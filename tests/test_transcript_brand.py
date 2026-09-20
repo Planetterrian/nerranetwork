@@ -52,6 +52,27 @@ class TestObservedMisspellings:
                 "part of the Naran Network, a family of daily",
                 "part of the Nerra Network, a family of daily",
             ),
+            # The brand's OTHER spoken nouns. "Nerra Personal" entered the
+            # spoken surface rotation on 2026-09-19 and SpaceX Ep106
+            # transcribed it "Nara personal" the next day — every anchor the
+            # repair had was some form of "network", so nothing fired and the
+            # word array shipped the misspelling into the captions.
+            (
+                "Nara personal builds you a private daily edition.",
+                "Nerra personal builds you a private daily edition.",
+            ),
+            (
+                "NARA Personal is the paid tier.",
+                "Nerra Personal is the paid tier.",
+            ),
+            (
+                "one episode a day on NARA Daily.",
+                "one episode a day on Nerra Daily.",
+            ),
+            (
+                "real people on NARA Voices.",
+                "real people on Nerra Voices.",
+            ),
             # Joined domain form.
             (
                 "explore the whole lineup at NARANetwork.com.",
@@ -292,7 +313,11 @@ class TestBackCatalogueIsClean:
     def test_no_committed_transcript_contains_the_misspelling(self):
         pattern = re.compile(
             r"\bnaran?\b[\s\-]{1,3}network\b|\bnaran?network\b"
-            r"|\bnaran?\b\s+(?:and|an|n)\s+network\b",  # "NARA and Network" (UC Ep119)
+            r"|\bnaran?\b\s+(?:and|an|n)\s+network\b"  # "NARA and Network" (UC Ep119)
+            # The brand's other spoken nouns (2026-09-20): this pattern only
+            # knew "network", so "Nara personal" passed the .txt check and
+            # was caught two surfaces later by the JSON word array.
+            r"|\bnaran?\b[\s\-]{1,3}(?:personal|daily|voices)\b",
             re.I,
         )
         offenders = []
@@ -411,3 +436,61 @@ class TestOriginLineRepair:
         from engine.transcripts import correct_brand_words
         words = [{"word": " NARA"}, {"word": " Network"}]
         assert [w["word"] for w in correct_brand_words(words)][0] == " Nerra"
+
+
+class TestEverySpokenBrandPhraseHasAnAnchor:
+    """The repair needs an anchor per brand phrase the shows say aloud.
+
+    The anchor requirement itself is load-bearing and must stay: a bare
+    "NARA" is legitimately the US National Archives, so the stem is never
+    repaired on its own. But a brand phrase with NO anchor is a
+    misspelling that ships — which is exactly what happened when "Nerra
+    Personal" joined the spoken rotation on 2026-09-19 and every anchor
+    was still some form of "network".
+    """
+
+    def test_each_brand_noun_anchors_the_repair(self):
+        from engine.transcripts import _BRAND_NOUNS, correct_brand_text
+        for noun in _BRAND_NOUNS:
+            assert correct_brand_text(f"listen to NARA {noun} today") == (
+                f"listen to Nerra {noun} today"
+            ), noun
+
+    def test_each_brand_noun_anchors_the_word_array(self):
+        from engine.transcripts import _BRAND_NOUNS, correct_brand_words
+        for noun in _BRAND_NOUNS:
+            words = [{"word": "Nara"}, {"word": noun.lower()}]
+            assert [w["word"] for w in correct_brand_words(words)] == [
+                "Nerra", noun.lower()], noun
+
+    def test_ordinary_words_that_merely_start_the_same_never_anchor(self):
+        """"personality" / "voiceover" / "dailies" must not repair a stem."""
+        from engine.transcripts import correct_brand_text, correct_brand_words
+        for tail in ("personality", "voiceover", "personnel"):
+            assert correct_brand_text(f"Nara {tail} was the draw") == (
+                f"Nara {tail} was the draw"
+            ), tail
+            words = [{"word": "Nara"}, {"word": tail}]
+            assert [w["word"] for w in correct_brand_words(words)][0] == "Nara", tail
+
+    def test_the_national_archives_are_still_safe(self):
+        from engine.transcripts import correct_brand_text
+        for line in ("records held at NARA in Washington",
+                     "we visited Nara ruins last spring",
+                     "the Nara period of Japanese history"):
+            assert correct_brand_text(line) == line, line
+
+    def test_the_spoken_surfaces_are_covered(self):
+        """Every brand phrase engine/network_promo.py can say aloud is
+        either "Nerra Network" (already anchored) or in _BRAND_NOUNS."""
+        import re as _re
+        from engine.transcripts import _BRAND_NOUNS
+        promo = (REPO_ROOT / "engine" / "network_promo.py").read_text(
+            encoding="utf-8")
+        spoken = set(_re.findall(r"Nerra\s+([A-Z][a-z]+)", promo))
+        known = {"Network"} | set(_BRAND_NOUNS)
+        missing = spoken - known
+        assert not missing, (
+            f"engine/network_promo.py says {sorted(missing)} aloud but the "
+            "transcript repair has no anchor for it — add it to _BRAND_NOUNS"
+        )

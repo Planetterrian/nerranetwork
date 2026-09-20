@@ -64,6 +64,15 @@ _BASE_VOCABULARY: tuple[str, ...] = (
     "nerranetwork.com",
 )
 
+# The other brand nouns the shows now say out loud. "Nerra Personal"
+# entered the spoken rotation on 2026-09-19 (engine/network_promo.py's
+# surface rotation) and SpaceX Ep106 transcribed it "Nara personal" the
+# next day — the repair below had no anchor for it, because every anchor
+# was some form of "network". Any new spoken brand phrase belongs here AND
+# in _BRAND_ANCHOR_WORDS; a phrase in neither is a misspelling that ships
+# into the captions and the published transcript.
+_BRAND_NOUNS: tuple[str, ...] = ("Personal", "Daily", "Voices")
+
 # The misspelling stem, as Whisper actually produced it: "nara" or
 # "naran" (it hears the doubled-R brand as a single R). Anchored with
 # \b on both sides so it never fires inside a longer word — the
@@ -98,8 +107,16 @@ _TORN_RE = re.compile(rf"\b{_STEM}\b[\s\-]{{1,3}}ren(?=networks?\b)", re.I)
 #    as "NARA networks"); ``\s`` in the separator lets the anchor
 #    reach across the NEWLINE that joins two transcript segments,
 #    which is where 41 of the occurrences lived.
+#    Since 2026-09-20 the anchor is any of the brand's own nouns, not
+#    just "network": the shows say "Nerra Personal", "Nerra Daily" and
+#    "Nerra Voices" on air too. The anchor requirement itself is
+#    load-bearing and stays — an UNANCHORED "NARA" is legitimately the US
+#    National Archives, so the bare stem is never repaired on its own.
+_BRAND_NOUN_TOKENS = frozenset(n.lower() for n in _BRAND_NOUNS)
+_BRAND_ANCHOR_WORDS = ("networks?",) + tuple(sorted(_BRAND_NOUN_TOKENS))
+_BRAND_ANCHOR = rf"(?:{'|'.join(_BRAND_ANCHOR_WORDS)})"
 _SEPARATED_RE = re.compile(
-    rf"\b(?:at?)?{_STEM}\b(?=[\s\-]{{1,3}}networks?\b)", re.I
+    rf"\b(?:at?)?{_STEM}\b(?=[\s\-]{{1,3}}{_BRAND_ANCHOR}\b)", re.I
 )
 
 # 3b. A filler syllable between the halves: Whisper heard the doubled R
@@ -193,6 +210,12 @@ def _next_token_anchors(token: str) -> bool:
     """True when *token* is the trailing half of a split brand name."""
     stripped = (token or "").strip().lstrip(".-–—/ ").lower()
     if stripped.startswith(("network", "rennetwork")):
+        return True
+    # The brand's other spoken nouns (Personal / Daily / Voices). Matched
+    # on the WHOLE token, never as a prefix: unlike "network" these are
+    # ordinary English words, and "personality" / "voiceover" / "personnel"
+    # must never anchor a repair of the preceding stem.
+    if stripped.strip(".,!?:;'\"") in _BRAND_NOUN_TOKENS:
         return True
     # "ru" must stand alone (bar trailing punctuation): "ruins", "rules"
     # and "Russia" begin with the same two letters, and treating them as
