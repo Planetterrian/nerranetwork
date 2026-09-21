@@ -70,17 +70,38 @@ runs:
       shell: bash
       run: |
         # Safely handle multi-line add-paths (the documented usage pattern).
-        # Writing to a temp file + --pathspec-from-file prevents shell
+        # Writing to a temp file and reading it line by line prevents shell
         # word-splitting and stops paths from being misinterpreted as
         # executable commands (the cause of "Permission denied" on .json files).
         cat > /tmp/paths-to-add.txt << 'EOL'
         ${{ inputs.add-paths }}
         EOL
 
-        # Drop blank lines and add the rest
-        grep -v '^[[:space:]]*$' /tmp/paths-to-add.txt > /tmp/paths-clean.txt || true
-        if [ -s /tmp/paths-clean.txt ]; then
-          git add --pathspec-from-file=/tmp/paths-clean.txt || true
+        # Drop blank lines, and the leading whitespace the heredoc keeps on
+        # the first line of an interpolated block scalar.
+        sed 's/^[[:space:]]*//' /tmp/paths-to-add.txt \
+          | grep -v '^[[:space:]]*$' > /tmp/paths-clean.txt || true
+
+        # Sept 21 2026: ONE pathspec that matches nothing makes `git add`
+        # fatal, stages NOTHING AT ALL, and the `|| true` swallowed it.
+        # Matt Davis's episode was published in full on the runner — feed
+        # entry, episode post, regenerated show pages — and every byte of it
+        # was thrown away, because the path list had gained
+        # nerra_voices_podcast.rss, a file that cannot exist until Nerra
+        # Voices publishes its first episode. Supabase recorded Ep6 as
+        # published and the site had never heard of it. Add the paths one at
+        # a time, so a path that is not there yet costs only itself.
+        added=0
+        while IFS= read -r p; do
+          [ -n "$p" ] || continue
+          if git add -- "$p" 2>/dev/null; then
+            added=$((added + 1))
+          else
+            echo "::warning::safe-commit-push: nothing to add at '$p' — skipped"
+          fi
+        done < /tmp/paths-clean.txt
+        if [ "$added" -eq 0 ]; then
+          echo "::warning::safe-commit-push: none of the requested paths matched anything"
         fi
 
         # Never commit unresolved conflict markers. The `git pull --rebase
@@ -114,6 +135,10 @@ runs:
       run: |
         if git diff --cached --quiet; then
           echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          # A job that regenerated something and staged nothing is usually a
+          # broken path list, not a quiet day. Say so where a run summary
+          # shows it rather than in the middle of the log.
+          echo "::warning::safe-commit-push: nothing staged — committing nothing"
           echo "No changes to commit"
         else
           echo "has_changes=true" >> "$GITHUB_OUTPUT"

@@ -1932,3 +1932,39 @@ class TestAReadThatDropsASentenceIsSaidAgain:
         loop = self.SRC[self.SRC.index("for seq, para in enumerate(paragraphs(text))"):]
         loop = loop[:loop.index("if not parts:")]
         assert loop.index("_trim(part)") < loop.index("_take_shortfall(trimmed, para)")
+
+
+class TestAPublishThatCommitsNothingIsNotSilent:
+    """Sept 21 2026, Matt Davis. The publish ran perfectly on the runner —
+    RSS entry, episode post, five regenerated blog pages — and committed
+    none of it. safe-commit-push passes every path to one `git add
+    --pathspec-from-file`, and a single pathspec that matches nothing makes
+    that command fatal and stage NOTHING; `|| true` swallowed the error. The
+    list had just gained nerra_voices_podcast.rss, which cannot exist until
+    Nerra Voices publishes its first episode. Supabase said Ep6 was
+    published and nerranetwork.com had never heard of it."""
+
+    ACTION = (ROOT / ".github" / "actions" / "safe-commit-push" / "action.yml").read_text(encoding="utf-8")
+    PUBLISH_WF = (ROOT / ".github" / "workflows" / "nerra_voices_publish.yml").read_text(encoding="utf-8")
+
+    def test_one_missing_path_cannot_take_the_others_down(self):
+        assert "--pathspec-from-file" not in self.ACTION
+        assert 'if git add -- "$p" 2>/dev/null; then' in self.ACTION
+        assert "done < /tmp/paths-clean.txt" in self.ACTION
+
+    def test_a_path_that_matches_nothing_says_so(self):
+        assert "nothing to add at '$p' — skipped" in self.ACTION
+        assert "none of the requested paths matched anything" in self.ACTION
+
+    def test_staging_nothing_is_a_warning_not_a_shrug(self):
+        assert "::warning::safe-commit-push: nothing staged" in self.ACTION
+
+    def test_the_first_line_indent_is_stripped(self):
+        # The heredoc keeps the workflow's indentation on the first
+        # interpolated line, which would make that one path match nothing.
+        assert "sed 's/^[[:space:]]*//' /tmp/paths-to-add.txt" in self.ACTION
+
+    def test_publish_can_actually_send_the_guest_their_episode(self):
+        # publish_one emails the guest now; this job had never needed mail.
+        assert "RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}" in self.PUBLISH_WF
+        assert "POSTMARK_TOKEN: ${{ secrets.POSTMARK_TOKEN }}" in self.PUBLISH_WF
