@@ -380,14 +380,42 @@ class TestNoDeadAirBetweenParagraphs:
         assert "def _trim(" in src
         assert "silenceremove=start_periods=1" in src
         assert "silenceremove=stop_periods=-1" in src
-        assert "parts.append(trimmed)" in src
+        # The retake loop (2026-09-21) records a paragraph up to three times and
+        # keeps the longest read, so the NAME of the stitched variable is free to
+        # change — `parts.append(trimmed)` became `parts.append(best)` and this
+        # guard failed on a refactor that preserved everything it defends. Assert
+        # the property instead of the spelling: the take is trimmed, and the raw
+        # untrimmed take is never what gets stitched.
+        assert "trimmed = _trim(part)" in src
+        assert "parts.append(part)" not in src, (
+            "the raw, untrimmed take must never be stitched"
+        )
 
     def test_the_length_check_runs_on_the_trimmed_take(self):
         src = (ROOT / "pipelines" / "voices" / "narrate.py").read_text(encoding="utf-8")
-        i_trim = src.index("trimmed = _trim(part)")
-        i_check = src.index("_check_not_truncated(trimmed, para)")
+        lines = src.splitlines()
+
+        def _line(pred, what):
+            for i, line in enumerate(lines):
+                if pred(line):
+                    return i
+            raise AssertionError(f"narrate.py no longer {what}")
+
+        i_trim = _line(lambda ln: "trimmed = _trim(part)" in ln, "trims each take")
+        # The CALL, not the `def` — the definition sits above the loop, so a plain
+        # ``src.index`` would find it and the ordering assertion would be vacuous.
+        i_check = _line(
+            lambda ln: "_check_not_truncated(" in ln
+            and not ln.lstrip().startswith("def "),
+            "checks a take for truncation",
+        )
         assert i_trim < i_check, (
             "trailing silence would make a cut-off read look complete")
+        # Rename-proof: the checked take may be called anything (the retake loop
+        # named it `best`), but neither the length check nor the shortfall measure
+        # may be handed the raw, untrimmed take.
+        assert "_check_not_truncated(part," not in src
+        assert "_take_shortfall(part," not in src
 
     def test_the_gap_between_paragraphs_is_the_one_we_choose(self):
         from narrate import BREATH_SEC, KEEP_SILENCE_SEC
