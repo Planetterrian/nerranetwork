@@ -299,6 +299,97 @@ reviews:
       ab_listen_required: false
       rationale: Every behavioral fix gets a drift-guard per playbook; pins the length-lever policy so a future pass cannot reintroduce podcast_expand_below_target (meta-review miss class).
     agent_cost_usd: 0.1165
+  - date: '2026-09-21'
+    pr: null
+    doc: docs/reviews/env_intel_review_2026_09_21.md
+    generated_by: grok-4.5
+    summary: 'Post-Aug-10 proposals never shipped: length lever partially held then relapsed (6/10 under 900; 4/8 post-lever under), deep-dive openers rotated past Consider-a into Picture-a/A-client while absence-of-section lines still ship, and chapters degraded with truncated titles plus missing Deep Dive on thin days.'
+    scored_prior_predictions:
+    - metric: deep-dive openers using 'There's a nuance here worth understanding' OR 'Consider a…' (or close paraphrase), last 10 transcripts
+      verdict: partial
+      evidence: nuance 0/10; Consider-a 4/10 (ep60/62/63/64); de-seed never shipped; Picture-a (ep67) + A-client/scene-open (ep65/66/68/69) already succeeding it
+    - metric: episodes below min_podcast_words:900 among episodes generated after digest lever (ep62+)
+      verdict: miss
+      evidence: 4/8 post-lever under 900 (ep66=783, ep67=867, ep68=850, ep69=896); escalate per Aug-10 deferral — no podcast-side re-file
+    - metric: transcripts containing spoken absence-of-section lines ('No qualifying… appeared today' / 'No major… appeared') or spoken bare URLs
+      verdict: miss
+      evidence: ep65/66/67 still speak the 'No qualifying peer reviewed… appeared today' failure mode; no bare URL in ep60-69
+    - metric: transcripts reading hyphen/underscore as words ('contaminated underscore/dash/hyphen sites')
+      verdict: hit
+      evidence: 0 instances in ep60-69 Whisper transcripts
+    - metric: successor deep-dive opener tic prediction (third-generation watch)
+      verdict: hit
+      evidence: ep67 'Picture a client filing…'; ep65/68/69 A-client/scene-open — watch fired as predicted
+    - metric: episodes whose LAST chapter is Closing (chapters_ep*.json)
+      verdict: hit
+      evidence: 10/10 of ep60-69 end with title Closing
+    shipped: []
+    deferred:
+    - 'ESCALATE to operator decision (two post-lever misses): raise min_digest_words above 950 and/or full-text article fetch for Gazette/provincial releases and/or licensed-knowledge floors for Regulatory Calendar + Practice Spotlight on thin days — do NOT re-file podcast-side length levers'
+    - Digest-driven / position-aware mid-section chapter titles (shared engine; carried since 2026-06-10) — ep67 truncated sentence-title and ep68 story-headline chapters are the latest symptom; marker tighten this pass is a local patch only
+    - 'Numbers/dates spell-out drift (PM, 2.5 comma pause; phase one slash two; digit dates) — landmine #17; needs A/B before any repair layer; never phonetic injection'
+    - French-language / QC-SK-Atlantic source coverage gap vs Phase-4 web_search_queries promise (operator/editorial)
+    - OP3 download flatline (7d=7, 30d=27, first-week median=3) + YouTube already paused — distribution/discoverability operator review, not a prompt change
+    - Thin-news blog <title> intelligence re-score — HOOK-level absence banned since June-11; residual is section-level absence lines (P0 this pass)
+    - Digest-verbatim paste rate 66-67% on ep62/64/68/69 with copied section headers — monitor; reinforce content_discipline only if it stays elevated post de-seed, no length pressure
+    predictions:
+    - metric: transcripts containing spoken absence-of-section lines ('No qualifying… appeared today' / 'No major… appeared' / 'No new peer-reviewed…'), last 10
+      baseline: 3/10 (ep65/66/67)
+      expected: 0/10 post-merge after podcast+digest ban
+      verdict: pending
+      evidence: null
+    - metric: deep-dive openers using 'Consider a…' OR 'Picture a…' OR 'A client…' (or close paraphrase), last 10 transcripts
+      baseline: Consider-a 4/10 + Picture-a 1/10 + A-client/scene 3/10 in ep60-69
+      expected: ≤2/10 within 2 weeks of post-merge episodes after shape de-seed + verbatim ban + recent-MEMORY; openers rotate without a new single template
+      verdict: pending
+      evidence: null
+    - metric: successor deep-dive opener tic prediction (fifth-generation watch)
+      baseline: none yet post-proposed-deseeds
+      expected: next review checks convergence on bare unmarked scene, 'Walk into…', 'On a [weekday]…', or 'You get a call…'; if ≥5/10, reopen with MEMORY ban of that shape
+      verdict: pending
+      evidence: null
+    - metric: chapters_ep*.json titles outside the known section-title set (Introduction/Executive Summary/Lead Story/Regulatory & Policy Watch/Science & Technical/Industry & Practice/Practitioner Deep Dive/Action Items/Week Ahead/Tomorrow Teaser/Closing), last 10
+      baseline: 2/10 (ep67 truncated sentence title; ep68 two story-headline titles)
+      expected: 0/10 post-merge after marker tighten
+      verdict: pending
+      evidence: null
+    - metric: episodes whose LAST chapter is Closing, last 10
+      baseline: 10/10
+      expected: 10/10 maintained (no regression from marker edits)
+      verdict: pending
+      evidence: null
+    - metric: Whisper garble of Kincardine / Ksi Lisims / Nerra / CEPA-as-see-EPA / Terrace / Kamloops in post-merge transcripts
+      baseline: ep61 Kincardine; ep64 Ksi Lisims; ep62/64/68/69 Nerra variants; ep62 see-EPA — open in current window
+      expected: 0 post-merge after hook override extension
+      verdict: pending
+      evidence: null
+    - metric: episodes below min_podcast_words:900 among ep62+ (carry; lever-gated)
+      baseline: 4/8 under in ep62-69
+      expected: n/a-lever-not-shipped unless operator ships a new digest-substrate lever; do not score as miss against unshipped podcast-side work
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/hooks/env_intel.py
+      kind: code
+      ab_listen_required: false
+      rationale: Highest-yield category (~100% hit, deterministic, no A/B). Current window still ships Kincardine/Ksi Lisims/Nerra/CEPA garble because Aug-10 hook extension never applied; extend the existing hook channel only.
+    - file: shows/prompts/env_intel_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'Locks three verified P0/P1 classes still shipping: (1) absence-of-section lines in ep65/66/67; (2) 4th/5th-gen deep-dive opener convergence (Consider-a 4/10, Picture-a already live); (3) durable cadence already drifted to ''next briefing'' — keep it banned from reverting to Tomorrow. De-seed by shape + verbatim ban + MEMORY per July 2026 ledger rule; no quotable replacement.'
+    - file: shows/prompts/env_intel_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Podcast faithfully echoes digest deep-dive openers and empty-section placeholders (June-15/July-2/July-27/Aug-10 lineage). Digest is the seed surface; de-seed + empty-section omit here or the podcast ban alone loses. No quotable replacement example.
+    - file: shows/env_intel.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Metadata-only. ep67 truncated sentence-title and ep68 story-headline chapters come from body-prose keyword hits; tighten Science/Industry to section-announce shapes and extend Deep Dive beat aliases so thin-day mistake+fix still titles correctly. Closing-first order untouched.
+    - file: tests/test_env_intel_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Every behavioral fix gets a drift-guard per playbook; pins the length-lever policy so a future pass cannot reintroduce podcast_expand_below_target, and locks absence-ban / shape-deseed / hook garble set / chapter title set.
+    agent_cost_usd: 0.143
 do_not_retry:
   - idea: Podcast-side length levers for env_intel (word floors in podcast prompt, podcast_expand_below_target re-enable, expand-retries aimed at _tts.txt length) — banned network-wide by July 2026 meta-review; EI now has digest_expand_below_target + min_digest_words:950; further length work is digest/fetch only.
     evidence: flagged 2026-08-10 (Grok review)
