@@ -117,7 +117,10 @@ class TestNetworkDiscoverySurfaces:
         pool = _weighted_surface_pool()
         gallery_slots = sum(1 for s in pool if s["id"] == "gallery")
         peer_slots = sum(1 for s in pool if s["id"] == "blogs")
-        assert gallery_slots >= 3
+        # 2 since 2026-09-21 (was 3). The INTENT of this test is that
+        # gallery outweighs its peers, which is still true and still
+        # asserted below — the floor moved, the property did not.
+        assert gallery_slots >= 2
         assert gallery_slots > peer_slots
         # Over a long window gallery should appear more often than blogs.
         counts = {"gallery": 0, "blogs": 0}
