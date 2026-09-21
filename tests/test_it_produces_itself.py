@@ -1865,3 +1865,41 @@ class TestSheDoesNotEndTheInterviewInTheFirstThird:
         assert "THE LIST IS A FLOOR, NOT THE HOUR" in flat
         assert "Reaching the end of the list early is a sign you have been reading it" in flat
         assert "ONE QUESTION, THEN SILENCE" in flat
+
+
+class TestTheIntroductionEarnsTheFirstThirtySeconds:
+    """Sept 21 2026. Six episodes in, every produced introduction opened with
+    the same thirty-five words of branding, then a CV, then "what surprised
+    me most" in four of the six, and said Patrick was the human in the room —
+    which stopped being true when he stopped sitting in. The prompt was
+    dictating all three."""
+
+    PROMPT = (V / "prompts" / "auto_edit.txt").read_text(encoding="utf-8")
+
+    def test_it_opens_on_the_conversation(self):
+        flat = _flat(self.PROMPT)
+        assert "OPEN ON THE CONVERSATION, NOT ON US" in flat
+        assert "the most concrete, most surprising thing in the hour" in flat
+        assert "never more than two sentences on the show before you are back to the guest" in flat
+
+    def test_the_worn_out_shapes_are_banned(self):
+        flat = _flat(self.PROMPT)
+        for dead in ("What surprised me most", "one moment stood out",
+                     "one moment in the conversation caught me"):
+            assert dead in flat, f"{dead} must be named as banned"
+        assert "instead of telling us what it was" in flat
+
+    def test_patrick_is_the_approver_not_a_presence_in_the_room(self):
+        flat = _flat(self.PROMPT)
+        assert "He is NOT in the room and does not host" in flat
+        assert "listen to every episode and approve it before it reaches anyone" in flat
+        assert "steer the show on what guests and listeners tell him" in flat
+        assert "Never say he is here, in the room, with you or beside you" in flat
+        # The old instruction that produced the wrong line is gone.
+        assert "is the human in the room" not in flat
+
+    def test_a_domain_is_never_invented(self):
+        flat = _flat(self.PROMPT)
+        assert "Say ONLY a domain that appears in the links above, character for character" in flat
+        assert "meridanzernar.com" in flat
+        assert "A wrong address in a published episode cannot be taken back" in flat
