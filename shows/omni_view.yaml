@@ -198,7 +198,14 @@ llm:
   # factual-flag rates on the shared 4.6-low reviewer. SCRIPT ONLY: the
   # facts-first digest stays on the grok-4.3 network default. Revert =
   # delete this line. A/B-listen the first episode (landmine #17).
-  podcast_model: grok-4.6
+  # 2026-09-21: grok-4.7, stage ONE of the staged 4.6 -> 4.7 migration
+  # (experiment grok-47-staged-migration). One show, SCRIPT stage only —
+  # the shape docs/model_upgrade_playbook.md calls correct. The digest
+  # stays on the grok-4.3 network default, so the facts-first path is
+  # untouched. Revert = restore grok-4.6 on this line.
+  # AUDIO: this changes shipped prose. A/B-listen the first episode
+  # (landmine #17).
+  podcast_model: grok-4.7
   digest_temperature: 0.5
   podcast_temperature: 0.7
   # Raised 10000 -> 13000 (July 28 2026). 21 of 117 recorded runs (17%)

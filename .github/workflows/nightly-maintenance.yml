@@ -194,6 +194,10 @@ jobs:
       - name: Aggregate paid-member counts
         env:
           PERSONAL_ADMIN_TOKEN: ${{ secrets.PERSONAL_ADMIN_TOKEN }}
+          # Revenue and trial state. Without this the script still runs and
+          # still writes member counts; mrr_usd and trialing simply stay
+          # null, which reads as "unmeasured" and never as "$0".
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
         run: python scripts/build_member_metrics.py --out api/member_metrics.json || echo "::warning::Member metrics build failed (non-fatal)"
 
       - name: Build the funnel (reach -> click -> visit -> capture)

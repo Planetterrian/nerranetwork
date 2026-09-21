@@ -4790,8 +4790,21 @@ def _empty_mandatory_section_issues(item_count_issues: list) -> list:
     ``0 chars`` covers prose sections validated by length rather than item
     count (e.g. MAB's "The Big Story"), so a genuinely empty prose section
     still triggers a regenerate while a full one does not.
+
+    **2026-09-21 — a section that is ABSENT is structural too.** The
+    validator has always emitted ``Section 'X' is missing from digest`` for
+    a mandatory section it cannot find, and this function did not match it,
+    so an EMPTY section spent the corrective regeneration while a MISSING
+    one sailed through. DP Pod shipped four episodes with no Lever segment
+    at all — the heart of the show, named in its own spine — and the run
+    logged a formatting mismatch and published. A section that is not there
+    guts the podcast at least as thoroughly as one that is there and empty.
     """
-    return [i for i in item_count_issues if re.search(r":\s*0\s+(?:items|chars)", i)]
+    return [
+        i for i in item_count_issues
+        if re.search(r":\s*0\s+(?:items|chars)", i)
+        or re.search(r"\bis missing from digest\b", i)
+    ]
 
 
 def _resolve_weekly_summary(

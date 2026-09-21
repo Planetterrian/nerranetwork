@@ -61,7 +61,15 @@ llm:
   # under this same reviewer, never against pre-08-18 history.
   # (History: the original grok-4-1-fast-non-reasoning slug was RETIRED
   # by xAI on May 15 and silently served by grok-4.3 at 4.3 billing.)
-  reviewer_model: grok-4.6
+  # 2026-09-21: grok-4.7, stage ONE of the staged 4.6 -> 4.7 migration
+  # (experiment grok-47-staged-migration). This stage goes first because it
+  # is the only 4.6 site that is BOTH outside run_show's timeout envelope
+  # and exercised every day on every show, so three days give a real sample
+  # with nothing a listener can hear at stake. Revert: this one line.
+  # The instrument caveat above applies AGAIN — a reviewer change re-bases
+  # FACTUAL_ERRORS, so 4.7-era rates are read against each other, never
+  # against the 4.6 era.
+  reviewer_model: grok-4.7
   reviewer_max_tokens: 1500
   reviewer_temperature: 0.3
   # Optional (July 2026): set to low|medium|high only when using a model

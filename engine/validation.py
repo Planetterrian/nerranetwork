@@ -779,6 +779,55 @@ def pr_validation_config() -> ValidationConfig:
 
 
 # Registry mapping show slugs to their validation config factory.
+def dp_pod_validation_config() -> ValidationConfig:
+    """Validation config for The DP Pod.
+
+    Added 2026-09-21. The show had NO entry here, so nothing checked that
+    its briefing carried the segments the show is made of — and it stopped
+    carrying one. The Lever is absent from Ep066, Ep068, Ep072 and Ep073,
+    and present in all 37 digests before the 2026-09-04 lever pass; Ep068
+    dropped Think Positive too. The digest prompt has said "REQUIRED
+    SECTIONS, in this order (never omit any)" the whole time, which is the
+    point: this show's own history (the Network-pick rotation, the lever
+    rotation memory) says an instruction the model breaks is fixed
+    data-side, not by rewording the instruction.
+
+    The likely cause is constraint load — banned opening verbs, a
+    real-world action due, and fuzzy-distinctness from the last six levers
+    is a brief the model cannot always satisfy, and omitting the segment
+    satisfies it vacuously. So the enforcement goes here rather than in the
+    prompt: a missing Lever is now a structural defect that spends the
+    one-shot corrective regeneration, and the rotation constraints degrade
+    instead of the segment.
+
+    ``min_items=0`` throughout: these segments are PROSE, not bullet lists,
+    so the only thing worth asserting is that the heading exists at all.
+    ``check_item_counts`` emits "Section 'X' is missing from digest" for a
+    mandatory section it cannot find, which is what the gate now acts on.
+    """
+    def _section(name: str, heading: str) -> SectionRule:
+        return SectionRule(
+            name=name,
+            # Tolerant of the ### / bold / emoji variants the digests have
+            # used, and bounded by the next segment heading or a box rule.
+            pattern=(
+                rf"(?:###\s*{heading}|\*\*{heading}\*\*)"
+                r"(.*?)"
+                r"(?=━━|###\s|\Z)"
+            ),
+            min_items=0,
+        )
+
+    return ValidationConfig(
+        sections=[
+            _section("The Positive Papers", "The Positive Papers"),
+            _section("Think Positive", "Think Positive"),
+            _section("The Lever", "The Lever"),
+            _section("Do Positive Dispatch", "Do Positive Dispatch"),
+        ],
+    )
+
+
 SHOW_VALIDATION_CONFIGS = {
     "tesla": tst_validation_config,
     "tesla_shorts_time": tst_validation_config,
@@ -791,4 +840,5 @@ SHOW_VALIDATION_CONFIGS = {
     "finansy_prosto": fp_validation_config,
     "modern_investing": mi_validation_config,
     "privet_russian": pr_validation_config,
+    "dp_pod": dp_pod_validation_config,
 }

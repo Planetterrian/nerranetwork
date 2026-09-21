@@ -1,6 +1,9 @@
 {% extends "base.html.j2" %}
 
 {% block head_extra %}
+{#- A paginated series tells a crawler so in the head, not only in the body. -#}
+{% if prev_page_url %}<link rel="prev" href="{{ prev_page_url }}">{% endif %}
+{% if next_page_url %}<link rel="next" href="{{ next_page_url }}">{% endif %}
     <link rel="alternate" type="application/rss+xml" title="{{ show_name }} Blog RSS" href="{{ blog_rss_url }}">
 
     <style>
@@ -133,6 +136,29 @@
         </a>
         {% endfor %}
     </div>
+
+    {#- Pager (Sep 21 2026). Rendered only when there is more than one page,
+        so a show with a short archive is unchanged. Page 1 keeps
+        index.html: it is the URL every feed, nav item and crawler already
+        points at. -#}
+    {% if total_pages and total_pages > 1 %}
+    <nav class="blog-idx-pager" aria-label="Blog pages"
+         style="display:flex;flex-wrap:wrap;gap:.45rem;justify-content:center;align-items:center;margin:var(--sp-8) auto var(--sp-12);padding:0 var(--sp-6);max-width:900px;font-family:var(--font-ui);font-size:.9rem;">
+        {% if prev_page_url %}
+        <a href="{{ prev_page_url }}" rel="prev" style="padding:.45rem .9rem;border:1px solid var(--nn-border);border-radius:100px;text-decoration:none;color:var(--nn-text-secondary);">&larr; Newer</a>
+        {% endif %}
+        {% for url in page_urls %}
+        {% if loop.index == page %}
+        <span aria-current="page" style="padding:.45rem .85rem;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));font-weight:600;">{{ loop.index }}</span>
+        {% else %}
+        <a href="{{ url }}" style="padding:.45rem .85rem;border:1px solid var(--nn-border);border-radius:100px;text-decoration:none;color:var(--nn-text-secondary);">{{ loop.index }}</a>
+        {% endif %}
+        {% endfor %}
+        {% if next_page_url %}
+        <a href="{{ next_page_url }}" rel="next" style="padding:.45rem .9rem;border:1px solid var(--nn-border);border-radius:100px;text-decoration:none;color:var(--nn-text-secondary);">Older &rarr;</a>
+        {% endif %}
+    </nav>
+    {% endif %}
     {% else %}
     <div class="blog-idx-empty" style="max-width:640px;margin:0 auto;padding:var(--sp-12) var(--sp-6);text-align:center;">
         {% if show_slug in ('age_of_ai', 'nerra_voices') %}

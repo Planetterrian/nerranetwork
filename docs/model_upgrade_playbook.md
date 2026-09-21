@@ -112,6 +112,33 @@ silently (the translation stage rode one until 2026-08-18). Every stage
 pins an explicit model id; `tests/test_llm_usage_pass.py` guards the
 translation pin.
 
+
+## The instrument (added 2026-09-21)
+
+`scripts/model_trial_report.py` answers rule 2 from the committed record, so
+a trial's verdict is reproducible later by anyone with no API key:
+
+```
+python scripts/model_trial_report.py --since 2026-09-22
+python scripts/model_trial_report.py --since 2026-09-22 --shows omni_view
+```
+
+It reads every show's `digests/<slug>/metrics_ep*.json` (`stages` →
+`{name, duration_s, success}`), dates each episode from the sibling digest
+filename — **never file mtime, which a fresh checkout rewrites** — and
+reports p50/p95/max per stage for the trial window against a trailing
+baseline. It exits 1 when an LLM stage's p95 passes 50% of the request
+timeout, regresses more than 50% against baseline, or any stage failed.
+Render and fetch stages are reported but never gate a MODEL trial.
+
+## Staged migrations on record
+
+| Date | Change | Outcome |
+|---|---|---|
+| 2026-08-18 | grok-4.3 → 4.6, all stages, one evening | REVERTED same day; 7 of 12 shows failed |
+| 2026-08-18 | staged 4.6 trial (dp_pod script, FPD/UC whole-show, synth, reviewer) | FPD/UC arms withdrawn 08-27 on the latency gate; the rest held |
+| 2026-09-21 | grok-4.6 → 4.7, two sites (reviewer, omni_view script) | `grok-47-staged-migration`, readout 09-25 |
+
 ## Quick checklist for the PR that changes a model
 
 - [ ] Only one show's YAML (or one stage) changes on day one

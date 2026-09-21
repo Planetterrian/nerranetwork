@@ -292,8 +292,10 @@ SHOW_REGISTRY = {
         "min_audio_s": 300,
         "max_audio_s": 1500,
         "required_sections": [],
-        # Fresh episode all 7 days — deliberately no Sunday recap.
-        "schedule": "daily",
+        # WEEKLY on Monday since 2026-09-21 (operator-directed). Getting
+        # this wrong is the July-18 P0 shape: the audit would flag a missed
+        # episode every non-Monday and dispatch an off-schedule run.
+        "schedule": "monday",
     },
     "offshore_north": {
         "name": "Offshore North",
@@ -1322,6 +1324,14 @@ def _load_reviewer_settings(show_slug: str) -> tuple[str, int, float]:
         return default_model, default_tokens, default_temp
 
 
+#: Reviewer models that must run at LOW reasoning effort. The audit is a
+#: time-boxed job and these models blow the request timeout at their default
+#: effort on a task that is a structured YES/NO plus a score. Any successor
+#: in this family inherits the setting rather than silently reverting to
+#: default — see the 2026-08-21 note at the call site.
+_LOW_EFFORT_REVIEWER_PREFIXES = ("grok-4.6", "grok-4.7")
+
+
 def ai_review_episode(ep: EpisodeReview) -> None:
     """Use Grok to review episode quality. Requires GROK_API_KEY."""
     api_key = (os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY") or "").strip()
@@ -1411,15 +1421,22 @@ def ai_review_episode(ep: EpisodeReview) -> None:
             # to grok-4.3 with reasoning effort "none". Keep effort none so
             # the explicit pin changes nothing about the served review.
             extra["extra_body"] = {"reasoning_effort": "none"}
-        elif reviewer_model.startswith("grok-4.6"):
+        elif reviewer_model.startswith(_LOW_EFFORT_REVIEWER_PREFIXES):
             # 2026-08-21: at its default (high) effort the 4.6 reviewer
             # blew the 300s request timeout on ~1/3 of episodes and the
             # 35-min audit job died with no report written. This is a
-            # structured YES/NO + score task — "low" keeps 4.6's sharper
+            # structured YES/NO + score task — "low" keeps the sharper
             # judgment (the 08-19 cross-show read) at a latency the audit
             # can actually afford. Instrument note: FACTUAL_ERRORS rates
-            # from 08-21 on are 4.6-LOW; compare cross-show within a day,
-            # never across effort eras.
+            # from 08-21 on are LOW-effort; compare cross-show within a
+            # day, never across effort eras.
+            #
+            # 2026-09-21: this is a PREFIX TUPLE, not a single id, because
+            # pinning it to one model is a silent trap. The migration to
+            # grok-4.7 left this branch matching nothing, so the reviewer
+            # would have quietly gone back to default effort and
+            # reproduced the exact 08-21 outage — a model change that
+            # looks like one line and is two.
             extra["extra_body"] = {"reasoning_effort": "low"}
         resp = client.chat.completions.create(
             model=reviewer_model,

@@ -239,6 +239,28 @@ def _format_chapter_block(chapters: List[Dict], *, language: str = "en") -> str:
 # Tag handling
 # ---------------------------------------------------------------------------
 
+def _episode_date(today_str: str):
+    """The episode's own date, parsed from the date string it was built with.
+
+    ``run_show`` formats it as ``"%B %d, %Y"``. The surface rotation has to
+    key off THIS date rather than ``date.today()``: the spoken outro picks its
+    surface at generation time, and a render that finishes after midnight —
+    or a re-render of an older episode — would otherwise advertise a
+    different surface in the description than the one the audio names.
+
+    An unparseable or empty string falls back to today, which is the old
+    behaviour and is never worse than it.
+    """
+    import datetime as _dt
+
+    for fmt in ("%B %d, %Y", "%Y-%m-%d", "%b %d, %Y"):
+        try:
+            return _dt.datetime.strptime((today_str or "").strip(), fmt).date()
+        except ValueError:
+            continue
+    return _dt.date.today()
+
+
 def _load_description_body_from_template(
     config: Any,
     *,
@@ -486,16 +508,38 @@ def build_long_form_metadata(
     # Rotating network-discovery line (gallery / blogs / trackers / …) —
     # metadata-only, no audio. Same date-deterministic surface rotation
     # as the spoken outro and X reply (engine.network_promo).
+    #
+    # Sep 21 2026 — two bugs, both invisible by construction.
+    #
+    # (1) This line hand-built ``https://nerranetwork.com/{url}``, UNTAGGED.
+    # It passed the network's ban on hand-rolled UTMs only because a bare URL
+    # carries no ``utm_campaign`` at all, so ~125k views a month of
+    # description clicks were unattributable — the same hole the Sep 21
+    # capture pass closed on the signup forms. It now goes through
+    # ``engine.funnel.network_link``, which puts the surface id in the
+    # campaign's variant slot, so "which plug earns clicks" is answerable.
+    #
+    # (2) It picked the surface from ``date.today()``, the RENDER date. The
+    # spoken outro picks from the GENERATION date (engine/pipeline.py), so a
+    # render that slipped past midnight — or any re-render of an older
+    # episode — advertised a surface the episode never says out loud. The
+    # episode's own date is what both must agree on.
     discovery_line = ""
     try:
-        import datetime as _dt
         from engine.network_promo import pick_featured_surface
         _slug = getattr(config, "slug", "") or ""
-        _surface = pick_featured_surface(_slug, _dt.date.today())
+        _surface = pick_featured_surface(_slug, _episode_date(today_str))
         if _surface:
+            _surface_url = _funnel.network_link(
+                _surface["url"], _slug, episode_num,
+                surface=_surface.get("id", ""),
+                source=_funnel.channel_source(channel),
+                medium=_funnel.MEDIUM_LONG,
+                placement=_funnel.PLACEMENT_DESCRIPTION,
+            ) or f"https://nerranetwork.com/{_surface['url']}"
             discovery_line = (
                 f"✨ {_surface['x_line'].replace('More from the Nerra Network: ', '')} "
-                f"— https://nerranetwork.com/{_surface['url']}"
+                f"— {_surface_url}"
             )
     except Exception:  # noqa: BLE001 — never block a YouTube upload
         discovery_line = ""

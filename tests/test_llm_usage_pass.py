@@ -71,13 +71,21 @@ class TestNoLiveRetiredSlugs:
         from engine.config import LLMConfig
         from engine.tracking import GROK_PRICING
 
-        assert LLMConfig().reviewer_model == "grok-4.6"
-
+        # Asserted as the INVARIANT this docstring names, not as a literal
+        # model id: the id is an operator decision (4.6 -> 4.7 on
+        # 2026-09-21) and a guard that fails on it is noise, while a guard
+        # that fails on an unpriced or floating id is the real protection.
         defaults = yaml.safe_load(
             (REPO_ROOT / "shows" / "_defaults.yaml").read_text(
                 encoding="utf-8"))
-        assert defaults["llm"]["reviewer_model"] == "grok-4.6"
-        assert defaults["llm"]["reviewer_model"] in GROK_PRICING
+        for source in (LLMConfig().reviewer_model,
+                       defaults["llm"]["reviewer_model"]):
+            assert source, "reviewer_model must be explicit, never empty"
+            assert "latest" not in source, f"{source} is a floating alias"
+            assert source in GROK_PRICING, f"{source} is unpriced"
+        assert LLMConfig().reviewer_model == defaults["llm"]["reviewer_model"], (
+            "the dataclass default and _defaults.yaml must agree, or a "
+            "caller that bypasses YAML silently runs a different model")
 
     def test_review_episodes_fallback_is_pinned_and_priced(self):
         src = (REPO_ROOT / "review_episodes.py").read_text(encoding="utf-8")
@@ -311,8 +319,20 @@ class TestReviewerLatencyEnvelope:
     def test_46_reviewer_runs_at_low_effort(self):
         """Structured YES/NO + score doesn't need deep reasoning; 'low'
         keeps 4.6's judgment at a latency the audit can afford."""
-        assert 'reviewer_model.startswith("grok-4.6")' in self.SRC
+        import review_episodes
+
         assert '"reasoning_effort": "low"' in self.SRC
+        # Asserted against the CONFIGURED reviewer rather than a literal in
+        # the source. Pinning the id here is what let the 2026-09-21
+        # migration to 4.7 nearly restore default effort: the branch matched
+        # one model, the pin moved, and the branch matched nothing.
+        reviewer = yaml.safe_load(
+            (REPO_ROOT / "shows" / "_defaults.yaml").read_text(
+                encoding="utf-8"))["llm"]["reviewer_model"]
+        assert reviewer.startswith(
+            review_episodes._LOW_EFFORT_REVIEWER_PREFIXES), (
+            f"{reviewer} matches no low-effort branch — it would run at "
+            "DEFAULT effort and reproduce the 2026-08-21 audit outage")
 
     def test_ai_review_loop_has_a_wall_clock_budget(self):
         """Past the budget, episodes keep structural checks and skip the
@@ -336,7 +356,16 @@ class TestGrok46Wave2Scripts:
     def test_wave2_shows_script_stage_only(self):
         for slug in ("omni_view", "models_agents_beginners"):
             cfg = self._load(slug)
-            assert cfg.llm.podcast_model == "grok-4.6", slug
+            # The safety argument this class states is SCOPE — "scripts
+            # move, facts-first digests do not" — so that is what is
+            # asserted. omni_view's script moved to grok-4.7 on 2026-09-21
+            # (experiment grok-47-staged-migration) and the scope is
+            # unchanged.
+            assert cfg.llm.podcast_model, (
+                f"{slug}: the script-stage pin is gone entirely")
+            assert cfg.llm.podcast_model != cfg.llm.model, (
+                f"{slug}: script and digest are on the same model, so this "
+                "is no longer a script-stage-only trial")
             assert cfg.llm.model == "grok-4.3", (
                 f"{slug}: the DIGEST must stay on the 4.3 network default")
 

@@ -136,7 +136,12 @@ class LLMConfig:
     # Episode quality reviewer defaults. grok-4.6 since the 2026-08-18
     # staged trial (staged-grok-46-trial) — mirrors shows/_defaults.yaml,
     # including the instrument-change caveat documented there.
-    reviewer_model: str = "grok-4.6"
+    # 2026-09-21: grok-4.7, kept in lockstep with shows/_defaults.yaml.
+    # These two must never disagree — a caller that builds LLMConfig()
+    # without YAML would otherwise silently run a different reviewer than
+    # production, and the audit's factual-flag rates would be two
+    # instruments blended into one series.
+    reviewer_model: str = "grok-4.7"
     reviewer_max_tokens: int = 1500
     reviewer_temperature: float = 0.3
     # Optional xAI reasoning depth for models that support it (grok-4.5:

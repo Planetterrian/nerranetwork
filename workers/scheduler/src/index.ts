@@ -40,7 +40,7 @@ const SLOTS: Array<[number, number, string, string | null]> = [
   [9, 1,  "unintended_consequences",  null],
   [9, 16, "spacex",                   null],
   [9, 37, "finansy_prosto",          "monday"],
-  [9, 46, "dp_pod",                   null],
+  [9, 46, "dp_pod",                   "monday"],
   [10, 1, "offshore_north",          "monday"],
 ];
 

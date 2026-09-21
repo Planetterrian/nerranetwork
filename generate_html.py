@@ -32,6 +32,9 @@ from jinja2 import Environment, FileSystemLoader
 from engine.utils import strip_lone_surrogates as _strip_lone_surrogates
 from engine import titles as _titles
 from engine import funnel as F
+from engine import blog as _blog
+from engine import brand as _brand
+from engine import summaries_ssr as _summaries_ssr
 from engine import show_lang as _show_lang
 
 ROOT = Path(__file__).resolve().parent
@@ -868,7 +871,7 @@ NETWORK_SHOWS = {
         "brand_color_dark": "#0D3B0F",
         "tagline": "Environmental regulatory and compliance briefing.",
         "hero_tagline": "Environmental regulatory and compliance briefing.",
-        "schedule": "Odd weekdays",
+        "schedule": "Weekly — Mondays",
         "episode_length": "~10 min",
         "about_text": "Environmental regulatory, science, and compliance briefing for BC professionals. Covers contaminated sites, CEPA, emissions, carbon policy, PFAS, and remediation developments.",
         "about_host": "Hosted by Patrick in Vancouver.",
@@ -1193,7 +1196,7 @@ NETWORK_SHOWS = {
         "brand_color_dark": "#DB2777",
         "tagline": "Finances Made Simple.",
         "hero_tagline": "Финансы — просто и понятно.",
-        "schedule": "Even days",
+        "schedule": "Weekly — Mondays",
         "episode_length": "~12 min",
         "about_text": "Ежедневный подкаст о финансах на русском языке для женщин в Канаде. Ведущая Оля объясняет инвестиции, сбережения, бюджет и финансовую грамотность — просто и понятно.",
         "about_host": "Ведущая — Оля из Ванкувера. Каждый выпуск — практические советы, новости и ресурсы для финансовой независимости.",
@@ -1305,7 +1308,7 @@ NETWORK_SHOWS = {
         "brand_color_dark": "#4F46E5",
         "tagline": "Learn Russian — Привет means hello!",
         "hero_tagline": "Learn Russian — Привет means hello!",
-        "schedule": "Even days",
+        "schedule": "Weekly — Mondays",
         "episode_length": "~10 min",
         "about_text": "A bilingual Russian language learning podcast for English speakers — kids and adult beginners. Host Olya teaches vocabulary, phrases, grammar, and culture through fun, themed episodes.",
         "about_host": "Hosted by Olya from Vancouver. Each episode is a mini lesson you can practice anywhere.",
@@ -1512,7 +1515,7 @@ NETWORK_SHOWS = {
         "brand_color_dark": "#92400E",
         "tagline": "Good intentions. Surprising results. Real lessons.",
         "hero_tagline": "Good intentions. Surprising results. Real lessons.",
-        "schedule": "Weekdays",
+        "schedule": "Daily",
         "episode_length": "~15-18 min",
         "about_text": "A daily narrative podcast profiling case studies of well-intentioned actions that triggered surprising consequences. From the Cobra Effect to social media algorithms, every episode follows a single story through good intentions, implementation, unexpected fallout, and the lessons we can learn.",
         "about_host": "Hosted by Patrick in Vancouver.",
@@ -2219,8 +2222,12 @@ def _get_jinja_env():
 # Summaries pages
 # ---------------------------------------------------------------------------
 
-def generate_summaries_page(slug, *, dry_run=False):
-    """Render and write a summaries page for a single show."""
+def generate_summaries_page(slug, *, dry_run=False, output_dir=None):
+    """Render and write a summaries page for a single show.
+
+    *output_dir* redirects the write so a guard can render the CURRENT
+    template into ``tmp_path`` rather than reading a committed page.
+    """
     cfg = NETWORK_SHOWS[slug]
     env = _get_jinja_env()
     template = env.get_template("summaries_page.html.j2")
@@ -2255,12 +2262,22 @@ def generate_summaries_page(slug, *, dry_run=False):
         "blog_page": f"blog/{cfg['slug']}/index.html",
         "all_shows": _build_all_shows_list(),
         "page_lang": _show_lang.page_lang(slug),
+        # Server-rendered cards (Sep 21 2026). This page was 100% built in
+        # the browser: with JavaScript off it WAS the sentence "Loading …
+        # summaries…", including on nerra-daily-summaries.html, the archive
+        # of the network's most-visited show. The script still replaces the
+        # whole container on load, so these are a floor rather than a second
+        # implementation to keep in sync.
+        "ssr_cards": _summaries_ssr.summary_cards(
+            ROOT / cfg.get("json_path", ""), slug),
         **_read_show_youtube(slug),
     }
 
     html = template.render(**context)
 
-    out_path = ROOT / cfg["summaries_page"]
+    out_path = (Path(output_dir) / cfg["summaries_page"] if output_dir
+                else ROOT / cfg["summaries_page"])
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     if dry_run:
         print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
         return None
@@ -2270,11 +2287,12 @@ def generate_summaries_page(slug, *, dry_run=False):
     return out_path
 
 
-def generate_all_summaries(*, dry_run=False):
+def generate_all_summaries(*, dry_run=False, output_dir=None):
     """Generate summaries pages for every show."""
     paths = []
     for slug in NETWORK_SHOWS:
-        result = generate_summaries_page(slug, dry_run=dry_run)
+        result = generate_summaries_page(
+            slug, dry_run=dry_run, output_dir=output_dir)
         if result:
             paths.append(result)
     return paths
@@ -2839,8 +2857,39 @@ def generate_all_narrative_pages(*, dry_run=False):
         generate_narrative_page(slug, dry_run=dry_run)
 
 
-def generate_show_page(slug, *, dry_run=False):
+def _interview_episode_cards(slug, cfg):
+    """Guest cards for an interview show's archive rail; [] for the rest.
+
+    The audio URL is routed through the same OP3 prefix the blog player uses,
+    so a play started from the show page is counted like one started from a
+    podcast app. Never let measurement break the page.
+    """
+    from engine.interviews import interview_episode_cards
+
+    cards = interview_episode_cards(
+        slug,
+        ROOT / cfg.get("json_path", ""),
+        ROOT / "digests" / _SHOW_DIRS.get(slug, slug),
+    )
+    if not cards:
+        return []
+    try:
+        from engine.blog import _measured_audio_url
+        for card in cards:
+            card["audio_url"] = _measured_audio_url(card["audio_url"])
+    except Exception:  # pragma: no cover - measurement is never fatal
+        pass
+    return cards
+
+
+def generate_show_page(slug, *, dry_run=False, output_dir=None):
     """Render and write a show page for a single show.
+
+    *output_dir* redirects the write, so a guard can render the CURRENT
+    template into ``tmp_path`` instead of reading a committed page — the
+    committed HTML is refreshed by the pipeline, not from a working tree, so
+    on any checkout it still carries the previous chrome and a test that
+    reads it is testing yesterday.
 
     A show can declare ``show_page_template`` in its registry entry
     (``shows/network_meta.yaml`` or the hardcoded dict) to swap the shared
@@ -3089,6 +3138,17 @@ def generate_show_page(slug, *, dry_run=False):
         # cross-reference each other instead of each being a dead end.
         "strand": cfg.get("strand", ""),
         "apply_page": cfg.get("apply_page", ""),
+        # Interview shows (Sep 21 2026): the episode rail is a list of
+        # GUESTS, not a list of RSS titles. On these shows the RSS title is
+        # the digest's whole thesis sentence, so the generic rail gave a
+        # visitor 200 characters of abstract prose per episode and no name
+        # to recognise. Empty for every other show, which keeps its rail.
+        "interview_episodes": _interview_episode_cards(slug, cfg),
+        # Who made this and what he actually does on THIS show. Scoped by
+        # engine.brand: the "reviews every episode before it publishes"
+        # paragraph is only ever handed to a show that has that gate.
+        "creator_name": _brand.NETWORK_CREATOR_NAME,
+        "creator_credit": _brand.creator_credit(slug),
         "related_show": related_show_data,
         "blog_page": f"blog/{cfg['slug']}/index.html",
         "latest_blog_posts": latest_blog_posts,
@@ -3122,7 +3182,11 @@ def generate_show_page(slug, *, dry_run=False):
 
     html = template.render(**context)
 
-    out_path = ROOT / cfg["show_page"]
+    out_path = (Path(output_dir) / cfg["show_page"] if output_dir
+                else ROOT / cfg["show_page"])
+    # Two shows live under ru/, which exists in the repo but not in a
+    # freshly-made tmp_path.
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     if dry_run:
         print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
         return None
@@ -3621,10 +3685,11 @@ def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None):
     return results
 
 
-def generate_blog_index(slug, *, dry_run=False, posts=None):
-    """Generate a blog index page for a show.
+def generate_blog_index(slug, *, dry_run=False, posts=None, output_dir=None):
+    """Generate a show's blog index, paginated.
 
     If *posts* is None, scans the digest directory for metadata.
+    Returns the path of page 1.
     """
     from engine.blog import (
         extract_blog_metadata,
@@ -3654,19 +3719,51 @@ def generate_blog_index(slug, *, dry_run=False, posts=None):
     # Sort newest first for index display
     posts_sorted = sorted(posts, key=lambda m: m.get("episode_num", 0), reverse=True)
 
-    html = generate_blog_index_html(posts_sorted, cfg, env)
+    # Paginate (Sep 21 2026). Tesla's index was 217 cards and 232 KB, growing
+    # by one card a day forever. Page 1 keeps the URL every feed, every nav
+    # and every crawler already points at; the rest become page2.html onward,
+    # each its own canonical. A show with <= one page renders exactly as
+    # before, pager and all absent.
+    per_page = _blog.BLOG_INDEX_POSTS_PER_PAGE
+    total_pages = _blog.blog_index_page_count(len(posts_sorted), per_page)
 
-    blog_dir = ROOT / "blog" / slug
-    out_path = blog_dir / "index.html"
+    blog_dir = (Path(output_dir) / "blog" / slug if output_dir
+                else ROOT / "blog" / slug)
+    written = []
+
+    for page in range(1, total_pages + 1):
+        chunk = posts_sorted[(page - 1) * per_page: page * per_page]
+        html = generate_blog_index_html(
+            chunk, cfg, env, page=page, total_pages=total_pages)
+        out_path = blog_dir / Path(
+            _blog.blog_index_page_path(slug, page)).name
+
+        if dry_run:
+            print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
+            continue
+
+        blog_dir.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+        print(f"Wrote {out_path}")
+        written.append(out_path)
+
+    # Remove pages left behind by a shrunk catalogue (the DP Pod prune
+    # removed 19 episodes in one day). A stale page4.html would otherwise
+    # stay live, in the sitemap, listing posts that moved.
+    if not dry_run and blog_dir.exists():
+        for stale in blog_dir.glob("page*.html"):
+            try:
+                number = int(stale.stem[4:])
+            except ValueError:
+                continue
+            if number > total_pages:
+                stale.unlink()
+                print(f"Removed stale {stale}")
 
     if dry_run:
-        print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
         return None
-
-    blog_dir.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
-    print(f"Wrote {out_path}")
-    return out_path
+    # The caller expects the index path; pages are a detail of this function.
+    return written[0] if written else None
 
 
 def generate_network_blog_index(*, dry_run=False, all_posts=None):
@@ -4484,6 +4581,14 @@ def generate_sitemap(*, dry_run=False, out=None):
                      _lm_or_today(cfg["summaries_page"])))
         urls.append((f"{base}/blog/{slug}/index.html", "0.7",
                      _lm_or_today(f"blog/{slug}/index.html")))
+        # Paginated archive pages (Sep 21 2026). Listed from the files that
+        # ACTUALLY EXIST on disk, never from a computed page count: the
+        # sitemap must not advertise a page the generator skipped, which is
+        # the same rule renderable_hubs follows for the topic hubs. Page 1 is
+        # index.html and is already above.
+        for _page in sorted((ROOT / "blog" / slug).glob("page*.html")):
+            _rel = f"blog/{slug}/{_page.name}"
+            urls.append((f"{base}/{_rel}", "0.5", _lm_or_today(_rel)))
         # Public narrative tracker page (Tesla + Phase 3 memory shows), when present.
         _narr = "tesla-narrative.html" if slug == "tesla" else (
             cfg["show_page"].replace(".html", "-narrative.html")

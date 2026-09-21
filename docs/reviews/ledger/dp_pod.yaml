@@ -139,38 +139,59 @@ reviews:
       - metric: "levers opening with the word Open, next 10 episodes"
         baseline: "13/26 (Ep31-56); 6 of the last 6"
         expected: "<=3/10"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2/10 on the ten most recent levers (Ep061-074) against a 13/26 baseline. Contact, Open and Buy each open two; no verb opens three. _recent_levers() currently computes 'BANNED OPENING VERBS today: Contact' from the record, so the rotation is data-driven rather than instructed."
       - metric: "screen-lookup levers (open/website/app/portal/search/.gov regex on the first sentence), next 10 episodes"
         baseline: "21/26 (81%)"
         expected: "<=5/10"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "4/10 (Ep071 rate plan, Ep070 ClinicalTrials.gov, Ep064 city website, Ep062 volunteer form) against 21/26 at baseline. The rest are physical: plant three native shrubs, call a regional office, join a restoration workday. CAVEAT — see the missing-segment note below: part of this improvement is levers not being written at all."
       - metric: "fuzzy-distinct levers (content-word Jaccard < 0.4), next 10 episodes"
         baseline: "8/10 in Ep31-40, 3 near-dup groups across Ep31-56"
         expected: ">=9/10"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "10/10 distinct at content-word Jaccard < 0.4, 0 near-duplicate pairs, against 3 near-duplicate groups at baseline. The show's own _recent_levers() fuzzy collapse also surfaces all of them as distinct."
       - metric: "scripts containing the word 'checklist', next 10 episodes"
         baseline: "23/26"
         expected: "<=3/10"
-        verdict: pending
-        evidence: null
+        verdict: miss
+        evidence: "7/10 scripts still say 'checklist' against an expected <=3/10 (baseline 23/26). The de-seed moved it off the top but did not retire it; RETIRED BITS mining is working on other phrases and not on this one. Reopen as a shape problem, not a ban-list problem — the word is doing real work in some of these and a ban would just push it to a synonym."
       - metric: "scripts containing 'steel-man' or 'I'll concede', next 10 episodes"
         baseline: "23/26 and 17/26"
         expected: "<=3/10 each"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "'steel-man' 2/10 (baseline 23/26) and \"I'll concede\" 0/10 (baseline 17/26). Both inside the <=3/10 target."
       - metric: "median audio duration (chapters end), next 10 episodes"
         baseline: "12.2 min (Ep44-56 range 11.1-14.1)"
         expected: "<=11.5 min, none above 13"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "Median 10.6 min over the last 10 episodes (range 8.8-11.8) against a 12.2 min baseline and a <=11.5 target, with nothing above 13. The 1,750-word ceiling is holding and the ten-minute promise is now true."
       - metric: "episodes airing at least one founders-notes marker, next 10 episodes"
         baseline: "3/26 (Yukon 0, WestJet 0, solar 1)"
         expected: ">=3/10"
-        verdict: pending
-        evidence: null
+        verdict: miss
+        evidence: "0/10 against an expected >=3/10 (baseline 3/26). _founders_detail_nudge() fires only after five consecutive real-material-free episodes, so it should have fired repeatedly in this window and produced nothing. Either the nudge is not reaching the prompt or it is too weak to act on; check the nudge is actually injected before rewriting it."
+    scored_on: 2026-09-21
+    scored_note: >
+      NEW FINDING, outside the predictions. The Lever SEGMENT is missing
+      outright from 4 of the 18 episodes since this pass (Ep066, Ep068,
+      Ep072, Ep073) and from 0 of the 37 before it; Ep068 also dropped
+      Think Positive. The Lever is part of this show's named spine, so
+      those episodes are not cleaner, they are shorter — and it means part
+      of the screen-lookup and distinctness wins above is levers not being
+      WRITTEN rather than written better. Likely constraint load: banned
+      verbs + a real-world action due + fuzzy-distinctness is a brief the
+      model does not always satisfy, and omitting the segment satisfies it
+      vacuously. PROPOSED, NOT APPLIED (landmine #17): make the segment
+      mandatory in the digest spec and let the rotation constraints degrade
+      instead of the segment; a read-only missing-required-segment detector
+      would catch the class without touching audio.
+      AUDIENCE, read first per the Sep 12 rule: dp_pod is at 60
+      downloads/30d, 3 in the last COMPLETE week against 10 the week
+      before, first-week median 0 over its four newest episodes, and 375
+      YouTube views across 16 videos. Three prompt passes have now
+      improved the copy and moved no listeners. Fix the missing segment,
+      then make the next DP Pod decision a distribution or cadence one.
     agent_cost_usd: null
 
 do_not_retry: []

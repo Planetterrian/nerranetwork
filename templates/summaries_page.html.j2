@@ -126,9 +126,58 @@
     <!-- Summaries -->
     <section style="padding:var(--sp-4) 0 var(--sp-12);">
         <div class="container">
+            {#- Server-rendered cards (Sep 21 2026). This container used to
+                ship the word "Loading" and nothing else: the page was built
+                entirely in the browser, so with JavaScript off — or before
+                the fetch resolved, or to a crawler that does not run scripts
+                — the archive of the network's most-visited show WAS that
+                sentence.
+
+                The script below replaces this container wholesale on load,
+                which is what keeps this cheap: these are a floor, not a
+                second implementation to keep in sync. They carry what a
+                reader needs and deliberately omit the interactive parts
+                (language pills, share, the sticky player), because those
+                need the script anyway and a dead control is worse than an
+                absent one. -#}
             <div id="summaries-container">
+                {%- if ssr_cards %}
+                {%- for card in ssr_cards %}
+                <div class="nn-summary-item" data-date="{{ card.date_raw }}">
+                    <div class="nn-summary-header">
+                        <div>
+                            <div class="nn-summary-date">{{ card.date }}</div>
+                            {%- if card.title %}
+                            <div class="nn-summary-title" style="font-weight:600;color:var(--show-color-text, var(--show-color));font-family:var(--font-ui);font-size:0.88rem;">{{ card.title }}</div>
+                            {%- endif %}
+                        </div>
+                        {%- if card.audio_url %}
+                        <div class="nn-summary-actions">
+                            <audio class="nn-summary-audio" controls preload="none" src="{{ card.audio_url }}" aria-label="{{ card.title or 'Episode' }} audio"></audio>
+                            <a class="nn-summary-link" href="{{ card.audio_url }}" target="_blank" rel="noopener">Download</a>
+                            {%- if card.blog_url %}
+                            <a class="nn-summary-link" href="{{ path_prefix }}{{ card.blog_url }}">Read transcript</a>
+                            {%- endif %}
+                        </div>
+                        {%- endif %}
+                    </div>
+                    <div class="nn-summary-content">{{ card.summary_html }}</div>
+                </div>
+                {%- endfor %}
+                {%- else %}
                 <div style="text-align:center;color:var(--nn-text-muted);padding:3rem;font-style:italic;">Loading {{ show_name }} summaries...</div>
+                {%- endif %}
             </div>
+            {%- if ssr_cards and blog_page %}
+            <noscript>
+                <p style="text-align:center;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.9rem;padding:1.5rem 0;">
+                    Showing the {{ ssr_cards | length }} most recent episodes. Search, filters and
+                    the other languages need JavaScript — the
+                    <a href="{{ path_prefix }}{{ blog_page }}" style="color:var(--show-color-text, var(--show-color));">complete archive with transcripts</a>
+                    works without it.
+                </p>
+            </noscript>
+            {%- endif %}
         </div>
     </section>
 

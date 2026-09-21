@@ -25,6 +25,10 @@ from typing import Optional
 from urllib.parse import urlparse
 
 from engine.episode_ask import episode_ask_for
+from engine.interviews import (
+    guest_name_for, interview_body_markdown, interview_context,
+    is_interview_show,
+)
 from engine import show_lang as _show_lang
 
 logger = logging.getLogger(__name__)
@@ -1190,6 +1194,25 @@ def _blog_meta_description(metadata: dict, show_config: dict) -> str:
     return hook
 
 
+def _interview_page_title(interview: dict, show_config: dict, ep_num: int) -> str:
+    """``<title>`` for an interview episode, or "" when it is not one.
+
+    Clipped through ``engine.titles`` like every other truncation on the site
+    (CLAUDE.md's first standing rule): the identifier is the part that gives,
+    because the guest's name must survive intact.
+    """
+    name = (interview or {}).get("guest_name", "").strip()
+    if not name:
+        return ""
+    lead = name
+    identifier = (interview or {}).get("guest_identifier", "").strip()
+    if identifier:
+        budget = _web_title_lead_max() - len(name) - 3
+        if budget > 12:
+            lead = f"{name} — {_clip_words(identifier, budget)}"
+    return f"{lead} | {show_config['name']} Ep{ep_num}"
+
+
 def generate_blog_post_html(
     md_text: str,
     metadata: dict,
@@ -1218,11 +1241,18 @@ def generate_blog_post_html(
     prev_post / next_post :
         Optional metadata dicts for prev/next navigation.
     """
-    cleaned = clean_digest_for_blog(md_text)
-    body_html, toc = convert_md_to_blog_html(cleaned)
-
     show_slug = show_config["slug"]
     ep_num = metadata.get("episode_num", 0)
+
+    # An interview post promotes the guest, the player and the talking points
+    # into the hero, so the body drops those sections rather than printing
+    # them a second time. Every other show reads the whole digest as before.
+    _body_md = (
+        interview_body_markdown(md_text)
+        if is_interview_show(show_slug) else md_text
+    )
+    cleaned = clean_digest_for_blog(_body_md)
+    body_html, toc = convert_md_to_blog_html(cleaned)
     blog_url = f"https://nerranetwork.com/blog/{show_slug}/ep{ep_num:03d}.html"
 
     # Per-episode title (SEO): digests lead with a "# <Show Name>" heading, so
@@ -1310,6 +1340,32 @@ def generate_blog_post_html(
     # already on disk at build time, so this costs nothing to generate.
     chapters = _load_chapters(metadata.get("_md_path"), ep_num)
 
+    # Interview shows (Sep 21 2026). The Age of AI and Nerra Voices commit a
+    # digest with a named guest, a one-line identifier and their own links,
+    # and none of it reached this page: the guest's name first appeared as an
+    # <h4> a third of the way down and there was no player at all, because
+    # extract_blog_metadata finds no audio_url in an interview digest. Read
+    # the structure back out and put the identity and the audio above the
+    # fold. Returns {} for every other show, so nothing else changes.
+    interview = interview_context(
+        md_text, show_slug, ep_num,
+        summaries_path=show_config.get("json_path", ""),
+    )
+    # The player and the PodcastEpisode contentUrl want the same URL, and the
+    # summaries record is the one the RSS enclosure was built from. Set it on
+    # the metadata before the JSON-LD is built so search engines get it too.
+    if interview.get("audio_url") and not metadata.get("audio_url"):
+        metadata["audio_url"] = interview["audio_url"]
+    if interview:
+        # Name the neighbours. "Episode 3" tells a reader nothing about
+        # whether they want it; "Adrian Wolfberg" is the whole proposition.
+        _sp = show_config.get("json_path", "")
+        interview["prev_guest"] = guest_name_for(
+            _sp, (prev_post or {}).get("episode_num"))
+        interview["next_guest"] = guest_name_for(
+            _sp, (next_post or {}).get("episode_num"))
+        interview["apply_page"] = show_config.get("apply_page", "")
+
     # Build JSON-LD now that the transcript is known, so the (single, canonical)
     # PodcastEpisode block can carry the transcript + audio links.
     _transcript_url = f"{blog_url}#transcript" if transcript_text else ""
@@ -1320,7 +1376,10 @@ def generate_blog_post_html(
         translations=metadata.get("translations", {}) or {},
     )
 
-    template = template_env.get_template("blog_post.html.j2")
+    # A show can swap the post template from its registry entry, the same way
+    # ``show_page_template`` swaps the show page. Same context either way.
+    template = template_env.get_template(
+        show_config.get("blog_post_template", "blog_post.html.j2"))
 
     from generate_html import _build_all_shows_list, _path_prefix
 
@@ -1333,9 +1392,15 @@ def generate_blog_post_html(
         # description; the <title> carries a word-safe lead plus the
         # episode and brand, so the part Google actually renders (~60
         # chars) is a readable phrase rather than a severed word.
+        # An interview's <title> names the PERSON. The generic title is a
+        # word-safe lead off the digest's thesis sentence, which for these
+        # episodes reads "A marketing founder scaling PIPPA tests whether…" —
+        # a search result that never says "Hogan Shrum", the one string
+        # anybody looking for this episode would actually type.
         "page_title": (
-            f"{_clip_words(metadata['title'], _web_title_lead_max())} — Ep{ep_num}"
-            f" | {show_config['name']}"
+            _interview_page_title(interview, show_config, ep_num)
+            or f"{_clip_words(metadata['title'], _web_title_lead_max())} — Ep{ep_num}"
+               f" | {show_config['name']}"
         ),
         "meta_description": _blog_meta_description(metadata, show_config),
         "meta_keywords": show_config.get("meta_keywords", ""),
@@ -1350,6 +1415,9 @@ def generate_blog_post_html(
         # evergreen hub for its topics. Without these the hubs are orphans
         # reachable only from the nav, and an orphan page does not rank.
         "topic_hubs": _topic_hubs_for(show_slug),
+        # Guest identity, talking points and links for an interview episode;
+        # empty dict for every other show (the template gates on it).
+        "interview": interview,
         "blog_author": _show_host_name(show_slug),
         "show_name": show_config["name"],
         "show_slug": show_slug,
@@ -1449,21 +1517,59 @@ def generate_blog_post_html(
     return template.render(**context)
 
 
+#: Posts per page on a SHOW's blog index. Matches the network hub's own
+#: page size so the two archives read the same way.
+#:
+#: Sep 21 2026: the per-show indexes were complete lists. Tesla's was 217
+#: cards and 232 KB — every card carrying a date, an episode number, a
+#: reading time, a 160-character hook and a language rail — served to a
+#: phone that wanted the latest episode, growing by one card a day forever.
+#: The Sep 3 pass capped the network hub for exactly this reason and left
+#: the per-show ones "complete"; completeness is now pages, which is the
+#: same promise with a bounded first byte.
+BLOG_INDEX_POSTS_PER_PAGE = 24
+
+
+def blog_index_page_count(total_posts: int,
+                          per_page: int = BLOG_INDEX_POSTS_PER_PAGE) -> int:
+    """How many pages *total_posts* needs. Always at least one."""
+    if per_page <= 0:
+        return 1
+    return max(1, -(-int(total_posts) // per_page))
+
+
+def blog_index_page_path(show_slug: str, page: int) -> str:
+    """Site-relative path of one page of a show's index.
+
+    Page 1 is ``index.html`` and NOT ``page1.html``: it is the URL the whole
+    site, every feed and every search engine already points at, and moving it
+    would retire ~18 live URLs to save a branch.
+    """
+    return (f"blog/{show_slug}/index.html" if page <= 1
+            else f"blog/{show_slug}/page{page}.html")
+
+
 def generate_blog_index_html(
     posts: list[dict],
     show_config: dict,
     template_env,
+    *,
+    page: int = 1,
+    total_pages: int = 1,
 ) -> str:
-    """Generate a blog index/listing page for a show.
+    """Generate one page of a show's blog index.
 
     Parameters
     ----------
     posts : list[dict]
-        List of metadata dicts (from extract_blog_metadata), newest first.
+        Metadata dicts for THIS PAGE only, newest first.
     show_config : dict
         Show entry from NETWORK_SHOWS.
     template_env :
         Jinja2 Environment.
+    page, total_pages :
+        Which page this is and how many there are. The defaults render a
+        single unpaginated page, byte-identical to the previous behaviour.
     """
     from generate_html import _build_all_shows_list, _path_prefix
 
@@ -1492,7 +1598,26 @@ def generate_blog_index_html(
         "description": show_config.get("description", ""),
         "posts": posts,
         "blog_rss_url": f"https://nerranetwork.com/blog_{show_slug}.rss",
+        # Pagination. total_pages == 1 renders no pager at all, so a show
+        # with one page is unchanged.
+        "page": page,
+        "total_pages": total_pages,
+        "prev_page_url": (Path(blog_index_page_path(show_slug, page - 1)).name
+                          if page > 1 else ""),
+        "next_page_url": (Path(blog_index_page_path(show_slug, page + 1)).name
+                          if page < total_pages else ""),
+        "page_urls": [Path(blog_index_page_path(show_slug, n)).name
+                      for n in range(1, total_pages + 1)],
     }
+
+    # Page 2 onward is its own canonical URL. Pointing them all at page 1
+    # would tell a crawler the deep archive does not exist, which is the
+    # opposite of why the pages are here.
+    if page > 1:
+        context["canonical_url"] = (
+            f"https://nerranetwork.com/{blog_index_page_path(show_slug, page)}")
+        context["page_title"] = (
+            f"{show_config['name']} Blog — page {page}")
 
     return template.render(**context)
 

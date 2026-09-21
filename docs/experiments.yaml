@@ -727,12 +727,84 @@ experiments:
       reproducible record, and the prompts require the show to say so.
       Prompt + audio change — landmine #17 A/B.
 
+  - id: grok-47-staged-migration
+    title: "Grok 4.6 -> 4.7, staged (operator-directed)"
+    area: quality
+    shipped: 2026-09-21
+    readout: 2026-09-25
+    status: reading
+    baseline: >
+      Eleven production sites run grok-4.6: the episode reviewer and the
+      weekly synthesizer (network defaults), three shows' SCRIPT stage
+      (omni_view, models_agents_beginners, dp_pod), the spacex deep-dive
+      model, the YouTube title bundle (3 call sites), and the translation
+      pin. A twelfth — the topic-queue restock — was pinned AWAY from 4.6
+      to grok-4.3 on 2026-09-17 after 4.6 timed out at 300s on both shows
+      in one dispatch. Digest and fetch stages network-wide stay on
+      grok-4.3 and are NOT in scope.
+    target: >
+      Day one moves exactly two sites, per docs/model_upgrade_playbook.md
+      rule 1: the episode reviewer (outside run_show's timeout envelope,
+      daily on every show, nothing a listener hears) and omni_view's
+      script stage (one show, script-only — the shape the playbook calls
+      correct). Three scheduled days, then
+      `python scripts/model_trial_report.py --since 2026-09-22` must
+      return GATE: PASS before anything widens.
+    criteria: >
+      REVERT TRIGGERS ARE OPERATIONAL FIRST, which is the whole lesson of
+      the 2026-08-18 outage — its registered triggers watched hallucination
+      rate and reviewer flags, and nobody watched latency, so the failure
+      that actually fired was unmonitored. Revert if ANY of: an LLM stage's
+      p95 exceeds 50% of the request timeout; an LLM stage p95 regresses
+      more than 50% against its trailing-14-day baseline; any `Slow LLM
+      completion` warning appears in the staged show's logs; any run fails
+      or is skipped for a timeout. Only then quality: a listener-value
+      regression on omni_view, or a reviewer that stops finding what the
+      4.6 reviewer found. Widening order once the gate passes:
+      models_agents_beginners + dp_pod script stages, then synth_model,
+      then the YouTube title bundle and the translation pin, then the
+      spacex deep-dive; the restock is the natural place to test whether
+      4.7 fixed the latency that disqualified 4.6.
+    notes: >
+      Same list price as 4.6 (operator), so a widening is a quality and
+      latency decision and never a cost one — priced in engine/tracking.py
+      before any stage used it (playbook rule 4). The reviewer carries a
+      trap this migration nearly walked into: review_episodes.py forced
+      reasoning_effort "low" on a `grok-4.6` prefix match, because at
+      default effort 4.6 blew the 300s timeout on ~1/3 of episodes and
+      killed the audit job. Pinned to one id, the 4.7 pin would have
+      matched nothing and silently restored default effort. That branch is
+      now a prefix tuple. omni_view's script change is AUDIO — A/B-listen
+      the first episode (landmine #17). Rollback is one line per site.
+
   - id: mit-options-positions
     title: "Modern Investing trades the options it teaches"
     area: quality
     shipped: 2026-08-19
     readout: 2026-09-19
-    status: reading
+    status: done
+    outcome: >
+      MISS, scored 2026-09-21. Thirty-six episodes since it shipped
+      (Ep142-177) produced 15 new trades and ZERO options positions: every
+      structure in investment_tracker.json is long_equity (14) or unset
+      (61), and the words "covered call", "cash-secured", "strike" and
+      "expiry" appear nowhere in the 75-trade record. Nothing recorded
+      option_quote_failed either, which is the diagnostic that matters —
+      the chain was never QUOTED, so this is not "the data would not
+      support it", it is the model never selecting the structure. The
+      criteria call that exactly: "If the show never picks one, the prompt
+      guidance is too weak and needs a nudge, not a mandate." The design
+      constraint held perfectly (zero estimated premiums, because zero
+      positions), so nothing here is a revert — the selection prompt needs
+      strengthening, and a mandate is still the wrong instrument on a show
+      whose whole credibility is that it does not force a trade. Audience:
+      MIT is at 224 downloads/30d and a -39% week over week, so nothing
+      about this reached listeners either way. NOTE the interaction with
+      mit-no-trade-budget-2026-09-18: 21 of these 36 episodes declared no
+      trade at all, so the options prompt was competing for a slot the show
+      was mostly leaving empty. Re-read this after the no-trade budget has
+      run a month; strengthening the options nudge before then would be
+      tuning against a starved sample.
     baseline: "0 of 61 simulated trades used an options structure, against options taught in 32 of the last 40 episodes"
     target: >
       At least one covered call or cash-secured put per ~10 episodes when
@@ -755,7 +827,27 @@ experiments:
     area: quality
     shipped: 2026-08-19
     readout: 2026-09-19
-    status: reading
+    status: done
+    outcome: >
+      PARTIAL, scored 2026-09-21. The honesty half is a clean HIT. The
+      scoreboard run against the live tracker emits ZERO retirement
+      verdicts and instead names five rules as "UNMEASURED, not zero" with
+      their both-arm counts (LL-002 6/3, LL-028 7/2, LL-041 8/1, LL-066
+      8/1, LL-067 5/4) — the explicit falsification test, "a retirement
+      flag appearing while every stamped trade still carries the same rule
+      set", does not fire. Rotation is working: 6 distinct rule sets across
+      the 9 closed era trades against a baseline of 2 across 15, so rules
+      can now be told apart in principle. Hygiene is out of the pick
+      prompt — 7 of 13 active entries are filtered as production lessons
+      (re-teach cooldowns, "state the NASDAQ level", multi-provider price
+      checks) and 6 reach the model as trading rules. The MISS is the third
+      target: no rule has been genuinely scored, because every one needs
+      five closed trades on BOTH arms and the era holds nine in total. That
+      is a trade-volume problem, not a scoreboard problem, and it is
+      exactly what mit-no-trade-budget-2026-09-18 exists to fix. Keep as
+      is; re-score when the era passes ~25 closed trades. Per the criteria,
+      "The loop is allowed to say nothing — that is the fix", and it is
+      saying nothing correctly.
     baseline: "5 identical RETIREMENT CANDIDATE verdicts from one undivided 10-trade sample, controlled against the disowned pre-era trades"
     target: >
       Zero verdicts from collinear rule sets; production-hygiene lessons
@@ -1320,7 +1412,43 @@ experiments:
     area: quality
     shipped: 2026-09-04
     readout: 2026-09-18
-    status: reading
+    status: done
+    outcome: >
+      PARTIAL with a REGRESSION, scored 2026-09-21. On the levers that
+      shipped, all three targets are met: of the ten most recent levers
+      (Ep061-074) 4/10 are screen lookups against a 21/26 baseline and a
+      <=5/10 target; the most-repeated opening verb appears twice (Contact,
+      Open and Buy at 2 each) against 13/26 opening "Open" and a <=3/10
+      target; and 10/10 survive the fuzzy collapse in _recent_levers()
+      against 3 near-duplicate groups at baseline. The mechanism is live
+      rather than merely instructed — the rotation block currently computes
+      "BANNED OPENING VERBS today: Contact" from the record itself — and
+      levers now run to physical actions (plant three native shrubs, call a
+      regional office, join a restoration workday) where the renewed-episode
+      run was overwhelmingly "open a website and look something up".
+      THE REGRESSION: The Lever SEGMENT is now missing outright from some
+      episodes. It appears in 37 of 37 digests before this pass and 14 of
+      18 after it — Ep066, Ep068, Ep072 and Ep073 carry no "### The Lever"
+      heading at all, and all four are inside the last two weeks. Ep068
+      also dropped Think Positive. The Lever is a named segment of this
+      show's spine, so an episode without one is not a cleaner episode, it
+      is a shorter one; and it means part of the screen-lookup improvement
+      above is levers not being WRITTEN rather than being written better.
+      Most likely cause is constraint load: banned verbs plus a real-world
+      action due plus fuzzy-distinctness is a harder brief than the model
+      always satisfies, and dropping the segment satisfies it vacuously.
+      PROPOSED, NOT APPLIED (landmine #17 — prompt change, operator A/B):
+      make the segment mandatory in the digest spec and let the rotation
+      constraints degrade instead of the segment. A read-only detector for
+      a missing required segment would catch the whole class without
+      touching audio.
+      AND THE AUDIENCE DID NOT MOVE. api/audience_headline.json has dp_pod
+      at 60 downloads/30d, 3 in the last COMPLETE week against 10 the week
+      before, and a first-week median of 0 across its four most recent
+      episodes. YouTube: 375 views over 16 videos, 31.3% Shorts retention,
+      the lowest of any show still uploading. So the next DP Pod decision
+      is a distribution or cadence question, NOT a fourth prompt pass on
+      The Lever — fix the missing segment, then leave the copy alone.
     baseline: "21/26 renewed-episode levers were screen lookups; 13/26 opened with 'Open'; 3 near-duplicate groups"
     target: >
       <=5/10 screen-lookup levers, <=3/10 opening with the same verb,
