@@ -270,7 +270,35 @@ def _visits(ga4: Optional[dict], destinations: Dict[str, str]) -> Dict[str, Any]
             entry["users"] += int(row.get("activeUsers") or 0)
         out["totals"]["sessions"] += sessions
     out["by_destination"] = dict(sorted(agg.items()))
+    out["upsell_clicks"] = _upsell_clicks(ga4)
     return out
+
+
+def _upsell_clicks(ga4: Optional[dict]) -> Dict[str, Any]:
+    """Clicks on an on-site Personal upsell CTA, by page.
+
+    Deliberately not folded into the capture stage: a click on "make this
+    yours" is intent toward the PAID product, and adding it to subscriber
+    counts would report an intention as a conversion. ``null`` when the
+    report could not be read, ``0`` when it was read and nobody clicked —
+    the same rule the rest of this file follows.
+    """
+    rows = (ga4 or {}).get("site_events")
+    if not isinstance(rows, list):
+        return {"configured": False, "total": None, "by_page": {}}
+    by_page: Dict[str, int] = {}
+    total = 0
+    for row in rows:
+        if (row.get("eventName") or "") != "select_personal_upsell":
+            continue
+        count = int(row.get("eventCount") or 0)
+        by_page[(row.get("pagePath") or "(unknown)")] = count
+        total += count
+    return {
+        "configured": True,
+        "total": total,
+        "by_page": dict(sorted(by_page.items(), key=lambda kv: -kv[1])),
+    }
 
 
 # ---------------------------------------------------------------------------

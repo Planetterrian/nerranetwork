@@ -100,11 +100,30 @@ def fetch_tag_counts(api_key: str) -> Optional[dict]:
                         "(keys: %s)", sorted(data.keys()))
             return None
         counts = {}
+        uncounted = []
         for row in results:
             name = (row or {}).get("name")
             count = (row or {}).get("subscriber_count")
-            if isinstance(name, str) and name and isinstance(count, int):
+            if not (isinstance(name, str) and name):
+                continue
+            if isinstance(count, int):
                 counts[name] = count
+            else:
+                uncounted.append(name)
+        # "This account has no tags" and "the tags endpoint stopped
+        # returning subscriber_count" produced byte-identical output before
+        # this branch — an empty dict either way — while the warning
+        # downstream asserted the first. They need different fixes, so say
+        # which one it is. The repo's other client of this endpoint reads
+        # only `name` and `id` (engine/newsletter.py), so the count field is
+        # not a safe assumption.
+        if uncounted:
+            log.warning(
+                "buttondown: %s of %s tag(s) carried no integer "
+                "subscriber_count (e.g. %s) — the per-tag breakdown is "
+                "INCOMPLETE, not empty",
+                len(uncounted), len(results), ", ".join(uncounted[:5]),
+            )
         return counts
     except Exception as exc:  # noqa: BLE001 — never break the nightly job
         log.warning("buttondown: tag fetch failed: %s", exc)
@@ -149,10 +168,16 @@ def main(argv: Optional[List[str]] = None) -> int:
         if count > 0 and not tag_counts:
             log.warning(
                 "::warning title=Buttondown attribution::%d subscriber(s) and "
-                "ZERO tags. resolveSubscribeTags in workers/gallery is supposed "
-                "to attach a list tag and a src-* tag to every signup, so an "
-                "empty breakdown means no capture can be attributed to a "
-                "surface. Check the Worker's /api/subscribe path.", count,
+                "ZERO tags. resolveSubscribeTags is NOT the suspect — it was "
+                "audited Sep 2026 and does put tags in the request body. The "
+                "two known causes are (1) an address already on the list when "
+                "tagging shipped, which until Sep 2026 could never acquire "
+                "tags because the Worker applied them on CREATE only, and (2) "
+                "a /tags response without subscriber_count, which looks "
+                "identical from here (see the INCOMPLETE warning above). To "
+                "tell them apart read-only, dispatch "
+                ".github/workflows/buttondown-tag-subscriber.yml in list-all "
+                "mode: it prints each subscriber's real tags array.", count,
             )
             stats["attribution_warning"] = (
                 "subscribers exist but no tags were returned — captures cannot "

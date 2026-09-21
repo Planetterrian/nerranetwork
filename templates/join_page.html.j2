@@ -364,7 +364,7 @@
 <section class="nn-join-form" id="join-free">
     <h2>Create your free Nerra account</h2>
     <p>One email. No password — we send you a sign-in link whenever you need one.</p>
-    <form onsubmit="var f=this,b=f.querySelector('button');b.disabled=true;b.textContent='Joining…';fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member'})}).then(function(r){if(r.ok){window.location='{{ path_prefix }}account.html';}else{b.textContent='Try again';b.disabled=false;}}).catch(function(){b.textContent='Try again';b.disabled=false;});return false;">
+    <form onsubmit="var f=this,b=f.querySelector('button');b.disabled=true;b.textContent='Joining…';fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member',source:{{ capture_source_site | tojson }}})}).then(function(r){if(r.ok){window.location='{{ path_prefix }}account.html';}else{b.textContent='Try again';b.disabled=false;}}).catch(function(){b.textContent='Try again';b.disabled=false;});return false;">
         <input type="email" name="email" placeholder="you@example.com" required aria-label="Email address">
         <button type="submit">Join free</button>
     </form>

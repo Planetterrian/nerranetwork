@@ -44,6 +44,19 @@ DEFAULT_PROPERTY_ID = "533581233"  # Nerra Network GA4 (see generate_html.py)
 API = "https://analyticsdata.googleapis.com/v1beta"
 SCOPES = ["https://www.googleapis.com/auth/analytics.readonly"]
 
+# The two event vocabularies this fetcher reads, named because an event a
+# template fires is not a metric until it is listed here — the same class as
+# `grok_image_px_max` and `caption_track_uploaded`, which were set on a result
+# for months and recorded nothing. Add the event here when you add the gtag
+# call, or it fires into GA4 and is never read back.
+#
+# They are deliberately SEPARATE reports, not one wider filter.
+# ``build_funnel._captures()`` sums every row of ``conversions`` into
+# ``signup_events_total``, so an engagement event in that list would silently
+# inflate the number of people who subscribed.
+CONVERSION_EVENTS = ["newsletter_signup", "generate_lead"]
+ENGAGEMENT_EVENTS = ["select_personal_upsell"]
+
 
 def _session():
     from google.oauth2 import service_account
@@ -166,7 +179,7 @@ def fetch(prop: str, days: int) -> Dict[str, Any]:
                 "filter": {
                     "fieldName": "eventName",
                     "inListFilter": {
-                        "values": ["newsletter_signup", "generate_lead"],
+                        "values": CONVERSION_EVENTS,
                     },
                 },
             },
@@ -181,6 +194,36 @@ def fetch(prop: str, days: int) -> Dict[str, Any]:
         # surface as "not measured" (null) or the funnel claims nobody
         # converted on a day it simply couldn't read the data.
         conversions = None
+
+    # On-site engagement events, reported separately from conversions above.
+    # Today that is the Nerra Personal upsell band on the Nerra Daily show page
+    # (templates/show_page.html.j2), the network's only on-site upsell: it had
+    # been firing into GA4 since 2026-09-19 and was read by nothing, so whether
+    # the one CTA for the paid product gets clicked was unknowable. Split by
+    # page so a second placement is attributable when one is added.
+    try:
+        site_events = _rows(_run_report(session, prop, {
+            "dateRanges": date_range,
+            "dimensions": [{"name": "eventName"},
+                           {"name": "pagePath"}],
+            "metrics": [{"name": "eventCount"}],
+            "dimensionFilter": {
+                "filter": {
+                    "fieldName": "eventName",
+                    "inListFilter": {
+                        "values": ENGAGEMENT_EVENTS,
+                    },
+                },
+            },
+            "orderBys": [{"metric": {"metricName": "eventCount"},
+                          "desc": True}],
+            "limit": 100,
+        }))
+    except Exception as exc:  # noqa: BLE001 — never fail the whole fetch
+        logger.warning("GA4 engagement report unavailable: %s", exc)
+        # Same null-vs-empty rule as conversions: [] is "measured, nobody
+        # clicked", None is "we could not read it".
+        site_events = None
 
     totals = {
         "active_users": sum(int(r.get("activeUsers", 0)) for r in day_series),
@@ -202,6 +245,9 @@ def fetch(prop: str, days: int) -> Dict[str, Any]:
         "campaigns": campaigns,
         "landing_pages": landing_pages,
         "conversions": conversions,
+        # v3 — on-site engagement, kept out of `conversions` on purpose (see
+        # CONVERSION_EVENTS / ENGAGEMENT_EVENTS above).
+        "site_events": site_events,
     }
 
 
