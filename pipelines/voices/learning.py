@@ -8,9 +8,16 @@ Every interview leaves two things behind besides an episode:
   the tape, which Patrick promotes or discards at gate 1. Active lessons are
   appended to Mira's system prompt for every later interview on that show.
 
-Deliberately a human-in-the-loop design. A host that rewrites its own
-instructions unsupervised drifts, and the drift is invisible until an episode
-is bad. Proposing costs nothing; promoting is one click.
+Sept 21 2026: the loop closes itself. Lessons used to land as proposals for
+Patrick to promote at gate 1, and eight of them were still sitting there
+unread while the same faults recurred — a queue is not a learning loop. The
+grading pass now ADOPTS what it decides, retires what it has outgrown, and
+tells Patrick what it did. Two things keep the old safety without the queue:
+the grader is shown the instructions Mira already carries and told not to
+restate them, so a relapse cannot multiply into three copies of one lesson;
+and every adoption is reversible from the same triage page that used to
+approve it, because a bad instruction should cost one click to remove rather
+than a deploy.
 """
 
 from __future__ import annotations
@@ -19,7 +26,13 @@ import difflib
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
+import datetime as dt
+
 from common import cohost_label, logger, sb_insert, sb_select, sb_update
+
+
+def _now() -> str:
+    return dt.datetime.now(dt.timezone.utc).isoformat()
 
 LESSON_CATEGORIES = {"pacing", "questions", "interruption", "listening", "tone"}
 MAX_ACTIVE_LESSONS = 12          # Mira's prompt is not a filing cabinet
@@ -27,6 +40,12 @@ MAX_RETIRED_PHRASES = 20         # the same, for her verbal tics
 PHRASE_MAX_WORDS = 12            # an acknowledgment, not a sentence of substance
 DEAD_AIR_SEC = 4.0
 REPEAT_RATIO = 0.82              # difflib ratio at which two questions are "the same"
+# Two lessons are the same instruction in different words. Measured against
+# the eight real proposals sitting in the queue on Sept 21 2026: the one true
+# duplicate pair scored 0.80 / 0.89 and the closest genuinely-different pair
+# scored 0.43 / 0.30, so both thresholds sit in open space.
+SAME_LESSON_RATIO = 0.72         # difflib ratio on the whole sentence
+SAME_LESSON_WORDS = 0.75         # shared share of the shorter sentence's words
 
 LINE_RE = re.compile(r"^\[(\d{1,2}):(\d{2})\]\s*([^:]+):\s*(.*)$")
 
@@ -295,6 +314,196 @@ def save_proposed_lessons(show_slug: str, interview_id: str,
     return saved
 
 
+def _already_says_it(lesson: str, existing: List[str]) -> bool:
+    """Is this lesson the same instruction as one she already carries?
+
+    A relapse reads to the grader as a fresh fault, so the same sentence
+    arrives again in slightly different words. Adopting it twice spends two
+    of a dozen slots saying one thing.
+    """
+    a = re.sub(r"[^a-z ]", "", (lesson or "").lower()).strip()
+    if not a:
+        return False
+    a_words = set(a.split())
+    for other in existing:
+        b = re.sub(r"[^a-z ]", "", (other or "").lower()).strip()
+        if not b:
+            continue
+        if difflib.SequenceMatcher(None, a, b).ratio() >= SAME_LESSON_RATIO:
+            return True
+        b_words = set(b.split())
+        shared = len(a_words & b_words) / max(1, min(len(a_words), len(b_words)))
+        if shared >= SAME_LESSON_WORDS:
+            return True
+    return False
+
+
+# The closing round asks every guest what they would change about how Mira
+# did this. That answer is the only outside opinion in the whole loop, so it
+# is pulled out of the tape by hand rather than left for the grader to find.
+_FEEDBACK_CUE = re.compile(
+    r"(change one thing about how I|what would you change|being interviewed by an AI"
+    r"|irritating|would not have said to a person|wouldn't have said to a person)",
+    re.I)
+
+
+def guest_feedback(transcript: str, guest_label: str) -> str:
+    """What the guest said when asked how the interview itself went.
+
+    Returns the guest's answers that follow Mira's feedback questions, or ""
+    when she never asked — which is itself worth knowing, and the grader is
+    told so.
+    """
+    rows = parse_transcript(transcript)
+    if not rows or not guest_label:
+        return ""
+    out: List[str] = []
+    for i, (_, speaker, text) in enumerate(rows):
+        if speaker.lower() == guest_label.lower() or not _FEEDBACK_CUE.search(text):
+            continue
+        # Take the guest's next few lines; an answer to this question is
+        # usually two or three sentences and often starts hesitantly.
+        said: List[str] = []
+        for _, spk, later in rows[i + 1:]:
+            if spk.lower() != guest_label.lower():
+                if said:
+                    break
+                continue
+            said.append(later)
+            if len(" ".join(said).split()) > 90:
+                break
+        if said:
+            out.append(f"Asked: {text.strip()}\nThey said: {' '.join(said).strip()}")
+    return "\n\n".join(out[:3])
+
+
+def retire_lessons(ids: List[str], why: str = "superseded") -> int:
+    """Move standing instructions out of Mira's prompt, keeping the record."""
+    done = 0
+    for lesson_id in ids or []:
+        lesson_id = str(lesson_id or "").strip()
+        if not lesson_id:
+            continue
+        try:
+            sb_update("show_lessons", f"id=eq.{lesson_id}",
+                      {"status": "retired", "decided_at": _now(),
+                       "decided_by": "mira", "decision_note": why[:200]})
+            done += 1
+        except Exception:  # noqa: BLE001 — never block an episode on this
+            logger.exception("retiring lesson %s failed (non-fatal)", lesson_id)
+    return done
+
+
+def adopt_lessons(show_slug: str, interview_id: str,
+                  lessons: List[dict]) -> List[dict]:
+    """Put a grading pass's lessons straight into Mira's standing
+    instructions, and return the ones that took.
+
+    Skips anything she already carries in other words, and once the show is
+    at :data:`MAX_ACTIVE_LESSONS` retires its oldest decision to make room,
+    so the newest instruction is never the one silently left out of the
+    prompt.
+    """
+    current = active_lessons(show_slug)
+    existing = [str(r.get("lesson") or "") for r in current]
+    adopted: List[dict] = []
+    for item in lessons or []:
+        if not isinstance(item, dict):
+            continue
+        lesson = str(item.get("lesson") or "").strip()
+        if not lesson:
+            continue
+        if _already_says_it(lesson, existing):
+            logger.info("lesson already carried, not adopted again: %s", lesson)
+            continue
+        category = str(item.get("category") or "other").strip().lower()
+        if category not in LESSON_CATEGORIES:
+            category = "other"
+        room = MAX_ACTIVE_LESSONS - (len(current) + len(adopted))
+        if room <= 0:
+            oldest = sorted(current + adopted,
+                            key=lambda r: str(r.get("decided_at") or ""))[:1]
+            if oldest:
+                retire_lessons([str(oldest[0].get("id"))],
+                               "made room for a newer lesson")
+                current = [r for r in current
+                           if str(r.get("id")) != str(oldest[0].get("id"))]
+        try:
+            row = sb_insert("show_lessons", {
+                "show": show_slug,
+                "interview_id": interview_id,
+                "category": category,
+                "lesson": lesson[:400],
+                "evidence": str(item.get("evidence") or "")[:400] or None,
+                "status": "active",
+                "decided_at": _now(),
+                "decided_by": "mira",
+                "decision_note": f"adopted automatically ({item.get('confidence') or 'medium'} confidence)",
+            })
+            adopted.append(row)
+            existing.append(lesson)
+        except Exception:  # noqa: BLE001
+            logger.exception("adopting lesson failed (non-fatal): %s", lesson)
+    return adopted
+
+
+def save_grade(show_slug: str, interview_id: str, graded: Dict[str, Any],
+               adopted: List[dict], retired: int) -> Optional[dict]:
+    """Record the scorecard so "Mira is getting better" is checkable."""
+    grades = graded.get("grades") if isinstance(graded, dict) else {}
+    grades = grades if isinstance(grades, dict) else {}
+
+    def score(key: str) -> Optional[float]:
+        try:
+            value = float(grades.get(key))
+        except (TypeError, ValueError):
+            return None
+        return round(min(10.0, max(0.0, value)), 1)
+
+    row = {
+        "interview_id": interview_id,
+        "show": show_slug,
+        "overall": score("overall"),
+        "listening": score("listening"),
+        "questions": score("questions"),
+        "pacing": score("pacing"),
+        "turn_taking": score("turn_taking"),
+        "warmth": score("warmth"),
+        "why": str(graded.get("grade_why") or "")[:1200] or None,
+        "worked": [str(w)[:300] for w in (graded.get("worked") or [])][:3],
+        "lessons_adopted": len(adopted),
+        "lessons_retired": retired,
+        "ask_the_guest": str(graded.get("ask_the_guest") or "")[:400] or None,
+    }
+    try:
+        return (sb_update("episode_grades", f"interview_id=eq.{interview_id}", row)
+                or [sb_insert("episode_grades", row)])[0]
+    except Exception:  # noqa: BLE001 — a grade never blocks an episode
+        logger.exception("episode_grades write failed (non-fatal)")
+        return None
+
+
+def grade_trend(show_slug: str, limit: int = 6) -> List[dict]:
+    """The last few overall scores for this show, newest first."""
+    try:
+        return sb_select("episode_grades",
+                         f"show=eq.{show_slug}&order=created_at.desc"
+                         f"&limit={limit}&select=overall,created_at,interview_id") or []
+    except Exception:  # noqa: BLE001
+        logger.exception("grade trend unavailable (non-fatal)")
+        return []
+
+
+def lessons_for_prompt(show_slug: str) -> str:
+    """The active instructions with their ids, for the grading prompt."""
+    rows = active_lessons(show_slug)
+    if not rows:
+        return "(none yet — this is the first graded interview on this show)"
+    return "\n".join(
+        f"- [{r.get('id')}] ({r.get('category') or 'other'}) {r.get('lesson')}"
+        for r in rows)
+
+
 def active_lessons(show_slug: str) -> List[dict]:
     try:
         rows = sb_select("show_lessons",
@@ -324,28 +533,54 @@ def lessons_block(show_slug: str) -> str:
 
 
 def improvement_summary(show_slug: str, interview_id: str) -> str:
-    """What Mira will try differently next time, as HTML for Patrick's email.
+    """The scorecard and what Mira changed about herself, for Patrick's email.
 
-    Sept 15 2026. The retro has been running since Matt Davis and its output
-    has only ever been visible to someone who went looking in the database.
-    Patrick asked for it next to the episode, which is the only place it can
-    actually change anything: he is the one who promotes a proposal into a
-    standing instruction, and he will not promote what he never sees.
+    Sept 15 2026: the retro had been running since Matt Davis and its output
+    was only ever visible to someone who went looking in the database, so it
+    moved next to the episode. Sept 21 2026: it no longer asks for anything.
+    The lessons here are already in force; this is the record of a decision,
+    and the triage page is where Patrick undoes one he disagrees with.
     """
     try:
+        adopted = sb_select(
+            "show_lessons",
+            f"show=eq.{show_slug}&interview_id=eq.{interview_id}"
+            f"&status=eq.active&order=created_at.desc&limit=8") or []
         proposed = sb_select(
             "show_lessons",
             f"show=eq.{show_slug}&interview_id=eq.{interview_id}"
             f"&status=eq.proposed&order=created_at.desc&limit=8") or []
         metrics = sb_select("episode_metrics",
                             f"interview_id=eq.{interview_id}&limit=1") or []
+        grades = sb_select("episode_grades",
+                           f"interview_id=eq.{interview_id}&limit=1") or []
     except Exception:  # noqa: BLE001
         logger.exception("improvement summary unavailable (non-fatal)")
         return ""
-    if not proposed and not metrics:
+    proposed = adopted + proposed
+    if not proposed and not metrics and not grades:
         return ""
 
     parts = ["<h3 style='margin:18px 0 6px'>What Mira took from this one</h3>"]
+    if grades:
+        g = grades[0]
+        scores = " &middot; ".join(
+            f"{label} {g[key]}" for label, key in (
+                ("listening", "listening"), ("questions", "questions"),
+                ("pacing", "pacing"), ("turn-taking", "turn_taking"),
+                ("warmth", "warmth"))
+            if g.get(key) is not None)
+        overall = g.get("overall")
+        parts.append(
+            "<p style='margin:0 0 4px'><b>She graded this one "
+            + (f"{overall} out of ten" if overall is not None else "ungraded")
+            + ".</b>" + (f" {g['why']}" if g.get("why") else "") + "</p>")
+        if scores:
+            parts.append(f"<p style='color:#555;margin:0 0 8px'>{scores}</p>")
+        worked = [str(w) for w in (g.get("worked") or []) if str(w).strip()]
+        if worked:
+            parts.append("<p style='color:#555;margin:0 0 8px'>Worked: "
+                         + "; ".join(worked) + "</p>")
     if metrics:
         m = metrics[0]
         bits = []
@@ -363,16 +598,24 @@ def improvement_summary(show_slug: str, interview_id: str) -> str:
         if bits:
             parts.append("<p style='color:#555'>" + " &middot; ".join(bits) + "</p>")
     if proposed:
-        parts.append("<p>She is proposing these for next time. They do not "
-                     "reach her until you approve them at gate 1:</p><ul>")
+        live = [r for r in proposed if r.get("status") == "active"]
+        parts.append(
+            "<p>These are now standing instructions for every later interview "
+            "on this show. They are already in force — nothing is waiting on "
+            "you. If one of them is wrong, remove it on the triage page and "
+            "she stops carrying it:</p><ul>"
+            if live else
+            "<p>Left for you to decide on:</p><ul>")
         for row in proposed:
             lesson = (row.get("lesson") or "").strip()
             why = (row.get("evidence") or "").strip()
-            parts.append(f"<li>{lesson}"
+            mark = "" if row.get("status") == "active" else " <i>(awaiting you)</i>"
+            parts.append(f"<li>{lesson}{mark}"
                          + (f"<br><span style='color:#777;font-size:90%'>{why}</span>"
                             if why else "")
                          + "</li>")
         parts.append("</ul>")
     else:
-        parts.append("<p>No changes proposed from this one.</p>")
+        parts.append("<p>Nothing to change from this one, which is the right "
+                     "answer for a clean interview.</p>")
     return "".join(parts)

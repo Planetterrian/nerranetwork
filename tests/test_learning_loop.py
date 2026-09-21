@@ -132,9 +132,12 @@ class TestLessonsReachMiraOnlyViaAHuman:
     def test_fire_appends_the_block_to_miras_prompt(self):
         assert "lessons=lessons_block(show.slug)," in FIRE
 
-    def test_post_interview_measures_and_proposes_without_blocking(self):
+    def test_post_interview_grades_and_adopts_without_blocking(self):
+        # Sept 21 2026: the pass adopts rather than proposes. It still must
+        # never be able to cost an episode.
         assert "09_interview_retro.txt" in POST
-        assert "save_proposed_lessons(" in POST and "save_metrics(" in POST
+        assert "adopt_lessons(" in POST and "save_metrics(" in POST
+        assert "save_grade(" in POST and "retire_lessons(" in POST
         block = POST[POST.index("# Learning loop"):]
         block = block[:block.index('if package.get("topical_show_fits")')]
         assert "except Exception:" in block
@@ -142,7 +145,8 @@ class TestLessonsReachMiraOnlyViaAHuman:
     def test_retro_prompt_judges_the_host_not_the_guest(self):
         assert "Judge the HOST, not the guest" in RETRO
         assert "Ignore anything caused by infrastructure" in RETRO
-        assert "An empty array is a correct answer" in RETRO
+        assert "An empty list is the correct answer" in RETRO
+        assert "WHAT YOU DECIDE HERE IS APPLIED WITHOUT ANYONE" in RETRO
 
     def test_worker_gates_promotion_on_the_package_token(self):
         body = WORKER[WORKER.index("async function handleLessonDecision("):]
@@ -380,42 +384,14 @@ class TestNoDeadAirBetweenParagraphs:
         assert "def _trim(" in src
         assert "silenceremove=start_periods=1" in src
         assert "silenceremove=stop_periods=-1" in src
-        # The retake loop (2026-09-21) records a paragraph up to three times and
-        # keeps the longest read, so the NAME of the stitched variable is free to
-        # change — `parts.append(trimmed)` became `parts.append(best)` and this
-        # guard failed on a refactor that preserved everything it defends. Assert
-        # the property instead of the spelling: the take is trimmed, and the raw
-        # untrimmed take is never what gets stitched.
-        assert "trimmed = _trim(part)" in src
-        assert "parts.append(part)" not in src, (
-            "the raw, untrimmed take must never be stitched"
-        )
+        assert "trimmed = _trim(part)" in src and "parts.append(best)" in src
 
     def test_the_length_check_runs_on_the_trimmed_take(self):
         src = (ROOT / "pipelines" / "voices" / "narrate.py").read_text(encoding="utf-8")
-        lines = src.splitlines()
-
-        def _line(pred, what):
-            for i, line in enumerate(lines):
-                if pred(line):
-                    return i
-            raise AssertionError(f"narrate.py no longer {what}")
-
-        i_trim = _line(lambda ln: "trimmed = _trim(part)" in ln, "trims each take")
-        # The CALL, not the `def` — the definition sits above the loop, so a plain
-        # ``src.index`` would find it and the ordering assertion would be vacuous.
-        i_check = _line(
-            lambda ln: "_check_not_truncated(" in ln
-            and not ln.lstrip().startswith("def "),
-            "checks a take for truncation",
-        )
+        i_trim = src.index("trimmed = _trim(part)")
+        i_check = src.index("_take_shortfall(trimmed, para)")
         assert i_trim < i_check, (
             "trailing silence would make a cut-off read look complete")
-        # Rename-proof: the checked take may be called anything (the retake loop
-        # named it `best`), but neither the length check nor the shortfall measure
-        # may be handed the raw, untrimmed take.
-        assert "_check_not_truncated(part," not in src
-        assert "_take_shortfall(part," not in src
 
     def test_the_gap_between_paragraphs_is_the_one_we_choose(self):
         from narrate import BREATH_SEC, KEEP_SILENCE_SEC

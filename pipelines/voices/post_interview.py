@@ -56,8 +56,9 @@ from audio.mix_tracks import (  # noqa: E402
     split_channels, split_left,
 )
 from learning import (  # noqa: E402
-    host_formulas, measure, parse_transcript, save_host_phrases, save_metrics,
-    save_proposed_lessons, session_events_summary,
+    adopt_lessons, guest_feedback, host_formulas, lessons_for_prompt, measure,
+    parse_transcript, retire_lessons, save_grade, save_host_phrases,
+    save_metrics, save_proposed_lessons, session_events_summary,
 )
 from validators.schema_validators import validate_pass_output  # noqa: E402
 
@@ -1004,24 +1005,41 @@ def main() -> int:
             "audio_quality_flag": ",".join(flags) or None,
         })
 
-        # Learning loop: measure the craft, and ask a producer's pass what
-        # should change next time. Lessons land as proposals; Patrick
-        # promotes them at gate 1 and only then do they reach Mira.
+        # Learning loop: measure the craft, grade the hour, and change how she
+        # works. Sept 21 2026: the grade is APPLIED rather than proposed —
+        # eight proposals had been waiting for a human while the same faults
+        # recurred. The grader sees what she already carries and is told not
+        # to restate it, and every adoption is reversible from triage.
         try:
             metrics = measure(run, package.get("transcript_cleaned") or transcript,
                               host_label="Mira", guest_label=_guest_label(app))
             save_metrics(interview["id"], metrics)
             logger.info("episode metrics: %s", metrics)
-            retro = llm(load_prompt(
+            cleaned = package.get("transcript_cleaned") or transcript
+            graded = parse_json_lenient(llm(load_prompt(
                 "editorial_passes/09_interview_retro.txt",
                 show=show, show_name=show.name,
                 guest_name=app["name"],
                 session_events=session_events_summary(run),
-                cleaned_transcript=package.get("transcript_cleaned") or transcript,
-            ), temperature=0.3, max_tokens=2000)
-            saved = save_proposed_lessons(show.slug, interview["id"],
-                                          parse_json_lenient(retro) or [])
-            logger.info("retro proposed %d lesson(s)", saved)
+                active_lessons=lessons_for_prompt(show.slug),
+                guest_feedback=guest_feedback(cleaned, _guest_label(app))
+                or "(she was not asked, or the answer is not in the tape)",
+                metrics=json.dumps({k: v for k, v in metrics.items()
+                                    if k != "notes"}, ensure_ascii=False),
+                cleaned_transcript=cleaned,
+            ), temperature=0.3, max_tokens=2500)) or {}
+            if not isinstance(graded, dict):
+                graded = {}
+            retired = retire_lessons(
+                [r.get("id") for r in (graded.get("retire") or [])
+                 if isinstance(r, dict)],
+                "retired by the grading pass")
+            adopted = adopt_lessons(show.slug, interview["id"],
+                                    graded.get("lessons") or [])
+            save_grade(show.slug, interview["id"], graded, adopted, retired)
+            logger.info("graded %s: overall %s — %d lesson(s) adopted, %d retired",
+                        app["name"], (graded.get("grades") or {}).get("overall"),
+                        len(adopted), retired)
             # Retire the acknowledgment reflexes she leaned on this time.
             tics = host_formulas(
                 parse_transcript(package.get("transcript_cleaned") or transcript),

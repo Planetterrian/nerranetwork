@@ -130,6 +130,13 @@ FROM_EMAIL = os.environ.get("VOICES_FROM_EMAIL") or "mira@nerranetwork.com"
 
 
 OPERATOR_EMAIL = os.environ.get("OPERATOR_EMAIL") or "patricknovak1@gmail.com"
+# Sept 21 2026: Mira runs the correspondence end to end and Patrick reads it
+# at both addresses — the Gmail he lives in and the Planetterrian one that is
+# archived with the rest of the business. Every cc_operator=True mail goes to
+# both, so "copy Patrick" cannot quietly mean one of them.
+OPERATOR_CC = [a.strip() for a in (
+    os.environ.get("OPERATOR_CC") or "patrick@planetterrian.com").split(",")
+    if a.strip()]
 
 # Phase 2 co-host (Sept 2026): Patrick sits in the room as co-host on
 # every Mira interview. His display name lives in ONE env var so the
@@ -234,6 +241,7 @@ def send_email(to: str, subject: str, html_body: str,
     copies: List[str] = []
     if cc_operator:
         copies.append(OPERATOR_EMAIL)
+        copies.extend(OPERATOR_CC)
     for addr in cc or []:
         addr = (addr or "").strip()
         if "@" in addr and addr.lower() != to.lower() \

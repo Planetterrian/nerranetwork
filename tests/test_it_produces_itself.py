@@ -56,7 +56,24 @@ class TestTheClosingRoundVaries:
     def test_she_asks_what_it_was_like_to_be_interviewed_by_her(self):
         assert "What was it like being interviewed by an AI" in PROMPT
         assert "would not have said to a person" in PROMPT
-        assert "most direct feedback" in PROMPT
+        # Sept 21 2026: that answer is no longer just "the most direct
+        # feedback this show gets" — it is read after the episode and
+        # adopted as a standing instruction, so she asks it every time.
+        assert "Ask that last one of every guest, every time" in _flat(PROMPT)
+        assert "turned into a standing instruction" in _flat(PROMPT)
+
+    def test_the_guest_gets_the_last_word_before_she_closes(self):
+        """Sept 21 2026, Sameer Ranjan: he volunteered a bet he could not
+        prove yet and the next thing on the tape was Mira telling him the
+        recording was over."""
+        flat = _flat(PROMPT)
+        assert "THEIR LAST WORD IS THEIRS, NOT YOURS" in flat
+        assert "anything you did not ask about that they came wanting to say" in flat
+        assert "whether they have any parting thoughts" in flat
+        assert "If they name a subject, GO THERE" in flat
+        # The end-of-recording script may only run after that handover.
+        assert "Only once they have had that last word" in flat
+        assert flat.index("THEIR LAST WORD IS THEIRS") < flat.index("HOW IT ENDS, FOR THE GUEST")
 
 
 class TestFactCheckingBuildsRatherThanArgues:
@@ -128,11 +145,14 @@ class TestPatrickIsToldWhatChanges:
     LEARNING = (V / "learning.py").read_text(encoding="utf-8")
     ASSEMBLE = (V / "assemble_edit.py").read_text(encoding="utf-8")
 
-    def test_the_summary_exists_and_is_honest_about_gating(self):
+    def test_the_summary_says_what_was_done_not_what_is_wanted(self):
+        """Sept 21 2026: the lessons in this email are already in force, so it
+        is a record of a decision rather than a request for one."""
         body = _pyfn("improvement_summary", self.LEARNING)
         assert "What Mira took from this one" in body
-        assert "do not\n                     \"reach her until you approve" in body \
-            or "reach her until you approve them at gate 1" in body
+        assert "already in force" in body and "nothing is waiting on" in body
+        assert "remove it on the triage page" in body
+        assert "until you approve" not in body
 
     def test_it_rides_with_the_episode(self):
         # The summary is the show's own (Nerra Voices episodes are not Age of AI's).
@@ -146,7 +166,12 @@ class TestPatrickIsToldWhatChanges:
 
     def test_an_episode_with_no_lessons_says_so(self):
         body = _pyfn("improvement_summary", self.LEARNING)
-        assert "No changes proposed from this one" in body
+        assert "Nothing to change from this one" in body
+
+    def test_the_grade_rides_with_it(self):
+        body = _pyfn("improvement_summary", self.LEARNING)
+        assert "She graded this one" in body
+        assert "out of ten" in body
 
 
 class TestTheContentLake:
@@ -1808,7 +1833,10 @@ class TestTheGuestHearsTheMomentTheyAreOut:
         common.send_email("guest@example.com", "s", "<p>b</p>", cc_operator=True,
                           cc=["pr@example.com", "", "guest@example.com",
                               common.OPERATOR_EMAIL.upper()])
-        assert sent["cc"] == [common.OPERATOR_EMAIL, "pr@example.com"]
+        # Both of Patrick's addresses, then the publicist, no duplicates.
+        assert sent["cc"] == [common.OPERATOR_EMAIL, *common.OPERATOR_CC,
+                              "pr@example.com"]
+        assert sent["from"] == "mira@nerranetwork.com"
 
 
 class TestSheDoesNotEndTheInterviewInTheFirstThird:
@@ -1968,3 +1996,65 @@ class TestAPublishThatCommitsNothingIsNotSilent:
         # publish_one emails the guest now; this job had never needed mail.
         assert "RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}" in self.PUBLISH_WF
         assert "POSTMARK_TOKEN: ${{ secrets.POSTMARK_TOKEN }}" in self.PUBLISH_WF
+
+
+class TestTheLoopClosesItself:
+    """Sept 21 2026. Eight lessons had been sitting as proposals — four from
+    Meridan Zerner, four from Sameer Ranjan — while the same faults recurred
+    in both episodes. A queue nobody drains is not a learning loop. The
+    grading pass now adopts what it decides and retires what the show has
+    outgrown, and Patrick reads the decision instead of gating it."""
+
+    LEARNING = (V / "learning.py").read_text(encoding="utf-8")
+    RETRO = (V / "prompts" / "editorial_passes" / "09_interview_retro.txt").read_text(encoding="utf-8")
+    POST = (V / "post_interview.py").read_text(encoding="utf-8")
+
+    def test_lessons_go_in_live_and_say_who_decided(self):
+        body = _pyfn("adopt_lessons", self.LEARNING)
+        assert '"status": "active"' in body
+        assert '"decided_by": "mira"' in body
+        assert "adopted automatically" in body
+
+    def test_it_will_not_carry_the_same_lesson_twice(self):
+        import importlib, sys as _sys
+        _sys.path.insert(0, str(V))
+        L = importlib.import_module("learning")
+        assert L._already_says_it(
+            "Ask one question at a time and stop talking.",
+            ["Ask one question at a time and stop speaking after each one."])
+        # ... and does not collapse two genuinely different instructions.
+        assert not L._already_says_it(
+            "Wait for the guest to finish their sentence before the next question.",
+            ["Ask one question at a time and stop speaking after each one."])
+
+    def test_the_prompt_is_shown_what_she_already_carries(self):
+        assert "{{active_lessons}}" in self.RETRO
+        assert "do not restate it" in _flat(self.RETRO)
+        assert "lessons_for_prompt(show.slug)" in self.POST
+
+    def test_a_dozen_instructions_stay_a_dozen(self):
+        body = _pyfn("adopt_lessons", self.LEARNING)
+        assert "MAX_ACTIVE_LESSONS - (len(current) + len(adopted))" in body
+        assert "made room for a newer lesson" in body
+        assert "RETIRE the instructions that have done their job" in self.RETRO
+
+    def test_the_guests_own_verdict_is_fed_back_in(self):
+        assert "{{guest_feedback}}" in self.RETRO
+        assert "guest_feedback(cleaned, _guest_label(app))" in self.POST
+        body = _pyfn("guest_feedback", self.LEARNING)
+        assert "change one thing about how I" in self.LEARNING
+        assert "Asked:" in body and "They said:" in body
+
+    def test_every_hour_gets_a_comparable_score(self):
+        body = _pyfn("save_grade", self.LEARNING)
+        for dimension in ("listening", "questions", "pacing", "turn_taking", "warmth"):
+            assert f'score("{dimension}")' in body
+        assert "min(10.0, max(0.0, value))" in body          # 0-10, clamped
+        assert "Do not drift upward to be kind" in self.RETRO
+
+    def test_grading_never_costs_an_episode(self):
+        block = self.POST[self.POST.index("# Learning loop"):]
+        block = block[:block.index('if package.get("topical_show_fits")')]
+        assert "except Exception:" in block
+        for fn in ("adopt_lessons", "retire_lessons", "save_grade"):
+            assert "except Exception:" in _pyfn(fn, self.LEARNING), fn
