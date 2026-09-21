@@ -1903,3 +1903,32 @@ class TestTheIntroductionEarnsTheFirstThirtySeconds:
         assert "Say ONLY a domain that appears in the links above, character for character" in flat
         assert "meridanzernar.com" in flat
         assert "A wrong address in a published episode cannot be taken back" in flat
+
+
+class TestAReadThatDropsASentenceIsSaidAgain:
+    """Sept 21 2026, Meridan Zerner. A narration take came back without its
+    last sentence — "He is not in this room, and nor is anyone else" — so the
+    episode said "Patrick Novak created the Nerra Network and created what he
+    does is listen to every episode". The take was 87% of its expected
+    length, and the cut-off check only fails below 60%, so it shipped."""
+
+    SRC = (V / "narrate.py").read_text(encoding="utf-8")
+
+    def test_a_short_take_is_retried_before_it_is_accepted(self):
+        assert "RETAKE_RATIO = 0.85" in self.SRC
+        assert "RETAKES = 2" in self.SRC
+        loop = self.SRC[self.SRC.index("for seq, para in enumerate(paragraphs(text))"):]
+        loop = loop[:loop.index("if not parts:")]
+        assert "for attempt in range(RETAKES + 1)" in loop
+        assert "if ratio >= RETAKE_RATIO:" in loop
+        assert "if ratio > best_ratio:" in loop       # keep the longest read
+        assert "_check_not_truncated(best, para)" in loop
+
+    def test_the_hard_floor_still_fails(self):
+        assert "SHORT_TAKE_RATIO = 0.6" in self.SRC
+        assert "raise RuntimeError(\n            f\"take was cut off:" in self.SRC
+
+    def test_completeness_is_measured_after_trimming(self):
+        loop = self.SRC[self.SRC.index("for seq, para in enumerate(paragraphs(text))"):]
+        loop = loop[:loop.index("if not parts:")]
+        assert loop.index("_trim(part)") < loop.index("_take_shortfall(trimmed, para)")

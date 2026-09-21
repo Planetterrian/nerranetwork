@@ -51,6 +51,8 @@ SILENCE_DB = -45           # below this is silence, not speech
 KEEP_SILENCE_SEC = 0.35    # a natural pause inside a paragraph
 PARAGRAPH_MAX_CHARS = 420  # a paragraph must be SAID inside a 60 s session
 SHORT_TAKE_RATIO = 0.6     # a take this far under its script was cut off
+RETAKE_RATIO = 0.85        # ... and this far under, record it again first
+RETAKES = 2                # how many second chances one paragraph gets
 MIN_CHECKABLE_WORDS = 14   # below this, pace varies too much to judge
 MIN_TAKE_SEC = 0.4         # ... so all a short line must prove is that it exists
 WORDS_PER_SEC = 2.4        # Mira's measured pace, for the truncation check
@@ -159,6 +161,17 @@ def _duration(path: Path) -> float:
         return 0.0
 
 
+def _take_shortfall(part: Path, text: str) -> float:
+    """How complete a take is against its script, as a ratio (1.0 = full).
+
+    Returns 1.0 when the script is too short to judge by pace.
+    """
+    words = spoken_words(text)
+    if words < MIN_CHECKABLE_WORDS:
+        return 1.0
+    return _duration(part) / max(words / WORDS_PER_SEC, 0.001)
+
+
 def _check_not_truncated(part: Path, text: str) -> None:
     """A take that is far shorter than its script was cut off mid-sentence.
 
@@ -261,14 +274,36 @@ def narrate(slug: str) -> Dict[str, str]:
                 continue
             parts: List[Path] = []
             for seq, para in enumerate(paragraphs(text)):
-                url = _record_take(slug, seg_id, seq, para, voice)
-                part = work / f"{seg_id}_{seq:03d}.mp3"
-                part.write_bytes(requests.get(url, timeout=180).content)
-                trimmed = _trim(part)
-                # Checked AFTER trimming: trailing silence would otherwise
-                # make a cut-off read look like a complete one.
-                _check_not_truncated(trimmed, para)
-                parts.append(trimmed)
+                # Sept 21 2026, Meridan Zerner. A take came back missing its
+                # last sentence — "He is not in this room, and nor is anyone
+                # else" — and the episode shipped "Patrick Novak created the
+                # Nerra Network and created what he does is listen to every
+                # episode". It was 87% of its expected length, so the
+                # cut-off check passed it. A dropout is stochastic, so the
+                # cheap fix is to say it again: retake anything under
+                # RETAKE_RATIO and keep the longest read.
+                best: Path | None = None
+                best_ratio = 0.0
+                for attempt in range(RETAKES + 1):
+                    url = _record_take(slug, seg_id, seq, para, voice)
+                    part = work / f"{seg_id}_{seq:03d}_{attempt}.mp3"
+                    part.write_bytes(requests.get(url, timeout=180).content)
+                    # Measured AFTER trimming: trailing silence would
+                    # otherwise make a cut-off read look like a complete one.
+                    trimmed = _trim(part)
+                    ratio = _take_shortfall(trimmed, para)
+                    if ratio > best_ratio:
+                        best, best_ratio = trimmed, ratio
+                    if ratio >= RETAKE_RATIO:
+                        break
+                    logger.warning(
+                        "take %s/%s#%d came back at %.0f%% of its script "
+                        "(attempt %d of %d) — saying it again: %.60s",
+                        slug, seg_id, seq, ratio * 100, attempt + 1,
+                        RETAKES + 1, para)
+                assert best is not None
+                _check_not_truncated(best, para)
+                parts.append(best)
             if not parts:
                 continue
             mp3 = _stitch(parts, work / f"{seg_id}.mp3")
