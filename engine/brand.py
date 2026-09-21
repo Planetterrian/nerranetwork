@@ -90,3 +90,88 @@ def mira_claim_paragraphs() -> list:
         MIRA_FIRST_CLAIM_BASIS,
         MIRA_FIRST_CLAIM_FOOTNOTE,
     ]
+
+
+# ---------------------------------------------------------------------------
+# The creator credit
+# ---------------------------------------------------------------------------
+#
+# 2026-09-21. Patrick Novak built this network and he does real, specific work
+# on the interview shows, and no surface said so. The credit lives here for the
+# same reason the Mira claim does: it is a factual claim about a named person,
+# it has to read the same everywhere, and it has exactly one way of going
+# wrong.
+#
+# THE WAY IT GOES WRONG is scope. "Patrick approves every episode before it
+# publishes" is TRUE of the interview shows and FALSE of the network. The ~18
+# run_show shows have no human gate at all — ``ai-disclosure.html`` says
+# plainly that nobody reads every episode before it ships, and an earlier
+# version of that page claimed the opposite for five months before it had to
+# be removed. So the approval sentence is bound to ``HUMAN_REVIEW_SHOW_SLUGS``
+# and ``creator_credit()`` refuses to hand it to anything else.
+#
+# The second way it goes wrong is the room. Patrick is not a co-host and does
+# not sit in on interviews; solo Mira is the normal case. Nothing here may
+# describe him as being in the conversation.
+
+NETWORK_CREATOR_NAME = "Patrick Novak"
+
+#: The shows where a human reviews and approves every episode before it
+#: publishes. Both run through the Nerra Voices pipeline
+#: (``pipelines/voices/``), whose two gates are the reason the sentence is
+#: true: gate 1 is Patrick's editorial review, which has no timer that
+#: expires into publication, and gate 2 is the guest approving their own
+#: transcript. No run_show show has either gate, and none may be added here
+#: without one.
+HUMAN_REVIEW_SHOW_SLUGS = ("age_of_ai", "nerra_voices")
+
+#: What he is, network-wide. Safe on any page: it claims nothing about how
+#: individual episodes are checked.
+CREATOR_NETWORK_ROLE = (
+    "Patrick Novak created the Nerra Network and runs it from Vancouver. He "
+    "chooses what the shows cover, writes the instructions they are made "
+    "from, and listens to what comes out. No episode of anything here carries "
+    "an ad or a sponsor."
+)
+
+#: What he does on a show that has the two gates. Every clause is a step that
+#: exists in ``pipelines/voices/``; none of it is true of the daily shows.
+CREATOR_REVIEW_ROLE = (
+    "On this show he is also the editor. He reads every application himself "
+    "and decides whether an interview happens, and he reviews the finished "
+    "episode before it is assembled — a gate with no timer, so nothing has "
+    "ever published because a review ran late. He is not in the room while "
+    "Mira is talking to a guest, and he does not answer for them afterwards: "
+    "the guest reads their own transcript and decides whether it ships."
+)
+
+#: What "he works on Mira" actually means. Deliberately concrete, because the
+#: vague version ("he trains Mira", "she learns from his feedback") describes
+#: a training loop that does not exist — nothing here fine-tunes a model.
+CREATOR_MIRA_ROLE = (
+    "Mira is his design. He writes and tunes the instructions she works from "
+    "— how she opens, what she chases, when to stop talking — sets the "
+    "editorial rules she is held to, and listens to what she did afterwards "
+    "to decide what changes next time. No model is retrained; the work is "
+    "the brief she is given and the judgement about what to change in it."
+)
+
+
+def creator_credit(slug: str = "") -> list:
+    """The creator credit for *slug*, as paragraphs in reading order.
+
+    The network role is always included. The editorial-review paragraph is
+    added ONLY for a show in :data:`HUMAN_REVIEW_SHOW_SLUGS`, and the Mira
+    paragraph ONLY for a show Mira hosts — so a caller cannot accidentally
+    put "he approves every episode" on a page for a show where no human reads
+    anything before it ships.
+
+    Passing no slug returns the network-safe paragraph alone. That is the
+    correct answer for a generic page, not a degraded one.
+    """
+    out = [CREATOR_NETWORK_ROLE]
+    if slug in HUMAN_REVIEW_SHOW_SLUGS:
+        out.append(CREATOR_REVIEW_ROLE)
+    if slug in MIRA_SHOW_SLUGS:
+        out.append(CREATOR_MIRA_ROLE)
+    return out

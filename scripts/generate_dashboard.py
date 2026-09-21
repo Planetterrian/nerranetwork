@@ -3289,6 +3289,21 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
                 "with_city_brief": data.get("with_city_brief"),
                 "on_default_lineup": data.get("on_default_lineup"),
                 "mrr_usd": data.get("mrr_usd"),
+                # Sep 21 2026 — Stripe is read now, so these are real
+                # instead of hardcoded null. They are surfaced HERE because
+                # a key nothing reads is not a metric: grok_image_px_max
+                # recorded nothing for six days for exactly this reason.
+                "trialing": data.get("trialing"),
+                "active_subscriptions": data.get("active_subscriptions"),
+                "canceling_at_period_end": data.get("canceling_at_period_end"),
+                "free_accounts": data.get("free_accounts"),
+                "newsletter_subscribers": data.get("newsletter_subscribers"),
+                # Declared understatement: MRR excludes any subscription in
+                # a currency we refuse to convert. A non-zero value here
+                # means the headline figure is low by that many customers.
+                "mrr_excluded_subscriptions": data.get(
+                    "mrr_excluded_subscriptions"),
+                "stripe_configured": data.get("stripe_configured"),
                 "note": data.get("note"),
             }
         except Exception as exc:  # noqa: BLE001

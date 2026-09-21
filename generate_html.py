@@ -32,6 +32,7 @@ from jinja2 import Environment, FileSystemLoader
 from engine.utils import strip_lone_surrogates as _strip_lone_surrogates
 from engine import titles as _titles
 from engine import funnel as F
+from engine import brand as _brand
 from engine import show_lang as _show_lang
 
 ROOT = Path(__file__).resolve().parent
@@ -2839,8 +2840,39 @@ def generate_all_narrative_pages(*, dry_run=False):
         generate_narrative_page(slug, dry_run=dry_run)
 
 
-def generate_show_page(slug, *, dry_run=False):
+def _interview_episode_cards(slug, cfg):
+    """Guest cards for an interview show's archive rail; [] for the rest.
+
+    The audio URL is routed through the same OP3 prefix the blog player uses,
+    so a play started from the show page is counted like one started from a
+    podcast app. Never let measurement break the page.
+    """
+    from engine.interviews import interview_episode_cards
+
+    cards = interview_episode_cards(
+        slug,
+        ROOT / cfg.get("json_path", ""),
+        ROOT / "digests" / _SHOW_DIRS.get(slug, slug),
+    )
+    if not cards:
+        return []
+    try:
+        from engine.blog import _measured_audio_url
+        for card in cards:
+            card["audio_url"] = _measured_audio_url(card["audio_url"])
+    except Exception:  # pragma: no cover - measurement is never fatal
+        pass
+    return cards
+
+
+def generate_show_page(slug, *, dry_run=False, output_dir=None):
     """Render and write a show page for a single show.
+
+    *output_dir* redirects the write, so a guard can render the CURRENT
+    template into ``tmp_path`` instead of reading a committed page — the
+    committed HTML is refreshed by the pipeline, not from a working tree, so
+    on any checkout it still carries the previous chrome and a test that
+    reads it is testing yesterday.
 
     A show can declare ``show_page_template`` in its registry entry
     (``shows/network_meta.yaml`` or the hardcoded dict) to swap the shared
@@ -3089,6 +3121,17 @@ def generate_show_page(slug, *, dry_run=False):
         # cross-reference each other instead of each being a dead end.
         "strand": cfg.get("strand", ""),
         "apply_page": cfg.get("apply_page", ""),
+        # Interview shows (Sep 21 2026): the episode rail is a list of
+        # GUESTS, not a list of RSS titles. On these shows the RSS title is
+        # the digest's whole thesis sentence, so the generic rail gave a
+        # visitor 200 characters of abstract prose per episode and no name
+        # to recognise. Empty for every other show, which keeps its rail.
+        "interview_episodes": _interview_episode_cards(slug, cfg),
+        # Who made this and what he actually does on THIS show. Scoped by
+        # engine.brand: the "reviews every episode before it publishes"
+        # paragraph is only ever handed to a show that has that gate.
+        "creator_name": _brand.NETWORK_CREATOR_NAME,
+        "creator_credit": _brand.creator_credit(slug),
         "related_show": related_show_data,
         "blog_page": f"blog/{cfg['slug']}/index.html",
         "latest_blog_posts": latest_blog_posts,
@@ -3122,7 +3165,11 @@ def generate_show_page(slug, *, dry_run=False):
 
     html = template.render(**context)
 
-    out_path = ROOT / cfg["show_page"]
+    out_path = (Path(output_dir) / cfg["show_page"] if output_dir
+                else ROOT / cfg["show_page"])
+    # Two shows live under ru/, which exists in the repo but not in a
+    # freshly-made tmp_path.
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     if dry_run:
         print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
         return None

@@ -730,6 +730,108 @@
             background: var(--nn-surface);
             border-radius: 0 8px 8px 0;
         }
+
+        /* ---------------------------------------------------------------
+           Interview posts (Sep 21 2026). The Age of AI and Nerra Voices
+           publish conversations with named people; the shared news layout
+           buried the guest in a fourth-level heading and gave the page no
+           player at all.
+           These rules only render when the post carries an `interview`
+           context, which is only ever an interview show.
+           --------------------------------------------------------------- */
+        .nn-iv-hero {
+            max-width: 900px;
+            margin: var(--sp-4) auto 0;
+            padding: 0 var(--sp-6);
+        }
+        .nn-iv-eyebrow {
+            display: flex; align-items: center; gap: 0.6rem;
+            font-family: var(--font-ui); font-size: 0.78rem;
+            font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+            color: var(--show-color-text, var(--show-color));
+            margin-bottom: 0.9rem;
+        }
+        .nn-iv-eyebrow img { border-radius: 7px; }
+        .nn-iv-eyebrow a { color: inherit; text-decoration: none; }
+        .nn-iv-name {
+            font-family: var(--font-heading);
+            font-size: clamp(2rem, 5.2vw, 3rem);
+            line-height: 1.08; margin: 0 0 0.45rem; letter-spacing: -0.02em;
+        }
+        .nn-iv-identifier {
+            font-family: var(--font-ui); font-size: 1.02rem; font-weight: 600;
+            color: var(--show-color-text, var(--show-color));
+            margin: 0 0 1rem;
+        }
+        .nn-iv-standfirst {
+            font-size: 1.12rem; line-height: 1.55; color: var(--nn-text-secondary);
+            margin: 0 0 1.4rem; max-width: 62ch;
+        }
+        .nn-iv-player {
+            border: 1px solid var(--nn-border); border-radius: 14px;
+            background: var(--nn-surface); padding: 1rem 1.1rem;
+            margin: 0 0 1.1rem;
+        }
+        .nn-iv-player-label {
+            display: flex; align-items: center; gap: 0.45rem;
+            font-family: var(--font-ui); font-size: 0.8rem; font-weight: 600;
+            color: var(--nn-text-muted); margin-bottom: 0.6rem;
+        }
+        .nn-iv-player audio { width: 100%; height: 40px; }
+        .nn-iv-meta {
+            display: flex; flex-wrap: wrap; gap: 0.55rem 1.1rem;
+            font-family: var(--font-ui); font-size: 0.85rem;
+            color: var(--nn-text-muted); margin: 0 0 1.4rem;
+            align-items: center;
+        }
+        .nn-iv-links { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+        .nn-iv-link {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            padding: 3px 11px; border: 1px solid var(--nn-border);
+            border-radius: 100px; font-family: var(--font-ui);
+            font-size: 0.78rem; font-weight: 600; text-decoration: none;
+            color: var(--nn-text-secondary); white-space: nowrap;
+        }
+        .nn-iv-link:hover { border-color: var(--show-color); color: var(--show-color-text, var(--show-color)); }
+        .nn-iv-card {
+            max-width: 900px; margin: 0 auto var(--sp-6);
+            padding: 0 var(--sp-6);
+        }
+        .nn-iv-card-inner {
+            border: 1px solid var(--nn-border);
+            border-left: 3px solid var(--show-color);
+            border-radius: 14px; background: var(--nn-card);
+            padding: 1.3rem 1.5rem;
+        }
+        .nn-iv-card-label {
+            font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--nn-text-muted); margin-bottom: 0.55rem;
+        }
+        .nn-iv-card p { margin: 0; line-height: 1.6; }
+        .nn-iv-points { margin: 0; padding-left: 1.15rem; }
+        .nn-iv-points li { margin-bottom: 0.6rem; line-height: 1.55; }
+        .nn-iv-points li:last-child { margin-bottom: 0; }
+        .nn-iv-next {
+            max-width: 900px; margin: 0 auto var(--sp-8); padding: 0 var(--sp-6);
+            display: grid; gap: 0.8rem;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        }
+        .nn-iv-next a {
+            display: block; border: 1px solid var(--nn-border);
+            border-radius: 14px; background: var(--nn-surface);
+            padding: 1rem 1.2rem; text-decoration: none; color: inherit;
+        }
+        .nn-iv-next a:hover { border-color: var(--show-color); }
+        .nn-iv-next-label {
+            font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--nn-text-muted); margin-bottom: 0.35rem;
+        }
+        .nn-iv-next-title { font-weight: 600; line-height: 1.35; }
+        @media (max-width: 640px) {
+            .nn-iv-hero, .nn-iv-card, .nn-iv-next { padding: 0 var(--sp-4); }
+        }
     </style>
 {% endblock %}
 
@@ -749,6 +851,89 @@
         </ol>
     </nav>
 
+    {# An interview post gets its own hero: the guest's name and what they do,
+       a player, then the episode's substance. The generic hero below leads
+       with the digest's thesis sentence and offers no way to listen, which is
+       the right shape for a news digest and the wrong one for a conversation
+       with a person. #}
+    {% if interview and interview.guest_name %}
+    <header class="nn-iv-hero">
+        <div class="nn-iv-eyebrow">
+            <a href="{{ blog_index_url }}">
+                <picture><source type="image/webp" srcset="{{ path_prefix }}{{ podcast_image[:-4] if podcast_image.endswith('.jpg') else podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ podcast_image }}" alt="" width="28" height="28"></picture>
+            </a>
+            <a href="{{ path_prefix }}{{ show_page }}">{{ show_name }}</a>
+            <span aria-hidden="true">·</span>
+            <span>Episode {{ episode_num }}</span>
+        </div>
+
+        <h1 class="nn-iv-name"><span class="nn-i18n-title">{{ interview.guest_name }}</span></h1>
+        {% if interview.guest_identifier %}
+        <p class="nn-iv-identifier">{{ interview.guest_identifier }}</p>
+        {% endif %}
+        {% if hook %}
+        <p class="nn-iv-standfirst">{{ hook }}</p>
+        {% endif %}
+
+        {# The player, above the fold. Until this shipped, an interview post
+           had no <audio> element anywhere on it. #}
+        {% if audio_url %}
+        <div class="nn-iv-player">
+            <div class="nn-iv-player-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Listen to the conversation
+            </div>
+            <audio controls preload="none" src="{{ audio_url }}">
+                <a href="{{ audio_url }}">Download the audio</a>
+            </audio>
+        </div>
+        {% endif %}
+
+        <div class="nn-iv-meta">
+            <span>{{ episode_date }}</span>
+            {% if interview.run_time %}<span aria-hidden="true">·</span><span>{{ interview.run_time }}</span>{% endif %}
+            {% if transcript %}<span aria-hidden="true">·</span><a href="#transcript" style="color:inherit;">Read the transcript</a>{% endif %}
+        </div>
+
+        {% if interview.guest_links %}
+        <div class="nn-iv-meta">
+            <span>{{ interview.guest_name }} online:</span>
+            <span class="nn-iv-links">
+                {% for link in interview.guest_links %}
+                <a class="nn-iv-link" href="{{ link.url }}" rel="noopener nofollow" target="_blank">{{ link.label }}</a>
+                {% endfor %}
+            </span>
+        </div>
+        {% endif %}
+
+        {% if interview.guest_blurb %}
+        <p class="nn-iv-standfirst" style="font-size:1rem;">{{ interview.guest_blurb }}</p>
+        {% endif %}
+    </header>
+
+    {% if interview.takeaway %}
+    <section class="nn-iv-card" aria-label="What you need to know">
+        <div class="nn-iv-card-inner">
+            <div class="nn-iv-card-label">What you need to know</div>
+            <p>{{ interview.takeaway }}</p>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if interview.talking_points %}
+    <section class="nn-iv-card" aria-label="What we talked about">
+        <div class="nn-iv-card-inner">
+            <div class="nn-iv-card-label">What we talked about</div>
+            <ul class="nn-iv-points">
+                {% for point in interview.talking_points %}
+                <li>{{ point }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </section>
+    {% endif %}
+
+    {% else %}
     <!-- Hero -->
     <header class="blog-hero">
         <div class="blog-hero-inner">
@@ -797,6 +982,7 @@
             </div>
         </div>
     </header>
+    {% endif %}
 
     {# Multilingual audio player + language switcher (June 2026).
        Only rendered when this episode actually has alternate-language
@@ -1009,16 +1195,16 @@
             <nav class="blog-ep-nav">
                 {% if prev_post %}
                 <a href="ep{{ '%03d' % prev_post.episode_num }}.html" rel="prev">
-                    <span class="nav-label">&larr; Previous</span>
-                    <span class="nav-title">Episode {{ prev_post.episode_num }}</span>
+                    <span class="nav-label">&larr; {% if interview %}Previous interview{% else %}Previous{% endif %}</span>
+                    <span class="nav-title">{% if interview and interview.prev_guest %}{{ interview.prev_guest }}{% else %}Episode {{ prev_post.episode_num }}{% endif %}</span>
                 </a>
                 {% else %}
                 <div></div>
                 {% endif %}
                 {% if next_post %}
                 <a href="ep{{ '%03d' % next_post.episode_num }}.html" rel="next" class="next">
-                    <span class="nav-label">Next &rarr;</span>
-                    <span class="nav-title">Episode {{ next_post.episode_num }}</span>
+                    <span class="nav-label">{% if interview %}Next interview{% else %}Next{% endif %} &rarr;</span>
+                    <span class="nav-title">{% if interview and interview.next_guest %}{{ interview.next_guest }}{% else %}Episode {{ next_post.episode_num }}{% endif %}</span>
                 </a>
                 {% else %}
                 {#- Phase 4 of May 2026 audit: when this is the latest
@@ -1043,6 +1229,27 @@
                 {% endif %}
             </nav>
             {% endif %}
+
+            {# The ask. A reader who got to the bottom of somebody else's
+               interview is the best-qualified visitor this show ever gets,
+               and until this shipped the page offered them nothing to do.
+               Gated on the registry's apply_page so a show without a form
+               never advertises one. #}
+            {% if interview and interview.apply_page %}
+            <section class="nn-iv-next" aria-label="Be a guest">
+                <a href="{{ path_prefix }}{{ interview.apply_page }}">
+                    <div class="nn-iv-next-label">Be a guest</div>
+                    <div class="nn-iv-next-title">Tell us what you would talk about &rarr;</div>
+                    <p style="margin:.4rem 0 0;font-size:.88rem;color:var(--nn-text-muted);line-height:1.5;">A short form. No media training and no AI angle required — {{ mira.host_name }} does the interview, and you decide whether it is published.</p>
+                </a>
+                <a href="{{ path_prefix }}mira.html">
+                    <div class="nn-iv-next-label">How this works</div>
+                    <div class="nn-iv-next-title">Meet {{ mira.host_name }} &rarr;</div>
+                    <p style="margin:.4rem 0 0;font-size:.88rem;color:var(--nn-text-muted);line-height:1.5;">Who the host is, how an interview runs end to end, and what you keep control of.</p>
+                </a>
+            </section>
+            {% endif %}
+
             {% if show_resources and show_resources.links %}
             <section class="blog-related" style="margin-top:1.4rem;">
                 <h2>{{ show_resources.title }}</h2>
