@@ -32,6 +32,7 @@ from jinja2 import Environment, FileSystemLoader
 from engine.utils import strip_lone_surrogates as _strip_lone_surrogates
 from engine import titles as _titles
 from engine import funnel as F
+from engine import show_lang as _show_lang
 
 ROOT = Path(__file__).resolve().parent
 TEMPLATES_DIR = ROOT / "templates"
@@ -390,6 +391,11 @@ def network_social_sameas():
 
 NETWORK_SHOWS = {
     "tesla": {
+        "picker_tags": {
+            "topics": ["tesla", "ev", "tech", "stocks", "energy"],
+            "audience": ["investors", "enthusiasts"],
+            "language": ["english"],
+        },
         "name": "Tesla Shorts Time",
         "slug": "tesla",
         "display_order": 7,
@@ -515,6 +521,11 @@ NETWORK_SHOWS = {
         },
     },
     "omni_view": {
+        "picker_tags": {
+            "topics": ["world-news", "politics", "balanced"],
+            "audience": ["professionals", "citizens"],
+            "language": ["english"],
+        },
         "name": "Omni View",
         "slug": "omni_view",
         "display_order": 3,
@@ -618,6 +629,11 @@ NETWORK_SHOWS = {
         ],
     },
     "fascinating_frontiers": {
+        "picker_tags": {
+            "topics": ["space", "astronomy", "science"],
+            "audience": ["enthusiasts", "students"],
+            "language": ["english"],
+        },
         "name": "Fascinating Frontiers",
         "slug": "fascinating_frontiers",
         "display_order": 5,
@@ -715,6 +731,11 @@ NETWORK_SHOWS = {
         ],
     },
     "planetterrian": {
+        "picker_tags": {
+            "topics": ["longevity", "biotech", "health", "science"],
+            "audience": ["professionals", "enthusiasts"],
+            "language": ["english"],
+        },
         "name": "Planetterrian Daily",
         "slug": "planetterrian",
         "display_order": 2,
@@ -815,6 +836,11 @@ NETWORK_SHOWS = {
         ],
     },
     "env_intel": {
+        "picker_tags": {
+            "topics": ["environment", "climate", "regulatory"],
+            "audience": ["professionals"],
+            "language": ["english"],
+        },
         "name": "Environmental Intelligence",
         "slug": "env_intel",
         "display_order": 8,
@@ -922,6 +948,11 @@ NETWORK_SHOWS = {
         ],
     },
     "models_agents": {
+        "picker_tags": {
+            "topics": ["ai", "tech", "research"],
+            "audience": ["builders", "professionals"],
+            "language": ["english"],
+        },
         "name": "Models & Agents",
         "slug": "models_agents",
         "display_order": 1,
@@ -1021,6 +1052,11 @@ NETWORK_SHOWS = {
         ],
     },
     "models_agents_beginners": {
+        "picker_tags": {
+            "topics": ["ai", "tech"],
+            "audience": ["students", "beginners"],
+            "language": ["english"],
+        },
         "name": "Models & Agents for Beginners",
         "slug": "models_agents_beginners",
         "display_order": 4,
@@ -1123,10 +1159,26 @@ NETWORK_SHOWS = {
         ],
     },
     "finansy_prosto": {
+        "picker_tags": {
+            "topics": ["personal-finance", "investing"],
+            "audience": ["newcomers", "families"],
+            "language": ["russian"],
+        },
         "name": "Финансы Просто",
         "slug": "finansy_prosto",
-        # Buttondown rejects non-ASCII tags; keep the display name in
-        # Cyrillic but tag in ASCII to match shows/finansy_prosto.yaml.
+        # Buttondown rejects non-ASCII tags, so the display name stays
+        # Cyrillic while the tag is ASCII.
+        #
+        # This key is NOT redundant with shows/finansy_prosto.yaml's
+        # ``newsletter.tag``, and it is not dead. The blog path renders from
+        # the RAW registry entry — generate_blog_posts does
+        # ``cfg = NETWORK_SHOWS[slug]`` and engine.blog reads
+        # ``show_config.get("newsletter_tag") or show_config["name"]`` — so
+        # deleting it falls back to the Cyrillic display NAME and every one of
+        # this show's ~79 blog posts ships a signup tag Buttondown refuses.
+        # Only the summaries/show-page context goes through
+        # _newsletter_tag_for_slug; checking that context alone makes this key
+        # look unused (2026-09-21: it did, and a full-tree diff caught it).
         "newsletter_tag": "Finansy Prosto",
         "display_order": 9,
         "description": "Ежедневный подкаст о финансах на русском языке для женщин в Канаде.",
@@ -1219,10 +1271,26 @@ NETWORK_SHOWS = {
         ],
     },
     "privet_russian": {
+        "picker_tags": {
+            "topics": ["language-learning"],
+            "audience": ["students", "heritage-learners"],
+            "language": ["bilingual"],
+        },
         "name": "Привет, Русский!",
         "slug": "privet_russian",
-        # Buttondown rejects non-ASCII tags; keep the display name in
-        # Cyrillic but tag in ASCII to match shows/privet_russian.yaml.
+        # Buttondown rejects non-ASCII tags, so the display name stays
+        # Cyrillic while the tag is ASCII.
+        #
+        # This key is NOT redundant with shows/privet_russian.yaml's
+        # ``newsletter.tag``, and it is not dead. The blog path renders from
+        # the RAW registry entry — generate_blog_posts does
+        # ``cfg = NETWORK_SHOWS[slug]`` and engine.blog reads
+        # ``show_config.get("newsletter_tag") or show_config["name"]`` — so
+        # deleting it falls back to the Cyrillic display NAME and every one of
+        # this show's ~79 blog posts ships a signup tag Buttondown refuses.
+        # Only the summaries/show-page context goes through
+        # _newsletter_tag_for_slug; checking that context alone makes this key
+        # look unused (2026-09-21: it did, and a full-tree diff caught it).
         "newsletter_tag": "Privet Russian",
         "display_order": 10,
         "description": "Bilingual Russian language learning podcast for English speakers.",
@@ -1314,6 +1382,11 @@ NETWORK_SHOWS = {
         ],
     },
     "modern_investing": {
+        "picker_tags": {
+            "topics": ["investing", "stocks", "personal-finance"],
+            "audience": ["investors", "professionals"],
+            "language": ["english"],
+        },
         "name": "Modern Investing Techniques",
         "slug": "modern_investing",
         "display_order": 6,
@@ -1330,7 +1403,6 @@ NETWORK_SHOWS = {
         "brand_color_dark": "#047857",
         "tagline": "AI-Powered Market Intelligence",
         # Special: Strong recursive learning + public transparency vs NASDAQ
-        "has_performance_loop": True,
         "hero_tagline": "AI-Powered Market Intelligence",
         "schedule": "Daily",
         "episode_length": "~12 min",
@@ -1420,6 +1492,11 @@ NETWORK_SHOWS = {
         ],
     },
     "unintended_consequences": {
+        "picker_tags": {
+            "topics": ["history", "policy", "technology", "narrative"],
+            "audience": ["enthusiasts", "professionals", "students"],
+            "language": ["english"],
+        },
         "name": "Unintended Consequences",
         "slug": "unintended_consequences",
         "display_order": 11,
@@ -1484,6 +1561,11 @@ NETWORK_SHOWS = {
         ],
     },
     "first_principles": {
+        "picker_tags": {
+            "topics": ["engineering", "tech", "innovation", "narrative"],
+            "audience": ["builders", "professionals", "enthusiasts"],
+            "language": ["english"],
+        },
         "name": "First Principles Daily",
         "slug": "first_principles",
         "display_order": 12,
@@ -1660,8 +1742,30 @@ _SCAFFOLD_SHOW_RESOURCES: dict = {
 }
 
 
+def _merge_show_meta(existing: dict, meta: dict) -> None:
+    """Fill gaps in a registry entry from its ``network_meta.yaml`` counterpart.
+
+    Per-key, and the curated Python value always wins. The previous version was
+    all-or-nothing: ``if slug not in NETWORK_SHOWS`` discarded a YAML entry's
+    thirty-odd keys the moment the slug also existed in Python, so a scaffolded
+    show could not contribute a single field to a hand-written entry and nothing
+    anywhere reported the drop. The two sources happen to be disjoint today
+    (twelve slugs in Python, six in YAML), which is exactly why the footgun went
+    unnoticed — it costs nothing now and silently eats a whole entry the first
+    time someone scaffolds over a hardcoded show.
+    """
+    for key, value in meta.items():
+        existing.setdefault(key, value)
+
+
 def _merge_scaffolded_network_registry() -> None:
-    """Overlay shows/network_meta.yaml (from scaffold_show.py) onto registries."""
+    """Overlay shows/network_meta.yaml (from scaffold_show.py) onto the registry.
+
+    ``picker_tags`` is an ordinary registry key since 2026-09-21 rather than
+    being diverted into a parallel ``_SHOW_PICKER_TAGS`` dict that only this
+    function could write to — a hardcoded show could not declare tags at all,
+    and the tags decide ``/topics/`` hub membership.
+    """
     meta_path = SHOWS_DIR / "network_meta.yaml"
     if not meta_path.exists():
         return
@@ -1676,7 +1780,6 @@ def _merge_scaffolded_network_registry() -> None:
         if not isinstance(meta, dict):
             continue
         meta = dict(meta)
-        picker = meta.pop("picker_tags", None)
         # Layer curated resource blocks (resource_categories/tools/faq)
         # onto the scaffolded base metadata — keeps the rich, hand-written
         # link sets in Python instead of the auto-generated YAML.
@@ -1684,85 +1787,16 @@ def _merge_scaffolded_network_registry() -> None:
             for key, value in _SCAFFOLD_SHOW_RESOURCES[slug].items():
                 if not meta.get(key):
                     meta[key] = value
-        if slug not in NETWORK_SHOWS:
+        existing = NETWORK_SHOWS.get(slug)
+        if existing is None:
             NETWORK_SHOWS[slug] = meta
-        if picker and slug not in _SHOW_PICKER_TAGS:
-            _SHOW_PICKER_TAGS[slug] = picker
+        else:
+            _merge_show_meta(existing, meta)
 
 
-# Per-show interest tags used by the "Find Your Show" picker on the
-# network landing page. Intentionally small and curated — every tag is a
-# button on the picker UI, and every show must claim at least one tag
-# from each category the picker groups by.
-#
-# Format: {slug: {topics: [...], audience: [...], language: [...]}}
-_SHOW_PICKER_TAGS = {
-    "tesla": {
-        "topics": ["tesla", "ev", "tech", "stocks", "energy"],
-        "audience": ["investors", "enthusiasts"],
-        "language": ["english"],
-    },
-    "omni_view": {
-        "topics": ["world-news", "politics", "balanced"],
-        "audience": ["professionals", "citizens"],
-        "language": ["english"],
-    },
-    "fascinating_frontiers": {
-        "topics": ["space", "astronomy", "science"],
-        "audience": ["enthusiasts", "students"],
-        "language": ["english"],
-    },
-    "planetterrian": {
-        "topics": ["longevity", "biotech", "health", "science"],
-        "audience": ["professionals", "enthusiasts"],
-        "language": ["english"],
-    },
-    "env_intel": {
-        "topics": ["environment", "climate", "regulatory"],
-        "audience": ["professionals"],
-        "language": ["english"],
-    },
-    "models_agents": {
-        "topics": ["ai", "tech", "research"],
-        "audience": ["builders", "professionals"],
-        "language": ["english"],
-    },
-    "models_agents_beginners": {
-        "topics": ["ai", "tech"],
-        "audience": ["students", "beginners"],
-        "language": ["english"],
-    },
-    "modern_investing": {
-        "topics": ["investing", "stocks", "personal-finance"],
-        "audience": ["investors", "professionals"],
-        "language": ["english"],
-    },
-    "finansy_prosto": {
-        "topics": ["personal-finance", "investing"],
-        "audience": ["newcomers", "families"],
-        "language": ["russian"],
-    },
-    "privet_russian": {
-        "topics": ["language-learning"],
-        "audience": ["students", "heritage-learners"],
-        "language": ["bilingual"],
-    },
-    "unintended_consequences": {
-        "topics": ["history", "policy", "technology", "narrative"],
-        "audience": ["enthusiasts", "professionals", "students"],
-        "language": ["english"],
-    },
-    "first_principles": {
-        "topics": ["engineering", "tech", "innovation", "narrative"],
-        "audience": ["builders", "professionals", "enthusiasts"],
-        "language": ["english"],
-    },
-}
-
-
-# Must run AFTER _SHOW_PICKER_TAGS is defined — the merge writes scaffolded
-# shows' picker tags into it (NameError at import time otherwise, which only
-# fires once network_meta.yaml has its first entry).
+# Must run AFTER _SCAFFOLD_SHOW_RESOURCES is defined — the merge layers those
+# curated resource blocks onto each scaffolded entry (NameError at import time
+# otherwise, which only fires once network_meta.yaml has its first entry).
 _merge_scaffolded_network_registry()
 
 
@@ -1955,7 +1989,7 @@ def _build_all_shows_list():
             "apple_podcasts_url": _apple_links_for(
                 cfg["slug"], cfg.get("apple_podcasts_url"))["apple_podcasts_url"],
             "spotify_url": cfg.get("spotify_url"),
-            "picker_tags": _SHOW_PICKER_TAGS.get(cfg["slug"], {}),
+            "picker_tags": cfg.get("picker_tags") or {},
             # ``strand`` groups shows that share a host or a format so the nav,
             # the footer and the homepage can name the group instead of
             # rendering 18 flat links. Today the only strand is "mira" — the
@@ -2220,7 +2254,7 @@ def generate_summaries_page(slug, *, dry_run=False):
         "hero_subtitle": f"The most recent {cfg['name']} episodes, summarised with a player for each. The complete archive, with transcripts, is on the blog.",
         "blog_page": f"blog/{cfg['slug']}/index.html",
         "all_shows": _build_all_shows_list(),
-        "page_lang": "ru" if slug in ("finansy_prosto", "privet_russian") else "en",
+        "page_lang": _show_lang.page_lang(slug),
         **_read_show_youtube(slug),
     }
 
@@ -2959,7 +2993,7 @@ def generate_show_page(slug, *, dry_run=False):
         # charter — never fabricated, never generated).
         dp_dispatches = _collect_dp_dispatches()
 
-    is_russian = slug in ("finansy_prosto", "privet_russian")
+    is_russian = _show_lang.is_russian(slug)
 
     yt_meta = _read_show_youtube(slug)
     # Phase 2 gallery: enable the embedded per-show gallery section
@@ -4560,12 +4594,8 @@ def _count_total_episodes() -> int:
 
 def _count_languages() -> int:
     """Count distinct languages across shows (en / ru currently)."""
-    langs = set()
-    for cfg in NETWORK_SHOWS.values():
-        if cfg.get("slug") in ("finansy_prosto", "privet_russian"):
-            langs.add("ru")
-        else:
-            langs.add("en")
+    langs = {_show_lang.page_lang(cfg.get("slug"))
+             for cfg in NETWORK_SHOWS.values()}
     return len(langs)
 
 
