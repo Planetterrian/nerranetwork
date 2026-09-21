@@ -2130,3 +2130,51 @@ class TestHerOwnVoiceIsNotPutInTheGuestsMouth:
         assert "muting by prediction alone" in self.BLEED
         # And the speaker's own ordinary volume is always safe.
         assert "np.minimum(predicted + ECHO_MARGIN_DB, own_db)" in self.BLEED
+
+
+class TestTheStudioChecksForHeadphonesRatherThanAskingNicely:
+    """Three of the last four guests recorded without headphones. Every email
+    already said to wear them, so saying it again was not the fix: the studio
+    now plays a tone through the speakers before the join and listens for it
+    on the microphone, and tells the guest what it heard."""
+
+    STUDIO = (ROOT / "age-of-ai-studio.html").read_text(encoding="utf-8")
+    WORKER = (ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")
+    FIRE = (V / "fire_interviews.py").read_text(encoding="utf-8")
+    BOOKING = (ROOT / "templates" / "email" / "voices_booking_confirmation.j2").read_text(encoding="utf-8")
+
+    def test_it_measures_rather_than_asks(self):
+        assert "var ECHO_HZ = 1180;" in self.STUDIO
+        assert "getFloatFrequencyData" in self.STUDIO
+        # A quiet baseline, then the tone, then the difference in decibels.
+        assert "measure(400, function (before)" in self.STUDIO
+        assert "var rise = during - before;" in self.STUDIO
+
+    def test_it_says_what_it_heard_in_plain_words(self):
+        assert "Your microphone can hear your speakers" in self.STUDIO
+        assert "your microphone hears only you" in self.STUDIO
+        assert "We can faintly hear your speakers" in self.STUDIO
+
+    def test_it_never_locks_the_guest_out(self):
+        """A guest who cannot find headphones must still be able to record."""
+        join = self.STUDIO[self.STUDIO.index('getElementById("joinBtn")'):]
+        join = join[:join.index("function join(")] if "function join(" in join else join[:4000]
+        assert "Never block the" in join
+        assert "costs us the episode" in join
+        assert "return" not in join.split("echoCheck();")[0].split("if (!isHost && !echoChecked)")[-1]
+
+    def test_the_verdict_reaches_the_operator(self):
+        assert 'path === "/voices/studio-echo"' in self.WORKER
+        assert "async function handleStudioEcho(" in self.WORKER
+        body = self.WORKER[self.WORKER.index("async function handleStudioEcho("):]
+        body = body[:body.index("async function handleStudioState(")]
+        assert "echo_check: record" in body
+        assert "is on speakers" in body
+        assert '"clean", "borderline", "speakers", "unknown"' in body
+
+    def test_the_emails_say_what_goes_wrong_not_just_what_to_do(self):
+        # "Headphones help a lot" is advice nobody acted on.
+        assert "headphones help a lot" not in self.FIRE
+        assert "her questions end up in the" in self.FIRE
+        assert "as though you had said" in self.BOOKING
+        assert "wearing headphones or" in self.BOOKING

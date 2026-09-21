@@ -96,6 +96,10 @@
     <label for="micSel">Microphone</label>
     <select id="micSel"></select>
     <div id="miclevel"><div></div></div>
+    <div class="guest-only" id="echoRow" style="margin:.5rem 0">
+      <button class="ghost" id="echoBtn" type="button">Check my headphones</button>
+      <span id="echoMsg" style="margin-left:.6rem;color:var(--muted)"></span>
+    </div>
     <div class="guest-only">
       <label for="camSel">Camera</label>
       <select id="camSel"></select>
@@ -428,9 +432,107 @@
     } catch (e) { /* meter is cosmetic */ }
   }
 
+  // ---- 2b. Can your microphone hear your speakers? ------------------------
+  // Sept 21 2026. Three of the last four guests recorded without headphones,
+  // so their microphone picked up Mira from their own speakers. That track is
+  // recorded with echo cancellation deliberately off (it exists for
+  // fidelity), which means her voice lands in the guest's recording and, from
+  // there, in the transcript attributed to the guest: Sameer Ranjan's
+  // transcript had him saying "I'm the AI age of 8" and "Nothing goes live".
+  // Telling people to wear headphones in an email plainly does not work.
+  // Showing them, ten seconds before they join, might.
+  //
+  // Play a quiet tone through the speakers and watch for it in the FFT bin it
+  // lives in. If the microphone hears it, the microphone will hear Mira too.
+  var ECHO_HZ = 1180;          // a bin of its own, well inside every mic's range
+  var echoChecked = false;
+  function echoCheck() {
+    var msg = document.getElementById("echoMsg");
+    var btn = document.getElementById("echoBtn");
+    if (!localStream) { msg.textContent = "Pick a microphone first."; return; }
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) { msg.textContent = ""; return; }
+    btn.disabled = true;
+    msg.style.color = "var(--muted)";
+    msg.textContent = "Listening… stay quiet for a moment.";
+    var ctx = new AC();
+    var an = ctx.createAnalyser();
+    an.fftSize = 4096;
+    ctx.createMediaStreamSource(localStream).connect(an);
+    var bins = new Float32Array(an.frequencyBinCount);
+    var bin = Math.round(ECHO_HZ / (ctx.sampleRate / an.fftSize));
+    function level() {
+      an.getFloatFrequencyData(bins);
+      // Average the target bin and its neighbours: a room shifts a tone a
+      // little, and one bin on its own is noisy.
+      var sum = 0, n = 0;
+      for (var i = bin - 1; i <= bin + 1; i++) { sum += bins[i]; n++; }
+      return sum / n;
+    }
+    function measure(ms, cb) {
+      var peak = -Infinity, until = performance.now() + ms;
+      (function loop() {
+        peak = Math.max(peak, level());
+        if (performance.now() < until) requestAnimationFrame(loop);
+        else cb(peak);
+      })();
+    }
+    var done = function (verdict, colour, text) {
+      echoChecked = true;
+      msg.style.color = colour;
+      msg.textContent = text;
+      btn.disabled = false;
+      btn.textContent = "Check again";
+      try { ctx.close(); } catch (e) { /* ignore */ }
+      // Tell the operator's side what we found, so a guest who joins anyway
+      // is not a surprise when the tape comes back.
+      try {
+        fetch(API + "/studio-echo", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ interview: interviewId, run_id: runId || null,
+                                 role: isHost ? "host" : "guest", verdict: verdict }),
+          keepalive: true,
+        }).catch(function () { /* advisory only */ });
+      } catch (e) { /* advisory only */ }
+    };
+    // Quiet baseline first, then the tone, then compare.
+    measure(400, function (before) {
+      var osc = ctx.createOscillator(), gain = ctx.createGain();
+      osc.frequency.value = ECHO_HZ;
+      gain.gain.value = 0.12;                  // audible, not unpleasant
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      measure(900, function (during) {
+        osc.stop();
+        var rise = during - before;            // decibels
+        if (!isFinite(rise)) { done("unknown", "var(--muted)", ""); return; }
+        if (rise > 12) {
+          done("speakers", "#b45309",
+               "Your microphone can hear your speakers. Mira's voice will end "
+               + "up in your recording. Headphones or earbuds fix it completely.");
+        } else if (rise > 6) {
+          done("borderline", "#b45309",
+               "We can faintly hear your speakers. Headphones would make this "
+               + "cleaner, or turn the volume down a little.");
+        } else {
+          done("clean", "#166534",
+               "Nothing coming back — your microphone hears only you.");
+        }
+      });
+    });
+  }
+  document.getElementById("echoBtn").addEventListener("click", echoCheck);
+
   // ---- 3. Join: SDK connect → one-time-key auth → call / auto-answer -------
   document.getElementById("joinBtn").addEventListener("click", function () {
     var btn = this;
+    // Offer the check to a guest who has not run it, once. Never block the
+    // join on it: a guest who cannot find their headphones must still be able
+    // to do the interview, and a locked door costs us the episode.
+    if (!isHost && !echoChecked) {
+      echoChecked = true;
+      try { echoCheck(); } catch (e) { /* advisory only */ }
+    }
     btn.disabled = true; btn.textContent = "Connecting…";
     join().catch(function (e) {
       console.error("[studio] join failed at step", joinStep, e);

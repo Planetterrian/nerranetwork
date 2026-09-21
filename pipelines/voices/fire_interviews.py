@@ -343,7 +343,11 @@ def send_reminders() -> None:
                     f"<p>Hi {app.get('name', 'there')},</p>"
                     f"<p>Mira is ready for you at <strong>"
                     f"{interview.get('scheduled_at', '')}</strong>. Join from a "
-                    f"computer in a quiet room — headphones help a lot:</p>"
+                    f"computer in a quiet room, and please wear headphones or "
+                    f"earbuds — without them your microphone records Mira's "
+                    f"voice as well as yours, and her questions end up in the "
+                    f"transcript as if you had said them. The studio checks "
+                    f"this for you before you join:</p>"
                     f'<p><a href="{show.studio_url(interview["id"])}">Join your '
                     f"interview</a></p>"
                     + (f'<p>If today does not work after all, '
@@ -372,8 +376,8 @@ def send_reminders() -> None:
                 text = (
                     f"Mira here, from {show.name} (Nerra Network). Your "
                     "interview starts in about two hours. Join from a "
-                    "computer in a quiet room (headphones or AirPods "
-                    "help a lot): "
+                    "computer in a quiet room, wearing headphones (without "
+                    "them your mic records Mira too): "
                     f"{show.studio_url(interview['id'])}"
                     + (f" — can't make it? {manage}" if manage else "")
                     + " — Mira"
@@ -461,7 +465,11 @@ def fire_due_interviews() -> int:
                     f"<p>Hi {app.get('name', 'there')},</p>"
                     f"<p>Mira is ready for you at <strong>"
                     f"{interview.get('scheduled_at', '')}</strong>. Join from a "
-                    f"computer in a quiet room — headphones help a lot:</p>"
+                    f"computer in a quiet room, and please wear headphones or "
+                    f"earbuds — without them your microphone records Mira's "
+                    f"voice as well as yours, and her questions end up in the "
+                    f"transcript as if you had said them. The studio checks "
+                    f"this for you before you join:</p>"
                     f'<p><a href="{show.studio_url(interview["id"])}">Join your '
                     f"interview</a></p>"
                     + (f'<p>If today does not work after all, '

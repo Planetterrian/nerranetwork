@@ -904,8 +904,13 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
      your personal browser studio:</p>
      <p><a href="${studio}"><strong>Join your interview here</strong></a>
      (bookmark it — it unlocks a few minutes before your slot).</p>
-     <p>To sound your best: use a computer in a quiet room, with headphones
-     or AirPods (a dedicated mic is even better). Camera is optional but
+     <p>To sound your best: use a computer in a quiet room and
+     <strong>wear headphones or earbuds</strong> (a dedicated mic is even
+     better, but the headphones matter more). Without them your microphone
+     picks up Mira's voice out of your speakers, which puts her half of the
+     conversation into your recording and her questions into the transcript as
+     though you had said them. The studio plays a tone and listens for it
+     before you join, so it will tell you either way. Camera is optional but
      appreciated — we record video for a future YouTube version. If the
      browser route doesn't work for you, reply to this email and Mira can
      call your phone instead.</p>
@@ -1695,6 +1700,48 @@ function adminTokenOk(env: Env, req: Request, bodyToken?: unknown): boolean {
 // `host_joined` come from the interview_runs columns that /voices/leg-event
 // and the interview-complete webhook maintain. `host_user` (the Voximplant
 // user the scenario dials) is only revealed to a host presenting ADMIN_TOKEN.
+/** The studio's pre-join headphone check, reported for the record.
+ *
+ *  Sept 21 2026: a guest whose microphone can hear their speakers records
+ *  Mira's voice into their own track, and from there into the transcript as
+ *  words they never said. Knowing before the interview beats finding out from
+ *  the tape, so the verdict is stored and a bad one is said out loud. It is
+ *  advisory in every direction: nobody is stopped from joining, and a failure
+ *  here never costs the interview.
+ */
+async function handleStudioEcho(req: Request, env: Env): Promise<Response> {
+  const body = await req.json<any>().catch(() => null);
+  const verdict = String(body?.verdict ?? "").trim();
+  if (!["clean", "borderline", "speakers", "unknown"].includes(verdict)) {
+    return json({ error: "verdict must be clean|borderline|speakers|unknown" }, 400);
+  }
+  const role = String(body?.role ?? "guest").trim() || "guest";
+  const runId = String(body?.run_id ?? "").trim();
+  const interviewId = String(body?.interview ?? "").trim();
+  const record = { verdict, role, at: new Date().toISOString() };
+  if (runId) {
+    await sb(env, "PATCH", `interview_runs?id=eq.${runId}`, { echo_check: record })
+      .catch(() => null);
+  }
+  if (verdict === "speakers" || verdict === "borderline") {
+    let who = role;
+    if (interviewId) {
+      const rows = await sb(env, "GET",
+        `interviews?id=eq.${interviewId}&select=application_id`).catch(() => null);
+      const appId = rows?.[0]?.application_id;
+      if (appId) {
+        const apps = await sb(env, "GET",
+          `guest_applications?id=eq.${appId}&select=name,show`).catch(() => null);
+        if (apps?.[0]?.name) who = `${apps[0].name} (${role})`;
+      }
+    }
+    await slack(env, `:headphones: studio echo check: ${who} is on speakers` +
+      (verdict === "borderline" ? " (faint)" : "") +
+      " — their microphone will carry Mira's voice into the recording.");
+  }
+  return json({ ok: true, verdict });
+}
+
 async function handleStudioState(req: Request, env: Env): Promise<Response> {
   const url = new URL(req.url);
   const interviewId = url.searchParams.get("interview") ?? "";
@@ -2165,6 +2212,7 @@ export default {
       if (req.method === "GET" && path === "/voices/guest-brief") return handleGuestBrief(req, env);
       if (req.method === "POST" && path === "/voices/fact-check") return handleFactCheck(req, env);
       if (req.method === "GET" && path === "/voices/studio-state") return handleStudioState(req, env);
+      if (req.method === "POST" && path === "/voices/studio-echo") return handleStudioEcho(req, env);
       if (req.method === "GET" && path === "/voices/health") return handleHealth(env);
       if (req.method === "POST" && path === "/voices/studio-auth") return handleStudioAuth(req, env);
       // Phase 2 co-host (Sept 2026)
