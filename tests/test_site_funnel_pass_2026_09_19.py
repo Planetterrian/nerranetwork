@@ -564,13 +564,24 @@ class TestPersonalAndNerraDailyArePlugged:
         }
         assert {"personal", "nerra_daily"} <= seen
 
-    def test_gallery_keeps_its_july_2026_weight(self):
-        """Adding two surfaces already dilutes every entry proportionally, so
-        there was nothing to make room for — and gallery's boost is a prior
-        operator decision, not spare capacity."""
+    def test_gallery_weight_is_the_september_decision(self):
+        """3 -> 2, operator-directed 2026-09-21.
+
+        The July boost gave the free image gallery 3 of 12 slots — a quarter of
+        every spoken outro, X reply and YouTube description — while the paid
+        product and the two newest properties held one each. It is still
+        weighted above every peer (asserted in
+        test_depth_and_network_discovery_2026_07_09), so the boost was reduced,
+        not removed. Changing this number reshuffles which surface every show
+        speaks on every future date, so it is a deliberate decision, never a
+        tidy-up: re-read the pool arithmetic before touching it.
+        """
         from engine.network_promo import NETWORK_SURFACES
         gallery = next(s for s in NETWORK_SURFACES if s["id"] == "gallery")
-        assert int(gallery["weight"]) == 3
+        assert int(gallery["weight"]) == 2
+        # The field is declared ``dict[str, str]`` — an int here would still
+        # parse but would break the module's own type contract.
+        assert isinstance(gallery["weight"], str)
 
     def test_spoken_copy_avoids_chapter_marker_trigger_phrases(self):
         """The module's own rule: spoken copy must not collide with the chapter

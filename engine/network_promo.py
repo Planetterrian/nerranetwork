@@ -111,7 +111,12 @@ COMPACT_PROMO_SHOWS = frozenset({"offshore_north"})
 NETWORK_SURFACES: list[dict[str, str]] = [
     {
         "id": "gallery",
-        "weight": "3",
+        # 3 -> 2 (Sep 21 2026, operator-directed). At weight 3 the free image
+        # gallery took 3 of 12 slots — a quarter of every spoken outro, X reply
+        # and YouTube description — while the paid product and the two newest
+        # properties took one each. It still outweighs every peer 2:1 and still
+        # never airs on consecutive days.
+        "weight": "2",
         "spoken": (
             "And on the website: every episode's visuals live in our free "
             "image gallery at nerranetwork.com/gallery — royalty-free under "
@@ -250,6 +255,41 @@ NETWORK_SURFACES: list[dict[str, str]] = [
             "Dispatch Wall"
         ),
         "url": "thedppod.html",
+    },
+    # Sep 21 2026 — the two newest properties were advertised NOWHERE on air.
+    # The interview shows carry the network's sharpest and most contestable
+    # claim, and the topic hubs are the whole of its search surface; neither
+    # had a rotation entry, so a listener could not be told either existed.
+    # Copy stays inside the narrow claim engine/brand.py owns: an AI asks the
+    # questions and the guest decides whether it ships. Do not widen it here —
+    # this text is handed to the model as {closing_block}, so a sentence
+    # written loosely is a sentence aired loosely.
+    {
+        "id": "mira",
+        "spoken": (
+            "Our interviews are hosted by Mira, the network's AI "
+            "documentarian, and the guest decides whether the conversation "
+            "is published at all — how that works is at "
+            "nerranetwork.com/mira."
+        ),
+        "x_line": (
+            "More from the Nerra Network: Mira hosts our interviews, and the "
+            "guest decides whether the episode ships"
+        ),
+        "url": "mira.html",
+    },
+    {
+        "id": "topics",
+        "spoken": (
+            "And if you would rather browse by subject than by show, every "
+            "subject the network covers has its own page at "
+            "nerranetwork.com/topics."
+        ),
+        "x_line": (
+            "More from the Nerra Network: browse every subject the network "
+            "covers by topic"
+        ),
+        "url": "topics/index.html",
     },
 ]
 

@@ -1895,3 +1895,50 @@ experiments:
       global fed by engine.funnel, never a literal, per CLAUDE.md's second
       standing rule. No prompt and no audio changed. Guards:
       tests/test_capture_measurement_2026_09_21.py.
+
+  - id: promo-rotation-mira-topics-2026-09-21
+    title: >
+      Put the two newest properties on air: mira and topics join the promo
+      rotation, gallery drops from 3 to 2
+    area: growth
+    shipped: 2026-09-21
+    readout: 2026-10-21
+    status: reading
+    hypothesis: >
+      The network's most differentiated claim and its entire search surface had
+      no rotation entry, so no listener could be told either existed, while the
+      free image gallery took 3 of 12 slots — a quarter of every spoken outro, X
+      reply and YouTube description. Two additions plus a reduction should send
+      the first traffic to /mira.html and /topics/ from audio and X, and should
+      stop four shows a day plugging the same surface.
+    baseline: >
+      2026-09-21: NETWORK_SURFACES held 10 entries over a 12-slot pool; gallery
+      3/12 = 25%, every other surface 1/12 = 8.3%; no entry for mira, topics or
+      nerra_voices. Site traffic to /mira.html was unmeasured (the page shipped
+      2026-09-20); GA4 28d showed age-of-ai.html 16 views and
+      nerra-voices.html 7. On 2026-09-22 the thirteen English shows spoke only
+      FOUR distinct surfaces between them.
+    target: >
+      By 10-21: /mira.html and a /topics/ page appear in api/ga4_stats.json
+      landing pages or in api/funnel.json's click stage with a parseable
+      campaign carrying the surface in the variant slot. Existence, not a rate —
+      at 282 sessions in 28 days a conversion rate cannot move measurably, and
+      the point of the variant slot is that "which plug earns clicks" becomes
+      answerable at all. Secondary, already verified rather than predicted: a
+      day's slate now speaks 12 distinct surfaces instead of 4.
+    notes: >
+      AUDIO-AFFECTING — the first episodes after merge are the A/B-listen set
+      (landmine #17), and the thing to listen for is whether the model KEPT the
+      new sentence: `spoken` is prompt text rendered into {closing_block} under
+      "do not rewrite it", not deterministic insertion, and the model has
+      dropped part of a promo frame before (MIT Ep171). The Mira line carries
+      the narrow claim only — the guest decides whether the conversation is
+      published — and no superlative, because a superlative needs its basis and
+      correction invitation beside it and a spoken outro can carry neither.
+      Gallery was reduced, not removed: still 2:1 over every peer and still
+      never on consecutive days. The pool length had to stay coprime with the
+      per-show offset stride of 3 or the shows re-collapse into a few phase
+      classes; that invariant is pinned rather than commented. offshore_north
+      still speaks no surface (COMPACT_PROMO_SHOWS) and the Russian shows are
+      excluded structurally. Revert is deleting two dict entries and restoring
+      one string. Guards: tests/test_rotation_pass_2026_09_21.py.
