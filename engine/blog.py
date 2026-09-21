@@ -1517,21 +1517,59 @@ def generate_blog_post_html(
     return template.render(**context)
 
 
+#: Posts per page on a SHOW's blog index. Matches the network hub's own
+#: page size so the two archives read the same way.
+#:
+#: Sep 21 2026: the per-show indexes were complete lists. Tesla's was 217
+#: cards and 232 KB — every card carrying a date, an episode number, a
+#: reading time, a 160-character hook and a language rail — served to a
+#: phone that wanted the latest episode, growing by one card a day forever.
+#: The Sep 3 pass capped the network hub for exactly this reason and left
+#: the per-show ones "complete"; completeness is now pages, which is the
+#: same promise with a bounded first byte.
+BLOG_INDEX_POSTS_PER_PAGE = 24
+
+
+def blog_index_page_count(total_posts: int,
+                          per_page: int = BLOG_INDEX_POSTS_PER_PAGE) -> int:
+    """How many pages *total_posts* needs. Always at least one."""
+    if per_page <= 0:
+        return 1
+    return max(1, -(-int(total_posts) // per_page))
+
+
+def blog_index_page_path(show_slug: str, page: int) -> str:
+    """Site-relative path of one page of a show's index.
+
+    Page 1 is ``index.html`` and NOT ``page1.html``: it is the URL the whole
+    site, every feed and every search engine already points at, and moving it
+    would retire ~18 live URLs to save a branch.
+    """
+    return (f"blog/{show_slug}/index.html" if page <= 1
+            else f"blog/{show_slug}/page{page}.html")
+
+
 def generate_blog_index_html(
     posts: list[dict],
     show_config: dict,
     template_env,
+    *,
+    page: int = 1,
+    total_pages: int = 1,
 ) -> str:
-    """Generate a blog index/listing page for a show.
+    """Generate one page of a show's blog index.
 
     Parameters
     ----------
     posts : list[dict]
-        List of metadata dicts (from extract_blog_metadata), newest first.
+        Metadata dicts for THIS PAGE only, newest first.
     show_config : dict
         Show entry from NETWORK_SHOWS.
     template_env :
         Jinja2 Environment.
+    page, total_pages :
+        Which page this is and how many there are. The defaults render a
+        single unpaginated page, byte-identical to the previous behaviour.
     """
     from generate_html import _build_all_shows_list, _path_prefix
 
@@ -1560,7 +1598,26 @@ def generate_blog_index_html(
         "description": show_config.get("description", ""),
         "posts": posts,
         "blog_rss_url": f"https://nerranetwork.com/blog_{show_slug}.rss",
+        # Pagination. total_pages == 1 renders no pager at all, so a show
+        # with one page is unchanged.
+        "page": page,
+        "total_pages": total_pages,
+        "prev_page_url": (Path(blog_index_page_path(show_slug, page - 1)).name
+                          if page > 1 else ""),
+        "next_page_url": (Path(blog_index_page_path(show_slug, page + 1)).name
+                          if page < total_pages else ""),
+        "page_urls": [Path(blog_index_page_path(show_slug, n)).name
+                      for n in range(1, total_pages + 1)],
     }
+
+    # Page 2 onward is its own canonical URL. Pointing them all at page 1
+    # would tell a crawler the deep archive does not exist, which is the
+    # opposite of why the pages are here.
+    if page > 1:
+        context["canonical_url"] = (
+            f"https://nerranetwork.com/{blog_index_page_path(show_slug, page)}")
+        context["page_title"] = (
+            f"{show_config['name']} Blog — page {page}")
 
     return template.render(**context)
 
