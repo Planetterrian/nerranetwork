@@ -2058,3 +2058,75 @@ class TestTheLoopClosesItself:
         assert "except Exception:" in block
         for fn in ("adopt_lessons", "retire_lessons", "save_grade"):
             assert "except Exception:" in _pyfn(fn, self.LEARNING), fn
+
+
+class TestHerOwnVoiceIsNotPutInTheGuestsMouth:
+    """Sept 21 2026, Sameer Ranjan. The studio records the guest's microphone
+    with echo cancellation deliberately off, for fidelity, so a guest without
+    headphones records Mira out of their own speakers. Whatever the bleed gate
+    left was transcribed as HIM: "I'm the AI age of 8", "Nothing goes live",
+    "Where are you calling from?". That transcript is what the guest approves,
+    what the episode page publishes, and what the producer's pass reads — and
+    it had already produced a lesson about Mira repeating her questions, from
+    her own echo."""
+
+    POST = (V / "post_interview.py").read_text(encoding="utf-8")
+    RETRO = (V / "prompts" / "editorial_passes" / "09_interview_retro.txt").read_text(encoding="utf-8")
+    BLEED = (V / "audio" / "bleed.py").read_text(encoding="utf-8")
+
+    def _strip(self):
+        import importlib, sys as _sys, os as _os
+        _sys.path.insert(0, str(V))
+        _os.environ.setdefault("SUPABASE_URL", "http://x")
+        _os.environ.setdefault("SUPABASE_SERVICE_KEY", "x")
+        return importlib.import_module("post_interview").strip_echo_lines
+
+    def test_a_garbled_fragment_of_her_line_is_dropped(self):
+        strip = self._strip()
+        out, dropped = strip(
+            "[00:24] Sameer: I'm the AI age of 8.\n"
+            "[00:26] Mira: I'm the AI who hosts the Age of AI, the first podcast.\n"
+            "[00:41] Sameer: Nothing goes live.\n"
+            "[00:44] Mira: Nothing goes live.\n"
+            "[00:54] Sameer: Where are you calling from?\n"
+            "[00:56] Mira: Where are you calling from today?\n", "Mira")
+        assert dropped == 3
+        assert "Sameer" not in out
+
+    def test_a_guest_leaning_on_the_question_survives(self):
+        strip = self._strip()
+        out, dropped = strip(
+            "[13:00] Mira: Where do you draw the line on what you will recommend?\n"
+            "[13:06] Vincent: I draw the line at anything I cannot show evidence for.\n"
+            "[33:41] Mira: What's the one bet you're making that you cannot prove yet?\n"
+            "[33:55] Sameer: That I have not proved it yet but I wish to prove it soon.\n",
+            "Mira")
+        assert dropped == 0
+        assert "Vincent" in out and "Sameer" in out
+
+    def test_a_short_agreement_is_always_the_guests(self):
+        strip = self._strip()
+        _, dropped = strip("[01:00] Mira: Exactly.\n[01:02] Sameer: Exactly.\n", "Mira")
+        assert dropped == 0
+
+    def test_it_runs_before_anyone_reads_the_transcript(self):
+        # The editorial passes, the guest's review copy and the grading pass
+        # must all see the cleaned version, so the strip happens where the
+        # transcript is first assembled.
+        i_strip = self.POST.index('strip_echo_lines(transcript, "Mira")')
+        assert i_strip < self.POST.index("package = run_editorial_passes(")
+        assert i_strip < self.POST.index("09_interview_retro.txt")
+
+    def test_the_grader_is_warned_not_to_trust_it_either(self):
+        flat = _flat(self.RETRO)
+        assert "BE SUSPICIOUS OF THE TRANSCRIPT ITSELF" in flat
+        assert "it is her voice in their microphone" in flat
+        assert "never conclude she repeated herself from it" in flat
+
+    def test_a_loud_echo_is_caught_by_prediction_not_by_level(self):
+        assert "def echo_fit(" in self.BLEED
+        assert "ECHO_MARGIN_DB" in self.BLEED
+        # The level test giving up must not end the attempt.
+        assert "muting by prediction alone" in self.BLEED
+        # And the speaker's own ordinary volume is always safe.
+        assert "np.minimum(predicted + ECHO_MARGIN_DB, own_db)" in self.BLEED

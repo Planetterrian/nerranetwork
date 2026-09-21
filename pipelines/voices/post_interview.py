@@ -29,6 +29,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -786,6 +787,88 @@ def diarized_transcript_three(tracks: dict, app: dict, workdir: Path,
                            offsets=offsets)
 
 
+_ECHO_SAME_RATIO = 0.75      # how alike two lines must be to be one line twice
+_ECHO_WINDOW_SEC = 8.0       # how far apart the echo can land from the original
+
+
+def strip_echo_lines(transcript: str, host_label: str = "Mira") -> tuple[str, int]:
+    """Take the host's own words out of everyone else's lines.
+
+    Sept 21 2026, Sameer Ranjan. The studio records the guest's microphone
+    with echo cancellation deliberately OFF, because the point of that track
+    is fidelity — so a guest without headphones records Mira coming back out
+    of their own speakers. The bleed gate mutes most of it, but whatever
+    survives is transcribed and attributed to the guest, and his transcript
+    opened with him saying "I'm the AI age of 8", "Nothing goes live" and
+    "Where are you calling from?" — all of them hers.
+
+    That is not a cosmetic problem. It is the transcript the guest reads and
+    approves, the transcript published on the episode page, and the
+    transcript the producer's pass reads when deciding what Mira did wrong:
+    one of the lessons adopted on Sept 21 cited her own echo as evidence that
+    she repeats herself.
+
+    So any non-host line that says what the host says within a few seconds of
+    her saying it is dropped as echo. Text is a far better discriminator than
+    level here: two people do not independently utter the same sentence
+    seconds apart, and a guest agreeing "yes" or "right" is too short to
+    match. Returns the cleaned transcript and how many lines went.
+    """
+    import difflib
+
+    def norm(text: str) -> str:
+        return re.sub(r"[^a-z0-9 ]", "", text.lower()).strip()
+
+    rows: list[tuple[str, str, float, str]] = []   # (raw line, speaker, sec, text)
+    for line in (transcript or "").splitlines():
+        m = re.match(r"^\[(\d{1,2}):(\d{2})\]\s*([^:]+):\s*(.*)$", line.strip())
+        if m:
+            rows.append((line, m.group(3).strip(),
+                         int(m.group(1)) * 60 + int(m.group(2)), m.group(4).strip()))
+        else:
+            rows.append((line, "", -1.0, ""))
+
+    host_said = [(sec, norm(text)) for _, spk, sec, text in rows
+                 if spk.lower() == host_label.lower() and sec >= 0 and len(text.split()) >= 3]
+    kept: list[str] = []
+    dropped = 0
+    for line, spk, sec, text in rows:
+        if not spk or spk.lower() == host_label.lower() or sec < 0:
+            kept.append(line)
+            continue
+        candidate = norm(text)
+        # Three words is the floor: "yes", "right", "exactly" are the guest
+        # agreeing, and they belong to him however often she says them too.
+        if len(candidate.split()) < 3:
+            kept.append(line)
+            continue
+        echo = False
+        for when, said in host_said:
+            if abs(when - sec) > _ECHO_WINDOW_SEC:
+                continue
+            # A whole-string ratio is the wrong measure here. The echo that
+            # survives is a GARBLED FRAGMENT of a longer line of hers — "I'm
+            # the AI age of 8" out of "I'm the AI who hosts The Age of AI,
+            # the first podcast..." — so the question is how much of the
+            # guest's line is accounted for by hers, not how alike the two
+            # strings are end to end. Sum the matching blocks and divide by
+            # the guest's own length.
+            matcher = difflib.SequenceMatcher(None, candidate, said)
+            covered = sum(b.size for b in matcher.get_matching_blocks())
+            if covered / max(len(candidate), 1) >= _ECHO_SAME_RATIO:
+                echo = True
+                break
+        if echo:
+            dropped += 1
+        else:
+            kept.append(line)
+    if dropped:
+        logger.warning("transcript: dropped %d line(s) attributed to a guest that "
+                       "were %s's own voice coming back through their microphone",
+                       dropped, host_label)
+    return "\n".join(kept), dropped
+
+
 def run_editorial_passes(transcript: str, interview: dict, app: dict) -> dict:
     show = show_for(interview, app)
     package: dict = {}
@@ -935,6 +1018,9 @@ def main() -> int:
             # original two-track path off the raw Voximplant stereo.
             mixed = mix_interview(raw, workdir / "mixed.wav")
             transcript, confidence = diarized_transcript(raw, workdir)
+        # Whatever the bleed gate left of Mira in someone else's microphone
+        # stops here, before anyone reads it as something the guest said.
+        transcript, echoed_lines = strip_echo_lines(transcript, "Mira")
         mixed_url = r2_upload(mixed, show.r2_key("raw", f"{run['id']}_{stamp}_mixed.wav"))
         # A review copy both humans can actually stream. The mixed WAV is
         # ~250 MB for a 45-minute call, which is a cruel thing to put in

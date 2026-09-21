@@ -32,6 +32,8 @@ BLEED_MIN_GAP_DB = 6.0      # bleed must sit at least this far under the voice
 BLEED_FLOOR_DB = -60.0      # anything under this is silence, not bleed
 BLEED_REACH_SEC = 1.0       # the other voice's reach either side (transmission lag)
 BLEED_HOLD_SEC = 0.25       # mute/unmute smoothing so words are not clipped
+ECHO_MAX_LAG_SEC = 1.5      # how far behind the other track the echo can sit
+ECHO_MARGIN_DB = 4.0        # how far above the predicted echo a real voice must be
 _EPS = 1e-6
 
 
@@ -44,6 +46,15 @@ def _dilate(mask: np.ndarray, frames: int) -> np.ndarray:
         return mask
     kernel = np.ones(2 * frames + 1)
     return np.convolve(mask.astype(np.float32), kernel, mode="same") > 0
+
+
+def _own_level(track: np.ndarray, others_on: np.ndarray) -> Optional[float]:
+    """This speaker's own level, measured where nobody else is talking."""
+    tdb = _db(track)
+    alone = tdb[(~others_on) & (tdb > BLEED_FLOOR_DB)]
+    if len(alone) < 50 * ROOM_ENVELOPE_SR:
+        return None
+    return float(np.percentile(alone, 75))
 
 
 def measure_bleed(track: np.ndarray, others: np.ndarray,
@@ -77,6 +88,61 @@ def measure_bleed(track: np.ndarray, others: np.ndarray,
     return own_db, bleed_db, gate_db
 
 
+def echo_fit(track: np.ndarray, others: np.ndarray, others_on: np.ndarray,
+             own_db: float) -> Optional[Tuple[int, float]]:
+    """``(lag_frames, offset_db)`` describing this track's echo of the others.
+
+    Sept 21 2026, Sameer Ranjan. A level gate cannot separate a loud echo
+    from a quiet speaker: his own voice measured -46.5 dB and the echo of
+    Mira through his laptop speakers peaked within six of that, so the gate
+    landed at -49.5 dB — three decibels under his voice — and her louder
+    syllables walked straight through it. Her words then appear in his
+    transcript, attributed to him, which is what the producer's pass reads
+    when it decides what Mira did wrong.
+
+    But the echo is not an unknown signal. It is a delayed, quieter copy of
+    a track we already have, so it can be predicted rather than guessed at:
+    find the delay, find how far under the original it sits, and anything
+    that matches that prediction is echo however loud it is. What the
+    speaker actually says is not predictable from someone else's track, so
+    it survives.
+    """
+    tdb, odb = _db(track), _db(others)
+    # Fit on every frame where the others are talking. The temptation is to
+    # exclude frames louder than the speaker's own level, on the grounds that
+    # those must be the speaker — but a loud echo lives exactly there, and
+    # excluding it leaves nothing to fit (the first version of this returned
+    # "no echo" for the loudest cases, which are the ones that matter). The
+    # speaker's genuine overlaps are a minority of these frames, so a median
+    # and an interquartile spread survive them.
+    base = others_on & (tdb > BLEED_FLOOR_DB)
+    if base.sum() < 5 * ROOM_ENVELOPE_SR:
+        return None
+    best: Optional[Tuple[int, float]] = None
+    best_spread = None
+    for lag in range(0, int(ECHO_MAX_LAG_SEC * ROOM_ENVELOPE_SR) + 1):
+        shifted = np.roll(odb, lag)
+        usable = base.copy()
+        if lag:
+            usable[:lag] = False
+        if usable.sum() < 5 * ROOM_ENVELOPE_SR:
+            continue
+        diff = tdb[usable] - shifted[usable]
+        # The right lag is the one where the gap between the two tracks is
+        # most nearly CONSTANT: that is what "the same sound, quieter and
+        # later" means. A wrong lag lines speech up against silence and the
+        # gap scatters.
+        spread = float(np.percentile(diff, 75) - np.percentile(diff, 25))
+        if best_spread is None or spread < best_spread:
+            best_spread, best = spread, (lag, float(np.median(diff)))
+    if best is None or best_spread is None or best_spread > 12.0:
+        # Nothing that behaves like a copy of the other track.
+        return None
+    logger.info("bleed: echo fits at %.2fs behind, %.1f dB under (spread %.1f dB)",
+                best[0] / ROOM_ENVELOPE_SR, -best[1], best_spread)
+    return best
+
+
 def strip_bleed(track_wav: Path, others: Iterable[Path], workdir: Path,
                 label: str = "track") -> Tuple[Path, dict]:
     """Return ``(path, stats)``: the track with the others' bleed muted, or
@@ -94,18 +160,45 @@ def strip_bleed(track_wav: Path, others: Iterable[Path], workdir: Path,
         return Path(track_wav), {"bleed": False}
     track = track[:n]
     other = np.max(np.stack([e[:n] for e in envs]), axis=0)
-    found = measure_bleed(track, other)
-    if found is None:
-        logger.info("bleed: %s is clean", label)
-        return Path(track_wav), {"bleed": False}
-    own_db, bleed_db, gate_db = found
     others_on = _dilate(_db(other) > BLEED_FLOOR_DB + 10,
                         int(BLEED_REACH_SEC * ROOM_ENVELOPE_SR))
     tdb = _db(track)
+    found = measure_bleed(track, other)
+    if found is None:
+        # A level test alone says "nothing safe to remove" in two opposite
+        # situations: there is no echo, and the echo is so loud it looks like
+        # the speaker. The second one is the dangerous one, so before giving
+        # up, ask whether this track can be PREDICTED from the others'. If it
+        # can, the level test was simply the wrong instrument.
+        own_db = _own_level(track, others_on)
+        fit = echo_fit(track, other, others_on, own_db) if own_db is not None else None
+        if fit is None:
+            logger.info("bleed: %s is clean", label)
+            return Path(track_wav), {"bleed": False}
+        logger.warning("bleed: %s carries the others almost as loudly as its "
+                       "owner — muting by prediction alone", label)
+        bleed_db, gate_db = own_db, BLEED_FLOOR_DB
+    else:
+        own_db, bleed_db, gate_db = found
     # Mute where the others are talking and this track is no louder than
     # the bleed would be. A speaker who talks over someone is above the
     # gate and stays.
     loud = tdb >= gate_db
+    # Where the echo can be predicted from the track it came from, the level
+    # gate is only the floor: this track must also be louder than the echo
+    # the others' audio predicts before it counts as its owner speaking.
+    fit = echo_fit(track, other, others_on, own_db)
+    if fit is not None:  # noqa: SIM102 — the predictor is the primary rule
+        lag, offset_db = fit
+        predicted = np.roll(_db(other), lag) + offset_db
+        if lag:
+            predicted[:lag] = BLEED_FLOOR_DB
+        # Never demand more of the speaker than their own ordinary volume.
+        # Without this cap a guest who interrupts quietly while the host is
+        # loud gets muted for it, and "your microphone carries only you"
+        # would quietly come to mean "only when you are the loudest".
+        threshold = np.minimum(predicted + ECHO_MARGIN_DB, own_db)
+        loud = loud & (tdb >= threshold)
     # The speaker talking over someone is loud for a sustained stretch; the
     # bleed's loudest syllables are isolated frames. Open the gate only for
     # a run that stays loud most of the time, then widen it so the edges of
@@ -118,7 +211,10 @@ def strip_bleed(track_wav: Path, others: Iterable[Path], workdir: Path,
     muted_sec = float(mute.sum()) / ROOM_ENVELOPE_SR
     stats = {"bleed": True, "own_db": round(own_db, 1),
              "bleed_db": round(bleed_db, 1), "gate_db": round(gate_db, 1),
-             "muted_sec": round(muted_sec, 1)}
+             "muted_sec": round(muted_sec, 1),
+             "echo_lag_sec": (round(fit[0] / ROOM_ENVELOPE_SR, 2)
+                              if fit is not None else None),
+             "echo_under_db": round(-fit[1], 1) if fit is not None else None}
     logger.info("bleed: %s carries the others at %.0f dB under the voice; "
                 "muting %.0fs of it", label, own_db - bleed_db, muted_sec)
     out = workdir / (Path(track_wav).stem + "_clean.wav")
