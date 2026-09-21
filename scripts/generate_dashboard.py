@@ -3271,6 +3271,29 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
         except Exception as exc:  # noqa: BLE001
             section["newsletter"] = {"configured": True, "error": str(exc)}
 
+    # Sep 2026 — paid membership. Nerra Personal has been sellable since
+    # August and had no committed record of whether anyone bought it, so the
+    # one product with revenue attached was the one number nobody could read.
+    # Counts only; `null` where a source does not exist (Stripe is not wired,
+    # so revenue stays null rather than being shown as $0).
+    section["membership"] = {"configured": False}
+    mm_path = root / "api" / "member_metrics.json"
+    if mm_path.exists():
+        try:
+            data = json.loads(mm_path.read_text(encoding="utf-8"))
+            section["membership"] = {
+                "configured": bool(data.get("configured")),
+                "generated_at": data.get("generated_at"),
+                "paid_active_total": data.get("paid_active_total"),
+                "by_tier": data.get("by_tier") or {},
+                "with_city_brief": data.get("with_city_brief"),
+                "on_default_lineup": data.get("on_default_lineup"),
+                "mrr_usd": data.get("mrr_usd"),
+                "note": data.get("note"),
+            }
+        except Exception as exc:  # noqa: BLE001
+            section["membership"] = {"configured": True, "error": str(exc)}
+
     # July 18 2026 — YouTube channel growth (subscribers were previously
     # tracked NOWHERE). Reads the channels block written by
     # fetch_youtube_analytics (schema v2) + the daily snapshot history for

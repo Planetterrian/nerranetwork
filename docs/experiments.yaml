@@ -1835,3 +1835,63 @@ experiments:
       per the Sep 3 source-only convention.
       No prompt and no audio changed. Guards:
       tests/test_topic_hubs_2026_09_20.py.
+
+  - id: capture-measurement-2026-09-21
+    title: >
+      Make the capture end of the funnel readable: a source on every signup
+      form, tags that reach an existing subscriber, and paid membership counted
+    area: funnel
+    shipped: 2026-09-21
+    readout: 2026-10-21
+    status: reading
+    hypothesis: >
+      Phase 1 made CLICKS traceable and the capture end stayed dark, so no
+      change to the Personal funnel — the operator's first priority — could be
+      scored at all. Three things were wrong and none of them was the part that
+      looked broken. resolveSubscribeTags was fine; the Worker applied tags on
+      CREATE only, so an address already on the list could never acquire one.
+      No first-party form sent `source`, so capture.by_source was structurally
+      incapable of ever holding a row, however long we waited. And paid
+      membership — the one product with revenue attached — had no committed
+      artifact anywhere in the repo. Fixing the three makes the question "which
+      surface produced this subscriber, and is anyone paying" answerable from
+      the record rather than from a guess.
+    baseline: >
+      2026-09-20 nightly: 5 subscribers, tag_counts {}, source_counts {},
+      capture.by_source {}, attribution_coverage_pct 3.5%, 10 attributed
+      sessions of 285. select_personal_upsell had been firing from the Nerra
+      Daily upsell band since 2026-09-19 and was read by nothing.
+      api/member_metrics.json did not exist and no script wrote it; a repo-wide
+      grep for member_metrics returned zero hits.
+    target: >
+      By 10-21: capture.by_source holds at least one row, select_personal_upsell
+      appears in api/ga4_stats.json, and api/member_metrics.json reports a
+      paid_active_total. Those are existence checks on purpose — NOT a
+      conversion rate. At 282 sessions and 5 subscribers in 28 days no rate can
+      move measurably in a month, and scoring this on conversion would be
+      scoring noise. Whether anyone subscribes is the next question, and it
+      needs these three to be answerable at all.
+    notes: >
+      The upsell event is a SEPARATE GA4 report from conversions, not a wider
+      filter: build_funnel._captures() sums every row of the conversions report
+      into signup_events_total, so an engagement event in that list would have
+      reported an intention as a subscriber. Named vocabularies
+      (CONVERSION_EVENTS / ENGAGEMENT_EVENTS) so the next event a template
+      fires is not silently dropped — this is the fourth instance of the "a
+      result key is not a metric" class after grok_image_px_max,
+      caption_track_uploaded and the OP3 prefix. The Worker's duplicate path
+      now merges tags as a UNION, because PATCH replaces the array and sending
+      only the wanted tags would strip a member's show subscriptions on their
+      next footer signup — a data loss that would look exactly like a working
+      signup; every merge failure still reports the subscribe as successful,
+      since an attribution tag is not worth a 502 on someone's signup.
+      member_metrics is counts and show histograms ONLY, never a name, city,
+      email or feed token: the admin endpoint returns first_name and city, and
+      at five members that identifies a person, in a file committed to a public
+      repo. free_accounts, mrr_usd and trialing are null because no wired source
+      can answer them — Stripe is read by nothing in this repo. Unmeasured is
+      null, never 0, and a run with no token leaves real counts alone rather
+      than overwriting them. The forms render the capture tag from a Jinja
+      global fed by engine.funnel, never a literal, per CLAUDE.md's second
+      standing rule. No prompt and no audio changed. Guards:
+      tests/test_capture_measurement_2026_09_21.py.

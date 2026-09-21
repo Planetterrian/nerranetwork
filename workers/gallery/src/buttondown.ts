@@ -38,6 +38,10 @@ export interface SubscribeResult {
    *  limit", which cost an afternoon on 2026-08-26 when signup broke
    *  and the log said only BUTTONDOWN_HTTP_400. */
   detail?: string;
+  /** On an already-subscribed address: the tags this request ADDED, or
+   *  `null` when the merge could not be attempted. `[]` means the
+   *  subscriber already carried every tag we would have set. */
+  tagsMerged?: string[] | null;
 }
 
 
@@ -94,7 +98,19 @@ export async function subscribe(
   // it as an idempotent re-subscribe.
   const body = await safeText(resp);
   if (resp.status === 400 && /already|exists|present/i.test(body)) {
-    return { ok: true, alreadySubscribed: true, status: resp.status };
+    // ...but returning here was how tags became unreachable for anyone
+    // already on the list (Sep 2026). Tags were applied on CREATE only, so
+    // an address already in Buttondown when the tagged path shipped could
+    // never acquire `nerra-member`, a show tag, or a `src-*` source however
+    // many times they resubmitted the form — which is why all five
+    // subscribers read untagged and `capture.by_source` was empty.
+    const merged = await mergeTags(apiKey, email, tags);
+    return {
+      ok: true,
+      alreadySubscribed: true,
+      status: resp.status,
+      tagsMerged: merged,
+    };
   }
 
   return {
@@ -164,6 +180,61 @@ export async function isSubscribed(
       r.email_address.toLowerCase() === want,
   );
   return { ok: true, exists, status: 200 };
+}
+
+/** Add `wanted` to an existing subscriber's tags, keeping what they have.
+ *
+ * Buttondown's PATCH REPLACES the tag array, so this reads the current tags
+ * and sends the union. Sending `wanted` alone would silently strip a member's
+ * show subscriptions the first time they re-used the footer form — a data loss
+ * that would look exactly like a working signup.
+ *
+ * Best-effort by contract: every failure returns `null` and the caller still
+ * reports the subscribe as successful, because the visitor IS on the list and
+ * an attribution tag is not worth a 502 on their signup.
+ */
+async function mergeTags(
+  apiKey: string,
+  email: string,
+  wanted: string[],
+): Promise<string[] | null> {
+  if (!wanted.length) return [];
+  try {
+    const lookup = await fetch(
+      `${BUTTONDOWN_BASE}/subscribers?email=${encodeURIComponent(email)}`,
+      {
+        headers: {
+          Authorization: `Token ${apiKey}`,
+          Accept: "application/json",
+        },
+      },
+    );
+    if (!lookup.ok) return null;
+    const payload = (await lookup.json()) as any;
+    const record = (payload?.results ?? [])[0];
+    const id = record?.id;
+    if (typeof id !== "string" || !id) return null;
+
+    const existing: string[] = Array.isArray(record.tags)
+      ? record.tags.filter((t: unknown) => typeof t === "string")
+      : [];
+    const have = new Set(existing.map((t) => t.toLowerCase()));
+    const added = wanted.filter((t) => !have.has(t.toLowerCase()));
+    if (!added.length) return [];
+
+    const patch = await fetch(`${BUTTONDOWN_BASE}/subscribers/${id}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Token ${apiKey}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ tags: [...existing, ...added] }),
+    });
+    return patch.ok ? added : null;
+  } catch {
+    return null;
+  }
 }
 
 async function safeText(resp: Response): Promise<string> {

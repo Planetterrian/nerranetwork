@@ -56,7 +56,13 @@ import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SHOWS_DIR = PROJECT_ROOT / "shows"
-BUTTONDOWN_API_BASE = "https://api.buttondown.email/v1"
+# api.buttondown.com is the host the repo's other two Python clients
+# use (engine/newsletter.py, scripts/fetch_buttondown_stats.py) and the
+# one whose reads are demonstrably working. The Cloudflare Worker still
+# posts to api.buttondown.email (workers/gallery/src/buttondown.ts) —
+# both hosts are live, and that write path is deliberately left alone
+# rather than flipped without a key to verify against.
+BUTTONDOWN_API_BASE = "https://api.buttondown.com/v1"
 
 
 def _load_show_tags() -> Dict[str, str]:

@@ -188,6 +188,14 @@ jobs:
       # silently report yesterday's funnel; running it later would give
       # the dashboard a stale one (the same ordering bug the July 24 lake
       # pass found on the content lake).
+      # Paid membership, counts only (never a name, city or token — the file
+      # is committed publicly). Clean no-op without PERSONAL_ADMIN_TOKEN, and
+      # it will not overwrite real counts with nulls.
+      - name: Aggregate paid-member counts
+        env:
+          PERSONAL_ADMIN_TOKEN: ${{ secrets.PERSONAL_ADMIN_TOKEN }}
+        run: python scripts/build_member_metrics.py --out api/member_metrics.json || echo "::warning::Member metrics build failed (non-fatal)"
+
       - name: Build the funnel (reach -> click -> visit -> capture)
         run: python scripts/build_funnel.py --out api/funnel.json || echo "::warning::Funnel build failed (non-fatal)"
 
@@ -390,6 +398,7 @@ jobs:
             api/op3_stats.json
             api/op3_history.json
             api/buttondown_stats.json
+            api/member_metrics.json
             api/ga4_stats.json
             api/spotify_stats.json
             api/apple_stats.json

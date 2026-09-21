@@ -31,6 +31,7 @@ from jinja2 import Environment, FileSystemLoader
 # for the May 7 2026 operator-caught regression that prompted this.
 from engine.utils import strip_lone_surrogates as _strip_lone_surrogates
 from engine import titles as _titles
+from engine import funnel as F
 
 ROOT = Path(__file__).resolve().parent
 TEMPLATES_DIR = ROOT / "templates"
@@ -2134,6 +2135,13 @@ def _get_jinja_env():
     # Organization JSON-LD can never disagree about which handle is ours.
     env.globals["network_social"] = network_social_links()
     env.globals["network_x_handle"] = NETWORK_SOCIAL["x"]["handle"]
+    # The capture tag a first-party signup form sends, from the module that
+    # owns the closed vocabulary (CLAUDE.md's second standing rule) — never a
+    # literal in a template. Until Sep 2026 none of the three site forms sent
+    # a source at all, so `api/funnel.json`'s `capture.by_source` was
+    # structurally incapable of ever holding a row: the Worker accepted the
+    # whole allow-list and nothing exercised it.
+    env.globals["capture_source_site"] = F.source_tag(F.SOURCE_SITE)
     # The Mira claim, its basis and its correction invitation. Registered as a
     # global rather than threaded through each generator's context so that
     # every surface renders the same three paragraphs from engine/brand.py —
@@ -3376,7 +3384,7 @@ _SHOW_DIRS = {
 }
 
 
-def _pick_cross_show_related(slug, cross_show_posts, *, want=3):
+def _pick_cross_show_related(slug, cross_show_posts, *, want=3, seed=""):
     """Pick up to *want* cross-show posts for a blog post's rec section.
 
     The show's curated sibling (``NETWORK_SHOWS[slug]["related_show"]``)
@@ -3387,6 +3395,19 @@ def _pick_cross_show_related(slug, cross_show_posts, *, want=3):
     if not cross_show_posts:
         return []
     import random
+    import zlib
+    # Seeded per POST, from its own filename stem — the CRC32-of-stem pattern
+    # engine/video.py uses for Ken Burns moves. Unseeded, regenerating a show's
+    # blog gave every one of its ~200 posts a fresh random draw, so a rebuild
+    # that changed nothing still rewrote every file: a diff with no meaning,
+    # and no way to prove a refactor was output-neutral. Seeding by slug alone
+    # would make every post in a show recommend the identical three, so the
+    # seed is the post, not the show.
+    #
+    # This makes a re-run with the SAME candidate pool byte-identical. It does
+    # not freeze the recommendations: the pool is the newest cross-show posts,
+    # so they still move as the network publishes.
+    rng = random.Random(zlib.crc32(seed.encode("utf-8")) if seed else None)
     related = []
     candidates = [p for p in cross_show_posts if p.get("show_slug") != slug]
     curated_slug = (NETWORK_SHOWS.get(slug) or {}).get("related_show")
@@ -3401,7 +3422,7 @@ def _pick_cross_show_related(slug, cross_show_posts, *, want=3):
     if len(candidates) <= remaining:
         related.extend(candidates[:remaining])
     else:
-        related.extend(random.sample(candidates[:12], remaining))
+        related.extend(rng.sample(candidates[:12], remaining))
     return related
 
 
@@ -3538,8 +3559,10 @@ def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None):
 
         md_text = meta["_md_path"].read_text(encoding="utf-8")
 
-        # Pick up to 3 recent posts from other shows for cross-show recs
-        _related = _pick_cross_show_related(slug, cross_show_posts)
+        # Pick up to 3 recent posts from other shows for cross-show recs.
+        # Seeded on this post's own stem so a rebuild is reproducible.
+        _related = _pick_cross_show_related(
+            slug, cross_show_posts, seed=meta["_md_path"].stem)
 
         html = generate_blog_post_html(
             md_text, meta, cfg, env,
