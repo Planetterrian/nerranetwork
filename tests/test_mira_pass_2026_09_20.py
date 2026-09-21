@@ -236,10 +236,18 @@ class TestStrandGrouping:
         assert {s for s, v in shows.items() if v["strand"] == "mira"} == set(MIRA_SLUGS)
 
     def test_nav_and_mobile_menu_group_by_strand(self):
+        """Asserts the property, not a literal count.
+
+        This counted ``nav_hosted_by_mira`` occurrences until 2026-09-21, when
+        the grouping became a single ``show_groups`` shared by four surfaces —
+        after which the count was 2 only because the ``t``-dict key and the
+        group tuple both spell it, i.e. it passed for the wrong reason.
+        """
         base = (TEMPLATES / "base.html.j2").read_text(encoding="utf-8")
-        assert base.count("nav_hosted_by_mira") >= 2, (
+        assert base.count("in show_groups") >= 2, (
             "the desktop dropdown and the mobile menu must group the same way"
         )
+        assert "'nav_hosted_by_mira'" in base, "the group label is gone"
         assert 'href="{{ path_prefix }}mira.html"' in base, "no nav entry"
 
     def test_show_pages_carry_the_band_only_for_the_strand(self):
@@ -247,16 +255,32 @@ class TestStrandGrouping:
         assert "{% if strand == 'mira' %}" in tmpl
         assert "mira_claim(" in tmpl
 
-    def test_footer_show_links_stay_flat(self):
-        """The mobile footer accordion targets ``.nn-footer-col > a``.
-
-        Grouping the footer's show list would nest those links and stop the
-        accordion collapsing on phones, which is why the strand grouping is in
-        the nav and the homepage badges instead.
+    def test_footer_show_links_nest_only_where_the_accordion_collapses(self):
+        """Corrected 2026-09-21. This test used to require the footer show list
+        to stay FLAT, on the premise that any nesting breaks the phone
+        accordion. The premise was incomplete: the CSS hides
+        ``.nn-footer-col > ul`` as well as ``> a``, so a direct-child list
+        collapses correctly. What does not collapse is a direct child of any
+        other kind — a group label written as a heading would stay visible above
+        an emptied column. The footer is grouped now, with its labels inside the
+        ``<ul>``; the full set of assertions is in
+        ``tests/test_chrome_pass_2026_09_21.py``.
         """
+        import re as _re
         base = (TEMPLATES / "base.html.j2").read_text(encoding="utf-8")
-        footer = base.split('<h4>{{ t.footer_shows }}</h4>')[1][:600]
-        assert "nn-nav-group-label" not in footer
+        # Jinja comments are stripped FIRST. Without this the check reads the
+        # comment that explains the rule ("the group label lives INSIDE the
+        # <ul>") as markup and passes no matter where the label actually is —
+        # verified by hoisting the label out and watching this still pass.
+        markup = _re.sub(r"\{#.*?#\}", "", base, flags=_re.S)
+        footer = markup.split('<h4>{{ t.footer_shows }}</h4>')[1][:1200]
+        assert "nn-footer-showlist" in footer, "the footer list is no longer grouped"
+        label_at = footer.find("nn-footer-grouplabel")
+        assert label_at != -1
+        before = footer[:label_at]
+        assert before.rfind("<ul") > before.rfind("</ul>"), (
+            "the group label escaped the <ul> and would not collapse"
+        )
 
 
 class TestMiraIsOnTheSurfacesThatMatter:

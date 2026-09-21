@@ -300,6 +300,11 @@ button { font-family: var(--font-ui); cursor: pointer; }
   text-align: center;
   margin-bottom: var(--sp-12);
 }
+/* h1 as well as h2 (2026-09-21): /explore.html's main heading is the page's
+   <h1>, and until this the selector styled h2 only, so an h1 in a section
+   header rendered at browser defaults. No existing page has an h1 here, so
+   this is additive. */
+.nn-section-header h1,
 .nn-section-header h2 {
   font-family: var(--font-heading);
   font-size: clamp(1.75rem, 3vw, 2.5rem);
@@ -332,6 +337,23 @@ button { font-family: var(--font-ui); cursor: pointer; }
   transition: opacity var(--duration) var(--ease);
 }
 .show-card:hover::before { opacity: 1; }
+
+/* Show-card filter states. Lived in the homepage's inline <style> until
+   2026-09-21, when /explore.html began rendering the same card macro — a rule
+   that only one of two pages carries is a rendering bug waiting to happen.
+   `.is-dimmed` also kills pointer events so a filtered-out card cannot be
+   clicked by someone tabbing through. */
+.show-card-wrap.is-dimmed { opacity: 0.32; filter: grayscale(0.5); }
+.show-card-wrap.is-dimmed .show-card { pointer-events: none; }
+.show-card-wrap.is-match {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--show-color, #6B47FF) 70%, transparent);
+  border-radius: 16px;
+}
+.show-card-audience {
+  font-size: 0.82rem; color: var(--nn-text-muted);
+  margin-top: 4px; line-height: 1.4;
+}
+.show-card-audience strong { color: var(--nn-text); font-weight: 600; }
 .show-card:hover { transform: translateY(-4px); }
 
 .show-card-image {
@@ -503,6 +525,28 @@ button { font-family: var(--font-ui); cursor: pointer; }
   transition: color var(--duration) var(--ease);
 }
 .nn-footer-col a:hover { color: var(--nn-white); }
+
+/* Strand-grouped show list in the footer (2026-09-21). A <ul> rather than bare
+   <a>s because the mobile accordion hides only `.nn-footer-col > a` and `> ul`:
+   a group label as a direct child of the column would stay visible on a phone
+   with every link beneath it collapsed away. `.nn-footer-col a` is a descendant
+   selector, so the links keep their existing styling untouched. */
+.nn-footer-col ul.nn-footer-showlist {
+  list-style: none;
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+}
+.nn-footer-col ul.nn-footer-showlist:last-child { margin-bottom: 0; }
+.nn-footer-col .nn-footer-grouplabel {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--nn-text-muted);
+  opacity: 0.7;
+  padding: var(--sp-1) 0;
+}
 
 .nn-footer-bottom {
   display: flex;
@@ -727,6 +771,47 @@ button { font-family: var(--font-ui); cursor: pointer; }
 .nn-chip:hover {
   color: var(--nn-text); border-color: var(--nn-border-hover);
   background: var(--nn-surface); transform: translateY(-1px);
+}
+
+/* /explore.html filter chips (2026-09-21). `.nn-chip` above is reused as-is;
+   these add the pressed state and the page's own layout. The chips are <button>
+   elements carrying aria-pressed, so a screen reader announces the filter state
+   and keyboard users get them for free. */
+button.nn-chip { cursor: pointer; }
+.nn-chip[aria-pressed="true"] {
+  color: var(--nn-white, #fff);
+  border-color: var(--nn-purple, #6B47FF);
+  background: color-mix(in srgb, var(--nn-purple, #6B47FF) 28%, transparent);
+}
+.nn-chip-count {
+  font-size: 0.72rem; font-weight: 700; opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+}
+.nn-chip--clear { border-style: dashed; }
+.nn-explore-filters {
+  display: flex; flex-direction: column; gap: var(--sp-3);
+  margin-bottom: var(--sp-6);
+}
+.nn-explore-facet {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-2);
+}
+.nn-explore-facet-label {
+  font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--nn-text-muted); flex: 0 0 auto; min-width: 5.5rem;
+}
+.nn-explore-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.nn-explore-status {
+  font-family: var(--font-ui); font-size: 0.85rem;
+  color: var(--nn-text-muted); margin: 0; min-height: 1.2em;
+}
+.nn-explore-foot {
+  font-family: var(--font-ui); font-size: 0.9rem;
+  color: var(--nn-text-muted); margin-top: var(--sp-6);
+}
+@media (max-width: 600px) {
+  .nn-explore-facet { flex-direction: column; align-items: stretch; }
+  .nn-explore-facet-label { min-width: 0; }
 }
 
 /* Apple's official "Listen on Apple Podcasts" lockup. Apple's identity

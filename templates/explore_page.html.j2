@@ -1,0 +1,144 @@
+{% extends "base.html.j2" %}
+{% from "_macros.html.j2" import show_card %}
+
+{#- /explore.html — pick a show by subject and language.
+
+    Why it exists: the network publishes eighteen shows and @NerraNetwork's
+    audience is 99.4% male and 37% over 55, while the catalogue already holds the
+    shows that would broaden it — a Russian language course, a good-news show, a
+    women-in-finance show, an ocean-racing show. They were reachable only by
+    reading an eighteen-item dropdown or scrolling the homepage grid. This is one
+    click to the half of the catalogue a visitor did not arrive for.
+
+    Two rules it keeps:
+
+    * The grid is SERVER-RENDERED in full and the chips only add a dim class, so
+      with JavaScript off the page is the complete catalogue rather than an empty
+      shell. Nothing here fetches.
+    * Subjects come from ``engine.topic_hubs.TOPIC_HUBS``, the curated
+      vocabulary, NOT from the union of registry ``picker_tags.topics`` — those
+      42 values include `tech` (5 shows) beside `technology` (2) and 28
+      singletons, which is the keyword-artifact problem that module was written
+      to avoid. Adding a show to a subject stays a registry edit. #}
+
+{% block content %}
+<main id="main-content">
+    <section class="nn-section">
+        <div class="container">
+            <div class="nn-section-header">
+                <div class="section-label">Explore</div>
+                <h1>Find a show that fits</h1>
+                <p>Eighteen shows, all ad-free and independently produced. Filter by
+                   subject or language — or <a href="{{ path_prefix }}nerra-daily.html">let
+                   Nerra Daily</a> hand you the whole network in one daily episode.</p>
+            </div>
+
+            <div class="nn-explore-filters" id="explore-filters">
+                <div class="nn-explore-facet">
+                    <span class="nn-explore-facet-label">Subject</span>
+                    <div class="nn-explore-chips">
+                        {% for subj in subjects %}
+                        <button type="button" class="nn-chip" data-facet="hub" data-value="{{ subj.id }}"
+                                aria-pressed="false">{{ subj.heading }} <span class="nn-chip-count">{{ subj.count }}</span></button>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="nn-explore-facet">
+                    <span class="nn-explore-facet-label">Language</span>
+                    <div class="nn-explore-chips">
+                        {% for lang in languages %}
+                        <button type="button" class="nn-chip" data-facet="language" data-value="{{ lang.id }}"
+                                aria-pressed="false">{{ lang.label }} <span class="nn-chip-count">{{ lang.count }}</span></button>
+                        {% endfor %}
+                    </div>
+                </div>
+                <button type="button" id="explore-clear" class="nn-chip nn-chip--clear" hidden>Clear filters</button>
+                <p class="nn-explore-status" id="explore-status" aria-live="polite"></p>
+            </div>
+
+            <div class="show-showcase" id="explore-grid">
+                {% for s in all_shows %}
+                {{ show_card(s, path_prefix) }}
+                {% endfor %}
+            </div>
+
+            <p class="nn-explore-foot">
+                Looking for a topic rather than a show? The
+                <a href="{{ path_prefix }}topics/index.html">topics map</a> collects
+                every episode on a subject. Three of these shows are hosted by
+                <a href="{{ path_prefix }}mira.html">Mira</a>.
+            </p>
+        </div>
+    </section>
+</main>
+
+{#- Slug -> subject ids. Emitted as data rather than computed in JS so the
+    curated vocabulary stays owned by engine/topic_hubs.py. #}
+<script type="application/json" id="explore-show-hubs">{{ hub_ids_by_slug | tojson }}</script>
+<script>
+(function () {
+  var grid = document.getElementById('explore-grid');
+  var filters = document.getElementById('explore-filters');
+  var status = document.getElementById('explore-status');
+  var clearBtn = document.getElementById('explore-clear');
+  if (!grid || !filters) return;
+
+  var hubsBySlug = {};
+  try {
+    hubsBySlug = JSON.parse(document.getElementById('explore-show-hubs').textContent) || {};
+  } catch (e) { /* cards stay visible; filtering is the enhancement */ }
+
+  var cards = Array.prototype.slice.call(grid.querySelectorAll('.show-card-wrap'));
+  var active = { hub: [], language: [] };
+
+  function matches(card) {
+    var slug = card.getAttribute('data-slug') || '';
+    if (active.hub.length) {
+      var mine = hubsBySlug[slug] || [];
+      var hit = active.hub.some(function (h) { return mine.indexOf(h) !== -1; });
+      if (!hit) return false;
+    }
+    if (active.language.length) {
+      var langs = (card.getAttribute('data-language') || '').split(/\s+/);
+      var lhit = active.language.some(function (l) { return langs.indexOf(l) !== -1; });
+      if (!lhit) return false;
+    }
+    return true;
+  }
+
+  function apply() {
+    var any = active.hub.length || active.language.length;
+    var shown = 0;
+    cards.forEach(function (card) {
+      var ok = !any || matches(card);
+      card.classList.toggle('is-dimmed', !ok);
+      if (ok) shown++;
+    });
+    clearBtn.hidden = !any;
+    status.textContent = any
+      ? shown + (shown === 1 ? ' show matches' : ' shows match')
+      : '';
+  }
+
+  filters.addEventListener('click', function (ev) {
+    var btn = ev.target.closest('.nn-chip');
+    if (!btn) return;
+    if (btn === clearBtn) {
+      active.hub = []; active.language = [];
+      filters.querySelectorAll('.nn-chip[aria-pressed="true"]').forEach(function (b) {
+        b.setAttribute('aria-pressed', 'false');
+      });
+      apply();
+      return;
+    }
+    var facet = btn.getAttribute('data-facet');
+    var value = btn.getAttribute('data-value');
+    if (!facet || !(facet in active)) return;
+    var at = active[facet].indexOf(value);
+    if (at === -1) { active[facet].push(value); btn.setAttribute('aria-pressed', 'true'); }
+    else { active[facet].splice(at, 1); btn.setAttribute('aria-pressed', 'false'); }
+    apply();
+  });
+})();
+</script>
+{% endblock %}
