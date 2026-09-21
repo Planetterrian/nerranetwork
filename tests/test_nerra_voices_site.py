@@ -111,7 +111,9 @@ class TestNetworkRegistration:
         assert cfg["rss_file"] == "nerra_voices_podcast.rss"
         assert cfg["podcast_image"] == "assets/covers/nerra-voices.jpg"
         assert cfg["related_show"] == "age_of_ai"
-        assert SLUG in g._SHOW_PICKER_TAGS
+        # picker_tags moved into the registry entry itself (2026-09-21);
+        # the parallel _SHOW_PICKER_TAGS dict is gone.
+        assert (cfg.get("picker_tags") or {}).get("topics")
         order = [s for s, _ in sorted(
             g.NETWORK_SHOWS.items(), key=lambda kv: kv[1].get("display_order", 0))]
         assert order.index(SLUG) == order.index("age_of_ai") + 1

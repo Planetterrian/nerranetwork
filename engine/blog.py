@@ -25,6 +25,7 @@ from typing import Optional
 from urllib.parse import urlparse
 
 from engine.episode_ask import episode_ask_for
+from engine import show_lang as _show_lang
 
 logger = logging.getLogger(__name__)
 
@@ -1055,7 +1056,8 @@ def _build_jsonld(metadata: dict, show_name: str, blog_url: str,
     each episode to its PodcastSeries, and surfaces episode number / duration
     in rich results.
     """
-    in_language = "ru" if show_config and show_config.get("slug") in ("finansy_prosto", "privet_russian") else "en"
+    in_language = _show_lang.page_lang(
+        show_config.get("slug") if show_config else None)
 
     blog_posting = {
         "@context": "https://schema.org",
@@ -1415,12 +1417,16 @@ def generate_blog_post_html(
         "translation_bodies": translation_bodies or {},
         "transcript_url": f"{blog_url}#transcript" if transcript_text else "",
         # Russian shows render UI strings (incl. the AI badge) in Russian.
-        "_is_ru": show_slug in ("finansy_prosto", "privet_russian"),
+        "_is_ru": _show_lang.is_russian(show_slug),
         "related_posts": related_posts or [],
-        # Use the show's Buttondown newsletter tag when set in
-        # NETWORK_SHOWS — falls back to the display name. Russian
-        # shows override this with an ASCII transliteration because
-        # Buttondown rejects tags with no ASCII letter/number.
+        # The show's Buttondown newsletter tag. NOTE this reads the RAW
+        # registry entry: generate_blog_posts passes NETWORK_SHOWS[slug]
+        # straight through, so the value is the registry's ``newsletter_tag``
+        # and NOT the one _newsletter_tag_for_slug resolves for the summaries
+        # and show-page context. The fallback is the display NAME, which is
+        # Cyrillic on the two Russian shows and which Buttondown rejects — so
+        # those two registry entries must keep their ASCII tag. Guarded by
+        # tests/test_registry_pass_2026_09_21.py.
         "newsletter_tag": show_config.get("newsletter_tag")
             or show_config["name"],
         # Cadence-aware "next episode" placeholder on the latest post
@@ -1428,9 +1434,9 @@ def generate_blog_post_html(
         # "New episode tomorrow" on every show, weekly ones included.
         "next_episode_nav": next_episode_placeholder(
             show_config.get("schedule", ""),
-            is_ru=show_slug in ("finansy_prosto", "privet_russian"),
+            is_ru=_show_lang.is_russian(show_slug),
         ),
-        "page_lang": "ru" if show_slug in ("finansy_prosto", "privet_russian") else "en",
+        "page_lang": _show_lang.page_lang(show_slug),
         # YouTube cross-posting — when present, the template renders a
         # "Watch on YouTube" button next to the existing podcast/summaries CTAs.
         "youtube_url": youtube_url or metadata.get("youtube_url", ""),
