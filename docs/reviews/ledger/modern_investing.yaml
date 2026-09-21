@@ -875,27 +875,27 @@ reviews:
         baseline: "5 identical RETIREMENT CANDIDATE flags from one 10-trade set"
         expected: "0 - the scoreboard reports 'not measurable' until the
           rule set genuinely varies"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "0. Run against the live tracker, _build_rule_scoreboard emits no retirement verdict at all and instead names five rules as UNMEASURED with their both-arm counts (LL-002 6/3, LL-028 7/2, LL-041 8/1, LL-066 8/1, LL-067 5/4). The falsification test - a retirement flag while every stamped trade carries the same rule set - does not fire. Scored 2026-09-21."
       - metric: production-hygiene rules appearing in the pick prompt
         baseline: "6 of 13 active rules"
         expected: "0 - only trading rules are stamped and scored"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "0. Of 13 active lessons, _is_trading_rule filters 7 as production hygiene (re-teach cooldowns, 'state the NASDAQ level', multi-provider price verification) and passes 6 to the pick prompt as trading rules. Scored 2026-09-21."
       - metric: simulated trades using an options structure
         baseline: "0 of 61, against options taught in 32 of 40 episodes"
         expected: ">=1 within 20 episodes, with a real recorded premium
           and an expiry-settled payoff; ZERO positions carrying an
           estimated premium"
-        verdict: pending
-        evidence: null
+        verdict: miss
+        evidence: "0 within 36 episodes (Ep142-177), well past the 20-episode window, across 15 new trades. Every structure in the record is long_equity or unset; 'covered call', 'cash-secured', 'strike' and 'expiry' appear nowhere in the 75-trade record, and api/mit_trade_ledger.json's own counts block reads options: 0. No option_quote_failed was recorded either, so the chain was never QUOTED - this is the model not selecting the structure, not the data refusing it. The design constraint held (zero estimated premiums, because zero positions), so this is a nudge-the-prompt outcome and not a revert. Confounded by the drought: 21 of those 36 episodes declared no trade at all, which mit-no-trade-budget-2026-09-18 addresses. Re-read after that budget has run a month. Scored 2026-09-21."
       - metric: trades published with their full decision record
         baseline: "5 rows on the performance page, no entry/exit dates,
           stops, horizons or invalidations anywhere public"
         expected: "100% of trades in api/mit_trade_ledger.json, voided
           ones included"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "75 of 75 trades are in api/mit_trade_ledger.json with entry/exit bar dates, stop, horizon, invalidation, confidence, rules_in_effect and the option contract fields. All 10 voided picks are present and flagged, and every row carries in_current_era so pre-era trades are marked rather than dropped. A ledger that hides its failures is marketing; this one does not. Scored 2026-09-21."
     agent_cost_usd: null
 
   - date: 2026-08-20
@@ -961,8 +961,8 @@ reviews:
         baseline: "2 sets across 15 trades, differing by one rule, by accident"
         expected: ">=4 distinct sets within 20 era trades, and every
           active rule carrying both a with-rule and a without-rule arm"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "6 distinct rule sets across the 9 closed era trades, against a baseline of 2 sets across 15 and an expectation of >=4 within 20. Rules can now be told apart in principle. Scored 2026-09-21."
       - metric: rules with enough evidence to be scored (>=5 trades on
           both arms)
         baseline: "0 - structurally impossible before rotation"
@@ -970,13 +970,13 @@ reviews:
           then, the pool is too small and needs widening rather than more
           waiting"
         verdict: pending
-        evidence: null
+        evidence: "NOT YET MEASURABLE, and not a miss - the condition has not been reached. The prediction allows ~25 era trades; the era holds 9 closed. Five rules have both arms but every without-arm is 1-4 trades, under the >=5 floor, so the scoreboard correctly reports UNMEASURED rather than inventing a verdict. The blocker is trade volume, which mit-no-trade-budget-2026-09-18 exists to fix. Re-score past ~25 closed era trades. Checked 2026-09-21."
       - metric: picks carrying an explicit strategy family
         baseline: "0 - the field did not exist; 61 unique free-text strings"
         expected: ">=90% of new picks, and a per-family record the show
           can quote once any family reaches 5 verified-window trades"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "14 of 14 picks since 2026-08-20 carry strategy_family (catalyst_event 9, earnings_surprise 3, valuation 2), against a >=90% expectation. Scored 2026-09-21."
       - metric: episodes that finish after the audit window and are never
           content-reviewed
         baseline: "4 on 2026-08-19 alone; a 32-episode backlog at first run"
