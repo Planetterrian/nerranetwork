@@ -81,7 +81,7 @@ class TestEditionSpec:
 
     def test_monday_only_subset_of_lineup(self):
         assert SPEC.monday_only <= set(SPEC.lineup)
-        assert SPEC.monday_only == {"env_intel", "offshore_north"}
+        assert SPEC.monday_only == {"env_intel", "offshore_north", "dp_pod"}
 
     def test_lineup_shows_have_configs(self):
         for slug in SPEC.lineup:

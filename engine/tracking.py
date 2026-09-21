@@ -104,6 +104,18 @@ GROK_PRICING = {
         "output_per_1m": 6.00,
         "cached_input_per_1m": 0.30,
     },
+    # Grok 4.7 (released 2026-09-21). Operator-directed successor to 4.6 at
+    # the SAME list price, so a widening is a quality-and-latency decision
+    # and never a cost one. Priced here BEFORE any stage uses it, which is
+    # playbook rule 4 and the lesson of the retired grok-4-1-fast slug: it
+    # was mis-costed 6x for three months because nothing priced it first.
+    # Correct these numbers the moment xAI publishes different ones —
+    # "same price as 4.6" is what we were told, not what we measured.
+    "grok-4.7": {
+        "input_per_1m": 2.00,
+        "output_per_1m": 6.00,
+        "cached_input_per_1m": 0.30,
+    },
     # Grok 4 (legacy refusal fallback — retained because older
     # credit_usage JSONs still report it, and _estimate_grok_cost may be
     # re-run against them).

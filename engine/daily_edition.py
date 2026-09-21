@@ -166,7 +166,7 @@ EDITIONS: Dict[str, EditionSpec] = {
             "offshore_north",
             "dp_pod",
         ),
-        monday_only=frozenset({"env_intel", "offshore_north"}),
+        monday_only=frozenset({"env_intel", "offshore_north", "dp_pod"}),
         feed_file="nerra_daily_podcast.rss",
         guid_prefix="nerra-daily",
         episode_prefix="Nerra_Daily",

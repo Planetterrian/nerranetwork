@@ -58,7 +58,7 @@ on:
     - cron: '37 9 * * 1'
     # The DP Pod: Daily at 9:46 UTC. Two-host dialogue show (Dan + Patrick).
     # Fresh episode all 7 days — no Sunday recap (operator decision).
-    - cron: '46 9 * * *'
+    - cron: '46 9 * * 1'
     # Offshore North: Weekly on Monday at 10:01 UTC.
     # Offshore ocean racing, single host (Dan). The "past 7 days"
     # window ends Sunday, so the cron day and the news window are
@@ -174,7 +174,7 @@ jobs:
                   "1 9 * * *":        ("unintended_consequences", None),
                   "16 9 * * *":       ("spacex",                   None),
                   "37 9 * * 1":       ("finansy_prosto",          "monday"),
-                  "46 9 * * *":       ("dp_pod",                   None),
+                  "46 9 * * 1":       ("dp_pod",                  "monday"),
                   "1 10 * * 1":       ("offshore_north",          "monday"),
               }
 

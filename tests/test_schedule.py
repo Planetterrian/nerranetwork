@@ -131,6 +131,11 @@ ALT_CADENCE_SHOWS = [
     # Weekly on Monday (June 2026): privet_russian + finansy_prosto moved off
     # even-days, env_intel off odd-weekdays. None carry the recap flag.
     "privet_russian", "finansy_prosto", "env_intel",
+    # Weekly on Monday since 2026-09-21 (operator-directed): dp_pod traded a
+    # daily cadence it was not being rewarded for — 60 downloads/30d, 3 in
+    # its last complete week — for one episode a week. It never carried the
+    # recap flag, so it belongs here and not in DAILY_SHOWS.
+    "dp_pod",
 ]
 
 

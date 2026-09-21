@@ -258,3 +258,62 @@ class TestNoPii:
                     walk(item)
 
         walk(data)
+
+class TestSharedAccountIsFilteredToNerra:
+    """The Stripe account is SHARED with Lil Words.
+
+    Confirmed by the operator 2026-09-21: it is the "Lil Learning" account
+    and carries Lil Words Coins / Learn / Learn Family beside Nerra
+    Personal. Summing every subscription would put another product line's
+    revenue in a file labelled Nerra's MRR — one number, no error, just
+    wrong. Today the account has a single active subscription and it IS
+    Nerra Personal, so filtered and unfiltered agree; that is precisely why
+    the filter belongs here before it matters.
+    """
+
+    @staticmethod
+    def _sub(product, unit=499):
+        return {
+            "currency": "usd", "discounts": [], "cancel_at_period_end": False,
+            "items": {"data": [{"quantity": 1, "price": {
+                "unit_amount": unit, "product": product,
+                "recurring": {"interval": "month", "interval_count": 1}}}]},
+        }
+
+    def test_a_nerra_product_counts(self):
+        assert B._is_nerra_subscription(self._sub("prod_V7zECn362K80w6"))
+
+    def test_a_lil_words_product_does_not(self):
+        assert not B._is_nerra_subscription(self._sub("prod_UyToncIo7uZcpw"))
+
+    def test_a_subscription_with_no_product_is_not_counted(self):
+        """Unknown provenance is never assumed to be ours."""
+        assert not B._is_nerra_subscription(self._sub(None))
+
+    def test_an_expanded_product_object_is_understood(self):
+        """Stripe returns `product` as an id or an expanded object."""
+        assert B._is_nerra_subscription(
+            self._sub({"id": "prod_V7zECn362K80w6"}))
+
+    def test_a_mixed_subscription_is_excluded_not_split(self):
+        """Splitting one would need per-item arithmetic this does not do,
+        and guessing is how a revenue figure becomes confidently wrong."""
+        mixed = self._sub("prod_V7zECn362K80w6")
+        mixed["items"]["data"].append({
+            "quantity": 1, "price": {
+                "unit_amount": 999, "product": "prod_UyToncIo7uZcpw",
+                "recurring": {"interval": "month", "interval_count": 1}}})
+        assert not B._is_nerra_subscription(mixed)
+
+    def test_the_allow_list_is_overridable(self, monkeypatch):
+        """A new Nerra product ships without a code change."""
+        monkeypatch.setenv("NERRA_STRIPE_PRODUCT_IDS", "prod_NEW")
+        assert B._is_nerra_subscription(self._sub("prod_NEW"))
+        assert not B._is_nerra_subscription(self._sub("prod_V7zECn362K80w6"))
+
+    def test_exclusions_are_declared_on_the_record(self):
+        """A filtered-out subscription is counted and named, never silently
+        dropped — the file has to say it is a partial view."""
+        import inspect
+        src = inspect.getsource(B.fetch_stripe_metrics)
+        assert "mrr_excluded_other_product" in src

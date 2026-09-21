@@ -20,7 +20,14 @@ not by reviewer vigilance.
 ``status == "active"`` and a feed token — i.e. paying members. Free Nerra
 accounts (every newsletter signup creates one) are NOT in that list.
 
-**Stripe (Sep 21 2026).** ``mrr_usd`` and ``trialing`` were hardcoded ``null``
+**Stripe (Sep 21 2026).** The account is the operator's "Lil Learning"
+Stripe account (confirmed 2026-09-21), which carries the ``Nerra Personal
+monthly`` price alongside its own products — so ``mrr_usd`` here is Nerra's
+share of a SHARED account, not the account's total. Today every recurring
+price on it is Nerra Personal, so the two are the same number; if that stops
+being true, filter by product before this figure is quoted anywhere.
+
+``mrr_usd`` and ``trialing`` were hardcoded ``null``
 because nothing in this repo read Stripe. They are real now, computed from
 live subscriptions over plain HTTP — no new dependency, and no ``stripe``
 package on the runner. Three rules the arithmetic follows:
@@ -138,6 +145,57 @@ _INTERVAL_MONTHS = {
 #: neither do we: a rate we made up would be indistinguishable from a real
 #: one in the committed file.
 MRR_CURRENCY = "usd"
+
+#: The Stripe products that are NERRA revenue.
+#:
+#: The Stripe account is SHARED (confirmed by the operator 2026-09-21): it is
+#: the "Lil Learning" account, and alongside Nerra Personal it carries the
+#: Lil Words products — Coins, Learn, and Learn Family. Summing every
+#: subscription on the account would put Lil Words revenue into a file
+#: labelled Nerra's MRR, and it would look completely normal: one number,
+#: no error, just wrong. Today there is a single active subscription and it
+#: IS Nerra Personal, so the filtered and unfiltered totals agree — which is
+#: exactly why this has to go in NOW rather than the first month someone
+#: subscribes to Lil Words.
+#:
+#: Override with ``NERRA_STRIPE_PRODUCT_IDS`` (comma-separated) when a new
+#: Nerra product ships; anything not listed is counted under
+#: ``mrr_excluded_other_product`` and named, never silently dropped.
+NERRA_PRODUCT_IDS = frozenset({
+    "prod_V7zECn362K80w6",  # Nerra Personal
+    "prod_V7zEuA2JJCwZXR",  # Personal News Network (Personal + city brief)
+    "prod_V7zEfCjuVbaS38",  # Support the Nerra Network (monthly)
+})
+
+
+def _nerra_product_ids() -> frozenset:
+    raw = os.environ.get("NERRA_STRIPE_PRODUCT_IDS", "").strip()
+    if not raw:
+        return NERRA_PRODUCT_IDS
+    return frozenset(p.strip() for p in raw.split(",") if p.strip())
+
+
+def _subscription_products(sub: dict) -> set:
+    """Every product id billed by this subscription."""
+    out = set()
+    for item in ((sub.get("items") or {}).get("data")) or []:
+        product = (item.get("price") or {}).get("product")
+        if isinstance(product, dict):
+            product = product.get("id")
+        if product:
+            out.add(str(product))
+    return out
+
+
+def _is_nerra_subscription(sub: dict) -> bool:
+    """True when every product on the subscription is a Nerra one.
+
+    A mixed subscription is NOT counted: splitting it would need per-item
+    arithmetic this does not do, and guessing is how a revenue figure becomes
+    confidently wrong. It is reported as excluded instead.
+    """
+    products = _subscription_products(sub)
+    return bool(products) and products <= _nerra_product_ids()
 
 
 def _stripe_get(path: str, key: str, params: Optional[dict] = None) -> Optional[dict]:
@@ -279,7 +337,12 @@ def fetch_stripe_metrics(key: str) -> Optional[Dict[str, Any]]:
     canceling = 0
     by_interval: Counter = Counter()
 
+    other_product = 0
     for sub in active:
+        if not _is_nerra_subscription(sub):
+            # A shared Stripe account: Lil Words revenue is not Nerra's.
+            other_product += 1
+            continue
         if sub.get("cancel_at_period_end"):
             canceling += 1
         for item in ((sub.get("items") or {}).get("data")) or []:
@@ -295,10 +358,15 @@ def fetch_stripe_metrics(key: str) -> Optional[Dict[str, Any]]:
             continue
         mrr_cents += value
 
+    nerra_active = [s for s in active if _is_nerra_subscription(s)]
     return {
         "mrr_usd": round(mrr_cents / 100.0, 2),
-        "trialing": len(trialing),
-        "active_subscriptions": len(active),
+        "trialing": len([s for s in trialing if _is_nerra_subscription(s)]),
+        "active_subscriptions": len(nerra_active),
+        # Declared, not hidden: subscriptions on the shared account that
+        # belong to another product line. A non-zero value here is normal
+        # and means the account is doing more than Nerra.
+        "mrr_excluded_other_product": other_product,
         # Subscriptions the member has asked to end. A paid_active_total that
         # is flat while this rises is churn the headline number cannot see.
         "canceling_at_period_end": canceling,

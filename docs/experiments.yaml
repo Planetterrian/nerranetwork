@@ -727,6 +727,56 @@ experiments:
       reproducible record, and the prompts require the show to say so.
       Prompt + audio change — landmine #17 A/B.
 
+  - id: grok-47-staged-migration
+    title: "Grok 4.6 -> 4.7, staged (operator-directed)"
+    area: quality
+    shipped: 2026-09-21
+    readout: 2026-09-25
+    status: reading
+    baseline: >
+      Eleven production sites run grok-4.6: the episode reviewer and the
+      weekly synthesizer (network defaults), three shows' SCRIPT stage
+      (omni_view, models_agents_beginners, dp_pod), the spacex deep-dive
+      model, the YouTube title bundle (3 call sites), and the translation
+      pin. A twelfth — the topic-queue restock — was pinned AWAY from 4.6
+      to grok-4.3 on 2026-09-17 after 4.6 timed out at 300s on both shows
+      in one dispatch. Digest and fetch stages network-wide stay on
+      grok-4.3 and are NOT in scope.
+    target: >
+      Day one moves exactly two sites, per docs/model_upgrade_playbook.md
+      rule 1: the episode reviewer (outside run_show's timeout envelope,
+      daily on every show, nothing a listener hears) and omni_view's
+      script stage (one show, script-only — the shape the playbook calls
+      correct). Three scheduled days, then
+      `python scripts/model_trial_report.py --since 2026-09-22` must
+      return GATE: PASS before anything widens.
+    criteria: >
+      REVERT TRIGGERS ARE OPERATIONAL FIRST, which is the whole lesson of
+      the 2026-08-18 outage — its registered triggers watched hallucination
+      rate and reviewer flags, and nobody watched latency, so the failure
+      that actually fired was unmonitored. Revert if ANY of: an LLM stage's
+      p95 exceeds 50% of the request timeout; an LLM stage p95 regresses
+      more than 50% against its trailing-14-day baseline; any `Slow LLM
+      completion` warning appears in the staged show's logs; any run fails
+      or is skipped for a timeout. Only then quality: a listener-value
+      regression on omni_view, or a reviewer that stops finding what the
+      4.6 reviewer found. Widening order once the gate passes:
+      models_agents_beginners + dp_pod script stages, then synth_model,
+      then the YouTube title bundle and the translation pin, then the
+      spacex deep-dive; the restock is the natural place to test whether
+      4.7 fixed the latency that disqualified 4.6.
+    notes: >
+      Same list price as 4.6 (operator), so a widening is a quality and
+      latency decision and never a cost one — priced in engine/tracking.py
+      before any stage used it (playbook rule 4). The reviewer carries a
+      trap this migration nearly walked into: review_episodes.py forced
+      reasoning_effort "low" on a `grok-4.6` prefix match, because at
+      default effort 4.6 blew the 300s timeout on ~1/3 of episodes and
+      killed the audit job. Pinned to one id, the 4.7 pin would have
+      matched nothing and silently restored default effort. That branch is
+      now a prefix tuple. omni_view's script change is AUDIO — A/B-listen
+      the first episode (landmine #17). Rollback is one line per site.
+
   - id: mit-options-positions
     title: "Modern Investing trades the options it teaches"
     area: quality
