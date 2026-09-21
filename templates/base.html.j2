@@ -196,7 +196,24 @@
         'copyright_line': ('© ' ~ current_year ~ ' Nerra Network. Все шоу — независимое производство.') if _is_ru else ('© ' ~ current_year ~ ' Nerra Network. All shows independently produced.'),
         'ai_notice': 'Nerra Network использует ИИ-инструменты в производстве контента.' if _is_ru else 'Nerra Network uses AI tools in content production.',
         'learn_more': 'Подробнее' if _is_ru else 'Learn more',
+        'footer_all_feeds': 'Все RSS-ленты' if _is_ru else 'All RSS feeds',
+        'nav_explore': 'Найти подкаст' if _is_ru else 'Find your show',
     } -%}
+
+    {#- ``strand`` groups the shows for the chrome. Computed ONCE here because
+        four surfaces need it — the desktop Shows dropdown, the mobile menu, the
+        footer show list and the Blog dropdown. It used to be an inline
+        ``selectattr``/``rejectattr`` pair copied per surface, and a copied
+        selector is how the footer drifts away from the nav.
+
+        The group carries the translation KEY, not the label, so each surface
+        can name the ungrouped fallback itself (the mobile menu calls it "All
+        Shows"; the dropdowns leave it unlabelled). A show with no strand is
+        unaffected, and the grouping disappears if the registry stops declaring
+        one. #}
+    {%- set _strand_mira = all_shows | selectattr('strand', 'equalto', 'mira') | list -%}
+    {%- set _strand_rest = all_shows | rejectattr('strand', 'equalto', 'mira') | list -%}
+    {%- set show_groups = [('nav_hosted_by_mira', _strand_mira), ('nav_other_shows', _strand_rest)] if _strand_mira else [('', all_shows)] -%}
     <a href="#main-content" class="skip-link">{{ t.skip_to_content }}</a>
     <!-- Navigation -->
     <nav class="nn-nav" aria-label="{{ t.main_navigation }}">
@@ -253,20 +270,18 @@
                         {{ t.nav_shows }}
                         <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
-                    {#- Grouped by ``strand`` (Sep 2026): the three shows the
-                        network's AI host presents sit at display_order 0.5, 13
-                        and 13.5, so a flat list scattered them and a reader who
-                        found one had no way to see the other two. One named
-                        group, then everything else. A show with no strand is
-                        unaffected, and the group vanishes if the registry
-                        stops declaring one. #}
-                    {%- set _mira_shows = all_shows | selectattr('strand', 'equalto', 'mira') | list -%}
-                    {%- set _other_shows = all_shows | rejectattr('strand', 'equalto', 'mira') | list -%}
-                    {%- set _show_groups = [(t.nav_hosted_by_mira, _mira_shows), (t.nav_other_shows, _other_shows)] if _mira_shows else [('', all_shows)] -%}
+                    {#- Grouped by ``strand``: the three shows the network's AI
+                        host presents sit at display_order 0.5, 13 and 13.5, so a
+                        flat list scattered them and a reader who found one had no
+                        way to see the other two. Groups come from ``show_groups``
+                        above. #}
                     <div class="nn-nav-dropdown-menu" role="menu">
-                        {% for _group_label, _group_shows in _show_groups %}
-                        {%- if _group_label %}
-                        <span class="nn-nav-group-label">{{ _group_label }}</span>
+                        <a href="{{ path_prefix }}explore.html" role="menuitem" style="font-weight:600;border-bottom:1px solid var(--nn-border);padding-bottom:8px;margin-bottom:4px">
+                            {{ t.nav_explore }}
+                        </a>
+                        {% for _group_key, _group_shows in show_groups %}
+                        {%- if _group_key %}
+                        <span class="nn-nav-group-label">{{ t[_group_key] }}</span>
                         {%- endif %}
                         {% for s in _group_shows %}
                         <a href="{{ path_prefix }}{{ s.show_page }}" role="menuitem">
@@ -286,11 +301,21 @@
                         <a href="{{ path_prefix }}blog/index.html" style="font-weight:600;border-bottom:1px solid var(--nn-border);padding-bottom:8px;margin-bottom:4px">
                             {{ t.all_blog_posts }}
                         </a>
-                        {% for s in all_shows %}
+                        {#- Grouped like the Shows dropdown: at 25 shows a flat
+                            list of per-show blogs has the same problem. Every
+                            link stays — the nav is where people navigate; it was
+                            the FOOTER's repetition of the same list on every
+                            page that was cut. #}
+                        {% for _b_key, _b_shows in show_groups %}
+                        {%- if _b_key %}
+                        <span class="nn-nav-group-label">{{ t[_b_key] }}</span>
+                        {%- endif %}
+                        {% for s in _b_shows %}
                         <a href="{{ path_prefix }}{{ s.blog_page }}">
                             <picture><source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="lazy"></picture>
                             {{ s.name }} {{ t.show_blog_suffix }}
                         </a>
+                        {% endfor %}
                         {% endfor %}
                     </div>
                 </li>
@@ -352,13 +377,13 @@
         <a href="{{ path_prefix }}about.html">{{ t.nav_about }}</a>
         <a href="{{ path_prefix }}player.html">{{ t.nav_player }}</a>
         {% endblock %}
-        {#- Mirrors the desktop Shows dropdown's strand grouping. #}
-        {%- set _m_mira = all_shows | selectattr('strand', 'equalto', 'mira') | list -%}
-        {%- set _m_other = all_shows | rejectattr('strand', 'equalto', 'mira') | list -%}
-        {%- set _m_groups = [(t.nav_hosted_by_mira, _m_mira), (t.nav_other_shows, _m_other)] if _m_mira else [(t.mobile_all_shows, all_shows)] -%}
-        {% for _m_label, _m_shows in _m_groups %}
+        {#- Mirrors the desktop Shows dropdown, from the same ``show_groups``.
+            The mobile menu names the ungrouped fallback ("All Shows") where the
+            dropdown leaves it bare, which is why the group carries a key. #}
+        <a href="{{ path_prefix }}explore.html" style="font-weight:600;">{{ t.nav_explore }}</a>
+        {% for _m_key, _m_shows in show_groups %}
         <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">{{ _m_label }}</div>
+            <div class="nn-mobile-shows-title">{{ t[_m_key] if _m_key else t.mobile_all_shows }}</div>
             {% for s in _m_shows %}
             <a href="{{ path_prefix }}{{ s.show_page }}" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="lazy"></picture>
@@ -372,11 +397,16 @@
             <a href="{{ path_prefix }}blog/index.html" class="nn-mobile-show-link" style="font-weight:600">
                 {{ t.all_blog_posts }}
             </a>
-            {% for s in all_shows %}
+            {% for _mb_key, _mb_shows in show_groups %}
+            {%- if _mb_key %}
+            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">{{ t[_mb_key] }}</div>
+            {%- endif %}
+            {% for s in _mb_shows %}
             <a href="{{ path_prefix }}{{ s.blog_page }}" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="lazy"></picture>
                 {{ s.name }} {{ t.show_blog_suffix }}
             </a>
+            {% endfor %}
             {% endfor %}
         </div>
         <div class="nn-mobile-shows">
@@ -406,16 +436,33 @@
                 </div>
                 <div class="nn-footer-col">
                     <h4>{{ t.footer_shows }}</h4>
-                    {% for s in all_shows %}
-                    <a href="{{ path_prefix }}{{ s.show_page }}">{{ s.name }}</a>
+                    {#- Grouped by strand, from the same ``show_groups`` the nav
+                        uses. The group label lives INSIDE the <ul> on purpose:
+                        the accordion CSS above hides only
+                        ``.nn-footer-col > a`` and ``> ul``, so a label as a
+                        direct child would stay visible on a phone with every
+                        link beneath it collapsed away. #}
+                    {% for _f_key, _f_shows in show_groups %}
+                    <ul class="nn-footer-showlist">
+                        {%- if _f_key %}
+                        <li class="nn-footer-grouplabel">{{ t[_f_key] }}</li>
+                        {%- endif %}
+                        {% for s in _f_shows %}
+                        <li><a href="{{ path_prefix }}{{ s.show_page }}">{{ s.name }}</a></li>
+                        {% endfor %}
+                    </ul>
                     {% endfor %}
                 </div>
                 <div class="nn-footer-col">
                     <h4>{{ t.footer_blog }}</h4>
+                    {#- The eighteen per-show blog links moved out (2026-09-21).
+                        Every one of them is one click further on from the hub and
+                        from the show's own page, and they were a third of the
+                        footer's show-derived links on all ~2,100 pages. The hub
+                        carries an archive-by-show rail; the topics map is the
+                        evergreen way in. #}
                     <a href="{{ path_prefix }}blog/index.html">{{ t.all_blog_posts }}</a>
-                    {% for s in all_shows %}
-                    <a href="{{ path_prefix }}{{ s.blog_page }}">{{ s.name }}</a>
-                    {% endfor %}
+                    <a href="{{ path_prefix }}topics/index.html">{{ t.nav_topics }}</a>
                     <a href="{{ path_prefix }}blog.rss">{% if _is_ru %}RSS блога (все подкасты){% else %}Blog RSS (All Shows){% endif %}</a>
                 </div>
                 <div class="nn-footer-col">
@@ -424,11 +471,12 @@
                     <a href="{{ path_prefix }}player.html" style="font-weight:600">{{ t.footer_network_player }}</a>
                     <a href="{{ 'https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939' | with_utm(campaign='tesla', medium='footer') }}" target="_blank" rel="noopener" data-show="tesla">Tesla Shorts Time on Apple Podcasts</a>
                     <a href="{{ path_prefix }}network.rss">{{ t.footer_network_rss }}</a>
-                    {% for s in all_shows %}
-                    {%- if s.has_feed %}
-                    <a href="{{ path_prefix }}{{ s.rss_file }}">{{ s.name }} RSS</a>
-                    {%- endif %}
-                    {% endfor %}
+                    {#- The seventeen per-show RSS links moved out (2026-09-21).
+                        how-to-listen.html already lists every feed, per-language
+                        ones included, gated on ``has_feed`` — so this is one link
+                        to a page that exists rather than seventeen repeated on
+                        every page of the site. #}
+                    <a href="{{ path_prefix }}how-to-listen.html#feeds">{{ t.footer_all_feeds }}</a>
                 </div>
                 {#- The About column used to sit OUTSIDE .nn-footer-grid
                     (after its closing div), so it rendered as a full-width

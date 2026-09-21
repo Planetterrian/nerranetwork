@@ -1942,3 +1942,45 @@ experiments:
       still speaks no surface (COMPACT_PROMO_SHOWS) and the Russian shows are
       excluded structurally. Revert is deleting two dict entries and restoring
       one string. Guards: tests/test_rotation_pass_2026_09_21.py.
+
+  - id: explore-and-footer-scale-2026-09-21
+    title: >
+      /explore.html plus a footer that scales: browse the catalogue by subject,
+      and stop repeating 53 show links on every page
+    area: growth
+    shipped: 2026-09-21
+    readout: 2026-10-21
+    status: reading
+    hypothesis: >
+      @NerraNetwork's audience is 99.4% male and 37% over 55 while the catalogue
+      already holds the shows that would broaden it — a Russian language course,
+      a good-news show, a women-in-finance show, an ocean-racing show. Nothing
+      surfaced them: the homepage grid is ordered by display_order and the only
+      other route was reading an eighteen-item dropdown. A page that filters by
+      subject is one click to the half of the catalogue a visitor did not arrive
+      for. Separately, the footer repeated the show list three times on every one
+      of ~2,100 pages, which is both a crawl-budget and a legibility cost and
+      breaks outright at 25 shows.
+    baseline: >
+      2026-09-21: no browse surface existed (the May 2026 picker was removed and
+      only its data attributes and dim CSS survived). The footer carried 53
+      show-derived links per page — 18 show pages, 18 per-show blog links, 17
+      per-show RSS links — of 86 links total. GA4 28-day organic sessions 20,
+      site sessions 282.
+    target: >
+      By 10-21: /explore.html appears in api/ga4_stats.json landing pages at all,
+      and Search Console (once verified) shows it indexed. An existence check on
+      purpose — at 282 sessions a month no rate here can be read as signal. The
+      footer measurement is not a hypothesis but a fact to keep true: 20
+      show-derived links per page, pinned by a guard.
+    notes: >
+      The subject vocabulary is engine.topic_hubs.TOPIC_HUBS, the curated set,
+      NOT the union of registry picker_tags.topics — those are 42 values with 28
+      singletons and both `tech` (5 shows) and `technology` (2), the keyword
+      artifact that module was written to avoid. Audience is deliberately not a
+      facet: eleven values including heritage-learners and newcomers on one show
+      each. The grid is server-rendered and the chips only add a dim class, so
+      the page is the full catalogue with JavaScript off. The card became a
+      shared macro (whitespace-only change to the homepage, verified) because a
+      second hand-maintained copy would drift the first time a badge changed.
+      Guards: tests/test_chrome_pass_2026_09_21.py.

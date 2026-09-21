@@ -84,3 +84,56 @@
   {%- endif %}
 </div>
 {%- endmacro -%}
+
+{#- One show card, used by the homepage grid and by /explore.html.
+
+    Extracted 2026-09-21 when /explore.html needed the same card: it carries the
+    `data-topics` / `data-audience` / `data-language` attributes the chip filters
+    read, and a second hand-maintained copy would drift from the homepage's the
+    first time a badge changed. The homepage's rendered card is unchanged apart
+    from leading whitespace. -#}
+{%- macro show_card(s, path_prefix='') -%}
+<div class="show-card-wrap"
+     data-slug="{{ s.slug }}"
+     data-strand="{{ s.strand | default('') }}"
+     data-topics="{{ s.picker_tags.topics | default([]) | join(' ') }}"
+     data-audience="{{ s.picker_tags.audience | default([]) | join(' ') }}"
+     data-language="{{ s.picker_tags.language | default([]) | join(' ') }}"
+     style="--show-color:{{ s.brand_color }};">
+    {% set _scbase = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
+    <a href="{{ path_prefix }}{{ s.show_page }}" class="show-card glass-card">
+        <picture>
+            <source type="image/webp" srcset="{{ path_prefix }}{{ _scbase }}-400.webp 400w, {{ path_prefix }}{{ _scbase }}-800.webp 800w" sizes="(max-width: 600px) 180px, 280px">
+            <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" class="show-card-image" width="1400" height="1400" loading="lazy">
+        </picture>
+        <div class="show-card-name">{{ s.name }}</div>
+        <div class="show-card-badges">
+            {#- The strand badge is first: the three shows Mira
+                hosts are the network's most differentiated and
+                display_order scatters them through this grid. #}
+            {% if s.strand == 'mira' %}<span class="show-card-badge show-card-badge--strand">Hosted by Mira</span>{% endif %}
+            {% if s.schedule %}<span class="show-card-badge">{{ s.schedule }}</span>{% endif %}
+            {% if s.episode_length %}<span class="show-card-badge">{{ s.episode_length }}</span>{% endif %}
+            {% if s.picker_tags and s.picker_tags.language and 'russian' in s.picker_tags.language %}<span class="show-card-badge">In Russian</span>{% endif %}
+        </div>
+        <div class="show-card-tagline">{{ s.description_long | default(s.tagline) }}</div>
+        {% if s.audience %}
+        {# Strip the leading "For " some audience strings use so we don't double it. #}
+        <div class="show-card-audience"><strong>For:</strong>
+            {{ s.audience | replace('For ', '', 1) if s.audience.startswith('For ') else s.audience }}
+        </div>
+        {% endif %}
+        {% if s.source_highlights %}
+        <div class="show-card-sources">Sources: {{ s.source_highlights | join(', ') }}</div>
+        {% endif %}
+        <div class="show-card-listen">
+            Listen
+            <svg viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+    </a>
+    <a href="{{ path_prefix }}{{ s.blog_page }}" class="show-card-blog-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Read Blog
+    </a>
+</div>
+{%- endmacro -%}

@@ -4124,6 +4124,111 @@ def generate_mira_page(*, dry_run=False, output_dir=None):
     return out_path
 
 
+#: Language facet labels for /explore.html. The registry's ``picker_tags.language``
+#: values are slugs; these are what a reader reads.
+_EXPLORE_LANGUAGE_LABELS = {
+    "english": "English",
+    "russian": "Russian",
+    "bilingual": "Bilingual (EN/RU)",
+}
+
+
+def generate_explore_page(*, dry_run=False, output_dir=None):
+    """Generate ``explore.html`` — pick a show by subject or language.
+
+    The homepage grid is ordered by ``display_order`` and nothing else, so a
+    visitor who arrived for one thing had to read eighteen cards to find the
+    other seventeen. @NerraNetwork's audience is 99.4% male and 37% over 55
+    while the catalogue already holds the shows that would broaden it; this is
+    one click to them.
+
+    Two things it deliberately does NOT do:
+
+    * It does not build its own subject vocabulary. Subjects are
+      ``engine.topic_hubs.TOPIC_HUBS`` — the curated set — because the union of
+      registry ``picker_tags.topics`` is 42 values with 28 singletons and both
+      ``tech`` and ``technology``, which is the keyword artifact that module
+      exists to avoid. A hub with no shows is skipped; a hub whose PAGE was too
+      thin to build still filters here, since a chip is not a link.
+    * It does not render client-side. The whole grid is in the HTML and the
+      chips only toggle a dim class, so with JavaScript off the page is the
+      full catalogue instead of an empty shell.
+
+    Audience is not a facet: those eleven registry values include
+    ``heritage-learners`` and ``newcomers`` on one show each, and a filter whose
+    options mostly match one show is noise. Subject and language are the two
+    that separate the catalogue.
+    """
+    from engine import topic_hubs as _hubs
+
+    env = _get_jinja_env()
+    template = env.get_template("explore_page.html.j2")
+
+    all_shows = _build_all_shows_list()
+
+    subjects = []
+    hub_ids_by_slug: dict[str, list[str]] = {}
+    for hub in _hubs.TOPIC_HUBS:
+        members = _hubs.hub_shows(hub, all_shows)
+        if not members:
+            continue
+        subjects.append({
+            "id": hub["id"],
+            "heading": hub["heading"],
+            "count": len(members),
+        })
+        for show in members:
+            hub_ids_by_slug.setdefault(show["slug"], []).append(hub["id"])
+
+    lang_counts: dict[str, int] = {}
+    for show in all_shows:
+        for lang in (show.get("picker_tags") or {}).get("language") or []:
+            lang_counts[lang] = lang_counts.get(lang, 0) + 1
+    languages = [
+        {"id": lang, "label": _EXPLORE_LANGUAGE_LABELS.get(lang, lang.title()),
+         "count": count}
+        for lang, count in sorted(lang_counts.items(), key=lambda kv: -kv[1])
+    ]
+
+    description = (
+        "Browse all of the Nerra Network's shows by subject and language — AI, "
+        "space, markets, science, climate, world news, language learning and "
+        "more. Every show is ad-free and independently produced."
+    )
+
+    context = {
+        "path_prefix": "",
+        "page_title": "Explore the shows — Nerra Network",
+        "page_description": description,
+        "meta_description": description,
+        "meta_keywords": (
+            "podcast by topic, find a podcast, AI podcast, space podcast, "
+            "investing podcast, science podcast, Russian language podcast"
+        ),
+        "theme_color": "#6B47FF",
+        "og_image": "",
+        "canonical_url": "https://nerranetwork.com/explore.html",
+        "show_color": "",
+        "show_color_dark": "",
+        "all_shows": all_shows,
+        "subjects": subjects,
+        "languages": languages,
+        "hub_ids_by_slug": hub_ids_by_slug,
+    }
+
+    html = template.render(**context)
+    out_path = (Path(output_dir) / "explore.html" if output_dir
+                else ROOT / "explore.html")
+
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
+
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
+
+
 # ---------------------------------------------------------------------------
 # /topics/ — evergreen subject hubs (Sep 2026, phase 4)
 # ---------------------------------------------------------------------------
@@ -4439,7 +4544,7 @@ def generate_sitemap(*, dry_run=False, out=None):
     # link for a scheduled interview.
     for extra in ["modern-investing-resources.html", "start-here.html",
                   "about.html", "how-to-listen.html", "faq.html",
-                  "mira.html", "age-of-ai-apply.html",
+                  "mira.html", "explore.html", "age-of-ai-apply.html",
                   "nerra-voices-apply.html",
                   "press.html", "contact.html", "editorial.html",
                   "gallery.html", "books.html", "player.html", "data.html",
@@ -5528,6 +5633,7 @@ def generate_static_pages(*, dry_run=False):
     generate_books_page(dry_run=dry_run)
     generate_404_page(dry_run=dry_run)
     generate_mira_page(dry_run=dry_run)
+    generate_explore_page(dry_run=dry_run)
     generate_topic_hub_pages(dry_run=dry_run)
     generate_redirect_stubs(dry_run=dry_run)
     generate_llms_txt(dry_run=dry_run)
@@ -5779,6 +5885,11 @@ def main():
         help="Generate mira.html, the hub for the three Mira-hosted shows",
     )
     parser.add_argument(
+        "--explore",
+        action="store_true",
+        help="Generate explore.html, the browse-by-subject page",
+    )
+    parser.add_argument(
         "--redirects",
         action="store_true",
         help=(
@@ -5800,7 +5911,7 @@ def main():
         or args.blogs or args.sitemap or args.player or args.how_to_listen
         or args.start_here or args.faq or args.about or args.blog_aggregates
         or args.books or args.legal or args.static_pages or args.redirects
-        or args.mira or args.topics
+        or args.mira or args.topics or args.explore
     )
     if not _any_flag:
         args.all = True
@@ -5958,6 +6069,8 @@ def main():
         generate_static_pages(dry_run=args.dry_run)
     if args.mira:
         generate_mira_page(dry_run=args.dry_run)
+    if args.explore:
+        generate_explore_page(dry_run=args.dry_run)
     if args.topics:
         generate_topic_hub_pages(dry_run=args.dry_run)
     if args.redirects:
