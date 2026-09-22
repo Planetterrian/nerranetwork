@@ -91,10 +91,12 @@ class TestInterviewTranscriptSplit:
         """
         text = path.read_text(encoding="utf-8")
         body = interview_body_markdown(text)
-        if "### Chapters" in text:
-            assert "Chapters" in body
-        else:
-            assert "Transcript" not in body
+        # Later the same day the chapter list moved out too, into the page's
+        # real chapter section (tests/test_age_of_ai_finish_2026_09_22.py),
+        # so the body carries neither; an unknown section still would.
+        assert "### Chapters" not in body
+        assert "### Transcript" not in body
+        assert "What we talked about" not in body
 
     def test_a_digest_with_no_transcript_section_is_not_an_error(self):
         """Ep001 predates the current shape and has no markdown at all; a

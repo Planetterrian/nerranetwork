@@ -1,9 +1,11 @@
 # The Age of AI — the network's AI-hosted LIVE INTERVIEW show (July 2026).
 #
 # Host: Mira, an AI documentarian persona (Grok voice `ara`). Guests are real
-# people interviewed over a REAL PHONE CALL: a Voximplant scenario dials the
-# guest, bridges the call to a Grok Voice Agent running Mira's persona, and
-# records both tracks. See docs/age_of_ai_plan.md for the full spec.
+# people interviewed LIVE: since 2026-09-09 every interview is a studio ROOM
+# the guest joins from their browser (age-of-ai-studio.html), bridged to a
+# Grok Voice Agent running Mira's persona, with every speaker recorded on
+# their own track; an outbound phone call is the fallback mode, not the
+# default. See docs/age_of_ai_plan.md for the full spec.
 #
 # IMPORTANT — production does NOT go through run_show.py generation.
 # Episodes are produced by the Nerra Voices pipeline:
@@ -24,11 +26,11 @@ slug: age_of_ai
 # NOT the run_show hooks — this show never generates via run_show.
 memory_enabled: true
 description: >-
-  The interview show where the roles are reversed: Mira, an AI, calls real
-  people and asks the questions. Teachers, founders, artists, tradespeople,
-  and skeptics on what the AI transition actually feels like from inside a
-  life and a livelihood. Real conversations, recorded live. Real people.
-  An honest machine asking the questions.
+  The interview show where the roles are reversed: Mira, an AI, sits down
+  with real people and asks the questions. Teachers, founders, artists,
+  tradespeople, and skeptics on what the AI transition actually feels like
+  from inside a life and a livelihood. Real conversations, recorded live.
+  Real people. An honest machine asking the questions.
 
 # Guard rail: keeps an accidental run_show dispatch a clean skip (the queue
 # is deliberately empty forever — the voices pipeline owns production).
@@ -70,8 +72,9 @@ publishing:
   rss_file: age_of_ai_podcast.rss
   rss_title: "The Age of AI"
   rss_description: >-
-    The interview show where the roles are reversed: Mira, an AI, calls real
-    people and asks the questions — live, on the record. Honest conversations
+    The interview show where the roles are reversed: Mira, an AI, interviews
+    real people live, on the record, and the guest approves the transcript
+    before it publishes. Honest conversations
     about what the AI transition actually feels like from inside a life and a
     livelihood, with full disclosure baked into every episode: the host is a
     machine, the guests never are.

@@ -2406,3 +2406,48 @@ experiments:
       code does; the guards read the transcripts and the Worker rather than
       pin a sentence. Also fixed: every blog post printed \ud83d\udc4d where
       a thumbs-up belonged. Guards: tests/test_age_of_ai_truth_2026_09_22.py.
+
+  - id: age-of-ai-finish-pass-2026-09-22
+    title: >
+      The Age of AI pages, finished: the interview steps and the credit on
+      the show page and every post, chapters that seek the player, the
+      guest on every index card, and a Spotify chip for six shows
+    area: growth
+    shipped: 2026-09-22
+    readout: 2026-10-22
+    status: reading
+    hypothesis: >
+      A stranger arriving on an interview page should see who the person is,
+      how the interview was made and who stands behind it without scrolling
+      for it. The truth pass (age-of-ai-truth-pass-2026-09-22) removed what
+      was false; this pass adds what was missing: the eight-step "how an
+      interview works" list in short form on the show page (one owner,
+      engine.brand, rendered by one macro on the hub and the show pages), a
+      one-line provenance under every post's player, the scoped creator
+      credit on every post, chapters in the page's real click-to-seek
+      section instead of an <h4> list with a one-item Contents sidebar, the
+      guest's name in the breadcrumb and the JSON-LD, and index cards that
+      lead with the person. Six shows whose YAML carried a Spotify id and
+      whose registry said null rendered no Spotify chip at all.
+    baseline: >
+      2026-09-22 renders from main: the show page had the Mira band and the
+      credit but no steps; posts had no credit, no provenance, chapters as a
+      digest <h4> list under a one-item "Contents" sidebar, "Episode N" in
+      the breadcrumb, an Organization as the only entity in the JSON-LD, and
+      "Suggest a story"; the index showed the thesis sentence twice under a
+      meaningless reading time; the Spotify chip was absent on age_of_ai,
+      spacex, dp_pod, unintended_consequences, first_principles, env_intel.
+    target: >
+      By 10-22: age-of-ai-apply.html sessions and blog/age_of_ai landing
+      sessions in api/ga4_stats.json, read alongside the truth pass; the
+      Spotify chip clicks show up as open.spotify.com outbound events. At
+      this traffic an existence check, not a rate.
+    notes: >
+      News surfaces changed only in CSS text (three new rules in the post's
+      style block, the guest/creator CSS leaving the show pages for
+      styles/main.css) and whitespace — verified by rendering Tesla, Omni
+      View and Offshore North before and after. Pre-existing and left alone:
+      generate_blog_index logs "Unrecognized summaries shape" for age_of_ai
+      (engine.summaries_io does not read the Voices {"episodes": [...]}
+      wrapper) — a warning on main before this change. Guards:
+      tests/test_age_of_ai_finish_2026_09_22.py.

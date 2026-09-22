@@ -178,6 +178,28 @@ CREATOR_MIRA_ROLE = (
 )
 
 
+def interview_provenance(guest_name: str = "", cohost_name: str = "") -> list:
+    """The one-line provenance an interview post prints under its player.
+
+    Short phrases, each a fact the pipeline can vouch for on EVERY episode:
+    who hosted (an AI, disclosed), who co-hosted when someone did (read from
+    the transcript, never assumed), who reviewed it (gate 1), and what the
+    guest was given (gate 2 as built — sent to approve, cut or refuse; it
+    does not say "approved by", because seven days of silence also
+    publishes). The credit paragraphs carry the same facts at length.
+    """
+    parts = [f"Hosted by {MIRA_HOST_NAME}, an AI"]
+    if cohost_name:
+        parts.append(f"{cohost_name} co-hosted")
+    parts.append(f"Reviewed before release by {NETWORK_CREATOR_NAME}")
+    if guest_name:
+        parts.append(
+            f"Transcript sent to {guest_name} to approve, cut or refuse "
+            "before publication"
+        )
+    return parts
+
+
 def creator_credit(slug: str = "") -> list:
     """The creator credit for *slug*, as paragraphs in reading order.
 
@@ -196,3 +218,52 @@ def creator_credit(slug: str = "") -> list:
     if slug in MIRA_SHOW_SLUGS:
         out.append(CREATOR_MIRA_ROLE)
     return out
+
+
+# ---------------------------------------------------------------------------
+# How an interview runs — the steps a guest is walked through
+# ---------------------------------------------------------------------------
+#
+# Moved here from generate_html.py on 2026-09-22. Two of these steps are
+# claims about a human deciding something (gate 1, the review with no timer)
+# and about what the guest can do (gate 2, a week to approve, cut or refuse);
+# they render on /mira.html AND on the interview show pages, so they need
+# one owner the way the claim and the credit do. Sources: docs/age_of_ai_plan.md
+# and voximplant/scenarios/age_of_ai_interview.js. Step 7 says what gate 2
+# actually does — the seven-day auto-approve is stated, not hidden.
+MIRA_INTERVIEW_STEPS = [
+    ("You apply", "A short form: who you are and what you would talk about. "
+                  "No media training, no pitch deck, no AI angle required."),
+    ("A human reads it", "Patrick triages every application himself. This is "
+                         "the step that decides whether an interview happens."),
+    ("You pick a time", "A booking link, your calendar, your timezone."),
+    ("You get a prep brief", "The day before, an emailed brief: the themes "
+                             "Mira means to explore and the ground she will "
+                             "cover, so nothing in the conversation is a "
+                             "surprise."),
+    ("You talk to Mira", "Open the studio link, pick a microphone, join — or "
+                         "take a call on your phone if you would rather. "
+                         "Mira hears you and answers in real time. It is a "
+                         "conversation, not a questionnaire, and it runs "
+                         "under an hour."),
+    ("A human edits it", "Patrick reviews the episode before anything is "
+                         "assembled. This gate has no timer: nothing "
+                         "publishes because a review was slow."),
+    ("You approve your transcript", "You read what you said, and you have a "
+                                    "week to approve it, cut anything from "
+                                    "it, or refuse it. What you cut is "
+                                    "removed from the audio before the "
+                                    "episode is built — not bleeped, cut. "
+                                    "After seven days without a reply the "
+                                    "episode goes ahead as sent, and you can "
+                                    "ask for a takedown at any time."),
+    ("It publishes", "Mira records the narration around your words, and the "
+                     "episode goes to the feeds, the site and the archive "
+                     "with the AI host disclosed on air."),
+]
+
+#: The steps a show page shows beside the Hosted-by-Mira band — the ones a
+#: prospective guest asks about first (apply, the human read, the
+#: conversation, the human edit, the transcript). The full list is on
+#: /mira.html. Indexes into :data:`MIRA_INTERVIEW_STEPS`.
+MIRA_INTERVIEW_STEPS_COMPACT = (0, 1, 4, 5, 6)
