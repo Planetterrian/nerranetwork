@@ -129,7 +129,10 @@ class TestTheEpisodeCutsItself:
 
     def test_the_edit_is_explainable_afterwards(self):
         assert '"episode_edits"' in AUTO or "episode_edits" in AUTO
-        assert '"rationale": decided.get("rationale", "")' in AUTO
+        # Sept 22 2026: the rationale can gain a line of its own when the cut
+        # ends early, so it is built before it is stored.
+        assert 'rationale = decided.get("rationale", "")' in AUTO
+        assert '"rationale": rationale' in AUTO
 
     def test_the_prompt_asks_for_speech_not_prose(self):
         assert "no headings or lists" in AUTO_PROMPT
@@ -1576,22 +1579,29 @@ class TestTheGuestFinishesTheirSentence:
         t = ("[47:49] Sheldon: So I'm using automation to create more automation\n"
              "[47:58] Sheldon: that we can produce.\n"
              "[48:03] Mira: Thank you, Sheldon. That's the end of the recording.\n")
-        # Pointed at the start of his last line: past it, before Mira.
-        assert 2879.5 <= _after_the_line(t, 2878.0) <= 2882.7
+        # Pointed at the start of his last line: past it, right up to Mira.
+        assert 2879.5 <= _after_the_line(t, 2878.0) <= 2882.8
         # Pointed at the first line of his final thought: the whole thought.
         assert _after_the_line(t, 2869.0) == _after_the_line(t, 2878.0)
         # Pointed at Mira's sign-off: pulled back to the end of his turn.
         assert _after_the_line(t, 2883.0) == _after_the_line(t, 2878.0)
-        # A long last line is bounded by the next speaker's start.
+        # A long last line is still bounded by the next speaker's start: past
+        # it lies Mira's live sign-off, which the listener never hears.
         t2 = "[10:00] Dan: " + "word " * 40 + "\n[10:05] Mira: Right.\n"
-        assert _after_the_line(t2, 600.0) == 604.7
+        assert _after_the_line(t2, 600.0) == 604.75
         # The last line of the file is extended by its own length.
         assert _after_the_line("[10:00] Dan: four words here now\n", 600.0) == 600.0 + 0.45 * 4 + 1.2
 
     def test_the_cutter_uses_it(self):
         auto = (V / "auto_edit.py").read_text(encoding="utf-8")
-        assert 'end = leg(_after_the_line(transcript_of(ctx), float(decided["end_sec"])))' in auto
-        assert "the cut is extended to where that line ends" in AUTO_PROMPT
+        # Sept 22 2026: the call goes through _where_it_closes, which makes
+        # the guest's LAST turn the default rather than whichever turn the
+        # model pointed at.
+        assert "_where_it_closes(" in auto
+        assert "end = leg(end)" in auto
+        assert "the cut is carried to where their turn ends" in _flat(AUTO_PROMPT)
+        assert "At the close of the conversation. That is the default" in _flat(AUTO_PROMPT)
+        assert "what is not allowed is one that happens quietly" in _flat(AUTO_PROMPT)
 
 
 class TestAPublishedEpisodesPostCanBeRefreshed:
@@ -2178,3 +2188,52 @@ class TestTheStudioChecksForHeadphonesRatherThanAskingNicely:
         assert "her questions end up in the" in self.FIRE
         assert "as though you had said" in self.BOOKING
         assert "wearing headphones or" in self.BOOKING
+
+
+class TestAnEpisodeRunsToTheClose:
+    """Sept 22 2026. Three episodes ended mid-sentence: Sheldon Poon twice and
+    Meridan Zerner, whose closing thought lost "It is complex." Her last line
+    ran 15:50 to 16:04, fourteen seconds, and the word-count estimate put it at
+    nine — and that estimate was being used as a CAP on the cut. Patrick's
+    rule: an episode runs to the close of the conversation unless he or the
+    guest asks otherwise, or there is a reason worth stating."""
+
+    SRC = (V / "auto_edit.py").read_text(encoding="utf-8")
+
+    def _mod(self):
+        import importlib, sys as _sys, os as _os
+        _sys.path.insert(0, str(V))
+        _os.environ.setdefault("SUPABASE_URL", "http://x")
+        _os.environ.setdefault("SUPABASE_SERVICE_KEY", "x")
+        return importlib.import_module("auto_edit")
+
+    MERIDAN = (
+        "[15:45] Meridan: and neighbors in your life to look at your spiritual\n"
+        "[15:50] Meridan: well-being. These are all equally weighted and make up this "
+        "recipe that we all deserve. It is complex.\n"
+        "[16:04] Mira: Thank you, Meridan. That's the end of the recording.\n")
+
+    def test_the_guess_can_only_extend_never_shorten(self):
+        m = self._mod()
+        # The shipped cut was 959.3s. The next speaker starts at 964.
+        assert m._after_the_line(self.MERIDAN, 950.0, 974) == 963.75
+        assert "estimate can only ever extend the cut, never shorten it" in _flat(self.SRC)
+
+    def test_the_close_is_the_default_not_whatever_was_pointed_at(self):
+        m = self._mod()
+        end, note = m._where_it_closes(self.MERIDAN, 950.0, 974, "her final line")
+        assert end > 959.3, "must reach past the cut that lost her last words"
+        assert note == "", "running to the close is not an exception worth noting"
+
+    def test_nothing_after_them_means_the_tape_is_the_end(self):
+        m = self._mod()
+        solo = "[10:00] Meridan: and that is really where I would leave it.\n"
+        assert m._after_the_line(solo, 600.0, 640.0) == 640.0
+
+    def test_a_deliberate_early_finish_is_allowed_and_declared(self):
+        m = self._mod()
+        end, note = m._where_it_closes(self.MERIDAN, 300.0, 974, "the line dropped")
+        assert end < 400, "an early finish for a stated reason still stands"
+        assert "ENDS EARLY" in note and "the line dropped" in note
+        # ...and it reaches the gate-1 email rather than the guest's ears.
+        assert "+ ended_early" in self.SRC and '"note": rationale' in self.SRC

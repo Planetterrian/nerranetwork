@@ -134,11 +134,57 @@ WORD_SEC = 0.45      # a spoken word, roughly
 LINE_TAIL_SEC = 1.2  # breath after the last word before the cut
 
 
+END_SNAP_SEC = 150.0   # how far back a model end is treated as "near the close"
+
+
+def _last_guest_turn(transcript: str) -> float | None:
+    """The room-clock second at which the last non-host line starts."""
+    latest = None
+    for raw in transcript.splitlines():
+        m = _LINE.match(raw.strip())
+        if not m:
+            continue
+        h, mm, ss, who, _text = m.groups()
+        if who.strip().lower() == "mira":
+            continue
+        at = (int(h) * 3600 + int(mm) * 60 + int(ss)) if ss else (int(h) * 60 + int(mm))
+        latest = float(at)
+    return latest
+
+
+def _where_it_closes(transcript: str, end_sec: float, room_end: float,
+                     why: str) -> tuple[float, str]:
+    """The end of the episode's conversation, and a note when it is early.
+
+    Sept 22 2026. Three episodes have now ended mid-sentence — Sheldon Poon
+    twice, Meridan Zerner once — because the cutter chose an end a few seconds
+    short and nothing questioned it. Patrick's rule: an episode runs to the
+    close of the conversation unless he or the guest asks otherwise, or there
+    is a reason worth stating. So the guest's final turn is the default. A
+    model end within a couple of minutes of it is treated as pointing AT the
+    close and snapped there; an end further back than that is a deliberate
+    early finish, which is allowed but is written into the edit so it shows up
+    at gate 1 rather than being discovered by the guest.
+    """
+    last_turn = _last_guest_turn(transcript)
+    if last_turn is None:
+        return _after_the_line(transcript, end_sec, room_end), ""
+    to_the_close = _after_the_line(transcript, last_turn, room_end)
+    if end_sec >= last_turn - END_SNAP_SEC:
+        return to_the_close, ""
+    chosen = _after_the_line(transcript, end_sec, room_end)
+    note = (f"ENDS EARLY: cut at {chosen / 60:.0f} min, "
+            f"{(to_the_close - chosen) / 60:.0f} min before the guest stopped "
+            f"talking — {why or 'no reason given'}")
+    logger.warning("auto_edit: %s", note)
+    return chosen, note
+
 def transcript_of(ctx: dict) -> str:
     return (ctx.get("package") or {}).get("transcript_raw") or ""
 
 
-def _after_the_line(transcript: str, end_sec: float) -> float:
+def _after_the_line(transcript: str, end_sec: float,
+                    until: float | None = None) -> float:
     """Where the episode's conversation ends, given the model's end_sec.
 
     The transcript stamps where each line STARTS, so end_sec is the start
@@ -174,9 +220,24 @@ def _after_the_line(transcript: str, end_sec: float) -> float:
         last += 1
     at, _who, text = lines[last]
     spoken = at + WORD_SEC * max(1, len(text.split())) + LINE_TAIL_SEC
+    # Sept 22 2026, Meridan Zerner. Her closing line ran from 15:50 to 16:04 —
+    # fourteen seconds — and the word-count estimate put it at nine, so the
+    # cut landed at 959.3s and took "It is complex" off the end. Sheldon Poon
+    # lost eight seconds the same way. The estimate was being used as a CAP,
+    # and it is the one number here that is a guess: the transcript's own next
+    # timestamp is a measurement. Someone else starting to speak is the only
+    # hard evidence that this speaker stopped, so that boundary wins and the
+    # estimate can only ever extend the cut, never shorten it.
     if last + 1 < len(lines):
-        return min(spoken, lines[last + 1][0] - 0.3)
-    return spoken
+        # Whoever speaks next is the measurement, so it decides — in both
+        # directions. Short of it, the estimate was wrong and the guest loses
+        # words. Past it, the episode would run into Mira's live "that's the
+        # end of the recording", which belongs to the guest and not to the
+        # listener; the produced outro closes the episode instead.
+        return lines[last + 1][0] - 0.25
+    # Nothing follows them on the tape, so the tape's end is where they
+    # stopped. Trailing silence is trimmed when the piece is cut.
+    return float(until) if until else spoken
 
 
 def plan(ctx: dict) -> dict:
@@ -222,13 +283,22 @@ def build(run_id: str) -> dict:
         slug = f"{slug}_auto"
         logger.info("a hand-written edit already exists — cutting as %s", slug)
     offset = _leg_offset(run)
+    # The room's own length, on the room clock: where the tape stops, and so
+    # the last moment the guest could still have been talking.
+    try:
+        room_end = float(run.get("duration_sec") or 0.0) or None
+    except (TypeError, ValueError):
+        room_end = None
 
     # Room clock -> the guest leg's own clock, which is what the EDL addresses.
     def leg(t: float) -> float:
         return max(0.0, float(t) - offset)
 
     start = leg(float(decided.get("start_sec") or 0.0)) + EDGE_PAD_SEC
-    end = leg(_after_the_line(transcript_of(ctx), float(decided["end_sec"])))
+    end, ended_early = _where_it_closes(
+        transcript_of(ctx), float(decided["end_sec"]), room_end,
+        decided.get("end_why") or "")
+    end = leg(end)
     drops = []
     for d in decided.get("drop") or []:
         a, b = leg(float(d["from_sec"])), leg(float(d["to_sec"]))
@@ -236,6 +306,9 @@ def build(run_id: str) -> dict:
             drops.append({"from": a, "to": b, "why": d.get("why", "")})
     drops.sort(key=lambda d: d["from"])
 
+    rationale = decided.get("rationale", "")
+    if ended_early:
+        rationale = (rationale + " " if rationale else "") + ended_early
     cuts = [{"from": "narration:intro"}, {"gap": 0.7}]
     at = start
     for d in drops:
@@ -263,7 +336,7 @@ def build(run_id: str) -> dict:
         "interview_id": interview["id"],
         "run_id": run["id"],
         "narration": slug,
-        "note": decided.get("rationale", ""),
+        "note": rationale,
         "cuts": cuts,
     }
 
@@ -279,7 +352,7 @@ def build(run_id: str) -> dict:
     existing = sb_select("episode_edits", f"slug=eq.{slug}&select=id")
     row = {"slug": slug, "interview_id": interview["id"],
            "interview_run_id": run["id"], "narration": narration, "edl": edl,
-           "rationale": decided.get("rationale", "")}
+           "rationale": rationale}
     if existing:
         sb_update("episode_edits", f"id=eq.{existing[0]['id']}", row)
     else:
