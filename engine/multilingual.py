@@ -12,6 +12,7 @@ on the website. See ``docs/multilingual.md``.
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import subprocess
@@ -116,6 +117,116 @@ def render_track(script_text: str, lang: str, voice_id: str, api_key: str,
         api_key=api_key, provider="grok",
         max_chars=max_chars, language_code=lang,
     )
+
+
+def track_transcript_path(output_dir: Path, episode_num: int, lang: str) -> Optional[Path]:
+    """The committed-or-local Whisper JSON for a language track, if the
+    multilingual sweep wrote one (``<stem>.<lang>_transcript.json`` beside
+    ``<stem>.<lang>.mp3``). The dub engines reuse it instead of running
+    Whisper a second time on the same bytes."""
+    matches = sorted(Path(output_dir).glob(f"*_Ep{episode_num:03d}_*.{lang}_transcript.json"))
+    return matches[-1] if matches else None
+
+
+def _record_dub_gate(output_dir: Path, lang: str, episode_num: int, payload: dict) -> Path:
+    """Read-modify-write ``digests/<slug>/spoken_text_gate.<lang>.json``,
+    keyed by episode so a re-run overwrites its own row."""
+    path = Path(output_dir) / f"spoken_text_gate.{lang}.json"
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(doc, dict) or not isinstance(doc.get("episodes"), dict):
+            doc = {}
+    except (OSError, ValueError):
+        doc = {}
+    doc.setdefault("schema_version", 1)
+    doc["lang"] = lang
+    doc.setdefault("episodes", {})[str(episode_num)] = payload
+    path.write_text(json.dumps(doc, indent=1, ensure_ascii=False, sort_keys=True) + "\n",
+                    encoding="utf-8")
+    return path
+
+
+class _GateDone(Exception):
+    """Internal: leave the gate body early but still record the sidecar."""
+
+
+def _gate_dub_track(config, lang: str, local_mp3: Path, script_text: str,
+                    output_dir: Path, stem: str, episode_num: int) -> dict:
+    """Spoken-text gate (landmine #25) on one translated track — SHADOW.
+
+    Whisper the rendered MP3 (the same call the dub engines make later,
+    whose JSON they now reuse) and compare it with the translated script
+    through ``engine.spoken_text_gate``. Records the verdict in the
+    per-language sidecar and warns on a failure; never raises and never
+    changes what ships. ``resolve_gate_mode`` downgrades ``enforce`` to
+    shadow for any non-English transcript, so blocking here is
+    structurally impossible until the mode resolver is recalibrated for
+    the language — which is what the shadow data is for.
+    """
+    from datetime import datetime as _dt_cls, timezone as _tz
+    payload: dict = {
+        "gate": "off", "mode": "off", "lang": lang, "passed": None,
+        "script_file": f"{stem}.{lang}.txt", "transcript_file": "",
+        "generated_at": _dt_cls.now(_tz.utc).isoformat(),
+    }
+    from engine.spoken_text_gate import check_transcript_files, resolve_gate_mode
+    configured = str(getattr(getattr(config, "multilingual", None),
+                             "spoken_text_gate", "shadow") or "shadow")
+    mode = resolve_gate_mode(configured, lang) if configured.strip().lower() != "off" else "off"
+    payload["mode"] = mode
+    if mode == "off":
+        return payload
+    try:
+        from engine import transcripts as _transcripts
+        tr = _transcripts.generate_transcript(
+            Path(local_mp3), Path(output_dir), f"{stem}.{lang}", language=lang)
+        if tr is None or not Path(tr.json_path).exists():
+            payload["gate"] = "no_transcript"
+            logger.warning(
+                "::warning::%s Ep%s [%s]: spoken-text gate could not run — no "
+                "Whisper transcript. The track is UNVERIFIED against its script.",
+                getattr(config, "slug", "?"), episode_num, lang)
+            raise _GateDone()
+        payload["transcript_file"] = Path(tr.json_path).name
+        tts_cfg = getattr(config, "tts", None)
+        report = check_transcript_files(
+            script_text, Path(tr.json_path), Path(tr.txt_path),
+            min_opening_match=float(getattr(tts_cfg, "spoken_text_gate_min_opening_match", 0.5) or 0.5),
+            max_unmatched_run=int(getattr(tts_cfg, "spoken_text_gate_max_unmatched_run", 40) or 40),
+        )
+        payload.update({
+            "passed": bool(report.passed),
+            "gate": "pass" if report.passed else "fail_shadow",
+            "reasons": list(report.reasons),
+            "opening_match": round(float(report.opening_match), 4),
+            "longest_unmatched_run": int(report.longest_unmatched_run),
+            "unmatched_snippet": report.unmatched_snippet,
+            "unmatched_position": round(float(report.unmatched_position), 4),
+            "script_words": int(report.script_words),
+            "spoken_words": int(report.spoken_words),
+            "segments_dropped": int(report.segments_dropped),
+            "loops_collapsed": int(report.loops_collapsed),
+            "thresholds": dict(report.thresholds),
+            "whisper_language": getattr(tr, "language", None),
+            "whisper_language_probability": getattr(tr, "language_probability", None),
+        })
+        if not report.passed:
+            logger.warning(
+                "::warning::%s Ep%s [%s]: spoken-text gate FAILED in shadow mode "
+                "(%s) — the track ships; listen before trusting it.",
+                getattr(config, "slug", "?"), episode_num, lang, report.summary())
+    except _GateDone:
+        pass
+    except Exception as exc:  # noqa: BLE001 — the gate is best-effort in shadow
+        payload["gate"] = "error"
+        payload["error"] = str(exc)[:300]
+        logger.warning("Ep%s [%s]: spoken-text gate errored (%s) — track unverified",
+                       episode_num, lang, exc)
+    try:
+        _record_dub_gate(Path(output_dir), lang, episode_num, payload)
+    except OSError as exc:
+        logger.warning("Ep%s [%s]: could not write the gate sidecar: %s", episode_num, lang, exc)
+    return payload
 
 
 def generate_for_episode(
@@ -228,6 +339,11 @@ def generate_for_episode(
             logger.warning("Ep%s [%s]: could not save translated script: %s", episode_num, lang, exc)
             script_name = ""
 
+        # Spoken-text gate (Sep 22 2026, shadow): BEFORE the R2 upload, so
+        # the verdict exists for every track the feeds and the dubs ship.
+        gate = _gate_dub_track(config, lang, local_mp3, translated, output_dir,
+                               tts_file.stem.replace('_tts', ''), episode_num)
+
         en_dur = ffprobe_duration(english_url)
         if en_dur and dur:
             logger.info("Ep%s LENGTH [%s]: %.0fs vs EN %.0fs (%+.0f%%)",
@@ -262,6 +378,11 @@ def generate_for_episode(
             # generator to render the body in this language). Empty if the
             # write failed.
             "script_file": script_name,
+            # Whisper JSON of this track (reused by the RU/FR dub engines)
+            # and the shadow gate's verdict; the full report is in
+            # digests/<slug>/spoken_text_gate.<lang>.json.
+            "transcript_file": gate.get("transcript_file", ""),
+            "spoken_text_gate": gate.get("gate", "off"),
             "generated_at": datetime.now(timezone.utc).isoformat(),
         })
         results[lang] = "done"

@@ -524,8 +524,8 @@ reviews:
     - metric: "combined_generation on Tesla / SpaceX / FF / PT / MIT, first 7 days"
       baseline: "two_pass on 100% (chain-excluded)"
       expected: "combined on >= 70% of their episodes; 0 lost; fallback reasons logged"
-      verdict: pending
-      evidence: null
+      verdict: partial
+      evidence: "2026-09-22 (5 of the 7 days): 17/25 combined on Tesla/SpaceX/FF/PT/MIT (68%) - 1/5 on 09-18 and 2/5 on 09-19, then 5/5, 5/5, 4/5 from 09-20 once the sentence-normalised stash test (09-18) was live; 0 lost; the two-pass fallbacks are logged. A hit on the trailing three days, a partial on the window; the 09-18 entry's pessimism was wrong."
     - metric: "script_words / target on the five chained flagships under combined generation"
       baseline: "56-84% of target on Sep 16; PT skipped at 858w on 09-17"
       expected: ">= 85% of target on median; 0 podcast_script_too_thin skips"
@@ -592,15 +592,73 @@ reviews:
       baseline: "never recorded; 1 known refusal (OV Ep179, 09-18) findable only in the Actions log"
       expected: "recorded on 100% of long-form episodes from the merge; refusals 0-1 per 14 days; a per-channel run of http_403_insufficient_scope means a re-auth, never another retry"
       verdict: pending
-      evidence: null
+      evidence: "2026-09-22 interim: caption_track_uploaded on 32/32 long-form metrics files since 09-19, 0 refusals; caption_track_refusals_14d reads 0 on the dashboard. Window closes 10-02."
     - metric: "MIT trade_signal action=new_trade share, next 10 weekday episodes"
       baseline: "4 of 23 since Ep152 (08-28); 13 of 34 in the era"
       expected: "unchanged (<= 30%) until the regime block is changed - this prediction scores the diagnosis, not a fix; if it rises without a change, the diagnosis is wrong"
-      verdict: pending
-      evidence: null
+      verdict: hit
+      evidence: "2026-09-22: the regime block WAS changed the same day (no-trade budget, PR merged 09-18) and mit_new_trade_share_10ep moved 0.10 -> 0.50 in four days - the share rose only after the change, which is what the diagnosis predicted. The fix itself is scored in modern_investing.yaml (target >= 0.80 by 10-02)."
     - metric: "combined_generation on Tesla / SpaceX / FF / PT / MIT"
       baseline: "09-18: combined 2/11 (M&A, MIT); combined_stale on Tesla, SpaceX, PT; FF under band x2"
       expected: "stays under 50% on the flagships until the regeneration path re-runs PART 2 (plan item 2); the 09-17 prediction of >= 70% is on course to MISS"
+      verdict: miss
+      evidence: "2026-09-22: 68% over 09-18..22 and 14/15 (93%) over 09-20..22 with plan item 2 NOT shipped - the sentence-normalised stash comparison merged 09-18 was the fix, not a PART 2 re-run. A miss in the pipeline's favour; plan item 2 narrows to the FF token-band half (FF two_pass 09-19, combined_stale earlier)."
+    agent_cost_usd: null
+
+  - date: 2026-09-22
+    pr: null
+    doc: docs/reviews/youtube_review_2026_09_22.md
+    summary: "Full YouTube pipeline review. The factory is healthy (100% upload days, spoken-text gate 91/91, captions 32/32, 2K scenes everywhere, subscribers +14/+9/+4 in 7d) and Shorts reach fell on all three channels between 09-13 and 09-16 - EN hook Shorts 23-41 -> 8-10 median views at age 3, RU ~220 -> 15-92 - while Tesla-EN held and its RU/FR dubs of the SAME episodes fell 5-10x: same content diverging by channel is a distribution-side change, not the 09-12 script pass the 09-17 review blamed. Nothing measured which traffic source moved. Operator decisions: EN ships the hook Short only (the second EN Short: median 6 views, 0 subs over 59 uploads/28d); a weekly-probe tier for dead Shorts; the spoken-text gate on the RU/FR/ES/ZH tracks in shadow (they were never compared with their script - the network's highest-reach surface). Silent numbers fixed: Tesla split across two audience-headline keys; the CTA experiment scored on a per-video rate that falls with reach; fact cards blind to counts under 100."
+    shipped:
+      - "engine/youtube_policy: MAX_SHORTS_PER_CHANNEL {en: 1} enforced in resolve_publish_plan on both clamps; run_show reads the plan's count on every path (a missing policy file used to let tesla.yaml's 2 through)"
+      - "scripts/update_youtube_policy + engine/youtube_policy: dead-Shorts weekly-probe tier (hook Short age-3 median < 10 over 21 days, >= 7 videos, two nights to enter, three probes to leave; EN only; a missing reach file holds state); dp_pod enrolled in SEED_TIERS; yt_policy_shorts recorded honestly, yt_policy_shorts_skipped + video_podcast_render_only allowlisted"
+      - "engine/multilingual: spoken-text gate on every translated track BEFORE the R2 upload, shadow; sidecar digests/<slug>/spoken_text_gate.<lang>.json; dub engines reuse the sweep's Whisper JSON; audit_spoken_text.py --dubs; metric dub_gate_fail_share_14d"
+      - "scripts/fetch_youtube_analytics: traffic_day_series per channel (views/day by insightTrafficSourceType, informational, never a degraded marker); dashboard Traffic mix card; metric shorts_feed_share_7d_en"
+      - "scripts/build_audience_headline: one key per show (videos' show_slug), guard against a dir-name row"
+      - "scripts/generate_dashboard: short_subs_per_1k_views_14d_en (1.51); shorts-subscribe-cta re-instrumented"
+      - "engine/fact_cards: count nouns card (9 satellites, 1 gigawatt); designations (Falcon 9 booster) never do"
+      - "docs/experiments.yaml: 8 entries past readout closed (4 INCONCLUSIVE on a shared flat metric, 2 HIT, 1 HIT+SUPERSEDED, 1 SURFACE FOUND); en-one-short, dead-shorts-weekly-probe, dub-spoken-text-gate-shadow, traffic-mix-instrument registered"
+    deferred:
+      - "enforce the dub gate (after the 10-06 readout of the shadow data; per-language thresholds in resolve_gate_mode)"
+      - "filter-graph benchmark (branch count, filter threads) - the remaining long-form render lever after the preset trial measured no effect (median 953 s)"
+      - "Planetterrian weekly long-form probe: AVP 1.3-2.0%, average view duration 6-10 s on the last three probes - operator spot-check of the first 15 s of the 09-14 upload before the next probe"
+      - "dp-pod-youtube-shorts readout 09-25 (16 Shorts, 195 views, 0 subs, AVP 27-31%) - keep/pause is the operator's"
+      - "Russian chapters on RU long-forms; dub-Short titles from translated headlines (polish, not reach)"
+      - "record_youtube_outcomes: yt_comments_queued / outro_card / short_errors beyond the first are set and dropped (exempted, not metrics)"
+    predictions:
+    - metric: "short_reach_d3_median_en_7d (EN hook Short median views at age 3, last 7 publish days)"
+      baseline: "10 on 2026-09-22 (8-10 on the 09-16..19 cohorts; 23-41 on 09-03..15)"
+      expected: ">= 15 by 2026-10-06 with EN net subscribers per week not down (+14 in the week to 09-22); if it does not move with ~10 fewer EN uploads a day, the drop is distribution-side and the cap stays for the cost saving alone"
+      verdict: pending
+      evidence: null
+    - metric: "EN Shorts uploads per day from digests/*/youtube_videos.json (channel en, kind short)"
+      baseline: "~15/day over 09-08..22 (215 in 14 days)"
+      expected: "<= 12/day over 09-23..10-06 (one per episode on 11 daily shows, minus the dead-tier days)"
+      verdict: pending
+      evidence: null
+    - metric: "api/youtube_policy.json shorts_probe_weekly on en/omni_view and en/modern_investing"
+      baseline: "both at shorts_dead_pending night 1 of 2 on the 09-22 regeneration (medians 8.5 and 9.0)"
+      expected: "both true after the 09-24 nightly; each probe Short's views no lower than the show's daily Shorts were (medians 6-9); neither MAB (11.0) nor dp_pod (14.5) enters unless its median falls"
+      verdict: pending
+      evidence: null
+    - metric: "dub_gate_fail_share_14d and dub_gate_tracks_14d (dashboard), spoken_text_gate.<lang>.json sidecars"
+      baseline: "never measured; 0 tracks"
+      expected: ">= 100 tracks by 10-06 with a fail share under 0.05, every failure explained by a Whisper artifact in audit_spoken_text.py --dubs; a real leak in the sample enforces sooner"
+      verdict: pending
+      evidence: null
+    - metric: "api/audience_headline.json shows.tesla"
+      baseline: "downloads present, youtube null; a second tesla_shorts_time row with the inverse"
+      expected: "one row carrying both on the 09-23 nightly build; no key that is not a show slug"
+      verdict: pending
+      evidence: null
+    - metric: "shorts_feed_share_7d_en and the Traffic mix card"
+      baseline: "null (no series)"
+      expected: "four complete weeks per channel by 10-06 and a written read of whether the September drop was the Shorts feed or the subscriber/search surfaces"
+      verdict: pending
+      evidence: null
+    - metric: "fact_cards_rendered >= 3 on SpaceX and FF long-forms (metrics files)"
+      baseline: "SpaceX 4/12, FF 5/12 episodes (09-09..22); re-run on the last four transcripts: SpaceX 1/6/2/1, FF 3/2/4/2 cards"
+      expected: ">= 3 on at least half of each show's episodes over 09-23..10-06; the AVP criterion (treatment >= control + 2) holds"
       verdict: pending
       evidence: null
     agent_cost_usd: null

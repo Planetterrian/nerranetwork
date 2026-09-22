@@ -15,6 +15,7 @@ generator can actually compute — a typo'd metric must fail CI, not render
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -72,6 +73,112 @@ class TestExperimentsRegister:
     def test_live_metrics_are_none_or_numeric(self):
         for k, v in gd._experiment_live_metrics(ROOT).items():
             assert v is None or isinstance(v, (int, float)), (k, v)
+
+
+class TestReachNormalisedSubs:
+    """Sep 22 2026: subscribers per 1,000 EN Short views — the CTA read
+    that does not fall when reach falls."""
+
+    def _root(self, tmp_path, videos):
+        (tmp_path / "api").mkdir()
+        (tmp_path / "api" / "youtube_stats.json").write_text(json.dumps({
+            "generated": "2026-09-22T14:00:00Z",
+            "channels": {"en": {"day_series": []}},
+            "shows": {"x": {"videos": videos}},
+        }), encoding="utf-8")
+        (tmp_path / "digests").mkdir()
+        return tmp_path
+
+    def test_null_under_300_views_never_zero(self, tmp_path):
+        vids = [{"kind": "short", "channel": "en", "published": "2026-09-20",
+                 "views": 10, "subscribers_gained": 0} for _ in range(12)]
+        m = gd._experiment_live_metrics(self._root(tmp_path, vids))
+        assert m["short_subs_per_1k_views_14d_en"] is None
+        assert m["short_subs_per_video_14d_en"] == 0.0
+
+    def test_computes_per_1k_views(self, tmp_path):
+        vids = [{"kind": "short", "channel": "en", "published": "2026-09-20",
+                 "views": 100, "subscribers_gained": 1} for _ in range(12)]
+        vids.append({"kind": "short", "channel": "ru", "published": "2026-09-20",
+                     "views": 5000, "subscribers_gained": 9})  # other channel ignored
+        m = gd._experiment_live_metrics(self._root(tmp_path, vids))
+        assert m["short_subs_per_1k_views_14d_en"] == 10.0
+        assert m["short_subs_per_video_14d_en"] == 1.0
+
+    def test_cta_experiment_reads_the_normalised_metric(self):
+        reg = yaml.safe_load((ROOT / "docs" / "experiments.yaml").read_text(encoding="utf-8"))
+        rows = reg["experiments"] if isinstance(reg, dict) else reg
+        cta = next(e for e in rows if e["id"] == "shorts-subscribe-cta")
+        assert cta["metric"] == "short_subs_per_1k_views_14d_en"
+
+
+class TestDubGateMetric:
+    """Sep 22 2026: dub spoken-text gate fail share — null under 10 tracks."""
+
+    def _root(self, tmp_path, rows):
+        (tmp_path / "api").mkdir()
+        (tmp_path / "api" / "youtube_stats.json").write_text(json.dumps({
+            "generated": "2026-09-22T14:00:00Z", "channels": {}, "shows": {}}), encoding="utf-8")
+        d = tmp_path / "digests" / "x"
+        d.mkdir(parents=True)
+        (d / "spoken_text_gate.ru.json").write_text(json.dumps({
+            "schema_version": 1, "lang": "ru",
+            "episodes": {str(i): {"gate": g, "generated_at": "2026-09-20T00:00:00+00:00"}
+                         for i, g in enumerate(rows)}}), encoding="utf-8")
+        return tmp_path
+
+    def test_null_under_ten_tracks(self, tmp_path):
+        m = gd._experiment_live_metrics(self._root(tmp_path, ["pass"] * 9))
+        assert m["dub_gate_fail_share_14d"] is None and m["dub_gate_tracks_14d"] == 9
+
+    def test_share_counts_only_gated_rows(self, tmp_path):
+        rows = ["pass"] * 8 + ["fail_shadow"] * 2 + ["no_transcript", "off", "error"]
+        m = gd._experiment_live_metrics(self._root(tmp_path, rows))
+        assert m["dub_gate_tracks_14d"] == 10 and m["dub_gate_fail_share_14d"] == 0.2
+
+    def test_no_sidecars_is_unmeasured(self, tmp_path):
+        (tmp_path / "api").mkdir(); (tmp_path / "digests").mkdir()
+        m = gd._experiment_live_metrics(tmp_path)
+        assert m["dub_gate_fail_share_14d"] is None and m["dub_gate_tracks_14d"] is None
+
+
+class TestTrafficMix:
+    """Sep 22 2026: the traffic-source instrument — null until the series exists."""
+
+    def _root(self, tmp_path, series):
+        (tmp_path / "api").mkdir()
+        (tmp_path / "digests").mkdir()
+        (tmp_path / "api" / "youtube_stats.json").write_text(json.dumps({
+            "generated": "2026-09-22T14:00:00Z",
+            "channels": {"en": {"day_series": [], "traffic_day_series": series},
+                         "ru": {"day_series": []}},
+            "shows": {}}), encoding="utf-8")
+        return tmp_path
+
+    def test_null_without_the_series(self, tmp_path):
+        sec = gd.build_traffic_mix_section(self._root(tmp_path, []))
+        assert sec["configured"] is False
+        assert gd._experiment_live_metrics(tmp_path)["shorts_feed_share_7d_en"] is None
+
+    def test_shares_and_lag_trim(self, tmp_path):
+        series = []
+        for i in range(30):
+            series.append({"day": f"2026-09-{(i % 30) + 1:02d}", "SHORTS": 60, "SUBSCRIBER": 30,
+                           "YT_SEARCH": 5, "RELATED_VIDEO": 5, "other": 0, "total": 100})
+        series.sort(key=lambda d: d["day"])
+        series[-1]["SHORTS"] = 0      # the unreported tail must be trimmed
+        series[-2]["SHORTS"] = 0
+        sec = gd.build_traffic_mix_section(self._root(tmp_path, series))
+        en = sec["channels"]["en"]
+        assert sec["configured"] is True and en["as_of"] == "2026-09-28"
+        assert en["shorts_share_7d"] == 0.6 and en["shorts_share_prior_7d"] == 0.6
+        assert len(en["weeks"]) == 4 and all(0 <= w["shorts_share"] <= 1 for w in en["weeks"])
+        assert sec["channels"]["ru"]["configured"] is False
+        assert gd._experiment_live_metrics(tmp_path)["shorts_feed_share_7d_en"] == 0.6
+
+    def test_card_is_rendered(self):
+        html = (ROOT / "management.html").read_text(encoding="utf-8")
+        assert "Traffic mix (by source)" in html and "growth.traffic_mix" in html
 
 
 class TestStaggerHealth:

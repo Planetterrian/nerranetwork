@@ -26,7 +26,7 @@ import json
 import hashlib
 import logging
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +49,32 @@ DEFAULT_POLICY_PATH = PROJECT_ROOT / "api" / "youtube_policy.json"
 # file, a YAML typo), not a target. What a show actually publishes is the
 # policy's business; this only says no configuration may exceed it.
 MAX_SHORTS_PER_EPISODE = 4  # Sep 2026: 4-Short band at 60 vpd (see update_youtube_policy)
+
+# Sep 22 2026 (operator-directed): the EN channel ships ONE Short per
+# episode — the hook Short. The second EN Short (the `qualified` window)
+# earned a median 6 views and 0 subscribers across 59 uploads in 28 days
+# against 22 views and 30 subscribers for the hook Short, on a channel
+# running ~24 uploads/day against the 30/day cadence ceiling. RU/FR keep
+# the ladder: their filled Shorts earn 100-225 views. Enforced HERE, in
+# the runtime resolver, so a stale policy file or a show YAML
+# ``shorts_per_episode: 2`` cannot reintroduce it; the nightly writer
+# reads the same constant. Revert = delete the entry. Register:
+# ``en-one-short-2026-09-22``.
+MAX_SHORTS_PER_CHANNEL: Dict[str, int] = {"en": 1}
+
+# Sep 22 2026: channels where a show whose hook Short is dead (age-3
+# median under DEAD_SHORTS_FLOOR for 21 days — see update_youtube_policy)
+# drops to ONE Short per week on its sharded probe day. "Shorts never 0"
+# becomes "never 0 for more than 7 days": the probe is the recovery
+# signal. RU/FR never enter.
+SHORTS_PROBE_CHANNELS: Tuple[str, ...] = ("en",)
+
+
+def shorts_ceiling(channel: str) -> int:
+    """Most Shorts per episode any configuration may ship on *channel*."""
+    return min(MAX_SHORTS_PER_EPISODE,
+               MAX_SHORTS_PER_CHANNEL.get((channel or "en").lower(),
+                                          MAX_SHORTS_PER_EPISODE))
 
 
 def load_policy(path: Optional[Path] = None) -> Optional[dict]:
@@ -107,17 +133,20 @@ def resolve_publish_plan(
         shorts system keeps running exactly as the policy decides. Wired
         from ``youtube.dub_force_long_channels`` in the show YAML.
       - ``shorts`` is the policy value with a hard probe floor of 1
-        (Shorts are the recovery signal — never 0), and RAISING above the
-        YAML count requires ``shorts_start_mode: smart`` (the multi-Short
-        path needs the top-N window selector). Lowering is always allowed.
+        (Shorts are the recovery signal — never 0 for more than 7 days:
+        an entry flagged ``shorts_probe_weekly`` on a SHORTS_PROBE_CHANNELS
+        channel ships its one Short on the sharded probe day and 0 on the
+        other six), capped by ``shorts_ceiling(channel)`` (EN: 1 since
+        Sep 22 2026), and RAISING above the YAML count requires
+        ``shorts_start_mode: smart`` (the multi-Short path needs the top-N
+        window selector). Lowering is always allowed.
     """
     # Clamp the YAML value too: the no-policy / adaptive-off paths return
     # this verbatim and run_show has no bound of its own, so a YAML
     # `shorts_per_episode: 10` would previously ship 10 Shorts whenever
     # the policy file was missing or the show opted out of adaptation.
-    yaml_shorts_floor = min(
-        MAX_SHORTS_PER_EPISODE, max(1, int(yaml_shorts or 1))
-    )
+    ceiling = shorts_ceiling(channel)
+    yaml_shorts_floor = min(ceiling, max(1, int(yaml_shorts or 1)))
     plan: Dict[str, object] = {
         "publish_long": bool(yaml_publish_long),
         "shorts": yaml_shorts_floor,
@@ -143,18 +172,34 @@ def resolve_publish_plan(
         # Multi-Shorts requires the smart selector (run_show falls back to
         # a single Short without it anyway) — don't raise past the YAML.
         shorts = yaml_shorts_floor
-    if shorts > MAX_SHORTS_PER_EPISODE:
+    reason = str(entry.get("reason") or "")
+    if shorts > ceiling:
         # Enforced here rather than per-consumer: run_show takes
         # plan["shorts"] verbatim and had no bound of its own, so a
         # mis-generated policy file could have asked it for any number.
         logger.warning(
             "yt policy: %s/%s asked for %d Shorts — clamping to %d",
-            channel, slug, shorts, MAX_SHORTS_PER_EPISODE,
+            channel, slug, shorts, ceiling,
         )
-        shorts = MAX_SHORTS_PER_EPISODE
+        shorts = ceiling
+        if ceiling < MAX_SHORTS_PER_EPISODE:
+            reason = (reason + " | " if reason else "") + \
+                f"{(channel or 'en').lower()} channel cap {ceiling}"
+
+    if (entry.get("shorts_probe_weekly") is True
+            and (channel or "en").lower() in SHORTS_PROBE_CHANNELS):
+        # Dead-Shorts tier (Sep 22 2026): one Short a week, on the same
+        # sharded weekday as the long-form probe, so the show keeps
+        # generating the reach data it needs to climb back out.
+        if _is_probe_day(probe_today, slug=slug, channel=channel):
+            shorts = 1
+            reason = (reason + " | " if reason else "") + "weekly Short probe"
+        else:
+            shorts = 0
+            reason = (reason + " | " if reason else "") + \
+                "dead-Shorts tier: no Short today"
 
     publish_long = bool(entry.get("publish_long_form", yaml_publish_long))
-    reason = str(entry.get("reason") or "")
     if (not publish_long and yaml_publish_long
             and _is_probe_day(probe_today, slug=slug, channel=channel)):
         # Weekly long-form probe: a Shorts-only show produces no long-form

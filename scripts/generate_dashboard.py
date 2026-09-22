@@ -1990,6 +1990,76 @@ def build_channel_scorecard(root: Path) -> Dict[str, Any]:
     return section
 
 
+def build_traffic_mix_section(root: Path) -> Dict[str, Any]:
+    """Where each channel's views come from, by week (Sep 22 2026).
+
+    Reads ``channels[ch]["traffic_day_series"]`` from the analytics
+    snapshot (views per day by insightTrafficSourceType). Four complete
+    weeks of source SHARES per channel plus the SHORTS-feed share over
+    the last 7 lag-trimmed days against the 7 before — the read that
+    says whether a reach change is the Shorts feed (exploration traffic
+    to new videos) or subscribers/search (the established audience).
+    Null everywhere until the first nightly carries the series.
+    """
+    section: Dict[str, Any] = {"configured": False}
+    stats = _load_json(root / "api" / "youtube_stats.json")
+    if not stats or not stats.get("channels"):
+        return section
+    _KEYS = ("SHORTS", "SUBSCRIBER", "YT_SEARCH", "RELATED_VIDEO", "other")
+    channels_out: Dict[str, Any] = {}
+    for ch, c in (stats.get("channels") or {}).items():
+        rows = [d for d in ((c or {}).get("traffic_day_series") or []) if isinstance(d, dict)]
+        # the trailing two rows are the unreported tail (lag) — dropped
+        # the same way the scorecard drops them
+        if len(rows) > 2:
+            rows = rows[:len(rows) - 2]
+        if not rows:
+            channels_out[ch] = {"configured": False, "weeks": [],
+                                "shorts_share_7d": None, "shorts_share_prior_7d": None}
+            continue
+
+        def _shares(chunk: List[dict]) -> Dict[str, Any]:
+            total = sum(int(d.get("total") or 0) for d in chunk)
+            out: Dict[str, Any] = {"views": total, "days": len(chunk)}
+            for k in _KEYS:
+                v = sum(int(d.get(k) or 0) for d in chunk)
+                out[f"{k.lower()}_share"] = (round(v / total, 3) if total else None)
+            return out
+
+        weeks = []
+        for i in range(4):
+            lo = len(rows) - 7 * (i + 1)
+            hi = len(rows) - 7 * i
+            if lo < 0:
+                break
+            chunk = rows[lo:hi]
+            weeks.append({"from": chunk[0]["day"], "to": chunk[-1]["day"], **_shares(chunk)})
+        weeks.reverse()
+        last7 = _shares(rows[-7:]) if len(rows) >= 7 else None
+        prior7 = _shares(rows[-14:-7]) if len(rows) >= 14 else None
+        channels_out[ch] = {
+            "configured": True,
+            "as_of": rows[-1]["day"],
+            "weeks": weeks,
+            "shorts_share_7d": (last7 or {}).get("shorts_share"),
+            "shorts_share_prior_7d": (prior7 or {}).get("shorts_share"),
+            "shorts_views_7d": (sum(int(d.get("SHORTS") or 0) for d in rows[-7:])
+                                if len(rows) >= 7 else None),
+            "shorts_views_prior_7d": (sum(int(d.get("SHORTS") or 0) for d in rows[-14:-7])
+                                      if len(rows) >= 14 else None),
+        }
+    section = {
+        "configured": any(v.get("configured") for v in channels_out.values()),
+        "channels": channels_out,
+        "note": ("Views per day by YouTube traffic source (Analytics "
+                 "insightTrafficSourceType), lag-trimmed two days. SHORTS is "
+                 "the Shorts feed — exploration traffic to new videos; "
+                 "SUBSCRIBER and YT_SEARCH are the established audience. "
+                 "Accrues from the first nightly after 2026-09-22."),
+    }
+    return section
+
+
 _EXPERIMENT_STATUSES = {"reading", "decide", "done"}
 
 
@@ -2020,15 +2090,22 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     # EN Shorts: subscribers gained per Short published in the last 14
     # analytics days (Sep 9 2026 — the shorts-subscribe-cta readout).
     # Null under 10 Shorts, never a fake zero. Baseline 0.11 (22 / 198).
-    sn = ss = 0
+    sn = ss = sv = 0
     for show in (stats.get("shows") or {}).values():
         for v in show.get("videos", []):
             if (v.get("kind") == "short" and (v.get("channel") or "en") == "en"
                     and str(v.get("published") or "")[:10] >= win_lo):
                 sn += 1
                 ss += int(v.get("subscribers_gained") or 0)
+                sv += int(v.get("views") or 0)
     out["short_subs_per_video_14d_en"] = (
         round(ss / sn, 3) if sn >= 10 else None)
+    # Sep 22 2026: the per-VIDEO rate falls mechanically when reach falls
+    # (0.11 -> 0.053 while EN Short views per video halved), so it cannot
+    # score a CTA. Subscribers per 1,000 Short views is the reach-
+    # normalised read; null under 300 views, never a fake zero.
+    out["short_subs_per_1k_views_14d_en"] = (
+        round(1000.0 * ss / sv, 2) if sv >= 300 else None)
 
     # Age-matched EN Shorts reach (Sep 12 2026): median views at snapshot
     # age EARLY_REACH_AGE_DAYS over the last 7 publish days. Null under 10
@@ -2097,6 +2174,38 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
         except (OSError, ValueError, TypeError):
             continue
     out["caption_track_refusals_14d"] = cap_refused if cap_seen else None
+
+    # Shorts-feed share of EN views over the last 7 lag-trimmed days (Sep
+    # 22 2026): the distribution read for the one-Short experiment. None
+    # until the analytics snapshot carries traffic_day_series.
+    _mix = build_traffic_mix_section(root)
+    out["shorts_feed_share_7d_en"] = (
+        ((_mix.get("channels") or {}).get("en") or {}).get("shorts_share_7d"))
+
+    # Dub spoken-text gate, shadow (Sep 22 2026): share of translated
+    # tracks the gate FAILED over the last 14 days, from the per-language
+    # sidecars digests/*/spoken_text_gate.<lang>.json. Null under 10
+    # tracks — never a fake zero. The enforce decision reads this beside
+    # scripts/audit_spoken_text.py --dubs.
+    gate_seen = gate_failed = 0
+    for sf in (root / "digests").glob("*/spoken_text_gate.*.json"):
+        try:
+            doc = json.loads(sf.read_text(encoding="utf-8")) or {}
+            for row in (doc.get("episodes") or {}).values():
+                if not isinstance(row, dict):
+                    continue
+                if str(row.get("generated_at") or "")[:10] < cutoff_14:
+                    continue
+                if row.get("gate") not in ("pass", "fail_shadow", "blocked"):
+                    continue
+                gate_seen += 1
+                if row.get("gate") != "pass":
+                    gate_failed += 1
+        except (OSError, ValueError, TypeError):
+            continue
+    out["dub_gate_tracks_14d"] = gate_seen if gate_seen else None
+    out["dub_gate_fail_share_14d"] = (
+        round(gate_failed / gate_seen, 3) if gate_seen >= 10 else None)
 
     # Modern Investing pick cadence (Sep 18 2026): share of the last 10
     # committed trade signals whose action is new_trade. The cold-streak
@@ -3057,6 +3166,7 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         "growth": {
             "channel_scorecard": build_channel_scorecard(root),
             "early_reach": build_early_reach_section(root),
+            "traffic_mix": build_traffic_mix_section(root),
             "experiments": experiments,
             "shorts_stagger": stagger,
             "specials": build_specials_section(root),
@@ -3960,6 +4070,10 @@ def build_youtube_policy_section(root: Path) -> Dict[str, Any]:
                     "long_vpd": v.get("long_vpd"),
                     "short_vpd": v.get("short_vpd"),
                     "pending": v.get("pending"),
+                    # Sep 22 2026: dead-Shorts weekly-probe tier + its ruler
+                    "shorts_probe_weekly": bool(v.get("shorts_probe_weekly")),
+                    "hook_short_d3_median_21d": v.get("hook_short_d3_median_21d"),
+                    "shorts_dead_pending": bool(v.get("shorts_dead_pending")),
                 })
             rows.sort(key=lambda r: (r["tier"], r["slug"]))
             channels_out[channel] = {

@@ -505,6 +505,10 @@ class TestAutoGeneration:
         monkeypatch.setattr(multilingual, "render_track",
                             lambda *a, **k: Path(a[4]).write_bytes(b"x"))
         monkeypatch.setattr(multilingual, "ffprobe_duration", lambda *a, **k: 120.0)
+        # Sep 22 2026: the shadow spoken-text gate Whispers every track —
+        # stubbed here or CI would try to load a Whisper model.
+        from engine import transcripts
+        monkeypatch.setattr(transcripts, "generate_transcript", lambda *a, **k: None)
         # No R2 creds → upload skipped, but record still written with derived URL.
         monkeypatch.setattr(multilingual, "PROJECT_ROOT", Path("/"))
         for v in ("R2_ENDPOINT_URL", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY"):
@@ -717,3 +721,138 @@ class TestMultilingualDecoupled:
         assert "scripts/create_recovery_pr.sh" in text
         assert "pull-requests: write" in text
         assert "next sweep will retry (idempotent)" not in text  # the old lie
+
+
+class TestDubSpokenTextGate:
+    """Sep 22 2026: landmine #25 on the translated tracks, shadow mode.
+
+    The RU/FR tracks were synthesised through the same request as the
+    English audio (server-side text normalisation included) and never
+    compared with their script. The gate now runs before the R2 upload,
+    records its verdict in digests/<slug>/spoken_text_gate.<lang>.json and
+    warns on a failure — it can never change what ships until the mode
+    resolver is calibrated for the language.
+    """
+
+    def _arm(self, tmp_path, monkeypatch, *, transcript_text, calls=None):
+        from types import SimpleNamespace
+        from engine import multilingual, translate, transcripts
+        TestAutoGeneration()._lay_episode(tmp_path)
+        cfg = TestAutoGeneration()._fake_config(tmp_path)
+        cfg.multilingual.spoken_text_gate = "shadow"
+        monkeypatch.setattr(translate, "translate_script",
+                            lambda s, lang, **k: "Bonjour et bienvenue sur le podcast. " * 12)
+        monkeypatch.setattr(translate, "translate_metadata", lambda t, d, lang, **k: ("T", "D"))
+        monkeypatch.setattr(multilingual, "render_track",
+                            lambda *a, **k: Path(a[4]).write_bytes(b"x"))
+        monkeypatch.setattr(multilingual, "ffprobe_duration", lambda *a, **k: 120.0)
+        monkeypatch.setattr(multilingual, "PROJECT_ROOT", Path("/"))
+        for v in ("R2_ENDPOINT_URL", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY"):
+            monkeypatch.delenv(v, raising=False)
+
+        def fake_whisper(audio_path, output_dir, prefix, **k):
+            if calls is not None:
+                calls.append(("whisper", prefix, k.get("language")))
+            if transcript_text is None:
+                return None
+            jp = Path(output_dir) / f"{prefix}_transcript.json"
+            tp = Path(output_dir) / f"{prefix}_transcript.txt"
+            words = transcript_text.split()
+            segs = [{"start": i * 2.0, "end": i * 2.0 + 1.5, "text": " ".join(words[i * 6:(i + 1) * 6])}
+                    for i in range((len(words) + 5) // 6)]
+            jp.write_text(json.dumps({"segments": segs}), encoding="utf-8")
+            tp.write_text(transcript_text, encoding="utf-8")
+            return SimpleNamespace(json_path=jp, txt_path=tp, text=transcript_text, language=k.get("language"))
+        monkeypatch.setattr(transcripts, "generate_transcript", fake_whisper)
+        if calls is not None:
+            real_upload = multilingual.upload_to_r2
+            monkeypatch.setattr(multilingual, "upload_to_r2",
+                                lambda *a, **k: calls.append(("upload",)) or real_upload(*a, **k))
+        return cfg
+
+    def test_shadow_gate_records_sidecar_and_never_changes_results(self, tmp_path, monkeypatch):
+        from engine import multilingual
+        cfg = self._arm(tmp_path, monkeypatch,
+                        transcript_text="Une chaîne de pensée du normaliseur lue à haute voix. " * 12)
+        res = multilingual.generate_for_episode(cfg, 5, ["fr"], voice_id="vid", api_key="k")
+        assert res == {"fr": "done"}                     # shadow never blocks
+        side = json.loads((tmp_path / "spoken_text_gate.fr.json").read_text(encoding="utf-8"))
+        row = side["episodes"]["5"]
+        assert row["gate"] == "fail_shadow" and row["passed"] is False and row["mode"] == "shadow"
+        assert "opening_mismatch" in row["reasons"]
+        assert row["transcript_file"] == "X_Ep005_20260101.fr_transcript.json"
+        rec = json.loads((tmp_path / "s.json").read_text(encoding="utf-8"))["summaries"][0]
+        assert rec["translations"]["fr"]["spoken_text_gate"] == "fail_shadow"
+        assert rec["translations"]["fr"]["transcript_file"] == "X_Ep005_20260101.fr_transcript.json"
+
+    def test_matching_track_passes(self, tmp_path, monkeypatch):
+        from engine import multilingual
+        cfg = self._arm(tmp_path, monkeypatch,
+                        transcript_text="Bonjour et bienvenue sur le podcast. " * 12)
+        assert multilingual.generate_for_episode(cfg, 5, ["fr"], voice_id="vid", api_key="k") == {"fr": "done"}
+        side = json.loads((tmp_path / "spoken_text_gate.fr.json").read_text(encoding="utf-8"))
+        assert side["episodes"]["5"]["gate"] == "pass"
+
+    def test_whisper_failure_records_no_transcript_and_track_ships(self, tmp_path, monkeypatch):
+        from engine import multilingual
+        cfg = self._arm(tmp_path, monkeypatch, transcript_text=None)
+        assert multilingual.generate_for_episode(cfg, 5, ["fr"], voice_id="vid", api_key="k") == {"fr": "done"}
+        side = json.loads((tmp_path / "spoken_text_gate.fr.json").read_text(encoding="utf-8"))
+        assert side["episodes"]["5"]["gate"] == "no_transcript"
+
+    def test_gate_runs_before_the_upload_and_off_skips_whisper(self, tmp_path, monkeypatch):
+        from engine import multilingual
+        calls = []
+        cfg = self._arm(tmp_path, monkeypatch, transcript_text="Bonjour et bienvenue sur le podcast. " * 12, calls=calls)
+        monkeypatch.setenv("R2_ENDPOINT_URL", "https://x")
+        monkeypatch.setenv("R2_ACCESS_KEY_ID", "a")
+        monkeypatch.setenv("R2_SECRET_ACCESS_KEY", "s")
+        monkeypatch.setattr(multilingual, "upload_to_r2", lambda *a, **k: calls.append(("upload",)))
+        multilingual.generate_for_episode(cfg, 5, ["fr"], voice_id="vid", api_key="k")
+        kinds = [c[0] for c in calls]
+        assert kinds.index("whisper") < kinds.index("upload")
+        assert calls[0][2] == "fr"                      # Whisper is told the language
+        calls.clear()
+        cfg.multilingual.spoken_text_gate = "off"
+        multilingual.generate_for_episode(cfg, 5, ["fr"], voice_id="vid", api_key="k", force=True)
+        assert "whisper" not in [c[0] for c in calls]
+
+    def test_dub_gate_can_never_enforce_until_calibrated(self, tmp_path, monkeypatch):
+        from engine import multilingual
+        from engine.spoken_text_gate import resolve_gate_mode
+        assert resolve_gate_mode("enforce", "ru") == "shadow"
+        assert resolve_gate_mode("enforce", "fr") == "shadow"
+        cfg = self._arm(tmp_path, monkeypatch, transcript_text="Autre chose entièrement. " * 20)
+        cfg.multilingual.spoken_text_gate = "enforce"
+        assert multilingual.generate_for_episode(cfg, 5, ["fr"], voice_id="vid", api_key="k") == {"fr": "done"}
+        side = json.loads((tmp_path / "spoken_text_gate.fr.json").read_text(encoding="utf-8"))
+        assert side["episodes"]["5"]["mode"] == "shadow"
+
+    def test_track_transcript_path_is_reused_by_the_dub_engines(self, tmp_path):
+        from engine import multilingual
+        assert multilingual.track_transcript_path(tmp_path, 5, "ru") is None
+        (tmp_path / "X_Ep005_20260101.ru_transcript.json").write_text("{}", encoding="utf-8")
+        assert multilingual.track_transcript_path(tmp_path, 5, "ru").name == "X_Ep005_20260101.ru_transcript.json"
+        assert multilingual.track_transcript_path(tmp_path, 5, "fr") is None
+        for rel in ("engine/ru_dub.py", "engine/lang_dub.py"):
+            src = (PROJECT_ROOT / rel).read_text(encoding="utf-8")
+            assert src.index("track_transcript_path(") < src.index("tr = generate_transcript("), rel
+
+    def test_sidecar_and_plain_transcript_are_committed_but_the_json_is_not(self):
+        gi = "\n".join(ln for ln in (PROJECT_ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+                       if not ln.lstrip().startswith("#"))   # rules only, never the comments
+        assert "digests/**/*.??_transcript.json" in gi
+        assert "spoken_text_gate" not in gi and "_transcript.txt" not in gi
+        wf = (PROJECT_ROOT / ".github" / "workflows" / "multilingual.yml").read_text(encoding="utf-8")
+        assert "git add -A" in wf
+
+    def test_audit_script_has_a_dubs_mode(self):
+        src = (PROJECT_ROOT / "scripts" / "audit_spoken_text.py").read_text(encoding="utf-8")
+        assert '"--dubs"' in src and "def _dub_pairs" in src
+
+    def test_config_field_and_default(self):
+        from engine.config import MultilingualConfig
+        import yaml as _yaml
+        assert MultilingualConfig().spoken_text_gate == "shadow"
+        d = _yaml.safe_load((PROJECT_ROOT / "shows" / "_defaults.yaml").read_text(encoding="utf-8"))
+        assert d["multilingual"]["spoken_text_gate"] == "shadow"

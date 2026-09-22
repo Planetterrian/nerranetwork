@@ -44,6 +44,11 @@ Thumbs.db
 
 # Episode audio files (hosted on Cloudflare R2, not tracked in git)
 digests/**/*.mp3
+# Sep 22 2026: the dub tracks' Whisper word JSON (spoken-text gate, reused
+# by the RU/FR dub engines in the same job) — ~3x the EN transcript
+# footprint per episode for no cross-run reader; the plain .txt and the
+# gate sidecar (spoken_text_gate.<lang>.json) are committed.
+digests/**/*.??_transcript.json
 digests/*.mp3
 
 # Episode video clips + raw WAV are episode media too (landmine #1: media

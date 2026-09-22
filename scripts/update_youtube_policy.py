@@ -53,6 +53,10 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from engine.youtube_policy import (  # noqa: E402 — one constant, both sides
+    SHORTS_PROBE_CHANNELS, shorts_ceiling,
+)
+
 logging.basicConfig(level=logging.INFO, stream=sys.stdout,
                     format="%(levelname)s %(message)s")
 logger = logging.getLogger("update_youtube_policy")
@@ -70,6 +74,26 @@ MIN_VIDEOS_CONFIDENT = 4    # per kind — below this, hold the active setting
 LONG_VPD_FLOOR: Dict[str, float] = {"en": 1.0, "ru": 2.0, "fr": 2.0}
 SHORT_VPD_PROBE = 0.5       # below this, shorts-only reads as "probe" (D)
 STREAK_TO_FLIP = 2          # consecutive identical computed tiers to flip
+
+# Dead-Shorts weekly-probe tier (Sep 22 2026, operator-directed). A show
+# whose HOOK Short (window ``hook_open`` — Short #1, the episode's opening)
+# earns under DEAD_SHORTS_FLOOR median views at snapshot age 3 across the
+# last DEAD_SHORTS_WINDOW_DAYS publish days (with at least
+# DEAD_SHORTS_MIN_VIDEOS observations) drops to ONE Short a week on its
+# sharded probe day; it climbs back out when the median of its last
+# DEAD_SHORTS_RECOVERY_PROBES probe Shorts clears the floor. Entering
+# needs STREAK_TO_FLIP consecutive nights (same hysteresis as the tiers);
+# leaving is immediate. The ruler is api/youtube_early_reach.json — the
+# age-matched instrument, never the rolling channel total. On the
+# 2026-09-22 file this enrols omni_view (8.5, n=16) and modern_investing
+# (9, n=15); MAB (11.0) and dp_pod (14.5) sit above the floor. EN only:
+# RU/FR filled Shorts earn 100-225 views (engine.youtube_policy.
+# SHORTS_PROBE_CHANNELS is the one constant both sides read).
+DEAD_SHORTS_FLOOR = 10
+DEAD_SHORTS_WINDOW_DAYS = 21
+DEAD_SHORTS_MIN_VIDEOS = 7
+DEAD_SHORTS_RECOVERY_PROBES = 3
+HOOK_WINDOW = "hook_open"
 # Stats older than this freeze the policy (loud ::warning::) instead of
 # recomputing tiers from a frozen 14-day cohort every night.
 STATS_MAX_AGE_DAYS = 3
@@ -150,6 +174,10 @@ SEED_TIERS: Dict[str, Dict[str, str]] = {
         "env_intel": "C",
         "first_principles": "C",
         "modern_investing": "D",
+        # Sep 22 2026: enrolled (Shorts-only since its 09-04 YouTube launch;
+        # the dp-pod-youtube-shorts experiment asked for its own tier
+        # line, and the dead-Shorts tier can only reach an enrolled slug).
+        "dp_pod": "C",
     },
     "ru": {
         "tesla": "C",
@@ -209,6 +237,111 @@ def collect_velocities(stats: dict) -> Dict[Tuple[str, str, str], List[float]]:
 
 def _avg(values: List[float]) -> float:
     return sum(values) / len(values)
+
+
+def collect_hook_short_reach(
+    reach: Optional[dict],
+    *,
+    window_days: int = DEAD_SHORTS_WINDOW_DAYS,
+) -> Dict[Tuple[str, str], List[Tuple[str, int]]]:
+    """Per (slug, channel): ``[(published, views_at_age_3), …]`` for hook
+    Shorts published within *window_days* of the reach file's ``updated``
+    date, oldest first. Only videos observed at age 3 count.
+    """
+    out: Dict[Tuple[str, str], List[Tuple[str, int]]] = {}
+    if not isinstance(reach, dict):
+        return out
+    as_of = _parse_date(str(reach.get("updated") or ""))
+    if as_of is None:
+        return out
+    cutoff = (as_of - _dt.timedelta(days=window_days)).isoformat()
+    for rec in (reach.get("videos") or {}).values():
+        if not isinstance(rec, dict) or rec.get("kind") != "short":
+            continue
+        if (rec.get("window") or "") != HOOK_WINDOW:
+            continue
+        pub = str(rec.get("published") or "")[:10]
+        if not pub or pub < cutoff:
+            continue
+        views = (rec.get("views_by_age") or {}).get("3")
+        if views is None:
+            continue
+        key = (str(rec.get("show") or ""), (rec.get("channel") or "en").lower())
+        out.setdefault(key, []).append((pub, int(views)))
+    for rows in out.values():
+        rows.sort()
+    return out
+
+
+def _median(values: List[int]) -> Optional[float]:
+    if not values:
+        return None
+    s = sorted(values)
+    n = len(s)
+    return float(s[n // 2]) if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2.0
+
+
+def advance_dead_shorts(
+    prev_entry: Optional[dict],
+    observations: Optional[List[Tuple[str, int]]],
+    channel: str,
+    today: _dt.date,
+    *,
+    have_reach: bool,
+) -> dict:
+    """Dead-Shorts tier state for one show × channel.
+
+    Returns the keys the policy entry carries: ``shorts_probe_weekly``,
+    ``shorts_probe_since``, ``hook_short_d3_median_21d``,
+    ``hook_short_n_21d``, ``shorts_dead_pending``, ``shorts_dead_streak``.
+    A channel outside SHORTS_PROBE_CHANNELS never enters. Without a reach
+    file (``have_reach`` False) the previous state is held untouched —
+    a missing instrument must never reset a show to daily Shorts, and
+    must never enrol one either.
+    """
+    prev = prev_entry if isinstance(prev_entry, dict) else {}
+    probing = prev.get("shorts_probe_weekly") is True
+    since = prev.get("shorts_probe_since")
+    state = {
+        "shorts_probe_weekly": probing,
+        "shorts_probe_since": since if probing else None,
+        "hook_short_d3_median_21d": None,
+        "hook_short_n_21d": 0,
+        "shorts_dead_pending": prev.get("shorts_dead_pending"),
+        "shorts_dead_streak": int(prev.get("shorts_dead_streak") or 0),
+    }
+    if (channel or "en").lower() not in SHORTS_PROBE_CHANNELS:
+        return {**state, "shorts_probe_weekly": False, "shorts_probe_since": None,
+                "shorts_dead_pending": None, "shorts_dead_streak": 0}
+    if not have_reach:
+        return state
+    obs = list(observations or [])
+    views = [v for _, v in obs]
+    median = _median(views)
+    state["hook_short_d3_median_21d"] = median
+    state["hook_short_n_21d"] = len(views)
+    if probing:
+        probe_views = [v for pub, v in obs if since and pub >= str(since)[:10]]
+        recent = probe_views[-DEAD_SHORTS_RECOVERY_PROBES:]
+        rec_median = _median(recent)
+        if (len(recent) >= DEAD_SHORTS_RECOVERY_PROBES and rec_median is not None
+                and rec_median >= DEAD_SHORTS_FLOOR):
+            state.update(shorts_probe_weekly=False, shorts_probe_since=None,
+                         shorts_dead_pending=None, shorts_dead_streak=0)
+        return state
+    dead = (len(views) >= DEAD_SHORTS_MIN_VIDEOS and median is not None
+            and median < DEAD_SHORTS_FLOOR)
+    if not dead:
+        state.update(shorts_dead_pending=None, shorts_dead_streak=0)
+        return state
+    streak = (int(prev.get("shorts_dead_streak") or 0) + 1
+              if prev.get("shorts_dead_pending") is True else 1)
+    state.update(shorts_dead_pending=True, shorts_dead_streak=streak)
+    if streak >= STREAK_TO_FLIP:
+        state.update(shorts_probe_weekly=True,
+                     shorts_probe_since=today.isoformat(),
+                     shorts_dead_pending=None, shorts_dead_streak=0)
+    return state
 
 
 def compute_tier(
@@ -297,10 +430,14 @@ def build_policy(
     previous: Optional[dict],
     *,
     now_iso: Optional[str] = None,
+    reach: Optional[dict] = None,
 ) -> dict:
     """Compose the full policy document (pure — no I/O)."""
     velocities = collect_velocities(stats) if stats else {}
     prev_channels = (previous or {}).get("channels") or {}
+    hook_reach = collect_hook_short_reach(reach) if reach else {}
+    today = (_dt.datetime.fromisoformat(now_iso).date() if now_iso
+             else _dt.datetime.now(_dt.timezone.utc).date())
 
     channels: Dict[str, Dict[str, dict]] = {}
     for channel, seeds in SEED_TIERS.items():
@@ -372,12 +509,38 @@ def build_policy(
                 shorts_streak = prev_ss + 1 if shorts == prev_sp else 1
                 if shorts_streak < STREAK_TO_FLIP:
                     shorts = prev_shorts   # hold until the raise confirms
+            # Sep 22 2026: per-channel ceiling (EN = 1, the hook Short
+            # only) — one constant shared with the runtime resolver, so
+            # the file and the publish agree. Also caps the pending value,
+            # or the raise-hysteresis would hold a phantom "2" forever.
+            cap = shorts_ceiling(channel)
+            if shorts > cap or shorts_pending > cap:
+                shorts = min(shorts, cap)
+                shorts_pending = min(shorts_pending, cap)
+                reason += f"; {channel} channel cap {cap}"
+            # Dead-Shorts weekly-probe tier (Sep 22 2026): an overlay on
+            # the capped ladder value — 0 with the flag set means "one
+            # Short a week, on the probe day" (resolve_publish_plan).
+            dead = advance_dead_shorts(
+                prev_entry, hook_reach.get((slug, channel)), channel, today,
+                have_reach=bool(hook_reach))
+            if dead["shorts_probe_weekly"]:
+                shorts = 0
+                reason += (f"; dead-Shorts tier since {dead['shorts_probe_since']}"
+                           f" (hook Short d3 median "
+                           f"{dead['hook_short_d3_median_21d']}, weekly probe)")
+            elif dead["shorts_dead_pending"]:
+                reason += (f"; hook Short d3 median {dead['hook_short_d3_median_21d']}"
+                           f" < {DEAD_SHORTS_FLOOR} (night {dead['shorts_dead_streak']}"
+                           f" of {STREAK_TO_FLIP} before the weekly-probe tier)")
             channels[channel][slug] = {
                 "tier": active,
                 "publish_long_form": publish_long,
                 "shorts_per_episode": shorts,
                 "shorts_pending": shorts_pending,
                 "shorts_streak": shorts_streak,
+                "shorts_channel_cap": cap,
+                **dead,
                 "long_vpd": round(long_vpd, 3) if long_vpd is not None else None,
                 "short_vpd": round(short_vpd, 3) if short_vpd is not None else None,
                 "video_count_14d": len(long_vpds) + len(short_vpds),
@@ -399,6 +562,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--stats", default="api/youtube_stats.json")
     parser.add_argument("--out", default="api/youtube_policy.json")
+    parser.add_argument("--reach", default="api/youtube_early_reach.json",
+                        help="age-matched reach file (the dead-Shorts ruler); "
+                             "a missing file holds every show's probe state")
     args = parser.parse_args()
 
     stats_path = ROOT / args.stats
@@ -456,7 +622,18 @@ def main() -> int:
                            "from seeds", out_path, exc)
             previous = None
 
-    policy = build_policy(stats, previous)
+    reach: Optional[dict] = None
+    reach_path = ROOT / args.reach
+    if reach_path.exists():
+        try:
+            reach = json.loads(reach_path.read_text(encoding="utf-8"))
+        except Exception as exc:  # noqa: BLE001 — best-effort by contract
+            logger.warning("Reach file %s unreadable: %s — dead-Shorts state "
+                           "held", reach_path, exc)
+    else:
+        logger.warning("No reach file at %s — dead-Shorts state held", reach_path)
+
+    policy = build_policy(stats, previous, reach=reach)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(
         json.dumps(policy, indent=2, ensure_ascii=False) + "\n",
