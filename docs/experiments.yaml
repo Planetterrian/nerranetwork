@@ -1262,13 +1262,18 @@ experiments:
     shipped: 2026-09-09
     readout: 2026-09-30
     status: reading
-    metric: short_subs_per_video_14d_en
-    baseline: 0.11
+    metric: short_subs_per_1k_views_14d_en
+    baseline: 1.51
     target: >
       EN Shorts earned 22 subscribers from 198 uploads in 14 days (0.11 per
-      Short); the hook Short's 30-day rate is 0.16. Target: >= 0.16 per Short
-      with EN Short views per video not down. RU/FR read from their own
-      channel subscriber series (localized cards shipped on the dub paths).
+      Short); the hook Short's 30-day rate is 0.16. Target as shipped: >= 0.16
+      per Short with EN Short views per video not down. 2026-09-22
+      RE-INSTRUMENTED: the per-video rate read 0.053 on 09-22 while EN Short
+      views per video had halved with the 09-13/16 distribution drop, so a
+      per-video figure cannot tell the CTA from the reach. The metric is now
+      subscribers per 1,000 EN Short views over 14 days (1.51 on 09-22: 9
+      subs / 5,964 views); target >= 2.0 at the 09-30 readout, read beside
+      the hook-Short reach card.
     notes: >
       Grok retention review 2026-09-09, item 1B, adapted. "WATCH FULL
       EPISODE / Tap Subscribe" pointed at a surface the burned-in card
@@ -1383,6 +1388,66 @@ experiments:
       Grok Imagine spend stops with the render (gallery auto-hides —
       gallery_enabled follows youtube.enabled). Guard:
       tests/test_schedule.py::test_youtube_enabled_show_set.
+
+  - id: en-one-short-2026-09-22
+    title: "EN ships one Short per episode — the hook Short only"
+    area: reach
+    shipped: 2026-09-22
+    readout: 2026-10-06
+    status: reading
+    metric: short_reach_d3_median_en_7d
+    baseline: 10
+    target: >
+      Operator decision 2026-09-22. The second EN Short (`qualified` window)
+      earned a median 6 views and 0 subscribers across 59 uploads in 28 days
+      against 22 views and 30 subscribers for the hook Short, on a channel
+      running ~24 uploads/day against the 30/day cadence ceiling. Target:
+      the EN hook Short's age-3 median (short_reach_d3_median_en_7d, 8-10 on
+      09-16..19 after 23-41 earlier in the month) recovers to >= 15 with EN
+      net subscribers per week not down (+14 in the week to 09-22). If the
+      median does not move with ~10 fewer uploads a day, the drop is
+      distribution-side, not supply-side, and the cap stays for the cost
+      saving alone. Read beside short_subs_per_1k_views_14d_en (1.51).
+    notes: >
+      engine.youtube_policy.MAX_SHORTS_PER_CHANNEL = {"en": 1}, enforced in
+      resolve_publish_plan (both clamps) so a stale policy file or a show
+      YAML `shorts_per_episode: 2` cannot reintroduce it; run_show reads the
+      plan's count on every path, applied or not. RU/FR keep the ladder
+      (their filled Shorts earn 100-225 views). Revert = delete the dict
+      entry. Register context: the 09-13/16 Shorts reach drop hit all three
+      channels while Tesla-EN held and its RU/FR dubs fell 5-10x — same
+      episode, different channels — so it is not the 09-12 script change
+      (docs/reviews/youtube_review_2026_09_22.md).
+
+  - id: dead-shorts-weekly-probe-2026-09-22
+    title: "Dead-Shorts tier: one Short a week for shows under 10 views at age 3"
+    area: reach
+    shipped: 2026-09-22
+    readout: 2026-10-13
+    status: reading
+    metric: short_reach_d3_median_en_7d
+    baseline: 10
+    target: >
+      Operator decision 2026-09-22. A show whose hook Short's age-3 median
+      sits under 10 views across the last 21 publish days (>= 7 videos)
+      drops to one Short a week on its sharded probe day after two
+      consecutive nights, and climbs back when the median of its last three
+      probe Shorts clears the floor — "Shorts never 0" becomes "never 0 for
+      more than 7 days". On the 09-22 reach file this enrols omni_view (8.5,
+      n=16) and modern_investing (9, n=15); models_agents_beginners (11.0)
+      and dp_pod (14.5) sit above the floor. Target: the enrolled shows'
+      probe Shorts earn no less than their daily Shorts did (the audience was
+      never there), the EN channel's hook-Short median is not down, and ~4
+      fewer EN uploads a day. EN only.
+    notes: >
+      scripts/update_youtube_policy.py::advance_dead_shorts (ruler:
+      api/youtube_early_reach.json, hook_open window, views_by_age["3"];
+      DEAD_SHORTS_FLOOR 10 / 21 days / >= 7 videos / 3 probes to recover);
+      engine.youtube_policy.resolve_publish_plan honours the flag on
+      SHORTS_PROBE_CHANNELS only, reusing _is_probe_day. run_show records
+      yt_policy_shorts_skipped on a no-Short day. dp_pod enrolled in
+      SEED_TIERS (C) so the tier can reach it. A missing reach file holds
+      every show's state. Revert = SHORTS_PROBE_CHANNELS = ().
 
   - id: dp-pod-youtube-shorts
     title: "DP Pod on YouTube — Shorts-only, first video surface"

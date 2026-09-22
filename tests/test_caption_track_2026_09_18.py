@@ -188,7 +188,7 @@ class TestPublishResultKeysAreMetricsOrExempt:
     # consumer in record_youtube_outcomes.
     NOT_A_METRIC = {
         "short_urls", "short_video_ids", "short_errors",   # video index / errors captured per Short
-        "video_podcast_url", "video_podcast_render_only",  # summaries_io.upsert_video reads these
+        "video_podcast_url",                               # summaries_io.upsert_video reads it
         "shorts_scheduled_times", "yt_comments_queued",    # stagger sidecar + scheduled_comments.json
         "outro_card", "visual_fallback", "video_provider",  # render-plan carriers (visual_mode is the metric)
         "shorts_ab_variants",                              # shorts_ab (recorded) carries the same

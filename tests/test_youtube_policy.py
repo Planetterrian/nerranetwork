@@ -179,16 +179,21 @@ class TestSeedsAndBestEffort:
                 assert entry["tier"] == seed
                 want_long, want_shorts = mod.TIER_SETTINGS[seed]
                 assert entry["publish_long_form"] is want_long
-                assert entry["shorts_per_episode"] == want_shorts
+                # Sep 22 2026: the per-channel ceiling applies at seed time too
+                assert entry["shorts_per_episode"] == min(want_shorts, mod.shorts_ceiling(channel))
 
     def test_ru_seeds_gate_long_form_off_everywhere(self):
         mod = _load_script()
         assert set(mod.SEED_TIERS["ru"].values()) == {"C"}
 
-    def test_dp_pod_excluded(self):
+    def test_dp_pod_enrolled_shorts_only_on_en(self):
+        # Sep 22 2026: enrolled (Shorts-only since the 09-04 launch) so the
+        # dead-Shorts tier can reach it; still absent from RU/FR.
         mod = _load_script()
-        for seeds in mod.SEED_TIERS.values():
-            assert "dp_pod" not in seeds
+        assert mod.SEED_TIERS["en"]["dp_pod"] == "C"
+        for ch, seeds in mod.SEED_TIERS.items():
+            if ch != "en":
+                assert "dp_pod" not in seeds
 
     def test_missing_stats_writes_seed_policy(self, tmp_path, monkeypatch):
         mod = _load_script()
@@ -301,7 +306,10 @@ class TestCommittedPolicyFile:
             assert shows  # never an empty channel
             for slug, entry in shows.items():
                 assert entry["tier"] in ("A", "B", "C", "D"), slug
-                assert entry["shorts_per_episode"] >= 1, slug
+                # never 0 for more than 7 days: a 0 must carry the
+                # weekly-probe flag (Sep 22 2026 dead-Shorts tier)
+                assert (entry["shorts_per_episode"] >= 1
+                        or entry.get("shorts_probe_weekly") is True), slug
                 assert isinstance(entry["publish_long_form"], bool), slug
                 assert entry["reason"], slug
 
@@ -318,9 +326,15 @@ def _policy(entry, channel="en", slug="tesla"):
 class TestResolvePublishPlan:
     def test_no_policy_is_legacy_passthrough(self):
         plan = resolve_publish_plan(
-            None, slug="tesla", channel="en", yaml_publish_long=True,
+            None, slug="tesla", channel="ru", yaml_publish_long=True,
             yaml_shorts=2, smart_mode=True, adaptive_enabled=True)
         assert plan == {"publish_long": True, "shorts": 2, "tier": "",
+                        "applied": False, "reason": ""}
+        # EN passthrough is clamped to the channel ceiling (Sep 22 2026)
+        plan = resolve_publish_plan(
+            None, slug="tesla", channel="en", yaml_publish_long=True,
+            yaml_shorts=2, smart_mode=True, adaptive_enabled=True)
+        assert plan == {"publish_long": True, "shorts": 1, "tier": "",
                         "applied": False, "reason": ""}
 
     def test_opt_out_is_legacy_passthrough(self):
@@ -355,12 +369,12 @@ class TestResolvePublishPlan:
         entry = {"tier": "A", "publish_long_form": True,
                  "shorts_per_episode": 2}
         blocked = resolve_publish_plan(
-            _policy(entry), slug="tesla", channel="en",
+            _policy(entry, channel="ru"), slug="tesla", channel="ru",
             yaml_publish_long=True, yaml_shorts=1,
             smart_mode=False, adaptive_enabled=True)
         assert blocked["shorts"] == 1
         allowed = resolve_publish_plan(
-            _policy(entry), slug="tesla", channel="en",
+            _policy(entry, channel="ru"), slug="tesla", channel="ru",
             yaml_publish_long=True, yaml_shorts=1,
             smart_mode=True, adaptive_enabled=True)
         assert allowed["shorts"] == 2
@@ -443,6 +457,23 @@ class TestRunShowWiring:
 
     def test_shorts_count_comes_from_plan(self):
         assert "shorts_count_yaml = _policy_shorts_count" in self._src()
+
+    def test_shorts_count_taken_from_plan_even_when_policy_absent(self):
+        """Sep 22 2026: the channel ceiling lives in resolve_publish_plan,
+        so the count must be read off the plan BEFORE the applied gate —
+        otherwise a missing policy file lets tesla.yaml's 2 through."""
+        src = self._src()
+        i = src.index("_policy_shorts_count = int(_yt_plan[\"shorts\"])")
+        assert i < src.index('if _yt_plan.get("applied"):')
+
+    def test_zero_shorts_plan_skips_the_shorts_block_and_is_recorded(self):
+        src = self._src()
+        assert "if _policy_shorts_count <= 0:" in src
+        assert 'result["yt_policy_shorts_skipped"] = True' in src
+        pipeline = (_ROOT / "engine" / "pipeline.py").read_text(encoding="utf-8")
+        assert '"yt_policy_shorts_skipped"' in pipeline
+        # the real value is recorded — a 0 is no longer coerced to 1
+        assert 'int(youtube_urls.get("yt_policy_shorts", 1) or 1)' not in pipeline
 
     def test_metrics_keys_recorded(self):
         src = self._src()
@@ -825,12 +856,15 @@ class TestShortsSupplyLadder:
         mod = _load_script()
         policy = json.loads(
             (_ROOT / "api" / "youtube_policy.json").read_text(encoding="utf-8"))
+        from engine.youtube_policy import shorts_ceiling
         for channel, entries in (policy.get("channels") or {}).items():
             for slug, entry in entries.items():
                 vpd = entry.get("short_vpd")
                 if vpd is None:
                     continue    # held — the count follows the active tier
-                ladder = mod.shorts_for_vpd(vpd)
+                if entry.get("shorts_probe_weekly") is True:
+                    continue    # dead-Shorts tier overlays the ladder
+                ladder = min(mod.shorts_for_vpd(vpd), shorts_ceiling(channel))
                 if entry["shorts_per_episode"] == ladder:
                     continue
                 assert entry.get("shorts_pending") == ladder, (
@@ -938,3 +972,204 @@ class TestShortsCountHysteresis:
         out = self._build(mod, prev, short_vpd=5.0)
         e = out["channels"]["ru"]["spacex"]
         assert e["shorts_per_episode"] == 2
+
+
+# ---------------------------------------------------------------------------
+# Sep 22 2026 — EN one-Short cap + dead-Shorts weekly-probe tier
+# ---------------------------------------------------------------------------
+
+
+class TestEnOneShortCap:
+    """The EN channel ships the hook Short only; the second EN Short earned
+    median 6 views / 0 subscribers over 59 uploads in 28 days."""
+
+    def test_yaml_two_resolves_to_one_on_en_without_a_policy(self):
+        plan = resolve_publish_plan(
+            None, slug="spacex", channel="en", yaml_publish_long=True,
+            yaml_shorts=2, smart_mode=True, adaptive_enabled=True)
+        assert plan["shorts"] == 1 and plan["applied"] is False
+
+    def test_stale_policy_two_is_clamped_to_one_on_en(self):
+        plan = resolve_publish_plan(
+            _policy({"tier": "A", "publish_long_form": True,
+                     "shorts_per_episode": 2, "reason": "tier A"}),
+            slug="tesla", channel="en", yaml_publish_long=True,
+            yaml_shorts=2, smart_mode=True, adaptive_enabled=True)
+        assert plan["shorts"] == 1 and plan["applied"] is True
+        assert "en channel cap 1" in plan["reason"]
+
+    def test_ru_fr_ladder_unaffected(self):
+        from engine.youtube_policy import shorts_ceiling
+        mod = _load_script()
+        assert shorts_ceiling("ru") == 4 and shorts_ceiling("fr") == 4
+        assert mod.shorts_for_vpd(60.0) == 4
+        plan = resolve_publish_plan(
+            _policy({"tier": "C", "publish_long_form": False,
+                     "shorts_per_episode": 4}, channel="ru", slug="fascinating_frontiers"),
+            slug="fascinating_frontiers", channel="ru", yaml_publish_long=False,
+            yaml_shorts=1, smart_mode=True, adaptive_enabled=True)
+        assert plan["shorts"] == 4
+
+    def test_writer_caps_en_entries_and_pending(self):
+        mod = _load_script()
+        stats = _stats([
+            *[_vid("tesla", "short", "en", "2026-09-20", 940) for _ in range(6)],
+            *[_vid("tesla", "long", "en", "2026-09-20", 200) for _ in range(6)],
+        ], generated="2026-09-22T00:00:00+00:00")
+        policy = mod.build_policy(stats, None, now_iso="2026-09-22T00:00:00+00:00")
+        entry = policy["channels"]["en"]["tesla"]
+        assert entry["shorts_per_episode"] == 1
+        assert entry["shorts_pending"] == 1
+        assert entry["shorts_channel_cap"] == 1
+        assert "en channel cap 1" in entry["reason"]
+
+    def test_revert_is_one_constant(self, monkeypatch):
+        import engine.youtube_policy as yp
+        monkeypatch.setattr(yp, "MAX_SHORTS_PER_CHANNEL", {})
+        plan = yp.resolve_publish_plan(
+            None, slug="tesla", channel="en", yaml_publish_long=True,
+            yaml_shorts=2, smart_mode=True, adaptive_enabled=True)
+        assert plan["shorts"] == 2
+
+    def test_registered_with_a_computable_metric(self):
+        import yaml as _yaml
+        reg = _yaml.safe_load((_ROOT / "docs" / "experiments.yaml").read_text(encoding="utf-8"))
+        rows = reg["experiments"] if isinstance(reg, dict) else reg
+        e = next(r for r in rows if r["id"] == "en-one-short-2026-09-22")
+        assert e["metric"] == "short_reach_d3_median_en_7d"
+
+
+def _reach(rows, updated="2026-09-22"):
+    """rows: [(show, channel, published, views_at_age_3, window)]"""
+    videos = {}
+    for i, (show, ch, pub, views, window) in enumerate(rows):
+        videos[f"v{i}"] = {"published": pub, "channel": ch, "kind": "short",
+                           "show": show, "window": window,
+                           "views_by_age": {"3": views}, "subs_by_age": {"3": 0}}
+    return {"schema_version": 1, "updated": updated, "videos": videos}
+
+
+def _dead_rows(show, ch="en", n=8, views=4, start=datetime.date(2026, 9, 10), window="hook_open"):
+    return [(show, ch, (start + datetime.timedelta(days=i)).isoformat(), views, window)
+            for i in range(n)]
+
+
+class TestDeadShortsTier:
+    TODAY = datetime.date(2026, 9, 22)
+
+    def _entry(self, mod, prev, reach, slug="omni_view", ch="en"):
+        obs = mod.collect_hook_short_reach(reach).get((slug, ch))
+        return mod.advance_dead_shorts(prev, obs, ch, self.TODAY, have_reach=bool(reach))
+
+    def test_dead_hook_median_needs_two_nights(self):
+        mod = _load_script()
+        reach = _reach(_dead_rows("omni_view"))
+        night1 = self._entry(mod, None, reach)
+        assert night1["shorts_probe_weekly"] is False
+        assert night1["shorts_dead_pending"] is True and night1["shorts_dead_streak"] == 1
+        assert night1["hook_short_d3_median_21d"] == 4 and night1["hook_short_n_21d"] == 8
+        night2 = self._entry(mod, night1, reach)
+        assert night2["shorts_probe_weekly"] is True
+        assert night2["shorts_probe_since"] == self.TODAY.isoformat()
+
+    def test_fewer_than_seven_observations_holds(self):
+        mod = _load_script()
+        reach = _reach(_dead_rows("omni_view", n=6))
+        e = self._entry(mod, None, reach)
+        assert e["shorts_probe_weekly"] is False and e["shorts_dead_pending"] is None
+
+    def test_only_hook_shorts_count_and_the_window_is_21_days(self):
+        mod = _load_script()
+        rows = _dead_rows("omni_view", n=8, views=4, window="qualified")   # ignored
+        rows += _dead_rows("omni_view", n=8, views=4, start=datetime.date(2026, 8, 1))  # too old
+        reach = _reach(rows)
+        assert mod.collect_hook_short_reach(reach) == {}
+
+    def test_recovery_after_three_probes_clear_the_floor(self):
+        mod = _load_script()
+        prev = {"shorts_probe_weekly": True, "shorts_probe_since": "2026-09-05"}
+        # two dead observations from before the probe began, then three
+        # probe Shorts above the floor
+        rows = _dead_rows("omni_view", n=2, views=3, start=datetime.date(2026, 9, 2))
+        rows += _dead_rows("omni_view", n=3, views=15, start=datetime.date(2026, 9, 8))
+        e = self._entry(mod, prev, _reach(rows))
+        assert e["shorts_probe_weekly"] is False and e["shorts_probe_since"] is None
+        # two probes are not enough
+        e2 = self._entry(mod, prev, _reach(rows[:-1]))
+        assert e2["shorts_probe_weekly"] is True
+
+    def test_ru_fr_never_enter(self):
+        mod = _load_script()
+        reach = _reach(_dead_rows("spacex", ch="ru"))
+        e = self._entry(mod, None, reach, slug="spacex", ch="ru")
+        assert e["shorts_probe_weekly"] is False and e["shorts_dead_pending"] is None
+        e = self._entry(mod, None, reach, slug="spacex", ch="fr")
+        assert e["shorts_probe_weekly"] is False
+
+    def test_missing_reach_file_holds_state(self):
+        mod = _load_script()
+        prev = {"shorts_probe_weekly": True, "shorts_probe_since": "2026-09-01",
+                "shorts_dead_pending": None, "shorts_dead_streak": 0}
+        e = mod.advance_dead_shorts(prev, None, "en", self.TODAY, have_reach=False)
+        assert e["shorts_probe_weekly"] is True and e["shorts_probe_since"] == "2026-09-01"
+        e = mod.advance_dead_shorts(None, None, "en", self.TODAY, have_reach=False)
+        assert e["shorts_probe_weekly"] is False and e["shorts_dead_pending"] is None
+
+    def test_build_policy_writes_zero_with_the_flag_after_two_nights(self):
+        mod = _load_script()
+        stats = _stats([_vid("omni_view", "short", "en", "2026-09-20", 3)
+                        for _ in range(8)], generated="2026-09-22T00:00:00+00:00")
+        reach = _reach(_dead_rows("omni_view"))
+        p1 = mod.build_policy(stats, None, now_iso="2026-09-22T00:00:00+00:00", reach=reach)
+        e1 = p1["channels"]["en"]["omni_view"]
+        assert e1["shorts_per_episode"] == 1 and e1["shorts_dead_pending"] is True
+        assert "night 1 of 2" in e1["reason"]
+        p2 = mod.build_policy(stats, p1, now_iso="2026-09-23T00:00:00+00:00", reach=reach)
+        e2 = p2["channels"]["en"]["omni_view"]
+        assert e2["shorts_per_episode"] == 0 and e2["shorts_probe_weekly"] is True
+        assert "dead-Shorts tier" in e2["reason"]
+        # no reach file: the flag is held, never reset
+        p3 = mod.build_policy(stats, p2, now_iso="2026-09-24T00:00:00+00:00", reach=None)
+        assert p3["channels"]["en"]["omni_view"]["shorts_probe_weekly"] is True
+
+    def test_dead_tier_zero_needs_the_flag_and_probes_once_a_week(self):
+        from engine.youtube_policy import _is_probe_day
+        entry = {"tier": "C", "publish_long_form": False, "shorts_per_episode": 0,
+                 "shorts_probe_weekly": True, "reason": "tier C"}
+        base = datetime.date(2026, 9, 21)  # a Monday
+        counts = []
+        for d in range(7):
+            day = base + datetime.timedelta(days=d)
+            plan = resolve_publish_plan(
+                _policy(entry, slug="omni_view"), slug="omni_view", channel="en",
+                yaml_publish_long=False, yaml_shorts=1, smart_mode=True,
+                adaptive_enabled=True, probe_today=day)
+            counts.append((day, plan["shorts"], plan["reason"]))
+        ones = [d for d, n, _ in counts if n == 1]
+        assert len(ones) == 1 and sum(n for _, n, _ in counts) == 1
+        assert _is_probe_day(ones[0], slug="omni_view", channel="en")
+        assert all("dead-Shorts tier" in r for _, n, r in counts if n == 0)
+        assert any("weekly Short probe" in r for _, n, r in counts if n == 1)
+        # a bare 0 WITHOUT the flag still floors to 1 (the legacy contract)
+        bare = resolve_publish_plan(
+            _policy({"publish_long_form": False, "shorts_per_episode": 0}, slug="omni_view"),
+            slug="omni_view", channel="en", yaml_publish_long=False,
+            yaml_shorts=1, smart_mode=True, adaptive_enabled=True,
+            probe_today=base + datetime.timedelta(days=1))
+        assert bare["shorts"] == 1
+
+    def test_dead_tier_flag_ignored_on_ru_fr(self):
+        entry = {"tier": "C", "publish_long_form": False, "shorts_per_episode": 2,
+                 "shorts_probe_weekly": True}
+        for ch in ("ru", "fr"):
+            for d in range(7):
+                plan = resolve_publish_plan(
+                    _policy(entry, channel=ch, slug="spacex"), slug="spacex", channel=ch,
+                    yaml_publish_long=False, yaml_shorts=1, smart_mode=True,
+                    adaptive_enabled=True,
+                    probe_today=datetime.date(2026, 9, 21) + datetime.timedelta(days=d))
+                assert plan["shorts"] == 2
+
+    def test_nightly_passes_the_reach_file_after_the_tracker(self):
+        wf = (_ROOT / ".github" / "workflows" / "nightly-maintenance.yml").read_text(encoding="utf-8")
+        assert wf.index("scripts/track_early_reach.py") < wf.index("scripts/update_youtube_policy.py")

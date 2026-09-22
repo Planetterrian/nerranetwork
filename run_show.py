@@ -5517,12 +5517,17 @@ def _publish_youtube(
                 getattr(config.youtube, "adaptive_publishing", True)
             ),
         )
+        # Sep 22 2026: the Shorts count comes from the plan on EVERY path,
+        # applied or not — resolve_publish_plan clamps the YAML value to
+        # the per-channel ceiling (EN: 1), and taking it only when a
+        # policy entry applied let a missing policy file or
+        # `adaptive_publishing: false` ship tesla.yaml's 2.
+        _policy_shorts_count = int(_yt_plan["shorts"])
         if _yt_plan.get("applied"):
             _policy_long_skipped = (
                 _policy_publish_long and not _yt_plan["publish_long"]
             )
             _policy_publish_long = bool(_yt_plan["publish_long"])
-            _policy_shorts_count = int(_yt_plan["shorts"])
             result["yt_policy_tier"] = str(_yt_plan.get("tier") or "")
             result["yt_policy_long_skipped"] = _policy_long_skipped
             result["yt_policy_shorts"] = _policy_shorts_count
@@ -6894,7 +6899,15 @@ def _publish_youtube(
             }
 
     # ---- Shorts ----
-    if config.youtube.publish_shorts and should_upload_shorts_today(
+    if _policy_shorts_count <= 0:
+        # Dead-Shorts weekly-probe tier (Sep 22 2026): the policy says this
+        # show's hook Short is dead and today is not its probe day. The
+        # skip is recorded so the metrics file can tell "no Short by
+        # policy" from "Short failed".
+        logger.info("%s: YouTube policy: dead-Shorts tier, no Short today "
+                    "(%s)", config.slug, _yt_plan.get("reason", ""))
+        result["yt_policy_shorts_skipped"] = True
+    elif config.youtube.publish_shorts and should_upload_shorts_today(
         config, episode_num=episode_num,
     ):
         try:

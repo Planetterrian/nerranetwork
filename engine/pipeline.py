@@ -244,10 +244,11 @@ def record_youtube_outcomes(
             _vp = youtube_urls["video_podcast"]
             metrics.record("video_podcast_uploaded", True)
             metrics.record("video_podcast_bytes", int(_vp.get("bytes", 0) or 0))
-        elif youtube_urls.get("video_podcast_skipped"):
-            metrics.record("video_podcast_uploaded", False)
-            metrics.record("video_podcast_skipped",
-                           str(youtube_urls["video_podcast_skipped"]))
+        # Sep 22 2026: a policy shorts-only day still renders the long-form
+        # for the video feed (no YouTube upload) — that is the signal worth
+        # recording; the never-written ``video_podcast_skipped`` is gone.
+        if youtube_urls.get("video_podcast_render_only"):
+            metrics.record("video_podcast_render_only", True)
 
         # Thumbnail + hook overlay autofit decisions (for drift monitoring)
         if "thumbnail_autofit_font_size" in youtube_urls:
@@ -328,7 +329,12 @@ def record_youtube_outcomes(
         if "yt_policy_tier" in youtube_urls:
             metrics.record("yt_policy_tier", str(youtube_urls["yt_policy_tier"]))
             metrics.record("yt_policy_long_skipped", bool(youtube_urls.get("yt_policy_long_skipped")))
-            metrics.record("yt_policy_shorts", int(youtube_urls.get("yt_policy_shorts", 1) or 1))
+            # Sep 22 2026: the real value — a 0 (dead-Shorts tier, not the
+            # probe day) used to be coerced to 1 and was invisible.
+            _yps = youtube_urls.get("yt_policy_shorts")
+            metrics.record("yt_policy_shorts", int(_yps) if _yps is not None else 1)
+        if youtube_urls.get("yt_policy_shorts_skipped"):
+            metrics.record("yt_policy_shorts_skipped", True)
     except Exception:
         # Never let metrics recording break a publish
         logger = __import__("logging").getLogger(__name__)
