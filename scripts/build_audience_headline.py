@@ -121,6 +121,27 @@ def youtube_retention(videos: List[dict], today: _dt.date) -> Dict[str, Any]:
     return out
 
 
+def youtube_videos_by_slug(yt: Dict[str, Any]) -> Dict[str, List[dict]]:
+    """Group ``youtube_stats.json`` videos by the SHOW SLUG they carry.
+
+    The stats file's top-level ``shows`` keys are the digests DIRECTORY
+    names (``fetch_youtube_analytics`` walks ``digests/<dir>/youtube_videos*.json``),
+    and for one show the directory is not the slug: ``tesla`` lives in
+    ``digests/tesla_shorts_time/``. Keying the headline by directory put
+    Tesla under two keys — ``tesla`` with downloads and no YouTube, and
+    ``tesla_shorts_time`` with YouTube and no downloads — so the network's
+    second-largest YouTube show read as dead in both rows (Sep 22 2026).
+    Every video row carries ``show_slug`` (the reach tracker already keys
+    by it); the directory name is only the fallback for a row without one.
+    """
+    out: Dict[str, List[dict]] = {}
+    for dir_name, payload in (yt.get("shows") or {}).items():
+        for v in (payload or {}).get("videos") or []:
+            slug = str(v.get("show_slug") or dir_name)
+            out.setdefault(slug, []).append(v)
+    return out
+
+
 def build_headline(root: Path, today: Optional[_dt.date] = None) -> Dict[str, Any]:
     today = today or _dt.date.today()
     op3 = _load(root / "api" / "op3_stats.json")
@@ -129,7 +150,7 @@ def build_headline(root: Path, today: Optional[_dt.date] = None) -> Dict[str, An
 
     shows: Dict[str, Any] = {}
     op3_shows = op3.get("shows") or {}
-    yt_shows = yt.get("shows") or {}
+    yt_shows = youtube_videos_by_slug(yt)
     network_weekly: List[int] = []
     for slug in sorted(set(op3_shows) | set(yt_shows)):
         s = op3_shows.get(slug) or {}
@@ -140,7 +161,7 @@ def build_headline(root: Path, today: Optional[_dt.date] = None) -> Dict[str, An
         }
         entry.update(weekly_wow(entry["weekly_downloads"]))
         entry["first_week"] = first_week_downloads(s.get("episodes") or [], today) if s else {"median": None, "episodes": 0}
-        entry["youtube"] = youtube_retention((yt_shows.get(slug) or {}).get("videos") or [], today)
+        entry["youtube"] = youtube_retention(yt_shows.get(slug) or [], today)
         shows[slug] = entry
         wk = entry["weekly_downloads"]
         if wk:
@@ -159,7 +180,7 @@ def build_headline(root: Path, today: Optional[_dt.date] = None) -> Dict[str, An
          if e["first_week"]["median"] is not None),
         key=lambda t: t[1], reverse=True,
     )[:3]
-    all_videos = [v for s in yt_shows.values() for v in (s.get("videos") or [])]
+    all_videos = [v for vids in yt_shows.values() for v in vids]
     network = {
         "downloads_7d": sum(int(e["downloads_7d"] or 0) for e in measured) if measured else None,
         "downloads_30d": sum(int(e["downloads_30d"] or 0) for e in measured) if measured else None,

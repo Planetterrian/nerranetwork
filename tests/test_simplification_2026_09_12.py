@@ -490,6 +490,42 @@ class TestAudienceHeadline:
         assert line.startswith("Audience headline") and "+4.5% WoW" in line and "spacex 72" in line
         assert "shorts 75.0%" in line and "newsletter: 5" in line
 
+    def test_tesla_youtube_joins_its_op3_row_under_one_key(self, tmp_path):
+        """Sep 22 2026: youtube_stats.json is keyed by digests DIRECTORY
+        (tesla_shorts_time) while OP3 is keyed by slug (tesla); the
+        headline had Tesla under two half-empty rows. Videos carry
+        show_slug — that is the join key."""
+        root = _seed_root(tmp_path)
+        api = root / "api"
+        op3 = json.loads((api / "op3_stats.json").read_text(encoding="utf-8"))
+        op3["shows"]["tesla"] = {"downloads_7d": 229, "downloads_30d": 835,
+                                 "weekly_downloads": [200, 210, 220, 229], "episodes": []}
+        (api / "op3_stats.json").write_text(json.dumps(op3), encoding="utf-8")
+        yt = json.loads((api / "youtube_stats.json").read_text(encoding="utf-8"))
+        yt["shows"]["tesla_shorts_time"] = {"videos": [
+            {"show_slug": "tesla", "kind": "short", "published": "2026-09-05",
+             "views": 200, "average_view_percentage": 70.0},
+            {"show_slug": "tesla", "kind": "long", "published": "2026-09-05",
+             "views": 100, "average_view_percentage": 20.0},
+        ]}
+        (api / "youtube_stats.json").write_text(json.dumps(yt), encoding="utf-8")
+        doc = ah.build_headline(root, today=self.TODAY)
+        assert "tesla_shorts_time" not in doc["shows"]
+        t = doc["shows"]["tesla"]
+        assert t["downloads_30d"] == 835 and t["youtube"]["videos"] == 2
+        assert t["youtube"]["short"] == 70.0 and t["youtube"]["long"] == 20.0
+        # the network rollup still sees every video exactly once
+        assert doc["network"]["youtube"]["videos"] == 5
+
+    def test_every_headline_key_is_a_show_slug(self):
+        """A directory name that differs from its slug must never become a
+        headline row — against the committed files."""
+        slugs = {p.stem for p in (ROOT / "shows").glob("*.yaml") if not p.stem.startswith("_")}
+        slugs |= {"nerra_daily", "age_of_ai", "nerra_voices"}
+        doc = ah.build_headline(ROOT)
+        stray = sorted(set(doc["shows"]) - slugs)
+        assert not stray, f"headline rows that are not show slugs: {stray}"
+
     def test_missing_files_are_unmeasured_not_zero(self, tmp_path):
         doc = ah.build_headline(tmp_path, today=self.TODAY)
         n = doc["network"]

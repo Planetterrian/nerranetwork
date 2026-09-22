@@ -15,6 +15,7 @@ generator can actually compute — a typo'd metric must fail CI, not render
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -72,6 +73,43 @@ class TestExperimentsRegister:
     def test_live_metrics_are_none_or_numeric(self):
         for k, v in gd._experiment_live_metrics(ROOT).items():
             assert v is None or isinstance(v, (int, float)), (k, v)
+
+
+class TestReachNormalisedSubs:
+    """Sep 22 2026: subscribers per 1,000 EN Short views — the CTA read
+    that does not fall when reach falls."""
+
+    def _root(self, tmp_path, videos):
+        (tmp_path / "api").mkdir()
+        (tmp_path / "api" / "youtube_stats.json").write_text(json.dumps({
+            "generated": "2026-09-22T14:00:00Z",
+            "channels": {"en": {"day_series": []}},
+            "shows": {"x": {"videos": videos}},
+        }), encoding="utf-8")
+        (tmp_path / "digests").mkdir()
+        return tmp_path
+
+    def test_null_under_300_views_never_zero(self, tmp_path):
+        vids = [{"kind": "short", "channel": "en", "published": "2026-09-20",
+                 "views": 10, "subscribers_gained": 0} for _ in range(12)]
+        m = gd._experiment_live_metrics(self._root(tmp_path, vids))
+        assert m["short_subs_per_1k_views_14d_en"] is None
+        assert m["short_subs_per_video_14d_en"] == 0.0
+
+    def test_computes_per_1k_views(self, tmp_path):
+        vids = [{"kind": "short", "channel": "en", "published": "2026-09-20",
+                 "views": 100, "subscribers_gained": 1} for _ in range(12)]
+        vids.append({"kind": "short", "channel": "ru", "published": "2026-09-20",
+                     "views": 5000, "subscribers_gained": 9})  # other channel ignored
+        m = gd._experiment_live_metrics(self._root(tmp_path, vids))
+        assert m["short_subs_per_1k_views_14d_en"] == 10.0
+        assert m["short_subs_per_video_14d_en"] == 1.0
+
+    def test_cta_experiment_reads_the_normalised_metric(self):
+        reg = yaml.safe_load((ROOT / "docs" / "experiments.yaml").read_text(encoding="utf-8"))
+        rows = reg["experiments"] if isinstance(reg, dict) else reg
+        cta = next(e for e in rows if e["id"] == "shorts-subscribe-cta")
+        assert cta["metric"] == "short_subs_per_1k_views_14d_en"
 
 
 class TestStaggerHealth:

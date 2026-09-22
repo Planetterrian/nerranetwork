@@ -2020,15 +2020,22 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     # EN Shorts: subscribers gained per Short published in the last 14
     # analytics days (Sep 9 2026 — the shorts-subscribe-cta readout).
     # Null under 10 Shorts, never a fake zero. Baseline 0.11 (22 / 198).
-    sn = ss = 0
+    sn = ss = sv = 0
     for show in (stats.get("shows") or {}).values():
         for v in show.get("videos", []):
             if (v.get("kind") == "short" and (v.get("channel") or "en") == "en"
                     and str(v.get("published") or "")[:10] >= win_lo):
                 sn += 1
                 ss += int(v.get("subscribers_gained") or 0)
+                sv += int(v.get("views") or 0)
     out["short_subs_per_video_14d_en"] = (
         round(ss / sn, 3) if sn >= 10 else None)
+    # Sep 22 2026: the per-VIDEO rate falls mechanically when reach falls
+    # (0.11 -> 0.053 while EN Short views per video halved), so it cannot
+    # score a CTA. Subscribers per 1,000 Short views is the reach-
+    # normalised read; null under 300 views, never a fake zero.
+    out["short_subs_per_1k_views_14d_en"] = (
+        round(1000.0 * ss / sv, 2) if sv >= 300 else None)
 
     # Age-matched EN Shorts reach (Sep 12 2026): median views at snapshot
     # age EARLY_REACH_AGE_DAYS over the last 7 publish days. Null under 10
@@ -3960,6 +3967,10 @@ def build_youtube_policy_section(root: Path) -> Dict[str, Any]:
                     "long_vpd": v.get("long_vpd"),
                     "short_vpd": v.get("short_vpd"),
                     "pending": v.get("pending"),
+                    # Sep 22 2026: dead-Shorts weekly-probe tier + its ruler
+                    "shorts_probe_weekly": bool(v.get("shorts_probe_weekly")),
+                    "hook_short_d3_median_21d": v.get("hook_short_d3_median_21d"),
+                    "shorts_dead_pending": bool(v.get("shorts_dead_pending")),
                 })
             rows.sort(key=lambda r: (r["tier"], r["slug"]))
             channels_out[channel] = {
