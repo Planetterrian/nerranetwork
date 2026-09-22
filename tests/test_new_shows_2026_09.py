@@ -315,6 +315,13 @@ class TestPhase1ShowWiring:
         dig = (ROOT / f"shows/prompts/{slug}_digest.txt").read_text(encoding="utf-8")
         assert "**Title:" not in dig and "Source Name**" not in dig
 
+    def test_digest_forbids_absence_sentences(self, slug):
+        # AI Chips dry run 2026-09-22 shipped "No power or core-count figures
+        # were released with the samples." — a filler shape the network's
+        # content discipline already bans in scripts.
+        dig = (ROOT / f"shows/prompts/{slug}_digest.txt").read_text(encoding="utf-8")
+        assert "NO ABSENCE SENTENCES" in dig
+
     def test_registries(self, slug):
         from engine.content_tracker import SHOW_SECTION_PATTERNS
         from engine.first_episode import _SHOW_DIGEST_EP1, _SHOW_PODCAST_EP1
@@ -555,3 +562,12 @@ class TestTestModeNeverPublishes:
         monkeypatch.setenv("NERRA_HOOKS_READONLY", "1")
         assert curriculum.mark_spotlight_done("peptides", "insulin-the-first-peptide", 1,
                                               root=tmp_path) is False
+
+
+class TestHookArticlesSurviveTheCap:
+    def test_cap_keeps_hook_articles(self):
+        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
+        cap = src[src.index("MAX_ARTICLES_FOR_LLM = 40"):]
+        cap = cap[:cap.index("# Get content tracker summary") if "# Get content tracker summary" in cap else 3000]
+        assert 'a.get("source_kind") == "hook"' in cap
+        assert "articles = articles[:MAX_ARTICLES_FOR_LLM]" not in src

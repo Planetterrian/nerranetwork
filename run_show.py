@@ -1409,12 +1409,21 @@ def run(args: argparse.Namespace) -> None:
         # target with diverse angles. Prompt token usage rises ~30%
         # (~1200 extra tokens) but stays well under the 128k context.
         MAX_ARTICLES_FOR_LLM = 40
+        MAX_HOOK_ARTICLES_FOR_LLM = 12
         if len(articles) > MAX_ARTICLES_FOR_LLM:
             logger.info(
                 "Capping articles from %d to %d to prevent prompt bloat",
                 len(articles), MAX_ARTICLES_FOR_LLM,
             )
-            articles = articles[:MAX_ARTICLES_FOR_LLM]
+            # Hook-supplied articles (engine.hook_articles) are merged LAST,
+            # so a plain slice cut them first — the Peptides dry run
+            # (2026-09-22) merged 4 Europe PMC abstracts for the spotlight and
+            # then capped 116 -> 40, dropping every one. They are the show's
+            # evidence, not overflow: keep them (bounded) and trim the feed
+            # articles instead.
+            _hook_kept = [a for a in articles if a.get("source_kind") == "hook"][:MAX_HOOK_ARTICLES_FOR_LLM]
+            _feed = [a for a in articles if a.get("source_kind") != "hook"]
+            articles = _feed[:MAX_ARTICLES_FOR_LLM - len(_hook_kept)] + _hook_kept
 
         # 5f. Restore chronological order for the prompt — LLMs follow the digest
         # format template more reliably when articles appear newest-first by feed,
