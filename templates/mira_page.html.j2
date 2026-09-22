@@ -5,7 +5,8 @@
     basis and the correction invitation come from engine/brand.py via the
     ``mira_claim`` macro, the episode counts are read from the committed
     summaries files at render time, and the interview steps are
-    ``MIRA_INTERVIEW_STEPS`` in generate_html.py. Nothing on this page should
+    ``MIRA_INTERVIEW_STEPS`` in engine/brand.py, rendered by the
+    ``mira_steps_list`` macro. Nothing on this page should
     be a number or a claim a reader can catch out of date. -#}
 
 {% block head_extra %}
@@ -112,44 +113,6 @@
         }
         .mira-show .links a { color: var(--nn-accent); text-decoration: none; }
         .mira-show .links a:hover { text-decoration: underline; }
-        .mira-steps {
-            list-style: none;
-            counter-reset: mira-step;
-            margin: var(--sp-6) 0 0;
-            padding: 0;
-        }
-        .mira-steps li {
-            counter-increment: mira-step;
-            position: relative;
-            padding: 0 0 var(--sp-5) var(--sp-10);
-            border-left: 1px solid var(--nn-border);
-            margin-left: 14px;
-        }
-        .mira-steps li:last-child { border-left-color: transparent; padding-bottom: 0; }
-        .mira-steps li::before {
-            content: counter(mira-step);
-            position: absolute;
-            left: -14px;
-            top: 0;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: var(--nn-accent);
-            color: #fff;
-            font-family: var(--font-ui);
-            font-size: 0.82rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .mira-steps h3 {
-            font-family: var(--font-heading);
-            font-size: 1.02rem;
-            color: var(--nn-white);
-            margin: 2px 0 var(--sp-2);
-        }
-        .mira-steps p { font-size: 0.95rem; margin: 0; }
         .mira-cta {
             display: inline-flex;
             align-items: center;
@@ -182,7 +145,7 @@
 {% endblock %}
 
 {% block content %}
-{% from "_macros.html.j2" import mira_claim %}
+{% from "_macros.html.j2" import mira_claim, mira_steps_list %}
 <div class="page-main">
     <section class="mira-hero">
         <p class="eyebrow">The host</p>
@@ -237,14 +200,7 @@
             marked. There is no step where a recording becomes an episode
             because nobody stopped it.
         </p>
-        <ol class="mira-steps">
-            {% for title, detail in interview_steps %}
-            <li>
-                <h3>{{ title }}</h3>
-                <p>{{ detail }}</p>
-            </li>
-            {% endfor %}
-        </ol>
+        {{ mira_steps_list() }}
     </section>
 
     <section class="mira-section">

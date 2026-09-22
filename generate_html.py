@@ -213,6 +213,41 @@ def _read_show_apple(slug: str) -> dict:
     }
 
 
+_SPOTIFY_SHOW_URL = "https://open.spotify.com/show/{show_id}"
+
+
+@functools.lru_cache(maxsize=None)
+def _read_show_spotify_id(slug: str) -> str:
+    """The show's Spotify show id from its YAML (``spotify_show_id``), or "".
+
+    Sep 22 2026: six shows carried an id here and ``spotify_url: null`` in
+    the registry, so their pages rendered no Spotify chip while the show was
+    on Spotify — Age of AI, SpaceX, DP Pod, Unintended Consequences, First
+    Principles, Environmental Intelligence. Same rule as Apple: the registry
+    string wins when set; the id fills the gap.
+    """
+    import yaml as _yaml
+
+    yaml_path = SHOWS_DIR / f"{slug}.yaml"
+    if not yaml_path.exists():
+        return ""
+    try:
+        data = _yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
+    except _yaml.YAMLError:
+        return ""
+    podcast = data.get("podcast") or {}
+    return str(data.get("spotify_show_id")
+               or podcast.get("spotify_show_id") or "").strip()
+
+
+def _spotify_url_for(slug: str, registry_url) -> str:
+    """Registry URL when set, else the URL derived from ``spotify_show_id``."""
+    if registry_url:
+        return registry_url
+    show_id = _read_show_spotify_id(slug)
+    return _SPOTIFY_SHOW_URL.format(show_id=show_id) if show_id else ""
+
+
 def _apple_links_for(slug: str, registry_url) -> dict:
     """Resolve the Apple links a template should render for *slug*.
 
@@ -1991,7 +2026,7 @@ def _build_all_shows_list():
             "audience": cfg.get("audience", ""),
             "apple_podcasts_url": _apple_links_for(
                 cfg["slug"], cfg.get("apple_podcasts_url"))["apple_podcasts_url"],
-            "spotify_url": cfg.get("spotify_url"),
+            "spotify_url": _spotify_url_for(cfg["slug"], cfg.get("spotify_url")),
             "picker_tags": cfg.get("picker_tags") or {},
             # ``strand`` groups shows that share a host or a format so the nav,
             # the footer and the homepage can name the group instead of
@@ -2193,6 +2228,12 @@ def _get_jinja_env():
     # the Mira hub both need them). Read at env-creation time from the
     # committed summaries files.
     env.globals["mira_shows"] = _mira_shows()
+    # The interview steps, for the Mira hub and any show page that runs them
+    # (rendered by the ``mira_steps_list`` macro; ``compact=true`` picks the
+    # subset brand.MIRA_INTERVIEW_STEPS_COMPACT names).
+    from engine.brand import MIRA_INTERVIEW_STEPS as _steps, MIRA_INTERVIEW_STEPS_COMPACT as _compact
+    env.globals["mira_steps"] = list(_steps)
+    env.globals["mira_steps_compact"] = [_steps[i] for i in _compact]
     env.globals["mira"] = {
         "host_name": MIRA_HOST_NAME,
         "summary": MIRA_SHORT_DESCRIPTION,
@@ -3238,6 +3279,7 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         # the ``apple_podcasts_url: None`` that **cfg splatted in above
         # for the six shows the registry never had a URL for.
         **_apple_links_for(cfg["slug"], cfg.get("apple_podcasts_url")),
+        "spotify_url": _spotify_url_for(cfg["slug"], cfg.get("spotify_url")),
         "apple_badge_asset": _apple_badge_asset(),
     }
 
@@ -3799,10 +3841,20 @@ def generate_blog_index(slug, *, dry_run=False, posts=None, output_dir=None):
                 else ROOT / "blog" / slug)
     written = []
 
+    # An interview show's index shows the PERSON on each card — name, role,
+    # run time — not the thesis sentence twice and a reading time that means
+    # nothing for a conversation. Keyed by episode; {} for every other show,
+    # whose index is byte-identical to before (Sep 22 2026).
+    interview_cards = {
+        c["episode"]: c for c in _interview_episode_cards(slug, cfg)
+        if isinstance(c.get("episode"), int)
+    }
+
     for page in range(1, total_pages + 1):
         chunk = posts_sorted[(page - 1) * per_page: page * per_page]
         html = generate_blog_index_html(
-            chunk, cfg, env, page=page, total_pages=total_pages)
+            chunk, cfg, env, page=page, total_pages=total_pages,
+            interview_cards=interview_cards)
         out_path = blog_dir / Path(
             _blog.blog_index_page_path(slug, page)).name
 
@@ -4178,7 +4230,7 @@ def _mira_shows():
             "has_feed": (ROOT / cfg.get("rss_file", "x")).exists(),
             "apple_podcasts_url": _apple_links_for(
                 slug, cfg.get("apple_podcasts_url"))["apple_podcasts_url"],
-            "spotify_url": cfg.get("spotify_url"),
+            "spotify_url": _spotify_url_for(slug, cfg.get("spotify_url")),
             "episode_count": count,
             # The honest label. "0 published" is the state Nerra Voices is
             # actually in, and the page says so rather than rendering an
@@ -4191,44 +4243,13 @@ def _mira_shows():
     return out
 
 
-# How an interview actually runs, from docs/age_of_ai_plan.md and
-# voximplant/scenarios/age_of_ai_interview.js. Kept as data so the page and
-# any future press copy read the same steps, and so a change to the flow is a
-# one-line edit here instead of a paragraph rewrite.
-#
-# Step 5 is deliberately mode-agnostic: since 2026-09-09 the default is a
-# browser studio room and the outbound phone call is the fallback, so no
-# surface should describe the show as "she phones you".
-MIRA_INTERVIEW_STEPS = [
-    ("You apply", "A short form: who you are and what you would talk about. "
-                  "No media training, no pitch deck, no AI angle required."),
-    ("A human reads it", "Patrick triages every application himself. This is "
-                         "the step that decides whether an interview happens."),
-    ("You pick a time", "A booking link, your calendar, your timezone."),
-    ("You get a prep brief", "The day before, an emailed brief: the themes "
-                             "Mira means to explore and the ground she will "
-                             "cover, so nothing in the conversation is a "
-                             "surprise."),
-    ("You talk to Mira", "Open the studio link, pick a microphone, join — or "
-                         "take a call on your phone if you would rather. "
-                         "Mira hears you and answers in real time. It is a "
-                         "conversation, not a questionnaire, and it runs "
-                         "under an hour."),
-    ("A human edits it", "Patrick reviews the episode before anything is "
-                         "assembled. This gate has no timer: nothing "
-                         "publishes because a review was slow."),
-    ("You approve your transcript", "You read what you said, and you have a "
-                                    "week to approve it, cut anything from "
-                                    "it, or refuse it. What you cut is "
-                                    "removed from the audio before the "
-                                    "episode is built — not bleeped, cut. "
-                                    "After seven days without a reply the "
-                                    "episode goes ahead as sent, and you can "
-                                    "ask for a takedown at any time."),
-    ("It publishes", "Mira records the narration around your words, and the "
-                     "episode goes to the feeds, the site and the archive "
-                     "with the AI host disclosed on air."),
-]
+# How an interview actually runs. Sep 22 2026: the steps moved to
+# engine/brand.py — they are claim copy (two of them say a human decides
+# something), and the show page renders them too, so they need one owner
+# the way the Mira claim and the creator credit have. The name is kept here
+# so callers and guards that read ``generate_html.MIRA_INTERVIEW_STEPS``
+# keep working; it is the same list object.
+from engine.brand import MIRA_INTERVIEW_STEPS  # noqa: E402
 
 
 def generate_mira_page(*, dry_run=False, output_dir=None):
@@ -4273,7 +4294,6 @@ def generate_mira_page(*, dry_run=False, output_dir=None):
         "host_summary": MIRA_SHORT_DESCRIPTION,
         "host_network_role": MIRA_NETWORK_ROLE,
         "mira_shows": _mira_shows(),
-        "interview_steps": MIRA_INTERVIEW_STEPS,
         # The hub's headline CTA points at the show that has episodes; each
         # card below links its own form from the registry.
         "apply_url": "age-of-ai-apply.html",

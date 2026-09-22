@@ -30,6 +30,7 @@ from engine.interviews import (
     interview_transcript_markdown, is_interview_show,
 )
 from engine import show_lang as _show_lang
+from engine import brand as _brand
 
 logger = logging.getLogger(__name__)
 
@@ -1097,7 +1098,8 @@ def _measured_audio_url(url: str) -> str:
 def _build_jsonld(metadata: dict, show_name: str, blog_url: str,
                    show_config: dict | None = None,
                    *, transcript_url: str = "", audio_url: str = "",
-                   translations: dict | None = None) -> str:
+                   translations: dict | None = None,
+                   guest_name: str = "") -> str:
     """Build Schema.org JSON-LD: BlogPosting + PodcastEpisode (as array).
 
     PodcastEpisode enables Google's podcast features in Search results, links
@@ -1133,6 +1135,11 @@ def _build_jsonld(metadata: dict, show_name: str, blog_url: str,
         blog_posting["image"] = f"https://nerranetwork.com/{show_config['podcast_image']}"
     if show_config and show_config.get("meta_keywords"):
         blog_posting["keywords"] = show_config["meta_keywords"]
+    # An interview is ABOUT a person, and the person is what a reader
+    # searches for. Named on both blocks; the author stays the show.
+    guest_entity = {"@type": "Person", "name": guest_name} if guest_name else None
+    if guest_entity:
+        blog_posting["about"] = guest_entity
 
     podcast_episode = {
         "@context": "https://schema.org",
@@ -1144,6 +1151,8 @@ def _build_jsonld(metadata: dict, show_name: str, blog_url: str,
         "inLanguage": in_language,
         "episodeNumber": metadata.get("episode_num", 0),
     }
+    if guest_entity:
+        podcast_episode["about"] = guest_entity
     if show_config:
         podcast_episode["partOfSeries"] = {
             "@type": "PodcastSeries",
@@ -1413,6 +1422,18 @@ def generate_blog_post_html(
     if interview.get("audio_url") and not metadata.get("audio_url"):
         metadata["audio_url"] = interview["audio_url"]
     if interview:
+        # The chapter section reads a chapters_epNNN.json these shows never
+        # write; the record's chapters (already gated by the transcript in
+        # engine.interviews) take its place, in the shape the section wants.
+        if not chapters and interview.get("chapters"):
+            chapters = sorted(
+                ({"seconds": float(c.get("start", 0)),
+                  "time": _format_timestamp(float(c.get("start", 0))),
+                  "title": str(c.get("title", "")).strip()}
+                 for c in interview["chapters"]
+                 if isinstance(c, dict) and c.get("title")),
+                key=lambda c: c["seconds"],
+            )
         # Name the neighbours. "Episode 3" tells a reader nothing about
         # whether they want it; "Adrian Wolfberg" is the whole proposition.
         _sp = show_config.get("json_path", "")
@@ -1430,6 +1451,7 @@ def generate_blog_post_html(
         metadata, show_config["name"], blog_url, show_config,
         transcript_url=_transcript_url, audio_url=_audio_url,
         translations=metadata.get("translations", {}) or {},
+        guest_name=(interview or {}).get("guest_name", ""),
     )
 
     # A show can swap the post template from its registry entry, the same way
@@ -1474,6 +1496,16 @@ def generate_blog_post_html(
         # Guest identity, talking points and links for an interview episode;
         # empty dict for every other show (the template gates on it).
         "interview": interview,
+        # The credit and the one-line provenance (Sep 22 2026), interview
+        # posts only — engine.brand scopes the review paragraph to the shows
+        # that have the gate, and a news post keeps its shape untouched.
+        "creator_name": _brand.NETWORK_CREATOR_NAME if interview else "",
+        "creator_credit": _brand.creator_credit(show_slug) if interview else [],
+        "interview_provenance": (
+            _brand.interview_provenance(
+                interview.get("guest_name", ""), interview.get("cohost_name", ""))
+            if interview else []
+        ),
         "blog_author": _show_host_name(show_slug),
         "show_name": show_config["name"],
         "show_slug": show_slug,
@@ -1617,6 +1649,7 @@ def generate_blog_index_html(
     *,
     page: int = 1,
     total_pages: int = 1,
+    interview_cards: dict | None = None,
 ) -> str:
     """Generate one page of a show's blog index.
 
@@ -1631,6 +1664,10 @@ def generate_blog_index_html(
     page, total_pages :
         Which page this is and how many there are. The defaults render a
         single unpaginated page, byte-identical to the previous behaviour.
+    interview_cards :
+        ``{episode_num: card}`` from ``engine.interviews.interview_episode_cards``
+        for an interview show, so each card can lead with the guest. Empty
+        or ``None`` renders the news-show card exactly as before.
     """
     from generate_html import _build_all_shows_list, _path_prefix
 
@@ -1658,6 +1695,7 @@ def generate_blog_index_html(
         "tagline": show_config.get("tagline", ""),
         "description": show_config.get("description", ""),
         "posts": posts,
+        "interview_cards": interview_cards or {},
         "blog_rss_url": f"https://nerranetwork.com/blog_{show_slug}.rss",
         # Pagination. total_pages == 1 renders no pager at all, so a show
         # with one page is unchanged.

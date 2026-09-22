@@ -178,13 +178,15 @@ class TestCohostFromTheTranscript:
 class TestGateTwoWordingMatchesTheWorker:
     OVERCLAIMS = ("until the guest has approved", "until the guest has read",
                   "until you have signed off", "nothing reaches a feed until",
-                  "no interview publishes until")
+                  "no interview publishes until",
+                  "approve your transcript before anything publishes")
 
     def _surfaces(self):
         return {
             "brand.basis": brand.MIRA_FIRST_CLAIM_BASIS,
             "steps": " ".join(body for _t, body in G.MIRA_INTERVIEW_STEPS),
             "about": (ROOT / "templates" / "about.html.j2").read_text(encoding="utf-8"),
+            "start_here": (ROOT / "templates" / "start_here.html.j2").read_text(encoding="utf-8"),
             "topic_hubs": (ROOT / "engine" / "topic_hubs.py").read_text(encoding="utf-8"),
         }
 
@@ -205,6 +207,10 @@ class TestGateTwoWordingMatchesTheWorker:
     def test_every_surface_states_the_week_and_the_takedown(self):
         for name, text in self._surfaces().items():
             low = " ".join(text.lower().split())
+            if name == "start_here":
+                # One sentence on a card: the week is enough there.
+                assert "week to approve" in low
+                continue
             assert "takedown" in low, f"{name} drops the takedown"
             assert "week" in low or "seven days" in low, (
                 f"{name} does not say how long the guest has"

@@ -53,6 +53,7 @@ _SECTION_ABOUT = "about "
 _SECTION_TALKING = "what we talked about"
 _SECTION_LINKS = "where to find "
 _SECTION_TRANSCRIPT = "transcript"
+_SECTION_CHAPTERS = "chapters"
 
 _HEADING_RE = re.compile(r"^#{2,4}\s+(.+?)\s*$", re.M)
 _MD_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)\s]+)\)")
@@ -493,14 +494,26 @@ def _is_transcript(heading: str) -> bool:
     return heading.strip().lower() == _SECTION_TRANSCRIPT
 
 
+def _is_chapters(heading: str) -> bool:
+    return heading.strip().lower() == _SECTION_CHAPTERS
+
+
 def interview_body_markdown(md_text: str) -> str:
     """*md_text* with the promoted sections, the transcript and the redundant
     preamble gone.
 
-    What is left is the part neither the hero nor the transcript box carries —
-    today that is the chapter list, plus any section a future digest adds that
-    this module does not know about. An unrecognised heading is KEPT, so a new
-    section shows up on the page looking plain rather than vanishing silently.
+    What is left is the part neither the hero, the chapter section nor the
+    transcript box carries — today that is nothing on most episodes, plus any
+    section a future digest adds that this module does not know about. An
+    unrecognised heading is KEPT, so a new section shows up on the page
+    looking plain rather than vanishing silently.
+
+    The chapter list left the body on 2026-09-22: it rendered as an ``<h4>``
+    bullet list with a one-item "Contents" sidebar pointing at it, while the
+    page's real chapter section (``blog-chapters``, with click-to-seek) sat
+    empty because it reads a ``chapters_epNNN.json`` these shows never
+    write. ``interview_context`` hands the record's chapters — gated by
+    :func:`supported_chapters` — to that section instead.
 
     The transcript leaves because it is 90% of the document: on Ep006 it is
     730 of 785 lines, and printing it open between the chapter list and the
@@ -517,7 +530,7 @@ def interview_body_markdown(md_text: str) -> str:
     for heading, body in _sections(md_text):
         if not heading:
             continue  # the preamble — hook, episode line, "What You Need to Know"
-        if _is_promoted(heading) or _is_transcript(heading):
+        if _is_promoted(heading) or _is_transcript(heading) or _is_chapters(heading):
             continue
         kept.append(f"### {heading}\n{body}")
     return _strip_rules("\n\n".join(kept))

@@ -20,7 +20,7 @@
     {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://nerranetwork.com/"},
     {"@type": "ListItem", "position": 2, "name": "{{ show_name }}", "item": "https://nerranetwork.com/{{ show_page }}"},
     {"@type": "ListItem", "position": 3, "name": "Blog", "item": "https://nerranetwork.com/blog/{{ show_slug }}/index.html"},
-    {"@type": "ListItem", "position": 4, "name": "Episode {{ episode_num }}"}
+    {"@type": "ListItem", "position": 4, "name": {{ (interview.guest_name if interview and interview.guest_name else 'Episode ' ~ episode_num) | tojson }}}
   ]
 }
     </script>
@@ -623,6 +623,37 @@
             text-align: right;
             margin-left: auto;
         }
+        /* The latest post has no next episode; the placeholder used to be a
+           bare div beside a bordered card (Sep 22 2026). Same box, dashed. */
+        .blog-ep-nav .nav-next-placeholder {
+            display: flex;
+            flex-direction: column;
+            gap: var(--sp-1);
+            padding: var(--sp-4) var(--sp-5);
+            border: 1px dashed var(--nn-border);
+            border-radius: 12px;
+            max-width: 48%;
+        }
+        .blog-ep-nav .nav-next-placeholder a {
+            display: inline; padding: 0; border: 0; background: none; max-width: none;
+        }
+        .nn-iv-provenance {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            line-height: 1.6;
+            margin: 0.35rem 0 0;
+        }
+        .nn-iv-provenance span { white-space: nowrap; }
+        .nn-iv-blurb-label {
+            font-family: var(--font-ui);
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--nn-text-muted);
+            margin: 1.1rem 0 0.2rem;
+        }
 
         /* Listen CTA */
         .blog-listen-cta {
@@ -896,7 +927,7 @@
             <li><a href="{{ path_prefix }}index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="{{ path_prefix }}{{ show_page }}" style="color:var(--nn-text-muted);text-decoration:none;">{{ show_name }}</a> <span aria-hidden="true">/</span></li>
             <li><a href="{{ blog_index_url }}" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode {{ episode_num }}</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">{% if interview and interview.guest_name %}{{ interview.guest_name }}{% else %}Episode {{ episode_num }}{% endif %}</li>
         </ol>
     </nav>
 
@@ -944,6 +975,15 @@
             {% if interview.cohost_name %}<span aria-hidden="true">·</span><span>with {{ interview.cohost_name }}, co-host</span>{% endif %}
             {% if transcript %}<span aria-hidden="true">·</span><a href="#transcript" style="color:inherit;">Read the transcript</a>{% endif %}
         </div>
+        {#- Provenance (Sep 22 2026): who hosted, who co-hosted when someone
+            did, who reviewed it, what the guest was given. Every phrase comes
+            from engine.brand.interview_provenance so it reads the same on
+            every post and never says more than the pipeline does. -#}
+        {% if interview_provenance %}
+        <p class="nn-iv-provenance">
+            {%- for part in interview_provenance %}{% if not loop.first %}<span aria-hidden="true"> · </span>{% endif %}<span>{{ part }}</span>{% endfor -%}
+        </p>
+        {% endif %}
 
         {% if interview.guest_links %}
         <div class="nn-iv-meta">
@@ -957,6 +997,8 @@
         {% endif %}
 
         {% if interview.guest_blurb %}
+        {#- The bio is the guest's own application text, first person; say so. -#}
+        <p class="nn-iv-blurb-label">In their own words</p>
         <p class="nn-iv-standfirst" style="font-size:1rem;">{{ interview.guest_blurb }}</p>
         {% endif %}
     </header>
@@ -1115,7 +1157,7 @@
                  disk at build time, so this adds no generation cost. -->
             {% if chapters %}
             <section class="blog-chapters" id="chapters">
-                <h2>In this episode</h2>
+                <h2>{% if interview %}In this conversation{% else %}In this episode{% endif %}</h2>
                 <ol class="blog-chapter-list">
                     {%- for ch in chapters %}
                     <li>
@@ -1134,7 +1176,8 @@
                alternate-language tracks render no inline <audio>, so the
                list stays a plain, useful contents listing there. */
             (function () {
-                var audio = document.getElementById("nn-i18n-audio");
+                var audio = document.getElementById("nn-i18n-audio")
+                    || document.querySelector(".nn-iv-player audio");
                 if (!audio) return;
                 document.querySelectorAll(".blog-chapter-list li").forEach(function (li) {
                     var stamp = li.querySelector(".chapter-time");
@@ -1241,7 +1284,7 @@
             <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>{{ '👋 ' if not _is_ru else '👋 ' }}{% if _is_ru %}Понравился выпуск?{% else %}Did this episode land?{% endif %}</span>
                 <a href="mailto:patrick@planetterrian.com?subject={{ ('I liked ' ~ show_name ~ ' Ep' ~ episode_num) | urlencode }}&body={{ ('Re: ' ~ canonical_url ~ '%0A%0A') }}" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">{% if _is_ru %}👍 Отзыв{% else %}👍 Tell Patrick{% endif %}</a>
-                <a href="mailto:patrick@planetterrian.com?subject={{ ('Suggestion for ' ~ show_name) | urlencode }}&body={{ ('Re: ' ~ canonical_url ~ '%0A%0A') }}" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">{% if _is_ru %}💡 Идея{% else %}💡 Suggest a story{% endif %}</a>
+                <a href="mailto:patrick@planetterrian.com?subject={{ ('Suggestion for ' ~ show_name) | urlencode }}&body={{ ('Re: ' ~ canonical_url ~ '%0A%0A') }}" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">{% if _is_ru %}💡 Идея{% elif interview %}💡 Suggest a guest{% else %}💡 Suggest a story{% endif %}</a>
             </div>
 
             {#- Per-show rating/review ask (engine.episode_ask). SpaceX Ask B
@@ -1299,7 +1342,7 @@
                         from engine.blog.next_episode_placeholder; the
                         literal fallback below only renders when a caller
                         bypasses that context (none do today). -#}
-                    {% set _nen = next_episode_nav or ({'label': 'Завтра →', 'title': 'Новый выпуск утром'} if _is_ru else {'label': 'Next episode →', 'title': 'New episode coming'}) %}
+                    {% set _nen = ({'label': 'Next interview →', 'title': 'When it is ready'} if interview else (next_episode_nav or ({'label': 'Завтра →', 'title': 'Новый выпуск утром'} if _is_ru else {'label': 'Next episode →', 'title': 'New episode coming'}))) %}
                     <span class="nav-label">{{ _nen.label }}</span>
                     <span class="nav-title">{{ _nen.title }}</span>
                     <a href="#subscribe-cta" style="font-size:0.82rem;color:var(--show-color-text, var(--show-color));text-decoration:none;display:block;margin-top:4px;">{% if _is_ru %}Подписаться, чтобы не пропустить →{% else %}Subscribe so you don't miss it &rarr;{% endif %}</a>
@@ -1316,6 +1359,24 @@
                and until this shipped the page offered them nothing to do.
                Gated on the registry's apply_page so a show without a form
                never advertises one. #}
+            {#- Who makes this (Sep 22 2026): the same scoped credit the show
+                page carries, from engine.brand.creator_credit — interview
+                posts only, so a news post keeps its shape. -#}
+            {% if interview and creator_credit %}
+            <div class="nn-creator">
+                <div class="nn-creator-label">Who makes this</div>
+                <h3 class="nn-creator-name">{{ creator_name }}</h3>
+                {% for para in creator_credit %}
+                <p>{{ para }}</p>
+                {% endfor %}
+                <p class="nn-creator-more">
+                    <a href="{{ path_prefix }}about.html">About the network</a>
+                    <span aria-hidden="true">·</span>
+                    <a href="{{ path_prefix }}ai-disclosure.html">How we use AI, in detail</a>
+                </p>
+            </div>
+            {% endif %}
+
             {% if interview and interview.apply_page %}
             <section class="nn-iv-next" aria-label="Be a guest">
                 <a href="{{ path_prefix }}{{ interview.apply_page }}">
