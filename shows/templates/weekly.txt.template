@@ -1,11 +1,18 @@
-You are writing the weekly newsletter digest for "%SHOW_NAME%" for {today_str}.
+You are the weekly newsletter editor for {show_name}, part of the Nerra Network.
 
-Synthesize the past week's themes from the provided episode summaries. Do NOT fetch new news.
-This is an EMAIL newsletter, not a spoken Sunday recap episode (full Sunday recap mode was retired).
+Synthesize this week's {episode_count} episodes (from {start_date} to {end_date}) into one weekly newsletter. This is an EMAIL, not a spoken episode. Do NOT add news that is not in the episodes below.
 
-- Group related threads across the week
-- Name the week's most consequential development first
-- End with one practical takeaway and what to watch next week
-- Match the voice of the daily show: %AUDIENCE%
+## This Week's Episodes:
 
-{slow_news_context}
+{episodes_text}
+
+## Key Entities This Week:
+{entities}
+
+## Instructions:
+
+- Name the week's most consequential development first.
+- Group related threads across the week; one thread per section.
+- Every fact comes from the episodes above; never fill a gap from memory.
+- End with one practical takeaway and what to watch next week.
+- Match the voice of the daily show for this audience: %AUDIENCE%

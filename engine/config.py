@@ -362,6 +362,11 @@ class PublishingConfig:
     x_handle: str = ""
     x_cross_promo: bool = False
     host_name: str = "Patrick"
+    # "human" (default) or "ai". An AI host (Mira) must never be given the
+    # human-host disclosure ("synthesis of MY voice — analysis my own",
+    # "curated by Patrick"): run_show picks the AI variant from this field
+    # (Sep 2026 new-shows Phase 0, docs/new_shows_plan_2026_09_22.md §2b).
+    host_kind: str = "human"
 
 
 @dataclass
@@ -508,6 +513,11 @@ class NewsletterConfig:
     short_label: str = ""
     emoji: str = ""
     newsletter_start_date: str = ""
+    # Sep 2026 (Peptides / Longevity Weekly): education-not-medical-advice
+    # callout, sibling of requires_financial_disclaimer. Read by
+    # engine.newsletter_template straight from the show YAML, so every
+    # caller of wrap_with_branding (daily + weekly) renders it.
+    requires_health_disclaimer: bool = False
     requires_financial_disclaimer: bool = False
     length_target_words: int = 0
     adjacent_shows: list = field(default_factory=list)

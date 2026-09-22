@@ -281,7 +281,8 @@ class TestShowAndInfoPages:
     def test_start_here_lists_every_show(self):
         src = (_T / "start_here.html.j2").read_text(encoding="utf-8")
         import generate_html as g
-        listed = set(re.findall(r"'([a-z_]+)'", "".join(re.findall(r"s\.slug in \[(.*?)\]", src))))
+        # Slugs may contain digits (engine.show_scaffold.validate_slug; mag7).
+        listed = set(re.findall(r"'([a-z][a-z0-9_]*)'", "".join(re.findall(r"s\.slug in \[(.*?)\]", src))))
         missing = set(g.NETWORK_SHOWS) - listed
         assert not missing, f"Start Here hides: {sorted(missing)}"
 

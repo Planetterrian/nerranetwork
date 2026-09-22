@@ -139,6 +139,21 @@ def _load_show_branding(slug: str) -> Dict[str, str]:
             nl_default.get("requires_financial_disclaimer", False),
         )
         out["requires_financial_disclaimer"] = "true" if flag else "false"
+        hflag = nl_show.get(
+            "requires_health_disclaimer",
+            nl_default.get("requires_health_disclaimer", False),
+        )
+        out["requires_health_disclaimer"] = "true" if hflag else "false"
+        # Host credit (Sep 2026): the footer said "Editorial by Patrick"
+        # and the reply row "Patrick reads every one" on every show — false
+        # on a Mira-hosted desk. Read the host from publishing.host_name /
+        # host_kind so the credit follows the show.
+        pub = data.get("publishing") or {}
+        pub_default = defaults.get("publishing") or {}
+        out["host_name"] = str(
+            pub.get("host_name") or pub_default.get("host_name") or "Patrick")
+        out["host_kind"] = str(
+            pub.get("host_kind") or pub_default.get("host_kind") or "human").lower()
     except Exception as exc:  # pragma: no cover — defensive
         logger.warning("Could not read newsletter branding for %s: %s", slug, exc)
 
@@ -539,6 +554,31 @@ def _build_by_the_numbers_html(
         'cellspacing="0" border="0" style="max-width:480px;margin:0 auto;">'
         f'<tr>{"".join(cells)}</tr>'
         '</table>'
+        '</td></tr></table>'
+    )
+
+
+def _build_health_disclaimer_html() -> str:
+    """Callout for the health-education shows (Sep 2026). Same visual
+    treatment as the financial callout; the copy is the show's posture."""
+    body = (
+        '<strong>Heads up:</strong> Education only, not medical advice. '
+        'Nothing here is a dosing, sourcing or treatment recommendation. '
+        'Talk to your own clinician before acting on anything you read.'
+    )
+    return (
+        '<table role="presentation" width="100%" cellpadding="0" '
+        'cellspacing="0" border="0" '
+        'class="surface-warn" '
+        'style="background:#FFF7ED;border-left:4px solid #B45309;">'
+        '<tr><td '
+        'style="padding:12px 16px;'
+        "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
+        'Roboto,Helvetica,Arial,sans-serif;'
+        'font-size:13px;color:#78350F;line-height:1.5;">'
+        '<span class="brand-text-warn" style="color:#78350F;">'
+        f'{body}'
+        '</span>'
         '</td></tr></table>'
     )
 
@@ -1392,6 +1432,11 @@ def _build_reply_share_html(
             'Патрик читает каждое.'
         )
         share_text = f'Слушаю «{name}» — рекомендую:'
+    elif show.get("host_kind") == "ai":
+        reply_html = (
+            '💬 <strong>Reply to this email</strong> — '
+            'replies reach the people who run the Nerra Network.'
+        )
     else:
         reply_html = (
             '💬 <strong>Reply to this email</strong> — '
@@ -1562,6 +1607,14 @@ def _build_issue_counter_html(
     )
 
 
+def _editorial_credit(show: Dict[str, str]) -> str:
+    """Footer credit line: the human editor, or the AI host plainly named."""
+    host = show.get("host_name") or "Patrick"
+    if show.get("host_kind") == "ai":
+        return f"Hosted by {host}, an AI · written by software from cited sources"
+    return f"Editorial by {host}"
+
+
 def _build_footer_html(show: Dict[str, str]) -> str:
     """Render the email's footer block as inline-styled HTML."""
     brand = show["brand_color"]
@@ -1641,7 +1694,7 @@ def _build_footer_html(show: Dict[str, str]) -> str:
         f'style="color:#475569;text-decoration:none;font-weight:600;">'
         f'Nerra Network</a> · '
         f'AI-narrated voice (Grok TTS) · '
-        f'Editorial by Patrick'
+        f'{_editorial_credit(show)}'
         f'</p>'
         # Unsubscribe / subscription source — same contrast bump.
         f'<p class="text-muted" '
@@ -1868,6 +1921,8 @@ def wrap_with_branding(
         _build_financial_disclaimer_html(disclaimer_lang)
         if requires_financial_disclaimer else ""
     )
+    if show.get("requires_health_disclaimer") == "true":
+        disclaimer += _build_health_disclaimer_html()
     p_s_block = _build_p_s_html(p_s, show["brand_color"], slug)
     cross_network = _build_cross_network_html(
         adjacent_shows, show["brand_color"]

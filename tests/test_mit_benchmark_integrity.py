@@ -2707,7 +2707,11 @@ class TestAuditRegistryCoversEveryShow:
                 "translation_overrides", "scaffold_pending",
             }
         }
-        missing = configured - set(mod.SHOW_REGISTRY) - mod.AUDIT_EXEMPT_SLUGS
+        # PRELAUNCH_SLUGS (Sep 2026): scaffolded, not yet scheduled — they
+        # publish nothing on their own until their cron lands, at which
+        # point the launch PR registers them (TestPrelaunchShows pins that).
+        missing = (configured - set(mod.SHOW_REGISTRY) - mod.AUDIT_EXEMPT_SLUGS
+                   - mod.PRELAUNCH_SLUGS)
         assert not missing, (
             f"shows publish with no daily-audit coverage: {sorted(missing)}. "
             "Add a SHOW_REGISTRY entry, or add the slug to "
@@ -2745,6 +2749,9 @@ class TestAuditRegistryCoversEveryShow:
             cron_src)
         assert pairs, "could not parse the runner's CRON_MAP"
 
+        _WEEKDAY_DOW = {"sunday": "0", "monday": "1", "tuesday": "2",
+                        "wednesday": "3", "thursday": "4", "friday": "5",
+                        "saturday": "6"}
         checked = 0
         for expression, slug, gate in pairs:
             entry = mod.SHOW_REGISTRY.get(slug)
@@ -2753,8 +2760,11 @@ class TestAuditRegistryCoversEveryShow:
             day_of_week = expression.split()[4]
             if day_of_week == "*" and gate == "None":
                 expected = "daily"
-            elif day_of_week == "1" and gate == '"monday"':
-                expected = "monday"
+            elif gate.strip('"') in _WEEKDAY_DOW and \
+                    day_of_week == _WEEKDAY_DOW[gate.strip('"')]:
+                # A weekly show on its named weekday (Sep 2026: any weekday,
+                # cron day-of-week numbering, Sunday == 0).
+                expected = gate.strip('"')
             else:
                 # A cadence shape this check does not model yet. Fail
                 # rather than skip silently — an unmodelled shape is

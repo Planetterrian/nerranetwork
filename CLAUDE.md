@@ -235,7 +235,7 @@ unfiltered agree, which is exactly why the filter went in before it mattered.
 
 ## Project Overview
 
-Automated daily podcast generation system running 18 shows via a unified
+Automated daily podcast generation system running 22 shows via a unified
 `run_show.py` runner + per-show YAML configs, plus 4 legacy standalone scripts
 (deprecated — see note below). Shows use **Grok TTS** (`engine.tts.grok_speak_chunk`)
 and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
@@ -258,6 +258,10 @@ and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 | The DP Pod | — | `shows/dp_pod.yaml` | Monday | — (X disabled) | Grok TTS (two-voice: Patrick + Dan) |
 | The Age of AI | — | `shows/age_of_ai.yaml` | When an interview is ready (Nerra Voices pipeline, NOT run_show) | — (X disabled) | Real guest phone audio + Mira narration (Grok voice `ara`) |
 | Offshore North | — | `shows/offshore_north.yaml` | Monday | — (X disabled) | Grok TTS (Dan `0vscf8u8yrxc`, single-narrator) |
+| AI Chips & Data Centres Daily | — | `shows/ai_chips.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X disabled) | Grok TTS (custom) |
+| MAG 7 Daily | — | `shows/mag7.yaml` | Daily (pre-launch) | — (X disabled) | Grok TTS (custom) |
+| Peptides Weekly | — | `shows/peptides.yaml` | Thursday (pre-launch) | — (X disabled) | Grok TTS (custom) |
+| Longevity Weekly | — | `shows/longevity.yaml` | Wednesday (pre-launch) | — (X disabled) | Grok TTS (custom) |
 | Nerra Daily | — | registry-only (`shows/network_meta.yaml`; NOT run_show — assembled by `scripts/build_daily_edition.py`) | Daily, after the English slate | — (X disabled) | Splices published show audio + Mira links (Grok voice `ara`) |
 
 > Weekly-summary segment (July 2026): shows on a daily cadence with

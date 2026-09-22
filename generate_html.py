@@ -429,6 +429,8 @@ def network_social_sameas():
 
 NETWORK_SHOWS = {
     "tesla": {
+        # Sep 2026 strand grouping (docs/new_shows_plan_2026_09_22.md §2f).
+        "strand": "markets",
         "picker_tags": {
             "topics": ["tesla", "ev", "tech", "stocks", "energy"],
             "audience": ["investors", "enthusiasts"],
@@ -769,6 +771,8 @@ NETWORK_SHOWS = {
         ],
     },
     "planetterrian": {
+        # Sep 2026 strand grouping (docs/new_shows_plan_2026_09_22.md §2f).
+        "strand": "health",
         "picker_tags": {
             "topics": ["longevity", "biotech", "health", "science"],
             "audience": ["professionals", "enthusiasts"],
@@ -986,6 +990,8 @@ NETWORK_SHOWS = {
         ],
     },
     "models_agents": {
+        # Sep 2026 strand grouping (docs/new_shows_plan_2026_09_22.md §2f).
+        "strand": "ai",
         "picker_tags": {
             "topics": ["ai", "tech", "research"],
             "audience": ["builders", "professionals"],
@@ -1090,6 +1096,8 @@ NETWORK_SHOWS = {
         ],
     },
     "models_agents_beginners": {
+        # Sep 2026 strand grouping (docs/new_shows_plan_2026_09_22.md §2f).
+        "strand": "ai",
         "picker_tags": {
             "topics": ["ai", "tech"],
             "audience": ["students", "beginners"],
@@ -1420,6 +1428,8 @@ NETWORK_SHOWS = {
         ],
     },
     "modern_investing": {
+        # Sep 2026 strand grouping (docs/new_shows_plan_2026_09_22.md §2f).
+        "strand": "markets",
         "picker_tags": {
             "topics": ["investing", "stocks", "personal-finance"],
             "audience": ["investors", "professionals"],
@@ -2034,6 +2044,11 @@ def _build_all_shows_list():
             # three shows the network's AI host presents, which display_order
             # scatters across the list (0.5, 13, 13.5).
             "strand": cfg.get("strand", ""),
+            # ``host`` (Sep 2026): who presents the show — patrick | dan |
+            # mira | patrick_dan. Separate from ``strand`` because Mira also
+            # hosts news desks that must NOT inherit the interview claim band
+            # (strand "mira" stays the three claim-bearing shows).
+            "host": cfg.get("host", ""),
             # The interview shows each have their own guest-application page;
             # sending a Nerra Voices reader to the Age of AI form files their
             # application against the wrong show.
@@ -3232,6 +3247,7 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         # "Hosted by Mira" band and the link to her hub, so the three shows
         # cross-reference each other instead of each being a dead end.
         "strand": cfg.get("strand", ""),
+        "host": cfg.get("host", ""),
         "apply_page": cfg.get("apply_page", ""),
         # Interview shows (Sep 21 2026): the episode rail is a list of
         # GUESTS, not a list of RSS titles. On these shows the RSS title is
@@ -4561,7 +4577,11 @@ def generate_llms_txt(*, dry_run=False):
     lines = [
         "# Nerra Network",
         "",
-        f"> An independent, ad-free podcast network of {len(shows)} shows, "
+        # Count only shows a listener can actually play (Sep 2026): a
+        # pre-launch show has a page but no feed, and an answer engine
+        # quoting this count should say something true.
+        f"> An independent, ad-free podcast network of "
+        f"{sum(1 for s in shows if s.get('has_feed', True))} shows, "
         "produced in Vancouver, Canada. Every episode is written, narrated and "
         "illustrated by AI under human editorial ownership, and every episode "
         "says so.",
@@ -4604,6 +4624,8 @@ def generate_llms_txt(*, dry_run=False):
         tagline = (show.get("tagline") or show.get("description") or "").strip()
         schedule = (show.get("schedule") or "").strip()
         suffix = f" ({schedule})" if schedule else ""
+        if show.get("has_feed") is False:
+            suffix += " — launching soon, no episodes yet"
         lines.append(
             f"- [{show['name']}]({base}/{show['show_page']}){suffix}"
             + (f" — {tagline}" if tagline else "")

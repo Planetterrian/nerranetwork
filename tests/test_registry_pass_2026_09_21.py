@@ -68,7 +68,8 @@ class TestTopicHubsDidNotSilentlyShrink:
         import generate_html as G
 
         shows = G._build_all_shows_list()
-        assert len(shows) == 18
+        # 22 since 2026-09-22 (new-shows Phase 1).
+        assert len(shows) == 22
         missing = [
             s["slug"] for s in shows
             if not ((s.get("picker_tags") or {}).get("topics"))

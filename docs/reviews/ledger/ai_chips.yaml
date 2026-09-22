@@ -1,0 +1,32 @@
+# Review ledger — AI Chips & Data Centres Daily. See README.md for schema.
+# Launch registration (Sep 2026, docs/new_shows_plan_2026_09_22.md §4, §9):
+# no episodes yet. The predictions below are the first review's to score.
+reviews:
+  - date: 2026-09-22
+    pr: null
+    doc: docs/new_shows_plan_2026_09_22.md
+    reviewer: claude-code (new-shows Phase 1 scaffold; launch registration, not a review)
+    summary: >-
+      Show scaffolded from the plan: YAML, prompts (shape-only, no specimen
+      sentences), hook, Ep1 debut brief, personality, section patterns,
+      validation config, memory seed, registry entry, cover. Not on a cron:
+      Episode 1 is produced by manual dispatch and listened to before the
+      launch PR adds the schedule (landmine #17).
+    shipped:
+      - scaffold per docs/new_shows_plan_2026_09_22.md Appendix A
+    deferred:
+      - Episode 1 by workflow_dispatch, operator listen, then the cadence PR
+      - re-grade the feed list from a runner (check_feeds.py ai_chips)
+    predictions:
+      - metric: "episodes (first 7) where a news item's main subject is a model/software release rather than hardware, facilities, power, supply chain or policy"
+        baseline: "n/a (pre-launch)"
+        expected: "<=1/7"
+        verdict: pending
+      - metric: "same-day stories shared with Models & Agents told without a new hardware or cost fact (read against the sibling block)"
+        baseline: "n/a"
+        expected: "0 in the first 7"
+        verdict: pending
+      - metric: "The Teardown re-explains a news item from the same episode"
+        baseline: "n/a"
+        expected: "0/7"
+        verdict: pending

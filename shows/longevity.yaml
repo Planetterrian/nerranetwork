@@ -1,0 +1,227 @@
+# Longevity Weekly — launched Sep 2026 (Phase 1 of docs/new_shows_plan_2026_09_22.md
+# §4.3). Weekly (Wednesday), Planetterrian-structured: the week's news plus one
+# curriculum spotlight (shows/curricula/longevity.yaml, picked by the hook).
+# Health posture (plan §4.3): education and awareness, never dosing,
+# sourcing or protocols. The posture is in the identity line and the
+# closing (engine/intros.py — supplied verbatim, so the model cannot drop
+# it), the newsletter health callout, and every prompt. The claims gate is
+# the network default enforce + STRIP: a sentence it cannot trace to a
+# source does not ship. Spotlight evidence arrives as real Europe PMC
+# abstracts (engine/europe_pmc.py via the hook), so it can be cited.
+# YouTube stays OFF until a policy review — platform medical-content rules
+# are a channel-level risk, not a per-video one.
+
+# Sibling: Planetterrian Daily covers longevity news daily; this show is the
+# weekly synthesis + mechanism show, and the hook hands it Planetterrian's
+# week of headlines as update-don't-retell notes (engine/sibling_coverage.py).
+#
+# Distribution OFF at launch; no cron until Episode 1 has been heard.
+name: Longevity Weekly
+slug: longevity
+weekly_summary_segment: false   # a weekly show IS the week in review
+memory_enabled: true
+story_recurrence: true
+description: Education and awareness about the science of aging — the trials, the mechanisms and the claims — with the evidence read carefully every week. Never medical advice.
+
+# Weekly show: every feed reads a week and a day (window_hours: 192), and
+# nothing older than nine days by its page or feed date reaches the prompt
+# (stale_article_days). Opt-in by name in the Offshore North guards.
+stale_article_days: 9
+# check_feeds.py 2026-09-22 (this session's egress, pipeline user agent):
+# Endpoints News 403s the fetcher's user agent; Fierce Biotech's pubDate is
+# not a parseable date; ScienceDaily Hormones and Cell Metabolism were stale
+# (monthly issue feeds). Wiley journal feeds 403 GitHub runners (Peptides
+# dry run, 2026-09-22). Dropped. Re-grade from a runner before Episode 1.
+sources:
+- url: https://www.biopharmadive.com/feeds/news/
+  label: BioPharma Dive
+  window_hours: 192
+- url: https://www.fightaging.org/feed/
+  label: Fight Aging!
+  window_hours: 192
+- url: https://www.lifespan.io/feed/
+  label: Lifespan.io
+  window_hours: 192
+- url: https://www.nature.com/nataging.rss
+  label: Nature Aging
+  window_hours: 192
+- url: https://www.sciencedaily.com/rss/health_medicine/healthy_aging.xml
+  label: ScienceDaily Healthy Aging
+  window_hours: 192
+- url: https://www.statnews.com/feed/
+  label: STAT News
+  window_hours: 192
+- url: https://news.google.com/rss/search?q=longevity+research+OR+%22aging+research%22+when:7d&hl=en-US&gl=US&ceid=US:en
+  label: Google News longevity research
+  window_hours: 192
+- url: https://news.google.com/rss/search?q=anti-aging+trial+OR+%22biological+age%22+when:7d&hl=en-US&gl=US&ceid=US:en
+  label: Google News aging trials
+  window_hours: 192
+- url: https://news.google.com/rss/search?q=longevity+biotech+funding+when:7d&hl=en-US&gl=US&ceid=US:en
+  label: Google News longevity biotech
+  window_hours: 192
+
+web_search_queries:
+- longevity aging research news this week
+- aging clinical trial results this week
+- longevity biotech news
+
+exclude_title_patterns:
+# Commerce and dosing content only. Never bare "order" (an FDA or
+# executive order is news) or "protocol" (a trial protocol is news).
+- '\b(buy now|shop now|coupon|promo code|discount code|for sale)\b'
+- '\b(peptide stack|dosing guide|how much to take|cycle guide)\b'
+
+keywords:
+- aging
+- ageing
+- longevity
+- lifespan
+- healthspan
+- senescence
+- senolytic
+- rapamycin
+- mtor
+- metformin
+- nad
+- reprogramming
+- epigenetic
+- biological age
+- centenarian
+- caloric restriction
+- autophagy
+- mitochondria
+- glp-1
+- trial
+
+min_articles: 5
+min_articles_skip: 3
+
+max_weekly_cost_usd: 4.0
+
+multilingual:
+  enabled: false
+
+llm:
+  provider: xai
+  system_prompt_file: shows/prompts/longevity_system.txt
+  digest_prompt_file: shows/prompts/longevity_digest.txt
+  podcast_prompt_file: shows/prompts/longevity_podcast.txt
+  digest_temperature: 0.4
+  podcast_temperature: 0.6
+  max_tokens: 6000
+  podcast_max_tokens: 9000
+  min_podcast_words: 1400
+  podcast_expand_below_target: false
+  min_digest_words: 1200
+  digest_expand_below_target: true
+
+tts: {}
+
+audio:
+  # Reuses Planetterrian's theme (the health strand) until a dedicated
+  # track is commissioned (plan §5c).
+  music_file: assets/music/oilers-pride.mp3
+  transition_sting: assets/music/transition_sting.mp3
+  voice_intro_delay: 0.0
+  intro_duration: 3.0
+  overlap_duration: 15.0
+  fade_duration: 30.0
+  outro_duration: 30.0
+  outro_crossfade: 0.0
+  outro_fade_out_duration: 10.0
+  intro_volume: 0.6
+  overlap_volume: 0.5
+  fade_volume: 0.4
+  outro_volume: 0.6
+
+publishing:
+  rss_file: longevity_podcast.rss
+  rss_title: Longevity Weekly
+  rss_description: 'The science of aging, read carefully. Every Wednesday: the week in longevity research, trials and regulation, and one mechanism of aging explained properly — what it is, what the evidence shows in animals and in people, and what it does not show. Education only; never medical advice.'
+  rss_link: https://nerranetwork.com/longevity.html
+  rss_author: Patrick
+  rss_email: patrick@planetterrian.com
+  rss_image: https://nerranetwork.com/assets/covers/longevity.jpg
+  rss_category: Health & Fitness
+  rss_subcategory: Medicine
+  rss_category2: "Science"
+  rss_subcategory2: "Life Sciences"
+  rss_keywords: aging, ageing, longevity, lifespan, healthspan, senescence, senolytic, rapamycin, mtor, metformin
+  guid_prefix: longevity
+  base_url: https://nerranetwork.com
+  audio_subdir: digests/longevity
+  summaries_json: digests/longevity/summaries_longevity.json
+  summaries_podcast_name: longevity
+  player_html: longevity.html
+  summaries_html: longevity-summaries.html
+  x_enabled: false
+  x_env_prefix: X_
+  host_name: Patrick
+  host_kind: human
+
+episode:
+  prefix: Longevity_Weekly
+  filename_pattern: '{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3'
+  output_dir: digests/longevity
+  mp3_glob: Longevity_Weekly_Ep*.mp3
+
+chapters:
+  enabled: true
+  section_markers:
+  - pattern: This is Longevity Weekly|Longevity Weekly, episode
+    title: Introduction
+    where: start
+  - pattern: this week'?s (spotlight|mechanism)|let'?s look (closely|properly) at
+    title: Mechanism of the Week
+  - pattern: That's Longevity Weekly|see you next week
+    title: Closing
+    where: end
+
+slow_news:
+  enabled: false
+
+newsletter:
+  enabled: false
+  platform: buttondown
+  api_key_env: BUTTONDOWN_API_KEY
+  status: about_to_send
+  tag: Longevity Weekly
+  short_label: Longevity
+  emoji: 🌱
+  newsletter_start_date: '2026-10-01'
+  requires_financial_disclaimer: false
+  requires_health_disclaimer: true
+  length_target_words: 1300
+
+content_tracking:
+  section_patterns: {}
+
+source_integrity:
+  enabled: true
+  enforce: true
+  on_failure: strip
+
+youtube:
+  enabled: false                # OFF until a medical-content policy review
+  channel: en
+  category_id: 27
+  shorts_start_mode: smart
+  shorts_min_score_threshold: 3.5
+  default_language: en
+  privacy_status: public
+  image_provider: grok
+  grok_image_model: grok-imagine-image
+  grok_image_descriptor: "cinematic laboratory science photo, soft lighting, ultra-detailed"
+  image_queries:
+  - research laboratory bench with pipettes
+  - microscope in a clinical lab
+  - scientist reviewing data on a screen
+  - molecular model on a desk
+  - hospital research corridor
+  - library of scientific journals
+  image_query_prefix: ''
+  tags:
+  - longevity
+  - health science
+  - medical research

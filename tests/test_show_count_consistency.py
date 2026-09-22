@@ -27,13 +27,15 @@ def _show_count() -> int:
     return len(generate_html.NETWORK_SHOWS)
 
 
-def test_network_has_eighteen_shows():
+def test_network_show_count():
     """When this fails you've added/removed a show — update the
     hardcoded-count surfaces listed in the other tests, then bump this.
     (17 as of August 2026: Nerra Daily, the combined daily edition, joined;
     18 as of September 2026: Nerra Voices, The Age of AI's sister interview
-    show.)"""
-    assert _show_count() == 18
+    show; 22 as of 2026-09-22: AI Chips & Data Centres Daily, MAG 7 Daily,
+    Peptides Weekly and Longevity Weekly — Phase 1 of
+    docs/new_shows_plan_2026_09_22.md.)"""
+    assert _show_count() == 22
 
 
 def test_no_stale_count_phrases_in_templates():
@@ -65,8 +67,13 @@ def test_hardcoded_count_surfaces_match():
     n = str(_show_count())
     # After the June 2026 brand refresh, README.md was made count-agnostic.
     # These surfaces remain hardcoded and must match the current show count:
+    # Sep 2026: the newsletter footer went count-agnostic ("18 daily
+    # podcasts" was wrong twice over — five shows are weekly — and the
+    # count changes five times in the new-shows rollout). It must not carry
+    # a number again.
+    nl = (_ROOT / "engine/newsletter.py").read_text(encoding="utf-8")
+    assert not re.search(r"\d+ daily podcasts", nl), "newsletter footer carries a show count again"
     surfaces = {
-        "engine/newsletter.py": f"{n} daily podcasts, ad-free",
         "CLAUDE.md": f"running {n} shows via a unified",
     }
     for rel, needle in surfaces.items():

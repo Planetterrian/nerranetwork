@@ -377,7 +377,9 @@ def drop_stale_articles(
     dropped: List[Dict] = []
     for art in articles:
         src = (art.get("source_name") or "").strip().lower()
-        if src in exempt:
+        # Hook-supplied articles may opt out (engine.hook_articles): a
+        # week's merged PRs are dated in the past by construction.
+        if src in exempt or art.get("exempt_stale"):
             kept.append(art)
             continue
         age = article_age_days(art, now)

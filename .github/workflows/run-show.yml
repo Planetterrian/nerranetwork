@@ -90,6 +90,13 @@ on:
           - dp_pod
           - age_of_ai
           - offshore_north
+          # Sep 2026 new shows — manual dispatch only until each launch PR adds
+          # its cron (Episode 1 is listened to first). Deliberately NOT in the
+          # `all` list below.
+          - ai_chips
+          - mag7
+          - peptides
+          - longevity
           - all
       test_mode:
         description: 'Dry run: fetch + digest only (no TTS, no R2 upload, no RSS, no X, no commit)'
@@ -179,6 +186,11 @@ jobs:
               }
 
               shows = []
+              # Named-weekday filters (Python weekday(): Monday == 0).
+              WEEKDAY_FILTERS = {
+                  "monday": 0, "tuesday": 1, "wednesday": 2, "thursday": 3,
+                  "friday": 4, "saturday": 5, "sunday": 6,
+              }
               entry = CRON_MAP.get(event_schedule)
 
               if entry:
@@ -206,13 +218,14 @@ jobs:
                       run_today = False
                       known_noop = True
                       print(f"Weekend no-op: {show_slug} only runs on weekdays.")
-                  elif day_filter == "monday" and weekday != 0:
-                      # Weekly shows run only on Monday (weekday()==0). The cron
-                      # already pins Monday; this guard also drops a GitHub cron
-                      # that fires late on a different day.
+                  elif day_filter in WEEKDAY_FILTERS and weekday != WEEKDAY_FILTERS[day_filter]:
+                      # Weekly shows run only on their named weekday (Monday
+                      # for most; Sep 2026 added any weekday name). The cron
+                      # already pins the day; this guard also drops a GitHub
+                      # cron that fires late on a different day.
                       run_today = False
                       known_noop = True
-                      print(f"Weekly no-op: {show_slug} only runs on Mondays.")
+                      print(f"Weekly no-op: {show_slug} only runs on {day_filter.title()}s.")
 
                   if run_today:
                       shows.append(show_slug)
@@ -625,7 +638,8 @@ jobs:
           exit 0
 
       - name: Validate output
-        if: steps.pipeline.outputs.skipped != 'true'
+        # test_mode is fetch + digest only: there is no audio to validate.
+        if: steps.pipeline.outputs.skipped != 'true' && github.event.inputs.test_mode != 'true'
         run: |
           # shellcheck disable=SC2044
           SHOW="${{ matrix.show }}"
@@ -677,11 +691,11 @@ jobs:
           echo "Output validation passed"
 
       - name: Regenerate network RSS
-        if: steps.pipeline.outputs.skipped != 'true'
+        if: steps.pipeline.outputs.skipped != 'true' && github.event.inputs.test_mode != 'true'
         run: python generate_network_rss.py
 
       - name: Regenerate show HTML pages
-        if: steps.pipeline.outputs.skipped != 'true'
+        if: steps.pipeline.outputs.skipped != 'true' && github.event.inputs.test_mode != 'true'
         env:
           GA4_MEASUREMENT_ID: ${{ secrets.GA4_MEASUREMENT_ID }}
           # Search Console ownership tag. Read by generate_html.py since
@@ -726,7 +740,11 @@ jobs:
         # The 4-attempt rebase/merge loop below handles races from concurrent
         # matrix jobs. On final exhaustion we create a recovery/* branch + draft
         # PR so the generated artifacts are NEVER lost in the ephemeral runner.
-        if: always() && steps.pipeline.outcome == 'success' && steps.pipeline.outputs.skipped != 'true'
+        # test_mode NEVER commits (Sep 2026): run_show --test writes the digest
+        # .md before its early exit, and this step used to commit and push it
+        # to main as "Auto-generated: <show> <date>" — which also trips the
+        # same-day duplicate guard and blocks that day's real episode.
+        if: always() && steps.pipeline.outcome == 'success' && steps.pipeline.outputs.skipped != 'true' && github.event.inputs.test_mode != 'true'
         env:
           # scripts/create_recovery_pr.sh posts a stranded-episode alert to
           # this webhook. It was reading the var but the step never passed it
@@ -785,6 +803,10 @@ jobs:
           # RE-FIRES on the next run (caught May 2026: SpaceX Ep059/Ep060 each
           # re-queued because this directory wasn't staged).
           git add -A shows/deep_dives/ || true
+          # Curriculum spotlights (Sep 2026: Peptides Weekly, Longevity
+          # Weekly) — the hook marks the week's spotlight produced; same
+          # persistence requirement as topic_queues or the next run re-picks it.
+          git add -A shows/curricula/ || true
 
           # Exclude MP3 files (hosted on R2, not in git)
           git reset HEAD -- '*.mp3' 2>/dev/null || true

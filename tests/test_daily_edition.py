@@ -49,6 +49,18 @@ class TestEditionSpec:
     def test_en_edition_registered(self):
         assert "en" in EDITIONS
 
+    # Sep 2026 new shows (docs/new_shows_plan_2026_09_22.md §6), excluded
+    # from the edition on purpose: a ~2 h edition would pass 3 h with every
+    # new daily in it, and a pre-launch show has no episodes to splice. The
+    # desks are a candidate SECOND edition (EDITIONS["world"]) once they have
+    # audience data — an operator decision, not a default.
+    EXCLUDED_NEW_SHOWS = {"ai_chips", "mag7", "peptides", "longevity"}
+
+    def test_new_shows_are_excluded_on_purpose(self):
+        assert not self.EXCLUDED_NEW_SHOWS & set(SPEC.lineup)
+        for slug in self.EXCLUDED_NEW_SHOWS:
+            assert (ROOT / "shows" / f"{slug}.yaml").exists(), slug
+
     def test_lineup_is_every_english_run_show_show(self):
         # Operator decision 2026-08-21: EVERY English show, MAB included.
         # A new English show scaffolded into the network must be added to

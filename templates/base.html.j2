@@ -181,6 +181,12 @@
         'nav_topics': 'Темы' if _is_ru else 'Browse by topic',
         'nav_hosted_by_mira': 'Ведёт Мира' if _is_ru else 'Hosted by Mira',
         'nav_other_shows': 'Остальные шоу' if _is_ru else 'Every other show',
+        'nav_strand_world': 'Мировые новости' if _is_ru else 'World desks',
+        'nav_strand_local': 'Местные новости' if _is_ru else 'Local news',
+        'nav_strand_ai': 'ИИ и вычисления' if _is_ru else 'AI & compute',
+        'nav_strand_markets': 'Рынки' if _is_ru else 'Markets',
+        'nav_strand_health': 'Здоровье и долголетие' if _is_ru else 'Health & longevity',
+        'nav_strand_network': 'О сети Nerra' if _is_ru else 'Across the network',
         'nav_books': 'Книги' if _is_ru else 'Books',
         'nav_gallery': 'Галерея' if _is_ru else 'Image Gallery',
         'nav_data': 'Данные и дашборды' if _is_ru else 'Data & Dashboards',
@@ -211,9 +217,24 @@
         Shows"; the dropdowns leave it unlabelled). A show with no strand is
         unaffected, and the grouping disappears if the registry stops declaring
         one. #}
-    {%- set _strand_mira = all_shows | selectattr('strand', 'equalto', 'mira') | list -%}
-    {%- set _strand_rest = all_shows | rejectattr('strand', 'equalto', 'mira') | list -%}
-    {%- set show_groups = [('nav_hosted_by_mira', _strand_mira), ('nav_other_shows', _strand_rest)] if _strand_mira else [('', all_shows)] -%}
+    {#- Sep 2026: every strand the registry declares becomes a group, in the
+        fixed order below (Mira first, as before); shows with no strand, or
+        with a strand not listed here, fall into "Every other show". With only
+        the `mira` strand declared this renders exactly what it used to. -#}
+    {%- set _strand_order = [
+        ('mira', 'nav_hosted_by_mira'), ('world', 'nav_strand_world'),
+        ('local', 'nav_strand_local'), ('ai', 'nav_strand_ai'),
+        ('markets', 'nav_strand_markets'), ('health', 'nav_strand_health'),
+        ('network', 'nav_strand_network'),
+    ] -%}
+    {%- set _grouping = namespace(groups=[], known=[]) -%}
+    {%- for _sid, _skey in _strand_order -%}
+        {%- set _members = all_shows | selectattr('strand', 'equalto', _sid) | list -%}
+        {%- if _members -%}{%- set _grouping.groups = _grouping.groups + [(_skey, _members)] -%}{%- endif -%}
+        {%- set _grouping.known = _grouping.known + [_sid] -%}
+    {%- endfor -%}
+    {%- set _strand_rest = all_shows | rejectattr('strand', 'in', _grouping.known) | list -%}
+    {%- set show_groups = (_grouping.groups + [('nav_other_shows', _strand_rest)]) if _grouping.groups else [('', all_shows)] -%}
     <a href="#main-content" class="skip-link">{{ t.skip_to_content }}</a>
     <!-- Navigation -->
     <nav class="nn-nav" aria-label="{{ t.main_navigation }}">

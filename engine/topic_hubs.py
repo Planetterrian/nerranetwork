@@ -432,6 +432,12 @@ def hub_shows(hub: Dict[str, Any], all_shows: Sequence[Dict[str, Any]]) -> List[
     for show in all_shows:
         if show.get("slug") in HUB_EXCLUDED_SHOWS:
             continue
+        # A show with no feed file yet (pre-launch) joins no hub: a hub
+        # page must not advertise a show a visitor cannot listen to (the
+        # Sep 19 2026 "no surface advertises something that does not
+        # exist" rule). It joins its hubs automatically once its feed exists.
+        if show.get("has_feed") is False:
+            continue
         topics = {
             str(t).lower()
             for t in ((show.get("picker_tags") or {}).get("topics") or [])

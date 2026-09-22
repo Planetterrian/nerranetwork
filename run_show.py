@@ -122,6 +122,45 @@ _AI_DISCLOSURE_RSS_RU = (
     "с помощью ИИ-синтеза голоса."
 )
 
+# AI-hosted run_show shows (Mira's news desks, Sep 2026). The human-host
+# lines above claim "synthesis of MY voice" and "curated by Patrick" —
+# both false for an AI host. These say what the episode actually is and
+# deliberately make NO human-review claim: that claim belongs only to the
+# two interview shows that bypass run_show (engine.brand
+# HUMAN_REVIEW_SHOW_SLUGS; tests/test_age_of_ai_pass_2026_09_21.py).
+_AI_DISCLOSURE_AI_HOST = (
+    "{host} is an AI host. This episode is AI voice synthesis, and its "
+    "stories were chosen and written by software from the named sources."
+)
+
+_AI_DISCLOSURE_RSS_AI_HOST = (
+    "AI Disclosure: {host}, the host of this podcast, is an AI. Episodes use "
+    "AI voice synthesis and are written by software from the cited sources."
+)
+
+
+def _is_ai_host(config) -> bool:
+    return str(getattr(config.publishing, "host_kind", "human") or "human").lower() == "ai"
+
+
+def _spoken_disclosure(config, slug: str) -> str:
+    """The one sentence spoken at the end of every episode."""
+    if slug in _RUSSIAN_SHOWS:
+        return _AI_DISCLOSURE_RU
+    if _is_ai_host(config):
+        return _AI_DISCLOSURE_AI_HOST.format(host=config.publishing.host_name or "Mira")
+    if config.tts.dialogue_mode:
+        return _AI_DISCLOSURE_DIALOGUE
+    return _AI_DISCLOSURE
+
+
+def _rss_disclosure_for(config, slug: str) -> str:
+    if slug in _RUSSIAN_SHOWS:
+        return _AI_DISCLOSURE_RSS_RU
+    if _is_ai_host(config):
+        return _AI_DISCLOSURE_RSS_AI_HOST.format(host=config.publishing.host_name or "Mira")
+    return _AI_DISCLOSURE_RSS
+
 # ---------------------------------------------------------------------------
 # Bootstrap
 # ---------------------------------------------------------------------------
@@ -756,6 +795,8 @@ def run(args: argparse.Namespace) -> None:
         audio_duration = rs.audio_duration
         digest_md = rs.digest_md
         extra_context = rs.extra_context
+        from engine.hook_articles import pop_hook_articles as _pop_ha
+        _pop_ha(extra_context, slug=args.show)
     else:
         # 4 & 5. Pre-fetch hook + RSS fetch in parallel (concurrent.futures)
         hook_module = _load_hook(args.show)
@@ -1034,6 +1075,19 @@ def run(args: argparse.Namespace) -> None:
                 logger.info("Cross-dedup filtered %d X post(s) that overlapped with RSS articles", skipped)
             articles.extend(filtered_x)
             x_posts = filtered_x  # Update for accurate count below
+        # Hook-supplied articles (Sep 2026, engine/hook_articles.py): a
+        # pre_fetch hook may return ``articles`` — PRs, road events, a
+        # journal search, a sibling desk's digest. Merged here, after the
+        # RSS ladder and the X merge and before every article-driven gate,
+        # so they reach the skip thresholds, the stale gate, news_section
+        # and the claims gate's local texts exactly like a fetched item.
+        from engine.hook_articles import merge_hook_articles, pop_hook_articles
+        _hook_articles = pop_hook_articles(extra_context, slug=config.slug)
+        if _hook_articles and not _topic_driven:
+            articles, _n_hook = merge_hook_articles(articles, _hook_articles)
+            metrics.record("articles_from_hook", _n_hook)
+            logger.info("Merged %d hook-supplied article(s) (%d offered)",
+                        _n_hook, len(_hook_articles))
         logger.info("After fetch + dedup: %d articles (incl. %d X posts)", len(articles), len(x_posts))
 
         # 5a2. Web search fallback — if articles below quality threshold, try Grok web_search
@@ -1232,7 +1286,10 @@ def run(args: argparse.Namespace) -> None:
             _skip_episode("no_articles", "No articles found even after expanded search.")
 
         # Skip episode if digest would be too thin — or activate slow news mode
-        skip_threshold = getattr(config, "min_articles_skip", 3) or 3
+        # An explicit 0 means "never skip for thin news" — the old
+        # ``or 3`` silently turned it back into 3 (Sep 2026).
+        _mas = getattr(config, "min_articles_skip", None)
+        skip_threshold = 3 if _mas is None else int(_mas)
         slow_news_mode = False
         selected_segs: list = []
 
@@ -1352,12 +1409,21 @@ def run(args: argparse.Namespace) -> None:
         # target with diverse angles. Prompt token usage rises ~30%
         # (~1200 extra tokens) but stays well under the 128k context.
         MAX_ARTICLES_FOR_LLM = 40
+        MAX_HOOK_ARTICLES_FOR_LLM = 12
         if len(articles) > MAX_ARTICLES_FOR_LLM:
             logger.info(
                 "Capping articles from %d to %d to prevent prompt bloat",
                 len(articles), MAX_ARTICLES_FOR_LLM,
             )
-            articles = articles[:MAX_ARTICLES_FOR_LLM]
+            # Hook-supplied articles (engine.hook_articles) are merged LAST,
+            # so a plain slice cut them first — the Peptides dry run
+            # (2026-09-22) merged 4 Europe PMC abstracts for the spotlight and
+            # then capped 116 -> 40, dropping every one. They are the show's
+            # evidence, not overflow: keep them (bounded) and trim the feed
+            # articles instead.
+            _hook_kept = [a for a in articles if a.get("source_kind") == "hook"][:MAX_HOOK_ARTICLES_FOR_LLM]
+            _feed = [a for a in articles if a.get("source_kind") != "hook"]
+            articles = _feed[:MAX_ARTICLES_FOR_LLM - len(_hook_kept)] + _hook_kept
 
         # 5f. Restore chronological order for the prompt — LLMs follow the digest
         # format template more reliably when articles appear newest-first by feed,
@@ -1615,6 +1681,10 @@ def run(args: argparse.Namespace) -> None:
         # Offshore North (Sep 19 2026): the computed CAMPAIGN STATUS block
         # from shows/hooks/offshore_north.py. Same defaulting contract.
         template_vars.setdefault("campaign_status", "")
+        # Generic per-show hook block (Sep 2026 new shows): sibling-coverage
+        # notes, the MAG 7 tape, a curriculum spotlight. Empty when the
+        # show's hook does not supply it or fails.
+        template_vars.setdefault("hook_context", "")
         # Привет, Русский! vocabulary memory (June 2026): the prompts
         # reference {vocab_review_section}, supplied by the show's hook.
         # Same defaulting contract as above.
@@ -3254,16 +3324,14 @@ def run(args: argparse.Namespace) -> None:
             # Append AI disclosure at the end of the episode (localized for
             # the Russian shows — an English sentence on the Russian voice
             # was the worst audio moment of every FP/PR episode).
-            _disclosure = (
-                _AI_DISCLOSURE_RU if args.show in _RUSSIAN_SHOWS else _AI_DISCLOSURE
-            )
+            _disclosure = _spoken_disclosure(config, args.show)
             if config.tts.dialogue_mode:
                 # Two voices spoke, so the disclosure is plural ("our
                 # voices"), and unlabeled text inherits the previous
                 # speaker's voice — make it explicitly the host's line.
                 _disclosure = (
                     f"{(config.publishing.host_name or 'PATRICK').upper()}: "
-                    f"{_AI_DISCLOSURE_DIALOGUE}"
+                    f"{_disclosure}"
                 )
             podcast_script = podcast_script.rstrip() + "\n\n" + _disclosure
             # MIT Ep159 (2026-09-03) spoke the gallery plug twice — once
@@ -3388,9 +3456,7 @@ def run(args: argparse.Namespace) -> None:
                 # the episode ending listeners hear.
                 _reader_body = _reader_body.rstrip()
                 _reader_disclosure = _strip_tags_for_reader(
-                    _AI_DISCLOSURE_RU if args.show in _RUSSIAN_SHOWS
-                    else (_AI_DISCLOSURE_DIALOGUE if config.tts.dialogue_mode
-                          else _AI_DISCLOSURE)
+                    _spoken_disclosure(config, args.show)
                 )
                 if _reader_disclosure and _reader_disclosure not in _reader_body:
                     _reader_body = _reader_body + "\n\n" + _reader_disclosure
@@ -4220,10 +4286,7 @@ def run(args: argparse.Namespace) -> None:
             episode_desc = x_thread[:_cut + 1] + " ..." if _cut > 100 else x_thread[:_desc_limit] + "..."
         else:
             episode_desc = x_thread
-        _rss_disclosure = (
-            _AI_DISCLOSURE_RSS_RU if args.show in _RUSSIAN_SHOWS
-            else _AI_DISCLOSURE_RSS
-        )
+        _rss_disclosure = _rss_disclosure_for(config, args.show)
         episode_desc = episode_desc.rstrip() + "\n\n" + _rss_disclosure
         # If the episode landed on YouTube, surface the watch link in
         # the RSS description so listeners on every podcast app can
@@ -4290,8 +4353,7 @@ def run(args: argparse.Namespace) -> None:
         channel_desc_with_disclosure = (
             config.publishing.rss_description.rstrip()
             + "\n\n"
-            + (_AI_DISCLOSURE_RSS_RU if args.show in _RUSSIAN_SHOWS
-               else _AI_DISCLOSURE_RSS)
+            + _rss_disclosure_for(config, args.show)
         )
 
         logger.info("Updating RSS feed: %s", config.publishing.rss_file)
@@ -4331,7 +4393,12 @@ def run(args: argparse.Namespace) -> None:
             funding_url=f"{config.publishing.base_url}/support.html",
             funding_label="Support the Nerra Network",
             person_name=config.publishing.host_name or "Patrick",
-            person_url=f"{config.publishing.base_url}/about.html",
+            # An AI host's person tag points at her own page, never at
+            # Patrick's About page (Sep 2026 §2b).
+            person_url=(
+                f"{config.publishing.base_url}/mira.html" if _is_ai_host(config)
+                else f"{config.publishing.base_url}/about.html"
+            ),
             # Item <link> = the episode's blog post (player + notes +
             # transcript), the page podcast apps open as "episode website".
             # Was the MP3 (Sep 4 2026 flagship pass).
@@ -5051,9 +5118,15 @@ def _clean_podcast_script(
     # These must be stripped so TTS doesn't try to voice them.
     # In dialogue mode the host's own name is a REAL turn label, not
     # scaffolding — leave it (and every other configured speaker) intact.
+    # Case variants of the host label too (Sep 2026): the Age of AI
+    # personality labels Mira's turns "MIRA:" while host_name is "Mira", and
+    # a case-sensitive match would voice the label on a Mira run_show show.
+    _host_variants = list(dict.fromkeys([
+        host_prefix, host_prefix.upper(), f"{host_name.title()}:",
+    ]))
     _SPEAKER_PREFIXES = [
         "Host:",
-    ] + ([] if dialogue_mode else [host_prefix]) + [
+    ] + ([] if dialogue_mode else _host_variants) + [
         # Russian (Финансы Просто)
         "Ведущая:",
         "Ведущий:",
