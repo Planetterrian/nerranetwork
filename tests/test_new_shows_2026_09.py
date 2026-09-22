@@ -571,3 +571,23 @@ class TestHookArticlesSurviveTheCap:
         cap = cap[:cap.index("# Get content tracker summary") if "# Get content tracker summary" in cap else 3000]
         assert 'a.get("source_kind") == "hook"' in cap
         assert "articles = articles[:MAX_ARTICLES_FOR_LLM]" not in src
+
+
+class TestTapeIgnoresTheLiveBar:
+    def test_todays_bar_is_not_a_close_until_16h_new_york(self):
+        import datetime as dt
+
+        from engine.market_quotes import completed_bars
+        rows = [("2026-09-21", 100.0), ("2026-09-22", 105.0)]
+        during = dt.datetime(2026, 9, 22, 19, 37, tzinfo=dt.timezone.utc)   # 15:37 ET
+        after = dt.datetime(2026, 9, 22, 20, 30, tzinfo=dt.timezone.utc)    # 16:30 ET
+        assert completed_bars(rows, during) == (100.0, None, "2026-09-21")
+        assert completed_bars(rows, after) == (105.0, 100.0, "2026-09-22")
+
+    def test_pre_market_run_uses_yesterdays_close(self):
+        import datetime as dt
+
+        from engine.market_quotes import completed_bars
+        rows = [("2026-09-18", 98.0), ("2026-09-21", 100.0)]
+        pre = dt.datetime(2026, 9, 22, 10, 46, tzinfo=dt.timezone.utc)      # 06:46 ET
+        assert completed_bars(rows, pre) == (100.0, 98.0, "2026-09-21")

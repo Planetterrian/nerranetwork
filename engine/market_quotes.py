@@ -8,7 +8,9 @@ source spoke a mid-session price as "closed at". MAG 7 Daily runs at
 06:46 New York, before any regular session, so this module deals ONLY in
 completed daily bars: every price it returns is a regular-session close,
 and it carries the bar's DATE so the digest can say which session it was.
-That is true at any hour, on weekends and on holidays, with no clock logic.
+The one piece of clock logic is ``session_complete``: yfinance includes
+TODAY's partial bar while New York is open, so a bar dated today only
+counts as a close after 16:00 New York.
 
 Validation per ticker: a loose sanity band plus the same deviation guard
 the Tesla and SpaceX chains use against the last cached close. A ticker
@@ -55,17 +57,52 @@ class Quote:
         return 0.0 if pct == 0 else pct
 
 
+#: The regular session ends at 16:00 America/New_York.
+SESSION_CLOSE_HOUR = 16
+
+
+def session_complete(bar_date: str, now: Optional[_dt.datetime] = None) -> bool:
+    """True when *bar_date*'s regular session has ended.
+
+    yfinance's daily history includes TODAY's partial bar while the market
+    is open — the first MAG 7 dry run (15:37 New York, 2026-09-22) got
+    seven "closes" dated today that were live prices. A bar from today only
+    counts once New York has passed 16:00.
+    """
+    now = now or _dt.datetime.now(_dt.timezone.utc)
+    try:
+        from zoneinfo import ZoneInfo
+        ny = now.astimezone(ZoneInfo("America/New_York"))
+    except Exception:  # pragma: no cover
+        ny = now - _dt.timedelta(hours=4)
+    if bar_date != ny.date().isoformat():
+        return True
+    return ny.hour >= SESSION_CLOSE_HOUR
+
+
+def completed_bars(rows: List[Tuple[str, float]], now: Optional[_dt.datetime] = None
+                   ) -> Optional[Tuple[float, Optional[float], str]]:
+    """(close, prev_close, bar_date) from ``(iso_date, close)`` rows, oldest
+    first, ignoring an in-progress bar for today."""
+    rows = [r for r in rows if r[1]]
+    if rows and not session_complete(rows[-1][0], now):
+        rows = rows[:-1]
+    if not rows:
+        return None
+    bar_date, close = rows[-1]
+    prev = rows[-2][1] if len(rows) >= 2 else None
+    return close, prev, bar_date
+
+
 def _history_fetch(ticker: str) -> Optional[Tuple[float, Optional[float], str]]:
     import yfinance as yf
 
     hist = yf.Ticker(ticker).history(period="10d")
-    rows = [(idx, float(c)) for idx, c in zip(hist.index, hist["Close"].tolist()) if c == c]
-    if not rows or not rows[-1][1]:
-        return None
-    last_idx, close = rows[-1]
-    prev = rows[-2][1] if len(rows) >= 2 else None
-    bar_date = last_idx.date().isoformat() if hasattr(last_idx, "date") else str(last_idx)[:10]
-    return close, prev, bar_date
+    rows = [
+        (idx.date().isoformat() if hasattr(idx, "date") else str(idx)[:10], float(c))
+        for idx, c in zip(hist.index, hist["Close"].tolist()) if c == c
+    ]
+    return completed_bars(rows)
 
 
 def load_cache(path: Path) -> Dict[str, dict]:
