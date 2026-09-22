@@ -719,6 +719,37 @@
             text-align: right;
             margin-left: auto;
         }
+        /* The latest post has no next episode; the placeholder used to be a
+           bare div beside a bordered card (Sep 22 2026). Same box, dashed. */
+        .blog-ep-nav .nav-next-placeholder {
+            display: flex;
+            flex-direction: column;
+            gap: var(--sp-1);
+            padding: var(--sp-4) var(--sp-5);
+            border: 1px dashed var(--nn-border);
+            border-radius: 12px;
+            max-width: 48%;
+        }
+        .blog-ep-nav .nav-next-placeholder a {
+            display: inline; padding: 0; border: 0; background: none; max-width: none;
+        }
+        .nn-iv-provenance {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            line-height: 1.6;
+            margin: 0.35rem 0 0;
+        }
+        .nn-iv-provenance span { white-space: nowrap; }
+        .nn-iv-blurb-label {
+            font-family: var(--font-ui);
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--nn-text-muted);
+            margin: 1.1rem 0 0.2rem;
+        }
 
         /* Listen CTA */
         .blog-listen-cta {
@@ -1703,7 +1734,8 @@
                alternate-language tracks render no inline <audio>, so the
                list stays a plain, useful contents listing there. */
             (function () {
-                var audio = document.getElementById("nn-i18n-audio");
+                var audio = document.getElementById("nn-i18n-audio")
+                    || document.querySelector(".nn-iv-player audio");
                 if (!audio) return;
                 document.querySelectorAll(".blog-chapter-list li").forEach(function (li) {
                     var stamp = li.querySelector(".chapter-time");
@@ -1972,6 +2004,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
             
 
             
+
             
 
             
