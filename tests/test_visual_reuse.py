@@ -591,7 +591,83 @@ class TestGalleryRetentionJoin:
                                 (_manifest_fixture(), None), (None, None)):
             out = mod.build(manifest, stats)
             assert out["shows"] == {}
-            assert out["schema_version"] == 1
+            assert out["schema_version"] == 2   # Sep 22 2026: by_kind added
+
+    # ---- Sep 22 2026: per-kind summaries, boilerplate excluded by name ----
+
+    def _kind_fixture(self, n_long=12, n_short=12):
+        """A show whose Shorts hold 60% and long-form 15%; every image
+        carries the framing hint of its kind plus one real style phrase."""
+        from engine.grok_imagine import FRAMING_HINT_VERTICAL, FRAMING_HINT_WIDE
+        videos, images = [], []
+        for i in range(n_long):
+            videos.append({"video_id": f"L{i}", "show_slug": "tesla", "episode": i,
+                           "kind": "long", "channel": "en",
+                           "average_view_percentage": 15.0 + (10.0 if i % 2 else 0.0)})
+            images.append({"image_id": f"img_l{i}", "show_slug": "tesla",
+                           "episode_id": f"ep{i:03d}", "intended_use": "segment_card",
+                           "tags": ["tesla"],
+                           "prompt": ("red car at dawn, " if i % 2 else "grey factory hall, ")
+                                     + FRAMING_HINT_WIDE + ", cinematic"})
+        for i in range(n_short):
+            videos.append({"video_id": f"S{i}", "show_slug": "tesla", "episode": i,
+                           "kind": "short", "channel": "en",
+                           "average_view_percentage": 60.0})
+            images.append({"image_id": f"img_s{i}", "show_slug": "tesla",
+                           "episode_id": f"ep{i:03d}", "intended_use": "social",
+                           "tags": ["tesla"],
+                           "prompt": "launch pad at night, " + FRAMING_HINT_VERTICAL + ", cinematic"})
+        return {"images": images}, {"shows": {"x": {"videos": videos}}}
+
+    def test_by_kind_summaries_split_long_from_short(self):
+        mod = _load_retention_module()
+        manifest, stats = self._kind_fixture()
+        out = mod.build(manifest, stats, min_videos=3, min_videos_kind=5)
+        summ = out["shows"]["tesla"]["summary"]
+        assert summ["pooled"] is True
+        by_kind = summ["by_kind"]
+        assert by_kind["long"]["videos"] == 12 and by_kind["short"]["videos"] == 12
+        assert by_kind["long"]["median_retention"] == 20.0
+        assert by_kind["short"]["median_retention"] == 60.0
+        long_tags = {r["tag"]: r for r in by_kind["long"]["top_tags"]}
+        assert long_tags["red car at dawn"]["mean_retention"] == 25.0
+        assert long_tags["grey factory hall"]["mean_retention"] == 15.0
+        assert {r["tag"] for r in by_kind["short"]["top_tags"]} == {"launch pad at night"}
+        # The kind's own framing hint never ranks — it is the kind.
+        for kind in ("long", "short"):
+            tags = {r["tag"] for r in by_kind[kind]["top_tags"] + by_kind[kind]["bottom_tags"]}
+            assert not any("9:16" in t or "16:9" in t for t in tags), tags
+        # Per-image kind is recorded.
+        assert out["shows"]["tesla"]["images"]["img_s0"]["kind"] == "short"
+
+    def test_pooled_summary_no_longer_ranks_the_framing_boilerplate(self):
+        mod = _load_retention_module()
+        manifest, stats = self._kind_fixture()
+        out = mod.build(manifest, stats, min_videos=3)
+        pooled = {r["tag"] for r in out["shows"]["tesla"]["summary"]["top_tags"]}
+        assert not any("framing" in t for t in pooled), pooled
+
+    def test_legacy_boilerplate_and_scaffold_labels_never_rank(self):
+        mod = _load_retention_module()
+        manifest, stats = self._kind_fixture()
+        for img in manifest["images"]:
+            img["prompt"] = ("clean photographic composition, visual subject: title, "
+                             "ultra-detailed, " + img["prompt"])
+        out = mod.build(manifest, stats, min_videos=1, min_videos_kind=1)
+        by_kind = out["shows"]["tesla"]["summary"]["by_kind"]
+        tags = {r["tag"] for k in by_kind.values() for r in k["top_tags"] + k["bottom_tags"]}
+        assert "clean photographic composition" not in tags
+        assert "ultra-detailed" not in tags
+        assert not any(t.startswith("visual subject:") for t in tags), tags
+        assert "red car at dawn" in tags
+
+    def test_by_kind_min_videos_prunes(self):
+        mod = _load_retention_module()
+        manifest, stats = self._kind_fixture(n_long=4, n_short=4)
+        out = mod.build(manifest, stats, min_videos=1, min_videos_kind=10)
+        by_kind = out["shows"]["tesla"]["summary"]["by_kind"]
+        assert by_kind["long"]["top_tags"] == []
+        assert by_kind["long"]["min_videos"] == 10
 
 
 # ---------------------------------------------------------------------------

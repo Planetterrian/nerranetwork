@@ -63,6 +63,47 @@ _USE_TO_KIND = {"segment_card": "long", "social": "short"}
 _GENERIC_TAGS = frozenset({"grok-imagine", "segment_card", "social",
                            "thumbnail_variant"})
 
+# Sep 22 2026: the prompt boilerplate every image carries, excluded from
+# the style tags by NAME (not only by document frequency): the 9:16
+# framing hint rides on every Short, Shorts hold ~60% against ~15% on
+# long-form, so pooled over both kinds "vertical 9:16 framing" was every
+# show's top tag and "wide cinematic 16:9 framing" its bottom — a
+# measurement of the KIND, not of the imagery.
+_BY_KIND_MIN_VIDEOS = 10
+# Boilerplate from RETIRED prompt shapes still in the manifest (the
+# committed images go back to May 2026): the pre-Sep no-text chunk, the
+# June quality cue, and the descriptor default. Read on the real
+# manifest 2026-09-22 — each ranked as a "style" on a flagship.
+_LEGACY_BOILERPLATE = frozenset({
+    "clean photographic composition", "ultra-detailed", "cinematic",
+    "photorealistic news photo", "photorealistic editorial photography",
+})
+# The legacy prompt scaffold leaked its own label into the phrases
+# ("visual subject: title" — the SpaceX placeholder-headline bug).
+_SCAFFOLD_PREFIXES = ("visual subject:", "depicting:")
+
+
+def _style_boilerplate() -> frozenset:
+    phrases = set(_LEGACY_BOILERPLATE)
+    try:
+        from engine.grok_imagine import (FRAMING_HINT_VERTICAL, FRAMING_HINT_WIDE,
+                                         NO_TEXT_HINT, QUALITY_HINT)
+    except Exception:  # noqa: BLE001 — the join must not depend on the engine
+        return frozenset(phrases)
+    for hint in (FRAMING_HINT_VERTICAL, FRAMING_HINT_WIDE, QUALITY_HINT, NO_TEXT_HINT):
+        phrases.update(_prompt_phrases(hint))
+        # The first comma chunk of a hint can run past the phrase cap
+        # ("clean photographic composition with ZERO text ..."); older
+        # prompts split it shorter, so exclude its leading words too.
+        for chunk in hint.split(","):
+            words = chunk.lower().split()
+            if len(words) > _MAX_PHRASE_WORDS:
+                phrases.add(" ".join(words[:3]))
+    return frozenset(phrases)
+
+
+_STYLE_BOILERPLATE: frozenset = frozenset()
+
 
 def _load_json(path: Path) -> Optional[dict]:
     try:
@@ -152,21 +193,56 @@ def build_style_tag_index(manifest: Optional[dict]) -> Dict[str, frozenset]:
 
 def _style_tags(entry: dict, boilerplate: frozenset) -> List[str]:
     """Distinctive style tags for one image: prompt phrases minus
-    boilerplate, plus any non-generic manifest tags."""
+    boilerplate (document-frequency AND the named prompt hints), plus
+    any non-generic manifest tags."""
     slug = entry.get("show_slug") or ""
     tags = [p for p in _prompt_phrases(entry.get("prompt") or "")
-            if p not in boilerplate and p != slug]
+            if p not in boilerplate and p not in _STYLE_BOILERPLATE
+            and p != slug and not p.startswith(_SCAFFOLD_PREFIXES)]
     for t in entry.get("tags") or []:
         if t and t != slug and t not in _GENERIC_TAGS and t not in tags:
             tags.append(t)
     return tags
 
 
+def _rank_tags(per_tag: Dict[str, Dict[str, float]], min_videos: int) -> List[dict]:
+    ranked: List[dict] = []
+    for tag, vids in per_tag.items():
+        if len(vids) < max(1, int(min_videos)):
+            continue
+        ranked.append({
+            "tag": tag,
+            "videos": len(vids),
+            "mean_retention": round(sum(vids.values()) / len(vids), 2),
+        })
+    ranked.sort(key=lambda r: (-r["mean_retention"], r["tag"]))
+    return ranked
+
+
+def _median(values: List[float]) -> Optional[float]:
+    if not values:
+        return None
+    vals = sorted(values)
+    n = len(vals)
+    mid = n // 2
+    return round(vals[mid] if n % 2 else (vals[mid - 1] + vals[mid]) / 2.0, 2)
+
+
 def build(manifest: Optional[dict], stats: Optional[dict],
-          *, min_videos: int = 3) -> dict:
-    """Compose the retention join. Empty ``shows`` when either side is absent."""
+          *, min_videos: int = 3,
+          min_videos_kind: int = _BY_KIND_MIN_VIDEOS) -> dict:
+    """Compose the retention join. Empty ``shows`` when either side is absent.
+
+    Sep 22 2026: the legacy per-show summary POOLS long-form and Shorts
+    (kept, flagged ``pooled: true`` — the dashboard card reads it) and a
+    ``by_kind`` block ranks tags WITHIN each kind with ``min_videos_kind``
+    distinct videos per tag. Only ``by_kind`` feeds the ranking prior and
+    the scene-brief style feedback (engine.gallery_library).
+    """
+    global _STYLE_BOILERPLATE
+    _STYLE_BOILERPLATE = _style_boilerplate()
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "generated": _dt.datetime.now(_dt.timezone.utc).isoformat(),
         "shows": {},
     }
@@ -182,6 +258,12 @@ def build(manifest: Optional[dict], stats: Optional[dict],
     # tag → list of (video_id, retention) per show, deduped by video so a
     # 4-image episode doesn't count its one video 4 times per tag.
     tag_videos: Dict[str, Dict[str, Dict[str, float]]] = defaultdict(
+        lambda: defaultdict(dict))
+    # Per kind: show → kind → tag → {video_id: retention}, and the
+    # per-kind video retention list for the kind's median.
+    kind_tag_videos: Dict[str, Dict[str, Dict[str, Dict[str, float]]]] = (
+        defaultdict(lambda: defaultdict(lambda: defaultdict(dict))))
+    kind_videos: Dict[str, Dict[str, Dict[str, float]]] = defaultdict(
         lambda: defaultdict(dict))
 
     for entry in manifest.get("images") or []:
@@ -200,33 +282,47 @@ def build(manifest: Optional[dict], stats: Optional[dict],
         retention = float(video.get("average_view_percentage") or 0.0)
         tags = _style_tags(entry, boilerplate_by_show.get(slug, frozenset()))
         shows.setdefault(slug, {"images": {}, "summary": {}})
+        video_kind = str(video.get("kind") or kind or "")
         shows[slug]["images"][image_id] = {
             "video_id": video.get("video_id"),
             "averageViewPercentage": retention,
             "episode_id": entry.get("episode_id") or "",
+            "kind": video_kind,
             "tags": tags,
         }
         for tag in tags:
             tag_videos[slug][tag][video["video_id"]] = retention
+            if video_kind:
+                kind_tag_videos[slug][video_kind][tag][video["video_id"]] = retention
+        if video_kind:
+            kind_videos[slug][video_kind][video["video_id"]] = retention
 
     for slug, per_tag in tag_videos.items():
-        ranked: List[dict] = []
-        for tag, vids in per_tag.items():
-            if len(vids) < max(1, int(min_videos)):
-                continue
-            ranked.append({
-                "tag": tag,
-                "videos": len(vids),
-                "mean_retention": round(sum(vids.values()) / len(vids), 2),
-            })
-        ranked.sort(key=lambda r: (-r["mean_retention"], r["tag"]))
+        ranked = _rank_tags(per_tag, min_videos)
         shows[slug]["summary"] = {
             "min_videos": int(min_videos),
+            # Long-form and Shorts pooled — the two kinds' baselines
+            # differ ~4x, so this ranks the KIND as much as the imagery.
+            "pooled": True,
             "top_tags": ranked[:5],
             "bottom_tags": sorted(
                 ranked, key=lambda r: (r["mean_retention"], r["tag"])
             )[:5],
         }
+        by_kind: Dict[str, dict] = {}
+        for video_kind, per_kind_tag in kind_tag_videos.get(slug, {}).items():
+            kranked = _rank_tags(per_kind_tag, min_videos_kind)
+            by_kind[video_kind] = {
+                "min_videos": int(min_videos_kind),
+                "videos": len(kind_videos[slug][video_kind]),
+                "median_retention": _median(
+                    list(kind_videos[slug][video_kind].values())),
+                "top_tags": kranked[:5],
+                "bottom_tags": sorted(
+                    kranked, key=lambda r: (r["mean_retention"], r["tag"])
+                )[:5],
+            }
+        shows[slug]["summary"]["by_kind"] = by_kind
 
     payload["shows"] = shows
     return payload
@@ -240,6 +336,9 @@ def main() -> int:
     parser.add_argument("--min-videos", type=int, default=3,
                         help="Minimum distinct videos behind a tag before "
                              "its mean retention enters the summary")
+    parser.add_argument("--min-videos-kind", type=int, default=_BY_KIND_MIN_VIDEOS,
+                        help="Minimum distinct videos behind a tag WITHIN one "
+                             "kind (long | short) for the by_kind summary")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -247,6 +346,7 @@ def main() -> int:
         _load_json(_ROOT / args.manifest),
         _load_json(_ROOT / args.stats),
         min_videos=args.min_videos,
+        min_videos_kind=args.min_videos_kind,
     )
     n_images = sum(len(s["images"]) for s in payload["shows"].values())
     logger.info("Joined %d gallery images with retention across %d shows",

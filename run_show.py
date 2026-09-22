@@ -5972,6 +5972,15 @@ def _publish_youtube(
     try:
         if str(getattr(yt, "image_provider", "pexels")) in ("grok", "hybrid"):
             from engine.scene_briefs import generate_scene_briefs
+            # Sep 22 2026: the retention flywheel's per-kind read (what
+            # has held THIS show's long-form viewers) reaches the
+            # picture editor as one sentence; None = prompt unchanged.
+            _style_feedback = None
+            try:
+                from engine.gallery_library import style_feedback_for
+                _style_feedback = style_feedback_for(config.slug, kind="long")
+            except Exception as exc:  # noqa: BLE001 — a nudge, never a gate
+                logger.debug("style feedback skipped: %s", exc)
             _scene_briefs = generate_scene_briefs(
                 _scene_contexts,
                 hook=hook or "",
@@ -5980,7 +5989,10 @@ def _publish_youtube(
                     yt, "grok_image_descriptor", "photorealistic news photo"),
                 max_n=int(getattr(yt, "scenes_per_episode", 8) or 8),
                 enabled=bool(getattr(yt, "scene_briefs_enabled", True)),
+                style_feedback=_style_feedback,
             )
+            if _style_feedback:
+                result["scene_brief_style_feedback"] = True
     except Exception as exc:  # pragma: no cover — best-effort
         logger.warning("scene briefs failed (%s) — legacy prompts", exc)
         _scene_briefs = []

@@ -208,6 +208,10 @@ def record_youtube_outcomes(
         if youtube_urls.get("shorts_punch_frame_rendered") is not None:
             metrics.record("shorts_punch_frame_rendered",
                            bool(youtube_urls["shorts_punch_frame_rendered"]))
+        # Sep 22 2026 — the retention flywheel's audience note reached the
+        # scene-brief prompt this episode.
+        if youtube_urls.get("scene_brief_style_feedback"):
+            metrics.record("scene_brief_style_feedback", True)
         metrics.record("image_provider", youtube_urls.get("image_provider", "pexels"))
         metrics.record("gallery_attempted", int(youtube_urls.get("gallery_attempted", 0) or 0))
         metrics.record("gallery_uploaded", int(youtube_urls.get("gallery_uploaded", 0) or 0))

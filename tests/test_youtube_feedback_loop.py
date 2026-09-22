@@ -450,6 +450,80 @@ class TestGalleryRetentionPrior:
              "prompt": "", "caption": ""}
         assert [e["image_id"] for e in _rank([b, a], "")] == ["a", "b"]
 
+    # ---- Sep 22 2026: the prior reads by kind and matches prompt text ----
+
+    def test_prior_matches_prompt_phrases_not_only_manifest_tags(self):
+        """The report's tags are phrases mined from the image PROMPT; the
+        manifest `tags` array carries only slug/provider/use, so the
+        tags-only match scored 0 on every image. Prompt text counts."""
+        from engine.gallery_library import _retention_score
+        scores = {"a red car at dawn": 8.0, "grey factory hall": -8.0}
+        assert _retention_score({"tags": ["tesla"], "prompt": "A red car at dawn, wide"}, scores) == 8.0
+        assert _retention_score({"tags": ["grey factory hall"], "prompt": ""}, scores) == -8.0
+        assert _retention_score({"tags": ["tesla"], "prompt": "starship on the pad"}, scores) == 0.0
+
+    def test_prior_reads_by_kind_only(self, tmp_path, monkeypatch):
+        import json
+        import engine.gallery_library as gl
+        report = {"shows": {"zeta": {"summary": {
+            "pooled": True,
+            "top_tags": [{"tag": "vertical 9:16 framing", "mean_retention": 60.0, "videos": 40}],
+            "bottom_tags": [{"tag": "wide cinematic", "mean_retention": 15.0, "videos": 40}],
+            "by_kind": {
+                "long": {"median_retention": 15.0,
+                         "top_tags": [{"tag": "a red car at dawn", "mean_retention": 25.0, "videos": 12}],
+                         "bottom_tags": [{"tag": "grey factory hall", "mean_retention": 10.0, "videos": 12}]},
+            }}}}}
+        path = tmp_path / "gallery_retention.json"
+        path.write_text(json.dumps(report))
+        monkeypatch.setattr(gl, "_RETENTION_PRIOR_PATH", path)
+        gl._RETENTION_PRIOR_CACHE.clear()
+        long_scores = gl._retention_tag_scores("zeta", "long")
+        assert "a red car at dawn" in long_scores and "grey factory hall" in long_scores
+        assert "vertical 9:16 framing" not in long_scores   # pooled rows never read
+        assert gl._retention_tag_scores("zeta", "short") == {}  # no short block → legacy
+        assert "zeta:long" in gl._RETENTION_PRIOR_CACHE
+        gl._RETENTION_PRIOR_CACHE.clear()
+
+    def test_rank_kind_follows_aspect(self, monkeypatch):
+        import engine.gallery_library as gl
+        seen = []
+        monkeypatch.setattr(gl, "_retention_tag_scores",
+                            lambda slug, kind="long": seen.append(kind) or {})
+        gl._rank([], "", "zeta", kind="short")
+        gl._rank([], "", "zeta")
+        assert seen == ["short", "long"]
+        src = (_ROOT / "engine" / "gallery_library.py").read_text(encoding="utf-8")
+        assert 'kind=_ASPECT_TO_KIND.get(aspect, "long")' in src
+
+    def test_style_feedback_for_thresholds_and_none(self, tmp_path, monkeypatch):
+        import json
+        import engine.gallery_library as gl
+        block = {"median_retention": 20.0, "videos": 30,
+                 "top_tags": [
+                     {"tag": "a red car at dawn", "mean_retention": 27.0, "videos": 12},
+                     {"tag": "thin sample", "mean_retention": 40.0, "videos": 3},
+                     {"tag": "near median", "mean_retention": 23.0, "videos": 15},
+                 ],
+                 "bottom_tags": [
+                     {"tag": "grey factory hall", "mean_retention": 12.0, "videos": 11},
+                     {"tag": "worst", "mean_retention": 5.0, "videos": 11},
+                     {"tag": "third worst", "mean_retention": 8.0, "videos": 11},
+                 ]}
+        path = tmp_path / "gallery_retention.json"
+        path.write_text(json.dumps({"shows": {"zeta": {"summary": {"by_kind": {"long": block}}}}}))
+        monkeypatch.setattr(gl, "_RETENTION_PRIOR_PATH", path)
+        fb = gl.style_feedback_for("zeta", "long")
+        assert fb == {"favoured": ["a red car at dawn"],
+                      "avoided": ["worst", "third worst"]}
+        assert gl.style_feedback_for("zeta", "short") is None
+        assert gl.style_feedback_for("nope", "long") is None
+        path.write_text(json.dumps({"shows": {"zeta": {"summary": {"by_kind": {"long": {
+            "median_retention": 20.0, "top_tags": [
+                {"tag": "near median", "mean_retention": 23.0, "videos": 15}],
+            "bottom_tags": []}}}}}}))
+        assert gl.style_feedback_for("zeta", "long") is None
+
 
 class TestSearchTermsLoop:
     """Aug 2026: the Analytics search-terms report flows per-show into
