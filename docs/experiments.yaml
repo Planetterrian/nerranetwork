@@ -2112,3 +2112,52 @@ experiments:
       shared macro (whitespace-only change to the homepage, verified) because a
       second hand-maintained copy would drift the first time a badge changed.
       Guards: tests/test_chrome_pass_2026_09_21.py.
+
+  - id: episode-card-and-transcript-box-2026-09-22
+    title: >
+      One card that plays the episode and links its article, and a transcript
+      that previews itself instead of being the page
+    area: growth
+    shipped: 2026-09-22
+    readout: 2026-10-22
+    status: reading
+    hypothesis: >
+      Every show now has a blog, and until today no show page said so on the
+      card a visitor actually looks at: the Latest Episode card offered a
+      player, a summary hidden by default, and no route to the written version
+      at all — that lived four screens down under "Latest from the Blog". The
+      card was also script-built, so its committed HTML said "Loading..." on
+      all eighteen pages. Meanwhile an interview post printed its whole
+      transcript open in the body (730 of Ep006's 785 lines), so the page a
+      stranger landed on was a wall of speaker turns. Putting listen and read
+      in one card, and collapsing a transcript behind its own opening lines,
+      should move blog page views per show-page session and lower the bounce on
+      an interview post.
+    baseline: >
+      2026-09-22: the card rendered "Loading..." with #latest-summary at
+      display:none and no article link on any of the 18 show pages. Interview
+      posts ep002-006 were 153-171 KB with no player and no transcript box; the
+      news shows' box carried a title and no preview. GA4 28-day site sessions
+      243, blog landing sessions unattributed at 3.5% campaign coverage.
+    target: >
+      By 10-22: blog/<slug>/ep*.html appears among api/ga4_stats.json landing
+      pages with a measurable share of site sessions, and the Age of AI posts
+      are not the shortest-dwell pages on the site. At this traffic no rate is
+      significant, so this is read as an existence check, the same standing as
+      explore-and-footer-scale.
+    notes: >
+      The card renders from engine.summaries_ssr, the same JSON the page's
+      script fetches, so the script's render is an update rather than a
+      different card replacing a placeholder. Both cut the summary at
+      CARD_PREVIEW_CHARS, interpolated into the script from the module, because
+      a second literal is how the card would flicker into different words. The
+      article link is resolved at build time through _blog_url_for_episode,
+      which knows a redirect stub is not an article, and the script HIDES it
+      when the feed has moved past the episode the page was built from rather
+      than deriving a URL it cannot vouch for. The transcript stays whole in the
+      HTML — collapsed, not fetched — so Ctrl-F and crawlers still see every
+      word. Interview transcripts now reach the page at all: those shows have no
+      *_reader.txt, so engine.interviews hands the digest's own section over.
+      Also corrected 14 stale "daily" claims about three Monday-only shows that
+      the 09-21 cadence guard did not reach. Guards:
+      tests/test_episode_card_transcript_2026_09_22.py.

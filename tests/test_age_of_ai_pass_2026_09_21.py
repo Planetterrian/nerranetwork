@@ -28,6 +28,7 @@ import pytest
 import generate_html as G
 from engine import brand
 from engine.interviews import (
+    interview_transcript_markdown,
     INTERVIEW_SHOW_SLUGS,
     interview_body_markdown,
     interview_context,
@@ -233,14 +234,26 @@ class TestInterviewParsing:
                 result["guest_name"], str)
             assert isinstance(result["talking_points"], list)
 
-    def test_body_keeps_the_transcript_and_drops_the_promoted_sections(self):
+    def test_body_drops_everything_rendered_somewhere_better(self):
+        """Printing a section twice is the bug this layout exists to fix.
+
+        The transcript left the body on 2026-09-22, when it moved to the
+        collapsed box every other show's transcript uses — it was 730 of
+        Ep006's 785 lines, so the article was the transcript with a chapter
+        list stranded on top of it. It is not dropped: see
+        ``interview_transcript_markdown`` and
+        ``tests/test_episode_card_transcript_2026_09_22.py``.
+        """
         path = AOAI_DIGESTS / "Age_of_AI_Ep004_20260919.md"
-        body = interview_body_markdown(path.read_text(encoding="utf-8"))
-        assert "Transcript" in body
-        # Promoted above the fold — printing them twice is the bug.
+        text = path.read_text(encoding="utf-8")
+        body = interview_body_markdown(text)
+        # Promoted above the fold.
         assert "What we talked about" not in body
         assert "Where to find" not in body
         assert "### Listen" not in body
+        # Collapsed into the transcript box.
+        assert "### Transcript" not in body
+        assert len(interview_transcript_markdown(text).split()) > 1000
 
     def test_unknown_section_is_kept_not_silently_dropped(self):
         md = ("# Show\n\n### About Jane Doe\n\n**CTO, Acme**\n\n"

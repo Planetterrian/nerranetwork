@@ -297,25 +297,52 @@
     </section>
     {% endif %}
 
+    {#- The latest episode, as ONE card: play it on the left, read it on the
+        right. The player and the article had been four screens apart — the
+        card offered audio and "Loading..." and never said a written version
+        existed — and the card itself was empty until the script ran, on every
+        show page, which is the shape the summaries pages were just fixed for.
+        Rendered from the same summaries JSON the script fetches, through
+        engine.summaries_ssr, so the script's replacement is an update rather
+        than a different page appearing. -#}
     <!-- Latest Episode -->
+    {#- A show with no feed has no episodes, so a card promising one is a
+        surface advertising something that does not exist. Nerra Voices showed
+        a permanent "Loading..." above its own "Not published yet" band. -#}
+    {% if has_feed %}
     <section class="nn-section" style="padding-top: var(--sp-8);">
         <div class="container">
-            <div class="latest-episode glass-card" id="latest-player">
+            <div class="latest-episode glass-card" id="latest-player"{% if latest_episode and latest_episode.episode_num %} data-episode="{{ latest_episode.episode_num }}"{% endif %}>
                 <div class="latest-episode-label">{% if _is_ru %}Последний выпуск{% else %}Latest Episode{% endif %}</div>
-                <div class="latest-episode-title" id="latest-title">Loading...</div>
-                <div class="latest-episode-date" id="latest-date"></div>
-                <audio id="latest-audio" controls preload="none" aria-label="Latest episode audio player" style="width:100%;height:42px;border-radius:8px;"></audio>
-                {# Language switcher for the latest episode — populated by JS only
-                   when the episode has translation tracks. Shares the site-wide
-                   `nn-pref-lang` preference with the per-episode blog switcher. #}
-                <div id="latest-langs" style="display:none;margin-top:10px;align-items:center;flex-wrap:wrap;gap:6px;" aria-label="Listen in another language"></div>
-                <div id="latest-summary" style="margin-top:var(--sp-4);color:var(--nn-text-muted);font-size:0.92rem;display:none;"></div>
+                <div class="nn-latest-grid">
+                    <div class="nn-latest-listen">
+                        <div class="latest-episode-title" id="latest-title">{% if latest_episode and latest_episode.title %}{{ latest_episode.title }}{% else %}Loading...{% endif %}</div>
+                        <div class="latest-episode-date" id="latest-date">{% if latest_episode %}{{ latest_episode.date }}{% endif %}</div>
+                        <audio id="latest-audio" controls preload="none"{% if latest_episode and latest_episode.audio_url %} src="{{ latest_episode.audio_url }}"{% endif %} aria-label="{% if _is_ru %}Плеер последнего выпуска{% else %}Latest episode audio player{% endif %}" style="width:100%;height:42px;border-radius:8px;"></audio>
+                        {# Language switcher for the latest episode — populated by JS only
+                           when the episode has translation tracks. Shares the site-wide
+                           `nn-pref-lang` preference with the per-episode blog switcher. #}
+                        <div id="latest-langs" style="display:none;margin-top:10px;align-items:center;flex-wrap:wrap;gap:6px;" aria-label="{% if _is_ru %}Слушать на другом языке{% else %}Listen in another language{% endif %}"></div>
+                    </div>
 
-                {# Quick-win noscript fallback (May 2026 review): the JS "Latest Episode"
-                   card is the only major surface that was previously empty without JS.
-                   We already parse the RSS into static_episodes for the archive grid below;
-                   reuse the first item here so no-JS visitors (and search crawlers) see
-                   real content + a working <audio> player immediately. #}
+                    <div class="nn-latest-read">
+                        <div class="nn-latest-read-label">{% if _is_ru %}Читать этот выпуск{% else %}Read this episode{% endif %}</div>
+                        <div class="nn-latest-summary" id="latest-summary"{% if not (latest_episode and latest_episode.summary_preview) %} style="display:none;"{% endif %}>{% if latest_episode %}{{ latest_episode.summary_preview }}{% endif %}</div>
+                        <div class="nn-latest-actions">
+                            {% if latest_episode and latest_episode.blog_url %}
+                            <a id="latest-article" href="{{ path_prefix }}{{ latest_episode.blog_url }}" class="nn-btn nn-btn-primary" style="font-size:0.9rem;padding:var(--sp-3) var(--sp-6);">{% if _is_ru %}Статья и расшифровка{% else %}Article &amp; transcript{% endif %} &rarr;</a>
+                            {% endif %}
+                            {% if blog_page %}
+                            <a class="nn-latest-archive" href="{{ path_prefix }}{{ blog_page }}">{% if _is_ru %}Все статьи{% else %}Every episode, written up{% endif %}</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {% if not latest_episode %}
+                {# No summaries file to render from (a show with no episodes yet),
+                   so the card is still script-built. Keep the RSS fallback that
+                   kept it from being empty without JavaScript. #}
                 <noscript>
                     {% if static_episodes %}
                     <div class="latest-episode-title" style="font-size:1.05rem;font-weight:600;margin:0.5rem 0;">{{ static_episodes[0].title }}</div>
@@ -325,12 +352,13 @@
                     {% if static_episodes[0].audio_url %}
                     <audio controls preload="none" src="{{ static_episodes[0].audio_url }}" style="width:100%;height:42px;border-radius:8px;" aria-label="Latest episode audio"></audio>
                     {% endif %}
-                    <div style="margin-top:0.5rem;font-size:0.8rem;opacity:0.7;">(JavaScript disabled — showing first episode from RSS)</div>
                     {% endif %}
                 </noscript>
+                {% endif %}
             </div>
         </div>
     </section>
+    {% endif %}
 
     {% if performance_data and performance_data.available %}
     <!-- Modern Investing — How the Practice Investment Model Works -->
@@ -951,7 +979,7 @@
             </div>
             <div class="blog-idx-grid" style="max-width:900px;padding-bottom:var(--sp-8)">
                 {% for post in latest_blog_posts %}
-                <a href="{{ path_prefix }}blog/{{ show_slug }}/ep{{ '%03d' % post.episode_num }}.html" class="blog-idx-card">
+                <a href="{{ path_prefix }}{{ post.post_url }}" class="blog-idx-card">
                     <div class="blog-idx-card-top">
                         <span class="blog-idx-date">{{ post.date }}</span>
                         <span class="blog-idx-ep">Ep {{ post.episode_num }}</span>
@@ -1064,17 +1092,51 @@
             el.textContent = s;
             return el.innerHTML;
         }
+        /* Mirrors engine/summaries_ssr.plain_preview walk for walk. The server
+           renders the same sentence into the card at build time and this
+           replaces it on load, so a difference between the two is a visible
+           flicker into different words. Change both or neither. */
+        const PREVIEW_CHARS = {{ card_preview_chars }};
+        const SHORT_HOOK_CHARS = {{ short_hook_chars }};
+
+        function previewLine(raw) {
+            let line = (raw || '').trim();
+            if (!line || line.charAt(0) === '#' || /^(-{3,}|—{3,}|━{3,})$/.test(line)) return '';
+            const hook = /^>\s*(.+?)\s*$/.exec(line);
+            if (hook) line = hook[1];
+            line = line.replace(/https?:\/\/\S+/g, '')
+                       .replace(/[*_]{1,2}/g, '')
+                       .replace(/\s+/g, ' ')
+                       .trim();
+            if (!line) return '';
+            // A short "Label: value" with no sentence in it — the date line, the
+            // stock price line. The full-stop test reads the END of the line;
+            // searching anywhere in it matched the decimal point in "(3.8%)".
+            if (line.slice(0, 40).indexOf(':') !== -1
+                && !/[.!?…]$/.test(line)
+                && line.split(' ').length < 10) return '';
+            return line;
+        }
+
         function getPreviewText(content) {
-            if (!content) return '';
-            let plain = content
-                .replace(/^###\s+/gm, '')
-                .replace(/\*\*(.+?)\*\*/g, '$1')
-                .replace(/https?:\/\/[^\s]+/g, '')
-                .replace(/[━─]+/g, '')
-                .replace(/[\n\r]+/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim();
-            return plain.length > 200 ? plain.substring(0, 200) + '...' : plain;
+            let lines = (content || '').split(/\r?\n/);
+            // The hook is the episode's own headline, so everything above it —
+            // show name, branding line, date, price — is preamble.
+            for (let i = 0; i < lines.length; i++) {
+                if (/^>\s*\S/.test(lines[i].trim())) { lines = lines.slice(i); break; }
+            }
+            const parts = [];
+            for (const raw of lines) {
+                const line = previewLine(raw);
+                if (!line) continue;
+                parts.push(line);
+                if (parts.join(' ').length >= PREVIEW_CHARS
+                    || (parts.length === 1 && line.length >= SHORT_HOOK_CHARS)) break;
+            }
+            const text = parts.join(' ').replace(/\s+/g, ' ').trim();
+            return text.length > PREVIEW_CHARS
+                ? text.slice(0, PREVIEW_CHARS).replace(/\s+$/, '') + '...'
+                : text;
         }
 
         // --- Load episodes ---
@@ -1108,6 +1170,23 @@
                 const summaryEl = document.getElementById('latest-summary');
                 summaryEl.textContent = getPreviewText(latest.content);
                 summaryEl.style.display = 'block';
+            }
+
+            /* The "Article & transcript" link was resolved at build time, which
+               is where we know whether that page exists — a pruned episode
+               leaves a redirect stub behind, so "blog/<slug>/epNNN.html" is not
+               a URL this script can derive. If the feed has moved on to a newer
+               episode than the page was built from, the link would point at the
+               previous one while the player plays this one. Drop it and leave
+               the archive link rather than show a mismatch. */
+            const playerEl = document.getElementById('latest-player');
+            const articleEl = document.getElementById('latest-article');
+            if (articleEl && playerEl) {
+                const built = parseInt(playerEl.getAttribute('data-episode'), 10);
+                const live = parseInt(latest.episode_num, 10);
+                if (!isNaN(live) && !isNaN(built) && live !== built) {
+                    articleEl.style.display = 'none';
+                }
             }
 
             renderLatestLangs(latest);

@@ -309,13 +309,24 @@ def _is_promoted(heading: str) -> bool:
     )
 
 
-def interview_body_markdown(md_text: str) -> str:
-    """*md_text* with the promoted sections and the redundant preamble gone.
+def _is_transcript(heading: str) -> bool:
+    return heading.strip().lower() == _SECTION_TRANSCRIPT
 
-    What is left is the part the hero does not carry: the transcript, plus any
-    section a future digest adds that this module does not know about — an
-    unrecognised heading is KEPT, so a new section shows up on the page
-    looking plain rather than vanishing silently.
+
+def interview_body_markdown(md_text: str) -> str:
+    """*md_text* with the promoted sections, the transcript and the redundant
+    preamble gone.
+
+    What is left is the part neither the hero nor the transcript box carries —
+    today that is the chapter list, plus any section a future digest adds that
+    this module does not know about. An unrecognised heading is KEPT, so a new
+    section shows up on the page looking plain rather than vanishing silently.
+
+    The transcript leaves because it is 90% of the document: on Ep006 it is
+    730 of 785 lines, and printing it open between the chapter list and the
+    page footer made the article a wall of text with the chapters stranded at
+    the top of it. It is not dropped — :func:`interview_transcript_markdown`
+    hands it to the same collapsed box every other show's transcript uses.
 
     The preamble goes because every line of it is already above the fold in a
     better place: the ``# The Age of AI`` heading is the show name (which the
@@ -326,10 +337,29 @@ def interview_body_markdown(md_text: str) -> str:
     for heading, body in _sections(md_text):
         if not heading:
             continue  # the preamble — hook, episode line, "What You Need to Know"
-        if _is_promoted(heading):
+        if _is_promoted(heading) or _is_transcript(heading):
             continue
         kept.append(f"### {heading}\n{body}")
     return _strip_rules("\n\n".join(kept))
+
+
+def interview_transcript_markdown(md_text: str) -> str:
+    """The ``### Transcript`` section's body, or ``""`` when there is none.
+
+    The heading itself is dropped: the box it lands in is already labelled,
+    and a second "Transcript" title inside it reads as a mistake.
+
+    Interview shows have no ``*_reader.txt`` or ``*_tts.txt`` beside their
+    digest — those are written by ``run_show``, which the Nerra Voices
+    pipeline bypasses — so this is the ONLY transcript these episodes have.
+    That is why the section is returned rather than discarded: before this,
+    dropping it from the body would have silently deleted the guest-approved
+    record of the conversation from the only page that carries it.
+    """
+    for heading, body in _sections(md_text):
+        if heading and _is_transcript(heading):
+            return _strip_rules(body).strip()
+    return ""
 
 
 def guest_name_for(summaries_path, episode_num: int) -> str:

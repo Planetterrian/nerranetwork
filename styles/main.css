@@ -865,6 +865,51 @@ button.nn-chip { cursor: pointer; }
   opacity: 1;
 }
 
+/* The combined card: listen on one side, read on the other. Before this the
+   show page offered the player here and the article four screens further
+   down under "Latest from the Blog", and nothing on the card said the
+   written version existed at all. One column under 860px, because a
+   two-column split at phone width puts the summary below the fold anyway. */
+.nn-latest-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-6);
+}
+@media (min-width: 860px) {
+  .nn-latest-grid { grid-template-columns: 1fr 1fr; }
+  .nn-latest-read {
+    border-left: 1px solid var(--nn-border);
+    padding-left: var(--sp-6);
+  }
+}
+.nn-latest-read-label {
+  font-family: var(--font-ui);
+  font-size: 0.75rem; font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--nn-text-muted);
+  margin-bottom: var(--sp-2);
+}
+.nn-latest-summary {
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: var(--nn-text-muted);
+  margin-bottom: var(--sp-4);
+}
+.nn-latest-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.nn-latest-actions .nn-latest-archive {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--nn-text-muted);
+}
+.nn-latest-actions .nn-latest-archive:hover { color: var(--show-color, var(--nn-purple)); }
+
 /* ---------- Episode Archive Grid ---------- */
 .episodes-grid {
   display: grid;

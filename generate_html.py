@@ -847,7 +847,7 @@ NETWORK_SHOWS = {
         "name": "Environmental Intelligence",
         "slug": "env_intel",
         "display_order": 8,
-        "description": "Daily environmental regulatory and compliance briefing.",
+        "description": "Weekly environmental regulatory and compliance briefing, every Monday.",
         "show_page": "env-intel.html",
         "summaries_page": "env-intel-summaries.html",
         "json_path": "digests/env_intel/summaries_env_intel.json",
@@ -881,7 +881,7 @@ NETWORK_SHOWS = {
         "apple_podcasts_url": None,  # Not yet on Apple Podcasts
         "spotify_url": None,  # Not yet on Spotify
         "theme_color": "#1B5E20",
-        "meta_description": "Environmental Intelligence — Daily environmental regulatory and compliance briefing for BC professionals.",
+        "meta_description": "Environmental Intelligence — a weekly environmental regulatory and compliance briefing for BC professionals, every Monday.",
         "meta_keywords": "environmental intelligence, regulatory compliance, environmental briefings, Canadian environment",
         "audience": "For Canadian environmental professionals — contaminated sites consultants, regulators, lawyers, and lab scientists.",
         "source_highlights": ["Canada Gazette", "ECCC", "BC Ministry of Environment", "The Narwhal"],
@@ -1184,7 +1184,7 @@ NETWORK_SHOWS = {
         # look unused (2026-09-21: it did, and a full-tree diff caught it).
         "newsletter_tag": "Finansy Prosto",
         "display_order": 9,
-        "description": "Ежедневный подкаст о финансах на русском языке для женщин в Канаде.",
+        "description": "Еженедельный подкаст о финансах на русском языке для женщин в Канаде.",
         "show_page": "ru/finansy-prosto.html",
         "summaries_page": "ru/finansy-prosto-summaries.html",
         "json_path": "digests/finansy_prosto/summaries_finansy_prosto.json",
@@ -1198,15 +1198,15 @@ NETWORK_SHOWS = {
         "hero_tagline": "Финансы — просто и понятно.",
         "schedule": "Weekly — Mondays",
         "episode_length": "~12 min",
-        "about_text": "Ежедневный подкаст о финансах на русском языке для женщин в Канаде. Ведущая Оля объясняет инвестиции, сбережения, бюджет и финансовую грамотность — просто и понятно.",
+        "about_text": "Еженедельный подкаст о финансах на русском языке для женщин в Канаде. Ведущая Оля объясняет инвестиции, сбережения, бюджет и финансовую грамотность — просто и понятно.",
         "about_host": "Ведущая — Оля из Ванкувера. Каждый выпуск — практические советы, новости и ресурсы для финансовой независимости.",
-        "description_long": "Ежедневный подкаст о финансах на русском языке для женщин в Канаде — инвестиции, сбережения, бюджет и финансовая грамотность просто и понятно.",
+        "description_long": "Еженедельный подкаст о финансах на русском языке для женщин в Канаде — инвестиции, сбережения, бюджет и финансовая грамотность просто и понятно.",
         "related_show": "privet_russian",
         "related_reason": "If you enjoy Финансы Просто, you might also like Привет, Русский! — learn Russian through fun, themed episodes.",
         "apple_podcasts_url": "https://podcasts.apple.com/us/podcast/%D1%84%D0%B8%D0%BD%D0%B0%D0%BD%D1%81%D1%8B-%D0%BF%D1%80%D0%BE%D1%81%D1%82%D0%BE/id1885235226",
         "spotify_url": "https://open.spotify.com/show/35jCJTVe3ITGah3ryeKzzM",
         "theme_color": "#BE185D",
-        "meta_description": "Финансы Просто — ежедневный подкаст о финансах на русском языке для женщин в Канаде. Инвестиции, сбережения, бюджет.",
+        "meta_description": "Финансы Просто — еженедельный подкаст о финансах на русском языке для женщин в Канаде. Инвестиции, сбережения, бюджет.",
         "meta_keywords": "финансы, подкаст, русский, Канада, инвестиции, сбережения, бюджет, финансовая грамотность",
         "audience": "Для русскоговорящих женщин в Канаде, которые хотят разобраться в финансах — от TFSA до ипотеки.",
         "source_highlights": ["MoneySense", "Financial Post", "FinTolk", "Tinkoff Journal"],
@@ -2863,6 +2863,12 @@ def _interview_episode_cards(slug, cfg):
     The audio URL is routed through the same OP3 prefix the blog player uses,
     so a play started from the show page is counted like one started from a
     podcast app. Never let measurement break the page.
+
+    The article URL is re-resolved HERE because engine.interviews cannot know
+    about redirect stubs — it builds ``blog/<slug>/epNNN.html`` from the
+    episode number, and Age of AI Ep001 IS a file at that path and IS a stub,
+    which is the distinction _blog_url_for_episode exists to make. The rail
+    linked it twice per page.
     """
     from engine.interviews import interview_episode_cards
 
@@ -2873,6 +2879,9 @@ def _interview_episode_cards(slug, cfg):
     )
     if not cards:
         return []
+    for card in cards:
+        card["post_url"] = _blog_url_for_episode(
+            slug, episode_num=card.get("episode"))
     try:
         from engine.blog import _measured_audio_url
         for card in cards:
@@ -2959,6 +2968,14 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
                                key=lambda m: m.get("episode_num", 0),
                                reverse=True)
             latest_blog_posts = all_posts[:3]
+            # Resolve each post's URL the one way that knows a redirect stub
+            # is not an article. The rail used to build "blog/<slug>/epNNN"
+            # in the template, which is the assumption the stubs broke.
+            for _post in latest_blog_posts:
+                _post["post_url"] = _blog_url_for_episode(
+                    slug, episode_num=_post.get("episode_num"))
+            latest_blog_posts = [p for p in latest_blog_posts
+                                 if p.get("post_url")]
     except Exception as e:
         print(f"Warning: could not collect blog posts for show page: {e}")
 
@@ -2999,6 +3016,27 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
             static_episodes = static_episodes[:12]
     except Exception as e:
         print(f"Warning: could not collect episodes from RSS for {slug}: {e}")
+
+    # The combined latest-episode card. Built from the same summaries JSON the
+    # page's own script fetches, so the script's render is an update to this
+    # rather than a different card replacing a "Loading..." placeholder.
+    #
+    # The article link is resolved HERE and nowhere else: _blog_url_for_episode
+    # knows that a redirect stub is a file at an epNNN.html path and not an
+    # article, which is exactly the distinction a client-side f-string cannot
+    # make. An episode with no post gets no link, not a link to a 404.
+    latest_episode = None
+    try:
+        from engine.summaries_ssr import summary_cards
+
+        _cards = summary_cards(
+            ROOT / cfg.get("json_path", ""), cfg["slug"], limit=1)
+        if _cards:
+            latest_episode = _cards[0]
+            latest_episode["blog_url"] = _blog_url_for_episode(
+                cfg["slug"], episode_num=latest_episode.get("episode_num"))
+    except Exception as e:  # pragma: no cover - a card is never worth a build
+        print(f"Warning: could not build latest-episode card for {slug}: {e}")
 
     # Quick-win dynamic metadata (May 2026 review): inject freshest episode title/hook
     # into page_title and meta description so social cards + search snippets reflect
@@ -3152,6 +3190,12 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         "related_show": related_show_data,
         "blog_page": f"blog/{cfg['slug']}/index.html",
         "latest_blog_posts": latest_blog_posts,
+        "latest_episode": latest_episode,
+        # The script re-renders the card on load and must cut the summary at
+        # the same place the server did, or the card flickers into different
+        # words. One owner for both numbers.
+        "card_preview_chars": _summaries_ssr.CARD_PREVIEW_CHARS,
+        "short_hook_chars": _summaries_ssr.SHORT_HOOK_CHARS,
         "static_episodes": static_episodes,
         "dp_levers": dp_levers,
         "dp_mindsets": dp_mindsets,
@@ -3593,11 +3637,18 @@ def _translated_bodies_for_episode(digest_dir, meta) -> dict:
     return bodies
 
 
-def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None):
+def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None,
+                        output_dir=None):
     """Generate blog post HTML pages for all episodes of a show.
 
     *cross_show_posts*: optional list of dicts from other shows for
     "You might also like" recommendations on each post.
+
+    *output_dir*: write under this root instead of the repo. Generated HTML
+    is refreshed by the pipeline and is not committed from a working tree, so
+    a guard that wants to assert on a post has to render its own — the
+    committed file still carries the previous chrome. Same reason
+    ``generate_blog_index`` and ``generate_editorial_page`` take one.
 
     Returns list of (metadata_dict, output_path) tuples.
     """
@@ -3648,7 +3699,7 @@ def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None):
 
     _attach_translations(slug, cfg, all_meta)
 
-    blog_dir = ROOT / "blog" / slug
+    blog_dir = (Path(output_dir) if output_dir else ROOT) / "blog" / slug
     results = []
 
     for i, meta in enumerate(all_meta):
