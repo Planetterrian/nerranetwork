@@ -941,6 +941,7 @@
         <div class="nn-iv-meta">
             <span>{{ episode_date }}</span>
             {% if interview.run_time %}<span aria-hidden="true">·</span><span>{{ interview.run_time }}</span>{% endif %}
+            {% if interview.cohost_name %}<span aria-hidden="true">·</span><span>with {{ interview.cohost_name }}, co-host</span>{% endif %}
             {% if transcript %}<span aria-hidden="true">·</span><a href="#transcript" style="color:inherit;">Read the transcript</a>{% endif %}
         </div>
 
@@ -1233,14 +1234,14 @@
 
             {#- Per-episode feedback surface (Phase 4 of May 2026 audit).
                 The strategic review found NO per-episode listener-voice
-                affordance \u2014 no thumbs-up, no comments, no community.
+                affordance — no thumbs-up, no comments, no community.
                 Mailto with prefilled subject/body is dependency-free,
                 privacy-respecting, and gives Patrick a real signal of
                 what episodes resonate. -#}
             <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
-                <span>{{ '\ud83d\udc4b ' if not _is_ru else '\ud83d\udc4b ' }}{% if _is_ru %}\u041f\u043e\u043d\u0440\u0430\u0432\u0438\u043b\u0441\u044f \u0432\u044b\u043f\u0443\u0441\u043a?{% else %}Did this episode land?{% endif %}</span>
-                <a href="mailto:patrick@planetterrian.com?subject={{ ('I liked ' ~ show_name ~ ' Ep' ~ episode_num) | urlencode }}&body={{ ('Re: ' ~ canonical_url ~ '%0A%0A') }}" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">{% if _is_ru %}\ud83d\udc4d \u041e\u0442\u0437\u044b\u0432{% else %}\ud83d\udc4d Tell Patrick{% endif %}</a>
-                <a href="mailto:patrick@planetterrian.com?subject={{ ('Suggestion for ' ~ show_name) | urlencode }}&body={{ ('Re: ' ~ canonical_url ~ '%0A%0A') }}" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">{% if _is_ru %}\ud83d\udca1 \u0418\u0434\u0435\u044f{% else %}\ud83d\udca1 Suggest a story{% endif %}</a>
+                <span>{{ '👋 ' if not _is_ru else '👋 ' }}{% if _is_ru %}Понравился выпуск?{% else %}Did this episode land?{% endif %}</span>
+                <a href="mailto:patrick@planetterrian.com?subject={{ ('I liked ' ~ show_name ~ ' Ep' ~ episode_num) | urlencode }}&body={{ ('Re: ' ~ canonical_url ~ '%0A%0A') }}" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">{% if _is_ru %}👍 Отзыв{% else %}👍 Tell Patrick{% endif %}</a>
+                <a href="mailto:patrick@planetterrian.com?subject={{ ('Suggestion for ' ~ show_name) | urlencode }}&body={{ ('Re: ' ~ canonical_url ~ '%0A%0A') }}" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">{% if _is_ru %}💡 Идея{% else %}💡 Suggest a story{% endif %}</a>
             </div>
 
             {#- Per-show rating/review ask (engine.episode_ask). SpaceX Ask B

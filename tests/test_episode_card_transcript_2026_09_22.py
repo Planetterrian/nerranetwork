@@ -80,10 +80,21 @@ class TestInterviewTranscriptSplit:
 
     @pytest.mark.parametrize("path", INTERVIEW_DIGESTS, ids=lambda p: p.name)
     def test_the_rest_of_the_digest_survives(self, path):
-        """The chapter list is the only thing left; losing it would leave an
-        interview post with an empty body."""
-        assert "Chapters" in interview_body_markdown(
-            path.read_text(encoding="utf-8"))
+        """A section the hero does not promote is kept, never dropped.
+
+        Sep 22 2026: this used to require "Chapters" in every digest's body,
+        which stopped being true when the fabricated chapter lists were
+        removed from Ep5-7 (tests/test_age_of_ai_truth_2026_09_22.py). The
+        property is that whatever unpromoted section a digest HAS survives
+        the split; a digest with none has an empty body, which the template
+        renders as no article, not as an error.
+        """
+        text = path.read_text(encoding="utf-8")
+        body = interview_body_markdown(text)
+        if "### Chapters" in text:
+            assert "Chapters" in body
+        else:
+            assert "Transcript" not in body
 
     def test_a_digest_with_no_transcript_section_is_not_an_error(self):
         """Ep001 predates the current shape and has no markdown at all; a

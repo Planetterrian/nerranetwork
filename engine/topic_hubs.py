@@ -267,9 +267,9 @@ TOPIC_HUBS: Tuple[Dict[str, Any], ...] = (
             "angle required."
         ),
         "angle": (
-            "A human editor reviews every episode with no timer, and nothing "
-            "publishes until the guest has read and approved their own "
-            "transcript."
+            "A human editor reviews every episode with no timer, and every "
+            "guest gets their own transcript first — a week to approve it, "
+            "cut from it or refuse it, and a takedown afterwards."
         ),
         "meta_description": (
             "Interview podcasts from Nerra Network, hosted by Mira, an AI: "
