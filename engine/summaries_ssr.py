@@ -110,6 +110,90 @@ def summary_to_html(markdown: str) -> str:
     return "".join(out)
 
 
+#: How much of a summary the combined show-page card shows before the reader
+#: follows it to the article. The show page script cuts at the same number,
+#: because it replaces this text on load: two lengths would make the card
+#: visibly twitch a moment after paint.
+CARD_PREVIEW_CHARS = 200
+
+#: Below this a hook is a label, not a sentence — Привет, Русский!'s is one
+#: word, its word of the day — so the preview keeps reading past it.
+SHORT_HOOK_CHARS = 60
+
+_HOOK_RE = re.compile(r"^>\s*(.+?)\s*$")
+_EMPHASIS_RE = re.compile(r"[*_]{1,2}")
+_URL_RE = re.compile(r"https?://\S+")
+_WS_RE = re.compile(r"\s+")
+
+
+def _preview_line(raw: str) -> str:
+    """One summary line reduced to its plain words, or "" to skip it.
+
+    Skipped: markdown headings (every digest opens on the show's own name,
+    which the card already says twice), horizontal rules, and short label
+    lines with no sentence in them — ``**Date:** August 23, 2026`` and
+    ``**REAL-TIME TSLA price:** $348.95 ▼ $13.91 (3.8%)`` are metadata that
+    the page has better places for, and both used to be the first thing the
+    summary said.
+    """
+    line = raw.strip()
+    if not line or line.startswith("#") or _RULE_RE.match(line):
+        return ""
+    hook = _HOOK_RE.match(line)
+    if hook:
+        line = hook.group(1)
+    line = _WS_RE.sub(" ", _EMPHASIS_RE.sub("", _URL_RE.sub("", line))).strip()
+    if not line:
+        return ""
+    # A short "Label: value" with no sentence in it. The terminal-punctuation
+    # test reads the END of the line, never anywhere in it: Tesla's price line
+    # ends "(3.8%)" and an "is there a full stop" search matched the decimal
+    # point, which is how "REAL-TIME TSLA price: $348.95" led the card.
+    if (":" in line[:40]
+            and not line.rstrip().endswith((".", "!", "?", "\u2026"))
+            and len(line.split()) < 10):
+        return ""
+    return line
+
+
+def plain_preview(content: str, limit: int = CARD_PREVIEW_CHARS) -> str:
+    """The opening of a summary as one line of plain text.
+
+    The digests write their headline as a blockquoted bold line — the hook —
+    and it is the sentence the episode was built around, so it leads. A hook
+    too short to be a sentence keeps reading into the prose under it; a show
+    with no hook at all (the interviews, Nerra Daily) starts from its first
+    real line.
+
+    ``show_page.html.j2`` carries the same walk in JavaScript and replaces
+    this text on load. The duplication is deliberate and it is the cheap
+    half: the alternative is the server rendering one sentence and the script
+    swapping in a different one a moment later.
+    """
+    lines = (content or "").splitlines()
+    # A hook is the episode's own headline, written for exactly this job, so
+    # everything above it is preamble by definition: the show name, the
+    # emoji-and-tagline branding line, the date, the stock price. Four shows'
+    # previews used to open on their own branding for want of this line.
+    for index, raw in enumerate(lines):
+        if _HOOK_RE.match(raw.strip()):
+            lines = lines[index:]
+            break
+
+    parts: List[str] = []
+    for raw in lines:
+        line = _preview_line(raw)
+        if not line:
+            continue
+        parts.append(line)
+        joined = " ".join(parts)
+        if len(joined) >= limit or (
+                len(parts) == 1 and len(line) >= SHORT_HOOK_CHARS):
+            break
+    text = _WS_RE.sub(" ", " ".join(parts)).strip()
+    return text[:limit].rstrip() + "..." if len(text) > limit else text
+
+
 def _display_date(value: str) -> str:
     """``2026-09-21`` -> ``September 21, 2026``; anything else passes through.
 
@@ -196,6 +280,8 @@ def summary_cards(
             "title": (record.get("episode_title") or record.get("title")
                       or "").strip(),
             "summary_html": summary_to_html(
+                record.get("content") or record.get("summary") or ""),
+            "summary_preview": plain_preview(
                 record.get("content") or record.get("summary") or ""),
             "audio_url": (record.get("audio_url") or "").strip(),
             "episode_num": number,

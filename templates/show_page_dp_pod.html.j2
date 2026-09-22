@@ -270,6 +270,10 @@
   .dpc-latest h3 { margin:0.5rem 0 1rem; color:var(--dp-cream);
     font-family:'Source Serif 4',Georgia,serif; font-size:1.25rem; line-height:1.4; }
   .dpc-latest audio { width:100%; }
+  .dpc-latest .lt-summary { margin:1rem 0 0; color:#b9d3c7; font-size:0.92rem; line-height:1.7; }
+  .dpc-latest .lt-read { display:inline-block; margin-top:1rem; color:var(--dp-green);
+    font-weight:700; font-size:0.9rem; text-decoration:none; }
+  .dpc-latest .lt-read:hover { text-decoration:underline; }
   .dpc-eplist { max-width:760px; margin:1.4rem auto 0; }
   .dpc-ep { display:flex; align-items:center; gap:1rem; padding:0.9rem 0.4rem;
     border-bottom:1px solid rgba(18,183,106,0.14); }
@@ -303,7 +307,7 @@
         <span class="dpc-eyebrow" style="justify-content:flex-start;">The Do Positive Club · A Nerra Network Original</span>
         <h1>Most media tells you what's wrong.<br>This club <em>does something about it.</em></h1>
         <p class="dpc-hero-desc">
-          The DP Pod is a ten-minute daily briefing of genuinely good news in science and
+          The DP Pod is a ten-minute Monday briefing of genuinely good news in science and
           tech — with honest numbers, healthy disagreement, and one concrete action a
           regular person can take. Members don't just listen. They pull the lever, write
           in, and get read on the show.
@@ -334,14 +338,25 @@
   <section class="dpc-section dpc-center" id="briefing">
     <span class="dpc-eyebrow">Today's briefing</span>
     <h2 class="dpc-h2">Ten minutes of things going right.</h2>
-    <p class="dpc-sub">Dan and Patrick, every day: The Positive Papers, The Lever, and the Do Positive Dispatch.</p>
-    {% if static_episodes %}
+    <p class="dpc-sub">Dan and Patrick, every Monday: The Positive Papers, The Lever, and the Do Positive Dispatch.</p>
+    {#- One card: hear it and read it. This page is bespoke, so the generic
+        show page's combined card does not reach it — the same gap that left
+        its Story Tracker unlinked for two months. It renders from the same
+        engine.summaries_ssr card, and falls back to the RSS title when the
+        summaries file has not caught up. -#}
+    {% if latest_episode or static_episodes %}
     <div class="dpc-latest">
-      <span class="lt-label">Latest episode</span>
-      <h3>{{ static_episodes[0].title }}</h3>
-      <audio controls preload="none" src="{{ static_episodes[0].audio_url }}">
+      <span class="lt-label">Latest episode{% if latest_episode and latest_episode.date %} · {{ latest_episode.date }}{% endif %}</span>
+      <h3>{% if latest_episode and latest_episode.title %}{{ latest_episode.title }}{% else %}{{ static_episodes[0].title }}{% endif %}</h3>
+      <audio controls preload="none" src="{% if latest_episode and latest_episode.audio_url %}{{ latest_episode.audio_url }}{% else %}{{ static_episodes[0].audio_url }}{% endif %}">
         Your browser does not support the audio element.
       </audio>
+      {% if latest_episode and latest_episode.summary_preview %}
+      <p class="lt-summary">{{ latest_episode.summary_preview }}</p>
+      {% endif %}
+      {% if latest_episode and latest_episode.blog_url %}
+      <a class="lt-read" href="{{ path_prefix }}{{ latest_episode.blog_url }}">Read this episode &amp; its transcript &rarr;</a>
+      {% endif %}
     </div>
     {% else %}
     <div class="dpc-latest">
@@ -403,8 +418,9 @@
     <div class="dpc-section dpc-center">
       <span class="dpc-eyebrow">Membership</span>
       <h2 class="dpc-h2">Join the club. Stay for the good news.</h2>
-      <p class="dpc-sub">Free email membership. Daily briefing when it drops. Optional: try
-        one lever a week and tell us what happened — that's how the Dispatch stays real.</p>
+      <p class="dpc-sub">Free email membership. The briefing when it drops, every Monday.
+        Optional: try one lever a week and tell us what happened — that's how the
+        Dispatch stays real.</p>
       <div class="dpc-pledge-card" id="pledge">
         <span class="pl-label">The invitation</span>
         <p class="dpc-pledge-text">“I'll give the good news ten minutes a day —
@@ -412,10 +428,10 @@
         <form class="dpc-pledge-form" action="https://buttondown.com/api/emails/embed-subscribe/patricknovak1" method="post" target="popupwindow">
           <input type="hidden" name="tag" value="{{ newsletter_tag }}">
           <input type="email" name="email" required placeholder="you@example.com" aria-label="Email address">
-          <button type="submit">Join free — get the daily briefing</button>
+          <button type="submit">Join free — get the Monday briefing</button>
         </form>
-        <p class="dpc-pledge-fine">Your email is the membership card — the daily briefing
-          in your inbox, no spam, leave anytime. No oath required. And when you try a
+        <p class="dpc-pledge-fine">Your email is the membership card — the briefing
+          in your inbox every Monday, no spam, leave anytime. No oath required. And when you try a
           lever, just hit reply: replies are how dispatches reach the show.</p>
         <div class="dpc-founding">
           ⭐ <b>Founding Members:</b> everyone who joins before Episode 100 is a Founding
@@ -443,7 +459,7 @@
         <span class="tier-name">Member</span>
         <span class="tier-price">Free</span>
         <ul>
-          <li>The daily briefing, every day</li>
+          <li>The briefing, every Monday</li>
           <li>Club membership + episode alerts</li>
           <li>Your dispatches read on the show</li>
           <li>A founding number if you join before Episode 100</li>
@@ -555,8 +571,8 @@
       {% else %}
         <div class="dpc-mindset">
           <span class="ms-ep">The shelf opens with Episode 1</span>
-          <p>Each daily briefing ends its Think Positive segment with one concrete mental
-          rep — a small, practical exercise you can actually try that day. They'll collect
+          <p>Each briefing ends its Think Positive segment with one concrete mental
+          rep — a small, practical exercise you can actually try that week. They'll collect
           here as episodes ship, so the shelf becomes the club's shared practice library.</p>
           <a class="ms-link" href="#join">Get Episode 1 first →</a>
         </div>
@@ -595,7 +611,7 @@
         <p>Who helped, or who should try it next. Gratitude fuels the club.</p></div>
     </div>
     <a class="dpc-cta dpc-cta--primary" href="{{ dispatch_mailto }}">Send your dispatch</a>
-    <p class="dpc-hero-note" style="margin-top:1rem;">Or just <b>hit reply to any daily
+    <p class="dpc-hero-note" style="margin-top:1rem;">Or just <b>hit reply to any
       briefing email</b> — replies land in the same mailbox and count exactly the same.
       New members and first dispatches get welcomed on the show by first name — tell us
       how to read yours.</p>
@@ -607,7 +623,7 @@
     <h2 class="dpc-h2">Five things we'll never break.</h2>
     <div class="dpc-charter" style="text-align:left;">
       <div class="dpc-tenet"><h4>Free to join</h4>
-        <p>The daily briefing and membership cost nothing. Patrons keep the club
+        <p>The briefing and membership cost nothing. Patrons keep the club
         running — by choice, never by paywall.</p></div>
       <div class="dpc-tenet"><h4>Honest numbers</h4>
         <p>Every claim gets its caveat. Every lever states its real cost and payback.</p></div>

@@ -501,7 +501,20 @@
             padding-top: var(--sp-6);
             border-top: 1px solid var(--nn-border);
         }
+        /* The preview lives INSIDE <summary> on purpose. A child of <details>
+           is hidden by the UA when the element is closed and author CSS
+           cannot reliably bring it back; summary content is always painted.
+           It carries aria-hidden because the same words are read out again
+           three lines below, and a 400-character button label is not a
+           button label. */
         .blog-transcript details summary {
+            display: block;
+            cursor: pointer;
+            padding: var(--sp-3) 0;
+            list-style: none;
+        }
+        .blog-transcript details summary::-webkit-details-marker { display: none; }
+        .blog-transcript .transcript-head {
             display: flex;
             align-items: center;
             gap: var(--sp-2);
@@ -509,18 +522,54 @@
             font-size: 1.1rem;
             font-weight: 600;
             color: var(--nn-white);
-            cursor: pointer;
-            padding: var(--sp-3) 0;
-            list-style: none;
         }
-        .blog-transcript details summary::-webkit-details-marker { display: none; }
-        .blog-transcript details summary::after {
+        .blog-transcript .transcript-length {
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--nn-text-muted);
+        }
+        .blog-transcript .transcript-head::after {
             content: '+';
             margin-left: auto;
             font-size: 1.2rem;
             color: var(--nn-text-muted);
         }
-        .blog-transcript details[open] summary::after { content: '\2212'; }
+        .blog-transcript details[open] .transcript-head::after { content: '\2212'; }
+        .blog-transcript .transcript-preview {
+            position: relative;
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: var(--nn-text-muted);
+            white-space: pre-wrap;
+            margin-top: var(--sp-3);
+            max-height: 11em;
+            overflow: hidden;
+        }
+        /* Fades the last line instead of chopping it, so the cut reads as
+           "there is more" rather than "this ended oddly". */
+        .blog-transcript .transcript-preview::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
+            height: 3.4em;
+            /* The article body sits directly on the page background, not on
+               a card, so the fade has to land on --nn-bg. */
+            background: linear-gradient(to bottom,
+                rgba(0,0,0,0), var(--nn-bg));
+            pointer-events: none;
+        }
+        .blog-transcript .transcript-more {
+            display: inline-block;
+            margin-top: var(--sp-3);
+            font-family: var(--font-ui);
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--show-color, var(--nn-purple));
+        }
+        .blog-transcript details[open] .transcript-preview,
+        .blog-transcript details[open] .transcript-more { display: none; }
         .blog-transcript .transcript-content {
             font-family: var(--font-body);
             font-size: 0.95rem;
@@ -1102,15 +1151,46 @@
 
             <!-- Transcript -->
             {% if transcript %}
+            {#- A transcript runs 1,200 words on a news show and over 9,000 on
+                an interview. Printed open it is the page; collapsed with only
+                a title on it, a reader has no way to tell what they would be
+                opening. So the box shows its opening lines and says how long
+                the whole thing is, and the full text stays in the HTML either
+                way — collapsed, not withheld, so Ctrl-F and crawlers still
+                see every word. -#}
             <section class="blog-transcript" id="transcript">
-                <details>
+                <details{% if not transcript_preview %} open{% endif %}>
                     <summary>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
-                        Full Episode Transcript
+                        <span class="transcript-head">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+                            {% if _is_ru %}{% if interview %}Полная расшифровка разговора{% else %}Полная расшифровка выпуска{% endif %}{% else %}{% if interview %}Full conversation transcript{% else %}Full episode transcript{% endif %}{% endif %}
+                            {% if transcript_word_count %}
+                            <span class="transcript-length">{{ '{:,}'.format(transcript_word_count) }} {% if _is_ru %}слов{% else %}words{% endif %}</span>
+                            {% endif %}
+                        </span>
+                        {% if transcript_preview %}
+                        <span class="transcript-preview" aria-hidden="true">{{ transcript_preview }}</span>
+                        <span class="transcript-more">{% if _is_ru %}Читать полностью{% else %}Read the whole thing{% endif %} &darr;</span>
+                        {% endif %}
                     </summary>
                     <div class="transcript-content">{{ transcript }}</div>
                 </details>
             </section>
+            <script>
+            /* Every "read the transcript" link on this page points at
+               #transcript, and landing on a collapsed box looks like the link
+               is broken. Open it when the fragment asks for it — including a
+               same-page click, which fires no navigation. */
+            (function () {
+                var box = document.querySelector('#transcript details');
+                if (!box) return;
+                function openIfTargeted() {
+                    if (location.hash === '#transcript') box.open = true;
+                }
+                openIfTargeted();
+                window.addEventListener('hashchange', openIfTargeted);
+            })();
+            </script>
             {% endif %}
 
             <!-- Story Tracker (narrative-memory shows only) -->

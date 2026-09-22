@@ -27,11 +27,55 @@ from urllib.parse import urlparse
 from engine.episode_ask import episode_ask_for
 from engine.interviews import (
     guest_name_for, interview_body_markdown, interview_context,
-    is_interview_show,
+    interview_transcript_markdown, is_interview_show,
 )
 from engine import show_lang as _show_lang
 
 logger = logging.getLogger(__name__)
+
+#: How much of a transcript is shown before a reader asks for the rest.
+#: Roughly the first three or four lines — enough to tell what the recording
+#: is and whether the expand is worth it, short enough that the article's own
+#: ending is still on the same screen. The whole transcript stays in the HTML
+#: either way: this is a reading decision, not a payload one, and collapsing
+#: it behind a fetch would cost the in-page search a reader uses to find a
+#: quote (Ctrl-F, and every crawler's view of the page).
+TRANSCRIPT_PREVIEW_CHARS = 420
+
+
+def transcript_preview(text: str, max_chars: int = TRANSCRIPT_PREVIEW_CHARS) -> str:
+    """The opening of *text*, cut at a sentence end, or "" if it is short.
+
+    It is a literal excerpt: line breaks are kept and nothing is rewritten or
+    re-wrapped. That is a requirement, not tidiness — on the interview shows
+    this text is the record a named human being read and approved, and
+    ``engine.interviews`` states plainly that their words are never
+    reformatted in rendering. An excerpt that paraphrased the opening of a
+    conversation would be the same failure in miniature.
+
+    Returns "" when the transcript is already shorter than the preview: there
+    is nothing to preview if the box would show the whole thing, and an
+    expander that reveals one extra sentence is noise.
+    """
+    body = (text or "").strip()
+    if not body or len(body) <= max_chars:
+        return ""
+
+    window = body[:max_chars]
+    # Prefer a sentence end, then a line end, then a word end. Anything past
+    # 55% of the budget is close enough that the reader sees a real opening
+    # rather than three words and an ellipsis.
+    floor = int(max_chars * 0.55)
+    for candidates in (
+        [window.rfind(mark) + len(mark) - 1 for mark in (". ", ".\n", "? ", "! ")],
+        [window.rfind("\n")],
+        [window.rfind(" ")],
+    ):
+        cut = max(candidates)
+        if cut >= floor:
+            return window[: cut + 1].strip()
+    return window.strip()
+
 
 # ---------------------------------------------------------------------------
 # Metadata extraction
@@ -1333,6 +1377,17 @@ def generate_blog_post_html(
     except Exception:
         pass  # Non-fatal — transcript is optional
 
+    # Interview shows have neither file: `run_show` writes *_reader.txt and
+    # *_tts.txt, and the Nerra Voices pipeline bypasses run_show. Their
+    # transcript is the digest's own `### Transcript` section, which
+    # interview_body_markdown stops printing open in the article. It wins
+    # outright if both were ever present — it is the text a named human being
+    # read and approved, and the TTS script is not.
+    if is_interview_show(show_slug):
+        _interview_transcript = interview_transcript_markdown(md_text)
+        if _interview_transcript:
+            transcript_text = _interview_transcript
+
     # Chapters (July 28 2026). These have been generated, committed and
     # shipped in the podcast feeds for months, but the website surfaced
     # them nowhere — a reader arriving from search saw a wall of
@@ -1469,6 +1524,11 @@ def generate_blog_post_html(
         "share_urls": _share_urls(show_slug, ep_num, blog_url),
         "tagline": show_config.get("tagline", ""),
         "transcript": transcript_text,
+        # The collapsed transcript box shows this much before a reader opens
+        # it, and says how long the whole thing is. Empty preview = a
+        # transcript short enough that the box has nothing to hide.
+        "transcript_preview": transcript_preview(transcript_text),
+        "transcript_word_count": len(transcript_text.split()),
         # PodcastEpisode JSON-LD fields. These were referenced by the template
         # but never supplied, so url/datePublished/contentUrl/transcript all
         # rendered empty. Populate them from the data we already have. The
