@@ -2,7 +2,8 @@
 
 Pins the launch decisions so a partial revert or config drift fails CI:
 - two-host dialogue TTS wiring (voices, no speech wrap, Patrick fallback)
-- daily cadence with NO Sunday recap (operator decision: fresh episode daily)
+- cadence with NO Sunday recap (weekly on Monday since 2026-09-21; the
+  six places the cadence lives are pinned by test_dp_pod_weekly_2026_09_21)
 - main-site registration under show_page thedppod.html + network.rss feed
 - chapter markers: Sign-Off listed before the body markers (EI June-11
   ordering rule) with where anchors
@@ -42,18 +43,21 @@ class TestDialogueTTSWiring:
 
 
 class TestCadence:
-    def test_daily_no_sunday_recap(self):
-        # Operator decision: fresh episode every day including Sunday, and no
-        # weekly-summary segment (dp_pod has its own fixed daily shape).
+    def test_no_sunday_recap(self):
+        # The show has its own fixed segment shape and carries no
+        # weekly-summary segment. True while it was daily and still true now
+        # that it is weekly on Monday (2026-09-21): the six places the
+        # cadence itself lives are pinned by
+        # tests/test_dp_pod_weekly_2026_09_21.py.
         assert CFG.weekly_summary_segment is False
 
 
 class TestLaunchDistribution:
     def test_distribution_shape(self):
         """Launch was RSS+site only. Aug 10 2026 (operator-directed): the
-        newsletter is ON — the club's join form had promised a daily
-        briefing since launch, and email replies are the Dispatch
-        submission channel. Sep 4 2026 (operator-directed reach pass):
+        newsletter is ON — the club's join form had promised a briefing
+        since launch, and email replies are the Dispatch submission
+        channel. Sep 4 2026 (operator-directed reach pass):
         YouTube ON, Shorts-only, once the script-model A/B had closed with
         adoption. X / multilingual stay off."""
         assert CFG.publishing.x_enabled is False
@@ -122,14 +126,19 @@ class TestClubPage:
     def test_club_page_renders_with_core_mechanics(self, tmp_path):
         import generate_html as gh
 
-        html_path = gh.generate_show_page("dp_pod", dry_run=False)
+        html_path = gh.generate_show_page(
+            "dp_pod", dry_run=False, output_dir=tmp_path)
         html = Path(html_path).read_text(encoding="utf-8")
         # Join via Buttondown with the show tag (de-gimmicked: invitation,
         # not an oath-style "Sign the pledge")
         assert "buttondown.com/api/emails/embed-subscribe" in html
         assert 'value="DP Pod"' in html
         assert "Join the club" in html
-        assert "Join free — get the daily briefing" in html
+        # The invitation framing, asserted as a PROPERTY. Pinning the whole
+        # button sentence broke main on 2026-09-22: the cadence word inside
+        # it changed when the show went weekly, and a guard that fails on a
+        # correction is a guard that argues for the stale copy.
+        assert re.search(r"Join free\s*—\s*get the \w+ briefing", html)
         assert "Sign the pledge" not in html
         assert "once a week, I'll do one positive thing" not in html
         # Seeded member wall (pledger-majority sequencing)
@@ -656,10 +665,11 @@ class TestCommunityLayer:
         data = _json.loads(path.read_text(encoding="utf-8"))
         assert isinstance(data.get("dispatches"), list)
 
-    def test_page_renders_community_sections(self):
+    def test_page_renders_community_sections(self, tmp_path):
         import generate_html as gh
 
-        html_path = gh.generate_show_page("dp_pod", dry_run=False)
+        html_path = gh.generate_show_page(
+            "dp_pod", dry_run=False, output_dir=tmp_path)
         html = Path(html_path).read_text(encoding="utf-8")
         assert 'id="mindset"' in html and "The Mindset Shelf" in html
         assert 'id="dispatch"' in html
@@ -744,10 +754,11 @@ class TestShowAnthem:
                 if len(fragment.split()) >= 3 and "Do Positive" not in fragment:
                     assert fragment in lyrics, f"prompt quote drifted from canon: {fragment!r}"
 
-    def test_club_page_has_anthem_section(self):
+    def test_club_page_has_anthem_section(self, tmp_path):
         import generate_html as gh
 
-        html_path = gh.generate_show_page("dp_pod", dry_run=False)
+        html_path = gh.generate_show_page(
+            "dp_pod", dry_run=False, output_dir=tmp_path)
         html = Path(html_path).read_text(encoding="utf-8")
         assert 'id="anthem"' in html
         assert "Turn the worry down" in html
