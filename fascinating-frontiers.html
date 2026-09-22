@@ -827,9 +827,10 @@
                 <div class="latest-episode-label">Latest Episode</div>
                 <div class="nn-latest-grid">
                     <div class="nn-latest-listen">
-                        <div class="latest-episode-title" id="latest-title">Ep 201: Astronomers have detected the first direct radio signals from an exoplanet, opening a new…</div>
+                        <div class="latest-episode-title" id="latest-title" data-rendered="1">Ep 201: Astronomers have detected the first direct radio signals from an exoplanet, opening a new…</div>
                         <div class="latest-episode-date" id="latest-date">September 22, 2026</div>
-                        <audio id="latest-audio" controls preload="none" src="https://audio.nerranetwork.com/fascinating_frontiers/Fascinating_Frontiers_Ep201_20260922.mp3" aria-label="Latest episode audio player" style="width:100%;height:42px;border-radius:8px;"></audio>
+                        
+                        <audio id="latest-audio" controls preload="metadata" src="https://audio.nerranetwork.com/fascinating_frontiers/Fascinating_Frontiers_Ep201_20260922.mp3" aria-label="Latest episode audio player" style="width:100%;height:42px;border-radius:8px;"></audio>
                         
                         <div id="latest-langs" style="display:none;margin-top:10px;align-items:center;flex-wrap:wrap;gap:6px;" aria-label="Listen in another language"></div>
                     </div>
@@ -2064,30 +2065,56 @@
             return m ? parseInt(m[1], 10) : null;
         }
 
+        /* The archive rail is not on every page. An interview show renders a
+           GUEST rail server-side instead (``interview_episodes``), so
+           ``#episodes-grid`` does not exist there — and reading ``.innerHTML``
+           off null is what took the Age of AI card down: the throw landed in
+           the fetch handler's catch, which reported it as "no episodes" and
+           overwrote a correct, server-rendered card with the empty state. */
+        function episodeGrid() {
+            return document.getElementById('episodes-grid');
+        }
+
+        /* ``data-rendered`` is the card's record of having shown a real
+           episode — set by the server when it had one, and by either client
+           path when it replaces it. ``showNoEpisodes`` reads it so a failure
+           after a success cannot un-say the truth. */
+        function setLatestTitle(text) {
+            const el = document.getElementById('latest-title');
+            if (!el) return;
+            el.textContent = text;
+            el.dataset.rendered = '1';
+        }
+
         // --- Load episodes ---
         async function loadEpisodes() {
+            /* The try covers FETCHING and PARSING only. A failure to render is
+               not evidence about the data, and falling back on it means a DOM
+               bug gets announced to the reader as an empty show. */
+            let episodes;
             try {
                 const resp = await fetch(JSON_URL);
                 if (!resp.ok) throw new Error('JSON not found');
                 const data = await resp.json();
-                const episodes = (JSON_FORMAT === 'array') ? (Array.isArray(data) ? data : []) : recordsFrom(data);
-                if (!episodes || !episodes.length) {
-                    console.warn(`[${SHOW_NAME}] JSON loaded but no episodes found, falling back to RSS`);
-                    loadFromRSS();
-                    return;
-                }
-                renderEpisodes(episodes);
+                episodes = (JSON_FORMAT === 'array') ? (Array.isArray(data) ? data : []) : recordsFrom(data);
             } catch (err) {
                 console.warn(`[${SHOW_NAME}] JSON load failed, falling back to RSS:`, err.message);
                 loadFromRSS();
+                return;
             }
+            if (!episodes || !episodes.length) {
+                console.warn(`[${SHOW_NAME}] JSON loaded but no episodes found, falling back to RSS`);
+                loadFromRSS();
+                return;
+            }
+            renderEpisodes(episodes);
         }
 
         function renderEpisodes(episodes) {
             if (!episodes || !episodes.length) { loadFromRSS(); return; }
             episodes.sort((a, b) => new Date(b.date) - new Date(a.date));
             const latest = episodes[0];
-            document.getElementById('latest-title').textContent = epTitle(latest) || 'Latest Episode';
+            setLatestTitle(epTitle(latest) || 'Latest Episode');
             document.getElementById('latest-date').textContent = formatDate(latest.date);
             document.getElementById('latest-audio').src = latest.audio_url || '';
 
@@ -2122,7 +2149,8 @@
 
             renderLatestLangs(latest);
 
-            const grid = document.getElementById('episodes-grid');
+            const grid = episodeGrid();
+            if (!grid) return;
             grid.innerHTML = '';
             episodes.slice(1, 13).forEach((ep, i) => {
                 const card = document.createElement('div');
@@ -2259,13 +2287,14 @@
                     });
 
                     const first = items[0];
-                    document.getElementById('latest-title').textContent = first.querySelector('title')?.textContent || 'Latest Episode';
+                    setLatestTitle(first.querySelector('title')?.textContent || 'Latest Episode');
                     const pubDate = first.querySelector('pubDate')?.textContent || '';
                     document.getElementById('latest-date').textContent = pubDate ? formatDate(pubDate) : '';
                     const enc = first.querySelector('enclosure');
                     if (enc) document.getElementById('latest-audio').src = enc.getAttribute('url') || '';
 
-                    const grid = document.getElementById('episodes-grid');
+                    const grid = episodeGrid();
+                    if (!grid) return;
                     grid.innerHTML = '';
                     items.slice(1, 13).forEach(item => {
                         const title = item.querySelector('title')?.textContent || 'Episode';
@@ -2292,8 +2321,20 @@
         }
 
         function showNoEpisodes() {
-            document.getElementById('latest-title').textContent = HAS_FEED ? 'No episodes available yet' : 'Not published yet';
-            document.getElementById('episodes-grid').innerHTML = '<p style="color:var(--nn-text-muted);grid-column:1/-1;text-align:center;padding:2rem 0;">Episodes will appear here once available.</p>';
+            /* Only claim the show is empty where the server made no claim. The
+               card is server-rendered from the same summaries this script
+               reads, so when it already carries an episode title, a later
+               fetch failure means the network dropped, not that the show has
+               nothing — and saying so replaces something true with something
+               false. */
+            const titleEl = document.getElementById('latest-title');
+            if (titleEl && !titleEl.dataset.rendered) {
+                titleEl.textContent = HAS_FEED ? 'No episodes available yet' : 'Not published yet';
+            }
+            const grid = episodeGrid();
+            if (grid) {
+                grid.innerHTML = '<p style="color:var(--nn-text-muted);grid-column:1/-1;text-align:center;padding:2rem 0;">Episodes will appear here once available.</p>';
+            }
         }
 
         
