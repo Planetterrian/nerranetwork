@@ -2105,6 +2105,31 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
             continue
     out["caption_track_refusals_14d"] = cap_refused if cap_seen else None
 
+    # Dub spoken-text gate, shadow (Sep 22 2026): share of translated
+    # tracks the gate FAILED over the last 14 days, from the per-language
+    # sidecars digests/*/spoken_text_gate.<lang>.json. Null under 10
+    # tracks — never a fake zero. The enforce decision reads this beside
+    # scripts/audit_spoken_text.py --dubs.
+    gate_seen = gate_failed = 0
+    for sf in (root / "digests").glob("*/spoken_text_gate.*.json"):
+        try:
+            doc = json.loads(sf.read_text(encoding="utf-8")) or {}
+            for row in (doc.get("episodes") or {}).values():
+                if not isinstance(row, dict):
+                    continue
+                if str(row.get("generated_at") or "")[:10] < cutoff_14:
+                    continue
+                if row.get("gate") not in ("pass", "fail_shadow", "blocked"):
+                    continue
+                gate_seen += 1
+                if row.get("gate") != "pass":
+                    gate_failed += 1
+        except (OSError, ValueError, TypeError):
+            continue
+    out["dub_gate_tracks_14d"] = gate_seen if gate_seen else None
+    out["dub_gate_fail_share_14d"] = (
+        round(gate_failed / gate_seen, 3) if gate_seen >= 10 else None)
+
     # Modern Investing pick cadence (Sep 18 2026): share of the last 10
     # committed trade signals whose action is new_trade. The cold-streak
     # regime text had the show declaring no trade on 19 of 23 episodes

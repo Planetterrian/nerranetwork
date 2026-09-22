@@ -1449,6 +1449,39 @@ experiments:
       SEED_TIERS (C) so the tier can reach it. A missing reach file holds
       every show's state. Revert = SHORTS_PROBE_CHANNELS = ().
 
+  - id: dub-spoken-text-gate-shadow-2026-09-22
+    title: "Spoken-text gate on the RU/FR/ES/ZH tracks — shadow first"
+    area: quality
+    shipped: 2026-09-22
+    readout: 2026-10-06
+    status: reading
+    metric: dub_gate_fail_share_14d
+    baseline: null
+    target: >
+      Landmine #25 covered the English audio only: the translated tracks
+      (the per-language podcast feeds and the @NerraRU / @NerraFR dubs —
+      @NerraRU carries 14 of the network's top 15 videos) were synthesised
+      through the same request, with the same server-side text
+      normalisation that read its own reasoning aloud on Tesla Ep605, and
+      never compared with their script. engine.multilingual now Whispers
+      every rendered track and runs engine.spoken_text_gate against the
+      translated script BEFORE the R2 upload, in SHADOW: the verdict goes to
+      digests/<slug>/spoken_text_gate.<lang>.json and a failure is a
+      ::warning::, never a block. Target at readout: dub_gate_fail_share_14d
+      under 0.05 with every failure explained by a Whisper artifact
+      (scripts/audit_spoken_text.py --dubs names them) — then set
+      per-language thresholds and let the mode resolver enforce; a fail
+      share above that with real leaks is the finding that enforces sooner.
+    notes: >
+      Operator decision 2026-09-22 (shadow, then enforce after the readout).
+      The dub engines (engine.ru_dub / engine.lang_dub) reuse the sweep's
+      Whisper JSON instead of transcribing the same bytes twice; the JSON is
+      gitignored, the plain transcript and the sidecar are committed.
+      MultilingualConfig.spoken_text_gate: shadow | off; "enforce" is
+      downgraded to shadow by resolve_gate_mode for any non-English
+      transcript until a language is calibrated. Cost: one Whisper run per
+      track (~1-3 min CPU) in the multilingual job, no API spend.
+
   - id: dp-pod-youtube-shorts
     title: "DP Pod on YouTube — Shorts-only, first video surface"
     area: reach

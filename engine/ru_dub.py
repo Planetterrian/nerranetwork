@@ -745,10 +745,19 @@ def publish_ru_dub(
                 from engine.transcripts import generate_transcript
                 from engine.shorts_selector import pick_top_n_engaging_windows
                 from engine.audio import get_audio_duration
-                tr = generate_transcript(
-                    audio, tmp, f"ru_ep{episode_num:03d}", language="ru")
-                if tr and tr.json_path.exists():
-                    tr_json = tr.json_path
+                # Sep 22 2026: the multilingual sweep already Whispered this
+                # track for the spoken-text gate — reuse its JSON.
+                from engine.multilingual import track_transcript_path
+                _reuse = track_transcript_path(
+                    PROJECT_ROOT / config.episode.output_dir, episode_num, "ru")
+                if _reuse is not None:
+                    tr_json = _reuse
+                else:
+                    tr = generate_transcript(
+                        audio, tmp, f"ru_ep{episode_num:03d}", language="ru")
+                    if tr and tr.json_path.exists():
+                        tr_json = tr.json_path
+                if tr_json is not None:
                     total_dur = get_audio_duration(audio) or 0.0
                     windows = pick_top_n_engaging_windows(
                         tr_json, n=ru_shorts,

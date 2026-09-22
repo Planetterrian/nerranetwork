@@ -265,6 +265,14 @@ multilingual:
   # chars + translation).
   auto: true
   languages: [fr, ru, es, zh]
+  # Sep 22 2026: spoken-text gate on every translated track, SHADOW mode —
+  # Whisper the dub MP3 and compare it with the translated script before
+  # the R2 upload; record the verdict in digests/<slug>/spoken_text_gate.<lang>.json
+  # and warn on a failure, never block. The Ep605 leak class (server-side
+  # text normalisation read aloud) had no check at all on the RU/FR
+  # tracks — @NerraRU is the network's highest-reach surface. Enforce
+  # after the 14-day readout (register dub-spoken-text-gate-shadow-2026-09-22).
+  spoken_text_gate: shadow
   # Optional override: name of an env var holding a DIFFERENT cloned voice ID
   # for the translations. Unset → the show's tts.voice_id is used.
   cloned_voice_env: GROK_CLONED_VOICE_ID

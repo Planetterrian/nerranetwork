@@ -414,6 +414,14 @@ class MultilingualConfig:
     # is NEVER stored in YAML/git — it's pasted into ``.env``. The TTS
     # call reads it at runtime and fails loud if unset.
     cloned_voice_env: str = "GROK_CLONED_VOICE_ID"
+    # Sep 22 2026: the spoken-text gate (landmine #25) on every translated
+    # track — Whisper the rendered MP3 and compare it with the translated
+    # script BEFORE the R2 upload that feeds the per-language podcast feed
+    # and the RU/FR YouTube dubs. ``shadow`` records and warns, never
+    # blocks (the measures are uncalibrated on non-English audio;
+    # ``resolve_gate_mode`` downgrades ``enforce`` to shadow for any
+    # non-English transcript anyway); ``off`` skips the Whisper run.
+    spoken_text_gate: str = "shadow"
 
 
 @dataclass

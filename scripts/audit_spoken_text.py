@@ -56,6 +56,40 @@ def _pairs(since: str, show: str | None):
         yield show_dir, base.name, date, tts, json_path, txt_path
 
 
+_LANG_RE = re.compile(r"\.([a-z]{2})_transcript\.(json|txt)$")
+
+
+def _dub_pairs(since: str, show: str | None):
+    """``<stem>.<lang>.txt`` + ``<stem>.<lang>_transcript.{json,txt}`` pairs
+    written by the multilingual sweep (Sep 22 2026) — the calibration set
+    for the dub spoken-text gate. The JSON is gitignored, so on a fresh
+    checkout the plain transcript carries the comparison."""
+    seen = set()
+    for tr in sorted((ROOT / "digests").glob("*/*_transcript.*")):
+        m = _LANG_RE.search(tr.name)
+        if not m:
+            continue
+        lang = m.group(1)
+        show_dir = tr.parent.name
+        if show and show_dir != show:
+            continue
+        base_name = tr.name[: -len(f".{lang}_transcript.{m.group(2)}")]
+        key = (show_dir, base_name, lang)
+        if key in seen:
+            continue
+        seen.add(key)
+        d = _DATE_RE.search(base_name)
+        date = d.group(1) if d else "00000000"
+        if date < since:
+            continue
+        script = tr.parent / f"{base_name}.{lang}.txt"
+        if not script.exists():
+            continue
+        json_path = tr.parent / f"{base_name}.{lang}_transcript.json"
+        txt_path = tr.parent / f"{base_name}.{lang}_transcript.txt"
+        yield show_dir, f"{base_name}.{lang}", date, script, json_path, txt_path, lang
+
+
 def _pct(values, q):
     if not values:
         return 0
@@ -69,17 +103,25 @@ def main() -> int:
     ap.add_argument("--show", help="Only this show directory")
     ap.add_argument("--top", type=int, default=15, help="Worst-N per measure")
     ap.add_argument("--json", help="Write per-episode rows to this file")
+    ap.add_argument("--dubs", action="store_true",
+                    help="Audit the translated tracks (<stem>.<lang>.txt vs "
+                         "<stem>.<lang>_transcript.*) instead of the English scripts")
     args = ap.parse_args()
 
     rows = []
-    for show, name, date, tts, json_path, txt_path in _pairs(args.since, args.show):
+    if args.dubs:
+        pairs = _dub_pairs(args.since, args.show)
+    else:
+        pairs = ((s, n, d, t, j, x, ("ru" if s in RU_SHOWS else "en"))
+                 for s, n, d, t, j, x in _pairs(args.since, args.show))
+    for show, name, date, tts, json_path, txt_path, language in pairs:
         script = tts.read_text(encoding="utf-8", errors="replace")
         report = check_transcript_files(script, json_path, txt_path)
         if report.spoken_words < 50:
             continue
         rows.append({
             "show": show, "episode": name, "date": date,
-            "language": "ru" if show in RU_SHOWS else "en",
+            "language": language,
             "passed": report.passed, "reasons": list(report.reasons),
             "opening_match": report.opening_match,
             "longest_unmatched_run": report.longest_unmatched_run,

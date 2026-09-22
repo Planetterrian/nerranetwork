@@ -112,6 +112,36 @@ class TestReachNormalisedSubs:
         assert cta["metric"] == "short_subs_per_1k_views_14d_en"
 
 
+class TestDubGateMetric:
+    """Sep 22 2026: dub spoken-text gate fail share — null under 10 tracks."""
+
+    def _root(self, tmp_path, rows):
+        (tmp_path / "api").mkdir()
+        (tmp_path / "api" / "youtube_stats.json").write_text(json.dumps({
+            "generated": "2026-09-22T14:00:00Z", "channels": {}, "shows": {}}), encoding="utf-8")
+        d = tmp_path / "digests" / "x"
+        d.mkdir(parents=True)
+        (d / "spoken_text_gate.ru.json").write_text(json.dumps({
+            "schema_version": 1, "lang": "ru",
+            "episodes": {str(i): {"gate": g, "generated_at": "2026-09-20T00:00:00+00:00"}
+                         for i, g in enumerate(rows)}}), encoding="utf-8")
+        return tmp_path
+
+    def test_null_under_ten_tracks(self, tmp_path):
+        m = gd._experiment_live_metrics(self._root(tmp_path, ["pass"] * 9))
+        assert m["dub_gate_fail_share_14d"] is None and m["dub_gate_tracks_14d"] == 9
+
+    def test_share_counts_only_gated_rows(self, tmp_path):
+        rows = ["pass"] * 8 + ["fail_shadow"] * 2 + ["no_transcript", "off", "error"]
+        m = gd._experiment_live_metrics(self._root(tmp_path, rows))
+        assert m["dub_gate_tracks_14d"] == 10 and m["dub_gate_fail_share_14d"] == 0.2
+
+    def test_no_sidecars_is_unmeasured(self, tmp_path):
+        (tmp_path / "api").mkdir(); (tmp_path / "digests").mkdir()
+        m = gd._experiment_live_metrics(tmp_path)
+        assert m["dub_gate_fail_share_14d"] is None and m["dub_gate_tracks_14d"] is None
+
+
 class TestStaggerHealth:
     def test_section_shape(self):
         st = gd.build_stagger_section(ROOT)

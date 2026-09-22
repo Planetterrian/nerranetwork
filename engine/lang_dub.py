@@ -516,11 +516,20 @@ def publish_lang_dub(
                     pick_top_n_engaging_windows,
                 )
                 from engine.transcripts import generate_transcript
-                tr = generate_transcript(
-                    audio, tmp, f"{lang.code}_ep{episode_num:03d}",
-                    language=lang.whisper_language)
-                if tr and tr.json_path.exists():
-                    tr_json = tr.json_path
+                # Sep 22 2026: the multilingual sweep already Whispered this
+                # track for the spoken-text gate — reuse its JSON.
+                from engine.multilingual import track_transcript_path
+                _reuse = track_transcript_path(
+                    PROJECT_ROOT / config.episode.output_dir, episode_num, lang.code)
+                if _reuse is not None:
+                    tr_json = _reuse
+                else:
+                    tr = generate_transcript(
+                        audio, tmp, f"{lang.code}_ep{episode_num:03d}",
+                        language=lang.whisper_language)
+                    if tr and tr.json_path.exists():
+                        tr_json = tr.json_path
+                if tr_json is not None:
                     total_dur = get_audio_duration(audio) or 0.0
                     windows = pick_top_n_engaging_windows(
                         tr_json, n=n_shorts,
