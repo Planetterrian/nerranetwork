@@ -81,6 +81,14 @@ PLAIN_SAILING_TITLE_MAX = 90
 # slice.
 FACT_CARD_LABEL_MAX = 36
 
+# The spoken open (Sep 22 2026): the digest's **HOOK:** line is read
+# aloud word for word as the episode's first sentence. Above this the
+# opener is two sentences pretending to be one (opens measured 14-32
+# words, 6 of 15 over the prompts' own 120-character ask, and nothing
+# in code checked). It is a GATE in run_show's structural regeneration,
+# never a truncation: a long hook is regenerated, not sliced.
+SPOKEN_HOOK_MAX_CHARS = 150
+
 ELLIPSIS = "…"
 
 # Trailing characters that read as debris once the tail is gone.

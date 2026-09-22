@@ -2156,10 +2156,26 @@ def run(args: argparse.Namespace) -> None:
         #     (narrative shows have their own fixed shape and may legitimately
         #     have no HOOK label). Deep dives are skipped too — their digest
         #     shape isn't the daily news format.
-        if _val_factory and not is_deep_dive:
+        # Sep 22 2026: a HOOK over the spoken ceiling is a structural
+        # defect too (engine.titles.SPOKEN_HOOK_MAX_CHARS — the line is the
+        # episode's first spoken sentence). It is a gate, never a clip:
+        # the one-shot regeneration is spent and the retry is used only
+        # when its hook fits. Runs for every daily show, validation
+        # config or not (SpaceX has none).
+        from engine.titles import SPOKEN_HOOK_MAX_CHARS as _HOOK_MAX
+        _hook_now = _extract_hook(x_thread) or ""
+        _hook_too_long = len(_hook_now) > _HOOK_MAX
+        if _hook_too_long:
+            metrics.record("digest_hook_over_length", len(_hook_now))
+        if (_val_factory or _hook_too_long) and not is_deep_dive:
             _struct_defects: list = []
-            if not _extract_hook(x_thread):
+            if not _hook_now:
                 _struct_defects.append("the **HOOK:** line is missing")
+            elif _hook_too_long:
+                _struct_defects.append(
+                    f"the **HOOK:** line is {len(_hook_now)} characters, "
+                    f"over the {_HOOK_MAX} spoken ceiling"
+                )
             if _empty_section_issues:
                 _struct_defects.append(
                     "these mandatory sections came back empty: "
@@ -2191,6 +2207,12 @@ def run(args: argparse.Namespace) -> None:
                     "write any thin section with extra depth rather than "
                     "leaving it blank."
                 )
+                if _hook_too_long:
+                    _struct_suffix += (
+                        f" The hook line is ONE sentence of at most "
+                        f"{_HOOK_MAX} characters; rewrite it shorter, never "
+                        "add a second sentence."
+                    )
                 try:
                     with metrics.stage("generate_digest_structural_retry"):
                         _x_struct = generate_digest(
@@ -2199,9 +2221,14 @@ def run(args: argparse.Namespace) -> None:
                         )
                     # Only swap in the retry if it restored the HOOK (the most
                     # reliable structural signal) and isn't shorter garbage.
+                    # When the defect was an over-long hook, the retry's hook
+                    # must fit the ceiling — never truncate, never accept a
+                    # second long one.
+                    _retry_hook = _extract_hook(_x_struct) or ""
                     if (
-                        _extract_hook(_x_struct)
+                        _retry_hook
                         and len(_x_struct.strip()) >= _MIN_DIGEST_CHARS
+                        and (not _hook_too_long or len(_retry_hook) <= _HOOK_MAX)
                     ):
                         logger.info(
                             "Structural retry produced a digest with a HOOK "

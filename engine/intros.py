@@ -1159,6 +1159,10 @@ def build_cold_open_spec(show_slug: str = "", *, is_ru: bool = False) -> str:
         "thing, not with scene-setting or a subordinate clause.\n"
         "- Never open on a question. It reads as a stall and the listener "
         "answers it by leaving.\n"
+        "- THE FIRST SENTENCE HAS A SHAPE: at most twenty words, its "
+        "concrete quantity inside the first ten, and the stake in the same "
+        "sentence. A longer opener is two sentences pretending to be one; "
+        "split it or cut it.\n"
         "- ONLY AFTER the cold open, give the short identity line."
     )
 
