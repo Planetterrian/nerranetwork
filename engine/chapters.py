@@ -462,6 +462,30 @@ def parse_chapters(
             )
             matches = [m for m in matches if m[0] <= closing_at]
 
+    # The opening must belong to a chapter (Sep 22 2026, new-show Ep1s).
+    # When no ``where: start`` marker matches inside the opening window,
+    # the first matched marker is a mid-episode section, and everything
+    # before it — the hook, the identity line and every news story —
+    # belonged to no chapter at all: AI Chips Ep1's chapters began at
+    # 343 s ("The Teardown"), Longevity Ep1's at 326 s. Auto-segmentation
+    # only ever splits the FIRST chapter, so it could not recover them.
+    # A synthetic opening chapter (titled like the show's own start
+    # marker) now covers that span, and the fallback below splits it on
+    # the digest headlines like any long Introduction. Only for shows that
+    # configure a start marker: a show without one keeps the legacy shape
+    # (split_script_at_chapters' "Preamble" section for section-TTS).
+    _start_titles = [t for _r, t, w in compiled_markers if w == "start"]
+    if _start_titles and matches[0][0] > start_window_end:
+        _open_title = _start_titles[0]
+        if _open_title in {t for _w, _c, t in matches}:
+            _open_title = "Opening"
+        matches.insert(0, (0, 0, _open_title))
+        logger.info(
+            "No start marker matched for %s — opening covered by a "
+            "synthetic '%s' chapter up to word %d",
+            show_name or "show", _open_title, matches[1][0],
+        )
+
     # Build Chapter objects from matches
     chapters: list[Chapter] = []
     for i, (w_start, c_start, title) in enumerate(matches):

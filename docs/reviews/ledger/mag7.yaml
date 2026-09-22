@@ -30,3 +30,33 @@ reviews:
         baseline: "n/a"
         expected: "0/7"
         verdict: pending
+  - date: 2026-09-22
+    pr: null
+    doc: tests/test_new_shows_ep1_review_2026_09_22.py
+    reviewer: claude-code (Episode 1 review, operator-requested)
+    summary: >-
+      Episode 1 generated and passed every gate but never reached main: the hook's quote cache was api/mag7.json, the same path as the per-show public API file generate_html writes; finalize committed that file while the cache sat untracked on the show runner, and all four rebase attempts aborted ('untracked working tree file would be overwritten'). The run exited green through the recovery-PR escape hatch (#1270). Content: the Thread re-read four tape prices, the Counterpoint was a technical-analysis 'fails at resistance' article, the Company Desk spent two items on Gemini settings changes, and the script carried 9 absence sentences.
+    shipped:
+      - chapters cover the opening when no start marker matches (engine/chapters.py)
+      - absence-sentence filter on digest and script (engine/absence_sentences.py, opt-in)
+      - targeted X accounts as a content source (x_fetch_enabled; x_lookback_hours on weeklies)
+      - full article text for the top 12 articles (fetch_full_text)
+      - quote cache renamed api/mag7_quotes.json, whitelisted in the commit step; guard that no hook writes api/<slug>.json
+      - Thread never repeats a tape number; Counterpoint must be an argument; TA titles excluded; minor UI rollouts rejected
+      - tape percentages drop a trailing .0
+    deferred:
+      - X handles are unverified until the first live fetch logs per-account counts; prune any that return nothing
+      - network-wide absence-sentence filter (opt-in here; precision on other shows' digests is high but not perfect)
+    predictions:
+      - metric: "MAG 7 episodes that reach main without a recovery PR (first 7)"
+        baseline: "0/1 (Ep1)"
+        expected: "7/7"
+        verdict: pending
+      - metric: "script_repeated_facts (numbers spoken more than once)"
+        baseline: "12 (Ep1)"
+        expected: "<= 4 median, first 7"
+        verdict: pending
+      - metric: "Counterpoint items that are chart/price-level commentary"
+        baseline: "1/1 (Ep1)"
+        expected: "0/7"
+        verdict: pending

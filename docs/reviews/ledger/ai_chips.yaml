@@ -30,3 +30,35 @@ reviews:
         baseline: "n/a"
         expected: "0/7"
         verdict: pending
+  - date: 2026-09-22
+    pr: null
+    doc: tests/test_new_shows_ep1_review_2026_09_22.py
+    reviewer: claude-code (Episode 1 review, operator-requested)
+    summary: >-
+      Episode 1 published (445 s, 912-word script vs 1,500 target). Chapters began at 343 s: no start marker matched the debut line, so the whole news block belonged to no chapter. 8 of 10 digest items ended on an absence sentence despite the prompt ban. The Teardown carried wafer-per-month and reticle ranges from model memory that no article contained, and its subject (CoWoS capacity) was also a news item.
+    shipped:
+      - chapters cover the opening when no start marker matches (engine/chapters.py)
+      - absence-sentence filter on digest and script (engine/absence_sentences.py, opt-in)
+      - targeted X accounts as a content source (x_fetch_enabled; x_lookback_hours on weeklies)
+      - full article text for the top 12 articles (fetch_full_text)
+      - Teardown numbers must come from an article above; its subject must not be a news item's
+    deferred:
+      - X handles are unverified until the first live fetch logs per-account counts; prune any that return nothing
+      - network-wide absence-sentence filter (opt-in here; precision on other shows' digests is high but not perfect)
+    predictions:
+      - metric: "absence sentences per episode (digest + script, before the filter; metric digest_absence_sentences_removed + script_absence_sentences_removed)"
+        baseline: "8 + 8 (Ep1)"
+        expected: "<= 2 after the filter, 0 shipped"
+        verdict: pending
+      - metric: "first chapter startTime (s) on episodes 2-8"
+        baseline: "343 (Ep1)"
+        expected: "<= 25 on 7/7"
+        verdict: pending
+      - metric: "Teardown numbers not traceable to that day's articles (spot check, 3 episodes)"
+        baseline: "at least 4 (Ep1)"
+        expected: "0"
+        verdict: pending
+      - metric: "podcast_script_word_count median, first 7 episodes"
+        baseline: "912 (Ep1)"
+        expected: ">= 1,100"
+        verdict: pending

@@ -16,8 +16,9 @@ Validation per ticker: a loose sanity band plus the same deviation guard
 the Tesla and SpaceX chains use against the last cached close. A ticker
 that fails is omitted — the tape says so; it never guesses.
 
-The cache (``api/mag7.json``) is the single source a web widget or a later
-review reads, and is whitelisted in both committing workflows.
+The cache (``api/mag7_quotes.json`` — never ``api/<slug>.json``, which is the
+per-show public episode API) is the single source a web widget or a later
+review reads, and run-show.yml's commit step adds it explicitly.
 """
 
 from __future__ import annotations
@@ -165,6 +166,14 @@ def persist(quotes: List[Quote], cache_path: Path) -> None:
         logger.warning("could not persist %s (non-fatal): %s", cache_path, exc)
 
 
+def _signed_pct(pct: float) -> str:
+    """``+1%`` not ``+1.0%``: MAG 7 Ep1 spoke "up one point zero percent"."""
+    text = f"{pct:+.1f}"
+    if text.endswith(".0"):
+        text = text[:-2]
+    return text + "%"
+
+
 def tape_block(quotes: List[Quote], names: Dict[str, str], expected: Iterable[str]) -> str:
     """The digest's REAL-TIME TAPE block, or a one-line 'no quotes' notice.
 
@@ -187,7 +196,7 @@ def tape_block(quotes: List[Quote], names: Dict[str, str], expected: Iterable[st
     for q in quotes:
         chg = ""
         if q.change_pct is not None:
-            chg = " (unchanged)" if q.change_pct == 0 else f" ({q.change_pct:+.1f}%)"
+            chg = " (unchanged)" if q.change_pct == 0 else f" ({_signed_pct(q.change_pct)})"
         lines.append(f"- {names.get(q.ticker, q.ticker)} ({q.ticker}): closed at "
                      f"${q.close:,.2f}{chg} on {q.bar_date}")
     missing = [t for t in expected if t not in have]

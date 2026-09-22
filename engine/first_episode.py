@@ -77,7 +77,7 @@ and the blog all read them — and add ONE new section directly after the
 **What You Need to Know** paragraph:
 
 **### What This Show Covers** (200-300 words, first episode only)
-- Open on the subject, not the show: what a peptide is, why the word now covers everything from insulin to unregulated online vials, and how the show reads evidence — cell, animal, human trial, regulator — using this week's spotlight as the first worked example.
+- Open on the subject, not the show: what a peptide is, why the word now covers everything from insulin to unregulated online vials, and how the show reads evidence — cell, animal, human trial, regulator — using this week's spotlight as the first worked example. Name that subject in one sentence and stop: never list its parts or pre-tell its evidence here — the spotlight section does that, and Longevity Ep1 listed all twelve hallmarks in both places.
 - The posture, stated once and plainly: education and awareness, never dosing, sourcing or protocols, never medical advice, and every compound's regulatory status named.
 - The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
 
@@ -94,7 +94,7 @@ and the blog all read them — and add ONE new section directly after the
 **What You Need to Know** paragraph:
 
 **### What This Show Covers** (200-300 words, first episode only)
-- Open on the subject, not the show: the science of aging as a field that is real, fast-moving and heavily marketed, and how the show reads it — the hallmarks framework as the map, evidence levels as the ruler — using this week's mechanism as the first worked example.
+- Open on the subject, not the show: the science of aging as a field that is real, fast-moving and heavily marketed, and how the show reads it — the hallmarks framework as the map, evidence levels as the ruler — using this week's mechanism as the first worked example. Name that subject in one sentence and stop: never list its parts or pre-tell its evidence here — the spotlight section does that, and Longevity Ep1 listed all twelve hallmarks in both places.
 - The posture, stated once and plainly: education, never medical advice, and every finding carries its evidence level; a mouse result is never presented as a human one.
 - The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
 

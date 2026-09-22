@@ -1169,6 +1169,13 @@ class ShowConfig:
     # description only, exactly as before.
     fetch_full_text: int = 0
     fetch_full_text_chars: int = 2500
+    # Remove "No X was disclosed" sentences from the digest and the script
+    # (engine/absence_sentences.py, Sep 22 2026 new-show Ep1s). Opt-in;
+    # False = every other show byte-identical.
+    absence_sentence_filter: bool = False
+    # How far back the X account fetch looks. 24 (default) = the prompt
+    # every show has always sent; the weekly shows read their whole week.
+    x_lookback_hours: int = 24
     # Nothing older than this many days is news (Sep 18 2026, Offshore
     # North round-1 fix 8): an article whose PAGE publish date (meta /
     # JSON-LD, read during the full-text fetch) or feed date is older is
@@ -1415,6 +1422,8 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         web_search_always=bool(data.get("web_search_always", False)),
         fetch_full_text=int(data.get("fetch_full_text", 0) or 0),
         fetch_full_text_chars=int(data.get("fetch_full_text_chars", 2500) or 2500),
+        absence_sentence_filter=bool(data.get("absence_sentence_filter", False)),
+        x_lookback_hours=int(data.get("x_lookback_hours", 24) or 24),
         stale_article_days=int(data.get("stale_article_days", 0) or 0),
         min_articles=data.get("min_articles", 3),
         min_articles_skip=data.get("min_articles_skip", 3),

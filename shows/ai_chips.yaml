@@ -121,6 +121,43 @@ keywords:
 - rubin
 - capex
 
+# X accounts (Sep 22 2026 Ep1 review): the companies that ship the silicon
+# and the analysts who count it. Fetched as a content SOURCE only — the show
+# never posts to X (x_enabled stays false). A handle that returns nothing is
+# logged "No recent posts" and costs one search call; prune it.
+x_fetch_enabled: true
+x_accounts:
+- handle: nvidia
+  label: NVIDIA
+  max_posts: 3
+- handle: AMD
+  label: AMD
+  max_posts: 3
+- handle: intel
+  label: Intel
+  max_posts: 2
+- handle: MicronTech
+  label: Micron
+  max_posts: 2
+- handle: Arm
+  label: Arm
+  max_posts: 2
+- handle: CoreWeave
+  label: CoreWeave
+  max_posts: 2
+- handle: dylan522p
+  label: Dylan Patel (SemiAnalysis)
+  max_posts: 3
+- handle: ServeTheHome
+  label: ServeTheHome
+  max_posts: 2
+
+# Full article text for the top articles (engine/article_text.py): Ep1's
+# items were written from feed teasers and ended in "no figures were
+# disclosed" eight times out of ten. The digest now reads the articles.
+fetch_full_text: 12
+absence_sentence_filter: true
+
 min_articles: 6
 min_articles_skip: 4
 
@@ -206,7 +243,7 @@ chapters:
   # announces sections, so news chapters come from the digest headlines;
   # the Teardown keys on its REQUIRED phrase "take it apart".
   section_markers:
-  - pattern: This is AI Chips and Data Centres|AI Chips and Data Centres, episode
+  - pattern: This is AI Chips and Data Centres|first episode of|AI Chips and Data Centres, episode
     title: Introduction
     where: start
   - pattern: take (it|this|that) apart

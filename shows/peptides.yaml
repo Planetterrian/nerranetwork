@@ -89,6 +89,42 @@ keywords:
 - health canada
 - amino acid
 
+# X accounts (Sep 22 2026 Ep1 review): regulators, journals and the two
+# companies that make most of the week's peptide news. Source only — the
+# show never posts to X. The whole week is read (x_lookback_hours), because
+# this is a weekly show. An influencer's claim with no study behind it is
+# rejected by the digest's selection rules like any other article.
+x_fetch_enabled: true
+x_lookback_hours: 192
+x_accounts:
+- handle: US_FDA
+  label: U.S. FDA
+  max_posts: 3
+- handle: EricTopol
+  label: Eric Topol (Scripps Research)
+  max_posts: 3
+- handle: statnews
+  label: STAT News
+  max_posts: 3
+- handle: NEJM
+  label: New England Journal of Medicine
+  max_posts: 3
+- handle: TheLancet
+  label: The Lancet
+  max_posts: 2
+- handle: LillyPad
+  label: Eli Lilly
+  max_posts: 2
+- handle: novonordisk
+  label: Novo Nordisk
+  max_posts: 2
+
+# Full article text (engine/article_text.py): Episode 1 was skipped because
+# its script came out at 703 words from a 1,094-word digest written from
+# feed teasers. The digest now reads the articles.
+fetch_full_text: 12
+absence_sentence_filter: true
+
 min_articles: 5
 min_articles_skip: 3
 
@@ -108,7 +144,7 @@ llm:
   podcast_max_tokens: 9000
   min_podcast_words: 1400
   podcast_expand_below_target: false
-  min_digest_words: 1200
+  min_digest_words: 1300
   digest_expand_below_target: true
 
 tts: {}
@@ -164,7 +200,7 @@ episode:
 chapters:
   enabled: true
   section_markers:
-  - pattern: This is Peptides Weekly|Peptides Weekly, episode
+  - pattern: This is Peptides Weekly|first episode of|Peptides Weekly, episode
     title: Introduction
     where: start
   - pattern: this week'?s (spotlight|mechanism)|let'?s look (closely|properly) at

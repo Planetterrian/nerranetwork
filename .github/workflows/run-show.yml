@@ -786,6 +786,11 @@ jobs:
           # Offshore North run's fetch step below and nightly; the page
           # offshore-north-dashboard.html reads it same-origin.
           git add api/offshore_north_dashboard.json || true
+          # MAG 7 Daily's validated regular-session closes (shows/hooks/
+          # mag7.py). Named *_quotes so it can never collide with the
+          # per-show public API file api/mag7.json (Sep 22 2026: that
+          # collision sent MAG 7 Ep1 to a recovery PR).
+          git add api/mag7_quotes.json || true
           # Growing SpaceX metrics time-series (monthly mass-to-orbit,
           # satellites, vehicle mix) — accumulates over time to power the
           # dashboard's long-run growth charts.

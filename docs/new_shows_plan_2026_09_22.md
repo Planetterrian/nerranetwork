@@ -77,7 +77,7 @@ Each item names the mechanism, not the story; the stories are in
 | A show that bypasses run_show gets none of its publish surface | Nerra Weekly wires OP3 prefix, `_VIRTUAL_COST_SLUGS`, content-lake import and any distribution explicitly. |
 | Per-show `min_articles_skip`, never the default | Pinned per show below; the `or 3` bug that turns 0 into 3 is fixed in Phase 0. |
 | Same-day sibling overlap (PT/FF; SpaceX/Tesla) | Boundaries are written into the prompts AND enforced data-side where a mechanism exists: MAG 7 vs Tesla Shorts Time, AI Chips vs Models & Agents, Longevity vs Planetterrian, Top World vs the regional desks vs Omni View. |
-| Loops on NUMBERS fail silently | Every new per-show data file (`api/mag7.json`, `api/vancouver_roads.json`, …) is whitelisted in BOTH committing workflows and read by a dashboard card or a metric with a named consumer. |
+| Loops on NUMBERS fail silently | Every new per-show data file (`api/mag7_quotes.json`, `api/vancouver_roads.json`, …; never `api/<slug>.json`, which is the per-show public episode API) is whitelisted in BOTH committing workflows and read by a dashboard card or a metric with a named consumer. |
 | Model changes follow the playbook | All new shows on the network default (grok-4.3 digest/fetch; combined generation on). No new show pins grok-4.6/4.7 on a digest stage. |
 | Feeds from a laptop are not feeds from a runner | Appendix B was probed through this session's proxy; five publishers returned 403 that likely differ on a GitHub runner. Every candidate list is re-graded with `check_feeds.py <slug>` from Actions before Ep1. |
 | YouTube cadence, not quota, is the constraint | Off at launch; a second channel for the Mira desks is a data decision (§7). |
@@ -370,7 +370,7 @@ before), and a `shows/segments/<slug>.json` slow-news library or
   (yfinance history → fast_info → Yahoo v8), the SpaceX clock rule for the
   verb (`_market_is_open` — weekday 04:00–20:00 New York; "closed at" on
   weekends and pre-open; "unchanged", never "up zero percent"), a sanity
-  band per ticker and the 25% deviation guard, cached to `api/mag7.json`
+  band per ticker and the 25% deviation guard, cached to `api/mag7_quotes.json`
   (whitelisted in the run-show commit step and nightly `add-paths`;
   `_STOCK_WIDGETS["mag7"]`). Recommended: lift the chain into
   `engine/market_quotes.py` used by mag7 first; Tesla and SpaceX migrate

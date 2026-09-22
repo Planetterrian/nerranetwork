@@ -30,3 +30,29 @@ reviews:
         baseline: "n/a"
         expected: "<=2 per episode"
         verdict: pending
+  - date: 2026-09-22
+    pr: null
+    doc: tests/test_new_shows_ep1_review_2026_09_22.py
+    reviewer: claude-code (Episode 1 review, operator-requested)
+    summary: >-
+      Episode 1 published (601 s, 1,213 words). Off-beat lead: the hook and three of six news items were Phase 3 trials for Sjogren's, obesity maintenance and an inherited eye disease, none about aging, admitted by the bare 'trial' keyword; two carried 'no approval for aging use' filler. The debut section listed all twelve hallmarks and the Mechanism of the Week listed them again. Chapters began at 326 s.
+    shipped:
+      - chapters cover the opening when no start marker matches (engine/chapters.py)
+      - absence-sentence filter on digest and script (engine/absence_sentences.py, opt-in)
+      - targeted X accounts as a content source (x_fetch_enabled; x_lookback_hours on weeklies)
+      - full article text for the top 12 articles (fetch_full_text)
+      - SCOPE rule (aging itself only) and 'trial' removed from keywords; age-related/frailty/sarcopenia/geroscience added
+      - debut section names the spotlight subject without listing its parts
+      - mechanism 550-700 words and the centre of the script
+    deferred:
+      - X handles are unverified until the first live fetch logs per-account counts; prune any that return nothing
+      - network-wide absence-sentence filter (opt-in here; precision on other shows' digests is high but not perfect)
+    predictions:
+      - metric: "news items not about aging (disease trials not studied as aging)"
+        baseline: "3/6 (Ep1)"
+        expected: "0 per episode on 5/6 of the first 6"
+        verdict: pending
+      - metric: "first chapter startTime (s)"
+        baseline: "326 (Ep1)"
+        expected: "<= 25 on 6/6"
+        verdict: pending
