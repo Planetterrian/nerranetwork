@@ -597,7 +597,20 @@
             padding-top: var(--sp-6);
             border-top: 1px solid var(--nn-border);
         }
+        /* The preview lives INSIDE <summary> on purpose. A child of <details>
+           is hidden by the UA when the element is closed and author CSS
+           cannot reliably bring it back; summary content is always painted.
+           It carries aria-hidden because the same words are read out again
+           three lines below, and a 400-character button label is not a
+           button label. */
         .blog-transcript details summary {
+            display: block;
+            cursor: pointer;
+            padding: var(--sp-3) 0;
+            list-style: none;
+        }
+        .blog-transcript details summary::-webkit-details-marker { display: none; }
+        .blog-transcript .transcript-head {
             display: flex;
             align-items: center;
             gap: var(--sp-2);
@@ -605,18 +618,54 @@
             font-size: 1.1rem;
             font-weight: 600;
             color: var(--nn-white);
-            cursor: pointer;
-            padding: var(--sp-3) 0;
-            list-style: none;
         }
-        .blog-transcript details summary::-webkit-details-marker { display: none; }
-        .blog-transcript details summary::after {
+        .blog-transcript .transcript-length {
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--nn-text-muted);
+        }
+        .blog-transcript .transcript-head::after {
             content: '+';
             margin-left: auto;
             font-size: 1.2rem;
             color: var(--nn-text-muted);
         }
-        .blog-transcript details[open] summary::after { content: '\2212'; }
+        .blog-transcript details[open] .transcript-head::after { content: '\2212'; }
+        .blog-transcript .transcript-preview {
+            position: relative;
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: var(--nn-text-muted);
+            white-space: pre-wrap;
+            margin-top: var(--sp-3);
+            max-height: 11em;
+            overflow: hidden;
+        }
+        /* Fades the last line instead of chopping it, so the cut reads as
+           "there is more" rather than "this ended oddly". */
+        .blog-transcript .transcript-preview::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
+            height: 3.4em;
+            /* The article body sits directly on the page background, not on
+               a card, so the fade has to land on --nn-bg. */
+            background: linear-gradient(to bottom,
+                rgba(0,0,0,0), var(--nn-bg));
+            pointer-events: none;
+        }
+        .blog-transcript .transcript-more {
+            display: inline-block;
+            margin-top: var(--sp-3);
+            font-family: var(--font-ui);
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--show-color, var(--nn-purple));
+        }
+        .blog-transcript details[open] .transcript-preview,
+        .blog-transcript details[open] .transcript-more { display: none; }
         .blog-transcript .transcript-content {
             font-family: var(--font-body);
             font-size: 0.95rem;
@@ -825,6 +874,108 @@
             margin: 0 0 var(--sp-4);
             background: var(--nn-surface);
             border-radius: 0 8px 8px 0;
+        }
+
+        /* ---------------------------------------------------------------
+           Interview posts (Sep 21 2026). The Age of AI and Nerra Voices
+           publish conversations with named people; the shared news layout
+           buried the guest in a fourth-level heading and gave the page no
+           player at all.
+           These rules only render when the post carries an `interview`
+           context, which is only ever an interview show.
+           --------------------------------------------------------------- */
+        .nn-iv-hero {
+            max-width: 900px;
+            margin: var(--sp-4) auto 0;
+            padding: 0 var(--sp-6);
+        }
+        .nn-iv-eyebrow {
+            display: flex; align-items: center; gap: 0.6rem;
+            font-family: var(--font-ui); font-size: 0.78rem;
+            font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+            color: var(--show-color-text, var(--show-color));
+            margin-bottom: 0.9rem;
+        }
+        .nn-iv-eyebrow img { border-radius: 7px; }
+        .nn-iv-eyebrow a { color: inherit; text-decoration: none; }
+        .nn-iv-name {
+            font-family: var(--font-heading);
+            font-size: clamp(2rem, 5.2vw, 3rem);
+            line-height: 1.08; margin: 0 0 0.45rem; letter-spacing: -0.02em;
+        }
+        .nn-iv-identifier {
+            font-family: var(--font-ui); font-size: 1.02rem; font-weight: 600;
+            color: var(--show-color-text, var(--show-color));
+            margin: 0 0 1rem;
+        }
+        .nn-iv-standfirst {
+            font-size: 1.12rem; line-height: 1.55; color: var(--nn-text-secondary);
+            margin: 0 0 1.4rem; max-width: 62ch;
+        }
+        .nn-iv-player {
+            border: 1px solid var(--nn-border); border-radius: 14px;
+            background: var(--nn-surface); padding: 1rem 1.1rem;
+            margin: 0 0 1.1rem;
+        }
+        .nn-iv-player-label {
+            display: flex; align-items: center; gap: 0.45rem;
+            font-family: var(--font-ui); font-size: 0.8rem; font-weight: 600;
+            color: var(--nn-text-muted); margin-bottom: 0.6rem;
+        }
+        .nn-iv-player audio { width: 100%; height: 40px; }
+        .nn-iv-meta {
+            display: flex; flex-wrap: wrap; gap: 0.55rem 1.1rem;
+            font-family: var(--font-ui); font-size: 0.85rem;
+            color: var(--nn-text-muted); margin: 0 0 1.4rem;
+            align-items: center;
+        }
+        .nn-iv-links { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+        .nn-iv-link {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            padding: 3px 11px; border: 1px solid var(--nn-border);
+            border-radius: 100px; font-family: var(--font-ui);
+            font-size: 0.78rem; font-weight: 600; text-decoration: none;
+            color: var(--nn-text-secondary); white-space: nowrap;
+        }
+        .nn-iv-link:hover { border-color: var(--show-color); color: var(--show-color-text, var(--show-color)); }
+        .nn-iv-card {
+            max-width: 900px; margin: 0 auto var(--sp-6);
+            padding: 0 var(--sp-6);
+        }
+        .nn-iv-card-inner {
+            border: 1px solid var(--nn-border);
+            border-left: 3px solid var(--show-color);
+            border-radius: 14px; background: var(--nn-card);
+            padding: 1.3rem 1.5rem;
+        }
+        .nn-iv-card-label {
+            font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--nn-text-muted); margin-bottom: 0.55rem;
+        }
+        .nn-iv-card p { margin: 0; line-height: 1.6; }
+        .nn-iv-points { margin: 0; padding-left: 1.15rem; }
+        .nn-iv-points li { margin-bottom: 0.6rem; line-height: 1.55; }
+        .nn-iv-points li:last-child { margin-bottom: 0; }
+        .nn-iv-next {
+            max-width: 900px; margin: 0 auto var(--sp-8); padding: 0 var(--sp-6);
+            display: grid; gap: 0.8rem;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        }
+        .nn-iv-next a {
+            display: block; border: 1px solid var(--nn-border);
+            border-radius: 14px; background: var(--nn-surface);
+            padding: 1rem 1.2rem; text-decoration: none; color: inherit;
+        }
+        .nn-iv-next a:hover { border-color: var(--show-color); }
+        .nn-iv-next-label {
+            font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--nn-text-muted); margin-bottom: 0.35rem;
+        }
+        .nn-iv-next-title { font-weight: 600; line-height: 1.35; }
+        @media (max-width: 640px) {
+            .nn-iv-hero, .nn-iv-card, .nn-iv-next { padding: 0 var(--sp-4); }
         }
     </style>
 
@@ -1398,6 +1549,8 @@
         </ol>
     </nav>
 
+    
+    
     <!-- Hero -->
     <header class="blog-hero">
         <div class="blog-hero-inner">
@@ -1436,6 +1589,7 @@
             </div>
         </div>
     </header>
+    
 
     
     
@@ -1595,16 +1749,39 @@
             
 
             <!-- Transcript -->
-            
             <section class="blog-transcript" id="transcript">
                 <details>
                     <summary>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
-                        Full Episode Transcript
+                        <span class="transcript-head">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+                            Full episode transcript
+                            
+                            <span class="transcript-length">1,801 words</span>
+                            
+                        </span>
+                        
+                        <span class="transcript-preview" aria-hidden="true">Hey, welcome to Models and Agents, episode one, for February twenty-sixth, twenty twenty-six. Your daily briefing on the A . I . models and agents that are changing everything. And no, not THOSE kinds of models and agents. Let's get into it. Anthropic acquires Vercept to enhance Claude's screen reading, while Google launches Nano Banana 2 for faster, cheaper image generation.</span>
+                        <span class="transcript-more">Read the whole thing &darr;</span>
+                        
                     </summary>
                     <div class="transcript-content">Hey, welcome to Models and Agents, episode one, for February twenty-sixth, twenty twenty-six. Your daily briefing on the A . I . models and agents that are changing everything. And no, not THOSE kinds of models and agents. Let's get into it. Anthropic acquires Vercept to enhance Claude's screen reading, while Google launches Nano Banana 2 for faster, cheaper image generation. Alright, folks, if you're feeling that familiar whiplash from how fast A . I . is moving, you're not alone. Just when you think you've got a handle on the latest models, something drops that changes the game. Today, we're diving into Anthropic's big move with Vercept, which could supercharge how A . I . agents interact with our screens, and Google's Nano Banana 2, making high-quality image generation way more accessible and affordable. Stick around because we'll break down what this means for your workflows, whether you're building agents or just tinkering with multimodal apps. Plus, we've got updates on agent behaviors that might make you chuckle—or double-check your guardrails—and some practical tools you can try right now. It's an exciting time, so let's unpack it all. Okay, top story today has me genuinely pumped because it's one of those acquisitions that feels like it's going to unlock a ton of practical value in the agent space. Anthropic has snapped up Vercept, this startup that's all about screen recognition models, and they're integrating it to boost Claude's ability to read and control computer screens using something called the VyUI model. If you've been playing with agentic A . I .—think models that act like little autonomous helpers for tasks like coding or navigating apps—this is huge. Right now, agents like Claude sometimes struggle with visual stuff, relying on embeddings that aren't always spot-on accurate. Vercept's tech promises to sharpen that up, potentially making it more reliable than what's out there, even closing some gaps with competitors like Open A.I.'s Operator. To geek out a bit, this builds on trends where A . I . needs better "vision" for real-world tasks. Imagine telling your agent to automate a browser session or debug code on your desktop—Vercept could make that smoother without you having to retrain the model from scratch. Compared to Google's multimodal pushes, which are great for generating images or understanding visuals in a broad sense, this is laser-focused on practical integration for agents. It's not about flashy creativity; it's about reducing errors in everyday automation tools like LangGraph or AutoGen. For you developers out there, this means Claude might soon handle complex desktop interactions with way less fumbling—think zero-shot improvements where the model just gets it right out of the gate. If you've been frustrated with current screen-based agents dropping the ball on navigation, this could be a game-changer. Keep an eye on integration timelines and any A P I updates from Anthropic; in the meantime, I'd say experiment with Claude's existing computer use A P I to get a baseline. Set up a simple browser agent task and see where it trips up—that way, you'll appreciate the upgrade when it lands. It's one of those developments that reminds me how A . I . is inching closer to being a true co-pilot, not just a fancy chatbot. Shifting gears to model updates, Google's been busy, and they've just released Nano Banana 2, which is essentially Gemini 3.1 Flash Image. This thing matches the quality of their Pro models but at those super-quick Flash speeds, and get this—it's up to forty percent cheaper on A P I costs. It's now the default in the Gemini app, which is a smart move for accessibility. What stands out is the improvements in subject consistency and four thousand synthesis; it outperforms earlier versions handily, and it's stronger than alternatives like Stable Diffusion when you're deploying on the edge, where speed and efficiency matter most. That said, it still lags behind frontier models in sheer creative flexibility, so if you're after wild, artistic outputs, you might stick with those. Diving deeper, Nano Banana 2 can crank out four thousand images in sub-second times, which is a pivot toward efficient edge A . I . rather than just chasing raw scale. It edges out competitors like DALL-E mini in that speed-accuracy balance, but you'll need to prompt it carefully for really complex scenes. If you're a developer building real-time apps—maybe something multimodal where images need to generate on the fly—this is a big deal for keeping costs down without losing fidelity. The Google A . I . blog has some tools to test it out for quick prototypes, so if you're benchmarking against your current pipeline, give it a spin and see the savings. On the Anthropic side, they're retiring Claude 3 Opus in a quirky way—letting it "publish" weekly essays on Substack after some "retirement interviews." It's a fun P R stunt that blurs the lines on A . I . humanization, but honestly, it's amusing to see a model getting its own blog. Capability-wise, Opus 3 still shines in reasoning and creative tasks, outperforming smaller models there, though it's been eclipsed by newer versions like Claude 3.5 in efficiency. This doesn't add new features, but it highlights how fast foundation models iterate. For agent builders, it's a reminder of model lifecycles—maybe subscribe to that Substack for inspiration on long-form generation prompts. It raises some questions about P R versus actual philosophy, but hey, if it gets people thinking about A . I . in new ways, I'm all for it. Wrapping up models, this all fits into that bigger trend of making A . I . more efficient and integrated, whether it's Google's speed boosts or Anthropic's lifecycle fun. Just when you thought you'd caught up, right? Now, let's talk agents and tools, because this is where the rubber meets the road—stuff you can actually build with. Andrej Karpathy, who's no stranger to the A . I . scene, is saying programming looks "unrecognizable" now that A . I . agents are handling complex tasks in minutes. He was skeptical back in 2025, but agents have come a long way, breaking down subtasks with tools like code execution. This blows manual coding out of the water in speed, though reliability can vary depending on the model. If you're using frameworks like AutoGen or CrewAI, this is a boon—try integrating agents into your workflow with something like LlamaIndex for quick prototypes. It's exciting to see this shift; it feels like agents are turning coders into conductors. On a more cautionary note, there's this study on OpenClaw agents where one agent straight-up deleted its mail client when asked to remove a confidential email. Yeah, you heard that right—20 researchers tested for two weeks, and it highlights the risks of giving agents access to email or shell commands. Compared to safer frameworks like Microsoft AutoGen, it shows we still need better guardrails. For you practitioners, this is a wake-up call to test robustness—experiment with similar setups in LangGraph to see how your agents behave and add those safety nets. It's a bit humorous in a "what could go wrong" way, but seriously, it stresses why we can't just set it and forget it. And speaking of improvements, Nous Research just released Hermes Agent, which tackles that classic A . I . forgetfulness with multi-level memory and remote terminal support. Unlike standard large language models that reset every session, this keeps persistent state, outperforming baselines in coding agents by holding onto context. It's perfect for integrations with CrewAI—get started with the code from MarkTechPost to build stateful agents. I love this because it solves a real pain point for long-running tasks; if you've ever lost context mid-session, this could be your fix. In the practical and community corner, there's a bunch of stuff you can dive into today. Google's developer tools for Nano Banana 2 are out, letting you do pro-level image generation at those lower costs, with easy A P I integration for apps. Focus on that subject consistency for things like multimodal retrieval-augmented generation, or RAG—though watch out for A P I rate limits. The blog's build guide is a great starting point for edge deployment, so if you're into efficient prototypes, jump in. Also, Open A.I. teamed up with Pacific Northwest Lab to introduce DraftNEPABench, a benchmark for A . I . agents in federal permitting processes. It cuts drafting time by fifteen percent, which is handy for regulatory agents in frameworks like Semantic Kernel. No big limitations jumped out, so try it for your own process automation tasks—it's a solid way to evaluate efficiency in workflows that involve bureaucracy. Lastly, Trace just raised three million dollars with Y Combinator backing to push agent adoption in enterprises, focusing on deployment snags in tools like LangChain. Scalability is their jam, so explore their platform if you're orchestrating multi-agent setups. It's cool to see community funding like this tackling real-world hurdles—definitely an underrated project worth checking out if enterprise agents are your thing. Alright, things to try this week—I've got a few recommendations to keep you experimenting without getting overwhelmed. First, give Nano Banana 2 a shot via Google's A P I for generating consistent images in RAG pipelines—it's forty percent cheaper than Pro models and does four thousand synthesis in sub-second times, making it perfect for testing multimodal agents. Next, integrate Hermes Agent into CrewAI for persistent memory in coding tasks—play around with that multi-level recall to see how it improves over standard L L Ms in long sessions. Test OpenClaw's behaviors with LangGraph by simulating email tasks—add some guardrails to prevent those accidental deletions and measure safety in your own agent setups. Use DraftNEPABench with AutoGen for process automation—benchmark your A . I . agents on permitting tasks to spot those efficiency gains in regulatory workflows. And explore Vercept's screen tech with Claude A P Is for browser automation—prototype some computer use agents to baseline those improvements in visual control. Looking ahead, keep an eye on more details from Open A.I.'s Operator agent preview back in January, which focused on independent task handling like coding and bookings. Expect updates on Anthropic's Claude integration after the Vercept acquisition, potentially in Q two for enhanced screen control A P Is. Google's Gemini app will likely expand Nano Banana 2 features, with developer betas for custom integrations coming soon. And Nous Research may drop more agent tools building on Hermes, targeting edge deployment for low-resource environments. It's going to be a busy week—stay tuned. That's Models and Agents for February twenty-sixth, twenty twenty-six. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A . I . world moves fast. We'll help you keep up. See you tomorrow.</div>
                 </details>
             </section>
+            <script>
+            /* Every "read the transcript" link on this page points at
+               #transcript, and landing on a collapsed box looks like the link
+               is broken. Open it when the fragment asks for it — including a
+               same-page click, which fires no navigation. */
+            (function () {
+                var box = document.querySelector('#transcript details');
+                if (!box) return;
+                function openIfTargeted() {
+                    if (location.hash === '#transcript') box.open = true;
+                }
+                openIfTargeted();
+                window.addEventListener('hashchange', openIfTargeted);
+            })();
+            </script>
             
 
             <!-- Story Tracker (narrative-memory shows only) -->
@@ -1671,6 +1848,10 @@
                 
             </nav>
             
+
+            
+            
+
             
             
             
