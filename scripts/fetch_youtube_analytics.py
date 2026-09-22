@@ -476,6 +476,68 @@ def _channel_day_series(service, days: int = 30) -> List[dict]:
         return []
 
 
+_TRAFFIC_KEEP = ("SHORTS", "SUBSCRIBER", "YT_SEARCH", "RELATED_VIDEO")
+
+
+def _traffic_source_day_series(service, days: int = 30) -> List[dict]:
+    """Views per DAY by traffic-source type (Sep 22 2026).
+
+    The 90-day ``traffic_sources`` aggregate could only say that the
+    Shorts-feed source was draining out of a rolling window; when every
+    channel's new Shorts lost their exploration traffic in the same four
+    days of September, nothing here could show WHICH source moved and
+    WHEN. One query, pivoted to ``{day, SHORTS, SUBSCRIBER, YT_SEARCH,
+    RELATED_VIDEO, other, total}`` rows. Retried on 5xx like the day
+    series, but a failure is LOG ONLY — it never joins ``_FAILED_QUERIES``,
+    because that list is the degraded marker ``snapshot_regression``
+    refuses a snapshot on, and a missing informational series must never
+    cost the policy its day. ``[]`` on any failure.
+    """
+    try:
+        today = _dt.date.today()
+        start = (today - _dt.timedelta(days=days)).isoformat()
+        resp = _execute_with_retry(lambda: service.reports().query(
+            ids="channel==MINE",
+            startDate=start,
+            endDate=today.isoformat(),
+            metrics="views",
+            dimensions="day,insightTrafficSourceType",
+            sort="day",
+        ), "traffic-source day series")
+    except Exception as exc:  # noqa: BLE001 — informational, never degraded
+        logger.info("traffic-source day series skipped: %s", str(exc)[:160])
+        return []
+    headers = [h["name"] for h in resp.get("columnHeaders", [])]
+    by_day: Dict[str, dict] = {}
+    for row in resp.get("rows", []) or []:
+        rec = dict(zip(headers, row))
+        day = str(rec.get("day") or "")
+        if not day:
+            continue
+        src = str(rec.get("insightTrafficSourceType") or "")
+        try:
+            views = int(float(rec.get("views") or 0))
+        except (TypeError, ValueError):
+            views = 0
+        d = by_day.setdefault(day, {"day": day, **{k: 0 for k in _TRAFFIC_KEEP},
+                                    "other": 0, "total": 0})
+        d[src if src in _TRAFFIC_KEEP else "other"] += views
+        d["total"] += views
+    return [by_day[k] for k in sorted(by_day)]
+
+
+def snapshot_notes(new: Dict[str, object], old: Optional[Dict[str, object]]) -> List[str]:
+    """Informational differences worth a ``::notice::`` — never a refusal."""
+    notes: List[str] = []
+    if not isinstance(old, dict) or not old:
+        return notes
+    for ch, block in (old.get("channels") or {}).items():
+        if (block or {}).get("traffic_day_series") and not (
+                ((new.get("channels") or {}).get(ch) or {}).get("traffic_day_series")):
+            notes.append(f"channel {ch} lost its traffic-source day series (informational)")
+    return notes
+
+
 def snapshot_regression(new: Dict[str, object], old: Optional[Dict[str, object]],
                         min_video_share: float = 0.6) -> Optional[str]:
     """Why *new* must NOT replace *old* on disk, or ``None`` when it may.
@@ -737,6 +799,7 @@ def fetch(digests_dir: Path, days: int,
                     demo[f"{kind}_summary"] = _summarise_demographics(kind_rows)
         geo = _geography(service, demo_start, end)
         traffic = _traffic_sources(service, demo_start, end)
+        traffic_days = _traffic_source_day_series(service)
         search_terms = _search_terms(service, demo_start, end)
 
         # Retention curves for the channel's top recent LONGS (28d, by
@@ -765,6 +828,8 @@ def fetch(digests_dir: Path, days: int,
                 snap["geography"] = geo
             if traffic:
                 snap["traffic_sources"] = traffic
+            if traffic_days:
+                snap["traffic_day_series"] = traffic_days
             if search_terms:
                 snap["search_terms"] = search_terms
             channels_block[channel] = snap
@@ -879,6 +944,8 @@ def main() -> int:
               f"early-reach card keep yesterday's numbers.", flush=True)
         logger.error("Snapshot refused: %s", reason)
         return 0
+    for note in snapshot_notes(payload, existing):
+        print(f"::notice::YouTube analytics — {note}", flush=True)
 
     if payload.get("channels"):
         append_channel_history(

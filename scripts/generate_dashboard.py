@@ -1990,6 +1990,76 @@ def build_channel_scorecard(root: Path) -> Dict[str, Any]:
     return section
 
 
+def build_traffic_mix_section(root: Path) -> Dict[str, Any]:
+    """Where each channel's views come from, by week (Sep 22 2026).
+
+    Reads ``channels[ch]["traffic_day_series"]`` from the analytics
+    snapshot (views per day by insightTrafficSourceType). Four complete
+    weeks of source SHARES per channel plus the SHORTS-feed share over
+    the last 7 lag-trimmed days against the 7 before — the read that
+    says whether a reach change is the Shorts feed (exploration traffic
+    to new videos) or subscribers/search (the established audience).
+    Null everywhere until the first nightly carries the series.
+    """
+    section: Dict[str, Any] = {"configured": False}
+    stats = _load_json(root / "api" / "youtube_stats.json")
+    if not stats or not stats.get("channels"):
+        return section
+    _KEYS = ("SHORTS", "SUBSCRIBER", "YT_SEARCH", "RELATED_VIDEO", "other")
+    channels_out: Dict[str, Any] = {}
+    for ch, c in (stats.get("channels") or {}).items():
+        rows = [d for d in ((c or {}).get("traffic_day_series") or []) if isinstance(d, dict)]
+        # the trailing two rows are the unreported tail (lag) — dropped
+        # the same way the scorecard drops them
+        if len(rows) > 2:
+            rows = rows[:len(rows) - 2]
+        if not rows:
+            channels_out[ch] = {"configured": False, "weeks": [],
+                                "shorts_share_7d": None, "shorts_share_prior_7d": None}
+            continue
+
+        def _shares(chunk: List[dict]) -> Dict[str, Any]:
+            total = sum(int(d.get("total") or 0) for d in chunk)
+            out: Dict[str, Any] = {"views": total, "days": len(chunk)}
+            for k in _KEYS:
+                v = sum(int(d.get(k) or 0) for d in chunk)
+                out[f"{k.lower()}_share"] = (round(v / total, 3) if total else None)
+            return out
+
+        weeks = []
+        for i in range(4):
+            lo = len(rows) - 7 * (i + 1)
+            hi = len(rows) - 7 * i
+            if lo < 0:
+                break
+            chunk = rows[lo:hi]
+            weeks.append({"from": chunk[0]["day"], "to": chunk[-1]["day"], **_shares(chunk)})
+        weeks.reverse()
+        last7 = _shares(rows[-7:]) if len(rows) >= 7 else None
+        prior7 = _shares(rows[-14:-7]) if len(rows) >= 14 else None
+        channels_out[ch] = {
+            "configured": True,
+            "as_of": rows[-1]["day"],
+            "weeks": weeks,
+            "shorts_share_7d": (last7 or {}).get("shorts_share"),
+            "shorts_share_prior_7d": (prior7 or {}).get("shorts_share"),
+            "shorts_views_7d": (sum(int(d.get("SHORTS") or 0) for d in rows[-7:])
+                                if len(rows) >= 7 else None),
+            "shorts_views_prior_7d": (sum(int(d.get("SHORTS") or 0) for d in rows[-14:-7])
+                                      if len(rows) >= 14 else None),
+        }
+    section = {
+        "configured": any(v.get("configured") for v in channels_out.values()),
+        "channels": channels_out,
+        "note": ("Views per day by YouTube traffic source (Analytics "
+                 "insightTrafficSourceType), lag-trimmed two days. SHORTS is "
+                 "the Shorts feed — exploration traffic to new videos; "
+                 "SUBSCRIBER and YT_SEARCH are the established audience. "
+                 "Accrues from the first nightly after 2026-09-22."),
+    }
+    return section
+
+
 _EXPERIMENT_STATUSES = {"reading", "decide", "done"}
 
 
@@ -2104,6 +2174,13 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
         except (OSError, ValueError, TypeError):
             continue
     out["caption_track_refusals_14d"] = cap_refused if cap_seen else None
+
+    # Shorts-feed share of EN views over the last 7 lag-trimmed days (Sep
+    # 22 2026): the distribution read for the one-Short experiment. None
+    # until the analytics snapshot carries traffic_day_series.
+    _mix = build_traffic_mix_section(root)
+    out["shorts_feed_share_7d_en"] = (
+        ((_mix.get("channels") or {}).get("en") or {}).get("shorts_share_7d"))
 
     # Dub spoken-text gate, shadow (Sep 22 2026): share of translated
     # tracks the gate FAILED over the last 14 days, from the per-language
@@ -3089,6 +3166,7 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         "growth": {
             "channel_scorecard": build_channel_scorecard(root),
             "early_reach": build_early_reach_section(root),
+            "traffic_mix": build_traffic_mix_section(root),
             "experiments": experiments,
             "shorts_stagger": stagger,
             "specials": build_specials_section(root),

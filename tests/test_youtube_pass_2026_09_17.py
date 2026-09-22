@@ -75,6 +75,52 @@ class TestSnapshotRegression:
             _snapshot(1500, degraded=["x"]), _snapshot(927, degraded=["y"])) is None
 
 
+class TestTrafficDaySeries:
+    """Sep 22 2026: the per-day traffic-source series is informational —
+    losing it never refuses a snapshot, and its query failing never marks
+    the snapshot degraded."""
+
+    def test_lost_traffic_day_series_never_refuses(self):
+        old = _snapshot(2753)
+        old["channels"]["en"]["traffic_day_series"] = [
+            {"day": "2026-09-14", "SHORTS": 50, "SUBSCRIBER": 30, "YT_SEARCH": 10,
+             "RELATED_VIDEO": 5, "other": 5, "total": 100}]
+        new = _snapshot(2760)
+        assert fya.snapshot_regression(new, old) is None
+        notes = fya.snapshot_notes(new, old)
+        assert notes and "traffic-source day series" in notes[0]
+        assert fya.snapshot_notes(old, old) == []
+
+    def test_query_failure_is_not_a_degraded_marker(self, monkeypatch):
+        class _Boom:
+            def reports(self):
+                return self
+            def query(self, **kw):
+                raise RuntimeError("HttpError 500")
+        monkeypatch.setattr(fya, "_RETRY_SLEEPS_S", ())
+        monkeypatch.setattr(fya, "_FAILED_QUERIES", [])
+        assert fya._traffic_source_day_series(_Boom()) == []
+        assert fya._FAILED_QUERIES == []
+
+    def test_pivot_shape(self):
+        class _Svc:
+            def reports(self):
+                return self
+            def query(self, **kw):
+                assert kw["dimensions"] == "day,insightTrafficSourceType"
+                return self
+            def execute(self):
+                return {"columnHeaders": [{"name": "day"}, {"name": "insightTrafficSourceType"}, {"name": "views"}],
+                        "rows": [["2026-09-20", "SHORTS", 40], ["2026-09-20", "SUBSCRIBER", 30],
+                                 ["2026-09-20", "EXT_URL", 5], ["2026-09-21", "YT_SEARCH", 7]]}
+        rows = fya._traffic_source_day_series(_Svc())
+        assert rows == [
+            {"day": "2026-09-20", "SHORTS": 40, "SUBSCRIBER": 30, "YT_SEARCH": 0,
+             "RELATED_VIDEO": 0, "other": 5, "total": 75},
+            {"day": "2026-09-21", "SHORTS": 0, "SUBSCRIBER": 0, "YT_SEARCH": 7,
+             "RELATED_VIDEO": 0, "other": 0, "total": 7}]
+
+
 class TestMainRefusesToOverwrite:
     def test_degraded_payload_leaves_the_committed_file_alone(self, tmp_path, monkeypatch, capsys):
         out = tmp_path / "youtube_stats.json"

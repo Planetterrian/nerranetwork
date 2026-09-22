@@ -142,6 +142,45 @@ class TestDubGateMetric:
         assert m["dub_gate_fail_share_14d"] is None and m["dub_gate_tracks_14d"] is None
 
 
+class TestTrafficMix:
+    """Sep 22 2026: the traffic-source instrument — null until the series exists."""
+
+    def _root(self, tmp_path, series):
+        (tmp_path / "api").mkdir()
+        (tmp_path / "digests").mkdir()
+        (tmp_path / "api" / "youtube_stats.json").write_text(json.dumps({
+            "generated": "2026-09-22T14:00:00Z",
+            "channels": {"en": {"day_series": [], "traffic_day_series": series},
+                         "ru": {"day_series": []}},
+            "shows": {}}), encoding="utf-8")
+        return tmp_path
+
+    def test_null_without_the_series(self, tmp_path):
+        sec = gd.build_traffic_mix_section(self._root(tmp_path, []))
+        assert sec["configured"] is False
+        assert gd._experiment_live_metrics(tmp_path)["shorts_feed_share_7d_en"] is None
+
+    def test_shares_and_lag_trim(self, tmp_path):
+        series = []
+        for i in range(30):
+            series.append({"day": f"2026-09-{(i % 30) + 1:02d}", "SHORTS": 60, "SUBSCRIBER": 30,
+                           "YT_SEARCH": 5, "RELATED_VIDEO": 5, "other": 0, "total": 100})
+        series.sort(key=lambda d: d["day"])
+        series[-1]["SHORTS"] = 0      # the unreported tail must be trimmed
+        series[-2]["SHORTS"] = 0
+        sec = gd.build_traffic_mix_section(self._root(tmp_path, series))
+        en = sec["channels"]["en"]
+        assert sec["configured"] is True and en["as_of"] == "2026-09-28"
+        assert en["shorts_share_7d"] == 0.6 and en["shorts_share_prior_7d"] == 0.6
+        assert len(en["weeks"]) == 4 and all(0 <= w["shorts_share"] <= 1 for w in en["weeks"])
+        assert sec["channels"]["ru"]["configured"] is False
+        assert gd._experiment_live_metrics(tmp_path)["shorts_feed_share_7d_en"] == 0.6
+
+    def test_card_is_rendered(self):
+        html = (ROOT / "management.html").read_text(encoding="utf-8")
+        assert "Traffic mix (by source)" in html and "growth.traffic_mix" in html
+
+
 class TestStaggerHealth:
     def test_section_shape(self):
         st = gd.build_stagger_section(ROOT)

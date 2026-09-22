@@ -1482,6 +1482,34 @@ experiments:
       transcript until a language is calibrated. Cost: one Whisper run per
       track (~1-3 min CPU) in the multilingual job, no API spend.
 
+  - id: traffic-mix-instrument-2026-09-22
+    title: "Views per day by traffic source — which surface moved, and when"
+    area: reach
+    shipped: 2026-09-22
+    readout: 2026-10-06
+    status: reading
+    metric: shorts_feed_share_7d_en
+    baseline: null
+    target: >
+      Instrument, not a lever. Between 09-13 and 09-16 every channel's new
+      hook Shorts lost most of their views at age 3 (EN 23-41 -> 8-10, RU
+      ~220 -> 15-92, FR 50-75 -> 8-49) while Tesla-EN held and its RU/FR
+      dubs of the same episodes fell 5-10x, and the only traffic-source read
+      was a 90-day aggregate that could show the SHORTS source draining but
+      not when. fetch_youtube_analytics now stores views per day by
+      insightTrafficSourceType per channel (traffic_day_series); the
+      dashboard's Traffic mix card and shorts_feed_share_7d_en read it.
+      Target at readout: four complete weeks per channel on the card, and a
+      written read of whether the September drop was the Shorts feed
+      (exploration) or the subscriber/search surfaces. Null until the first
+      nightly after ship; a missing series never refuses a snapshot.
+    notes: >
+      Informational by contract: the query is retried on 5xx like the day
+      series but a failure is log-only and never joins _FAILED_QUERIES, so
+      it cannot mark a snapshot degraded (tests/test_youtube_pass_2026_09_17.py
+      ::TestTrafficDaySeries). Read with api/youtube_early_reach.json: the
+      age-matched instrument says reach moved, this one says which source.
+
   - id: dp-pod-youtube-shorts
     title: "DP Pod on YouTube — Shorts-only, first video surface"
     area: reach

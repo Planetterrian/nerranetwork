@@ -1269,6 +1269,43 @@
       grid.appendChild(card);
     }
 
+    // Traffic mix (Sep 22 2026): where each channel's views come from, by
+    // week. The Shorts-feed share is exploration traffic to NEW videos;
+    // subscriber + search is the established audience. When every
+    // channel's new Shorts lost reach in the same four days of September,
+    // nothing here could say which source moved.
+    {
+      const tm = growth.traffic_mix || {};
+      const card = sectionCard("Traffic mix (by source)",
+        tm.configured ? "views per day by YouTube traffic source, lag-trimmed" : "no data yet");
+      if (!tm.configured) {
+        card.appendChild(h("p", { class: "fine-list", text: tm.note || "" }));
+      } else {
+        const chName = (ch) => ch === "ru" ? "@NerraRU" : ch === "fr" ? "@NerraFR"
+          : ch === "en" ? "@NerraNetwork" : ch;
+        const pct = (v) => (v === null || v === undefined) ? "—" : Math.round(v * 100) + "%";
+        Object.keys(tm.channels || {}).sort().forEach((ch) => {
+          const c = tm.channels[ch];
+          if (!c.configured) return;
+          const head = h("div", { style: "margin-top:10px;font-size:13px;" });
+          head.appendChild(h("strong", { text: chName(ch) }));
+          head.appendChild(h("span", { style: "margin-left:8px;color:var(--ink-2);",
+            text: "Shorts feed " + pct(c.shorts_share_7d) + " of views (prior 7d "
+                  + pct(c.shorts_share_prior_7d) + ") · feed views 7d "
+                  + fmtOrDash(c.shorts_views_7d) + " vs " + fmtOrDash(c.shorts_views_prior_7d) }));
+          card.appendChild(head);
+          const line = (c.weeks || []).map((w) =>
+            w.from.slice(5) + "→" + w.to.slice(5) + ": feed " + pct(w.shorts_share)
+            + " · subs " + pct(w.subscriber_share) + " · search " + pct(w.yt_search_share)
+            + " · related " + pct(w.related_video_share) + " (" + fmtOrDash(w.views) + ")"
+          ).join("  |  ");
+          card.appendChild(h("div", { class: "fine-list", text: line }));
+        });
+        card.appendChild(h("p", { class: "fine-list", text: tm.note || "" }));
+      }
+      grid.appendChild(card);
+    }
+
     // Where long-form viewers LEAVE — audience-retention curves (Aug 2026).
     {
       const rc = data.retention_curves || {};
