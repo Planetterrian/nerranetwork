@@ -3026,15 +3026,30 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
     # article, which is exactly the distinction a client-side f-string cannot
     # make. An episode with no post gets no link, not a link to a 404.
     latest_episode = None
+    # episode number -> its article URL, for EVERY episode the page can show.
+    # The archive cards are built by the page's script, which cannot tell an
+    # article from a redirect stub (a stub IS a file at blog/<slug>/epNNN.html),
+    # so the resolution happens here and the script only looks up what it is
+    # given. An episode with no article simply has no entry, and its card
+    # renders without the link rather than with a broken one.
+    episode_post_urls: dict[str, str] = {}
     try:
-        from engine.summaries_ssr import summary_cards
+        from engine.summaries_ssr import SSR_CARD_LIMIT, summary_cards
 
         _cards = summary_cards(
-            ROOT / cfg.get("json_path", ""), cfg["slug"], limit=1)
+            ROOT / cfg.get("json_path", ""), cfg["slug"],
+            limit=max(SSR_CARD_LIMIT, 40))
         if _cards:
-            latest_episode = _cards[0]
+            latest_episode = dict(_cards[0])
             latest_episode["blog_url"] = _blog_url_for_episode(
                 cfg["slug"], episode_num=latest_episode.get("episode_num"))
+        for _card in _cards:
+            _num = _card.get("episode_num")
+            if not isinstance(_num, int):
+                continue
+            _url = _blog_url_for_episode(cfg["slug"], episode_num=_num)
+            if _url:
+                episode_post_urls[str(_num)] = _url
     except Exception as e:  # pragma: no cover - a card is never worth a build
         print(f"Warning: could not build latest-episode card for {slug}: {e}")
 
@@ -3191,6 +3206,7 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         "blog_page": f"blog/{cfg['slug']}/index.html",
         "latest_blog_posts": latest_blog_posts,
         "latest_episode": latest_episode,
+        "episode_post_urls": episode_post_urls,
         # The script re-renders the card on load and must cut the summary at
         # the same place the server did, or the card flickers into different
         # words. One owner for both numbers.
