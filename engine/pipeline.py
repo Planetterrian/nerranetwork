@@ -200,6 +200,14 @@ def record_youtube_outcomes(
                            float(youtube_urls.get("long_form_render_budget_s") or 0.0))
         if youtube_urls.get("fact_cards_rendered") is not None:
             metrics.record("fact_cards_rendered", int(youtube_urls["fact_cards_rendered"]))
+        # Sep 22 2026 — Shorts fact cards + punch frame (a result key is
+        # not a metric until it is here).
+        if youtube_urls.get("shorts_fact_cards_rendered") is not None:
+            metrics.record("shorts_fact_cards_rendered",
+                           int(youtube_urls["shorts_fact_cards_rendered"]))
+        if youtube_urls.get("shorts_punch_frame_rendered") is not None:
+            metrics.record("shorts_punch_frame_rendered",
+                           bool(youtube_urls["shorts_punch_frame_rendered"]))
         metrics.record("image_provider", youtube_urls.get("image_provider", "pexels"))
         metrics.record("gallery_attempted", int(youtube_urls.get("gallery_attempted", 0) or 0))
         metrics.record("gallery_uploaded", int(youtube_urls.get("gallery_uploaded", 0) or 0))

@@ -331,3 +331,64 @@ def fact_cards_for_episode(
     except Exception as exc:  # noqa: BLE001 — cards are best-effort
         logger.warning("fact_cards: skipped (%s)", exc)
         return None
+
+
+#: Shorts cards (Sep 22 2026): the 0-3 s hook overlay owns the open, so
+#: a card may not start before this; the end card takes the tail.
+SHORT_OPEN_SKIP_S = 3.5
+SHORT_TAIL_CLEAR_S = 3.0
+SHORT_MIN_GAP_S = 8.0
+SHORT_MAX_CARDS = 2
+
+
+def fact_cards_for_window(
+    transcript_path,
+    window_start: float,
+    duration: float,
+    *,
+    max_cards: int = SHORT_MAX_CARDS,
+    open_skip_s: float = SHORT_OPEN_SKIP_S,
+    tail_clear_s: float = SHORT_TAIL_CLEAR_S,
+    min_gap_s: float = SHORT_MIN_GAP_S,
+) -> Optional[List[Tuple[float, str, str]]]:
+    """Fact cards for ONE Shorts clip, on the clip's own t=0 timeline.
+
+    *window_start* is the clip's start on the transcript's (voice-only)
+    timeline — the caller has already removed the music-intro offset,
+    exactly as it does for the Shorts captions. Cards start no earlier
+    than *open_skip_s* into the clip and finish before the last
+    *tail_clear_s* (the end card). Returns ``None`` on no usable
+    transcript so the caller ships the legacy render; never raises.
+    """
+    try:
+        if not transcript_path or not Path(transcript_path).exists():
+            return None
+        if not duration or float(duration) <= 0:
+            return None
+        from engine.visual_reuse import load_transcript_words
+        words = load_transcript_words(transcript_path)
+        if not words:
+            return None
+        start = float(window_start)
+        end = start + float(duration)
+        clip_words = []
+        for w in words:
+            try:
+                ws = float(w["start"])
+                we = float(w["end"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if ws < start or we > end:
+                continue
+            clip_words.append({**w, "start": ws - start, "end": we - start})
+        if not clip_words:
+            return None
+        latest = float(duration) - tail_clear_s - FACT_CARD_SECONDS
+        cards = extract_fact_cards(
+            clip_words, max_cards=max_cards, min_gap_s=min_gap_s,
+            open_skip_s=open_skip_s,
+        )
+        return [c.as_tuple() for c in cards if c.start <= latest]
+    except Exception as exc:  # noqa: BLE001 — cards are best-effort
+        logger.warning("fact_cards: Shorts window skipped (%s)", exc)
+        return None

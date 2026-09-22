@@ -2844,3 +2844,84 @@ class TestX264PresetOverride:
         finally:
             monkeypatch.delenv("NERRA_X264_PRESET")
             importlib.reload(v)
+
+
+# ---------------------------------------------------------------------------
+# Shorts punch frame (Sep 22 2026) — the thumbnail punch text opens the Short
+# ---------------------------------------------------------------------------
+
+class TestShortsPunchFrame:
+    HOOK = "Tesla just unveiled a Virtual Queue for Superchargers."
+
+    def test_none_is_byte_identical(self):
+        base = _short_form_filter_graph(hook=self.HOOK, subtitles_path="/tmp/x.ass")
+        assert base == _short_form_filter_graph(
+            hook=self.HOOK, subtitles_path="/tmp/x.ass", punch_text=None)
+        assert base == _short_form_filter_graph(
+            hook=self.HOOK, subtitles_path="/tmp/x.ass", punch_text="   ")
+
+    def test_punch_precedes_hook_and_shifts_its_window(self):
+        g = _short_form_filter_graph(hook=self.HOOK, punch_text="VIRTUAL QUEUE")
+        # Two words wrap to two lines at the 128 px opening size.
+        assert "text='VIRTUAL'" in g and "text='QUEUE'" in g
+        assert g.index("VIRTUAL") < g.index("QUEUE") < g.index("Tesla just")
+        assert "[punched]" in g
+        assert r"enable='between(t,0,1.45)'" in g
+        assert r"alpha='clip(t/0.15,0,1)*clip((1.4-t)/0.3,0,1)'" in g
+        # The hook waits for the punch to fade.
+        assert r"enable='between(t,1.2,4.25)'" in g
+        assert r"alpha='clip((t-1.2)/0.25,0,1)*clip((4.2-t)/0.4,0,1)'" in g
+        assert r"enable='between(t,0,3.05)'" not in g
+        assert g.endswith("[v]") and g.count("[v]") == 1
+
+    def test_geometry_and_escaping(self):
+        g = _short_form_filter_graph(hook=self.HOOK, punch_text="ELON'S QUEUE")
+        assert "y=h*0.40" in g
+        assert "borderw=6:bordercolor=black" in g
+        assert "ELON’S" in g and "ELON'S" not in g
+        assert any(f"fontsize={s}:" in g for s in (128, 120, 112, 104, 96))
+
+    def test_unfit_punch_is_skipped_not_ellipsised(self):
+        from engine.video import _autofit_punch
+        assert _autofit_punch("") is None
+        fit = _autofit_punch("A " * 60)  # needs more than two lines at 96 px
+        assert fit is None
+        g = _short_form_filter_graph(hook=self.HOOK, punch_text="A " * 60)
+        assert g == _short_form_filter_graph(hook=self.HOOK)
+
+    def test_compose_order_with_every_layer(self):
+        cards = [(12.0, "$9 billion", "Backlog value")]
+        g = _short_form_filter_graph(
+            hook=self.HOOK, punch_text="VIRTUAL QUEUE", fact_cards=cards,
+            end_card=True, end_card_duration=3.0, total_duration=35.0,
+            end_card_image_input_label="[4:v]", subtitles_path="/tmp/x.ass",
+            progress_bar=True, with_url_pill=True,
+        )
+        order = [g.index(k) for k in ("[pbar]", "VIRTUAL", "Tesla just",
+                                       "Backlog value", "fade=t=in", "subtitles=")]
+        assert order == sorted(order)
+        assert g.endswith("[v]") and g.count("[v]") == 1
+
+    def test_cmd_and_builder_thread_punch(self, tmp_path, monkeypatch):
+        from engine import video
+        cmd = _short_form_cmd("a.mp3", "bg.jpg", "brand.png", "out.mp4",
+                              hook=self.HOOK, punch_text="VIRTUAL QUEUE")
+        assert "VIRTUAL" in cmd[cmd.index("-filter_complex") + 1]
+        captured = {}
+        monkeypatch.setattr(video, "_run_ffmpeg",
+                            lambda c, **k: captured.setdefault("cmd", c))
+        audio = tmp_path / "a.mp3"; audio.write_bytes(b"x")
+        cover = tmp_path / "c.jpg"; cover.write_bytes(b"x")
+        build_short_video(audio, cover, tmp_path / "s.mp4", duration=35.0,
+                          hook=self.HOOK, punch_text="VIRTUAL QUEUE")
+        g = captured["cmd"][captured["cmd"].index("-filter_complex") + 1]
+        assert "VIRTUAL" in g and "QUEUE" in g
+
+    def test_run_show_gates_punch_to_the_en_hook_short(self):
+        src = (Path(__file__).resolve().parents[1] / "run_show.py").read_text(encoding="utf-8")
+        block = src[src.index("_short_punch = None"):src.index("punch_text=_short_punch")]
+        assert "short_idx == 0" in block
+        assert '_fill_mode == "hook_open"' in block
+        assert '_yt_channel == "en"' in block
+        assert '"shorts_punch_frame"' in block
+        assert 'result["shorts_punch_frame_rendered"]' in block

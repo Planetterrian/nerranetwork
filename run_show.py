@@ -7382,8 +7382,41 @@ def _publish_youtube(
                     result.setdefault("shorts_broll_counts", []).append(
                         len(_short_broll))
 
+                    # ---- Shorts fact cards + punch frame (Sep 22 2026) ----
+                    # EN path only (the RU/FR dubs render their own Shorts
+                    # and stay the control arm). Both best-effort: None
+                    # keeps the render byte-identical.
+                    _short_fact_cards = None
+                    if (_yt_channel == "en"
+                            and bool(getattr(config.youtube,
+                                             "shorts_fact_cards", False))):
+                        try:
+                            from engine.fact_cards import fact_cards_for_window
+                            _short_fact_cards = fact_cards_for_window(
+                                transcript_path,
+                                this_offset - _caption_offset,
+                                duration,
+                            )
+                        except Exception as exc:  # noqa: BLE001
+                            logger.warning("Shorts fact cards skipped: %s", exc)
+                            _short_fact_cards = None
+                        result["shorts_fact_cards_rendered"] = (
+                            int(result.get("shorts_fact_cards_rendered") or 0)
+                            + len(_short_fact_cards or [])
+                        )
+                    _short_punch = None
+                    if (short_idx == 0
+                            and _fill_mode == "hook_open"
+                            and _yt_channel == "en"
+                            and bool(getattr(config.youtube,
+                                             "shorts_punch_frame", False))):
+                        _short_punch = (yt_punch_text or "").strip() or None
+                        result["shorts_punch_frame_rendered"] = bool(_short_punch)
+
                     build_short_video(
                         final_mp3, cover_path, this_short_video_path,
+                        fact_cards=_short_fact_cards,
+                        punch_text=_short_punch,
                         clip_paths=(_variant.clip_paths
                                     or _short_broll or None),
                         clip_seconds=float(getattr(

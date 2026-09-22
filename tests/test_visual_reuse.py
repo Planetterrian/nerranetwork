@@ -54,6 +54,9 @@ _NEW_KNOBS = {
     "shorts_sentence_cuts": True,
     "long_form_sentence_cuts": True,
     "evergreen_broll": True,
+    # Sep 22 2026 — Shorts fact cards + punch frame (arm shows opt in).
+    "shorts_fact_cards": False,
+    "shorts_punch_frame": False,
 }
 
 

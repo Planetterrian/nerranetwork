@@ -1001,6 +1001,14 @@ class YouTubeConfig:
     # cards driven by the Whisper word transcript. Render-only, best-effort;
     # experiment long-form-fact-cards (tesla/spacex/FF on, the rest control).
     fact_cards_enabled: bool = False
+    # Sep 22 2026 — the same cards on the Shorts (clip-relative, ≤2 per
+    # Short, never under the hook band or the end card). EN path only;
+    # the RU/FR dubs stay the control arm. Experiment shorts-fact-cards.
+    shorts_fact_cards: bool = False
+    # Sep 22 2026 — the thumbnail's 2-4 word ALL-CAPS punch text opens the
+    # hook Short as a full-frame title (0-1.4 s) before the hook slides
+    # in. Hook Short, EN path only. Experiment shorts-punch-frame.
+    shorts_punch_frame: bool = False
 
     # End-screen CTA card on Shorts (May 2026). When enabled, the last
     # ``shorts_end_card_duration_seconds`` of the Shorts MP4 overlay a

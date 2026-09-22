@@ -247,3 +247,159 @@ class TestSubscribeCTA:
             code = "\n".join(l for l in src.splitlines() if not l.lstrip().startswith("#"))
             assert "WATCH FULL EPISODE" not in code, rel
             assert "СМОТРЕТЬ ПОЛНЫЙ ВЫПУСК" not in code, rel
+
+
+# ---------------------------------------------------------------------------
+# Shorts fact cards (Sep 22 2026) — clip-relative window + vertical stage
+# ---------------------------------------------------------------------------
+
+def _transcript(tmp_path, words):
+    import json
+    p = tmp_path / "ep_transcript.json"
+    p.write_text(json.dumps({"segments": [{"words": words}]}), encoding="utf-8")
+    return p
+
+
+class TestWindow:
+    def test_cards_are_clip_relative_and_inside_the_window(self, tmp_path):
+        # Voice timeline: the clip starts at 100 s; "$9 billion" is spoken
+        # at 112 s (=12 s into the clip); "$4 million" at 90 s is outside.
+        words = (_w(["raised", "$4", "million", "early."], start=90.0)
+                 + _w(["backlog", "of", "$9", "billion", "now."], start=112.0)
+                 + _w(["and", "77%", "of", "orders", "shipped."], start=160.0))
+        t = _transcript(tmp_path, words)
+        cards = fc.fact_cards_for_window(t, 100.0, 35.0)
+        assert cards is not None
+        starts = [s for s, _, _ in cards]
+        figs = [f for _, f, _ in cards]
+        assert "$9 billion" in figs and "$4 million" not in figs
+        assert all(fc.SHORT_OPEN_SKIP_S <= s for s in starts)
+        assert all(s + fc.FACT_CARD_SECONDS <= 35.0 - fc.SHORT_TAIL_CLEAR_S
+                   for s in starts)
+        assert abs(starts[figs.index("$9 billion")] - 13.0) < 0.01
+
+    def test_open_and_tail_are_clear_and_max_two(self, tmp_path):
+        words = (_w(["$1", "billion", "open."], start=101.0)      # 1 s in
+                 + _w(["$2", "billion", "next."], start=110.0)    # 10 s
+                 + _w(["$3", "billion", "then."], start=120.0)    # 20 s
+                 + _w(["$4", "billion", "late."], start=131.0))   # 31 s
+        t = _transcript(tmp_path, words)
+        cards = fc.fact_cards_for_window(t, 100.0, 35.0)
+        figs = [f for _, f, _ in cards]
+        assert "$1 billion" not in figs   # under the hook band
+        assert "$4 billion" not in figs   # would run into the end card
+        assert len(cards) <= fc.SHORT_MAX_CARDS
+
+    def test_no_transcript_or_no_words_is_none(self, tmp_path):
+        assert fc.fact_cards_for_window(tmp_path / "missing.json", 0.0, 35.0) is None
+        t = _transcript(tmp_path, [])
+        assert fc.fact_cards_for_window(t, 0.0, 35.0) is None
+        t = _transcript(tmp_path, _w(["$9", "billion."], start=500.0))
+        assert fc.fact_cards_for_window(t, 0.0, 35.0) is None
+
+    def test_zero_duration_is_none_and_never_raises(self, tmp_path):
+        t = _transcript(tmp_path, _w(["$9", "billion."]))
+        assert fc.fact_cards_for_window(t, 0.0, 0.0) is None
+        assert fc.fact_cards_for_window(object(), 0.0, 35.0) is None
+
+
+class TestShortRenderStage:
+    CARDS = [(2.0, "$1", "under the hook"), (12.0, "$9 billion", "Backlog value"),
+             (24.0, "946", "Megawatts of capacity"), (33.0, "77%", "in the end card")]
+
+    def test_none_and_empty_are_byte_identical(self):
+        from engine.video import _short_form_filter_graph
+        base = _short_form_filter_graph(hook="Hook line", subtitles_path="/tmp/x.ass")
+        assert base == _short_form_filter_graph(
+            hook="Hook line", subtitles_path="/tmp/x.ass", fact_cards=None)
+        assert base == _short_form_filter_graph(
+            hook="Hook line", subtitles_path="/tmp/x.ass", fact_cards=[])
+        # The four hook pins survive untouched.
+        assert r"alpha='clip(t/0.25,0,1)*clip((3-t)/0.4,0,1)'" in base
+        assert r"enable='between(t,0,3.05)'" in base
+
+    def test_cards_sit_after_hook_and_before_end_card(self):
+        from engine.video import _short_form_filter_graph
+        g = _short_form_filter_graph(
+            hook="Hook line", fact_cards=self.CARDS, end_card=True,
+            end_card_duration=3.0, total_duration=35.0,
+            end_card_image_input_label="[4:v]", subtitles_path="/tmp/x.ass",
+        )
+        assert "Backlog value" in g and "Megawatts" in g
+        assert "under the hook" not in g          # < 3.5 s
+        assert "in the end card" not in g         # 33 + 4 > 32
+        assert g.index("Hook") < g.index("Backlog") < g.index("fade=t=in")
+        assert g.index("fade=t=in") < g.index("subtitles=")
+        assert g.endswith("[v]") and g.count("[v]") == 1
+        assert "[hooked]" in g
+
+    def test_hook_and_cards_without_subs_or_end_card_terminates_once(self):
+        from engine.video import _short_form_filter_graph
+        g = _short_form_filter_graph(hook="Hook line", fact_cards=self.CARDS)
+        assert g.endswith("[v]") and g.count("[v]") == 1
+        assert "[hooked]" in g and "null[v]" in g
+        g2 = _short_form_filter_graph(fact_cards=self.CARDS)
+        assert g2.endswith("[v]") and g2.count("[v]") == 1
+
+    def test_vertical_geometry(self):
+        from engine.video import _short_form_fact_cards_stage
+        frag, label = _short_form_fact_cards_stage("[x]", self.CARDS)
+        assert label == "[sfact2]"   # three usable cards without an end card
+        assert "fontsize=96:fontcolor=0x00D4FF" in frag
+        assert "x=(w-text_w)/2:y=h*0.62-70" in frag
+        assert "y=h*0.62+60" in frag and "fontsize=40:fontcolor=white" in frag
+        assert "y=h-300" not in frag   # not the long-form corner geometry
+
+    def test_cmd_and_builder_thread_the_cards(self, tmp_path, monkeypatch):
+        from engine import video
+        cmd = video._short_form_cmd("a.mp3", "bg.jpg", "brand.png", "out.mp4",
+                                    fact_cards=self.CARDS)
+        graph = cmd[cmd.index("-filter_complex") + 1]
+        assert "Backlog value" in graph
+        captured = {}
+        monkeypatch.setattr(video, "_run_ffmpeg",
+                            lambda c, **k: captured.setdefault("cmd", c))
+        audio = tmp_path / "a.mp3"; audio.write_bytes(b"x")
+        cover = tmp_path / "c.jpg"; cover.write_bytes(b"x")
+        video.build_short_video(audio, cover, tmp_path / "s.mp4",
+                                duration=35.0, fact_cards=self.CARDS)
+        g = captured["cmd"][captured["cmd"].index("-filter_complex") + 1]
+        assert "Backlog value" in g
+
+
+class TestShortWiring:
+    def test_run_show_en_only_gate_and_metric(self):
+        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert "fact_cards_for_window(" in src
+        assert "fact_cards=_short_fact_cards" in src
+        assert 'result["shorts_fact_cards_rendered"]' in src
+        block = src[src.index("Shorts fact cards + punch frame"):
+                    src.index("fact_cards=_short_fact_cards")]
+        assert '_yt_channel == "en"' in block
+        assert '"shorts_fact_cards"' in block
+        # The dub renderers are the control arm: untouched.
+        for mod in ("ru_dub", "lang_dub"):
+            dub = (ROOT / "engine" / f"{mod}.py").read_text(encoding="utf-8")
+            assert "fact_cards_for_window" not in dub
+            assert "punch_text=" not in dub
+
+    def test_metrics_on_the_allowlist(self):
+        src = (ROOT / "engine" / "pipeline.py").read_text(encoding="utf-8")
+        assert 'metrics.record("shorts_fact_cards_rendered"' in src
+        assert 'metrics.record("shorts_punch_frame_rendered"' in src
+
+    def test_knobs_default_off_and_arm_shows_on(self):
+        from engine.config import YouTubeConfig
+        cfg = YouTubeConfig()
+        assert cfg.shorts_fact_cards is False and cfg.shorts_punch_frame is False
+        defaults = yaml.safe_load((ROOT / "shows" / "_defaults.yaml").read_text(encoding="utf-8"))
+        assert defaults["youtube"]["shorts_fact_cards"] is False
+        assert defaults["youtube"]["shorts_punch_frame"] is False
+        for slug in ("tesla", "spacex", "fascinating_frontiers"):
+            data = yaml.safe_load((ROOT / "shows" / f"{slug}.yaml").read_text(encoding="utf-8"))
+            assert data["youtube"]["shorts_fact_cards"] is True, slug
+            assert data["youtube"]["shorts_punch_frame"] is True, slug
+        for slug in ("models_agents", "omni_view", "finansy_prosto"):
+            data = yaml.safe_load((ROOT / "shows" / f"{slug}.yaml").read_text(encoding="utf-8"))
+            yt = data.get("youtube") or {}
+            assert "shorts_fact_cards" not in yt and "shorts_punch_frame" not in yt, slug
