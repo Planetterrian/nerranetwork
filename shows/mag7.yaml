@@ -1,0 +1,257 @@
+# MAG 7 Daily — launched Sep 2026 (Phase 1 of docs/new_shows_plan_2026_09_22.md
+# §4.2). Modelled on SpaceX Daily: a company desk with a market thread, but
+# for seven companies at once — Alphabet (GOOGL/GOOG), Amazon (AMZN), Apple
+# (AAPL), Meta Platforms (META), Microsoft (MSFT), NVIDIA (NVDA), Tesla (TSLA).
+#
+# Boundaries (prompt rules + a data-side sibling block in shows/hooks/mag7.py):
+# Tesla Shorts Time owns Tesla's products, FSD, energy and community — this
+# show speaks Tesla only as a company. Modern Investing owns picks and the
+# practice portfolio — this show never picks.
+#
+# THE TAPE is regular-session CLOSES with their session date
+# (engine/market_quotes.py): the show runs at 06:46 New York, before any
+# session opens, so nothing it says is "trading at".
+#
+# Distribution OFF at launch; no cron until Episode 1 has been heard.
+name: MAG 7 Daily
+slug: mag7
+weekly_summary_segment: true
+memory_enabled: true
+story_recurrence: true
+description: The seven largest US companies as one daily desk — Alphabet,
+  Amazon, Apple, Meta, Microsoft, NVIDIA and Tesla. The closes, the news, one
+  cross-company thread and the calendar. Not financial advice.
+
+# Probed live 2026-09-22. Company newsrooms first; finance.yahoo.com and
+# seekingalpha.com are in shows/_blocked_sources.yaml and stay out.
+sources:
+- url: https://blog.google/rss/
+  label: Google Blog
+- url: https://www.aboutamazon.com/news/rss
+  label: About Amazon
+- url: https://www.apple.com/newsroom/rss-feed.rss
+  label: Apple Newsroom
+- url: https://about.fb.com/news/feed/
+  label: Meta Newsroom
+- url: https://blogs.microsoft.com/feed/
+  label: Official Microsoft Blog
+- url: https://nvidianews.nvidia.com/releases.xml
+  label: NVIDIA Newsroom
+- url: https://www.theinformation.com/feed
+  label: The Information
+- url: https://www.ft.com/technology?format=rss
+  label: Financial Times Technology
+- url: https://feeds.bloomberg.com/technology/news.rss
+  label: Bloomberg Technology
+- url: https://www.geekwire.com/feed/
+  label: GeekWire
+- url: https://www.macrumors.com/macrumors.xml
+  label: MacRumors
+- url: https://9to5google.com/feed/
+  label: 9to5Google
+- url: https://9to5mac.com/feed/
+  label: 9to5Mac
+- url: https://stratechery.com/feed/
+  label: Stratechery
+- url: https://www.theverge.com/rss/index.xml
+  label: The Verge
+- url: https://techcrunch.com/feed/
+  label: TechCrunch
+- url: https://arstechnica.com/feed/
+  label: Ars Technica
+- url: https://news.google.com/rss/search?q=Alphabet+OR+Google+earnings+OR+antitrust+OR+Gemini&hl=en-US&gl=US&ceid=US:en
+  label: Google News Alphabet
+- url: https://news.google.com/rss/search?q=Amazon+AWS+OR+%22Amazon+earnings%22&hl=en-US&gl=US&ceid=US:en
+  label: Google News Amazon
+- url: https://news.google.com/rss/search?q=Apple+iPhone+OR+%22Apple+earnings%22&hl=en-US&gl=US&ceid=US:en
+  label: Google News Apple
+- url: https://news.google.com/rss/search?q=%22Meta+Platforms%22+OR+Zuckerberg&hl=en-US&gl=US&ceid=US:en
+  label: Google News Meta
+- url: https://news.google.com/rss/search?q=Microsoft+Azure+OR+%22Microsoft+earnings%22&hl=en-US&gl=US&ceid=US:en
+  label: Google News Microsoft
+- url: https://news.google.com/rss/search?q=Nvidia+earnings+OR+Nvidia+deal&hl=en-US&gl=US&ceid=US:en
+  label: Google News NVIDIA
+- url: https://news.google.com/rss/search?q=Tesla+earnings+OR+%22Tesla+stock%22+OR+%22Tesla+deliveries%22&hl=en-US&gl=US&ceid=US:en
+  label: Google News Tesla (company)
+- url: https://news.google.com/rss/search?q=%22Magnificent+Seven%22+stocks&hl=en-US&gl=US&ceid=US:en
+  label: Google News Magnificent Seven
+- url: https://news.google.com/rss/search?q=big+tech+antitrust+DOJ+OR+FTC+OR+%22European+Commission%22&hl=en-US&gl=US&ceid=US:en
+  label: Google News big-tech antitrust
+
+web_search_queries:
+- Magnificent Seven stocks news today
+- Alphabet Amazon Apple Meta Microsoft Nvidia Tesla news today
+- big tech earnings guidance this week
+- big tech antitrust ruling news
+
+exclude_title_patterns:
+# Shopping only — acquisitions and partnerships ("deals") are news here.
+- '\b(best deals?|black friday|prime day|coupon|promo code|price drop|lowest price|% off)\b'
+- '\bhow to\b'
+- '\b(best|top) \d+ (apps|gadgets|phones|laptops)\b'
+
+keywords:
+- alphabet
+- google
+- googl
+- amazon
+- aws
+- amzn
+- apple
+- aapl
+- iphone
+- meta
+- facebook
+- instagram
+- whatsapp
+- microsoft
+- msft
+- azure
+- nvidia
+- nvda
+- tesla
+- tsla
+- magnificent seven
+- big tech
+- earnings
+- guidance
+- antitrust
+- capex
+
+min_articles: 8
+min_articles_skip: 5
+
+max_weekly_cost_usd: 10.0
+
+multilingual:
+  enabled: false
+
+llm:
+  provider: xai
+  system_prompt_file: shows/prompts/mag7_system.txt
+  digest_prompt_file: shows/prompts/mag7_digest.txt
+  podcast_prompt_file: shows/prompts/mag7_podcast.txt
+  digest_temperature: 0.5
+  podcast_temperature: 0.7
+  max_tokens: 5000
+  podcast_max_tokens: 8000
+  min_podcast_words: 1300
+  podcast_expand_below_target: false
+  min_digest_words: 1200
+  digest_expand_below_target: true
+  podcast_chain: true
+
+tts: {}
+
+audio:
+  # Reuses the markets strand's theme until a dedicated track is commissioned
+  # (plan §5c).
+  music_file: assets/music/ModernInvesting.mp3
+  transition_sting: assets/music/transition_sting.mp3
+  voice_intro_delay: 0.0
+  intro_duration: 3.0
+  overlap_duration: 15.0
+  fade_duration: 30.0
+  outro_duration: 30.0
+  outro_crossfade: 0.0
+  outro_fade_out_duration: 10.0
+  intro_volume: 0.6
+  overlap_volume: 0.5
+  fade_volume: 0.4
+  outro_volume: 0.6
+
+publishing:
+  rss_file: mag7_podcast.rss
+  rss_title: MAG 7 Daily
+  rss_description: 'The seven largest US companies — Alphabet, Amazon, Apple,
+    Meta, Microsoft, NVIDIA and Tesla — as one daily desk. The previous
+    session''s closes, the news that moved each company, one story that runs
+    across several of them, and the dates coming up. Facts and numbers, never
+    picks. Not financial advice.'
+  rss_link: https://nerranetwork.com/mag7.html
+  rss_author: Patrick
+  rss_email: patrick@planetterrian.com
+  rss_image: https://nerranetwork.com/assets/covers/mag7.jpg
+  rss_category: Business
+  rss_subcategory: Investing
+  rss_category2: "News"
+  rss_subcategory2: "Business News"
+  rss_keywords: magnificent seven, big tech, alphabet, amazon, apple, meta,
+    microsoft, nvidia, tesla, stocks
+  guid_prefix: mag7
+  base_url: https://nerranetwork.com
+  audio_subdir: digests/mag7
+  summaries_json: digests/mag7/summaries_mag7.json
+  summaries_podcast_name: mag7
+  player_html: mag7.html
+  summaries_html: mag7-summaries.html
+  x_enabled: false
+  x_env_prefix: X_
+  host_name: Patrick
+  host_kind: human
+
+episode:
+  prefix: MAG7_Daily
+  filename_pattern: '{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3'
+  output_dir: digests/mag7
+  mp3_glob: MAG7_Daily_Ep*.mp3
+
+chapters:
+  enabled: true
+  # Anchors only (never a company name — every item names one).
+  section_markers:
+  - pattern: This is Mag Seven Daily|Mag Seven Daily, episode
+    title: Introduction
+    where: start
+  - pattern: across the seven|runs through (several|more than one) of (them|these companies)
+    title: The Thread
+  - pattern: Before we go|before we wrap
+    title: Tomorrow Teaser
+    where: end
+  - pattern: That's Mag Seven Daily|that.?s.*for today
+    title: Closing
+    where: end
+
+slow_news:
+  enabled: false
+
+newsletter:
+  enabled: false
+  platform: buttondown
+  api_key_env: BUTTONDOWN_API_KEY
+  status: about_to_send
+  tag: MAG 7 Daily
+  short_label: MAG 7
+  emoji: 📈
+  newsletter_start_date: '2026-10-01'
+  requires_financial_disclaimer: true
+  length_target_words: 1200
+
+content_tracking:
+  section_patterns: {}
+
+youtube:
+  enabled: false
+  channel: en
+  category_id: 25
+  shorts_start_mode: smart
+  shorts_min_score_threshold: 3.5
+  default_language: en
+  privacy_status: public
+  image_provider: grok
+  grok_image_model: grok-imagine-image
+  grok_image_descriptor: "cinematic corporate technology photo, dramatic lighting, ultra-detailed"
+  image_queries:
+  - glass corporate headquarters at dusk
+  - stock exchange trading floor screens
+  - smartphone on a desk with charts
+  - cloud data center aisle
+  - electric car factory line
+  - engineers at a whiteboard in an office
+  - city skyline with tech offices
+  image_query_prefix: ''
+  tags:
+  - magnificent seven
+  - big tech
+  - stocks
+  - earnings

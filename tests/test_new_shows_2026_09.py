@@ -277,3 +277,265 @@ class TestScaffoldRepairs:
         spec = ScaffoldSpec(show_name="SpaceX", slug="spacex", description="d", audience="a")
         with pytest.raises(FileExistsError):
             merge_network_meta(tmp_path, build_network_meta_entry(spec), dry_run=False)
+
+
+# ---------------------------------------------------------------------------
+# Phase 1 — the four Patrick shows (plan §4.1-4.4)
+# ---------------------------------------------------------------------------
+
+PHASE1 = ("ai_chips", "mag7", "peptides", "longevity")
+WEEKLY = {"peptides": "thursday", "longevity": "wednesday"}
+
+
+def _cfg(slug):
+    from engine.config import load_config
+    return load_config(ROOT / "shows" / f"{slug}.yaml")
+
+
+@pytest.mark.parametrize("slug", PHASE1)
+class TestPhase1ShowWiring:
+    def test_config_loads_with_host_and_breaker(self, slug):
+        c = _cfg(slug)
+        assert c.publishing.host_kind == "human" and c.publishing.host_name == "Patrick"
+        assert c.max_weekly_cost_usd > 0, "breaker must be TOP-level to take effect"
+        assert c.youtube.enabled is False and c.newsletter.enabled is False
+        assert c.publishing.x_enabled is False
+
+    def test_prompts_exist_and_share_content_discipline(self, slug):
+        for kind in ("system", "digest", "podcast", "weekly"):
+            assert (ROOT / f"shows/prompts/{slug}_{kind}.txt").read_text(encoding="utf-8").strip()
+        pod = (ROOT / f"shows/prompts/{slug}_podcast.txt").read_text(encoding="utf-8")
+        assert "<<include: _shared/content_discipline.txt>>" in pod
+        dig = (ROOT / f"shows/prompts/{slug}_digest.txt").read_text(encoding="utf-8")
+        assert "{hook_context}" in dig
+
+    def test_no_title_placeholder_that_reads_as_content(self, slug):
+        # The SpaceX Ep70 lesson: a literal **Title: Source Name** template
+        # is reproduced verbatim by the model.
+        dig = (ROOT / f"shows/prompts/{slug}_digest.txt").read_text(encoding="utf-8")
+        assert "**Title:" not in dig and "Source Name**" not in dig
+
+    def test_registries(self, slug):
+        from engine.content_tracker import SHOW_SECTION_PATTERNS
+        from engine.first_episode import _SHOW_DIGEST_EP1, _SHOW_PODCAST_EP1
+        from engine.intros import _SHOW_PERSONALITIES
+        from engine.show_memory import SHOW_MEMORY_CONFIGS
+        from engine.validation import SHOW_VALIDATION_CONFIGS
+        for reg in (SHOW_SECTION_PATTERNS, SHOW_VALIDATION_CONFIGS, SHOW_MEMORY_CONFIGS,
+                    _SHOW_PERSONALITIES, _SHOW_DIGEST_EP1, _SHOW_PODCAST_EP1):
+            assert slug in reg
+
+    def test_chapter_anchors_match_identity_and_closing(self, slug):
+        from engine.intros import build_closing_block, build_intro_line
+        markers = {m.title: m for m in _cfg(slug).chapters.section_markers}
+        intro = build_intro_line(slug, episode_num=1, today_str="x")
+        closing = build_closing_block(slug, episode_num=1, today_str="x")
+        assert re.search(markers["Introduction"].pattern, intro, re.I)
+        assert re.search(markers["Closing"].pattern, closing, re.I)
+
+    def test_no_topic_word_chapter_markers(self, slug):
+        # Sep 4 2026: M&A's "open.source" marker fired on news content.
+        bare = {"silicon", "gpu", "nvidia", "tesla", "apple", "peptide", "aging"}
+        for m in _cfg(slug).chapters.section_markers:
+            assert m.pattern.lower() not in bare, m.pattern
+
+    def test_registry_page_and_cover(self, slug):
+        import generate_html as G
+        entry = G.NETWORK_SHOWS[slug]
+        assert entry["host"] == "patrick" and entry["strand"] in {"ai", "markets", "health"}
+        assert (ROOT / entry["podcast_image"]).exists()
+        for px in ("400", "800"):
+            assert (ROOT / entry["podcast_image"].replace(".jpg", f"-{px}.webp")).exists()
+        assert (ROOT / entry["show_page"]).exists(), "rss_link must resolve"
+        if slug in WEEKLY:
+            assert "week" in entry["schedule"].lower()
+            assert "daily" not in _cfg(slug).publishing.rss_description.lower()
+
+
+class TestPrelaunchShows:
+    def _cron_map_slugs(self):
+        wf = (ROOT / ".github/workflows/run-show.yml").read_text(encoding="utf-8")
+        return set(re.findall(r'"\S+ \S+ \S+ \S+ \S+":\s*\("(\w+)"', wf))
+
+    def test_prelaunch_shows_are_not_scheduled_or_audited(self):
+        import review_episodes as R
+        scheduled = self._cron_map_slugs()
+        for slug in R.PRELAUNCH_SLUGS:
+            assert slug not in scheduled, (
+                f"{slug} is on a cron but still pre-launch — move it into "
+                "SHOW_REGISTRY in the same PR that schedules it")
+            assert slug not in R.SHOW_REGISTRY
+
+    def test_scheduled_shows_are_never_prelaunch(self):
+        import review_episodes as R
+        assert not (R.PRELAUNCH_SLUGS & self._cron_map_slugs())
+
+    def test_prelaunch_shows_are_dispatchable_but_not_in_all(self):
+        import review_episodes as R
+        wf = (ROOT / ".github/workflows/run-show.yml").read_text(encoding="utf-8")
+        opts = wf[wf.index("options:"):wf.index("test_mode:")]
+        all_line = next(line for line in wf.splitlines()
+                        if line.strip().startswith('shows = ["tesla"'))
+        for slug in R.PRELAUNCH_SLUGS:
+            assert f"- {slug}\n" in opts
+            assert slug not in all_line
+
+    def test_prelaunch_shows_join_no_topic_hub(self):
+        from engine.topic_hubs import TOPIC_HUBS, hub_shows
+        shows = [{"slug": "ai_chips", "has_feed": False, "picker_tags": {"topics": ["ai"]}}]
+        for hub in TOPIC_HUBS:
+            assert hub_shows(hub, shows) == []
+
+
+class TestMarketTape:
+    def _quotes(self, tmp_path, fetch):
+        from engine.market_quotes import fetch_daily_closes
+        return fetch_daily_closes(("AAPL", "MSFT", "NVDA"), cache_path=tmp_path / "q.json",
+                                  fetch=fetch)
+
+    def test_every_line_is_a_close_with_its_session_date(self, tmp_path):
+        from engine.market_quotes import tape_block
+        qs = self._quotes(tmp_path, lambda t: (100.0, 99.0, "2026-09-18"))
+        block = tape_block(qs, {"AAPL": "Apple"}, ("AAPL", "MSFT", "NVDA"))
+        assert "trading at" not in block
+        assert block.count("closed at") == 3 and "2026-09-18" in block
+
+    def test_failed_ticker_is_named_missing_not_guessed(self, tmp_path):
+        from engine.market_quotes import tape_block
+
+        def fetch(t):
+            if t == "MSFT":
+                raise RuntimeError("down")
+            return (100.0, 100.0, "2026-09-18")
+        qs = self._quotes(tmp_path, fetch)
+        block = tape_block(qs, {}, ("AAPL", "MSFT", "NVDA"))
+        assert "No validated close today for: MSFT" in block
+        assert "(unchanged)" in block, "a zero move is unchanged, never up/down zero"
+
+    def test_deviation_guard_rejects_a_garbled_close(self, tmp_path):
+        import json
+
+        from engine.market_quotes import fetch_daily_closes
+        cache = tmp_path / "q.json"
+        cache.write_text(json.dumps({"quotes": [{"ticker": "AAPL", "close": 200.0}]}))
+        qs = fetch_daily_closes(("AAPL",), cache_path=cache, fetch=lambda t: (20.0, 19.0, "d"))
+        assert qs == []
+
+    def test_no_prices_means_no_prices(self):
+        from engine.market_quotes import tape_block
+        block = tape_block([], {}, ("AAPL",))
+        assert "no price may appear" in block
+
+    def test_empty_run_never_overwrites_cache(self, tmp_path):
+        from engine.market_quotes import persist
+        cache = tmp_path / "q.json"
+        cache.write_text("keep")
+        persist([], cache)
+        assert cache.read_text() == "keep"
+
+
+class TestSiblingCoverage:
+    def test_headlines_from_recent_sibling_digests_only(self, tmp_path):
+        import datetime as dt
+
+        from engine.sibling_coverage import sibling_block
+        d = tmp_path / "digests" / "sib"
+        d.mkdir(parents=True)
+        (d / "Sib_Ep010_20260922.md").write_text(
+            "# Sib\n**HOOK:** x\n### Top Story\n**Nvidia ships a new rack system: The Verge**\n"
+            "### Model Updates\n**Delegation vs. Judgment: how agents decide: Outlet**\n")
+        (d / "Sib_Ep001_20260101.md").write_text("**Ancient headline far away: Old**\n")
+        block = sibling_block("Sib", "digests/sib", days=1, lens="Add only new facts.",
+                              today=dt.date(2026, 9, 22), root=tmp_path)
+        assert "Nvidia ships a new rack system" in block
+        assert "Delegation vs. Judgment: how agents decide" in block, "outlet is the LAST part"
+        assert "Ancient" not in block and "Top Story" not in block.split("\n", 2)[2]
+        assert "do not include in output" in block
+
+    def test_missing_dir_is_empty(self, tmp_path):
+        from engine.sibling_coverage import sibling_block
+        assert sibling_block("X", "nope", days=1, lens="", root=tmp_path) == ""
+
+
+class TestHealthWeeklies:
+    def test_curricula_are_complete_and_start_from_ground_truth(self):
+        import yaml
+        firsts = {"peptides": "insulin", "longevity": "hallmarks"}
+        for slug, first in firsts.items():
+            q = yaml.safe_load((ROOT / f"shows/curricula/{slug}.yaml").read_text())["queue"]
+            assert len(q) >= 24, "six months of weekly spotlights"
+            assert first in q[0]["id"]
+            for e in q:
+                assert e["id"] and e["title"] and e["brief"] and e["search"]
+                assert "never dosing" in e["brief"].lower() or "never medical" in e["brief"].lower() \
+                    or "never dosing, sourcing" in e["brief"].lower()
+
+    def test_curricula_live_outside_the_narrative_queues(self):
+        assert not (ROOT / "shows/topic_queues/peptides.yaml").exists()
+        wf = (ROOT / ".github/workflows/run-show.yml").read_text(encoding="utf-8")
+        assert "git add -A shows/curricula/" in wf
+
+    def test_closing_carries_the_posture_verbatim(self):
+        from engine.intros import build_closing_block
+        for slug in ("peptides", "longevity"):
+            assert "not medical advice" in build_closing_block(slug, episode_num=2, today_str="x")
+        assert "financial advice" in build_closing_block("mag7", episode_num=2, today_str="x")
+
+    def test_newsletter_health_callout_is_configured_and_renders(self):
+        from engine.newsletter_template import _build_health_disclaimer_html, _load_show_branding
+        assert _load_show_branding("peptides")["requires_health_disclaimer"] == "true"
+        assert _load_show_branding("tesla")["requires_health_disclaimer"] == "false"
+        assert "not medical advice" in _build_health_disclaimer_html()
+
+    def test_europe_pmc_abstracts_become_citable_hook_articles(self):
+        from engine.europe_pmc import abstracts_for
+        rec = {"source": "MED", "pmid": "123", "title": "A trial of X.",
+               "abstractText": "<p>" + "Randomized trial result. " * 20 + "</p>",
+               "pubYear": "2024", "firstPublicationDate": "2024-01-02",
+               "journalInfo": {"journal": {"title": "Journal of Things"}}}
+        arts = abstracts_for("X", get=lambda params: {"resultList": {"result": [rec]}})
+        assert len(arts) == 1, "the two slices de-duplicate"
+        a = arts[0]
+        assert a["url"] == "https://europepmc.org/article/MED/123"
+        assert a["exempt_stale"] is True and "<p>" not in a["content_text"]
+        from engine.claims import build_local_texts
+        from engine.hook_articles import normalize_hook_articles
+        assert build_local_texts(normalize_hook_articles(arts))
+
+    def test_europe_pmc_failure_is_empty_not_raised(self):
+        from engine.europe_pmc import abstracts_for
+
+        def boom(params):
+            raise OSError("offline")
+        assert abstracts_for("X", get=boom) == []
+
+    def test_spotlight_block_names_subject_or_falls_back(self):
+        from engine.curriculum import spotlight_block
+        assert "Subject: Insulin" in spotlight_block({"title": "Insulin", "brief": "b"}, "Peptide Spotlight")
+        assert "curriculum is empty" in spotlight_block(None, "Peptide Spotlight")
+
+
+class TestTitleFiltersKeepRealNews:
+    """A drop-any title filter with a common word in it silently removes the
+    show's own news (the first draft dropped every "deal" — power, supply and
+    acquisition deals — and every FDA "order")."""
+
+    KEEP = {
+        "ai_chips": ["Nvidia signs $10B supply deal with Microsoft",
+                     "Utility strikes power deal for 1 GW data center",
+                     "TSMC sale of stake in Arizona fab approved"],
+        "mag7": ["Apple agrees $2B deal to buy AI startup",
+                 "Amazon wins antitrust order appeal",
+                 "Meta sale of VR unit under review"],
+        "peptides": ["FDA order restricts compounded semaglutide",
+                     "Trial protocol amended for retatrutide phase 3"],
+        "longevity": ["Executive order on aging research funding",
+                      "TAME trial protocol published"],
+    }
+
+    @pytest.mark.parametrize("slug", PHASE1)
+    def test_real_headlines_survive(self, slug):
+        from engine.utils import drop_excluded_titles
+        arts = [{"title": t} for t in self.KEEP[slug]]
+        kept, dropped = drop_excluded_titles(arts, _cfg(slug).exclude_title_patterns)
+        assert dropped == 0, [a["title"] for a in arts if a not in kept]

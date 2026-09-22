@@ -1,0 +1,32 @@
+# Review ledger — Longevity Weekly. See README.md for schema.
+# Launch registration (Sep 2026, docs/new_shows_plan_2026_09_22.md §4, §9):
+# no episodes yet. The predictions below are the first review's to score.
+reviews:
+  - date: 2026-09-22
+    pr: null
+    doc: docs/new_shows_plan_2026_09_22.md
+    reviewer: claude-code (new-shows Phase 1 scaffold; launch registration, not a review)
+    summary: >-
+      Show scaffolded from the plan: YAML, prompts (shape-only, no specimen
+      sentences), hook, Ep1 debut brief, personality, section patterns,
+      validation config, memory seed, registry entry, cover. Not on a cron:
+      Episode 1 is produced by manual dispatch and listened to before the
+      launch PR adds the schedule (landmine #17).
+    shipped:
+      - scaffold per docs/new_shows_plan_2026_09_22.md Appendix A
+    deferred:
+      - Episode 1 by workflow_dispatch, operator listen, then the cadence PR
+      - re-grade the feed list from a runner (check_feeds.py longevity)
+    predictions:
+      - metric: "episodes (first 4) presenting an animal or cell result as a human result"
+        baseline: "n/a (pre-launch)"
+        expected: "0/4"
+        verdict: pending
+      - metric: "week stories that re-tell a Planetterrian headline from the same week without a new fact"
+        baseline: "n/a"
+        expected: "0 in the first 4"
+        verdict: pending
+      - metric: "spotlight claims stripped by the claims gate"
+        baseline: "n/a"
+        expected: "<=2 per episode"
+        verdict: pending

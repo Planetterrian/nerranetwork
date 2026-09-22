@@ -1301,5 +1301,180 @@ SHOW_MEMORY_CONFIGS: Dict[str, MemoryConfig] = {
             "class40", "ultim", "défi azimut", "defi azimut",
         ],
     ),
+    # ---- Sep 2026 new shows (docs/new_shows_plan_2026_09_22.md §4) ----
+    # Seeded with status only — no forecasts. Injection is gated on
+    # memory_enabled in each show YAML; A/B-listen per landmine #17.
+    "ai_chips": MemoryConfig(
+        slug="ai_chips",
+        label="AI CHIPS & DATA CENTRES",
+        file_prefix="ai_chips",
+        default_programs={
+            "nvidia_roadmap": _prog(
+                "NVIDIA Roadmap",
+                "NVIDIA's accelerator generations, systems and annual cadence.",
+                ["Next-generation ship dates vs announced", "System-level (rack) vs chip-level launches"],
+            ),
+            "tsmc_nodes_packaging": _prog(
+                "TSMC Nodes & Packaging",
+                "Leading-edge process nodes and advanced packaging capacity (CoWoS and successors).",
+                ["Packaging capacity vs accelerator demand", "Overseas fab ramp timing"],
+            ),
+            "hbm_supply": _prog(
+                "HBM Supply",
+                "High-bandwidth memory supply from SK hynix, Samsung and Micron.",
+                ["Generation transitions", "Allocation and pricing"],
+            ),
+            "hyperscaler_capex": _prog(
+                "Hyperscaler Capex",
+                "Data-centre capital spending disclosed by the largest cloud and AI operators.",
+                ["Guidance revisions", "Capex vs depreciation"],
+            ),
+            "gigawatt_sites": _prog(
+                "Gigawatt-Scale Sites",
+                "The largest AI campuses (e.g. Stargate, Colossus) — announced, under construction, energized.",
+                ["Energization dates vs announcements", "Site cancellations or delays"],
+                confidence="low-medium",
+            ),
+            "grid_and_power": _prog(
+                "Grid & Power",
+                "Interconnection queues, on-site generation and power purchase deals for data centres.",
+                ["Interconnection wait times", "Gas, nuclear and renewable supply deals"],
+            ),
+            "export_controls": _prog(
+                "Export Controls",
+                "US and allied export rules on AI chips and chipmaking equipment.",
+                ["Rule changes and effective dates", "Licensing outcomes"],
+            ),
+            "custom_silicon": _prog(
+                "Custom Silicon",
+                "Hyperscaler in-house accelerators (TPU, Trainium, MTIA, Maia) and merchant alternatives.",
+                ["Custom share of deployed compute", "New generations"],
+                confidence="low-medium",
+            ),
+        },
+        theme_keywords=[
+            "nvidia", "amd", "intel", "tsmc", "samsung", "sk hynix", "micron", "broadcom",
+            "hbm", "cowos", "packaging", "gpu", "accelerator", "tpu", "trainium",
+            "data center", "data centre", "gigawatt", "megawatt", "cooling", "grid",
+            "interconnect", "export control", "fab", "wafer", "capex", "stargate", "colossus",
+        ],
+    ),
+    "mag7": MemoryConfig(
+        slug="mag7",
+        label="MAG 7",
+        file_prefix="mag7",
+        default_programs={
+            "ai_capex": _prog(
+                "AI Capex Race",
+                "Capital spending on AI infrastructure across Alphabet, Amazon, Meta and Microsoft, and NVIDIA's revenue from it.",
+                ["Guidance changes at earnings", "Return on AI spend"],
+            ),
+            "antitrust": _prog(
+                "Antitrust & Regulation",
+                "US and EU antitrust cases and digital-markets rules touching the seven companies.",
+                ["Court rulings and remedies", "EU DMA enforcement"],
+            ),
+            "earnings_cycle": _prog(
+                "Earnings Cycle",
+                "Quarterly results and guidance for the seven companies.",
+                ["Next reporting dates", "Guidance vs consensus as reported"],
+            ),
+            "cloud_share": _prog(
+                "Cloud Platforms",
+                "AWS, Azure and Google Cloud growth and AI workloads.",
+                ["Cloud growth rates as reported", "AI share of cloud revenue"],
+                confidence="low-medium",
+            ),
+            "devices": _prog(
+                "Devices & Platforms",
+                "Apple hardware, Android, Meta devices and platform changes.",
+                ["Launch cycles", "App-store and platform rules"],
+            ),
+        },
+        theme_keywords=[
+            "alphabet", "google", "amazon", "aws", "apple", "iphone", "meta", "microsoft",
+            "azure", "nvidia", "tesla", "earnings", "guidance", "capex", "antitrust",
+            "doj", "ftc", "european commission", "cloud", "ai", "buyback", "dividend",
+        ],
+    ),
+    "longevity": MemoryConfig(
+        slug="longevity",
+        label="LONGEVITY WEEKLY",
+        file_prefix="longevity",
+        default_programs={
+            "tame_metformin": _prog(
+                "TAME / Metformin",
+                "The Targeting Aging with Metformin trial and the case for aging as an indication.",
+                ["Funding and enrolment status", "Regulatory framing"],
+                confidence="low",
+            ),
+            "rapamycin_trials": _prog(
+                "Rapamycin & mTOR",
+                "Human trials of rapamycin and mTOR inhibitors for aging-related outcomes.",
+                ["Published human results", "Dosing-safety findings"],
+            ),
+            "partial_reprogramming": _prog(
+                "Partial Reprogramming",
+                "Cellular reprogramming approaches to rejuvenation and the companies pursuing them.",
+                ["First human trials", "Safety evidence"],
+                confidence="low",
+            ),
+            "senolytics": _prog(
+                "Senolytics",
+                "Drugs that clear senescent cells and their clinical results.",
+                ["Trial readouts", "Which indications show effect"],
+            ),
+            "glp1_and_aging": _prog(
+                "GLP-1s & Aging",
+                "Evidence on GLP-1 drugs beyond weight loss: cardiovascular, kidney, brain outcomes.",
+                ["Outcome-trial readouts", "Mechanism vs weight-loss effect"],
+            ),
+            "epigenetic_clocks": _prog(
+                "Aging Clocks",
+                "Epigenetic and other biomarkers of biological age and their validation.",
+                ["Validation against outcomes", "Regulatory acceptance"],
+                confidence="low-medium",
+            ),
+        },
+        theme_keywords=[
+            "aging", "ageing", "longevity", "senescen", "rapamycin", "mtor", "metformin",
+            "nad", "reprogramming", "epigenetic", "clock", "healthspan", "lifespan",
+            "glp-1", "semaglutide", "trial", "biomarker", "autophagy", "mitochond",
+        ],
+    ),
+    "peptides": MemoryConfig(
+        slug="peptides",
+        label="PEPTIDES WEEKLY",
+        file_prefix="peptides",
+        default_programs={
+            "glp1_class": _prog(
+                "GLP-1 Class",
+                "GLP-1 and multi-agonist peptide drugs: approvals, trials, supply and pricing.",
+                ["New approvals and indications", "Supply and compounding status"],
+            ),
+            "regulatory_actions": _prog(
+                "Regulatory Actions",
+                "FDA, Health Canada and other regulators' actions on peptide drugs and compounding.",
+                ["Compounding rules", "Warning letters and enforcement"],
+            ),
+            "peptide_manufacturing": _prog(
+                "Peptide Manufacturing",
+                "How therapeutic peptides are made and the capacity to make them.",
+                ["Capacity expansions", "Oral and long-acting formulations"],
+                confidence="low-medium",
+            ),
+            "grey_market": _prog(
+                "Grey Market",
+                "Unapproved 'research use only' peptides sold to consumers, and enforcement against them.",
+                ["Enforcement actions", "Documented harms"],
+                confidence="low",
+            ),
+        },
+        theme_keywords=[
+            "peptide", "glp-1", "semaglutide", "tirzepatide", "retatrutide", "insulin",
+            "fda", "health canada", "compounding", "trial", "approval", "oral", "injection",
+            "bpc-157", "research use", "amino acid",
+        ],
+    ),
 }
 

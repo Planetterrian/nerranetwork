@@ -589,6 +589,7 @@ def build_podcast_template_vars(
     # tests/test_memory_lake_expansion.py passed by counting occurrences
     # in that dead block. setdefault means a working hook is unaffected.
     pod_vars.setdefault("narrative_memory_section", "")
+    pod_vars.setdefault("hook_context", "")
     pod_vars.setdefault("vocab_review_section", "")
     # Offshore North (Sep 19 2026): {campaign_status} in both prompts.
     pod_vars.setdefault("campaign_status", "")

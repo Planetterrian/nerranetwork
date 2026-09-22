@@ -366,6 +366,77 @@ SPACEX_SECTION_PATTERNS: Dict[str, str] = {
 }
 
 
+# ---- Sep 2026 new shows (docs/new_shows_plan_2026_09_22.md §4) ----
+# Registered on day one: DP Pod / Offshore North / FPD launched without an
+# entry and nothing noticed when a show stopped tracking what it covered.
+AI_CHIPS_SECTION_PATTERNS: Dict[str, str] = {
+    "headlines": (
+        r"(?:### Top Story|## Top Story)(.*?)"
+        r"(?=### Silicon|## Silicon|$)"
+    ),
+    "silicon": (
+        r"(?:### Silicon|## Silicon)(.*?)"
+        r"(?=### Data Cent|## Data Cent|$)"
+    ),
+    "data_centres": (
+        r"(?:### Data Centres & Power|## Data Centres & Power)(.*?)"
+        r"(?=### Supply Chain|## Supply Chain|$)"
+    ),
+    "supply_policy": (
+        r"(?:### Supply Chain & Policy|## Supply Chain & Policy)(.*?)"
+        r"(?=### The Teardown|## The Teardown|$)"
+    ),
+    "deep_dive": (
+        r"(?:### The Teardown|## The Teardown)(.*?)"
+        r"(?=### On the Horizon|## On the Horizon|$)"
+    ),
+}
+
+MAG7_SECTION_PATTERNS: Dict[str, str] = {
+    "headlines": (
+        r"(?:### Top News|## Top News)(.*?)"
+        r"(?=### Company Desk|## Company Desk|$)"
+    ),
+    "company_desk": (
+        r"(?:### Company Desk|## Company Desk)(.*?)"
+        r"(?=### The Counterpoint|## The Counterpoint|$)"
+    ),
+    "counterpoint": (
+        r"(?:### The Counterpoint|## The Counterpoint)(.*?)"
+        r"(?=### The Thread|## The Thread|$)"
+    ),
+    "deep_dive": (
+        r"(?:### The Thread|## The Thread)(.*?)"
+        r"(?=### Calendar|## Calendar|$)"
+    ),
+}
+
+PEPTIDES_SECTION_PATTERNS: Dict[str, str] = {
+    "headlines": (
+        r"(?:### The Week in Peptides|## The Week in Peptides)(.*?)"
+        r"(?=### Peptide Spotlight|## Peptide Spotlight|$)"
+    ),
+    "deep_dive": (
+        r"(?:### Peptide Spotlight|## Peptide Spotlight)(.*?)"
+        r"(?=### Evidence Ledger|## Evidence Ledger|$)"
+    ),
+}
+
+LONGEVITY_SECTION_PATTERNS: Dict[str, str] = {
+    "headlines": (
+        r"(?:### The Week in Longevity|## The Week in Longevity)(.*?)"
+        r"(?=### Mechanism of the Week|## Mechanism of the Week|$)"
+    ),
+    "deep_dive": (
+        r"(?:### Mechanism of the Week|## Mechanism of the Week)(.*?)"
+        r"(?=### Evidence Ledger|## Evidence Ledger|$)"
+    ),
+    "trials": (
+        r"(?:### Trial Tracker|## Trial Tracker)(.*?)"
+        r"(?=$)"
+    ),
+}
+
 # Registry mapping show slugs to their section patterns.
 # New shows should be added here to enable cross-episode content tracking.
 SHOW_SECTION_PATTERNS: Dict[str, Dict[str, str]] = {
@@ -382,6 +453,10 @@ SHOW_SECTION_PATTERNS: Dict[str, Dict[str, str]] = {
     "modern_investing": MI_SECTION_PATTERNS,
     "unintended_consequences": UC_SECTION_PATTERNS,
     "spacex": SPACEX_SECTION_PATTERNS,
+    "ai_chips": AI_CHIPS_SECTION_PATTERNS,
+    "mag7": MAG7_SECTION_PATTERNS,
+    "peptides": PEPTIDES_SECTION_PATTERNS,
+    "longevity": LONGEVITY_SECTION_PATTERNS,
 }
 
 

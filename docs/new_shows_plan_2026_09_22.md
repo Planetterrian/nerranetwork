@@ -869,7 +869,9 @@ Allowed minutes {1,7,16,31,37,46}, hours 06–12 UTC
 | 10:16 | omni_view_north_america | daily | 06:16 ET |
 | 10:31 | omni_view_latam | daily | 07:31 BRT/ART |
 | 10:46 | mag7 | daily | 06:46 ET, pre-market |
-| 11:01 | longevity / peptides / nerra_dev | wednesday / thursday / sunday | one slot, three days (distinct cron keys AND distinct Worker rows: the Worker matches h:m then filter — confirm it tolerates three rows at one time, else 11:01/11:07/11:37) |
+| 11:01 | longevity | wednesday | |
+| 11:07 | peptides | thursday | Checked in Phase 0: the scheduler Worker takes the FIRST `SLOTS` row matching h:m, so every weekly needs its own minute |
+| 11:37 | nerra_dev | sunday | |
 | 11:31 | omni_view_world | daily | after every desk's 50-min budget |
 | 12:16 | vancouver | daily | 05:16 PDT |
 | 13:23 | nerra_weekly | sunday | own workflow, not CRON_MAP |
@@ -940,6 +942,28 @@ economics are read per language on the dashboard card first.
 ---
 
 ## 8. Rollout phases and PR sequence
+
+**Implementation status (updated as work lands):**
+
+- **Phase 0 — shipped** on `claude/funny-lovelace-2nskcy`: hook articles,
+  AI-host disclosure, named-weekday cadence, scaffold repairs, strand
+  grouping, cover generator (`tests/test_new_shows_2026_09.py`).
+- **Phase 1 A-parts — shipped** on the same branch: AI Chips, MAG 7,
+  Peptides, Longevity are scaffolded and on the site as "Not published yet"
+  pages, dispatchable by hand, and NOT on a cron. Found during the build and
+  handled: (1) a registered show with no episodes would be reported "missed"
+  by the daily audit and auto-retried, publishing Episode 1 unheard — new
+  `review_episodes.PRELAUNCH_SLUGS` keeps them out until each show's B-PR;
+  (2) curricula live in `shows/curricula/`, not `shows/topic_queues/`, so the
+  restock automation and runway guards never touch them; (3) the health
+  spotlights fetch real Europe PMC abstracts as hook articles, because the
+  claims gate would otherwise strip an unsourced spotlight to nothing;
+  (4) hub pages skip a show with no feed file; (5) the pre-launch band on a
+  show page no longer assumes the show takes guests.
+- **Each B-PR** (after Episode 1 is heard): CRON_MAP + `- cron:` line +
+  Worker SLOTS row (unique minute) + move the slug from `PRELAUNCH_SLUGS`
+  into `SHOW_REGISTRY` + daily-audit FEEDS limit + `ALT_CADENCE_SHOWS` /
+  `DAILY_SHOWS` + `network_promo` + adjacency siblings + hub snapshot.
 
 Each show's launch is two PRs: **A** (scaffold + prompts + hook + registry +
 tests + `--test` digest pasted in the PR body) merged → Ep1 by

@@ -1672,6 +1672,10 @@ def run(args: argparse.Namespace) -> None:
         # Offshore North (Sep 19 2026): the computed CAMPAIGN STATUS block
         # from shows/hooks/offshore_north.py. Same defaulting contract.
         template_vars.setdefault("campaign_status", "")
+        # Generic per-show hook block (Sep 2026 new shows): sibling-coverage
+        # notes, the MAG 7 tape, a curriculum spotlight. Empty when the
+        # show's hook does not supply it or fails.
+        template_vars.setdefault("hook_context", "")
         # Привет, Русский! vocabulary memory (June 2026): the prompts
         # reference {vocab_review_section}, supplied by the show's hook.
         # Same defaulting contract as above.

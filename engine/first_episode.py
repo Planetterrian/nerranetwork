@@ -35,6 +35,74 @@ This is the **series premiere** for "{show_name}".
 # audio.debut_song_file; the script must introduce it).
 
 _SHOW_DIGEST_EP1 = {
+    "ai_chips": """
+### FIRST EPISODE (Episode {episode_num}) — DEBUT BRIEF for "{show_name}"
+A normal episode with a real introduction in front of it. Keep the standard
+hook line and every standard section heading — the pipeline, the validator
+and the blog all read them — and add ONE new section directly after the
+**What You Need to Know** paragraph:
+
+**### What This Show Covers** (200-300 words, first episode only)
+- Open on the subject, not the show: the physical layer of AI in three layers — the chips, the systems they sit in, and the sites and power that house them — and the one quantity the show will keep returning to: gigawatts of AI capacity announced versus under construction versus energized.
+- The boundary, as a listener promise: models and software are the sister show Models and Agents; this show is the hardware, the buildings, the power and the money.
+- The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
+
+Then run the normal sections. Debut discipline: the STRONGEST stories only,
+jargon defined on first use, no reference to earlier episodes, and every
+factual claim held to the normal sourcing rules — only the introduction
+speaks from the show's own identity.
+""",
+    "mag7": """
+### FIRST EPISODE (Episode {episode_num}) — DEBUT BRIEF for "{show_name}"
+A normal episode with a real introduction in front of it. Keep the standard
+hook line and every standard section heading — the pipeline, the validator
+and the blog all read them — and add ONE new section directly after the
+**What You Need to Know** paragraph:
+
+**### What This Show Covers** (200-300 words, first episode only)
+- Open on the subject, not the show: seven companies — Alphabet, Amazon, Apple, Meta, Microsoft, NVIDIA and Tesla — treated as one desk because together they move the market and share suppliers, regulators and bets; the daily shape: the closes, the news, one thread that runs across several of them, and the calendar.
+- The boundaries, as a listener promise: Tesla's products and self-driving are Tesla Shorts Time; stock picks are Modern Investing Techniques; this show never gives advice, never predicts a price, and every price it speaks is a close.
+- The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
+
+Then run the normal sections. Debut discipline: the STRONGEST stories only,
+jargon defined on first use, no reference to earlier episodes, and every
+factual claim held to the normal sourcing rules — only the introduction
+speaks from the show's own identity.
+""",
+    "peptides": """
+### FIRST EPISODE (Episode {episode_num}) — DEBUT BRIEF for "{show_name}"
+A normal episode with a real introduction in front of it. Keep the standard
+hook line and every standard section heading — the pipeline, the validator
+and the blog all read them — and add ONE new section directly after the
+**What You Need to Know** paragraph:
+
+**### What This Show Covers** (200-300 words, first episode only)
+- Open on the subject, not the show: what a peptide is, why the word now covers everything from insulin to unregulated online vials, and how the show reads evidence — cell, animal, human trial, regulator — using this week's spotlight as the first worked example.
+- The posture, stated once and plainly: education and awareness, never dosing, sourcing or protocols, never medical advice, and every compound's regulatory status named.
+- The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
+
+Then run the normal sections. Debut discipline: the STRONGEST stories only,
+jargon defined on first use, no reference to earlier episodes, and every
+factual claim held to the normal sourcing rules — only the introduction
+speaks from the show's own identity.
+""",
+    "longevity": """
+### FIRST EPISODE (Episode {episode_num}) — DEBUT BRIEF for "{show_name}"
+A normal episode with a real introduction in front of it. Keep the standard
+hook line and every standard section heading — the pipeline, the validator
+and the blog all read them — and add ONE new section directly after the
+**What You Need to Know** paragraph:
+
+**### What This Show Covers** (200-300 words, first episode only)
+- Open on the subject, not the show: the science of aging as a field that is real, fast-moving and heavily marketed, and how the show reads it — the hallmarks framework as the map, evidence levels as the ruler — using this week's mechanism as the first worked example.
+- The posture, stated once and plainly: education, never medical advice, and every finding carries its evidence level; a mouse result is never presented as a human one.
+- The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
+
+Then run the normal sections. Debut discipline: the STRONGEST stories only,
+jargon defined on first use, no reference to earlier episodes, and every
+factual claim held to the normal sourcing rules — only the introduction
+speaks from the show's own identity.
+""",
     "offshore_north": """
 ### FIRST EPISODE (Episode {episode_num}) — DEBUT BRIEF for "{show_name}"
 A normal weekly brief with a real introduction in front of it. Keep the
@@ -130,6 +198,54 @@ Papers news-item format entirely and structure the brief as:
 }
 
 _SHOW_PODCAST_EP1 = {
+    "ai_chips": """
+### FIRST EPISODE (Episode {episode_num}) — DEBUT SCRIPT for "{show_name}"
+- The cold open and identity line stay exactly as specified. Directly after
+  the identity line, spend sixty to ninety seconds on what this show is,
+  built from the digest's "What This Show Covers" section, rewritten for
+  the ear: what it covers, the boundary with the sister shows, and the
+  promise — in plain sentences, never a list, never a tour of the network.
+- Then a normal episode. Give the top story a little more room than usual.
+- No "welcome back", no reference to earlier episodes, no superlatives
+  about the network, and no counts of shows or listeners.
+- The closing is the supplied one, unchanged.
+""",
+    "mag7": """
+### FIRST EPISODE (Episode {episode_num}) — DEBUT SCRIPT for "{show_name}"
+- The cold open and identity line stay exactly as specified. Directly after
+  the identity line, spend sixty to ninety seconds on what this show is,
+  built from the digest's "What This Show Covers" section, rewritten for
+  the ear: what it covers, the boundary with the sister shows, and the
+  promise — in plain sentences, never a list, never a tour of the network.
+- Then a normal episode. Give the top story a little more room than usual.
+- No "welcome back", no reference to earlier episodes, no superlatives
+  about the network, and no counts of shows or listeners.
+- The closing is the supplied one, unchanged.
+""",
+    "peptides": """
+### FIRST EPISODE (Episode {episode_num}) — DEBUT SCRIPT for "{show_name}"
+- The cold open and identity line stay exactly as specified. Directly after
+  the identity line, spend sixty to ninety seconds on what this show is,
+  built from the digest's "What This Show Covers" section, rewritten for
+  the ear: what it covers, the boundary with the sister shows, and the
+  promise — in plain sentences, never a list, never a tour of the network.
+- Then a normal episode. Give the top story a little more room than usual.
+- No "welcome back", no reference to earlier episodes, no superlatives
+  about the network, and no counts of shows or listeners.
+- The closing is the supplied one, unchanged.
+""",
+    "longevity": """
+### FIRST EPISODE (Episode {episode_num}) — DEBUT SCRIPT for "{show_name}"
+- The cold open and identity line stay exactly as specified. Directly after
+  the identity line, spend sixty to ninety seconds on what this show is,
+  built from the digest's "What This Show Covers" section, rewritten for
+  the ear: what it covers, the boundary with the sister shows, and the
+  promise — in plain sentences, never a list, never a tour of the network.
+- Then a normal episode. Give the top story a little more room than usual.
+- No "welcome back", no reference to earlier episodes, no superlatives
+  about the network, and no counts of shows or listeners.
+- The closing is the supplied one, unchanged.
+""",
     "offshore_north": """
 ### FIRST EPISODE — THE DEBUT SCRIPT (series premiere of {show_name})
 A real episode with a real introduction in front of it, NOT a news-only

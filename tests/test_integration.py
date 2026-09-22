@@ -239,7 +239,9 @@ class TestContentTrackerIntegration:
         expected = {"tesla", "tesla_shorts_time", "fascinating_frontiers",
                     "planetterrian", "omni_view", "env_intel", "models_agents",
                     "models_agents_beginners", "finansy_prosto", "privet_russian",
-                    "modern_investing", "unintended_consequences", "spacex"}
+                    "modern_investing", "unintended_consequences", "spacex",
+                    # Sep 2026 new shows — registered on day one.
+                    "ai_chips", "mag7", "peptides", "longevity"}
         assert set(SHOW_SECTION_PATTERNS.keys()) == expected
 
     def test_cross_episode_dedup(self, tmp_tracker_dir):

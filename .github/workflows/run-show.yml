@@ -90,6 +90,13 @@ on:
           - dp_pod
           - age_of_ai
           - offshore_north
+          # Sep 2026 new shows — manual dispatch only until each launch PR adds
+          # its cron (Episode 1 is listened to first). Deliberately NOT in the
+          # `all` list below.
+          - ai_chips
+          - mag7
+          - peptides
+          - longevity
           - all
       test_mode:
         description: 'Dry run: fetch + digest only (no TTS, no R2 upload, no RSS, no X, no commit)'
@@ -791,6 +798,10 @@ jobs:
           # RE-FIRES on the next run (caught May 2026: SpaceX Ep059/Ep060 each
           # re-queued because this directory wasn't staged).
           git add -A shows/deep_dives/ || true
+          # Curriculum spotlights (Sep 2026: Peptides Weekly, Longevity
+          # Weekly) — the hook marks the week's spotlight produced; same
+          # persistence requirement as topic_queues or the next run re-picks it.
+          git add -A shows/curricula/ || true
 
           # Exclude MP3 files (hosted on R2, not in git)
           git reset HEAD -- '*.mp3' 2>/dev/null || true

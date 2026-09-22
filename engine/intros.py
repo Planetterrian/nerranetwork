@@ -922,6 +922,66 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             ),
         ],
     },
+    # ---- Sep 2026 new shows (docs/new_shows_plan_2026_09_22.md §4) ----
+    # A show without an entry debuts on the generic "see you tomorrow"
+    # closing (has_show_personality), so these are launch items. Each
+    # closing must match the Closing chapter pattern in the show's YAML
+    # (guard: tests/test_new_shows_2026_09.py). ONE closing per show — the
+    # Sep 5 2026 delivery review found rotating pools read as register drift.
+    # Spoken show names are written as words ("and", "Seven") so the voice
+    # never reads a symbol or a digit.
+    "ai_chips": {
+        "host": "Patrick",
+        "show_name": "AI Chips and Data Centres",
+        "greetings": ["Welcome to"],
+        "openers": ["episode {ep}."],
+        "framings": ["Here is the physical side of AI today."],
+        "closings": [
+            "That's AI Chips and Data Centres for today. I'm Patrick in "
+            "Vancouver. Thanks for listening — see you tomorrow.",
+        ],
+    },
+    "mag7": {
+        "host": "Patrick",
+        "show_name": "Mag Seven Daily",
+        "greetings": ["Welcome to"],
+        "openers": ["episode {ep}."],
+        "framings": ["Seven companies, one desk."],
+        "closings": [
+            # The not-advice line is supplied here, verbatim, so the model
+            # cannot drop it (the SpaceX shape): this is a markets show.
+            "That's Mag Seven Daily for today. Nothing in this show is "
+            "financial advice. I'm Patrick in Vancouver — see you tomorrow.",
+        ],
+    },
+    "peptides": {
+        "host": "Patrick",
+        "show_name": "Peptides Weekly",
+        # The posture is part of the identity on every episode (plan §4.3):
+        # education, never dosing.
+        "identity_tail": "Education and evidence — never dosing advice.",
+        "greetings": ["Welcome to"],
+        "openers": ["episode {ep}."],
+        "framings": ["The week in peptide science, read carefully."],
+        "closings": [
+            "That's Peptides Weekly. This show is education, not medical "
+            "advice — talk to your own clinician before acting on anything "
+            "you heard. I'm Patrick in Vancouver. See you next week.",
+        ],
+    },
+    "longevity": {
+        "host": "Patrick",
+        "show_name": "Longevity Weekly",
+        "identity_tail": "The science of aging, read carefully — never medical advice.",
+        "greetings": ["Welcome to"],
+        "openers": ["episode {ep}."],
+        "framings": ["The week in aging science."],
+        "closings": [
+            "That's Longevity Weekly. This show is education, not medical "
+            "advice — talk to your own clinician before acting on anything "
+            "you heard. I'm Patrick in Vancouver. See you next week.",
+        ],
+    },
 }
 
 

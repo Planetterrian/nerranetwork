@@ -1,0 +1,32 @@
+# Review ledger — MAG 7 Daily. See README.md for schema.
+# Launch registration (Sep 2026, docs/new_shows_plan_2026_09_22.md §4, §9):
+# no episodes yet. The predictions below are the first review's to score.
+reviews:
+  - date: 2026-09-22
+    pr: null
+    doc: docs/new_shows_plan_2026_09_22.md
+    reviewer: claude-code (new-shows Phase 1 scaffold; launch registration, not a review)
+    summary: >-
+      Show scaffolded from the plan: YAML, prompts (shape-only, no specimen
+      sentences), hook, Ep1 debut brief, personality, section patterns,
+      validation config, memory seed, registry entry, cover. Not on a cron:
+      Episode 1 is produced by manual dispatch and listened to before the
+      launch PR adds the schedule (landmine #17).
+    shipped:
+      - scaffold per docs/new_shows_plan_2026_09_22.md Appendix A
+    deferred:
+      - Episode 1 by workflow_dispatch, operator listen, then the cadence PR
+      - re-grade the feed list from a runner (check_feeds.py mag7)
+    predictions:
+      - metric: "episodes (first 7) speaking any price as 'trading at' or a price absent from the tape block"
+        baseline: "n/a (pre-launch)"
+        expected: "0/7"
+        verdict: pending
+      - metric: "Tesla product/FSD/community stories told as news (TST's beat)"
+        baseline: "n/a"
+        expected: "0 in the first 7"
+        verdict: pending
+      - metric: "episodes with any buy/sell/target/prediction language"
+        baseline: "n/a"
+        expected: "0/7"
+        verdict: pending

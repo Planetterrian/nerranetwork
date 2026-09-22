@@ -603,14 +603,20 @@
             <div style="border:1px solid var(--nn-border);border-left:3px solid var(--nn-accent);border-radius:14px;background:var(--nn-surface);padding:1.6rem 1.8rem;">
                 <div class="section-label">Not published yet</div>
                 <h2 style="font-family:var(--font-heading);margin:0.4rem 0 0.7rem;font-size:1.45rem;line-height:1.25;">{% if _is_ru %}Первый выпуск ещё не вышел{% else %}The first episode has not shipped{% endif %}</h2>
+                {#- Sep 2026: the copy used to assume every pre-launch show takes
+                    guests. Only a show with an apply page does; a news show in
+                    its final checks says so and points at its sister show. -#}
                 <p style="color:var(--nn-text-muted);margin:0 0 1rem;max-width:60ch;">
-                    {% if _is_ru %}Как только выйдет первый выпуск, здесь появится лента и подписка.{% else %}This show is open for guests and has nothing published. There is no
+                    {% if _is_ru %}Как только выйдет первый выпуск, здесь появится лента и подписка.{% elif apply_page %}This show is open for guests and has nothing published. There is no
                     feed to subscribe to yet — when the first interview is out, it
+                    appears here and in every podcast app.{% else %}This show is in its final checks and has nothing published yet. There
+                    is no feed to subscribe to until the first episode is out — then it
                     appears here and in every podcast app.{% endif %}
                 </p>
                 <p style="margin:0;display:flex;gap:0.6rem;flex-wrap:wrap;">
-                    <a class="nn-btn nn-btn-primary" href="{{ path_prefix }}{{ apply_page or 'age-of-ai-apply.html' }}">{% if _is_ru %}Стать гостем{% else %}Apply to be a guest{% endif %} →</a>
-                    <a class="nn-btn" href="{{ path_prefix }}nerra-daily.html">{% if _is_ru %}Слушать Nerra Daily{% else %}Listen to Nerra Daily meanwhile{% endif %}</a>
+                    {% if apply_page %}<a class="nn-btn nn-btn-primary" href="{{ path_prefix }}{{ apply_page }}">{% if _is_ru %}Стать гостем{% else %}Apply to be a guest{% endif %} →</a>
+                    {% elif related_show %}<a class="nn-btn nn-btn-primary" href="{{ path_prefix }}{{ related_show.show_page }}">{% if _is_ru %}Послушать{% else %}Listen to{% endif %} {{ related_show.name }} →</a>
+                    {% endif %}<a class="nn-btn" href="{{ path_prefix }}nerra-daily.html">{% if _is_ru %}Слушать Nerra Daily{% else %}Listen to Nerra Daily meanwhile{% endif %}</a>
                 </p>
             </div>
         </div>

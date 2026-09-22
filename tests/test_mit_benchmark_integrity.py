@@ -2707,7 +2707,11 @@ class TestAuditRegistryCoversEveryShow:
                 "translation_overrides", "scaffold_pending",
             }
         }
-        missing = configured - set(mod.SHOW_REGISTRY) - mod.AUDIT_EXEMPT_SLUGS
+        # PRELAUNCH_SLUGS (Sep 2026): scaffolded, not yet scheduled — they
+        # publish nothing on their own until their cron lands, at which
+        # point the launch PR registers them (TestPrelaunchShows pins that).
+        missing = (configured - set(mod.SHOW_REGISTRY) - mod.AUDIT_EXEMPT_SLUGS
+                   - mod.PRELAUNCH_SLUGS)
         assert not missing, (
             f"shows publish with no daily-audit coverage: {sorted(missing)}. "
             "Add a SHOW_REGISTRY entry, or add the slug to "

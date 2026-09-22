@@ -513,6 +513,11 @@ class NewsletterConfig:
     short_label: str = ""
     emoji: str = ""
     newsletter_start_date: str = ""
+    # Sep 2026 (Peptides / Longevity Weekly): education-not-medical-advice
+    # callout, sibling of requires_financial_disclaimer. Read by
+    # engine.newsletter_template straight from the show YAML, so every
+    # caller of wrap_with_branding (daily + weekly) renders it.
+    requires_health_disclaimer: bool = False
     requires_financial_disclaimer: bool = False
     length_target_words: int = 0
     adjacent_shows: list = field(default_factory=list)

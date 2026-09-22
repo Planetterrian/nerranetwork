@@ -429,6 +429,8 @@ def network_social_sameas():
 
 NETWORK_SHOWS = {
     "tesla": {
+        # Sep 2026 strand grouping (docs/new_shows_plan_2026_09_22.md §2f).
+        "strand": "markets",
         "picker_tags": {
             "topics": ["tesla", "ev", "tech", "stocks", "energy"],
             "audience": ["investors", "enthusiasts"],
@@ -769,6 +771,8 @@ NETWORK_SHOWS = {
         ],
     },
     "planetterrian": {
+        # Sep 2026 strand grouping (docs/new_shows_plan_2026_09_22.md §2f).
+        "strand": "health",
         "picker_tags": {
             "topics": ["longevity", "biotech", "health", "science"],
             "audience": ["professionals", "enthusiasts"],
@@ -986,6 +990,8 @@ NETWORK_SHOWS = {
         ],
     },
     "models_agents": {
+        # Sep 2026 strand grouping (docs/new_shows_plan_2026_09_22.md §2f).
+        "strand": "ai",
         "picker_tags": {
             "topics": ["ai", "tech", "research"],
             "audience": ["builders", "professionals"],
@@ -1090,6 +1096,8 @@ NETWORK_SHOWS = {
         ],
     },
     "models_agents_beginners": {
+        # Sep 2026 strand grouping (docs/new_shows_plan_2026_09_22.md §2f).
+        "strand": "ai",
         "picker_tags": {
             "topics": ["ai", "tech"],
             "audience": ["students", "beginners"],
@@ -1420,6 +1428,8 @@ NETWORK_SHOWS = {
         ],
     },
     "modern_investing": {
+        # Sep 2026 strand grouping (docs/new_shows_plan_2026_09_22.md §2f).
+        "strand": "markets",
         "picker_tags": {
             "topics": ["investing", "stocks", "personal-finance"],
             "audience": ["investors", "professionals"],
@@ -4567,7 +4577,11 @@ def generate_llms_txt(*, dry_run=False):
     lines = [
         "# Nerra Network",
         "",
-        f"> An independent, ad-free podcast network of {len(shows)} shows, "
+        # Count only shows a listener can actually play (Sep 2026): a
+        # pre-launch show has a page but no feed, and an answer engine
+        # quoting this count should say something true.
+        f"> An independent, ad-free podcast network of "
+        f"{sum(1 for s in shows if s.get('has_feed', True))} shows, "
         "produced in Vancouver, Canada. Every episode is written, narrated and "
         "illustrated by AI under human editorial ownership, and every episode "
         "says so.",
@@ -4610,6 +4624,8 @@ def generate_llms_txt(*, dry_run=False):
         tagline = (show.get("tagline") or show.get("description") or "").strip()
         schedule = (show.get("schedule") or "").strip()
         suffix = f" ({schedule})" if schedule else ""
+        if show.get("has_feed") is False:
+            suffix += " — launching soon, no episodes yet"
         lines.append(
             f"- [{show['name']}]({base}/{show['show_page']}){suffix}"
             + (f" — {tagline}" if tagline else "")

@@ -828,6 +828,94 @@ def dp_pod_validation_config() -> ValidationConfig:
     )
 
 
+def _items_rule(name: str, header: str, next_headers: str, min_items: int,
+                optional: bool = False) -> SectionRule:
+    return SectionRule(
+        name=name,
+        pattern=rf"(?:### {header}|## {header})(.*?)(?={next_headers}|$)",
+        min_items=min_items,
+        optional=optional,
+    )
+
+
+def ai_chips_validation_config() -> ValidationConfig:
+    """AI Chips & Data Centres Daily (Sep 2026)."""
+    return ValidationConfig(
+        section_pairs=[],
+        sections=[
+            SectionRule(
+                name="Top Story",
+                pattern=r"(?:### Top Story|## Top Story)(.*?)(?=### Silicon|## Silicon|$)",
+                min_items=0,
+                min_chars=250,
+            ),
+            _items_rule("Silicon", "Silicon", r"### Data Cent|## Data Cent", 2),
+            _items_rule("Data Centres & Power", "Data Centres & Power",
+                        r"### Supply Chain|## Supply Chain", 2),
+            _items_rule("Supply Chain & Policy", "Supply Chain & Policy",
+                        r"### The Teardown|## The Teardown", 1, optional=True),
+        ],
+        forbidden_patterns=[r"https?://\S+"],
+    )
+
+
+def mag7_validation_config() -> ValidationConfig:
+    """MAG 7 Daily (Sep 2026)."""
+    return ValidationConfig(
+        section_pairs=[],
+        sections=[
+            SectionRule(
+                name="The Tape",
+                pattern=r"(?:### The Tape|## The Tape)(.*?)(?=### Top News|## Top News|$)",
+                min_items=0,
+                min_chars=40,
+            ),
+            _items_rule("Top News", "Top News", r"### Company Desk|## Company Desk", 2),
+            _items_rule("Company Desk", "Company Desk",
+                        r"### The Counterpoint|## The Counterpoint", 2),
+        ],
+        forbidden_patterns=[r"https?://\S+"],
+    )
+
+
+def peptides_validation_config() -> ValidationConfig:
+    """Peptides Weekly (Sep 2026)."""
+    return ValidationConfig(
+        section_pairs=[],
+        sections=[
+            _items_rule("The Week in Peptides", "The Week in Peptides",
+                        r"### Peptide Spotlight|## Peptide Spotlight", 3),
+            SectionRule(
+                name="Peptide Spotlight",
+                pattern=(r"(?:### Peptide Spotlight|## Peptide Spotlight)(.*?)"
+                         r"(?=### Evidence Ledger|## Evidence Ledger|$)"),
+                min_items=0,
+                min_chars=600,
+            ),
+        ],
+        forbidden_patterns=[r"https?://\S+"],
+    )
+
+
+def longevity_validation_config() -> ValidationConfig:
+    """Longevity Weekly (Sep 2026)."""
+    return ValidationConfig(
+        section_pairs=[],
+        sections=[
+            _items_rule("The Week in Longevity", "The Week in Longevity",
+                        r"### Mechanism of the Week|## Mechanism of the Week", 3),
+            SectionRule(
+                name="Mechanism of the Week",
+                pattern=(r"(?:### Mechanism of the Week|## Mechanism of the Week)(.*?)"
+                         r"(?=### Evidence Ledger|## Evidence Ledger|$)"),
+                min_items=0,
+                min_chars=600,
+            ),
+        ],
+        forbidden_patterns=[r"https?://\S+"],
+    )
+
+
 SHOW_VALIDATION_CONFIGS = {
     "tesla": tst_validation_config,
     "tesla_shorts_time": tst_validation_config,
@@ -841,4 +929,8 @@ SHOW_VALIDATION_CONFIGS = {
     "modern_investing": mi_validation_config,
     "privet_russian": pr_validation_config,
     "dp_pod": dp_pod_validation_config,
+    "ai_chips": ai_chips_validation_config,
+    "mag7": mag7_validation_config,
+    "peptides": peptides_validation_config,
+    "longevity": longevity_validation_config,
 }

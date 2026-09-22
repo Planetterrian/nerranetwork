@@ -1,0 +1,264 @@
+# AI Chips & Data Centres Daily — launched Sep 2026 (Phase 1 of
+# docs/new_shows_plan_2026_09_22.md §4.1). Modelled on Models & Agents:
+# same digest-first structure and content discipline, different layer of
+# the stack. M&A owns models, agents, software and research; this show owns
+# silicon, systems, data-centre construction, power and cooling, the supply
+# chain and export policy. The boundary is written into both prompts and a
+# sibling-coverage block from the hook (shows/hooks/ai_chips.py).
+#
+# Distribution is OFF at launch (RSS + site + blog only) — the First
+# Principles launch pattern. Not on a cron until Episode 1 has been heard.
+name: AI Chips & Data Centres Daily
+slug: ai_chips
+weekly_summary_segment: true   # daily cadence; Sunday adds a short week-in-review segment
+memory_enabled: true
+story_recurrence: true
+description: The silicon, the buildings and the power behind AI — what shipped,
+  what broke ground, what it costs. A daily engineering-and-capex briefing on
+  AI chips and data centres.
+
+# Sources probed live 2026-09-22 (Appendix B of the plan). Re-grade from a
+# runner with `python check_feeds.py ai_chips` before Episode 1.
+sources:
+- url: https://newsletter.semianalysis.com/feed
+  label: SemiAnalysis
+- url: https://www.nextplatform.com/feed/
+  label: The Next Platform
+- url: https://www.hpcwire.com/feed/
+  label: HPCwire
+- url: https://www.servethehome.com/feed/
+  label: ServeTheHome
+- url: https://www.tomshardware.com/feeds/all
+  label: Tom's Hardware
+- url: https://www.eetimes.com/feed/
+  label: EE Times
+- url: https://semiengineering.com/feed/
+  label: Semiconductor Engineering
+- url: https://www.semiconductor-digest.com/feed/
+  label: Semiconductor Digest
+- url: https://www.techpowerup.com/rss/news
+  label: TechPowerUp
+- url: https://www.datacenterdynamics.com/en/rss/
+  label: Data Center Dynamics
+- url: https://www.datacenterknowledge.com/rss.xml
+  label: Data Center Knowledge
+- url: https://www.utilitydive.com/feeds/news/
+  label: Utility Dive
+- url: https://blogs.nvidia.com/feed/
+  label: NVIDIA Blog
+- url: https://nvidianews.nvidia.com/releases.xml
+  label: NVIDIA Newsroom
+- url: https://spectrum.ieee.org/feeds/topic/semiconductors.rss
+  label: IEEE Spectrum Semiconductors
+- url: https://news.google.com/rss/search?q=TSMC+OR+%22advanced+packaging%22+OR+CoWoS&hl=en-US&gl=US&ceid=US:en
+  label: Google News TSMC & packaging
+- url: https://news.google.com/rss/search?q=%22HBM%22+memory+SK+Hynix+OR+Samsung+OR+Micron&hl=en-US&gl=US&ceid=US:en
+  label: Google News HBM
+- url: https://news.google.com/rss/search?q=%22data+center%22+power+grid+gigawatt&hl=en-US&gl=US&ceid=US:en
+  label: Google News data-centre power
+- url: https://news.google.com/rss/search?q=Nvidia+Blackwell+OR+Rubin+GPU&hl=en-US&gl=US&ceid=US:en
+  label: Google News Nvidia GPUs
+- url: https://news.google.com/rss/search?q=chip+%22export+controls%22&hl=en-US&gl=US&ceid=US:en
+  label: Google News export controls
+
+web_search_queries:
+- AI data center construction news today
+- AI chip GPU accelerator announcement today
+- semiconductor fab advanced packaging news
+- data center power grid interconnection AI
+
+# Tom's Hardware and TechPowerUp carry heavy consumer-hardware traffic.
+exclude_title_patterns:
+- '\bbest (gaming )?(laptops?|monitors?|keyboards?|mice|headsets?)\b'
+# Shopping only — never the bare word "deal": power, supply and chip deals
+# are this show's news.
+- '\b(best deals?|black friday|prime day|coupon|promo code|price drop|lowest price|% off)\b'
+- '\b(game|gaming) (review|benchmark)s?\b'
+- '\bhow to\b'
+
+keywords:
+- gpu
+- accelerator
+- chip
+- chips
+- semiconductor
+- silicon
+- wafer
+- fab
+- foundry
+- tsmc
+- nvidia
+- amd
+- intel
+- broadcom
+- marvell
+- arm
+- hbm
+- memory
+- packaging
+- cowos
+- data center
+- data centre
+- datacenter
+- hyperscale
+- gigawatt
+- megawatt
+- power grid
+- cooling
+- liquid cooling
+- interconnect
+- nvlink
+- infiniband
+- ethernet
+- tpu
+- trainium
+- inference chip
+- export control
+- supercomputer
+- colossus
+- stargate
+- blackwell
+- rubin
+- capex
+
+min_articles: 6
+min_articles_skip: 4
+
+# Cost circuit breaker — TOP LEVEL (nested keys are ignored; see _defaults).
+max_weekly_cost_usd: 8.0
+
+multilingual:
+  enabled: false
+
+llm:
+  provider: xai
+  system_prompt_file: shows/prompts/ai_chips_system.txt
+  digest_prompt_file: shows/prompts/ai_chips_digest.txt
+  podcast_prompt_file: shows/prompts/ai_chips_podcast.txt
+  digest_temperature: 0.5
+  podcast_temperature: 0.7
+  max_tokens: 5000
+  podcast_max_tokens: 10000
+  min_podcast_words: 1500
+  # Length levers are digest-side only (CLAUDE.md live constraints).
+  podcast_expand_below_target: false
+  min_digest_words: 1300
+  digest_expand_below_target: true
+
+tts: {}
+
+audio:
+  # Reuses the AI strand's theme until a dedicated track is commissioned
+  # (plan §5c; M&A and MAB already share it).
+  music_file: assets/music/ModelsAgents.mp3
+  transition_sting: assets/music/transition_sting.mp3
+  voice_intro_delay: 0.0
+  intro_duration: 3.0
+  overlap_duration: 15.0
+  fade_duration: 30.0
+  outro_duration: 30.0
+  outro_crossfade: 0.0
+  outro_fade_out_duration: 10.0
+  intro_volume: 0.6
+  overlap_volume: 0.5
+  fade_volume: 0.4
+  outro_volume: 0.6
+
+publishing:
+  rss_file: ai_chips_podcast.rss
+  rss_title: AI Chips & Data Centres Daily
+  rss_description: 'The silicon, the buildings and the power behind AI. Every day:
+    the chips and systems that shipped, the data centres that broke ground or
+    switched on, the grid and cooling constraints that decide where they go, and
+    the supply chain and export rules underneath it all — with the numbers.
+    Engineering and capex first, never hype.'
+  rss_link: https://nerranetwork.com/ai-chips.html
+  rss_author: Patrick
+  rss_email: patrick@planetterrian.com
+  rss_image: https://nerranetwork.com/assets/covers/ai-chips.jpg
+  rss_category: Technology
+  rss_category2: "News"
+  rss_subcategory2: "Tech News"
+  rss_keywords: ai chips, gpu, data center, semiconductors, nvidia, tsmc, hbm, ai
+    infrastructure
+  guid_prefix: ai-chips
+  base_url: https://nerranetwork.com
+  audio_subdir: digests/ai_chips
+  summaries_json: digests/ai_chips/summaries_ai_chips.json
+  summaries_podcast_name: ai_chips
+  player_html: ai-chips.html
+  summaries_html: ai-chips-summaries.html
+  x_enabled: false
+  x_env_prefix: X_
+  host_name: Patrick
+  host_kind: human
+
+episode:
+  prefix: AI_Chips
+  filename_pattern: '{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3'
+  output_dir: digests/ai_chips
+  mp3_glob: AI_Chips_Ep*.mp3
+
+chapters:
+  enabled: true
+  # Anchors only — never a topic word (Sep 4 2026: M&A's "open.source"
+  # marker fired on news content and titled the whole body). The host never
+  # announces sections, so news chapters come from the digest headlines;
+  # the Teardown keys on its REQUIRED phrase "take it apart".
+  section_markers:
+  - pattern: This is AI Chips and Data Centres|AI Chips and Data Centres, episode
+    title: Introduction
+    where: start
+  - pattern: take (it|this|that) apart
+    title: The Teardown
+  - pattern: Before we go|before we wrap
+    title: Tomorrow Teaser
+    where: end
+  - pattern: That's AI Chips and Data Centres|that.?s.*for today|until tomorrow
+    title: Closing
+    where: end
+
+slow_news:
+  enabled: false
+
+newsletter:
+  enabled: false
+  platform: buttondown
+  api_key_env: BUTTONDOWN_API_KEY
+  status: about_to_send
+  tag: AI Chips & Data Centres Daily
+  short_label: AI Chips
+  emoji: 🔌
+  newsletter_start_date: '2026-10-01'
+  requires_financial_disclaimer: false
+  length_target_words: 1300
+
+content_tracking:
+  section_patterns: {}
+
+youtube:
+  enabled: false                 # OFF at launch (plan §7; EN channel cadence)
+  channel: en
+  category_id: 28
+  shorts_start_mode: smart
+  shorts_min_score_threshold: 3.5
+  default_language: en
+  privacy_status: public
+  image_provider: grok
+  grok_image_model: grok-imagine-image
+  grok_image_descriptor: "cinematic data-centre and semiconductor photo, dramatic lighting, ultra-detailed"
+  image_queries:
+  - hyperscale data center server aisle
+  - silicon wafer in clean room
+  - gpu accelerator board close-up
+  - data center cooling towers
+  - high voltage substation at dusk
+  - semiconductor fab exterior
+  - liquid cooled server rack
+  image_query_prefix: ''
+  tags:
+  - ai chips
+  - data centers
+  - semiconductors
+  - gpu
+  - ai infrastructure

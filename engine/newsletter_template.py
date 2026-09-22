@@ -139,6 +139,11 @@ def _load_show_branding(slug: str) -> Dict[str, str]:
             nl_default.get("requires_financial_disclaimer", False),
         )
         out["requires_financial_disclaimer"] = "true" if flag else "false"
+        hflag = nl_show.get(
+            "requires_health_disclaimer",
+            nl_default.get("requires_health_disclaimer", False),
+        )
+        out["requires_health_disclaimer"] = "true" if hflag else "false"
         # Host credit (Sep 2026): the footer said "Editorial by Patrick"
         # and the reply row "Patrick reads every one" on every show — false
         # on a Mira-hosted desk. Read the host from publishing.host_name /
@@ -549,6 +554,31 @@ def _build_by_the_numbers_html(
         'cellspacing="0" border="0" style="max-width:480px;margin:0 auto;">'
         f'<tr>{"".join(cells)}</tr>'
         '</table>'
+        '</td></tr></table>'
+    )
+
+
+def _build_health_disclaimer_html() -> str:
+    """Callout for the health-education shows (Sep 2026). Same visual
+    treatment as the financial callout; the copy is the show's posture."""
+    body = (
+        '<strong>Heads up:</strong> Education only, not medical advice. '
+        'Nothing here is a dosing, sourcing or treatment recommendation. '
+        'Talk to your own clinician before acting on anything you read.'
+    )
+    return (
+        '<table role="presentation" width="100%" cellpadding="0" '
+        'cellspacing="0" border="0" '
+        'class="surface-warn" '
+        'style="background:#FFF7ED;border-left:4px solid #B45309;">'
+        '<tr><td '
+        'style="padding:12px 16px;'
+        "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
+        'Roboto,Helvetica,Arial,sans-serif;'
+        'font-size:13px;color:#78350F;line-height:1.5;">'
+        '<span class="brand-text-warn" style="color:#78350F;">'
+        f'{body}'
+        '</span>'
         '</td></tr></table>'
     )
 
@@ -1891,6 +1921,8 @@ def wrap_with_branding(
         _build_financial_disclaimer_html(disclaimer_lang)
         if requires_financial_disclaimer else ""
     )
+    if show.get("requires_health_disclaimer") == "true":
+        disclaimer += _build_health_disclaimer_html()
     p_s_block = _build_p_s_html(p_s, show["brand_color"], slug)
     cross_network = _build_cross_network_html(
         adjacent_shows, show["brand_color"]

@@ -318,6 +318,17 @@ SHOW_REGISTRY = {
 # two human review gates in that pipeline instead.
 AUDIT_EXEMPT_SLUGS = frozenset({"age_of_ai", "nerra_voices"})
 
+# Shows scaffolded but NOT yet on a cron (Sep 2026 new-shows rollout,
+# docs/new_shows_plan_2026_09_22.md §8). A show here is deliberately left
+# out of SHOW_REGISTRY: registering it before its cron exists would make
+# the audit report a "missed episode" every day and AUTO-DISPATCH a retry
+# (scripts/dispatch_audit_retries.py) — publishing Episode 1 before anyone
+# has listened to it. Episode 1 is produced by manual workflow_dispatch;
+# the show's launch PR moves it from here into SHOW_REGISTRY in the same
+# change that adds its CRON_MAP entry (guard:
+# tests/test_new_shows_2026_09.py::TestPrelaunchShows).
+PRELAUNCH_SLUGS = frozenset({"ai_chips", "mag7", "peptides", "longevity"})
+
 
 # ---------------------------------------------------------------------------
 # Schedule helpers
