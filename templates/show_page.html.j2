@@ -730,6 +730,10 @@
                     <div class="nn-guest-meta">
                         {% if ep.date %}<span>{{ ep.date }}</span>{% endif %}
                         {% if ep.run_time %}<span aria-hidden="true">·</span><span>{{ ep.run_time }}</span>{% endif %}
+                        {#- Only on the episodes where he actually spoke: the
+                            label is read back out of the committed transcript
+                            (engine.interviews.cohost_label), never assumed. -#}
+                        {% if ep.cohost %}<span aria-hidden="true">·</span><span class="nn-guest-cohost">with {{ ep.cohost }}</span>{% endif %}
                         {% if ep.post_url %}<span aria-hidden="true">·</span><a href="{{ path_prefix }}{{ ep.post_url }}">Read &amp; transcript</a>{% endif %}
                     </div>
                 </article>

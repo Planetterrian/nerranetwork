@@ -2358,3 +2358,51 @@ experiments:
       Also corrected 14 stale "daily" claims about three Monday-only shows that
       the 09-21 cadence guard did not reach. Guards:
       tests/test_episode_card_transcript_2026_09_22.py.
+
+  - id: age-of-ai-truth-pass-2026-09-22
+    title: >
+      The Age of AI pages say only what the record supports: measured run
+      times, transcript-vouched chapters, the co-host named where he was, and
+      gate 2 described as built
+    area: growth
+    shipped: 2026-09-22
+    readout: 2026-10-22
+    status: reading
+    hypothesis: >
+      An interview page that a stranger can trust converts better than one
+      that is merely handsome. Four statements on the live pages were false
+      (fabricated chapter lists on Ep5-7, run times derived from them on every
+      episode, a credit saying Patrick was never in the room when he co-hosted
+      five of seven, and a claim basis that said nothing publishes until the
+      guest approves while gate 2 auto-approves at day 7), and every new
+      episode published without its article link because the show page was
+      rendered before the post was written. Fixing the last one removes a
+      dead-end from the top of the most-visited interview page on every
+      publish day.
+    baseline: >
+      2026-09-22: age-of-ai.html on main carried no article link for Ep7 (nor
+      for Ep6 at its publish), "38 min" for a 46:05 episode, six chapters about
+      an animation studio on a novelist's episode, and the sentence "He is not
+      in the room while Mira is talking to a guest" beside four transcripts in
+      which he speaks. GA4 28-day: age-of-ai.html was the second-most-visited
+      show page (16 views at the Sep 17 read).
+    target: >
+      By 10-22: blog/age_of_ai/ep*.html appears among api/ga4_stats.json
+      landing pages with sessions arriving from age-of-ai.html on the day an
+      episode publishes (the link now exists that day), and no interview post
+      or show page carries a chapter, run time or room claim the transcript
+      or feed contradicts. Existence check at this traffic, the same standing
+      as episode-card-and-transcript-box.
+    notes: >
+      generate_html.py's per-show path now writes posts before the show page,
+      because every article link is a file-exists check. engine.interviews
+      reads the co-host label out of each transcript (Ep6 writes PATRICK: in
+      capitals, which a case-sensitive count read as zero), takes run time
+      from the feed's itunes:duration, and gates chapter lists on the
+      transcript vouching for their titles (real lists pass every title;
+      the fabricated ones pass at most one in six). The chapter prompt's
+      quotable specimen ("Why the studio banned AI storyboards") is gone —
+      de-seed by shape. engine.brand's credit and claim basis say what the
+      code does; the guards read the transcripts and the Worker rather than
+      pin a sentence. Also fixed: every blog post printed \ud83d\udc4d where
+      a thumbs-up belonged. Guards: tests/test_age_of_ai_truth_2026_09_22.py.

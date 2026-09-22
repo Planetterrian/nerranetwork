@@ -1405,6 +1405,7 @@ def generate_blog_post_html(
     interview = interview_context(
         md_text, show_slug, ep_num,
         summaries_path=show_config.get("json_path", ""),
+        rss_path=show_config.get("rss_file", ""),
     )
     # The player and the PodcastEpisode contentUrl want the same URL, and the
     # summaries record is the one the RSS enclosure was built from. Set it on

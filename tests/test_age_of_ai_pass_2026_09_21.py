@@ -114,15 +114,27 @@ class TestCreatorCreditScope:
                 f"network-wide credit implies per-episode review: {forbidden!r}"
             )
 
-    def test_credit_never_puts_patrick_in_the_room(self):
-        """He is not a co-host and does not sit in on interviews."""
+    def test_credit_never_makes_patrick_the_host(self):
+        """Mira hosts; he is at most a co-host, and only when asked.
+
+        Sep 22 2026: this guard used to require the words "not in the room"
+        and forbid "co-host" — and pinned a sentence that was false on five
+        of the seven published episodes (he co-hosted every one but Ep4; Ep7
+        opens with Mira saying so). A guard that pins a claim is only as
+        good as the claim. The property is: he is never described as the
+        host, never as present on every episode, and never as absent from
+        all of them — ``test_credit_agrees_with_the_transcripts`` checks the
+        last against the committed transcripts.
+        """
         joined = " ".join(brand.creator_credit("age_of_ai")).lower()
-        for forbidden in ("co-host", "cohost", "joins the conversation",
-                          "sits in", "in the room as"):
+        for forbidden in ("he hosts", "patrick hosts", "co-hosts every",
+                          "in every interview", "not in the room",
+                          "does not sit in", "never in the room"):
             assert forbidden not in joined, (
-                f"creator credit describes Patrick as present: {forbidden!r}"
+                f"creator credit misstates the room: {forbidden!r}"
             )
-        assert "not in the room" in joined
+        assert "mira conducts every interview" in joined
+        assert "decides whether it ships" in joined
 
     def test_credit_does_not_claim_a_training_loop(self):
         """"He tunes Mira" means prompts and rules, not fine-tuning."""

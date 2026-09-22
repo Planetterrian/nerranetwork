@@ -2876,6 +2876,7 @@ def _interview_episode_cards(slug, cfg):
         slug,
         ROOT / cfg.get("json_path", ""),
         ROOT / "digests" / _SHOW_DIRS.get(slug, slug),
+        rss_path=ROOT / cfg["rss_file"] if cfg.get("rss_file") else None,
     )
     if not cards:
         return []
@@ -4216,12 +4217,14 @@ MIRA_INTERVIEW_STEPS = [
     ("A human edits it", "Patrick reviews the episode before anything is "
                          "assembled. This gate has no timer: nothing "
                          "publishes because a review was slow."),
-    ("You approve your transcript", "You read what you said. Anything you "
-                                    "ask to have removed is cut from the "
-                                    "audio before the episode is built — not "
-                                    "bleeped, cut. Nothing reaches a feed "
-                                    "until you have signed off, and you can "
-                                    "ask for a takedown afterwards."),
+    ("You approve your transcript", "You read what you said, and you have a "
+                                    "week to approve it, cut anything from "
+                                    "it, or refuse it. What you cut is "
+                                    "removed from the audio before the "
+                                    "episode is built — not bleeped, cut. "
+                                    "After seven days without a reply the "
+                                    "episode goes ahead as sent, and you can "
+                                    "ask for a takedown at any time."),
     ("It publishes", "Mira records the narration around your words, and the "
                      "episode goes to the feeds, the site and the archive "
                      "with the AI host disclosed on air."),
@@ -6107,6 +6110,18 @@ def main():
         if args.show not in NETWORK_SHOWS:
             print(f"Error: unknown show '{args.show}'. Valid: {', '.join(NETWORK_SHOWS)}", file=sys.stderr)
             sys.exit(1)
+        # Posts FIRST. Every "Read & transcript" / "Article & transcript"
+        # link on the show page is a file-exists check on the post's HTML
+        # (_blog_url_for_episode), so the page has to be rendered AFTER the
+        # posts are on disk. Until Sep 22 2026 this branch built the page
+        # first: the Nerra Voices publish run (which writes only the digest
+        # .md and then calls `--show <slug> --blogs`) rendered age-of-ai.html
+        # with no link to the episode it had just published, every time —
+        # Ep6 and Ep7 both shipped that way and were repaired only by the
+        # nightly rebuild. run_show never hit it because it writes the post
+        # HTML itself before calling here.
+        if args.blogs:
+            generate_blog_posts(args.show, dry_run=args.dry_run)
         # Always generate the show page and summaries page
         generate_show_page(args.show, dry_run=args.dry_run)
         generate_summaries_page(args.show, dry_run=args.dry_run)
@@ -6134,7 +6149,6 @@ def main():
         # arrives from this morning's Short.
         generate_ru_landing_page(args.show, dry_run=args.dry_run)
         if args.blogs:
-            generate_blog_posts(args.show, dry_run=args.dry_run)
             generate_blog_index(args.show, dry_run=args.dry_run)
         if args.network:
             generate_network_page(dry_run=args.dry_run)
