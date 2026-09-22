@@ -613,7 +613,20 @@
             padding-top: var(--sp-6);
             border-top: 1px solid var(--nn-border);
         }
+        /* The preview lives INSIDE <summary> on purpose. A child of <details>
+           is hidden by the UA when the element is closed and author CSS
+           cannot reliably bring it back; summary content is always painted.
+           It carries aria-hidden because the same words are read out again
+           three lines below, and a 400-character button label is not a
+           button label. */
         .blog-transcript details summary {
+            display: block;
+            cursor: pointer;
+            padding: var(--sp-3) 0;
+            list-style: none;
+        }
+        .blog-transcript details summary::-webkit-details-marker { display: none; }
+        .blog-transcript .transcript-head {
             display: flex;
             align-items: center;
             gap: var(--sp-2);
@@ -621,18 +634,54 @@
             font-size: 1.1rem;
             font-weight: 600;
             color: var(--nn-white);
-            cursor: pointer;
-            padding: var(--sp-3) 0;
-            list-style: none;
         }
-        .blog-transcript details summary::-webkit-details-marker { display: none; }
-        .blog-transcript details summary::after {
+        .blog-transcript .transcript-length {
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--nn-text-muted);
+        }
+        .blog-transcript .transcript-head::after {
             content: '+';
             margin-left: auto;
             font-size: 1.2rem;
             color: var(--nn-text-muted);
         }
-        .blog-transcript details[open] summary::after { content: '\2212'; }
+        .blog-transcript details[open] .transcript-head::after { content: '\2212'; }
+        .blog-transcript .transcript-preview {
+            position: relative;
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: var(--nn-text-muted);
+            white-space: pre-wrap;
+            margin-top: var(--sp-3);
+            max-height: 11em;
+            overflow: hidden;
+        }
+        /* Fades the last line instead of chopping it, so the cut reads as
+           "there is more" rather than "this ended oddly". */
+        .blog-transcript .transcript-preview::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
+            height: 3.4em;
+            /* The article body sits directly on the page background, not on
+               a card, so the fade has to land on --nn-bg. */
+            background: linear-gradient(to bottom,
+                rgba(0,0,0,0), var(--nn-bg));
+            pointer-events: none;
+        }
+        .blog-transcript .transcript-more {
+            display: inline-block;
+            margin-top: var(--sp-3);
+            font-family: var(--font-ui);
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--show-color, var(--nn-purple));
+        }
+        .blog-transcript details[open] .transcript-preview,
+        .blog-transcript details[open] .transcript-more { display: none; }
         .blog-transcript .transcript-content {
             font-family: var(--font-body);
             font-size: 0.95rem;
@@ -841,6 +890,108 @@
             margin: 0 0 var(--sp-4);
             background: var(--nn-surface);
             border-radius: 0 8px 8px 0;
+        }
+
+        /* ---------------------------------------------------------------
+           Interview posts (Sep 21 2026). The Age of AI and Nerra Voices
+           publish conversations with named people; the shared news layout
+           buried the guest in a fourth-level heading and gave the page no
+           player at all.
+           These rules only render when the post carries an `interview`
+           context, which is only ever an interview show.
+           --------------------------------------------------------------- */
+        .nn-iv-hero {
+            max-width: 900px;
+            margin: var(--sp-4) auto 0;
+            padding: 0 var(--sp-6);
+        }
+        .nn-iv-eyebrow {
+            display: flex; align-items: center; gap: 0.6rem;
+            font-family: var(--font-ui); font-size: 0.78rem;
+            font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+            color: var(--show-color-text, var(--show-color));
+            margin-bottom: 0.9rem;
+        }
+        .nn-iv-eyebrow img { border-radius: 7px; }
+        .nn-iv-eyebrow a { color: inherit; text-decoration: none; }
+        .nn-iv-name {
+            font-family: var(--font-heading);
+            font-size: clamp(2rem, 5.2vw, 3rem);
+            line-height: 1.08; margin: 0 0 0.45rem; letter-spacing: -0.02em;
+        }
+        .nn-iv-identifier {
+            font-family: var(--font-ui); font-size: 1.02rem; font-weight: 600;
+            color: var(--show-color-text, var(--show-color));
+            margin: 0 0 1rem;
+        }
+        .nn-iv-standfirst {
+            font-size: 1.12rem; line-height: 1.55; color: var(--nn-text-secondary);
+            margin: 0 0 1.4rem; max-width: 62ch;
+        }
+        .nn-iv-player {
+            border: 1px solid var(--nn-border); border-radius: 14px;
+            background: var(--nn-surface); padding: 1rem 1.1rem;
+            margin: 0 0 1.1rem;
+        }
+        .nn-iv-player-label {
+            display: flex; align-items: center; gap: 0.45rem;
+            font-family: var(--font-ui); font-size: 0.8rem; font-weight: 600;
+            color: var(--nn-text-muted); margin-bottom: 0.6rem;
+        }
+        .nn-iv-player audio { width: 100%; height: 40px; }
+        .nn-iv-meta {
+            display: flex; flex-wrap: wrap; gap: 0.55rem 1.1rem;
+            font-family: var(--font-ui); font-size: 0.85rem;
+            color: var(--nn-text-muted); margin: 0 0 1.4rem;
+            align-items: center;
+        }
+        .nn-iv-links { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+        .nn-iv-link {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            padding: 3px 11px; border: 1px solid var(--nn-border);
+            border-radius: 100px; font-family: var(--font-ui);
+            font-size: 0.78rem; font-weight: 600; text-decoration: none;
+            color: var(--nn-text-secondary); white-space: nowrap;
+        }
+        .nn-iv-link:hover { border-color: var(--show-color); color: var(--show-color-text, var(--show-color)); }
+        .nn-iv-card {
+            max-width: 900px; margin: 0 auto var(--sp-6);
+            padding: 0 var(--sp-6);
+        }
+        .nn-iv-card-inner {
+            border: 1px solid var(--nn-border);
+            border-left: 3px solid var(--show-color);
+            border-radius: 14px; background: var(--nn-card);
+            padding: 1.3rem 1.5rem;
+        }
+        .nn-iv-card-label {
+            font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--nn-text-muted); margin-bottom: 0.55rem;
+        }
+        .nn-iv-card p { margin: 0; line-height: 1.6; }
+        .nn-iv-points { margin: 0; padding-left: 1.15rem; }
+        .nn-iv-points li { margin-bottom: 0.6rem; line-height: 1.55; }
+        .nn-iv-points li:last-child { margin-bottom: 0; }
+        .nn-iv-next {
+            max-width: 900px; margin: 0 auto var(--sp-8); padding: 0 var(--sp-6);
+            display: grid; gap: 0.8rem;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        }
+        .nn-iv-next a {
+            display: block; border: 1px solid var(--nn-border);
+            border-radius: 14px; background: var(--nn-surface);
+            padding: 1rem 1.2rem; text-decoration: none; color: inherit;
+        }
+        .nn-iv-next a:hover { border-color: var(--show-color); }
+        .nn-iv-next-label {
+            font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--nn-text-muted); margin-bottom: 0.35rem;
+        }
+        .nn-iv-next-title { font-weight: 600; line-height: 1.35; }
+        @media (max-width: 640px) {
+            .nn-iv-hero, .nn-iv-card, .nn-iv-next { padding: 0 var(--sp-4); }
         }
     </style>
 
@@ -1414,6 +1565,8 @@
         </ol>
     </nav>
 
+    
+    
     <!-- Hero -->
     <header class="blog-hero">
         <div class="blog-hero-inner">
@@ -1452,6 +1605,7 @@
             </div>
         </div>
     </header>
+    
 
     
     <section class="nn-i18n" aria-label="Listen in another language">
@@ -1627,12 +1781,24 @@
             
 
             <!-- Transcript -->
-            
             <section class="blog-transcript" id="transcript">
                 <details>
                     <summary>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
-                        Full Episode Transcript
+                        <span class="transcript-head">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+                            Full episode transcript
+                            
+                            <span class="transcript-length">1,186 words</span>
+                            
+                        </span>
+                        
+                        <span class="transcript-preview" aria-hidden="true">A gallon of basic interior latex paint sells for around thirty-five dollars, but the raw materials inside may be worth only a few dollars.
+
+This is First Principles Daily, episode 104.
+
+Inside that can sit pigment, resin binder, and water whose combined commodity value sits well below four dollars.</span>
+                        <span class="transcript-more">Read the whole thing &darr;</span>
+                        
                     </summary>
                     <div class="transcript-content">A gallon of basic interior latex paint sells for around thirty-five dollars, but the raw materials inside may be worth only a few dollars.
 
@@ -1739,6 +1905,21 @@ If you want another sharp daily briefing, Planetterrian Daily has you covered �
 This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.</div>
                 </details>
             </section>
+            <script>
+            /* Every "read the transcript" link on this page points at
+               #transcript, and landing on a collapsed box looks like the link
+               is broken. Open it when the fragment asks for it — including a
+               same-page click, which fires no navigation. */
+            (function () {
+                var box = document.querySelector('#transcript details');
+                if (!box) return;
+                function openIfTargeted() {
+                    if (location.hash === '#transcript') box.open = true;
+                }
+                openIfTargeted();
+                window.addEventListener('hashchange', openIfTargeted);
+            })();
+            </script>
             
 
             <!-- Story Tracker (narrative-memory shows only) -->
@@ -1803,6 +1984,10 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 
             </nav>
             
+
+            
+            
+
             
             
             
