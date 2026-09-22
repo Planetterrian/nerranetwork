@@ -323,7 +323,10 @@ class TestTheCombinedCard:
     def test_the_card_is_readable_before_the_script_runs(self, pages):
         card = _markup_only(_card(pages["tesla"]))
         assert "Loading..." not in card
-        assert re.search(r'id="latest-title">\S', card)
+        # Match the element, not one spelling of its start tag: the title
+        # carries attributes (``data-rendered``) and a guard pinned to
+        # ``id="latest-title">`` breaks on the next one added.
+        assert re.search(r'id="latest-title"[^>]*>\s*\S', card)
         assert re.search(r'id="latest-audio"[^>]*src="https://', card)
         assert re.search(r'id="latest-summary"[^>]*>\s*\S', card)
 
