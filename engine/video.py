@@ -1318,8 +1318,15 @@ def _build_short_hybrid_sequence(
     duration: float,
     nominal_clip_seconds: float = 5.0,
     min_still_hold_s: float = 2.0,
+    max_still_hold_s: Optional[float] = None,
 ) -> List[tuple]:
     """Lay out one Short's background as clips interleaved with stills.
+
+    ``max_still_hold_s`` (Sep 22 2026, the hook-Short motion retry): a
+    still gap longer than this is split into holds of at most that
+    length, cycling the stills — with ONE opening clip the legacy
+    layout parked on a single still for the remaining ~31 s. ``None``
+    keeps the legacy layout byte-identical.
 
     Returns the ``(path, is_video, seconds)`` list
     :func:`_render_hybrid_slideshow` consumes, summing to *duration*
@@ -1374,10 +1381,19 @@ def _build_short_hybrid_sequence(
     hold = (remaining / n_gaps) if n_gaps else 0.0
 
     visuals: List[tuple] = []
+    still_i = 0
     for i, (clip, secs) in enumerate(kept):
         visuals.append((clip, True, secs))
         if n_gaps and hold > 0:
-            visuals.append((stills[i % len(stills)], False, hold))
+            if max_still_hold_s and hold > float(max_still_hold_s) and stills:
+                n_split = max(1, math.ceil(hold / float(max_still_hold_s)))
+                part = hold / n_split
+                for _ in range(n_split):
+                    visuals.append((stills[still_i % len(stills)], False, part))
+                    still_i += 1
+            else:
+                visuals.append((stills[i % len(stills)], False, hold))
+                still_i = i + 1
 
     if not n_gaps and remaining > 0:
         # No stills available: stretch the final clip's slot instead of
@@ -3374,7 +3390,9 @@ def build_short_video(audio_path: Path, cover_path: Path,
                       kb_extended: bool = True,
                       progress_bar: bool = True,
                       fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None,
-                      punch_text: Optional[str] = None) -> Path:
+                      punch_text: Optional[str] = None,
+                      min_clips: int = 2,
+                      still_max_hold_s: Optional[float] = None) -> Path:
     """Render a 1080x1920 vertical YouTube Shorts video.
 
     ``drop_url_pill`` / ``caption_margin_v`` support the multi-platform
@@ -3452,6 +3470,11 @@ def build_short_video(audio_path: Path, cover_path: Path,
         (``engine.fact_cards.fact_cards_for_window``) painted as Shorts
         fact cards, and the ALL-CAPS punch text opening the Short as a
         full-frame title before the hook. ``None`` = legacy graph.
+    min_clips, still_max_hold_s:
+        Sep 22 2026 — the hook-Short motion retry ships ONE clip, so it
+        passes ``min_clips=1`` (legacy 2: the A/B's two-clip floor) and
+        ``still_max_hold_s`` so the stills after the clip keep cycling
+        instead of parking on one image for the rest of the Short.
     """
     if duration >= 60:
         raise ValueError(
@@ -3491,13 +3514,14 @@ def build_short_video(audio_path: Path, cover_path: Path,
     # falls straight through to them on any failure.
     usable_clips = [Path(p) for p in (clip_paths or [])]
     usable_clips = [p for p in usable_clips if p.exists()]
-    if len(usable_clips) >= 2:
+    if len(usable_clips) >= max(1, int(min_clips)):
         try:
             visuals = _build_short_hybrid_sequence(
                 list(scene_paths or []) or [cover_path],
                 usable_clips,
                 duration=duration,
                 nominal_clip_seconds=clip_seconds,
+                max_still_hold_s=still_max_hold_s,
             )
             hybrid_path = work_dir / f"{output_path.stem}_short_hybrid.mp4"
             _render_hybrid_slideshow(

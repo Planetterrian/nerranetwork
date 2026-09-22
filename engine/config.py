@@ -894,6 +894,17 @@ class YouTubeConfig:
     # as a two-clip loop that would misrepresent the treatment.
     shorts_ab_min_clips: int = 2
 
+    # ---- Hook-Short motion retry (Sep 22 2026, engine/hook_short_motion) ----
+    # ONE ~4 s Grok video clip opens the HOOK Short (the one that earns
+    # the views) on tesla/spacex/FF; stills from the clip onward. Cost
+    # gate before any request ($0.07/s x 4 s = $0.28), its own wall-clock
+    # budget under the pipeline's, and a shortfall ships stills recorded
+    # as `hook_stills` (never the A/B's "stills"). Off network-wide.
+    hook_short_motion: bool = False
+    hook_short_motion_seconds: int = 4
+    hook_short_motion_max_cost_usd: float = 0.30
+    hook_short_motion_budget_seconds: float = 150.0
+
     # ---- Visual reuse + chapter-aligned scenes (June 2026) ----
     # These gate engine/visual_reuse.py, the composition layer over
     # engine.gallery_library + engine.scene_scheduler. All default ON and

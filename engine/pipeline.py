@@ -318,6 +318,15 @@ def record_youtube_outcomes(
         if "shorts_broll_counts" in youtube_urls:
             metrics.record("shorts_broll_counts",
                            list(youtube_urls.get("shorts_broll_counts") or []))
+        # Sep 22 2026 — hook-Short motion retry: the arm that shipped and
+        # what it cost (engine/hook_short_motion.py).
+        if youtube_urls.get("hook_short_motion"):
+            metrics.record("hook_short_motion", str(youtube_urls["hook_short_motion"]))
+            metrics.record("hook_short_motion_cost_usd",
+                           float(youtube_urls.get("hook_short_motion_cost_usd") or 0.0))
+            if youtube_urls.get("hook_short_motion_reason"):
+                metrics.record("hook_short_motion_reason",
+                               str(youtube_urls["hook_short_motion_reason"]))
         # Shorts-only scene saving (July 2026): 16:9 scenes are only worth
         # generating when a long-form video is actually produced.
         if "scene_long_form_produced" in youtube_urls:

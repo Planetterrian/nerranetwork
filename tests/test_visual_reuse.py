@@ -57,6 +57,11 @@ _NEW_KNOBS = {
     # Sep 22 2026 — Shorts fact cards + punch frame (arm shows opt in).
     "shorts_fact_cards": False,
     "shorts_punch_frame": False,
+    # Sep 22 2026 — hook-Short motion retry (arm shows opt in).
+    "hook_short_motion": False,
+    "hook_short_motion_seconds": 4,
+    "hook_short_motion_max_cost_usd": 0.30,
+    "hook_short_motion_budget_seconds": 150.0,
 }
 
 

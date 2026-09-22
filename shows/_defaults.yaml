@@ -628,3 +628,12 @@ youtube:
   # Shorts draw 2 clips per Short from the same pool (real footage
   # between the stills). No-op until the show has a broll.json.
   shorts_broll: true
+  # Sep 22 2026 — hook-Short motion retry (engine/hook_short_motion.py):
+  # one ~4 s Grok video clip opens the HOOK Short, stills after it.
+  # $0.28 per successful clip; cost gate before any request; a
+  # shortfall ships stills recorded as hook_stills. Off network-wide,
+  # on for tesla/spacex/FF (experiment hook-short-motion-2026-09-22).
+  hook_short_motion: false
+  hook_short_motion_seconds: 4
+  hook_short_motion_max_cost_usd: 0.30
+  hook_short_motion_budget_seconds: 150.0

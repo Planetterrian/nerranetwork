@@ -34,7 +34,10 @@ Schema (``schema_version`` 1)::
           "published": "2026-06-29",
           "watch_url": "https://www.youtube.com/watch?v=abc123",
           "channel": "en" | "ru",
-          "variant": "stills" | "grok_video"   # optional; A/B arm only
+          "variant": "stills" | "grok_video"   # optional; A/B arm — or, on a
+                                               # hook Short of a hook_short_motion
+                                               # show (Sep 22 2026): "motion_open"
+                                               # | "broll_open" | "hook_stills"
         },
         ...
       ]

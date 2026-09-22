@@ -6997,6 +6997,7 @@ def _publish_youtube(
             # behaviour, byte for byte) unless the show opts in and has
             # >= 2 Shorts, so index 0 is always the control.
             from engine import shorts_ab as _shorts_ab
+            from engine import hook_short_motion as _hook_motion_mod
 
             # Window-parity de-confound (July 31 2026 learning-loop
             # review): treatment is pinned to Short INDEX 1, which was
@@ -7356,9 +7357,43 @@ def _publish_youtube(
                     # enrolled BOTH arms keep their designed visuals —
                     # pool clips in the control arm would upgrade it
                     # mid-experiment.
+                    # ---- Hook-Short motion retry (Sep 22 2026) ----
+                    # ONE ~4 s Grok clip opens the hook Short on the shows
+                    # that opt in (engine/hook_short_motion.py). Outside
+                    # the A/B, EN hook window only; every shortfall ships
+                    # stills and records the arm it actually shipped.
+                    _hook_motion = None
+                    _hook_motion_clip = None
+                    if (short_idx == 0
+                            and not _ab_on
+                            and _yt_channel == "en"
+                            and _fill_mode == "hook_open"
+                            and _hook_motion_mod.is_enabled(config)):
+                        try:
+                            _motion_brief = ""
+                            for _mp in (_short_visuals.get("scene_paths") or []):
+                                _motion_brief = fresh_scene_prompts.get(Path(_mp), "") or ""
+                                if _motion_brief:
+                                    break
+                            _hook_motion = _hook_motion_mod.plan_hook_motion(
+                                config,
+                                work_dir=work_dir,
+                                episode_num=episode_num,
+                                scene_brief=_motion_brief,
+                                hook=(this_hook or hook or ""),
+                                pipeline_budget_left_s=_pipeline_budget_remaining(),
+                            )
+                        except Exception as exc:  # noqa: BLE001
+                            logger.warning("Hook Short motion plan failed: %s", exc)
+                            _hook_motion = None
+                        if _hook_motion is not None:
+                            _hook_motion_clip = _hook_motion.clip_path
+                            result.update(_hook_motion.as_metric())
+
                     _short_broll: list = []
                     if (not _ab_on
                             and not _variant.clip_paths
+                            and _hook_motion_clip is None
                             and getattr(config.youtube,
                                         "shorts_broll", True)):
                         try:
@@ -7413,14 +7448,34 @@ def _publish_youtube(
                         _short_punch = (yt_punch_text or "").strip() or None
                         result["shorts_punch_frame_rendered"] = bool(_short_punch)
 
+                    if _hook_motion is not None and _hook_motion_clip is None:
+                        # The retry did not land a clip: say which arm the
+                        # Short actually opens on (SpaceX's b-roll pool
+                        # already opens its hook Short on real footage).
+                        _hook_motion.variant = (
+                            _hook_motion_mod.VARIANT_BROLL_OPEN if _short_broll
+                            else _hook_motion_mod.VARIANT_HOOK_STILLS
+                        )
+                        result.update(_hook_motion.as_metric())
+
                     build_short_video(
                         final_mp3, cover_path, this_short_video_path,
                         fact_cards=_short_fact_cards,
                         punch_text=_short_punch,
                         clip_paths=(_variant.clip_paths
+                                    or ([_hook_motion_clip] if _hook_motion_clip else None)
                                     or _short_broll or None),
-                        clip_seconds=float(getattr(
-                            config.youtube, "shorts_ab_clip_seconds", 5) or 5),
+                        clip_seconds=(
+                            float(_hook_motion.seconds or 4)
+                            if _hook_motion_clip else
+                            float(getattr(
+                                config.youtube, "shorts_ab_clip_seconds", 5) or 5)
+                        ),
+                        min_clips=1 if _hook_motion_clip else 2,
+                        still_max_hold_s=(
+                            _hook_motion_mod.STILL_MAX_HOLD_S
+                            if _hook_motion_clip else None
+                        ),
                         # A1 guard: a show running the Shorts motion A/B
                         # keeps the LEGACY Ken Burns on both arms so the
                         # control arm isn't upgraded mid-experiment.
@@ -7529,7 +7584,11 @@ def _publish_youtube(
                             # analytics reads the experiment from here.
                             # Empty for non-participating shows so the
                             # control arm stays same-show, same-channel.
-                            variant=(_variant.variant if _ab_on else ""),
+                            variant=(
+                                _variant.variant if _ab_on
+                                else (_hook_motion.variant
+                                      if _hook_motion is not None else "")
+                            ),
                             # Which window this Short came from (hook-
                             # first directive) — hook_open | qualified |
                             # filled | legacy_fallback.
