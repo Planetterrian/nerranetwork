@@ -179,6 +179,11 @@ jobs:
               }
 
               shows = []
+              # Named-weekday filters (Python weekday(): Monday == 0).
+              WEEKDAY_FILTERS = {
+                  "monday": 0, "tuesday": 1, "wednesday": 2, "thursday": 3,
+                  "friday": 4, "saturday": 5, "sunday": 6,
+              }
               entry = CRON_MAP.get(event_schedule)
 
               if entry:
@@ -206,13 +211,14 @@ jobs:
                       run_today = False
                       known_noop = True
                       print(f"Weekend no-op: {show_slug} only runs on weekdays.")
-                  elif day_filter == "monday" and weekday != 0:
-                      # Weekly shows run only on Monday (weekday()==0). The cron
-                      # already pins Monday; this guard also drops a GitHub cron
-                      # that fires late on a different day.
+                  elif day_filter in WEEKDAY_FILTERS and weekday != WEEKDAY_FILTERS[day_filter]:
+                      # Weekly shows run only on their named weekday (Monday
+                      # for most; Sep 2026 added any weekday name). The cron
+                      # already pins the day; this guard also drops a GitHub
+                      # cron that fires late on a different day.
                       run_today = False
                       known_noop = True
-                      print(f"Weekly no-op: {show_slug} only runs on Mondays.")
+                      print(f"Weekly no-op: {show_slug} only runs on {day_filter.title()}s.")
 
                   if run_today:
                       shows.append(show_slug)

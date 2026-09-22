@@ -339,9 +339,19 @@ def _should_run_on(schedule: str, target_date: datetime.date) -> bool:
         return is_weekday
     if schedule == "odd_weekday":
         return day % 2 == 1 and is_weekday
-    if schedule == "monday":
-        return weekday == 0
+    if schedule in WEEKDAY_SCHEDULES:
+        # Weekly shows name their day (Monday for most; Sep 2026 added the
+        # other six so the new weeklies need not all land on Monday).
+        return weekday == WEEKDAY_SCHEDULES[schedule]
     return True  # unknown schedule → assume should run
+
+
+#: Weekly schedule names → ``date.weekday()`` (Monday == 0). Mirrors the
+#: run-show gate's WEEKDAY_FILTERS and the scheduler Worker's switch.
+WEEKDAY_SCHEDULES = {
+    "monday": 0, "tuesday": 1, "wednesday": 2, "thursday": 3,
+    "friday": 4, "saturday": 5, "sunday": 6,
+}
 
 
 def _read_skip_marker(output_dir: str, target_date: datetime.date) -> Optional[dict]:

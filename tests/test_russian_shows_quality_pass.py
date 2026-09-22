@@ -51,8 +51,19 @@ class TestLocalizedDisclosures:
         assert "_AI_DISCLOSURE_RU" in src
         assert "_AI_DISCLOSURE_RSS_RU" in src
         assert '_RUSSIAN_SHOWS = ("finansy_prosto", "privet_russian")' in src
-        # The spoken pick is gated, not unconditional English.
-        assert "_AI_DISCLOSURE_RU if args.show in _RUSSIAN_SHOWS else _AI_DISCLOSURE" in src
+        # The spoken pick is gated, not unconditional English. Since Sep
+        # 2026 the pick lives in _spoken_disclosure (host-aware); assert the
+        # behaviour rather than the old inline expression.
+        from types import SimpleNamespace
+
+        from run_show import _AI_DISCLOSURE, _AI_DISCLOSURE_RU, _spoken_disclosure
+        cfg = SimpleNamespace(
+            publishing=SimpleNamespace(host_kind="human", host_name="Patrick"),
+            tts=SimpleNamespace(dialogue_mode=False))
+        assert _spoken_disclosure(cfg, "finansy_prosto") == _AI_DISCLOSURE_RU
+        assert _spoken_disclosure(cfg, "privet_russian") == _AI_DISCLOSURE_RU
+        assert _spoken_disclosure(cfg, "tesla") == _AI_DISCLOSURE
+        assert "_spoken_disclosure(config, args.show)" in src
 
     def test_russian_disclosure_is_actually_russian(self):
         src = (_ROOT / "run_show.py").read_text(encoding="utf-8")

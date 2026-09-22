@@ -1,0 +1,222 @@
+#!/usr/bin/env python3
+"""Generate cover art for the Sep 2026 new shows (deterministic, PIL-only, $0).
+
+One template, many shows — the Nerra Daily "dial" approach generalized
+(docs/new_shows_plan_2026_09_22.md §5b). Every cover shares the network
+field (#070E1A → #0D1E33), the "THE NERRA NETWORK" eyebrow, the title
+typography and a horizon glow; what changes per show is the ACCENT colour
+(from the registry's ``theme_color``) and one simple geometric GLYPH that
+names the show's subject. Consistency is the branding: on a grid of
+eighteen-plus covers the family should read as one network.
+
+Outputs per slug (idempotent):
+  assets/covers/<slug-hyphen>.jpg          3000x3000 podcast cover
+  assets/covers/<slug-hyphen>.webp         full-size WebP
+  assets/covers/<slug-hyphen>-800.webp     800px WebP
+  assets/covers/<slug-hyphen>-400.webp     400px WebP
+
+Run from repo root:
+  python scripts/generate_show_brand.py --slug ai_chips
+  python scripts/generate_show_brand.py --all
+"""
+
+from __future__ import annotations
+
+import argparse
+import math
+from dataclasses import dataclass
+from pathlib import Path
+
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
+
+ROOT = Path(__file__).resolve().parent.parent
+
+SIZE = 3000
+NIGHT = (7, 14, 26)          # #070E1A  field base
+DUSK = (13, 30, 51)          # #0D1E33  gradient top
+NERRA_CYAN = (0, 212, 255)   # #00D4FF  the network accent
+SLATE = (148, 179, 199)      # secondary text
+WHITE = (245, 250, 253)      # primary text
+
+FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+FONT_BOOK = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+
+
+@dataclass(frozen=True)
+class CoverSpec:
+    title_lines: tuple            # one or two big lines
+    tagline: str                  # small caps line under the glyph
+    host_line: str                # "with Patrick" / "with Mira"
+    accent: tuple                 # RGB accent for glyph + host line
+    glyph: str                    # die | bars | chain | rings | sectors | place | commits | dial
+    glyph_arg: int = 0            # glyph-specific (e.g. highlighted sector)
+
+
+def _hex(h: str) -> tuple:
+    h = h.lstrip("#")
+    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def _lift(rgb: tuple, amount: float = 0.45) -> tuple:
+    """Lighten a brand colour so it reads as a glyph on the dark field.
+
+    Registry brand colours are chosen for >=4.5:1 on WHITE, which makes
+    them too dark to see on #070E1A; the cover uses a lifted tint.
+    """
+    return tuple(round(c + (255 - c) * amount) for c in rgb)
+
+
+# Per-show specs. Accents come from the registry colours in
+# docs/new_shows_plan_2026_09_22.md §5a (lifted for the dark field).
+SPECS: dict[str, CoverSpec] = {
+    "ai_chips": CoverSpec(("AI CHIPS", "& DATA CENTRES"), "SILICON · SYSTEMS · SITES · POWER",
+                          "with Patrick", _lift(_hex("#4338CA"), 0.5), "die"),
+    "mag7": CoverSpec(("MAG 7", "DAILY"), "THE SEVEN LARGEST US COMPANIES · ONE DESK",
+                      "with Patrick", _hex("#F59E0B"), "bars"),
+    "peptides": CoverSpec(("PEPTIDES", "WEEKLY"), "EDUCATION · EVIDENCE · NEVER DOSING",
+                          "with Patrick", _lift(_hex("#9D174D"), 0.45), "chain"),
+    "longevity": CoverSpec(("LONGEVITY", "WEEKLY"), "THE SCIENCE OF AGING, READ CAREFULLY",
+                           "with Patrick", _lift(_hex("#3F6212"), 0.5), "rings"),
+}
+
+
+def _vertical_gradient(size: int, top: tuple, bottom: tuple) -> Image.Image:
+    strip = Image.new("RGB", (1, size))
+    for y in range(size):
+        t = y / (size - 1)
+        strip.putpixel((0, y), tuple(
+            round(top[c] + (bottom[c] - top[c]) * t) for c in range(3)))
+    return strip.resize((size, size))
+
+
+def _tracked_text(draw, y, text, font, fill, tracking, center_x):
+    widths = [draw.textlength(ch, font=font) for ch in text]
+    total = sum(widths) + tracking * (len(text) - 1)
+    x = center_x - total / 2
+    for ch, w in zip(text, widths):
+        draw.text((x, y), ch, font=font, fill=fill)
+        x += w + tracking
+
+
+def _fit_font(draw, text, path, start, max_width, tracking):
+    size = start
+    while size > 120:
+        font = ImageFont.truetype(path, size)
+        width = sum(draw.textlength(ch, font=font) for ch in text) + tracking * (len(text) - 1)
+        if width <= max_width:
+            return font
+        size -= 10
+    return ImageFont.truetype(path, size)
+
+
+def _glow(img, box, color, blur, fill=150):
+    mask = Image.new("L", (SIZE, SIZE), 0)
+    ImageDraw.Draw(mask).ellipse(box, fill=fill)
+    mask = mask.filter(ImageFilter.GaussianBlur(blur))
+    img.paste(Image.new("RGB", (SIZE, SIZE), color), (0, 0), mask)
+
+
+def _draw_glyph(img, draw, spec: CoverSpec, cx: float, cy: float) -> None:
+    a = spec.accent
+    if spec.glyph == "die":
+        # A chip die with pins on four sides and a glowing core.
+        half = 300
+        draw.rounded_rectangle([cx - half, cy - half, cx + half, cy + half],
+                               radius=40, outline=a + (255,), width=22)
+        draw.rectangle([cx - 150, cy - 150, cx + 150, cy + 150], fill=a + (70,))
+        for i in range(7):
+            off = -240 + i * 80
+            for x0, y0, x1, y1 in (
+                (cx + off, cy - half - 110, cx + off, cy - half - 20),
+                (cx + off, cy + half + 20, cx + off, cy + half + 110),
+                (cx - half - 110, cy + off, cx - half - 20, cy + off),
+                (cx + half + 20, cy + off, cx + half + 110, cy + off),
+            ):
+                draw.line([x0, y0, x1, y1], fill=a + (200,), width=18)
+        _glow(img, [cx - 120, cy - 120, cx + 120, cy + 120], NERRA_CYAN, 60, 170)
+    elif spec.glyph == "bars":
+        # Seven rising bars — the seven companies as one tape.
+        heights = (0.42, 0.58, 0.5, 0.72, 0.64, 0.86, 1.0)
+        w, gap, base = 90, 40, cy + 330
+        x = cx - (7 * w + 6 * gap) / 2
+        for h in heights:
+            draw.rounded_rectangle([x, base - 620 * h, x + w, base], radius=18,
+                                   fill=a + (235,))
+            x += w + gap
+        draw.line([cx - 560, base + 30, cx + 560, base + 30], fill=SLATE + (180,), width=10)
+    elif spec.glyph == "chain":
+        # A short amino-acid chain: beads on a gently curved backbone.
+        pts = []
+        for i in range(9):
+            t = i / 8
+            pts.append((cx - 560 + 1120 * t, cy + math.sin(t * math.pi * 1.6) * 170))
+        draw.line(pts, fill=a + (160,), width=16, joint="curve")
+        for i, (x, y) in enumerate(pts):
+            r = 74 if i % 3 == 1 else 56
+            draw.ellipse([x - r, y - r, x + r, y + r], fill=a + (255,) if i % 3 == 1 else a + (170,))
+    elif spec.glyph == "rings":
+        # Concentric growth rings, slightly off-centre — time, read carefully.
+        for i, r in enumerate(range(90, 460, 62)):
+            draw.ellipse([cx - r, cy - r * 0.94, cx + r, cy + r * 0.94],
+                         outline=a + (255 - i * 28,), width=16)
+        _glow(img, [cx - 90, cy - 90, cx + 90, cy + 90], a, 50, 160)
+    else:  # dial — the Nerra Daily family default
+        r = 420
+        draw.arc([cx - r, cy - r, cx + r, cy + r], start=205, end=335, fill=a + (235,), width=26)
+
+
+def build_cover(spec: CoverSpec) -> Image.Image:
+    img = _vertical_gradient(SIZE, DUSK, NIGHT)
+    draw = ImageDraw.Draw(img, "RGBA")
+    cx = SIZE / 2
+    _glow(img, [cx - 1150, SIZE * 0.6 - 420, cx + 1150, SIZE * 0.6 + 420],
+          tuple(round(c * 0.55) for c in spec.accent), 260, 110)
+    draw = ImageDraw.Draw(img, "RGBA")
+
+    f_kicker = ImageFont.truetype(FONT_BOLD, 96)
+    _tracked_text(draw, SIZE * 0.085, "THE NERRA NETWORK", f_kicker, NERRA_CYAN, 30, cx)
+
+    y = SIZE * 0.15
+    for line in spec.title_lines:
+        f = _fit_font(draw, line, FONT_BOLD, 360, SIZE * 0.86, 28)
+        _tracked_text(draw, y, line, f, WHITE, 28, cx)
+        y += f.size * 1.12
+
+    _draw_glyph(img, draw, spec, cx, SIZE * 0.6)
+
+    f_sub = _fit_font(draw, spec.tagline, FONT_BOOK, 92, SIZE * 0.88, 14)
+    _tracked_text(draw, SIZE * 0.815, spec.tagline, f_sub, SLATE, 14, cx)
+    f_host = ImageFont.truetype(FONT_BOOK, 96)
+    _tracked_text(draw, SIZE * 0.875, spec.host_line, f_host, spec.accent, 8, cx)
+    return img
+
+
+def write_cover(slug: str, out_dir: Path | None = None) -> Path:
+    spec = SPECS[slug]
+    out_dir = out_dir or (ROOT / "assets" / "covers")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    stem = slug.replace("_", "-")
+    img = build_cover(spec)
+    jpg = out_dir / f"{stem}.jpg"
+    img.save(jpg, quality=92, optimize=True)
+    img.save(out_dir / f"{stem}.webp", quality=86, method=6)
+    for px in (800, 400):
+        img.resize((px, px), Image.LANCZOS).save(
+            out_dir / f"{stem}-{px}.webp", quality=84, method=6)
+    return jpg
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    g = ap.add_mutually_exclusive_group(required=True)
+    g.add_argument("--slug", choices=sorted(SPECS))
+    g.add_argument("--all", action="store_true")
+    args = ap.parse_args()
+    for slug in (sorted(SPECS) if args.all else [args.slug]):
+        path = write_cover(slug)
+        print(f"wrote {path.relative_to(ROOT)} (+3 webp variants)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

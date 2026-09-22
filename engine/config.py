@@ -362,6 +362,11 @@ class PublishingConfig:
     x_handle: str = ""
     x_cross_promo: bool = False
     host_name: str = "Patrick"
+    # "human" (default) or "ai". An AI host (Mira) must never be given the
+    # human-host disclosure ("synthesis of MY voice — analysis my own",
+    # "curated by Patrick"): run_show picks the AI variant from this field
+    # (Sep 2026 new-shows Phase 0, docs/new_shows_plan_2026_09_22.md §2b).
+    host_kind: str = "human"
 
 
 @dataclass

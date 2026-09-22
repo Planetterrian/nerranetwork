@@ -131,7 +131,7 @@
             {#- The strand badge is first: the three shows Mira
                 hosts are the network's most differentiated and
                 display_order scatters them through this grid. #}
-            {% if s.strand == 'mira' %}<span class="show-card-badge show-card-badge--strand">Hosted by Mira</span>{% endif %}
+            {% if s.strand == 'mira' or s.host == 'mira' %}<span class="show-card-badge show-card-badge--strand">Hosted by Mira</span>{% endif %}
             {% if s.schedule %}<span class="show-card-badge">{{ s.schedule }}</span>{% endif %}
             {% if s.episode_length %}<span class="show-card-badge">{{ s.episode_length }}</span>{% endif %}
             {% if s.picker_tags and s.picker_tags.language and 'russian' in s.picker_tags.language %}<span class="show-card-badge">In Russian</span>{% endif %}

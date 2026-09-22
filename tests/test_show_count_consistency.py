@@ -65,8 +65,13 @@ def test_hardcoded_count_surfaces_match():
     n = str(_show_count())
     # After the June 2026 brand refresh, README.md was made count-agnostic.
     # These surfaces remain hardcoded and must match the current show count:
+    # Sep 2026: the newsletter footer went count-agnostic ("18 daily
+    # podcasts" was wrong twice over — five shows are weekly — and the
+    # count changes five times in the new-shows rollout). It must not carry
+    # a number again.
+    nl = (_ROOT / "engine/newsletter.py").read_text(encoding="utf-8")
+    assert not re.search(r"\d+ daily podcasts", nl), "newsletter footer carries a show count again"
     surfaces = {
-        "engine/newsletter.py": f"{n} daily podcasts, ad-free",
         "CLAUDE.md": f"running {n} shows via a unified",
     }
     for rel, needle in surfaces.items():

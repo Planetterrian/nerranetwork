@@ -28,7 +28,7 @@ llm:
   podcast_max_tokens: {podcast_max_tokens}
   min_podcast_words: {min_podcast_words}
 
-tts: {{}}
+{tts_block}
 
 audio:
   music_file: {music_file}
@@ -39,7 +39,7 @@ publishing:
   rss_title: "{show_name}"
   rss_description: "{rss_description}"
   rss_link: https://nerranetwork.com/{show_page}
-  rss_author: Patrick
+  rss_author: {rss_author}
   rss_email: patrick@planetterrian.com
   rss_image: https://nerranetwork.com/assets/covers/{cover_file}
   rss_category: {rss_category}
@@ -53,6 +53,8 @@ publishing:
   summaries_html: {summaries_page}
   x_enabled: {x_enabled}
   x_env_prefix: "{x_env_prefix}"
+  host_name: {host_name}
+  host_kind: {host_kind}
 
 episode:
   prefix: {episode_prefix}
@@ -84,8 +86,11 @@ newsletter:
   requires_financial_disclaimer: false
   length_target_words: {length_target_words}
 
+# Slow-news mode needs a segment library (tests/test_slow_news.py). Enable
+# it once shows/segments/{slug}.json exists:
+#   slow_news: {{enabled: true, library_file: shows/segments/{slug}.json}}
 slow_news:
-  enabled: true
+  enabled: false
 
 content_tracking:
   section_patterns: {{}}

@@ -59,6 +59,19 @@ function dayFilterPasses(filter: string | null, now: Date): boolean {
       return day % 2 === 1 && isWeekday;
     case "monday":
       return weekday === 1;
+    // Named weekdays for weekly shows (Sep 2026). getUTCDay: 0=Sun .. 6=Sat.
+    case "tuesday":
+      return weekday === 2;
+    case "wednesday":
+      return weekday === 3;
+    case "thursday":
+      return weekday === 4;
+    case "friday":
+      return weekday === 5;
+    case "saturday":
+      return weekday === 6;
+    case "sunday":
+      return weekday === 0;
     default:
       return true;
   }

@@ -29,6 +29,11 @@ def _cron_map() -> dict:
     return entries
 
 
+#: Weekly day filters (Sep 2026): any named weekday, not only Monday.
+WEEKLY_FILTERS = {"monday", "tuesday", "wednesday", "thursday", "friday",
+                  "saturday", "sunday"}
+
+
 def _worker_slots() -> dict:
     entries = {}
     for m in re.finditer(
@@ -56,7 +61,10 @@ def test_cron_minutes_off_peak():
 def test_worker_slots_match_cron_map():
     cron_map = _cron_map()
     slots = _worker_slots()
-    assert len(cron_map) == 15, f"CRON_MAP parse drift: {sorted(cron_map)}"
+    # Count is derived, not pinned: every `- cron:` line must parse into a
+    # CRON_MAP entry, so a new show that adds one without the other fails.
+    crons = re.findall(r"- cron: '([^']+)'", _WF)
+    assert len(cron_map) == len(crons), f"CRON_MAP parse drift: {sorted(cron_map)}"
     assert slots == cron_map, (
         "workers/scheduler SLOTS desynced from run-show.yml CRON_MAP:\n"
         f"  worker-only/changed: { {k: v for k, v in slots.items() if cron_map.get(k) != v} }\n"
@@ -100,16 +108,16 @@ def test_review_schedules_match_cron_day_filters():
         info = review_episodes.SHOW_REGISTRY.get(show)
         if info is None:
             continue  # not all shows are audited (e.g. age_of_ai)
-        if day_filter == "monday":
-            assert info.get("schedule") == "monday", (
-                f"{show}: CRON_MAP is Monday-only but review_episodes "
+        if day_filter in WEEKLY_FILTERS:
+            assert info.get("schedule") == day_filter, (
+                f"{show}: CRON_MAP is {day_filter}-only but review_episodes "
                 f"says {info.get('schedule')!r} — the audit will flag "
                 "phantom missed episodes and dispatch off-schedule runs"
             )
         else:
-            assert info.get("schedule") != "monday", (
-                f"{show}: review_episodes says Monday-only but the cron "
-                "has no Monday day-filter"
+            assert info.get("schedule") not in WEEKLY_FILTERS, (
+                f"{show}: review_episodes says weekly but the cron "
+                "has no weekday day-filter"
             )
 
 
@@ -143,9 +151,9 @@ def test_audit_rss_limits_match_cron_cadence():
             "audit's RSS freshness FEEDS — a dead feed would never page"
         )
         limit = limits[feed]
-        if day_filter == "monday":
+        if day_filter in WEEKLY_FILTERS:
             assert limit >= 192, (
-                f"{show}: Monday-only cadence but audit limit is {limit}h "
+                f"{show}: weekly cadence but audit limit is {limit}h "
                 "(<192h) — pages every week for an on-schedule feed"
             )
         else:

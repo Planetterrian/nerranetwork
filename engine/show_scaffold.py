@@ -13,6 +13,10 @@ import yaml
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "shows" / "templates"
 DEFAULT_MUSIC = "assets/music/tesla_shorts_time.mp3"
 
+#: Weekly day filters the run-show gate and scheduler Worker understand.
+WEEKDAY_FILTERS = ("monday", "tuesday", "wednesday", "thursday", "friday",
+                   "saturday", "sunday")
+
 
 @dataclass
 class ScaffoldSpec:
@@ -51,7 +55,15 @@ class ScaffoldSpec:
     x_env_prefix: str = ""
     related_show: str = "omni_view"
     related_reason: str = ""
-    display_order: int = 99
+    display_order: float = 99
+    # Sep 2026 (docs/new_shows_plan_2026_09_22.md §2d): the scaffold could
+    # only make a Patrick-hosted daily. These carry host, voice and grouping.
+    host_name: str = "Patrick"
+    host_kind: str = "human"          # "human" | "ai" (Mira)
+    host_key: str = "patrick"         # registry `host`: patrick|dan|mira|patrick_dan
+    voice_id: str = ""                # empty = inherit _defaults.yaml
+    strand: str = ""
+    page_lang: str = ""
     sources: list[dict[str, str]] = field(default_factory=list)
     web_search_queries: list[str] = field(default_factory=list)
     keywords: list[str] = field(default_factory=list)
@@ -165,6 +177,12 @@ def build_show_yaml(spec: ScaffoldSpec) -> str:
         "youtube_category_id": spec.youtube_category_id,
         "image_queries_block": _format_image_queries(spec.image_queries),
         "summaries_page": summaries_page,
+        "tts_block": (
+            "tts:\n  voice_id: " + spec.voice_id if spec.voice_id else "tts: {}"
+        ),
+        "rss_author": "Nerra Network" if spec.host_kind == "ai" else spec.host_name,
+        "host_name": spec.host_name,
+        "host_kind": spec.host_kind,
     }
     raw = (TEMPLATES_DIR / "show.yaml.template").read_text(encoding="utf-8")
     return raw.format(**mapping)
@@ -195,7 +213,12 @@ def build_network_meta_entry(spec: ScaffoldSpec) -> dict[str, Any]:
             "schedule": spec.schedule_label,
             "episode_length": f"~{spec.episode_length} min",
             "about_text": spec.description,
-            "about_host": "Hosted by Patrick in Vancouver.",
+            "about_host": (
+                f"Hosted by {spec.host_name}, the Nerra Network's AI host."
+                if spec.host_kind == "ai" else
+                f"Hosted by {spec.host_name} in Vancouver."
+            ),
+            "host": spec.host_key,
             "description_long": spec.description,
             "related_show": rel,
             "related_reason": spec.related_reason or (
@@ -209,6 +232,8 @@ def build_network_meta_entry(spec: ScaffoldSpec) -> dict[str, Any]:
             "audience": spec.audience,
             "source_highlights": ["Curated RSS", "Google News"],
             "resource_categories": [],
+            **({"strand": spec.strand} if spec.strand else {}),
+            **({"page_lang": spec.page_lang} if spec.page_lang else {}),
             "picker_tags": {
                 "topics": spec.keywords[:5] or [slug.replace("_", "-")],
                 "audience": ["general"],
@@ -219,18 +244,30 @@ def build_network_meta_entry(spec: ScaffoldSpec) -> dict[str, Any]:
 
 
 def merge_network_meta(root: Path, entry: dict[str, Any], *, dry_run: bool) -> None:
+    """APPEND the new entry as a YAML block.
+
+    The old implementation reloaded the whole file and rewrote it with
+    ``safe_dump(sort_keys=True)``, which stripped every comment in
+    ``shows/network_meta.yaml`` (they document why fields exist) and
+    reordered every existing entry. Appending touches nothing else.
+    """
     path = root / "shows" / "network_meta.yaml"
     existing: dict[str, Any] = {}
+    text = ""
     if path.exists():
-        existing = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    existing.update(entry)
+        text = path.read_text(encoding="utf-8")
+        existing = yaml.safe_load(text) or {}
+    dup = sorted(set(entry) & set(existing))
+    if dup:
+        raise FileExistsError(
+            f"shows/network_meta.yaml already has {dup} — edit that entry by hand")
     if dry_run:
         return
+    block = yaml.safe_dump(entry, allow_unicode=True, sort_keys=False)
+    if text and not text.endswith("\n"):
+        text += "\n"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        yaml.safe_dump(existing, allow_unicode=True, sort_keys=True),
-        encoding="utf-8",
-    )
+    path.write_text(text + block, encoding="utf-8")
 
 
 def append_cron_snippet(
@@ -272,13 +309,17 @@ def generate_registration_patch(spec: ScaffoldSpec) -> str:
     rss_file = f"{slug}_podcast.rss"
     cover = f"assets/covers/{slug.replace('_', '-')}.jpg"
 
-    # Reasonable staleness threshold based on cadence
-    if spec.cadence == "daily" or spec.weekly_summary_segment:
-        health_hours = 48
-    elif "weekday" in (spec.cron_day_filter or ""):
+    # Staleness threshold follows the cron's day filter, not
+    # weekly_summary_segment (which defaults true and made every weekly
+    # show's patch print 48h — tests/test_scheduling_punctuality.py needs
+    # >=192h for a weekly show and <=120h for a daily one).
+    filt = (spec.cron_day_filter or "").lower()
+    if filt in WEEKDAY_FILTERS:
+        health_hours = 240
+    elif filt in ("weekday", "odd_weekday", "even", "odd"):
         health_hours = 120
     else:
-        health_hours = 96
+        health_hours = 48
 
     cron_line = ""
     if spec.cron:
@@ -290,7 +331,10 @@ def generate_registration_patch(spec: ScaffoldSpec) -> str:
 
     health_line = f'              "{rss_file}": ("{spec.show_name}", {health_hours}),'
 
-    buttondown_tag = spec.slug.replace("_", "-")
+    # The Buttondown tag IS the YAML's newsletter.tag (the show name); the
+    # gallery Worker's SHOW_NEWSLETTER_TAGS allow-list must carry the same
+    # string or the tag is silently dropped on signup.
+    buttondown_tag = spec.show_name
 
     lines = [
         "\n" + "=" * 60,
@@ -320,6 +364,20 @@ def generate_registration_patch(spec: ScaffoldSpec) -> str:
         "",
         "6. (Optional) Music:",
         f"   Update shows/{slug}.yaml → audio.music_file if you have a dedicated track.",
+        "",
+        "7. Cadence lives in SIX places — all must agree (CLAUDE.md, Sep 21 2026):",
+        "   run-show.yml CRON_MAP + `- cron:` line + workflow_dispatch options + `all` list;",
+        "   workers/scheduler/src/index.ts SLOTS (unique h:m — the Worker takes the first match);",
+        "   review_episodes.py SHOW_REGISTRY schedule; daily-audit.yml FEEDS limit (above);",
+        "   engine/daily_edition.py lineup/monday_only (or an explicit exclusion in",
+        "   tests/test_daily_edition.py); the registry `schedule` + rss_description copy.",
+        "",
+        "8. Registries tests do NOT guard (docs/new_shows_plan_2026_09_22.md App. A):",
+        "   docs/reviews/review_state.yaml, _defaults.yaml newsletter.network_adjacencies,",
+        "   engine/network_promo.py ENGLISH_SHOWS/ENGLISH_ORDER, engine/intros.py",
+        "   _SHOW_PERSONALITIES, engine/first_episode.py Ep1 override, content_tracker",
+        "   SHOW_SECTION_PATTERNS, validation SHOW_VALIDATION_CONFIGS, workers/gallery",
+        f"   SHOW_NEWSLETTER_TAGS ({buttondown_tag!r}), the show page HTML (rss_link guard).",
         "",
         "=" * 60,
     ])

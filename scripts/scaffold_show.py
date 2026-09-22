@@ -70,8 +70,19 @@ def main() -> int:
     p.add_argument("--image-query", action="append", default=[], dest="image_queries")
     p.add_argument("--cron", default="", help="Cron expression for run-show.yml")
     p.add_argument("--cron-filter", default=None,
-                   choices=["even", "odd", "odd_weekday", "weekday"],
-                   help="Day filter for CRON_MAP")
+                   choices=["even", "odd", "odd_weekday", "weekday",
+                            "monday", "tuesday", "wednesday", "thursday",
+                            "friday", "saturday", "sunday"],
+                   help="Day filter for CRON_MAP (a weekday name = weekly show)")
+    p.add_argument("--display-order", type=float, default=99)
+    p.add_argument("--related-reason", default="")
+    p.add_argument("--strand", default="", help="Registry strand (world, local, …)")
+    p.add_argument("--host", default="Patrick", help="Host display name")
+    p.add_argument("--host-kind", default="human", choices=["human", "ai"])
+    p.add_argument("--host-key", default="",
+                   help="Registry host key (patrick|dan|mira|patrick_dan)")
+    p.add_argument("--voice", default="", help="Grok voice id (empty = network default)")
+    p.add_argument("--page-lang", default="", help="Page language for registry-only shows")
     p.add_argument("--related-show", default="omni_view")
     p.add_argument("--dry-run", action="store_true")
     args = p.parse_args()
@@ -97,6 +108,17 @@ def main() -> int:
         cron=args.cron,
         cron_day_filter=args.cron_filter,
         related_show=args.related_show,
+        related_reason=args.related_reason,
+        display_order=args.display_order,
+        strand=args.strand,
+        host_name=args.host,
+        host_kind=args.host_kind,
+        host_key=args.host_key or args.host.lower(),
+        voice_id=args.voice,
+        page_lang=args.page_lang,
+        cadence="weekly" if (args.cron_filter or "") in (
+            "monday", "tuesday", "wednesday", "thursday", "friday",
+            "saturday", "sunday") else "daily",
     )
 
     try:

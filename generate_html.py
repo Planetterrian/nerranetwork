@@ -2034,6 +2034,11 @@ def _build_all_shows_list():
             # three shows the network's AI host presents, which display_order
             # scatters across the list (0.5, 13, 13.5).
             "strand": cfg.get("strand", ""),
+            # ``host`` (Sep 2026): who presents the show — patrick | dan |
+            # mira | patrick_dan. Separate from ``strand`` because Mira also
+            # hosts news desks that must NOT inherit the interview claim band
+            # (strand "mira" stays the three claim-bearing shows).
+            "host": cfg.get("host", ""),
             # The interview shows each have their own guest-application page;
             # sending a Nerra Voices reader to the Age of AI form files their
             # application against the wrong show.
@@ -3232,6 +3237,7 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         # "Hosted by Mira" band and the link to her hub, so the three shows
         # cross-reference each other instead of each being a dead end.
         "strand": cfg.get("strand", ""),
+        "host": cfg.get("host", ""),
         "apply_page": cfg.get("apply_page", ""),
         # Interview shows (Sep 21 2026): the episode rail is a list of
         # GUESTS, not a list of RSS titles. On these shows the RSS title is

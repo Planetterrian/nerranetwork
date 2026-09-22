@@ -134,6 +134,37 @@ _PUB_AGE_THRESHOLDS_H: Dict[str, Optional[tuple]] = {
     "nerra_voices": None,           # on-demand interviews (Age of AI sister)
 }
 _PUB_AGE_DEFAULT_H = (48, 72)
+#: Any show whose run-show CRON_MAP entry carries a weekday filter is weekly
+#: and gets the weekly thresholds, derived rather than listed (Sep 2026 —
+#: dp_pod went weekly on 09-21 and was never added to the dict above, so
+#: the dashboard painted an on-schedule feed stale every Wednesday).
+_PUB_AGE_WEEKLY_H = (192, 240)
+_WEEKLY_DAY_FILTERS = frozenset({
+    "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+})
+
+
+def _weekly_slugs_from_cron_map(root: Optional[Path] = None) -> set:
+    """Slugs whose CRON_MAP entry names a weekday. Empty on any read error."""
+    import re as _re
+    try:
+        wf = ((root or _ROOT) / ".github" / "workflows" / "run-show.yml").read_text(
+            encoding="utf-8")
+    except OSError:
+        return set()
+    return {
+        slug for slug, filt in _re.findall(
+            r'"\S+ \S+ \S+ \S+ \S+":\s*\("(\w+)",\s*"(\w+)"\)', wf)
+        if filt in _WEEKLY_DAY_FILTERS
+    }
+
+
+def _pub_age_thresholds(slug: str, weekly: set) -> Optional[tuple]:
+    if slug in _PUB_AGE_THRESHOLDS_H:
+        return _PUB_AGE_THRESHOLDS_H[slug]
+    if slug in weekly:
+        return _PUB_AGE_WEEKLY_H
+    return _PUB_AGE_DEFAULT_H
 
 
 # ---------------------------------------------------------------------------
@@ -1504,6 +1535,7 @@ def build_network_rollup(
 
     # Per-show latest episode from RSS audit
     latest_by_feed = {f["file"]: f.get("latest_pub_date") for f in rss.get("feeds", [])}
+    _weekly_slugs = _weekly_slugs_from_cron_map()
 
     # Overlay network_meta.yaml show_page overrides (dp_pod, age_of_ai, …).
     show_pages = dict(_SHOW_PAGE_BY_SLUG)
@@ -1527,7 +1559,7 @@ def build_network_rollup(
         rss_file = cfg.publishing.rss_file or ""
         latest_pub = latest_by_feed.get(rss_file)
         pub_status = "ok"
-        thresholds = _PUB_AGE_THRESHOLDS_H.get(slug, _PUB_AGE_DEFAULT_H)
+        thresholds = _pub_age_thresholds(slug, _weekly_slugs)
         if latest_pub and thresholds is not None:
             try:
                 when = _dt.datetime.fromisoformat(latest_pub)
