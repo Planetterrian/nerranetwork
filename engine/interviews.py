@@ -53,11 +53,18 @@ _SECTION_ABOUT = "about "
 _SECTION_TALKING = "what we talked about"
 _SECTION_LINKS = "where to find "
 _SECTION_TRANSCRIPT = "transcript"
+_SECTION_CHAPTERS = "chapters"
 
 _HEADING_RE = re.compile(r"^#{2,4}\s+(.+?)\s*$", re.M)
 _MD_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)\s]+)\)")
 _BOLD_LINE_RE = re.compile(r"^\*\*(.+?)\*\*\s*$", re.M)
 _BULLET_RE = re.compile(r"^[-*]\s+(.+?)\s*$", re.M)
+#: One transcript line: ``[MM:SS] Speaker: text``. The label is whatever the
+#: cleaner wrote — "Mira", the guest's first name, or the co-host's.
+_SPEAKER_LINE_RE = re.compile(r"^\[\d{1,2}:\d{2}(?::\d{2})?\]\s+([A-Za-z][\w'\-]*):", re.M)
+#: A co-host is reported only above this many lines. A stray mislabel on a
+#: two-speaker episode is not a third person in the room.
+COHOST_MIN_LINES = 5
 
 
 def is_interview_show(slug: str) -> bool:
@@ -136,6 +143,7 @@ def parse_interview_digest(md_text: str) -> dict:
         "talking_points": [],
         "guest_links": [],
         "has_transcript": False,
+        "cohost": "",
     }
 
     for heading, body in _sections(md_text):
@@ -193,8 +201,48 @@ def parse_interview_digest(md_text: str) -> dict:
 
         elif low == _SECTION_TRANSCRIPT:
             result["has_transcript"] = bool(_strip_rules(body))
+            result["cohost"] = cohost_label(body, result["guest_name"])
 
     return result
+
+
+def cohost_label(transcript: str, guest_name: str = "") -> str:
+    """The co-host's speaker label, or "" when Mira and the guest were alone.
+
+    Read from the transcript's own speaker labels rather than from any
+    header line, because only Ep5 and Ep7 carry a ``Speakers:`` line while
+    Ep2 and Ep3 were co-hosted too. Any label that is neither Mira nor the
+    guest's first name and has at least :data:`COHOST_MIN_LINES` lines is
+    the co-host. The credit copy in ``engine.brand`` used to say he was
+    never in the room; this is what makes a page able to say he was, on the
+    episodes where he was, and nothing on the rest.
+    """
+    if not transcript:
+        return ""
+    guest_first = (guest_name or "").split()[0].lower() if guest_name else ""
+    counts: dict = {}
+    for label in _SPEAKER_LINE_RE.findall(transcript):
+        low = label.lower()
+        if low in ("mira", guest_first):
+            continue
+        counts[label] = counts.get(label, 0) + 1
+    if not counts:
+        return ""
+    label, n = max(counts.items(), key=lambda kv: kv[1])
+    return label if n >= COHOST_MIN_LINES else ""
+
+
+def cohost_display_name(label: str) -> str:
+    """The name a page prints for a co-host label ("Patrick" → the creator)."""
+    if not label:
+        return ""
+    try:
+        from engine import brand
+        if label.lower() == brand.CREATOR_TRANSCRIPT_LABEL.lower():
+            return brand.NETWORK_CREATOR_NAME
+    except ImportError:  # pragma: no cover - brand is a sibling module
+        pass
+    return label
 
 
 def episode_record(summaries_path, episode_num: int) -> dict:
@@ -229,6 +277,7 @@ def interview_context(
     slug: str,
     episode_num: int,
     summaries_path: Optional[str] = None,
+    rss_path: Optional[str] = None,
 ) -> dict:
     """Everything the interview templates need for one episode.
 
@@ -260,25 +309,80 @@ def interview_context(
         if links:
             ctx["guest_links"] = links
 
-    ctx["chapters"] = record.get("chapters") or []
+    ctx["chapters"] = supported_chapters(
+        record.get("chapters") or [],
+        interview_transcript_markdown(md_text or ""),
+    )
     ctx["episode_num"] = episode_num
-    ctx["run_time"] = _run_time(ctx["chapters"])
+    ctx["run_time"] = _run_time(
+        feed_durations(rss_path).get(episode_num) if rss_path else None)
+    ctx["cohost_name"] = cohost_display_name(ctx.get("cohost", ""))
     return ctx
 
 
-def _run_time(chapters) -> str:
-    """Human running time from the last chapter's end, or "".
+def feed_durations(rss_path) -> dict:
+    """``{episode_number: seconds}`` from the show's own RSS feed.
 
-    The summaries record carries no duration field, but its chapter markers
-    are built from the finished audio, so the final ``end`` is the episode
-    length. A malformed or empty chapter list gives "" and the template
-    simply omits the figure — a wrong running time is worse than none.
+    The feed's ``<itunes:duration>`` is measured from the finished audio by
+    the publisher, which makes it the one running time on record that is not
+    a guess. Until Sep 22 2026 the cards derived the figure from the last
+    chapter marker's ``end`` — and the chapter markers are a model's output,
+    which on Ep5–7 was fabricated wholesale and on every other episode was
+    simply short: Ep2 read "23 min" against a 44:52 feed, on the same page
+    as a player showing 44:52. A missing or unreadable feed gives ``{}``.
     """
-    if not isinstance(chapters, list) or not chapters:
-        return ""
+    if not rss_path:
+        return {}
+    path = Path(rss_path)
+    if not path.exists():
+        return {}
     try:
-        seconds = int(max(float(c.get("end", 0)) for c in chapters
-                          if isinstance(c, dict)))
+        import xml.etree.ElementTree as ET
+        root = ET.parse(path).getroot()
+    except Exception:  # noqa: BLE001 - a broken feed is not this page's crash
+        return {}
+    ns = {"itunes": "http://www.itunes.com/dtds/podcast-1.0.dtd"}
+    out = {}
+    for item in root.findall(".//item"):
+        num = None
+        ep_el = item.find("itunes:episode", ns)
+        if ep_el is not None and (ep_el.text or "").strip().isdigit():
+            num = int(ep_el.text.strip())
+        else:
+            m = re.match(r"\s*Ep(\d+)\b", item.findtext("title", "") or "")
+            if m:
+                num = int(m.group(1))
+        dur = item.find("itunes:duration", ns)
+        seconds = _duration_seconds((dur.text or "") if dur is not None else "")
+        if num is not None and seconds:
+            out[num] = seconds
+    return out
+
+
+def _duration_seconds(text: str) -> int:
+    """``"46:05"`` / ``"1:02:03"`` / ``"2765"`` → seconds; 0 when unreadable."""
+    text = (text or "").strip()
+    if not text:
+        return 0
+    if text.isdigit():
+        return int(text)
+    parts = text.split(":")
+    if not all(p.strip().isdigit() for p in parts) or len(parts) > 3:
+        return 0
+    total = 0
+    for part in parts:
+        total = total * 60 + int(part)
+    return total
+
+
+def _run_time(seconds) -> str:
+    """Human running time from *seconds*, or "" — never from chapters.
+
+    A wrong running time is worse than none, so anything unreadable or under
+    a minute renders nothing and the template omits the figure.
+    """
+    try:
+        seconds = int(seconds or 0)
     except (TypeError, ValueError):
         return ""
     if seconds < 60:
@@ -288,6 +392,83 @@ def _run_time(chapters) -> str:
         return f"{minutes} min"
     hours, rem = divmod(minutes, 60)
     return f"{hours} hr {rem} min" if rem else f"{hours} hr"
+
+
+#: Words a chapter title can share with any transcript without meaning it
+#: was written from THIS one. Speaker names are stripped separately.
+_CHAPTER_STOPWORDS = frozenset("""
+a an and the of to in on at for from with by as or but not is are was were be
+been being it its this that these those his her their our your my we you he
+she they them who what why how when where which into over about after before
+than then there here up down out off own same so too very can will just do does
+did done more most other some such no nor only both each few all any one two
+first last next new old real big small long short early late round closing
+lightning bet episode conversation interview show host guest talk talks
+ai human humans
+""".split())
+
+
+def supported_chapters(chapters, transcript: str) -> list:
+    """*chapters* that the transcript can vouch for, or ``[]``.
+
+    Sep 22 2026: Ep5, Ep6 and Ep7 shipped chapter lists about a film studio
+    banning AI storyboards — for a network-automation builder, a propulsion
+    founder and a novelist — because the chapter prompt supplied that exact
+    title as its example and the model reproduced it — round-number
+    timestamps and all, on episodes whose transcripts never mention a studio
+    or a storyboard. This is the render-side gate, the same shape as the
+    claims gate: a chapter title must be built from words that occur in the
+    transcript it claims to segment.
+
+    Calibrated on the seven committed episodes (Sep 22 2026). A title's
+    CONTENT words are what is left after stopwords, the speaker labels, the
+    guest's name and the show's own subject ("ai", "human") are removed —
+    every transcript of this show contains those, so they vouch for nothing.
+    A title passes when at least two content words appear in the transcript
+    and at least half of them do (a one-word title needs its word); a title
+    that names a speaker with no lines fails outright. The real lists (Ep2,
+    Ep3, Ep4) pass every title; the fabricated ones pass at most one in six.
+    If fewer than :data:`CHAPTER_LIST_MIN_PASS` of the titles pass, the whole
+    list is dropped — a half-fabricated chapter list is not a navigation aid.
+    An empty transcript cannot vouch for anything and yields ``[]``.
+    """
+    if not isinstance(chapters, list) or not chapters:
+        return []
+    text = (transcript or "").lower()
+    if not text.strip():
+        return []
+    words = set(re.findall(r"[a-z][a-z'\-]+", text))
+    speakers = {lbl.lower() for lbl in _SPEAKER_LINE_RE.findall(transcript or "")}
+    # Names vouch for nothing: the guest's first name is a speaker label on
+    # every line, and the hosts' names are the same on every episode.
+    people = speakers | {"mira", "patrick", "novak"}
+    kept = []
+    judged = 0
+    for ch in chapters:
+        if not isinstance(ch, dict):
+            continue
+        judged += 1
+        title = str(ch.get("title", "")).lower()
+        tokens = [t for t in re.findall(r"[a-z][a-z'\-]+", title)
+                  if t not in _CHAPTER_STOPWORDS]
+        # A host named in a title must have lines on THIS episode.
+        if any(t in ("mira", "patrick") and t not in speakers for t in tokens):
+            continue
+        content = [t for t in tokens if t not in people]
+        if not content:
+            continue
+        hits = sum(1 for t in content if t in words)
+        needed = 2 if len(content) >= 2 else 1
+        if hits >= needed and hits * 2 >= len(content):
+            kept.append(ch)
+    if judged == 0 or len(kept) < CHAPTER_LIST_MIN_PASS * judged:
+        return []
+    return kept
+
+
+#: Share of a chapter list's titles that must be vouched for by the
+#: transcript before the list is shown at all.
+CHAPTER_LIST_MIN_PASS = 0.6
 
 
 #: The digest sections the interview layout promotes above the fold. Leaving
@@ -313,14 +494,26 @@ def _is_transcript(heading: str) -> bool:
     return heading.strip().lower() == _SECTION_TRANSCRIPT
 
 
+def _is_chapters(heading: str) -> bool:
+    return heading.strip().lower() == _SECTION_CHAPTERS
+
+
 def interview_body_markdown(md_text: str) -> str:
     """*md_text* with the promoted sections, the transcript and the redundant
     preamble gone.
 
-    What is left is the part neither the hero nor the transcript box carries —
-    today that is the chapter list, plus any section a future digest adds that
-    this module does not know about. An unrecognised heading is KEPT, so a new
-    section shows up on the page looking plain rather than vanishing silently.
+    What is left is the part neither the hero, the chapter section nor the
+    transcript box carries — today that is nothing on most episodes, plus any
+    section a future digest adds that this module does not know about. An
+    unrecognised heading is KEPT, so a new section shows up on the page
+    looking plain rather than vanishing silently.
+
+    The chapter list left the body on 2026-09-22: it rendered as an ``<h4>``
+    bullet list with a one-item "Contents" sidebar pointing at it, while the
+    page's real chapter section (``blog-chapters``, with click-to-seek) sat
+    empty because it reads a ``chapters_epNNN.json`` these shows never
+    write. ``interview_context`` hands the record's chapters — gated by
+    :func:`supported_chapters` — to that section instead.
 
     The transcript leaves because it is 90% of the document: on Ep006 it is
     730 of 785 lines, and printing it open between the chapter list and the
@@ -337,7 +530,7 @@ def interview_body_markdown(md_text: str) -> str:
     for heading, body in _sections(md_text):
         if not heading:
             continue  # the preamble — hook, episode line, "What You Need to Know"
-        if _is_promoted(heading) or _is_transcript(heading):
+        if _is_promoted(heading) or _is_transcript(heading) or _is_chapters(heading):
             continue
         kept.append(f"### {heading}\n{body}")
     return _strip_rules("\n\n".join(kept))
@@ -379,6 +572,7 @@ def interview_episode_cards(
     summaries_path,
     digest_dir=None,
     limit: int = 0,
+    rss_path=None,
 ) -> list:
     """The show's episodes as guest cards, newest first.
 
@@ -408,17 +602,19 @@ def interview_episode_cards(
         return []
 
     identifiers = {}
+    transcripts = {}
     if digest_dir:
         for md_path in Path(digest_dir).glob("*.md"):
             m = re.search(r"_Ep(\d+)_", md_path.name)
             if not m:
                 continue
             try:
-                parsed = parse_interview_digest(
-                    md_path.read_text(encoding="utf-8"))
+                md_text = md_path.read_text(encoding="utf-8")
             except OSError:
                 continue
-            identifiers[int(m.group(1))] = parsed
+            identifiers[int(m.group(1))] = parse_interview_digest(md_text)
+            transcripts[int(m.group(1))] = interview_transcript_markdown(md_text)
+    durations = feed_durations(rss_path) if rss_path else {}
 
     cards = []
     for record in episodes:
@@ -432,7 +628,10 @@ def interview_episode_cards(
             "identifier": parsed.get("guest_identifier", ""),
             "date": _display_date(record.get("date", "")),
             "audio_url": record.get("audio_url", ""),
-            "run_time": _run_time(record.get("chapters") or []),
+            "run_time": _run_time(durations.get(num)),
+            "chapters": supported_chapters(
+                record.get("chapters") or [], transcripts.get(num, "")),
+            "cohost": cohost_display_name(parsed.get("cohost", "")),
             "takeaway": parsed.get("takeaway", ""),
             "hook": record.get("hook", ""),
             "post_url": f"blog/{slug}/ep{num:03d}.html" if isinstance(num, int) else "",

@@ -2098,6 +2098,23 @@ details[open] .faq-question::after { content: '\2212'; }
   margin: 0;
   flex: 1;
 }
+/* Interview index cards (Sep 22 2026): the role line under the guest's name
+   and the co-host note, both from engine.interviews. */
+.blog-idx-card p.blog-idx-guest-role {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--card-accent);
+  flex: none;
+  margin: 0 0 var(--sp-2);
+}
+.blog-idx-card p.blog-idx-guest-cohost {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--nn-text-muted);
+  flex: none;
+  margin: var(--sp-2) 0 0;
+}
 .blog-idx-read-more {
   font-family: var(--font-ui);
   font-size: 0.8rem;
@@ -2711,3 +2728,111 @@ body.nn-no-scroll { overflow: hidden; }
   border-color: var(--nn-accent);
   color: var(--nn-accent);
 }
+
+
+/* ---------------------------------------------------------------------
+   Interview shows (moved to the shared stylesheet Sep 22 2026).
+   .nn-guest-* is the guest rail on the interview show pages and the blog
+   index; .nn-creator-* is the "Who makes this" credit on the show page and
+   on every interview post; .mira-steps is the numbered how-it-works list on
+   /mira.html and on the interview show pages. A rule only one of two pages
+   carries is a rendering bug waiting to happen.
+   --------------------------------------------------------------------- */
+.nn-guest-grid {
+    display: grid; gap: var(--sp-4);
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+.nn-guest-card {
+    border: 1px solid var(--nn-border); border-radius: 16px;
+    background: var(--nn-card); padding: 1.25rem 1.35rem;
+    display: flex; flex-direction: column; gap: 0.7rem;
+}
+.nn-guest-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 0.8rem;
+}
+.nn-guest-name { font-family: var(--font-heading); font-size: 1.28rem; line-height: 1.2; margin: 0; }
+.nn-guest-name a { color: inherit; text-decoration: none; }
+.nn-guest-name a:hover { color: var(--show-color); }
+.nn-guest-identifier {
+    font-family: var(--font-ui); font-size: 0.86rem; font-weight: 600;
+    color: var(--show-color); margin: 0.25rem 0 0;
+}
+.nn-guest-ep {
+    flex: none; font-family: var(--font-ui); font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--nn-text-muted);
+    border: 1px solid var(--nn-border); border-radius: 100px; padding: 2px 9px;
+}
+.nn-guest-hook {
+    margin: 0; font-size: 0.93rem; line-height: 1.5;
+    color: var(--nn-text-secondary);
+    display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.nn-guest-audio { width: 100%; height: 36px; border-radius: 8px; margin-top: auto; }
+.nn-guest-meta {
+    display: flex; flex-wrap: wrap; gap: 0.4rem;
+    font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted);
+    align-items: center;
+}
+.nn-guest-meta a { color: var(--show-color); text-decoration: none; font-weight: 600; }
+
+.nn-creator {
+    margin-top: var(--sp-6); border-top: 1px solid var(--nn-border);
+    padding-top: var(--sp-5); max-width: 68ch;
+}
+.nn-creator-label {
+    font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--nn-text-muted); margin-bottom: 0.35rem;
+}
+.nn-creator-name { font-family: var(--font-heading); font-size: 1.35rem; margin: 0 0 0.7rem; }
+.nn-creator p { line-height: 1.62; margin: 0 0 0.85rem; color: var(--nn-text-secondary); }
+.nn-creator-more {
+    font-family: var(--font-ui); font-size: 0.88rem;
+    display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;
+}
+.nn-creator-more a { color: var(--show-color); text-decoration: none; font-weight: 600; }
+.nn-guest-cohost { color: var(--nn-text-secondary); }
+
+.mira-steps {
+    list-style: none;
+    counter-reset: mira-step;
+    margin: var(--sp-6) 0 0;
+    padding: 0;
+}
+.mira-steps li {
+    counter-increment: mira-step;
+    position: relative;
+    padding: 0 0 var(--sp-5) var(--sp-10);
+    border-left: 1px solid var(--nn-border);
+    margin-left: 14px;
+}
+.mira-steps li:last-child { border-left-color: transparent; padding-bottom: 0; }
+.mira-steps li::before {
+    content: counter(mira-step);
+    position: absolute;
+    left: -14px;
+    top: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--nn-accent);
+    color: #fff;
+    font-family: var(--font-ui);
+    font-size: 0.82rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.mira-steps h3 {
+    font-family: var(--font-heading);
+    font-size: 1.02rem;
+    color: var(--nn-white);
+    margin: 2px 0 var(--sp-2);
+}
+.mira-steps p { font-size: 0.95rem; margin: 0; }
+.mira-steps.mira-steps--compact { margin-top: var(--sp-4); }
+.mira-steps.mira-steps--compact li { padding-bottom: var(--sp-4); }
+.mira-steps.mira-steps--compact p { color: var(--nn-text-muted); }

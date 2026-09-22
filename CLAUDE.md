@@ -3115,6 +3115,96 @@ screens down under "Latest from the Blog". Guards:
   every public string field for every Monday show, stripping show NAMES first
   so "SpaceX Daily" is not a false positive.
 
+**Sep 22 2026 — The Age of AI: the pages say only what the record supports,
+and a publish that renders the page before the post.** Guards:
+`tests/test_age_of_ai_truth_2026_09_22.py`; register
+`age-of-ai-truth-pass-2026-09-22`. What binds:
+
+- **`generate_html.py --show <slug> --blogs` writes the POSTS first.** Every
+  article link on a show page is a file-exists check (`_blog_url_for_episode`),
+  and the Nerra Voices publisher writes only the digest `.md` and then calls
+  exactly that command — so the page rendered with no link to the episode it
+  had just published, every publish (Ep6 and Ep7 both), repaired only by the
+  nightly. run_show never hit it because it writes the post HTML itself. The
+  guard runs the real `main()` with recorders and asserts the call ORDER.
+- **A chapter list is shown only when the transcript vouches for it**
+  (`engine.interviews.supported_chapters`, the same shape as the claims
+  gate). Ep5–7 shipped chapter lists about a film studio banning AI
+  storyboards — for a network-automation builder, a propulsion founder and a
+  novelist — because `02_chapter_markers.txt` supplied that exact title as
+  its example and the model reproduced it (de-seed by shape applies to the
+  Voices editorial passes too; the specimen is gone). Calibrated on all seven
+  episodes: the real lists (Ep2–4) pass every title, the fabricated ones pass
+  at most one in six; the guest's name and "ai" vouch for nothing on this
+  show. The three lists were REMOVED from the committed digests and
+  summaries; the Supabase `editorial_packages.chapter_markers` rows still
+  hold them, and there is no chapters-only re-run yet (operator item).
+- **Run time comes from the feed's `itunes:duration`, never from chapters.**
+  `_run_time` used to read the last chapter's `end`, so it was wrong on
+  EVERY episode, not only the fabricated ones — Ep2 "23 min" beside a player
+  reading 44:52. `feed_durations(rss_path)` is threaded through both the
+  show-page cards and the post context.
+- **The co-host is read from the transcript, in both directions.** The
+  credit said Patrick "is not in the room while Mira is talking to a guest";
+  he co-hosted five of the first seven episodes (every one but Ep4 — Ep6
+  labels him `PATRICK:` in capitals, which is how a case-sensitive count once
+  read it as zero). `cohost_label` reports a label with ≥ 5 lines that is
+  neither Mira nor the guest; the show page and the post say "with Patrick
+  Novak" on exactly those episodes. The credit now states the arrangement in
+  Mira's own prompt: she conducts every interview, he joins as co-host when a
+  guest has asked for him, he never answers for the guest afterwards. The
+  old guard PINNED the false sentence; the new one checks the copy against
+  the committed transcripts. A guard that pins a claim is only as good as
+  the claim.
+- **Gate 2 is described as built.** `MIRA_FIRST_CLAIM_BASIS`, the interview
+  steps, `about.html.j2` and the topic-hub copy all said nothing publishes
+  "until the guest has approved it"; `gate2Housekeeping` auto-approves after
+  seven days of silence (operator-confirmed to keep the timer, 2026-09-22).
+  The copy now says: a week to approve, cut from or refuse the transcript;
+  cuts removed from the audio, not bleeped; takedown available afterwards.
+  The narrow claim (the guest holds the final say) survives on those terms.
+  The guard reads `workers/voices/src/index.ts` for the auto-approve and
+  fails any surface that claims the stronger gate while it exists.
+- Every blog post on the site printed `\ud83d\udc4d` where a thumbs-up
+  belonged — JSON escapes pasted into `blog_post.html.j2`. A guard sweeps
+  every template for surrogate escapes.
+
+**Sep 22 2026, later — the finishing pass on the same pages** (guards
+`tests/test_age_of_ai_finish_2026_09_22.py`; register
+`age-of-ai-finish-pass-2026-09-22`). What binds:
+
+- **`engine/brand.py` owns the interview steps** (`MIRA_INTERVIEW_STEPS`,
+  `MIRA_INTERVIEW_STEPS_COMPACT`); `generate_html.MIRA_INTERVIEW_STEPS` is
+  the same object re-exported. The `mira_steps_list` macro renders them from
+  the `mira_steps` / `mira_steps_compact` globals — all eight on `mira.html`,
+  the five a prospective guest asks about on a show page that has an
+  `apply_page` (Nerra Daily is `strand: mira` and takes no guests, so it
+  shows none). A template that types a step title fails CI. Step 7 states
+  the seven-day auto-approve; it is not hidden in the short form.
+- **A Spotify id in the show YAML is a Spotify chip** (`_spotify_url_for`,
+  the `_apple_links_for` rule: registry string wins, the id fills the gap).
+  Six shows had the id and `spotify_url: null` and rendered no chip.
+- **Interview posts carry a one-line provenance** from
+  `brand.interview_provenance(guest, cohost)`: hosted by an AI, who
+  co-hosted (from the transcript), reviewed by Patrick, transcript SENT to
+  the guest to approve, cut or refuse — never "approved by", because
+  silence also publishes. The scoped `creator_credit` renders on the post
+  as it does on the show page; the chapter list left the digest body for
+  the page's real `blog-chapters` section (the seek script falls back to
+  `.nn-iv-player audio`; the `nn-i18n-audio` literal a guard pins is kept);
+  the breadcrumb and both JSON-LD blocks name the guest (`about` Person).
+- **Interview index cards lead with the person** (`interview_cards` keyed
+  by episode into `generate_blog_index_html`; a news index is byte-identical).
+- **`.nn-guest-*`, `.nn-creator-*` and `.mira-steps` live in `styles/main.css`**
+  — each is rendered on more than one page now.
+- **News surfaces changed in CSS text and whitespace only**, verified by
+  rendering Tesla, Omni View and Offshore North before and after. That is
+  an intended, reviewed diff, not a byte-identical one: the
+  `.nav-next-placeholder` fix applies to every show's latest post.
+- Pre-existing, left alone: `generate_blog_index` logs "Unrecognized
+  summaries shape" for `age_of_ai` — `engine.summaries_io` does not read the
+  Voices `{"episodes": [...]}` wrapper. It was on main before this pass.
+
 **Sep 21 2026 — chrome that scales, and a way to browse (C2).** The footer
 repeated the show list three times on every one of ~2,100 pages and `/explore.html`
 did not exist. Guards: `tests/test_chrome_pass_2026_09_21.py`; experiment

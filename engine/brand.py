@@ -59,16 +59,22 @@ MIRA_FIRST_CLAIM = (
 
 # The basis. Every clause is something this pipeline actually does, every one
 # is true whether the guest joins from a browser or answers a phone call, and
-# the combination is the claim.
+# the combination is the claim. Sep 22 2026: "nothing reaches a feed until
+# the guest has approved it" came out of this paragraph because it was not
+# what the code does — gate 2 auto-approves after seven days of silence
+# (workers/voices/src/index.ts, ``gate2Housekeeping``). The guest's final
+# say is the week to approve, cut or refuse plus the standing takedown; the
+# copy says exactly that, and a guard reads the Worker to keep it honest.
 MIRA_FIRST_CLAIM_BASIS = (
     "What is unusual is not that the host is an AI — it is the terms. Mira "
     "holds a live, unscripted conversation rather than reading a script at a "
     "recording. She discloses on air that the host is a machine. A human "
     "editor reviews every episode before release, and that review has no "
-    "timer that expires into publication. And nothing reaches a feed until the "
-    "guest has read their own transcript and approved it: anything they ask to "
-    "have removed is cut from the audio before the episode is assembled, and a "
-    "takedown stays available afterwards. Plenty of shows use AI to write, "
+    "timer that expires into publication. And the guest gets their own "
+    "transcript before anything is assembled, with a week to approve it, cut "
+    "anything from it, or refuse it outright: what they cut is removed from the "
+    "audio, not bleeped, and a takedown stays available after publication. "
+    "Plenty of shows use AI to write, "
     "narrate or edit, and some now let it interview. We have not found another "
     "that hands the guest the final say."
 )
@@ -110,9 +116,17 @@ def mira_claim_paragraphs() -> list:
 # be removed. So the approval sentence is bound to ``HUMAN_REVIEW_SHOW_SLUGS``
 # and ``creator_credit()`` refuses to hand it to anything else.
 #
-# The second way it goes wrong is the room. Patrick is not a co-host and does
-# not sit in on interviews; solo Mira is the normal case. Nothing here may
-# describe him as being in the conversation.
+# The second way it goes wrong is the room — in BOTH directions. An earlier
+# version of this credit said he "is not in the room while Mira is talking to
+# a guest", and a guard pinned the sentence. He co-hosted five of the first
+# seven episodes — every one but Ep4 (Ep7 opens with Mira saying so on air;
+# Ep6 labels him ``PATRICK:`` in capitals, which is how a case-sensitive
+# count once read it as zero). The arrangement is the one in
+# Mira's own prompt: she hosts every interview; he joins as co-host only when
+# a guest has asked for him. The credit may say that and nothing stronger —
+# never that he hosts, never that he is in every room, never that he is in
+# none of them. ``tests/test_age_of_ai_pass_2026_09_21.py`` checks the copy
+# against the committed transcripts, so it cannot drift back to "never".
 
 NETWORK_CREATOR_NAME = "Patrick Novak"
 
@@ -140,10 +154,17 @@ CREATOR_REVIEW_ROLE = (
     "On this show he is also the editor. He reads every application himself "
     "and decides whether an interview happens, and he reviews the finished "
     "episode before it is assembled — a gate with no timer, so nothing has "
-    "ever published because a review ran late. He is not in the room while "
-    "Mira is talking to a guest, and he does not answer for them afterwards: "
-    "the guest reads their own transcript and decides whether it ships."
+    "ever published because a review ran late. Mira conducts every interview; "
+    "when a guest has asked for him he joins as co-host, and either way he "
+    "never answers for the guest afterwards: the guest reads their own "
+    "transcript and decides whether it ships."
 )
+
+#: The co-host label the transcripts use for him. ``engine.interviews`` reads
+#: the speaker labels back out of each committed transcript and reports a
+#: co-host only when that label actually has lines — so a page can say
+#: "with Patrick Novak" on Ep7 and say nothing on Ep4, the solo episode.
+CREATOR_TRANSCRIPT_LABEL = "Patrick"
 
 #: What "he works on Mira" actually means. Deliberately concrete, because the
 #: vague version ("he trains Mira", "she learns from his feedback") describes
@@ -155,6 +176,28 @@ CREATOR_MIRA_ROLE = (
     "to decide what changes next time. No model is retrained; the work is "
     "the brief she is given and the judgement about what to change in it."
 )
+
+
+def interview_provenance(guest_name: str = "", cohost_name: str = "") -> list:
+    """The one-line provenance an interview post prints under its player.
+
+    Short phrases, each a fact the pipeline can vouch for on EVERY episode:
+    who hosted (an AI, disclosed), who co-hosted when someone did (read from
+    the transcript, never assumed), who reviewed it (gate 1), and what the
+    guest was given (gate 2 as built — sent to approve, cut or refuse; it
+    does not say "approved by", because seven days of silence also
+    publishes). The credit paragraphs carry the same facts at length.
+    """
+    parts = [f"Hosted by {MIRA_HOST_NAME}, an AI"]
+    if cohost_name:
+        parts.append(f"{cohost_name} co-hosted")
+    parts.append(f"Reviewed before release by {NETWORK_CREATOR_NAME}")
+    if guest_name:
+        parts.append(
+            f"Transcript sent to {guest_name} to approve, cut or refuse "
+            "before publication"
+        )
+    return parts
 
 
 def creator_credit(slug: str = "") -> list:
@@ -175,3 +218,52 @@ def creator_credit(slug: str = "") -> list:
     if slug in MIRA_SHOW_SLUGS:
         out.append(CREATOR_MIRA_ROLE)
     return out
+
+
+# ---------------------------------------------------------------------------
+# How an interview runs — the steps a guest is walked through
+# ---------------------------------------------------------------------------
+#
+# Moved here from generate_html.py on 2026-09-22. Two of these steps are
+# claims about a human deciding something (gate 1, the review with no timer)
+# and about what the guest can do (gate 2, a week to approve, cut or refuse);
+# they render on /mira.html AND on the interview show pages, so they need
+# one owner the way the claim and the credit do. Sources: docs/age_of_ai_plan.md
+# and voximplant/scenarios/age_of_ai_interview.js. Step 7 says what gate 2
+# actually does — the seven-day auto-approve is stated, not hidden.
+MIRA_INTERVIEW_STEPS = [
+    ("You apply", "A short form: who you are and what you would talk about. "
+                  "No media training, no pitch deck, no AI angle required."),
+    ("A human reads it", "Patrick triages every application himself. This is "
+                         "the step that decides whether an interview happens."),
+    ("You pick a time", "A booking link, your calendar, your timezone."),
+    ("You get a prep brief", "The day before, an emailed brief: the themes "
+                             "Mira means to explore and the ground she will "
+                             "cover, so nothing in the conversation is a "
+                             "surprise."),
+    ("You talk to Mira", "Open the studio link, pick a microphone, join — or "
+                         "take a call on your phone if you would rather. "
+                         "Mira hears you and answers in real time. It is a "
+                         "conversation, not a questionnaire, and it runs "
+                         "under an hour."),
+    ("A human edits it", "Patrick reviews the episode before anything is "
+                         "assembled. This gate has no timer: nothing "
+                         "publishes because a review was slow."),
+    ("You approve your transcript", "You read what you said, and you have a "
+                                    "week to approve it, cut anything from "
+                                    "it, or refuse it. What you cut is "
+                                    "removed from the audio before the "
+                                    "episode is built — not bleeped, cut. "
+                                    "After seven days without a reply the "
+                                    "episode goes ahead as sent, and you can "
+                                    "ask for a takedown at any time."),
+    ("It publishes", "Mira records the narration around your words, and the "
+                     "episode goes to the feeds, the site and the archive "
+                     "with the AI host disclosed on air."),
+]
+
+#: The steps a show page shows beside the Hosted-by-Mira band — the ones a
+#: prospective guest asks about first (apply, the human read, the
+#: conversation, the human edit, the transcript). The full list is on
+#: /mira.html. Indexes into :data:`MIRA_INTERVIEW_STEPS`.
+MIRA_INTERVIEW_STEPS_COMPACT = (0, 1, 4, 5, 6)

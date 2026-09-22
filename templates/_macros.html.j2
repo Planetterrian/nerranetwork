@@ -85,6 +85,26 @@
 </div>
 {%- endmacro -%}
 
+{#- The interview steps, as the numbered list /mira.html has always shown.
+
+    Reads the ``mira_steps`` / ``mira_steps_compact`` Jinja globals, which
+    generate_html registers from engine.brand.MIRA_INTERVIEW_STEPS — so the
+    hub and the show pages cannot tell a guest two different stories about
+    what happens after they apply. ``compact`` renders the subset a show page
+    shows beside its Hosted-by-Mira band; the styles are ``.mira-steps`` in
+    styles/main.css.
+-#}
+{%- macro mira_steps_list(compact=false, classes='') -%}
+<ol class="mira-steps{% if compact %} mira-steps--compact{% endif %} {{ classes }}">
+  {%- for title, detail in (mira_steps_compact if compact else mira_steps) %}
+  <li>
+    <h3>{{ title }}</h3>
+    <p>{{ detail }}</p>
+  </li>
+  {%- endfor %}
+</ol>
+{%- endmacro -%}
+
 {#- One show card, used by the homepage grid and by /explore.html.
 
     Extracted 2026-09-21 when /explore.html needed the same card: it carries the

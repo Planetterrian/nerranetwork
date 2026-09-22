@@ -2359,6 +2359,99 @@ experiments:
       the 09-21 cadence guard did not reach. Guards:
       tests/test_episode_card_transcript_2026_09_22.py.
 
+  - id: age-of-ai-truth-pass-2026-09-22
+    title: >
+      The Age of AI pages say only what the record supports: measured run
+      times, transcript-vouched chapters, the co-host named where he was, and
+      gate 2 described as built
+    area: growth
+    shipped: 2026-09-22
+    readout: 2026-10-22
+    status: reading
+    hypothesis: >
+      An interview page that a stranger can trust converts better than one
+      that is merely handsome. Four statements on the live pages were false
+      (fabricated chapter lists on Ep5-7, run times derived from them on every
+      episode, a credit saying Patrick was never in the room when he co-hosted
+      five of seven, and a claim basis that said nothing publishes until the
+      guest approves while gate 2 auto-approves at day 7), and every new
+      episode published without its article link because the show page was
+      rendered before the post was written. Fixing the last one removes a
+      dead-end from the top of the most-visited interview page on every
+      publish day.
+    baseline: >
+      2026-09-22: age-of-ai.html on main carried no article link for Ep7 (nor
+      for Ep6 at its publish), "38 min" for a 46:05 episode, six chapters about
+      an animation studio on a novelist's episode, and the sentence "He is not
+      in the room while Mira is talking to a guest" beside four transcripts in
+      which he speaks. GA4 28-day: age-of-ai.html was the second-most-visited
+      show page (16 views at the Sep 17 read).
+    target: >
+      By 10-22: blog/age_of_ai/ep*.html appears among api/ga4_stats.json
+      landing pages with sessions arriving from age-of-ai.html on the day an
+      episode publishes (the link now exists that day), and no interview post
+      or show page carries a chapter, run time or room claim the transcript
+      or feed contradicts. Existence check at this traffic, the same standing
+      as episode-card-and-transcript-box.
+    notes: >
+      generate_html.py's per-show path now writes posts before the show page,
+      because every article link is a file-exists check. engine.interviews
+      reads the co-host label out of each transcript (Ep6 writes PATRICK: in
+      capitals, which a case-sensitive count read as zero), takes run time
+      from the feed's itunes:duration, and gates chapter lists on the
+      transcript vouching for their titles (real lists pass every title;
+      the fabricated ones pass at most one in six). The chapter prompt's
+      quotable specimen ("Why the studio banned AI storyboards") is gone —
+      de-seed by shape. engine.brand's credit and claim basis say what the
+      code does; the guards read the transcripts and the Worker rather than
+      pin a sentence. Also fixed: every blog post printed \ud83d\udc4d where
+      a thumbs-up belonged. Guards: tests/test_age_of_ai_truth_2026_09_22.py.
+
+  - id: age-of-ai-finish-pass-2026-09-22
+    title: >
+      The Age of AI pages, finished: the interview steps and the credit on
+      the show page and every post, chapters that seek the player, the
+      guest on every index card, and a Spotify chip for six shows
+    area: growth
+    shipped: 2026-09-22
+    readout: 2026-10-22
+    status: reading
+    hypothesis: >
+      A stranger arriving on an interview page should see who the person is,
+      how the interview was made and who stands behind it without scrolling
+      for it. The truth pass (age-of-ai-truth-pass-2026-09-22) removed what
+      was false; this pass adds what was missing: the eight-step "how an
+      interview works" list in short form on the show page (one owner,
+      engine.brand, rendered by one macro on the hub and the show pages), a
+      one-line provenance under every post's player, the scoped creator
+      credit on every post, chapters in the page's real click-to-seek
+      section instead of an <h4> list with a one-item Contents sidebar, the
+      guest's name in the breadcrumb and the JSON-LD, and index cards that
+      lead with the person. Six shows whose YAML carried a Spotify id and
+      whose registry said null rendered no Spotify chip at all.
+    baseline: >
+      2026-09-22 renders from main: the show page had the Mira band and the
+      credit but no steps; posts had no credit, no provenance, chapters as a
+      digest <h4> list under a one-item "Contents" sidebar, "Episode N" in
+      the breadcrumb, an Organization as the only entity in the JSON-LD, and
+      "Suggest a story"; the index showed the thesis sentence twice under a
+      meaningless reading time; the Spotify chip was absent on age_of_ai,
+      spacex, dp_pod, unintended_consequences, first_principles, env_intel.
+    target: >
+      By 10-22: age-of-ai-apply.html sessions and blog/age_of_ai landing
+      sessions in api/ga4_stats.json, read alongside the truth pass; the
+      Spotify chip clicks show up as open.spotify.com outbound events. At
+      this traffic an existence check, not a rate.
+    notes: >
+      News surfaces changed only in CSS text (three new rules in the post's
+      style block, the guest/creator CSS leaving the show pages for
+      styles/main.css) and whitespace — verified by rendering Tesla, Omni
+      View and Offshore North before and after. Pre-existing and left alone:
+      generate_blog_index logs "Unrecognized summaries shape" for age_of_ai
+      (engine.summaries_io does not read the Voices {"episodes": [...]}
+      wrapper) — a warning on main before this change. Guards:
+      tests/test_age_of_ai_finish_2026_09_22.py.
+
   - id: library-blend-own-scenes-2026-09-22
     title: "Every long-form image is the episode's own — library blend 8 -> 3, overlap 1 -> 2"
     area: retention
