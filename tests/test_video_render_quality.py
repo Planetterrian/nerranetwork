@@ -221,8 +221,17 @@ class TestGalleryBlendPoolSize:
         # own picture — not the defect this guard was written for. What
         # must hold: fresh + on-topic library can cover a typical
         # 8-12 chapter episode without an off-topic filler.
+        # Sep 22 2026: the library is a GAP FILLER, not a pool extender.
+        # Half the images on a flagship long-form were older library
+        # shots matched on one token, so the blend is capped at 3 with
+        # two shared salient tokens required. Fresh scenes alone cover a
+        # typical 8-chapter episode; a longer one keeps a chapter's own
+        # picture across its slots rather than showing another day's.
         cfg = YouTubeConfig()
         pool = cfg.scenes_per_episode + cfg.gallery_blend_max_long
         assert cfg.scenes_per_episode >= 8
-        assert cfg.gallery_blend_min_overlap >= 1
-        assert pool >= 12, f"pool of {pool} cannot cover a 12-chapter episode"
+        assert cfg.gallery_blend_min_overlap >= 2
+        assert 1 <= cfg.gallery_blend_max_long <= 4, (
+            f"library blend {cfg.gallery_blend_max_long}: 0 loses the gap "
+            "filler, >4 brings back another day's imagery")
+        assert pool >= 11, f"pool of {pool} cannot cover a typical episode"
