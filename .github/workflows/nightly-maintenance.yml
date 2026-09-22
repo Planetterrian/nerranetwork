@@ -322,6 +322,22 @@ jobs:
           # per-show blog feed stayed current. The nightly is the single
           # writer, so no contention.
           python generate_html.py --blog-aggregates
+          # Show pages nothing else re-renders. Every other show's page is
+          # rebuilt by the job that publishes it — run-show's per-show
+          # finalize, or Nerra Daily's own build. The interview shows bypass
+          # run_show entirely, so theirs were rebuilt ONLY when a new guest
+          # aired: on 2026-09-22 the Age of AI page and all six interview
+          # posts were still serving pre-template-change chrome with no path
+          # to the current one, and would have until the next interview.
+          # The slugs are derived, never listed here, so a show scaffolded
+          # tomorrow that skips run_show is covered by existing; the commit
+          # step's pathspecs are pinned to the same derivation by
+          # tests/test_page_regen_ownership_2026_09_22.py.
+          for slug in $(python scripts/list_unowned_show_pages.py); do
+            echo "Refreshing unowned show page: $slug"
+            python generate_html.py --show "$slug" --blogs \
+              || echo "::warning::Could not regenerate $slug pages (non-fatal)"
+          done
           # Optionally regenerate full site if needed:
           # python generate_html.py --all
 
@@ -383,6 +399,14 @@ jobs:
           add-paths: |
             *_podcast.*.rss
             *.video.rss
+            age-of-ai.html
+            age-of-ai-summaries.html
+            age-of-ai-narrative.html
+            blog/age_of_ai/**
+            nerra-voices.html
+            nerra-voices-summaries.html
+            nerra-voices-narrative.html
+            blog/nerra_voices/**
             digests/**/video_assets.json
             digests/**/channel_i18n.json
             digests/**/scheduled_comments.json
