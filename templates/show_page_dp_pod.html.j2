@@ -348,7 +348,8 @@
     <div class="dpc-latest">
       <span class="lt-label">Latest episode{% if latest_episode and latest_episode.date %} · {{ latest_episode.date }}{% endif %}</span>
       <h3>{% if latest_episode and latest_episode.title %}{{ latest_episode.title }}{% else %}{{ static_episodes[0].title }}{% endif %}</h3>
-      <audio controls preload="none" src="{% if latest_episode and latest_episode.audio_url %}{{ latest_episode.audio_url }}{% else %}{{ static_episodes[0].audio_url }}{% endif %}">
+      {# ``metadata`` on the latest player only -- see show_page.html.j2. #}
+      <audio controls preload="metadata" src="{% if latest_episode and latest_episode.audio_url %}{{ latest_episode.audio_url }}{% else %}{{ static_episodes[0].audio_url }}{% endif %}">
         Your browser does not support the audio element.
       </audio>
       {% if latest_episode and latest_episode.summary_preview %}
