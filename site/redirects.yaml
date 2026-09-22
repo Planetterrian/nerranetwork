@@ -128,6 +128,16 @@ redirects:
 # Paths that are measured as 404s and should STAY 404s. Listed so the audit
 # reports only genuinely new holes, and so the reasoning is not re-litigated.
 accepted_404:
+  # A truncated URL. GA4 measured one session at /blog/age with a 100% bounce
+  # on 2026-09-22, against eight healthy /blog/age_of_ai/* rows in the same
+  # report -- a link cut short somewhere between the copy and the click. It is
+  # not a path this site ever served, and it carries no extension, so a stub
+  # would put a file named "blog/age" in the repo for GitHub Pages to serve
+  # with no content type. A 404 is the honest answer; the reader who typed it
+  # gets the 404 page's search, which finds the show in one query.
+  - path: blog/age
+    reason: truncated URL that never existed -- a 404 is the correct answer
+
   # A feed URL that never existed must not answer with HTML: GitHub Pages
   # serves ``.rss`` as application/rss+xml, so a redirect stub there would
   # hand a feed reader a document it cannot parse — worse than a clean 404.
