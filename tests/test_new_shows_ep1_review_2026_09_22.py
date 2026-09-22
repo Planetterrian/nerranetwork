@@ -314,3 +314,16 @@ def test_weekly_spotlight_is_the_centre(slug):
     podcast = _prompt(f"{slug}_podcast.txt")
     assert "at least a third of the script" in podcast
     assert "COVERAGE: every item in the briefing is told" in podcast
+
+
+def test_mag7_filters_analyst_price_targets():
+    """The first dry run's Top News carried an Oppenheimer Microsoft price
+    target: a prediction, and Modern Investing's beat."""
+    pats = yaml.safe_load((ROOT / "shows/mag7.yaml").read_text())["exclude_title_patterns"]
+    for title in ("Oppenheimer revamps Microsoft price target after management meeting",
+                  "Morgan Stanley upgrades Nvidia to Overweight"):
+        assert any(re.search(p, title, re.IGNORECASE) for p in pats), title
+    for title in ("Claims now open in Apple settlement",
+                  "Microsoft downgrades Windows 10 support timeline"):
+        assert not any(re.search(p, title, re.IGNORECASE) for p in pats), title
+    assert "reject analyst price targets" in _prompt("mag7_digest.txt")

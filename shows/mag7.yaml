@@ -94,6 +94,11 @@ exclude_title_patterns:
 # for a rule is news.
 - '\b(fails? at resistance|breaks? (above|below) resistance|support level|price prediction|stock forecast|technical analysis|chart pattern|price target hit)\b'
 - '\b(stock|shares) (to buy|to watch) (now|today|this week)\b'
+# Analyst price targets and rating changes are Modern Investing's beat and
+# a prediction by construction (the first dry run's Top News carried an
+# Oppenheimer Microsoft target).
+- '\bprice targets?\b'
+- '\b(upgrades?|downgrades?|reiterates?|initiates? coverage)\b.{0,40}\b(buy|sell|hold|overweight|underweight|outperform|underperform|neutral)\b'
 
 keywords:
 - alphabet
@@ -123,33 +128,34 @@ keywords:
 - antitrust
 - capex
 
-# X accounts (Sep 22 2026 Ep1 review): the seven's chief executives and
-# newsrooms, plus the reporter who breaks Apple news. Source only — the
-# show never posts to X. A handle that returns nothing is logged "No recent
-# posts"; prune it.
+# X accounts (Sep 22 2026 Ep1 review). Source only — the show never posts
+# to X. The first dry run (same day) proved the CEOs are the wrong accounts:
+# Pichai, Jassy, Cook, Nadella and @Meta all returned "No recent posts" in
+# 24 hours while Gurman and the NVIDIA newsroom carried real news. These
+# post daily. A handle that returns nothing for a week is pruned.
 x_fetch_enabled: true
 x_accounts:
-- handle: sundarpichai
-  label: Sundar Pichai (Alphabet)
-  max_posts: 2
-- handle: ajassy
-  label: Andy Jassy (Amazon)
-  max_posts: 2
-- handle: tim_cook
-  label: Tim Cook (Apple)
-  max_posts: 2
-- handle: satyanadella
-  label: Satya Nadella (Microsoft)
-  max_posts: 2
-- handle: nvidianewsroom
-  label: NVIDIA Newsroom
-  max_posts: 2
-- handle: Meta
-  label: Meta
-  max_posts: 2
 - handle: markgurman
   label: Mark Gurman (Bloomberg)
   max_posts: 3
+- handle: nvidianewsroom
+  label: NVIDIA Newsroom
+  max_posts: 2
+- handle: Techmeme
+  label: Techmeme
+  max_posts: 4
+- handle: theinformation
+  label: The Information
+  max_posts: 3
+- handle: Google
+  label: Google
+  max_posts: 2
+- handle: Microsoft
+  label: Microsoft
+  max_posts: 2
+- handle: amazonnews
+  label: Amazon News
+  max_posts: 2
 
 # Full article text (engine/article_text.py): Ep1's Company Desk was three
 # teaser-length items padded with "no release date was given".
