@@ -2451,3 +2451,185 @@ experiments:
       (engine.summaries_io does not read the Voices {"episodes": [...]}
       wrapper) — a warning on main before this change. Guards:
       tests/test_age_of_ai_finish_2026_09_22.py.
+
+  - id: library-blend-own-scenes-2026-09-22
+    title: "Every long-form image is the episode's own — library blend 8 -> 3, overlap 1 -> 2"
+    area: retention
+    shipped: 2026-09-22
+    readout: 2026-10-13
+    status: reading
+    metric: long_form_median_avp_en_14d
+    baseline: 15.8
+    target: >
+      Half the images on a flagship long-form this week were older library
+      shots (13 fresh vs 14 library per episode) matched on ONE salient token,
+      so the picture on screen was often another day's story. With one fresh
+      scene per story the library only fills a gap, and only with two shared
+      salient tokens. Target: scene_library_count <= 3 on every flagship
+      episode from 09-23 and the EN long-form 14-day median AVP not down
+      (15.8 at ship). Render-only; the RU/FR dubs reuse the same images so
+      they are not a control here — the read is the trend, not an arm.
+    notes: >
+      gallery_blend_max_long 8->3, gallery_blend_min_overlap 1->2,
+      gallery_blend_max_short 6->2 in engine/config.py + _defaults.yaml; the
+      visual_reuse getattr fallbacks now equal the dataclass. Guard:
+      tests/test_visual_reuse.py::test_getattr_fallbacks_equal_the_dataclass.
+
+  - id: long-form-speech-cuts-2026-09-22
+    title: "Long-form scene cuts snap to sentence ends"
+    area: retention
+    shipped: 2026-09-22
+    readout: 2026-10-13
+    status: reading
+    metric: long_form_median_avp_en_14d
+    baseline: 15.8
+    target: >
+      The long-form scheduler subdivided each chapter into equal holds, so a
+      scene changed mid-sentence; the Shorts have snapped their cuts to
+      sentence ends since June. Interior cuts now move to the nearest sentence
+      end within 2.5 s (chapter boundaries and slot counts unchanged). Target:
+      the scheduler's log reads a majority of interior cuts snapped on every
+      flagship episode, and the EN long-form 14-day median AVP not down. Read
+      together with library-blend-own-scenes; both are render-only and share
+      the metric — a move cannot be attributed to one of them alone, which is
+      accepted for two changes that only make the picture follow the audio.
+    notes: >
+      engine.scene_scheduler._snap_slots (+-2.5 s; a hold may run past the
+      max by the tolerance, never under the min); long_form_visual_plan shifts
+      the Whisper words by the music-intro delay; knob long_form_sentence_cuts
+      (on). Guards: tests/test_scene_scheduler.py::TestLongFormSentenceSnap.
+
+  - id: gallery-retention-per-kind-2026-09-22
+    title: "Gallery-retention flywheel repaired: per-kind read, prompt-text prior, style feedback"
+    area: retention
+    shipped: 2026-09-22
+    readout: 2026-10-20
+    status: reading
+    metric: long_form_median_avp_en_14d
+    baseline: 15.8
+    target: >
+      The flywheel was inert and confounded: the ranking prior matched the
+      report's prompt-mined phrases against the manifest's tags array (slug,
+      provider, use) and scored 0 on all 1,646 images across three shows, and
+      the report pooled Shorts (~55% AVP) with long-form (~15%) so every show's
+      top tag was the 9:16 framing hint. The report now carries by_kind
+      summaries with the prompt boilerplate excluded by name, the prior reads
+      by_kind and matches prompt text, and style_feedback_for hands the scene
+      brief prompt one audience-note sentence when a phrase sits >= 5 points
+      from the kind's median on >= 10 videos. On the 09-22 data every flagship
+      reads None (best long-form tags +4.3 under the bar), so the prompt is
+      unchanged until the data says something. Target: by 10-20 at least one
+      flagship carries a real favoured/avoided pair, scene_brief_style_feedback
+      appears in its metrics, and its long-form AVP is not down against the
+      shows without one. Instrument first; the prompt effect is the readout
+      after.
+    notes: >
+      scripts/build_gallery_retention.py schema_version 2 (pooled: true on the
+      legacy block); engine.gallery_library._retention_tag_scores(slug, kind),
+      style_feedback_for; engine.scene_briefs.generate_scene_briefs(
+      style_feedback=). Image-side prompt change only when feedback exists.
+      Guards: TestGalleryRetentionJoin, TestGalleryRetentionPrior,
+      TestStyleFeedbackLine.
+
+  - id: shorts-fact-cards-2026-09-22
+    title: "Fact cards on the Shorts (tesla / spacex / FF, EN only)"
+    area: retention
+    shipped: 2026-09-22
+    readout: 2026-10-13
+    status: reading
+    metric: short_avp_en_14d
+    baseline: 62.5
+    target: >
+      Fact cards are the one render lever with a measured effect (+3-4 AVP
+      points on the long-form treatment shows) and existed on long-form only.
+      Up to two clip-relative cards per Short, never under the 0-3 s hook band
+      or into the end card. Target: EN Shorts views-weighted AVP over 14 days
+      (62.5 at ship) up on the three arm shows against the other EN shows, and
+      the RU/FR dubs of the same episodes (which render their own Shorts and
+      get no cards) not moving with them. Read beside shorts-punch-frame: the
+      two ship on the same Shorts and the same day, so only the pair is
+      attributable; a per-show A/B of the two is the follow-up if the pair moves.
+    notes: >
+      engine.fact_cards.fact_cards_for_window; engine.video.
+      _short_form_fact_cards_stage (96 px cyan figure at ~62% frame height);
+      knob shorts_fact_cards; metric shorts_fact_cards_rendered. Guards:
+      tests/test_fact_cards.py::{TestWindow,TestShortRenderStage,TestShortWiring}.
+
+  - id: shorts-punch-frame-2026-09-22
+    title: "The thumbnail punch text opens the hook Short as a 1.4 s title"
+    area: retention
+    shipped: 2026-09-22
+    readout: 2026-10-13
+    status: reading
+    metric: short_avp_en_14d
+    baseline: 62.5
+    target: >
+      The 2-4 word ALL-CAPS punch text has been generated for every episode
+      since July and used only on the thumbnail. On the hook Short it now opens
+      the frame for 1.4 s at 96-128 px before the hook slides in, so a muted
+      feed viewer gets the subject in one glance. Target: read with
+      shorts-fact-cards (same Shorts, same day); the pair is a HIT at
+      short_avp_en_14d >= 65 on the arm with the dubs flat, a MISS if the arm
+      falls under the other EN shows. Hook Short only, EN only.
+    notes: >
+      engine.video._short_form_punch_stage; the hook window shifts to
+      1.2-4.25 s under a punch; an unfit punch is skipped, never ellipsised;
+      knob shorts_punch_frame; metric shorts_punch_frame_rendered. Guards:
+      tests/test_video_commands.py::TestShortsPunchFrame.
+
+  - id: hook-short-motion-2026-09-22
+    title: "Bounded real-motion retry: one 4 s clip opens the hook Short"
+    area: retention
+    shipped: 2026-09-22
+    readout: 2026-10-13
+    status: reading
+    metric: hook_short_motion_share_14d
+    baseline: null
+    target: >
+      The Shorts motion A/B stalled at n=4 and the long-form clip pilot was
+      retired for cost and timeouts. This is the smallest honest retry: ONE
+      ~4 s Grok video clip ($0.28) on the hook Short of the three flagships,
+      cost gate before any request, a 150 s clip budget under a 300 s pipeline
+      floor, every shortfall recorded as hook_stills (SpaceX's b-roll pool
+      records broll_open). Target at 10-13: hook_short_motion_share_14d >= 0.6
+      (the clip lands on most days — the retired pilot's ~1/3 success is the
+      number to beat), and api/youtube_early_reach.json sliced by variant shows
+      motion_open hook Shorts at or above hook_stills at age 3 with n >= 10 per
+      arm. Under 0.4 success the retry is switched off for cost. ~$25/month
+      at full success on three shows.
+    notes: >
+      engine/hook_short_motion.py; generate_short_clips(prompt_override=);
+      build_short_video(min_clips=1, still_max_hold_s=7) keeps the stills
+      cycling after the clip; variant on the video index and in the
+      early-reach file; metrics hook_short_motion / _cost_usd / _reason.
+      Guards: tests/test_hook_short_motion.py.
+
+  - id: spoken-open-shape-2026-09-22
+    title: "The spoken open has a shape — one sentence, quantity first, stake in the same breath (tesla / spacex / FF)"
+    area: retention
+    shipped: 2026-09-22
+    readout: 2026-10-13
+    status: reading
+    metric: long_open_hold_5pct_arm
+    baseline: 0.49
+    target: >
+      Long-form viewers leave in a steady slide over seconds 6-60 (EN mean
+      curve 0.95 at 1% elapsed, 0.74 at 3%, 0.48 at 5%), before the first
+      chapter change; every render lever since August left the 5% hold at 0.48
+      and the one audio lever (the cold open) moved it +2 points. The open is
+      the digest HOOK line spoken word for word, and it ran 14-32 words with no
+      digit in 10 of 15. Staged on three shows via a shared shape snippet (no
+      specimen) plus a 150-character gate in code (regenerate, never clip).
+      Target: long_open_hold_5pct_arm (0.49 at ship) >= 0.55 by 10-13 with
+      long_open_hold_5pct_control (0.44) not up by as much — the control is the
+      rest of the EN slate. The network-wide long_open_hold_5pct_en is not
+      reopened (long-open-cliff). Landmine #17: A/B-listen the first arm
+      episodes before trusting the number.
+    notes: >
+      shows/prompts/_shared/hook_shape.txt included in the three arm digest
+      prompts (WEAK/STRONG specimen hooks removed); engine.titles.
+      SPOKEN_HOOK_MAX_CHARS; run_show's structural regeneration now runs on an
+      over-long hook for every daily show (SpaceX had no validation config and
+      was never gated); build_cold_open_spec gained one shape bullet. Metric
+      digest_hook_over_length. Guards: tests/test_spoken_open_shape_2026_09_22.py,
+      tests/test_dashboard_growth.py::TestSpokenOpenArmSplit.

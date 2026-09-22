@@ -180,29 +180,49 @@ def _candidate_entries(
 
 _RETENTION_PRIOR_PATH = Path(__file__).resolve().parent.parent / "api" / "gallery_retention.json"
 _RETENTION_PRIOR_CACHE: dict = {}
+# The retention join keys videos by kind; a scene's aspect says which.
+_ASPECT_TO_KIND = {"16:9": "long", "9:16": "short"}
 
 
-def _retention_tag_scores(show_slug: str) -> dict:
-    """Per-tag mean-retention map for one show, from the nightly
-    ``api/gallery_retention.json`` flywheel report.
-
-    July 31 2026: the flywheel had been a DEAD END — the report was built
-    nightly since June and consumed only by a dashboard card, while scene
-    ranking stayed pure token-overlap + recency. This closes the loop:
-    tags that measurably held viewers get a bounded ranking nudge.
-    Fail-open: missing file/show → {} → ranking identical to legacy.
-    Cached per process (the manifest loader already sets that precedent).
-    """
-    if show_slug in _RETENTION_PRIOR_CACHE:
-        return _RETENTION_PRIOR_CACHE[show_slug]
-    scores: dict = {}
+def _retention_kind_summary(show_slug: str, kind: str) -> dict:
+    """The ``by_kind[kind]`` block of the nightly report, or ``{}``."""
     try:
         import json as _json
         data = _json.loads(_RETENTION_PRIOR_PATH.read_text(encoding="utf-8"))
         summary = ((data.get("shows") or {}).get(show_slug) or {}).get(
             "summary") or {}
-        rows = list(summary.get("top_tags") or []) + list(
-            summary.get("bottom_tags") or [])
+        block = (summary.get("by_kind") or {}).get(kind) or {}
+        return block if isinstance(block, dict) else {}
+    except Exception:  # noqa: BLE001 — the prior is a nudge, never a gate
+        return {}
+
+
+def _retention_tag_scores(show_slug: str, kind: str = "long") -> dict:
+    """Per-tag centered-retention map for one show AND KIND, from the
+    nightly ``api/gallery_retention.json`` flywheel report.
+
+    July 31 2026: the flywheel had been a DEAD END — the report was built
+    nightly since June and consumed only by a dashboard card, while scene
+    ranking stayed pure token-overlap + recency. This closes the loop:
+    tags that measurably held viewers get a bounded ranking nudge.
+
+    Sep 22 2026: the read is the ``by_kind`` block ONLY. The pooled
+    summary mixed long-form (~15% AVP) with Shorts (~60%), so its top
+    tags were the 9:16 framing boilerplate — a measurement of the kind,
+    not the imagery — and a pooled prior would have ranked vertical-
+    looking prompts up on the long-form. A report without ``by_kind``
+    (older nightly) yields {} → legacy order until the rebuild.
+    Fail-open: missing file/show → {} → ranking identical to legacy.
+    Cached per process (the manifest loader already sets that precedent).
+    """
+    key = f"{show_slug}:{kind}"
+    if key in _RETENTION_PRIOR_CACHE:
+        return _RETENTION_PRIOR_CACHE[key]
+    scores: dict = {}
+    try:
+        block = _retention_kind_summary(show_slug, kind)
+        rows = list(block.get("top_tags") or []) + list(
+            block.get("bottom_tags") or [])
         vals = [float(r.get("mean_retention") or 0.0) for r in rows]
         if rows and vals:
             mid = sorted(vals)[len(vals) // 2]
@@ -212,27 +232,83 @@ def _retention_tag_scores(show_slug: str) -> dict:
                     scores[tag] = float(r.get("mean_retention") or 0.0) - mid
     except Exception:  # noqa: BLE001 — the prior is a nudge, never a gate
         scores = {}
-    _RETENTION_PRIOR_CACHE[show_slug] = scores
+    _RETENTION_PRIOR_CACHE[key] = scores
     return scores
 
 
 def _retention_score(entry: dict, tag_scores: dict) -> float:
     """Mean centered-retention of the entry's known tags, clipped to
     ±10 points so the prior can shuffle near-ties but never outrank a
-    real context-overlap difference (overlap stays the primary key)."""
+    real context-overlap difference (overlap stays the primary key).
+
+    Sep 22 2026: a "tag" in the report is a PHRASE mined from the image
+    prompt (``build_gallery_retention._prompt_phrases``); the manifest
+    ``tags`` array carries only slug/provider/use, so matching against
+    it alone scored 0 on every one of 1,646 images across three shows —
+    the prior had never moved a rank. Phrases are matched against the
+    prompt + caption + tags text.
+    """
     if not tag_scores:
         return 0.0
-    vals = [tag_scores[t] for t in
-            (str(x).strip().lower() for x in entry.get("tags") or [])
-            if t in tag_scores]
+    haystack = " ".join(
+        str(x).strip().lower()
+        for x in ([entry.get("prompt") or "", entry.get("caption") or ""]
+                  + list(entry.get("tags") or []))
+    )
+    haystack = " ".join(haystack.split())
+    vals = [score for tag, score in tag_scores.items() if tag and tag in haystack]
     if not vals:
         return 0.0
     return max(-10.0, min(10.0, sum(vals) / len(vals)))
 
 
+def style_feedback_for(
+    show_slug: str, kind: str = "long", *,
+    min_videos: int = 10, min_delta: float = 5.0,
+) -> Optional[dict]:
+    """What this show's audience has held on to, for the scene-brief
+    prompt (Sep 22 2026): up to two ``favoured`` and two ``avoided``
+    style phrases from the report's ``by_kind[kind]`` block.
+
+    A phrase qualifies only with ``min_videos`` distinct videos behind it
+    and a mean at least ``min_delta`` points from the kind's median —
+    below that the difference is noise and the prompt says nothing.
+    ``None`` when there is nothing to say (missing report, thin data),
+    which leaves the scene-brief prompt byte-identical.
+    """
+    block = _retention_kind_summary(show_slug, kind)
+    if not block:
+        return None
+    try:
+        median = block.get("median_retention")
+        median = float(median) if median is not None else None
+        rows = list(block.get("top_tags") or []) + list(block.get("bottom_tags") or [])
+        if median is None or not rows:
+            return None
+        seen = set()
+        usable = []
+        for r in rows:
+            tag = str(r.get("tag") or "").strip().lower()
+            if not tag or tag in seen or int(r.get("videos") or 0) < int(min_videos):
+                continue
+            seen.add(tag)
+            usable.append((float(r.get("mean_retention") or 0.0) - median, tag))
+        # The two strongest above the bar, the two weakest below it.
+        favoured = [t for d, t in sorted(usable, key=lambda x: -x[0])
+                    if d >= float(min_delta)][:2]
+        avoided = [t for d, t in sorted(usable, key=lambda x: x[0])
+                   if d <= -float(min_delta)][:2]
+        if not favoured and not avoided:
+            return None
+        return {"favoured": favoured, "avoided": avoided}
+    except Exception:  # noqa: BLE001 — feedback is a nudge, never a gate
+        return None
+
+
 def _rank(entries: List[dict], context_text: str,
           show_slug: str = "",
-          common: Optional[frozenset] = None) -> List[dict]:
+          common: Optional[frozenset] = None,
+          kind: str = "long") -> List[dict]:
     """Deterministic best-first ordering.
 
     Primary: SALIENT token overlap with the context (*common* tokens —
@@ -247,7 +323,7 @@ def _rank(entries: List[dict], context_text: str,
     """
     common = common or frozenset()
     ctx = _tokenize(context_text) - common
-    tag_scores = _retention_tag_scores(show_slug) if show_slug else {}
+    tag_scores = _retention_tag_scores(show_slug, kind) if show_slug else {}
     ranked = sorted(entries, key=lambda e: e.get("image_id") or "")
     ranked.sort(key=lambda e: e.get("episode_date") or "", reverse=True)
     if tag_scores:
@@ -571,7 +647,8 @@ def select_library_scenes(
         ctx_tokens = (
             (_tokenize(context_text) - common) if min_overlap > 0 else frozenset()
         )
-        for entry in _rank(entries, context_text, show_slug, common=common):
+        for entry in _rank(entries, context_text, show_slug, common=common,
+                           kind=_ASPECT_TO_KIND.get(aspect, "long")):
             if len(paths) >= limit:
                 break
             if ctx_tokens and len(

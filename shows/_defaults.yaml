@@ -514,6 +514,12 @@ youtube:
   # figures as timed on-screen cards. Off network-wide; the experiment
   # long-form-fact-cards turns it on per show (tesla, spacex, FF).
   fact_cards_enabled: false
+  # Sep 22 2026: the same cards on the Shorts (≤2, clip-relative) and
+  # the thumbnail punch text as a 1.4 s opening title on the hook
+  # Short. Off network-wide; on for tesla/spacex/FF (EN only — the
+  # RU/FR dubs are the control arm).
+  shorts_fact_cards: false
+  shorts_punch_frame: false
   description_prompt_file: shows/prompts/youtube_description_intro.txt
   pinned_comment_template: |
     🎧 Full episode + show notes: {show_page_url}
@@ -549,12 +555,15 @@ youtube:
   # committed manifest) into the fresh Grok Imagine sets — zero new
   # image-generation cost; the caps bound the per-episode downloads.
   gallery_blend_enabled: true
-  gallery_blend_max_long: 8     # 16:9 library scenes per long-form video (fills gaps only — one fresh scene per story now)
-  gallery_blend_min_overlap: 1  # library scenes must share >=1 token with hook+chapter titles (no off-topic padding)
+  # Sep 22 2026: 8 -> 3 and 1 -> 2. Half the images on a flagship
+  # long-form were older library shots matched on one token; every
+  # picture on screen should be this episode's own.
+  gallery_blend_max_long: 3     # 16:9 library scenes per long-form video (fills gaps only — one fresh scene per story now)
+  gallery_blend_min_overlap: 2  # library scenes must share >=2 salient tokens with hook+chapter titles (no off-topic padding)
   scene_briefs_enabled: true    # Grok-written per-story scene briefs lead the image prompts (engine/scene_briefs.py)
   scenes_per_episode: 8         # fresh 16:9 scenes: one per story, capped here (was a fixed 4)
   short_scenes_per_episode: 5   # fresh 9:16 scenes for the Shorts
-  gallery_blend_max_short: 6    # 9:16 library scenes per Short
+  gallery_blend_max_short: 2    # 9:16 library scenes per Short (Sep 22 2026: 6 -> 2)
   # Scene switches land on chapters.json boundaries instead of the
   # uniform timer (<2 usable chapters falls back to uniform).
   chapter_aligned_scenes: true
@@ -605,6 +614,9 @@ youtube:
   # Shorts scene changes snap to sentence ends from the Whisper word
   # transcript instead of the flat 7 s grid.
   shorts_sentence_cuts: true
+  # Sep 22 2026: long-form interior scene cuts snap to the nearest
+  # sentence end (±2.5 s) instead of the equal split within a chapter.
+  long_form_sentence_cuts: true
   # Interleave curated evergreen b-roll (digests/<dir>/broll.json via
   # scripts/build_broll_pool.py). Clean no-op until a pool is published.
   evergreen_broll: true
@@ -616,3 +628,12 @@ youtube:
   # Shorts draw 2 clips per Short from the same pool (real footage
   # between the stills). No-op until the show has a broll.json.
   shorts_broll: true
+  # Sep 22 2026 — hook-Short motion retry (engine/hook_short_motion.py):
+  # one ~4 s Grok video clip opens the HOOK Short, stills after it.
+  # $0.28 per successful clip; cost gate before any request; a
+  # shortfall ships stills recorded as hook_stills. Off network-wide,
+  # on for tesla/spacex/FF (experiment hook-short-motion-2026-09-22).
+  hook_short_motion: false
+  hook_short_motion_seconds: 4
+  hook_short_motion_max_cost_usd: 0.30
+  hook_short_motion_budget_seconds: 150.0

@@ -80,6 +80,58 @@ class TestModelBriefs:
         assert out[0].lower().startswith("raptor 3")
 
 
+class TestStyleFeedbackLine:
+    """Sep 22 2026: the retention flywheel reaches the picture editor as
+    ONE sentence; no feedback leaves the prompt byte-identical."""
+
+    def _capture(self, monkeypatch):
+        seen = {}
+
+        def _fake(prompt, **kw):
+            seen["prompt"] = prompt
+            return ('["A rack of humming AI accelerator servers in a dim data center, telephoto"]', {})
+        monkeypatch.setattr("engine.generator._call_grok", _fake)
+        return seen
+
+    def test_no_feedback_is_byte_identical(self, monkeypatch):
+        seen = self._capture(monkeypatch)
+        sb.generate_scene_briefs(STORIES[:1])
+        base = seen["prompt"]
+        sb.generate_scene_briefs(STORIES[:1], style_feedback=None)
+        assert seen["prompt"] == base
+        sb.generate_scene_briefs(STORIES[:1], style_feedback={"favoured": [], "avoided": []})
+        assert seen["prompt"] == base
+        assert "Audience note" not in base
+
+    def test_one_sentence_with_both_sides(self, monkeypatch):
+        seen = self._capture(monkeypatch)
+        sb.generate_scene_briefs(STORIES[:1], style_feedback={
+            "favoured": ["a red car at dawn", "launch pad at night"],
+            "avoided": ["grey factory hall"]})
+        p = seen["prompt"]
+        assert p.count("Audience note:") == 1
+        assert ("Audience note: scenes with a red car at dawn and launch pad at "
+                "night have held this show's viewers; scenes with grey factory "
+                "hall have not.") in p
+        assert p.index("Audience note") < p.index("Stories:")
+
+    def test_line_shape(self):
+        assert sb._style_feedback_line(None) == ""
+        assert sb._style_feedback_line({"favoured": ["x"]}).endswith("have held this show's viewers.")
+        assert sb._style_feedback_line({"avoided": ["y"]}) == " Audience note: scenes with y have not."
+        # Never more than two per side.
+        line = sb._style_feedback_line({"favoured": ["a", "b", "c"]})
+        assert "c" not in line.split("scenes with ")[1].split(" have")[0].split(" and ")
+
+    def test_run_show_passes_the_long_form_feedback(self):
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert 'style_feedback_for(config.slug, kind="long")' in src
+        assert "style_feedback=_style_feedback" in src
+        assert 'result["scene_brief_style_feedback"]' in src
+        assert 'metrics.record("scene_brief_style_feedback"' in (
+            _ROOT / "engine" / "pipeline.py").read_text(encoding="utf-8")
+
+
 class TestBriefFirstPrompts:
     BRIEFS = ["Starship upper stage lowered onto its booster at dawn, wide shot",
               "A Model 3 interior at night with the center screen glowing"]
@@ -186,7 +238,7 @@ class TestConfigContract:
         assert c.scene_briefs_enabled is True
         assert c.scenes_per_episode >= 8
         assert c.short_scenes_per_episode >= 4
-        assert c.gallery_blend_min_overlap >= 1
+        assert c.gallery_blend_min_overlap >= 2
 
     def test_run_show_generates_briefs_once_and_passes_them(self):
         src = (_ROOT / "run_show.py").read_text(encoding="utf-8")

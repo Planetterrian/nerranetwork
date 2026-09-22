@@ -2278,21 +2278,88 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     # curve. The 2026-08-17 baseline read ~0.50 — half the audience gone
     # inside the first ~30-45 s — making the open the dominant remaining
     # retention lever. None until curves exist.
+    holds = _open_holds_5pct(stats)
+    out["long_open_hold_5pct_en"] = (
+        round(sum(holds) / len(holds), 2) if holds else None)
+    # Sep 22 2026 — the spoken-open shape is staged on three shows; the
+    # readout compares the ARM against the rest of the EN slate, and the
+    # network-wide key above is never reopened (long-open-cliff's rule).
+    arm = _open_holds_5pct(stats, slugs=_SPOKEN_OPEN_ARM)
+    ctl = _open_holds_5pct(stats, slugs=_SPOKEN_OPEN_ARM, exclude=True)
+    out["long_open_hold_5pct_arm"] = (
+        round(sum(arm) / len(arm), 2) if arm else None)
+    out["long_open_hold_5pct_control"] = (
+        round(sum(ctl) / len(ctl), 2) if ctl else None)
+
+    # Sep 22 2026 — EN Shorts views-weighted average view percentage over
+    # the last 14 analytics days (the Shorts fact cards + punch frame
+    # readout; the dubs are the control and are not in it). Null under
+    # 10 Shorts with retention.
+    sa_v = sa_w = 0.0
+    sa_n = 0
+    for show in (stats.get("shows") or {}).values():
+        for v in show.get("videos", []):
+            if (v.get("kind") == "short" and (v.get("channel") or "en") == "en"
+                    and str(v.get("published") or "")[:10] >= win_lo
+                    and v.get("average_view_percentage") is not None):
+                w = float(v.get("views") or 0)
+                if w <= 0:
+                    continue
+                sa_v += w * float(v["average_view_percentage"])
+                sa_w += w
+                sa_n += 1
+    out["short_avp_en_14d"] = (
+        round(sa_v / sa_w, 1) if sa_n >= 10 and sa_w > 0 else None)
+
+    # Sep 22 2026 — share of EN hook Shorts that opened on a real motion
+    # clip (engine/hook_short_motion.py). The denominator is every hook
+    # Short that carries one of the retry's three labels, so a show whose
+    # retry never ran is not counted. Null under 10.
+    mo_n = mo_hit = 0
+    for show in (stats.get("shows") or {}).values():
+        for v in show.get("videos", []):
+            if (v.get("kind") == "short" and (v.get("channel") or "en") == "en"
+                    and str(v.get("published") or "")[:10] >= win_lo
+                    and v.get("variant") in _HOOK_MOTION_VARIANTS):
+                mo_n += 1
+                if v.get("variant") == "motion_open":
+                    mo_hit += 1
+    out["hook_short_motion_share_14d"] = (
+        round(mo_hit / mo_n, 2) if mo_n >= 10 else None)
+    return out
+
+
+# Sep 22 2026 — the spoken-open shape arm (shows/prompts hook_shape
+# include); everything else on the EN slate is the control.
+_SPOKEN_OPEN_ARM = frozenset({"tesla", "spacex", "fascinating_frontiers"})
+_HOOK_MOTION_VARIANTS = frozenset({"motion_open", "broll_open", "hook_stills"})
+
+
+def _open_holds_5pct(stats: dict, *, slugs=None, exclude: bool = False) -> list:
+    """Per-video EN long-form retention at the 5% point of the curve.
+
+    ``slugs`` limits the read to those shows' videos (by the video's own
+    ``show_slug`` — the stats file's top-level keys are digests
+    DIRECTORY names, not slugs); ``exclude=True`` takes every EN video
+    NOT in ``slugs``. ``None`` = the whole EN slate.
+    """
     holds = []
     for show in (stats.get("shows") or {}).values():
         for v in show.get("videos", []):
             curve = v.get("retention_curve")
             if not curve or (v.get("channel") or "en") != "en":
                 continue
+            if slugs is not None:
+                hit = (v.get("show_slug") or "") in slugs
+                if hit == bool(exclude):
+                    continue
             try:
                 pts = {float(p["t"]): float(p["ratio"]) for p in curve}
                 k = min(pts, key=lambda t: abs(t - 0.05))
                 holds.append(pts[k])
             except (KeyError, TypeError, ValueError):
                 continue
-    out["long_open_hold_5pct_en"] = (
-        round(sum(holds) / len(holds), 2) if holds else None)
-    return out
+    return holds
 
 
 

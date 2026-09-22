@@ -638,3 +638,21 @@ class TestMarkdownLinkHeadlines:
         from engine.grok_imagine import extract_story_headlines
         digest = "> **# Models & Agents**\nAgent reliability benchmarks just exposed a gap.\n"
         assert extract_story_headlines(digest) == []
+
+
+class TestHintConstants:
+    """Sep 22 2026: the prompt boilerplate is a set of module constants so
+    the retention join can exclude exactly those phrases by name."""
+
+    def test_constants_appear_in_built_prompts(self):
+        from engine.grok_imagine import (FRAMING_HINT_VERTICAL, FRAMING_HINT_WIDE,
+                                         NO_TEXT_HINT, QUALITY_HINT,
+                                         build_image_prompts)
+        wide = build_image_prompts(hook="h", image_queries=["a car"], count=1, aspect="16:9")[0]
+        tall = build_image_prompts(hook="h", image_queries=["a car"], count=1, aspect="9:16")[0]
+        assert FRAMING_HINT_WIDE in wide and FRAMING_HINT_VERTICAL not in wide
+        assert FRAMING_HINT_VERTICAL in tall and FRAMING_HINT_WIDE not in tall
+        for p in (wide, tall):
+            assert QUALITY_HINT in p and NO_TEXT_HINT in p
+        assert FRAMING_HINT_VERTICAL == "vertical 9:16 framing, single subject, mobile-first composition"
+        assert FRAMING_HINT_WIDE == "wide cinematic 16:9 framing, photojournalism style"

@@ -94,6 +94,26 @@ def _parse_json_array(text: str) -> Optional[list]:
     return data if isinstance(data, list) else None
 
 
+def _style_feedback_line(feedback: Optional[dict]) -> str:
+    """One sentence, or "" — what has held this show's viewers.
+
+    Shape only: the phrases are the report's own mined style tags, so
+    the line carries no quotable specimen scene.
+    """
+    if not isinstance(feedback, dict):
+        return ""
+    fav = [str(t).strip() for t in (feedback.get("favoured") or []) if str(t).strip()][:2]
+    avo = [str(t).strip() for t in (feedback.get("avoided") or []) if str(t).strip()][:2]
+    if not fav and not avo:
+        return ""
+    parts = []
+    if fav:
+        parts.append(f"scenes with {' and '.join(fav)} have held this show's viewers")
+    if avo:
+        parts.append(f"scenes with {' and '.join(avo)} have not")
+    return " Audience note: " + "; ".join(parts) + "."
+
+
 def generate_scene_briefs(
     headlines: Sequence[str],
     *,
@@ -103,6 +123,7 @@ def generate_scene_briefs(
     max_n: int = 8,
     model: str = "grok-4.3",
     enabled: bool = True,
+    style_feedback: Optional[dict] = None,
 ) -> List[str]:
     """One concrete visual scene brief per story, in story order.
 
@@ -110,6 +131,11 @@ def generate_scene_briefs(
     malformed output, or when *enabled* is False. Returns at most
     *max_n* briefs; ``[]`` only when there are no usable headlines at
     all (caller then keeps the legacy image_queries prompts).
+
+    ``style_feedback`` (Sep 22 2026 — ``engine.gallery_library.
+    style_feedback_for``): ``{"favoured": [...], "avoided": [...]}``
+    renders ONE audience-note sentence into the prompt; ``None`` (the
+    default, and any empty feedback) leaves the prompt byte-identical.
     """
     stories = [str(h).strip() for h in (headlines or []) if str(h).strip()]
     if hook and hook.strip() and hook.strip() not in stories:
@@ -134,7 +160,8 @@ def generate_scene_briefs(
         f"numbers, logos, charts, captions or signage in the scene; no "
         f"people's faces as the subject unless the story is about a "
         f"person; never invent facts beyond the story line; keep the "
-        f"subject matter faithful to the story's actual topic.\n\n"
+        f"subject matter faithful to the story's actual topic."
+        f"{_style_feedback_line(style_feedback)}\n\n"
         f"Stories:\n{numbered}\n\n"
         f"Return ONLY a JSON array of {len(stories)} strings, in the same "
         f"order, nothing else."

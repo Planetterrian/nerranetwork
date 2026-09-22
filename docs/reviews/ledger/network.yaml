@@ -663,6 +663,65 @@ reviews:
       evidence: null
     agent_cost_usd: null
 
+  - date: 2026-09-22
+    pr: null
+    doc: docs/reviews/video_quality_pass_2026_09_22.md
+    summary: >
+      Second pass of the day (operator: make the videos more entertaining,
+      visually appealing and relevant to the audio; yes to a bounded real-
+      motion retry and a careful spoken-open prompt change). The retention
+      curves say viewers leave in a steady slide over seconds 6-60, before any
+      visual event; the render-side levers shipped are the episode's own
+      imagery only, speech-snapped long-form cuts, Shorts fact cards + a punch
+      frame, the flywheel repaired per kind, one 4 s motion clip on the hook
+      Short, and the spoken open's shape staged on three shows with a length
+      gate in code.
+    shipped:
+      - library blend 8->3 / overlap 1->2 / short 6->2 (own scenes)
+      - long-form interior scene cuts snap to sentence ends (+-2.5 s)
+      - Shorts fact cards (EN, tesla/spacex/FF)
+      - Shorts opening punch frame on the hook Short (EN, tesla/spacex/FF)
+      - hook-Short motion retry (one 4 s clip, honest fallback labels)
+      - gallery-retention by_kind + prompt-text prior + style feedback line
+      - hook_shape.txt on the three arm digest prompts + SPOKEN_HOOK_MAX_CHARS gate
+      - dashboard: long_open_hold_5pct_arm/control, short_avp_en_14d, hook_short_motion_share_14d
+    deferred:
+      - a per-show A/B separating the Shorts fact card from the punch frame (they ship together; split only if the pair moves)
+      - the second-window Short's variant slicing (EN ships one Short; the RU/FR dubs keep the ladder and stay the control)
+      - style feedback on the Shorts' scene briefs (long-form only until the by_kind short block carries a real pair)
+    predictions:
+    - metric: "long_open_hold_5pct_arm vs long_open_hold_5pct_control (dashboard)"
+      baseline: "arm 0.49, control 0.44 on 2026-09-22"
+      expected: "arm >= 0.55 by 2026-10-13 with the control not up by as much; the first arm episodes A/B-listened before the number is trusted"
+      verdict: pending
+      evidence: null
+    - metric: "digest_hook_over_length (metrics files) and hook length on the three arm shows"
+      baseline: "6 of 15 recent opens over 120 characters; median 19 words / 123 chars; no digit in 10 of 15"
+      expected: "no shipped arm hook over 150 characters from 09-23; a digit inside the first ten words on >= 10 of the first 15 arm episodes"
+      verdict: pending
+      evidence: null
+    - metric: "short_avp_en_14d (views-weighted EN Shorts AVP, 14 d)"
+      baseline: "62.5 on 2026-09-22"
+      expected: ">= 65 on the arm shows by 10-13 with the RU/FR dubs of the same episodes flat (they get neither the cards nor the punch)"
+      verdict: pending
+      evidence: null
+    - metric: "hook_short_motion_share_14d and api/youtube_early_reach.json sliced by variant"
+      baseline: "null (no arm rows yet)"
+      expected: ">= 0.6 by 10-13 and motion_open hook Shorts at or above hook_stills at age 3 with n >= 10 per arm; under 0.4 the retry is switched off for cost"
+      verdict: pending
+      evidence: null
+    - metric: "scene_library_count on flagship long-forms (metrics files)"
+      baseline: "13 fresh vs 14 library per episode in the week to 09-22"
+      expected: "<= 3 library on every flagship episode from 09-23; long_form_median_avp_en_14d (15.8) not down"
+      verdict: pending
+      evidence: null
+    - metric: "scene_brief_style_feedback (metrics) and the by_kind blocks of api/gallery_retention.json"
+      baseline: "by_kind absent; every flagship's feedback None on 09-22 (best long-form tags +4.3 under the 5-point bar)"
+      expected: "by_kind present on the 09-23 nightly; at least one flagship carries a real favoured/avoided pair by 10-20"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
 do_not_retry:
   - idea: podcast-side length levers (word floors, expand-retries, prompt
       pressure on the podcast stage) for ANY show

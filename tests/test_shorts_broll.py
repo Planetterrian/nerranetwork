@@ -154,7 +154,10 @@ class TestShortsDrawFromThePool:
     def test_run_show_wiring(self):
         src = (PROJECT_ROOT / "run_show.py").read_text(encoding="utf-8")
         assert "episode_num * 4 + short_idx" in src
+        # The pool is the LAST fallback: after the A/B's clips and (Sep 22
+        # 2026) the hook-Short motion clip.
         assert "clip_paths=(_variant.clip_paths\n" \
+               "                                    or ([_hook_motion_clip] if _hook_motion_clip else None)\n" \
                "                                    or _short_broll or None)" \
                in src
         # The A/B guard: no pool clips while an experiment is enrolled.

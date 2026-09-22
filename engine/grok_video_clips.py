@@ -85,8 +85,15 @@ def generate_short_clips(
     resolution: str = "720p",
     aspect: str = "16:9",
     budget_s: Optional[float] = None,
+    prompt_override: Optional[str] = None,
 ) -> ClipSet:
-    """Generate up to *count* short clips. Returns an (empty-on-failure) ClipSet."""
+    """Generate up to *count* short clips. Returns an (empty-on-failure) ClipSet.
+
+    ``prompt_override`` (Sep 22 2026) sends that text verbatim for every
+    clip instead of the templated B-roll prompt — the hook-Short motion
+    retry ships the episode's own scene brief, whose "gentle camera
+    motion" the template's "dynamic camera movement" would fight.
+    """
     count = max(0, min(int(count or 0), 6))
     seconds = max(2, min(int(seconds or 5), 15))
     if count == 0:
@@ -122,7 +129,8 @@ def generate_short_clips(
     pending: dict[str, int] = {}  # request_id -> clip index
     for i in range(count):
         ctx = contexts[i % len(contexts)] if contexts else ""
-        prompt = _short_clip_prompt(ctx, show_config, hook, seconds)
+        prompt = (prompt_override.strip() if prompt_override and prompt_override.strip()
+                  else _short_clip_prompt(ctx, show_config, hook, seconds))
         try:
             rid = _request_one_video(
                 prompt,

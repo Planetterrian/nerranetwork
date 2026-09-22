@@ -38,9 +38,11 @@ _NEW_KNOBS = {
     # Library scenes are already generated and already paid for.
     # Sep 2026: back to 8 — one fresh scene per story covers the
     # chapters; the library only fills gaps, on-topic only.
-    "gallery_blend_max_long": 8,
-    "gallery_blend_min_overlap": 1,
-    "gallery_blend_max_short": 6,
+    # Sep 22 2026: 3 / 2 / 2 — half the images on a flagship long-form
+    # were older library shots matched on one token.
+    "gallery_blend_max_long": 3,
+    "gallery_blend_min_overlap": 2,
+    "gallery_blend_max_short": 2,
     "scene_briefs_enabled": True,
     "scenes_per_episode": 8,
     "short_scenes_per_episode": 5,
@@ -50,7 +52,16 @@ _NEW_KNOBS = {
     "recap_reuse_scenes": True,
     "gallery_fallback_enabled": True,
     "shorts_sentence_cuts": True,
+    "long_form_sentence_cuts": True,
     "evergreen_broll": True,
+    # Sep 22 2026 — Shorts fact cards + punch frame (arm shows opt in).
+    "shorts_fact_cards": False,
+    "shorts_punch_frame": False,
+    # Sep 22 2026 — hook-Short motion retry (arm shows opt in).
+    "hook_short_motion": False,
+    "hook_short_motion_seconds": 4,
+    "hook_short_motion_max_cost_usd": 0.30,
+    "hook_short_motion_budget_seconds": 150.0,
 }
 
 
@@ -210,6 +221,68 @@ class TestLongFormVisualPlan:
         assert out["scene_paths"] is None
         assert out["broll_clips"] is None
         assert out["mode"] == "uniform"  # ≥2 fresh scenes → legacy uniform
+
+    def test_transcript_words_are_offset_and_reach_the_scheduler(
+        self, monkeypatch, tmp_path,
+    ):
+        _stub_library(monkeypatch, scenes=[])
+        import engine.scene_scheduler as ss
+        seen = {}
+        real = ss.plan_chapter_schedule
+
+        def _spy(*a, **k):
+            seen["words"] = k.get("transcript_words")
+            return real(*a, **k)
+
+        monkeypatch.setattr(ss, "plan_chapter_schedule", _spy)
+        words = [{"word": " end.", "start": 10.0, "end": 10.5}]
+        self._plan(_config(), tmp_path, transcript_words=words,
+                   transcript_offset_s=3.0)
+        assert seen["words"] == [{"word": " end.", "start": 13.0, "end": 13.5}]
+
+    def test_long_form_sentence_cuts_knob_off_sends_no_words(
+        self, monkeypatch, tmp_path,
+    ):
+        _stub_library(monkeypatch, scenes=[])
+        import engine.scene_scheduler as ss
+        seen = {}
+        real = ss.plan_chapter_schedule
+
+        def _spy(*a, **k):
+            seen["words"] = k.get("transcript_words")
+            return real(*a, **k)
+
+        monkeypatch.setattr(ss, "plan_chapter_schedule", _spy)
+        words = [{"word": " end.", "start": 10.0, "end": 10.5}]
+        self._plan(_config(long_form_sentence_cuts=False), tmp_path,
+                   transcript_words=words)
+        assert seen["words"] is None
+
+    def test_getattr_fallbacks_equal_the_dataclass(self, monkeypatch, tmp_path):
+        """A config object without the blend knobs must resolve to the
+        SAME limits the dataclass declares (Sep 22 2026: 3 / 2 / 2) — a
+        stale literal fallback is how a stub config ships the old blend."""
+        import engine.gallery_library as gl
+        seen = {}
+
+        def _select(*a, **k):
+            seen["limit"] = k.get("limit")
+            seen["min_overlap"] = k.get("min_overlap")
+            return []
+
+        _stub_library(monkeypatch, scenes=[])
+        monkeypatch.setattr(gl, "select_library_scenes", _select)
+        bare = SimpleNamespace(youtube=SimpleNamespace())
+        self._plan(bare, tmp_path)
+        assert seen == {"limit": YouTubeConfig().gallery_blend_max_long,
+                        "min_overlap": YouTubeConfig().gallery_blend_min_overlap}
+        vr.short_visual_extras(
+            bare, show_slug="tesla", episode_id="ep001",
+            fresh_short_scenes=_scenes("fresh", 2), transcript_words=[],
+            window_start_s=0.0, clip_duration_s=35.0, context_text="x",
+        )
+        assert seen == {"limit": YouTubeConfig().gallery_blend_max_short,
+                        "min_overlap": YouTubeConfig().gallery_blend_min_overlap}
 
     def test_scheduler_failure_never_raises(self, monkeypatch, tmp_path):
         _stub_library(monkeypatch, scenes=_scenes("lib", 2))
@@ -440,6 +513,11 @@ class TestRunShowWiring:
         # Scene-based thumbnail + variants.
         assert "long_form_thumbnail_from_scene" in src
         assert "generate_thumbnail_variants" in src
+        # Sep 22 2026: long-form cuts snap to speech — the words reach the
+        # planner with the music-intro offset, gated on the knob.
+        assert "transcript_words=_long_words or None" in src
+        assert '"long_form_sentence_cuts"' in src
+        assert "transcript_offset_s=float(" in src
 
     def test_publisher_variant_helper_exists(self):
         from engine.publisher import generate_thumbnail_variants
@@ -513,7 +591,83 @@ class TestGalleryRetentionJoin:
                                 (_manifest_fixture(), None), (None, None)):
             out = mod.build(manifest, stats)
             assert out["shows"] == {}
-            assert out["schema_version"] == 1
+            assert out["schema_version"] == 2   # Sep 22 2026: by_kind added
+
+    # ---- Sep 22 2026: per-kind summaries, boilerplate excluded by name ----
+
+    def _kind_fixture(self, n_long=12, n_short=12):
+        """A show whose Shorts hold 60% and long-form 15%; every image
+        carries the framing hint of its kind plus one real style phrase."""
+        from engine.grok_imagine import FRAMING_HINT_VERTICAL, FRAMING_HINT_WIDE
+        videos, images = [], []
+        for i in range(n_long):
+            videos.append({"video_id": f"L{i}", "show_slug": "tesla", "episode": i,
+                           "kind": "long", "channel": "en",
+                           "average_view_percentage": 15.0 + (10.0 if i % 2 else 0.0)})
+            images.append({"image_id": f"img_l{i}", "show_slug": "tesla",
+                           "episode_id": f"ep{i:03d}", "intended_use": "segment_card",
+                           "tags": ["tesla"],
+                           "prompt": ("red car at dawn, " if i % 2 else "grey factory hall, ")
+                                     + FRAMING_HINT_WIDE + ", cinematic"})
+        for i in range(n_short):
+            videos.append({"video_id": f"S{i}", "show_slug": "tesla", "episode": i,
+                           "kind": "short", "channel": "en",
+                           "average_view_percentage": 60.0})
+            images.append({"image_id": f"img_s{i}", "show_slug": "tesla",
+                           "episode_id": f"ep{i:03d}", "intended_use": "social",
+                           "tags": ["tesla"],
+                           "prompt": "launch pad at night, " + FRAMING_HINT_VERTICAL + ", cinematic"})
+        return {"images": images}, {"shows": {"x": {"videos": videos}}}
+
+    def test_by_kind_summaries_split_long_from_short(self):
+        mod = _load_retention_module()
+        manifest, stats = self._kind_fixture()
+        out = mod.build(manifest, stats, min_videos=3, min_videos_kind=5)
+        summ = out["shows"]["tesla"]["summary"]
+        assert summ["pooled"] is True
+        by_kind = summ["by_kind"]
+        assert by_kind["long"]["videos"] == 12 and by_kind["short"]["videos"] == 12
+        assert by_kind["long"]["median_retention"] == 20.0
+        assert by_kind["short"]["median_retention"] == 60.0
+        long_tags = {r["tag"]: r for r in by_kind["long"]["top_tags"]}
+        assert long_tags["red car at dawn"]["mean_retention"] == 25.0
+        assert long_tags["grey factory hall"]["mean_retention"] == 15.0
+        assert {r["tag"] for r in by_kind["short"]["top_tags"]} == {"launch pad at night"}
+        # The kind's own framing hint never ranks — it is the kind.
+        for kind in ("long", "short"):
+            tags = {r["tag"] for r in by_kind[kind]["top_tags"] + by_kind[kind]["bottom_tags"]}
+            assert not any("9:16" in t or "16:9" in t for t in tags), tags
+        # Per-image kind is recorded.
+        assert out["shows"]["tesla"]["images"]["img_s0"]["kind"] == "short"
+
+    def test_pooled_summary_no_longer_ranks_the_framing_boilerplate(self):
+        mod = _load_retention_module()
+        manifest, stats = self._kind_fixture()
+        out = mod.build(manifest, stats, min_videos=3)
+        pooled = {r["tag"] for r in out["shows"]["tesla"]["summary"]["top_tags"]}
+        assert not any("framing" in t for t in pooled), pooled
+
+    def test_legacy_boilerplate_and_scaffold_labels_never_rank(self):
+        mod = _load_retention_module()
+        manifest, stats = self._kind_fixture()
+        for img in manifest["images"]:
+            img["prompt"] = ("clean photographic composition, visual subject: title, "
+                             "ultra-detailed, " + img["prompt"])
+        out = mod.build(manifest, stats, min_videos=1, min_videos_kind=1)
+        by_kind = out["shows"]["tesla"]["summary"]["by_kind"]
+        tags = {r["tag"] for k in by_kind.values() for r in k["top_tags"] + k["bottom_tags"]}
+        assert "clean photographic composition" not in tags
+        assert "ultra-detailed" not in tags
+        assert not any(t.startswith("visual subject:") for t in tags), tags
+        assert "red car at dawn" in tags
+
+    def test_by_kind_min_videos_prunes(self):
+        mod = _load_retention_module()
+        manifest, stats = self._kind_fixture(n_long=4, n_short=4)
+        out = mod.build(manifest, stats, min_videos=1, min_videos_kind=10)
+        by_kind = out["shows"]["tesla"]["summary"]["by_kind"]
+        assert by_kind["long"]["top_tags"] == []
+        assert by_kind["long"]["min_videos"] == 10
 
 
 # ---------------------------------------------------------------------------

@@ -94,6 +94,10 @@ def merge_snapshot(reach: Dict[str, Any], stats: Dict[str, Any]) -> int:
                 "kind": v.get("kind") or "",
                 "show": v.get("show_slug") or "",
                 "window": v.get("window") or "",
+                # Sep 22 2026: the arm a hook Short shipped (motion_open |
+                # broll_open | hook_stills, or the A/B's labels) so the
+                # age-matched reach can be sliced by arm at readout.
+                "variant": v.get("variant") or "",
                 "views_by_age": {},
                 "subs_by_age": {},
             })

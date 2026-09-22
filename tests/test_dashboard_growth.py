@@ -267,3 +267,46 @@ class TestVirtualShowCosts:
     def test_aggregate_costs_includes_virtual_shows(self):
         costs = gd.aggregate_costs(ROOT, [])
         assert "nerra_daily" in costs["per_show"]
+
+
+class TestSpokenOpenArmSplit:
+    """Sep 22 2026: the spoken-open shape is staged on three shows; the
+    open hold is read per arm, and the network-wide key is never reopened
+    (long-open-cliff's outcome)."""
+
+    def _root(self, tmp_path, videos):
+        (tmp_path / "api").mkdir()
+        (tmp_path / "api" / "youtube_stats.json").write_text(json.dumps({
+            "generated": "2026-09-22T14:00:00Z",
+            "channels": {"en": {"day_series": []}},
+            "shows": {"x": {"videos": videos}},
+        }), encoding="utf-8")
+        (tmp_path / "digests").mkdir()
+        return tmp_path
+
+    def _video(self, slug, hold, ch="en"):
+        return {"kind": "long", "channel": ch, "show_slug": slug,
+                "published": "2026-09-20",
+                "retention_curve": [{"t": 0.0, "ratio": 1.0}, {"t": 0.05, "ratio": hold},
+                                    {"t": 0.1, "ratio": hold / 2}]}
+
+    def test_arm_and_control_split_by_show_slug(self, tmp_path):
+        vids = [self._video("tesla", 0.6), self._video("spacex", 0.5),
+                self._video("omni_view", 0.3), self._video("models_agents", 0.4),
+                self._video("tesla", 0.9, ch="ru")]   # dubs never count
+        m = gd._experiment_live_metrics(self._root(tmp_path, vids))
+        assert m["long_open_hold_5pct_arm"] == 0.55
+        assert m["long_open_hold_5pct_control"] == 0.35
+        assert m["long_open_hold_5pct_en"] == 0.45
+
+    def test_null_when_no_curves(self, tmp_path):
+        m = gd._experiment_live_metrics(self._root(tmp_path, []))
+        assert m["long_open_hold_5pct_arm"] is None
+        assert m["long_open_hold_5pct_control"] is None
+
+    def test_no_new_entry_reopens_long_open_hold_5pct_en(self):
+        data = yaml.safe_load((ROOT / "docs" / "experiments.yaml").read_text(encoding="utf-8"))
+        for e in data["experiments"]:
+            if e.get("metric") == "long_open_hold_5pct_en":
+                assert str(e.get("shipped")) < "2026-09-22", (
+                    f"{e['id']} reopens long_open_hold_5pct_en; score the arm metric")

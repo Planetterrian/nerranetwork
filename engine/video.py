@@ -1318,8 +1318,15 @@ def _build_short_hybrid_sequence(
     duration: float,
     nominal_clip_seconds: float = 5.0,
     min_still_hold_s: float = 2.0,
+    max_still_hold_s: Optional[float] = None,
 ) -> List[tuple]:
     """Lay out one Short's background as clips interleaved with stills.
+
+    ``max_still_hold_s`` (Sep 22 2026, the hook-Short motion retry): a
+    still gap longer than this is split into holds of at most that
+    length, cycling the stills — with ONE opening clip the legacy
+    layout parked on a single still for the remaining ~31 s. ``None``
+    keeps the legacy layout byte-identical.
 
     Returns the ``(path, is_video, seconds)`` list
     :func:`_render_hybrid_slideshow` consumes, summing to *duration*
@@ -1374,10 +1381,19 @@ def _build_short_hybrid_sequence(
     hold = (remaining / n_gaps) if n_gaps else 0.0
 
     visuals: List[tuple] = []
+    still_i = 0
     for i, (clip, secs) in enumerate(kept):
         visuals.append((clip, True, secs))
         if n_gaps and hold > 0:
-            visuals.append((stills[i % len(stills)], False, hold))
+            if max_still_hold_s and hold > float(max_still_hold_s) and stills:
+                n_split = max(1, math.ceil(hold / float(max_still_hold_s)))
+                part = hold / n_split
+                for _ in range(n_split):
+                    visuals.append((stills[still_i % len(stills)], False, part))
+                    still_i += 1
+            else:
+                visuals.append((stills[i % len(stills)], False, hold))
+                still_i = i + 1
 
     if not n_gaps and remaining > 0:
         # No stills available: stretch the final clip's slot instead of
@@ -1684,6 +1700,30 @@ def _long_form_chapter_cards_stage(
 # / chapter cards (top-left) and of YouTube's caption box (bottom
 # centre, now that long-form captions are the uploaded track).
 _FACT_CARD_SECONDS = 4.0
+# Shorts fact cards (Sep 22 2026): the hook overlay owns 0-3.05 s.
+_SHORT_FACT_CARD_MIN_START_S = 3.5
+
+
+def _usable_fact_cards(
+    cards: Optional[Sequence[Tuple[float, str, str]]], *, min_start_s: float,
+) -> List[Tuple[float, str, str]]:
+    """Validate ``[(start, figure, label), …]`` for a drawtext stage."""
+    from engine.titles import FACT_CARD_LABEL_MAX, fits
+
+    usable: List[Tuple[float, str, str]] = []
+    for start, figure, label in cards or []:
+        try:
+            s = float(start)
+        except (TypeError, ValueError):
+            continue
+        f = str(figure or "").strip()
+        lab = str(label or "").strip()
+        if s < min_start_s or not f or len(f) > 24:
+            continue
+        if lab and not fits(lab, FACT_CARD_LABEL_MAX):
+            lab = ""
+        usable.append((s, f, lab))
+    return usable
 
 
 def _long_form_fact_cards_stage(
@@ -1697,21 +1737,7 @@ def _long_form_fact_cards_stage(
     ``(chain_fragment, new_post_label)``; an empty list returns
     ``("", post_label)`` so callers' terminal logic is untouched.
     """
-    from engine.titles import FACT_CARD_LABEL_MAX, fits
-
-    usable = []
-    for start, figure, label in cards or []:
-        try:
-            s = float(start)
-        except (TypeError, ValueError):
-            continue
-        f = str(figure or "").strip()
-        lab = str(label or "").strip()
-        if s < 5.0 or not f or len(f) > 24:
-            continue
-        if lab and not fits(lab, FACT_CARD_LABEL_MAX):
-            lab = ""
-        usable.append((s, f, lab))
+    usable = _usable_fact_cards(cards, min_start_s=5.0)
     if not usable:
         return "", post_label
     font_path = _drawtext_escape(_find_font())
@@ -1741,6 +1767,130 @@ def _long_form_fact_cards_stage(
                 f"alpha='{alpha}':{enable}"
             )
         chain += out
+        label_in = out
+    return chain, label_in
+
+
+def _short_form_fact_cards_stage(
+    post_label: str,
+    cards: Optional[Sequence[Tuple[float, str, str]]],
+    *, width: int = 1080, height: int = 1920,
+    end_card_start: Optional[float] = None,
+) -> Tuple[str, str]:
+    """Shorts fact cards (Sep 22 2026): the long-form treatment — the
+    one render lever with a measured retention effect (+3-4 AVP points
+    on the treatment shows) — on the vertical frame.
+
+    Cards are clip-relative (``engine.fact_cards.fact_cards_for_window``).
+    The block sits at ~62% of the frame height: under the hook band
+    (gone by 3.05 s; cards start no earlier than
+    ``_SHORT_FACT_CARD_MIN_START_S``) and above the caption card
+    (top ≈ 1480 px at MarginV=340). A card that would run into the end
+    card is dropped. Empty input returns ``("", post_label)`` so the
+    callers' terminal logic is untouched — ``None`` is byte-identical.
+    """
+    usable = _usable_fact_cards(cards, min_start_s=_SHORT_FACT_CARD_MIN_START_S)
+    if end_card_start is not None:
+        usable = [c for c in usable if c[0] + _FACT_CARD_SECONDS <= end_card_start]
+    if not usable:
+        return "", post_label
+    font_path = _drawtext_escape(_find_font())
+    chain = ""
+    label_in = post_label
+    for i, (s, f, lab) in enumerate(usable):
+        end = s + _FACT_CARD_SECONDS
+        alpha = (f"clip((t-{s:.2f})/0.25,0,1)*"
+                 f"clip(({end:.2f}-t)/0.25,0,1)")
+        enable = f"enable='between(t,{s:.2f},{end + 0.05:.2f})'"
+        out = f"[sfact{i}]"
+        chain += (
+            f";{label_in}drawtext=fontfile='{font_path}':"
+            f"text='{_drawtext_escape(f)}':"
+            f"fontsize=96:fontcolor=0x00D4FF:"
+            f"x=(w-text_w)/2:y=h*0.62-70:"
+            f"box=1:boxcolor=black@0.6:boxborderw=18:"
+            f"alpha='{alpha}':{enable}"
+        )
+        if lab:
+            chain += (
+                f"[sfactfig{i}];[sfactfig{i}]drawtext=fontfile='{font_path}':"
+                f"text='{_drawtext_escape(lab)}':"
+                f"fontsize=40:fontcolor=white:"
+                f"x=(w-text_w)/2:y=h*0.62+60:"
+                f"box=1:boxcolor=black@0.6:boxborderw=12:"
+                f"alpha='{alpha}':{enable}"
+            )
+        chain += out
+        label_in = out
+    return chain, label_in
+
+
+# Shorts punch frame (Sep 22 2026): the 2-4 word ALL-CAPS thumbnail
+# punch text, until now used only on the thumbnail, opens the Short as
+# a full-frame title for the first ~1.4 s; the hook then slides in
+# under it. A muted feed viewer gets the subject in one glance before
+# the sentence arrives. When a punch is present the hook's window
+# shifts by 1.2 s so the two never fight for the frame.
+_PUNCH_FONT_CANDIDATES = (128, 120, 112, 104, 96)
+_PUNCH_ALPHA = "clip(t/0.15,0,1)*clip((1.4-t)/0.3,0,1)"
+_PUNCH_ENABLE = "between(t,0,1.45)"
+_HOOK_ALPHA_AFTER_PUNCH = "clip((t-1.2)/0.25,0,1)*clip((4.2-t)/0.4,0,1)"
+_HOOK_ENABLE_AFTER_PUNCH = "between(t,1.2,4.25)"
+_HOOK_ALPHA_LEGACY = "clip(t/0.25,0,1)*clip((3-t)/0.4,0,1)"
+_HOOK_ENABLE_LEGACY = "between(t,0,3.05)"
+
+
+def _autofit_punch(
+    text: Optional[str], *, frame_width: int = 1080, safe_margin: int = 80,
+) -> Optional[Tuple[int, List[str]]]:
+    """Largest punch size at which the text fits two lines, or ``None``.
+
+    A punch that would need an ellipsis at the smallest size is not a
+    punch — the caller skips the frame rather than ship a clipped one.
+    """
+    clean = " ".join(str(text or "").split())
+    if not clean:
+        return None
+    size, wrapped = autofit_hook_overlay(
+        clean, frame_width=frame_width, safe_margin=safe_margin,
+        max_lines=2, candidates=_PUNCH_FONT_CANDIDATES,
+    )
+    lines = [ln for ln in (wrapped or "").split("\n") if ln]
+    if not lines or lines[-1].endswith("..."):
+        return None
+    return size, lines
+
+
+def _short_form_punch_stage(
+    post_label: str, punch_text: Optional[str], *,
+    width: int = 1080, height: int = 1920,
+) -> Tuple[str, str]:
+    """drawtext chain for the opening punch frame; ``("", post_label)``
+    when there is no usable punch so the graph is byte-identical."""
+    fit = _autofit_punch(punch_text, frame_width=width)
+    if fit is None:
+        return "", post_label
+    size, lines = fit
+    font_path = _drawtext_escape(_find_font())
+    line_h = size + 12
+    n = len(lines)
+    chain = ""
+    label_in = post_label
+    for i, line in enumerate(lines):
+        offset_px = (i - (n - 1) / 2.0) * line_h
+        sign = "+" if offset_px >= 0 else "-"
+        out = "[punched]" if i == n - 1 else f"[punchln{i}]"
+        chain += (
+            f";{label_in}drawtext=fontfile='{font_path}':"
+            f"text='{_drawtext_escape(line)}':"
+            f"fontsize={size}:fontcolor=white:"
+            f"x=(w-text_w)/2:y=h*0.40{sign}{abs(offset_px):.0f}:"
+            f"borderw=6:bordercolor=black:"
+            f"shadowx=3:shadowy=3:shadowcolor=black@0.7:"
+            f"alpha='{_PUNCH_ALPHA}':"
+            f"enable='{_PUNCH_ENABLE}'"
+            f"{out}"
+        )
         label_in = out
     return chain, label_in
 
@@ -1892,8 +2042,16 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
                              end_card_sub_text: str = "Never miss an episode ↓",
                              end_card_image_input_label: Optional[str] = None,
                              progress_bar: bool = False,
-                             caption_margin_v: Optional[int] = None) -> str:
+                             caption_margin_v: Optional[int] = None,
+                             fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None,
+                             punch_text: Optional[str] = None) -> str:
     """filter_complex for the 1080x1920 Shorts build.
+
+    ``fact_cards`` / ``punch_text`` (Sep 22 2026) add the Shorts fact
+    cards and the opening punch frame; both default to ``None`` and
+    leave the graph byte-identical. Order of overlays: brand pill →
+    URL pill → progress bar → punch (0-1.45 s) → hook → fact cards →
+    end card → burn-in subtitles → ``[v]``.
 
     Inputs:
       ``[0:v]`` — background. Either looped cover image (static) or
@@ -1989,6 +2147,30 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
         )
         post_brand_label = "[pbar]"
 
+    punch_chain, post_brand_label = _short_form_punch_stage(
+        post_brand_label, punch_text, width=width, height=height,
+    )
+    chain += punch_chain
+    punch_on = bool(punch_chain)
+    hook_alpha = _HOOK_ALPHA_AFTER_PUNCH if punch_on else _HOOK_ALPHA_LEGACY
+    hook_enable = _HOOK_ENABLE_AFTER_PUNCH if punch_on else _HOOK_ENABLE_LEGACY
+
+    # Shorts fact cards are validated up front so the hook knows whether
+    # it is the terminal stage.
+    if end_card:
+        _cards_end_start = (
+            0.0 if total_duration <= end_card_duration
+            else max(0.0, total_duration - end_card_duration)
+        )
+    else:
+        _cards_end_start = None
+    _short_cards = _usable_fact_cards(
+        fact_cards, min_start_s=_SHORT_FACT_CARD_MIN_START_S,
+    )
+    if _cards_end_start is not None:
+        _short_cards = [c for c in _short_cards
+                        if c[0] + _FACT_CARD_SECONDS <= _cards_end_start]
+
     if hook:
         # Auto-shrink-to-fit (May 2026 retune): start at the legacy
         # fontsize=44 and shrink in 4-px steps only if the wrapped
@@ -2037,7 +2219,7 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
         #     imagery visible behind the words. A 4 px black
         #     outline + 2 px shadow stays readable on bright
         #     backgrounds without painting a black rectangle.
-        hook_label = "[hooked]" if subtitles_path else "[v]"
+        hook_label = "[hooked]" if (subtitles_path or _short_cards) else "[v]"
         for i, line in enumerate(wrapped_lines):
             escaped_line = _drawtext_escape(line)
             offset_px = (i - (n_lines - 1) / 2.0) * line_h
@@ -2057,11 +2239,18 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
                 f"x=(w-text_w)/2:y={y_expr}:"
                 f"borderw=4:bordercolor=black:"
                 f"shadowx=2:shadowy=2:shadowcolor=black@0.7:"
-                f"alpha='clip(t/0.25,0,1)*clip((3-t)/0.4,0,1)':"
-                f"enable='between(t,0,3.05)'"
+                f"alpha='{hook_alpha}':"
+                f"enable='{hook_enable}'"
                 f"{line_label}"
             )
             post_brand_label = line_label
+
+    if _short_cards:
+        cards_chain, post_brand_label = _short_form_fact_cards_stage(
+            post_brand_label, _short_cards, width=width, height=height,
+            end_card_start=_cards_end_start,
+        )
+        chain += cards_chain
 
     # Subtitles used to burn in HERE, with the end card overlaid on top
     # afterwards — and the PNG card is fully opaque, so the last ~3 s of
@@ -2080,7 +2269,7 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
             f":force_style='{_shorts_subtitle_style(caption_margin_v)}'[v]"
         )
         return chain
-    if hook and not end_card and not subtitles_path:
+    if hook and not end_card and not subtitles_path and not _short_cards:
         # Hook was the last filter — already terminated at [v].
         return chain
 
@@ -2702,7 +2891,9 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                     end_card_image_in: Optional[str] = None,
                     caption_margin_v: Optional[int] = None,
                     bg_loop: bool = True,
-                    progress_bar: bool = False) -> List[str]:
+                    progress_bar: bool = False,
+                    fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None,
+                    punch_text: Optional[str] = None) -> List[str]:
     """ffmpeg command for the 1080x1920 Shorts build.
 
     When *bg_is_video* is True, *bg_in* is a pre-rendered vertical
@@ -2771,7 +2962,9 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                                  end_card_sub_text=end_card_sub_text,
                                  end_card_image_input_label=end_card_image_input_label,
                                  caption_margin_v=caption_margin_v,
-                                 progress_bar=progress_bar),
+                                 progress_bar=progress_bar,
+                                 fact_cards=fact_cards,
+                                 punch_text=punch_text),
         "-map", "[v]", "-map", "1:a",
         *_VIDEO_ENCODE,
         "-r", str(fps),
@@ -3195,7 +3388,11 @@ def build_short_video(audio_path: Path, cover_path: Path,
                       clip_paths: Optional[Sequence[Path]] = None,
                       clip_seconds: float = 5.0,
                       kb_extended: bool = True,
-                      progress_bar: bool = True) -> Path:
+                      progress_bar: bool = True,
+                      fact_cards: Optional[Sequence[Tuple[float, str, str]]] = None,
+                      punch_text: Optional[str] = None,
+                      min_clips: int = 2,
+                      still_max_hold_s: Optional[float] = None) -> Path:
     """Render a 1080x1920 vertical YouTube Shorts video.
 
     ``drop_url_pill`` / ``caption_margin_v`` support the multi-platform
@@ -3268,6 +3465,16 @@ def build_short_video(audio_path: Path, cover_path: Path,
         running the Shorts motion A/B does not have its CONTROL arm
         upgraded mid-experiment (which would bias the test toward
         "motion isn't worth paying for").
+    fact_cards, punch_text:
+        Sep 22 2026 — clip-relative ``[(start, figure, label), …]``
+        (``engine.fact_cards.fact_cards_for_window``) painted as Shorts
+        fact cards, and the ALL-CAPS punch text opening the Short as a
+        full-frame title before the hook. ``None`` = legacy graph.
+    min_clips, still_max_hold_s:
+        Sep 22 2026 — the hook-Short motion retry ships ONE clip, so it
+        passes ``min_clips=1`` (legacy 2: the A/B's two-clip floor) and
+        ``still_max_hold_s`` so the stills after the clip keep cycling
+        instead of parking on one image for the rest of the Short.
     """
     if duration >= 60:
         raise ValueError(
@@ -3307,13 +3514,14 @@ def build_short_video(audio_path: Path, cover_path: Path,
     # falls straight through to them on any failure.
     usable_clips = [Path(p) for p in (clip_paths or [])]
     usable_clips = [p for p in usable_clips if p.exists()]
-    if len(usable_clips) >= 2:
+    if len(usable_clips) >= max(1, int(min_clips)):
         try:
             visuals = _build_short_hybrid_sequence(
                 list(scene_paths or []) or [cover_path],
                 usable_clips,
                 duration=duration,
                 nominal_clip_seconds=clip_seconds,
+                max_still_hold_s=still_max_hold_s,
             )
             hybrid_path = work_dir / f"{output_path.stem}_short_hybrid.mp4"
             _render_hybrid_slideshow(
@@ -3408,6 +3616,8 @@ def build_short_video(audio_path: Path, cover_path: Path,
         caption_margin_v=caption_margin_v,
         bg_loop=not bg_full_length,
         progress_bar=progress_bar,
+        fact_cards=fact_cards,
+        punch_text=punch_text,
     )
     logger.info(
         "Building Shorts video (%.1fs from %.1fs) → %s "

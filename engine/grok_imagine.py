@@ -245,6 +245,33 @@ def extract_story_headlines(digest_text: str, max_count: int = 12) -> List[str]:
     return headlines
 
 
+
+# The prompt boilerplate every image carries (Sep 22 2026: hoisted to
+# module constants so scripts/build_gallery_retention.py can exclude
+# EXACTLY these phrases from the style tags — pooled over both kinds
+# they were every show's "top tags", because the 9:16 framing hint
+# rides on the Shorts and Shorts hold ~60% against ~15% on long-form).
+FRAMING_HINT_VERTICAL = (
+    "vertical 9:16 framing, single subject, mobile-first composition"
+)
+FRAMING_HINT_WIDE = "wide cinematic 16:9 framing, photojournalism style"
+# Network-wide visual-quality cue (June 14 2026; retuned July 2026):
+# polished editorial photo, not a flat stock render or title card.
+QUALITY_HINT = (
+    "dramatic natural lighting, rich depth of field, sharp focus, "
+    "high detail, vivid color grading, professional editorial photography, "
+    "cinematic atmosphere, beautiful and enticing"
+)
+# Hard no-text contract. Operator review (July 2026): dumping the full
+# episode headline after ``depicting:`` made Grok paint white chyron
+# text onto nearly every gallery image. We now pass only short visual
+# subject phrases (see ``_visual_subject_phrase``) and reinforce the
+# ban with an explicit negative.
+NO_TEXT_HINT = (
+    "clean photographic composition with ZERO text, letters, words, "
+    "captions, logos, watermarks, or typography of any kind in the frame"
+)
+
 def build_image_prompts(
     *,
     hook: str,
@@ -288,27 +315,9 @@ def build_image_prompts(
         return []
 
     is_vertical = aspect.startswith("9:") or aspect == "vertical"
-    framing_hint = (
-        "vertical 9:16 framing, single subject, mobile-first composition"
-        if is_vertical
-        else "wide cinematic 16:9 framing, photojournalism style"
-    )
-    # Network-wide visual-quality cue (June 14 2026; retuned July 2026):
-    # polished editorial photo, not a flat stock render or title card.
-    quality_hint = (
-        "dramatic natural lighting, rich depth of field, sharp focus, "
-        "high detail, vivid color grading, professional editorial photography, "
-        "cinematic atmosphere, beautiful and enticing"
-    )
-    # Hard no-text contract. Operator review (July 2026): dumping the full
-    # episode headline after ``depicting:`` made Grok paint white chyron
-    # text onto nearly every gallery image. We now pass only short visual
-    # subject phrases (see ``_visual_subject_phrase``) and reinforce the
-    # ban with an explicit negative.
-    no_text_hint = (
-        "clean photographic composition with ZERO text, letters, words, "
-        "captions, logos, watermarks, or typography of any kind in the frame"
-    )
+    framing_hint = FRAMING_HINT_VERTICAL if is_vertical else FRAMING_HINT_WIDE
+    quality_hint = QUALITY_HINT
+    no_text_hint = NO_TEXT_HINT
 
     safe_hook = (hook or "").strip().rstrip(".")
     descriptor = (show_descriptor or "photorealistic news photo").strip()
