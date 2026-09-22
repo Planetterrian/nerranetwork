@@ -55,6 +55,28 @@ def _paths(items: Optional[Sequence]) -> List[Path]:
     return [Path(p) for p in (items or [])]
 
 
+def _shift_words(words: Sequence[dict], offset_s: float) -> List[dict]:
+    """Move Whisper words from the voice-only timeline onto the mixed
+    audio's (the music intro delays the voice by ``offset_s``)."""
+    try:
+        offset = float(offset_s or 0.0)
+    except (TypeError, ValueError):
+        offset = 0.0
+    if not offset:
+        return list(words)
+    out: List[dict] = []
+    for w in words:
+        try:
+            out.append({
+                **w,
+                "start": float(w["start"]) + offset,
+                "end": float(w["end"]) + offset,
+            })
+        except (KeyError, TypeError, ValueError):
+            continue
+    return out
+
+
 def _dedup(*lists: Sequence[Path]) -> List[Path]:
     seen: set = set()
     out: List[Path] = []
@@ -143,6 +165,8 @@ def long_form_visual_plan(
     cache_dir: Optional[Path] = None,
     fresh_scene_context: Optional[Dict[Path, str]] = None,
     blend_library: Optional[bool] = None,
+    transcript_words: Optional[Sequence[dict]] = None,
+    transcript_offset_s: float = 0.0,
 ) -> Dict[str, Any]:
     """Plan the long-form slideshow visuals for one episode.
 
@@ -164,6 +188,11 @@ def long_form_visual_plan(
     library context comes from the manifest. ``blend_library`` overrides
     the ``gallery_blend_enabled`` config gate (the recap path passes
     ``False`` because its pool IS library imagery already).
+
+    ``transcript_words`` (the faster-whisper word list, voice-only
+    timeline) with ``transcript_offset_s`` (the music-intro delay)
+    lets the scheduler snap interior scene cuts to sentence ends
+    (``long_form_sentence_cuts``); ``None`` keeps the equal split.
 
     Best-effort: any failure returns the legacy shape (no schedule, no
     extra scenes) with a logged warning. Never raises.
@@ -191,7 +220,7 @@ def long_form_visual_plan(
         if do_blend:
             from engine.gallery_library import load_manifest, select_library_scenes
             manifest = load_manifest()
-            limit = int(getattr(_yt(config), "gallery_blend_max_long", 8) or 0)
+            limit = int(getattr(_yt(config), "gallery_blend_max_long", 3) or 0)
             library = select_library_scenes(
                 show_slug,
                 aspect="16:9",
@@ -200,7 +229,7 @@ def long_form_visual_plan(
                 limit=limit,
                 manifest=manifest,
                 cache_dir=cache_dir,
-                min_overlap=int(getattr(_yt(config), "gallery_blend_min_overlap", 1) or 0),
+                min_overlap=int(getattr(_yt(config), "gallery_blend_min_overlap", 2) or 0),
             )
         out["library_count"] = len(library)
 
@@ -237,9 +266,13 @@ def long_form_visual_plan(
                 from engine.gallery_library import scene_context_map
                 scene_context.update(scene_context_map(manifest or {}, library))
             from engine.scene_scheduler import plan_chapter_schedule
+            words = None
+            if transcript_words and _flag(config, "long_form_sentence_cuts"):
+                words = _shift_words(transcript_words, transcript_offset_s)
             schedule = plan_chapter_schedule(
                 fresh, library, chapters, float(audio_duration_s),
                 scene_context=scene_context,
+                transcript_words=words,
             )
             if len(schedule) >= 2:
                 out["scene_schedule"] = schedule
@@ -332,7 +365,7 @@ def short_visual_extras(
                     if blend_library is None else bool(blend_library))
         if do_blend:
             from engine.gallery_library import select_library_scenes
-            limit = int(getattr(_yt(config), "gallery_blend_max_short", 4) or 0)
+            limit = int(getattr(_yt(config), "gallery_blend_max_short", 2) or 0)
             library = select_library_scenes(
                 show_slug,
                 aspect="9:16",
@@ -340,7 +373,7 @@ def short_visual_extras(
                 context_text=context_text,
                 limit=limit,
                 cache_dir=cache_dir,
-                min_overlap=int(getattr(_yt(config), "gallery_blend_min_overlap", 1) or 0),
+                min_overlap=int(getattr(_yt(config), "gallery_blend_min_overlap", 2) or 0),
             )
         out["library_count"] = len(library)
         pool = _dedup(fresh, library)

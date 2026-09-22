@@ -94,6 +94,13 @@ _OPEN_MAX_HOLD_S = 8.0
 # the shapes that have ever timed out.
 _MAX_SLIDESHOW_SLOTS = 36
 
+# Long-form speech snap (Sep 22 2026): an equal-split slot boundary
+# inside a chapter moves to the nearest sentence end within this many
+# seconds, so a scene change lands between sentences the way the Shorts
+# cuts already do. Beyond it the equal split stands — a snap that far
+# would make one hold visibly longer than its neighbours.
+_LONG_SNAP_TOLERANCE_S = 2.5
+
 
 def _tokenize(text: Optional[str]) -> frozenset:
     """Lower-cased alphanumeric token set for overlap scoring."""
@@ -161,6 +168,85 @@ def _subdivide(length: float, max_hold_s: float, min_hold_s: float) -> List[floa
     while n > 1 and length / n < min_hold_s:
         n -= 1
     return [length / n] * n
+
+
+def _sentence_end_times(words: Optional[Sequence[dict]]) -> List[float]:
+    """Absolute ``end`` times of sentence-ending words, sorted.
+
+    Same word contract as :func:`sentence_cut_times` (faster-whisper
+    dicts with ``word``/``start``/``end``); the caller has already put
+    the words on the mixed-audio timeline (music-intro offset applied).
+    """
+    ends: List[float] = []
+    for w in words or []:
+        token = (w.get("word") or "").strip()
+        if not token or not token.endswith(_SENTENCE_END_CHARS):
+            continue
+        try:
+            ends.append(float(w["end"]))
+        except (KeyError, TypeError, ValueError):
+            continue
+    ends.sort()
+    return ends
+
+
+def _snap_slots(
+    start: float,
+    end: float,
+    slots: Sequence[float],
+    ends: Sequence[float],
+    *,
+    min_hold_s: float,
+    max_hold_s: float,
+    tolerance_s: float = _LONG_SNAP_TOLERANCE_S,
+) -> List[float]:
+    """Move each interior slot boundary to the nearest sentence end.
+
+    ``slots`` is the equal-split output of :func:`_subdivide` for the
+    chapter window ``[start, end]``; ``ends`` are absolute sentence-end
+    times. A boundary moves only when a sentence end sits within
+    ``tolerance_s`` of it, the hold it closes stays within
+    ``[min_hold_s, max_hold_s + tolerance_s]`` (a hold may run past the
+    max by at most the tolerance to finish a sentence — never under the
+    min, which is the flicker floor), and the remaining tail still leaves
+    every later slot at least ``min_hold_s``. The window edges never
+    move (chapter alignment is the point of the schedule); durations
+    always sum to the window length.
+    """
+    slots = list(slots)
+    if len(slots) < 2 or not ends:
+        return slots
+    length = end - start
+    out: List[float] = []
+    cursor = start
+    for i, planned in enumerate(slots[:-1]):
+        target = cursor + planned
+        remaining_slots = len(slots) - i - 1
+        best: Optional[float] = None
+        best_dist = tolerance_s
+        for e in ends:
+            if e <= cursor:
+                continue
+            if e >= end:
+                break
+            dist = abs(e - target)
+            if dist > best_dist:
+                continue
+            hold = e - cursor
+            tail = end - e
+            if hold < min_hold_s or hold > max_hold_s + tolerance_s:
+                continue
+            if tail < remaining_slots * min_hold_s:
+                continue
+            best, best_dist = e, dist
+        boundary = best if best is not None else target
+        out.append(boundary - cursor)
+        cursor = boundary
+    out.append(end - cursor)
+    diff = length - math.fsum(out)
+    if abs(diff) > 1e-9:
+        out[-1] += diff
+    return out
 
 
 def _pick_scene(
@@ -271,6 +357,7 @@ def plan_chapter_schedule(
     max_hold_s: float = 15.0,
     min_hold_s: float = 6.0,
     scene_context: Optional[Dict[Path, str]] = None,
+    transcript_words: Optional[Sequence[dict]] = None,
 ) -> List[Tuple[Path, float]]:
     """Plan the long-form slideshow as ``[(scene_path, hold_seconds), …]``.
 
@@ -294,6 +381,13 @@ def plan_chapter_schedule(
     scene_context:
         Optional ``{path: prompt/caption text}`` used for the
         title-overlap scoring; scenes without context score 0 overlap.
+    transcript_words:
+        Optional faster-whisper word list ON THE MIXED-AUDIO TIMELINE
+        (the caller applies the music-intro offset). When given, the
+        interior slot boundaries inside each chapter snap to the nearest
+        sentence end within ``_LONG_SNAP_TOLERANCE_S`` (see
+        :func:`_snap_slots`); chapter boundaries and slot counts are
+        unchanged. ``None`` keeps the equal-split plan byte-identical.
     """
     seen = set()
     pool: List[Path] = []
@@ -327,6 +421,9 @@ def plan_chapter_schedule(
         )
         return _uniform_plan(pool, audio_duration_s, max_hold_s)
 
+    sentence_ends = _sentence_end_times(transcript_words)
+    snapped_boundaries = 0
+
     plan: List[Tuple[Path, float]] = []
     use_counts: Dict[Path, int] = {path: 0 for path in pool}
     last_pick: Optional[Path] = None
@@ -339,7 +436,17 @@ def plan_chapter_schedule(
             min(max_hold_s, _OPEN_MAX_HOLD_S)
             if start < _OPEN_FAST_WINDOW_S else max_hold_s
         )
-        for slot_duration in _subdivide(end - start, effective_max, min_hold_s):
+        slots = _subdivide(end - start, effective_max, min_hold_s)
+        if sentence_ends and len(slots) > 1:
+            snapped = _snap_slots(
+                start, end, slots, sentence_ends,
+                min_hold_s=min_hold_s, max_hold_s=effective_max,
+            )
+            snapped_boundaries += sum(
+                1 for a, b in zip(slots[:-1], snapped[:-1]) if abs(a - b) > 1e-6
+            )
+            slots = snapped
+        for slot_duration in slots:
             # The OPENING slot is this episode's imagery (Sep 2026): the
             # fresh bonus (0.25) loses to a single token of title overlap,
             # so a library scene from an older episode could open the
@@ -364,6 +471,13 @@ def plan_chapter_schedule(
             "scene_scheduler: capped slideshow slots %d → %d "
             "(max=%d; audio=%.0fs) to keep ffmpeg renderable",
             uncapped, len(plan), _MAX_SLIDESHOW_SLOTS, audio_duration_s,
+        )
+    if sentence_ends:
+        logger.info(
+            "scene_scheduler: %d of %d interior scene cuts snapped to a "
+            "sentence end (tolerance %.1fs)",
+            snapped_boundaries, max(0, uncapped - len(windows)),
+            _LONG_SNAP_TOLERANCE_S,
         )
     logger.debug(
         "scene_scheduler: %d chapter windows → %d slots over %.1fs",

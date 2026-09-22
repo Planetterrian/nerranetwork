@@ -6466,6 +6466,19 @@ def _publish_youtube(
     if _policy_publish_long and video_provider != "grok":
         try:
             from engine.visual_reuse import long_form_visual_plan
+            # Sep 22 2026: the long-form scene cuts snap to sentence ends
+            # like the Shorts cuts do. The Whisper words sit on the
+            # voice-only timeline; the planner shifts them by the music
+            # intro delay. [] (no word data / any failure) = equal split.
+            _long_words: "list[dict]" = []
+            if transcript_path is not None and getattr(
+                config.youtube, "long_form_sentence_cuts", True
+            ):
+                try:
+                    from engine.visual_reuse import load_transcript_words
+                    _long_words = load_transcript_words(transcript_path)
+                except Exception as exc:  # pragma: no cover — best-effort
+                    logger.debug("Long-form transcript word load skipped: %s", exc)
             _visual_plan = long_form_visual_plan(
                 config,
                 show_slug=config.slug,
@@ -6482,6 +6495,10 @@ def _publish_youtube(
                 digests_dir=digests_dir,
                 fresh_scene_context=fresh_scene_prompts,
                 blend_library=False if recap_pool_used else None,
+                transcript_words=_long_words or None,
+                transcript_offset_s=float(
+                    getattr(config.audio, "voice_intro_delay", 0.0) or 0.0
+                ),
             )
             scene_library_count += int(_visual_plan.get("library_count") or 0)
         except Exception as exc:  # pragma: no cover — never block a publish

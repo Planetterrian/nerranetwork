@@ -438,3 +438,133 @@ class TestFreshOpen:
         chapters = [{"startTime": 0.0, "title": "A"}, {"startTime": 30.0, "title": "B"}]
         plan = plan_chapter_schedule([], library, chapters, 60.0)
         assert plan and plan[0][0] in library
+
+
+# ---------------------------------------------------------------------------
+# Long-form speech snap (Sep 22 2026) — interior cuts land on sentence ends
+# ---------------------------------------------------------------------------
+
+def _words_ending_at(*ends):
+    """Whisper-shaped words: one sentence-ending word per absolute end."""
+    return [
+        {"word": " done.", "start": e - 0.3, "end": e} for e in ends
+    ]
+
+
+def _boundaries(plan):
+    acc = 0.0
+    out = []
+    for _, d in plan:
+        acc += d
+        out.append(round(acc, 6))
+    return out
+
+
+class TestLongFormSentenceSnap:
+    def test_none_words_is_byte_identical(self):
+        pool = _scenes("fresh", 5)
+        chapters = _chapters((0.0, "Intro"), (30.0, "Deep Dive"), (60.0, "End"))
+        a = plan_chapter_schedule(pool, [], chapters, 90.0)
+        b = plan_chapter_schedule(pool, [], chapters, 90.0, transcript_words=None)
+        c = plan_chapter_schedule(pool, [], chapters, 90.0, transcript_words=[])
+        assert a == b == c
+
+    def test_interior_cut_lands_on_a_sentence_end(self):
+        """A 30 s chapter after the open splits 15/15; a sentence ends at
+        16.8 s into it (within the 2.5 s tolerance) so the cut moves
+        there: [16.8, 13.2]. The chapter boundary itself does not move."""
+        pool = _scenes("fresh", 5)
+        chapters = _chapters((0.0, "Intro"), (90.0, "Deep Dive"), (120.0, "End"))
+        words = _words_ending_at(90.0 + 16.8)
+        plan = plan_chapter_schedule(pool, [], chapters, 150.0,
+                                     transcript_words=words)
+        bounds = _boundaries(plan)
+        assert 90.0 in bounds and 120.0 in bounds
+        assert 106.8 in bounds
+        assert 105.0 not in bounds
+        assert abs(math.fsum(d for _, d in plan) - 150.0) < 1e-6
+
+    def test_chapter_boundaries_never_move(self):
+        pool = _scenes("fresh", 5)
+        chapters = _chapters((0.0, "Intro"), (90.0, "Deep Dive"), (120.0, "End"))
+        # A sentence end 1 s before the chapter boundary must not pull it.
+        words = _words_ending_at(89.0, 119.0)
+        plan = plan_chapter_schedule(pool, [], chapters, 150.0,
+                                     transcript_words=words)
+        bounds = _boundaries(plan)
+        assert 90.0 in bounds and 120.0 in bounds
+        assert 89.0 not in bounds and 119.0 not in bounds
+
+    def test_no_snap_beyond_tolerance(self):
+        pool = _scenes("fresh", 5)
+        chapters = _chapters((0.0, "Intro"), (90.0, "Deep Dive"), (120.0, "End"))
+        words = _words_ending_at(90.0 + 19.0)  # 4 s from the 15 s split
+        plan = plan_chapter_schedule(pool, [], chapters, 150.0,
+                                     transcript_words=words)
+        assert _boundaries(plan) == _boundaries(
+            plan_chapter_schedule(pool, [], chapters, 150.0)
+        )
+
+    def test_snap_never_shortens_a_hold_below_the_min(self):
+        """A 16 s chapter splits 8/8; a sentence end at 5.8 s is inside
+        the tolerance but would leave a 5.8 s hold (< min 6), and one at
+        10.2 s would leave a 5.8 s tail — neither is taken."""
+        pool = _scenes("fresh", 5)
+        chapters = _chapters((0.0, "Intro"), (90.0, "Deep Dive"), (106.0, "End"))
+        for rel in (5.8, 10.2):
+            words = _words_ending_at(90.0 + rel)
+            plan = plan_chapter_schedule(pool, [], chapters, 150.0,
+                                         transcript_words=words)
+            assert 98.0 in _boundaries(plan)
+            for _, d in plan:
+                assert d >= 6.0 - 1e-9
+
+    def test_snap_may_run_past_the_max_only_by_the_tolerance(self):
+        """Finishing a sentence may hold a scene up to 2.5 s past the
+        max (the 16.8 s case above); 17.6 s would be 2.6 s past a 15 s
+        split — outside the tolerance — so the split stands."""
+        pool = _scenes("fresh", 5)
+        chapters = _chapters((0.0, "Intro"), (90.0, "Deep Dive"), (120.0, "End"))
+        words = _words_ending_at(90.0 + 17.6)
+        plan = plan_chapter_schedule(pool, [], chapters, 150.0,
+                                     transcript_words=words)
+        assert 105.0 in _boundaries(plan)
+        words = _words_ending_at(90.0 + 17.4)
+        plan = plan_chapter_schedule(pool, [], chapters, 150.0,
+                                     transcript_words=words)
+        assert 107.4 in _boundaries(plan)
+
+    def test_open_snap_stays_within_tolerance_of_the_eight_second_cap(self):
+        """Inside the first minute the effective max is 8 s; a snap can
+        run past it only by the tolerance, and never past a full cruise
+        hold."""
+        pool = _scenes("fresh", 6)
+        chapters = _chapters((0.0, "Intro"), (40.0, "Closing"))
+        words = _words_ending_at(9.5, 22.0)  # 9.5 ok (≤ 10.5); 22 vs 16 no
+        plan = plan_chapter_schedule(pool, [], chapters, 55.0,
+                                     transcript_words=words)
+        bounds = _boundaries(plan)
+        assert 9.5 in bounds and 22.0 not in bounds
+        for _, d in plan[:5]:
+            assert d <= 8.0 + 2.5 + 1e-9
+
+    def test_slot_count_unchanged_and_cap_holds(self):
+        pool = _scenes("fresh", 6)
+        chapters = _chapters(*[(i * 60.0, f"Ch {i}") for i in range(20)])
+        words = _words_ending_at(*[i * 60.0 + 31.2 for i in range(20)])
+        plain = plan_chapter_schedule(pool, [], chapters, 1200.0)
+        snapped = plan_chapter_schedule(pool, [], chapters, 1200.0,
+                                        transcript_words=words)
+        assert len(snapped) == len(plain) <= _MAX_SLIDESHOW_SLOTS
+        assert abs(math.fsum(d for _, d in snapped) - 1200.0) < 1e-6
+
+    def test_malformed_words_are_ignored(self):
+        pool = _scenes("fresh", 5)
+        chapters = _chapters((0.0, "Intro"), (90.0, "Deep Dive"), (120.0, "End"))
+        words = [{"word": "done."}, {"word": None, "end": 106.8},
+                 {"word": "x.", "end": "nope"}]
+        plan = plan_chapter_schedule(pool, [], chapters, 150.0,
+                                     transcript_words=words)
+        assert _boundaries(plan) == _boundaries(
+            plan_chapter_schedule(pool, [], chapters, 150.0)
+        )

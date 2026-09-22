@@ -186,7 +186,7 @@ class TestConfigContract:
         assert c.scene_briefs_enabled is True
         assert c.scenes_per_episode >= 8
         assert c.short_scenes_per_episode >= 4
-        assert c.gallery_blend_min_overlap >= 1
+        assert c.gallery_blend_min_overlap >= 2
 
     def test_run_show_generates_briefs_once_and_passes_them(self):
         src = (_ROOT / "run_show.py").read_text(encoding="utf-8")

@@ -915,10 +915,15 @@ class YouTubeConfig:
     # Sep 2026: back to 8. With one fresh scene PER STORY (scene briefs)
     # the episode's own imagery covers its chapters; the library only
     # fills gaps, and only with on-topic images (gallery_blend_min_overlap).
-    gallery_blend_max_long: int = 8    # 16:9 library scenes per long-form
+    # Sep 22 2026: 8 -> 3 and overlap 1 -> 2. Measured on the flagships
+    # this week: 13 fresh vs 14 library images per long-form, so half of
+    # what a viewer saw was an older episode's picture matched on ONE
+    # salient token. Every image on screen should be this episode's own;
+    # the library fills a gap only when it shares two salient tokens.
+    gallery_blend_max_long: int = 3    # 16:9 library scenes per long-form
     # Minimum token overlap (context = hook + chapter titles) a library
     # scene needs to be blended at all; 0 = legacy rank-only behaviour.
-    gallery_blend_min_overlap: int = 1
+    gallery_blend_min_overlap: int = 2
     # ---- Story-driven scene briefs (Sep 2026, engine.scene_briefs) ----
     # One Grok text call per episode writes a concrete visual scene per
     # story; those briefs LEAD the Grok Imagine prompts. False = the
@@ -928,7 +933,7 @@ class YouTubeConfig:
     scene_briefs_enabled: bool = True
     scenes_per_episode: int = 8
     short_scenes_per_episode: int = 5
-    gallery_blend_max_short: int = 6   # 9:16 library scenes per Short
+    gallery_blend_max_short: int = 2   # 9:16 library scenes per Short (Sep 22 2026: 6 -> 2)
     # Align long-form scene switches with the episode's chapters.json
     # boundaries (engine.scene_scheduler.plan_chapter_schedule) instead of
     # the uniform timer. <2 usable chapters falls back to uniform.
@@ -951,6 +956,11 @@ class YouTubeConfig:
     # word-level transcript (engine.scene_scheduler.sentence_cut_times)
     # instead of the flat 7 s grid.
     shorts_sentence_cuts: bool = True
+    # Sep 22 2026: the same for long-form — the interior scene cuts
+    # inside each chapter snap to the nearest sentence end (within
+    # engine.scene_scheduler._LONG_SNAP_TOLERANCE_S) instead of the
+    # equal split. Chapter boundaries and slot counts are unchanged.
+    long_form_sentence_cuts: bool = True
     # Interleave curated evergreen b-roll clips (digests/<dir>/broll.json,
     # published by scripts/build_broll_pool.py) into the long-form
     # slideshow. A clean no-op until the operator publishes a pool.

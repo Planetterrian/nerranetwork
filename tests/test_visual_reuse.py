@@ -38,9 +38,11 @@ _NEW_KNOBS = {
     # Library scenes are already generated and already paid for.
     # Sep 2026: back to 8 — one fresh scene per story covers the
     # chapters; the library only fills gaps, on-topic only.
-    "gallery_blend_max_long": 8,
-    "gallery_blend_min_overlap": 1,
-    "gallery_blend_max_short": 6,
+    # Sep 22 2026: 3 / 2 / 2 — half the images on a flagship long-form
+    # were older library shots matched on one token.
+    "gallery_blend_max_long": 3,
+    "gallery_blend_min_overlap": 2,
+    "gallery_blend_max_short": 2,
     "scene_briefs_enabled": True,
     "scenes_per_episode": 8,
     "short_scenes_per_episode": 5,
@@ -50,6 +52,7 @@ _NEW_KNOBS = {
     "recap_reuse_scenes": True,
     "gallery_fallback_enabled": True,
     "shorts_sentence_cuts": True,
+    "long_form_sentence_cuts": True,
     "evergreen_broll": True,
 }
 
@@ -210,6 +213,68 @@ class TestLongFormVisualPlan:
         assert out["scene_paths"] is None
         assert out["broll_clips"] is None
         assert out["mode"] == "uniform"  # ≥2 fresh scenes → legacy uniform
+
+    def test_transcript_words_are_offset_and_reach_the_scheduler(
+        self, monkeypatch, tmp_path,
+    ):
+        _stub_library(monkeypatch, scenes=[])
+        import engine.scene_scheduler as ss
+        seen = {}
+        real = ss.plan_chapter_schedule
+
+        def _spy(*a, **k):
+            seen["words"] = k.get("transcript_words")
+            return real(*a, **k)
+
+        monkeypatch.setattr(ss, "plan_chapter_schedule", _spy)
+        words = [{"word": " end.", "start": 10.0, "end": 10.5}]
+        self._plan(_config(), tmp_path, transcript_words=words,
+                   transcript_offset_s=3.0)
+        assert seen["words"] == [{"word": " end.", "start": 13.0, "end": 13.5}]
+
+    def test_long_form_sentence_cuts_knob_off_sends_no_words(
+        self, monkeypatch, tmp_path,
+    ):
+        _stub_library(monkeypatch, scenes=[])
+        import engine.scene_scheduler as ss
+        seen = {}
+        real = ss.plan_chapter_schedule
+
+        def _spy(*a, **k):
+            seen["words"] = k.get("transcript_words")
+            return real(*a, **k)
+
+        monkeypatch.setattr(ss, "plan_chapter_schedule", _spy)
+        words = [{"word": " end.", "start": 10.0, "end": 10.5}]
+        self._plan(_config(long_form_sentence_cuts=False), tmp_path,
+                   transcript_words=words)
+        assert seen["words"] is None
+
+    def test_getattr_fallbacks_equal_the_dataclass(self, monkeypatch, tmp_path):
+        """A config object without the blend knobs must resolve to the
+        SAME limits the dataclass declares (Sep 22 2026: 3 / 2 / 2) — a
+        stale literal fallback is how a stub config ships the old blend."""
+        import engine.gallery_library as gl
+        seen = {}
+
+        def _select(*a, **k):
+            seen["limit"] = k.get("limit")
+            seen["min_overlap"] = k.get("min_overlap")
+            return []
+
+        _stub_library(monkeypatch, scenes=[])
+        monkeypatch.setattr(gl, "select_library_scenes", _select)
+        bare = SimpleNamespace(youtube=SimpleNamespace())
+        self._plan(bare, tmp_path)
+        assert seen == {"limit": YouTubeConfig().gallery_blend_max_long,
+                        "min_overlap": YouTubeConfig().gallery_blend_min_overlap}
+        vr.short_visual_extras(
+            bare, show_slug="tesla", episode_id="ep001",
+            fresh_short_scenes=_scenes("fresh", 2), transcript_words=[],
+            window_start_s=0.0, clip_duration_s=35.0, context_text="x",
+        )
+        assert seen == {"limit": YouTubeConfig().gallery_blend_max_short,
+                        "min_overlap": YouTubeConfig().gallery_blend_min_overlap}
 
     def test_scheduler_failure_never_raises(self, monkeypatch, tmp_path):
         _stub_library(monkeypatch, scenes=_scenes("lib", 2))
@@ -440,6 +505,11 @@ class TestRunShowWiring:
         # Scene-based thumbnail + variants.
         assert "long_form_thumbnail_from_scene" in src
         assert "generate_thumbnail_variants" in src
+        # Sep 22 2026: long-form cuts snap to speech — the words reach the
+        # planner with the music-intro offset, gated on the knob.
+        assert "transcript_words=_long_words or None" in src
+        assert '"long_form_sentence_cuts"' in src
+        assert "transcript_offset_s=float(" in src
 
     def test_publisher_variant_helper_exists(self):
         from engine.publisher import generate_thumbnail_variants
