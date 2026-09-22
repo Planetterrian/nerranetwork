@@ -962,7 +962,15 @@ experiments:
     area: reach
     shipped: 2026-08-21
     readout: 2026-09-22
-    status: reading
+    status: done
+    outcome: >
+      SURFACE FOUND, scored 2026-09-22. OP3 now measures nerra_daily:
+      153 downloads/30d, 56/7d, weekly [13, 23, 61, 56] — nonzero and rising
+      toward the per-show median (network median first-week downloads sit
+      in the 20s; the network's smaller feeds run 30-60/7d). The bet holds
+      at ~$0.08/episode; keep. Next read is the Apple/Spotify submission in
+      docs/nerra_daily.md (operator checklist) and whether the 7d line
+      clears 100 by the late-October review.
     target: >
       Nonzero OP3 downloads on nerra_daily_podcast.rss by the readout,
       trending toward the network per-show median. The bet is that a
@@ -1013,9 +1021,19 @@ experiments:
     area: retention
     shipped: 2026-09-02
     readout: 2026-09-23
-    status: reading
+    status: done
     metric: long_open_hold_5pct_en
     baseline: 0.49
+    outcome: >
+      INCONCLUSIVE, scored 2026-09-22. long_open_hold_5pct_en reads 0.48
+      against a 0.49 baseline (retention_curves.mean_hold_5pct_by_channel
+      en 0.48, fr 0.50, ru 0.53). Five entries share this metric
+      (scene-briefs, video-quality-round-3, captions-track-only, fresh-open)
+      and it has not moved for any of them — the open cliff is a spoken-
+      open question, not a render one (long-open-cliff MISS 09-07). Cards
+      stay: render-only, no cost, and the chapter list they mirror is the
+      seek bar. Not scored MISS: the number the entry was written against
+      never separated from its siblings.
     target: >
       Hold at the 5% mark up, and — the real target — the 25% hold
       (curves) up: viewers who see what is coming next stay for it.
@@ -1061,7 +1079,17 @@ experiments:
     area: reach
     shipped: 2026-09-02
     readout: 2026-09-23
-    status: reading
+    status: done
+    outcome: >
+      INCONCLUSIVE, scored 2026-09-22 — confounded. EN Shorts median views
+      did not reach 25: the hook Short's age-3 median ran 23-41 through
+      09-15 and then 8-10 from 09-16, but the RU/FR dubs of the SAME
+      episodes (whose titles are cut from the translated long title, not
+      this change) fell 5-10x in the same window while Tesla-EN held — a
+      distribution-side drop that no title format can be read through
+      (docs/reviews/youtube_review_2026_09_22.md). The shorter title stays
+      (the quartile cut that motivated it is unchanged); re-read once
+      traffic-mix-instrument-2026-09-22 says the Shorts feed has settled.
     target: >
       Views/Short up on EN (median 18 -> 25+). The 45-day top- vs
       bottom-quartile cut favoured SHORTER Short titles on every channel
@@ -1100,9 +1128,18 @@ experiments:
     area: retention
     shipped: 2026-09-02
     readout: 2026-09-23
-    status: reading
+    status: done
     metric: long_open_hold_5pct_en
     baseline: 0.49
+    outcome: >
+      INCONCLUSIVE on its metric, KEPT on its mechanism — scored
+      2026-09-22. long_open_hold_5pct_en 0.48 vs 0.49 baseline, shared with
+      four siblings and flat for all of them. The mechanism did what it was
+      built for: one fresh scene per story leads every prompt, the 09-09
+      early read had EN views/day doubled on the joint change, and the
+      imagery complaints that opened the round have not recurred. Cost
+      stands at +$0.08/episode. The retention question moves to the spoken
+      open (landmine #17 territory), not to another render lever.
     target: >
       Viewer complaints about imagery not matching the subject stop;
       long-form hold at 5% and Shorts AVP up. Mechanism: one Grok text
@@ -1136,7 +1173,16 @@ experiments:
     area: retention
     shipped: 2026-09-02
     readout: 2026-09-23
-    status: reading
+    status: done
+    outcome: >
+      HIT on delivery, INCONCLUSIVE on retention — scored 2026-09-22. Every
+      episode since 09-03 records grok_image_px_max 2816 (2816x1584 /
+      1584x2816 from the bytes), so the 3x upsample is gone; Shorts open on
+      the scene matching their own window. Shorts AVP held 60-73% by
+      channel (views-weighted, 28d) and long-form hold at 5% is flat at
+      0.48 — no separable retention effect. The quality-tier decision
+      (grok-imagine-image-quality, +$35/mo) stays with the operator and is
+      not recommended on this evidence.
     target: >
       Sharper stills (the 16:9 render prescales to 3840 wide for Ken
       Burns; a 1792-wide source was a 2.1x upsample before any zoom —
@@ -1169,9 +1215,17 @@ experiments:
     area: retention
     shipped: 2026-09-03
     readout: 2026-09-23
-    status: reading
+    status: done
     metric: long_open_hold_5pct_en
     baseline: 0.51
+    outcome: >
+      HIT on (1) and (2), INCONCLUSIVE on the metric — scored 2026-09-22.
+      (1) delivered width 2816 on every episode since 09-03; (2) library
+      overlap on salient tokens, 13 fresh + 14 library scenes per episode on
+      the flagships this week with visual_mode chapter_schedule throughout;
+      (3) chapter cards fit-gated. long_open_hold_5pct_en 0.48 vs a 0.51
+      baseline — shared with four siblings, flat for all; not a MISS the
+      render can own.
     target: >
       From the first-round readout (Tesla Ep592 frame check + the
       committed gallery sidecars): (1) the endpoint ignores `size`, so
@@ -1208,9 +1262,16 @@ experiments:
     area: retention
     shipped: 2026-09-09
     readout: 2026-09-23
-    status: reading
+    status: done
     metric: long_open_hold_5pct_en
     baseline: 0.49
+    outcome: >
+      HIT on its own terms, scored 2026-09-22. No doubled caption layer
+      since 09-09 (burn-in off, the uploaded track is the only layer; 32/32
+      long-forms since 09-19 record caption_track_uploaded true, 0
+      refusals) and hold at 5% is no worse than the burn-in period (0.48 vs
+      0.49). The retention metric it shares with four siblings never moved
+      for any of them.
     target: >
       Operator screenshot 2026-09-09: on a long-form video YouTube's
       caption box (the uploaded track, CC on in the player) was drawn
@@ -1237,7 +1298,17 @@ experiments:
     area: reach
     shipped: 2026-09-09
     readout: 2026-09-23
-    status: reading
+    status: done
+    outcome: >
+      HIT on its own terms, then SUPERSEDED — scored 2026-09-22. EN
+      `filled` Shorts since 09-09: 0 (the index carries none). But the
+      window it promoted, `qualified`, earned a median 6 views and 0
+      subscribers across 59 uploads in 28 days (hook Short: 22 views, 30
+      subscribers), and the age-7 read the 09-17 review asked for came in at
+      3-6. The hook Short was not diluted (its fall from 09-16 is the
+      channel-wide distribution drop, see en-one-short-2026-09-22). The EN
+      supply question is now answered by the channel cap: one Short per
+      episode, the hook.
     target: >
       EN Shorts 09-03..07: hook Short (`hook_open`) n=41, median 48
       views, mean 128, 8 subscribers; filled second/third Short
