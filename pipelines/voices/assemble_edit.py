@@ -39,6 +39,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -283,6 +284,61 @@ def _duration(path: Path) -> float:
         return 0.0
 
 
+# How far back to look for the real end of the conversation, and how much of
+# the silence after the last word to keep.
+END_SEARCH_SEC = 6.0
+END_KEEP_SEC = 0.5
+
+
+def _last_silence_before(src: Path, end: float) -> float | None:
+    """Where everyone stopped talking, just before ``end``.
+
+    Sept 22 2026. An EDL's end comes from transcript timestamps, and those are
+    approximate at both edges: Meridan Zerner's closing line was stamped nine
+    seconds long and ran fourteen, so the cut took "It is complex." off the
+    end; correcting it to the next speaker's stamp then included the first
+    three quarters of a second of Mira's live "Thank you, Meridan", because
+    that stamp was itself nearly a second late. Two failures from the same
+    cause, in opposite directions, on the same episode.
+
+    The audio does not need to be guessed at. Look at the last few seconds
+    before the nominal end and find where speech actually stops — the fold of
+    the guest's channels is silent only when NEITHER of them is talking, which
+    is exactly the seam an editor would choose.
+    """
+    lo = max(0.0, end - END_SEARCH_SEC)
+    try:
+        proc = subprocess.run(
+            ["ffmpeg", "-v", "info", "-ss", str(lo), "-to", str(end + 0.5),
+             "-i", str(src), "-ac", "1",
+             "-af", "silencedetect=n=-45dB:d=0.35", "-f", "null", "-"],
+            capture_output=True, text=True, timeout=180)
+    except Exception:  # noqa: BLE001 — the nominal end is a fine fallback
+        logger.exception("silence probe failed (non-fatal)")
+        return None
+    starts = re.findall(r"silence_start: ([0-9.]+)", proc.stderr or "")
+    if not starts:
+        return None
+    # ffmpeg reports relative to the -ss point.
+    at = lo + float(starts[-1])
+    if not (lo < at < end):
+        return None
+    return at + END_KEEP_SEC
+
+
+def _end_on_the_last_word(cut: dict, src: Path) -> None:
+    """Move a conversation cut's end onto the silence after the last word."""
+    end = cut.get("end")
+    if end is None:
+        return
+    found = _last_silence_before(src, float(end))
+    if found is None or abs(found - float(end)) < 0.05:
+        return
+    logger.info("end of the conversation: %.1fs -> %.1fs (the last word ends "
+                "%.1fs before the timestamp said)", float(end), found,
+                float(end) - found)
+    cut["end"] = round(found, 2)
+
 def assemble(slug: str) -> dict:
     spec_path = EDL_DIR / f"{slug}.json"
     # See narrate._stored_spec: an auto cut's EDL lives on the runner that
@@ -306,6 +362,11 @@ def assemble(slug: str) -> dict:
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
         pieces: List[Path] = []
+        last_conversation = max(
+            (i for i, c in enumerate(cuts)
+             if str(c.get("from", "")).startswith(("run:", "track:"))
+             and c.get("end") is not None),
+            default=-1)
         for i, cut in enumerate(cuts):
             out = work / f"{i:03d}.wav"
             if cut.get("gap") is not None:
@@ -313,6 +374,12 @@ def assemble(slug: str) -> dict:
                 continue
             url = _resolve(str(cut["from"]), run, show, spec.get("narration", ""))
             src = _fetch(url, work / f"src_{abs(hash(url))}.bin", cache)
+            # The last stretch of conversation decides where the episode ends,
+            # so its end is measured from the audio rather than trusted from
+            # the transcript. Earlier cuts are seams in the middle, where a
+            # tenth of a second either way is nobody's business.
+            if i == last_conversation and str(cut["from"]).startswith(("run:", "track:")):
+                _end_on_the_last_word(cut, src)
             pieces.append(_piece(cut, src, out))
             logger.info("cut %d: %s -> %.1fs", i, cut["from"], _duration(out))
 

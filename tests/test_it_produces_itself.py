@@ -2237,3 +2237,40 @@ class TestAnEpisodeRunsToTheClose:
         assert "ENDS EARLY" in note and "the line dropped" in note
         # ...and it reaches the gate-1 email rather than the guest's ears.
         assert "+ ended_early" in self.SRC and '"note": rationale' in self.SRC
+
+
+class TestTheEndIsMeasuredNotGuessed:
+    """Sept 22 2026, Meridan Zerner, twice in one episode. The cut ended at
+    959.3s and took "It is complex." off her closing thought, because her line
+    was stamped nine seconds long and ran fourteen. Correcting it to the next
+    speaker's stamp then caught the first three quarters of a second of Mira's
+    live "Thank you, Meridan", because that stamp was itself nearly a second
+    late. Transcript timestamps are approximate at both edges; the audio is
+    not. Measured from her tape: last word 961.8, Mira 963.1, seam 962.5."""
+
+    SRC = (V / "assemble_edit.py").read_text(encoding="utf-8")
+
+    def test_the_last_stretch_is_trimmed_to_the_last_word(self):
+        assert "def _last_silence_before(" in self.SRC
+        assert "silencedetect=n=-45dB:d=0.35" in self.SRC
+        assert "_end_on_the_last_word(cut, src)" in self.SRC
+
+    def test_only_the_final_stretch_of_conversation(self):
+        # A seam in the middle of an episode is nobody's business; the end is.
+        assert "last_conversation = max(" in self.SRC
+        assert "if i == last_conversation and str(cut[\"from\"]).startswith((\"run:\", \"track:\"))" in self.SRC
+
+    def test_it_keeps_a_breath_after_the_last_word(self):
+        assert "END_KEEP_SEC = 0.5" in self.SRC
+        assert "return at + END_KEEP_SEC" in self.SRC
+
+    def test_a_failed_probe_leaves_the_edit_alone(self):
+        body = _pyfn("_last_silence_before", self.SRC)
+        assert "except Exception" in body and "return None" in body
+        guard = _pyfn("_end_on_the_last_word", self.SRC)
+        assert "if found is None" in guard
+
+    def test_it_never_reaches_outside_its_window(self):
+        body = _pyfn("_last_silence_before", self.SRC)
+        assert "if not (lo < at < end):" in body
+        assert "END_SEARCH_SEC = 6.0" in self.SRC
