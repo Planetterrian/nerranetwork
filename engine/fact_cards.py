@@ -65,6 +65,27 @@ _UNIT_WORDS = {
 }
 _YEAR_RE = re.compile(r"^(?:19|20)\d\d$")
 _EPISODE_WORDS = frozenset({"episode", "ep", "ep.", "number"})
+# Sep 22 2026: a small count with a unit noun IS a fact ("9 satellites",
+# "1 gigawatt", "5 orbital launches"), but ``_score`` gave every bare
+# value under 100 a zero, so the treatment shows rendered 1-3 cards an
+# episode against the >= 3 the fact-card experiment asked for while their
+# transcripts carried 12-25 digit figures. The noun is consumed into the
+# run (so the label never repeats it) and scored 2 — below money and
+# percentages, above bare thousands. Digits only: a spelled-out number
+# stays out of scope (``_START_RE`` is untouched).
+_COUNT_NOUNS = frozenset({
+    "gigawatt", "gigawatts", "megawatt", "megawatts", "kilowatt", "kilowatts",
+    "satellite", "satellites", "launch", "launches", "flight", "flights",
+    "mission", "missions", "engine", "engines", "booster", "boosters",
+    "year", "years", "month", "months", "day", "days", "hour", "hours",
+    "mile", "miles", "km", "kilometer", "kilometers", "kilometre", "kilometres",
+    "tonne", "tonnes", "ton", "tons", "kg", "kilogram", "kilograms",
+    "employee", "employees", "vehicle", "vehicles", "unit", "units",
+    "country", "countries", "patient", "patients", "sample", "samples",
+    "light-year", "light-years", "orbit", "orbits", "starlink", "starlinks",
+})
+#: "in 2021 launches resumed" — a year before a count noun is still a year.
+_YEAR_PREPS = frozenset({"in", "since", "by", "from", "until", "of", "through"})
 
 
 @dataclass(frozen=True)
@@ -121,6 +142,15 @@ def _score(figure: str, unit: str, prev_word: str) -> int:
         return 3
     if unit in ("million", "billion", "trillion", "thousand", "%", "$"):
         return 3
+    if unit in _COUNT_NOUNS:
+        if _YEAR_RE.match(core) and prev_word.lower().strip(".,;:!?") in _YEAR_PREPS:
+            return 0
+        # "Falcon 9 booster", "Raptor 3 engines", "Model 3 units": a number
+        # right after a capitalised word is a designation, not a count. A
+        # count follows a verb, article or preposition (lowercase).
+        if prev_word[:1].isupper():
+            return 0
+        return 2
     if _YEAR_RE.match(core):
         return 0
     if core.count(".") > 1:
@@ -173,6 +203,10 @@ def _merge_runs(words: Sequence[dict]) -> List[dict]:
             key = nxt.lower()
             if key in _UNIT_WORDS:
                 unit = _UNIT_WORDS[key]
+                j += 1
+                ended = nxt_ended
+            elif key in _COUNT_NOUNS:
+                unit = key
                 j += 1
                 ended = nxt_ended
         prev_word = _clean(words[i - 1].get("word")) if i > 0 else ""

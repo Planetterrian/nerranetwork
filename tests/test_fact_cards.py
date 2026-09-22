@@ -35,7 +35,7 @@ class TestFigureMerging:
     def test_thousands_separator_token_is_rejoined(self):
         words = _w(["shipped", "4", ",000", "units", "in", "August."])
         cards = fc.extract_fact_cards(words, open_skip_s=0)
-        assert cards and cards[0].figure == "4,000"
+        assert cards and cards[0].figure == "4,000 units"   # count noun rides along (Sep 22 2026)
 
     def test_unit_words_attach_and_percent_normalises(self):
         words = _w(["raised", "$450", "million", "in", "a", "round."])
@@ -91,14 +91,55 @@ class TestLabels:
         assert lab[0].isupper()
 
     def test_label_falls_back_to_words_before_a_sentence_final_figure(self):
-        words = _w(["Starship", "flew", "to", "an", "altitude", "of", "150", "kilometers", "twice."])
+        words = _w(["Starship", "reached", "a", "record", "altitude", "of", "150."])
         cards = fc.extract_fact_cards(words, open_skip_s=0)
         assert cards and cards[0].label  # the "before" path produced text
+        assert "150" not in cards[0].label
 
     def test_split_figures_inside_labels_are_rejoined(self):
         words = _w(["$368", ".16,", "up", "$14", ".08", "or", "4%."])
         cards = fc.extract_fact_cards(words, open_skip_s=0)
         assert "$14.08" in cards[0].label
+
+
+class TestCountNouns:
+    """Sep 22 2026: a small count with a unit noun is a fact worth a card."""
+
+    def test_small_count_with_unit_noun_cards(self):
+        words = _w(["Falcon", "delivered", "9", "satellites", "to", "orbit", "today."])
+        cards = fc.extract_fact_cards(words, open_skip_s=0)
+        assert [c.figure for c in cards] == ["9 satellites"]
+        assert cards[0].score == 2
+
+    def test_unit_noun_ranks_below_money(self):
+        words = (_w(["it", "adds", "1", "gigawatt", "of", "capacity."], start=20.0)
+                 + _w(["worth", "$3", "billion", "in", "orders."], start=30.0))
+        cards = fc.extract_fact_cards(words, max_cards=1)
+        assert [c.figure for c in cards] == ["$3 billion"]
+
+    def test_bare_small_number_still_never_cards(self):
+        words = _w(["about", "9", "cars", "were", "seen."])
+        assert fc.extract_fact_cards(words, open_skip_s=0) == []
+
+    def test_label_does_not_repeat_the_noun(self):
+        words = _w(["it", "flew", "5", "missions", "for", "the", "Space", "Force", "in", "spring."])
+        cards = fc.extract_fact_cards(words, open_skip_s=0)
+        assert cards[0].figure == "5 missions"
+        assert not cards[0].label.lower().startswith("missions")
+
+    def test_year_before_a_count_noun_is_not_a_count(self):
+        words = _w(["back", "in", "2021", "launches", "resumed", "quickly."])
+        assert fc.extract_fact_cards(words, open_skip_s=0) == []
+
+    def test_designation_after_a_capitalised_word_is_not_a_count(self):
+        for toks in (["Falcon", "9", "booster", "B1081", "flew."],
+                     ["three", "Raptor", "3", "engines", "fired."],
+                     ["the", "Model", "3", "units", "shipped."]):
+            assert fc.extract_fact_cards(_w(toks), open_skip_s=0) == [], toks
+
+    def test_spelled_out_numbers_stay_out_of_scope(self):
+        words = _w(["it", "flew", "five", "missions", "last", "year."])
+        assert fc.extract_fact_cards(words, open_skip_s=0) == []
 
 
 class TestRenderStage:
