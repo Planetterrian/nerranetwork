@@ -1472,6 +1472,12 @@
         const JSON_FORMAT = 'wrapped';
         const RSS_URL = 'nerra_voices_podcast.rss';
         const HAS_FEED = false;
+        /* episode number -> its article URL, resolved at build time because
+           only the server can tell an article from a redirect stub. An
+           episode missing from this map renders without a link, never with a
+           broken one. */
+        const EPISODE_POST_URLS = {};
+        const PATH_PREFIX = "";
         const SHOW_NAME = "Nerra Voices";
 
         // --- Helpers ---
@@ -1533,13 +1539,62 @@
                 : text;
         }
 
+        /* The committed summaries files are not one shape. run_show writes
+           {"podcast": ..., "summaries": [...]}; the Nerra Voices pipeline
+           writes {"episodes": [...]} with per-record keys of its own. This
+           mirrors engine/summaries_ssr.py's _records / _episode_number and
+           its title and summary fallbacks -- the server renders the card
+           from THAT reader, so a narrower reader here does not degrade
+           gracefully, it contradicts the page: Age of AI shipped a card
+           whose left half said "No episodes available yet" beside a right
+           half showing the episode. Change both or neither. */
+        function recordsFrom(data) {
+            if (Array.isArray(data)) return data;
+            if (!data || typeof data !== 'object') return [];
+            for (const key of ['summaries', 'episodes']) {
+                if (Array.isArray(data[key])) return data[key];
+            }
+            for (const value of Object.values(data)) {
+                if (Array.isArray(value)) return value;
+            }
+            return [];
+        }
+
+        function epNumber(r) {
+            const v = r.episode_num !== undefined ? r.episode_num : r.episode;
+            const n = parseInt(v, 10);
+            return isNaN(n) ? null : n;
+        }
+
+        function epTitle(r) {
+            return (r.episode_title || r.title || '').trim();
+        }
+
+        function epSummary(r) {
+            return r.content || r.summary || '';
+        }
+
+        function postUrlFor(num) {
+            if (num === null || num === undefined) return '';
+            const rel = EPISODE_POST_URLS[String(num)];
+            return rel ? PATH_PREFIX + rel : '';
+        }
+
+        /* The RSS fallback has no episode field, only a title like
+           "Ep 611: ...". Reading the number back out is what lets those cards
+           carry the same link as the JSON-built ones. */
+        function epNumberFromTitle(title) {
+            const m = /\bEp\s*(\d+)\b/i.exec(title || '');
+            return m ? parseInt(m[1], 10) : null;
+        }
+
         // --- Load episodes ---
         async function loadEpisodes() {
             try {
                 const resp = await fetch(JSON_URL);
                 if (!resp.ok) throw new Error('JSON not found');
                 const data = await resp.json();
-                const episodes = (JSON_FORMAT === 'array') ? (Array.isArray(data) ? data : []) : (data.summaries || data);
+                const episodes = (JSON_FORMAT === 'array') ? (Array.isArray(data) ? data : []) : recordsFrom(data);
                 if (!episodes || !episodes.length) {
                     console.warn(`[${SHOW_NAME}] JSON loaded but no episodes found, falling back to RSS`);
                     loadFromRSS();
@@ -1556,13 +1611,13 @@
             if (!episodes || !episodes.length) { loadFromRSS(); return; }
             episodes.sort((a, b) => new Date(b.date) - new Date(a.date));
             const latest = episodes[0];
-            document.getElementById('latest-title').textContent = latest.episode_title || 'Latest Episode';
+            document.getElementById('latest-title').textContent = epTitle(latest) || 'Latest Episode';
             document.getElementById('latest-date').textContent = formatDate(latest.date);
             document.getElementById('latest-audio').src = latest.audio_url || '';
 
-            if (latest.content) {
+            if (epSummary(latest)) {
                 const summaryEl = document.getElementById('latest-summary');
-                summaryEl.textContent = getPreviewText(latest.content);
+                summaryEl.textContent = getPreviewText(epSummary(latest));
                 summaryEl.style.display = 'block';
             }
 
@@ -1573,12 +1628,18 @@
                episode than the page was built from, the link would point at the
                previous one while the player plays this one. Drop it and leave
                the archive link rather than show a mismatch. */
-            const playerEl = document.getElementById('latest-player');
             const articleEl = document.getElementById('latest-article');
-            if (articleEl && playerEl) {
-                const built = parseInt(playerEl.getAttribute('data-episode'), 10);
-                const live = parseInt(latest.episode_num, 10);
-                if (!isNaN(live) && !isNaN(built) && live !== built) {
+            if (articleEl) {
+                // The map is resolved server-side for every episode the page
+                // knows, so when the feed has moved past the episode the page
+                // was built from we can point at the right article rather than
+                // hide the link. Still no guessing: an episode with no entry
+                // has no article page, and the link goes away.
+                const href = postUrlFor(epNumber(latest));
+                if (href) {
+                    articleEl.href = href;
+                    articleEl.style.display = '';
+                } else {
                     articleEl.style.display = 'none';
                 }
             }
@@ -1592,10 +1653,11 @@
                 card.className = 'episode-card glass-card';
                 card.innerHTML = `
                     <div class="episode-card-date">${formatDate(ep.date)}</div>
-                    <div class="episode-card-title" data-role="title">${escapeHtml(ep.episode_title || 'Episode')}</div>
-                    <div style="color:var(--nn-text-muted);font-size:0.85rem;margin-bottom:var(--sp-3);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(getPreviewText(ep.content))}</div>
-                    <audio controls preload="none" data-role="audio" src="${ep.audio_url || ''}" aria-label="Play ${escapeHtml(ep.episode_title || 'episode')}" style="width:100%;height:36px;border-radius:8px;"></audio>
+                    <div class="episode-card-title" data-role="title">${escapeHtml(epTitle(ep) || 'Episode')}</div>
+                    <div style="color:var(--nn-text-muted);font-size:0.85rem;margin-bottom:var(--sp-3);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(getPreviewText(epSummary(ep)))}</div>
+                    <audio controls preload="none" data-role="audio" src="${ep.audio_url || ''}" aria-label="Play ${escapeHtml(epTitle(ep) || 'episode')}" style="width:100%;height:36px;border-radius:8px;"></audio>
                     <div data-role="langs" style="display:none;margin-top:6px;"></div>
+                    ${postUrlFor(epNumber(ep)) ? `<a class="episode-card-article" href="${postUrlFor(epNumber(ep))}">Article &amp; transcript &rarr;</a>` : ''}
                 `;
                 grid.appendChild(card);
                 // Per-episode language switcher (any translated archive episode,
@@ -1608,7 +1670,7 @@
                         audioEl: card.querySelector('[data-role=audio]'),
                         titleEl: card.querySelector('[data-role=title]'),
                         enUrl: ep.audio_url || '',
-                        enTitle: ep.episode_title || 'Episode',
+                        enTitle: epTitle(ep) || 'Episode',
                         translations: tr,
                     });
                 }
@@ -1687,7 +1749,7 @@
                 titleEl: document.getElementById('latest-title'),
                 summaryEl: summaryEl,
                 enUrl: latest.audio_url || '',
-                enTitle: latest.episode_title || 'Latest Episode',
+                enTitle: epTitle(latest) || 'Latest Episode',
                 enSummary: summaryEl ? summaryEl.textContent : '',
                 translations: (latest && latest.translations) || {},
             });
@@ -1742,6 +1804,7 @@
                             <div class="episode-card-title">${escapeHtml(title)}</div>
                             <div style="color:var(--nn-text-muted);font-size:0.85rem;margin-bottom:var(--sp-3);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(getPreviewText(desc))}</div>
                             <audio controls preload="none" src="${url}" aria-label="Play ${escapeHtml(title)}" style="width:100%;height:36px;border-radius:8px;"></audio>
+                            ${postUrlFor(epNumberFromTitle(title)) ? `<a class="episode-card-article" href="${postUrlFor(epNumberFromTitle(title))}">Article &amp; transcript &rarr;</a>` : ''}
                         `;
                         grid.appendChild(card);
                     });
