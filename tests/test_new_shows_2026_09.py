@@ -591,3 +591,11 @@ class TestTapeIgnoresTheLiveBar:
         rows = [("2026-09-18", 98.0), ("2026-09-21", 100.0)]
         pre = dt.datetime(2026, 9, 22, 10, 46, tzinfo=dt.timezone.utc)      # 06:46 ET
         assert completed_bars(rows, pre) == (100.0, 98.0, "2026-09-21")
+
+
+class TestNoLabelSeededEvidenceTic:
+    @pytest.mark.parametrize("slug", ("peptides", "longevity"))
+    def test_evidence_level_is_prose_not_a_label(self, slug):
+        dig = (ROOT / f"shows/prompts/{slug}_digest.txt").read_text(encoding="utf-8")
+        # The Longevity dry run shipped "Evidence level: human ..." 11 times.
+        assert "never as a label line" in " ".join(dig.split())
