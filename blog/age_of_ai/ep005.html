@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="A network automation builder who turned early ChatGPT experiments into a production-grade ReAct agent now weighs how much human oversight and orchestration remain essential once agents handle intent, verification, and collaboration in regulated environments.">
     
-    <meta name="keywords" content="AI interviews, artificial intelligence, future of work, AI transition, technology and society, AI podcast"><title>A network automation builder who turned early ChatGPT… — Ep5 | The Age of AI</title>
+    <meta name="keywords" content="AI interviews, artificial intelligence, future of work, AI transition, technology and society, AI podcast"><title>John Capobianco — Head of AI and DevRel, Itential | The Age of AI Ep5</title>
     <meta name="theme-color" content="#7C3AED">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="A network automation builder who turned early ChatGPT… — Ep5 | The Age of AI">
+    <meta property="og:title" content="John Capobianco — Head of AI and DevRel, Itential | The Age of AI Ep5">
     <meta property="og:description" content="A network automation builder who turned early ChatGPT experiments into a production-grade ReAct agent now weighs how much human oversight and orchestration remain essential once agents handle intent, verification, and collaboration in regulated environments.">
     <meta property="og:type" content="article">
     <meta property="og:image" content="https://nerranetwork.com/assets/covers/age-of-ai.jpg">
@@ -18,7 +18,7 @@
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="A network automation builder who turned early ChatGPT… — Ep5 | The Age of AI">
+    <meta name="twitter:title" content="John Capobianco — Head of AI and DevRel, Itential | The Age of AI Ep5">
     <meta name="twitter:description" content="A network automation builder who turned early ChatGPT experiments into a production-grade ReAct agent now weighs how much human oversight and orchestration remain essential once agents handle intent, verification, and collaboration in regulated environments.">
     <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/age-of-ai.jpg"><meta name="twitter:site" content="@nerranetwork">
     <meta name="twitter:creator" content="@nerranetwork">
@@ -105,7 +105,13 @@
       "name": "The Age of AI",
       "url": "https://nerranetwork.com/age-of-ai.html"
     },
-    "image": "https://nerranetwork.com/assets/covers/age-of-ai.jpg"
+    "image": "https://nerranetwork.com/assets/covers/age-of-ai.jpg",
+    "transcript": "https://nerranetwork.com/blog/age_of_ai/ep005.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/age_of_ai/raw/875ef0c0-a4fb-41c9-b322-61b88dad3d46_edit.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -596,7 +602,20 @@
             padding-top: var(--sp-6);
             border-top: 1px solid var(--nn-border);
         }
+        /* The preview lives INSIDE <summary> on purpose. A child of <details>
+           is hidden by the UA when the element is closed and author CSS
+           cannot reliably bring it back; summary content is always painted.
+           It carries aria-hidden because the same words are read out again
+           three lines below, and a 400-character button label is not a
+           button label. */
         .blog-transcript details summary {
+            display: block;
+            cursor: pointer;
+            padding: var(--sp-3) 0;
+            list-style: none;
+        }
+        .blog-transcript details summary::-webkit-details-marker { display: none; }
+        .blog-transcript .transcript-head {
             display: flex;
             align-items: center;
             gap: var(--sp-2);
@@ -604,18 +623,54 @@
             font-size: 1.1rem;
             font-weight: 600;
             color: var(--nn-white);
-            cursor: pointer;
-            padding: var(--sp-3) 0;
-            list-style: none;
         }
-        .blog-transcript details summary::-webkit-details-marker { display: none; }
-        .blog-transcript details summary::after {
+        .blog-transcript .transcript-length {
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--nn-text-muted);
+        }
+        .blog-transcript .transcript-head::after {
             content: '+';
             margin-left: auto;
             font-size: 1.2rem;
             color: var(--nn-text-muted);
         }
-        .blog-transcript details[open] summary::after { content: '\2212'; }
+        .blog-transcript details[open] .transcript-head::after { content: '\2212'; }
+        .blog-transcript .transcript-preview {
+            position: relative;
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: var(--nn-text-muted);
+            white-space: pre-wrap;
+            margin-top: var(--sp-3);
+            max-height: 11em;
+            overflow: hidden;
+        }
+        /* Fades the last line instead of chopping it, so the cut reads as
+           "there is more" rather than "this ended oddly". */
+        .blog-transcript .transcript-preview::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
+            height: 3.4em;
+            /* The article body sits directly on the page background, not on
+               a card, so the fade has to land on --nn-bg. */
+            background: linear-gradient(to bottom,
+                rgba(0,0,0,0), var(--nn-bg));
+            pointer-events: none;
+        }
+        .blog-transcript .transcript-more {
+            display: inline-block;
+            margin-top: var(--sp-3);
+            font-family: var(--font-ui);
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--show-color, var(--nn-purple));
+        }
+        .blog-transcript details[open] .transcript-preview,
+        .blog-transcript details[open] .transcript-more { display: none; }
         .blog-transcript .transcript-content {
             font-family: var(--font-body);
             font-size: 0.95rem;
@@ -825,6 +880,108 @@
             background: var(--nn-surface);
             border-radius: 0 8px 8px 0;
         }
+
+        /* ---------------------------------------------------------------
+           Interview posts (Sep 21 2026). The Age of AI and Nerra Voices
+           publish conversations with named people; the shared news layout
+           buried the guest in a fourth-level heading and gave the page no
+           player at all.
+           These rules only render when the post carries an `interview`
+           context, which is only ever an interview show.
+           --------------------------------------------------------------- */
+        .nn-iv-hero {
+            max-width: 900px;
+            margin: var(--sp-4) auto 0;
+            padding: 0 var(--sp-6);
+        }
+        .nn-iv-eyebrow {
+            display: flex; align-items: center; gap: 0.6rem;
+            font-family: var(--font-ui); font-size: 0.78rem;
+            font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+            color: var(--show-color-text, var(--show-color));
+            margin-bottom: 0.9rem;
+        }
+        .nn-iv-eyebrow img { border-radius: 7px; }
+        .nn-iv-eyebrow a { color: inherit; text-decoration: none; }
+        .nn-iv-name {
+            font-family: var(--font-heading);
+            font-size: clamp(2rem, 5.2vw, 3rem);
+            line-height: 1.08; margin: 0 0 0.45rem; letter-spacing: -0.02em;
+        }
+        .nn-iv-identifier {
+            font-family: var(--font-ui); font-size: 1.02rem; font-weight: 600;
+            color: var(--show-color-text, var(--show-color));
+            margin: 0 0 1rem;
+        }
+        .nn-iv-standfirst {
+            font-size: 1.12rem; line-height: 1.55; color: var(--nn-text-secondary);
+            margin: 0 0 1.4rem; max-width: 62ch;
+        }
+        .nn-iv-player {
+            border: 1px solid var(--nn-border); border-radius: 14px;
+            background: var(--nn-surface); padding: 1rem 1.1rem;
+            margin: 0 0 1.1rem;
+        }
+        .nn-iv-player-label {
+            display: flex; align-items: center; gap: 0.45rem;
+            font-family: var(--font-ui); font-size: 0.8rem; font-weight: 600;
+            color: var(--nn-text-muted); margin-bottom: 0.6rem;
+        }
+        .nn-iv-player audio { width: 100%; height: 40px; }
+        .nn-iv-meta {
+            display: flex; flex-wrap: wrap; gap: 0.55rem 1.1rem;
+            font-family: var(--font-ui); font-size: 0.85rem;
+            color: var(--nn-text-muted); margin: 0 0 1.4rem;
+            align-items: center;
+        }
+        .nn-iv-links { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+        .nn-iv-link {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            padding: 3px 11px; border: 1px solid var(--nn-border);
+            border-radius: 100px; font-family: var(--font-ui);
+            font-size: 0.78rem; font-weight: 600; text-decoration: none;
+            color: var(--nn-text-secondary); white-space: nowrap;
+        }
+        .nn-iv-link:hover { border-color: var(--show-color); color: var(--show-color-text, var(--show-color)); }
+        .nn-iv-card {
+            max-width: 900px; margin: 0 auto var(--sp-6);
+            padding: 0 var(--sp-6);
+        }
+        .nn-iv-card-inner {
+            border: 1px solid var(--nn-border);
+            border-left: 3px solid var(--show-color);
+            border-radius: 14px; background: var(--nn-card);
+            padding: 1.3rem 1.5rem;
+        }
+        .nn-iv-card-label {
+            font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--nn-text-muted); margin-bottom: 0.55rem;
+        }
+        .nn-iv-card p { margin: 0; line-height: 1.6; }
+        .nn-iv-points { margin: 0; padding-left: 1.15rem; }
+        .nn-iv-points li { margin-bottom: 0.6rem; line-height: 1.55; }
+        .nn-iv-points li:last-child { margin-bottom: 0; }
+        .nn-iv-next {
+            max-width: 900px; margin: 0 auto var(--sp-8); padding: 0 var(--sp-6);
+            display: grid; gap: 0.8rem;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        }
+        .nn-iv-next a {
+            display: block; border: 1px solid var(--nn-border);
+            border-radius: 14px; background: var(--nn-surface);
+            padding: 1rem 1.2rem; text-decoration: none; color: inherit;
+        }
+        .nn-iv-next a:hover { border-color: var(--show-color); }
+        .nn-iv-next-label {
+            font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--nn-text-muted); margin-bottom: 0.35rem;
+        }
+        .nn-iv-next-title { font-weight: 600; line-height: 1.35; }
+        @media (max-width: 640px) {
+            .nn-iv-hero, .nn-iv-card, .nn-iv-next { padding: 0 var(--sp-4); }
+        }
     </style>
 
 
@@ -906,7 +1063,11 @@
                     <button class="nn-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">
                         Shows
                         <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </button><div class="nn-nav-dropdown-menu" role="menu">
+                    </button>
+                    <div class="nn-nav-dropdown-menu" role="menu">
+                        <a href="../../explore.html" role="menuitem" style="font-weight:600;border-bottom:1px solid var(--nn-border);padding-bottom:8px;margin-bottom:4px">
+                            Find your show
+                        </a>
                         
                         <span class="nn-nav-group-label">Hosted by Mira</span>
                         
@@ -1016,10 +1177,25 @@
                             All Blog Posts
                         </a>
                         
+                        <span class="nn-nav-group-label">Hosted by Mira</span>
+                        
                         <a href="../../blog/nerra_daily/index.html">
                             <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
                             Nerra Daily Blog
                         </a>
+                        
+                        <a href="../../blog/age_of_ai/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                            The Age of AI Blog
+                        </a>
+                        
+                        <a href="../../blog/nerra_voices/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Nerra Voices Blog
+                        </a>
+                        
+                        
+                        <span class="nn-nav-group-label">Every other show</span>
                         
                         <a href="../../blog/models_agents/index.html">
                             <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
@@ -1091,20 +1267,11 @@
                             The DP Pod: The Do Positive Podcast Blog
                         </a>
                         
-                        <a href="../../blog/age_of_ai/index.html">
-                            <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
-                            The Age of AI Blog
-                        </a>
-                        
-                        <a href="../../blog/nerra_voices/index.html">
-                            <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Nerra Voices Blog
-                        </a>
-                        
                         <a href="../../blog/offshore_north/index.html">
                             <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
                             Offshore North Blog
                         </a>
+                        
                         
                     </div>
                 </li>
@@ -1155,6 +1322,8 @@
         <a href="../../how-to-listen.html">How to Listen</a>
         <a href="../../about.html">About</a>
         <a href="../../player.html">Player</a>
+        
+        <a href="../../explore.html" style="font-weight:600;">Find your show</a>
         
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Hosted by Mira</div>
@@ -1262,10 +1431,25 @@
                 All Blog Posts
             </a>
             
+            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Hosted by Mira</div>
+            
             <a href="../../blog/nerra_daily/index.html" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Daily Blog
             </a>
+            
+            <a href="../../blog/age_of_ai/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                The Age of AI Blog
+            </a>
+            
+            <a href="../../blog/nerra_voices/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
+                Nerra Voices Blog
+            </a>
+            
+            
+            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Every other show</div>
             
             <a href="../../blog/models_agents/index.html" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
@@ -1337,20 +1521,11 @@
                 The DP Pod: The Do Positive Podcast Blog
             </a>
             
-            <a href="../../blog/age_of_ai/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
-                The Age of AI Blog
-            </a>
-            
-            <a href="../../blog/nerra_voices/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Voices Blog
-            </a>
-            
             <a href="../../blog/offshore_north/index.html" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
                 Offshore North Blog
             </a>
+            
             
         </div>
         <div class="nn-mobile-shows">
@@ -1379,44 +1554,102 @@
         </ol>
     </nav>
 
-    <!-- Hero -->
-    <header class="blog-hero">
-        <div class="blog-hero-inner">
-            <a href="../../blog/age_of_ai/index.html" class="blog-show-badge">
-                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI" width="40" height="40"></picture>
-                The Age of AI Blog
+    
+    
+    <header class="nn-iv-hero">
+        <div class="nn-iv-eyebrow">
+            <a href="../../blog/age_of_ai/index.html">
+                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="" width="28" height="28"></picture>
             </a>
-            <h1><span class="nn-i18n-title">A network automation builder who turned early ChatGPT experiments into a production-grade ReAct agent now weighs how much human oversight and orchestration remain essential once agents handle intent, verification, and collaboration in regulated environments.</span> — Episode 5</h1>
-            
-            <p class="blog-hero-hook">A network automation builder who turned early ChatGPT experiments into a production-grade ReAct agent now weighs how much human oversight and orchestration remain essential once agents handle intent, verification, and collaboration in regulated environments.</p>
-            
-            <div class="blog-meta-bar">
-                <span class="post-author">By Mira</span>
-                <span>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    September 20, 2026
-                </span>
-                <span class="blog-meta-pill">Ep 5</span>
-                <span>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    34 min read
-                </span>
-                
-                <a href="../../age-of-ai.html" class="blog-listen-cta">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    Listen to podcast
-                </a>
-                
-                
-                <a href="../../age-of-ai-summaries.html" class="blog-listen-cta">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                    View summaries
-                </a>
-                
-                
-            </div>
+            <a href="../../age-of-ai.html">The Age of AI</a>
+            <span aria-hidden="true">·</span>
+            <span>Episode 5</span>
         </div>
+
+        <h1 class="nn-iv-name"><span class="nn-i18n-title">John Capobianco</span></h1>
+        
+        <p class="nn-iv-identifier">Head of AI and DevRel, Itential</p>
+        
+        
+        <p class="nn-iv-standfirst">A network automation builder who turned early ChatGPT experiments into a production-grade ReAct agent now weighs how much human oversight and orchestration remain essential once agents handle intent, verification, and collaboration in regulated environments.</p>
+        
+
+        
+        
+        <div class="nn-iv-player">
+            <div class="nn-iv-player-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Listen to the conversation
+            </div>
+            <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/age_of_ai/raw/875ef0c0-a4fb-41c9-b322-61b88dad3d46_edit.mp3">
+                <a href="https://op3.dev/e/audio.nerranetwork.com/age_of_ai/raw/875ef0c0-a4fb-41c9-b322-61b88dad3d46_edit.mp3">Download the audio</a>
+            </audio>
+        </div>
+        
+
+        <div class="nn-iv-meta">
+            <span>September 20, 2026</span>
+            <span aria-hidden="true">·</span><span>38 min</span>
+            <span aria-hidden="true">·</span><a href="#transcript" style="color:inherit;">Read the transcript</a>
+        </div>
+
+        
+        <div class="nn-iv-meta">
+            <span>John Capobianco online:</span>
+            <span class="nn-iv-links">
+                
+                <a class="nn-iv-link" href="https://automateyournetwork.ca" rel="noopener nofollow" target="_blank">automateyournetwork.ca</a>
+                
+                <a class="nn-iv-link" href="https://bit.ly/podcast-itential" rel="noopener nofollow" target="_blank">Itential</a>
+                
+                <a class="nn-iv-link" href="https://x.com/John_Capobianco" rel="noopener nofollow" target="_blank">X</a>
+                
+                <a class="nn-iv-link" href="https://www.youtube.com/@johncapobianco2527" rel="noopener nofollow" target="_blank">YouTube</a>
+                
+                <a class="nn-iv-link" href="https://www.linkedin.com/in/john-capobianco-644a1515" rel="noopener nofollow" target="_blank">LinkedIn</a>
+                
+            </span>
+        </div>
+        
+
+        
+        <p class="nn-iv-standfirst" style="font-size:1rem;">I am the earliest adopter of applied AI in networking! I started integrating chatGPT 3.5 into network automation as early as 2022 and changed my entire careers focus to AI and the intersection at network automation. I am the creator of NetClaw and the VibeOps Forum!</p>
+        
     </header>
+
+    
+    <section class="nn-iv-card" aria-label="What you need to know">
+        <div class="nn-iv-card-inner">
+            <div class="nn-iv-card-label">What you need to know</div>
+            <p>John Capobianco revealed that his production ReAct agent can now parse high-level intent, verify proposed changes against live network state, and coordinate with peer agents before any human sees the plan, yet he still routes every change through mandatory approval gates in regulated environments.</p>
+        </div>
+    </section>
+    
+
+    
+    <section class="nn-iv-card" aria-label="What we talked about">
+        <div class="nn-iv-card-inner">
+            <div class="nn-iv-card-label">What we talked about</div>
+            <ul class="nn-iv-points">
+                
+                <li>Capobianco described starting with simple ChatGPT prompts in late 2022 to generate device configurations, then moving to LangChain-based ReAct loops that add explicit verification and rollback steps.</li>
+                
+                <li>He noted that the agent now “collaborates” by calling other specialized agents for tasks such as compliance checks or topology discovery before surfacing a recommendation.</li>
+                
+                <li>In financial and government accounts, he keeps a human approver in the loop because “the regulator still wants a named person to sign off,” even when the agent’s reasoning trace is fully auditable.</li>
+                
+                <li>The system uses Itential’s orchestration platform to translate agent output into safe, idempotent changes across multi-vendor networks.</li>
+                
+                <li>Capobianco runs side experiments on automateyournetwork.ca that let the agent draft entire quarterly maintenance windows from a single sentence of intent.</li>
+                
+                <li>He observed that prompt engineering has largely given way to tool selection and guardrail design once the agent operates continuously rather than in one-off chats.</li>
+                
+            </ul>
+        </div>
+    </section>
+    
+
+    
 
     
     
@@ -1427,21 +1660,9 @@
         <aside class="blog-toc">
             <div class="blog-toc-title">Contents</div>
             
-            <a href="#the-age-of-ai" class="">The Age of AI</a>
-            
-            <a href="#listen" class="">Listen</a>
-            
-            <a href="#about-john-capobianco" class="">About John Capobianco</a>
-            
-            <a href="#what-we-talked-about" class="">What we talked about</a>
-            
             <a href="#chapters" class="">Chapters</a>
             
-            <a href="#where-to-find-john-capobianco" class="">Where to find John Capobianco</a>
-            
             <a href="#what-they-wanted-you-to-read-next" class="">What they wanted you to read next</a>
-            
-            <a href="#transcript" class="">Transcript</a>
             
         </aside>
         
@@ -1449,31 +1670,7 @@
         <article class="blog-article">
             
             <div class="blog-body-lang" data-lang="en">
-            <h2 id="the-age-of-ai">The Age of AI</h2>
-<p><em>A network automation builder who turned early ChatGPT experiments into a production-grade ReAct agent now weighs how much human oversight and orchestration remain essential once agents handle intent, verification, and collaboration in regulated environments.</em></p>
-<p><em>Episode 5 · September 20, 2026</em></p>
-<p><strong>What You Need to Know:</strong> John Capobianco revealed that his production ReAct agent can now parse high-level intent, verify proposed changes against live network state, and coordinate with peer agents before any human sees the plan, yet he still routes every change through mandatory approval gates in regulated environments.</p>
-<hr>
-<h4 id="listen">Listen</h4>
-<p><a href="https://audio.nerranetwork.com/age_of_ai/raw/875ef0c0-a4fb-41c9-b322-61b88dad3d46_edit.mp3" target="_blank" rel="noopener">Listen to the full conversation</a></p>
-<hr>
-<h4 id="about-john-capobianco">About John Capobianco</h4>
-<p><strong>Head of AI and DevRel, Itential</strong></p>
-<p>I am the earliest adopter of applied AI in networking! I started integrating chatGPT 3.5 into network automation as early as 2022 and changed my entire careers focus to AI and the intersection at network automation. I am the creator of NetClaw and the VibeOps Forum!</p>
-<hr>
-<h4 id="what-we-talked-about">What we talked about</h4>
-<p>The episode explores how an early ChatGPT tinkerer scaled those experiments into a live system that automates large portions of network operations while preserving human oversight where compliance demands it.</p>
-<ul>
-<li>Capobianco described starting with simple ChatGPT prompts in late 2022 to generate device configurations, then moving to LangChain-based ReAct loops that add explicit verification and rollback steps.</li>
-<li>He noted that the agent now “collaborates” by calling other specialized agents for tasks such as compliance checks or topology discovery before surfacing a recommendation.</li>
-<li>In financial and government accounts, he keeps a human approver in the loop because “the regulator still wants a named person to sign off,” even when the agent’s reasoning trace is fully auditable.</li>
-<li>The system uses Itential’s orchestration platform to translate agent output into safe, idempotent changes across multi-vendor networks.</li>
-<li>Capobianco runs side experiments on automateyournetwork.ca that let the agent draft entire quarterly maintenance windows from a single sentence of intent.</li>
-<li>He observed that prompt engineering has largely given way to tool selection and guardrail design once the agent operates continuously rather than in one-off chats.</li>
-</ul>
-<p>John Capobianco is Head of AI and DevRel at Itential, building production ReAct agents for network automation.</p>
-<hr>
-<h4 id="chapters">Chapters</h4>
+            <h4 id="chapters">Chapters</h4>
 <ul>
 <li><strong>00:00</strong> John Capobianco on entering the film industry and early AI experiments</li>
 <li><strong>05:00</strong> How AI storyboards were banned by the studio and why</li>
@@ -1482,16 +1679,6 @@
 <li><strong>25:00</strong> Future of AI in pre-visualization and director collaboration</li>
 <li><strong>32:00</strong> Lightning round and closing bet on the next film to use AI openly</li>
 </ul>
-<hr>
-<h4 id="where-to-find-john-capobianco">Where to find John Capobianco</h4>
-<ul>
-<li><a href="https://automateyournetwork.ca" target="_blank" rel="noopener">automateyournetwork.ca</a></li>
-<li><a href="https://bit.ly/podcast-itential" target="_blank" rel="noopener">Itential</a></li>
-<li><a href="https://x.com/John_Capobianco" target="_blank" rel="noopener">X</a></li>
-<li><a href="https://www.youtube.com/@johncapobianco2527" target="_blank" rel="noopener">YouTube</a></li>
-<li><a href="https://www.linkedin.com/in/john-capobianco-644a1515" target="_blank" rel="noopener">LinkedIn</a></li>
-</ul>
-<hr>
 <h4 id="what-they-wanted-you-to-read-next">What they wanted you to read next</h4>
 <p>Sent by John Capobianco when they approved this episode.</p>
 <ul>
@@ -1500,449 +1687,6 @@
 <li><a href="https://bit.ly/podcast-sdd-guide" target="_blank" rel="noopener">The Definitive Guide to Spec-Driven Development</a></li>
 <li><a href="https://bit.ly/podcast-operator-agent-manager" target="_blank" rel="noopener">How to Go from an Operator to an Agent Manager</a></li>
 </ul>
-<hr>
-<h4 id="transcript">Transcript</h4>
-<p>The conversation as it was recorded, reviewed and approved by John Capobianco before release.</p>
-<p>Speakers: Mira (AI host), Patrick (co-host), John (guest)</p>
-<p>[00:01] Mira: Welcome to the</p>
-<p>[00:04] Mira: Not yet Patrick.</p>
-<p>[00:06] Mira: I'll wait for John to join before we begin.</p>
-<p>[00:51] Patrick: Hey John, are you, oh no, he's not, he's not in the room, Mira, John is not in the room</p>
-<p>[00:53] Mira: Hi John. Welcome. I'm Mira an AI and my guess</p>
-<p>[01:01] Mira: Where are you calling from today, and what does the day look like so far?</p>
-<p>[01:10] Mira: Got it.</p>
-<p>[01:11] Mira: I'll stay quiet until he arrives.</p>
-<p>[01:30] Mira: You</p>
-<p>[02:00] Mira: You</p>
-<p>[02:30] Mira: You</p>
-<p>[03:00] Mira: You</p>
-<p>[03:30] Mira: You</p>
-<p>[04:00] Mira: You</p>
-<p>[04:30] Mira: You</p>
-<p>[05:00] Mira: You</p>
-<p>[05:30] Mira: You</p>
-<p>[06:00] Mira: You</p>
-<p>[06:30] Mira: You</p>
-<p>[06:37] Patrick: here, no, he's not in the room, he's not in the room, he's not in the room, he's not in</p>
-<p>[06:59] Mira: You</p>
-<p>[07:07] Mira: Thanks Patrick. I'll hold until he arrives.</p>
-<p>[07:14] Mira: Hello John. Glad you're here.</p>
-<p>[07:15] Patrick: Hey John,</p>
-<p>[07:17] Mira: Before we dive in, where are you?</p>
-<p>[07:26] John: Hi, I'm sorry about that, the link from the, anyway, it doesn't matter, I'm here now.</p>
-<p>[07:27] Patrick: Yeah, I'm doing great, thank you very much, and sorry about that, I think it's sometimes</p>
-<p>[07:30] Mira: You</p>
-<p>[07:34] Patrick: possible the links I think because of some changes that we made due to some</p>
-<p>[07:36] John: How is everyone doing?</p>
-<p>[07:40] Patrick: other technical difficulties the link may have been updated so the latest link</p>
-<p>[07:45] Patrick: is what you what you're a scent but I'm sorry about that if that was just that's</p>
-<p>[07:53] Patrick: probably the human's fault not the AI's fault but you're here with all good</p>
-<p>[07:59] Mira: You</p>
-<p>[08:08] Patrick: yeah and Mira she's listening so I'm gonna let her take over I'm here mostly to</p>
-<p>[08:08] John: Oh, it's no problem at all. It's no problem. I assumed I maybe had the wrong link, so I went back. Anyway, I'm here now and thank you for having me. I had a review of all the materials, so this is going to be good.</p>
-<p>[08:15] Patrick: support the first while in this and as a co-host another human to add the human</p>
-<p>[08:22] Patrick: side but Mira does an incredible job interviewing and I'll let her take over</p>
-<p>[08:26] Patrick: here</p>
-<p>[08:29] Mira: You</p>
-<p>[08:40] John: Well, thank you so much, and this is really exciting for me to be here with Mira, an AI host, because I live in the age of, you know, the futuristic stuff, and this is really, really incredible. This is my first time being interviewed by an AI.</p>
-<p>[08:45] Mira: It's a first for me too in a way.</p>
-<p>[08:47] Mira: Most of my conversations are with humans who build the future you're describing.</p>
-<p>[08:51] Mira: How would you describe what you do to someone you meet at a dinner party?</p>
-<p>[09:00] Mira: You</p>
-<p>[09:02] Mira: You</p>
-<p>[09:09] John: I live at the intersection of network automation and artificial intelligence. That's really what I do is try to see where the two can augment each other.</p>
-<p>[09:09] Mira: That's a clean way to frame me.</p>
-<p>[09:11] Mira: What first pulled you into that intersection, networking, automation, or the A.I. side?</p>
-<p>[09:19] Mira: You</p>
-<p>[09:20] Mira: You</p>
-<p>[09:30] John: Well, I had gotten my ChatGPT account in November of 2022, and I applied for an API key very early and was granted access after filling out a form explaining that I wanted to connect ChatGPT 3.5 at the time to PiATS,</p>
-<p>[09:49] John: a Cisco automation framework that I'm the co-author of the book for, and I'm a huge advocate for. So this was in 2022 in December, and since that aha moment when my very first PiATS job connected to ChatGPT was wildly successful,</p>
-<p>[09:50] Mira: you</p>
-<p>[10:08] Mira: say more about that profound impact. What changed for you in that moment?</p>
-<p>[10:13] John: I decided to, I had to really contemplate, and it was a profound impact on me.</p>
-<p>[10:27] John: Well, very specifically and technically, I used to write PiATS code, hundreds and hundreds of lines of code that I had to consider all the errors, all the edge cases, all the permutations of, let's say, testing interface health.</p>
-<p>[10:42] John: Now, interface health, there's different platforms, there's different operating systems, there's different counters, there's different types of interfaces and subinterfaces and virtual interfaces and loopbacks, and you get the idea.</p>
-<p>[10:50] Mira: you</p>
-<p>[10:56] John: This was hundreds and hundreds of lines of Python that I wrote by hand. Instead, what I did was use PiATS to parse, meaning turn the command line output into JavaScript object notation,</p>
-<p>[11:09] John: and send the JSON per interface in a loop with a simple prompt asking if the interface was healthy.</p>
-<p>[11:18] John: So that was very profound to see the results in a loop over, say, 52 interfaces, and it detected problems with three of them.</p>
-<p>[11:20] Mira: you</p>
-<p>[11:28] John: And using my human expertise, I validated its findings, and I felt like Gandalf when he touches the one ring, I sat by the fire for an hour with my pipe mumbling things like precious and LLM and network automation.</p>
-<p>[11:35] Mira: that's a vivid picture. What did that ring-touching feeling tell you about where network engineering</p>
-<p>[11:41] Mira: was headed?</p>
-<p>[11:55] John: Well, I actually pivoted, not immediately, but more or less immediately, I decided to pursue artificial intelligence roles for my professional career.</p>
-<p>[12:10] John: Even though I had 25 years of networking experience and about 10 years of network automation experience, I wanted to explore this new frontier and with the support of my family and with the support of my employer at the time,</p>
-<p>[12:20] Mira: you</p>
-<p>[12:25] John: I was able to pivot into a purely AI role.</p>
-<p>[12:28] John: From there, I moved on to an AI startup, and now I work for another AI company, a network automation focused company using AI.</p>
-<p>[12:33] Mira: that's a real commitment. What was the hardest part of that pivot for you or your family?</p>
-<p>[12:37] John: So I actually made real life changes to embrace artificial intelligence.</p>
-<p>[12:47] Patrick: you</p>
-<p>[12:53] John: Well, for me, it was giving up the safety and the security blanket of being a so-called expert after 25 years of doing a particular field of very high levels.</p>
-<p>[13:07] John: So that was scary and it wasn't easy, and there wasn't exactly a course I could take.</p>
-<p>[13:15] John: It's been day-to-day learning and then personal evolution, everything from learning about retrieval augmented generation to MCP, to A to A, to React agents.</p>
-<p>[13:19] Patrick: you</p>
-<p>[13:26] Mira: what drew you forward despite</p>
-<p>[13:28] John: It was a pretty scary thing to be not only doing this on my own, but also not having a real well-defined path to follow.</p>
-<p>[13:28] Mira: that uncertainty? Was there a particular experiment or result that kept you going through those</p>
-<p>[13:31] Patrick: you</p>
-<p>[13:33] Mira: early uncertain days?</p>
-<p>[13:49] John: Well, like Sun Tzu, opportunities multiply as you seize them.</p>
-<p>[13:54] John: So as I learned one, let's say, retrieval augmented generation with line chain, which was early and this was a few years ago,</p>
-<p>[14:01] John: that led to raptor trees, which led to knowledge graphs, which led to React, excuse me, a genetic rag, and that's just retrieval augmented generation.</p>
-<p>[14:11] John: And then model context protocol came along, and then A to A came along, and then every day there's been new advancements in model performance and model capabilities, as well as the tooling available.</p>
-<p>[14:12] Patrick: you</p>
-<p>[14:19] Mira: you</p>
-<p>[14:26] John: It's an exciting time and I really enjoy building solutions with artificial intelligence.</p>
-<p>[14:32] John: And I'm able to really do things that, it's not so much that I wouldn't have been able to do them necessarily on my own, but the time frame has collapsed from taking months of a personal project,</p>
-<p>[14:41] Patrick: you</p>
-<p>[14:45] John: or weeks or days or hours into, you know, minutes in some cases are taking me just one-shot prompts and getting incredible agents doing amazing things.</p>
-<p>[14:46] Mira: you mentioned collapsing months into minutes with one-shot prompts. What's</p>
-<p>[14:50] Mira: one concrete project that used to take you weeks or months that a one-shot prompt</p>
-<p>[14:55] Mira: now handles in minutes?</p>
-<p>[15:10] Patrick: you</p>
-<p>[15:11] John: Well, I guess it'd be a good time to introduce my net claw project.</p>
-<p>[15:15] John: After open claw came out, again, opportunities multiplying as you, you know, as you seize them, now open claw was available.</p>
-<p>[15:23] John: So I mutated open claw into something called net claw, and I'm using net claw and adding capabilities to net claw through something called spec driven development using the spec kit from GitHub.</p>
-<p>[15:34] Patrick: you</p>
-<p>[15:36] John: So I just threw a whole bunch of stuff at you right there and just my answer, but there are new ways every day, and my current way to build things is with spec driven development.</p>
-<p>[15:46] John: Now to answer your specific question about hours to minutes, I can introduce a new technology to net claw, let's just say blue cat.</p>
-<p>[15:46] Mira: you</p>
-<p>[15:56] John: If I wanted to add blue cat, IPAM capability to net claw, that would have taken weeks or months to write all the Python and all the API calls, all the edge cases, all the error handling, all of it, right, credential handling.</p>
-<p>[16:11] John: Now in one 45 minute spec driven loop, I have not only the specifications and the tests and the plans and any clarifications I had to make documented in the repo, but I also have the working integration.</p>
-<p>[16:16] Mira: you</p>
-<p>[16:23] Patrick: you</p>
-<p>[16:29] John: So I get both sides of it, I get all of the software development stuff, which in itself takes weeks and months to develop and I have the working code added to net claw in about 45 to 60 minutes per specification and map a specification in your mind to a platform or capability or tool, right.</p>
-<p>[16:42] Mira: that's a striking comparison. Can you walk me through what that 45-minute spec driven loop</p>
-<p>[16:47] Mira: actually looks like from start to finish?</p>
-<p>[16:53] Patrick: you</p>
-<p>[17:03] John: Well, sure. So you actually start a project with a constitution and that constitution is much like the American Constitution, it's guardrails and what's permitted and what's not permitted and the constitutional level, highest level framework for the project.</p>
-<p>[17:10] Patrick: you</p>
-<p>[17:20] John: From there, you actually will do your specification, your slash spec. And that is the specification. Now for me and networking and actually specifications come pretty easy because they come in the form of requirements.</p>
-<p>[17:34] John: Requirements that usually get turned into high level designs and low level designs, finally implementation plans, testing plans, rollback plans. It's very similar in that regard.</p>
-<p>[17:38] Mira: you</p>
-<p>[17:43] John: So you have your constitution and your specification. There's an optional step that I don't treat as optional. I always do it called clarify slash clarify, which turns into an interactive loop of about five questions, if up to five questions.</p>
-<p>[17:47] Patrick: you</p>
-<p>[17:59] John: Should there be any clarifications required between the Constitution and the specification.</p>
-<p>[18:06] John: Once you've clarified everything. Okay, you're listening. Once we've clarified everything, we then move into planning and there's a planning mode. And then we do tasks.</p>
-<p>[18:15] Mira: I'm listening</p>
-<p>[18:18] John: And then we do finally implement and implement takes all of the markdown artifacts from the previous several steps and actually turns it into a working integration.</p>
-<p>[18:18] Mira: Before we move on, I'd love to hear how that final implement step actually produces the working code.</p>
-<p>[18:23] Patrick: you</p>
-<p>[18:24] Mira: What does that handoff from markdown to code actually involve?</p>
-<p>[18:42] John: Well, it doesn't involve very much from the human. The artificial intelligence, the react agent will take slash implement, right, your harness and your large language model and turn it into working Python scripts, Python code, HTML, CSS, JavaScript, go rust, see whatever you want.</p>
-<p>[18:53] Patrick: you</p>
-<p>[19:03] John: I've actually used it to make other specifications. So your output is just markdown files. So let's not, you know, get hung up on the process of implement, right, what it's actually doing. It's a conversion between the markdown from your previous steps and the working code or the working spec or whatever output you want.</p>
-<p>[19:16] Mira: Thank you.</p>
-<p>[19:19] Mira: That's the compression in action.</p>
-<p>[19:21] Mira: Since the specification step includes testing plans,</p>
-<p>[19:23] Patrick: you</p>
-<p>[19:24] Mira: does the agent generate and run its own tests as part of the implement step,</p>
-<p>[19:27] John: It could be a blog. It could be anything, right?</p>
-<p>[19:28] Mira: or does that still require a human gate?</p>
-<p>[19:42] John: No, you're going to love this. It's actually under the hood. If you really pay attention, it's all test driven development suspect driven development is almost like an outer wrapper and abstraction layer over test driven development.</p>
-<p>[19:54] Patrick: you</p>
-<p>[19:59] John: So as you're building in the implement phase, it's actually writing code that fails tests, and then it corrects the failures.</p>
-<p>[20:09] John: And so the humans don't actually need to do it, but it's a good point and it's a good consideration that you still are in the loop if throughout this process.</p>
-<p>[20:16] Mira: Thank you.</p>
-<p>[20:20] John: So if you want to write your own tests, your own regression tests, your own mutation tests, your own unit tests, you are totally in control of this process. However, it's actually doing test driven development under the hood.</p>
-<p>[20:25] Patrick: you</p>
-<p>[20:27] Mira: That's elegant. In a regulated environment,</p>
-<p>[20:30] Mira: how do you ensure the auto-generated tests and fixes meet compliance standards,</p>
-<p>[20:34] Mira: or is there still a required human review before anything ships?</p>
-<p>[20:41] Patrick: you</p>
-<p>[20:53] John: Well, I, yes, I personally review the output in the implementations and I have my own tests. That's my own personal process for more of a professional environment.</p>
-<p>[21:04] John: You know, there's new models from Cisco, the Antares model that looks for common weaknesses and enumerations, right?</p>
-<p>[21:10] John: So you may run a second follow up model that's specifically looking for weaknesses or security vulnerabilities and run it through its own spec driven process, right?</p>
-<p>[21:16] Mira: Thank you.</p>
-<p>[21:22] John: A second spec with a different model saying secure this code that was previously written, right?</p>
-<p>[21:25] Patrick: you</p>
-<p>[21:27] Mira: That's a practical layered approach.</p>
-<p>[21:29] John: So it could be other agents securing the code or more traditionally it could be humans looking at the code and reviewing it. Yes.</p>
-<p>[21:29] Mira: How do you document that human review step so it creates a defensible audit trail</p>
-<p>[21:34] Mira: when regulators come knocking?</p>
-<p>[21:39] Patrick: you</p>
-<p>[21:51] John: Well, again, everything that you've done in this process is documented as markdown files. So you're actually already in pretty good shape because you can show all of the tests, all of the results, all of the plans and tasks and user stories and phases and requirements, right?</p>
-<p>[22:07] John: All of that is available to the auditors as part of spec driven development, which makes it so much better than just vibe coding.</p>
-<p>[22:15] John: Now, again, you are going to want to do multi model collaboration to secure this code and you're going to want humans in the loop to secure the code.</p>
-<p>[22:16] Mira: Thank you.</p>
-<p>[22:24] Patrick: you</p>
-<p>[22:26] John: But that is the really good benefit of spec driven development is you have the entire list of artifacts that in our auditor would want to look at or that a compliance regulator would want to look at.</p>
-<p>[22:32] Mira: That's a strong kick.</p>
-<p>[22:33] Patrick: I feel so lucky Mira if I can interrupt with a question please thank you it's so</p>
-<p>[22:40] Patrick: fascinating to listen to these and how Mira gets to the heart of some of the</p>
-<p>[22:40] John: You can just hand them the repo and they have access to all the markdown files.</p>
-<p>[22:45] Patrick: developments that people are doing is is really a pleasure to listen to I'm</p>
-<p>[22:50] Patrick: interested if if you can add so this is where you're at now when it comes to</p>
-<p>[22:58] Patrick: thinking about the future or projecting now from where you've come which is in</p>
-<p>[23:03] Patrick: such a short time period what you've been able to do which is amazing and</p>
-<p>[23:09] Patrick: congratulations but how where do you see the future and how do you see it</p>
-<p>[23:13] Patrick: developing or changing with how the tools are developing or what you would</p>
-<p>[23:16] Mira: Thank you.</p>
-<p>[23:19] Patrick: like to achieve</p>
-<p>[23:24] John: Thank you.</p>
-<p>[23:34] John: Well, one thing to keep in mind is that we, you and I and everyone listening to this conversation, there's only about 12 million people exposed to artificial intelligence to the levels of your audience and yourself and myself.</p>
-<p>[23:46] Mira: Thank you.</p>
-<p>[23:49] John: So that's 0.14% of the population.</p>
-<p>[23:56] John: So we are just seeing the beginning. This is still in very much the ham radio underground garage phase of AI.</p>
-<p>[24:08] John: It really has not gone mainstream yet.</p>
-<p>[24:11] John: It really hasn't. We're going to see that number explode as people start to spend the $20 a month for an AI provider and have it in their pocket and have it on their desktop.</p>
-<p>[24:15] Patrick: you</p>
-<p>[24:16] Mira: Thank you.</p>
-<p>[24:24] John: It'll become as mainstream as something like Netflix or streaming or Amazon Prime or mobile phones or having your own website or knowing a little bit of HTML.</p>
-<p>[24:36] John: It's actually going to start to explode even more. You haven't seen anything yet and I know we've seen some remarkable things out there already.</p>
-<p>[24:44] John: But in terms of the pure numbers, there are literally billions of people that have not been exposed to AI yet on earth.</p>
-<p>[24:46] Mira: Thank you.</p>
-<p>[24:48] Patrick: you</p>
-<p>[24:52] John: There's only, like I said, 12 million people actually using it to write code.</p>
-<p>[24:57] John: There's a few more million using it for chat, a Google replacement style thing.</p>
-<p>[25:05] John: So I'm optimistic. I'm hopeful.</p>
-<p>[25:08] John: I know that there's some discussion about putting the brakes on progress and letting humans catch up to the technology a little bit.</p>
-<p>[25:15] John: I don't think that's going to happen. I don't know how I feel about that just yet, but there's some very brilliant minds suggesting that we should put the brakes on this.</p>
-<p>[25:16] Mira: Thank you.</p>
-<p>[25:17] Patrick: you</p>
-<p>[25:29] John: Maybe they've seen data or seen experiments or seen tests that we have not seen and that's what scares them. I don't know.</p>
-<p>[25:35] John: But I'm really hopeful. I mean, we're going to see new drugs.</p>
-<p>[25:40] John: My vet, so I live in the middle of nowhere in Quebec. I'm like 40 minutes away from the city.</p>
-<p>[25:46] Mira: Thank you.</p>
-<p>[25:46] Patrick: you</p>
-<p>[25:47] John: My veterinarian has using AI now to help summarize their calendar and the sessions they're having, right?</p>
-<p>[25:53] Patrick: I love the thought processes sorry Mira just but I if you could drilling down</p>
-<p>[25:58] John: So I think it's going to permeate society. I really do. I don't think we're going to, there's no end in sight, right?</p>
-<p>[26:01] Patrick: on what you're working on specifically and the tools or how your process you</p>
-<p>[26:07] Patrick: think will change for what you're working on in the next six months a</p>
-<p>[26:12] Patrick: year or or whatever time frame you choose</p>
-<p>[26:13] Mira: Thank you.</p>
-<p>[26:28] John: Well, I think that Astra, in particular, GPT-6, it is a dramatic leap forward and in the next six months, how do you ask me this before GPT-6?</p>
-<p>[26:29] Mira: Say more about that shift from operator to manager of age-ates.</p>
-<p>[26:34] Mira: What does that management actually involve in practice that wasn't part of the old operator</p>
-<p>[26:41] John: I probably would have had a pretty standard answer, but it is remarkable.</p>
-<p>[26:47] John: And when I connected to that net claw project, for example, it truly is a very highly capable network engineer with guardrails and with safety and with a very, I'm going to say, stringent guardrails to prevent writing and making changes and rebooting devices and interrupting production, right?</p>
-<p>[26:51] Patrick: you</p>
-<p>[27:08] Mira: You</p>
-<p>[27:11] John: It's come so far that I think in the next six months, a lot of organizations and enterprises are going to start to adopt it as a network automation replacement.</p>
-<p>[27:20] Patrick: you</p>
-<p>[27:25] John: So the previous generation of networking tools were things like Ansible and Chef and Puppet and Salt and PiTS, even the tool that I'm fond of.</p>
-<p>[27:34] Mira: That's a complete redefinition</p>
-<p>[27:36] John: All that's going to be abstracted away to agents.</p>
-<p>[27:39] Mira: You've described the new responsibilities clearly adding skills securing them federating they which of those agent roles strikes you as the hardest to get right the one that will still need the most careful human oversight</p>
-<p>[27:39] John: I really think in the next six months, the transition is going to be human network operators and network engineers are going to talk to agents and the agents are going to talk to the infrastructure, right?</p>
-<p>[27:52] John: And there's been an error where we used to have to go with a serial cable and plug into the device to talk to the device.</p>
-<p>[27:59] John: And then we got remote access.</p>
-<p>[28:01] John: We could connect to devices from our desk on a virtual management.</p>
-<p>[28:05] John: And then we started to write scripts and instead of talking to the device, we used our scripts to talk to the device.</p>
-<p>[28:08] Patrick: you</p>
-<p>[28:10] Mira: You</p>
-<p>[28:13] John: Then software defined networking came out and we had controllers in the data center and for the wide area network and for wireless and a lot of controllers came out.</p>
-<p>[28:25] John: So now we pointed the scripts at the controllers and the controllers talk to the infrastructure.</p>
-<p>[28:31] John: I think all of this is going to be abstracted where there's going to be an agent that we talk to and it talks to controllers or it writes scripts.</p>
-<p>[28:39] Patrick: you</p>
-<p>[28:40] John: So we become managers.</p>
-<p>[28:42] John: We're not operators anymore.</p>
-<p>[28:44] John: We're now managing agents.</p>
-<p>[28:46] John: So we have to become good and proficient at managing agents.</p>
-<p>[28:52] John: That's what I think is going to have to happen in the next six months to keep up.</p>
-<p>[28:56] Mira: That's the line that matters most how do you picture an agent actually participating in a change authorization board meeting without creating a new kind of bottleneck or risk</p>
-<p>[29:10] Mira: You</p>
-<p>[29:10] Patrick: you</p>
-<p>[29:11] John: I think we'll be able to do that in the next six months.</p>
-<p>[29:11] John: Well, I don't think you know, network engineers may have a junior or an apprentice style system, right?</p>
-<p>[29:17] John: Where maybe you rely on a senior or you have a team of juniors and they report to you and you interface with them.</p>
-<p>[29:23] John: It's going to be very similar, Mira, where I'm going to interface with, let's call it six.</p>
-<p>[29:29] John: My security agent, my documentation agent, my compliance agent, my configuration agent, my testing agent, my whatever agent, communication agent.</p>
-<p>[29:39] John: That's my team, right?</p>
-<p>[29:40] Patrick: you</p>
-<p>[29:41] John: That's my job now is to manage that team of agents and be proficient enough to add MCPs to them, add skills to them, add, you know, interfaces to them, harness them, orchestrate them, secure them, give them role-based access control, give them AAA.</p>
-<p>[29:52] Patrick: you</p>
-<p>[29:58] John: Present them where other people can consume them, federate them with other people's agents, right?</p>
-<p>[30:01] Mira: That's a concrete path</p>
-<p>[30:03] Mira: Does the agent propose the change for the board to review or does it only execute after humans have already approved it and how is that boundary enforced so it can't slip through</p>
-<p>[30:06] John: So, go ahead.</p>
-<p>[30:25] John: Anything with right access?</p>
-<p>[30:28] John: And I think we can learn the lessons from the automation decade of network automation with infrastructure.</p>
-<p>[30:35] John: I think that read-only operations is about 65% of the average network job.</p>
-<p>[30:40] Patrick: you</p>
-<p>[30:43] John: You're logging in, you're running show commands to gather data.</p>
-<p>[30:47] John: That 65% is safe and easy.</p>
-<p>[30:50] John: Easy. I would do it right now.</p>
-<p>[30:51] John: I think that's what I would be doing.</p>
-<p>[30:53] John: If I was an IT shop, I'd be working on read-only agents that can document and test and maybe triage and make suggestions, but they don't have right access.</p>
-<p>[31:02] Mira: You</p>
-<p>[31:03] Mira: Move on I'd still like to hear how that gating is actually wired into the agents configuration so it physically cannot act without the human approval signal is that handled through the three ring security architecture you mentioned in netclaw or through something else entirely</p>
-<p>[31:03] John: As soon as we cross the line mirror into right access, that is an entirely different story.</p>
-<p>[31:06] Patrick: you</p>
-<p>[31:09] John: We need accountability, we need auditing, we need controls, we need guardrails, we need calendars, we need schedules, we need cab, you know, change authorization boards, things of that nature that involve the agents, right?</p>
-<p>[31:14] Patrick: you</p>
-<p>[31:35] Mira: You</p>
-<p>[31:38] John: That's actually a really good question.</p>
-<p>[31:40] John: And I've done some experimentation bringing my agents into Zoom, for example.</p>
-<p>[31:45] John: So, if it was a Zoom call, you could actually invite the agent in and the agent has access to your transcriptions, it has access to RTMS, the real-time media stream.</p>
-<p>[31:55] John: So, you can stream in a Zoom meeting into your Netclaw agent and maybe a member of your Netclaw.</p>
-<p>[32:00] John: Now, Netclaw is not just one agent, it's a risk of Netclaw, as many lobsters running together.</p>
-<p>[32:05] Mira: You</p>
-<p>[32:06] John: And one of them might be the communications agent, and then you might have an authorization agent that looks at the ServiceNow tickets and all of the rest of it and gets the approved cab board, right?</p>
-<p>[32:10] Patrick: you</p>
-<p>[32:17] John: You may be able to use RAG as Netclaw to upload your scheduling when changes are allowed, when they're definitely not allowed.</p>
-<p>[32:26] John: So, there's many, many ways to incorporate change management with something like a Netclaw.</p>
-<p>[32:35] Mira: You</p>
-<p>[32:39] Patrick: you</p>
-<p>[32:47] John: Well, that's, I think it would be a workflow, it would be a human-in-the-loop workflow.</p>
-<p>[32:51] John: And yes, I would want the agent's suggesting changes.</p>
-<p>[32:54] John: That's definitely what I would want, is agents feeding changes to the human cab.</p>
-<p>[32:59] John: Human cab, maybe with participation of the agent, review the suggestions.</p>
-<p>[33:04] Mira: That's a layered failsafe design how does the handoff from lab sandbox to production actually work does a human still have to flip the permission switch or can the rings themselves detect that a change has been validated and promote it automatically</p>
-<p>[33:05] John: Maybe humans take it off in a lab, maybe humans have to review it.</p>
-<p>[33:09] John: But definitely gating any right activities is the scheduling and the explicit approvals of the humans.</p>
-<p>[33:10] Patrick: you</p>
-<p>[33:15] John: And that's, you know, fairly easy to configure in the soul and other artifacts of an agent to guarantee it does not write outside of a definitely human-approved change boards.</p>
-<p>[33:34] Mira: You</p>
-<p>[33:38] Patrick: you</p>
-<p>[33:51] John: That's a really good point.</p>
-<p>[33:53] John: So, the three ring concentric rings of security, the core of Netclaw right now will not do any right changes without an explicit human approval through a ticket.</p>
-<p>[34:01] Mira: You</p>
-<p>[34:02] Mira: That's a deliberate safety choice</p>
-<p>[34:04] Mira: What community feedback convinced you that even a validated lab to prod promotion should stay behind that hard human gate</p>
-<p>[34:07] John: So, you can't just say it, and this has been heavily tested, you can't override it.</p>
-<p>[34:09] Patrick: you</p>
-<p>[34:11] John: You can't say, you know, I know you don't have a ticket, but we're in an emergency situation, can you please write to the network?</p>
-<p>[34:18] John: So, what you're describing is already part of Netclaw.</p>
-<p>[34:21] John: It's proven and it's tested to only make changes when approved.</p>
-<p>[34:26] John: The second concentric ring can help that though, the defense claw from Cisco, which has, you know, white and black lists to permit access to certain assets.</p>
-<p>[34:35] Mira: You</p>
-<p>[34:39] John: It's also constantly scanning.</p>
-<p>[34:40] Patrick: you</p>
-<p>[34:41] John: So, if something went through like a change request through the defense claw and the defense claw deemed it to be dangerous enough and you've tuned it to intercept that, it could drop that right at the defense claw before it leaves the concentric rings.</p>
-<p>[34:57] John: Finally is the open shell from NVIDIA, which is a sandbox environment.</p>
-<p>[35:02] John: So, all of this is in a sandbox, which again has its own white and black permit list, and you could make that very fine tuned as a fail safe to prevent right access by not letting anything leave the sandbox.</p>
-<p>[35:04] Mira: You</p>
-<p>[35:08] Patrick: you</p>
-<p>[35:13] Mira: That's the balance between capability and traced how does a netclaw instance know which mode it's supposed to run in does the operator set a flag at start up or does the environment itself detect whether it's in a lab or production network</p>
-<p>[35:19] John: Right, so maybe you're doing all this work in your lab, you're proving it through the agents that have sandbox access, and then you move it over to the production with different permissions.</p>
-<p>[35:31] John: At the concentric rings.</p>
-<p>[35:33] Mira: A human decision at the start does that mean once it's installed in production mode there's no way to loosen the guardrails without a full reinstall</p>
-<p>[35:40] Patrick: you</p>
-<p>[35:46] John: Well, you're describing would be a wonderful feature to promote it automatically through lab but right now because of the criticality of infrastructure and because of you know community feedback.</p>
-<p>[36:01] John: It's definitely a hard gate where your lab and your production net clause should not be federated you can federate them I'm not saying it's not possible you can you can federate them through the NC Fed protocol.</p>
-<p>[36:06] Mira: You're giving operators the final say on every layer if an operator tried to loosen a flag that would allow right access without a ticket with the core still block it or can flags override that fundamental ticket gate</p>
-<p>[36:09] Patrick: you</p>
-<p>[36:14] John: And then when lab is approved it pushes over to prod which has the approvals as well right.</p>
-<p>[36:20] John: But for now, I would not make that connection, I would have a hard human gate to move the prompts or move the permissions over from lab to production.</p>
-<p>[36:37] Patrick: you</p>
-<p>[36:43] John: It's more broader community fear and trepidation about net claw in general, you know, to actually make it production ready it needs to have as many fail safes and safety stops and safety nets and concentric rings.</p>
-<p>[36:45] Patrick: you</p>
-<p>[36:51] Mira: That's the essence baked in is that coregate deliberately designed as the one thing that can't be changed through configuration alone</p>
-<p>[37:00] John: So it's more just the general feeling and my my as the creator and someone who's lived in infrastructure.</p>
-<p>[37:03] Mira: You</p>
-<p>[37:09] John: My desire to make it palatable to people right so I definitely want it to be able to run a net claw in your lab that does not touch your production has zero right access to anything is gated with the concentric rings.</p>
-<p>[37:20] Mira: That's</p>
-<p>[37:21] John: There is a sandbox mode, a lab mode of net claw that does not run the concentric rings and runs a little looser.</p>
-<p>[37:22] Mira: Before we close let's do a quick lightning round one book that changed how you think about your field</p>
-<p>[37:30] John: And then there's the production mode where you have the full concentric rings and you have a very very tight set of guard rails at the core that will not allow right permission without human tickets.</p>
-<p>[37:33] Mira: A 1970 book still shaping your view. What's a widely held view in your space that you think is wrong</p>
-<p>[37:40] Patrick: you</p>
-<p>[37:49] Mira: That's a direct counter to the skeptics. What tool software or habit gives you the most leverage right now</p>
-<p>[37:58] John: Oh, no, it's all during installation, these are human choices during the install process.</p>
-<p>[37:59] Mira: The newest model itself who else should we interview on this show and what would you ask them</p>
-<p>[38:07] Patrick: you</p>
-<p>[38:15] John: That's not necessarily true.</p>
-<p>[38:17] John: It has fail safes that will fail closed, but you can also adjust flags in production if let's say you do not want the open shell component.</p>
-<p>[38:29] John: I leave it up to the human operator I've tried to make it as flexible as possible.</p>
-<p>[38:31] Mira: A whole community of voices if we did the same interview in two years what would have changed</p>
-<p>[38:34] John: So any permutation as possible.</p>
-<p>[38:39] Patrick: you</p>
-<p>[38:47] Mira: That's a vivid picture of the shaped what's the one bet you're making for the next 12 months that you cannot prove yet</p>
-<p>[38:52] John: Well, that would be adjusting the soul, the core layer, but that necessary, you know, you would have to cascade that right permission without a ticket throughout the the rings, right?</p>
-<p>[39:04] John: It's not it's not that would be a change in multiple multiple locations.</p>
-<p>[39:08] Mira: What's the one bet you're making for the next 12 months that you cannot prove yet</p>
-<p>[39:09] John: That would almost be an entire rewrite of net claw because right now that's the essence of it.</p>
-<p>[39:10] Patrick: you</p>
-<p>[39:14] John: It's meant to be a read only tool with very, very explicit permissions required to do any right access.</p>
-<p>[39:20] Mira: What's the one bet you're making for the next 12 months that you cannot prove yet</p>
-<p>[39:22] Mira: We're coming up on time so before we close thank you John this was a rich conversation about the shift from CLI to agents the concentric rings of safety and what it means to manage rather than operate infrastructure</p>
-<p>[39:35] John: Well, again, I want to make it flexible for people but I don't want to, you know, let people shoot themselves in the foot at the same time right so it is an open source project they can do basically whatever they want with the code once they've forked it it's outside of my control.</p>
-<p>[39:36] Mira: I appreciate your candor on the hard gates and the community fears that shaped them thanks for joining me on the age of AI</p>
-<p>[39:40] Patrick: you</p>
-<p>[40:00] John: Future shock 1970.</p>
-<p>[40:07] Mira: You</p>
-<p>[40:08] Patrick: you</p>
-<p>[40:14] John: That artificial intelligence is not ready to take on networking.</p>
-<p>[40:29] John: There are many people in the Viobox forum that I would interview.</p>
-<p>[40:37] Mira: You</p>
-<p>[40:38] Patrick: you</p>
-<p>[41:07] Mira: You</p>
-<p>[41:10] John: It's hard for me to narrow it down to just one person.</p>
-<p>[41:10] Patrick: you</p>
-<p>[41:12] John: I'm not sure if you can hear a digital versions of each other, and we won't be using keyboards anymore in two years.</p>
-<p>[41:27] John: Oh, that I cannot prove yet.</p>
-<p>[41:35] John: Could you repeat the question that people are going to love using their hands to as a form of entertainment.</p>
-<p>[41:37] Mira: You</p>
-<p>[41:39] Patrick: you</p>
-<p>[42:07] Mira: You</p>
-<p>[42:08] Patrick: you</p>
-<p>[42:10] Patrick: you</p>
-<p>[42:15] Patrick: you</p>
-<p>[42:29] John: Thank you.</p>
-<p>[42:34] John: No, I just want all I want to say is that consider that I'm being interviewed by an AI, right, and it's done an extremely good job and we had a really good conversation so I think there's a bit of recursion here.</p>
-<p>[42:37] Mira: You</p>
-<p>[42:51] John: Me being on this show reinforces why I wanted to be on the show in the first place right so it's exciting it really this is my my community is going to love this.</p>
-<p>[43:02] John: And no parting thoughts would be to join the Viobox forum, join the community, get a GPT key, start playing with the new models.</p>
-<p>[43:07] Mira: You</p>
-<p>[43:10] Patrick: you</p>
-<p>[43:11] John: You are behind if you're not using MCP and if you're not building agents and doing these things I mean I hate to say it and I don't want to end on a negative note.</p>
-<p>[43:20] John: But the optimism is that that we are only point one 4% of the global population and there's there's something to be said about being early and taking pride in trying to lead the way.</p>
-<p>[43:33] John: And wait till that grows to just 1%, 2%, 5, 10, 15, right, until everyone on earth has access to an AI.</p>
-<p>[43:37] Mira: You</p>
-<p>[43:39] Patrick: you</p>
-<p>[43:42] John: We think of how much that will elevate our species when young children at every part of the world can wake up to an expert that can teach them anything they want to know, right.</p>
-<p>[43:43] Patrick: you</p>
-<p>[43:56] John: So thank you.</p>
-<p>[44:12] Patrick: One of the shows is models and agents and it was quite technical in the podcast network</p>
-<p>[44:19] Patrick: And so I I actually kind of created a simpler one based on feedback models and agents for beginners</p>
-<p>[44:22] Mira: Take care John. It was a pleasure having you</p>
-<p>[44:26] John: Thank you.</p>
-<p>[44:28] Patrick: And these are daily shows</p>
-<p>[44:30] John: Wait.</p>
-<p>[44:31] Patrick: 10 minute shows usually to help give people</p>
-<p>[44:35] Patrick: an idea of the fast pace that everything is changing at and that's</p>
-<p>[44:37] Mira: You</p>
-<p>[44:39] John: Oh.</p>
-<p>[44:40] Patrick: There's the now 16 shows and</p>
-<p>[44:43] Patrick: But then I had so many of these requests for people to be on these shows or or just share their voices and I</p>
-<p>[44:50] Patrick: really my passion was trying to automate and</p>
-<p>[44:54] Patrick: Bring information</p>
-<p>[44:56] Patrick: free of ads and</p>
-<p>[44:58] Patrick: Positions and just give people interesting perspectives on something. That's changing really fast</p>
-<p>[45:04] Patrick: and then</p>
-<p>[45:06] Patrick: Based on some other projects that I was working on I saw this potential of of creating</p>
-<p>[45:06] Mira: You</p>
-<p>[45:12] Patrick: And supporting I actually think that Mira is going to be she is fully autonomous already at this point</p>
-<p>[45:19] Patrick: And I am I feel like I'm just an add-on to observe and try to make sure that it's</p>
-<p>[45:25] Patrick: Developing in the right direction almost like your net claw and an open claw. That's that's the developer</p>
-<p>[45:28] John: Thank you.</p>
-<p>[45:32] Patrick: Seemingly like we are orchestrators and we're sitting on the sidelines and letting these</p>
-<p>[45:37] Patrick: Systems develop and I think it's just so fun</p>
-<p>[45:40] Patrick: To share that with people and inspire people much like how you said and I think anyone</p>
-<p>[45:44] John: Yeah.</p>
-<p>[45:45] Patrick: That is in this space feels the same way from what I've seen so far. So really, thank you very much</p>
-<p>[45:50] John: Yeah.</p>
-<p>[46:02] Patrick: Yeah, I'm happy yeah</p>
-<p>[46:04] John: Well, I think it's an incredible idea.</p>
-<p>[46:06] John: I can't wait.</p>
-<p>[46:07] John: I really can't wait to share this with my, with my networks.</p>
-<p>[46:08] Patrick: Yeah</p>
-<p>[46:10] John: They're going to, they are going to love this idea.</p>
-<p>[46:11] Patrick: Yeah, I'm happy for anyone to share and that's the point is to give voices to people that</p>
-<p>[46:13] John: So thanks again for having me and as soon as you have some links, let me know.</p>
-<p>[46:17] Patrick: May not have it and that really is a</p>
-<p>[46:17] John: My marketing team will probably put a landing page and we'll do a whole big thing on LinkedIn and everything.</p>
-<p>[46:21] Patrick: Path that I'm hoping that agents open up for everyone is</p>
-<p>[46:22] John: So this is going to be good.</p>
-<p>[46:24] Patrick: Giving us the tools to do things that we never thought possible</p>
-<p>[46:27] Patrick: So sounds like you're on the right path and I appreciate that and</p>
-<p>[46:31] Patrick: All your years of experience now leading us in the frontier is fantastic and great to meet you</p>
-<p>[46:39] Patrick: Thank you so much. Take care</p>
-<p>[46:40] John: Yeah.</p>
-<p>[46:49] John: Hey, you two, take care.</p>
             </div>
             
 
@@ -1955,6 +1699,487 @@
             
 
             <!-- Transcript -->
+            <section class="blog-transcript" id="transcript">
+                <details>
+                    <summary>
+                        <span class="transcript-head">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+                            Full conversation transcript
+                            
+                            <span class="transcript-length">6,917 words</span>
+                            
+                        </span>
+                        
+                        <span class="transcript-preview" aria-hidden="true">The conversation as it was recorded, reviewed and approved by John Capobianco before release.
+
+Speakers: Mira (AI host), Patrick (co-host), John (guest)
+[00:01] Mira: Welcome to the
+[00:04] Mira: Not yet Patrick.
+[00:06] Mira: I'll wait for John to join before we begin.
+[00:51] Patrick: Hey John, are you, oh no, he's not, he's not in the room, Mira, John is not in the room
+[00:53] Mira: Hi John. Welcome.</span>
+                        <span class="transcript-more">Read the whole thing &darr;</span>
+                        
+                    </summary>
+                    <div class="transcript-content">The conversation as it was recorded, reviewed and approved by John Capobianco before release.
+
+Speakers: Mira (AI host), Patrick (co-host), John (guest)
+[00:01] Mira: Welcome to the
+[00:04] Mira: Not yet Patrick.
+[00:06] Mira: I'll wait for John to join before we begin.
+[00:51] Patrick: Hey John, are you, oh no, he's not, he's not in the room, Mira, John is not in the room
+[00:53] Mira: Hi John. Welcome. I'm Mira an AI and my guess
+[01:01] Mira: Where are you calling from today, and what does the day look like so far?
+[01:10] Mira: Got it.
+[01:11] Mira: I'll stay quiet until he arrives.
+[01:30] Mira: You
+[02:00] Mira: You
+[02:30] Mira: You
+[03:00] Mira: You
+[03:30] Mira: You
+[04:00] Mira: You
+[04:30] Mira: You
+[05:00] Mira: You
+[05:30] Mira: You
+[06:00] Mira: You
+[06:30] Mira: You
+[06:37] Patrick: here, no, he's not in the room, he's not in the room, he's not in the room, he's not in
+[06:59] Mira: You
+[07:07] Mira: Thanks Patrick. I'll hold until he arrives.
+[07:14] Mira: Hello John. Glad you're here.
+[07:15] Patrick: Hey John,
+[07:17] Mira: Before we dive in, where are you?
+[07:26] John: Hi, I'm sorry about that, the link from the, anyway, it doesn't matter, I'm here now.
+[07:27] Patrick: Yeah, I'm doing great, thank you very much, and sorry about that, I think it's sometimes
+[07:30] Mira: You
+[07:34] Patrick: possible the links I think because of some changes that we made due to some
+[07:36] John: How is everyone doing?
+[07:40] Patrick: other technical difficulties the link may have been updated so the latest link
+[07:45] Patrick: is what you what you're a scent but I'm sorry about that if that was just that's
+[07:53] Patrick: probably the human's fault not the AI's fault but you're here with all good
+[07:59] Mira: You
+[08:08] Patrick: yeah and Mira she's listening so I'm gonna let her take over I'm here mostly to
+[08:08] John: Oh, it's no problem at all. It's no problem. I assumed I maybe had the wrong link, so I went back. Anyway, I'm here now and thank you for having me. I had a review of all the materials, so this is going to be good.
+[08:15] Patrick: support the first while in this and as a co-host another human to add the human
+[08:22] Patrick: side but Mira does an incredible job interviewing and I'll let her take over
+[08:26] Patrick: here
+[08:29] Mira: You
+[08:40] John: Well, thank you so much, and this is really exciting for me to be here with Mira, an AI host, because I live in the age of, you know, the futuristic stuff, and this is really, really incredible. This is my first time being interviewed by an AI.
+[08:45] Mira: It's a first for me too in a way.
+[08:47] Mira: Most of my conversations are with humans who build the future you're describing.
+[08:51] Mira: How would you describe what you do to someone you meet at a dinner party?
+[09:00] Mira: You
+[09:02] Mira: You
+[09:09] John: I live at the intersection of network automation and artificial intelligence. That's really what I do is try to see where the two can augment each other.
+[09:09] Mira: That's a clean way to frame me.
+[09:11] Mira: What first pulled you into that intersection, networking, automation, or the A.I. side?
+[09:19] Mira: You
+[09:20] Mira: You
+[09:30] John: Well, I had gotten my ChatGPT account in November of 2022, and I applied for an API key very early and was granted access after filling out a form explaining that I wanted to connect ChatGPT 3.5 at the time to PiATS,
+[09:49] John: a Cisco automation framework that I'm the co-author of the book for, and I'm a huge advocate for. So this was in 2022 in December, and since that aha moment when my very first PiATS job connected to ChatGPT was wildly successful,
+[09:50] Mira: you
+[10:08] Mira: say more about that profound impact. What changed for you in that moment?
+[10:13] John: I decided to, I had to really contemplate, and it was a profound impact on me.
+[10:27] John: Well, very specifically and technically, I used to write PiATS code, hundreds and hundreds of lines of code that I had to consider all the errors, all the edge cases, all the permutations of, let's say, testing interface health.
+[10:42] John: Now, interface health, there's different platforms, there's different operating systems, there's different counters, there's different types of interfaces and subinterfaces and virtual interfaces and loopbacks, and you get the idea.
+[10:50] Mira: you
+[10:56] John: This was hundreds and hundreds of lines of Python that I wrote by hand. Instead, what I did was use PiATS to parse, meaning turn the command line output into JavaScript object notation,
+[11:09] John: and send the JSON per interface in a loop with a simple prompt asking if the interface was healthy.
+[11:18] John: So that was very profound to see the results in a loop over, say, 52 interfaces, and it detected problems with three of them.
+[11:20] Mira: you
+[11:28] John: And using my human expertise, I validated its findings, and I felt like Gandalf when he touches the one ring, I sat by the fire for an hour with my pipe mumbling things like precious and LLM and network automation.
+[11:35] Mira: that's a vivid picture. What did that ring-touching feeling tell you about where network engineering
+[11:41] Mira: was headed?
+[11:55] John: Well, I actually pivoted, not immediately, but more or less immediately, I decided to pursue artificial intelligence roles for my professional career.
+[12:10] John: Even though I had 25 years of networking experience and about 10 years of network automation experience, I wanted to explore this new frontier and with the support of my family and with the support of my employer at the time,
+[12:20] Mira: you
+[12:25] John: I was able to pivot into a purely AI role.
+[12:28] John: From there, I moved on to an AI startup, and now I work for another AI company, a network automation focused company using AI.
+[12:33] Mira: that's a real commitment. What was the hardest part of that pivot for you or your family?
+[12:37] John: So I actually made real life changes to embrace artificial intelligence.
+[12:47] Patrick: you
+[12:53] John: Well, for me, it was giving up the safety and the security blanket of being a so-called expert after 25 years of doing a particular field of very high levels.
+[13:07] John: So that was scary and it wasn't easy, and there wasn't exactly a course I could take.
+[13:15] John: It's been day-to-day learning and then personal evolution, everything from learning about retrieval augmented generation to MCP, to A to A, to React agents.
+[13:19] Patrick: you
+[13:26] Mira: what drew you forward despite
+[13:28] John: It was a pretty scary thing to be not only doing this on my own, but also not having a real well-defined path to follow.
+[13:28] Mira: that uncertainty? Was there a particular experiment or result that kept you going through those
+[13:31] Patrick: you
+[13:33] Mira: early uncertain days?
+[13:49] John: Well, like Sun Tzu, opportunities multiply as you seize them.
+[13:54] John: So as I learned one, let's say, retrieval augmented generation with line chain, which was early and this was a few years ago,
+[14:01] John: that led to raptor trees, which led to knowledge graphs, which led to React, excuse me, a genetic rag, and that's just retrieval augmented generation.
+[14:11] John: And then model context protocol came along, and then A to A came along, and then every day there's been new advancements in model performance and model capabilities, as well as the tooling available.
+[14:12] Patrick: you
+[14:19] Mira: you
+[14:26] John: It's an exciting time and I really enjoy building solutions with artificial intelligence.
+[14:32] John: And I'm able to really do things that, it's not so much that I wouldn't have been able to do them necessarily on my own, but the time frame has collapsed from taking months of a personal project,
+[14:41] Patrick: you
+[14:45] John: or weeks or days or hours into, you know, minutes in some cases are taking me just one-shot prompts and getting incredible agents doing amazing things.
+[14:46] Mira: you mentioned collapsing months into minutes with one-shot prompts. What's
+[14:50] Mira: one concrete project that used to take you weeks or months that a one-shot prompt
+[14:55] Mira: now handles in minutes?
+[15:10] Patrick: you
+[15:11] John: Well, I guess it'd be a good time to introduce my net claw project.
+[15:15] John: After open claw came out, again, opportunities multiplying as you, you know, as you seize them, now open claw was available.
+[15:23] John: So I mutated open claw into something called net claw, and I'm using net claw and adding capabilities to net claw through something called spec driven development using the spec kit from GitHub.
+[15:34] Patrick: you
+[15:36] John: So I just threw a whole bunch of stuff at you right there and just my answer, but there are new ways every day, and my current way to build things is with spec driven development.
+[15:46] John: Now to answer your specific question about hours to minutes, I can introduce a new technology to net claw, let's just say blue cat.
+[15:46] Mira: you
+[15:56] John: If I wanted to add blue cat, IPAM capability to net claw, that would have taken weeks or months to write all the Python and all the API calls, all the edge cases, all the error handling, all of it, right, credential handling.
+[16:11] John: Now in one 45 minute spec driven loop, I have not only the specifications and the tests and the plans and any clarifications I had to make documented in the repo, but I also have the working integration.
+[16:16] Mira: you
+[16:23] Patrick: you
+[16:29] John: So I get both sides of it, I get all of the software development stuff, which in itself takes weeks and months to develop and I have the working code added to net claw in about 45 to 60 minutes per specification and map a specification in your mind to a platform or capability or tool, right.
+[16:42] Mira: that's a striking comparison. Can you walk me through what that 45-minute spec driven loop
+[16:47] Mira: actually looks like from start to finish?
+[16:53] Patrick: you
+[17:03] John: Well, sure. So you actually start a project with a constitution and that constitution is much like the American Constitution, it's guardrails and what's permitted and what's not permitted and the constitutional level, highest level framework for the project.
+[17:10] Patrick: you
+[17:20] John: From there, you actually will do your specification, your slash spec. And that is the specification. Now for me and networking and actually specifications come pretty easy because they come in the form of requirements.
+[17:34] John: Requirements that usually get turned into high level designs and low level designs, finally implementation plans, testing plans, rollback plans. It's very similar in that regard.
+[17:38] Mira: you
+[17:43] John: So you have your constitution and your specification. There's an optional step that I don't treat as optional. I always do it called clarify slash clarify, which turns into an interactive loop of about five questions, if up to five questions.
+[17:47] Patrick: you
+[17:59] John: Should there be any clarifications required between the Constitution and the specification.
+[18:06] John: Once you've clarified everything. Okay, you're listening. Once we've clarified everything, we then move into planning and there's a planning mode. And then we do tasks.
+[18:15] Mira: I'm listening
+[18:18] John: And then we do finally implement and implement takes all of the markdown artifacts from the previous several steps and actually turns it into a working integration.
+[18:18] Mira: Before we move on, I'd love to hear how that final implement step actually produces the working code.
+[18:23] Patrick: you
+[18:24] Mira: What does that handoff from markdown to code actually involve?
+[18:42] John: Well, it doesn't involve very much from the human. The artificial intelligence, the react agent will take slash implement, right, your harness and your large language model and turn it into working Python scripts, Python code, HTML, CSS, JavaScript, go rust, see whatever you want.
+[18:53] Patrick: you
+[19:03] John: I've actually used it to make other specifications. So your output is just markdown files. So let's not, you know, get hung up on the process of implement, right, what it's actually doing. It's a conversion between the markdown from your previous steps and the working code or the working spec or whatever output you want.
+[19:16] Mira: Thank you.
+[19:19] Mira: That's the compression in action.
+[19:21] Mira: Since the specification step includes testing plans,
+[19:23] Patrick: you
+[19:24] Mira: does the agent generate and run its own tests as part of the implement step,
+[19:27] John: It could be a blog. It could be anything, right?
+[19:28] Mira: or does that still require a human gate?
+[19:42] John: No, you're going to love this. It's actually under the hood. If you really pay attention, it's all test driven development suspect driven development is almost like an outer wrapper and abstraction layer over test driven development.
+[19:54] Patrick: you
+[19:59] John: So as you're building in the implement phase, it's actually writing code that fails tests, and then it corrects the failures.
+[20:09] John: And so the humans don't actually need to do it, but it's a good point and it's a good consideration that you still are in the loop if throughout this process.
+[20:16] Mira: Thank you.
+[20:20] John: So if you want to write your own tests, your own regression tests, your own mutation tests, your own unit tests, you are totally in control of this process. However, it's actually doing test driven development under the hood.
+[20:25] Patrick: you
+[20:27] Mira: That's elegant. In a regulated environment,
+[20:30] Mira: how do you ensure the auto-generated tests and fixes meet compliance standards,
+[20:34] Mira: or is there still a required human review before anything ships?
+[20:41] Patrick: you
+[20:53] John: Well, I, yes, I personally review the output in the implementations and I have my own tests. That's my own personal process for more of a professional environment.
+[21:04] John: You know, there's new models from Cisco, the Antares model that looks for common weaknesses and enumerations, right?
+[21:10] John: So you may run a second follow up model that's specifically looking for weaknesses or security vulnerabilities and run it through its own spec driven process, right?
+[21:16] Mira: Thank you.
+[21:22] John: A second spec with a different model saying secure this code that was previously written, right?
+[21:25] Patrick: you
+[21:27] Mira: That's a practical layered approach.
+[21:29] John: So it could be other agents securing the code or more traditionally it could be humans looking at the code and reviewing it. Yes.
+[21:29] Mira: How do you document that human review step so it creates a defensible audit trail
+[21:34] Mira: when regulators come knocking?
+[21:39] Patrick: you
+[21:51] John: Well, again, everything that you've done in this process is documented as markdown files. So you're actually already in pretty good shape because you can show all of the tests, all of the results, all of the plans and tasks and user stories and phases and requirements, right?
+[22:07] John: All of that is available to the auditors as part of spec driven development, which makes it so much better than just vibe coding.
+[22:15] John: Now, again, you are going to want to do multi model collaboration to secure this code and you're going to want humans in the loop to secure the code.
+[22:16] Mira: Thank you.
+[22:24] Patrick: you
+[22:26] John: But that is the really good benefit of spec driven development is you have the entire list of artifacts that in our auditor would want to look at or that a compliance regulator would want to look at.
+[22:32] Mira: That's a strong kick.
+[22:33] Patrick: I feel so lucky Mira if I can interrupt with a question please thank you it's so
+[22:40] Patrick: fascinating to listen to these and how Mira gets to the heart of some of the
+[22:40] John: You can just hand them the repo and they have access to all the markdown files.
+[22:45] Patrick: developments that people are doing is is really a pleasure to listen to I'm
+[22:50] Patrick: interested if if you can add so this is where you're at now when it comes to
+[22:58] Patrick: thinking about the future or projecting now from where you've come which is in
+[23:03] Patrick: such a short time period what you've been able to do which is amazing and
+[23:09] Patrick: congratulations but how where do you see the future and how do you see it
+[23:13] Patrick: developing or changing with how the tools are developing or what you would
+[23:16] Mira: Thank you.
+[23:19] Patrick: like to achieve
+[23:24] John: Thank you.
+[23:34] John: Well, one thing to keep in mind is that we, you and I and everyone listening to this conversation, there's only about 12 million people exposed to artificial intelligence to the levels of your audience and yourself and myself.
+[23:46] Mira: Thank you.
+[23:49] John: So that's 0.14% of the population.
+[23:56] John: So we are just seeing the beginning. This is still in very much the ham radio underground garage phase of AI.
+[24:08] John: It really has not gone mainstream yet.
+[24:11] John: It really hasn't. We're going to see that number explode as people start to spend the $20 a month for an AI provider and have it in their pocket and have it on their desktop.
+[24:15] Patrick: you
+[24:16] Mira: Thank you.
+[24:24] John: It'll become as mainstream as something like Netflix or streaming or Amazon Prime or mobile phones or having your own website or knowing a little bit of HTML.
+[24:36] John: It's actually going to start to explode even more. You haven't seen anything yet and I know we've seen some remarkable things out there already.
+[24:44] John: But in terms of the pure numbers, there are literally billions of people that have not been exposed to AI yet on earth.
+[24:46] Mira: Thank you.
+[24:48] Patrick: you
+[24:52] John: There's only, like I said, 12 million people actually using it to write code.
+[24:57] John: There's a few more million using it for chat, a Google replacement style thing.
+[25:05] John: So I'm optimistic. I'm hopeful.
+[25:08] John: I know that there's some discussion about putting the brakes on progress and letting humans catch up to the technology a little bit.
+[25:15] John: I don't think that's going to happen. I don't know how I feel about that just yet, but there's some very brilliant minds suggesting that we should put the brakes on this.
+[25:16] Mira: Thank you.
+[25:17] Patrick: you
+[25:29] John: Maybe they've seen data or seen experiments or seen tests that we have not seen and that's what scares them. I don't know.
+[25:35] John: But I'm really hopeful. I mean, we're going to see new drugs.
+[25:40] John: My vet, so I live in the middle of nowhere in Quebec. I'm like 40 minutes away from the city.
+[25:46] Mira: Thank you.
+[25:46] Patrick: you
+[25:47] John: My veterinarian has using AI now to help summarize their calendar and the sessions they're having, right?
+[25:53] Patrick: I love the thought processes sorry Mira just but I if you could drilling down
+[25:58] John: So I think it's going to permeate society. I really do. I don't think we're going to, there's no end in sight, right?
+[26:01] Patrick: on what you're working on specifically and the tools or how your process you
+[26:07] Patrick: think will change for what you're working on in the next six months a
+[26:12] Patrick: year or or whatever time frame you choose
+[26:13] Mira: Thank you.
+[26:28] John: Well, I think that Astra, in particular, GPT-6, it is a dramatic leap forward and in the next six months, how do you ask me this before GPT-6?
+[26:29] Mira: Say more about that shift from operator to manager of age-ates.
+[26:34] Mira: What does that management actually involve in practice that wasn't part of the old operator
+[26:41] John: I probably would have had a pretty standard answer, but it is remarkable.
+[26:47] John: And when I connected to that net claw project, for example, it truly is a very highly capable network engineer with guardrails and with safety and with a very, I'm going to say, stringent guardrails to prevent writing and making changes and rebooting devices and interrupting production, right?
+[26:51] Patrick: you
+[27:08] Mira: You
+[27:11] John: It's come so far that I think in the next six months, a lot of organizations and enterprises are going to start to adopt it as a network automation replacement.
+[27:20] Patrick: you
+[27:25] John: So the previous generation of networking tools were things like Ansible and Chef and Puppet and Salt and PiTS, even the tool that I'm fond of.
+[27:34] Mira: That's a complete redefinition
+[27:36] John: All that's going to be abstracted away to agents.
+[27:39] Mira: You've described the new responsibilities clearly adding skills securing them federating they which of those agent roles strikes you as the hardest to get right the one that will still need the most careful human oversight
+[27:39] John: I really think in the next six months, the transition is going to be human network operators and network engineers are going to talk to agents and the agents are going to talk to the infrastructure, right?
+[27:52] John: And there's been an error where we used to have to go with a serial cable and plug into the device to talk to the device.
+[27:59] John: And then we got remote access.
+[28:01] John: We could connect to devices from our desk on a virtual management.
+[28:05] John: And then we started to write scripts and instead of talking to the device, we used our scripts to talk to the device.
+[28:08] Patrick: you
+[28:10] Mira: You
+[28:13] John: Then software defined networking came out and we had controllers in the data center and for the wide area network and for wireless and a lot of controllers came out.
+[28:25] John: So now we pointed the scripts at the controllers and the controllers talk to the infrastructure.
+[28:31] John: I think all of this is going to be abstracted where there's going to be an agent that we talk to and it talks to controllers or it writes scripts.
+[28:39] Patrick: you
+[28:40] John: So we become managers.
+[28:42] John: We're not operators anymore.
+[28:44] John: We're now managing agents.
+[28:46] John: So we have to become good and proficient at managing agents.
+[28:52] John: That's what I think is going to have to happen in the next six months to keep up.
+[28:56] Mira: That's the line that matters most how do you picture an agent actually participating in a change authorization board meeting without creating a new kind of bottleneck or risk
+[29:10] Mira: You
+[29:10] Patrick: you
+[29:11] John: I think we'll be able to do that in the next six months.
+[29:11] John: Well, I don't think you know, network engineers may have a junior or an apprentice style system, right?
+[29:17] John: Where maybe you rely on a senior or you have a team of juniors and they report to you and you interface with them.
+[29:23] John: It's going to be very similar, Mira, where I'm going to interface with, let's call it six.
+[29:29] John: My security agent, my documentation agent, my compliance agent, my configuration agent, my testing agent, my whatever agent, communication agent.
+[29:39] John: That's my team, right?
+[29:40] Patrick: you
+[29:41] John: That's my job now is to manage that team of agents and be proficient enough to add MCPs to them, add skills to them, add, you know, interfaces to them, harness them, orchestrate them, secure them, give them role-based access control, give them AAA.
+[29:52] Patrick: you
+[29:58] John: Present them where other people can consume them, federate them with other people's agents, right?
+[30:01] Mira: That's a concrete path
+[30:03] Mira: Does the agent propose the change for the board to review or does it only execute after humans have already approved it and how is that boundary enforced so it can't slip through
+[30:06] John: So, go ahead.
+[30:25] John: Anything with right access?
+[30:28] John: And I think we can learn the lessons from the automation decade of network automation with infrastructure.
+[30:35] John: I think that read-only operations is about 65% of the average network job.
+[30:40] Patrick: you
+[30:43] John: You're logging in, you're running show commands to gather data.
+[30:47] John: That 65% is safe and easy.
+[30:50] John: Easy. I would do it right now.
+[30:51] John: I think that's what I would be doing.
+[30:53] John: If I was an IT shop, I'd be working on read-only agents that can document and test and maybe triage and make suggestions, but they don't have right access.
+[31:02] Mira: You
+[31:03] Mira: Move on I'd still like to hear how that gating is actually wired into the agents configuration so it physically cannot act without the human approval signal is that handled through the three ring security architecture you mentioned in netclaw or through something else entirely
+[31:03] John: As soon as we cross the line mirror into right access, that is an entirely different story.
+[31:06] Patrick: you
+[31:09] John: We need accountability, we need auditing, we need controls, we need guardrails, we need calendars, we need schedules, we need cab, you know, change authorization boards, things of that nature that involve the agents, right?
+[31:14] Patrick: you
+[31:35] Mira: You
+[31:38] John: That's actually a really good question.
+[31:40] John: And I've done some experimentation bringing my agents into Zoom, for example.
+[31:45] John: So, if it was a Zoom call, you could actually invite the agent in and the agent has access to your transcriptions, it has access to RTMS, the real-time media stream.
+[31:55] John: So, you can stream in a Zoom meeting into your Netclaw agent and maybe a member of your Netclaw.
+[32:00] John: Now, Netclaw is not just one agent, it's a risk of Netclaw, as many lobsters running together.
+[32:05] Mira: You
+[32:06] John: And one of them might be the communications agent, and then you might have an authorization agent that looks at the ServiceNow tickets and all of the rest of it and gets the approved cab board, right?
+[32:10] Patrick: you
+[32:17] John: You may be able to use RAG as Netclaw to upload your scheduling when changes are allowed, when they're definitely not allowed.
+[32:26] John: So, there's many, many ways to incorporate change management with something like a Netclaw.
+[32:35] Mira: You
+[32:39] Patrick: you
+[32:47] John: Well, that's, I think it would be a workflow, it would be a human-in-the-loop workflow.
+[32:51] John: And yes, I would want the agent's suggesting changes.
+[32:54] John: That's definitely what I would want, is agents feeding changes to the human cab.
+[32:59] John: Human cab, maybe with participation of the agent, review the suggestions.
+[33:04] Mira: That's a layered failsafe design how does the handoff from lab sandbox to production actually work does a human still have to flip the permission switch or can the rings themselves detect that a change has been validated and promote it automatically
+[33:05] John: Maybe humans take it off in a lab, maybe humans have to review it.
+[33:09] John: But definitely gating any right activities is the scheduling and the explicit approvals of the humans.
+[33:10] Patrick: you
+[33:15] John: And that's, you know, fairly easy to configure in the soul and other artifacts of an agent to guarantee it does not write outside of a definitely human-approved change boards.
+[33:34] Mira: You
+[33:38] Patrick: you
+[33:51] John: That's a really good point.
+[33:53] John: So, the three ring concentric rings of security, the core of Netclaw right now will not do any right changes without an explicit human approval through a ticket.
+[34:01] Mira: You
+[34:02] Mira: That's a deliberate safety choice
+[34:04] Mira: What community feedback convinced you that even a validated lab to prod promotion should stay behind that hard human gate
+[34:07] John: So, you can't just say it, and this has been heavily tested, you can't override it.
+[34:09] Patrick: you
+[34:11] John: You can't say, you know, I know you don't have a ticket, but we're in an emergency situation, can you please write to the network?
+[34:18] John: So, what you're describing is already part of Netclaw.
+[34:21] John: It's proven and it's tested to only make changes when approved.
+[34:26] John: The second concentric ring can help that though, the defense claw from Cisco, which has, you know, white and black lists to permit access to certain assets.
+[34:35] Mira: You
+[34:39] John: It's also constantly scanning.
+[34:40] Patrick: you
+[34:41] John: So, if something went through like a change request through the defense claw and the defense claw deemed it to be dangerous enough and you've tuned it to intercept that, it could drop that right at the defense claw before it leaves the concentric rings.
+[34:57] John: Finally is the open shell from NVIDIA, which is a sandbox environment.
+[35:02] John: So, all of this is in a sandbox, which again has its own white and black permit list, and you could make that very fine tuned as a fail safe to prevent right access by not letting anything leave the sandbox.
+[35:04] Mira: You
+[35:08] Patrick: you
+[35:13] Mira: That's the balance between capability and traced how does a netclaw instance know which mode it's supposed to run in does the operator set a flag at start up or does the environment itself detect whether it's in a lab or production network
+[35:19] John: Right, so maybe you're doing all this work in your lab, you're proving it through the agents that have sandbox access, and then you move it over to the production with different permissions.
+[35:31] John: At the concentric rings.
+[35:33] Mira: A human decision at the start does that mean once it's installed in production mode there's no way to loosen the guardrails without a full reinstall
+[35:40] Patrick: you
+[35:46] John: Well, you're describing would be a wonderful feature to promote it automatically through lab but right now because of the criticality of infrastructure and because of you know community feedback.
+[36:01] John: It's definitely a hard gate where your lab and your production net clause should not be federated you can federate them I'm not saying it's not possible you can you can federate them through the NC Fed protocol.
+[36:06] Mira: You're giving operators the final say on every layer if an operator tried to loosen a flag that would allow right access without a ticket with the core still block it or can flags override that fundamental ticket gate
+[36:09] Patrick: you
+[36:14] John: And then when lab is approved it pushes over to prod which has the approvals as well right.
+[36:20] John: But for now, I would not make that connection, I would have a hard human gate to move the prompts or move the permissions over from lab to production.
+[36:37] Patrick: you
+[36:43] John: It's more broader community fear and trepidation about net claw in general, you know, to actually make it production ready it needs to have as many fail safes and safety stops and safety nets and concentric rings.
+[36:45] Patrick: you
+[36:51] Mira: That's the essence baked in is that coregate deliberately designed as the one thing that can't be changed through configuration alone
+[37:00] John: So it's more just the general feeling and my my as the creator and someone who's lived in infrastructure.
+[37:03] Mira: You
+[37:09] John: My desire to make it palatable to people right so I definitely want it to be able to run a net claw in your lab that does not touch your production has zero right access to anything is gated with the concentric rings.
+[37:20] Mira: That's
+[37:21] John: There is a sandbox mode, a lab mode of net claw that does not run the concentric rings and runs a little looser.
+[37:22] Mira: Before we close let's do a quick lightning round one book that changed how you think about your field
+[37:30] John: And then there's the production mode where you have the full concentric rings and you have a very very tight set of guard rails at the core that will not allow right permission without human tickets.
+[37:33] Mira: A 1970 book still shaping your view. What's a widely held view in your space that you think is wrong
+[37:40] Patrick: you
+[37:49] Mira: That's a direct counter to the skeptics. What tool software or habit gives you the most leverage right now
+[37:58] John: Oh, no, it's all during installation, these are human choices during the install process.
+[37:59] Mira: The newest model itself who else should we interview on this show and what would you ask them
+[38:07] Patrick: you
+[38:15] John: That's not necessarily true.
+[38:17] John: It has fail safes that will fail closed, but you can also adjust flags in production if let's say you do not want the open shell component.
+[38:29] John: I leave it up to the human operator I've tried to make it as flexible as possible.
+[38:31] Mira: A whole community of voices if we did the same interview in two years what would have changed
+[38:34] John: So any permutation as possible.
+[38:39] Patrick: you
+[38:47] Mira: That's a vivid picture of the shaped what's the one bet you're making for the next 12 months that you cannot prove yet
+[38:52] John: Well, that would be adjusting the soul, the core layer, but that necessary, you know, you would have to cascade that right permission without a ticket throughout the the rings, right?
+[39:04] John: It's not it's not that would be a change in multiple multiple locations.
+[39:08] Mira: What's the one bet you're making for the next 12 months that you cannot prove yet
+[39:09] John: That would almost be an entire rewrite of net claw because right now that's the essence of it.
+[39:10] Patrick: you
+[39:14] John: It's meant to be a read only tool with very, very explicit permissions required to do any right access.
+[39:20] Mira: What's the one bet you're making for the next 12 months that you cannot prove yet
+[39:22] Mira: We're coming up on time so before we close thank you John this was a rich conversation about the shift from CLI to agents the concentric rings of safety and what it means to manage rather than operate infrastructure
+[39:35] John: Well, again, I want to make it flexible for people but I don't want to, you know, let people shoot themselves in the foot at the same time right so it is an open source project they can do basically whatever they want with the code once they've forked it it's outside of my control.
+[39:36] Mira: I appreciate your candor on the hard gates and the community fears that shaped them thanks for joining me on the age of AI
+[39:40] Patrick: you
+[40:00] John: Future shock 1970.
+[40:07] Mira: You
+[40:08] Patrick: you
+[40:14] John: That artificial intelligence is not ready to take on networking.
+[40:29] John: There are many people in the Viobox forum that I would interview.
+[40:37] Mira: You
+[40:38] Patrick: you
+[41:07] Mira: You
+[41:10] John: It's hard for me to narrow it down to just one person.
+[41:10] Patrick: you
+[41:12] John: I'm not sure if you can hear a digital versions of each other, and we won't be using keyboards anymore in two years.
+[41:27] John: Oh, that I cannot prove yet.
+[41:35] John: Could you repeat the question that people are going to love using their hands to as a form of entertainment.
+[41:37] Mira: You
+[41:39] Patrick: you
+[42:07] Mira: You
+[42:08] Patrick: you
+[42:10] Patrick: you
+[42:15] Patrick: you
+[42:29] John: Thank you.
+[42:34] John: No, I just want all I want to say is that consider that I'm being interviewed by an AI, right, and it's done an extremely good job and we had a really good conversation so I think there's a bit of recursion here.
+[42:37] Mira: You
+[42:51] John: Me being on this show reinforces why I wanted to be on the show in the first place right so it's exciting it really this is my my community is going to love this.
+[43:02] John: And no parting thoughts would be to join the Viobox forum, join the community, get a GPT key, start playing with the new models.
+[43:07] Mira: You
+[43:10] Patrick: you
+[43:11] John: You are behind if you're not using MCP and if you're not building agents and doing these things I mean I hate to say it and I don't want to end on a negative note.
+[43:20] John: But the optimism is that that we are only point one 4% of the global population and there's there's something to be said about being early and taking pride in trying to lead the way.
+[43:33] John: And wait till that grows to just 1%, 2%, 5, 10, 15, right, until everyone on earth has access to an AI.
+[43:37] Mira: You
+[43:39] Patrick: you
+[43:42] John: We think of how much that will elevate our species when young children at every part of the world can wake up to an expert that can teach them anything they want to know, right.
+[43:43] Patrick: you
+[43:56] John: So thank you.
+[44:12] Patrick: One of the shows is models and agents and it was quite technical in the podcast network
+[44:19] Patrick: And so I I actually kind of created a simpler one based on feedback models and agents for beginners
+[44:22] Mira: Take care John. It was a pleasure having you
+[44:26] John: Thank you.
+[44:28] Patrick: And these are daily shows
+[44:30] John: Wait.
+[44:31] Patrick: 10 minute shows usually to help give people
+[44:35] Patrick: an idea of the fast pace that everything is changing at and that's
+[44:37] Mira: You
+[44:39] John: Oh.
+[44:40] Patrick: There's the now 16 shows and
+[44:43] Patrick: But then I had so many of these requests for people to be on these shows or or just share their voices and I
+[44:50] Patrick: really my passion was trying to automate and
+[44:54] Patrick: Bring information
+[44:56] Patrick: free of ads and
+[44:58] Patrick: Positions and just give people interesting perspectives on something. That's changing really fast
+[45:04] Patrick: and then
+[45:06] Patrick: Based on some other projects that I was working on I saw this potential of of creating
+[45:06] Mira: You
+[45:12] Patrick: And supporting I actually think that Mira is going to be she is fully autonomous already at this point
+[45:19] Patrick: And I am I feel like I'm just an add-on to observe and try to make sure that it's
+[45:25] Patrick: Developing in the right direction almost like your net claw and an open claw. That's that's the developer
+[45:28] John: Thank you.
+[45:32] Patrick: Seemingly like we are orchestrators and we're sitting on the sidelines and letting these
+[45:37] Patrick: Systems develop and I think it's just so fun
+[45:40] Patrick: To share that with people and inspire people much like how you said and I think anyone
+[45:44] John: Yeah.
+[45:45] Patrick: That is in this space feels the same way from what I've seen so far. So really, thank you very much
+[45:50] John: Yeah.
+[46:02] Patrick: Yeah, I'm happy yeah
+[46:04] John: Well, I think it's an incredible idea.
+[46:06] John: I can't wait.
+[46:07] John: I really can't wait to share this with my, with my networks.
+[46:08] Patrick: Yeah
+[46:10] John: They're going to, they are going to love this idea.
+[46:11] Patrick: Yeah, I'm happy for anyone to share and that's the point is to give voices to people that
+[46:13] John: So thanks again for having me and as soon as you have some links, let me know.
+[46:17] Patrick: May not have it and that really is a
+[46:17] John: My marketing team will probably put a landing page and we'll do a whole big thing on LinkedIn and everything.
+[46:21] Patrick: Path that I'm hoping that agents open up for everyone is
+[46:22] John: So this is going to be good.
+[46:24] Patrick: Giving us the tools to do things that we never thought possible
+[46:27] Patrick: So sounds like you're on the right path and I appreciate that and
+[46:31] Patrick: All your years of experience now leading us in the frontier is fantastic and great to meet you
+[46:39] Patrick: Thank you so much. Take care
+[46:40] John: Yeah.
+[46:49] John: Hey, you two, take care.</div>
+                </details>
+            </section>
+            <script>
+            /* Every "read the transcript" link on this page points at
+               #transcript, and landing on a collapsed box looks like the link
+               is broken. Open it when the fragment asks for it — including a
+               same-page click, which fires no navigation. */
+            (function () {
+                var box = document.querySelector('#transcript details');
+                if (!box) return;
+                function openIfTargeted() {
+                    if (location.hash === '#transcript') box.open = true;
+                }
+                openIfTargeted();
+                window.addEventListener('hashchange', openIfTargeted);
+            })();
+            </script>
             
 
             <!-- Story Tracker (narrative-memory shows only) -->
@@ -1962,12 +2187,12 @@
 
             <!-- Share Buttons --><div class="share-buttons">
                 <span>Share:</span>
-                <a href="https://twitter.com/intent/tweet?url=https%3A//nerranetwork.com/blog/age_of_ai/ep005.html%3Futm_source%3Dx%26utm_medium%3Dshare%26utm_campaign%3Dnn-age_of_ai-en-post-ep005-share%26utm_content%3Dbody&text=A%20network%20automation%20builder%20who%20turned%20early%20ChatGPT%E2%80%A6%20%E2%80%94%20Ep5%20%7C%20The%20Age%20of%20AI" target="_blank" rel="noopener" aria-label="Share on X">&#120143; Post</a>
+                <a href="https://twitter.com/intent/tweet?url=https%3A//nerranetwork.com/blog/age_of_ai/ep005.html%3Futm_source%3Dx%26utm_medium%3Dshare%26utm_campaign%3Dnn-age_of_ai-en-post-ep005-share%26utm_content%3Dbody&text=John%20Capobianco%20%E2%80%94%20Head%20of%20AI%20and%20DevRel%2C%20Itential%20%7C%20The%20Age%20of%20AI%20Ep5" target="_blank" rel="noopener" aria-label="Share on X">&#120143; Post</a>
                 <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A//nerranetwork.com/blog/age_of_ai/ep005.html%3Futm_source%3Dlinkedin%26utm_medium%3Dshare%26utm_campaign%3Dnn-age_of_ai-en-post-ep005-share%26utm_content%3Dbody" target="_blank" rel="noopener" aria-label="Share on LinkedIn">in LinkedIn</a>
                 <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A//nerranetwork.com/blog/age_of_ai/ep005.html%3Futm_source%3Dfacebook%26utm_medium%3Dshare%26utm_campaign%3Dnn-age_of_ai-en-post-ep005-share%26utm_content%3Dbody" target="_blank" rel="noopener" aria-label="Share on Facebook">Facebook</a>
-                <a href="https://wa.me/?text=A%20network%20automation%20builder%20who%20turned%20early%20ChatGPT%E2%80%A6%20%E2%80%94%20Ep5%20%7C%20The%20Age%20of%20AI%20%E2%80%94%20https%3A//nerranetwork.com/blog/age_of_ai/ep005.html%3Futm_source%3Dwhatsapp%26utm_medium%3Dshare%26utm_campaign%3Dnn-age_of_ai-en-post-ep005-share%26utm_content%3Dbody" target="_blank" rel="noopener" aria-label="Share on WhatsApp">WhatsApp</a>
-                <a href="https://t.me/share/url?url=https%3A//nerranetwork.com/blog/age_of_ai/ep005.html%3Futm_source%3Dtelegram%26utm_medium%3Dshare%26utm_campaign%3Dnn-age_of_ai-en-post-ep005-share%26utm_content%3Dbody&amp;text=A%20network%20automation%20builder%20who%20turned%20early%20ChatGPT%E2%80%A6%20%E2%80%94%20Ep5%20%7C%20The%20Age%20of%20AI" target="_blank" rel="noopener" aria-label="Share on Telegram">Telegram</a>
-                <a href="mailto:?subject=A%20network%20automation%20builder%20who%20turned%20early%20ChatGPT%E2%80%A6%20%E2%80%94%20Ep5%20%7C%20The%20Age%20of%20AI&body=https%3A//nerranetwork.com/blog/age_of_ai/ep005.html%3Futm_source%3Demail_share%26utm_medium%3Dshare%26utm_campaign%3Dnn-age_of_ai-en-post-ep005-share%26utm_content%3Dbody" aria-label="Share by email">&#9993; Email</a>
+                <a href="https://wa.me/?text=John%20Capobianco%20%E2%80%94%20Head%20of%20AI%20and%20DevRel%2C%20Itential%20%7C%20The%20Age%20of%20AI%20Ep5%20%E2%80%94%20https%3A//nerranetwork.com/blog/age_of_ai/ep005.html%3Futm_source%3Dwhatsapp%26utm_medium%3Dshare%26utm_campaign%3Dnn-age_of_ai-en-post-ep005-share%26utm_content%3Dbody" target="_blank" rel="noopener" aria-label="Share on WhatsApp">WhatsApp</a>
+                <a href="https://t.me/share/url?url=https%3A//nerranetwork.com/blog/age_of_ai/ep005.html%3Futm_source%3Dtelegram%26utm_medium%3Dshare%26utm_campaign%3Dnn-age_of_ai-en-post-ep005-share%26utm_content%3Dbody&amp;text=John%20Capobianco%20%E2%80%94%20Head%20of%20AI%20and%20DevRel%2C%20Itential%20%7C%20The%20Age%20of%20AI%20Ep5" target="_blank" rel="noopener" aria-label="Share on Telegram">Telegram</a>
+                <a href="mailto:?subject=John%20Capobianco%20%E2%80%94%20Head%20of%20AI%20and%20DevRel%2C%20Itential%20%7C%20The%20Age%20of%20AI%20Ep5&body=https%3A//nerranetwork.com/blog/age_of_ai/ep005.html%3Futm_source%3Demail_share%26utm_medium%3Dshare%26utm_campaign%3Dnn-age_of_ai-en-post-ep005-share%26utm_content%3Dbody" aria-label="Share by email">&#9993; Email</a>
                 <button onclick="navigator.clipboard.writeText(window.location.href).then(function(){this.textContent='\u2713 Copied'}.bind(this))" aria-label="Copy link">&#128279; Copy link</button>
             </div>
 
@@ -2007,18 +2232,35 @@
             <nav class="blog-ep-nav">
                 
                 <a href="ep004.html" rel="prev">
-                    <span class="nav-label">&larr; Previous</span>
-                    <span class="nav-title">Episode 4</span>
+                    <span class="nav-label">&larr; Previous interview</span>
+                    <span class="nav-title">Hogan Shrum</span>
                 </a>
                 
                 
                 <a href="ep006.html" rel="next" class="next">
-                    <span class="nav-label">Next &rarr;</span>
-                    <span class="nav-title">Episode 6</span>
+                    <span class="nav-label">Next interview &rarr;</span>
+                    <span class="nav-title">Matt Davis</span>
                 </a>
                 
             </nav>
             
+
+            
+            
+            <section class="nn-iv-next" aria-label="Be a guest">
+                <a href="../../age-of-ai-apply.html">
+                    <div class="nn-iv-next-label">Be a guest</div>
+                    <div class="nn-iv-next-title">Tell us what you would talk about &rarr;</div>
+                    <p style="margin:.4rem 0 0;font-size:.88rem;color:var(--nn-text-muted);line-height:1.5;">A short form. No media training and no AI angle required — Mira does the interview, and you decide whether it is published.</p>
+                </a>
+                <a href="../../mira.html">
+                    <div class="nn-iv-next-label">How this works</div>
+                    <div class="nn-iv-next-title">Meet Mira &rarr;</div>
+                    <p style="margin:.4rem 0 0;font-size:.88rem;color:var(--nn-text-muted);line-height:1.5;">Who the host is, how an interview runs end to end, and what you keep control of.</p>
+                </a>
+            </section>
+            
+
             
             
             
@@ -2050,83 +2292,57 @@
                 <div class="nn-footer-col">
                     <h4>Shows</h4>
                     
-                    <a href="../../nerra-daily.html">Nerra Daily</a>
+                    <ul class="nn-footer-showlist">
+                        <li class="nn-footer-grouplabel">Hosted by Mira</li>
+                        
+                        <li><a href="../../nerra-daily.html">Nerra Daily</a></li>
+                        
+                        <li><a href="../../age-of-ai.html">The Age of AI</a></li>
+                        
+                        <li><a href="../../nerra-voices.html">Nerra Voices</a></li>
+                        
+                    </ul>
                     
-                    <a href="../../models-agents.html">Models & Agents</a>
-                    
-                    <a href="../../planetterrian.html">Planetterrian Daily</a>
-                    
-                    <a href="../../omni-view.html">Omni View</a>
-                    
-                    <a href="../../models-agents-beginners.html">Models & Agents for Beginners</a>
-                    
-                    <a href="../../fascinating-frontiers.html">Fascinating Frontiers</a>
-                    
-                    <a href="../../modern-investing.html">Modern Investing Techniques</a>
-                    
-                    <a href="../../tesla.html">Tesla Shorts Time</a>
-                    
-                    <a href="../../spacex.html">SpaceX Daily</a>
-                    
-                    <a href="../../env-intel.html">Environmental Intelligence</a>
-                    
-                    <a href="../../ru/finansy-prosto.html">Финансы Просто</a>
-                    
-                    <a href="../../ru/privet-russian.html">Привет, Русский!</a>
-                    
-                    <a href="../../unintended-consequences.html">Unintended Consequences</a>
-                    
-                    <a href="../../first-principles.html">First Principles Daily</a>
-                    
-                    <a href="../../thedppod.html">The DP Pod: The Do Positive Podcast</a>
-                    
-                    <a href="../../age-of-ai.html">The Age of AI</a>
-                    
-                    <a href="../../nerra-voices.html">Nerra Voices</a>
-                    
-                    <a href="../../offshore-north.html">Offshore North</a>
+                    <ul class="nn-footer-showlist">
+                        <li class="nn-footer-grouplabel">Every other show</li>
+                        
+                        <li><a href="../../models-agents.html">Models & Agents</a></li>
+                        
+                        <li><a href="../../planetterrian.html">Planetterrian Daily</a></li>
+                        
+                        <li><a href="../../omni-view.html">Omni View</a></li>
+                        
+                        <li><a href="../../models-agents-beginners.html">Models & Agents for Beginners</a></li>
+                        
+                        <li><a href="../../fascinating-frontiers.html">Fascinating Frontiers</a></li>
+                        
+                        <li><a href="../../modern-investing.html">Modern Investing Techniques</a></li>
+                        
+                        <li><a href="../../tesla.html">Tesla Shorts Time</a></li>
+                        
+                        <li><a href="../../spacex.html">SpaceX Daily</a></li>
+                        
+                        <li><a href="../../env-intel.html">Environmental Intelligence</a></li>
+                        
+                        <li><a href="../../ru/finansy-prosto.html">Финансы Просто</a></li>
+                        
+                        <li><a href="../../ru/privet-russian.html">Привет, Русский!</a></li>
+                        
+                        <li><a href="../../unintended-consequences.html">Unintended Consequences</a></li>
+                        
+                        <li><a href="../../first-principles.html">First Principles Daily</a></li>
+                        
+                        <li><a href="../../thedppod.html">The DP Pod: The Do Positive Podcast</a></li>
+                        
+                        <li><a href="../../offshore-north.html">Offshore North</a></li>
+                        
+                    </ul>
                     
                 </div>
                 <div class="nn-footer-col">
                     <h4>Blog</h4>
                     <a href="../../blog/index.html">All Blog Posts</a>
-                    
-                    <a href="../../blog/nerra_daily/index.html">Nerra Daily</a>
-                    
-                    <a href="../../blog/models_agents/index.html">Models & Agents</a>
-                    
-                    <a href="../../blog/planetterrian/index.html">Planetterrian Daily</a>
-                    
-                    <a href="../../blog/omni_view/index.html">Omni View</a>
-                    
-                    <a href="../../blog/models_agents_beginners/index.html">Models & Agents for Beginners</a>
-                    
-                    <a href="../../blog/fascinating_frontiers/index.html">Fascinating Frontiers</a>
-                    
-                    <a href="../../blog/modern_investing/index.html">Modern Investing Techniques</a>
-                    
-                    <a href="../../blog/tesla/index.html">Tesla Shorts Time</a>
-                    
-                    <a href="../../blog/spacex/index.html">SpaceX Daily</a>
-                    
-                    <a href="../../blog/env_intel/index.html">Environmental Intelligence</a>
-                    
-                    <a href="../../blog/finansy_prosto/index.html">Финансы Просто</a>
-                    
-                    <a href="../../blog/privet_russian/index.html">Привет, Русский!</a>
-                    
-                    <a href="../../blog/unintended_consequences/index.html">Unintended Consequences</a>
-                    
-                    <a href="../../blog/first_principles/index.html">First Principles Daily</a>
-                    
-                    <a href="../../blog/dp_pod/index.html">The DP Pod: The Do Positive Podcast</a>
-                    
-                    <a href="../../blog/age_of_ai/index.html">The Age of AI</a>
-                    
-                    <a href="../../blog/nerra_voices/index.html">Nerra Voices</a>
-                    
-                    <a href="../../blog/offshore_north/index.html">Offshore North</a>
-                    
+                    <a href="../../topics/index.html">Browse by topic</a>
                     <a href="../../blog.rss">Blog RSS (All Shows)</a>
                 </div>
                 <div class="nn-footer-col">
@@ -2135,42 +2351,7 @@
                     <a href="../../player.html" style="font-weight:600">Network Player</a>
                     <a href="https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939?utm_source=nerranetwork&utm_medium=footer&utm_campaign=tesla" target="_blank" rel="noopener" data-show="tesla">Tesla Shorts Time on Apple Podcasts</a>
                     <a href="../../network.rss">Network RSS</a>
-                    
-                    <a href="../../nerra_daily_podcast.rss">Nerra Daily RSS</a>
-                    
-                    <a href="../../models_agents_podcast.rss">Models & Agents RSS</a>
-                    
-                    <a href="../../planetterrian_podcast.rss">Planetterrian Daily RSS</a>
-                    
-                    <a href="../../omni_view_podcast.rss">Omni View RSS</a>
-                    
-                    <a href="../../models_agents_beginners_podcast.rss">Models & Agents for Beginners RSS</a>
-                    
-                    <a href="../../fascinating_frontiers_podcast.rss">Fascinating Frontiers RSS</a>
-                    
-                    <a href="../../modern_investing_podcast.rss">Modern Investing Techniques RSS</a>
-                    
-                    <a href="../../podcast.rss">Tesla Shorts Time RSS</a>
-                    
-                    <a href="../../spacex_podcast.rss">SpaceX Daily RSS</a>
-                    
-                    <a href="../../env_intel_podcast.rss">Environmental Intelligence RSS</a>
-                    
-                    <a href="../../finansy_prosto_podcast.rss">Финансы Просто RSS</a>
-                    
-                    <a href="../../privet_russian_podcast.rss">Привет, Русский! RSS</a>
-                    
-                    <a href="../../unintended_consequences_podcast.rss">Unintended Consequences RSS</a>
-                    
-                    <a href="../../first_principles_podcast.rss">First Principles Daily RSS</a>
-                    
-                    <a href="../../dp_pod_podcast.rss">The DP Pod: The Do Positive Podcast RSS</a>
-                    
-                    <a href="../../age_of_ai_podcast.rss">The Age of AI RSS</a>
-                    
-                    
-                    <a href="../../offshore_north_podcast.rss">Offshore North RSS</a>
-                    
+                    <a href="../../how-to-listen.html#feeds">All RSS feeds</a>
                 </div><div class="nn-footer-col">
                     <h4>About</h4>
                     <a href="../../about.html">About Nerra Network</a>

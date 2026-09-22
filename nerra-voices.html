@@ -92,6 +92,67 @@
     .skeleton-date { width: 30%; }
     .skeleton-text { width: 100%; }
     .skeleton-text.short { width: 60%; }
+
+/* ---------------------------------------------------------------------
+   Interview shows: the guest rail and the creator credit (Sep 21 2026).
+   Both render only when their context key is populated, which today means
+   the two Nerra Voices shows for the rail and every show for the credit.
+   --------------------------------------------------------------------- */
+.nn-guest-grid {
+    display: grid; gap: var(--sp-4);
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+.nn-guest-card {
+    border: 1px solid var(--nn-border); border-radius: 16px;
+    background: var(--nn-card); padding: 1.25rem 1.35rem;
+    display: flex; flex-direction: column; gap: 0.7rem;
+}
+.nn-guest-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 0.8rem;
+}
+.nn-guest-name { font-family: var(--font-heading); font-size: 1.28rem; line-height: 1.2; margin: 0; }
+.nn-guest-name a { color: inherit; text-decoration: none; }
+.nn-guest-name a:hover { color: var(--show-color); }
+.nn-guest-identifier {
+    font-family: var(--font-ui); font-size: 0.86rem; font-weight: 600;
+    color: var(--show-color); margin: 0.25rem 0 0;
+}
+.nn-guest-ep {
+    flex: none; font-family: var(--font-ui); font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--nn-text-muted);
+    border: 1px solid var(--nn-border); border-radius: 100px; padding: 2px 9px;
+}
+.nn-guest-hook {
+    margin: 0; font-size: 0.93rem; line-height: 1.5;
+    color: var(--nn-text-secondary);
+    display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.nn-guest-audio { width: 100%; height: 36px; border-radius: 8px; margin-top: auto; }
+.nn-guest-meta {
+    display: flex; flex-wrap: wrap; gap: 0.4rem;
+    font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted);
+    align-items: center;
+}
+.nn-guest-meta a { color: var(--show-color); text-decoration: none; font-weight: 600; }
+
+.nn-creator {
+    margin-top: var(--sp-6); border-top: 1px solid var(--nn-border);
+    padding-top: var(--sp-5); max-width: 68ch;
+}
+.nn-creator-label {
+    font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--nn-text-muted); margin-bottom: 0.35rem;
+}
+.nn-creator-name { font-family: var(--font-heading); font-size: 1.35rem; margin: 0 0 0.7rem; }
+.nn-creator p { line-height: 1.62; margin: 0 0 0.85rem; color: var(--nn-text-secondary); }
+.nn-creator-more {
+    font-family: var(--font-ui); font-size: 0.88rem;
+    display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;
+}
+.nn-creator-more a { color: var(--show-color); text-decoration: none; font-weight: 600; }
 </style>
 
 
@@ -173,7 +234,11 @@
                     <button class="nn-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">
                         Shows
                         <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </button><div class="nn-nav-dropdown-menu" role="menu">
+                    </button>
+                    <div class="nn-nav-dropdown-menu" role="menu">
+                        <a href="explore.html" role="menuitem" style="font-weight:600;border-bottom:1px solid var(--nn-border);padding-bottom:8px;margin-bottom:4px">
+                            Find your show
+                        </a>
                         
                         <span class="nn-nav-group-label">Hosted by Mira</span>
                         
@@ -283,10 +348,25 @@
                             All Blog Posts
                         </a>
                         
+                        <span class="nn-nav-group-label">Hosted by Mira</span>
+                        
                         <a href="blog/nerra_daily/index.html">
                             <picture><source type="image/webp" srcset="assets/covers/nerra-daily-400.webp"><img src="assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
                             Nerra Daily Blog
                         </a>
+                        
+                        <a href="blog/age_of_ai/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/age-of-ai-400.webp"><img src="assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                            The Age of AI Blog
+                        </a>
+                        
+                        <a href="blog/nerra_voices/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/nerra-voices-400.webp"><img src="assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Nerra Voices Blog
+                        </a>
+                        
+                        
+                        <span class="nn-nav-group-label">Every other show</span>
                         
                         <a href="blog/models_agents/index.html">
                             <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
@@ -358,20 +438,11 @@
                             The DP Pod: The Do Positive Podcast Blog
                         </a>
                         
-                        <a href="blog/age_of_ai/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/age-of-ai-400.webp"><img src="assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
-                            The Age of AI Blog
-                        </a>
-                        
-                        <a href="blog/nerra_voices/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/nerra-voices-400.webp"><img src="assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
-                            Nerra Voices Blog
-                        </a>
-                        
                         <a href="blog/offshore_north/index.html">
                             <picture><source type="image/webp" srcset="assets/covers/offshore-north-400.webp"><img src="assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
                             Offshore North Blog
                         </a>
+                        
                         
                     </div>
                 </li>
@@ -430,6 +501,8 @@
 <a href="#resources" onclick="document.getElementById('mobileMenu').classList.remove('open')">Resources</a>
 <a href="#faq" onclick="document.getElementById('mobileMenu').classList.remove('open')">FAQ</a>
 
+        <a href="explore.html" style="font-weight:600;">Find your show</a>
+        
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Hosted by Mira</div>
             
@@ -536,10 +609,25 @@
                 All Blog Posts
             </a>
             
+            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Hosted by Mira</div>
+            
             <a href="blog/nerra_daily/index.html" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="assets/covers/nerra-daily-400.webp"><img src="assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Daily Blog
             </a>
+            
+            <a href="blog/age_of_ai/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/age-of-ai-400.webp"><img src="assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                The Age of AI Blog
+            </a>
+            
+            <a href="blog/nerra_voices/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="assets/covers/nerra-voices-400.webp"><img src="assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
+                Nerra Voices Blog
+            </a>
+            
+            
+            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Every other show</div>
             
             <a href="blog/models_agents/index.html" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
@@ -611,20 +699,11 @@
                 The DP Pod: The Do Positive Podcast Blog
             </a>
             
-            <a href="blog/age_of_ai/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/age-of-ai-400.webp"><img src="assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
-                The Age of AI Blog
-            </a>
-            
-            <a href="blog/nerra_voices/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/nerra-voices-400.webp"><img src="assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Voices Blog
-            </a>
-            
             <a href="blog/offshore_north/index.html" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="assets/covers/offshore-north-400.webp"><img src="assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
                 Offshore North Blog
             </a>
+            
             
         </div>
         <div class="nn-mobile-shows">
@@ -714,27 +793,7 @@
             </form>
         </div>
     </section>
-    
-
     <!-- Latest Episode -->
-    <section class="nn-section" style="padding-top: var(--sp-8);">
-        <div class="container">
-            <div class="latest-episode glass-card" id="latest-player">
-                <div class="latest-episode-label">Latest Episode</div>
-                <div class="latest-episode-title" id="latest-title">Loading...</div>
-                <div class="latest-episode-date" id="latest-date"></div>
-                <audio id="latest-audio" controls preload="none" aria-label="Latest episode audio player" style="width:100%;height:42px;border-radius:8px;"></audio>
-                
-                <div id="latest-langs" style="display:none;margin-top:10px;align-items:center;flex-wrap:wrap;gap:6px;" aria-label="Listen in another language"></div>
-                <div id="latest-summary" style="margin-top:var(--sp-4);color:var(--nn-text-muted);font-size:0.92rem;display:none;"></div>
-
-                
-                <noscript>
-                    
-                </noscript>
-            </div>
-        </div>
-    </section>
 
     
 
@@ -785,6 +844,8 @@
             <div class="nn-section-header" style="text-align:left;">
                 <h2>Recent Episodes</h2>
             </div>
+            
+            
             <div id="episodes-grid" class="episodes-grid">
                 
                 <div class="skeleton-card"><div class="skeleton-line skeleton-title"></div><div class="skeleton-line skeleton-date"></div><div class="skeleton-line skeleton-text"></div><div class="skeleton-line skeleton-text short"></div></div>
@@ -792,6 +853,7 @@
                 <div class="skeleton-card"><div class="skeleton-line skeleton-title"></div><div class="skeleton-line skeleton-date"></div><div class="skeleton-line skeleton-text"></div><div class="skeleton-line skeleton-text short"></div></div>
                 
             </div>
+            
             <div style="text-align:center;margin-top:var(--sp-6);">
                 <a href="nerra-voices-summaries.html" class="nn-btn">View All Episodes</a>
             </div>
@@ -813,6 +875,26 @@
                 <p>Hosted by Mira — the Nerra Network's AI documentarian. Guest triage, editorial review, and final publication are curated by Patrick in Vancouver; every guest approves their transcript before release.</p>
                 
             </div>
+
+            
+            
+            <div class="nn-creator">
+                <div class="nn-creator-label">Who makes this</div>
+                <h3 class="nn-creator-name">Patrick Novak</h3>
+                
+                <p>Patrick Novak created the Nerra Network and runs it from Vancouver. He chooses what the shows cover, writes the instructions they are made from, and listens to what comes out. No episode of anything here carries an ad or a sponsor.</p>
+                
+                <p>On this show he is also the editor. He reads every application himself and decides whether an interview happens, and he reviews the finished episode before it is assembled — a gate with no timer, so nothing has ever published because a review ran late. He is not in the room while Mira is talking to a guest, and he does not answer for them afterwards: the guest reads their own transcript and decides whether it ships.</p>
+                
+                <p>Mira is his design. He writes and tunes the instructions she works from — how she opens, what she chases, when to stop talking — sets the editorial rules she is held to, and listens to what she did afterwards to decide what changes next time. No model is retrained; the work is the brief she is given and the judgement about what to change in it.</p>
+                
+                <p class="nn-creator-more">
+                    <a href="about.html">About the network</a>
+                    <span aria-hidden="true">·</span>
+                    <a href="ai-disclosure.html">How we use AI, in detail</a>
+                </p>
+            </div>
+            
         </div>
     </section>
 
@@ -1080,7 +1162,7 @@
                         </picture>
                         <div class="cross-network-card-info">
                             <div class="cross-network-card-name">The DP Pod: The Do Positive Podcast</div>
-                            <div class="cross-network-card-tagline">The club for people who do something about it — good news, honest numbers, one action a day.</div>
+                            <div class="cross-network-card-tagline">The club for people who do something about it — good news, honest numbers, one action a week.</div>
                         </div>
                     </a>
                     <a href="blog/dp_pod/index.html" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">Read blog &rarr;</a>
@@ -1138,83 +1220,57 @@
                 <div class="nn-footer-col">
                     <h4>Shows</h4>
                     
-                    <a href="nerra-daily.html">Nerra Daily</a>
+                    <ul class="nn-footer-showlist">
+                        <li class="nn-footer-grouplabel">Hosted by Mira</li>
+                        
+                        <li><a href="nerra-daily.html">Nerra Daily</a></li>
+                        
+                        <li><a href="age-of-ai.html">The Age of AI</a></li>
+                        
+                        <li><a href="nerra-voices.html">Nerra Voices</a></li>
+                        
+                    </ul>
                     
-                    <a href="models-agents.html">Models & Agents</a>
-                    
-                    <a href="planetterrian.html">Planetterrian Daily</a>
-                    
-                    <a href="omni-view.html">Omni View</a>
-                    
-                    <a href="models-agents-beginners.html">Models & Agents for Beginners</a>
-                    
-                    <a href="fascinating-frontiers.html">Fascinating Frontiers</a>
-                    
-                    <a href="modern-investing.html">Modern Investing Techniques</a>
-                    
-                    <a href="tesla.html">Tesla Shorts Time</a>
-                    
-                    <a href="spacex.html">SpaceX Daily</a>
-                    
-                    <a href="env-intel.html">Environmental Intelligence</a>
-                    
-                    <a href="ru/finansy-prosto.html">Финансы Просто</a>
-                    
-                    <a href="ru/privet-russian.html">Привет, Русский!</a>
-                    
-                    <a href="unintended-consequences.html">Unintended Consequences</a>
-                    
-                    <a href="first-principles.html">First Principles Daily</a>
-                    
-                    <a href="thedppod.html">The DP Pod: The Do Positive Podcast</a>
-                    
-                    <a href="age-of-ai.html">The Age of AI</a>
-                    
-                    <a href="nerra-voices.html">Nerra Voices</a>
-                    
-                    <a href="offshore-north.html">Offshore North</a>
+                    <ul class="nn-footer-showlist">
+                        <li class="nn-footer-grouplabel">Every other show</li>
+                        
+                        <li><a href="models-agents.html">Models & Agents</a></li>
+                        
+                        <li><a href="planetterrian.html">Planetterrian Daily</a></li>
+                        
+                        <li><a href="omni-view.html">Omni View</a></li>
+                        
+                        <li><a href="models-agents-beginners.html">Models & Agents for Beginners</a></li>
+                        
+                        <li><a href="fascinating-frontiers.html">Fascinating Frontiers</a></li>
+                        
+                        <li><a href="modern-investing.html">Modern Investing Techniques</a></li>
+                        
+                        <li><a href="tesla.html">Tesla Shorts Time</a></li>
+                        
+                        <li><a href="spacex.html">SpaceX Daily</a></li>
+                        
+                        <li><a href="env-intel.html">Environmental Intelligence</a></li>
+                        
+                        <li><a href="ru/finansy-prosto.html">Финансы Просто</a></li>
+                        
+                        <li><a href="ru/privet-russian.html">Привет, Русский!</a></li>
+                        
+                        <li><a href="unintended-consequences.html">Unintended Consequences</a></li>
+                        
+                        <li><a href="first-principles.html">First Principles Daily</a></li>
+                        
+                        <li><a href="thedppod.html">The DP Pod: The Do Positive Podcast</a></li>
+                        
+                        <li><a href="offshore-north.html">Offshore North</a></li>
+                        
+                    </ul>
                     
                 </div>
                 <div class="nn-footer-col">
                     <h4>Blog</h4>
                     <a href="blog/index.html">All Blog Posts</a>
-                    
-                    <a href="blog/nerra_daily/index.html">Nerra Daily</a>
-                    
-                    <a href="blog/models_agents/index.html">Models & Agents</a>
-                    
-                    <a href="blog/planetterrian/index.html">Planetterrian Daily</a>
-                    
-                    <a href="blog/omni_view/index.html">Omni View</a>
-                    
-                    <a href="blog/models_agents_beginners/index.html">Models & Agents for Beginners</a>
-                    
-                    <a href="blog/fascinating_frontiers/index.html">Fascinating Frontiers</a>
-                    
-                    <a href="blog/modern_investing/index.html">Modern Investing Techniques</a>
-                    
-                    <a href="blog/tesla/index.html">Tesla Shorts Time</a>
-                    
-                    <a href="blog/spacex/index.html">SpaceX Daily</a>
-                    
-                    <a href="blog/env_intel/index.html">Environmental Intelligence</a>
-                    
-                    <a href="blog/finansy_prosto/index.html">Финансы Просто</a>
-                    
-                    <a href="blog/privet_russian/index.html">Привет, Русский!</a>
-                    
-                    <a href="blog/unintended_consequences/index.html">Unintended Consequences</a>
-                    
-                    <a href="blog/first_principles/index.html">First Principles Daily</a>
-                    
-                    <a href="blog/dp_pod/index.html">The DP Pod: The Do Positive Podcast</a>
-                    
-                    <a href="blog/age_of_ai/index.html">The Age of AI</a>
-                    
-                    <a href="blog/nerra_voices/index.html">Nerra Voices</a>
-                    
-                    <a href="blog/offshore_north/index.html">Offshore North</a>
-                    
+                    <a href="topics/index.html">Browse by topic</a>
                     <a href="blog.rss">Blog RSS (All Shows)</a>
                 </div>
                 <div class="nn-footer-col">
@@ -1223,42 +1279,7 @@
                     <a href="player.html" style="font-weight:600">Network Player</a>
                     <a href="https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939?utm_source=nerranetwork&utm_medium=footer&utm_campaign=tesla" target="_blank" rel="noopener" data-show="tesla">Tesla Shorts Time on Apple Podcasts</a>
                     <a href="network.rss">Network RSS</a>
-                    
-                    <a href="nerra_daily_podcast.rss">Nerra Daily RSS</a>
-                    
-                    <a href="models_agents_podcast.rss">Models & Agents RSS</a>
-                    
-                    <a href="planetterrian_podcast.rss">Planetterrian Daily RSS</a>
-                    
-                    <a href="omni_view_podcast.rss">Omni View RSS</a>
-                    
-                    <a href="models_agents_beginners_podcast.rss">Models & Agents for Beginners RSS</a>
-                    
-                    <a href="fascinating_frontiers_podcast.rss">Fascinating Frontiers RSS</a>
-                    
-                    <a href="modern_investing_podcast.rss">Modern Investing Techniques RSS</a>
-                    
-                    <a href="podcast.rss">Tesla Shorts Time RSS</a>
-                    
-                    <a href="spacex_podcast.rss">SpaceX Daily RSS</a>
-                    
-                    <a href="env_intel_podcast.rss">Environmental Intelligence RSS</a>
-                    
-                    <a href="finansy_prosto_podcast.rss">Финансы Просто RSS</a>
-                    
-                    <a href="privet_russian_podcast.rss">Привет, Русский! RSS</a>
-                    
-                    <a href="unintended_consequences_podcast.rss">Unintended Consequences RSS</a>
-                    
-                    <a href="first_principles_podcast.rss">First Principles Daily RSS</a>
-                    
-                    <a href="dp_pod_podcast.rss">The DP Pod: The Do Positive Podcast RSS</a>
-                    
-                    <a href="age_of_ai_podcast.rss">The Age of AI RSS</a>
-                    
-                    
-                    <a href="offshore_north_podcast.rss">Offshore North RSS</a>
-                    
+                    <a href="how-to-listen.html#feeds">All RSS feeds</a>
                 </div><div class="nn-footer-col">
                     <h4>About</h4>
                     <a href="about.html">About Nerra Network</a>
@@ -1295,7 +1316,7 @@
                  member surface and the list grow together. -->
             <div class="nn-footer-subscribe">
                 <form class="nn-subscribe-form"
-                      onsubmit="var f=this,btn=f.querySelector('button[type=submit]');btn.disabled=true;btn.textContent="Subscribing…";var tags=Array.prototype.map.call(f.querySelectorAll('input[name=tag]:checked'),function(c){return c.value;});fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member',tags:tags})}).then(function(r){btn.textContent=r.ok?"Check your email ✓":"Subscribe";if(r.ok){var a=f.querySelector('.nn-account-link');if(a)a.style.display='inline';}}).catch(function(){btn.textContent="Subscribe";}).then(function(){btn.disabled=false;});return false;">
+                      onsubmit="var f=this,btn=f.querySelector('button[type=submit]');btn.disabled=true;btn.textContent="Subscribing…";var tags=Array.prototype.map.call(f.querySelectorAll('input[name=tag]:checked'),function(c){return c.value;});fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member',tags:tags,source:"src-nerranetwork"})}).then(function(r){btn.textContent=r.ok?"Check your email ✓":"Subscribe";if(r.ok){var a=f.querySelector('.nn-account-link');if(a)a.style.display='inline';}}).catch(function(){btn.textContent="Subscribe";}).then(function(){btn.disabled=false;});return false;">
                     <h4>Get Show Updates</h4>
                     <p>Pick the shows you want in your inbox:</p>
                     <div class="nn-subscribe-tags">
@@ -1465,17 +1486,51 @@
             el.textContent = s;
             return el.innerHTML;
         }
+        /* Mirrors engine/summaries_ssr.plain_preview walk for walk. The server
+           renders the same sentence into the card at build time and this
+           replaces it on load, so a difference between the two is a visible
+           flicker into different words. Change both or neither. */
+        const PREVIEW_CHARS = 200;
+        const SHORT_HOOK_CHARS = 60;
+
+        function previewLine(raw) {
+            let line = (raw || '').trim();
+            if (!line || line.charAt(0) === '#' || /^(-{3,}|—{3,}|━{3,})$/.test(line)) return '';
+            const hook = /^>\s*(.+?)\s*$/.exec(line);
+            if (hook) line = hook[1];
+            line = line.replace(/https?:\/\/\S+/g, '')
+                       .replace(/[*_]{1,2}/g, '')
+                       .replace(/\s+/g, ' ')
+                       .trim();
+            if (!line) return '';
+            // A short "Label: value" with no sentence in it — the date line, the
+            // stock price line. The full-stop test reads the END of the line;
+            // searching anywhere in it matched the decimal point in "(3.8%)".
+            if (line.slice(0, 40).indexOf(':') !== -1
+                && !/[.!?…]$/.test(line)
+                && line.split(' ').length < 10) return '';
+            return line;
+        }
+
         function getPreviewText(content) {
-            if (!content) return '';
-            let plain = content
-                .replace(/^###\s+/gm, '')
-                .replace(/\*\*(.+?)\*\*/g, '$1')
-                .replace(/https?:\/\/[^\s]+/g, '')
-                .replace(/[━─]+/g, '')
-                .replace(/[\n\r]+/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim();
-            return plain.length > 200 ? plain.substring(0, 200) + '...' : plain;
+            let lines = (content || '').split(/\r?\n/);
+            // The hook is the episode's own headline, so everything above it —
+            // show name, branding line, date, price — is preamble.
+            for (let i = 0; i < lines.length; i++) {
+                if (/^>\s*\S/.test(lines[i].trim())) { lines = lines.slice(i); break; }
+            }
+            const parts = [];
+            for (const raw of lines) {
+                const line = previewLine(raw);
+                if (!line) continue;
+                parts.push(line);
+                if (parts.join(' ').length >= PREVIEW_CHARS
+                    || (parts.length === 1 && line.length >= SHORT_HOOK_CHARS)) break;
+            }
+            const text = parts.join(' ').replace(/\s+/g, ' ').trim();
+            return text.length > PREVIEW_CHARS
+                ? text.slice(0, PREVIEW_CHARS).replace(/\s+$/, '') + '...'
+                : text;
         }
 
         // --- Load episodes ---
@@ -1509,6 +1564,23 @@
                 const summaryEl = document.getElementById('latest-summary');
                 summaryEl.textContent = getPreviewText(latest.content);
                 summaryEl.style.display = 'block';
+            }
+
+            /* The "Article & transcript" link was resolved at build time, which
+               is where we know whether that page exists — a pruned episode
+               leaves a redirect stub behind, so "blog/<slug>/epNNN.html" is not
+               a URL this script can derive. If the feed has moved on to a newer
+               episode than the page was built from, the link would point at the
+               previous one while the player plays this one. Drop it and leave
+               the archive link rather than show a mismatch. */
+            const playerEl = document.getElementById('latest-player');
+            const articleEl = document.getElementById('latest-article');
+            if (articleEl && playerEl) {
+                const built = parseInt(playerEl.getAttribute('data-episode'), 10);
+                const live = parseInt(latest.episode_num, 10);
+                if (!isNaN(live) && !isNaN(built) && live !== built) {
+                    articleEl.style.display = 'none';
+                }
             }
 
             renderLatestLangs(latest);
