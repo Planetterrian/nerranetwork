@@ -57,13 +57,19 @@ def _facts():
 # ---------------------------------------------------------------------------
 
 class TestFullTextLayer:
+    # Deliberate opt-ins, by name. The four Sep 2026 new shows joined after
+    # their Episode 1 digests were written from feed teasers (Ep1 review,
+    # tests/test_new_shows_ep1_review_2026_09_22.py).
+    _FULL_TEXT_OPT_INS = frozenset({
+        "offshore_north", "ai_chips", "mag7", "peptides", "longevity"})
+
     def test_show_opts_in_and_every_other_show_is_untouched(self):
         cfg = load_config(str(_SHOW_YAML))
         assert cfg.fetch_full_text >= 8, "Offshore North must open its articles"
         assert cfg.fetch_full_text_chars >= 1500
         offenders = []
         for path in sorted((_ROOT / "shows").glob("*.yaml")):
-            if path.stem.startswith("_") or path.stem == "offshore_north":
+            if path.stem.startswith("_") or path.stem in self._FULL_TEXT_OPT_INS:
                 continue
             data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
             if isinstance(data, dict) and data.get("fetch_full_text"):

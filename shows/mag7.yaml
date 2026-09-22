@@ -89,6 +89,11 @@ exclude_title_patterns:
 - '\b(best deals?|black friday|prime day|coupon|promo code|price drop|lowest price|% off)\b'
 - '\bhow to\b'
 - '\b(best|top) \d+ (apps|gadgets|phones|laptops)\b'
+# Chart-reading and price-level pieces (Ep1's Counterpoint was an FXLeaders
+# "fails at resistance" article). Never bare "support": a rival's support
+# for a rule is news.
+- '\b(fails? at resistance|breaks? (above|below) resistance|support level|price prediction|stock forecast|technical analysis|chart pattern|price target hit)\b'
+- '\b(stock|shares) (to buy|to watch) (now|today|this week)\b'
 
 keywords:
 - alphabet
@@ -117,6 +122,39 @@ keywords:
 - guidance
 - antitrust
 - capex
+
+# X accounts (Sep 22 2026 Ep1 review): the seven's chief executives and
+# newsrooms, plus the reporter who breaks Apple news. Source only — the
+# show never posts to X. A handle that returns nothing is logged "No recent
+# posts"; prune it.
+x_fetch_enabled: true
+x_accounts:
+- handle: sundarpichai
+  label: Sundar Pichai (Alphabet)
+  max_posts: 2
+- handle: ajassy
+  label: Andy Jassy (Amazon)
+  max_posts: 2
+- handle: tim_cook
+  label: Tim Cook (Apple)
+  max_posts: 2
+- handle: satyanadella
+  label: Satya Nadella (Microsoft)
+  max_posts: 2
+- handle: nvidianewsroom
+  label: NVIDIA Newsroom
+  max_posts: 2
+- handle: Meta
+  label: Meta
+  max_posts: 2
+- handle: markgurman
+  label: Mark Gurman (Bloomberg)
+  max_posts: 3
+
+# Full article text (engine/article_text.py): Ep1's Company Desk was three
+# teaser-length items padded with "no release date was given".
+fetch_full_text: 12
+absence_sentence_filter: true
 
 min_articles: 8
 min_articles_skip: 5
@@ -200,7 +238,7 @@ chapters:
   enabled: true
   # Anchors only (never a company name — every item names one).
   section_markers:
-  - pattern: This is Mag Seven Daily|Mag Seven Daily, episode
+  - pattern: This is Mag Seven Daily|first episode of|Mag Seven Daily, episode
     title: Introduction
     where: start
   - pattern: across the seven|runs through (several|more than one) of (them|these companies)

@@ -758,6 +758,7 @@ def x_fetch_allowed(
 def fetch_x_posts(
     x_accounts: list,
     keywords: Optional[List[str]] = None,
+    lookback_hours: int = 24,
 ) -> List[Dict]:
     """Fetch recent posts from X accounts via per-account parallel API calls.
 
@@ -787,10 +788,13 @@ def fetch_x_posts(
         handle = account.handle.lstrip("@")
         label = account.label or f"@{handle}"
         max_posts = getattr(account, "max_posts", 10) or 10
+        # 24 renders the exact prompt every daily show has always sent; the
+        # weekly shows (Peptides/Longevity) read the week they cover.
+        window = f"{int(lookback_hours or 24)} hours"
 
         prompt = (
             f"Search X/Twitter for the most recent posts from @{handle} "
-            f"in the last 24 hours.\n\n"
+            f"in the last {window}.\n\n"
             f"Return ONLY a structured list of their posts, formatted exactly like this "
             f"(one block per post, separated by blank lines):\n\n"
             f"POST_TITLE: [A short headline summarizing the post, max 100 chars]\n"
@@ -798,7 +802,7 @@ def fetch_x_posts(
             f"POST_URL: [The URL, e.g. https://x.com/{handle}/status/...]\n\n"
             f"Rules:\n"
             f"- Up to {max_posts} posts maximum\n"
-            f"- Only posts from the last 24 hours\n"
+            f"- Only posts from the last {window}\n"
             f"- Skip retweets — only original posts and quote tweets\n"
             f"- SUBSTANTIVE posts only: skip posts that are just emoji, a "
             f"single reaction word, a bare link/photo/video with no text, "

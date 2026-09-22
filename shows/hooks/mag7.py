@@ -26,7 +26,13 @@ logger = logging.getLogger(__name__)
 
 _SLUG = "mag7"
 _ROOT = Path(__file__).resolve().parent.parent.parent
-CACHE_PATH = _ROOT / "api" / "mag7.json"
+# NOT api/mag7.json: generate_html writes the per-show public episode API to
+# api/<slug>.json for every registry show, and the two files collided on the
+# first live run (2026-09-22) — the finalize job committed the episode API as
+# api/mag7.json while this cache sat untracked on the show runner, and every
+# rebase of the episode commit aborted on "untracked working tree file would
+# be overwritten". The episode went to a recovery PR instead of main.
+CACHE_PATH = _ROOT / "api" / "mag7_quotes.json"
 
 #: The seven, in the show's fixed order. Alphabet trades as GOOGL and GOOG;
 #: the tape carries GOOGL (the two classes move together) and the show copy

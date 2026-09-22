@@ -42,6 +42,10 @@ EXPECTED_HUB_SHOWS = {
     "good-news": {"dp_pod"},
 }
 
+#: Shows launched after the snapshot (new-shows plan, Sep 2026). Each joins
+#: its hubs when its first episode publishes; see the test below.
+LAUNCHED_AFTER_SNAPSHOT = ("ai_chips", "mag7", "peptides", "longevity")
+
 #: The slugs every one of the seven replaced tuples named. ``engine.show_lang``
 #: derives this from ``tts.language_code``; this pins that the derivation still
 #: agrees with the literal it replaced.
@@ -60,7 +64,21 @@ class TestTopicHubsDidNotSilentlyShrink:
             c["hub"]["id"]: {s["slug"] for s in (c.get("shows") or [])}
             for c in H.renderable_hubs(shows, index)
         }
-        assert got == EXPECTED_HUB_SHOWS
+        # Shows launched after the snapshot join a hub the day their first
+        # episode publishes (hub_shows skips a show with no feed), so they
+        # are checked by that rule rather than by a set that would turn main
+        # red on the data commit of every Episode 1 (Sep 22 2026: AI Chips
+        # and Longevity did exactly that).
+        launched_later = set(LAUNCHED_AFTER_SNAPSHOT)
+        pinned = {hub: members - launched_later for hub, members in got.items()}
+        assert pinned == EXPECTED_HUB_SHOWS
+        has_feed = {s["slug"]: s.get("has_feed", True) for s in shows}
+        for slug in launched_later:
+            hubs = {hub for hub, members in got.items() if slug in members}
+            if has_feed.get(slug) is False:
+                assert not hubs, f"{slug} has no feed but is in {hubs}"
+            elif slug in has_feed:
+                assert hubs, f"{slug} publishes but joined no /topics/ hub"
 
     def test_every_registered_show_still_declares_picker_topics(self):
         """A show whose tags went missing joins no hub and is not otherwise

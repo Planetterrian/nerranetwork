@@ -860,7 +860,10 @@ def run(args: argparse.Namespace) -> None:
                 getattr(config, "x_fetch_enabled", None),
             ):
                 return []
-            return fetch_x_posts(config.x_accounts, keywords=config.keywords)
+            return fetch_x_posts(
+                config.x_accounts, keywords=config.keywords,
+                lookback_hours=int(getattr(config, "x_lookback_hours", 24) or 24),
+            )
 
         articles = []
         x_posts = []
@@ -2411,6 +2414,22 @@ def run(args: argparse.Namespace) -> None:
             from shows.hooks.tesla import scrub_unavailable_tsla_from_digest
             x_thread = scrub_unavailable_tsla_from_digest(x_thread)
 
+        # Absence sentences ("No energization date was stated.") — the
+        # four Sep 2026 new shows' Ep1 digests carried them despite an
+        # explicit prompt ban. Removed BEFORE the source-integrity gate so
+        # the ledger is checked against the text that ships. Opt-in.
+        if getattr(config, "absence_sentence_filter", False):
+            try:
+                from engine.absence_sentences import strip_absence_sentences
+                x_thread, _absent_n = strip_absence_sentences(x_thread)
+                if _absent_n:
+                    logger.info("Removed %d absence sentence(s) from the digest",
+                                _absent_n)
+                metrics.record("digest_absence_sentences_removed", _absent_n)
+            except Exception as _abs_exc:  # noqa: BLE001 — never block a run
+                logger.warning("Absence-sentence filter failed (non-fatal): %s",
+                               _abs_exc)
+
         # --- Source-integrity gate (Aug 2026, engine/claims.py) ---
         # The generation stage emitted a claim ledger alongside the prose
         # (extracted+stashed inside generate_digest). Verify it against the
@@ -3114,6 +3133,21 @@ def run(args: argparse.Namespace) -> None:
             # lines BEFORE pronunciation — FP Ep059 voiced "Сорс MoneySense…"
             # because a digest "Source:" line reached TTS.
             podcast_script = _strip_source_scaffold_lines(podcast_script)
+
+            # Same absence-sentence filter as the digest (opt-in): the
+            # script stage writes its own ("Current reporting supplies no
+            # release date for the redesign." — MAG 7 Ep1).
+            if getattr(config, "absence_sentence_filter", False):
+                try:
+                    from engine.absence_sentences import strip_absence_sentences
+                    podcast_script, _absent_s = strip_absence_sentences(podcast_script)
+                    if _absent_s:
+                        logger.info("Removed %d absence sentence(s) from the script",
+                                    _absent_s)
+                    metrics.record("script_absence_sentences_removed", _absent_s)
+                except Exception as _abs_exc:  # noqa: BLE001
+                    logger.warning("Script absence-sentence filter failed "
+                                   "(non-fatal): %s", _abs_exc)
 
             # Final near-duplicate strip (July 16 2026): SpaceX Ep034 spoke
             # its entire ~8-sentence Engineering Deep Dive TWICE verbatim —

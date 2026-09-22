@@ -30,3 +30,32 @@ reviews:
         baseline: "n/a"
         expected: "0 in the first 4"
         verdict: pending
+  - date: 2026-09-22
+    pr: null
+    doc: tests/test_new_shows_ep1_review_2026_09_22.py
+    reviewer: claude-code (Episode 1 review, operator-requested)
+    summary: >-
+      Episode 1 skipped: podcast_script_too_thin (703 words; soft floor 840). The digest reached 1,094 words only after the expansion retry, written from feed teasers (Google News GLP-1 supplied 50 of 160 raw articles), and the script told it in 583 words, 761 after the expansion retry.
+    shipped:
+      - chapters cover the opening when no start marker matches (engine/chapters.py)
+      - absence-sentence filter on digest and script (engine/absence_sentences.py, opt-in)
+      - targeted X accounts as a content source (x_fetch_enabled; x_lookback_hours on weeklies)
+      - full article text for the top 12 articles (fetch_full_text)
+      - spotlight 550-700 words and the centre of the script (a third or more); every briefing item spoken
+      - 5-8 news items; at most three GLP-1 items a week; min_digest_words 1,300
+    deferred:
+      - X handles are unverified until the first live fetch logs per-account counts; prune any that return nothing
+      - network-wide absence-sentence filter (opt-in here; precision on other shows' digests is high but not perfect)
+    predictions:
+      - metric: "weekly episodes skipped for a thin script (first 6)"
+        baseline: "1/1 (Ep1)"
+        expected: "0/6"
+        verdict: pending
+      - metric: "podcast_script_word_count median, first 6"
+        baseline: "703 (Ep1, skipped)"
+        expected: ">= 1,200"
+        verdict: pending
+      - metric: "GLP-1 items in The Week in Peptides"
+        baseline: "n/a"
+        expected: "<= 3 per episode on 6/6"
+        verdict: pending
