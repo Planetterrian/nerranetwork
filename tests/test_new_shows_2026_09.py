@@ -539,3 +539,19 @@ class TestTitleFiltersKeepRealNews:
         arts = [{"title": t} for t in self.KEEP[slug]]
         kept, dropped = drop_excluded_titles(arts, _cfg(slug).exclude_title_patterns)
         assert dropped == 0, [a["title"] for a in arts if a not in kept]
+
+
+class TestTestModeNeverPublishes:
+    def test_commit_and_publish_steps_skip_test_mode(self):
+        wf = (ROOT / ".github/workflows/run-show.yml").read_text(encoding="utf-8")
+        for step in ("Validate output", "Regenerate network RSS",
+                     "Regenerate show HTML pages", "Commit and push output"):
+            block = wf[wf.index(f"- name: {step}"):]
+            block = block[:block.index("run:")]
+            assert "github.event.inputs.test_mode != 'true'" in block, step
+
+    def test_readonly_run_never_consumes_a_spotlight(self, monkeypatch, tmp_path):
+        from engine import curriculum
+        monkeypatch.setenv("NERRA_HOOKS_READONLY", "1")
+        assert curriculum.mark_spotlight_done("peptides", "insulin-the-first-peptide", 1,
+                                              root=tmp_path) is False

@@ -57,8 +57,18 @@ def spotlight_block(topic: Optional[dict], label: str) -> str:
     )
 
 
+def hooks_readonly() -> bool:
+    """run_show sets NERRA_HOOKS_READONLY=1 for --test / rehearsal runs; a
+    test digest must never consume a curriculum entry."""
+    import os
+    return os.environ.get("NERRA_HOOKS_READONLY", "").strip() == "1"
+
+
 def mark_spotlight_done(slug: str, topic_id: str, episode_num: int,
                         root: Path | None = None) -> bool:
+    if hooks_readonly():
+        logger.info("%s: read-only run — spotlight %s NOT marked produced", slug, topic_id)
+        return False
     return mark_topic_produced(curriculum_path(slug, root), topic_id,
                                episode_num, _dt.date.today().isoformat())
 

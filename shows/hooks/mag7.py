@@ -80,7 +80,10 @@ def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
     parts = []
     try:
         quotes = fetch_daily_closes(TICKERS, cache_path=CACHE_PATH)
-        persist(quotes, CACHE_PATH)
+        # A --test run must not rewrite the public cache (NERRA_HOOKS_READONLY).
+        import os
+        if os.environ.get("NERRA_HOOKS_READONLY", "").strip() != "1":
+            persist(quotes, CACHE_PATH)
         parts.append(tape_block(quotes, NAMES, TICKERS))
     except Exception as exc:  # noqa: BLE001
         logger.warning("mag7 tape failed (non-fatal): %s", exc)
