@@ -209,14 +209,25 @@ def strip_bleed(track_wav: Path, others: Iterable[Path], workdir: Path,
     speaking = _dilate(density >= 0.5, reach)
     mute = others_on & ~speaking
     muted_sec = float(mute.sum()) / ROOM_ENVELOPE_SR
+    # How much of what this gate silenced was too loud to have been bleed.
+    # Bleed sits at least BLEED_MIN_GAP_DB under its owner by definition, so
+    # anything muted ABOVE that line is this speaker's own voice going out of
+    # the episode. It is the one number that says whether the strip overreached,
+    # and the edit reads it before deciding to cut from these tracks at all
+    # (Sept 22 2026): the predictor is the primary discriminator now, and a
+    # predictor that is wrong about a tape is wrong quietly.
+    loud_muted_sec = float((mute & (tdb >= own_db - BLEED_MIN_GAP_DB)).sum()) \
+        / ROOM_ENVELOPE_SR
     stats = {"bleed": True, "own_db": round(own_db, 1),
              "bleed_db": round(bleed_db, 1), "gate_db": round(gate_db, 1),
              "muted_sec": round(muted_sec, 1),
+             "loud_muted_sec": round(loud_muted_sec, 1),
              "echo_lag_sec": (round(fit[0] / ROOM_ENVELOPE_SR, 2)
                               if fit is not None else None),
              "echo_under_db": round(-fit[1], 1) if fit is not None else None}
     logger.info("bleed: %s carries the others at %.0f dB under the voice; "
-                "muting %.0fs of it", label, own_db - bleed_db, muted_sec)
+                "muting %.0fs of it (%.1fs of that was loud enough to be the "
+                "speaker)", label, own_db - bleed_db, muted_sec, loud_muted_sec)
     out = workdir / (Path(track_wav).stem + "_clean.wav")
     _apply_gain(Path(track_wav), out, (~mute).astype(np.float32))
     return out, stats

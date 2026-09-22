@@ -26,9 +26,18 @@ An EDL puts the edit in the repo as data:
 
 ``from`` is ``narration:<segment>`` (an R2 narration take), ``run:<name>``
 (guest | host | mira | mix | extra_guest:N | extra_host:N, resolved from the
-run row) or a literal URL. ``channel`` picks left, right or a mono fold of a
-stereo source — the Voximplant per-person recordings are L = that person's
-microphone, R = what they heard.
+run row), ``track:<role>`` (one speaker's processed, room-aligned track),
+``mix:clean`` (every speaker's processed track, levelled one at a time and
+folded — see :func:`_piece_clean`) or a literal URL. ``channel`` picks left,
+right or a mono fold of a stereo source — the Voximplant per-person recordings
+are L = that person's microphone, R = what they heard.
+
+``mix:clean`` is what a conversation should normally be cut from. ``run:guest``
+folds the guest's own microphone together with what the guest heard, and a
+guest without headphones has Mira coming back out of their speakers into that
+microphone: she then appears twice, a few hundred milliseconds apart, which is
+the slapback audible on the Sameer Ranjan and Meridan Zerner tapes. The
+processed tracks have already had that taken out of them.
 
 The result is uploaded to R2 and pointed at by the review pages, so gate 1
 and gate 2 play the EDITED episode rather than the raw mix.
@@ -131,6 +140,17 @@ NARRATION_RESTORE = "adeclick=w=75:t=2,afftdn=nf=-45:nr=12,anlmdn=s=0.0005:p=0.0
 # folding fixes that; levelling after the fold cannot, because by then it is
 # one signal. "balance" on a cut turns this on.
 SIDE_CHAIN = ("highpass=f=70,{restore},dynaudnorm=f=200:g=9:p=0.9:m=12")
+# The same chain for a single speaker's own track, with one addition. On the
+# stereo path each side always has somebody on it, so levelling every frame is
+# harmless. A per-speaker track is silence for most of the episode — the
+# co-host who says nothing for ten minutes, the guest through every question —
+# and dynaudnorm will happily bring that silence UP: measured on a track with
+# room tone at -58 dBFS, the chain above delivers it at -37.2, and three
+# tracks folded together means three lifted noise floors summed under the
+# conversation. The threshold leaves any frame peaking under -40 dBFS at the
+# level it arrived: the same tone comes out at -58.9, and speech pays 1.4 dB,
+# which the master loudnorm takes back.
+CLEAN_SIDE = SIDE_CHAIN + ":t=0.01"
 BALANCE_GLUE = "acompressor=threshold=-20dB:ratio=2.5:attack=20:release=250"
 
 # Sept 15 2026. Mira takes a beat before she answers — the model has to
@@ -197,6 +217,19 @@ def _resolve(ref: str, run: dict, show, narration_slug: str) -> str:
     if ref.startswith(("http://", "https://")):
         return ref
     raise SystemExit(f"unrecognised source {ref!r}")
+
+
+# The order speakers are folded in. Guest first because the guest is the
+# reason the episode exists; Mira last because hers is the track that gets the
+# presence EQ.
+CLEAN_ROLES = ("guest", "host", "mira")
+
+
+def _clean_sources(run: dict, show) -> List[tuple]:
+    """``[(role, url)]`` for the processed, bleed-stripped speaker tracks."""
+    sources = _run_sources(run, show)
+    return [(role, sources[f"track:{role}"]) for role in CLEAN_ROLES
+            if sources.get(f"track:{role}")]
 
 
 def _fetch(url: str, dest: Path, cache: Dict[str, Path]) -> Path:
@@ -268,6 +301,50 @@ def _piece(cut: dict, src: Path, out: Path) -> Path:
     return out
 
 
+def _piece_clean(cut: dict, srcs: List[tuple], out: Path) -> Path:
+    """One conversation cut, folded from the processed per-speaker tracks.
+
+    Sept 22 2026. This is the ``balance`` path done properly. ``balance``
+    levels the two SIDES of a stereo per-person recording separately and folds
+    them, which was the right answer while the only thing we had was that
+    recording. But the left side is the guest's microphone with everything it
+    overheard still in it, so the published episode carried Mira twice on any
+    tape where the guest had no headphones on.
+
+    The processed tracks are one voice each, on the room's clock, with the
+    others already gated out. So: level every speaker on their own — the same
+    per-side chain, for the same reason, a guest who sat six decibels over
+    everyone is still a guest who sat six decibels over everyone — give Mira
+    her presence EQ and nobody else, and fold. Every mixing decision is made on
+    one person's voice rather than on a mixture.
+    """
+    restore = RESTORE if cut.get("restore", True) else None
+    side = CLEAN_SIDE.format(restore=restore or "anull")
+    cmd = ["ffmpeg", "-y", "-v", "error"]
+    for _role, src in srcs:
+        if cut.get("start") is not None:
+            cmd += ["-ss", str(cut["start"])]
+        if cut.get("end") is not None:
+            cmd += ["-to", str(cut["end"])]
+        cmd += ["-i", str(src)]
+    chains, labels = [], []
+    for i, (role, _src) in enumerate(srcs):
+        # VOICE_MATCH is Mira's presence correction, measured against a real
+        # microphone on the same tape. On the stereo path it landed on the
+        # channel that carries her AND the co-host, so it was quietly
+        # equalising a human being too. Here it lands on her alone.
+        extra = ("," + VOICE_MATCH) if role == "mira" else ""
+        chains.append(f"[{i}:a]aformat=channel_layouts=mono,{side}{extra}[c{i}]")
+        labels.append(f"[c{i}]")
+    fold = ("".join(labels) + f"amix=inputs={len(srcs)}:duration=longest:"
+            f"normalize=0,{BALANCE_GLUE}"
+            + ("," + GAP_TRIM if cut.get("gaps", True) else "") + "[o]")
+    cmd += ["-filter_complex", ";".join(chains) + ";" + fold, "-map", "[o]",
+            "-ar", "48000", "-ac", "1", "-c:a", "pcm_s16le", str(out)]
+    subprocess.run(cmd, check=True)
+    return out
+
+
 def _silence(seconds: float, out: Path) -> Path:
     subprocess.run(["ffmpeg", "-y", "-v", "error", "-f", "lavfi",
                     "-t", str(seconds), "-i", "anullsrc=r=48000:cl=mono",
@@ -290,7 +367,7 @@ END_SEARCH_SEC = 6.0
 END_KEEP_SEC = 0.5
 
 
-def _last_silence_before(src: Path, end: float) -> float | None:
+def _last_silence_before(src, end: float) -> float | None:
     """Where everyone stopped talking, just before ``end``.
 
     Sept 22 2026. An EDL's end comes from transcript timestamps, and those are
@@ -302,17 +379,29 @@ def _last_silence_before(src: Path, end: float) -> float | None:
     cause, in opposite directions, on the same episode.
 
     The audio does not need to be guessed at. Look at the last few seconds
-    before the nominal end and find where speech actually stops — the fold of
-    the guest's channels is silent only when NEITHER of them is talking, which
-    is exactly the seam an editor would choose.
+    before the nominal end and find where speech actually stops — the fold is
+    silent only when NOBODY is talking, which is exactly the seam an editor
+    would choose.
+
+    ``src`` is one file or several. Several are folded first, because with the
+    speakers on separate tracks no single one of them can answer "has everyone
+    stopped": the guest's track is silent through every question Mira asks.
     """
+    srcs = [src] if isinstance(src, (str, Path)) else list(src)
     lo = max(0.0, end - END_SEARCH_SEC)
+    cmd = ["ffmpeg", "-v", "info"]
+    for one in srcs:
+        cmd += ["-ss", str(lo), "-to", str(end + 0.5), "-i", str(one)]
+    if len(srcs) > 1:
+        labels = "".join(f"[{i}:a]" for i in range(len(srcs)))
+        cmd += ["-filter_complex",
+                f"{labels}amix=inputs={len(srcs)}:duration=longest:normalize=0,"
+                f"silencedetect=n=-45dB:d=0.35[o]", "-map", "[o]"]
+    else:
+        cmd += ["-ac", "1", "-af", "silencedetect=n=-45dB:d=0.35"]
+    cmd += ["-f", "null", "-"]
     try:
-        proc = subprocess.run(
-            ["ffmpeg", "-v", "info", "-ss", str(lo), "-to", str(end + 0.5),
-             "-i", str(src), "-ac", "1",
-             "-af", "silencedetect=n=-45dB:d=0.35", "-f", "null", "-"],
-            capture_output=True, text=True, timeout=180)
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
     except Exception:  # noqa: BLE001 — the nominal end is a fine fallback
         logger.exception("silence probe failed (non-fatal)")
         return None
@@ -326,7 +415,7 @@ def _last_silence_before(src: Path, end: float) -> float | None:
     return at + END_KEEP_SEC
 
 
-def _end_on_the_last_word(cut: dict, src: Path) -> None:
+def _end_on_the_last_word(cut: dict, src) -> None:
     """Move a conversation cut's end onto the silence after the last word."""
     end = cut.get("end")
     if end is None:
@@ -362,9 +451,10 @@ def assemble(slug: str) -> dict:
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
         pieces: List[Path] = []
+        conversation = ("run:", "track:", "mix:")
         last_conversation = max(
             (i for i, c in enumerate(cuts)
-             if str(c.get("from", "")).startswith(("run:", "track:"))
+             if str(c.get("from", "")).startswith(conversation)
              and c.get("end") is not None),
             default=-1)
         for i, cut in enumerate(cuts):
@@ -372,16 +462,33 @@ def assemble(slug: str) -> dict:
             if cut.get("gap") is not None:
                 pieces.append(_silence(float(cut["gap"]), out))
                 continue
-            url = _resolve(str(cut["from"]), run, show, spec.get("narration", ""))
-            src = _fetch(url, work / f"src_{abs(hash(url))}.bin", cache)
+            ref = str(cut["from"])
             # The last stretch of conversation decides where the episode ends,
             # so its end is measured from the audio rather than trusted from
             # the transcript. Earlier cuts are seams in the middle, where a
             # tenth of a second either way is nobody's business.
-            if i == last_conversation and str(cut["from"]).startswith(("run:", "track:")):
+            if ref == "mix:clean":
+                tracks = _clean_sources(run, show)
+                if not tracks:
+                    raise SystemExit(
+                        "mix:clean needs the processed per-speaker tracks and "
+                        "the run row has none — post_interview records them "
+                        "under grok_session_log.tracks.processed")
+                srcs = [(role, _fetch(url, work / f"src_{abs(hash(url))}.bin",
+                                      cache))
+                        for role, url in tracks]
+                if i == last_conversation:
+                    _end_on_the_last_word(cut, [src for _role, src in srcs])
+                pieces.append(_piece_clean(cut, srcs, out))
+                logger.info("cut %d: %s (%s) -> %.1fs", i, ref,
+                            ", ".join(r for r, _ in srcs), _duration(out))
+                continue
+            url = _resolve(ref, run, show, spec.get("narration", ""))
+            src = _fetch(url, work / f"src_{abs(hash(url))}.bin", cache)
+            if i == last_conversation and ref.startswith(conversation):
                 _end_on_the_last_word(cut, src)
             pieces.append(_piece(cut, src, out))
-            logger.info("cut %d: %s -> %.1fs", i, cut["from"], _duration(out))
+            logger.info("cut %d: %s -> %.1fs", i, ref, _duration(out))
 
         episode = work / "episode.mp3"
         inputs: List[str] = []

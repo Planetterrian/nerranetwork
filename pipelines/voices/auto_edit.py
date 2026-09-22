@@ -269,6 +269,67 @@ def plan(ctx: dict) -> dict:
     return out
 
 
+# How much of a speaker's own voice the bleed gate may swallow before its
+# output is no longer the better bed. Measured per track in
+# audio/bleed.py as "loud_muted_sec" — seconds muted while the track was
+# still too loud to have been anyone's echo.
+OVERREACH_MAX_SEC = 3.0
+
+
+def _clean_bed(run: dict) -> tuple[bool, str]:
+    """Should the conversation be cut from the processed tracks?
+
+    Sept 22 2026. The default answer is yes, and it is the better bed for a
+    reason that has nothing to do with taste: ``run:guest`` is the guest's
+    microphone folded together with what the guest heard, so on any tape
+    where the guest had no headphones in, Mira is in the episode twice, a
+    few hundred milliseconds apart. The processed tracks have had that taken
+    out and are levelled one voice at a time.
+
+    It says no in the three cases where those tracks are not trustworthy:
+    they do not exist (an older run, or the two-track fallback path), a
+    track could not be placed on the room's clock (folding it would slide a
+    speaker away from the conversation), or the bleed gate is measured to
+    have muted a real stretch of somebody's own voice.
+
+    Returns ``(use_them, why)``; ``why`` is for the edit's rationale, so a
+    human reading the note knows which bed this episode was cut from.
+    """
+    tracks = ((run.get("grok_session_log") or {}).get("tracks") or {})
+    processed = tracks.get("processed") or {}
+    if not processed.get("guest") or not processed.get("mira"):
+        return False, ("CUT FROM THE STEREO: this run has no processed "
+                       "per-speaker tracks.")
+    unaligned = [r for r in ("guest", "host", "mira")
+                 if r in (tracks.get("unaligned") or []) and processed.get(r)]
+    if unaligned:
+        return False, ("CUT FROM THE STEREO: " + ", ".join(unaligned) +
+                       " could not be placed on the room's clock, and a track "
+                       "off the clock folded into the others is worse than an "
+                       "echo.")
+    over = {}
+    unmeasured = []
+    for role, stats in (tracks.get("bleed") or {}).items():
+        if not isinstance(stats, dict) or not stats.get("bleed"):
+            continue
+        loud = stats.get("loud_muted_sec")
+        if loud is None:
+            unmeasured.append(role)
+        elif float(loud) > OVERREACH_MAX_SEC:
+            over[role] = float(loud)
+    if over:
+        worst = ", ".join(f"{r} {v:.0f}s" for r, v in sorted(over.items()))
+        return False, ("CUT FROM THE STEREO: the bleed gate muted more of a "
+                       "speaker's own voice than it should have (" + worst +
+                       "), so the stripped tracks are missing words.")
+    if unmeasured:
+        return True, ("Cut from the processed tracks. The bleed gate on " +
+                      ", ".join(unmeasured) + " predates the over-reach "
+                      "measurement, so listen for a missing word as well as "
+                      "for the echo.")
+    return True, "Cut from the processed tracks: one voice each, no echo."
+
+
 def build(run_id: str) -> dict:
     ctx = _context(run_id)
     run, interview, app = ctx["run"], ctx["interview"], ctx["app"]
@@ -309,15 +370,23 @@ def build(run_id: str) -> dict:
     rationale = decided.get("rationale", "")
     if ended_early:
         rationale = (rationale + " " if rationale else "") + ended_early
+    clean, bed_why = _clean_bed(run)
+    rationale = (rationale + " " if rationale else "") + bed_why
+    logger.info("%s", bed_why)
+    # The stereo fold stays as the fallback, with the settings it has always
+    # had: level the guest's microphone and the side they heard separately,
+    # and give the side carrying Mira her presence EQ.
+    bed = ({"from": "mix:clean"} if clean else
+           {"from": "run:guest", "balance": True, "voice_match": "right"})
     cuts = [{"from": "narration:intro"}, {"gap": 0.7}]
     at = start
     for d in drops:
-        cuts.append({"from": "run:guest", "balance": True, "voice_match": "right",
+        cuts.append({**bed,
                      "start": round(at, 1), "end": round(d["from"], 1),
                      "note": f"to {d['from']:.0f}s: {d['why']}"})
         cuts.append({"gap": 0.4})
         at = d["to"]
-    cuts.append({"from": "run:guest", "balance": True, "voice_match": "right",
+    cuts.append({**bed,
                  "start": round(at, 1), "end": round(end, 1),
                  "note": decided.get("end_why", "")})
     # A breath after the guest's last word before the produced close; 0.7 s

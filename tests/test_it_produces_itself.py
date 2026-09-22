@@ -375,7 +375,9 @@ class TestTheDeadAirGoes:
         assert 'if not narration and cut.get("gaps", True):' in self.ASSEMBLE
 
     def test_an_edit_can_turn_it_off(self):
-        assert self.ASSEMBLE.count('cut.get("gaps", True)') == 2
+        # Three conversation paths honour the switch: the stereo fold, the
+        # single-source cut, and the clean per-speaker fold added Sept 22 2026.
+        assert self.ASSEMBLE.count('cut.get("gaps", True)') == 3
 
 
 class TestNoLaughter:
@@ -2258,7 +2260,17 @@ class TestTheEndIsMeasuredNotGuessed:
     def test_only_the_final_stretch_of_conversation(self):
         # A seam in the middle of an episode is nobody's business; the end is.
         assert "last_conversation = max(" in self.SRC
-        assert "if i == last_conversation and str(cut[\"from\"]).startswith((\"run:\", \"track:\"))" in self.SRC
+        assert 'conversation = ("run:", "track:", "mix:")' in self.SRC
+        assert "if i == last_conversation and ref.startswith(conversation)" in self.SRC
+
+    def test_the_clean_fold_is_measured_the_same_way(self):
+        # With the speakers on separate tracks, no single one of them can say
+        # whether everyone has stopped: the guest's track is silent through
+        # every question. The probe gets all of them and folds them first.
+        assert "_end_on_the_last_word(cut, [src for _role, src in srcs])" in self.SRC
+        body = _pyfn("_last_silence_before", self.SRC)
+        assert "srcs = [src] if isinstance(src, (str, Path)) else list(src)" in body
+        assert "amix=inputs={len(srcs)}:duration=longest:normalize=0," in body
 
     def test_it_keeps_a_breath_after_the_last_word(self):
         assert "END_KEEP_SEC = 0.5" in self.SRC

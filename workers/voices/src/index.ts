@@ -55,6 +55,8 @@ export interface Env {
   VOX_GUEST_USER?: string;      // default "guest"
   VOX_GUEST_PASSWORD?: string;
   OPERATOR_EMAIL?: string;      // default patricknovak1@gmail.com
+  // Comma-separated, copied alongside OPERATOR_EMAIL on guest-facing mail.
+  OPERATOR_CC?: string;         // default patrick@planetterrian.com
   // Phase 2 co-host (Sept 2026, docs/cohost_phase2_contract.md): Patrick
   // joins every interview from the same studio page as `host`. The
   // scenario dials this Voximplant user; the page auto-answers. Host
@@ -229,6 +231,24 @@ function operatorEmail(env: Env): string {
   return env.OPERATOR_EMAIL || "patricknovak1@gmail.com";
 }
 
+// Sept 21 2026: Mira runs the correspondence end to end and Patrick reads it
+// at both addresses — the Gmail he lives in and the Planetterrian one that is
+// archived with the rest of the business. Every ccOperator mail goes to both,
+// so "copy Patrick" cannot quietly mean one of them. Mirrors OPERATOR_CC in
+// pipelines/voices/common.py — change the two together.
+function operatorCc(env: Env): string[] {
+  const extra = (env.OPERATOR_CC ?? "patrick@planetterrian.com")
+    .split(",").map((a) => a.trim()).filter(Boolean);
+  const all = [operatorEmail(env), ...extra];
+  const seen = new Set<string>();
+  return all.filter((a) => {
+    const k = a.toLowerCase();
+    if (!a.includes("@") || seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
 // Something between us and Gmail decodes our HTML as quoted-printable
 // without our ever having encoded it, so an "=" inside a link is eaten
 // together with the two characters after it ("?interview=89fbb824..."
@@ -250,8 +270,10 @@ async function email(env: Env, to: string, subject: string, html: string,
   // scheduling/prep mail so Mira can run the show day-to-day while he
   // keeps full visibility.
   const cc: string[] = [];
-  if (ccOperator && to.toLowerCase() !== operatorEmail(env).toLowerCase()) {
-    cc.push(operatorEmail(env));
+  if (ccOperator) {
+    for (const addr of operatorCc(env)) {
+      if (addr.toLowerCase() !== to.toLowerCase()) cc.push(addr);
+    }
   }
   for (const addr of extraCc ?? []) {
     if (addr && addr.includes("@") && addr.toLowerCase() !== to.toLowerCase()
@@ -645,7 +667,7 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
               `<p>Hi ${esc(apps[0].name)},</p><p>Mira tried to reach you twice for your` +
               ` ${esc(show.shortLabel)} interview but couldn't get through. No problem — pick a` +
               ` new time that works for you:</p><p><a href="${esc(rebook)}">` +
-              `Rebook your interview</a></p><p>${esc(signOff(show))}</p>`);
+              `Rebook your interview</a></p><p>${esc(signOff(show))}</p>`, true);
           }
           await slack(env, `${show.shortLabel}: interview ${ivId} marked missed after 2 failed attempts — reschedule email sent.`);
         }
@@ -1029,8 +1051,20 @@ async function handleEditorialDecision(req: Request, env: Env): Promise<Response
     if (!interview || !app) return json({ error: "interview/application not found" }, 404);
     await sb(env, "PATCH", `interviews?id=eq.${interview.id}`, { status: "guest_review" });
     const link = `https://api.nerranetwork.com/voices/review/${pkg.guest_review_token}`;
+    // Sept 22 2026. Meridan Zerner's episode ran seventeen minutes because
+    // Mira closed it early, and Sameer Ranjan's ended mid-thought. Both
+    // needed something said that no template covers, so both were written by
+    // hand from Patrick's own mailbox — which is the one thing this process
+    // is meant not to do. A note written at gate 1 rides along instead, in
+    // Mira's mail, in front of the standard text rather than instead of it.
+    const note = String(body.note_to_guest ?? "").trim();
+    const noteHtml = note
+      ? note.split(/\n{2,}/).map((para: string) =>
+          `<p>${esc(para.trim()).replace(/\n/g, "<br>")}</p>`).join("")
+      : "";
     await email(env, app.email, `Thank you — your ${show.shortLabel} episode is ready for you`,
       `<p>Hi ${esc(app.name)},</p>
+       ${noteHtml}
        <p>Thank you for the time you gave us. Your episode is edited and
        ready, and nothing goes out until you have heard it and said yes.</p>
        <p><a href="${esc(link)}">Listen to the episode and read the transcript</a></p>
@@ -1053,7 +1087,7 @@ async function handleEditorialDecision(req: Request, env: Env): Promise<Response
        <p>If we don't hear from you within seven days we'll take that as
        approval, and we'll remind you at day four. You can always ask for
        changes after publication too.</p>
-       <p>${esc(signOff(show))}</p>`);
+       <p>${esc(signOff(show))}</p>`, true);
     await slack(env, `${show.shortLabel}: Patrick approved package ${pkg.id} — guest review email sent`);
   } else {
     await sb(env, "PATCH", `interviews?id=eq.${pkg.interview_id}`, { status: "failed" });
@@ -1483,7 +1517,10 @@ ${activeLessons.length
      <ul>${activeLessons.map((l: any) => lessonRow(l, "active")).join("")}</ul></details>`
   : ""}
 <h3>Decision</h3>
-<textarea id="notes" placeholder="Editorial notes (kept on the package)"></textarea>
+<textarea id="notes" placeholder="Editorial notes (kept on the package, nobody else sees them)"></textarea>
+<p>Anything you want said to the guest goes here, and Mira puts it at the top
+of the mail she sends them. Leave it empty for the standard note.</p>
+<textarea id="to_guest" placeholder="A word to the guest — an apology, a thank-you, what changed since they recorded"></textarea>
 <p><button onclick="decide('approve')">Approve → guest review</button>
 <button onclick="decide('kill')">Kill episode</button></p>
 <p id="status"></p>
@@ -1492,7 +1529,9 @@ const token = new URL(location).searchParams.get('token');
 async function decide(decision){
   const resp = await fetch('/voices/editorial-decision?token='+token, {method:'POST',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({package_id:'${pkg.id}', decision, notes: document.getElementById('notes').value})});
+    body: JSON.stringify({package_id:'${pkg.id}', decision,
+      notes: document.getElementById('notes').value,
+      note_to_guest: document.getElementById('to_guest').value})});
   document.getElementById('status').textContent = resp.ok ? 'Saved.' : 'Failed — check the token.';
 }
 async function lesson(id, status){
@@ -1598,7 +1637,7 @@ async function gate2Housekeeping(env: Env) {
          <p>A gentle nudge — your transcript is waiting for review:</p>
          <p><a href="${esc(link)}">${esc(link)}</a></p>
          <p>If we don't hear from you in the next three days we'll take that
-         as approval.</p><p>${esc(signOff(show))}</p>`);
+         as approval.</p><p>${esc(signOff(show))}</p>`, true);
     }
   }
 }
