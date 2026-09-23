@@ -96,12 +96,13 @@ const SUBSCRIBE_LISTS: Record<string, string[]> = {
   // gallery tag rides along so the existing download gate recognises
   // members without a second enrolment.
   member: ["nerra-member", SUBSCRIBER_TAG],
-  // Sep 2026: Soft Personal interest form (/personal-interest.html).
-  // Optional email capture for Personal tips/reminder — NOT a waitlist,
-  // NOT paid checkout. Creates the same Nerra account identity so
-  // "one click from your account" on the confirmation is true, plus a
-  // founder-filterable `personal-interest` tag in Buttondown.
-  "personal-interest": ["personal-interest", "nerra-member", SUBSCRIBER_TAG],
+  // Sep 2026 Soft Personal (/personal-interest.html) — ENG-SPEC.
+  // Tag SoT: `personal-interest` only. Gallery unlock rides along so the
+  // confirmation's "your account" path works. Network newsletter
+  // (`nerra-member`) is NOT automatic — the form's newsletter checkbox
+  // opts in via resolveSubscribeTags(..., { networkNewsletter: true }).
+  // Never creates a paid Personal subscription (Stripe is not called).
+  "personal-interest": ["personal-interest", SUBSCRIBER_TAG],
 };
 const DEFAULT_LIST = "gallery";
 
@@ -155,11 +156,18 @@ const SHOW_NEWSLETTER_TAGS = new Set([
 ]);
 
 /** Resolve the client's `list` + `source` (+ optional show newsletter
- * `tags`) into the tags we will send. */
+ * `tags`) into the tags we will send.
+ *
+ * Soft Personal (ENG-SPEC): pass ``networkNewsletter: true`` when the
+ * form's newsletter checkbox is on — that adds the existing network
+ * newsletter segment (`nerra-member`, same as Ask C / join free), never
+ * a paid Personal charge.
+ */
 export function resolveSubscribeTags(
   list: unknown,
   source: unknown,
   showTags?: unknown,
+  opts?: { networkNewsletter?: boolean },
 ): { tags: string[]; list: string } {
   const listKey =
     typeof list === "string" && Object.prototype.hasOwnProperty.call(
@@ -179,6 +187,9 @@ export function resolveSubscribeTags(
         tags.push(tag);
       }
     }
+  }
+  if (opts?.networkNewsletter && !tags.includes("nerra-member")) {
+    tags.push("nerra-member");
   }
   return { tags, list: listKey };
 }
@@ -306,7 +317,9 @@ export async function handleSubscribe(
   const metadata = firstName ? { first_name: firstName } : undefined;
 
   const { tags, list } = resolveSubscribeTags(
-    body?.list, body?.source, body?.tags);
+    body?.list, body?.source, body?.tags, {
+      networkNewsletter: body?.newsletter === true,
+    });
   const result = await deps.buttondown.subscribe(
     env.BUTTONDOWN_API_KEY,
     email,

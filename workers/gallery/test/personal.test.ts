@@ -355,14 +355,22 @@ describe("membership plumbing", () => {
     expect(tags).toContain("gallery-subscriber");
   });
 
-  it("Soft Personal interest list creates an account + filterable tag", () => {
+  it("Soft Personal interest list is filterable without forcing newsletter", () => {
     const { tags, list } = resolveSubscribeTags(
       "personal-interest", "src-nerranetwork");
     expect(list).toBe("personal-interest");
     expect(tags).toContain("personal-interest");
-    expect(tags).toContain("nerra-member");
     expect(tags).toContain("gallery-subscriber");
     expect(tags).toContain("src-nerranetwork");
+    expect(tags).not.toContain("nerra-member");
+  });
+
+  it("Soft Personal newsletter checkbox adds nerra-member (Ask C segment)", () => {
+    const { tags } = resolveSubscribeTags(
+      "personal-interest", "src-nerranetwork", ["SpaceX Daily"],
+      { networkNewsletter: true });
+    expect(tags).toContain("nerra-member");
+    expect(tags).toContain("SpaceX Daily");
   });
 
   it("show newsletter tags pass only from the closed set", () => {

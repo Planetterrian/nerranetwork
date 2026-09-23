@@ -28,7 +28,7 @@ else — to an arbitrary Buttondown segment by editing the request body.
 | `ru-spacex` | `ru-spacex` | `ru/spacex.html`, the RU SpaceX funnel landing page |
 | `ru-tesla` | `ru-tesla` | `ru/tesla.html` |
 | `member` | `nerra-member`, `gallery-subscriber` | `/join.html` free account + footer newsletter |
-| `personal-interest` | `personal-interest`, `nerra-member`, `gallery-subscriber` | `/personal-interest.html` Soft Personal tips/reminder capture (optional newsletter via show tag `SpaceX Daily`) |
+| `personal-interest` | `personal-interest`, `gallery-subscriber` (+ `nerra-member` when `newsletter: true`) | `/personal-interest.html` Soft Personal tips/reminder. Newsletter checkbox also may send show tag `SpaceX Daily`. Never charges Personal. |
 
 `source` must be one of the `src-*` attribution tags produced by
 `engine.funnel.source_tag()` (`src-youtube`, `src-youtube-ru`,

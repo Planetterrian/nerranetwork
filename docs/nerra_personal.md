@@ -123,25 +123,55 @@ Rules that bind:
 
 ## Soft Personal interest (`/personal-interest.html`)
 
-Sep 2026 (SpaceX Daily hero funnel): optional email capture for Personal
-tips or a reminder — **not a waitlist, not paid checkout**. Copy SoT is
-the Wed Clip 3 Soft Personal section (curiosity, not scarcity; all 18
-shows stay free; no episode totals).
+Sep 2026 Soft Personal — **ENG-SPEC** (Brand HoM): optional email capture
+for Personal tips/reminder. **Not a waitlist. Never auto-charges
+Personal.** Paid checkout stays on `/join.html`. Spoken Soft Personal
+end-sting on SpaceX Daily is untouched.
 
+### Copy SoT
+Wed Clip 3 Soft Personal section + Brand error strings in the ENG-SPEC.
+Header / body / success / CTAs are exact; no episode totals; no scarcity.
+
+### Submit destination (locked)
+**Buttondown** — same patricknovak1 / Nerra Network account as Ask C
+(Worker secret `BUTTONDOWN_API_KEY`, already provisioned).
+
+| Intent | Buttondown tags |
+|---|---|
+| Soft interest (default) | `personal-interest`, `gallery-subscriber` (+ `src-nerranetwork`) |
+| + newsletter checkbox | also `nerra-member` (network newsletter segment) + `SpaceX Daily` |
+
+Optional first name → Buttondown subscriber metadata. Honeypot `company`
+is discarded. Rate-limit already on `/api/subscribe`. **Stripe is never
+called from this form.**
+
+Acceptable alt (not wired): Resend audience with the same tags. Sheets
+is not SoT.
+
+### Surfaces
 - Page: `templates/personal_interest_page.html.j2` →
-  `/personal-interest.html` (also linked from `/join.html`).
-- Submissions: `POST https://api.nerranetwork.com/api/subscribe` with
-  `list: "personal-interest"` (Worker tags
-  `personal-interest` + `nerra-member` + `gallery-subscriber`, plus
-  `src-nerranetwork`). Optional newsletter checkbox adds the closed
-  show tag `SpaceX Daily`. Optional first name is stored as Buttondown
-  subscriber metadata. Honeypot field `company` is silently discarded.
-- Founder filter: Buttondown tag `personal-interest`.
-- Paid path stays on `/join.html` ("Or start Personal now →").
+  `/personal-interest.html` (linked from `/join.html`).
+- Client: `POST https://api.nerranetwork.com/api/subscribe`
+  `list: "personal-interest"`, `newsletter: true` when the box is on.
+- On Buttondown / Worker failure the page shows Brand fail copy and does
+  not invent keys or charge anything.
 
-Deploy note: the HTML ships with the site; the new Worker list needs a
-`wrangler deploy` of `workers/gallery` before submissions land on the
-new tag (unknown lists fall back to `gallery`).
+### CoS / Patrick setup
+1. Confirm Worker secret `BUTTONDOWN_API_KEY` is set (same key as
+   gallery / Ask C — `wrangler secret list` from `workers/gallery/`).
+2. In Buttondown, create (or confirm) tag/segment **`personal-interest`**
+   on the Nerra Network list. `nerra-member` and `SpaceX Daily` already
+   exist.
+3. Deploy the Worker so the new list is live:
+   ```bash
+   cd workers/gallery && npx wrangler deploy
+   ```
+   Until deploy, an unknown `list` falls back to `gallery` and the form
+   still returns Brand fail copy if Buttondown errors.
+4. No new env vars on GitHub Pages / the static site — the browser only
+   talks to `api.nerranetwork.com`.
+5. Do **not** attach a Stripe Payment Link or auto-subscribe path to this
+   form.
 
 ## Donations (`/support.html`)
 
