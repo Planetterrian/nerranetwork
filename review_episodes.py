@@ -465,6 +465,7 @@ def check_missed_episodes(
     for slug, info in SHOW_REGISTRY.items():
         if show_filter and slug != show_filter:
             continue
+        schedule = info.get("schedule", "daily")
         if not _scheduled_on(info, target_date):
             continue
         if slug in found_slugs:

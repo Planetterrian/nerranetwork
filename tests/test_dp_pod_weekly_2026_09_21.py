@@ -38,7 +38,7 @@ def _cron_map() -> dict:
     block = re.search(r"CRON_MAP = \{(.*?)\n              \}", wf, re.S).group(1)
     out = {}
     for m in re.finditer(
-            r'"([^"]+)":\s*\("([a-z_]+)",\s*(None|"[a-z_]+")\)', block):
+            r'"([^"]+)":\s*\("([a-z0-9_]+)",\s*(None|"[a-z_]+")\)', block):
         out[m.group(2)] = (m.group(1), m.group(3).strip('"').replace("None", ""))
     return out
 

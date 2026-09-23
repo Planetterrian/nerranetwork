@@ -37,7 +37,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
 _CRON_MAP_RE = re.compile(r"CRON_MAP = \{(.*?)\n              \}", re.S)
-_SLOT_RE = re.compile(r'"[^"]+":\s*\("([a-z_]+)"')
+# Slugs may carry digits ("mag7"): [a-z_]+ read MAG 7 as unscheduled.
+_SLOT_RE = re.compile(r'"[^"]+":\s*\("([a-z0-9_]+)"')
 
 #: Shows whose page is re-rendered by a scheduled job OTHER than run-show.
 #: Nerra Daily is assembled by its own workflow, and
