@@ -26,6 +26,35 @@ description: The week in Collingwood and the south Georgian Bay towns —
 
 fetch_full_text: 12
 absence_sentence_filter: true
+# Digest lints + X-source policy (Sep 23 2026 launch-cohort review; engine/digest_lint.py).
+digest_lints:
+- wyntk_hook_match
+- x_only_lead
+x_posts_as_sources: linked_only
+# Region allow-list (Sep 23 2026): an article names one of these or is dropped
+# before the digest (metric articles_dropped_off_region); hook articles always pass.
+region_allowlist:
+- Collingwood
+- Georgian Bay
+- South Georgian Bay
+- Simcoe County
+- Simcoe
+- Grey County
+- Grey Bruce
+- Blue Mountains
+- Blue Mountain
+- Wasaga Beach
+- Wasaga
+- Clearview
+- Stayner
+- Creemore
+- Meaford
+- Thornbury
+- Nottawasaga
+- Barrie
+- Midland
+- Owen Sound
+- Ontario
 # Weekly: nothing older than nine days by its page or feed date.
 stale_article_days: 9
 
@@ -241,7 +270,12 @@ chapters:
     where: end
 
 slow_news:
-  enabled: false
+  # A Friday with a thin week still carries the town's standing explainers
+  # (plan §4.6; 12 evergreen segments, reviewed quarterly).
+  enabled: true
+  library_file: shows/segments/collingwood.json
+  max_segments: 2
+  cooldown_days: 84
 
 newsletter:
   enabled: false

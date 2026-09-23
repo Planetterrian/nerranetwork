@@ -136,5 +136,5 @@ class TestFetchedCopyVerification:
     def test_run_show_passes_the_fetched_copy_everywhere(self):
         src = (ROOT / "run_show.py").read_text(encoding="utf-8")
         assert "_si_mod.build_local_texts(" in src
-        assert src.count("local_texts=_si_local_texts") == 3  # gate, repair, strip
+        assert src.count("local_texts=_si_local_texts") == 4  # gate, repair, item coverage, strip
         assert 'metrics.record("source_integrity_verified_from_fetched"' in src

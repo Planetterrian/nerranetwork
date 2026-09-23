@@ -2803,3 +2803,62 @@ experiments:
       One definition (engine/omni_desks.py), one shared format
       (shows/prompts/_shared/omni_desk_*.txt), five region files. Distribution
       off at launch. Guards: tests/test_phase3_desks_2026_09_23.py.
+  - id: launch-cohort-pass-2026-09-23
+    title: "Launch-cohort pass: sourcing floor, digest lints, formats and fixed-clock segments on the 13 new shows"
+    area: quality
+    shipped: 2026-09-23
+    readout: 2026-10-07
+    status: reading
+    baseline: >
+      Fourteen Episode 1s (2026-09-22/23). Two of fourteen reached their
+      script-length target; every desk digest written on grok-4.7 came in
+      under its own min_digest_words. Every episode written on the grok-4.3
+      fallback recorded 0-1 claims against 8-13 on 4.7 (the appendix called an
+      empty ledger normal). X posts outranked the articles they linked to:
+      Africa & Middle East Ep1 sourced 6 of 6 items to x.com, Vancouver 3/10,
+      Peptides 2/5. MAG 7's What You Need to Know opened on a different story
+      than its hook; LatAm's Progress Watch was a six-second marker; the desks
+      shipped five equal items with no lead. None of the 13 included
+      hook_shape. Top World Ep1 parsed zero desk items (heading-shape bug),
+      ran on 4.3, claims 0.
+    target: >
+      Engine (PR A): newsroom X posts credit the article they link
+      (POST_LINK), `x_posts_as_sources` per show, wire datelines re-credit
+      syndicated copies, `region_allowlist` on the local shows, the claims
+      item-coverage repair (a passed gate with <50% of sourced items covered
+      gets one ADD-only repair; nothing new blocks), and `engine/digest_lint.py`
+      — a closed vocabulary of digest lints a show opts into
+      (wyntk_hook_match, x_only_lead, progress_watch_thin, region_world_thin,
+      counterpoint_keyed_to_lead, dc_items_unlabelled, evidence_rung,
+      dose_terms, spotlight_card) riding the existing one-shot structural
+      regeneration. Formats (PR B): desks move to Lead + two developed +
+      "Also Today" one-liners (story count follows supply); Top World carries
+      a ranking line per story, an intake line from `desks_live_at_publish`
+      and a Saturday single-story edition; MAG 7 and AI Chips close on a
+      dated calendar read last; Prediction Markets gets Friday "The Week's
+      Board" (engine/board_week.py, data-side), price-not-odds, a named-critic
+      beat and +19 curriculum subjects; Vancouver and Collingwood carry the
+      non-residency identity line; Longevity names one hallmark, never the
+      framework; Peptides closes its Spotlight on a five-slot card; LatAm adds
+      six Spanish/Portuguese publisher feeds; Collingwood gets a 12-segment
+      evergreen library; the NA desk gets a Canada / US-Mexico floor and a
+      Both Sides rotation memory.
+    criteria: >
+      Read on the Ep2-Ep10 metrics, never on completion (unmeasured here):
+      `digest_lints_fired` should fall episode over episode on each show and
+      `digest_lints_fired_after_retry` should be empty on most; `x_posts_
+      dropped_unlinked` and the Sources block on every Africa & ME post naming
+      publishers; `source_integrity_item_coverage_pct` >= 50 on 4.3-fallback
+      episodes; desk digests at or above min_digest_words on days with >= 12
+      full-text articles; Prediction Markets' first Friday carries The Week's
+      Board with >= 3 rows; Top World's first Saturday validates as one story;
+      the operator's listen on the first post-merge episode of every show
+      (landmine #17 — every prompt here changed). MISS = a lint that fires on
+      every episode after the retry (the rule belongs in code, not the prompt)
+      or a show whose fallback rate stays > 30%.
+    notes: >
+      Plan: the session plan file (staged-brewing-hanrahan) summarised in
+      CLAUDE.md under "Launch-cohort pass". Guards:
+      tests/test_launch_cohort_pass_2026_09_23.py (engine),
+      tests/test_launch_cohort_formats_2026_09_23.py (formats). PR C
+      (schedule, cross-promo, pages, ledgers) follows this merge.

@@ -1006,7 +1006,9 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
     "vancouver": {
         "host": "Mira",
         "show_name": "Vancouver Daily",
-        "identity_tail": "I'm Mira, the Nerra Network's AI host.",
+        # Non-residency in the identity line (Collingwood Ep1's shape, cloned
+        # here Sep 23 2026): Mira does not live in the city she reads.
+        "identity_tail": "I'm Mira, the Nerra Network's AI host — I don't live in Vancouver, I read it every morning from the people who do.",
         "greetings": ["Good morning, this is"],
         "openers": ["episode {ep}."],
         "framings": ["What changed in Metro Vancouver today."],
@@ -1018,7 +1020,7 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
     "collingwood": {
         "host": "Mira",
         "show_name": "Collingwood Weekly",
-        "identity_tail": "I'm Mira, the Nerra Network's AI host.",
+        "identity_tail": "I'm Mira, the Nerra Network's AI host — I don't live in Collingwood, I read it every week from the people who do.",
         "greetings": ["Good morning, this is"],
         "openers": ["episode {ep}."],
         "framings": ["The week around the south Georgian Bay."],

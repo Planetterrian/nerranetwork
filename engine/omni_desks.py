@@ -290,18 +290,61 @@ def balance_note(recent_digests: Sequence[str], d: Desk) -> str:
     )
 
 
-_ITEM_HEAD_RE = re.compile(r"^\*\*(?P<title>[^*\n]{8,}?):\*\*\s*(?P<rest>.*)$")
+_BOTH_SIDES_RE = re.compile(r"^###\s+Both Sides:\s*(?P<q>.+?)\s*$", re.MULTILINE)
+_US_FEDERAL_RE = re.compile(
+    r"\b(congress|senate|house of representatives|white house|federal|supreme court|"
+    r"president|administration|washington|capitol|fed\b|fcc|ftc|sec\b|doj|pentagon)",
+    re.I)
+
+
+def both_sides_subjects(recent_digests: Sequence[str]) -> List[str]:
+    """The ``### Both Sides: <question>`` titles of recent digests, oldest first."""
+    out: List[str] = []
+    for text in recent_digests:
+        m = _BOTH_SIDES_RE.search(text or "")
+        if m:
+            out.append(m.group("q").strip())
+    return out
+
+
+def both_sides_rotation_note(recent_digests: Sequence[str], d: Desk, window: int = 6) -> str:
+    """Data-side rotation memory for the Both Sides question (the DP Pod
+    lever pattern, Sep 23 2026). Names the last *window* questions so the
+    model does not re-ask one; on the North America desk it also says
+    whether the last two were US-federal, which the desk prompt turns into
+    a Canada / province / state / border question today."""
+    subjects = both_sides_subjects(recent_digests)[-window:]
+    if not subjects:
+        return ""
+    lines = ["### BOTH SIDES ROTATION (instruction — do not include in output)",
+             "Recent Both Sides questions, oldest first — choose a different one today:"]
+    lines += [f"- {q}" for q in subjects]
+    if d.slug == "omni_view_north_america" and len(subjects) >= 2:
+        if all(_US_FEDERAL_RE.search(q) for q in subjects[-2:]):
+            lines.append("The last two questions were US-federal.")
+    return "\n".join(lines)
+
+
+# Two item-head shapes: the desks write ``**Title: Outlet**`` on its own line
+# (the outlet after the LAST colon inside the bold), older formats write
+# ``**Title:** Outlet. body`` inline. Top World Ep1 (2026-09-23) parsed ZERO
+# items from five published desks because only the second was matched.
+_ITEM_HEAD_RE = re.compile(
+    r"^\*\*(?P<title>[^*\n]{8,}?):\*\*\s*(?P<rest>.*)$"
+    r"|^\*\*(?P<title2>[^*\n]{8,}):\s*(?P<outlet2>[^*\n:]{2,60})\*\*\s*$"
+)
 _SOURCE_URL_RE = re.compile(r"Source:\s*(?:\[[^\]]*\]\()?(?P<url>https?://[^\s)\]]+)")
 #: Sections of a desk digest that carry ranked news items.
-DESK_ITEM_SECTIONS = ("Lead", "Across the Region", "The Region and the World")
+DESK_ITEM_SECTIONS = ("Lead", "Across the Region", "Also Today", "The Region and the World")
 
 
 def desk_items(digest_md: str) -> List[Dict[str, str]]:
     """The news items of a committed desk digest: headline, outlet, the
     desk's own summary and the ORIGINAL publisher URL.
 
-    Only the Lead, Across the Region and The Region and the World sections
-    are read (Both Sides and Progress Watch are the desk's own framing).
+    Only the Lead, Across the Region, Also Today and The Region and the
+    World sections are read (Both Sides and Progress Watch are the desk's
+    own framing).
     An item without a publisher URL is dropped: Top World verifies against
     the publisher, never against a sibling digest.
     """
@@ -317,14 +360,25 @@ def desk_items(digest_md: str) -> List[Dict[str, str]]:
         u = _SOURCE_URL_RE.search(text)
         if not m or not u:
             return
-        rest = m.group("rest").strip()
-        outlet, _, body = rest.partition(". ")
+        # An X post is not a publisher URL: Top World verifies against the
+        # newsroom's own page or not at all (Africa & Middle East Ep1 sourced
+        # six items to x.com).
+        if re.match(r"https?://(?:www\.|mobile\.)?(?:x\.com|twitter\.com)/", u.group("url"), re.I):
+            return
+        if m.group("title2"):
+            title = m.group("title2").strip()
+            outlet = m.group("outlet2").strip()
+            body = ""
+        else:
+            title = m.group("title").strip()
+            rest = m.group("rest").strip()
+            outlet, _, body = rest.partition(". ")
         body_all = (body + " " + " ".join(block[1:])).strip()
         body_all = _SOURCE_URL_RE.sub("", body_all)
         body_all = re.sub(r"\s*Source:\s*$", "", body_all).strip(" >")
         items.append({
             "section": section,
-            "title": m.group("title").strip(),
+            "title": title,
             "outlet": outlet.strip().rstrip("."),
             "summary": re.sub(r"\s+", " ", body_all)[:420],
             "url": u.group("url").rstrip(".,"),

@@ -929,7 +929,7 @@ def prediction_markets_validation_config() -> ValidationConfig:
             SectionRule(
                 name="The Board",
                 pattern=(r"(?:### The Board|## The Board)(.*?)"
-                         r"(?=### New and Notable|## New and Notable|### How It Works|## How It Works|$)"),
+                         r"(?=### The Week's Board|## The Week's Board|### New and Notable|## New and Notable|### How It Works|## How It Works|$)"),
                 min_items=0,
                 min_chars=60,
             ),
@@ -992,8 +992,11 @@ def collingwood_validation_config() -> ValidationConfig:
 
 
 def omni_desk_validation_config() -> ValidationConfig:
-    """The Omni View regional desks (Sep 2026, Phase 3). Lead is one item;
-    Across the Region carries four, three is the floor on a thin day."""
+    """The Omni View regional desks (Sep 2026, Phase 3; format v2 Sep 23):
+    Lead is one item, Across the Region two developed items, Also Today the
+    rest as one-liners (optional — story count follows supply), The Region
+    and the World optional, Both Sides required. Progress Watch's floor is
+    the ``progress_watch_thin`` digest lint."""
     return ValidationConfig(
         section_pairs=[],
         sections=[
@@ -1004,7 +1007,7 @@ def omni_desk_validation_config() -> ValidationConfig:
                 min_chars=250,
             ),
             _items_rule("Across the Region", "Across the Region",
-                        r"### The Region and the World|## The Region and the World|### Both Sides|## Both Sides", 3),
+                        r"### Also Today|## Also Today|### The Region and the World|## The Region and the World|### Both Sides|## Both Sides", 2),
             SectionRule(
                 name="Both Sides",
                 pattern=r"(?:### Both Sides|## Both Sides)(.*?)(?=### Progress Watch|## Progress Watch|$)",
@@ -1044,13 +1047,31 @@ for _slug in _OMNI_DESK_SLUGS:
     SHOW_VALIDATION_CONFIGS.setdefault(_slug, omni_desk_validation_config)
 
 
-def omni_world_validation_config() -> ValidationConfig:
+def _world_is_saturday() -> bool:
+    import datetime as _dt
+    return _dt.datetime.now(_dt.timezone.utc).weekday() == 5
+
+
+def omni_world_validation_config(saturday: "bool | None" = None) -> ValidationConfig:
     """Omni View Top World News (Sep 2026, Phase 3): The Ten, eight is the
-    floor on a thin day; Both Sides."""
+    floor on a thin day; Both Sides. Saturday (Sep 23) is the single-story
+    edition: one story of at least 1,800 characters under the same header,
+    so the items floor does not apply."""
+    if saturday is None:
+        saturday = _world_is_saturday()
+    if saturday:
+        ten_rule = SectionRule(
+            name="The Ten",
+            pattern=r"(?:### The Ten|## The Ten)(.*?)(?=### Both Sides|## Both Sides|$)",
+            min_items=0,
+            min_chars=1800,
+        )
+    else:
+        ten_rule = _items_rule("The Ten", "The Ten", r"### Both Sides|## Both Sides", 8)
     return ValidationConfig(
         section_pairs=[],
         sections=[
-            _items_rule("The Ten", "The Ten", r"### Both Sides|## Both Sides", 8),
+            ten_rule,
             SectionRule(
                 name="Both Sides",
                 pattern=r"(?:### Both Sides|## Both Sides)(.*?)(?=### Progress Watch|## Progress Watch|$)",

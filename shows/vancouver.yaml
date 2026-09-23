@@ -25,6 +25,47 @@ description: The morning brief for Metro Vancouver — the day's civic and
 # Local wire copy is short; the digest reads full article text.
 fetch_full_text: 12
 absence_sentence_filter: true
+# Digest lints + X-source policy (Sep 23 2026 launch-cohort review; engine/digest_lint.py).
+digest_lints:
+- wyntk_hook_match
+- x_only_lead
+x_posts_as_sources: linked_only
+# Region allow-list (Sep 23 2026): an article names one of these or is dropped
+# before the digest (metric articles_dropped_off_region); hook articles always pass.
+region_allowlist:
+- Vancouver
+- Metro Vancouver
+- B.C.
+- British Columbia
+- Lower Mainland
+- Fraser Valley
+- TransLink
+- SkyTrain
+- DriveBC
+- BC Ferries
+- BC Hydro
+- BC Lions
+- Canucks
+- Whitecaps
+- Eby
+- YVR
+- North Vancouver
+- West Vancouver
+- Burnaby
+- Surrey
+- Richmond
+- Coquitlam
+- Port Coquitlam
+- Port Moody
+- New Westminster
+- Delta
+- Langley
+- Maple Ridge
+- Pitt Meadows
+- White Rock
+- Squamish
+- Abbotsford
+- Chilliwack
 # A daily local brief: nothing older than three days by its page or feed
 # date reaches the prompt (Google News re-surfaces old stories under fresh
 # index dates — the Offshore North lesson).

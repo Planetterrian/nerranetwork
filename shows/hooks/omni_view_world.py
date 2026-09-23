@@ -52,13 +52,45 @@ def todays_desk_digests(root: Path, date: _dt.date) -> List[Tuple[object, str]]:
     return out
 
 
+def intake_line(desks_live: int, desks_total: int) -> str:
+    """The sentence the digest's WYNTK ends on — data-side, never typed.
+
+    Top World is assembled from whichever desks published before it ran
+    (plan §3.9 "intake honesty"): the reader is told how many, in the
+    show's own words, and the number is the count of desk digests read."""
+    if desks_live <= 0:
+        return "This edition was drawn from the world feeds alone; no regional desk had published by press time."
+    if desks_live >= desks_total:
+        return f"This edition draws on all {desks_total} Omni View regional desks."
+    return (f"This edition draws on {desks_live} of the {desks_total} Omni View regional desks "
+            "live by press time.")
+
+
+def edition_note(date: _dt.date) -> str:
+    """Saturday is the single-story edition (The Intelligence's weekend
+    shape, plan §2k); every other day is The Ten. The model never reads a
+    calendar — the hook says which edition today is."""
+    if date.weekday() == 5:
+        return ("### EDITION (instruction — do not include in output)\n"
+                "Today is Saturday: the single-story edition. Under `### The Ten` write "
+                "ONE story — the week's most consequential — in 350-500 words with the "
+                "week's context from the articles above, then Both Sides and Progress "
+                "Watch as usual. No list of ten today.")
+    return ("### EDITION (instruction — do not include in output)\n"
+            "Today is a weekday edition: The Ten, ranked, items one to five developed "
+            "and six to ten one sentence each.")
+
+
 def build_payload(root: Path, date: _dt.date) -> Dict[str, object]:
     articles: List[Dict[str, str]] = []
     lines: List[str] = []
-    for d, text in todays_desk_digests(root, date):
+    live = todays_desk_digests(root, date)
+    desks_live = 0
+    for d, text in live:
         items = desk_items(text)
         if not items:
             continue
+        desks_live += 1
         lines.append(f"{d.region}:")
         for n, it in enumerate(items):
             lines.append(f"- [{it['section']}] {it['title']} — {it['summary']} ({it['url']})")
@@ -69,8 +101,16 @@ def build_payload(root: Path, date: _dt.date) -> Dict[str, object]:
                     "source_name": it["outlet"] or d.name,
                     "published_date": date.isoformat(),
                 })
+    intake = intake_line(desks_live, len(DESKS))
+    metrics = {"desks_live_at_publish": desks_live, "desks_total": len(DESKS)}
     if not lines:
-        return {"articles": [], "hook_context": ""}
+        note = (
+            "### TODAY'S REGIONAL DESKS (instruction — do not include in output)\n"
+            "No regional desk had published when this edition was assembled. The "
+            "intake line for the end of What You Need to Know is, copied as given: "
+            + intake + "\n\n" + edition_note(date)
+        )
+        return {"articles": [], "hook_context": note, "metrics": metrics}
     note = (
         "### TODAY'S REGIONAL DESKS (instruction — do not include in output)\n"
         "The Omni View regional desks published these today. Use them to judge "
@@ -78,8 +118,10 @@ def build_payload(root: Path, date: _dt.date) -> Dict[str, object]:
         "write comes from the numbered articles above (the desks' leading "
         "stories are among them under their original publisher URLs); a "
         "detail that appears only in this note is left out.\n" + "\n".join(lines)
+        + "\n\nThe intake line for the end of What You Need to Know is, copied as given: "
+        + intake + "\n\n" + edition_note(date)
     )
-    return {"articles": articles, "hook_context": note}
+    return {"articles": articles, "hook_context": note, "metrics": metrics}
 
 
 def pre_fetch(config, *, episode_num=None, today_str=None,

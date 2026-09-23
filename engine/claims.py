@@ -206,8 +206,10 @@ def claims_prompt_appendix() -> str:
         "that supports the claim>\n"
         '  "confidence": <one of high, medium, low>\n'
         "\n"
-        "An empty array is a valid and normal ledger when the episode makes "
-        "no externally checkable specific assertions. The fenced block is "
+        "An empty array is correct ONLY for an episode that asserts no "
+        "externally checkable specific at all; a news item that carries a "
+        "Source line asserts at least one, and that fact is an entry. The "
+        "fenced block is "
         "machine-read and removed before publication — it is never spoken "
         "and never shown to readers, so do not mention it in the episode "
         "body, and do not place any prose after it."
@@ -1620,3 +1622,102 @@ def load_ledger(digest_md_path: Path) -> List[dict]:
         return []
     claims = payload.get("claims")
     return claims if isinstance(claims, list) else []
+
+
+# ---------------------------------------------------------------------------
+# Item coverage floor (Sep 23 2026, the launch-cohort review)
+# ---------------------------------------------------------------------------
+# Across the 14 new-show Episode 1s every run written on grok-4.3 recorded
+# 0-1 claims and every grok-4.7 run 8-13: the appendix's "an empty array is
+# valid and normal" was the opening 4.3 took every time, so on a fallback
+# episode the enforce gate had nothing to check and "claims=0, passed" was
+# the record. The floor below is data-side: it measures how many digest
+# items that carry a ``Source:`` line have at least one VERIFIED ledger
+# entry anchored in them, and when fewer than half do it spends the one
+# existing repair pass on the uncovered items' first sentences. It can only
+# ADD verified entries — a repaired ledger that fails the full gate is
+# discarded and the original result stands — so nothing here can block or
+# strip an episode.
+
+ITEM_COVERAGE_MIN_PCT = 50.0
+
+
+def _digest_items_with_source(text: str) -> List[Tuple[str, str]]:
+    """``(first_sentence, block)`` for every digest item carrying a Source."""
+    from engine.digest_lint import items as _items, sections as _sections
+    out: List[Tuple[str, str]] = []
+    for title, body in _sections(text):
+        if title in ("What This Show Covers", "Evidence Ledger", "The Tape"):
+            continue
+        for block in _items(body):
+            if "Source:" not in block and "http" not in block:
+                continue
+            lines = [ln.strip() for ln in block.splitlines()[1:]
+                     if ln.strip() and not ln.strip().startswith("Source:")]
+            prose = " ".join(lines)
+            first = re.split(r"(?<=[.!?])\s+", prose, 1)[0].strip() if prose else ""
+            if len(first) >= 40:
+                out.append((first, block))
+    return out
+
+
+def item_source_coverage(text: str, verified_claims: List[dict]) -> Tuple[int, int, List[str]]:
+    """``(items_with_source, items_covered, uncovered_first_sentences)``."""
+    pairs = _digest_items_with_source(text)
+    uncovered: List[str] = []
+    covered = 0
+    for first, block in pairs:
+        if any(_sentence_covered(block, c) for c in verified_claims):
+            covered += 1
+        else:
+            uncovered.append(first)
+    return len(pairs), covered, uncovered
+
+
+def attempt_item_coverage_repair(
+    episode_text: str,
+    gate: GateResult,
+    claims: List[dict],
+    generate: Callable[[str], str],
+    fetch: Optional[Callable[[str], Tuple[int, str]]] = None,
+    local_texts: Optional[Dict[str, str]] = None,
+) -> Tuple[GateResult, List[dict], dict]:
+    """Spend one repair pass on sourced items no verified entry covers.
+
+    Returns ``(gate, claims, info)``; ``info`` carries the coverage numbers
+    for the metrics. The repaired ledger is kept only when the FULL gate
+    passes on it (``attempt_claim_repair`` re-runs it) — the floor adds
+    provenance, it never changes a verdict downward."""
+    total, covered, uncovered = item_source_coverage(episode_text, gate.verified_claims)
+    pct = round(100.0 * covered / total, 1) if total else None
+    info = {"items_with_source": total, "items_covered": covered,
+            "item_coverage_pct": pct, "coverage_repair_attempted": False}
+    if not total or pct is None or pct >= ITEM_COVERAGE_MIN_PCT or not uncovered:
+        return gate, claims, info
+    info["coverage_repair_attempted"] = True
+    synthetic = GateResult(
+        passed=False,
+        ledger_present=gate.ledger_present,
+        claims_total=gate.claims_total,
+        claims_anchored=gate.claims_anchored,
+        claims_verified=gate.claims_verified,
+        failed_verifications=[],
+        uncovered_shapes=[{"sentence": sent, "match": "item-coverage"}
+                          for sent in uncovered[:REPAIR_MAX_CLAIMS]],
+        verified_claims=list(gate.verified_claims),
+    )
+    try:
+        new_gate, new_claims = attempt_claim_repair(
+            episode_text, synthetic, claims, generate,
+            fetch=fetch, local_texts=local_texts)
+    except Exception:  # noqa: BLE001 — the floor can only help
+        return gate, claims, info
+    if new_gate is synthetic or not new_gate.passed:
+        return gate, claims, info
+    if new_gate.claims_verified <= gate.claims_verified:
+        return gate, claims, info
+    t2, c2, _ = item_source_coverage(episode_text, new_gate.verified_claims)
+    info.update({"items_covered": c2,
+                 "item_coverage_pct": round(100.0 * c2 / t2, 1) if t2 else None,
+                 "coverage_repair_added": new_gate.claims_verified - gate.claims_verified})
+    return new_gate, new_claims, info

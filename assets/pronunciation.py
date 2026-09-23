@@ -1813,6 +1813,19 @@ def prepare_text_for_tts(
     # Matches spaced-letter expansions (A I, E V, M L, etc.) before a hyphen.
     text = re.sub(r"([A-Z](?: [A-Z])+)-(\w)", r"\1 \2", text)
 
+    # ── 8b. A number spelled out at the start of a sentence keeps the
+    # sentence's capital (AI Chips Ep2: "...Scalable Unit. one thousand one
+    # hundred fifty-two NVIDIA chips..." — the digit expansion is lower-case
+    # and nothing upstream re-capitalised it).
+    text = re.sub(
+        r"(^|[.!?]\s+|\n\s*)(one|two|three|four|five|six|seven|eight|nine|ten|"
+        r"eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|"
+        r"nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|"
+        r"hundred|thousand|million|billion|trillion|zero|half|a quarter)\b",
+        lambda m: m.group(1) + m.group(2)[0].upper() + m.group(2)[1:],
+        text,
+    )
+
     # ── 9. Final whitespace cleanup ──
     text = re.sub(r"  +", " ", text)
     text = re.sub(r"\n{3,}", "\n\n", text)

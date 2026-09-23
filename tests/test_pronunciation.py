@@ -830,7 +830,7 @@ class TestPrepareTextForTts:
         assert "Cassini" in result             # respelling moved to pronunciation_map.yaml (audio-only) 2026-06-25
         assert "Enceladus" in result           # respelling removed 2026-06-25 (garble-redundant)
         assert "Phase three" in result         # Roman numeral
-        assert "five hundred thousand" in result  # Large number
+        assert "five hundred thousand" in result.lower()  # Large number (sentence-initial → capitalised, Sep 23 2026)
         assert "kilometers" in result          # Unit expansion
         assert "E S A" in result               # Acronym
         assert "seventh" in result             # Ordinal number
@@ -853,7 +853,7 @@ class TestPrepareTextForTts:
         # AI should be expanded to "A I"
         assert "A I" in result
         assert "billion dollars" in result
-        assert "fifteen percent" in result
+        assert "fifteen percent" in result.lower()  # sentence-initial → capitalised, Sep 23 2026
         assert "Q three" in result
 
     def test_stock_price_with_change_and_status(self):

@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import List
 
 from engine import show_memory
-from engine.omni_desks import balance_note, desk
+from engine.omni_desks import balance_note, both_sides_rotation_note, desk
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,10 @@ def recent_digests(config, n: int = BALANCE_WINDOW) -> List[str]:
 def pre_fetch(config, slug: str) -> dict:
     context = show_memory.memory_pre_fetch(config, slug)
     try:
-        context["hook_context"] = balance_note(recent_digests(config), desk(slug))
+        recent = recent_digests(config)
+        d = desk(slug)
+        parts = [balance_note(recent, d), both_sides_rotation_note(recent, d)]
+        context["hook_context"] = "\n\n".join(p for p in parts if p)
     except Exception as exc:  # noqa: BLE001 — never block a run
         logger.warning("%s: sub-region balance note failed (non-fatal): %s", slug, exc)
         context["hook_context"] = ""
