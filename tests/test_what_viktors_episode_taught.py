@@ -452,3 +452,66 @@ class TestTheRoomNeverPlaysAMissingClip:
         body = FIRE[FIRE.index("def _clip_is_there("):FIRE.index("def room_clips(")]
         assert "except Exception" in body and "return False" in body
         assert "resp.status_code == 200" in body
+
+
+# ---------------------------------------------------------------------------
+# 7. A RETAKE IS A SECOND CHANCE, NOT A SECOND REQUIREMENT.
+#
+# Voicing those two clips, the first take read all 34 words at 0.84 of the
+# expected length, one hundredth under the retake line. The retake lost its
+# socket to xAI and the exception threw the good take away with it. The same
+# loop voices every episode's introduction and close.
+
+class TestAFailedRetakeKeepsTheGoodTake:
+    def _run(self, monkeypatch, tmp_path, outcomes):
+        """outcomes: per attempt, either a ratio (take recorded) or an
+        exception (take failed). Returns the uploaded path or raises."""
+        import narrate
+        seq = iter(outcomes)
+        ratios = {}
+
+        def record(slug, seg_id, n, para, voice):
+            nxt = next(seq)
+            if isinstance(nxt, Exception):
+                raise nxt
+            url = f"u{len(ratios)}"
+            ratios[url] = nxt
+            return url
+
+        class _Resp:
+            def __init__(self, url): self.content = url.encode()
+        monkeypatch.setattr(narrate, "_record_take", record)
+        monkeypatch.setattr(narrate.requests, "get", lambda url, timeout=0: _Resp(url))
+        monkeypatch.setattr(narrate, "_trim", lambda part: part)
+        monkeypatch.setattr(narrate, "_take_shortfall",
+                            lambda part, text: ratios[part.read_bytes().decode()])
+        monkeypatch.setattr(narrate, "_check_not_truncated", lambda part, text: None)
+        monkeypatch.setattr(narrate, "_stitch", lambda parts, out: parts[0])
+        uploaded = []
+        monkeypatch.setattr(narrate, "r2_upload",
+                            lambda path, key: uploaded.append(path.read_bytes().decode()) or key)
+        spec = tmp_path / "t.json"
+        spec.write_text(json.dumps({"show": "nerra_voices", "segments": [
+            {"id": "disclosure", "text": "One short paragraph."}]}))
+        monkeypatch.setattr(narrate, "NARRATION_DIR", tmp_path)
+        monkeypatch.setenv("NARRATION_ENGINE", "agent")
+        narrate.narrate("t")
+        return uploaded
+
+    def test_what_happened_now_keeps_the_first_take(self, monkeypatch, tmp_path):
+        up = self._run(monkeypatch, tmp_path,
+                       [0.84, RuntimeError("take failed: socket closed: 1006")])
+        assert up == ["u0"]
+
+    def test_a_first_take_that_fails_gets_another_go(self, monkeypatch, tmp_path):
+        up = self._run(monkeypatch, tmp_path, [RuntimeError("1006"), 0.95])
+        assert up == ["u0"]   # the only take that came back
+
+    def test_no_usable_take_at_all_still_fails(self, monkeypatch, tmp_path):
+        with pytest.raises(RuntimeError):
+            self._run(monkeypatch, tmp_path,
+                      [RuntimeError("a"), RuntimeError("b"), RuntimeError("c")])
+
+    def test_the_longest_take_still_wins_when_nothing_fails(self, monkeypatch, tmp_path):
+        up = self._run(monkeypatch, tmp_path, [0.70, 0.80, 0.84])
+        assert up == ["u2"]

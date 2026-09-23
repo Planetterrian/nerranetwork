@@ -285,7 +285,27 @@ def narrate(slug: str) -> Dict[str, str]:
                 best: Path | None = None
                 best_ratio = 0.0
                 for attempt in range(RETAKES + 1):
-                    url = _record_take(slug, seg_id, seq, para, voice)
+                    # Sept 23 2026, nerra_voices_system. The first take read
+                    # all 34 words cleanly at 0.84 of the expected length, one
+                    # hundredth under the retake line; the retake then lost its
+                    # socket to xAI (1006) and the exception threw the good
+                    # take away with it, failing the run. A retake is a second
+                    # chance, not a second requirement: if one fails and there
+                    # is already a take in hand, keep it and move on. Only a
+                    # paragraph with no usable take at all fails the run.
+                    try:
+                        url = _record_take(slug, seg_id, seq, para, voice)
+                    except RuntimeError as err:
+                        if best is None and attempt < RETAKES:
+                            logger.warning("take %s/%s#%d failed (%s) — trying "
+                                           "again", slug, seg_id, seq, err)
+                            continue
+                        if best is None:
+                            raise
+                        logger.warning("retake %s/%s#%d failed (%s) — keeping "
+                                       "the take already recorded at %.0f%%",
+                                       slug, seg_id, seq, err, best_ratio * 100)
+                        break
                     part = work / f"{seg_id}_{seq:03d}_{attempt}.mp3"
                     part.write_bytes(requests.get(url, timeout=180).content)
                     # Measured AFTER trimming: trailing silence would
