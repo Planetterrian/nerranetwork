@@ -516,11 +516,23 @@ def build_podcast_template_vars(
             # premiere promising a daily follow-up. The debut INTRO stays
             # generic on purpose ("the very first episode of…"), which the
             # per-show debut templates are written around.
-            pod_vars.setdefault(
-                "intro_line",
+            #
+            # Sep 23 2026: on an AI-hosted show the debut line keeps the
+            # personality's identity tail ("I'm Mira, the Nerra Network's AI
+            # host."). The generic line had replaced the identity line, so
+            # Vancouver and Collingwood Ep1 never said Mira's name until the
+            # closing and disclosed the AI only because the model improvised
+            # it — the plan requires the disclosure in the first 30 seconds.
+            _ep1_intro = (
                 f"Welcome to the very first episode of {config.name}! "
-                f"Today is {today_str}.",
+                f"Today is {today_str}."
             )
+            if getattr(getattr(config, "publishing", None), "host_kind", "") == "ai":
+                from engine.intros import _SHOW_PERSONALITIES
+                _tail = str((_SHOW_PERSONALITIES.get(_slug) or {}).get("identity_tail") or "")
+                if _tail:
+                    _ep1_intro = f"{_ep1_intro} {_tail}"
+            pod_vars.setdefault("intro_line", _ep1_intro)
             pod_vars.setdefault(
                 "closing_block",
                 build_closing_block(
