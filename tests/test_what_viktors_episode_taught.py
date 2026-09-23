@@ -15,14 +15,23 @@ found a third thing underneath that had caused most of the damage.
    closed the recording at [44:08], eleven seconds later, before he had said
    a word of it. Asking without waiting is worse than not asking.
 
-3. WHY THE TRANSCRIPT WAS A MESS, which is the one that mattered. Viktor's
-   browser recording never uploaded, and the two-track path was gated on the
-   GUEST's track being local rather than on Mira having audio of her own. So a
-   run holding a clean guest channel and a real Mira-only leg fell through to
-   transcribing the raw Voximplant stereo — whose right channel carries the
-   guest's own voice back — and his sentences were attributed to her. The
-   grading pass read that as Mira parroting her guest, scored her listening at
-   three, and adopted a standing instruction about a fault that was not hers.
+3. WHY THERE WERE NO CLEAN TRACKS. Viktor's browser recording never
+   uploaded, and the two-track path was gated on the GUEST's track being local
+   rather than on Mira having audio of her own. So a run holding a clean guest
+   channel and a real Mira-only leg fell through to transcribing the raw
+   Voximplant stereo, and neither the clean bed nor a transcript anyone could
+   trust about who said what was ever produced.
+
+4. AND A CORRECTION TO POINT 3, made the next day. Her turns in that first
+   transcript kept opening with the guest's last few words ("Talking to staff.
+   How big is the team?"), and the first account of this episode put that down
+   to his voice leaking into her channel — and taught the grader to stop
+   grading it. Re-transcribed from the clean tracks, every one of those lines
+   was still on HER recording. She was echoing him, and resuming sentences she
+   had been interrupted in. The grader had been right about the parroting. It
+   is now TOLD whether the channels were separated, as a fact from the
+   pipeline, instead of guessing from how the text reads — which is the
+   mistake the reviewer made, not the grader.
 """
 
 from __future__ import annotations
@@ -182,15 +191,51 @@ class TestTheLastWordIsWaitedFor:
         assert "you close because they have finished" in PROMPT
 
 
-class TestTheGraderIsToldAboutBothDirections:
-    def test_it_knows_the_guest_can_land_in_her_channel(self):
-        assert "IT HAPPENS THE OTHER WAY ROUND TOO" in RETRO
-        assert "OPENS with the tail of" in RETRO
+class TestTheGraderIsToldTheFactNotLeftToGuess:
+    """Whether who-said-what can be trusted is a property of the recording,
+    and the pipeline knows it. The grader is told; it does not infer it from
+    how a line reads."""
 
-    def test_it_is_told_not_to_grade_those_dimensions_from_such_a_tape(self):
-        block = RETRO[RETRO.index("IT HAPPENS THE OTHER WAY ROUND TOO"):]
-        assert "do not grade listening, turn-taking or repetition" in block
+    def test_the_heuristic_that_misled_the_reviewer_is_gone(self):
+        # "A Mira turn that opens with the guest's words is bleed" was wrong
+        # on the very tape it was written about.
+        assert "IT HAPPENS THE OTHER WAY ROUND TOO" not in RETRO
+
+    def test_the_pipeline_states_whether_the_channels_were_separated(self):
+        assert "{{channels}}" in RETRO
+        call = POST[POST.index('"editorial_passes/09_interview_retro.txt"'):]
+        call = call[:call.index("temperature=0.3")]
+        assert "channels=channels," in call
+        # Decided by whether per-speaker tracks were produced, nothing else.
+        assert 'if processed else' in POST[POST.index("channels = ("):
+                                           POST.index("channels = (") + 700]
+
+    def test_both_answers_say_what_they_mean(self):
+        block = POST[POST.index("channels = ("):POST.index("channels = (") + 900]
+        flat = " ".join(block.replace('" "', "").replace('"\n', "").split())
+        assert "SEPARATED. Each speaker was recorded on a track of their own" in block
+        assert "labelled Mira was said by Mira" in flat
+        assert "NOT SEPARATED. Mira had no recording of her own" in block
+
+    def test_only_an_unseparated_tape_stops_the_grading(self):
+        block = RETRO[RETRO.index("HOW FAR TO TRUST WHO SAID WHAT"):
+                      RETRO.index("AND A RELAPSE IS NOT A NEW LESSON")]
+        assert "If it says NOT SEPARATED, do not grade listening" in block
         assert "propose no lesson that depends on who said what" in block
+
+    def test_on_a_separated_tape_her_strange_lines_are_hers(self):
+        block = RETRO[RETRO.index("HOW FAR TO TRUST WHO SAID WHAT"):
+                      RETRO.index("AND A RELAPSE IS NOT A NEW LESSON")]
+        assert "If it says SEPARATED, believe the labels" in block
+        # The two habits Viktor's clean tracks proved were hers.
+        flat = " ".join(block.split())
+        assert "That is her echoing him back" in flat
+        assert "picked up the sentence she had been cut off in" in flat
+
+    def test_it_is_told_why_guessing_is_the_expensive_mistake(self):
+        flat = " ".join(RETRO.split())
+        assert "every one of those lines was still hers" in flat
+        assert "Do not guess; read the line above." in flat
 
     def test_a_relapse_is_not_adopted_as_a_new_lesson(self):
         assert "AND A RELAPSE IS NOT A NEW LESSON" in RETRO

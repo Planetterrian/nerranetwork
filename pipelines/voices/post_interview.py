@@ -1008,15 +1008,22 @@ def main() -> int:
             # Sept 22 2026, Viktor Popovic. This branch used to ask whether
             # the GUEST track was the local browser recording. His never
             # uploaded, so a run holding a clean guest channel and a real
-            # Mira-only leg fell through to transcribing the raw stereo
-            # instead — and the right channel of that stereo is the room as
-            # the guest heard it, which carries the guest's own voice back.
-            # The recogniser duly attributed his words to her: half her turns
-            # in that transcript open with the tail of his sentence, and the
-            # grading pass read it as Mira parroting her guest and adopted a
-            # standing instruction about a fault that was not hers. Two good
-            # tracks were on disk the whole time. What decides this path is
-            # whether Mira has her own audio, not where the guest's came from.
+            # Mira-only leg fell through to transcribing the raw stereo, whose
+            # right channel is the room as the guest heard it. Two good tracks
+            # were on disk the whole time, and neither the clean bed nor a
+            # transcript anyone could trust about who said what was produced.
+            # What decides this path is whether Mira has her own audio, not
+            # where the guest's came from.
+            #
+            # A correction worth keeping next to it. Her turns in that first
+            # transcript kept opening with the guest's last few words, and the
+            # fix above was first justified as his voice leaking into her
+            # channel. Re-transcribed from the clean tracks on Sept 23, every
+            # one of those lines was still on HER recording: she was echoing
+            # him, and resuming sentences she had been interrupted in. The
+            # fix is right; that explanation for it was not. A transcript from
+            # this path is worth having precisely because it settles questions
+            # like that one instead of inviting a guess.
             for speaker in ("guest", "mira"):
                 processed[speaker] = r2_upload(
                     tracks[speaker], show.r2_key("raw", f"{run['id']}_{speaker}.wav"))
@@ -1125,10 +1132,25 @@ def main() -> int:
             save_metrics(interview["id"], metrics)
             logger.info("episode metrics: %s", metrics)
             cleaned = package.get("transcript_cleaned") or transcript
+            # Whether who-said-what in this transcript can be trusted is a
+            # fact about how it was recorded, so it is TOLD to the grader
+            # rather than left for it to infer from the text. Sept 23 2026:
+            # inferring it is exactly the mistake made on Viktor Popovic's
+            # tape — a pattern read as bleed turned out, on his clean tracks,
+            # to be Mira's own habit.
+            channels = (
+                "SEPARATED. Each speaker was recorded on a track of their own, "
+                "so who said what in this transcript is reliable. A line "
+                "labelled Mira was said by Mira."
+                if processed else
+                "NOT SEPARATED. Mira had no recording of her own, so her lines "
+                "were transcribed from the room as the guest heard it, and that "
+                "carries the guest's voice too. Who said what is unreliable.")
             graded = parse_json_lenient(llm(load_prompt(
                 "editorial_passes/09_interview_retro.txt",
                 show=show, show_name=show.name,
                 guest_name=app["name"],
+                channels=channels,
                 session_events=session_events_summary(run),
                 active_lessons=lessons_for_prompt(show.slug),
                 guest_feedback=guest_feedback(cleaned, _guest_label(app))
