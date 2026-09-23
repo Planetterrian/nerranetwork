@@ -99,3 +99,110 @@ class TestLowEffortOnNewShows:
 def test_collingwood_floor_matches_its_length_target():
     cfg = load_config("shows/collingwood.yaml")
     assert cfg.llm.min_podcast_words == 1000
+
+
+class TestExpansionKeepsTheLedger:
+    DRAFT = (
+        "### Top Stories\n**A thing happened:** CBC. It happened today.\n"
+        "Source: https://cbc.ca/a\n\n```claims\n"
+        '[{"claim": "It happened today.", "source_url": "https://cbc.ca/a", '
+        '"supporting_quote": "it happened today"}]\n```\n'
+    )
+
+    def test_empty_ledger_after_expansion_is_replaced_by_the_draft(self):
+        from engine.claims import extract_claims_block
+        from engine.generator import _carry_claims_ledger
+        expanded = "### Top Stories\n**A thing happened:** CBC. It happened today, at noon.\n\n```claims\n[]\n```\n"
+        out = _carry_claims_ledger(self.DRAFT, expanded, "t")
+        prose, claims = extract_claims_block(out)
+        assert len(claims) == 1 and claims[0]["source_url"] == "https://cbc.ca/a"
+        assert "at noon" in prose and "[]" not in prose
+
+    def test_missing_ledger_after_expansion_is_replaced(self):
+        from engine.claims import extract_claims_block
+        from engine.generator import _carry_claims_ledger
+        out = _carry_claims_ledger(self.DRAFT, "### Top Stories\nLonger prose.\n", "t")
+        assert len(extract_claims_block(out)[1]) == 1
+
+    def test_expansion_with_its_own_ledger_keeps_it(self):
+        from engine.generator import _carry_claims_ledger
+        own = ('Prose.\n\n```claims\n[{"claim": "b", "source_url": "https://x/b", '
+               '"supporting_quote": "b"}]\n```\n')
+        assert _carry_claims_ledger(self.DRAFT, own, "t") == own
+
+    def test_draft_without_entries_changes_nothing(self):
+        from engine.generator import _carry_claims_ledger
+        assert _carry_claims_ledger("Prose.\n```claims\n[]\n```\n", "More.\n", "t") == "More.\n"
+
+    def test_wired_into_the_expansion_branch(self):
+        src = Path("engine/generator.py").read_text()
+        i = src.index('"x_thread_generation_expansion"')
+        assert "_carry_claims_ledger(text, expanded" in src[i - 4000:i]
+
+
+class TestHookArticlesSurviveEveryCap:
+    """Vancouver Ep1: 152 articles, pre-dedup cap to 150 by plain slice,
+    and the two it cut were the hook's DriveBC + Environment Canada
+    articles — merged last. Every cap in run_show must keep them."""
+
+    def test_pre_dedup_cap_keeps_hook_articles(self):
+        src = Path("run_show.py").read_text()
+        i = src.index("MAX_RAW_BEFORE_DEDUP = 150")
+        block = src[i:i + 1500]
+        assert "articles = articles[:MAX_RAW_BEFORE_DEDUP]" not in block
+        assert 'a.get("source_kind") == "hook"' in block
+
+    def test_prompt_cap_keeps_hook_articles(self):
+        src = Path("run_show.py").read_text()
+        i = src.index("MAX_ARTICLES_FOR_LLM = 40")
+        assert '"source_kind") == "hook"' in src[i:i + 1800]
+
+
+class TestBodyChapterMarkers:
+    SCRIPT = (
+        "A hook sentence about the day.\n\n"
+        "Welcome to the very first episode of Vancouver Daily News.\n\n"
+        "It covers what council decided and what that means for getting around.\n\n"
+        + "\n\n".join(f"News sentence number {i} about the province and its politics today." for i in range(60))
+        + "\n\nGetting around starts with a lane closure on Highway 17.\n\n"
+        + "\n\n".join(f"Road sentence {i} with more detail about the commute." for i in range(10))
+        + "\n\nThat's Vancouver Daily News, see you tomorrow.\n"
+    )
+
+    def _titles_at(self, markers):
+        from engine.chapters import parse_chapters
+        return {c.title: c.word_start for c in parse_chapters(self.SCRIPT, markers, known_sections_only=True)}
+
+    def test_body_marker_skips_the_opening_window(self):
+        m = [{"pattern": "first episode of", "title": "Introduction", "where": "start"},
+             {"pattern": "getting around", "title": "Getting Around", "where": "body"}]
+        at = self._titles_at(m)
+        opening = len(self.SCRIPT.split("Getting around starts")[0].split())
+        assert at["Getting Around"] == opening
+
+    def test_unconstrained_marker_still_matches_first(self):
+        m = [{"pattern": "first episode of", "title": "Introduction", "where": "start"},
+             {"pattern": "getting around", "title": "Getting Around"}]
+        assert self._titles_at(m)["Getting Around"] < 40
+
+    @pytest.mark.parametrize("slug", ["vancouver", "collingwood"])
+    def test_local_show_segment_anchors_are_body(self, slug):
+        cfg = load_config(f"shows/{slug}.yaml")
+        for mk in cfg.chapters.section_markers:
+            if mk.title not in ("Introduction", "Closing"):
+                assert mk.where == "body", (slug, mk.title)
+
+    def test_vancouver_ep1_replay(self):
+        import re
+        from engine.chapters import parse_chapters
+        stem = Path("digests/vancouver/Vancouver_Daily_Ep001_20260923")
+        if not stem.with_name(stem.name + "_tts.txt").exists():
+            pytest.skip("Ep1 not in this checkout")
+        script = stem.with_name(stem.name + "_tts.txt").read_text()
+        md = stem.with_suffix(".md").read_text()
+        heads = [m.group(1) for m in re.finditer(r"^\*\*(.+?):\*\*", md, re.M)]
+        cfg = load_config("shows/vancouver.yaml")
+        chs = parse_chapters(script, cfg.chapters.section_markers, story_headlines=heads)
+        by = {c.title: c.word_start for c in chs}
+        assert by["Getting Around"] > len(script.split()) * 0.5
+        assert any(t.startswith("Eby calls") for t in by)

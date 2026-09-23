@@ -1397,7 +1397,14 @@ def run(args: argparse.Namespace) -> None:
                 "Pre-dedup cap: %d → %d articles (keeping most recent / highest relevance)",
                 len(articles), MAX_RAW_BEFORE_DEDUP,
             )
-            articles = articles[:MAX_RAW_BEFORE_DEDUP]
+            # Hook articles are merged LAST, so a plain slice cut them first:
+            # Vancouver Ep1 (2026-09-23) fetched 152, sliced to 150, and lost
+            # exactly its two — the DriveBC and Environment Canada articles —
+            # so Getting Around shipped with no forecast. Same rule as the
+            # 40-article cap below: keep them, trim the feed articles.
+            _hook_pre = [a for a in articles if a.get("source_kind") == "hook"]
+            _feed_pre = [a for a in articles if a.get("source_kind") != "hook"]
+            articles = _feed_pre[:max(MAX_RAW_BEFORE_DEDUP - len(_hook_pre), 0)] + _hook_pre
 
         # 5d. Sort by relevance_score desc to select the best articles for the
         # cap, then restore chronological order for the LLM prompt.  Prompt order
