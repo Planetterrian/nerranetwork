@@ -102,6 +102,12 @@ def switch_to_network_default(config, reason: str) -> bool:
     llm._pinned_model = pinned
     llm._model_fallback_reason = reason
     llm.model = default
+    # A reasoning_effort set for the pinned model (the new shows run 4.7 at
+    # "low") must not follow the run onto the default: grok-4.3's requests
+    # are byte-identical only when the parameter is omitted.
+    if getattr(llm, "reasoning_effort", ""):
+        llm._pinned_reasoning_effort = llm.reasoning_effort
+        llm.reasoning_effort = ""
     logger.warning("Pinned model '%s' unavailable (%s) — this run uses '%s'",
                    pinned, reason, default)
     print(f"::warning::{getattr(config, 'slug', '?')}: pinned model '{pinned}' "
@@ -1340,6 +1346,40 @@ def _dedup_expansion_sentences(
     return deduped, removed
 
 
+def _carry_claims_ledger(draft: str, expanded: str, show_name: str) -> str:
+    """Keep the draft's claims ledger when the expansion retry emptied it.
+
+    Sep 23 2026: the digest expansion retry fires on ~90% of episodes
+    (232/257 in September) and its prompt never mentions the fenced
+    ``claims`` block, so the rewrite usually returns it EMPTY — FF shipped
+    claims=0 on 11 of 16 expanded episodes against 1 of 6 plain ones, M&A
+    14/15 against 4/7, and the enforce gate then passed on nothing.
+    Carrying the draft's entries over launders nothing: the gate still
+    anchors every entry against the EXPANDED prose (an entry whose
+    sentence the rewrite changed is dropped) and verifies its URL and
+    quote as always. An expansion that wrote its own non-empty ledger
+    keeps it.
+    """
+    import json
+
+    from engine.claims import extract_claims_block
+
+    _, draft_claims = extract_claims_block(draft)
+    if not draft_claims:
+        return expanded
+    cleaned, expanded_claims = extract_claims_block(expanded)
+    if expanded_claims:
+        return expanded
+    logger.warning(
+        "Digest expansion retry for '%s' returned %s claims ledger — "
+        "carrying the draft's %d entr%s over for the gate",
+        show_name, "an empty" if expanded_claims == [] else "no",
+        len(draft_claims), "y" if len(draft_claims) == 1 else "ies",
+    )
+    block = json.dumps(draft_claims, ensure_ascii=False, indent=1)
+    return cleaned.rstrip() + "\n\n```claims\n" + block + "\n```\n"
+
+
 def _build_digest_expansion_retry_prompt(
     word_count: int,
     min_words: int,
@@ -2356,6 +2396,8 @@ def generate_digest(
                         "stripped %d near-duplicate sentence(s)",
                         config.name, _dig_dup,
                     )
+                if _si_enabled:
+                    expanded = _carry_claims_ledger(text, expanded, config.name)
                 expanded_wc = len(expanded.split())
                 if expanded_wc > word_count:
                     logger.info(

@@ -422,6 +422,13 @@ def parse_chapters(
                 continue
             if where == "end" and word_idx < end_window_start:
                 continue
+            # ``body`` (Sep 23 2026): never inside the opening window.
+            # Vancouver Ep1's debut explainer said "…what those decisions
+            # mean for getting around" at 16 s, the segment anchor matched
+            # there, and five minutes of provincial politics shipped under
+            # a "Getting Around" chapter.
+            if where == "body" and word_idx <= start_window_end:
+                continue
             if regex.search(line_stripped):
                 matches.append((word_idx, char_offset, title))
                 matched_titles.add(title)

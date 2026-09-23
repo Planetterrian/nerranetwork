@@ -387,11 +387,17 @@ def deduplicate_by_entity(
     articles: list,
     max_per_entity: int = 2,
     entity_similarity_threshold: float = 0.70,
+    ignore: Optional[list] = None,
 ) -> list:
     """Limit articles to max_per_entity per primary entity.
 
     If 6 articles all cover "Crew-12", only the 2 most distinct survive.
     Also deduplicates by URL.
+
+    *ignore* (per-show ``entity_dedup_ignore``) lists words that never make
+    an entity on their own — a local show's town names, which open almost
+    every headline. An entity whose words are all in it counts as no
+    entity, so the article is kept. Empty = the original behaviour.
     """
     if not articles:
         return articles
@@ -409,12 +415,17 @@ def deduplicate_by_entity(
         url_deduped.append(article)
 
     # Entity-level dedup
+    _ignored = {w for term in (ignore or []) for w in re.split(r"[\s-]+", str(term).lower()) if w}
     entity_counts: dict = {}
     filtered = []
     for article in url_deduped:
         title = article.get("title", "")
         desc = article.get("description", "")
         entity = extract_primary_entity(title, desc)
+        if entity and _ignored:
+            words = [w for w in re.split(r"[\s-]+", entity.lower()) if w]
+            if words and all(w in _ignored for w in words):
+                entity = ""
         if not entity:
             filtered.append(article)
             continue

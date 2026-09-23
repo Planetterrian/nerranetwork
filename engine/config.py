@@ -1144,6 +1144,14 @@ class ShowConfig:
     # content (moon calendars, planet-visibility roundups, "this day in
     # history") — see engine.utils.drop_excluded_titles.
     exclude_title_patterns: List[str] = field(default_factory=list)
+    # Words that are never a story's "primary entity" for the entity dedup
+    # (engine.utils.deduplicate_by_entity, max two articles per entity).
+    # Sep 23 2026: on a local show the first capitalised phrase of almost
+    # every headline is the TOWN, so Collingwood Weekly Ep1 lost 29 of 73
+    # articles as "duplicates" of "Collingwood" / "Wasaga Beach" and the
+    # week read thin. An entity made only of these words is ignored and
+    # the next candidate is used. Empty (default) = byte-identical.
+    entity_dedup_ignore: List[str] = field(default_factory=list)
     # Story-recurrence memory (Aug 2026): annotate fetched articles that
     # match the ContentTracker's recent-headline window with an inline
     # "already covered — update, don't re-tell" note in the digest
@@ -1417,6 +1425,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         x_fetch_enabled=data.get("x_fetch_enabled"),
         keywords=data.get("keywords", []),
         exclude_title_patterns=data.get("exclude_title_patterns", []),
+        entity_dedup_ignore=[str(w) for w in (data.get("entity_dedup_ignore") or [])],
         story_recurrence=bool(data.get("story_recurrence", False)),
         web_search_queries=data.get("web_search_queries", []),
         web_search_always=bool(data.get("web_search_always", False)),
