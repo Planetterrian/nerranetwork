@@ -34,3 +34,29 @@ reviews:
         baseline: "n/a"
         expected: "0 in the first 4"
         verdict: pending
+  - date: 2026-09-23
+    pr: "#1286 (launch-cohort pass) + PR C (schedule)"
+    doc: docs/experiments.yaml (launch-cohort-pass-2026-09-23, launch-cohort-schedule-2026-09-23)
+    reviewer: claude-code (Episode 1 review + launch, operator brief 2026-09-23)
+    summary: >-
+      Ep1 (4:27, 719 words) had 0 X sources, the non-residency disclosure and Soft Personal right, and no labelled Both Sides; the runtime was under half the target on a thin week. Now: the 12-segment evergreen library (shows/segments/collingwood.json, slow_news on, 2 per episode, 84-day cooldown), hook_shape + lints, and the Friday 10:07 UTC slot with first scheduled run 2026-10-02 (Ep1 was hand-made Wed 09-23 from the 192-hour window).
+    shipped:
+      - slow_news library: 12 evergreen explainers
+      - region_allowlist (21 places); lints
+      - scheduled Friday 10:07 UTC, first run 2026-10-02 (PR C)
+    deferred:
+      - Both Sides weekly as a validator floor (today it is prompt + lint)
+      - a local music theme
+    predictions:
+      - metric: "episode run time"
+        baseline: "4:27 (Ep1)"
+        expected: ">= 8:00 on 3 of the first 4"
+        verdict: pending
+      - metric: "episodes carrying a labelled Both Sides"
+        baseline: "0/1 (Ep1)"
+        expected: ">= 3/4"
+        verdict: pending
+      - metric: "episodes published on a Friday (or a dated exception)"
+        baseline: "0/1 (Ep1, Wednesday)"
+        expected: "4/4 from 2026-10-02"
+        verdict: pending

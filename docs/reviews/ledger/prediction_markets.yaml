@@ -45,3 +45,34 @@ reviews:
         baseline: "n/a"
         expected: "0 in the first 7"
         verdict: pending
+  - date: 2026-09-23
+    pr: "#1286 (launch-cohort pass) + PR C (schedule)"
+    doc: docs/experiments.yaml (launch-cohort-pass-2026-09-23, launch-cohort-schedule-2026-09-23)
+    reviewer: claude-code (Episode 1 review + launch, operator brief 2026-09-23)
+    summary: >-
+      Ep1 (8:50, 1,259 words) was the cohort's strongest launch: the never-tells-anyone-what-to-trade line and NFA in the verbatim closing, Board -> How It Works order, jurisdiction on legal stories, 1 of 9 sources on X. Now: Friday 'The Week's Board' (engine/board_week.py, data-side), price-not-odds, four-field Board rows, a named-critic beat only when an article carries one, an independence line by shape, +19 curriculum subjects (41 unproduced), x_posts_as_sources secondary; scheduled 11:16 UTC.
+    shipped:
+      - board_week.py + Friday section + podcast beat
+      - price-not-odds, four-field rows, named-critic beat, independence line
+      - curriculum +19 (41 unproduced)
+      - scheduled daily 11:16 UTC (PR C)
+    deferred:
+      - preferred_domains for legal stories (Law360 / CFTC / dockets first)
+      - with vs without the named-critic beat, Ep2-8, on first-week downloads
+    predictions:
+      - metric: "first Friday's The Week's Board rows"
+        baseline: "n/a"
+        expected: ">= 3"
+        verdict: pending
+      - metric: "Board lines missing one of the four fields"
+        baseline: "n/a"
+        expected: "0 in the first 7"
+        verdict: pending
+      - metric: "episodes with a number spoken as 'the odds' or a forecast in the show's voice"
+        baseline: "n/a"
+        expected: "0/7"
+        verdict: pending
+      - metric: "curriculum unproduced on 2026-10-21"
+        baseline: "41"
+        expected: ">= 13"
+        verdict: pending

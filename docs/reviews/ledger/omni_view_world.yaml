@@ -40,3 +40,34 @@ reviews:
         baseline: "n/a"
         expected: "0 in the first 7"
         verdict: pending
+  - date: 2026-09-23
+    pr: "#1286 (launch-cohort pass) + PR C (schedule)"
+    doc: docs/experiments.yaml (launch-cohort-pass-2026-09-23, launch-cohort-schedule-2026-09-23)
+    reviewer: claude-code (Episode 1 review + launch, operator brief 2026-09-23)
+    summary: >-
+      Ep1 ran on the grok-4.3 fallback (timeout), recorded claims=0, and its desk intake parsed ZERO items: desk_items matched only the '**Title:** body' heading shape while the desks write '**Title: Outlet**', so The Ten was built from the show's own world feeds — no Both Sides chapter, weak items (a CryptoRank bitcoin piece, an Airtel Money listing, a live-blog headline), 948 words / ~7 min against 1,400. Fixed: the heading shape (replay: 10 articles from 5 desks), an X URL is never a publisher URL, a Ranks line per story, items 6-10 one sentence, an intake line from desks_live_at_publish, and a Saturday single-story edition decided by the hook.
+    shipped:
+      - desk_items heading fix + X URLs excluded
+      - Ranks line per story (reader-only); items 6-10 one sentence
+      - intake_line + metric desks_live_at_publish; Saturday single-story edition (omni_world_validation_config(saturday=))
+      - digest lints: wyntk_hook_match, x_only_lead, progress_watch_thin
+      - scheduled 11:31 UTC, after every desk's budget (PR C)
+    deferred:
+      - 8-story vs 10-story cut after 4 weeks (first-week downloads)
+    predictions:
+      - metric: "desks_live_at_publish on a weekday"
+        baseline: "0 (Ep1: parser)"
+        expected: "5 on >= 5 of 7 days"
+        verdict: pending
+      - metric: "episodes whose claims verified against a publisher URL (not a sibling digest)"
+        baseline: "claims=0 (Ep1)"
+        expected: ">= 8 claims on 6/7"
+        verdict: pending
+      - metric: "Saturday edition validates as one story of >= 1,800 chars"
+        baseline: "n/a"
+        expected: "first two Saturdays"
+        verdict: pending
+      - metric: "script words"
+        baseline: "948 (Ep1)"
+        expected: ">= 1,200 median Ep2-8"
+        verdict: pending

@@ -250,9 +250,10 @@ class TestPhase2Wiring:
             assert (ROOT / e["podcast_image"].replace(".jpg", f"-{px}.webp")).exists()
         assert (ROOT / e["show_page"]).exists()
 
-    def test_prelaunch(self, slug):
+    def test_launched(self, slug):
+        # Launch-cohort PR C (2026-09-23): out of the pre-launch set and on the clock.
         import review_episodes as R
-        assert slug in R.PRELAUNCH_SLUGS and slug not in R.SHOW_REGISTRY
+        assert slug not in R.PRELAUNCH_SLUGS and slug in R.SHOW_REGISTRY
 
 
 def test_collingwood_is_a_weekly_everywhere_it_says_so():

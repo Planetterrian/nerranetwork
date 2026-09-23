@@ -224,7 +224,12 @@ class TestPhase1Launch:
         wblock = worker[worker.index("const FIRST_RUN"):]
         wblock = wblock[:wblock.index("};")]
         wk = dict(re.findall(r'(\w+):\s*"(\d{4}-\d{2}-\d{2})"', wblock))
-        assert reg == gate == wk == {"longevity": "2026-09-30", "peptides": "2026-10-01"}
+        # Collingwood joined 2026-09-23 (launch-cohort PR C): Ep1 hand-made on
+        # Wednesday the 23rd, first Friday slot honoured 2026-10-02.
+        assert reg == gate == wk == {
+            "longevity": "2026-09-30", "peptides": "2026-10-01",
+            "collingwood": "2026-10-02",
+        }
 
     def test_audit_does_not_expect_a_weekly_before_its_first_run(self):
         import datetime as _dt

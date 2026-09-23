@@ -87,6 +87,60 @@ ENGLISH_SHOWS: dict[str, dict[str, str]] = {
         "spoken_name": "Offshore North",
         "tagline": "offshore ocean racing explained every Monday, with a Canadian angle",
     },
+    # Appended Sep 23 2026 (launch-cohort PR C) — keep at end. Until this
+    # date no established show ever mentioned a new one on air.
+    "ai_chips": {
+        "spoken_name": "AI Chips and Data Centres Daily",
+        "tagline": "the daily on accelerators, memory, and the data centres being built to run them",
+    },
+    "mag7": {
+        "spoken_name": "Mag Seven Daily",
+        "tagline": "what the seven largest technology companies actually did today, as businesses",
+    },
+    "peptides": {
+        "spoken_name": "Peptides Weekly",
+        "tagline": "the week in peptide science, evidence first and never dosing advice",
+    },
+    "longevity": {
+        "spoken_name": "Longevity Weekly",
+        "tagline": "the week in aging science, each finding with its evidence level",
+    },
+    "prediction_markets": {
+        "spoken_name": "Prediction Markets Daily",
+        "tagline": "the prediction-market world explained daily, never a bet",
+    },
+    "vancouver": {
+        "spoken_name": "Vancouver Daily News",
+        "tagline": "what changed in Metro Vancouver today, with the roads and the weather",
+    },
+    "collingwood": {
+        "spoken_name": "Collingwood Weekly",
+        "tagline": "the week around the south Georgian Bay, every Friday",
+    },
+    "omni_view_north_america": {
+        "spoken_name": "Omni View North America",
+        "tagline": "the day's decisions across the United States and Canada, from outside either party",
+    },
+    "omni_view_europe": {
+        "spoken_name": "Omni View Europe",
+        "tagline": "the day across Europe, one lead and the stories behind it",
+    },
+    "omni_view_asia_pacific": {
+        "spoken_name": "Omni View Asia Pacific",
+        "tagline": "the day across Asia and the Pacific, told from the region's side",
+    },
+    "omni_view_africa_mideast": {
+        "spoken_name": "Omni View Africa and Middle East",
+        "tagline": "the day across Africa and the Middle East, with every claim attributed",
+    },
+    "omni_view_latam": {
+        "spoken_name": "Omni View Central and South America",
+        "tagline": "the day across Central and South America, from Mexico to the Southern Cone",
+    },
+    "omni_view_world": {
+        "spoken_name": "Omni View Top World News",
+        "tagline": "the ten stories that matter most in the world today, ranked",
+    },
 }
 
 # Fixed rotation order (insertion order of the dict above).

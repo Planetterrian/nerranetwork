@@ -78,6 +78,28 @@ on:
     # Peptides Weekly: Thursday at 11:07 UTC (own minute: the scheduler
     # Worker takes the FIRST SLOTS row matching h:m).
     - cron: '7 11 * * 4'
+    # Launch-cohort PR C (2026-09-23; docs/new_shows_plan_2026_09_22.md §6):
+    # the nine shows whose Episode 1s were produced by hand and reviewed.
+    # Omni View Asia Pacific: Daily at 6:16 UTC (16:16 AEST).
+    - cron: '16 6 * * *'
+    # Omni View Africa & Middle East: Daily at 6:31 UTC (09:31 EAT).
+    - cron: '31 6 * * *'
+    # Omni View Europe: Daily at 6:46 UTC (08:46 CEST).
+    - cron: '46 6 * * *'
+    # Collingwood Weekly: Weekly on Friday at 10:07 UTC (06:07 ET);
+    # first scheduled run 2026-10-02 (Ep1 was produced by hand 09-23).
+    - cron: '7 10 * * 5'
+    # Omni View North America: Daily at 10:16 UTC (06:16 ET).
+    - cron: '16 10 * * *'
+    # Omni View Central & South America: Daily at 10:31 UTC (07:31 BRT).
+    - cron: '31 10 * * *'
+    # Prediction Markets Daily: Daily at 11:16 UTC (07:16 ET).
+    - cron: '16 11 * * *'
+    # Omni View Top World News: Daily at 11:31 UTC — after every desk's
+    # 50-minute budget, so its intake reads the five desks' digests.
+    - cron: '31 11 * * *'
+    # Vancouver Daily News: Daily at 12:16 UTC (05:16 PDT).
+    - cron: '16 12 * * *'
 
   workflow_dispatch:
     inputs:
@@ -169,7 +191,7 @@ jobs:
 
           if event_name == "workflow_dispatch":
               if dispatch_show == "all":
-                  shows = ["tesla", "omni_view", "fascinating_frontiers", "planetterrian", "env_intel", "models_agents", "models_agents_beginners", "finansy_prosto", "privet_russian", "modern_investing", "unintended_consequences", "first_principles", "spacex", "dp_pod", "offshore_north", "ai_chips", "mag7", "peptides", "longevity"]
+                  shows = ["tesla", "omni_view", "fascinating_frontiers", "planetterrian", "env_intel", "models_agents", "models_agents_beginners", "finansy_prosto", "privet_russian", "modern_investing", "unintended_consequences", "first_principles", "spacex", "dp_pod", "offshore_north", "ai_chips", "mag7", "peptides", "longevity", "vancouver", "collingwood", "prediction_markets", "omni_view_europe", "omni_view_asia_pacific", "omni_view_africa_mideast", "omni_view_latam", "omni_view_north_america", "omni_view_world"]
               else:
                   shows = [dispatch_show]
           else:
@@ -211,6 +233,16 @@ jobs:
                   "46 10 * * *":      ("mag7",                     None),
                   "1 11 * * 3":       ("longevity",               "wednesday"),
                   "7 11 * * 4":       ("peptides",                "thursday"),
+                  # Launch-cohort PR C (2026-09-23).
+                  "16 6 * * *":       ("omni_view_asia_pacific",   None),
+                  "31 6 * * *":       ("omni_view_africa_mideast", None),
+                  "46 6 * * *":       ("omni_view_europe",         None),
+                  "7 10 * * 5":       ("collingwood",             "friday"),
+                  "16 10 * * *":      ("omni_view_north_america",  None),
+                  "31 10 * * *":      ("omni_view_latam",          None),
+                  "16 11 * * *":      ("prediction_markets",       None),
+                  "31 11 * * *":      ("omni_view_world",          None),
+                  "16 12 * * *":      ("vancouver",                None),
               }
 
               # First scheduled run per show (Sep 2026 launch). A weekly
@@ -222,6 +254,10 @@ jobs:
               FIRST_SCHEDULED_RUN = {
                   "longevity": "2026-09-30",
                   "peptides": "2026-10-01",
+                  # Collingwood Ep1 was produced by hand on Wed 2026-09-23
+                  # from a 192-hour window; the Friday 09-25 slot would
+                  # re-cover the same week.
+                  "collingwood": "2026-10-02",
               }
 
               shows = []

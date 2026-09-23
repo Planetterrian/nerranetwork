@@ -91,4 +91,9 @@ def test_new_shows_appended_not_reordered():
     assert ENGLISH_ORDER.index("spacex") < ENGLISH_ORDER.index("first_principles")
     assert ENGLISH_ORDER.index("first_principles") < ENGLISH_ORDER.index("dp_pod")
     assert ENGLISH_ORDER.index("dp_pod") < ENGLISH_ORDER.index("offshore_north")
-    assert ENGLISH_ORDER[-1] == "offshore_north"
+    # Sep 23 2026: the 13-show launch cohort appended after offshore_north,
+    # in launch order (Phase 1 -> 2b -> 2 -> 3), Top World last.
+    assert ENGLISH_ORDER.index("offshore_north") < ENGLISH_ORDER.index("ai_chips")
+    assert ENGLISH_ORDER.index("longevity") < ENGLISH_ORDER.index("prediction_markets")
+    assert ENGLISH_ORDER.index("collingwood") < ENGLISH_ORDER.index("omni_view_north_america")
+    assert ENGLISH_ORDER[-1] == "omni_view_world"

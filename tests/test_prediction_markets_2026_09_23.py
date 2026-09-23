@@ -325,13 +325,14 @@ class TestWiring:
         # Its own accent, not AI Chips' indigo (plan §5a: family + per-show accent).
         assert reg["brand_color"] != "#4338CA"
 
-    def test_prelaunch_and_manual_dispatch_only(self):
+    def test_launched_and_on_the_clock(self):
+        # Launch-cohort PR C (2026-09-23): daily at 11:16 UTC.
         from review_episodes import PRELAUNCH_SLUGS, SHOW_REGISTRY
-        assert SLUG in PRELAUNCH_SLUGS and SLUG not in SHOW_REGISTRY
+        assert SLUG not in PRELAUNCH_SLUGS and SHOW_REGISTRY[SLUG]["schedule"] == "daily"
         wf = (ROOT / ".github" / "workflows" / "run-show.yml").read_text(encoding="utf-8")
         assert f"          - {SLUG}\n" in wf
         cron_block = wf[wf.index("CRON_MAP"):wf.index("CRON_MAP") + 6000]
-        assert f'"{SLUG}"' not in cron_block
+        assert f'"{SLUG}"' in cron_block
 
     def test_nightly_owns_the_prelaunch_pages(self):
         wf = (ROOT / ".github" / "workflows" / "nightly-maintenance.yml").read_text(encoding="utf-8")

@@ -2862,3 +2862,39 @@ experiments:
       tests/test_launch_cohort_pass_2026_09_23.py (engine),
       tests/test_launch_cohort_formats_2026_09_23.py (formats). PR C
       (schedule, cross-promo, pages, ledgers) follows this merge.
+  - id: launch-cohort-schedule-2026-09-23
+    title: "The nine hand-launched shows go on the clock; all 13 join the cross-promo rotation"
+    area: reach
+    shipped: 2026-09-23
+    readout: 2026-10-14
+    status: reading
+    baseline: >
+      Vancouver, Collingwood, Prediction Markets, the five Omni View desks and
+      Top World each had one hand-dispatched Episode 1 (two for Collingwood
+      and Prediction Markets) and no cron; none of the 13 new shows was in
+      engine/network_promo.py ENGLISH_SHOWS, so no established show had ever
+      plugged one on air, and /mira.html did not say Mira reads the news.
+    target: >
+      Plan §6 slots (UTC): Asia Pacific 06:16, Africa & Middle East 06:31,
+      Europe 06:46, Collingwood Fri 10:07 (first run 2026-10-02), North
+      America 10:16, LatAm 10:31, Prediction Markets 11:16, Top World 11:31,
+      Vancouver 12:16 — in CRON_MAP, the Worker SLOTS, review_episodes'
+      registry, the audit FEEDS and the schedule tests together. The 13 are
+      appended to ENGLISH_SHOWS (pool 13 -> 26; the surface pool and its
+      stride are untouched). /mira.html lists the eight news shows she reads
+      under their own heading, from brand.MIRA_NEWS_SHOW_SLUGS.
+    criteria: >
+      Punctuality: every scheduled show publishes on its slot day for the
+      first two weeks (daily-audit "Missed episode" count 0 after the
+      Worker redeploy; the Worker's dispatch on the slot minute in Actions).
+      Top World's desks_live_at_publish reads 5 on a normal day. First-week
+      downloads per episode from api/audience_headline.json once the shows
+      appear (nothing to compare yet — the baseline is this fortnight).
+      Cross-promo: the sibling plug names a new show on ~half of the
+      established shows' episodes (26-show pool); read the spoken outros of
+      the first slate for wording that lands badly and fix the tagline, not
+      the pool.
+    notes: >
+      Operator step after merge: `wrangler deploy` in workers/scheduler.
+      Guards: tests/test_launch_cohort_schedule_2026_09_23.py. The nine stay
+      out of the Nerra Daily lineup on purpose (tests/test_daily_edition.py).
