@@ -52,8 +52,25 @@ class TestLintReplays:
     def test_a_matching_wyntk_passes(self, slug):
         assert dl.wyntk_hook_match(_ep1(slug)) >= dl.WYNTK_HOOK_MIN_MATCH
 
+    # Africa & Middle East Ep1's Lead exactly as it was published (the
+    # committed digest was re-sourced to the BBC article on 2026-09-23 by
+    # scripts/resource_x_citations.py, so the replay keeps the original).
+    AFRICA_EP1_LEAD_AS_PUBLISHED = (
+        "# Omni View Africa & Middle East\n"
+        "> **At least 11 people were killed in a mass shooting near Durban.**\n\n"
+        "### Lead\n"
+        "**11 killed in mass shooting near Durban, South Africa: BBC News Africa**\n"
+        "Gunmen stormed a house in the KwaMakhutha township, near the South African "
+        "city of Durban, late on Tuesday and opened fire on 14 people. At least 11 "
+        "people were killed in that residential building. "
+        "Source: [x.com](https://x.com/BBCAfrica/status/2102729744491950571)\n\n"
+        "### Across the Region\n"
+    )
+
     def test_africa_mideast_lead_was_sourced_only_to_x(self):
-        assert dl.x_only_lead_items(_ep1("omni_view_africa_mideast"))
+        assert dl.x_only_lead_items(self.AFRICA_EP1_LEAD_AS_PUBLISHED)
+        # ...and the committed record no longer is.
+        assert dl.x_only_lead_items(_ep1("omni_view_africa_mideast")) == []
 
     @pytest.mark.parametrize("slug", ["omni_view_north_america", "omni_view_latam", "mag7"])
     def test_a_newsroom_sourced_lead_passes(self, slug):

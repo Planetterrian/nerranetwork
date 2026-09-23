@@ -77,3 +77,17 @@ reviews:
         baseline: "5:54 (Ep1)"
         expected: ">= 8:00 median over Ep2-8"
         verdict: pending
+  - date: 2026-09-23
+    pr: "PR D (launch-cohort follow-ups: re-source, feeds, preferred_domains)"
+    doc: docs/experiments.yaml (launch-cohort-pass-2026-09-23)
+    reviewer: claude-code (follow-up pass after PRs A/B/C, same day)
+    summary: >-
+      check_feeds on the Sep 23 feed list: O Globo's URL returned 200 with zero items (missing trailing slash) and Infobae's was a 404 — two of the six ES/PT feeds PR B added were dead on arrival; replaced with the working URLs (89 and 16 items). The Tico Times feed is empty at the source; replaced with Q Costa Rica.
+    shipped:
+      - oglobo.globo.com/rss/oglobo/ and infobae.com/arc/outboundfeeds/rss/category/america/
+      - Q Costa Rica in place of The Tico Times
+    predictions:
+      - metric: "ES/PT publisher articles in the fetch per episode (elpais, folha, oglobo, lanacion, reforma, infobae domains)"
+        baseline: "0 from oglobo/infobae (dead feeds)"
+        expected: ">= 4 per episode on 5/7"
+        verdict: pending

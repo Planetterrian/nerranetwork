@@ -1032,7 +1032,15 @@ today's work, not just explain yesterday's):
   `POST_LINK`; the post URL moves to `x_url`), and `x_posts_as_sources`
   (`any` = legacy | `linked_only` | `secondary`) says how a show may use
   posts — Africa & Middle East Ep1 had credited 6 of 6 sources to x.com,
-  BBC Africa and Al Jazeera posting their own stories. **The claims ledger
+  BBC Africa and Al Jazeera posting their own stories. The committed
+  Ep1s were re-sourced the same day with `scripts/resource_x_citations.py`
+  (X's public syndication endpoint → the post's outbound link → the
+  publisher URL; a tag / topic / mirror page is never a citation; dry-run
+  default): 8 of 16 lines resolved, the rest were posts that linked
+  nothing. `preferred_domains` (per-show list; `engine/preferred_sources.py`)
+  gives a show's primary publishers — regulators, courts, journals, the
+  city's own newsroom — a relevance bonus and a `[preferred primary source]`
+  tag in the prompt listing (metric `articles_preferred_in_prompt`). **The claims ledger
   has an item coverage floor**: every grok-4.3 episode had recorded 0–1
   claims against 8–13 on 4.7 because the appendix called an empty array
   "valid and normal"; `attempt_item_coverage_repair` spends the existing

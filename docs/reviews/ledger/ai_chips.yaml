@@ -62,3 +62,20 @@ reviews:
         baseline: "912 (Ep1)"
         expected: ">= 1,100"
         verdict: pending
+  - date: 2026-09-23
+    pr: "PR D (launch-cohort follow-ups: re-source, feeds, preferred_domains)"
+    doc: docs/experiments.yaml (launch-cohort-pass-2026-09-23)
+    reviewer: claude-code (follow-up pass after PRs A/B/C, same day)
+    summary: >-
+      Ep2's four x.com Sources are posts with no outbound link, so the re-source pass left them (x_posts_as_sources: secondary now ranks posts after every article). Comma density 1.8/100w on the grok-4.3 fallback runs (Ep1 and Ep2) against 3-8 across the cohort — same finding as Vancouver; read Ep3 on pinned 4.7.
+    shipped:
+      - none (measurement)
+    predictions:
+      - metric: "commas per 100 words in the digest on a grok-4.7 episode"
+        baseline: "1.8 / 2.4 (Ep1-2, fallback)"
+        expected: ">= 3.0 on Ep3-5"
+        verdict: pending
+      - metric: "x.com Sources per episode"
+        baseline: "4/13 (Ep2)"
+        expected: "<= 1 median over Ep3-9"
+        verdict: pending

@@ -37,7 +37,7 @@ Florida governor, Byron Donalds: 76% implied probability, down 4.0 points from t
 Whether these venues are available, and for which contracts, depends on where the listener lives; the rules differ by country, province and state and are changing. Source: [polymarket.com](https://polymarket.com/event/us-announces-end-of-iranian-blockade-byptptpt-20260713152715080) Source: [polymarket.com](https://polymarket.com/event/brazil-presidential-election) Source: [polymarket.com](https://polymarket.com/event/republican-presidential-nominee-2028) Source: [kalshi.com](https://kalshi.com/markets/kxbalancepowercombo) Source: [kalshi.com](https://kalshi.com/markets/govpartyfl)
 
 ### New and Notable
-Polymarket posted a new market, Nothing Ever Happens: September, on the morning of September 23, 2026. The listing puts a month, rather than one candidate or one match, into a single question. Source: [x.com](https://x.com/Polymarket/status/2102663506516435057)
+Polymarket posted a new market, Nothing Ever Happens: September, on the morning of September 23, 2026. The listing puts a month, rather than one candidate or one match, into a single question. Source: [polymarket.com](https://polymarket.com/event/nothing-ever-happens-september-27)
 
 ### How It Works: Why a Price Can Be Read as a Probability
 A contract that pays a fixed sum if an event happens, and nothing if it does not, trades at a price between those two payoffs. Buyers are taking the view that the event is more likely than that price; sellers, that it is less likely. Where both sides can trade, the price is where that disagreement has cleared for the moment, which is why it can be read as a probability — the terms on which the market last found a counterparty, not a verdict issued by the venue.

@@ -1168,6 +1168,12 @@ class ShowConfig:
     # in its title or opening text or it is dropped before the digest
     # (metric articles_dropped_off_region). Empty = no guard.
     region_allowlist: List[str] = field(default_factory=list)
+    # Launch-cohort follow-up (Sep 23 2026): primary publishers a show
+    # wants the digest to lean on for its lead claims (regulators, courts,
+    # journals, the city's own newsroom). An article from one of these
+    # hosts gets a relevance bonus so it survives the prompt cap and its
+    # listing carries a "[preferred primary source]" tag. Empty = no-op.
+    preferred_domains: List[str] = field(default_factory=list)
     # Story-recurrence memory (Aug 2026): annotate fetched articles that
     # match the ContentTracker's recent-headline window with an inline
     # "already covered — update, don't re-tell" note in the digest
@@ -1451,6 +1457,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         digest_lints=[str(x) for x in (data.get("digest_lints") or [])],
         x_posts_as_sources=str(data.get("x_posts_as_sources", "any") or "any"),
         region_allowlist=[str(x) for x in (data.get("region_allowlist") or [])],
+        preferred_domains=[str(x).strip().lower() for x in (data.get("preferred_domains") or []) if str(x).strip()],
         x_lookback_hours=int(data.get("x_lookback_hours", 24) or 24),
         stale_article_days=int(data.get("stale_article_days", 0) or 0),
         min_articles=data.get("min_articles", 3),
