@@ -1,0 +1,46 @@
+# Omni View Africa & Middle East
+> **At least 11 people were killed in a mass shooting near Durban.**
+
+**What You Need to Know:** Gunmen killed at least 11 people in a house in KwaMakhutha, near Durban, late on Tuesday. The UK is reviewing its deal to hand the Chagos Islands to Mauritius after President Donald Trump called that deal terrible. Syria’s president, at the UN General Assembly, condemned Israeli attacks and described a year of change at home.
+
+### What This Show Covers
+You want one region, every day, told straight: what was decided, what happened, what it changes and for whom. One contested question is set out with the strongest case on each side, and the day is checked for one measurable sign of progress. That is the job — not a tour of every capital, and not a verdict.
+
+This desk covers the African continent, the Arabian Peninsula and the Gulf, the Levant, Iran and Iraq. A story filed somewhere else is here only for a concrete consequence inside that region, and that consequence is stated first.
+
+The brief is read by Mira, the network’s AI host. The stories are chosen and written by software from named newsrooms, and every item names its source. The one thing it will not do is take a side — every claim is attributed, and no party, government or people is praised or mocked.
+
+The other Omni View desks and Omni View Top World News sit alongside this one.
+
+Omni View Africa & Middle East is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. Listen if it is useful; nothing is being sold with the invitation.
+
+### Lead
+**11 killed in mass shooting near Durban, South Africa: BBC News Africa**
+Gunmen stormed a house in the KwaMakhutha township, near the South African city of Durban, late on Tuesday and opened fire on 14 people. At least 11 people were killed in that residential building. For the people inside that house, the attack is the day’s hardest counted loss. Source: [x.com](https://x.com/BBCAfrica/status/2102729744491950571)
+
+### Across the Region
+**South African police officer charged with sexual offences: BBC News Africa**
+Lieutenant General Shadrack Sibiya, one of South Africa’s highest-ranking police officers, has been charged with sexual offences. He made a brief appearance at a court north-west of Johannesburg. Source: [x.com](https://x.com/BBCAfrica/status/2102738015080558665)
+
+**Al-Sharaa condemns Israel’s attacks on Syria, calls for 1974 agreement commitment: Al Jazeera English**
+Syria’s President Ahmed al-Sharaa opened his UN General Assembly speech by praising what he called Syria’s “breakthrough” over the past year. He said the country had transformed “from a crisis to an opportunity” under his leadership, which is his account of the year, not an independent finding. He condemned Israel’s attacks on Syria and called for a commitment to the 1974 agreement. Source: [x.com](https://x.com/AJEnglish/status/2102758391974375817)
+
+**French FM Calls for Palestinians to Hold Polls: Arab News**
+France’s foreign minister has called for Palestinians to hold polls. Source: [x.com](https://x.com/arabnews/status/2102758481325359126)
+
+### The Region and the World
+**UK reviewing Chagos Islands deal after Trump criticism: BBC News Africa**
+Mauritius’s agreed handover of the Chagos Islands is no longer being treated in London as settled. The UK is reviewing its deal to hand the islands to Mauritius. Defence secretary Wes Streeting confirmed the deal was being looked at after US President Donald Trump called it “terrible” at the UN General Assembly on Tuesday. Source: [x.com](https://x.com/BBCAfrica/status/2102753124389646503)
+
+### Both Sides: The Chagos transfer
+What is being decided is whether the UK goes ahead with its deal to hand the Chagos Islands to Mauritius. Defence secretary Wes Streeting has confirmed the deal is being looked at. BBC News Africa reported that the review follows US President Donald Trump, who at the UN General Assembly on Tuesday called the deal “terrible”.
+
+The case against letting the transfer stand, as Trump made it, is that judgment. He called the deal terrible before the General Assembly. Streeting’s confirmation that the deal is being reviewed comes after that criticism. The reason Trump gave, in the words the report carries, is that the deal is terrible.
+
+The arrangement that criticism is aimed at is the UK deal to hand the Chagos Islands to Mauritius. Streeting’s stated position is that this deal is being looked at. That review is the British official position on the record today: not a fresh defence of the transfer, and not a statement that the handover has been replaced by another plan.
+
+The fact the criticism and the review share is that a deal exists to hand the islands to Mauritius, that the defence secretary says it is being looked at, and that Trump called it terrible at the General Assembly on Tuesday. The next step the report names is that review.
+
+### Progress Watch
+**150 Women Graduate from Syria's New Police Academy: Arab News**
+Some 150 women have graduated from Syria’s new police academy in Al-Tal, north of Damascus. That is a completed first cohort, not a pledge of future recruitment. Source: [x.com](https://x.com/arabnews/status/2102758374450643001)
