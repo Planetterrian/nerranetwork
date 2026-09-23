@@ -395,10 +395,11 @@ jobs:
           # A generated path missing from this list is rebuilt nightly and then
           # thrown away: the silent-drop class that cost
           # api/youtube_channel_history.json four runs and six shows' memory
-          # trackers a month of nights. The vancouver/collingwood/
-          # prediction-markets/omni-view-* lines are pre-launch pages that no cron
-          # re-renders yet; each launch PR removes its own (run-show owns a
-          # scheduled show's pages).
+          # trackers a month of nights. A pre-launch show's pages are listed
+          # here until its launch PR schedules it (run-show owns a scheduled
+          # show's pages; the ownership guard in
+          # tests/test_page_regen_ownership_2026_09_22.py flags a stale line).
+          # No show is pre-launch since 2026-09-23.
           add-paths: |
             *_podcast.*.rss
             *.video.rss
@@ -410,42 +411,6 @@ jobs:
             nerra-voices-summaries.html
             nerra-voices-narrative.html
             blog/nerra_voices/**
-            vancouver.html
-            vancouver-summaries.html
-            vancouver-narrative.html
-            blog/vancouver/**
-            collingwood.html
-            collingwood-summaries.html
-            collingwood-narrative.html
-            blog/collingwood/**
-            prediction-markets.html
-            prediction-markets-summaries.html
-            prediction-markets-narrative.html
-            blog/prediction_markets/**
-            omni-view-europe.html
-            omni-view-europe-summaries.html
-            omni-view-europe-narrative.html
-            blog/omni_view_europe/**
-            omni-view-asia-pacific.html
-            omni-view-asia-pacific-summaries.html
-            omni-view-asia-pacific-narrative.html
-            blog/omni_view_asia_pacific/**
-            omni-view-africa-mideast.html
-            omni-view-africa-mideast-summaries.html
-            omni-view-africa-mideast-narrative.html
-            blog/omni_view_africa_mideast/**
-            omni-view-latam.html
-            omni-view-latam-summaries.html
-            omni-view-latam-narrative.html
-            blog/omni_view_latam/**
-            omni-view-north-america.html
-            omni-view-north-america-summaries.html
-            omni-view-north-america-narrative.html
-            blog/omni_view_north_america/**
-            omni-view-world.html
-            omni-view-world-summaries.html
-            omni-view-world-narrative.html
-            blog/omni_view_world/**
             digests/**/video_assets.json
             digests/**/channel_i18n.json
             digests/**/scheduled_comments.json
