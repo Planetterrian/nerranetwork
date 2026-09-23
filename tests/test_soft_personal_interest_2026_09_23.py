@@ -49,12 +49,35 @@ class TestSoftPersonalInterestPage:
         assert "Or start Personal now →" in src
         assert "join.html" in src
 
+    def test_brand_error_copy(self):
+        src = _read("templates/personal_interest_page.html.j2")
+        assert (
+            "That email doesn’t look right. Try again, or start Personal "
+            "now at nerranetwork.com/join."
+        ) in src
+        assert (
+            "Couldn’t save that just now. Try again in a moment — or start "
+            "Personal whenever you’re ready at nerranetwork.com/join."
+        ) in src
+        # Superseded informal strings must not return.
+        assert "Please enter a valid email address." not in src
+        assert "Please try again in a moment." not in src
+
     def test_posts_to_personal_interest_list(self):
         src = _read("templates/personal_interest_page.html.j2")
         assert 'list = interested ? "personal-interest" : "member"' in src
         assert 'API_BASE = "https://api.nerranetwork.com"' in src
         assert 'API_BASE + "/api/subscribe"' in src
         assert 'tags.push("SpaceX Daily")' in src
+        assert "newsletter: !!newsletter" in src
+
+    def test_never_auto_charges_personal(self):
+        src = _read("templates/personal_interest_page.html.j2")
+        assert "stripe" not in src.lower()
+        assert "STRIPE" not in src
+        handlers = _read("workers/gallery/src/handlers.ts")
+        assert "Never creates a paid Personal subscription" in handlers
+        assert '"personal-interest": ["personal-interest", SUBSCRIBER_TAG]' in handlers
 
     def test_no_scarcity_or_episode_totals(self):
         src = _read("templates/personal_interest_page.html.j2")
@@ -71,10 +94,17 @@ class TestSoftPersonalInterestPage:
         src = _read("templates/join_page.html.j2")
         assert "personal-interest.html" in src
         assert "quiet nudge" in src.lower()
+        # ENG-SPEC: interest block above Stripe plans (does not replace checkout)
+        assert 'id="soft-interest"' in src
+        assert 'id="plans"' in src
+        soft_at = src.index('id="soft-interest"')
+        plans_at = src.index('id="plans"')
+        assert soft_at < plans_at
 
     def test_worker_owns_the_list(self):
         handlers = _read("workers/gallery/src/handlers.ts")
-        assert '"personal-interest": ["personal-interest", "nerra-member"' in handlers
+        assert '"personal-interest": ["personal-interest", SUBSCRIBER_TAG]' in handlers
+        assert "networkNewsletter" in handlers
         assert "honeypot" in handlers.lower() or "company" in handlers
 
     def test_generator_does_not_inject_episode_totals(self):

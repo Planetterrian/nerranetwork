@@ -244,7 +244,7 @@
     var newsletter = document.getElementById("spi-newsletter").checked;
 
     if (!email || email.indexOf("@") < 1 || email.indexOf(".") < 0) {
-      say("Please enter a valid email address.", "error");
+      say("That email doesn’t look right. Try again, or start Personal now at nerranetwork.com/join.", "error");
       document.getElementById("spi-email").focus();
       return;
     }
@@ -256,6 +256,9 @@
     submitBtn.disabled = true;
     say("Saving…", "");
 
+    // ENG-SPEC: Buttondown list tag `personal-interest`. Newsletter
+    // checkbox adds the existing network newsletter segment (nerra-member)
+    // plus SpaceX Daily — never auto-charge Personal from this form.
     var list = interested ? "personal-interest" : "member";
     var tags = [];
     if (newsletter) { tags.push("SpaceX Daily"); }
@@ -265,6 +268,7 @@
       list: list,
       source: SOURCE,
       tags: tags,
+      newsletter: !!newsletter,
       // Honeypot: Worker silently accepts & discards when company is set.
       company: company
     };
@@ -280,10 +284,10 @@
         .then(function (data) { return { ok: resp.ok, status: resp.status, data: data }; });
     }).then(function (r) {
       if (r.status === 429) {
-        throw new Error("rate");
+        throw new Error("fail");
       }
       if (!r.ok || !r.data || r.data.ok !== true) {
-        throw new Error("subscribe failed");
+        throw new Error("fail");
       }
       form.hidden = true;
       confirmEl.classList.add("is-visible");
@@ -295,11 +299,9 @@
           campaign: "personal-interest"
         });
       }
-    }).catch(function (err) {
+    }).catch(function () {
       submitBtn.disabled = false;
-      say(err && err.message === "rate"
-        ? "Too many tries from this network. Please wait a few minutes."
-        : "Couldn’t save that just now. Please try again in a moment.", "error");
+      say("Couldn’t save that just now. Try again in a moment — or start Personal whenever you’re ready at nerranetwork.com/join.", "error");
     });
   });
 })();

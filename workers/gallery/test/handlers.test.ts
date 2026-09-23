@@ -147,22 +147,24 @@ describe("resolveSubscribeTags", () => {
     expect(tags).toEqual(["ru-spacex", "src-youtube-ru"]);
   });
 
-  it("resolves the Soft Personal interest list", () => {
-    // Soft capture creates a Nerra account + a founder-filterable tag;
-    // it is NOT a waitlist and must not omit nerra-member.
+  it("resolves the Soft Personal interest list without forcing newsletter", () => {
+    // ENG-SPEC: tag `personal-interest` (+ gallery unlock). Network
+    // newsletter (`nerra-member`) is opt-in via the checkbox only.
     expect(resolveSubscribeTags("personal-interest", "src-nerranetwork"))
       .toEqual({
-        tags: ["personal-interest", "nerra-member", "gallery-subscriber",
-               "src-nerranetwork"],
+        tags: ["personal-interest", "gallery-subscriber", "src-nerranetwork"],
         list: "personal-interest",
       });
   });
 
-  it("can attach SpaceX Daily when Soft Personal opts into the newsletter", () => {
+  it("adds nerra-member + SpaceX Daily when Soft Personal opts into newsletter", () => {
     const { tags } = resolveSubscribeTags(
-      "personal-interest", "src-nerranetwork", ["SpaceX Daily"]);
-    expect(tags).toContain("SpaceX Daily");
+      "personal-interest", "src-nerranetwork", ["SpaceX Daily"],
+      { networkNewsletter: true });
     expect(tags).toContain("personal-interest");
+    expect(tags).toContain("nerra-member");
+    expect(tags).toContain("SpaceX Daily");
+    expect(tags).toContain("gallery-subscriber");
   });
 });
 
@@ -295,6 +297,7 @@ describe("POST /api/subscribe", () => {
         source: "src-nerranetwork",
         first_name: "Pat",
         tags: ["SpaceX Daily"],
+        newsletter: true,
       }),
       headers: { "Content-Type": "application/json" },
     });
@@ -303,9 +306,29 @@ describe("POST /api/subscribe", () => {
     expect(deps.buttondown.subscribe).toHaveBeenCalledWith(
       "fake-bd",
       "pat@example.com",
-      ["personal-interest", "nerra-member", "gallery-subscriber",
-       "src-nerranetwork", "SpaceX Daily"],
+      ["personal-interest", "gallery-subscriber", "src-nerranetwork",
+       "SpaceX Daily", "nerra-member"],
       { first_name: "Pat" },
+    );
+  });
+
+  it("Soft Personal without newsletter checkbox does not add nerra-member", async () => {
+    const deps = makeDeps();
+    const req = makeRequest("POST", "https://api.nerranetwork.com/api/subscribe", {
+      body: JSON.stringify({
+        email: "quiet@example.com",
+        list: "personal-interest",
+        source: "src-nerranetwork",
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const resp = await handleSubscribe(req, makeEnv(), deps);
+    expect(resp.status).toBe(200);
+    expect(deps.buttondown.subscribe).toHaveBeenCalledWith(
+      "fake-bd",
+      "quiet@example.com",
+      ["personal-interest", "gallery-subscriber", "src-nerranetwork"],
+      undefined,
     );
   });
 });

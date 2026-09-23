@@ -5506,11 +5506,10 @@ def generate_join_page(*, dry_run=False):
 def generate_personal_interest_page(*, dry_run=False):
     """Generate /personal-interest.html — Soft Personal email capture.
 
-    Sep 2026 (SpaceX Daily hero funnel): optional tips/reminder signup,
-    not a waitlist and not the paid join path. Submissions go through
-    the gallery Worker's ``/api/subscribe`` with ``list: personal-interest``
-    (Buttondown tags ``personal-interest`` + ``nerra-member`` +
-    ``gallery-subscriber``). Episode totals are never shown here.
+    ENG-SPEC (Brand HoM, Sep 2026): optional tips/reminder signup via
+    Buttondown tag ``personal-interest`` — not a waitlist, not paid
+    checkout, never auto-charges. Newsletter checkbox adds ``nerra-member``
+    + ``SpaceX Daily``. Episode totals are never shown here.
     """
     env = _get_jinja_env()
     ctx = _member_page_context(
