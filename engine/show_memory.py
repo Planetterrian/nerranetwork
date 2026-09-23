@@ -1522,6 +1522,52 @@ SHOW_MEMORY_CONFIGS: Dict[str, MemoryConfig] = {
             "lions", "port", "yvr", "downtown eastside",
         ],
     ),
+    # Prediction Markets Daily (Phase 2b, plan §4.11): regulatory and court
+    # arcs run for months (a filing today, a ruling next quarter), so the
+    # tracker names the institutions and fights, never outcomes.
+    "prediction_markets": MemoryConfig(
+        slug="prediction_markets",
+        label="PREDICTION MARKETS",
+        file_prefix="prediction_markets",
+        default_programs={
+            "us_federal": _prog(
+                "US Federal Regulation",
+                "The CFTC's rules, advisories and approvals for event contracts, and federal legislation.",
+                ["Rules and advisories", "Contract approvals and reviews"],
+            ),
+            "state_fights": _prog(
+                "States and the Courts",
+                "State gaming regulators and attorneys general against the exchanges, and the rulings.",
+                ["Filings and injunctions", "Appeals and rulings"],
+            ),
+            "canada_intl": _prog(
+                "Canada and International",
+                "Canadian securities and gaming regulators and other countries' treatment of prediction markets.",
+                ["Regulator statements", "Access and enforcement"],
+                confidence="low-medium",
+            ),
+            "venues": _prog(
+                "Venues and Products",
+                "Kalshi, Polymarket, Manifold and new entrants: products, fees, access and market types.",
+                ["Launches and new market types", "Partnerships and funding"],
+            ),
+            "integrity": _prog(
+                "Market Integrity",
+                "Manipulation, insider trading and resolution disputes, and what was decided about them.",
+                ["Allegations and investigations", "Resolutions and outcomes"],
+            ),
+            "forecasting_research": _prog(
+                "Forecasting and Research",
+                "Accuracy studies, forecasting tournaments and research on how these markets work.",
+                ["Published studies", "Tournament results"],
+            ),
+        },
+        theme_keywords=[
+            "cftc", "kalshi", "polymarket", "manifold", "metaculus", "event contract",
+            "sports", "election", "court", "injunction", "state", "manipulation",
+            "insider", "resolution", "liquidity", "forecast",
+        ],
+    ),
     "collingwood": MemoryConfig(
         slug="collingwood",
         label="COLLINGWOOD",

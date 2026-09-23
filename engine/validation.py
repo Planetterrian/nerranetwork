@@ -912,6 +912,38 @@ def longevity_validation_config() -> ValidationConfig:
     )
 
 
+def prediction_markets_validation_config() -> ValidationConfig:
+    """Prediction Markets Daily (Sep 2026, Phase 2b). The Board may be one
+    sentence on a day no venue answered, and New and Notable may be one
+    sentence saying nothing qualifies — both are present, never long."""
+    return ValidationConfig(
+        section_pairs=[],
+        sections=[
+            SectionRule(
+                name="Top Story",
+                pattern=r"(?:### Top Story|## Top Story)(.*?)(?=### The Ecosystem|## The Ecosystem|$)",
+                min_items=0,
+                min_chars=250,
+            ),
+            _items_rule("The Ecosystem", "The Ecosystem", r"### The Board|## The Board", 2),
+            SectionRule(
+                name="The Board",
+                pattern=(r"(?:### The Board|## The Board)(.*?)"
+                         r"(?=### New and Notable|## New and Notable|### How It Works|## How It Works|$)"),
+                min_items=0,
+                min_chars=60,
+            ),
+            SectionRule(
+                name="How It Works",
+                pattern=r"(?:### How It Works|## How It Works)(.*?)$",
+                min_items=0,
+                min_chars=800,
+            ),
+        ],
+        forbidden_patterns=[r"https?://\S+"],
+    )
+
+
 def vancouver_validation_config() -> ValidationConfig:
     """Vancouver Daily News (Sep 2026, Phase 2)."""
     return ValidationConfig(
@@ -972,6 +1004,7 @@ SHOW_VALIDATION_CONFIGS = {
     "privet_russian": pr_validation_config,
     "dp_pod": dp_pod_validation_config,
     "ai_chips": ai_chips_validation_config,
+    "prediction_markets": prediction_markets_validation_config,
     "mag7": mag7_validation_config,
     "peptides": peptides_validation_config,
     "longevity": longevity_validation_config,

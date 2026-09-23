@@ -38,17 +38,24 @@ def next_spotlight(slug: str, root: Path | None = None) -> Optional[dict]:
     return pick_next_topic(path)
 
 
-def spotlight_block(topic: Optional[dict], label: str) -> str:
-    """Digest-prompt block naming this week's spotlight, or a fallback rule."""
+def spotlight_block(topic: Optional[dict], label: str, period: str = "week") -> str:
+    """Digest-prompt block naming the spotlight, or a fallback rule.
+
+    ``period`` is "week" for the health weeklies (the default, unchanged) and
+    "day" for a daily show's rotating explainer (Prediction Markets Daily).
+    """
+    heading = "TODAY'S" if period == "day" else "THIS WEEK'S"
+    when = "today" if period == "day" else "this week"
+    whose = "today's" if period == "day" else "the week's"
     if not topic:
         return (
-            f"### THIS WEEK'S {label.upper()} (instruction — do not include in output)\n"
-            "The curriculum is empty this week: choose the spotlight subject "
-            "from the week's most-covered item above, and say plainly in the "
+            f"### {heading} {label.upper()} (instruction — do not include in output)\n"
+            f"The curriculum is empty {when}: choose the spotlight subject "
+            f"from {whose} most-covered item above, and say plainly in the "
             "section what is and is not established about it."
         )
     return (
-        f"### THIS WEEK'S {label.upper()} (instruction — do not include in output)\n"
+        f"### {heading} {label.upper()} (instruction — do not include in output)\n"
         f"Subject: {topic['title']}\n"
         f"Brief: {topic['brief']}\n"
         "Write the spotlight on exactly this subject. The brief is direction, "
