@@ -1,4 +1,5 @@
 {% extends "base.html.j2" %}
+{% from "_macros.html.j2" import soft_personal_interest %}
 
 {% block head_extra %}
 {#- A paginated series tells a crawler so in the head, not only in the body. -#}
@@ -110,6 +111,15 @@
             {% endif %}
         </div>
     </header>
+
+    {#- Soft Personal on SpaceX Daily blog (and any show with soft_personal_cta).
+        Brand: /blog/spacex/ was join-only; soft interest is tips/reminder,
+        never a charge. -#}
+    {% if soft_personal_cta %}
+    <div style="padding:0 var(--sp-6);">
+        {{ soft_personal_interest(path_prefix) }}
+    </div>
+    {% endif %}
 
     <!-- Posts -->
     {% if posts %}

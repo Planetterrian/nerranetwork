@@ -1,5 +1,5 @@
 {% extends "base.html.j2" %}
-{% from "_macros.html.j2" import show_card %}
+{% from "_macros.html.j2" import show_card, soft_personal_interest %}
 
 {# May 2026 operator request: homepage nav previously read just
    ``Latest | Subscribe`` — inconsistent with the rest of the site
@@ -207,10 +207,16 @@
                             <li>✓ Free account: newsletter, gallery downloads, book discounts</li>
                             <li>✓ $4.99/mo · cancel any time · no ads, ever</li>
                         </ul>
-                        <p style="margin:0;display:flex;gap:0.6rem;flex-wrap:wrap;">
+                        <p style="margin:0;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;">
                             <a class="nn-btn nn-btn-primary" href="{{ path_prefix }}join.html">Build your show →</a>
                             <a class="nn-btn" href="{{ path_prefix }}account.html">Member sign in</a>
                             <a class="nn-btn" href="{{ path_prefix }}nerra-daily.html">Try Nerra Daily free</a>
+                        </p>
+                        {#- Soft Personal (Sep 2026): home Personal band used to
+                            push join only. Soft interest is tips/reminder email
+                            — never a charge; paid stays the primary button. -#}
+                        <p style="margin:0.85rem 0 0;" id="soft-interest">
+                            {{ soft_personal_interest(path_prefix, compact=true) }}
                         </p>
                     </div>
                     <div aria-hidden="true" style="display:grid;gap:0.6rem;">
