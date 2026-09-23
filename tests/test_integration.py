@@ -243,7 +243,8 @@ class TestContentTrackerIntegration:
                     # Sep 2026 new shows — registered on day one.
                     "ai_chips", "mag7", "peptides", "longevity",
                     # Phase 2 (Mira's local shows).
-                    "vancouver", "collingwood"}
+                    "vancouver", "collingwood",
+                    "prediction_markets"}
         assert set(SHOW_SECTION_PATTERNS.keys()) == expected
 
     def test_cross_episode_dedup(self, tmp_tracker_dir):

@@ -158,6 +158,7 @@ class TestStagingIsStaged:
     #: this set by being a NEW show, in this list, with the register entry.
     NEW_SHOWS_47_ARM = frozenset({
         "ai_chips", "mag7", "peptides", "longevity", "vancouver", "collingwood",
+        "prediction_markets",
     })
 
     def test_no_show_digest_left_the_network_default(self):

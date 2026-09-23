@@ -1,0 +1,280 @@
+# Prediction Markets Daily — Phase 2b of docs/new_shows_plan_2026_09_22.md
+# §4.11 (operator brief 2026-09-23; host Patrick, operator-confirmed the same
+# day). The developing prediction-market ecosystem in Canada, the United
+# States and the world: the regulators and courts, the venues and their
+# products, the people building and legitimizing the field, the economics
+# of why a price can be a forecast — and a capped Board of the day's most
+# traded markets.
+#
+# The MAG 7 lesson is written in on day one (plan §9b): this is a show about
+# the ecosystem, never a price tape. The Board is five markets at most and
+# arrives as hook ARTICLES (shows/hooks/prediction_markets.py,
+# engine/prediction_board.py); How It Works is one curriculum subject a day
+# with real paper abstracts behind it (shows/curricula/prediction_markets.yaml,
+# engine/research_papers.py).
+#
+# Posture: journalism and education, never a bet. No recommendation to buy,
+# sell or trade a contract, no picks, no "smart money". Legality varies by
+# jurisdiction and the show says so; the gambling-harm line is in the
+# verbatim closing (engine/intros.py).
+#
+# Distribution OFF at launch (RSS + site + blog). NOT on a cron: Episode 1 is
+# produced by manual dispatch and listened to before the launch PR adds the
+# 11:16 UTC slot (plan §6).
+name: Prediction Markets Daily
+slug: prediction_markets
+weekly_summary_segment: true   # daily cadence; Sunday adds a short week-in-review segment
+memory_enabled: true
+story_recurrence: true
+description: The prediction-market ecosystem in Canada, the United States and
+  the world — the regulators and courts, the venues and new markets, the most
+  traded questions, and the economics of reading a price as a forecast.
+  Journalism and education, never a bet.
+
+fetch_full_text: 12
+absence_sentence_filter: true
+# A daily: nothing older than four days by its page or feed date. Google News
+# re-surfaces old court stories under fresh index dates, and a ruling that is
+# a week old is not today's news in a field that changes weekly.
+stale_article_days: 4
+
+# Probed 2026-09-23 from this session's egress (feedparser: items, age of the
+# newest item, and how many mention prediction markets). CoinDesk and The
+# Block are crypto-wide: the keyword list below is the filter. Dropped: the
+# Kalshi blog (429 via proxy), Metaculus news (403), the Ontario Securities
+# Commission (403), Axios (403), a Forecasting newsletter feed (404), Legal
+# Sports Report (its newest item was 176 h old, and 'legalsportsreport.com'
+# trips the blocked-source substring 'rt.com'). Retest
+# from a runner (`python check_feeds.py prediction_markets`) before Episode 1.
+sources:
+- url: https://news.polymarket.com/feed
+  label: Polymarket newsletter
+- url: https://news.manifold.markets/feed
+  label: Manifold newsletter
+- url: https://www.astralcodexten.com/feed
+  label: Astral Codex Ten
+- url: https://www.coindesk.com/arc/outboundfeeds/rss/
+  label: CoinDesk
+- url: https://www.theblock.co/rss.xml
+  label: The Block
+- url: https://www.cftc.gov/RSS/RSSGP/rssgp.xml
+  label: CFTC press releases
+- url: https://www.sportico.com/feed/
+  label: Sportico
+- url: https://news.google.com/rss/search?q=%22prediction+markets%22+when:2d&hl=en-US&gl=US&ceid=US:en
+  label: Google News prediction markets
+- url: https://news.google.com/rss/search?q=Kalshi+when:2d&hl=en-US&gl=US&ceid=US:en
+  label: Google News Kalshi
+- url: https://news.google.com/rss/search?q=Polymarket+when:2d&hl=en-US&gl=US&ceid=US:en
+  label: Google News Polymarket
+- url: https://news.google.com/rss/search?q=CFTC+%22event+contracts%22+when:7d&hl=en-US&gl=US&ceid=US:en
+  label: Google News CFTC event contracts
+- url: https://news.google.com/rss/search?q=%22prediction+market%22+Canada+OR+%22Ontario+Securities+Commission%22+OR+%22event+contracts%22+when:7d&hl=en-CA&gl=CA&ceid=CA:en
+  label: Google News prediction markets Canada
+- url: https://news.google.com/rss/search?q=Metaculus+OR+%22forecasting+tournament%22+OR+superforecasters+when:7d&hl=en-US&gl=US&ceid=US:en
+  label: Google News forecasting
+
+web_search_queries:
+- prediction markets news today
+- Kalshi Polymarket CFTC ruling court news
+- prediction market regulation Canada news
+
+# Kalshi and Polymarket Google News results are saturated with sportsbook
+# promo-code pages ("Kalshi Promo Code MILE: Claim Up to $2,000 Bonus" led
+# the probe). Never the bare word "bonus" alone in a regulatory sense —
+# these patterns match the affiliate headline shapes.
+exclude_title_patterns:
+- '\b(promo|referral|invite|bonus) codes?\b'
+- '\b(sign-?up|welcome|deposit) (bonus|offer)\b'
+- '\bclaim up to \$'
+- '\bget \$\d+'
+- '\b(best|top) (prediction market|betting) (apps?|sites?)\b'
+- '\b(odds|picks|predictions?) (for|today)\b.*\b(vs\.?|game|match)\b'
+- '\bparlay\b'
+
+# The fetch-side filter (applied to every feed): a story names a prediction
+# market, a venue, the regulator or the forecasting world.
+keywords:
+- prediction market
+- prediction-market
+- event contract
+- kalshi
+- polymarket
+- manifold
+- metaculus
+- predictit
+- futarchy
+- forecasting
+- superforecast
+- cftc
+- mention market
+- betting exchange
+- sports event contract
+- decision market
+
+# X accounts: the venues and the regulator post daily. Source only — the show
+# never posts. Verify the handles and read the first run's per-handle counts
+# (plan §9a); a handle that returns nothing costs one search call.
+x_fetch_enabled: true
+x_accounts:
+- handle: Kalshi
+  label: Kalshi
+  max_posts: 3
+- handle: Polymarket
+  label: Polymarket
+  max_posts: 3
+- handle: ManifoldMarkets
+  label: Manifold
+  max_posts: 2
+- handle: metaculus
+  label: Metaculus
+  max_posts: 2
+- handle: CFTC
+  label: CFTC
+  max_posts: 2
+
+min_articles: 6
+min_articles_skip: 4
+
+max_weekly_cost_usd: 8.0
+
+multilingual:
+  enabled: false
+
+llm:
+  provider: xai
+  # grok-4.7 on every stage that writes, like every new show (operator
+  # brief 2026-09-23; experiment new-shows-grok-47-2026-09-23). A run whose
+  # pinned model does not answer falls back to grok-4.3 and records it
+  # (engine.generator.switch_to_network_default).
+  model: grok-4.7
+  system_prompt_file: shows/prompts/prediction_markets_system.txt
+  digest_prompt_file: shows/prompts/prediction_markets_digest.txt
+  podcast_prompt_file: shows/prompts/prediction_markets_podcast.txt
+  digest_temperature: 0.4
+  podcast_temperature: 0.7
+  max_tokens: 5500
+  podcast_max_tokens: 9000
+  # About nine minutes. Set to what the format's digest supports (plan §9a);
+  # the skip floor is 60% of this.
+  min_podcast_words: 1100
+  podcast_expand_below_target: false
+  min_digest_words: 1200
+  digest_expand_below_target: true
+
+tts: {}
+
+audio:
+  # The markets strand's theme (Modern Investing's, shared with MAG 7)
+  # until a dedicated track is commissioned (plan §5c).
+  music_file: assets/music/ModernInvesting.mp3
+  transition_sting: assets/music/transition_sting.mp3
+  voice_intro_delay: 0.0
+  intro_duration: 3.0
+  overlap_duration: 15.0
+  fade_duration: 30.0
+  outro_duration: 30.0
+  outro_crossfade: 0.0
+  outro_fade_out_duration: 10.0
+  intro_volume: 0.6
+  overlap_volume: 0.5
+  fade_volume: 0.4
+  outro_volume: 0.6
+
+publishing:
+  rss_file: prediction_markets_podcast.rss
+  rss_title: Prediction Markets Daily
+  rss_description: 'The prediction-market ecosystem in Canada, the United States
+    and the world, every day: the regulators, the courts and the new rules; the
+    venues, the markets they list and the people building them; the most traded
+    questions of the day with their prices, volumes and caveats; and one clear
+    explainer on how these markets work and what the research says. Journalism
+    and education — never a tip, never a bet.'
+  rss_link: https://nerranetwork.com/prediction-markets.html
+  rss_author: Patrick
+  rss_email: patrick@planetterrian.com
+  rss_image: https://nerranetwork.com/assets/covers/prediction-markets.jpg
+  rss_category: Business
+  rss_subcategory: Investing
+  rss_category2: "News"
+  rss_subcategory2: "Business News"
+  rss_keywords: prediction markets, kalshi, polymarket, event contracts, cftc,
+    forecasting, manifold, metaculus
+  guid_prefix: prediction-markets
+  base_url: https://nerranetwork.com
+  audio_subdir: digests/prediction_markets
+  summaries_json: digests/prediction_markets/summaries_prediction_markets.json
+  summaries_podcast_name: prediction_markets
+  player_html: prediction-markets.html
+  summaries_html: prediction-markets-summaries.html
+  x_enabled: false
+  x_env_prefix: X_
+  host_name: Patrick
+  host_kind: human
+
+episode:
+  prefix: Prediction_Markets
+  filename_pattern: '{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3'
+  output_dir: digests/prediction_markets
+  mp3_glob: Prediction_Markets_Ep*.mp3
+
+chapters:
+  enabled: true
+  # Anchors only — never a topic word. News chapters come from the digest
+  # headlines; the two segments key on REQUIRED phrases the podcast prompt
+  # builds a sentence around.
+  section_markers:
+  - pattern: This is Prediction Markets Daily|first episode of|Prediction Markets Daily, episode
+    title: Introduction
+    where: start
+  - pattern: on the board today
+    title: The Board
+  - pattern: how (it|this|that) works
+    title: How It Works
+  - pattern: That's Prediction Markets Daily|see you tomorrow
+    title: Closing
+    where: end
+
+slow_news:
+  enabled: false
+
+newsletter:
+  enabled: false
+  platform: buttondown
+  api_key_env: BUTTONDOWN_API_KEY
+  status: about_to_send
+  tag: Prediction Markets Daily
+  short_label: Prediction Markets
+  emoji: 📊
+  newsletter_start_date: '2026-10-15'
+  requires_financial_disclaimer: true
+  length_target_words: 1200
+
+content_tracking:
+  section_patterns: {}
+
+youtube:
+  enabled: false                 # OFF at launch (plan §7; EN channel cadence)
+  channel: en
+  category_id: 25
+  shorts_start_mode: smart
+  shorts_min_score_threshold: 3.5
+  default_language: en
+  privacy_status: public
+  image_provider: grok
+  grok_image_model: grok-imagine-image
+  grok_image_descriptor: "cinematic editorial photo, clean composition, natural light, ultra-detailed"
+  image_queries:
+  - trading floor screens with probability charts
+  - courthouse steps in Washington
+  - election night crowd watching results
+  - abstract probability dial on a desk
+  - financial regulator building exterior
+  - stadium lights at night
+  image_query_prefix: ''
+  tags:
+  - prediction markets
+  - kalshi
+  - polymarket
+  - forecasting
+  - event contracts

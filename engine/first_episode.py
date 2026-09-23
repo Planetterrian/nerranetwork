@@ -103,6 +103,23 @@ jargon defined on first use, no reference to earlier episodes, and every
 factual claim held to the normal sourcing rules — only the introduction
 speaks from the show's own identity.
 """,
+    "prediction_markets": """
+### FIRST EPISODE (Episode {episode_num}) — DEBUT BRIEF for "{show_name}"
+A normal episode with a real introduction in front of it. Keep the standard
+hook line and every standard section heading — the pipeline, the validator
+and the blog all read them — and add ONE new section directly after the
+**What You Need to Know** paragraph:
+
+**### What This Show Covers** (200-300 words, first episode only)
+- Open on the subject, not the show: a prediction market lets people trade on whether something will happen, and the price can be read as the crowd's probability; the daily shape: the regulators, courts and venues building and contesting the field, a short board of the day's most traded questions, and one explainer on how these markets work.
+- The one thing this show will not do, as a listener promise: tell anyone what to trade — it reports and explains, it never recommends. The law differs by country, province and state and is changing, and the show says whose rules a story is about.
+- The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
+
+Then run the normal sections. Debut discipline: the STRONGEST stories only,
+jargon defined on first use, no reference to earlier episodes, and every
+factual claim held to the normal sourcing rules — only the introduction
+speaks from the show's own identity.
+""",
     "vancouver": """
 ### FIRST EPISODE (Episode {episode_num}) — DEBUT BRIEF for "{show_name}"
 A normal episode with a real introduction in front of it. Keep the standard
@@ -273,6 +290,19 @@ _SHOW_PODCAST_EP1 = {
   built from the digest's "What This Show Covers" section, rewritten for
   the ear: what it covers, the boundary with the sister shows, and the
   promise — in plain sentences, never a list, never a tour of the network.
+- Then a normal episode. Give the top story a little more room than usual.
+- No "welcome back", no reference to earlier episodes, no superlatives
+  about the network, and no counts of shows or listeners.
+- The closing is the supplied one, unchanged.
+""",
+    "prediction_markets": """
+### FIRST EPISODE (Episode {episode_num}) — DEBUT SCRIPT for "{show_name}"
+- The cold open and identity line stay exactly as specified. Directly after
+  the identity line, spend sixty to ninety seconds on what this show is,
+  built from the digest's "What This Show Covers" section, rewritten for
+  the ear: what a prediction market is, what the show covers, and the one
+  thing it will not do — in plain sentences, never a list, never a tour of
+  the network.
 - Then a normal episode. Give the top story a little more room than usual.
 - No "welcome back", no reference to earlier episodes, no superlatives
   about the network, and no counts of shows or listeners.

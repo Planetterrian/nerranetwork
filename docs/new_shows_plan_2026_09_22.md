@@ -791,9 +791,8 @@ shared prompts.
   interesting new markets, the most popular ones, the strategies and the
   people helping to build and legitimize the field, and the economics behind
   it (why a price can be a forecast, and when it is not).
-- **Host:** Patrick (assumption, §10 item 12) on `kdif6sqjcyiq`, markets
-  strand. Mira is the alternative if the operator wants the markets shows
-  split by host.
+- **Host:** Patrick on `kdif6sqjcyiq`, markets strand (operator-confirmed
+  2026-09-23, §10 item 12).
 - **The MAG 7 lesson, written in on day one (§9b):** the show is about the
   ecosystem, not a price tape. The board of popular markets is ONE short
   segment of at most five markets; the rest of the episode is developments.
@@ -1104,6 +1103,49 @@ economics are read per language on the dashboard card first.
   Still deferred, deliberately: `engine/network_promo.py` rotation for all
   the new shows at once (an audio change on thirteen shows — its own PR with
   an A/B listen, after the Phase 2 Episode 1s).
+- **Phase 2 Episode 1s — FAILED 2026-09-23, not heard yet.** Both runs died in
+  the digest stage on grok-4.7: the 10-token pre-flight ping timed out at
+  30 s, then three digest attempts each hung ~260 s until xAI dropped the
+  connection. No committed credit file anywhere records a grok-4.7
+  completion — Omni View's script-stage pin had fallen back to grok-4.3 on
+  its first run because the script stage has a fallback and the digest stage
+  did not. Fix (separate PR): a pinned model that fails the ping or the
+  digest call switches the run to grok-4.3, sticky for the process, and
+  records `llm_model_pinned` / `llm_model_fallback`. The pins stay (the
+  operator wants 4.7); an episode that fell back is not a 4.7 data point.
+  AI Chips and MAG 7 were on the same path from their first grok-4.7 cron.
+- **Phase 2b A-parts — shipped 2026-09-23** (Prediction Markets Daily,
+  Patrick; guards `tests/test_prediction_markets_2026_09_23.py`). What the
+  build settled: (1) The Board is one hook article PER MARKET
+  (`engine/prediction_board.py`), so every board line cites its own market
+  URL; Polymarket's events endpoint is sorted server-side by 24-hour volume
+  and carries tags; Kalshi's is NOT sorted, returns thousands of events and
+  answers HTTP 429 to a fast crawl, so it is paged slowly (≤20 pages, one
+  retry) and ranked from what was read; Manifold is play money and its top
+  volume is perpetual contracts, so only binary markets with ≥100 traders;
+  (2) filters by rule — sports and esports tags / categories, recurring
+  price ladders, tweet counts, Kalshi numeric strike ladders and parlays,
+  and near-certain markets (the first live read put "will the US confirm
+  aliens exist" on the board at 3.1%); mutually exclusive outcomes are
+  ranked by price, a "by…?" date ladder keeps its own order; volume is
+  reported in each venue's own unit (Kalshi's is contracts), never
+  converted; (3) board text is the pipeline's own copy, which the claims
+  gate treats as sourced, so it carries a neutral access line and NO
+  specific legal claim — legal facts come from dated news articles only;
+  (4) How It Works is a 23-subject curriculum
+  (`shows/curricula/prediction_markets.yaml`, about three weeks of dailies;
+  the hook warns under seven) with real abstracts from Crossref and arXiv
+  (`engine/research_papers.py`) — Crossref's citation sort returns AlphaFold
+  for "prediction markets", so results are filtered on TITLE first and then
+  ranked by citations; every subject's query was run and returned ≥2
+  on-subject papers; OpenAlex and Semantic Scholar answered 429;
+  (5) Google News for Kalshi / Polymarket is saturated with sportsbook
+  promo-code pages — title filters match the affiliate shapes and a guard
+  checks real regulatory headlines still pass; (6) the Board is NOT
+  content-tracked (a live market can lead for weeks); (7) the not-advice
+  and gambling-help lines live in the verbatim closing. Cover glyph
+  "gauge"; accent `#A21CAF` inside the markets family (AI Chips owns
+  `#4338CA`). Episode 1 waits for the pinned-model fallback to merge.
 - **Each B-PR** (after Episode 1 is heard): CRON_MAP + `- cron:` line +
   Worker SLOTS row (unique minute) + move the slug from `PRELAUNCH_SLUGS`
   into `SHOW_REGISTRY` + daily-audit FEEDS limit + `ALT_CADENCE_SHOWS` /
@@ -1274,8 +1316,8 @@ operator's direction binds every show from here:
 11. **Apple/Spotify/Podcast Index submissions** per show once Ep3 exists
     (the OP3 404-until-indexed lag applies to every new feed; six of the
     existing paid language feeds are still unmeasurable for this reason).
-12. **Prediction Markets Daily host:** Patrick (assumed, markets strand) or
-    Mira.
+12. ~~**Prediction Markets Daily host:** Patrick (assumed, markets strand) or
+    Mira.~~ **Decided 2026-09-23: Patrick.**
 13. **A "local" music theme** for Vancouver and Collingwood (voice-only at
     launch) — a Suno brief like §5c's.
 

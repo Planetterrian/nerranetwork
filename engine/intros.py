@@ -982,6 +982,23 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             "you heard. I'm Patrick in Vancouver. See you next week.",
         ],
     },
+    # Phase 2b (plan §4.11). The posture is in the verbatim closing, where
+    # the model cannot drop it (the MAG 7 / health-show shape): not advice,
+    # and a gambling-harm line — most of this industry's volume is sports.
+    "prediction_markets": {
+        "host": "Patrick",
+        "show_name": "Prediction Markets Daily",
+        "identity_tail": "Journalism and education — never a bet.",
+        "greetings": ["Welcome to"],
+        "openers": ["episode {ep}."],
+        "framings": ["Where forecasting meets the market."],
+        "closings": [
+            "That's Prediction Markets Daily for today. Nothing in this show "
+            "is financial advice, and if trading or betting has stopped being "
+            "fun, help is available where you live. I'm Patrick in Vancouver "
+            "— see you tomorrow.",
+        ],
+    },
     # ---- Phase 2: Mira's local shows (plan §4.5-4.6, §2b) ----
     # The identity tail discloses the AI host on EVERY episode, the Age of
     # AI pattern; run_show adds the AI-host spoken disclosure at the end.

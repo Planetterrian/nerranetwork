@@ -395,9 +395,10 @@ jobs:
           # A generated path missing from this list is rebuilt nightly and then
           # thrown away: the silent-drop class that cost
           # api/youtube_channel_history.json four runs and six shows' memory
-          # trackers a month of nights. The vancouver/collingwood lines are
-          # Phase 2 pre-launch pages that no cron re-renders yet; their launch
-          # PR removes them (run-show owns a scheduled show's pages).
+          # trackers a month of nights. The vancouver/collingwood/
+          # prediction-markets lines are pre-launch pages that no cron
+          # re-renders yet; each launch PR removes its own (run-show owns a
+          # scheduled show's pages).
           add-paths: |
             *_podcast.*.rss
             *.video.rss
@@ -417,6 +418,10 @@ jobs:
             collingwood-summaries.html
             collingwood-narrative.html
             blog/collingwood/**
+            prediction-markets.html
+            prediction-markets-summaries.html
+            prediction-markets-narrative.html
+            blog/prediction_markets/**
             digests/**/video_assets.json
             digests/**/channel_i18n.json
             digests/**/scheduled_comments.json

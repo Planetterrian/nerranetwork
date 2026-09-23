@@ -77,6 +77,10 @@ SPECS: dict[str, CoverSpec] = {
                           "with Patrick", _lift(_hex("#9D174D"), 0.45), "chain"),
     "longevity": CoverSpec(("LONGEVITY", "WEEKLY"), "THE SCIENCE OF AGING, READ CAREFULLY",
                            "with Patrick", _lift(_hex("#3F6212"), 0.5), "rings"),
+    # Phase 2b: a probability gauge — the price read as a forecast.
+    "prediction_markets": CoverSpec(("PREDICTION", "MARKETS DAILY"),
+                                    "THE LAW · THE VENUES · HOW IT WORKS",
+                                    "with Patrick", _lift(_hex("#A21CAF"), 0.4), "gauge"),
     # Local strand (plan §5b): a horizon with one place mark. glyph_arg picks
     # the ridge — 0 the North Shore mountains over water, 1 the long, low
     # Niagara Escarpment rise of Blue Mountain behind the bay.
@@ -192,6 +196,26 @@ def _draw_glyph(img, draw, spec: CoverSpec, cx: float, cy: float) -> None:
         draw.ellipse([mx - 58, my - 58, mx + 58, my + 58], fill=NERRA_CYAN + (255,))
         draw.ellipse([mx - 120, my - 120, mx + 120, my + 120], outline=NERRA_CYAN + (170,), width=12)
         _glow(img, [mx - 140, my - 140, mx + 140, my + 140], NERRA_CYAN, 60, 120)
+    elif spec.glyph == "gauge":
+        # A half-circle probability gauge: ticks at every tenth, the arc
+        # filled to the needle, the needle at a price that is neither a sure
+        # thing nor a long shot.
+        r, base = 470, cy + 230
+        box = [cx - r, base - r, cx + r, base + r]
+        draw.arc(box, start=180, end=360, fill=SLATE + (200,), width=34)
+        p_needle = 0.63
+        draw.arc(box, start=180, end=180 + 180 * p_needle, fill=a + (255,), width=34)
+        for i in range(11):
+            ang = math.radians(180 + 18 * i)
+            r0, r1 = r - 70, r - (110 if i % 5 else 140)
+            draw.line([cx + r0 * math.cos(ang), base + r0 * math.sin(ang),
+                       cx + r1 * math.cos(ang), base + r1 * math.sin(ang)],
+                      fill=a + (220,), width=12)
+        ang = math.radians(180 + 180 * p_needle)
+        nx, ny = cx + (r - 150) * math.cos(ang), base + (r - 150) * math.sin(ang)
+        draw.line([cx, base, nx, ny], fill=NERRA_CYAN + (255,), width=22)
+        draw.ellipse([cx - 46, base - 46, cx + 46, base + 46], fill=NERRA_CYAN + (255,))
+        _glow(img, [cx - 110, base - 110, cx + 110, base + 110], NERRA_CYAN, 50, 140)
     else:  # dial — the Nerra Daily family default
         r = 420
         draw.arc([cx - r, cy - r, cx + r, cy + r], start=205, end=335, fill=a + (235,), width=26)

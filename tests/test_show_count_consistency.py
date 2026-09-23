@@ -35,8 +35,8 @@ def test_network_show_count():
     show; 22 as of 2026-09-22: AI Chips & Data Centres Daily, MAG 7 Daily,
     Peptides Weekly and Longevity Weekly — Phase 1 of
     docs/new_shows_plan_2026_09_22.md; 24 as of 2026-09-23 with Phase 2: Vancouver Daily
-    News and Collingwood Weekly.)"""
-    assert _show_count() == 24
+    News and Collingwood Weekly; 25 with Phase 2b: Prediction Markets Daily.)"""
+    assert _show_count() == 25
 
 
 def test_no_stale_count_phrases_in_templates():

@@ -1,0 +1,197 @@
+# Prediction Markets Daily — the How It Works curriculum (plan §4.11).
+# One subject per episode, first unproduced entry wins
+# (engine/topic_queue.pick_next_topic via engine/curriculum.py). Each entry's
+# `search` / `arxiv` / `require` / `exclude` feed engine/research_papers.py,
+# which hands the digest real abstracts as hook articles so every figure and
+# every named study in the explainer is sourced (the claims gate strips the
+# rest). Every query below was run on 2026-09-23 and returned at least two
+# on-subject papers.
+#
+# Order: what a listener needs to read a market first (price, liquidity,
+# calibration, biases, manipulation, resolution, the law), theory and history
+# after. A daily show uses one entry a day: this list is about three weeks.
+# Hand-planned, not auto-restocked (curricula live outside topic_queues/) —
+# the hook logs a ::warning:: when fewer than seven remain.
+queue:
+- id: price-as-probability
+  title: Why a Price Can Be Read as a Probability
+  brief: 'Series debut explainer. A contract that pays one dollar if an event happens, why its price can be read as the market''s probability, what the price does NOT tell you (the fee, the spread, the favourite-longshot pattern, thin trading), and the one thing this show will not do: tell anyone what to trade. Education only: how it works and what the evidence shows; never a recommendation, a pick or a strategy to follow.'
+  category: debut
+  search: prediction markets
+  require: [prediction market]
+  exclude: [cortical]
+  arxiv: ti:"prediction markets"
+  produced: false
+- id: liquidity-and-thin-markets
+  title: Liquidity, Spreads and Thin Markets
+  brief: 'What liquidity means on an event contract, the bid-ask spread, why a market with little volume can move on one trade, and how an automated liquidity parameter trades stability against responsiveness. How a listener can tell a thin market from a deep one. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: mechanism
+  search: liquidity prediction markets
+  require: [liquid, prediction|betting]
+  arxiv: ti:"prediction market" AND abs:liquidity
+  produced: false
+- id: calibration
+  title: 'Calibration: What It Means for a Forecast to Be Right'
+  brief: 'What it means for a probability forecast to be calibrated across many events rather than right on one; calibration and sharpness, how forecasters are scored after the fact, and why one surprising result does not make a market wrong. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: mechanism
+  search: calibration probability forecasts
+  require: [calibrat, forecast|probabilit]
+  arxiv: ti:calibration AND abs:"prediction market"
+  produced: false
+- id: favourite-longshot-bias
+  title: The Favourite-Longshot Bias
+  brief: 'The long-documented pattern in betting markets that long shots are overpriced and favourites underpriced, the explanations researchers have tested (risk-seeking, misperception, insiders, bookmaker margins), and what recent studies find on crypto-settled prediction markets. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: mechanism
+  search: favorite longshot bias betting
+  require: [longshot]
+  arxiv: abs:"longshot bias"
+  produced: false
+- id: markets-versus-polls
+  title: Markets Against Polls
+  brief: 'How election markets and opinion polls answer different questions (who will win versus who people support today), the published comparisons of their accuracy, and where each has failed. Covered as a question about forecasting, never as election coverage. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: evidence
+  search: prediction markets polls election forecasts
+  require: [poll|forecast, market]
+  arxiv: ti:"prediction market" AND abs:polls
+  produced: false
+- id: manipulation
+  title: Can a Prediction Market Be Manipulated?
+  brief: 'What manipulation attempts look like in experiments and in real markets, why a manipulator can end up subsidising the traders who correct the price, where the defence fails (thin markets, settlement manipulation), and what regulators have warned about. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: risk
+  search: manipulation prediction markets
+  require: [manipulat, predict|betting|election]
+  arxiv: ti:"prediction markets" AND ti:manipulation
+  produced: false
+- id: resolution-and-oracles
+  title: 'Who Decides the Answer? Resolution, Rules and Oracles'
+  brief: 'How a market''s wording and its named resolution source decide who is paid, the disputes that follow ambiguous questions, and how crypto-settled venues use oracles and bonded votes to settle. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: risk
+  search: oracle blockchain prediction market
+  require: [oracle|settle|resolution]
+  exclude: [entity resolution]
+  arxiv: ti:"prediction market" AND (abs:oracle OR abs:settlement)
+  produced: false
+- id: the-law
+  title: 'The Law: Event Contracts, Regulators and the Courts'
+  brief: 'How the United States regulates event contracts as derivatives under the CFTC while states argue they are gambling, how other jurisdictions have approached the question, and why the answer can change in a week. Every legal claim is dated and sourced to an article above or a paper here; what is unsettled is said to be unsettled. Canada: say only what a sourced article states. Education only; never legal advice, a recommendation or a pick.'
+  category: law
+  search: prediction markets law regulation
+  require: [prediction market, regulat|law|legal]
+  arxiv: ti:"prediction markets" AND abs:regulation
+  produced: false
+- id: arbitrage
+  title: 'Arbitrage: When Two Venues Disagree'
+  brief: 'Why the same question can trade at different prices on two venues, what stops traders from closing the gap (fees, capital locked until resolution, access rules, settlement risk), and what studies of cross-market arbitrage find. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: mechanism
+  search: arbitrage betting prediction markets
+  require: [arbitrage, predict|betting|wager]
+  arxiv: ti:arbitrage AND abs:"prediction market"
+  produced: false
+- id: information-aggregation
+  title: How Markets Aggregate Information
+  brief: 'The economic case that a price pools scattered private information, the laboratory experiments that tested it, and the conditions under which aggregation works and fails. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: theory
+  search: information aggregation markets
+  require: [aggregat, market]
+  arxiv: ti:"information aggregation" AND abs:market
+  produced: false
+- id: insider-information
+  title: Insiders and Event Contracts
+  brief: 'What researchers found about insider trading in betting markets, why a market that attracts insiders can be more accurate and less fair at once, and how venues and regulators treat trading on non-public information about an event. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: risk
+  search: insider trading betting markets
+  require: [insider, betting|prediction|wager]
+  produced: false
+- id: scoring-rules
+  title: Proper Scoring Rules
+  brief: 'How a forecast is scored so that honesty pays (Brier and logarithmic scores), what makes a scoring rule proper, and why the idea underlies both forecasting tournaments and automated market makers. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: theory
+  search: proper scoring rules
+  require: [scoring rule]
+  arxiv: ti:"scoring rules"
+  produced: false
+- id: market-makers
+  title: How an Automated Market Maker Sets a Price
+  brief: 'The logarithmic market scoring rule and its relatives: how an algorithm quotes a price on every question, what it costs the sponsor, and how the liquidity parameter shapes how far one trade moves the price. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: mechanism
+  search: market scoring rule prediction market maker
+  require: [scoring rule|market maker, predict]
+  arxiv: abs:"logarithmic market scoring rule"
+  produced: false
+- id: wisdom-of-crowds
+  title: The Wisdom of Crowds, and When It Fails
+  brief: 'Why averaging many independent judgments beats most individuals, and how social influence, herding and shared information break it — with the research on each. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: theory
+  search: wisdom of crowds
+  require: [wisdom of crowd]
+  arxiv: ti:"wisdom of crowds"
+  produced: false
+- id: forecasting-tournaments
+  title: Superforecasters and Forecasting Tournaments
+  brief: 'The government-funded geopolitical forecasting tournaments, what separated the best forecasters, and how prediction polls compare with markets on the same questions. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: evidence
+  search: forecasting tournament superforecasters
+  require: [forecast, tournament|superforecast]
+  exclude: [ncaa]
+  produced: false
+- id: sports-contracts-and-harm
+  title: Sports Event Contracts, Sportsbooks and Gambling Harm
+  brief: 'How a sports event contract on an exchange differs from a sportsbook bet (who sets the price, who takes the other side), why most of the industry''s volume is sports, what the research on sports-betting markets and on gambling harm finds, and where help is available. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: risk
+  search: sports betting markets efficiency
+  require: [sport, betting|wager|market]
+  arxiv: ti:"sports betting" AND abs:market
+  produced: false
+- id: hedging
+  title: Hedging With Event Contracts
+  brief: 'The economic argument that event contracts let people and firms insure against outcomes (weather, policy, elections), the evidence for and against that use, and why regulators weigh hedging value against gambling. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: theory
+  search: hedging with prediction markets
+  require: [hedg, prediction|event|betting]
+  arxiv: ti:"prediction market" AND abs:hedg
+  produced: false
+- id: corporate-markets
+  title: Prediction Markets Inside Companies
+  brief: 'Internal markets that firms have run on launch dates, sales and ideas, what the published studies found about their accuracy, and why many were quietly shut down. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: evidence
+  search: prediction markets in organizations corporate
+  require: [prediction market]
+  arxiv: ti:"prediction markets" AND (abs:corporate OR abs:firms)
+  produced: false
+- id: futarchy
+  title: Futarchy and Decision Markets
+  brief: 'The proposal to make decisions by comparing conditional markets, how decision markets differ from forecasting markets, the problems researchers have found, and where it has been tried. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: theory
+  search: futarchy decision markets
+  require: [futarch|decision market]
+  arxiv: abs:futarchy OR ti:"decision markets"
+  produced: false
+- id: economic-value
+  title: 'Why Economists Care: Prices as Public Information'
+  brief: 'The case that a market price is a public good — a free, continuously updated forecast anyone can read — the evidence on how much information prediction markets add, and the criticism that their social value is overstated. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: theory
+  search: value of prediction markets information welfare
+  require: [prediction market]
+  arxiv: ti:"prediction market" AND abs:welfare
+  produced: false
+- id: election-betting-history
+  title: A Short History of Election Betting
+  brief: 'The large, open election-betting markets of the early twentieth century, how accurate they were, why they disappeared, and the university-run markets that revived the idea. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: history
+  search: historical election betting markets
+  require: [betting, election|presidential]
+  produced: false
+- id: efficient-markets
+  title: Are Betting Markets Efficient?
+  brief: 'What efficiency means for a betting or prediction market, how researchers test it, and what the evidence from football, racing and prediction markets shows about persistent mispricing. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: evidence
+  search: efficient markets hypothesis betting markets
+  require: [efficien, betting|wager|prediction]
+  produced: false
+- id: ai-forecasters
+  title: Can AI Forecast?
+  brief: 'How researchers benchmark language models against live prediction markets and human forecasters, what the early results show, and the limits of those benchmarks. Education only; never a recommendation, a pick or a strategy to follow.'
+  category: evidence
+  arxiv: ti:forecast AND abs:"language model" AND abs:"prediction market"
+  require: [forecast]
+  produced: false

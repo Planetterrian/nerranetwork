@@ -1,0 +1,47 @@
+# Review ledger — Prediction Markets Daily. See README.md for schema.
+# Launch registration (Phase 2b of docs/new_shows_plan_2026_09_22.md §4.11,
+# §9a/§9b): no episodes yet. The predictions below are the first review's to score.
+reviews:
+  - date: 2026-09-23
+    pr: null
+    doc: docs/new_shows_plan_2026_09_22.md
+    reviewer: claude-code (new-shows Phase 2b scaffold; launch registration, not a review)
+    summary: >-
+      Patrick-hosted daily on the prediction-market ecosystem, scaffolded
+      from the plan: YAML with probed feeds and promo-code filters,
+      shape-only prompts, a hook that supplies The Board as one hook article
+      per market (engine/prediction_board.py — Polymarket, Kalshi, Manifold,
+      sports, ladders and near-certain markets excluded) and today's How It
+      Works subject from a curriculum with real Crossref / arXiv abstracts
+      (engine/research_papers.py), Ep1 debut brief, a verbatim closing that
+      carries the not-advice and gambling-help lines, section patterns
+      (The Board deliberately untracked), validation, memory seed, registry
+      entry, cover, page. grok-4.7 on every writing stage with the
+      pinned-model fallback. Not on a cron: Episode 1 by manual dispatch.
+    shipped:
+      - scaffold per docs/new_shows_plan_2026_09_22.md Appendix A and §9a defaults
+    deferred:
+      - Episode 1 by workflow_dispatch (budget two attempts), operator listen, then the cadence PR (11:16 UTC)
+      - re-grade the feed list from a runner (check_feeds.py prediction_markets); verify the five X handles
+      - restock shows/curricula/prediction_markets.yaml before it runs dry (23 subjects, one a day)
+    predictions:
+      - metric: "episodes (first 7) with any recommendation, pick, tip, edge or 'mispriced' language (transcript read)"
+        baseline: "n/a (pre-launch)"
+        expected: "0/7"
+        verdict: pending
+      - metric: "The Board carries more than five markets, or a market / probability / volume not in the hook articles"
+        baseline: "n/a"
+        expected: "0/7"
+        verdict: pending
+      - metric: "share of script words spent on The Board"
+        baseline: "n/a"
+        expected: "<=15% on 7/7 (developments lead; plan §9b)"
+        verdict: pending
+      - metric: "How It Works figures or named studies stripped by the claims gate (source_integrity_stripped_sentences in that section)"
+        baseline: "n/a"
+        expected: "<=1 per episode on 6/7"
+        verdict: pending
+      - metric: "legal claims without a named jurisdiction and a dated source"
+        baseline: "n/a"
+        expected: "0 in the first 7"
+        verdict: pending

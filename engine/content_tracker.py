@@ -437,6 +437,25 @@ LONGEVITY_SECTION_PATTERNS: Dict[str, str] = {
     ),
 }
 
+# Prediction Markets Daily (Sep 2026, Phase 2b). The Board is deliberately
+# NOT tracked: the same heavily traded market can lead the board for weeks,
+# and "recently covered" must never push a live market off it. The news
+# sections are tracked so a ruling is not re-told as new.
+PREDICTION_MARKETS_SECTION_PATTERNS: Dict[str, str] = {
+    "headlines": (
+        r"(?:### Top Story|## Top Story)(.*?)"
+        r"(?=### The Ecosystem|## The Ecosystem|$)"
+    ),
+    "ecosystem": (
+        r"(?:### The Ecosystem|## The Ecosystem)(.*?)"
+        r"(?=### The Board|## The Board|$)"
+    ),
+    "new_markets": (
+        r"(?:### New and Notable|## New and Notable)(.*?)"
+        r"(?=### How It Works|## How It Works|$)"
+    ),
+}
+
 VANCOUVER_SECTION_PATTERNS: Dict[str, str] = {
     "headlines": (
         r"(?:### Top Stories|## Top Stories)(.*?)"
@@ -486,6 +505,7 @@ SHOW_SECTION_PATTERNS: Dict[str, Dict[str, str]] = {
     "unintended_consequences": UC_SECTION_PATTERNS,
     "spacex": SPACEX_SECTION_PATTERNS,
     "ai_chips": AI_CHIPS_SECTION_PATTERNS,
+    "prediction_markets": PREDICTION_MARKETS_SECTION_PATTERNS,
     "mag7": MAG7_SECTION_PATTERNS,
     "peptides": PEPTIDES_SECTION_PATTERNS,
     "longevity": LONGEVITY_SECTION_PATTERNS,

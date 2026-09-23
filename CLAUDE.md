@@ -235,7 +235,7 @@ unfiltered agree, which is exactly why the filter went in before it mattered.
 
 ## Project Overview
 
-Automated daily podcast generation system running 24 shows via a unified
+Automated daily podcast generation system running 25 shows via a unified
 `run_show.py` runner + per-show YAML configs, plus 4 legacy standalone scripts
 (deprecated — see note below). Shows use **Grok TTS** (`engine.tts.grok_speak_chunk`)
 and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
@@ -264,6 +264,7 @@ and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 | Longevity Weekly | — | `shows/longevity.yaml` | Wednesday | — (X source only) | Grok TTS (custom) |
 | Vancouver Daily News | — | `shows/vancouver.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X source only) | Grok TTS (Mira, `ara`) |
 | Collingwood Weekly | — | `shows/collingwood.yaml` | Friday (pre-launch) | — (X disabled) | Grok TTS (Mira, `ara`) |
+| Prediction Markets Daily | — | `shows/prediction_markets.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X source only) | Grok TTS (custom) |
 | Nerra Daily | — | registry-only (`shows/network_meta.yaml`; NOT run_show — assembled by `scripts/build_daily_edition.py`) | Daily, after the English slate | — (X disabled) | Splices published show audio + Mira links (Grok voice `ara`) |
 
 > Weekly-summary segment (July 2026): shows on a daily cadence with
@@ -964,7 +965,23 @@ today's work, not just explain yesterday's):
   a data-less day is one sentence. **Every new show runs grok-4.7** on its
   writing stages and includes `_shared/interesting_first.txt` (operator
   brief 2026-09-23; plan §9b; the established shows stay on grok-4.3).
-  Guards: `tests/test_new_shows_phase2_2026_09_23.py`.
+  Guards: `tests/test_new_shows_phase2_2026_09_23.py`. **grok-4.7 had
+  never completed a call here** (Vancouver/Collingwood Ep1 died in the
+  digest stage, 2026-09-23): a pinned model that fails the pre-flight ping
+  or the digest call now switches the run to grok-4.3 and records
+  `llm_model_pinned` / `llm_model_fallback` — read those before scoring
+  the 4.7 experiment (`engine.generator.switch_to_network_default`).
+- **Prediction Markets Daily** (Sep 2026, pre-launch, Patrick) — the
+  ecosystem, never a price tape and never a bet. The Board (≤5 markets) is
+  one hook ARTICLE per market from `engine/prediction_board.py` (Polymarket
+  Gamma, Kalshi's paced events crawl — it 429s a fast one — and Manifold
+  play money; sports, parlays, price ladders and near-certain markets
+  excluded; volume in each venue's own unit, never converted); How It Works
+  is one subject a day from `shows/curricula/prediction_markets.yaml` with
+  Crossref/arXiv abstracts (`engine/research_papers.py`) so the claims gate
+  has papers to verify against. Board text is the pipeline's own copy, so it
+  carries no specific legal claim. The Board is not content-tracked (a live
+  market may lead for weeks). Guards: `tests/test_prediction_markets_2026_09_23.py`.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:
