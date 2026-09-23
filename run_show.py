@@ -1036,6 +1036,16 @@ def run(args: argparse.Namespace) -> None:
                         args.show, exc,
                     )
                     extra_context = {}
+                # A hook may return ``metrics`` (Sep 23 2026: Top World's
+                # desks_live_at_publish, Prediction Markets' week_board_rows)
+                # — recorded here, never left inside the prompt context.
+                _hook_metrics = extra_context.pop("metrics", None) if isinstance(extra_context, dict) else None
+                if isinstance(_hook_metrics, dict):
+                    for _hk, _hv in _hook_metrics.items():
+                        try:
+                            metrics.record(str(_hk), _hv)
+                        except Exception:  # noqa: BLE001
+                            pass
 
                 if fetch_future is not None:
                     try:
@@ -1110,6 +1120,18 @@ def run(args: argparse.Namespace) -> None:
                 logger.info("Cross-dedup filtered %d X post(s) that overlapped with RSS articles", skipped)
             articles.extend(filtered_x)
             x_posts = filtered_x  # Update for accurate count below
+        # X-source policy (Sep 23 2026): a show says how X posts may serve as
+        # sources. linked_only drops a post that links no article (a
+        # newsroom's post about its own story was already re-credited to
+        # the article in _parse_x_posts); secondary moves posts behind
+        # every fetched article so they cannot lead. "any" = legacy.
+        _x_policy = str(getattr(config, "x_posts_as_sources", "any") or "any")
+        if _x_policy != "any" and articles:
+            from engine.fetcher import apply_x_source_policy
+            articles, _x_dropped = apply_x_source_policy(articles, _x_policy)
+            metrics.record("x_posts_dropped_unlinked", _x_dropped)
+            if _x_dropped:
+                logger.info("X-source policy %s dropped %d unlinked post(s)", _x_policy, _x_dropped)
         # Hook-supplied articles (Sep 2026, engine/hook_articles.py): a
         # pre_fetch hook may return ``articles`` — PRs, road events, a
         # journal search, a sibling desk's digest. Merged here, after the
@@ -1137,6 +1159,33 @@ def run(args: argparse.Namespace) -> None:
         # 70 articles against min_articles=4, so its eight configured
         # web_search_queries could never run: 70 < 4 is never true. The
         # digest that resulted was 697 words against a 1300 target.
+        # Region allow-list (Sep 23 2026, the local shows): an article must
+        # name one of the show's places in its title or opening text or it
+        # is dropped here, before any digest sees it — Patch's AI local
+        # newsletters put "the wrong Springfield" in front of readers a few
+        # times a week, and that is the likeliest Ep1 embarrassment on a
+        # local desk. Hook articles (roads, weather) are the show's own and
+        # always pass. Metric: articles_dropped_off_region.
+        _region_terms = [t for t in (getattr(config, "region_allowlist", []) or []) if t]
+        if _region_terms and articles:
+            import re as _re
+            _region_re = _re.compile(
+                r"(?<![A-Za-z])(?:" + "|".join(_re.escape(t) for t in _region_terms) + r")(?![A-Za-z])",
+                _re.IGNORECASE)
+
+            def _in_region(art: dict) -> bool:
+                if art.get("source_kind") == "hook":
+                    return True
+                blob = (f"{art.get('title', '')} "
+                        f"{str(art.get('content_text') or art.get('description') or '')[:300]}")
+                return bool(_region_re.search(blob))
+            _before_region = len(articles)
+            articles = [a for a in articles if _in_region(a)]
+            _off_region = _before_region - len(articles)
+            metrics.record("articles_dropped_off_region", _off_region)
+            if _off_region:
+                logger.info("Region allow-list dropped %d of %d article(s)", _off_region, _before_region)
+
         _kw_lower = [k.lower() for k in (getattr(config, "keywords", []) or [])]
 
         def _is_on_topic(art: dict) -> bool:
@@ -1543,6 +1592,15 @@ def run(args: argparse.Namespace) -> None:
                 # (a zero here on a full-text show means the fetch layer
                 # went dark, not that the week was quiet).
                 metrics.record("articles_full_text", _n_full)
+                # Sep 23 2026: a syndicated copy is credited to the wire its
+                # dateline names (Omni View Europe Ep1: "The Mighty 790 KFGO").
+                try:
+                    from engine.fetcher import credit_wire_datelines
+                    _n_wire = credit_wire_datelines(articles)
+                    if _n_wire:
+                        metrics.record("articles_wire_credited", _n_wire)
+                except Exception as _wexc:  # noqa: BLE001
+                    logger.debug("wire credit skipped: %s", _wexc)
             except Exception as _ft_exc:  # noqa: BLE001 — never block a run
                 logger.warning("Full-text enrichment failed (non-fatal): %s", _ft_exc)
 
@@ -2279,8 +2337,24 @@ def run(args: argparse.Namespace) -> None:
         _hook_too_long = len(_hook_now) > _HOOK_MAX
         if _hook_too_long:
             metrics.record("digest_hook_over_length", len(_hook_now))
-        if (_val_factory or _hook_too_long) and not is_deep_dive:
+        # Digest lints (Sep 23 2026, engine/digest_lint.py): the per-show
+        # structural checks the launch-cohort review asked for — WYNTK opens
+        # on the hook's story, a lead is never sourced only to X, a desk's
+        # Progress Watch is a result or an explicit none, and so on. A
+        # finding rides this same one-shot regeneration; metrics record
+        # every lint whether or not it fired.
+        _lint_findings: list = []
+        _lint_names = list(getattr(config, "digest_lints", []) or [])
+        if _lint_names and not is_deep_dive:
+            from engine.digest_lint import run_digest_lints
+            _lint_findings, _lint_metrics = run_digest_lints(x_thread, _lint_names)
+            for _lk, _lv in _lint_metrics.items():
+                metrics.record(_lk, _lv)
+            metrics.record("digest_lints_fired", [f.lint for f in _lint_findings])
+        if (_val_factory or _hook_too_long or _lint_findings) and not is_deep_dive:
             _struct_defects: list = []
+            for _lf in _lint_findings:
+                _struct_defects.append(_lf.note)
             if not _hook_now:
                 _struct_defects.append("the **HOOK:** line is missing")
             elif _hook_too_long:
@@ -2348,6 +2422,13 @@ def run(args: argparse.Namespace) -> None:
                             len(_x_struct.strip()),
                         )
                         x_thread = _dedupe_digest_sections(_x_struct, config, metrics)
+                        if _lint_names:
+                            from engine.digest_lint import run_digest_lints as _rdl
+                            _after, _after_m = _rdl(x_thread, _lint_names)
+                            metrics.record("digest_lints_fired_after_retry",
+                                           [f.lint for f in _after])
+                            for _lk, _lv in _after_m.items():
+                                metrics.record(_lk, _lv)
                     else:
                         logger.warning(
                             "Structural retry did not restore a usable HOOK — "
@@ -2540,6 +2621,25 @@ def run(args: argparse.Namespace) -> None:
                 metrics.record("source_integrity_enforced", _si_enforce)
                 metrics.record("source_integrity_on_failure", _si_on_failure)
 
+                def _repair_llm(prompt: str) -> str:
+                    from digests.xai_grok import grok_generate_text
+                    from engine.tracking import record_llm_usage
+                    text, _meta = grok_generate_text(
+                        prompt=prompt,
+                        model=getattr(config.llm, "model", "grok-4.3"),
+                        temperature=0.2, max_tokens=2000,
+                        timeout_seconds=300,
+                    )
+                    _usage = (_meta or {}).get("usage")
+                    record_llm_usage(
+                        tracker, "claim_repair",
+                        int(getattr(_usage, "prompt_tokens", 0) or 0),
+                        int(getattr(_usage, "completion_tokens", 0) or 0),
+                        model=str((_meta or {}).get("model")
+                                  or getattr(config.llm, "model", "")),
+                    )
+                    return text
+
                 # One bounded repair pass before an enforce-mode block
                 # (Aug 25 2026: UC lost two days because its topic's
                 # authoritative sources 403 GitHub runners — the gate read
@@ -2557,24 +2657,6 @@ def run(args: argparse.Namespace) -> None:
                         "one-shot claim repair before blocking",
                         _si_gate.summary())
 
-                    def _repair_llm(prompt: str) -> str:
-                        from digests.xai_grok import grok_generate_text
-                        from engine.tracking import record_llm_usage
-                        text, _meta = grok_generate_text(
-                            prompt=prompt,
-                            model=getattr(config.llm, "model", "grok-4.3"),
-                            temperature=0.2, max_tokens=2000,
-                            timeout_seconds=300,
-                        )
-                        _usage = (_meta or {}).get("usage")
-                        record_llm_usage(
-                            tracker, "claim_repair",
-                            int(getattr(_usage, "prompt_tokens", 0) or 0),
-                            int(getattr(_usage, "completion_tokens", 0) or 0),
-                            model=str((_meta or {}).get("model")
-                                      or getattr(config.llm, "model", "")),
-                        )
-                        return text
 
                     _si_gate, _si_claims = _si_mod.attempt_claim_repair(
                         x_thread, _si_gate, _si_claims or [], _repair_llm,
@@ -2594,6 +2676,23 @@ def run(args: argparse.Namespace) -> None:
                         logger.info(
                             "Claim repair recovered the episode: %s",
                             _si_gate.summary())
+
+                # Item coverage floor (Sep 23 2026): on a passing gate,
+                # measure how many sourced digest items a VERIFIED entry
+                # covers; under half spends one repair pass on the
+                # uncovered items' first sentences. It can only ADD verified
+                # entries (a repaired ledger the full gate rejects is
+                # discarded) — the grok-4.3 arm had been shipping
+                # "claims=0, passed" on every new show.
+                if _si_gate.passed:
+                    try:
+                        _si_gate, _si_claims, _cov = _si_mod.attempt_item_coverage_repair(
+                            x_thread, _si_gate, _si_claims or [], _repair_llm,
+                            fetch=_si_fetch, local_texts=_si_local_texts)
+                        for _ck, _cv in _cov.items():
+                            metrics.record(f"source_integrity_{_ck}", _cv)
+                    except Exception as _cov_exc:  # noqa: BLE001
+                        logger.warning("item coverage floor skipped: %s", _cov_exc)
 
                 # Strip mode (Sep 12 2026, network-wide enforcement): what
                 # the repair could not source leaves the digest — the

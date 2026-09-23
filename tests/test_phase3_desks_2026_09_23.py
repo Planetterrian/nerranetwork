@@ -24,7 +24,9 @@ class TestMiraDebutKeepsIdentity:
     def test_ai_host_debut_names_mira_and_the_ai(self, slug):
         line = self._intro(slug, 1)
         assert "very first episode" in line
-        assert "I'm Mira, the Nerra Network's AI host." in line
+        # Sep 23 2026: the tail also says Mira does not live there.
+        assert "I'm Mira, the Nerra Network's AI host" in line
+        assert "don't live in" in line
 
     def test_human_host_debut_unchanged(self):
         line = self._intro("prediction_markets", 1)
@@ -232,7 +234,14 @@ class TestTopWorldReadsTheDesks:
         from shows.hooks import omni_view_world as h
         assert h.build_payload(self._root(tmp_path, skip=True), _dt.date(2026, 9, 23))["articles"] == []
         root = self._root(tmp_path / "b")
-        assert h.build_payload(root, _dt.date(2026, 9, 24)) == {"articles": [], "hook_context": ""}
+        # Sep 23 2026: an empty day still carries the intake line + edition
+        # note (data-side honesty about how many desks were live), never
+        # desk items.
+        payload = h.build_payload(root, _dt.date(2026, 9, 24))
+        assert payload["articles"] == []
+        assert payload["metrics"]["desks_live_at_publish"] == 0
+        assert "No regional desk had published" in payload["hook_context"]
+        assert "Europe:" not in payload["hook_context"]
 
     def test_hook_articles_stay_under_the_prompt_cap(self):
         from shows.hooks import omni_view_world as h

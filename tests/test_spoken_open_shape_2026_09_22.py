@@ -42,9 +42,19 @@ class TestSnippet:
 
 class TestArmPrompts:
     def test_included_in_exactly_the_three_arm_prompts(self):
+        # The Sep 23 2026 launch cohort includes hook_shape on every one of
+        # its digest prompts by design (they have no control arm — nobody
+        # was listening); the arm/control split is among the ESTABLISHED
+        # shows, so the cohort is excluded from this count.
+        from engine.omni_desks import DESK_SLUGS
+        cohort = set(DESK_SLUGS) | {
+            "omni_view_world", "ai_chips", "mag7", "peptides", "longevity",
+            "prediction_markets", "vancouver", "collingwood",
+        }
         with_it = sorted(
             p.name for p in (ROOT / "shows" / "prompts").glob("*_digest.txt")
-            if INCLUDE in p.read_text(encoding="utf-8"))
+            if INCLUDE in p.read_text(encoding="utf-8")
+            and p.name[:-len("_digest.txt")] not in cohort)
         assert with_it == sorted(f"{s}_digest.txt" for s in ARM)
 
     def test_specimen_hooks_are_gone_from_the_arm(self):
@@ -65,7 +75,7 @@ class TestCeilingAndGate:
 
     def test_gate_regenerates_never_truncates(self):
         src = (ROOT / "run_show.py").read_text(encoding="utf-8")
-        assert "if (_val_factory or _hook_too_long) and not is_deep_dive:" in src
+        assert "if (_val_factory or _hook_too_long or _lint_findings) and not is_deep_dive:" in src
         assert "over the {_HOOK_MAX} spoken ceiling" in src
         assert 'metrics.record("digest_hook_over_length", len(_hook_now))' in src
         # The retry is accepted only when its hook fits; the original is

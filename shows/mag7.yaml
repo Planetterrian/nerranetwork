@@ -181,6 +181,12 @@ x_accounts:
 # teaser-length items padded with "no release date was given".
 fetch_full_text: 12
 absence_sentence_filter: true
+# Digest lints + X-source policy (Sep 23 2026 launch-cohort review; engine/digest_lint.py).
+digest_lints:
+- wyntk_hook_match
+- x_only_lead
+- counterpoint_keyed_to_lead
+x_posts_as_sources: secondary
 
 min_articles: 8
 min_articles_skip: 5
@@ -286,8 +292,14 @@ chapters:
   - pattern: This is Mag Seven Daily|first episode of|Mag Seven Daily, episode
     title: Introduction
     where: start
+  - pattern: top of the tape
+    title: Top News
+    where: body
   - pattern: across the seven|runs through (several|more than one) of (them|these companies)
     title: The Thread
+  - pattern: on the calendar
+    title: On the Calendar
+    where: body
   - pattern: Before we go|before we wrap
     title: Tomorrow Teaser
     where: end

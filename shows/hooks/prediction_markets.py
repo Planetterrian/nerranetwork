@@ -21,9 +21,12 @@ failed episode.
 
 from __future__ import annotations
 
+import datetime as _dt
 import logging
+from pathlib import Path
 
 from engine import show_memory
+from engine.board_week import week_board_block
 from engine.curriculum import (
     curriculum_path,
     mark_spotlight_done,
@@ -43,6 +46,7 @@ logger = logging.getLogger(__name__)
 
 _SLUG = "prediction_markets"
 _LABEL = "How It Works"
+_DIGESTS_DIR = Path(__file__).resolve().parents[2] / "digests" / _SLUG
 
 #: Below this many unproduced subjects the hook warns: the curriculum is
 #: hand-planned and a daily show uses one a day.
@@ -83,6 +87,21 @@ def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
         except Exception as exc:  # noqa: BLE001
             logger.warning("%s: paper fetch failed (non-fatal): %s", _SLUG, exc)
     parts.append(spotlight_block(topic, _LABEL, period="day"))
+
+    # Friday: The Week's Board — the show scores its own week from the
+    # committed Boards (engine/board_week.py; data-side, nothing looked up).
+    try:
+        today = _dt.date.fromisoformat(today_str) if today_str else _dt.datetime.now(_dt.timezone.utc).date()
+    except ValueError:
+        today = _dt.datetime.now(_dt.timezone.utc).date()
+    if today.weekday() == 4:
+        try:
+            week = week_board_block(_DIGESTS_DIR, today, articles)
+            if week:
+                parts.append(week)
+                context["metrics"] = {"week_board_rows": week.count("\n- ")}
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("%s: week board failed (non-fatal): %s", _SLUG, exc)
 
     left = _remaining()
     if left < RUNWAY_WARN_ENTRIES:

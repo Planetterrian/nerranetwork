@@ -15,8 +15,15 @@ memory_enabled: true
 story_recurrence: true
 description: 'The day across Asia and the Pacific, one region deep: China, Japan, the Koreas, India and South Asia, Southeast Asia, Australia, New Zealand and the Pacific islands — decisions, economies, security and elections, with one contested question argued fairly both ways and one sign of progress. Read by Mira, the Nerra Network''s AI host; every story from named newsrooms.'
 
-fetch_full_text: 12
+fetch_full_text: 16
 absence_sentence_filter: true
+# Digest lints + X-source policy (Sep 23 2026 launch-cohort review; engine/digest_lint.py).
+digest_lints:
+- wyntk_hook_match
+- x_only_lead
+- progress_watch_thin
+- region_world_thin
+x_posts_as_sources: linked_only
 stale_article_days: 3
 
 # Probed 2026-09-23 from this session's egress (200, posts inside the day);
@@ -202,6 +209,9 @@ chapters:
     where: start
   - pattern: across the region
     title: Across the Region
+    where: body
+  - pattern: also today
+    title: Also Today
     where: body
   - pattern: the wider world
     title: The Region and the World

@@ -84,6 +84,9 @@ exclude_title_patterns:
 # executive order is news) or "protocol" (a trial protocol is news).
 - '\b(buy now|shop now|coupon|promo code|discount code|for sale)\b'
 - '\b(peptide stack|dosing guide|how much to take|cycle guide)\b'
+# Out-of-scope disease trials (Ep1 led with three of them): a result is
+# aging news only when the source frames it as aging — these titles never do.
+- '\b(Sj[oö]gren|psoriasis|eczema|migraine|schizophrenia|hepatitis|HIV|malaria|tuberculosis|cystic fibrosis|retinitis pigmentosa|ulcerative colitis|Crohn)\b'
 
 keywords:
 - aging
@@ -149,6 +152,12 @@ x_accounts:
 # Full article text (engine/article_text.py) — the digest reads the articles.
 fetch_full_text: 12
 absence_sentence_filter: true
+# Digest lints + X-source policy (Sep 23 2026 launch-cohort review; engine/digest_lint.py).
+digest_lints:
+- wyntk_hook_match
+- x_only_lead
+- evidence_rung
+x_posts_as_sources: secondary
 
 min_articles: 5
 min_articles_skip: 3

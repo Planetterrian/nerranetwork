@@ -1152,6 +1152,22 @@ class ShowConfig:
     # week read thin. An entity made only of these words is ignored and
     # the next candidate is used. Empty (default) = byte-identical.
     entity_dedup_ignore: List[str] = field(default_factory=list)
+    # Digest lints (Sep 23 2026, engine/digest_lint.py): structural checks a
+    # show opts into by name; a finding rides the existing one-shot
+    # structural regeneration. Empty (default) = byte-identical.
+    digest_lints: List[str] = field(default_factory=list)
+    # How X posts may serve as sources (Sep 23 2026). "any" = legacy: every
+    # post becomes an article under its x.com URL. "linked_only" = a post is
+    # kept only when it links an article, and that article URL becomes the
+    # source (the post is context). "secondary" = posts are kept but ranked
+    # after every RSS/hook article (they cannot lead). Omni View Africa &
+    # Middle East Ep1 credited 6 of 6 sources to x.com — BBC Africa's and
+    # Al Jazeera's own posts about their own articles.
+    x_posts_as_sources: str = "any"
+    # Local shows (Sep 23 2026): an article must name one of these places
+    # in its title or opening text or it is dropped before the digest
+    # (metric articles_dropped_off_region). Empty = no guard.
+    region_allowlist: List[str] = field(default_factory=list)
     # Story-recurrence memory (Aug 2026): annotate fetched articles that
     # match the ContentTracker's recent-headline window with an inline
     # "already covered — update, don't re-tell" note in the digest
@@ -1432,6 +1448,9 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         fetch_full_text=int(data.get("fetch_full_text", 0) or 0),
         fetch_full_text_chars=int(data.get("fetch_full_text_chars", 2500) or 2500),
         absence_sentence_filter=bool(data.get("absence_sentence_filter", False)),
+        digest_lints=[str(x) for x in (data.get("digest_lints") or [])],
+        x_posts_as_sources=str(data.get("x_posts_as_sources", "any") or "any"),
+        region_allowlist=[str(x) for x in (data.get("region_allowlist") or [])],
         x_lookback_hours=int(data.get("x_lookback_hours", 24) or 24),
         stale_article_days=int(data.get("stale_article_days", 0) or 0),
         min_articles=data.get("min_articles", 3),

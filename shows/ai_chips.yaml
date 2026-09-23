@@ -155,8 +155,14 @@ x_accounts:
 # Full article text for the top articles (engine/article_text.py): Ep1's
 # items were written from feed teasers and ended in "no figures were
 # disclosed" eight times out of ten. The digest now reads the articles.
-fetch_full_text: 12
+fetch_full_text: 16
 absence_sentence_filter: true
+# Digest lints + X-source policy (Sep 23 2026 launch-cohort review; engine/digest_lint.py).
+digest_lints:
+- wyntk_hook_match
+- x_only_lead
+- dc_items_unlabelled
+x_posts_as_sources: secondary
 
 min_articles: 6
 min_articles_skip: 4
@@ -267,6 +273,9 @@ chapters:
     where: start
   - pattern: take (it|this|that) apart
     title: The Teardown
+  - pattern: on the horizon
+    title: On the Horizon
+    where: body
   - pattern: Before we go|before we wrap
     title: Tomorrow Teaser
     where: end

@@ -9,7 +9,7 @@ import logging
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import requests
 from tenacity import (
@@ -799,7 +799,9 @@ def fetch_x_posts(
             f"(one block per post, separated by blank lines):\n\n"
             f"POST_TITLE: [A short headline summarizing the post, max 100 chars]\n"
             f"POST_TEXT: [The full text of the post]\n"
-            f"POST_URL: [The URL, e.g. https://x.com/{handle}/status/...]\n\n"
+            f"POST_URL: [The URL, e.g. https://x.com/{handle}/status/...]\n"
+            f"POST_LINK: [The full URL of the article or page the post links "
+            f"to, if it links one; otherwise the single word none]\n\n"
             f"Rules:\n"
             f"- Up to {max_posts} posts maximum\n"
             f"- Only posts from the last {window}\n"
@@ -1028,6 +1030,7 @@ def _parse_x_posts(
         title_m = re.search(r"POST_TITLE\s*:\s*(.+?)(?:\n|$)", block)
         text_m = re.search(r"POST_TEXT\s*:\s*(.+?)(?=POST_URL|\Z)", block, re.DOTALL)
         url_m = re.search(r"POST_URL\s*:\s*(https?://\S+)", block)
+        link_m = re.search(r"POST_LINK\s*:\s*(https?://\S+)", block)
 
         title = title_m.group(1).strip() if title_m else ""
         desc = text_m.group(1).strip() if text_m else ""
@@ -1043,15 +1046,29 @@ def _parse_x_posts(
         if not title and not desc:
             continue
 
-        posts.append({
+        # Sep 23 2026: a newsroom's post about its own article is credited
+        # to the ARTICLE. The post URL stays on ``x_url``; ``url`` is the
+        # linked page when the post carries one that is not itself on X
+        # (Omni View Africa & Middle East Ep1 credited 6 of 6 sources to
+        # x.com — BBC Africa, Al Jazeera and Arab News posting their own
+        # stories). A post with no link keeps the x.com URL and is dropped
+        # or demoted by the show's ``x_posts_as_sources`` setting.
+        link = link_m.group(1).strip().rstrip(".,)") if link_m else ""
+        if link and re.match(r"https?://(?:www\.|mobile\.)?(?:x\.com|twitter\.com|t\.co)/", link, re.I):
+            link = ""
+        entry = {
             "title": title or desc[:100],
             "description": desc,
-            "url": url,
-            "source_name": f"{label} (X)",
+            "url": link or url,
+            "x_url": url,
+            "source_name": f"{label} (X)" if not link else label,
             "published_date": now_iso,
             "relevance_score": 0.7,
             "author": f"@{handle}",
-        })
+            "source_kind": "x_post",
+            "x_linked": bool(link),
+        }
+        posts.append(entry)
 
     return posts
 
@@ -1313,3 +1330,60 @@ def collect_feed_freshness(sources) -> str:
                 "about this channel's recent activity)"
             )
     return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Wire-service credit (Sep 23 2026)
+# ---------------------------------------------------------------------------
+# Google News resolves a syndicated wire story to whichever affiliate page
+# ranked (Omni View Europe Ep1 credited Italy's nuclear vote to "The Mighty
+# 790 KFGO", a Fargo radio station carrying the Reuters copy). The page's
+# own dateline names the wire; when it does, the article is credited to the
+# wire and the affiliate stays on ``syndicated_via``. Deterministic; a page
+# without a dateline is untouched.
+
+_DATELINE_WIRE_RE = re.compile(
+    r"^.{0,120}?\((?P<wire>AP|Reuters|AFP|The Canadian Press|CP|Bloomberg)\)\s*[—–-]",
+    re.DOTALL)
+_WIRE_NAMES = {"AP": "Associated Press", "CP": "The Canadian Press"}
+
+_X_POST_HOSTS_RE = re.compile(r"^https?://(?:www\.|mobile\.)?(?:x\.com|twitter\.com)/", re.I)
+
+
+def credit_wire_datelines(articles: List[Dict]) -> int:
+    """Re-credit syndicated copies to the wire named in their dateline.
+    Returns the number of articles re-credited."""
+    n = 0
+    for art in articles or []:
+        text = str(art.get("content_text") or art.get("description") or "")
+        m = _DATELINE_WIRE_RE.match(text.lstrip())
+        if not m:
+            continue
+        wire = _WIRE_NAMES.get(m.group("wire"), m.group("wire"))
+        if str(art.get("source_name") or "").strip() == wire:
+            continue
+        art["syndicated_via"] = art.get("source_name", "")
+        art["source_name"] = wire
+        n += 1
+    return n
+
+
+def apply_x_source_policy(articles: List[Dict], policy: str) -> Tuple[List[Dict], int]:
+    """Apply a show's ``x_posts_as_sources`` setting to merged articles.
+
+    ``any`` — unchanged. ``linked_only`` — an X post that carries no linked
+    article is dropped (a newsroom's post about its own article was already
+    re-credited to the article by ``_parse_x_posts``). ``secondary`` — X
+    posts are moved behind every other article so they cannot lead the
+    digest's article list. Returns ``(articles, dropped)``."""
+    policy = (policy or "any").strip().lower()
+    if policy not in ("linked_only", "secondary"):
+        return articles, 0
+    def _is_x(a: Dict) -> bool:
+        return a.get("source_kind") == "x_post" or bool(_X_POST_HOSTS_RE.match(str(a.get("url") or "")))
+    if policy == "linked_only":
+        kept = [a for a in articles if not _is_x(a) or a.get("x_linked")]
+        return kept, len(articles) - len(kept)
+    non_x = [a for a in articles if not _is_x(a)]
+    x = [a for a in articles if _is_x(a)]
+    return non_x + x, 0
