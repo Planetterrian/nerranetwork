@@ -168,6 +168,11 @@ llm:
   # The existing news shows stay on grok-4.3 (TestStagedGrok46Trial).
   # Revert: delete this line.
   model: grok-4.7
+  # Low effort (Sep 23 2026): at default effort grok-4.7's digest call ran
+  # past xAI's ~260 s edge disconnect on both Episode 1s (Vancouver,
+  # Collingwood); the reviewer's 4.7 pin completes at "low". A fallback to
+  # grok-4.3 drops this with the model (switch_to_network_default).
+  reasoning_effort: low
   system_prompt_file: shows/prompts/longevity_system.txt
   digest_prompt_file: shows/prompts/longevity_digest.txt
   podcast_prompt_file: shows/prompts/longevity_podcast.txt

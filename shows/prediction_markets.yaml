@@ -148,6 +148,11 @@ llm:
   # pinned model does not answer falls back to grok-4.3 and records it
   # (engine.generator.switch_to_network_default).
   model: grok-4.7
+  # Low effort (Sep 23 2026): at default effort grok-4.7's digest call ran
+  # past xAI's ~260 s edge disconnect on both Episode 1s (Vancouver,
+  # Collingwood); the reviewer's 4.7 pin completes at "low". A fallback to
+  # grok-4.3 drops this with the model (switch_to_network_default).
+  reasoning_effort: low
   system_prompt_file: shows/prompts/prediction_markets_system.txt
   digest_prompt_file: shows/prompts/prediction_markets_digest.txt
   podcast_prompt_file: shows/prompts/prediction_markets_podcast.txt

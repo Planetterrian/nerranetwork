@@ -83,6 +83,29 @@ exclude_title_patterns:
 - '\b(horoscope|lotto max|lottery results|winning numbers)\b'
 - '\b(sponsored|advertorial|presented by)\b'
 - '\b(obituar(y|ies)|in memoriam)\b'
+- '\(n[ée]e\b'
+
+# Place names never count as a story's "entity" for the two-per-entity
+# dedup: on a local show the town opens almost every headline, and
+# Collingwood Ep1 lost 29 of 73 articles to "Collingwood" (Sep 23 2026).
+entity_dedup_ignore:
+- "Collingwood"
+- "Wasaga Beach"
+- "Wasaga"
+- "Clearview"
+- "Stayner"
+- "Creemore"
+- "Blue Mountain"
+- "Blue Mountains"
+- "Thornbury"
+- "Meaford"
+- "Georgian Bay"
+- "Simcoe County"
+- "Grey County"
+- "Town"
+- "Ontario"
+- "OPP"
+- "Local"
 
 # Region purity: a story happens in, or is decided for, Collingwood and the
 # south Georgian Bay (Simcoe and Grey county decisions count).
@@ -123,6 +146,11 @@ llm:
   # grok-4.7 on every stage that writes, like every new show (operator
   # brief 2026-09-23; experiment new-shows-grok-47-2026-09-23).
   model: grok-4.7
+  # Low effort (Sep 23 2026): at default effort grok-4.7's digest call ran
+  # past xAI's ~260 s edge disconnect on both Episode 1s (Vancouver,
+  # Collingwood); the reviewer's 4.7 pin completes at "low". A fallback to
+  # grok-4.3 drops this with the model (switch_to_network_default).
+  reasoning_effort: low
   system_prompt_file: shows/prompts/collingwood_system.txt
   digest_prompt_file: shows/prompts/collingwood_digest.txt
   podcast_prompt_file: shows/prompts/collingwood_podcast.txt
@@ -132,7 +160,9 @@ llm:
   podcast_max_tokens: 8000
   # About ten minutes. Set to what a small-town week supports (plan §9a);
   # the skip floor is 60% of this.
-  min_podcast_words: 1100
+  # 1000 matches length_target_words: a small-town week does not carry the
+  # 1,100 a daily does (Ep1: 631 words against a 660 floor, Sep 23 2026).
+  min_podcast_words: 1000
   podcast_expand_below_target: false
   min_digest_words: 1000
   digest_expand_below_target: true

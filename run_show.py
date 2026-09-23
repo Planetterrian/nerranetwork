@@ -4842,7 +4842,10 @@ def _fetch_with_expansion(
                     _n_excluded,
                 )
 
-        articles = deduplicate_by_entity(articles, max_per_entity=2)
+        articles = deduplicate_by_entity(
+            articles, max_per_entity=2,
+            ignore=list(getattr(config, "entity_dedup_ignore", []) or []) if config else None,
+        )
         # Reduce dedup lookback for young shows (< 10 episodes) to avoid
         # over-filtering when the content tracker has very few episodes.
         ep_count = len(content_tracker.data.get("episodes", []))

@@ -102,6 +102,12 @@ def switch_to_network_default(config, reason: str) -> bool:
     llm._pinned_model = pinned
     llm._model_fallback_reason = reason
     llm.model = default
+    # A reasoning_effort set for the pinned model (the new shows run 4.7 at
+    # "low") must not follow the run onto the default: grok-4.3's requests
+    # are byte-identical only when the parameter is omitted.
+    if getattr(llm, "reasoning_effort", ""):
+        llm._pinned_reasoning_effort = llm.reasoning_effort
+        llm.reasoning_effort = ""
     logger.warning("Pinned model '%s' unavailable (%s) — this run uses '%s'",
                    pinned, reason, default)
     print(f"::warning::{getattr(config, 'slug', '?')}: pinned model '{pinned}' "
