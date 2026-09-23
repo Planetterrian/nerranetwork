@@ -68,6 +68,48 @@ class LLMEmptyOutputError(LLMRefusalError):
 _LLM_FALLBACK_MODEL = "grok-4.20-reasoning"
 
 
+def network_default_model() -> str:
+    """The network's default LLM (``LLMConfig.model``, grok-4.3 today)."""
+    from engine.config import LLMConfig
+    return LLMConfig().model
+
+
+def switch_to_network_default(config, reason: str) -> bool:
+    """Move a run pinned to a non-default model onto the network default.
+
+    Sep 23 2026: the new shows were pinned to grok-4.7 (operator brief) and
+    it had never completed a single call on this pipeline — Omni View's
+    script-stage pin fell back to grok-4.3 on its first run (the script
+    stage has always had that fallback), and Vancouver's and Collingwood's
+    Episode 1s died in the DIGEST stage, which had none: each attempt hung
+    ~260 s until xAI dropped the connection, three attempts, no episode.
+    A model experiment must not be able to cost a show its episode (the
+    script stage's rule), so the run switches to the default and the switch
+    is STICKY for the rest of the process — every later call (claim repair,
+    expansions, the script fallback) would otherwise hang the same way.
+
+    Returns True when a switch happened. The pinned model is kept on
+    ``config.llm._pinned_model`` so run_show records ``llm_model_fallback``
+    and the experiment reads as "did not run", never as a result.
+    """
+    llm = getattr(config, "llm", None)
+    if llm is None:
+        return False
+    default = network_default_model()
+    pinned = str(getattr(llm, "model", "") or "")
+    if not pinned or pinned == default:
+        return False
+    llm._pinned_model = pinned
+    llm._model_fallback_reason = reason
+    llm.model = default
+    logger.warning("Pinned model '%s' unavailable (%s) — this run uses '%s'",
+                   pinned, reason, default)
+    print(f"::warning::{getattr(config, 'slug', '?')}: pinned model '{pinned}' "
+          f"unavailable ({reason}) — episode generated on '{default}'. The model "
+          "experiment did NOT run for this episode.", flush=True)
+    return True
+
+
 def _resolve_fallback_model(config) -> str:
     """Return the configured refusal-fallback model, falling back to the module default."""
     return getattr(getattr(config, "llm", None), "fallback_model", "") or _LLM_FALLBACK_MODEL
@@ -1986,15 +2028,28 @@ def generate_digest(
     logger.info("Generating digest for '%s' (model=%s, temp=%.1f) ...",
                 config.name, config.llm.model, config.llm.digest_temperature)
 
-    text, meta = _digest_call(
-        prompt,
-        model=config.llm.model,
-        system_prompt=system_prompt,
-        temperature=config.llm.digest_temperature,
-        max_tokens=_digest_tokens,
-        cache_key=_show_cache_key(config),
-        reasoning_effort=_llm_reasoning_effort(config),
-    )
+    def _primary_call():
+        return _digest_call(
+            prompt,
+            model=config.llm.model,
+            system_prompt=system_prompt,
+            temperature=config.llm.digest_temperature,
+            max_tokens=_digest_tokens,
+            cache_key=_show_cache_key(config),
+            reasoning_effort=_llm_reasoning_effort(config),
+        )
+
+    try:
+        text, meta = _primary_call()
+    except _TRANSIENT_ERRORS as exc:
+        # A pinned model that does not answer falls back to the network
+        # default ONCE, immediately, instead of spending two more ~260 s
+        # stalls on the same model (switch_to_network_default). A run
+        # already on the default re-raises into the normal retry.
+        if not switch_to_network_default(
+                config, f"digest call failed: {type(exc).__name__}"):
+            raise
+        text, meta = _primary_call()
 
     # Retry once with 50% more tokens if the response was truncated
     if meta.get("finish_reason") == "length":
