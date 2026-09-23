@@ -176,7 +176,10 @@ llm:
   podcast_temperature: 0.7
   max_tokens: 5000
   podcast_max_tokens: 10000
-  min_podcast_words: 1500
+  # Sep 23 2026: targets set to what the format's digest supports. The
+  # skip floor is 60% of this; Ep1 runs produced 912 words against 1,500 (61% — one bad day from a skip). Length is still
+  # a digest-side lever (CLAUDE.md) — this is the target, not a retry.
+  min_podcast_words: 1300
   # Length levers are digest-side only (CLAUDE.md live constraints).
   podcast_expand_below_target: false
   min_digest_words: 1300
