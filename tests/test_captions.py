@@ -413,10 +413,14 @@ class TestLongSegmentsBecomeMultipleCues:
             for line in body:
                 assert len(line) <= self._MAX_CHARS, line
 
-        # And the SRT still carries every transcribed word.
+        # And the SRT still carries every transcribed word — except a blip
+        # under the artifact floor, which is dropped by design (SpaceX Ep109,
+        # 2026-09-23: Whisper wrote "times." for 0.14 s after "yards."; the
+        # script never said it).
         segments = json.loads(src[-1].read_text(encoding="utf-8"))["segments"]
         expected = " ".join((s.get("text") or "").strip()
-                            for s in segments).split()
+                            for s in segments
+                            if float(s["end"]) - float(s["start"]) >= 0.15).split()
         got = " ".join(l for c in cues for l in c.split("\n")[2:]).split()
         assert got == expected
 
