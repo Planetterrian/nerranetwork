@@ -24,7 +24,9 @@ from __future__ import annotations
 
 import difflib
 import re
-from typing import Any, Dict, List, Optional, Tuple
+import subprocess
+from pathlib import Path
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import datetime as dt
 
@@ -39,6 +41,22 @@ MAX_ACTIVE_LESSONS = 12          # Mira's prompt is not a filing cabinet
 MAX_RETIRED_PHRASES = 20         # the same, for her verbal tics
 PHRASE_MAX_WORDS = 12            # an acknowledgment, not a sentence of substance
 DEAD_AIR_SEC = 4.0
+# Where a line ENDS, when the transcript gives only where it starts: about 150
+# words a minute, the pace of ordinary conversation. Sept 23 2026: dead air
+# used to be measured from the start of one line to the start of the next, so
+# a guest talking for ten seconds counted as ten seconds of silence. Viktor
+# Popovic talked 80% of his interview in long answers and was credited with
+# 983 seconds of dead air. Measured from the audio, nobody was silent for more
+# than 57, and 26 of those were Mira correctly waiting while he thought.
+#
+# 2.0 is the rate that tape actually ran at (5,313 words over the time someone
+# was speaking). Even so, the estimate from line ends comes out near 270s,
+# because the transcriber's own line timestamps leave holes. No constant fixes
+# that: the transcript cannot measure silence. measure_silence() can, and
+# post_interview uses it whenever there are tracks; this is only the fallback,
+# and it says so in its basis note.
+SPEAKING_WPS = 2.0
+SILENCE_DB = -40.0               # below this, on an unlevelled track, nobody is talking
 REPEAT_RATIO = 0.82              # difflib ratio at which two questions are "the same"
 # Two lessons are the same instruction in different words. Measured against
 # the eight real proposals sitting in the queue on Sept 21 2026: the one true
@@ -59,6 +77,85 @@ def parse_transcript(transcript: str) -> List[Tuple[float, str, str]]:
             out.append((int(m.group(1)) * 60 + int(m.group(2)),
                         m.group(3).strip(), m.group(4).strip()))
     return out
+
+
+def _line_ends(rows: List[Tuple[float, str, str]]) -> List[float]:
+    """Each line's estimated end: its start plus the time its words take to
+    say, and never past the start of the line after it."""
+    ends: List[float] = []
+    for i, (at, _speaker, text) in enumerate(rows):
+        end = at + len(text.split()) / SPEAKING_WPS
+        if i + 1 < len(rows):
+            end = min(end, rows[i + 1][0])
+        ends.append(end)
+    return ends
+
+
+def _turns(rows: List[Tuple[float, str, str]], ends: List[float],
+           speaker: str) -> List[float]:
+    """Length of each of one speaker's turns, a run of consecutive lines of
+    theirs being a single turn — the transcriber splits a long answer into
+    several lines, and a turn is what the listener hears."""
+    lengths: List[float] = []
+    start: Optional[float] = None
+    last_end = 0.0
+    for (at, spk, _t), end in zip(rows, ends):
+        if spk.lower() == speaker.lower():
+            if start is None:
+                start = at
+            last_end = end
+        elif start is not None:
+            lengths.append(last_end - start)
+            start = None
+    if start is not None:
+        lengths.append(last_end - start)
+    return [x for x in lengths if x > 0]
+
+
+def measure_silence(paths: Iterable[Any], threshold_db: float = SILENCE_DB,
+                    min_sec: float = DEAD_AIR_SEC,
+                    timeout: int = 900) -> Optional[Dict[str, Any]]:
+    """Dead air, measured from the audio: every stretch where NOBODY was
+    speaking for longer than ``min_sec``.
+
+    ``paths`` are the per-speaker tracks, already on one clock, before any
+    levelling — a leveller lifts silence toward speech and hides exactly what
+    this is looking for. They are folded, and a stretch is silent only when the
+    fold is, which is only when every one of them is. The lead-in before
+    anybody speaks is not dead air in the conversation and is left out; so is
+    silence still running at the end of the file, which is the room after the
+    goodbye. Returns None when there is nothing to measure or ffmpeg fails, so
+    the transcript estimate stands.
+    """
+    srcs = [Path(p) for p in paths if p]
+    if not srcs:
+        return None
+    cmd = ["ffmpeg", "-v", "info"]
+    for src in srcs:
+        cmd += ["-i", str(src)]
+    detect = f"silencedetect=n={threshold_db}dB:d={min_sec}"
+    if len(srcs) > 1:
+        labels = "".join(f"[{i}:a]" for i in range(len(srcs)))
+        cmd += ["-filter_complex",
+                f"{labels}amix=inputs={len(srcs)}:duration=shortest:normalize=0,"
+                f"{detect}[o]", "-map", "[o]"]
+    else:
+        cmd += ["-ac", "1", "-af", detect]
+    cmd += ["-f", "null", "-"]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    except Exception:  # noqa: BLE001 — the estimate from the transcript stands
+        logger.exception("silence measurement failed (non-fatal)")
+        return None
+    starts = [float(x) for x in re.findall(r"silence_start: ([0-9.]+)", proc.stderr or "")]
+    lengths = [float(x) for x in re.findall(r"silence_duration: ([0-9.]+)", proc.stderr or "")]
+    # A silence with a start and no duration is still running at EOF.
+    silences = [(at, dur) for at, dur in zip(starts, lengths) if at >= 1.0]
+    return {
+        "dead_air_sec": round(sum(d for _, d in silences), 1),
+        "longest_silence_sec": round(max((d for _, d in silences), default=0.0), 1),
+        "silences": [[round(at, 1), round(d, 1)] for at, d in silences],
+    }
 
 
 def _questions(texts: List[str]) -> List[str]:
@@ -247,9 +344,12 @@ def measure(run: dict, transcript: str, host_label: str = "Mira",
         words[spk] = words.get(spk, 0) + len(text.split())
     total_words = sum(words.values()) or 1
 
-    gaps = [b[0] - a[0] for a, b in zip(rows, rows[1:])]
-    host_turn_lengths = [b[0] - a[0] for a, b in zip(host_rows, host_rows[1:])
-                         if 0 < (b[0] - a[0]) < 300]
+    ends = _line_ends(rows)
+    # From where a line ends to where the next one starts: the time nobody was
+    # speaking, as far as the transcript can tell. See SPEAKING_WPS for why it
+    # was ever anything else.
+    gaps = [b[0] - end for end, b in zip(ends, rows[1:])]
+    host_turn_lengths = _turns(rows, ends, host_label)
 
     trace = run.get("scenario_trace") or []
     descr = [str(e.get("d", "")) for e in trace if isinstance(e, dict)]
@@ -265,11 +365,13 @@ def measure(run: dict, transcript: str, host_label: str = "Mira",
                                if host_turn_lengths else None),
         "interruptions": count_interruptions(rows, host_label, guest_label),
         "repeated_questions": count_repeated_questions([t for _, _, t in host_rows]),
-        "dead_air_sec": round(sum(g - DEAD_AIR_SEC for g in gaps if g > DEAD_AIR_SEC), 1),
+        "dead_air_sec": round(sum(g for g in gaps if g > DEAD_AIR_SEC), 1),
         "agent_sessions": sessions,
         "drops": drops,
         "notes": {"talk_share_basis": "words", "word_counts": words,
                   "interruption_basis": "estimated line spans",
+                  "dead_air_basis": ("estimated line ends, which overstates it "
+                                     "several-fold; do not grade pacing on it"),
                   "host_label": host_label, "guest_label": guest_label},
     }
 

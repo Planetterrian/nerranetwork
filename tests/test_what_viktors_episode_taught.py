@@ -242,3 +242,139 @@ class TestTheGraderIsToldTheFactNotLeftToGuess:
         block = RETRO[RETRO.index("AND A RELAPSE IS NOT A NEW LESSON"):]
         assert "adopt nothing" in block
         assert "relapse against that lesson's" in block
+
+
+# ---------------------------------------------------------------------------
+# 5. THE DEAD AIR THAT WASN'T (found Sept 23, on the re-run).
+#
+# Both grading passes marked Mira's pacing at 2 and 3 out of 10 for "18
+# minutes of dead air", and the metric said 983 seconds. It measured from the
+# START of one transcript line to the START of the next, so every second the
+# guest spent talking counted as a second of silence. Measured from the audio,
+# nobody was silent for more than 57 seconds in the whole hour — and the
+# longest of those, 26 seconds, was Mira waiting while he thought.
+
+import shutil  # noqa: E402
+import subprocess  # noqa: E402
+import wave  # noqa: E402
+
+import numpy as np  # noqa: E402
+import pytest  # noqa: E402
+
+LEARNING = (V / "learning.py").read_text(encoding="utf-8")
+
+
+class TestTheTranscriptNoLongerCountsTalkingAsSilence:
+    def test_a_long_answer_is_not_dead_air(self):
+        import learning
+        # He talks for the whole of a 40-word answer; she asks at 0:30.
+        words = " ".join(["word"] * 40)
+        t = (f"[00:00] Mira: What happened next?\n"
+             f"[00:02] Viktor: {words}\n"
+             f"[00:30] Mira: And after that?\n")
+        m = learning.measure({"id": "r"}, t, host_label="Mira", guest_label="Viktor")
+        # 40 words at 2 a second ends at 0:22; the gap to 0:30 is 8 seconds.
+        # Measured start to start it would have been 28.
+        assert m["dead_air_sec"] < 10
+
+    def test_a_real_gap_is_still_counted(self):
+        import learning
+        t = ("[00:00] Mira: Take your time.\n"
+             "[00:30] Viktor: Right, here is the example.\n")
+        m = learning.measure({"id": "r"}, t, host_label="Mira", guest_label="Viktor")
+        assert m["dead_air_sec"] > 20
+
+    def test_the_estimate_says_it_cannot_be_graded_on(self):
+        import learning
+        m = learning.measure({"id": "r"}, "[00:00] Mira: Hello.\n[00:05] Viktor: Hi.\n",
+                             host_label="Mira", guest_label="Viktor")
+        assert "do not grade pacing on it" in m["notes"]["dead_air_basis"]
+
+    def test_a_turn_is_a_run_of_her_lines_not_the_gap_between_them(self):
+        import learning
+        # Two Mira lines back to back are ONE turn; his answer between two of
+        # her turns is not part of hers.
+        t = ("[00:00] Mira: One two three four five six.\n"
+             "[00:03] Mira: Seven eight nine ten.\n"
+             "[00:05] Viktor: " + " ".join(["w"] * 60) + "\n"
+             "[00:40] Mira: Short.\n")
+        m = learning.measure({"id": "r"}, t, host_label="Mira", guest_label="Viktor")
+        assert m["mira_turns"] == 3            # lines, as before
+        assert m["mira_mean_turn_sec"] < 10    # was the whole answer, start to start
+
+    def test_the_rate_is_the_one_people_actually_speak_at(self):
+        assert "SPEAKING_WPS = 2.0" in LEARNING
+        assert "5,313 words" in LEARNING
+
+
+def _voice(path, spans, total=60.0, sr=16000):
+    """A track with a tone during each (start, end) span and room tone elsewhere."""
+    n = int(total * sr)
+    rng = np.random.default_rng(1)
+    x = rng.normal(0, 10 ** (-62 / 20), n)
+    t = np.arange(n) / sr
+    for a, b in spans:
+        i, j = int(a * sr), int(b * sr)
+        x[i:j] += 0.3 * np.sin(2 * np.pi * 220 * t[i:j])
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(sr)
+        w.writeframes(np.clip(x * 32767, -32768, 32767).astype("<i2").tobytes())
+    return path
+
+
+@pytest.mark.skipif(not shutil.which("ffmpeg"), reason="ffmpeg not installed")
+class TestSilenceIsMeasuredFromTheAudio:
+    def test_it_is_silent_only_when_everyone_is(self, tmp_path):
+        import learning
+        # She speaks 2-8; he speaks 9-40 (a long answer); she speaks 42-44;
+        # then a 12-second silence nobody fills; he speaks 56-59.
+        mira = _voice(tmp_path / "m.wav", [(2, 8), (42, 44)])
+        guest = _voice(tmp_path / "g.wav", [(9, 40), (56, 59)])
+        heard = learning.measure_silence([guest, mira])
+        assert heard is not None
+        # The lead-in (0-2) is left out; his 31-second answer is NOT silence;
+        # the one real gap is 44-56.
+        assert 10 < heard["longest_silence_sec"] < 13
+        assert heard["dead_air_sec"] < 16
+        assert any(43 < at < 46 for at, _d in heard["silences"])
+
+    def test_the_lead_in_before_anyone_speaks_is_not_dead_air(self, tmp_path):
+        import learning
+        mira = _voice(tmp_path / "m.wav", [(20, 25)], total=30)
+        guest = _voice(tmp_path / "g.wav", [(26, 29)], total=30)
+        heard = learning.measure_silence([guest, mira])
+        assert heard is not None
+        assert all(at >= 1.0 for at, _d in heard["silences"])
+
+    def test_nothing_to_measure_means_the_estimate_stands(self):
+        import learning
+        assert learning.measure_silence([]) is None
+        assert learning.measure_silence([None]) is None
+
+
+class TestPostInterviewUsesTheAudio:
+    def test_it_measures_from_the_tracks_when_it_has_them(self):
+        block = POST[POST.index("heard = measure_silence("):]
+        block = block[:block.index("save_metrics(")]
+        assert '[tracks.get(r) for r in ("guest", "host", "mira")] if processed' in block
+        assert "else [raw]" in block
+
+    def test_the_detail_goes_where_the_table_can_take_it(self):
+        # An unknown key fails the whole metrics write, and the grade with it.
+        block = POST[POST.index("heard = measure_silence("):]
+        block = block[:block.index("save_metrics(")]
+        assert 'metrics["dead_air_sec"] = heard["dead_air_sec"]' in block
+        assert 'notes["silences"] = heard["silences"]' in block
+        assert "metrics.update(heard)" not in block
+
+    def test_the_grader_is_shown_how_it_was_measured_and_where(self):
+        call = POST[POST.index('"editorial_passes/09_interview_retro.txt"'):]
+        call = call[:call.index("temperature=0.3")]
+        for key in ("dead_air_basis", "longest_silence_sec", "silences"):
+            assert f'"{key}"' in call
+
+    def test_the_grader_is_told_to_read_a_silence_before_punishing_it(self):
+        flat = " ".join(RETRO.split())
+        assert "READ A SILENCE BEFORE YOU PUNISH IT" in flat
+        assert "Only a silence nobody asked for" in flat
+        assert "do not grade pacing on it at all" in flat

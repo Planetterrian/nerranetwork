@@ -58,6 +58,7 @@ from audio.mix_tracks import (  # noqa: E402
 )
 from learning import (  # noqa: E402
     adopt_lessons, guest_feedback, host_formulas, lessons_for_prompt, measure,
+    measure_silence,
     parse_transcript, retire_lessons, save_grade, save_host_phrases,
     save_metrics, save_proposed_lessons, session_events_summary,
 )
@@ -1129,6 +1130,28 @@ def main() -> int:
         try:
             metrics = measure(run, package.get("transcript_cleaned") or transcript,
                               host_label="Mira", guest_label=_guest_label(app))
+            # Silence is measured from the audio whenever there is audio to
+            # measure it from. Sept 23 2026: the transcript credited Viktor
+            # Popovic's interview with 983 seconds of dead air, both grading
+            # passes marked her pacing down for it, and it was 57 — 26 of them
+            # Mira holding still while he found the best story he told. The
+            # per-speaker tracks, unlevelled, are what can say when nobody was
+            # talking; the raw stereo can too, less exactly, when there is
+            # nothing better.
+            heard = measure_silence(
+                [tracks.get(r) for r in ("guest", "host", "mira")] if processed
+                else [raw])
+            if heard is not None:
+                # dead_air_sec is a column; the detail rides in notes, because
+                # episode_metrics has no column for it and an unknown key
+                # fails the whole write.
+                metrics["dead_air_sec"] = heard["dead_air_sec"]
+                notes = metrics.setdefault("notes", {})
+                notes["dead_air_basis"] = (
+                    "audio: per-speaker tracks, silent only when everyone was"
+                    if processed else "audio: the guest's stereo recording")
+                notes["longest_silence_sec"] = heard["longest_silence_sec"]
+                notes["silences"] = heard["silences"]
             save_metrics(interview["id"], metrics)
             logger.info("episode metrics: %s", metrics)
             cleaned = package.get("transcript_cleaned") or transcript
@@ -1155,8 +1178,15 @@ def main() -> int:
                 active_lessons=lessons_for_prompt(show.slug),
                 guest_feedback=guest_feedback(cleaned, _guest_label(app))
                 or "(she was not asked, or the answer is not in the tape)",
-                metrics=json.dumps({k: v for k, v in metrics.items()
-                                    if k != "notes"}, ensure_ascii=False),
+                metrics=json.dumps(
+                    {**{k: v for k, v in metrics.items() if k != "notes"},
+                     # How dead air was measured, and where each silence was,
+                     # so the grader can look at what was said just before it.
+                     **{k: (metrics.get("notes") or {}).get(k)
+                        for k in ("dead_air_basis", "longest_silence_sec",
+                                  "silences")
+                        if (metrics.get("notes") or {}).get(k) is not None}},
+                    ensure_ascii=False),
                 cleaned_transcript=cleaned,
             ), temperature=0.3, max_tokens=2500)) or {}
             if not isinstance(graded, dict):
