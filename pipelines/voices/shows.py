@@ -106,6 +106,10 @@ class VoiceShow:
     closing_question: str
     apple_url: str = ""        # the show on Apple Podcasts, "" until it is listed
     spotify_url: str = ""      # the show on Spotify, "" until it is listed
+    # The room's own clips (consent notice, drop apology). "" = the shared
+    # defaults on interview_runs, which were voiced for The Age of AI.
+    disclosure_clip: str = ""
+    apology_clip: str = ""
 
     # -- derived -----------------------------------------------------------
     @property
@@ -223,6 +227,8 @@ def get_show(slug: Optional[str] = None) -> VoiceShow:
                    if cfg.get("apple_show_id") else ""),
         spotify_url=(f"https://open.spotify.com/show/{cfg['spotify_show_id']}"
                      if cfg.get("spotify_show_id") else ""),
+        disclosure_clip=str(voices.get("disclosure_clip") or "").strip(),
+        apology_clip=str(voices.get("apology_clip") or "").strip(),
     )
 
 

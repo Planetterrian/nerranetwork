@@ -378,3 +378,77 @@ class TestPostInterviewUsesTheAudio:
         assert "READ A SILENCE BEFORE YOU PUNISH IT" in flat
         assert "Only a silence nobody asked for" in flat
         assert "do not grade pacing on it at all" in flat
+
+
+# ---------------------------------------------------------------------------
+# 6. THE FIRST THING A NERRA VOICES GUEST HEARD WAS THE WRONG SHOW.
+#
+# "Hi, this is Mira, the AI host for the Age of AI on the Nerra Network."
+# Not in the scenario and not in any prompt: an MP3, set as the database
+# default for every run on both shows. Deploying the scenario could never
+# change it.
+
+import json  # noqa: E402
+
+FIRE = (V / "fire_interviews.py").read_text(encoding="utf-8")
+NV_SYSTEM = json.loads((V / "narration" / "nerra_voices_system.json").read_text(encoding="utf-8"))
+
+
+class TestEachShowHasItsOwnRoomClips:
+    def test_nerra_voices_names_its_own(self):
+        from pipelines.voices.shows import get_show
+        nv = get_show("nerra_voices")
+        assert nv.disclosure_clip.endswith("/nerra_voices/narration/nerra_voices_system/disclosure.mp3")
+        assert nv.apology_clip.endswith("/nerra_voices/narration/nerra_voices_system/apology.mp3")
+
+    def test_the_age_of_ai_keeps_the_clips_it_was_voiced_for(self):
+        from pipelines.voices.shows import get_show
+        aoa = get_show("age_of_ai")
+        assert aoa.disclosure_clip == "" and aoa.apology_clip == ""
+
+    def test_the_text_names_the_right_show_and_still_asks_consent(self):
+        seg = {s["id"]: s["text"] for s in NV_SYSTEM["segments"]}
+        assert NV_SYSTEM["show"] == "nerra_voices"
+        assert "the AI host of Nerra Voices" in seg["disclosure"]
+        assert "Age of AI" not in seg["disclosure"]
+        assert "recorded" in seg["disclosure"] and "consent" in seg["disclosure"]
+        assert "Age of AI" not in seg["apology"]
+
+    def test_the_narration_upload_lands_where_the_config_points(self):
+        # narrate.py uploads to show.r2_key("narration", slug, "<id>.mp3").
+        from pipelines.voices.shows import get_show
+        nv = get_show("nerra_voices")
+        for seg_id, url in (("disclosure", nv.disclosure_clip), ("apology", nv.apology_clip)):
+            assert url.endswith(nv.r2_key("narration", "nerra_voices_system", f"{seg_id}.mp3"))
+
+
+class TestTheRoomNeverPlaysAMissingClip:
+    def test_the_run_row_takes_the_shows_clips(self):
+        insert = FIRE[FIRE.index('run = sb_insert("interview_runs", {'):]
+        insert = insert[:insert.index("})")]
+        assert "**room_clips(show)," in insert
+
+    def test_a_clip_that_is_not_there_is_not_used(self, monkeypatch):
+        import fire_interviews
+        from pipelines.voices.shows import get_show
+        monkeypatch.setattr(fire_interviews, "_clip_is_there", lambda url: False)
+        assert fire_interviews.room_clips(get_show("nerra_voices")) == {}
+
+    def test_a_clip_that_is_there_is(self, monkeypatch):
+        import fire_interviews
+        from pipelines.voices.shows import get_show
+        monkeypatch.setattr(fire_interviews, "_clip_is_there", lambda url: True)
+        clips = fire_interviews.room_clips(get_show("nerra_voices"))
+        assert clips["recording_disclosure_url"].endswith("disclosure.mp3")
+        assert clips["grok_drop_apology_url"].endswith("apology.mp3")
+
+    def test_a_show_without_its_own_keeps_the_default(self, monkeypatch):
+        import fire_interviews
+        from pipelines.voices.shows import get_show
+        monkeypatch.setattr(fire_interviews, "_clip_is_there", lambda url: True)
+        assert fire_interviews.room_clips(get_show("age_of_ai")) == {}
+
+    def test_unreachable_counts_as_absent(self):
+        body = FIRE[FIRE.index("def _clip_is_there("):FIRE.index("def room_clips(")]
+        assert "except Exception" in body and "return False" in body
+        assert "resp.status_code == 200" in body

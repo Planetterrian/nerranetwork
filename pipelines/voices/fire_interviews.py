@@ -63,6 +63,42 @@ COHOST_BLOCK = (
 )
 
 
+def _clip_is_there(url: str) -> bool:
+    """A clip the room will play must exist: a consent notice that 404s is no
+    consent notice at all, and the guest hears nothing."""
+    try:
+        import requests
+        resp = requests.head(url, timeout=10, allow_redirects=True)
+        return resp.status_code == 200
+    except Exception:  # noqa: BLE001 — unreachable counts as absent
+        return False
+
+
+def room_clips(show) -> dict:
+    """The consent notice and drop apology for this show's room.
+
+    Sept 23 2026. Both columns default, in the database, to clips voiced for
+    The Age of AI, so every Nerra Voices guest was greeted with "Hi, this is
+    Mira, the AI host for the Age of AI" before Mira introduced herself
+    properly as the host of Nerra Voices eleven seconds later. Deploying the
+    scenario could never fix that: the words are in an MP3. A show that names
+    its own clips gets them — but only once they exist, because the shared
+    clip with the wrong show name still tells the guest they are being
+    recorded, and a missing one tells them nothing.
+    """
+    out = {}
+    for column, url in (("recording_disclosure_url", getattr(show, "disclosure_clip", "")),
+                        ("grok_drop_apology_url", getattr(show, "apology_clip", ""))):
+        if not url:
+            continue
+        if _clip_is_there(url):
+            out[column] = url
+        else:
+            logger.warning("%s: %s not found at %s — the room keeps the shared "
+                           "clip", show.slug, column, url)
+    return out
+
+
 def host_mode_enabled(interview: dict, run: dict | None = None) -> bool:
     """Whether the co-host is expected in the room.
 
@@ -514,6 +550,7 @@ def fire_due_interviews() -> int:
                 # 20260906_cohost_conference.sql).
                 "host_mode": host_mode,
                 "host_user": os.environ.get("VOX_HOST_USER", "").strip() or "host",
+                **room_clips(show),
                 **({"status": "awaiting_guest"} if call_mode == "webrtc" else {}),
             })
             if host_mode:
