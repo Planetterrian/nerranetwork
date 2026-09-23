@@ -201,14 +201,14 @@ class TestSurfaces:
         import generate_html as gh
 
         for fn in ("generate_join_page", "generate_support_page",
-                   "generate_account_page"):
+                   "generate_account_page", "generate_personal_interest_page"):
             assert hasattr(gh, fn), fn
         src = (ROOT / "generate_html.py").read_text(encoding="utf-8")
-        assert '"join.html", "support.html"' in src  # sitemap
+        assert '"join.html", "support.html", "personal-interest.html"' in src  # sitemap
 
     def test_templates_exist(self):
         for name in ("join_page.html.j2", "account_page.html.j2",
-                     "support_page.html.j2"):
+                     "support_page.html.j2", "personal_interest_page.html.j2"):
             assert (ROOT / "templates" / name).exists(), name
 
     def test_funding_tag_points_at_support(self):

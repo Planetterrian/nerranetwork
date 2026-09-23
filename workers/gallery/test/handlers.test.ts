@@ -146,6 +146,24 @@ describe("resolveSubscribeTags", () => {
     const { tags } = resolveSubscribeTags("ru-spacex", "SRC-YOUTUBE-RU");
     expect(tags).toEqual(["ru-spacex", "src-youtube-ru"]);
   });
+
+  it("resolves the Soft Personal interest list", () => {
+    // Soft capture creates a Nerra account + a founder-filterable tag;
+    // it is NOT a waitlist and must not omit nerra-member.
+    expect(resolveSubscribeTags("personal-interest", "src-nerranetwork"))
+      .toEqual({
+        tags: ["personal-interest", "nerra-member", "gallery-subscriber",
+               "src-nerranetwork"],
+        list: "personal-interest",
+      });
+  });
+
+  it("can attach SpaceX Daily when Soft Personal opts into the newsletter", () => {
+    const { tags } = resolveSubscribeTags(
+      "personal-interest", "src-nerranetwork", ["SpaceX Daily"]);
+    expect(tags).toContain("SpaceX Daily");
+    expect(tags).toContain("personal-interest");
+  });
 });
 
 
@@ -165,6 +183,7 @@ describe("POST /api/subscribe", () => {
     expect(resp.status).toBe(200);
     expect(deps.buttondown.subscribe).toHaveBeenCalledWith(
       "fake-bd", "boris@example.com", ["ru-spacex", "src-youtube-ru"],
+      undefined,
     );
   });
 
@@ -181,6 +200,7 @@ describe("POST /api/subscribe", () => {
     // this endpoint sent before subscribe lists existed.
     expect(deps.buttondown.subscribe).toHaveBeenCalledWith(
       "fake-bd", "alice@example.com", ["gallery-subscriber"],
+      undefined,
     );
     const setCookie = resp.headers.get("Set-Cookie");
     expect(setCookie).toMatch(/^nn_gallery=/);
@@ -246,6 +266,47 @@ describe("POST /api/subscribe", () => {
     const body = await resp.json() as { alreadySubscribed: boolean };
     expect(body.alreadySubscribed).toBe(true);
     expect(resp.headers.get("Set-Cookie")).toMatch(/^nn_gallery=/);
+  });
+
+  it("discards honeypot submissions without calling Buttondown", async () => {
+    const deps = makeDeps();
+    const req = makeRequest("POST", "https://api.nerranetwork.com/api/subscribe", {
+      body: JSON.stringify({
+        email: "bot@example.com",
+        list: "personal-interest",
+        company: "Acme Spam Co",
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const resp = await handleSubscribe(req, makeEnv(), deps);
+    expect(resp.status).toBe(200);
+    const body = await resp.json() as { ok: boolean; discarded?: boolean };
+    expect(body.ok).toBe(true);
+    expect(body.discarded).toBe(true);
+    expect(deps.buttondown.subscribe).not.toHaveBeenCalled();
+  });
+
+  it("forwards Soft Personal first_name as Buttondown metadata", async () => {
+    const deps = makeDeps();
+    const req = makeRequest("POST", "https://api.nerranetwork.com/api/subscribe", {
+      body: JSON.stringify({
+        email: "pat@example.com",
+        list: "personal-interest",
+        source: "src-nerranetwork",
+        first_name: "Pat",
+        tags: ["SpaceX Daily"],
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const resp = await handleSubscribe(req, makeEnv(), deps);
+    expect(resp.status).toBe(200);
+    expect(deps.buttondown.subscribe).toHaveBeenCalledWith(
+      "fake-bd",
+      "pat@example.com",
+      ["personal-interest", "nerra-member", "gallery-subscriber",
+       "src-nerranetwork", "SpaceX Daily"],
+      { first_name: "Pat" },
+    );
   });
 });
 

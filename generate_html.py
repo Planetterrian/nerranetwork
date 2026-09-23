@@ -4765,7 +4765,7 @@ def generate_sitemap(*, dry_run=False, out=None):
                   "nerra-voices-apply.html",
                   "press.html", "contact.html", "editorial.html",
                   "gallery.html", "books.html", "player.html", "data.html",
-                  "join.html", "support.html",
+                  "join.html", "support.html", "personal-interest.html",
                   "modern-investing-performance.html",
                   "spacex-dashboard.html", "tesla-dashboard.html",
                   "offshore-north-dashboard.html",
@@ -5503,6 +5503,34 @@ def generate_join_page(*, dry_run=False):
     return out_path
 
 
+def generate_personal_interest_page(*, dry_run=False):
+    """Generate /personal-interest.html — Soft Personal email capture.
+
+    Sep 2026 (SpaceX Daily hero funnel): optional tips/reminder signup,
+    not a waitlist and not the paid join path. Submissions go through
+    the gallery Worker's ``/api/subscribe`` with ``list: personal-interest``
+    (Buttondown tags ``personal-interest`` + ``nerra-member`` +
+    ``gallery-subscriber``). Episode totals are never shown here.
+    """
+    env = _get_jinja_env()
+    ctx = _member_page_context(
+        "Nerra Personal — when you’re ready | Nerra Network",
+        "All 18 Nerra shows stay free. Leave your email for a quiet "
+        "nudge with Personal tips — or a reminder when you’re ready. "
+        "No ads. Curiosity only.",
+        "https://nerranetwork.com/personal-interest.html")
+    # Soft page must never carry episode totals (frozen / no FOMO).
+    ctx.pop("total_episodes", None)
+    html = env.get_template("personal_interest_page.html.j2").render(**ctx)
+    out_path = ROOT / "personal-interest.html"
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
+
+
 def account_library_volumes(volumes):
     """The member-library rows: id, display title, subtitle, cover URL,
     list price, EPUB basename — and nothing private. Volumes without a
@@ -5852,6 +5880,7 @@ def generate_static_pages(*, dry_run=False):
     generate_mira_page(dry_run=dry_run)
     generate_explore_page(dry_run=dry_run)
     generate_topic_hub_pages(dry_run=dry_run)
+    generate_personal_interest_page(dry_run=dry_run)
     generate_redirect_stubs(dry_run=dry_run)
     generate_llms_txt(dry_run=dry_run)
 
@@ -6216,7 +6245,10 @@ def main():
         # cheap; regenerating with the network keeps Stripe-link env
         # changes and lineup names current. account.html is deliberately
         # NOT in the sitemap (it's a console, not content).
+        # Soft Personal interest (Sep 2026) sits beside join — tips/
+        # reminder capture, not checkout.
         generate_join_page(dry_run=args.dry_run)
+        generate_personal_interest_page(dry_run=args.dry_run)
         generate_support_page(dry_run=args.dry_run)
         generate_account_page(dry_run=args.dry_run)
         generate_login_page(dry_run=args.dry_run)
@@ -6269,6 +6301,7 @@ def main():
         # Member surface (Aug 2026): static + cheap; regenerating with the
         # network keeps Stripe-link env changes and lineup names current.
         generate_join_page(dry_run=args.dry_run)
+        generate_personal_interest_page(dry_run=args.dry_run)
         generate_support_page(dry_run=args.dry_run)
         generate_account_page(dry_run=args.dry_run)
         generate_login_page(dry_run=args.dry_run)

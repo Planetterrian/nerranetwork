@@ -33,6 +33,27 @@ describe("subscribe()", () => {
     expect(fetchSpy).toHaveBeenCalledOnce();
   });
 
+  it("includes optional metadata when provided", async () => {
+    const fetchSpy = mockFetch(async (_url, init) => {
+      const body = JSON.parse(init?.body as string);
+      expect(body.metadata).toEqual({ first_name: "Pat" });
+      return new Response("", { status: 201 });
+    });
+    const result = await subscribe(
+      "abc", "pat@example.com", ["personal-interest"], { first_name: "Pat" });
+    expect(result.ok).toBe(true);
+    expect(fetchSpy).toHaveBeenCalledOnce();
+  });
+
+  it("omits metadata from the body when none is given", async () => {
+    mockFetch(async (_url, init) => {
+      const body = JSON.parse(init?.body as string);
+      expect(body.metadata).toBeUndefined();
+      return new Response("", { status: 201 });
+    });
+    await subscribe("abc", "alice@example.com", "gallery-subscriber");
+  });
+
   it("treats 400 'already exists' as success", async () => {
     mockFetch(async () => new Response("already subscribed", { status: 400 }));
     const result = await subscribe("abc", "alice@example.com", "gallery-subscriber");

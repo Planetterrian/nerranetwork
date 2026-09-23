@@ -56,6 +56,8 @@ export interface ButtondownClient {
     // A single tag (the gallery gate) or the resolved list + source tags
     // a funnel landing page sends. See resolveSubscribeTags in handlers.ts.
     tag: string | string[],
+    // Optional subscriber metadata (Soft Personal first_name, etc.).
+    metadata?: Record<string, string>,
   ): Promise<{
     ok: boolean;
     alreadySubscribed: boolean;

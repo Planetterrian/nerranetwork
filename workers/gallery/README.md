@@ -26,6 +26,9 @@ else — to an arbitrary Buttondown segment by editing the request body.
 |---|---|---|
 | *(omitted)* → `gallery` | `gallery-subscriber` | the gallery download gate (unchanged behaviour) |
 | `ru-spacex` | `ru-spacex` | `ru/spacex.html`, the RU SpaceX funnel landing page |
+| `ru-tesla` | `ru-tesla` | `ru/tesla.html` |
+| `member` | `nerra-member`, `gallery-subscriber` | `/join.html` free account + footer newsletter |
+| `personal-interest` | `personal-interest`, `nerra-member`, `gallery-subscriber` | `/personal-interest.html` Soft Personal tips/reminder capture (optional newsletter via show tag `SpaceX Daily`) |
 
 `source` must be one of the `src-*` attribution tags produced by
 `engine.funnel.source_tag()` (`src-youtube`, `src-youtube-ru`,

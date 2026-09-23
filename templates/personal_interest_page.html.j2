@@ -1,0 +1,307 @@
+{% extends "base.html.j2" %}
+
+{% block head_extra %}
+    <link rel="stylesheet" href="{{ path_prefix }}styles/main.css">
+    <style>
+        .spi-hero {
+            position: relative;
+            overflow: hidden;
+            padding: calc(var(--nav-height) + var(--sp-12)) var(--sp-6) var(--sp-10);
+        }
+        .spi-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 60% 50% at 18% 12%, rgba(0, 212, 255, 0.14), transparent 65%),
+                radial-gradient(ellipse 50% 45% at 88% 72%, rgba(124, 92, 255, 0.12), transparent 65%);
+            pointer-events: none;
+        }
+        .spi-wrap {
+            position: relative;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+        .spi-eyebrow {
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--nn-cyan, #00D4FF);
+            font-weight: 700;
+            margin-bottom: var(--sp-3);
+        }
+        .spi-hero h1 {
+            font-family: var(--font-heading);
+            font-size: clamp(2rem, 5vw, 2.85rem);
+            line-height: 1.12;
+            margin: 0 0 var(--sp-5);
+        }
+        .spi-body {
+            font-family: var(--font-ui);
+            color: var(--nn-text-muted);
+            font-size: 1.05rem;
+            line-height: 1.65;
+            margin: 0 0 var(--sp-4);
+        }
+        .spi-body + .spi-body { margin-top: var(--sp-4); }
+        .spi-card {
+            margin-top: var(--sp-8);
+            padding: var(--sp-6);
+            border: 1px solid var(--nn-border);
+            border-radius: 16px;
+            background: var(--nn-surface);
+        }
+        .spi-field { margin-bottom: var(--sp-4); }
+        .spi-field label {
+            display: block;
+            font-family: var(--font-ui);
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+        .spi-field .hint {
+            font-weight: 400;
+            color: var(--nn-text-muted);
+            font-size: 0.82rem;
+        }
+        .spi-field input[type=email],
+        .spi-field input[type=text] {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-bg, #0b0f1a);
+            color: inherit;
+            font-family: var(--font-ui);
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        .spi-field input:focus {
+            outline: 2px solid var(--nn-cyan, #00D4FF);
+            outline-offset: 1px;
+        }
+        .spi-check {
+            display: flex;
+            gap: 0.7rem;
+            align-items: flex-start;
+            margin-bottom: var(--sp-3);
+            font-family: var(--font-ui);
+            font-size: 0.95rem;
+            line-height: 1.45;
+        }
+        .spi-check input {
+            margin-top: 0.25rem;
+            flex: none;
+            width: 1.05rem;
+            height: 1.05rem;
+        }
+        .spi-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--sp-3);
+            align-items: center;
+            margin-top: var(--sp-5);
+        }
+        .spi-actions button[type=submit] {
+            padding: 0.85rem 1.5rem;
+            border-radius: 12px;
+            border: none;
+            background: var(--nn-gradient);
+            color: #fff;
+            font-weight: 700;
+            font-family: var(--font-ui);
+            font-size: 1rem;
+        }
+        .spi-actions button[type=submit]:disabled {
+            opacity: 0.65;
+            cursor: wait;
+        }
+        .spi-actions .spi-secondary {
+            font-family: var(--font-ui);
+            font-size: 0.95rem;
+            color: var(--nn-cyan, #00D4FF);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .spi-actions .spi-secondary:hover { text-decoration: underline; }
+        .spi-status {
+            margin-top: var(--sp-4);
+            font-family: var(--font-ui);
+            font-size: 0.95rem;
+            line-height: 1.55;
+            min-height: 1.4em;
+        }
+        .spi-status[data-state="ok"] { color: #34d399; }
+        .spi-status[data-state="error"] { color: #f87171; }
+        .spi-confirm {
+            display: none;
+            margin-top: var(--sp-6);
+            padding: var(--sp-5);
+            border-radius: 14px;
+            border: 1px solid rgba(52, 211, 153, 0.35);
+            background: rgba(52, 211, 153, 0.08);
+            font-family: var(--font-ui);
+            line-height: 1.6;
+        }
+        .spi-confirm.is-visible { display: block; }
+        .spi-confirm a { color: var(--nn-cyan, #00D4FF); font-weight: 600; }
+        .spi-hp {
+            position: absolute;
+            left: -9999px;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+        .spi-foot {
+            margin-top: var(--sp-8);
+            font-size: 0.85rem;
+            color: var(--nn-text-muted);
+            text-align: center;
+        }
+        @media (max-width: 560px) {
+            .spi-actions { flex-direction: column; align-items: stretch; }
+            .spi-actions button[type=submit],
+            .spi-actions .spi-secondary { text-align: center; }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<section class="spi-hero" aria-labelledby="spi-title">
+    <div class="spi-wrap">
+        <div class="spi-eyebrow">Nerra Personal</div>
+        <h1 id="spi-title">Your own morning show — when you’re ready</h1>
+        <p class="spi-body">All 18 Nerra shows stay free. Personal is optional: you pick the shows (SpaceX Daily included), Mira greets you by name, and one private podcast feed arrives in the app you already use.</p>
+        <p class="spi-body">Want a quiet nudge with Personal tips — or a reminder to try it when you’re ready? Leave your email. No ads. No outrage diet. Curiosity only.</p>
+
+        <div class="spi-card" id="spi-form-card">
+            <form id="spi-form" novalidate>
+                <div class="spi-field">
+                    <label for="spi-email">Email <span class="hint">(required)</span></label>
+                    <input type="email" id="spi-email" name="email" autocomplete="email" required
+                           placeholder="you@example.com" aria-required="true">
+                </div>
+                <div class="spi-field">
+                    <label for="spi-name">First name <span class="hint">(optional)</span></label>
+                    <input type="text" id="spi-name" name="first_name" autocomplete="given-name"
+                           maxlength="40" placeholder="How Mira should greet you">
+                </div>
+
+                {# Honeypot — leave empty. Screen-reader hidden; bots that fill every field trip it. #}
+                <div class="spi-hp" aria-hidden="true">
+                    <label for="spi-company">Company</label>
+                    <input type="text" id="spi-company" name="company" tabindex="-1" autocomplete="off">
+                </div>
+
+                <div class="spi-check">
+                    <input type="checkbox" id="spi-interest" name="personal_interest" checked>
+                    <label for="spi-interest">I’m interested in Nerra Personal</label>
+                </div>
+                <div class="spi-check">
+                    <input type="checkbox" id="spi-newsletter" name="newsletter">
+                    <label for="spi-newsletter">I’d like the free SpaceX Daily / network newsletter too</label>
+                </div>
+
+                <div class="spi-actions">
+                    <button type="submit" id="spi-submit">Save my email</button>
+                    <a class="spi-secondary" href="{{ path_prefix }}join.html">Or start Personal now →</a>
+                </div>
+                <p class="spi-status" id="spi-status" role="status" aria-live="polite"></p>
+            </form>
+
+            <div class="spi-confirm" id="spi-confirm" role="status">
+                <p>You’re on the list. Shows stay free either way. If you want Personal today, it’s one click from your <a href="{{ path_prefix }}account.html">account</a> — cancel anytime.</p>
+            </div>
+        </div>
+
+        <p class="spi-foot">Already a member? <a href="{{ path_prefix }}account.html">Go to your account →</a>
+           · Prefer to join paid now? <a href="{{ path_prefix }}join.html">Nerra Personal</a></p>
+    </div>
+</section>
+
+<script>
+(function () {
+  var API_BASE = "https://api.nerranetwork.com";
+  var SOURCE = {{ capture_source_site | tojson }};
+  var form = document.getElementById("spi-form");
+  var statusEl = document.getElementById("spi-status");
+  var confirmEl = document.getElementById("spi-confirm");
+  var submitBtn = document.getElementById("spi-submit");
+  if (!form) return;
+
+  function say(text, state) {
+    statusEl.textContent = text || "";
+    statusEl.setAttribute("data-state", state || "");
+  }
+
+  form.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var email = (document.getElementById("spi-email").value || "").trim();
+    var firstName = (document.getElementById("spi-name").value || "").trim();
+    var company = (document.getElementById("spi-company").value || "").trim();
+    var interested = document.getElementById("spi-interest").checked;
+    var newsletter = document.getElementById("spi-newsletter").checked;
+
+    if (!email || email.indexOf("@") < 1 || email.indexOf(".") < 0) {
+      say("Please enter a valid email address.", "error");
+      document.getElementById("spi-email").focus();
+      return;
+    }
+    if (!interested && !newsletter) {
+      say("Pick at least one option — Personal tips, or the free newsletter.", "error");
+      return;
+    }
+
+    submitBtn.disabled = true;
+    say("Saving…", "");
+
+    var list = interested ? "personal-interest" : "member";
+    var tags = [];
+    if (newsletter) { tags.push("SpaceX Daily"); }
+
+    var body = {
+      email: email,
+      list: list,
+      source: SOURCE,
+      tags: tags,
+      // Honeypot: Worker silently accepts & discards when company is set.
+      company: company
+    };
+    if (firstName) { body.first_name = firstName; }
+
+    fetch(API_BASE + "/api/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(body)
+    }).then(function (resp) {
+      return resp.json().catch(function () { return {}; })
+        .then(function (data) { return { ok: resp.ok, status: resp.status, data: data }; });
+    }).then(function (r) {
+      if (r.status === 429) {
+        throw new Error("rate");
+      }
+      if (!r.ok || !r.data || r.data.ok !== true) {
+        throw new Error("subscribe failed");
+      }
+      form.hidden = true;
+      confirmEl.classList.add("is-visible");
+      say("", "");
+      if (typeof window.gtag === "function") {
+        window.gtag("event", "newsletter_signup", {
+          list: list,
+          source: SOURCE || "direct",
+          campaign: "personal-interest"
+        });
+      }
+    }).catch(function (err) {
+      submitBtn.disabled = false;
+      say(err && err.message === "rate"
+        ? "Too many tries from this network. Please wait a few minutes."
+        : "Couldn’t save that just now. Please try again in a moment.", "error");
+    });
+  });
+})();
+</script>
+{% endblock %}
