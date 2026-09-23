@@ -334,11 +334,14 @@ class TestWiring:
         cron_block = wf[wf.index("CRON_MAP"):wf.index("CRON_MAP") + 6000]
         assert f'"{SLUG}"' in cron_block
 
-    def test_nightly_owns_the_prelaunch_pages(self):
+    def test_run_show_owns_the_pages_now(self):
+        # Launch-cohort PR C (2026-09-23) put the show on the clock, so run-show
+        # regenerates its pages and the nightly add-paths must not name them
+        # (a stale pathspec fails test_page_regen_ownership).
         wf = (ROOT / ".github" / "workflows" / "nightly-maintenance.yml").read_text(encoding="utf-8")
         for path in ("prediction-markets.html", "prediction-markets-summaries.html",
                      "blog/prediction_markets/**"):
-            assert f"            {path}\n" in wf
+            assert f"            {path}\n" not in wf
 
     def test_closing_carries_the_posture_and_matches_the_chapter(self):
         from engine.intros import _SHOW_PERSONALITIES as SHOW_PERSONALITIES
