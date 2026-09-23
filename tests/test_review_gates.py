@@ -123,15 +123,31 @@ class TestLocalTrackIsNeverDiscarded:
         assert "def mix_two(guest_wav: Path, mira_wav: Path" in MIXER
         assert "amix=inputs=2:duration=longest:normalize=0" in MIXER
 
+    # Sept 22 2026 (46b6a8f38, Viktor Popovic): the two-speaker path is
+    # decided by whether MIRA has audio of her own, not by where the guest's
+    # track came from. Keyed on the guest being local, a run whose browser
+    # upload never arrived fell through to the raw stereo, whose right channel
+    # carries the guest's voice back, and his words were attributed to her.
+    # A local guest track still takes this path: its Mira source is her leg.
+    _CLEAN_TWO = 'elif tracks["sources"].get("mira") != "guest_r":'
+
+    def _branch(self):
+        branch = POST[POST.index(self._CLEAN_TWO):]
+        # The branch holds a nested (12-space) else; stop at its own.
+        return branch[:branch.index("\n        else:\n")]
+
     def test_no_host_but_a_local_guest_track_still_takes_the_clean_path(self):
-        assert 'elif tracks["sources"].get("guest") == "local":' in POST
-        branch = POST[POST.index('elif tracks["sources"].get("guest") == "local":'):]
-        branch = branch[:branch.index("        else:")]
+        assert self._CLEAN_TWO in POST
+        assert 'elif tracks["sources"].get("guest") == "local":' not in POST
+        branch = self._branch()
         assert "mix_two(tracks[\"guest\"], tracks[\"mira\"]" in branch
         assert "diarized_tracks(" in branch
         assert "mix_interview(" not in branch
 
     def test_raw_fallback_survives_for_runs_with_neither(self):
-        tail = POST[POST.index("        else:\n            # Pre-Phase-2"):]
+        tail = POST[POST.index(self._CLEAN_TWO):]
+        tail = tail[tail.index("\n        else:\n"):]
         assert "mix_interview(raw, workdir / \"mixed.wav\")" in tail
         assert "diarized_transcript(raw, workdir)" in tail
+        # The fallback says out loud that its attribution cannot be trusted.
+        assert "speaker attribution is unreliable" in tail
