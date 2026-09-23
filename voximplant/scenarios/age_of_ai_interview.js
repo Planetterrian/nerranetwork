@@ -901,6 +901,27 @@ async function createAgent(note) {
     } catch (err) {
       if (bargeIns <= 2) trace("grok", "could not cancel the turn: " + err.message);
     }
+    // Sept 23 2026, Viktor Popovic. Cancelling the turn stops her being
+    // heard, but nothing told HER that the rest went unsaid, and when he
+    // finished she picked the sentence up where it broke: "strategies. What
+    // triggers a fallback..." — the first word left over from a question
+    // abandoned a minute earlier. Said once, quietly, while he is talking:
+    // the unfinished sentence is gone, answer him instead. No responseCreate;
+    // this is context for her next turn, not a turn of its own.
+    if (bargeIns <= 40) {
+      try {
+        agent.conversationItemCreate({
+          item: { type: "message", role: "system", content: [{ type: "input_text", text:
+            "[ROOM — system note, do not read aloud] You were cut off " +
+            "mid-sentence and they did not hear the rest. When they finish, " +
+            "do NOT pick that sentence up where it stopped and do not repeat " +
+            "their last words back to them. Respond to what they just said, " +
+            "or ask one fresh, short question." }] },
+        });
+      } catch (err) {
+        if (bargeIns <= 2) trace("grok", "could not note the barge-in: " + err.message);
+      }
+    }
   });
 
   // Rolling transcript — the raw material for the hand-over note.

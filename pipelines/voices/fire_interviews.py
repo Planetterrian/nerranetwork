@@ -29,7 +29,7 @@ from common import (  # noqa: E402
     show_for, to_e164,
 )
 from learning import lessons_block, variety_block  # noqa: E402
-from address import address_rule, spoken as spoken_address  # noqa: E402
+from address import address_rule, first_name, spoken as spoken_address  # noqa: E402
 from interview_shape import planned_minutes, shape_block  # noqa: E402
 
 FIRE_WINDOW_AHEAD_MIN = 5          # phone (PSTN) interviews: Mira dials at T-5..T-0
@@ -382,7 +382,7 @@ def send_reminders() -> None:
                 send_email(
                     app.get("email", ""),
                     f"Your {show.short_label} interview is in about two hours",
-                    f"<p>Hi {app.get('name', 'there')},</p>"
+                    f"<p>Hi {first_name(app)},</p>"
                     f"<p>Mira is ready for you at <strong>"
                     f"{interview.get('scheduled_at', '')}</strong>. Join from a "
                     f"computer in a quiet room, and please wear headphones or "
@@ -504,7 +504,7 @@ def fire_due_interviews() -> int:
                 send_email(
                     app.get("email", ""),
                     f"Your {show.short_label} interview is in about two hours",
-                    f"<p>Hi {app.get('name', 'there')},</p>"
+                    f"<p>Hi {first_name(app)},</p>"
                     f"<p>Mira is ready for you at <strong>"
                     f"{interview.get('scheduled_at', '')}</strong>. Join from a "
                     f"computer in a quiet room, and please wear headphones or "

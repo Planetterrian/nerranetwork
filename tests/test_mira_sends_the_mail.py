@@ -114,3 +114,28 @@ class TestAWordFromPatrick:
         # "note_to_guest" is the only one that leaves the building.
         assert "patrick_notes: body.notes ?? null" in WORKER
         assert "nobody else sees them" in WORKER
+
+
+class TestGuestsAreGreetedByFirstName:
+    """Sept 23 2026: Viktor Popovic's review invitation opened "Hi Viktor
+    Popovic,". Patrick writes "Hi Viktor," and so did the published-episode
+    note; the Worker's mail was the odd one out."""
+
+    def test_no_guest_greeting_uses_the_full_name(self):
+        assert not re.search(r"<p>Hi \$\{esc\((?:apps\[0\]|app)\.name", WORKER)
+        assert '<p>Hi ${esc(app.name ?? "there")}' not in WORKER
+
+    def test_every_greeting_goes_through_first_name(self):
+        greetings = re.findall(r"<p>Hi \$\{esc\(([^)]*\))\)", WORKER)
+        assert greetings and all(g.startswith("firstName(") for g in greetings)
+
+    def test_it_mirrors_the_pipeline(self):
+        body = _tsfn("firstName")
+        assert r"(?:dr\.?|doctor)" in body        # drops Dr. / Doctor
+        assert r"split(/\s*,\s*/)[0]" in body     # drops ", PhD"
+        assert 'return words[0] || "there";' in body
+
+    def test_the_pipeline_reminders_do_too(self):
+        fire = (ROOT / "pipelines" / "voices" / "fire_interviews.py").read_text(encoding="utf-8")
+        assert "Hi {app.get('name', 'there')}" not in fire
+        assert fire.count("<p>Hi {first_name(app)},</p>") == 2

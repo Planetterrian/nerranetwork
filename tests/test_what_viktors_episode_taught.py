@@ -555,3 +555,81 @@ class TestTheRoomClipsMatchHerLiveVoice:
             capture_output=True, text=True).stderr
         got = float(json.loads(meas[meas.rindex("{"):meas.rindex("}") + 1])["input_i"])
         assert -25.0 < got < -21.0
+
+
+# ---------------------------------------------------------------------------
+# 9. ONLY A GUEST WHO HAS SAID YES CAN BE QUOTED TO ANOTHER.
+#
+# Mira put Meridan Zerner's line to Viktor Popovic while Meridan's own episode
+# was still waiting for her approval. The same pool held Rhett Mikols, whose
+# interview was killed. episode_records are written when an interview is cut,
+# before anyone approves anything.
+
+COMMON_SRC = (V / "common.py").read_text(encoding="utf-8")
+
+
+class TestOnlyPublishedGuestsAreCarried:
+    ROWS = [
+        {"interview_id": "viktor", "guest_name": "Viktor Popovic", "guest_email": "v@x",
+         "recorded_on": "2026-09-22", "quotes": [{"text": "Two processors only."}]},
+        {"interview_id": "meridan", "guest_name": "Meridan Zerner", "guest_email": "m@x",
+         "recorded_on": "2026-09-20", "quotes": [{"text": "The architect of your own life."}]},
+        {"interview_id": "rhett", "guest_name": "Rhett Mikols", "guest_email": "r@x",
+         "recorded_on": "2026-09-17", "quotes": [{"text": "Killed."}]},
+        {"interview_id": "vincent", "guest_name": "Vincent Rylan", "guest_email": "vr@x",
+         "recorded_on": "2026-09-14", "quotes": [{"text": "Nobody can opt out."}]},
+        {"guest_name": "No interview on record", "recorded_on": "2026-09-01",
+         "quotes": [{"text": "Orphan."}]},
+    ]
+
+    def _insights(self, monkeypatch, published, fail=False):
+        import common
+
+        def fake_select(table, query):
+            if table == "episode_records":
+                return self.ROWS
+            if table == "interviews":
+                if fail:
+                    raise RuntimeError("supabase down")
+                return [{"id": i} for i in published if f"{i}" in query]
+            raise AssertionError(table)
+        monkeypatch.setattr(common, "sb_select", fake_select)
+        return [r["guest"] for r in common.show_insights("nerra_voices")]
+
+    def test_unapproved_and_killed_guests_are_not_quoted(self, monkeypatch):
+        assert self._insights(monkeypatch, published={"vincent"}) == ["Vincent Rylan"]
+
+    def test_nobody_published_means_nobody_quoted(self, monkeypatch):
+        # Nerra Voices today: Viktor and Meridan in review, Rhett killed.
+        assert self._insights(monkeypatch, published=set()) == []
+
+    def test_a_record_with_no_interview_is_not_evidence_of_consent(self, monkeypatch):
+        assert "No interview on record" not in self._insights(
+            monkeypatch, published={"viktor", "meridan", "rhett", "vincent"})
+
+    def test_if_publication_cannot_be_checked_nobody_is_quoted(self, monkeypatch):
+        assert self._insights(monkeypatch, published={"vincent"}, fail=True) == []
+
+    def test_the_forced_callback_is_described_by_the_one_that_happened(self):
+        assert "architect of your own life to a payments founder" in COMMON_SRC
+        assert "would this guest have" in COMMON_SRC
+
+
+class TestSheIsToldWhenSheWasCutOff:
+    def test_the_barge_in_leaves_her_a_note(self):
+        start = SCENARIO.index("InputAudioBufferSpeechStarted, function")
+        body = SCENARIO[start:SCENARIO.index("\n  });", start)]
+        assert "You were cut off" in body
+        assert "do NOT pick that sentence up where it stopped" in body
+        assert "do not repeat" in body and "their last words back" in body
+
+    def test_it_is_context_not_a_turn(self):
+        start = SCENARIO.index("InputAudioBufferSpeechStarted, function")
+        body = SCENARIO[start:SCENARIO.index("\n  });", start)]
+        note = body[body.index("You were cut off"):]
+        assert "responseCreate" not in note
+
+    def test_it_comes_after_the_turn_is_cancelled(self):
+        start = SCENARIO.index("InputAudioBufferSpeechStarted, function")
+        body = SCENARIO[start:SCENARIO.index("\n  });", start)]
+        assert body.index("responseCancel") < body.index("You were cut off")

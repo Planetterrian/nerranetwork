@@ -681,6 +681,21 @@ def guest_links_markdown(app: Dict[str, Any], heading: str = "") -> str:
 CARRY_LIMIT = 6
 
 
+def _published_interviews(ids: List[str]) -> set:
+    """Which of these interviews are published. Anything unknown is not."""
+    ids = [i for i in dict.fromkeys(ids) if i]
+    if not ids:
+        return set()
+    try:
+        rows = sb_select("interviews",
+                         f"id=in.({','.join(ids)})&status=eq.published&select=id")
+    except Exception:  # noqa: BLE001 — if in doubt, quote nobody
+        logger.exception("could not check which guests are published — "
+                         "carrying no one's words this time")
+        return set()
+    return {r["id"] for r in rows or [] if r.get("id")}
+
+
 def show_insights(show: ShowRef = None, exclude_email: str = "",
                   limit: int = CARRY_LIMIT) -> List[Dict[str, Any]]:
     """Quotable things previous guests said, newest first.
@@ -696,9 +711,19 @@ def show_insights(show: ShowRef = None, exclude_email: str = "",
     except Exception:  # noqa: BLE001 — memory never blocks an interview
         logger.exception("show insights unavailable (non-fatal)")
         return []
+    # Only a guest who has said yes to their words being public can be quoted
+    # to someone else. Sept 22 2026: Mira put Meridan Zerner's line to Viktor
+    # Popovic while Meridan's own episode was still waiting for her approval,
+    # and the pool also held Rhett Mikols, whose interview was killed. An
+    # episode_record is written the moment an interview is cut, before anyone
+    # has approved anything; publication is the only state that means consent.
+    published = _published_interviews(
+        [r.get("interview_id") for r in rows or [] if r.get("interview_id")])
     out: List[Dict[str, Any]] = []
     skip = (exclude_email or "").strip().lower()
     for row in rows or []:
+        if row.get("interview_id") not in published:
+            continue
         if skip and (row.get("guest_email") or "").lower() == skip:
             continue
         quotes = row.get("quotes") or []
@@ -745,7 +770,11 @@ def carry_the_show_block(show: ShowRef = None, exclude_email: str = "") -> str:
         "Name the person. Quote them accurately or not at all. If nothing above "
         "genuinely connects to this conversation, say nothing — "
         "a forced callback is worse than none, and there will be a better "
-        "one next time."
+        "one next time. Sept 22 2026: you put a nutritionist's line about "
+        "being the architect of your own life to a payments founder, "
+        "mid-way through his answer about processor fees. That is the "
+        "forced callback this means. The test: would this guest have "
+        "brought up that subject themselves? If not, leave it."
         "\n\nHOW TO SAY IT. The callback is a QUESTION and it stands alone. "
         "One sentence of who said what, then the question, then silence: "
         "\"Vincent Rylan, a novelist, told me nobody can opt out of the race "

@@ -368,6 +368,17 @@ function reviewAudioUrl(run: any): string | null {
   return typeof url === "string" && url ? url : null;
 }
 
+/** "Hi Viktor," — the guest's first name, the way Patrick writes, and the
+ *  way the published-episode note already greeted them. Sept 23 2026: the
+ *  guest review invitation opened "Hi Viktor Popovic,". Mirrors first_name in
+ *  pipelines/voices/address.py: drop a leading "Dr."/"Doctor", drop anything
+ *  after a comma ("Adrian Wolfberg, PhD"), take the first word. */
+function firstName(name: unknown): string {
+  const bare = String(name ?? "").trim().replace(/^\s*(?:dr\.?|doctor)\s+/i, "");
+  const words = bare.split(/\s*,\s*/)[0].split(/\s+/).filter(Boolean);
+  return words[0] || "there";
+}
+
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -595,7 +606,7 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
       if (apps?.[0]?.email) {
         await email(env, apps[0].email,
           "Change of plan — I'll call your phone instead",
-          `<p>Hi ${esc(apps[0].name)},</p><p>The browser studio isn't
+          `<p>Hi ${esc(firstName(apps[0].name))},</p><p>The browser studio isn't
            cooperating with your setup today — no fault of yours. Let's not
            fight it: <strong>I'll call your phone within the next five
            minutes.</strong> Find a quiet spot, and answer when you see the
@@ -664,7 +675,7 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
             const rebook = bookingUrl(env, show);
             await email(env, apps[0].email,
               `We missed you — rebook your ${show.shortLabel} interview`,
-              `<p>Hi ${esc(apps[0].name)},</p><p>Mira tried to reach you twice for your` +
+              `<p>Hi ${esc(firstName(apps[0].name))},</p><p>Mira tried to reach you twice for your` +
               ` ${esc(show.shortLabel)} interview but couldn't get through. No problem — pick a` +
               ` new time that works for you:</p><p><a href="${esc(rebook)}">` +
               `Rebook your interview</a></p><p>${esc(signOff(show))}</p>`, true);
@@ -921,7 +932,7 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
   }
   const studio = studioUrl(show, interviewId, "guest");
   await email(env, emailAddr, `Your ${show.shortLabel} interview is booked`,
-    `<p>Hi ${esc(apps[0].name)},</p>
+    `<p>Hi ${esc(firstName(apps[0].name))},</p>
      <p>You're booked. At the scheduled time, join Mira — our AI host — from
      your personal browser studio:</p>
      <p><a href="${studio}"><strong>Join your interview here</strong></a>
@@ -968,7 +979,7 @@ async function handleTriageDecision(req: Request, env: Env): Promise<Response> {
     const show = showFor(app);
     const link = bookingUrl(env, show);
     await email(env, app.email, `You're invited — book your ${show.name} interview`,
-      `<p>Hi ${esc(app.name)},</p>
+      `<p>Hi ${esc(firstName(app.name))},</p>
        <p>We'd love to have you on ${esc(show.name)}. Pick a time that works and
        Mira — our AI host — will call you: </p>
        <p><a href="${esc(link)}">${esc(link)}</a></p>
@@ -984,7 +995,7 @@ async function handleTriageDecision(req: Request, env: Env): Promise<Response> {
     const show = showFor(app);
     try {
       await email(env, app.email, `Your ${show.name} application`,
-        `<p>Hi ${esc(app.name)},</p>
+        `<p>Hi ${esc(firstName(app.name))},</p>
          <p>Thank you for applying to be a guest on ${esc(show.name)}, and for
          the time you put into telling us about your work.</p>
          <p>We are not going to be able to find a place for it on the show at
@@ -1063,7 +1074,7 @@ async function handleEditorialDecision(req: Request, env: Env): Promise<Response
           `<p>${esc(para.trim()).replace(/\n/g, "<br>")}</p>`).join("")
       : "";
     await email(env, app.email, `Thank you — your ${show.shortLabel} episode is ready for you`,
-      `<p>Hi ${esc(app.name)},</p>
+      `<p>Hi ${esc(firstName(app.name))},</p>
        ${noteHtml}
        <p>Thank you for the time you gave us. Your episode is edited and
        ready, and nothing goes out until you have heard it and said yes.</p>
@@ -1172,7 +1183,7 @@ async function handleManagePage(env: Env, token: string): Promise<Response> {
       (booking ? `<p>Whenever you want to pick it up again: <a href="${esc(booking)}">book a new time</a>.</p>` : "")));
   }
   return html(page(`Your ${esc(show.shortLabel)} interview`, `
-    <p>Hi ${esc(app.name ?? "there")} — your interview is set for <strong>${esc(when)}</strong>.</p>
+    <p>Hi ${esc(firstName(app.name))} — your interview is set for <strong>${esc(when)}</strong>.</p>
     <p>If that still works, you do not need to do anything. If it does not,
        tell us here rather than leaving it. Nobody minds, and it means Mira is
        not sitting in an empty room waiting for you.</p>
@@ -1633,7 +1644,7 @@ async function gate2Housekeeping(env: Env) {
       // Day 4 (±cron granularity): one reminder.
       const link = `https://api.nerranetwork.com/voices/review/${pkg.guest_review_token}`;
       await email(env, app.email, `Reminder: your ${show.shortLabel} transcript awaits`,
-        `<p>Hi ${esc(app.name)},</p>
+        `<p>Hi ${esc(firstName(app.name))},</p>
          <p>A gentle nudge — your transcript is waiting for review:</p>
          <p><a href="${esc(link)}">${esc(link)}</a></p>
          <p>If we don't hear from you in the next three days we'll take that
