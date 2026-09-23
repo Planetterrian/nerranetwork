@@ -757,8 +757,15 @@ function remember(who, text) {
   transcript.push(who + ": " + String(text).slice(0, 400));
   if (transcript.length > 200) transcript.splice(0, transcript.length - 200);
   if (who === "Mira") {
+    // Order matters: note the question BEFORE testing for a sign-off, so a
+    // turn that asks for a parting thought and then ends the recording in the
+    // same breath is caught by the same rule.
+    try { noteLastWordAsk(text); }
+    catch (err) { Logger.write("[aoa " + runId + "] last-word check failed: " + err.message); }
     try { catchEarlySignOff(text); }
     catch (err) { Logger.write("[aoa " + runId + "] sign-off check failed: " + err.message); }
+  } else {
+    lastWordAnswered = true;
   }
 }
 
@@ -1363,6 +1370,73 @@ function startTimeChecks() {
 // interview by mistake, and the guest is about to hang up.
 const SIGN_OFF_RE = /(end of the recording|you can hang up|that'?s a wrap|we'?re all done here)/i;
 
+// The two questions that hand the last word to the guest. She is instructed to
+// ask both before closing, and since Sept 21 she does — Viktor Popovic was
+// asked at 42:40 whether anything had gone unreached and gave a full answer.
+// Then at 43:57 she asked "Do you have any parting thoughts?" and closed the
+// recording eleven seconds later, without him having said a word. Asking is
+// not the same as waiting, and a question asked into a closing door is worse
+// than not asking: the guest hears himself being invited and then dismissed.
+const LAST_WORD_RE = /(parting thought|anything (else )?(that )?you (came|were) (wanting|hoping) to say|anything you came wanting|subject(s)? we (never|didn'?t|did not) (reach|cover|get to)|we (never|didn'?t|did not) (reach|cover|get to)|anything (else )?(you'?d|you would|you want to|to) (like to )?(add|say)|any last word)/i;
+
+const LAST_WORD_WAIT_MS = 25 * 1000;  // silence that counts as "nothing to add"
+let lastWordAskedAt = 0;
+let lastWordAnswered = true;          // true until a question is outstanding
+let lastWordRescues = 0;
+
+/** She has just handed the guest the last word. Start the clock. */
+function noteLastWordAsk(text) {
+  if (!LAST_WORD_RE.test(text || "")) return;
+  lastWordAskedAt = Date.now();
+  lastWordAnswered = false;
+  trace("close", "asked for the guest's last word; waiting");
+}
+
+/**
+ * True when she is closing on a question the guest has not answered yet, and
+ * has not waited long enough to call it silence. Unlike the early sign-off
+ * catcher this does NOT care what minute it is: at 44 minutes of a 45 minute
+ * show closing is entirely permitted, and cutting the guest off mid-invitation
+ * is still wrong.
+ */
+function closingOnAnUnansweredQuestion() {
+  return !!lastWordAskedAt && !lastWordAnswered
+         && (Date.now() - lastWordAskedAt) < LAST_WORD_WAIT_MS;
+}
+
+function catchClosingWithoutTheAnswer(text) {
+  if (roomEnded || !grokAgent) return false;
+  if (!SIGN_OFF_RE.test(text || "")) return false;
+  if (!closingOnAnUnansweredQuestion()) return false;
+  if (lastWordRescues >= 2) return false;
+  lastWordRescues += 1;
+  const waited = Math.round((Date.now() - lastWordAskedAt) / 1000);
+  trace("close", "closed " + waited + "s after handing over the last word, "
+        + "before the guest used it — holding the room open");
+  Logger.write("[aoa " + runId + "] closing rescue: only " + waited +
+               "s after the last-word question");
+  try {
+    grokAgent.conversationItemCreate({
+      item: { type: "message", role: "system", content: [{ type: "input_text", text:
+        "[ROOM — system note, do not read aloud] You asked for their parting" +
+        " thought " + waited + " seconds ago and they have not answered yet." +
+        " You then began to close, which takes back the thing you just" +
+        " offered them. The recording is still running and they are still" +
+        " here. Say one short line making the invitation real — that you" +
+        " meant it, and there is no hurry — and then STOP TALKING and wait." +
+        " Silence is the correct behaviour now, however long it lasts. Do not" +
+        " ask a different question, do not fill the gap, and do not mention" +
+        " the recording. Only once they have actually spoken, or a note tells" +
+        " you they have nothing to add, may you close." }] },
+    });
+    miraSpeaking = true;
+    grokAgent.responseCreate({});
+  } catch (err) {
+    Logger.write("[aoa " + runId + "] closing rescue failed: " + err.message);
+  }
+  return true;
+}
+
 /**
  * She just told the guest it was over, far too early. The guest is
  * listening right now, so the recovery has to be immediate and has to be
@@ -1370,7 +1444,11 @@ const SIGN_OFF_RE = /(end of the recording|you can hang up|that'?s a wrap|we'?re
  * Called from remember() on every line of hers.
  */
 function catchEarlySignOff(text) {
-  if (roomEnded || !grokAgent || closingPermitted) return;
+  if (roomEnded || !grokAgent) return;
+  // A close that lands on an unanswered last-word question is wrong whatever
+  // the clock says, so that rule runs first and on its own.
+  if (catchClosingWithoutTheAnswer(text)) return;
+  if (closingPermitted) return;
   if (!SIGN_OFF_RE.test(text || "")) return;
   const elapsed = elapsedMin();
   if (elapsed >= closingOpensAtMin()) return;

@@ -198,6 +198,14 @@ class TestTheRecordingWithTheInterviewOnIt:
         assert '_covers(local_guest, guest_vox, "guest")' in self.SRC
         assert '_covers(local_host, host_vox or guest_r, "host")' in self.SRC
 
+    def test_an_unreadable_file_is_not_evidence_against_the_take(self):
+        # The coverage check exists to catch a short upload, not to gate on
+        # ffprobe: if the duration cannot be measured, keep the local take.
+        body = _pyfn("_covers", self.SRC)
+        assert "except Exception as err:" in body
+        assert "keeping the " in body
+        assert "return True" in body.split("except Exception as err:")[1]
+
     def test_no_reference_means_trust_the_local_take(self):
         body = _pyfn("_covers", self.SRC)
         assert "if reference is None:\n        return True" in body
@@ -281,6 +289,7 @@ class TestTheCoHostAlsoRejoins:
         # the first leg is the host_raw the rest of the pipeline expects.
         assert 'host_legs = leg_recordings(run, "host", workdir)' in self.SRC
         assert "host_raw = host_legs[0] if host_legs else None" in self.SRC
+        assert "host_legs=host_legs" in self.SRC
 
     def test_a_missing_leg_is_skipped_not_fatal(self):
         body = _pyfn("longest_leg_recording", self.SRC)
@@ -428,12 +437,21 @@ class TestTheCraftRules:
         assert "ONE question per turn, asked once" in flat
         assert "never re-ask a question that has not been answered yet" in flat
         assert "The discomfort is yours to hold, not theirs to fill" in flat
+        assert "Silence means they are thinking: count to five and wait again" in flat
+        # The same rule again, where the cost of stacking is spelled out.
+        assert "ONE QUESTION, THEN SILENCE" in flat
 
     def test_the_close_waits_for_the_answer(self):
         flat = _flat(self.PROMPT)
         assert "permission to close at the next natural break" in flat
         assert "not an instruction to talk over the answer in progress" in flat
         assert "let it land, then close" in flat
+        # And the guest's own last word. Sept 22 2026, Viktor Popovic: she
+        # asked for his parting thought and closed eleven seconds later,
+        # which is worse than never asking.
+        assert "THEIR LAST WORD IS THEIRS, NOT YOURS" in flat
+        assert "AND WAITING IS THE WHOLE POINT OF ASKING" in flat
+        assert "you close because they have finished" in flat
 
     def test_the_closing_round_is_a_tool_not_a_ritual(self):
         flat = _flat(self.PROMPT)

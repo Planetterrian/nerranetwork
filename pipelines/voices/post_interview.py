@@ -999,23 +999,46 @@ def main() -> int:
             mixed = mix_three(tracks["guest"], tracks["host"], tracks["mira"],
                               workdir / "mixed.wav")
             transcript, confidence = diarized_transcript_three(tracks, app, workdir, run)
-        elif tracks["sources"].get("guest") == "local":
-            # No co-host, but the guest's browser recording arrived intact.
-            # Sept 10 2026: this branch used to fall through to mixing the
-            # raw Voximplant stereo, throwing away a 192 kbps local track
-            # for no reason. Keep the clean-track path with two speakers.
+        elif tracks["sources"].get("mira") != "guest_r":
+            # No co-host, but Mira has a recording of her own — either her
+            # Voximplant leg or nothing at all, and here it is her leg. That
+            # plus the guest's own channel IS two per-speaker tracks, whether
+            # or not the guest's browser recording arrived.
+            #
+            # Sept 22 2026, Viktor Popovic. This branch used to ask whether
+            # the GUEST track was the local browser recording. His never
+            # uploaded, so a run holding a clean guest channel and a real
+            # Mira-only leg fell through to transcribing the raw stereo
+            # instead — and the right channel of that stereo is the room as
+            # the guest heard it, which carries the guest's own voice back.
+            # The recogniser duly attributed his words to her: half her turns
+            # in that transcript open with the tail of his sentence, and the
+            # grading pass read it as Mira parroting her guest and adopted a
+            # standing instruction about a fault that was not hers. Two good
+            # tracks were on disk the whole time. What decides this path is
+            # whether Mira has her own audio, not where the guest's came from.
             for speaker in ("guest", "mira"):
                 processed[speaker] = r2_upload(
                     tracks[speaker], show.r2_key("raw", f"{run['id']}_{speaker}.wav"))
             mixed = mix_two(tracks["guest"], tracks["mira"], workdir / "mixed.wav")
-            by_role = room_offsets(run, _track_durations(tracks))
+            if tracks.get("alignment") is None:
+                by_role = room_offsets(run, _track_durations(tracks))
+                offsets = {_guest_label(app): by_role["guest"], "Mira": by_role["mira"]}
+            else:
+                # build_tracks already placed both on the guest leg's clock.
+                offsets = {_guest_label(app): 0.0, "Mira": 0.0}
             transcript, confidence = diarized_tracks(
                 [(_guest_label(app), tracks["guest"]), ("Mira", tracks["mira"])],
-                workdir,
-                offsets={_guest_label(app): by_role["guest"], "Mira": by_role["mira"]})
+                workdir, offsets=offsets)
         else:
-            # Pre-Phase-2, no co-host and no usable local track: the
-            # original two-track path off the raw Voximplant stereo.
+            # Mira was never recorded separately, so the only thing that
+            # carries her is the guest's right channel — which carries the
+            # guest too. The original two-track path off the raw stereo, and
+            # the reason a transcript from it cannot be trusted about who
+            # said what.
+            logger.warning("no separate Mira recording on run %s — transcribing "
+                           "the raw stereo, so speaker attribution is unreliable",
+                           run["id"])
             mixed = mix_interview(raw, workdir / "mixed.wav")
             transcript, confidence = diarized_transcript(raw, workdir)
         # Whatever the bleed gate left of Mira in someone else's microphone

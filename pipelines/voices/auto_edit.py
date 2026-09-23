@@ -266,7 +266,85 @@ def plan(ctx: dict) -> dict:
     out = parse_json_lenient(raw)
     if not isinstance(out, dict) or "intro" not in out or "outro" not in out:
         raise SystemExit("auto_edit pass did not return intro and outro")
+    out["intro"] = _drop_borrowed_open(str(out["intro"]), transcript)
     return out
+
+
+def _spoken(transcript: str, until_sec: float = 180.0) -> list[str]:
+    """Normalised text of everything said in the room's first few minutes.
+
+    Uses the module's own ``_LINE`` — this had its own copy of that regex for
+    about an hour on Sept 22 2026, which shadowed the real one and quietly
+    broke ``_after_the_line``, the code that decides where an episode ends.
+    """
+    said = []
+    for line in transcript.splitlines():
+        m = _LINE.match(line.strip())
+        if not m:
+            continue
+        h, mm, ss, _who, turn = m.groups()
+        # "[06:53]" is minutes and seconds; "[1:02:33]" adds the hour.
+        at = (int(h) * 3600 + int(mm) * 60 + int(ss)) if ss else (int(h) * 60 + int(mm))
+        if at > until_sec:
+            break
+        text = _normalise(turn)
+        if text:
+            said.append(text)
+        # One transcript line often holds several sentences ("Thank you. Thank
+        # you for having me. I am based in South Florida."), and a narration
+        # can borrow from the second one. Each sentence counts as a start too.
+        parts = re.split(r"(?<=[.!?])\s+", turn.strip())
+        if len(parts) > 1:
+            for at in range(1, len(parts)):
+                tail = _normalise(" ".join(parts[at:]))
+                if tail:
+                    said.append(tail)
+    return said
+
+
+def _normalise(text: str) -> str:
+    return " ".join(re.sub(r"[^a-z0-9 ]+", " ", text.lower()).split())
+
+
+def _drop_borrowed_open(intro: str, transcript: str) -> str:
+    """Take the room's own warm-up back off the front of the narration.
+
+    Sept 22 2026, Viktor Popovic. His episode's written introduction began
+    "Thank you. Thank you for having me. I am based in South Florida. This is
+    Nerra Voices from the Nerra Network. I'm Mira..." — the first three
+    sentences are HIS, lifted from [00:38] of the transcript the pass was
+    reading, and they would have been performed in Mira's voice as the first
+    thing in the episode. The pass is asked to open on the conversation; it
+    opened with the conversation.
+
+    A narration is written copy, so nothing at the front of it should be a
+    verbatim line from the tape. Walk the opening sentences, and drop the
+    longest run of them that matches something somebody actually said.
+    """
+    text = (intro or "").strip()
+    if not text:
+        return text
+    said = _spoken(transcript)
+    if not said:
+        return text
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+    drop_upto, joined = 0, ""
+    for i, sentence in enumerate(sentences[:-1]):   # never strip it all away
+        joined = (joined + " " + sentence).strip()
+        probe = _normalise(joined)
+        if not probe:
+            continue
+        # A full spoken line, or the start of one: a borrowed opening is the
+        # front of somebody's turn, not a phrase from the middle of it.
+        if any(line == probe or line.startswith(probe) for line in said):
+            drop_upto = i + 1
+    if not drop_upto:
+        return text
+    dropped = " ".join(sentences[:drop_upto])
+    logger.warning("narration intro opened with %d sentence(s) spoken in the "
+                   "room, not written for it — dropped: %s",
+                   drop_upto, dropped[:200])
+    return " ".join(sentences[drop_upto:]).strip()
 
 
 # How much of a speaker's own voice the bleed gate may swallow before its
