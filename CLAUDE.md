@@ -258,10 +258,10 @@ and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 | The DP Pod | — | `shows/dp_pod.yaml` | Monday | — (X disabled) | Grok TTS (two-voice: Patrick + Dan) |
 | The Age of AI | — | `shows/age_of_ai.yaml` | When an interview is ready (Nerra Voices pipeline, NOT run_show) | — (X disabled) | Real guest phone audio + Mira narration (Grok voice `ara`) |
 | Offshore North | — | `shows/offshore_north.yaml` | Monday | — (X disabled) | Grok TTS (Dan `0vscf8u8yrxc`, single-narrator) |
-| AI Chips & Data Centres Daily | — | `shows/ai_chips.yaml` | Daily 09:31 UTC (launched 2026-09-23) | — (X source only) | Grok TTS (custom) |
-| MAG 7 Daily | — | `shows/mag7.yaml` | Daily 10:46 UTC (launched 2026-09-23) | — (X source only) | Grok TTS (custom) |
-| Peptides Weekly | — | `shows/peptides.yaml` | Thursday 11:07 UTC (first scheduled 2026-10-01) | — (X source only) | Grok TTS (custom) |
-| Longevity Weekly | — | `shows/longevity.yaml` | Wednesday 11:01 UTC (first scheduled 2026-09-30) | — (X source only) | Grok TTS (custom) |
+| AI Chips & Data Centres Daily | — | `shows/ai_chips.yaml` | Daily | — (X source only) | Grok TTS (custom) |
+| MAG 7 Daily | — | `shows/mag7.yaml` | Daily | — (X source only) | Grok TTS (custom) |
+| Peptides Weekly | — | `shows/peptides.yaml` | Thursday | — (X source only) | Grok TTS (custom) |
+| Longevity Weekly | — | `shows/longevity.yaml` | Wednesday | — (X source only) | Grok TTS (custom) |
 | Nerra Daily | — | registry-only (`shows/network_meta.yaml`; NOT run_show — assembled by `scripts/build_daily_edition.py`) | Daily, after the English slate | — (X disabled) | Splices published show audio + Mira links (Grok voice `ara`) |
 
 > Weekly-summary segment (July 2026): shows on a daily cadence with
