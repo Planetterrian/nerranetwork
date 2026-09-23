@@ -535,6 +535,13 @@ def _preflight_checks(config, *, dry_run: bool = False) -> None:
             "Pre-flight LLM ping failed for model=%s: %s (continuing anyway)",
             config.llm.model, exc,
         )
+        # A PINNED model that cannot answer a 10-token ping in 30 s cannot
+        # write a digest either: switch the run to the network default now,
+        # before the fetch and three ~260 s digest stalls (Vancouver and
+        # Collingwood Ep1 on grok-4.7, 2026-09-23). The default model's own
+        # ping failure stays a warning — a network blip must not cancel a day.
+        from engine.generator import switch_to_network_default
+        switch_to_network_default(config, f"pre-flight ping failed: {type(exc).__name__}")
 
     # Validate newsletter API key if newsletter is enabled — gives a clear
     # early warning instead of failing silently at the end of the pipeline.
@@ -2946,6 +2953,14 @@ def run(args: argparse.Namespace) -> None:
             # combined script was written but the digest was regenerated
             # afterwards, so the script call ran). Read this beside the
             # script density audit on the first slates after Sep 12 2026.
+            # A pinned model that fell back (engine.generator.
+            # switch_to_network_default) is recorded, so a model experiment
+            # that never ran cannot be read as one that did.
+            _pinned = getattr(config.llm, "_pinned_model", "")
+            if _pinned:
+                metrics.record("llm_model_pinned", _pinned)
+                metrics.record("llm_model_fallback",
+                               getattr(config.llm, "_model_fallback_reason", "") or "fallback")
             metrics.record(
                 "combined_generation",
                 (template_vars or {}).pop("_generation_path", None)
