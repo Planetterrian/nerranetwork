@@ -47,7 +47,10 @@ class TestColdOpenFragment:
     def test_debut_intro_does_not_repeat_the_hook(self):
         src = (ROOT / "engine" / "pipeline.py").read_text(encoding="utf-8")
         assert 'f"Today is {today_str}. {effective_hook}"' not in src
-        assert src.count('f"Today is {today_str}.",') == 3
+        # The three debut lines (dialogue, personality, generic); the
+        # personality branch builds its line in a variable since the Mira
+        # identity fix (tests/test_phase3_desks_2026_09_23.py).
+        assert src.count('f"Today is {today_str}."') == 3
 
 
 # ---------------------------------------------------------------------------

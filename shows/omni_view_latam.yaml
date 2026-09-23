@@ -1,0 +1,246 @@
+# Omni View Central & South America — Phase 3 of docs/new_shows_plan_2026_09_22.md §4.7.
+# One of the five Omni View regional desks read by Mira, the network's AI
+# host. The desks share ONE format: prompts include
+# shows/prompts/_shared/omni_desk_*.txt, and the only per-desk prompt text is
+# the region file (shows/prompts/omni_desks/). Everything per-desk that a
+# registry needs lives in engine/omni_desks.py.
+#
+# Distribution OFF at launch (RSS + site + blog). NOT on a cron: Episode 1 is
+# produced by manual dispatch and listened to before the launch PR adds the
+# schedule (10:31 UTC (07:31 BRT), plan §6).
+name: Omni View Central & South America
+slug: omni_view_latam
+weekly_summary_segment: true   # daily cadence; Sunday adds a short week-in-review segment
+memory_enabled: true
+story_recurrence: true
+description: 'The day across Central and South America and the Caribbean, one region deep: Brazil, Mexico, Argentina, Colombia, Venezuela, the Andes, Central America and the islands — decisions, economies, security and elections, with one contested question argued fairly both ways and one sign of progress. Read by Mira, the Nerra Network''s AI host; every story from named newsrooms.'
+
+fetch_full_text: 12
+absence_sentence_filter: true
+stale_article_days: 3
+
+# Probed 2026-09-23 from this session's egress (200, posts inside the day);
+# re-grade from a runner (`python check_feeds.py omni_view_latam`) before Episode 1.
+# No `keywords:` list on purpose: these feeds are regional by construction,
+# and a title keyword filter would drop on-region stories whose titles name
+# no country. The REGION RULE in the prompt decides what qualifies.
+sources:
+- url: https://feeds.bbci.co.uk/news/world/latin_america/rss.xml
+  label: BBC Latin America
+- url: https://www.theguardian.com/world/americas/rss
+  label: The Guardian Americas
+- url: https://www.france24.com/en/americas/rss
+  label: France 24 Americas
+- url: https://en.mercopress.com/rss/
+  label: MercoPress
+- url: https://www.batimes.com.ar/feed
+  label: Buenos Aires Times
+- url: https://mexiconewsdaily.com/feed/
+  label: Mexico News Daily
+- url: https://www.riotimesonline.com/feed/
+  label: The Rio Times
+- url: https://www.jamaicaobserver.com/feed/
+  label: Jamaica Observer
+- url: https://ticotimes.net/feed
+  label: The Tico Times
+- url: https://latinamericareports.com/feed/
+  label: Latin America Reports
+- url: https://news.google.com/rss/search?q=Brazil+government+OR+Lula+when:1d&hl=en-US&gl=US&ceid=US:en
+  label: Google News Central and South America 1
+- url: https://news.google.com/rss/search?q=Mexico+Sheinbaum+OR+%22Mexico+City%22+when:1d&hl=en-US&gl=US&ceid=US:en
+  label: Google News Central and South America 2
+- url: https://news.google.com/rss/search?q=Argentina+Milei+OR+%22Buenos+Aires%22+when:1d&hl=en-US&gl=US&ceid=US:en
+  label: Google News Central and South America 3
+- url: https://news.google.com/rss/search?q=Colombia+OR+Venezuela+when:1d&hl=en-US&gl=US&ceid=US:en
+  label: Google News Central and South America 4
+- url: https://news.google.com/rss/search?q=Chile+OR+Peru+OR+Ecuador+OR+Bolivia+when:1d&hl=en-US&gl=US&ceid=US:en
+  label: Google News Central and South America 5
+- url: https://news.google.com/rss/search?q=Central+America+OR+Guatemala+OR+Honduras+OR+%22El+Salvador%22+when:1d&hl=en-US&gl=US&ceid=US:en
+  label: Google News Central and South America 6
+- url: https://news.google.com/rss/search?q=Caribbean+OR+Cuba+OR+Haiti+OR+%22Dominican+Republic%22+when:1d&hl=en-US&gl=US&ceid=US:en
+  label: Google News Central and South America 7
+
+web_search_queries:
+- Latin America news today
+- Brazil Mexico Argentina news today
+- Central America Caribbean news today
+
+# Omni View's nine anti-tabloid filters plus the desk additions
+# (engine.omni_desks.ANTI_TABLOID_PATTERNS — keep the two in sync).
+exclude_title_patterns:
+- 'red carpet'
+- '\bLove Island\b'
+- '\bStrictly Come Dancing\b'
+- 'reality TV star'
+- '\broyal\b.*\b(fashion|dress|style|outfit)\b'
+- 'wardrobe malfunction'
+- '\bpaparazzi\b'
+- '\bnet worth\b'
+- 'steps out (?:in|with)'
+- '\b(live updates?|as it happened|live blog)\b'
+- '\b(in pictures|photos of the (day|week)|week in pictures)\b'
+- '\b(quiz|crossword|wordle)\b'
+- '\b(obituar(y|ies)|in memoriam)\b'
+
+x_fetch_enabled: true
+x_accounts:
+- handle: MercoPress
+  label: MercoPress
+  max_posts: 2
+- handle: BBCWorld
+  label: BBC World
+  max_posts: 2
+- handle: AJEnglish
+  label: Al Jazeera English
+  max_posts: 2
+
+min_articles: 8
+min_articles_skip: 4
+
+# Cost circuit breaker — TOP LEVEL (nested keys are ignored; see _defaults).
+max_weekly_cost_usd: 7.0
+
+multilingual:
+  enabled: false
+
+llm:
+  provider: xai
+  # grok-4.7 at low effort, like every new show (operator brief 2026-09-23;
+  # experiment new-shows-grok-47-2026-09-23). A run whose pinned model does
+  # not answer falls back to grok-4.3 and records it.
+  model: grok-4.7
+  reasoning_effort: low
+  system_prompt_file: shows/prompts/omni_view_latam_system.txt
+  digest_prompt_file: shows/prompts/omni_view_latam_digest.txt
+  podcast_prompt_file: shows/prompts/omni_view_latam_podcast.txt
+  digest_temperature: 0.4
+  podcast_temperature: 0.7
+  # Room for grok-4.7's reasoning AND the claims ledger at the tail
+  # (Prediction Markets Ep1 used 5,384 of 5,500 and lost its ledger).
+  max_tokens: 8000
+  podcast_max_tokens: 9500
+  # A 10-12 minute brief. The skip floor is 60% of this.
+  min_podcast_words: 1300
+  podcast_expand_below_target: false
+  min_digest_words: 1100
+  digest_expand_below_target: true
+
+tts:
+  # Mira's voice (Grok built-in `ara`), no speech wrap — the Vancouver
+  # calibration shape (plan §2b).
+  voice_id: ara
+  speech_wrap_open: ""
+  speech_wrap_close: ""
+
+audio:
+  # The Omni View theme until the desk variant is commissioned (plan §5c).
+  music_file: assets/music/OmniView.mp3
+  transition_sting: assets/music/transition_sting.mp3
+  voice_intro_delay: 0.0
+  intro_duration: 3.0
+  overlap_duration: 15.0
+  fade_duration: 30.0
+  outro_duration: 30.0
+  outro_crossfade: 0.0
+  outro_fade_out_duration: 10.0
+  intro_volume: 0.6
+  overlap_volume: 0.5
+  fade_volume: 0.4
+  outro_volume: 0.6
+
+publishing:
+  rss_file: omni_view_latam_podcast.rss
+  rss_title: Omni View Central & South America
+  rss_description: 'The day across Central and South America and the Caribbean, one region deep: Brazil, Mexico, Argentina, Colombia, Venezuela, the Andes, Central America and the islands — decisions, economies, security and elections, with one contested question argued fairly both ways and one sign of progress. Read by Mira, the Nerra Network''s AI host; every story from named newsrooms.'
+  rss_link: https://nerranetwork.com/omni-view-latam.html
+  rss_author: Mira (AI host), Nerra Network
+  rss_email: patrick@planetterrian.com
+  rss_image: https://nerranetwork.com/assets/covers/omni-view-latam.jpg
+  rss_category: News
+  rss_subcategory: Daily News
+  # Secondary must differ from the primary (Apple rejects a duplicate).
+  rss_category2: Government
+  rss_keywords: latin america news, brazil news, mexico news, argentina news, caribbean news, daily news briefing
+  guid_prefix: omni-view-latam
+  base_url: https://nerranetwork.com
+  audio_subdir: digests/omni_view_latam
+  summaries_json: digests/omni_view_latam/summaries_omni_view_latam.json
+  summaries_podcast_name: omni_view_latam
+  player_html: omni-view-latam.html
+  summaries_html: omni-view-latam-summaries.html
+  x_enabled: false
+  x_env_prefix: X_
+  host_name: Mira
+  host_kind: ai
+
+episode:
+  prefix: Omni_View_LatAm
+  filename_pattern: '{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3'
+  output_dir: digests/omni_view_latam
+  mp3_glob: Omni_View_LatAm_Ep*.mp3
+
+chapters:
+  enabled: true
+  # Anchors only — never a topic word. The Lead and Across the Region items
+  # take their chapters from the digest headlines; the segments key on
+  # REQUIRED phrases the podcast prompt builds a sentence around, never
+  # inside the opening window (where: body — the Vancouver Ep1 lesson).
+  section_markers:
+  - pattern: This is Omni View Central and South America|first episode of|Omni View Central and South America, episode
+    title: Introduction
+    where: start
+  - pattern: across the region
+    title: Across the Region
+    where: body
+  - pattern: the wider world
+    title: The Region and the World
+    where: body
+  - pattern: case on both sides
+    title: Both Sides
+    where: body
+  - pattern: a sign of progress
+    title: Progress Watch
+    where: body
+  - pattern: That's Omni View Central and South America|see you tomorrow
+    title: Closing
+    where: end
+
+slow_news:
+  enabled: false
+
+newsletter:
+  enabled: false
+  platform: buttondown
+  api_key_env: BUTTONDOWN_API_KEY
+  status: about_to_send
+  tag: Omni View Central & South America
+  short_label: Central and South America
+  emoji: 🌎
+  newsletter_start_date: '2026-10-15'
+  requires_financial_disclaimer: false
+  length_target_words: 1300
+
+content_tracking:
+  section_patterns: {}
+
+youtube:
+  enabled: false                 # OFF at launch (plan §7: a second channel is a data decision)
+  channel: en
+  category_id: 25
+  shorts_start_mode: smart
+  shorts_min_score_threshold: 3.5
+  default_language: en
+  privacy_status: public
+  image_provider: grok
+  grok_image_model: grok-imagine-image
+  grok_image_descriptor: "cinematic news photo, natural light, ultra-detailed"
+  image_queries:
+  - Rio de Janeiro coastline at dawn
+  - colonial plaza in a Latin American city
+  - Andes mountains above a valley town
+  - Caribbean harbour with fishing boats
+  image_query_prefix: ''
+  tags:
+  - world news
+  - central and south america
+  - daily news

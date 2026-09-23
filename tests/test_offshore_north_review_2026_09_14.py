@@ -62,7 +62,9 @@ class TestFullTextLayer:
     # tests/test_new_shows_ep1_review_2026_09_22.py).
     _FULL_TEXT_OPT_INS = frozenset({
         "offshore_north", "ai_chips", "mag7", "peptides", "longevity",
-        "vancouver", "collingwood", "prediction_markets"})
+        "vancouver", "collingwood", "prediction_markets",
+        "omni_view_europe", "omni_view_asia_pacific", "omni_view_africa_mideast",
+        "omni_view_latam", "omni_view_north_america", "omni_view_world"})
 
     def test_show_opts_in_and_every_other_show_is_untouched(self):
         cfg = load_config(str(_SHOW_YAML))

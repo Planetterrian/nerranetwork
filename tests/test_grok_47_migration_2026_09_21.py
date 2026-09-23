@@ -159,6 +159,9 @@ class TestStagingIsStaged:
     NEW_SHOWS_47_ARM = frozenset({
         "ai_chips", "mag7", "peptides", "longevity", "vancouver", "collingwood",
         "prediction_markets",
+        # Phase 3: the Omni View desks and Top World.
+        "omni_view_europe", "omni_view_asia_pacific", "omni_view_africa_mideast",
+        "omni_view_latam", "omni_view_north_america", "omni_view_world",
     })
 
     def test_no_show_digest_left_the_network_default(self):

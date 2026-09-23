@@ -1030,6 +1030,33 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
 }
 
 
+# ---- Phase 3: the Omni View regional desks (plan §4.7), Mira ----
+# Built from engine.omni_desks so a desk is defined in one place. The
+# identity tail discloses the AI host on every episode (the Phase 2 shape).
+def _omni_desk_personality(name: str, framing: str) -> dict:
+    spoken = name.replace("&", "and")
+    return {
+        "host": "Mira",
+        "show_name": spoken,
+        "identity_tail": "I'm Mira, the Nerra Network's AI host.",
+        "greetings": ["This is"],
+        "openers": ["episode {ep}."],
+        "framings": [framing],
+        "closings": [f"That's {spoken} for today. I'm Mira — see you tomorrow."],
+    }
+
+
+def _register_omni_desks() -> None:
+    from engine.omni_desks import DESKS
+    for _d in DESKS:
+        _SHOW_PERSONALITIES.setdefault(_d.slug, _omni_desk_personality(_d.name, _d.framing))
+    _SHOW_PERSONALITIES.setdefault("omni_view_world", _omni_desk_personality(
+        "Omni View Top World News", "The ten stories that matter most today, anywhere."))
+
+
+_register_omni_desks()
+
+
 # ---------------------------------------------------------------------------
 # Milestone detection
 # ---------------------------------------------------------------------------

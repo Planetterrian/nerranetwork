@@ -235,7 +235,7 @@ unfiltered agree, which is exactly why the filter went in before it mattered.
 
 ## Project Overview
 
-Automated daily podcast generation system running 25 shows via a unified
+Automated daily podcast generation system running 31 shows via a unified
 `run_show.py` runner + per-show YAML configs, plus 4 legacy standalone scripts
 (deprecated — see note below). Shows use **Grok TTS** (`engine.tts.grok_speak_chunk`)
 and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
@@ -265,6 +265,12 @@ and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 | Vancouver Daily News | — | `shows/vancouver.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X source only) | Grok TTS (Mira, `ara`) |
 | Collingwood Weekly | — | `shows/collingwood.yaml` | Friday (pre-launch) | — (X disabled) | Grok TTS (Mira, `ara`) |
 | Prediction Markets Daily | — | `shows/prediction_markets.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X source only) | Grok TTS (custom) |
+| Omni View Top World News | — | `shows/omni_view_world.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X source only) | Grok TTS (Mira, `ara`) |
+| Omni View North America | — | `shows/omni_view_north_america.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X source only) | Grok TTS (Mira, `ara`) |
+| Omni View Europe | — | `shows/omni_view_europe.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X source only) | Grok TTS (Mira, `ara`) |
+| Omni View Asia Pacific | — | `shows/omni_view_asia_pacific.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X source only) | Grok TTS (Mira, `ara`) |
+| Omni View Africa & Middle East | — | `shows/omni_view_africa_mideast.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X source only) | Grok TTS (Mira, `ara`) |
+| Omni View Central & South America | — | `shows/omni_view_latam.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X source only) | Grok TTS (Mira, `ara`) |
 | Nerra Daily | — | registry-only (`shows/network_meta.yaml`; NOT run_show — assembled by `scripts/build_daily_edition.py`) | Daily, after the English slate | — (X disabled) | Splices published show audio + Mira links (Grok voice `ara`) |
 
 > Weekly-summary segment (July 2026): shows on a daily cadence with
@@ -982,6 +988,23 @@ today's work, not just explain yesterday's):
   has papers to verify against. Board text is the pipeline's own copy, so it
   carries no specific legal claim. The Board is not content-tracked (a live
   market may lead for weeks). Guards: `tests/test_prediction_markets_2026_09_23.py`.
+- **The Omni View desks + Top World** (Sep 2026, pre-launch, Mira) — five
+  regional daily briefs (Europe, Asia Pacific, Africa & Middle East, Central &
+  South America, North America) and Omni View Top World News, which ranks the
+  day's ten. **One definition, every surface:** `engine/omni_desks.py` owns
+  the desks (sub-regions, seeded arcs, accents, anti-tabloid filters) and the
+  intros / first-episode / validation / tracker / memory / cover registries
+  loop over it; the prompts share `shows/prompts/_shared/omni_desk_*.txt` and
+  the ONLY per-desk prompt text is `shows/prompts/omni_desks/<region>.txt`.
+  No `keywords:` on purpose (regional feeds; a title filter would drop
+  on-region stories). Sub-region balance is a data-side preference note from
+  the last ten digests, never a quota. **Top World verifies against the
+  publisher, never a sibling digest:** its hook turns each desk's Lead and
+  first regional item into a hook article carrying only the headline and the
+  ORIGINAL publisher URL (no desk prose), text-less hook articles are fetched
+  first (`engine.article_text`), and the desks' summaries reach the prompt
+  only as a ranking note the claims gate never reads. Guards:
+  `tests/test_phase3_desks_2026_09_23.py`.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:

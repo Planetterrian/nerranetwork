@@ -156,8 +156,22 @@ def _pct(p: float) -> str:
     return f"{value:.0f}%" if value == int(value) else f"{value:.1f}%"
 
 
+def _amount(n: float) -> str:
+    """A 24-hour volume rounded for the ear: 1,624,335 -> '1.6 million',
+    810,753 -> '811,000', 950 -> '950'. Episode 1 read "eight hundred ten
+    thousand seven hundred fifty-three dollars" aloud — false precision for
+    a figure that changes by the minute."""
+    n = float(n or 0)
+    if n >= 1_000_000:
+        v = round(n / 1_000_000, 1)
+        return (f"{v:.0f}" if v == int(v) else f"{v:.1f}") + " million"
+    if n >= 10_000:
+        return f"{round(n / 1000):,},000"
+    return f"{n:,.0f}"
+
+
 def _money(n: float) -> str:
-    return f"${n:,.0f}"
+    return f"${_amount(n)}"
 
 
 def _points(delta: float) -> str:
@@ -357,7 +371,7 @@ def kalshi_articles(fetch: Fetch = _http_json, now: Optional[_dt.datetime] = Non
             if prev and abs(p - prev) >= 0.03:
                 line += f" ({_points(p - prev)} since the previous day's price)"
             lines.append(line)
-        lines.append(f"24-hour volume: {vol:,.0f} contracts (each pays at most one "
+        lines.append(f"24-hour volume: {_amount(vol)} contracts (each pays at most one "
                      "US dollar).")
         lines.append(f"Category on Kalshi: {ev.get('category') or 'unlisted'}.")
         lines.append(VENUE_ACCESS_LINE.format(venue="Kalshi"))
@@ -399,7 +413,7 @@ def manifold_articles(fetch: Fetch = _http_json, now: Optional[_dt.datetime] = N
         lines = [f"Manifold market, read at {_read_stamp(now)}.",
                  f"Question: {question}",
                  f"- Yes: {_pct(p)} implied probability",
-                 f"Traders: {traders:,}. 24-hour volume: {_f(m.get('volume24Hours')):,.0f} "
+                 f"Traders: {traders:,}. 24-hour volume: {_amount(_f(m.get('volume24Hours')))} "
                  "mana.",
                  "Manifold uses play money (mana), not dollars; its prices are "
                  "forecasts from traders with nothing but reputation at stake.",

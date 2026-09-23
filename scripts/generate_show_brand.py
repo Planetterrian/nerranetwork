@@ -90,6 +90,31 @@ SPECS: dict[str, CoverSpec] = {
                              "with Mira, AI host", _lift(_hex("#7C2D12"), 0.45), "place", 1),
 }
 
+# Phase 3: the Omni View desks. The family colour is Omni View's blue; the
+# desk accent (engine.omni_desks) lights its region on the globe.
+_DESK_TITLES = {
+    "omni_view_europe": (("OMNI VIEW", "EUROPE"), "ONE REGION, EVERY DAY"),
+    "omni_view_asia_pacific": (("OMNI VIEW", "ASIA PACIFIC"), "ONE REGION, EVERY DAY"),
+    "omni_view_africa_mideast": (("OMNI VIEW", "AFRICA & MIDDLE EAST"), "ONE REGION, EVERY DAY"),
+    "omni_view_latam": (("OMNI VIEW", "CENTRAL & SOUTH AMERICA"), "ONE REGION, EVERY DAY"),
+    "omni_view_north_america": (("OMNI VIEW", "NORTH AMERICA"), "ONE REGION, EVERY DAY"),
+}
+
+
+def _register_desk_specs() -> None:
+    import sys as _sys
+    _sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from engine.omni_desks import DESKS
+    for d in DESKS:
+        title, sub = _DESK_TITLES[d.slug]
+        SPECS[d.slug] = CoverSpec(title, sub, "with Mira, AI host",
+                                  _lift(_hex(d.accent), 0.35), "globe", d.glyph_arg)
+    SPECS["omni_view_world"] = CoverSpec(("OMNI VIEW", "TOP WORLD NEWS"), "THE TEN THAT MATTER MOST TODAY",
+                                         "with Mira, AI host", _lift(_hex("#0B6FD6"), 0.35), "globe", 5)
+
+
+_register_desk_specs()
+
 
 def _vertical_gradient(size: int, top: tuple, bottom: tuple) -> Image.Image:
     strip = Image.new("RGB", (1, size))
@@ -216,6 +241,31 @@ def _draw_glyph(img, draw, spec: CoverSpec, cx: float, cy: float) -> None:
         draw.line([cx, base, nx, ny], fill=NERRA_CYAN + (255,), width=22)
         draw.ellipse([cx - 46, base - 46, cx + 46, base + 46], fill=NERRA_CYAN + (255,))
         _glow(img, [cx - 110, base - 110, cx + 110, base + 110], NERRA_CYAN, 50, 140)
+    elif spec.glyph == "globe":
+        # Omni View desks (Phase 3): a wire globe with the desk's region lit.
+        # glyph_arg: 0 Europe, 1 Asia Pacific, 2 Africa & Middle East,
+        # 3 Central & South America, 4 North America, 5 the whole world.
+        r = 470
+        box = [cx - r, cy - r, cx + r, cy + r]
+        draw.ellipse(box, fill=a + (40,), outline=a + (240,), width=18)
+        for k in (0.36, 0.72):                       # meridians
+            draw.ellipse([cx - r * k, cy - r, cx + r * k, cy + r], outline=a + (150,), width=10)
+        draw.line([cx, cy - r, cx, cy + r], fill=a + (150,), width=10)
+        for f in (-0.55, 0.0, 0.55):                 # parallels
+            y = cy + r * f
+            half = r * math.sqrt(max(0.0, 1 - f * f))
+            draw.line([cx - half, y, cx + half, y], fill=a + (150,), width=10)
+        spots = {0: [(0.05, -0.45)], 1: [(0.55, -0.15)], 2: [(0.12, 0.12)],
+                 3: [(-0.42, 0.42)], 4: [(-0.45, -0.4)],
+                 5: [(0.05, -0.45), (0.55, -0.15), (0.12, 0.12), (-0.42, 0.42), (-0.45, -0.4)]}
+        for fx, fy in spots.get(spec.glyph_arg, spots[5]):
+            mx, my = cx + fx * r, cy + fy * r
+            big = spec.glyph_arg != 5
+            rr = 78 if big else 44
+            draw.ellipse([mx - rr, my - rr, mx + rr, my + rr], fill=NERRA_CYAN + (255,))
+            if big:
+                draw.ellipse([mx - 150, my - 150, mx + 150, my + 150], outline=NERRA_CYAN + (170,), width=12)
+            _glow(img, [mx - 170, my - 170, mx + 170, my + 170], NERRA_CYAN, 60, 120)
     else:  # dial — the Nerra Daily family default
         r = 420
         draw.arc([cx - r, cy - r, cx + r, cy + r], start=205, end=335, fill=a + (235,), width=26)
