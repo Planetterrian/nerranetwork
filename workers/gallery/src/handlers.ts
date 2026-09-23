@@ -96,6 +96,12 @@ const SUBSCRIBE_LISTS: Record<string, string[]> = {
   // gallery tag rides along so the existing download gate recognises
   // members without a second enrolment.
   member: ["nerra-member", SUBSCRIBER_TAG],
+  // Sep 2026: Soft Personal interest form (/personal-interest.html).
+  // Optional email capture for Personal tips/reminder — NOT a waitlist,
+  // NOT paid checkout. Creates the same Nerra account identity so
+  // "one click from your account" on the confirmation is true, plus a
+  // founder-filterable `personal-interest` tag in Buttondown.
+  "personal-interest": ["personal-interest", "nerra-member", SUBSCRIBER_TAG],
 };
 const DEFAULT_LIST = "gallery";
 
@@ -277,10 +283,27 @@ export async function handleSubscribe(
   } catch {
     return jsonResponse(request, 400, { ok: false, error: "invalid json" });
   }
+
+  // Honeypot (Soft Personal interest + future forms): bots that fill
+  // every field trip `company`. Answer success without writing anything
+  // so the trap is invisible and Buttondown stays clean.
+  const honeypot = typeof body?.company === "string" ? body.company.trim() : "";
+  if (honeypot) {
+    console.log("subscribe: honeypot tripped");
+    return jsonResponse(request, 200, { ok: true, discarded: true });
+  }
+
   const email = normaliseEmail(body?.email);
   if (!email) {
     return jsonResponse(request, 400, { ok: false, error: "invalid email" });
   }
+
+  // Optional first name (Soft Personal): capped, stored as Buttondown
+  // subscriber metadata so founders can see it beside the tag. Never
+  // required; empty string is omitted rather than written.
+  const rawName = typeof body?.first_name === "string" ? body.first_name : "";
+  const firstName = rawName.trim().slice(0, 40);
+  const metadata = firstName ? { first_name: firstName } : undefined;
 
   const { tags, list } = resolveSubscribeTags(
     body?.list, body?.source, body?.tags);
@@ -288,6 +311,7 @@ export async function handleSubscribe(
     env.BUTTONDOWN_API_KEY,
     email,
     tags,
+    metadata,
   );
 
   if (!result.ok) {

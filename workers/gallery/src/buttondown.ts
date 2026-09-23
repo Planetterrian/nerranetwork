@@ -56,6 +56,7 @@ export async function subscribe(
   apiKey: string,
   email: string,
   tag: string | string[],
+  metadata?: Record<string, string>,
 ): Promise<SubscribeResult> {
   if (!apiKey) return { ok: false, alreadySubscribed: false, error: "no api key" };
   // July 2026: accepts multiple tags so one signup can carry both the
@@ -65,6 +66,24 @@ export async function subscribe(
   const tags = (Array.isArray(tag) ? tag : [tag]).filter(
     (t) => typeof t === "string" && t.trim().length > 0,
   );
+  // Optional subscriber metadata (Sep 2026 Soft Personal first_name).
+  // Only string values, capped keys — never pass through client objects.
+  const meta: Record<string, string> = {};
+  if (metadata && typeof metadata === "object") {
+    for (const [k, v] of Object.entries(metadata).slice(0, 8)) {
+      if (typeof k === "string" && typeof v === "string" && k && v) {
+        meta[k.slice(0, 40)] = v.slice(0, 80);
+      }
+    }
+  }
+  const payload: Record<string, unknown> = {
+    email_address: email,
+    tags,
+    type: "regular",
+  };
+  if (Object.keys(meta).length > 0) {
+    payload.metadata = meta;
+  }
   let resp: Response;
   try {
     resp = await fetch(`${BUTTONDOWN_BASE}/subscribers`, {
@@ -74,11 +93,7 @@ export async function subscribe(
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({
-        email_address: email,
-        tags,
-        type: "regular",
-      }),
+      body: JSON.stringify(payload),
     });
   } catch (e) {
     return {

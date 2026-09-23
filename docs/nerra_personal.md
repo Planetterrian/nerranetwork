@@ -121,6 +121,28 @@ Rules that bind:
   not billing address; Open-Meteo geocodes it. Multiple locations per
   feed is roadmap, not yet schema.
 
+## Soft Personal interest (`/personal-interest.html`)
+
+Sep 2026 (SpaceX Daily hero funnel): optional email capture for Personal
+tips or a reminder — **not a waitlist, not paid checkout**. Copy SoT is
+the Wed Clip 3 Soft Personal section (curiosity, not scarcity; all 18
+shows stay free; no episode totals).
+
+- Page: `templates/personal_interest_page.html.j2` →
+  `/personal-interest.html` (also linked from `/join.html`).
+- Submissions: `POST https://api.nerranetwork.com/api/subscribe` with
+  `list: "personal-interest"` (Worker tags
+  `personal-interest` + `nerra-member` + `gallery-subscriber`, plus
+  `src-nerranetwork`). Optional newsletter checkbox adds the closed
+  show tag `SpaceX Daily`. Optional first name is stored as Buttondown
+  subscriber metadata. Honeypot field `company` is silently discarded.
+- Founder filter: Buttondown tag `personal-interest`.
+- Paid path stays on `/join.html` ("Or start Personal now →").
+
+Deploy note: the HTML ships with the site; the new Worker list needs a
+`wrangler deploy` of `workers/gallery` before submissions land on the
+new tag (unknown lists fall back to `gallery`).
+
 ## Donations (`/support.html`)
 
 Cost-transparency page (the honest-ledger pitch: ~$120/month runs the

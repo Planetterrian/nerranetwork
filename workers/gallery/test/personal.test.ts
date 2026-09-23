@@ -355,6 +355,16 @@ describe("membership plumbing", () => {
     expect(tags).toContain("gallery-subscriber");
   });
 
+  it("Soft Personal interest list creates an account + filterable tag", () => {
+    const { tags, list } = resolveSubscribeTags(
+      "personal-interest", "src-nerranetwork");
+    expect(list).toBe("personal-interest");
+    expect(tags).toContain("personal-interest");
+    expect(tags).toContain("nerra-member");
+    expect(tags).toContain("gallery-subscriber");
+    expect(tags).toContain("src-nerranetwork");
+  });
+
   it("show newsletter tags pass only from the closed set", () => {
     const { tags } = resolveSubscribeTags("member", undefined, [
       "Tesla Shorts Time", "Not A Real Tag", "SpaceX Daily",
