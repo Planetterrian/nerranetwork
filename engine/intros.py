@@ -982,6 +982,34 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             "you heard. I'm Patrick in Vancouver. See you next week.",
         ],
     },
+    # ---- Phase 2: Mira's local shows (plan §4.5-4.6, §2b) ----
+    # The identity tail discloses the AI host on EVERY episode, the Age of
+    # AI pattern; run_show adds the AI-host spoken disclosure at the end.
+    # Mira is never "in" a place — she is not a person with an address.
+    "vancouver": {
+        "host": "Mira",
+        "show_name": "Vancouver Daily",
+        "identity_tail": "I'm Mira, the Nerra Network's AI host.",
+        "greetings": ["Good morning, this is"],
+        "openers": ["episode {ep}."],
+        "framings": ["What changed in Metro Vancouver today."],
+        "closings": [
+            "That's Vancouver Daily for today. I'm Mira. Get where you're "
+            "going safely — see you tomorrow.",
+        ],
+    },
+    "collingwood": {
+        "host": "Mira",
+        "show_name": "Collingwood Weekly",
+        "identity_tail": "I'm Mira, the Nerra Network's AI host.",
+        "greetings": ["Good morning, this is"],
+        "openers": ["episode {ep}."],
+        "framings": ["The week around the south Georgian Bay."],
+        "closings": [
+            "That's Collingwood Weekly. I'm Mira. Enjoy the weekend — see "
+            "you next Friday.",
+        ],
+    },
 }
 
 

@@ -1,0 +1,247 @@
+# Collingwood Weekly — Phase 2 of docs/new_shows_plan_2026_09_22.md §4.6.
+# The week in Collingwood and the south Georgian Bay towns (Wasaga Beach,
+# Clearview, The Blue Mountains), hosted by Mira, the network's AI host.
+# Friday morning so "the weekend ahead" is true.
+#
+# Roads & Weather Ahead is built from hook ARTICLES only
+# (shows/hooks/collingwood.py: Ontario 511 events around the bay + the
+# Environment Canada forecast for Collingwood).
+#
+# Risk (plan §4.6): thinness. This is the show most likely to hit
+# insufficient_articles in a quiet week; the ledger's first prediction is
+# the skip rate. Every feed reads the week plus a day (window_hours: 192).
+#
+# Distribution OFF at launch. NOT on a cron: Episode 1 is produced by manual
+# dispatch and listened to before the launch PR adds the Friday slot
+# (10:07 UTC = 06:07 ET, plan §6).
+name: Collingwood Weekly
+slug: collingwood
+weekly_summary_segment: false   # a weekly show IS the week in review
+memory_enabled: true
+story_recurrence: true
+description: The week in Collingwood and the south Georgian Bay towns —
+  council and county, the roads and the weekend ahead, local sport, and one
+  local issue argued fairly both ways. Every Friday, hosted by Mira, the Nerra
+  Network's AI host.
+
+fetch_full_text: 12
+absence_sentence_filter: true
+# Weekly: nothing older than nine days by its page or feed date.
+stale_article_days: 9
+
+# Probed 2026-09-23 from this session's egress. Village Media titles use the
+# /rss/local-news section feed (the bare /rss led with a British Columbia
+# election story on CollingwoodToday). Dropped: Simcoe.com search RSS (its
+# newest item was from 2015), Bayshore Broadcasting's /rss (item titles were
+# internal ids), The Blue Mountains and Grey County (no working feed) —
+# Google News covers them. Re-grade from a runner before Episode 1.
+sources:
+- url: https://www.collingwoodtoday.ca/rss/local-news
+  label: CollingwoodToday
+  window_hours: 192
+- url: https://www.collingwoodtoday.ca/rss/local-sports
+  label: CollingwoodToday Sports
+  window_hours: 192
+- url: https://www.simcoe.ca/rss
+  label: County of Simcoe
+  window_hours: 192
+- url: https://www.midlandtoday.ca/rss/local-news
+  label: MidlandToday
+  window_hours: 192
+- url: https://www.barrietoday.com/rss/local-news
+  label: BarrieToday
+  window_hours: 192
+- url: https://news.google.com/rss/search?q=%22Town+of+Collingwood%22+OR+%22Collingwood+council%22+when:7d&hl=en-CA&gl=CA&ceid=CA:en
+  label: Google News Collingwood council
+  window_hours: 192
+- url: https://news.google.com/rss/search?q=Collingwood+Ontario+when:7d&hl=en-CA&gl=CA&ceid=CA:en
+  label: Google News Collingwood
+  window_hours: 192
+- url: https://news.google.com/rss/search?q=%22Blue+Mountain%22+resort+OR+%22Town+of+The+Blue+Mountains%22+OR+Thornbury+when:7d&hl=en-CA&gl=CA&ceid=CA:en
+  label: Google News Blue Mountains
+  window_hours: 192
+- url: https://news.google.com/rss/search?q=%22Wasaga+Beach%22+when:7d&hl=en-CA&gl=CA&ceid=CA:en
+  label: Google News Wasaga Beach
+  window_hours: 192
+- url: https://news.google.com/rss/search?q=%22Clearview+Township%22+OR+Stayner+OR+%22Grey+County%22+when:7d&hl=en-CA&gl=CA&ceid=CA:en
+  label: Google News Clearview & Grey County
+  window_hours: 192
+- url: https://news.google.com/rss/search?q=%22Collingwood+Blues%22+OR+%22Georgian+Bay%22+hockey+OR+ski+when:7d&hl=en-CA&gl=CA&ceid=CA:en
+  label: Google News local sport
+  window_hours: 192
+- url: https://news.google.com/rss/search?q=Collingwood+OR+%22Blue+Mountain%22+festival+OR+event+OR+concert+when:7d&hl=en-CA&gl=CA&ceid=CA:en
+  label: Google News events
+  window_hours: 192
+
+web_search_queries:
+- Collingwood Ontario news this week
+- Town of Collingwood council news
+- Blue Mountain Wasaga Beach Clearview news this week
+
+exclude_title_patterns:
+- '\b(best deals?|coupon|promo code|black friday|% off)\b'
+- '\b(horoscope|lotto max|lottery results|winning numbers)\b'
+- '\b(sponsored|advertorial|presented by)\b'
+- '\b(obituar(y|ies)|in memoriam)\b'
+
+# Region purity: a story happens in, or is decided for, Collingwood and the
+# south Georgian Bay (Simcoe and Grey county decisions count).
+keywords:
+- collingwood
+- wasaga
+- clearview
+- stayner
+- creemore
+- blue mountain
+- blue mountains
+- thornbury
+- meaford
+- georgian bay
+- simcoe county
+- grey county
+- nottawasaga
+- craigleith
+- georgian triangle
+
+# X fetch OFF at launch: the town, county and local newsroom handles are
+# unverified, and a weekly show reading a handful of quiet accounts would
+# spend a search call per handle for little. Turn on with verified handles
+# after Episode 1 (read the first run's per-handle counts, plan §9a).
+x_fetch_enabled: false
+
+min_articles: 4
+# A small town in a quiet week is a real case (plan §4.6).
+min_articles_skip: 3
+
+max_weekly_cost_usd: 3.0
+
+multilingual:
+  enabled: false
+
+llm:
+  provider: xai
+  # grok-4.7 on every stage that writes, like every new show (operator
+  # brief 2026-09-23; experiment new-shows-grok-47-2026-09-23).
+  model: grok-4.7
+  system_prompt_file: shows/prompts/collingwood_system.txt
+  digest_prompt_file: shows/prompts/collingwood_digest.txt
+  podcast_prompt_file: shows/prompts/collingwood_podcast.txt
+  digest_temperature: 0.4
+  podcast_temperature: 0.7
+  max_tokens: 5000
+  podcast_max_tokens: 8000
+  # About ten minutes. Set to what a small-town week supports (plan §9a);
+  # the skip floor is 60% of this.
+  min_podcast_words: 1100
+  podcast_expand_below_target: false
+  min_digest_words: 1000
+  digest_expand_below_target: true
+
+tts:
+  # Mira's voice, no speech wrap — see shows/vancouver.yaml.
+  voice_id: ara
+  speech_wrap_open: ""
+  speech_wrap_close: ""
+
+audio:
+  # Voice-only until a "local" theme is commissioned (plan §5c).
+  transition_sting: assets/music/transition_sting.mp3
+  voice_intro_delay: 0.0
+  intro_duration: 0.0
+
+publishing:
+  rss_file: collingwood_podcast.rss
+  rss_title: Collingwood Weekly
+  rss_description: 'The week in Collingwood and the south Georgian Bay towns,
+    every Friday morning: council and county decisions, the roads and the
+    weather for the weekend ahead, local sport, what is on, and one local issue
+    argued fairly both ways. Hosted by Mira, the Nerra Network''s AI host —
+    every story from named local sources.'
+  rss_link: https://nerranetwork.com/collingwood.html
+  rss_author: Mira (AI host), Nerra Network
+  rss_email: patrick@planetterrian.com
+  rss_image: https://nerranetwork.com/assets/covers/collingwood.jpg
+  rss_category: News
+  rss_subcategory: Daily News
+  rss_category2: "Society & Culture"
+  rss_subcategory2: "Places & Travel"
+  rss_keywords: collingwood, georgian bay, wasaga beach, blue mountains,
+    clearview, simcoe county, ontario local news
+  guid_prefix: collingwood
+  base_url: https://nerranetwork.com
+  audio_subdir: digests/collingwood
+  summaries_json: digests/collingwood/summaries_collingwood.json
+  summaries_podcast_name: collingwood
+  player_html: collingwood.html
+  summaries_html: collingwood-summaries.html
+  x_enabled: false
+  x_env_prefix: X_
+  host_name: Mira
+  host_kind: ai
+
+episode:
+  prefix: Collingwood_Weekly
+  filename_pattern: '{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3'
+  output_dir: digests/collingwood
+  mp3_glob: Collingwood_Weekly_Ep*.mp3
+
+chapters:
+  enabled: true
+  section_markers:
+  - pattern: This is Collingwood Weekly|first episode of|Collingwood Weekly, episode
+    title: Introduction
+    where: start
+  - pattern: at the council table
+    title: Council & County
+  - pattern: roads and (the )?weather ahead
+    title: Roads & Weather Ahead
+  - pattern: the weekend ahead
+    title: The Weekend
+  - pattern: case on both sides
+    title: Both Sides
+  - pattern: That's Collingwood Weekly|see you next Friday
+    title: Closing
+    where: end
+
+slow_news:
+  enabled: false
+
+newsletter:
+  enabled: false
+  platform: buttondown
+  api_key_env: BUTTONDOWN_API_KEY
+  status: about_to_send
+  tag: Collingwood Weekly
+  short_label: Collingwood
+  emoji: ⛰️
+  newsletter_start_date: '2026-10-16'
+  requires_financial_disclaimer: false
+  length_target_words: 1000
+
+content_tracking:
+  section_patterns: {}
+
+youtube:
+  enabled: false
+  channel: en
+  category_id: 25
+  shorts_start_mode: smart
+  shorts_min_score_threshold: 3.5
+  default_language: en
+  privacy_status: public
+  image_provider: grok
+  grok_image_model: grok-imagine-image
+  grok_image_descriptor: "cinematic small-town Ontario photo, natural light, ultra-detailed"
+  image_queries:
+  - Collingwood harbour grain terminals at dusk
+  - Blue Mountain ski hills in autumn colour
+  - Georgian Bay shoreline at sunrise
+  - small-town main street with brick storefronts
+  - Wasaga Beach in the off season
+  - county road through farmland in fall
+  image_query_prefix: ''
+  tags:
+  - collingwood
+  - georgian bay
+  - ontario
+  - local news

@@ -1,0 +1,308 @@
+# Vancouver Daily News — Phase 2 of docs/new_shows_plan_2026_09_22.md §4.5.
+# The morning brief for people who live in Metro Vancouver, hosted by Mira,
+# the network's AI host. It is the first Mira NEWS show and therefore the
+# calibration set for the AI-host path on run_show (plan §2b): the identity
+# line discloses the AI every day, the spoken and RSS disclosures are the
+# AI-host variants (run_show._spoken_disclosure / _rss_disclosure_for), and
+# the spoken-text gate is enforce (English).
+#
+# Getting Around is built from hook ARTICLES only (shows/hooks/vancouver.py:
+# DriveBC's major Metro Vancouver events + the Environment Canada forecast),
+# so the claims gate can verify it and a data-less day says so in one line.
+#
+# Distribution OFF at launch (RSS + site + blog). NOT on a cron: Episode 1 is
+# produced by manual dispatch and listened to before the launch PR adds the
+# schedule (12:16 UTC = 05:16 PDT, plan §6).
+name: Vancouver Daily News
+slug: vancouver
+weekly_summary_segment: true   # daily cadence; Sunday adds a short week-in-review segment
+memory_enabled: true
+story_recurrence: true
+description: The morning brief for Metro Vancouver — the day's civic and
+  provincial stories, getting around, sport, what's on, and one local issue
+  argued fairly both ways. Hosted by Mira, the Nerra Network's AI host.
+
+# Local wire copy is short; the digest reads full article text.
+fetch_full_text: 12
+absence_sentence_filter: true
+# A daily local brief: nothing older than three days by its page or feed
+# date reaches the prompt (Google News re-surfaces old stories under fresh
+# index dates — the Offshore North lesson).
+stale_article_days: 3
+
+# Probed 2026-09-23 from this session's egress (200, posts inside the day).
+# Glacier/Village Media titles use the /rss/local-news section feed: the bare
+# /rss is a network aggregate that led with the same national wire story on
+# every title. Re-grade from a runner (`python check_feeds.py vancouver`)
+# before Episode 1. No feed: BC Gov News (timeout), TransLink (/news/rss is
+# empty), Burnaby Now / Tri-City News (/rss served HTML) — Google News
+# covers them.
+sources:
+- url: https://www.cbc.ca/webfeed/rss/rss-canada-britishcolumbia
+  label: CBC British Columbia
+- url: https://vancouversun.com/feed
+  label: Vancouver Sun
+- url: https://theprovince.com/feed
+  label: The Province
+- url: https://globalnews.ca/bc/feed/
+  label: Global BC
+- url: https://vancouver.citynews.ca/feed/
+  label: CityNews Vancouver
+- url: https://dailyhive.com/feed/vancouver
+  label: Daily Hive Vancouver
+- url: https://www.vancouverisawesome.com/rss/local-news
+  label: Vancouver Is Awesome
+- url: https://www.nsnews.com/rss/local-news
+  label: North Shore News
+- url: https://www.richmond-news.com/rss/local-news
+  label: Richmond News
+- url: https://www.straight.com/rss.xml
+  label: The Georgia Straight
+- url: https://thetyee.ca/rss2.xml
+  label: The Tyee
+- url: https://biv.com/rss
+  label: Business in Vancouver
+- url: https://vpd.ca/feed/
+  label: Vancouver Police Department
+- url: https://news.ubc.ca/feed/
+  label: UBC News
+- url: https://canucksarmy.com/feed/
+  label: CanucksArmy
+- url: https://news.google.com/rss/search?q=%22Vancouver+city+council%22+OR+%22Vancouver+council%22+when:2d&hl=en-CA&gl=CA&ceid=CA:en
+  label: Google News Vancouver council
+- url: https://news.google.com/rss/search?q=TransLink+OR+SkyTrain+when:2d&hl=en-CA&gl=CA&ceid=CA:en
+  label: Google News TransLink
+- url: https://news.google.com/rss/search?q=%22Metro+Vancouver%22+OR+Burnaby+OR+Surrey+OR+Coquitlam+when:2d&hl=en-CA&gl=CA&ceid=CA:en
+  label: Google News Metro Vancouver
+- url: https://news.google.com/rss/search?q=%22B.C.+government%22+OR+%22BC+legislature%22+OR+Eby+when:2d&hl=en-CA&gl=CA&ceid=CA:en
+  label: Google News BC government
+- url: https://news.google.com/rss/search?q=Canucks+OR+Whitecaps+OR+%22BC+Lions%22+when:2d&hl=en-CA&gl=CA&ceid=CA:en
+  label: Google News Vancouver sport
+- url: https://news.google.com/rss/search?q=Vancouver+events+this+weekend+OR+festival+OR+concert+when:3d&hl=en-CA&gl=CA&ceid=CA:en
+  label: Google News Vancouver events
+
+web_search_queries:
+- Vancouver news today
+- Metro Vancouver council transit housing news today
+- British Columbia government news today
+
+exclude_title_patterns:
+# Shopping, listicles and restaurant churn only. Never bare "deal" (a
+# council or labour deal is news) or "opening" (a SkyTrain station opening
+# is news).
+- '\b(best deals?|coupon|promo code|black friday|% off)\b'
+- '\b(best|top) \d+ (restaurants|brunch|patios|things to do|places)\b'
+- '\b(horoscope|lotto max|lottery results|winning numbers)\b'
+- '\b(sponsored|advertorial|presented by)\b'
+
+# Region purity is a prompt rule (the first rule of the digest), and these
+# keywords are the fetch-side filter: a story names a Metro Vancouver
+# municipality, a BC institution or a local team.
+keywords:
+- vancouver
+- metro vancouver
+- burnaby
+- surrey
+- richmond
+- coquitlam
+- port coquitlam
+- port moody
+- new westminster
+- north vancouver
+- west vancouver
+- delta
+- langley
+- maple ridge
+- pitt meadows
+- white rock
+- tsawwassen
+- squamish
+- b.c.
+- british columbia
+- bc
+- translink
+- skytrain
+- canucks
+- whitecaps
+- bc lions
+- ubc
+- sfu
+- yvr
+- eby
+
+# X accounts: newsrooms and agencies that post every day (the Phase 1
+# lesson — people who post rarely return nothing). Source only; the show
+# never posts. Read the first run's per-handle counts and prune.
+x_fetch_enabled: true
+x_accounts:
+- handle: CBCVancouver
+  label: CBC Vancouver
+  max_posts: 3
+- handle: VancouverSun
+  label: Vancouver Sun
+  max_posts: 3
+- handle: globalnewsbc
+  label: Global BC
+  max_posts: 3
+- handle: CityNewsVAN
+  label: CityNews Vancouver
+  max_posts: 2
+- handle: TransLink
+  label: TransLink
+  max_posts: 2
+- handle: DriveBC
+  label: DriveBC
+  max_posts: 2
+- handle: VancouverPD
+  label: Vancouver Police
+  max_posts: 2
+- handle: CityofVancouver
+  label: City of Vancouver
+  max_posts: 2
+- handle: BCGovNews
+  label: BC Government News
+  max_posts: 2
+
+min_articles: 8
+min_articles_skip: 4
+
+# Cost circuit breaker — TOP LEVEL (nested keys are ignored; see _defaults).
+max_weekly_cost_usd: 8.0
+
+multilingual:
+  enabled: false
+
+llm:
+  provider: xai
+  # grok-4.7 on every stage that writes, like every new show (operator
+  # brief 2026-09-23; experiment new-shows-grok-47-2026-09-23).
+  model: grok-4.7
+  system_prompt_file: shows/prompts/vancouver_system.txt
+  digest_prompt_file: shows/prompts/vancouver_digest.txt
+  podcast_prompt_file: shows/prompts/vancouver_podcast.txt
+  digest_temperature: 0.4
+  podcast_temperature: 0.7
+  max_tokens: 5500
+  podcast_max_tokens: 9000
+  # A 8-9 minute commute brief. The skip floor is 60% of this (720 words);
+  # set to what a local digest supports (the Phase 1 lesson, plan §9a).
+  min_podcast_words: 1200
+  podcast_expand_below_target: false
+  min_digest_words: 1200
+  digest_expand_below_target: true
+
+tts:
+  # Mira's voice (Grok built-in `ara`) — the voice Nerra Daily listeners
+  # already know. No speech wrap: Nerra Daily's Mira links are synthesized
+  # without one, and the network default <fast> wrap was tuned on Patrick's
+  # voice (plan §2b). Episode 1 is the listen that confirms it; turning the
+  # wrap on is these two lines.
+  voice_id: ara
+  speech_wrap_open: ""
+  speech_wrap_close: ""
+
+audio:
+  # Voice-only until a "local" theme is commissioned (plan §5c). No music
+  # intro, so no intro offset on the chapter timestamps either.
+  transition_sting: assets/music/transition_sting.mp3
+  voice_intro_delay: 0.0
+  intro_duration: 0.0
+
+publishing:
+  rss_file: vancouver_podcast.rss
+  rss_title: Vancouver Daily News
+  rss_description: 'The morning brief for people who live in Metro Vancouver,
+    ready before the commute. Every day: the civic and provincial stories that
+    change something here, getting around (roads, transit and the forecast),
+    sport, what is on, and one contested local issue argued fairly both ways.
+    Hosted by Mira, the Nerra Network''s AI host — every story from named local
+    sources.'
+  rss_link: https://nerranetwork.com/vancouver.html
+  rss_author: Mira (AI host), Nerra Network
+  rss_email: patrick@planetterrian.com
+  rss_image: https://nerranetwork.com/assets/covers/vancouver.jpg
+  rss_category: News
+  rss_subcategory: Daily News
+  rss_category2: "Society & Culture"
+  rss_subcategory2: "Places & Travel"
+  rss_keywords: vancouver news, metro vancouver, british columbia, bc news,
+    translink, vancouver daily
+  guid_prefix: vancouver
+  base_url: https://nerranetwork.com
+  audio_subdir: digests/vancouver
+  summaries_json: digests/vancouver/summaries_vancouver.json
+  summaries_podcast_name: vancouver
+  player_html: vancouver.html
+  summaries_html: vancouver-summaries.html
+  x_enabled: false
+  x_env_prefix: X_
+  host_name: Mira
+  host_kind: ai
+
+episode:
+  prefix: Vancouver_Daily
+  filename_pattern: '{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3'
+  output_dir: digests/vancouver
+  mp3_glob: Vancouver_Daily_Ep*.mp3
+
+chapters:
+  enabled: true
+  # Anchors only — never a topic word. News chapters come from the digest
+  # headlines; the three segments key on REQUIRED phrases the podcast
+  # prompt builds a sentence around.
+  section_markers:
+  - pattern: This is Vancouver Daily|first episode of|Vancouver Daily, episode
+    title: Introduction
+    where: start
+  - pattern: getting around
+    title: Getting Around
+  - pattern: what'?s on around town
+    title: What's On
+  - pattern: case on both sides
+    title: Both Sides
+  - pattern: That's Vancouver Daily|see you tomorrow
+    title: Closing
+    where: end
+
+slow_news:
+  enabled: false
+
+newsletter:
+  enabled: false
+  platform: buttondown
+  api_key_env: BUTTONDOWN_API_KEY
+  status: about_to_send
+  tag: Vancouver Daily News
+  short_label: Vancouver
+  emoji: 🏔️
+  newsletter_start_date: '2026-10-15'
+  requires_financial_disclaimer: false
+  length_target_words: 1200
+
+content_tracking:
+  section_patterns: {}
+
+youtube:
+  enabled: false                 # OFF at launch (plan §7: a second channel is a data decision)
+  channel: en
+  category_id: 25
+  shorts_start_mode: smart
+  shorts_min_score_threshold: 3.5
+  default_language: en
+  privacy_status: public
+  image_provider: grok
+  grok_image_model: grok-imagine-image
+  grok_image_descriptor: "cinematic Vancouver city photo, natural light, ultra-detailed"
+  image_queries:
+  - Vancouver skyline with the North Shore mountains
+  - SkyTrain crossing a bridge at dawn
+  - Vancouver city hall exterior
+  - seawall with joggers at sunrise
+  - rainy Vancouver street at night
+  - Lions Gate Bridge in fog
+  image_query_prefix: ''
+  tags:
+  - vancouver
+  - metro vancouver
+  - british columbia
+  - local news

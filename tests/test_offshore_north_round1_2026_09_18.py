@@ -70,7 +70,7 @@ class TestCampaignWindow:
     # Sep 2026: the weekly health shows read a week of each feed — a
     # deliberate, named opt-in (docs/new_shows_plan_2026_09_22.md §4.3),
     # not a silent network-wide change, which is what this guard catches.
-    WINDOW_HOURS_OPT_IN = {"offshore_north", "peptides", "longevity"}
+    WINDOW_HOURS_OPT_IN = {"offshore_north", "peptides", "longevity", "collingwood"}
 
     def test_no_other_show_uses_window_hours(self):
         offenders = []
@@ -129,7 +129,7 @@ class TestStaleArticleGate:
         assert ShowConfig().stale_article_days == 0
         offenders = []
         # Sep 2026: the weekly health shows opt in by name (plan §4.3).
-        opt_in = {"offshore_north", "peptides", "longevity"}
+        opt_in = {"offshore_north", "peptides", "longevity", "vancouver", "collingwood"}
         for path in sorted((_ROOT / "shows").glob("*.yaml")):
             if path.stem.startswith("_") or path.stem in opt_in:
                 continue

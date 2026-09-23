@@ -437,6 +437,38 @@ LONGEVITY_SECTION_PATTERNS: Dict[str, str] = {
     ),
 }
 
+VANCOUVER_SECTION_PATTERNS: Dict[str, str] = {
+    "headlines": (
+        r"(?:### Top Stories|## Top Stories)(.*?)"
+        r"(?=### City & Province|## City & Province|$)"
+    ),
+    "city_province": (
+        r"(?:### City & Province|## City & Province)(.*?)"
+        r"(?=### Getting Around|## Getting Around|$)"
+    ),
+    "sports": (
+        r"(?:### Sports|## Sports)(.*?)"
+        r"(?=### What's On|## What's On|### Both Sides|## Both Sides|$)"
+    ),
+    "deep_dive": (
+        r"(?:### Both Sides|## Both Sides)(.*?)(?=$)"
+    ),
+}
+
+COLLINGWOOD_SECTION_PATTERNS: Dict[str, str] = {
+    "headlines": (
+        r"(?:### The Week's Stories|## The Week's Stories)(.*?)"
+        r"(?=### Council & County|## Council & County|### Roads|## Roads|$)"
+    ),
+    "council": (
+        r"(?:### Council & County|## Council & County)(.*?)"
+        r"(?=### Roads|## Roads|$)"
+    ),
+    "deep_dive": (
+        r"(?:### Both Sides|## Both Sides)(.*?)(?=$)"
+    ),
+}
+
 # Registry mapping show slugs to their section patterns.
 # New shows should be added here to enable cross-episode content tracking.
 SHOW_SECTION_PATTERNS: Dict[str, Dict[str, str]] = {
@@ -457,6 +489,8 @@ SHOW_SECTION_PATTERNS: Dict[str, Dict[str, str]] = {
     "mag7": MAG7_SECTION_PATTERNS,
     "peptides": PEPTIDES_SECTION_PATTERNS,
     "longevity": LONGEVITY_SECTION_PATTERNS,
+    "vancouver": VANCOUVER_SECTION_PATTERNS,
+    "collingwood": COLLINGWOOD_SECTION_PATTERNS,
 }
 
 

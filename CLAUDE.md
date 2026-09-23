@@ -235,7 +235,7 @@ unfiltered agree, which is exactly why the filter went in before it mattered.
 
 ## Project Overview
 
-Automated daily podcast generation system running 22 shows via a unified
+Automated daily podcast generation system running 24 shows via a unified
 `run_show.py` runner + per-show YAML configs, plus 4 legacy standalone scripts
 (deprecated — see note below). Shows use **Grok TTS** (`engine.tts.grok_speak_chunk`)
 and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
@@ -262,6 +262,8 @@ and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 | MAG 7 Daily | — | `shows/mag7.yaml` | Daily | — (X source only) | Grok TTS (custom) |
 | Peptides Weekly | — | `shows/peptides.yaml` | Thursday | — (X source only) | Grok TTS (custom) |
 | Longevity Weekly | — | `shows/longevity.yaml` | Wednesday | — (X source only) | Grok TTS (custom) |
+| Vancouver Daily News | — | `shows/vancouver.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X source only) | Grok TTS (Mira, `ara`) |
+| Collingwood Weekly | — | `shows/collingwood.yaml` | Friday (pre-launch) | — (X disabled) | Grok TTS (Mira, `ara`) |
 | Nerra Daily | — | registry-only (`shows/network_meta.yaml`; NOT run_show — assembled by `scripts/build_daily_edition.py`) | Daily, after the English slate | — (X disabled) | Splices published show audio + Mira links (Grok voice `ara`) |
 
 > Weekly-summary segment (July 2026): shows on a daily cadence with
@@ -954,6 +956,15 @@ today's work, not just explain yesterday's):
   cdnjs + OSM tiles) plots only the dated PLACES a team post named — an
   entry without `lat`/`lon` gets no marker — and the show page carries a
   campaign strip from the same record.
+- **Vancouver Daily News / Collingwood Weekly** (Sep 2026, pre-launch) — the
+  first run_show shows with an AI host: `host_kind: ai`, Mira on `ara`, NO
+  speech wrap (Nerra Daily's Mira has none). Roads and weather arrive as
+  sourced hook ARTICLES from `engine/local_conditions.py` (DriveBC boxed to
+  Metro Vancouver, Ontario 511, Environment Canada's `/rss/weather/` feed);
+  a data-less day is one sentence. **Every new show runs grok-4.7** on its
+  writing stages and includes `_shared/interesting_first.txt` (operator
+  brief 2026-09-23; plan §9b; the established shows stay on grok-4.3).
+  Guards: `tests/test_new_shows_phase2_2026_09_23.py`.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:
