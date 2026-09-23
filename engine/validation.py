@@ -860,16 +860,12 @@ def ai_chips_validation_config() -> ValidationConfig:
 
 
 def mag7_validation_config() -> ValidationConfig:
-    """MAG 7 Daily (Sep 2026)."""
+    """MAG 7 Daily (Sep 2026). The Tape is a reader-only line at the foot of
+    the digest since 2026-09-23 and is omitted when there are no prices, so
+    it is not a required section."""
     return ValidationConfig(
         section_pairs=[],
         sections=[
-            SectionRule(
-                name="The Tape",
-                pattern=r"(?:### The Tape|## The Tape)(.*?)(?=### Top News|## Top News|$)",
-                min_items=0,
-                min_chars=40,
-            ),
             _items_rule("Top News", "Top News", r"### Company Desk|## Company Desk", 2),
             _items_rule("Company Desk", "Company Desk",
                         r"### The Counterpoint|## The Counterpoint", 2),
@@ -888,7 +884,7 @@ def peptides_validation_config() -> ValidationConfig:
             SectionRule(
                 name="Peptide Spotlight",
                 pattern=(r"(?:### Peptide Spotlight|## Peptide Spotlight)(.*?)"
-                         r"(?=### Evidence Ledger|## Evidence Ledger|$)"),
+                         r"(?=### Worth Knowing|## Worth Knowing|### Evidence Ledger|## Evidence Ledger|$)"),
                 min_items=0,
                 min_chars=600,
             ),
@@ -907,9 +903,55 @@ def longevity_validation_config() -> ValidationConfig:
             SectionRule(
                 name="Mechanism of the Week",
                 pattern=(r"(?:### Mechanism of the Week|## Mechanism of the Week)(.*?)"
-                         r"(?=### Evidence Ledger|## Evidence Ledger|$)"),
+                         r"(?=### Worth Knowing|## Worth Knowing|### Evidence Ledger|## Evidence Ledger|$)"),
                 min_items=0,
                 min_chars=600,
+            ),
+        ],
+        forbidden_patterns=[r"https?://\S+"],
+    )
+
+
+def vancouver_validation_config() -> ValidationConfig:
+    """Vancouver Daily News (Sep 2026, Phase 2)."""
+    return ValidationConfig(
+        section_pairs=[],
+        sections=[
+            _items_rule("Top Stories", "Top Stories", r"### City & Province|## City & Province", 2),
+            _items_rule("City & Province", "City & Province",
+                        r"### Getting Around|## Getting Around", 1),
+            SectionRule(
+                name="Getting Around",
+                pattern=(r"(?:### Getting Around|## Getting Around)(.*?)"
+                         r"(?=### Sports|## Sports|### What's On|## What's On|### Both Sides|## Both Sides|$)"),
+                min_items=0,
+                min_chars=60,
+            ),
+            SectionRule(
+                name="Both Sides",
+                pattern=r"(?:### Both Sides|## Both Sides)(.*?)$",
+                min_items=0,
+                min_chars=400,
+            ),
+        ],
+        forbidden_patterns=[r"https?://\S+"],
+    )
+
+
+def collingwood_validation_config() -> ValidationConfig:
+    """Collingwood Weekly (Sep 2026, Phase 2). Council & County, Sport, The
+    Weekend and Both Sides are omitted in a quiet week by design."""
+    return ValidationConfig(
+        section_pairs=[],
+        sections=[
+            _items_rule("The Week's Stories", "The Week's Stories",
+                        r"### Council|## Council|### Roads|## Roads", 2),
+            SectionRule(
+                name="Roads & Weather Ahead",
+                pattern=(r"(?:### Roads & Weather Ahead|## Roads & Weather Ahead)(.*?)"
+                         r"(?=### Sport|## Sport|### The Weekend|## The Weekend|### Both Sides|## Both Sides|$)"),
+                min_items=0,
+                min_chars=60,
             ),
         ],
         forbidden_patterns=[r"https?://\S+"],
@@ -933,4 +975,6 @@ SHOW_VALIDATION_CONFIGS = {
     "mag7": mag7_validation_config,
     "peptides": peptides_validation_config,
     "longevity": longevity_validation_config,
+    "vancouver": vancouver_validation_config,
+    "collingwood": collingwood_validation_config,
 }

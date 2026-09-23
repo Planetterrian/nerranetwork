@@ -60,8 +60,8 @@ and the blog all read them — and add ONE new section directly after the
 **What You Need to Know** paragraph:
 
 **### What This Show Covers** (200-300 words, first episode only)
-- Open on the subject, not the show: seven companies — Alphabet, Amazon, Apple, Meta, Microsoft, NVIDIA and Tesla — treated as one desk because together they move the market and share suppliers, regulators and bets; the daily shape: the closes, the news, one thread that runs across several of them, and the calendar.
-- The boundaries, as a listener promise: Tesla's products and self-driving are Tesla Shorts Time; stock picks are Modern Investing Techniques; this show never gives advice, never predicts a price, and every price it speaks is a close.
+- Open on the subject, not the show: seven companies — Alphabet, Amazon, Apple, Meta, Microsoft, NVIDIA and Tesla — treated as one desk because between them they ship the phones, the clouds, the models and the chips most people use, and they share suppliers, regulators and bets; the daily shape: what they shipped, discovered and were allowed to do, and one thread that runs across several of them.
+- The boundaries, as a listener promise: Tesla's products and self-driving are Tesla Shorts Time; stock picks are Modern Investing Techniques; this is not a stock show — it never gives advice and never predicts a price.
 - The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
 
 Then run the normal sections. Debut discipline: the STRONGEST stories only,
@@ -102,6 +102,38 @@ Then run the normal sections. Debut discipline: the STRONGEST stories only,
 jargon defined on first use, no reference to earlier episodes, and every
 factual claim held to the normal sourcing rules — only the introduction
 speaks from the show's own identity.
+""",
+    "vancouver": """
+### FIRST EPISODE (Episode {episode_num}) — DEBUT BRIEF for "{show_name}"
+A normal episode with a real introduction in front of it. Keep the standard
+hook line and every standard section heading — the pipeline, the validator
+and the blog all read them — and add ONE new section directly after the
+**What You Need to Know** paragraph:
+
+**### What This Show Covers** (180-260 words, first episode only)
+- Open on the listener, not the show: a short morning brief for people who live in Metro Vancouver — what council and the province decided, what it means for getting around today, how the local teams did, what is on, and one contested local issue with the strongest case on each side.
+- The host, stated plainly: the brief is read by Mira, the network's AI host. The stories are chosen and written by software from named local newsrooms and public data (DriveBC, Environment Canada), and every item names its source. The one thing it will not do: speculate about people — no guesses about anyone's motives, guilt, health or private life, and no endorsements at election time.
+- The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
+
+Then run the normal sections. Debut discipline: the STRONGEST stories only,
+no reference to earlier episodes, and every factual claim held to the normal
+sourcing rules — only the introduction speaks from the show's own identity.
+""",
+    "collingwood": """
+### FIRST EPISODE (Episode {episode_num}) — DEBUT BRIEF for "{show_name}"
+A normal weekly round-up with a real introduction in front of it. Keep the
+standard hook line and every standard section heading — the pipeline, the
+validator and the blog all read them — and add ONE new section directly after
+the **What You Need to Know** paragraph:
+
+**### What This Show Covers** (180-260 words, first episode only)
+- Open on the listener, not the show: every Friday morning, the week in Collingwood and the south Georgian Bay towns — Wasaga Beach, Clearview, The Blue Mountains — what the councils and counties decided, the roads and weather for the weekend ahead, local sport, what is on, and one contested local issue with the strongest case on each side.
+- The host, stated plainly: the round-up is read by Mira, the network's AI host. The stories are chosen and written by software from named local newsrooms and public data (Ontario 511, Environment Canada), and every item names its source. The one thing it will not do: speculate about people — no guesses about anyone's motives, guilt, health or private life.
+- The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
+
+Then run the normal sections. Debut discipline: the STRONGEST stories only,
+no reference to earlier episodes, and every factual claim held to the normal
+sourcing rules — only the introduction speaks from the show's own identity.
 """,
     "offshore_north": """
 ### FIRST EPISODE (Episode {episode_num}) — DEBUT BRIEF for "{show_name}"
@@ -244,6 +276,36 @@ _SHOW_PODCAST_EP1 = {
 - Then a normal episode. Give the top story a little more room than usual.
 - No "welcome back", no reference to earlier episodes, no superlatives
   about the network, and no counts of shows or listeners.
+- The closing is the supplied one, unchanged.
+""",
+    "vancouver": """
+### FIRST EPISODE (Episode {episode_num}) — DEBUT SCRIPT for "{show_name}"
+- The cold open and identity line stay exactly as specified. The identity
+  line already says Mira is an AI host; directly after it, spend forty-five
+  to seventy-five seconds on what this brief is, built from the digest's
+  "What This Show Covers" section, rewritten for the ear: who it is for,
+  what it covers, how the stories are chosen, and the one thing it will not
+  do — in plain sentences, never a list, never a tour of the network.
+- Mira never claims to live in Vancouver or to have felt the weather; she
+  says what she is and moves on.
+- Then a normal episode. No "welcome back", no reference to earlier
+  episodes, no superlatives about the network, and no counts of shows or
+  listeners.
+- The closing is the supplied one, unchanged.
+""",
+    "collingwood": """
+### FIRST EPISODE (Episode {episode_num}) — DEBUT SCRIPT for "{show_name}"
+- The cold open and identity line stay exactly as specified. The identity
+  line already says Mira is an AI host; directly after it, spend forty-five
+  to seventy-five seconds on what this round-up is, built from the digest's
+  "What This Show Covers" section, rewritten for the ear: who it is for,
+  what it covers, how the stories are chosen, and the one thing it will not
+  do — in plain sentences, never a list, never a tour of the network.
+- Mira never claims to live on the bay or to have skied the hill; she says
+  what she is and moves on.
+- Then a normal episode. No "welcome back", no reference to earlier
+  episodes, no superlatives about the network, and no counts of shows or
+  listeners.
 - The closing is the supplied one, unchanged.
 """,
     "offshore_north": """

@@ -44,7 +44,8 @@ EXPECTED_HUB_SHOWS = {
 
 #: Shows launched after the snapshot (new-shows plan, Sep 2026). Each joins
 #: its hubs when its first episode publishes; see the test below.
-LAUNCHED_AFTER_SNAPSHOT = ("ai_chips", "mag7", "peptides", "longevity")
+LAUNCHED_AFTER_SNAPSHOT = ("ai_chips", "mag7", "peptides", "longevity",
+                           "vancouver", "collingwood")
 
 #: The slugs every one of the seven replaced tuples named. ``engine.show_lang``
 #: derives this from ``tts.language_code``; this pins that the derivation still
@@ -73,12 +74,20 @@ class TestTopicHubsDidNotSilentlyShrink:
         pinned = {hub: members - launched_later for hub, members in got.items()}
         assert pinned == EXPECTED_HUB_SHOWS
         has_feed = {s["slug"]: s.get("has_feed", True) for s in shows}
+        tags = {s["slug"]: {str(x).lower() for x in ((s.get("picker_tags") or {}).get("topics") or [])}
+                for s in shows}
         for slug in launched_later:
             hubs = {hub for hub, members in got.items() if slug in members}
             if has_feed.get(slug) is False:
                 assert not hubs, f"{slug} has no feed but is in {hubs}"
-            elif slug in has_feed:
-                assert hubs, f"{slug} publishes but joined no /topics/ hub"
+            elif slug in has_feed and not hubs:
+                # A show whose only hub is still below MIN_EPISODES_FOR_HUB
+                # (Phase 2's local-news hub at launch) joins it when the
+                # archive is deep enough; until then no hub page exists to join.
+                mapped = [h["id"] for h in H.TOPIC_HUBS
+                          if tags[slug] & {str(x).lower() for x in h["picker_topics"]}]
+                assert mapped and not (set(mapped) & set(got)), (
+                    f"{slug} publishes but joined no /topics/ hub")
 
     def test_every_registered_show_still_declares_picker_topics(self):
         """A show whose tags went missing joins no hub and is not otherwise
@@ -86,8 +95,9 @@ class TestTopicHubsDidNotSilentlyShrink:
         import generate_html as G
 
         shows = G._build_all_shows_list()
-        # 22 since 2026-09-22 (new-shows Phase 1).
-        assert len(shows) == 22
+        # 22 since 2026-09-22 (new-shows Phase 1); 24 since 2026-09-23
+        # (Phase 2: Vancouver Daily News, Collingwood Weekly).
+        assert len(shows) == 24
         missing = [
             s["slug"] for s in shows
             if not ((s.get("picker_tags") or {}).get("topics"))

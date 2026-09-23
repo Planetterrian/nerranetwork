@@ -327,6 +327,34 @@ TOPIC_HUBS: Tuple[Dict[str, Any], ...] = (
         "keywords": "engineering podcast, manufacturing podcast, first principles, idiot index, cost engineering",
     },
     {
+        # Phase 2 (Sep 2026): Mira's local shows. Below MIN_EPISODES_FOR_HUB
+        # at launch, so the page is not built, not in the sitemap and not
+        # linked until the archive is deep enough — then it turns itself on.
+        "id": "local-news",
+        "title": "Local news podcasts — Metro Vancouver and the south Georgian Bay",
+        "heading": "Local news",
+        "picker_topics": ("local-news",),
+        "intro": (
+            "Short local briefs for two places: a weekday-and-weekend morning "
+            "brief for Metro Vancouver, and a Friday round-up for Collingwood "
+            "and the south Georgian Bay towns. What council and the province "
+            "decided, the roads and the weather, sport and what is on."
+        ),
+        "angle": (
+            "Both are read by Mira, the network's AI host, who says so at the "
+            "top of every episode; the road and weather sections come from "
+            "public data feeds, and a contested local issue gets the "
+            "strongest case on each side."
+        ),
+        "meta_description": (
+            "Local news podcasts from Nerra Network: a daily morning brief for "
+            "Metro Vancouver and a weekly round-up for Collingwood and the "
+            "south Georgian Bay, read by an AI host with every source named."
+        ),
+        "keywords": "vancouver news podcast, local news podcast, collingwood news, georgian bay, metro vancouver",
+        "alternative": {"label": "Vancouver Daily News", "href": "vancouver.html"},
+    },
+    {
         "id": "sailing",
         "title": "Offshore sailing podcast — a Canadian Vendée Globe campaign",
         "heading": "Offshore sailing",

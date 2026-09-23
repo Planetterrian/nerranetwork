@@ -407,7 +407,7 @@ MAG7_SECTION_PATTERNS: Dict[str, str] = {
     ),
     "deep_dive": (
         r"(?:### The Thread|## The Thread)(.*?)"
-        r"(?=### Calendar|## Calendar|$)"
+        r"(?=### The Tape|## The Tape|$)"
     ),
 }
 
@@ -418,7 +418,7 @@ PEPTIDES_SECTION_PATTERNS: Dict[str, str] = {
     ),
     "deep_dive": (
         r"(?:### Peptide Spotlight|## Peptide Spotlight)(.*?)"
-        r"(?=### Evidence Ledger|## Evidence Ledger|$)"
+        r"(?=### Worth Knowing|## Worth Knowing|### Evidence Ledger|## Evidence Ledger|$)"
     ),
 }
 
@@ -429,11 +429,43 @@ LONGEVITY_SECTION_PATTERNS: Dict[str, str] = {
     ),
     "deep_dive": (
         r"(?:### Mechanism of the Week|## Mechanism of the Week)(.*?)"
-        r"(?=### Evidence Ledger|## Evidence Ledger|$)"
+        r"(?=### Worth Knowing|## Worth Knowing|### Evidence Ledger|## Evidence Ledger|$)"
     ),
     "trials": (
         r"(?:### Trial Tracker|## Trial Tracker)(.*?)"
         r"(?=$)"
+    ),
+}
+
+VANCOUVER_SECTION_PATTERNS: Dict[str, str] = {
+    "headlines": (
+        r"(?:### Top Stories|## Top Stories)(.*?)"
+        r"(?=### City & Province|## City & Province|$)"
+    ),
+    "city_province": (
+        r"(?:### City & Province|## City & Province)(.*?)"
+        r"(?=### Getting Around|## Getting Around|$)"
+    ),
+    "sports": (
+        r"(?:### Sports|## Sports)(.*?)"
+        r"(?=### What's On|## What's On|### Both Sides|## Both Sides|$)"
+    ),
+    "deep_dive": (
+        r"(?:### Both Sides|## Both Sides)(.*?)(?=$)"
+    ),
+}
+
+COLLINGWOOD_SECTION_PATTERNS: Dict[str, str] = {
+    "headlines": (
+        r"(?:### The Week's Stories|## The Week's Stories)(.*?)"
+        r"(?=### Council & County|## Council & County|### Roads|## Roads|$)"
+    ),
+    "council": (
+        r"(?:### Council & County|## Council & County)(.*?)"
+        r"(?=### Roads|## Roads|$)"
+    ),
+    "deep_dive": (
+        r"(?:### Both Sides|## Both Sides)(.*?)(?=$)"
     ),
 }
 
@@ -457,6 +489,8 @@ SHOW_SECTION_PATTERNS: Dict[str, Dict[str, str]] = {
     "mag7": MAG7_SECTION_PATTERNS,
     "peptides": PEPTIDES_SECTION_PATTERNS,
     "longevity": LONGEVITY_SECTION_PATTERNS,
+    "vancouver": VANCOUVER_SECTION_PATTERNS,
+    "collingwood": COLLINGWOOD_SECTION_PATTERNS,
 }
 
 

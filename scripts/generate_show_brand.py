@@ -77,6 +77,13 @@ SPECS: dict[str, CoverSpec] = {
                           "with Patrick", _lift(_hex("#9D174D"), 0.45), "chain"),
     "longevity": CoverSpec(("LONGEVITY", "WEEKLY"), "THE SCIENCE OF AGING, READ CAREFULLY",
                            "with Patrick", _lift(_hex("#3F6212"), 0.5), "rings"),
+    # Local strand (plan §5b): a horizon with one place mark. glyph_arg picks
+    # the ridge — 0 the North Shore mountains over water, 1 the long, low
+    # Niagara Escarpment rise of Blue Mountain behind the bay.
+    "vancouver": CoverSpec(("VANCOUVER", "DAILY NEWS"), "THE MORNING BRIEF FOR METRO VANCOUVER",
+                           "with Mira, AI host", _lift(_hex("#0D6E8C"), 0.4), "place", 0),
+    "collingwood": CoverSpec(("COLLINGWOOD", "WEEKLY"), "THE WEEK AROUND THE SOUTH GEORGIAN BAY",
+                             "with Mira, AI host", _lift(_hex("#7C2D12"), 0.45), "place", 1),
 }
 
 
@@ -160,6 +167,31 @@ def _draw_glyph(img, draw, spec: CoverSpec, cx: float, cy: float) -> None:
             draw.ellipse([cx - r, cy - r * 0.94, cx + r, cy + r * 0.94],
                          outline=a + (255 - i * 28,), width=16)
         _glow(img, [cx - 90, cy - 90, cx + 90, cy + 90], a, 50, 160)
+    elif spec.glyph == "place":
+        # A horizon with a ridge above water and a single place mark.
+        w = 1100
+        base = cy + 200
+        if spec.glyph_arg == 1:
+            # One long, low escarpment rise (Blue Mountain behind the bay).
+            ridge = [(-1.0, 0.0), (-0.55, 0.08), (-0.2, 0.42), (0.35, 0.5),
+                     (0.7, 0.32), (1.0, 0.18)]
+        else:
+            # Three peaks (the North Shore mountains over the water).
+            ridge = [(-1.0, 0.12), (-0.62, 0.62), (-0.35, 0.3), (-0.05, 0.9),
+                     (0.3, 0.38), (0.6, 0.7), (1.0, 0.16)]
+        pts = [(cx + x * w, base - h * 520) for x, h in ridge]
+        draw.polygon(pts + [(cx + w, base), (cx - w, base)], fill=a + (70,))
+        draw.line(pts, fill=a + (240,), width=20, joint="curve")
+        # Water: three thin horizontal strokes under the horizon.
+        for i, inset in enumerate((0, 160, 320)):
+            y = base + 70 + i * 70
+            draw.line([cx - w + inset, y, cx + w - inset, y], fill=SLATE + (150 - i * 35,), width=12)
+        draw.line([cx - w, base, cx + w, base], fill=a + (255,), width=14)
+        # The place mark.
+        mx, my = cx + (180 if spec.glyph_arg == 1 else -60), base - 40
+        draw.ellipse([mx - 58, my - 58, mx + 58, my + 58], fill=NERRA_CYAN + (255,))
+        draw.ellipse([mx - 120, my - 120, mx + 120, my + 120], outline=NERRA_CYAN + (170,), width=12)
+        _glow(img, [mx - 140, my - 140, mx + 140, my + 140], NERRA_CYAN, 60, 120)
     else:  # dial — the Nerra Daily family default
         r = 420
         draw.arc([cx - r, cy - r, cx + r, cy + r], start=205, end=335, fill=a + (235,), width=26)

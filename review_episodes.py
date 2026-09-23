@@ -383,9 +383,9 @@ AUDIT_EXEMPT_SLUGS = frozenset({"age_of_ai", "nerra_voices"})
 # the show's launch PR moves it from here into SHOW_REGISTRY in the same
 # change that adds its CRON_MAP entry (guard:
 # tests/test_new_shows_2026_09.py::TestPrelaunchShows).
-#: Empty since 2026-09-23: the four Phase 1 shows launched. The Phase 2+
-#: shows join it in their A-PR and leave it in their B-PR.
-PRELAUNCH_SLUGS: frozenset = frozenset()
+#: The four Phase 1 shows launched 2026-09-23. Phase 2 (Mira's local shows)
+#: joined 2026-09-23 in its A-PR and leaves in its B-PR.
+PRELAUNCH_SLUGS: frozenset = frozenset({"vancouver", "collingwood"})
 
 
 # ---------------------------------------------------------------------------

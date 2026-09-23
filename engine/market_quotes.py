@@ -214,18 +214,20 @@ def _signed_pct(pct: float) -> str:
 
 
 def tape_block(quotes: List[Quote], names: Dict[str, str], expected: Iterable[str]) -> str:
-    """The digest's REAL-TIME TAPE block, or a one-line 'no quotes' notice.
+    """The digest's MARKET TAPE block, or a one-line 'no quotes' notice.
 
-    Every line is a CLOSE with its session date — the digest and the script
-    say "closed", never "trading at". A missing ticker is named as missing.
+    Every line is a CLOSE with its session date — the digest says "closed",
+    never "trading at". A missing ticker is named as missing. On MAG 7 the
+    tape feeds one reader-only line at the foot of the digest; the script
+    never reads it (operator brief, 2026-09-23).
     """
     expected = list(expected)
     if not quotes:
         return (
             "### MARKET TAPE (instruction — do not include in output)\n"
-            "No validated closing prices were available today. The Tape section "
-            "must say in one sentence that the price feed was unavailable, and "
-            "no price may appear anywhere in the digest."
+            "No validated closing prices were available today. Leave The Tape "
+            "section out entirely, and no price may appear anywhere in the "
+            "digest."
         )
     have = {q.ticker for q in quotes}
     # One session date, said once: MAG 7 Ep1's tape carried the date on all

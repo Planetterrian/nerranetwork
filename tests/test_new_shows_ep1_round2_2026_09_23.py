@@ -85,8 +85,13 @@ class TestTape:
         assert "on 2026-09-21" in block and "on 2026-09-22" in block
 
     def test_digest_prompt_says_the_date_once(self):
-        assert "First line: the session date the MARKET TAPE block names, once." in _prompt(
-            "mag7_digest.txt")
+        # Sep 23 2026: the Tape is one reader-only line at the foot of the
+        # digest, and the script never reads it.
+        p = _prompt("mag7_digest.txt")
+        assert "ONE line: the session date the MARKET TAPE block names" in p
+        assert p.index("### The Tape") > p.index("### The Thread")
+        assert "The briefing's Tape section is for readers — never read it." in _prompt(
+            "mag7_podcast.txt")
 
 
 # ---------------------------------------------------------------------------

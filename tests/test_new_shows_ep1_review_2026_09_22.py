@@ -284,7 +284,9 @@ def _prompt(name: str) -> str:
 
 def test_mag7_thread_never_rereads_the_tape():
     p = _prompt("mag7_digest.txt")
-    assert "Never repeat a closing price or a percentage move from The Tape" in p
+    # Sep 23 2026: stricter — the Thread speaks no share price at all (the
+    # operator brief moved the show off prices; the Tape is reader-only).
+    assert "Never a share price or a percentage move: the Thread is about the businesses" in p
     assert "from today's articles or the tape" not in p
 
 
@@ -326,7 +328,7 @@ def test_mag7_filters_analyst_price_targets():
     for title in ("Claims now open in Apple settlement",
                   "Microsoft downgrades Windows 10 support timeline"):
         assert not any(re.search(p, title, re.IGNORECASE) for p in pats), title
-    assert "reject analyst price targets" in _prompt("mag7_digest.txt")
+    assert "analyst price targets and rating changes" in _prompt("mag7_digest.txt")
 
 
 # ---------------------------------------------------------------------------

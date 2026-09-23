@@ -277,6 +277,25 @@ def enrich_articles_with_full_text(
         return 0
     prio = {s.strip().lower() for s in (priority_sources or []) if s}
 
+    # Hook-supplied articles that carry their own text (engine.hook_articles:
+    # Europe PMC abstracts, road and weather data) are rendered whole and do
+    # not compete for the page-fetch slots. They are merged LAST, so ranking
+    # them with the feed articles left them outside the cap on any busy day
+    # and the prompt saw one line of a DriveBC event list or 600 characters
+    # of an abstract. No HTTP is involved; run_show already bounds how many
+    # hook articles reach the prompt (MAX_HOOK_ARTICLES_FOR_LLM).
+    gained = 0
+    rest: List[Dict] = []
+    for art in articles:
+        body = (art.get("content_text") or "").strip()
+        if art.get("source_kind") == "hook" and body:
+            art["full_text"] = clip_text(body, max_chars)
+            art["full_text_source"] = "hook"
+            gained += 1
+        else:
+            rest.append(art)
+    articles = rest
+
     def _rank(item: Tuple[int, Dict]) -> Tuple[int, int]:
         idx, art = item
         src = (art.get("source_name") or "").strip().lower()
@@ -285,7 +304,6 @@ def enrich_articles_with_full_text(
     ordered = sorted(enumerate(articles), key=_rank)
     chosen = [art for _, art in ordered[:max_articles]]
 
-    gained = 0
     to_fetch: List[Dict] = []
     for art in chosen:
         body = (art.get("content_text") or "").strip()

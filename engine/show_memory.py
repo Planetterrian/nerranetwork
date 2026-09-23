@@ -1476,5 +1476,89 @@ SHOW_MEMORY_CONFIGS: Dict[str, MemoryConfig] = {
             "bpc-157", "research use", "amino acid",
         ],
     ),
+    # Phase 2 (Mira's local shows). Seeded with standing local arcs only —
+    # institutions and projects, no dates or outcomes; the tracker advances
+    # each program from the digests (auto_update_narrative_from_digest).
+    "vancouver": MemoryConfig(
+        slug="vancouver",
+        label="VANCOUVER",
+        file_prefix="vancouver",
+        default_programs={
+            "city_council": _prog(
+                "Vancouver City Council",
+                "Council votes and debates on budget, zoning, policing and city services.",
+                ["Budget and tax decisions", "Zoning and housing approvals"],
+            ),
+            "bc_government": _prog(
+                "BC Government",
+                "Provincial decisions that land in Metro Vancouver: housing, health, transit and budgets.",
+                ["Legislation and announcements", "Campaign promises versus policy"],
+            ),
+            "housing": _prog(
+                "Housing & Rent",
+                "Housing supply, approvals, rents and affordability measures across Metro Vancouver.",
+                ["Approvals and starts", "Rent and vacancy figures"],
+            ),
+            "transit": _prog(
+                "Transit & Roads",
+                "TransLink service, SkyTrain and bus projects, bridges and highways.",
+                ["Project timelines", "Fares and service changes"],
+            ),
+            "public_safety": _prog(
+                "Public Safety",
+                "Policing, emergency response and public-safety decisions in the region.",
+                ["Police and fire announcements", "Court outcomes"],
+                confidence="low-medium",
+            ),
+            "local_sport": _prog(
+                "Local Sport",
+                "The Canucks, Whitecaps, BC Lions and other local teams.",
+                ["Results and standings", "Roster and venue news"],
+            ),
+        },
+        theme_keywords=[
+            "council", "housing", "rent", "translink", "skytrain", "transit", "bridge",
+            "police", "election", "budget", "school", "hospital", "canucks", "whitecaps",
+            "lions", "port", "yvr", "downtown eastside",
+        ],
+    ),
+    "collingwood": MemoryConfig(
+        slug="collingwood",
+        label="COLLINGWOOD",
+        file_prefix="collingwood",
+        default_programs={
+            "town_council": _prog(
+                "Collingwood Council",
+                "Town council votes and debates on budget, development, water and services.",
+                ["Budget and tax decisions", "Development approvals"],
+            ),
+            "county_decisions": _prog(
+                "Simcoe & Grey Counties",
+                "County decisions that land in the south Georgian Bay towns.",
+                ["Roads and services", "Planning decisions"],
+            ),
+            "development_growth": _prog(
+                "Growth & Development",
+                "Housing, waterfront and commercial development across the south Georgian Bay.",
+                ["Approvals and appeals", "Infrastructure capacity"],
+            ),
+            "blue_mountain": _prog(
+                "Blue Mountain & Tourism",
+                "The resort, the seasons and the tourism economy of the bay.",
+                ["Season openings and results", "Visitor and traffic effects"],
+                confidence="low-medium",
+            ),
+            "health_and_schools": _prog(
+                "Health & Schools",
+                "Hospital, clinic and school decisions for the area.",
+                ["Hospital redevelopment", "School capacity"],
+                confidence="low-medium",
+            ),
+        },
+        theme_keywords=[
+            "council", "collingwood", "wasaga", "clearview", "blue mountain", "development",
+            "water", "harbour", "hospital", "school", "county", "tourism", "ski", "budget",
+        ],
+    ),
 }
 

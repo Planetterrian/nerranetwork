@@ -8,9 +8,10 @@
 # show speaks Tesla only as a company. Modern Investing owns picks and the
 # practice portfolio — this show never picks.
 #
-# THE TAPE is regular-session CLOSES with their session date
-# (engine/market_quotes.py): the show runs at 06:46 New York, before any
-# session opens, so nothing it says is "trading at".
+# The show is about what the seven build, ship and discover (operator brief,
+# 2026-09-23). THE TAPE survives only as one reader-only line at the foot of
+# the digest (regular-session closes, engine/market_quotes.py); the podcast
+# never reads it, and the earnings calendar is gone.
 #
 # Distribution OFF at launch; on the cron since 2026-09-23 (Episode 1 reviewed first).
 name: MAG 7 Daily
@@ -18,9 +19,9 @@ slug: mag7
 weekly_summary_segment: true
 memory_enabled: true
 story_recurrence: true
-description: The seven largest US companies as one daily desk — Alphabet,
-  Amazon, Apple, Meta, Microsoft, NVIDIA and Tesla. The closes, the news, one
-  cross-company thread and the calendar. Not financial advice.
+description: The seven largest US technology companies as one daily desk —
+  Alphabet, Amazon, Apple, Meta, Microsoft, NVIDIA and Tesla. What they built,
+  shipped and discovered, one cross-company thread. Not financial advice.
 
 # Probed live 2026-09-22. Company newsrooms first; finance.yahoo.com and
 # seekingalpha.com are in shows/_blocked_sources.yaml and stay out.
@@ -37,6 +38,24 @@ sources:
   label: Official Microsoft Blog
 - url: https://nvidianews.nvidia.com/releases.xml
   label: NVIDIA Newsroom
+# Research and engineering blogs (operator brief 2026-09-23: developments,
+# research and advancements over prices). Probed 200 with posts inside the
+# last week, 2026-09-23. ai.meta.com has no feed (404); Engineering at Meta
+# is the working one.
+- url: https://research.google/blog/rss/
+  label: Google Research
+- url: https://deepmind.google/blog/rss.xml
+  label: Google DeepMind
+- url: https://www.microsoft.com/en-us/research/feed/
+  label: Microsoft Research
+- url: https://machinelearning.apple.com/rss.xml
+  label: Apple Machine Learning Research
+- url: https://www.amazon.science/index.rss
+  label: Amazon Science
+- url: https://engineering.fb.com/feed/
+  label: Engineering at Meta
+- url: https://blogs.nvidia.com/feed/
+  label: NVIDIA Blog
 - url: https://www.theinformation.com/feed
   label: The Information
 - url: https://www.ft.com/technology?format=rss
@@ -59,29 +78,28 @@ sources:
   label: TechCrunch
 - url: https://arstechnica.com/feed/
   label: Ars Technica
-- url: https://news.google.com/rss/search?q=Alphabet+OR+Google+earnings+OR+antitrust+OR+Gemini&hl=en-US&gl=US&ceid=US:en
+# Google News queries lean on what the companies ship and publish, not on
+# earnings (operator brief 2026-09-23).
+- url: https://news.google.com/rss/search?q=Google+Gemini+OR+DeepMind+OR+Waymo+OR+%22Google+announces%22&hl=en-US&gl=US&ceid=US:en
   label: Google News Alphabet
-- url: https://news.google.com/rss/search?q=Amazon+AWS+OR+%22Amazon+earnings%22&hl=en-US&gl=US&ceid=US:en
+- url: https://news.google.com/rss/search?q=AWS+OR+%22Amazon+announces%22+OR+%22Project+Kuiper%22+OR+Alexa&hl=en-US&gl=US&ceid=US:en
   label: Google News Amazon
-- url: https://news.google.com/rss/search?q=Apple+iPhone+OR+%22Apple+earnings%22&hl=en-US&gl=US&ceid=US:en
+- url: https://news.google.com/rss/search?q=%22Apple+announces%22+OR+%22Apple+Intelligence%22+OR+%22Apple+unveils%22&hl=en-US&gl=US&ceid=US:en
   label: Google News Apple
-- url: https://news.google.com/rss/search?q=%22Meta+Platforms%22+OR+Zuckerberg&hl=en-US&gl=US&ceid=US:en
+- url: https://news.google.com/rss/search?q=%22Meta+Platforms%22+OR+%22Meta+AI%22+OR+%22Meta+announces%22&hl=en-US&gl=US&ceid=US:en
   label: Google News Meta
-- url: https://news.google.com/rss/search?q=Microsoft+Azure+OR+%22Microsoft+earnings%22&hl=en-US&gl=US&ceid=US:en
+- url: https://news.google.com/rss/search?q=%22Microsoft+announces%22+OR+Copilot+OR+%22Azure+AI%22&hl=en-US&gl=US&ceid=US:en
   label: Google News Microsoft
-- url: https://news.google.com/rss/search?q=Nvidia+earnings+OR+Nvidia+deal&hl=en-US&gl=US&ceid=US:en
+- url: https://news.google.com/rss/search?q=%22Nvidia+announces%22+OR+%22Nvidia+unveils%22+OR+%22Nvidia+research%22&hl=en-US&gl=US&ceid=US:en
   label: Google News NVIDIA
-- url: https://news.google.com/rss/search?q=Tesla+earnings+OR+%22Tesla+stock%22+OR+%22Tesla+deliveries%22&hl=en-US&gl=US&ceid=US:en
+- url: https://news.google.com/rss/search?q=Tesla+regulators+OR+%22Tesla+investment%22+OR+%22Tesla+factory%22&hl=en-US&gl=US&ceid=US:en
   label: Google News Tesla (company)
-- url: https://news.google.com/rss/search?q=%22Magnificent+Seven%22+stocks&hl=en-US&gl=US&ceid=US:en
-  label: Google News Magnificent Seven
 - url: https://news.google.com/rss/search?q=big+tech+antitrust+DOJ+OR+FTC+OR+%22European+Commission%22&hl=en-US&gl=US&ceid=US:en
   label: Google News big-tech antitrust
 
 web_search_queries:
-- Magnificent Seven stocks news today
-- Alphabet Amazon Apple Meta Microsoft Nvidia Tesla news today
-- big tech earnings guidance this week
+- Alphabet Amazon Apple Meta Microsoft Nvidia Tesla announces today
+- big tech research paper new model announced this week
 - big tech antitrust ruling news
 
 exclude_title_patterns:
@@ -96,9 +114,13 @@ exclude_title_patterns:
 - '\b(stock|shares) (to buy|to watch) (now|today|this week)\b'
 # Analyst price targets and rating changes are Modern Investing's beat and
 # a prediction by construction (the first dry run's Top News carried an
-# Oppenheimer Microsoft target).
+# Oppenheimer Microsoft target). Earnings previews and stock-move explainers
+# are market noise, not developments (operator brief 2026-09-23).
 - '\bprice targets?\b'
 - '\b(upgrades?|downgrades?|reiterates?|initiates? coverage)\b.{0,40}\b(buy|sell|hold|overweight|underweight|outperform|underperform|neutral)\b'
+- '\b(earnings preview|what to expect from|ahead of earnings|earnings (date|call) (set|scheduled))\b'
+- '\b(why|here.s why) \w+ (stock|shares) (is|are|fell|rose|jumped|dropped|soared|slid)\b'
+- '\b(market (cap|value) (hits|tops|crosses|passes)|trillion.dollar (club|valuation))\b'
 
 keywords:
 - alphabet
@@ -123,8 +145,6 @@ keywords:
 - tsla
 - magnificent seven
 - big tech
-- earnings
-- guidance
 - antitrust
 - capex
 
@@ -172,6 +192,14 @@ multilingual:
 
 llm:
   provider: xai
+  # grok-4.7 on every stage that writes (digest + script; combined generation
+  # stays eligible because podcast_model is unset), operator-directed
+  # 2026-09-23: the new shows are the proving ground for the latest model,
+  # and what works here is carried to the existing shows afterwards
+  # (experiment new-shows-grok-47-2026-09-23, docs/model_upgrade_playbook.md).
+  # The existing news shows stay on grok-4.3 (TestStagedGrok46Trial).
+  # Revert: delete this line.
+  model: grok-4.7
   system_prompt_file: shows/prompts/mag7_system.txt
   digest_prompt_file: shows/prompts/mag7_digest.txt
   podcast_prompt_file: shows/prompts/mag7_podcast.txt
@@ -210,11 +238,11 @@ audio:
 publishing:
   rss_file: mag7_podcast.rss
   rss_title: MAG 7 Daily
-  rss_description: 'The seven largest US companies — Alphabet, Amazon, Apple,
-    Meta, Microsoft, NVIDIA and Tesla — as one daily desk. The previous
-    session''s closes, the news that moved each company, one story that runs
-    across several of them, and the dates coming up. Facts and numbers, never
-    picks. Not financial advice.'
+  rss_description: 'Alphabet, Amazon, Apple, Meta, Microsoft, NVIDIA and Tesla as
+    one daily desk: the products, models and chips they shipped, the research
+    they published, the rulings and deals that change what they can do, and
+    one story that runs across several of them. Developments and numbers,
+    never picks. Not financial advice.'
   rss_link: https://nerranetwork.com/mag7.html
   rss_author: Patrick
   rss_email: patrick@planetterrian.com
@@ -223,7 +251,7 @@ publishing:
   rss_subcategory: Investing
   rss_category2: "News"
   rss_subcategory2: "Business News"
-  rss_keywords: magnificent seven, big tech, alphabet, amazon, apple, meta,
+  rss_keywords: magnificent seven, big tech, technology, ai, alphabet, amazon, apple, meta,
     microsoft, nvidia, tesla, stocks
   guid_prefix: mag7
   base_url: https://nerranetwork.com
@@ -301,4 +329,4 @@ youtube:
   - magnificent seven
   - big tech
   - stocks
-  - earnings
+  - technology

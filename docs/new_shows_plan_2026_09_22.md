@@ -1,4 +1,4 @@
-# Fourteen new shows — build plan (22 Sep 2026)
+# New shows — build plan (22 Sep 2026; fifteenth show added 23 Sep)
 
 **Status:** plan, nothing shipped. Operator-requested. This document is the
 spec for every PR in the rollout; each PR links back to the section it
@@ -9,6 +9,7 @@ Collingwood Weekly · Nerra Weekly · Nerra Network Developments · MAG 7
 Daily · Peptides Weekly · Longevity Weekly · Omni View North America ·
 Omni View Europe · Omni View Asia Pacific · Omni View Central & South
 America · Omni View Africa & Middle East · Omni View Top World News.
+**Added 2026-09-23 (operator):** Prediction Markets Daily (§4.11).
 
 Everything below was checked against the tree on 2026-09-22 (file:line
 references are to that tree) and against a live probe of ~260 candidate
@@ -18,6 +19,17 @@ feeds (Appendix B). Where the plan makes a decision the brief left open,
 ---
 
 ## 0. Summary
+
+**23 Sep 2026 operator brief — read first.** Three decisions that bind every
+remaining phase and change what the Phase 1 shows already do (§9b):
+(1) every new show runs **grok-4.7** on its writing stages — the new shows are
+the proving ground for the latest model, and what works is carried to the
+established shows afterwards under the playbook; (2) every new show leads with
+**useful, interesting, timely** developments — never share prices, earnings
+calendars or announcements of announcements (MAG 7 Ep1 spent its opening on
+seven closing prices and dates a month out); (3) the health shows **teach**
+rather than report a drug pipeline. A fifteenth show, **Prediction Markets
+Daily**, joins the plan (§4.11).
 
 - **Nine daily and five weekly shows, 12 through `run_show.py` and 2
   assembled.** Nerra Weekly is a registry-only edition on the Nerra Daily
@@ -78,7 +90,7 @@ Each item names the mechanism, not the story; the stories are in
 | Per-show `min_articles_skip`, never the default | Pinned per show below; the `or 3` bug that turns 0 into 3 is fixed in Phase 0. |
 | Same-day sibling overlap (PT/FF; SpaceX/Tesla) | Boundaries are written into the prompts AND enforced data-side where a mechanism exists: MAG 7 vs Tesla Shorts Time, AI Chips vs Models & Agents, Longevity vs Planetterrian, Top World vs the regional desks vs Omni View. |
 | Loops on NUMBERS fail silently | Every new per-show data file (`api/mag7_quotes.json`, `api/vancouver_roads.json`, …; never `api/<slug>.json`, which is the per-show public episode API) is whitelisted in BOTH committing workflows and read by a dashboard card or a metric with a named consumer. |
-| Model changes follow the playbook | All new shows on the network default (grok-4.3 digest/fetch; combined generation on). No new show pins grok-4.6/4.7 on a digest stage. |
+| Model changes follow the playbook | **Superseded 2026-09-23 (operator):** every new show pins `llm.model: grok-4.7` on its writing stages (digest + script, combined generation still on); fetch stays on grok-4.3. It is a named, registered arm (`new-shows-grok-47-2026-09-23`; the guard forbids it growing onto an established show) with latency-first revert triggers — the playbook's staging, applied to shows with no audience history to lose. |
 | Feeds from a laptop are not feeds from a runner | Appendix B was probed through this session's proxy; five publishers returned 403 that likely differ on a GitHub runner. Every candidate list is re-graded with `check_feeds.py <slug>` from Actions before Ep1. |
 | YouTube cadence, not quota, is the constraint | Off at launch; a second channel for the Mira desks is a data decision (§7). |
 | Landmine #17 | Every prompt is A/B-listened on Ep1. Mira on `ara` inherits the `<fast>` wrap tuned on Patrick's voice; the Vancouver Ep1 test renders are made with and without it and the operator picks. |
@@ -277,6 +289,7 @@ same-day echoes become unavoidable — the echo guard
 | 12 | Omni View Top World News | `omni_view_world` | Mira | daily 11:31 (after all desks) | Omni View + desks | world | family, accent white |
 | 13 | Nerra Weekly | `nerra_weekly` (registry-only) | Mira | Sun 13:23 (own workflow) | Nerra Daily | network | `#005F78` |
 | 14 | Nerra Network Developments | `nerra_dev` | **Patrick (assumption, §10)** | Sun 11:01 | new shape (hook articles) | network | `#475569` |
+| 15 | Prediction Markets Daily *(added 23 Sep)* | `prediction_markets` | **Patrick (assumption, §10)** | daily 11:16 (07:16 ET) | MAG 7 (desk + hook data) | markets | `#86198F` |
 
 Naming: the network brand is "Omni View" (two words, registry name). The
 desks are named "Omni View Europe" etc.; the brief's "Omniview" spelling is
@@ -357,6 +370,11 @@ before), and a `shows/segments/<slug>.json` slow-news library or
 
 ### 4.2 MAG 7 Daily (`mag7`)
 
+> **Revised 2026-09-23 (§9b):** the show is about what the seven build, ship,
+> discover and are allowed to do. The tape below survives only as one
+> reader-only line at the foot of the digest that the script never reads;
+> the earnings calendar is gone.
+
 - **Promise:** the seven largest US companies as one daily desk — the tape,
   the news, one cross-company thread, the calendar. Not a trading show.
 - **Boundaries:** Tesla Shorts Time owns Tesla's products, FSD, energy and
@@ -409,6 +427,11 @@ before), and a `shows/segments/<slug>.json` slow-news library or
   Tesla double-coverage complaint is the one to watch in the first ledger.
 
 ### 4.3 Peptides Weekly (`peptides`) and 4.4 Longevity Weekly (`longevity`)
+
+> **Revised 2026-09-23 (§9b):** education first — human findings a listener
+> can use, how the biology works, consumer protection; commercial pipeline
+> news at most one item a week; a Worth Knowing section; BioPharma Dive
+> replaced by research sources; curricula lead with practical subjects.
 
 Both are Patrick, weekly, Planetterrian-structured, and carry the same
 health posture, so they share one spec with per-show differences.
@@ -761,6 +784,81 @@ shared prompts.
 
 ---
 
+### 4.11 Prediction Markets Daily (`prediction_markets`) — added 2026-09-23
+
+- **Promise (operator's brief):** a daily show on the developing prediction-
+  market ecosystem in Canada, the United States and the world — the
+  interesting new markets, the most popular ones, the strategies and the
+  people helping to build and legitimize the field, and the economics behind
+  it (why a price can be a forecast, and when it is not).
+- **Host:** Patrick (assumption, §10 item 12) on `kdif6sqjcyiq`, markets
+  strand. Mira is the alternative if the operator wants the markets shows
+  split by host.
+- **The MAG 7 lesson, written in on day one (§9b):** the show is about the
+  ecosystem, not a price tape. The board of popular markets is ONE short
+  segment of at most five markets; the rest of the episode is developments.
+- **Digest sections:** Top Story · The Ecosystem (3–5: regulation and
+  courts — the CFTC, state gaming regulators and the suits between them,
+  Canadian securities regulators; new venues and products; partnerships with
+  leagues, brokers and media; money raised only when it changes what a venue
+  can do) · The Board (hook data only, ≤5 markets: the question, the implied
+  probability, the venue, the 24-hour volume and the time it was read; one
+  sentence of why each is moving only when an article says so) · New and
+  Notable (1–3 markets that opened in the window and why they are
+  interesting) · How It Works (a rotating explainer, 220–320 words, from a
+  curriculum like the health shows': information aggregation and the
+  efficient-markets case, calibration and accuracy research, arbitrage and
+  market making as mechanisms, manipulation and thin-market failure modes,
+  resolution disputes, futarchy and decision markets, the law in Canada vs
+  the US) · the closing.
+- **Posture:** education and journalism, never a bet. Never a
+  recommendation to buy, sell or trade a contract, never "the smart money",
+  never a pick. Every probability carries its venue, its time and its
+  volume; a thin market is called thin. Legality varies by jurisdiction and
+  the show says so whenever a venue is named (most Canadian provinces
+  restrict or prohibit these products; US access varies by state and
+  product). A gambling-harm line sits in the verbatim closing, the way the
+  health shows carry their posture.
+- **Hook `shows/hooks/prediction_markets.py`:** the board as hook ARTICLES
+  (the `engine/local_conditions.py` pattern): public, keyless endpoints
+  probed 2026-09-23 — Polymarket's Gamma API (`gamma-api.polymarket.com/
+  markets?order=volume24hr`), Kalshi's public market API
+  (`api.elections.kalshi.com/trade-api/v2/markets`) and Manifold's
+  (`api.manifold.markets/v0/search-markets?sort=24-hour-vol`), each a
+  sourced article with the numbers in `content_text` so the claims gate
+  verifies them. Venue filters drop sports-parlay and sub-$10k-volume
+  markets from the board (a board of same-game parlays is noise).
+- **Sources (probed 23 Sep):** Polymarket's newsletter (`news.polymarket.com/
+  feed`), Manifold's (`news.manifold.markets/feed`), Astral Codex Ten (its
+  "Mantic Monday" forecasting round-ups), CoinDesk and The Block (with a
+  keyword filter — both are crypto-wide), the CFTC general press feed
+  (`cftc.gov/RSS/RSSGP/rssgp.xml`), and Google News queries: "prediction
+  markets", "Kalshi", "Polymarket", "CFTC event contracts", "prediction
+  market Canada OR Ontario Securities Commission", "Metaculus OR forecasting
+  tournament". Retest from a runner: the Kalshi blog (429 via proxy),
+  Metaculus news (403), the Ontario Securities Commission (403).
+- **X accounts (verify handles before Ep1):** the venues and the regulator
+  (Kalshi, Polymarket, Manifold, Metaculus, CFTC) plus two or three
+  journalists who cover the beat daily; read the first run's per-handle
+  counts and prune (§9a).
+- **Thresholds:** `min_articles_skip: 4`, `min_digest_words: 1200`,
+  `min_podcast_words: 1100`, `max_weekly_cost_usd: 8`, grok-4.7 (§9b).
+- **Boundaries:** MAG 7 and Modern Investing own stocks; Omni View owns the
+  news a market is about. This show owns the markets as markets — a market
+  on an election is covered for what the market is doing, never as election
+  coverage.
+- **Ep1:** what a prediction market is and why a price can be read as a
+  probability, the one thing the show will not do (tell anyone what to
+  bet), and the legal patchwork in one sentence each for Canada and the US;
+  then a normal day.
+- **Phase:** 2b — build after the Phase 2 Episode 1s are heard, before the
+  desks. It needs no new host machinery (Patrick) and reuses the
+  hook-articles and curriculum machinery that already exist.
+- **Risks:** (1) promotion — venues court coverage; the posture and the
+  board's five-market cap are the defence; (2) sports-parlay noise on the
+  board (filter); (3) regulatory whiplash — a ruling can change what is
+  legal in a week, so every legal claim is dated and sourced.
+
 ## 5. Design: making fourteen shows read as one network
 
 ### 5a. Strand colour system
@@ -871,6 +969,7 @@ Allowed minutes {1,7,16,31,37,46}, hours 06–12 UTC
 | 10:46 | mag7 | daily | 06:46 ET, pre-market |
 | 11:01 | longevity | wednesday | |
 | 11:07 | peptides | thursday | Checked in Phase 0: the scheduler Worker takes the FIRST `SLOTS` row matching h:m, so every weekly needs its own minute |
+| 11:16 | prediction_markets | daily | 07:16 ET; added 23 Sep (§4.11) |
 | 11:37 | nerra_dev | sunday | |
 | 11:31 | omni_view_world | daily | after every desk's 50-min budget |
 | 12:16 | vancouver | daily | 05:16 PDT |
@@ -974,6 +1073,37 @@ economics are read per language on the dashboard card first.
   audio change on thirteen shows, landmine #17, and the stride-3/pool-13
   echo guard needs re-deriving); the Phase 2 A-PR does it for all new
   shows at once, with an A/B listen.
+- **23 Sep 2026 operator brief — shipped** (§9b): grok-4.7 on the four
+  Phase 1 shows' writing stages, MAG 7 and AI Chips moved off prices and
+  earnings calendars onto developments and research, Longevity and Peptides
+  moved from the drug pipeline to education (Worth Knowing section, new
+  sources, curricula reordered). A/B-listen the next episode of each.
+- **Phase 2 A-parts — shipped 2026-09-23** (Vancouver Daily News, Collingwood
+  Weekly; guards `tests/test_new_shows_phase2_2026_09_23.py`). What the build
+  settled: (1) roads and weather arrive as sourced hook ARTICLES from
+  keyless public data (`engine/local_conditions.py`: DriveBC Open511 filtered
+  to a Metro Vancouver box — the "Lower Mainland District" runs to Hope;
+  Ontario 511 filtered to the south Georgian Bay; Environment Canada's
+  location Atom feed, because the `/rss/city/` path the plan named is 404);
+  a data-less day is one honest sentence; (2) Mira's voice ships with **no
+  speech wrap**, the voice Nerra Daily listeners already know — the plan's
+  with-and-without render needs a key this build did not have, so Episode 1
+  is that listen and the wrap is a two-line flip; (3) voice-only audio sets
+  `intro_duration: 0` so chapter times carry no phantom music offset;
+  (4) Village Media titles use `/rss/local-news` — the bare `/rss` is a
+  network aggregate that led every title with the same wire story;
+  (5) a `local-news` topic hub exists and stays unbuilt until 12 episodes;
+  (6) Collingwood's X fetch is off until its handles are verified;
+  (7) `/mira.html` still lists Mira's three original shows — the desks join
+  its copy in their B-PR, once they have episodes, never as "launching soon";
+  (8) hook articles that carry their own text are now rendered whole, outside
+  the full-text cap (`engine.article_text.enrich_articles_with_full_text`):
+  merged last, they had fallen outside the first-N slots on any busy day —
+  the road list would have reached the prompt as one line, and the health
+  shows' Europe PMC abstracts had been reaching it as 600 characters.
+  Still deferred, deliberately: `engine/network_promo.py` rotation for all
+  the new shows at once (an audio change on thirteen shows — its own PR with
+  an A/B listen, after the Phase 2 Episode 1s).
 - **Each B-PR** (after Episode 1 is heard): CRON_MAP + `- cron:` line +
   Worker SLOTS row (unique minute) + move the slug from `PRELAUNCH_SLUGS`
   into `SHOW_REGISTRY` + daily-audit FEEDS limit + `ALT_CADENCE_SHOWS` /
@@ -991,6 +1121,7 @@ precede every Ep1 (read for tics, section shape, region purity).
 | 0 | 1 | §2 enablers + scaffold repairs + strand chrome + brand-cover generator; `tests/test_new_shows_2026_09.py` guards (hook articles, host-aware disclosure, weekday filters, count derivation) | CI green; `--all` render byte-identical for existing pages except the nav grouping |
 | 1 | 1–2 | AI Chips, MAG 7 (daily, Patrick); Peptides, Longevity (weekly, Patrick) | four Ep1s heard; MAG 7 price line verified on a weekend and a Monday pre-open; no Tesla double-coverage flag on day 3 |
 | 2 | 2–3 | Vancouver Daily (Mira calibration set), Collingwood Weekly | Mira Ep1 with/without `<fast>` chosen; disclosure heard; spoken-text gate `opening_match` healthy on `ara`; `check_feeds.py` from a runner ≥ B on the anchor feeds |
+| 2b | 3 | Prediction Markets Daily (Patrick; §4.11) | Ep1 heard; the board is ≤5 markets and the episode is developments-led; no pick language in the transcript |
 | 3 | 3–4 | five regional desks (A-PRs together, Ep1s over two days), then Top World | region purity read on 3 episodes each; Top World's hook articles present in `articles_from_hook`; Omni View's own audience unchanged after two weeks (ledger prediction) |
 | 4 | 4–5 | Nerra Weekly (edition generalization + workflow), Nerra Network Developments | first Weekly heard end-to-end; clip boundaries land on sentence ends on 10/10 segments; Dev Ep1's every claim `fetched_copy` |
 | 5 | 6+ | readouts: `<slug>-launch` experiments at four weeks; YouTube decisions (§7); Nerra World edition decision; music commissions land as they arrive | |
@@ -1087,6 +1218,39 @@ a default the Phase 2+ A-PRs copy.
 
 ---
 
+### 9b. The 23 Sep 2026 operator brief — useful, interesting, timely
+
+The Phase 1 Episode 1s were well sourced and still spent their best minutes
+on the wrong things: MAG 7 opened on seven closing prices and earnings dates
+a month away, and the health shows' weeks were drug-company news. The
+operator's direction binds every show from here:
+
+- **Every new show runs grok-4.7** on its writing stages (`llm.model` — digest
+  and script in one combined call). The new shows are the proving ground;
+  lessons carry to the established shows only through the playbook's
+  one-show-first rule. Fetch stays on grok-4.3. Revert per show = delete the
+  line. Read `python scripts/model_trial_report.py --since 2026-09-24
+  --shows <new shows>` before any widening.
+- **Interesting first.** Every new show's digest includes
+  `shows/prompts/_shared/interesting_first.txt`: rank by NEW, USEFUL,
+  CONSEQUENTIAL; market noise (price moves, market-value milestones, analyst
+  targets, earnings previews, dates weeks away) is not news; an announcement
+  about a future announcement earns one sentence inside a real item at most;
+  research counts when it is published inside the window. Shape-only — it
+  quotes no sentence to copy.
+- **Market shows are about what companies and markets DO.** Prices survive
+  only as reader-only data at the foot of a digest (MAG 7's Tape) or a
+  capped board (Prediction Markets' five markets). Earnings calendars are
+  gone. Research blogs are sources.
+- **Health shows teach.** Human findings a listener can understand and use,
+  how the biology works, consumer protection; commercial pipeline news is at
+  most one item a week and only with a human result or a regulator's
+  decision. A "Worth Knowing" section gives the plain-language meaning of the
+  week's human evidence — never an instruction, dose or product.
+- **Local shows are useful the same morning:** the roads and the forecast
+  from public data, the decisions that change something here, and one issue
+  argued fairly both ways.
+
 ## 10. Operator decisions (the plan proceeds on the first option)
 
 1. **Nerra Network Developments host:** Patrick (assumed) or Mira.
@@ -1110,6 +1274,10 @@ a default the Phase 2+ A-PRs copy.
 11. **Apple/Spotify/Podcast Index submissions** per show once Ep3 exists
     (the OP3 404-until-indexed lag applies to every new feed; six of the
     existing paid language feeds are still unmeasurable for this reason).
+12. **Prediction Markets Daily host:** Patrick (assumed, markets strand) or
+    Mira.
+13. **A "local" music theme** for Vancouver and Collingwood (voice-only at
+    launch) — a Suno brief like §5c's.
 
 ---
 
@@ -1164,6 +1332,7 @@ Tick every row for every YAML show (registry-only shows: rows marked ★).
 - `python scripts/validate_show.py <slug>`; `python check_feeds.py <slug>` FROM A RUNNER (Actions), anchors ≥ B; `--check-blocked` clean
 - `python run_show.py <slug> --test` on two consecutive days, digests read
 - §9a defaults present: `absence_sentence_filter`, `fetch_full_text`, daily-posting `x_accounts`, a realistic `min_podcast_words`, COVERAGE + shape block, `first episode of` in the start marker
+- §9b present: `llm.model: grok-4.7` (and the slug added to `NEW_SHOWS_47_ARM` in `tests/test_grok_47_migration_2026_09_21.py`), `<<include: _shared/interesting_first.txt>>` in the digest prompt, no price tape or calendar spoken
 - curriculum/research queries run live and read
 - Ep1 by `workflow_dispatch` (budget two attempts); the `Auto-generated` commit is on main; listened; then PR B (weeklies: `first_run` date in the three places)
 

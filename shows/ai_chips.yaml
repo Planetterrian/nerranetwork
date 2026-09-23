@@ -169,6 +169,14 @@ multilingual:
 
 llm:
   provider: xai
+  # grok-4.7 on every stage that writes (digest + script; combined generation
+  # stays eligible because podcast_model is unset), operator-directed
+  # 2026-09-23: the new shows are the proving ground for the latest model,
+  # and what works here is carried to the existing shows afterwards
+  # (experiment new-shows-grok-47-2026-09-23, docs/model_upgrade_playbook.md).
+  # The existing news shows stay on grok-4.3 (TestStagedGrok46Trial).
+  # Revert: delete this line.
+  model: grok-4.7
   system_prompt_file: shows/prompts/ai_chips_system.txt
   digest_prompt_file: shows/prompts/ai_chips_digest.txt
   podcast_prompt_file: shows/prompts/ai_chips_podcast.txt
