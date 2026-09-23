@@ -28,7 +28,14 @@ else — to an arbitrary Buttondown segment by editing the request body.
 | `ru-spacex` | `ru-spacex` | `ru/spacex.html`, the RU SpaceX funnel landing page |
 | `ru-tesla` | `ru-tesla` | `ru/tesla.html` |
 | `member` | `nerra-member`, `gallery-subscriber` | `/join.html` free account + footer newsletter |
-| `personal-interest` | `personal-interest`, `gallery-subscriber` (+ `nerra-member` when `newsletter: true`) | `/personal-interest.html` Soft Personal tips/reminder. Newsletter checkbox also may send show tag `SpaceX Daily`. Never charges Personal. |
+| `personal-interest` | `personal-interest` (+ `src-*` from `source`; + `nerra-member` / show tags only when `newsletter: true`) | `/personal-interest.html` Soft Personal tips/reminder. **No** forced `gallery-subscriber`. Never charges Personal. |
+
+> **Deploy is not automatic.** Merging this repo updates GitHub Pages
+> (the form) but **does not** ship `nerra-gallery-api`. An undeployed
+> Worker does not know `list=personal-interest`, silently falls back to
+> `gallery`, and writes only `gallery-subscriber` (+ `src-*`). That is
+> the brand-qa signature from 2026-09-22. After every subscribe-list
+> change: `cd workers/gallery && npx wrangler deploy`.
 
 `source` must be one of the `src-*` attribution tags produced by
 `engine.funnel.source_tag()` (`src-youtube`, `src-youtube-ru`,

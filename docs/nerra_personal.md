@@ -138,8 +138,12 @@ Header / body / success / CTAs are exact; no episode totals; no scarcity.
 
 | Intent | Buttondown tags |
 |---|---|
-| Soft interest (default) | `personal-interest`, `gallery-subscriber` (+ `src-nerranetwork`) |
+| Soft interest (default) | `personal-interest` (+ `src-nerranetwork` when the page sends it) |
 | + newsletter checkbox | also `nerra-member` (network newsletter segment) + `SpaceX Daily` |
+
+**Not applied on Soft interest alone:** `gallery-subscriber`. That tag
+belongs to the gallery / join free-account path; Soft Personal SoT is the
+`personal-interest` segment.
 
 Optional first name → Buttondown subscriber metadata. Honeypot `company`
 is discarded. Rate-limit already on `/api/subscribe`. **Stripe is never
@@ -156,21 +160,50 @@ is not SoT.
 - On Buttondown / Worker failure the page shows Brand fail copy and does
   not invent keys or charge anything.
 
-### CoS / Patrick setup
+### Tag-mapping before / after (investigation)
+
+Live brand-qa (`brand-qa-spi-20260922-…@nerranetwork-qa.test`) POSTed
+`list=personal-interest`, got `{"ok":true}`, and landed with tags
+`gallery-subscriber` + `src-nerranetwork` only — **no** `personal-interest`.
+
+That exact pair is what `resolveSubscribeTags` emits when the named
+`list` is **unknown** to the running Worker (`DEFAULT_LIST = "gallery"`).
+Leading hypothesis (not proven from this repo alone): **PR #1274/#1275
+merged the form + Worker source, but `nerra-gallery-api` was never
+`wrangler deploy`ed**, so production still had the pre-Soft-Personal
+allow-list. Secondary fix in this pass: Soft Personal no longer forces
+`gallery-subscriber` even when the list *is* known — SoT wants the
+interest segment tag alone.
+
+### CoS / Patrick setup — **Worker deploy required**
+Merging to `main` updates GitHub Pages only. The subscribe API is a
+Cloudflare Worker; list→tag changes are dead until deploy.
+
 1. Confirm Worker secret `BUTTONDOWN_API_KEY` is set (same key as
    gallery / Ask C — `wrangler secret list` from `workers/gallery/`).
 2. In Buttondown, create (or confirm) tag/segment **`personal-interest`**
-   on the Nerra Network list. `nerra-member` and `SpaceX Daily` already
-   exist.
-3. Deploy the Worker so the new list is live:
+   on the Nerra Network list (already created for brand-qa).
+   `nerra-member` and `SpaceX Daily` already exist.
+3. **Deploy the Worker** (this is the step that makes the mapping live):
    ```bash
-   cd workers/gallery && npx wrangler deploy
+   cd workers/gallery
+   git pull
+   npm test          # expect Soft Personal cases green
+   npx wrangler deploy
    ```
-   Until deploy, an unknown `list` falls back to `gallery` and the form
-   still returns Brand fail copy if Buttondown errors.
-4. No new env vars on GitHub Pages / the static site — the browser only
+   Until deploy, an unknown `list` falls back to `gallery` → tags
+   `gallery-subscriber` (+ `src-*`), API still returns `{"ok":true}`.
+4. Smoke-test with a fresh QA address:
+   ```bash
+   curl -sS -X POST https://api.nerranetwork.com/api/subscribe \
+     -H 'Content-Type: application/json' \
+     -d '{"email":"qa-spi-$(date +%s)@nerranetwork-qa.test","list":"personal-interest","source":"src-nerranetwork"}'
+   ```
+   Then check Buttondown: expect **`personal-interest`** +
+   `src-nerranetwork`, **not** `gallery-subscriber`.
+5. No new env vars on GitHub Pages / the static site — the browser only
    talks to `api.nerranetwork.com`.
-5. Do **not** attach a Stripe Payment Link or auto-subscribe path to this
+6. Do **not** attach a Stripe Payment Link or auto-subscribe path to this
    form.
 
 ## Donations (`/support.html`)

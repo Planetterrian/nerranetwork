@@ -77,7 +77,9 @@ class TestSoftPersonalInterestPage:
         assert "STRIPE" not in src
         handlers = _read("workers/gallery/src/handlers.ts")
         assert "Never creates a paid Personal subscription" in handlers
-        assert '"personal-interest": ["personal-interest", SUBSCRIBER_TAG]' in handlers
+        # Soft Personal SoT: interest segment only — no forced gallery tag.
+        assert '"personal-interest": ["personal-interest"]' in handlers
+        assert '"personal-interest": ["personal-interest", SUBSCRIBER_TAG]' not in handlers
 
     def test_no_scarcity_or_episode_totals(self):
         src = _read("templates/personal_interest_page.html.j2")
@@ -103,9 +105,12 @@ class TestSoftPersonalInterestPage:
 
     def test_worker_owns_the_list(self):
         handlers = _read("workers/gallery/src/handlers.ts")
-        assert '"personal-interest": ["personal-interest", SUBSCRIBER_TAG]' in handlers
+        assert '"personal-interest": ["personal-interest"]' in handlers
         assert "networkNewsletter" in handlers
         assert "honeypot" in handlers.lower() or "company" in handlers
+        # Unknown list must keep falling back to gallery — that fallthrough
+        # is what made undeployed Workers write gallery-subscriber only.
+        assert 'DEFAULT_LIST = "gallery"' in handlers
 
     def test_generator_does_not_inject_episode_totals(self):
         src = _read("generate_html.py")

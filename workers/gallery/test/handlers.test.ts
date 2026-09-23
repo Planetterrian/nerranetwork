@@ -148,11 +148,13 @@ describe("resolveSubscribeTags", () => {
   });
 
   it("resolves the Soft Personal interest list without forcing newsletter", () => {
-    // ENG-SPEC: tag `personal-interest` (+ gallery unlock). Network
-    // newsletter (`nerra-member`) is opt-in via the checkbox only.
+    // ENG-SPEC / Soft Personal SoT: exact tag `personal-interest` +
+    // allow-listed source. Do NOT force gallery-subscriber — that made
+    // brand-qa look like a gallery signup while the interest segment
+    // stayed empty. Network newsletter is opt-in via the checkbox only.
     expect(resolveSubscribeTags("personal-interest", "src-nerranetwork"))
       .toEqual({
-        tags: ["personal-interest", "gallery-subscriber", "src-nerranetwork"],
+        tags: ["personal-interest", "src-nerranetwork"],
         list: "personal-interest",
       });
   });
@@ -161,10 +163,13 @@ describe("resolveSubscribeTags", () => {
     const { tags } = resolveSubscribeTags(
       "personal-interest", "src-nerranetwork", ["SpaceX Daily"],
       { networkNewsletter: true });
-    expect(tags).toContain("personal-interest");
-    expect(tags).toContain("nerra-member");
-    expect(tags).toContain("SpaceX Daily");
-    expect(tags).toContain("gallery-subscriber");
+    expect(tags).toEqual([
+      "personal-interest",
+      "src-nerranetwork",
+      "SpaceX Daily",
+      "nerra-member",
+    ]);
+    expect(tags).not.toContain("gallery-subscriber");
   });
 });
 
@@ -306,7 +311,7 @@ describe("POST /api/subscribe", () => {
     expect(deps.buttondown.subscribe).toHaveBeenCalledWith(
       "fake-bd",
       "pat@example.com",
-      ["personal-interest", "gallery-subscriber", "src-nerranetwork",
+      ["personal-interest", "src-nerranetwork",
        "SpaceX Daily", "nerra-member"],
       { first_name: "Pat" },
     );
@@ -327,7 +332,7 @@ describe("POST /api/subscribe", () => {
     expect(deps.buttondown.subscribe).toHaveBeenCalledWith(
       "fake-bd",
       "quiet@example.com",
-      ["personal-interest", "gallery-subscriber", "src-nerranetwork"],
+      ["personal-interest", "src-nerranetwork"],
       undefined,
     );
   });
