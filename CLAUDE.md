@@ -1004,7 +1004,18 @@ today's work, not just explain yesterday's):
   ORIGINAL publisher URL (no desk prose), text-less hook articles are fetched
   first (`engine.article_text`), and the desks' summaries reach the prompt
   only as a ranking note the claims gate never reads. Guards:
-  `tests/test_phase3_desks_2026_09_23.py`.
+  `tests/test_phase3_desks_2026_09_23.py`. **Ep1 review (2026-09-23):**
+  grok-4.7 speaks every prompt rule as a sentence — 37 of 305 script
+  sentences narrated the briefing, "the item", the desk's rules or the length
+  target, and a per-sentence attribution rule produced "The Times reports…"
+  ten lines running. `_shared/omni_listener_rules.txt` (desks + Top World)
+  describes the shape, and the opt-in absence filter now removes
+  self-narration (`is_self_narration_sentence`). Europe died on a grok-4.7
+  503 (the pinned-model fallback now covers 5xx and the script stage) after
+  its RSS fetch outlived run_show's 120 s wait and was DISCARDED
+  (`_await_fetch` grace period). Guards:
+  `tests/test_desk_ep1_review_2026_09_23.py`,
+  `tests/test_pinned_model_fallback_2026_09_23.py`.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:
