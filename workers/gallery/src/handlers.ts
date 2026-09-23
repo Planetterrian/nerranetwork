@@ -97,12 +97,17 @@ const SUBSCRIBE_LISTS: Record<string, string[]> = {
   // members without a second enrolment.
   member: ["nerra-member", SUBSCRIBER_TAG],
   // Sep 2026 Soft Personal (/personal-interest.html) — ENG-SPEC.
-  // Tag SoT: `personal-interest` only. Gallery unlock rides along so the
-  // confirmation's "your account" path works. Network newsletter
-  // (`nerra-member`) is NOT automatic — the form's newsletter checkbox
-  // opts in via resolveSubscribeTags(..., { networkNewsletter: true }).
-  // Never creates a paid Personal subscription (Stripe is not called).
-  "personal-interest": ["personal-interest", SUBSCRIBER_TAG],
+  // Tag SoT: exact Buttondown segment `personal-interest` ONLY.
+  // Do NOT force `gallery-subscriber` here — Soft Personal interest is a
+  // tips/reminder segment, not a gallery unlock; forcing that tag made
+  // brand-qa look like a successful gallery signup while the interest
+  // segment stayed empty. Network newsletter (`nerra-member`) and show
+  // tags (e.g. SpaceX Daily) are NOT automatic — the form's newsletter
+  // checkbox opts in via resolveSubscribeTags(..., { networkNewsletter }).
+  // Session cookie (nn_gallery) is still issued so "your account" works
+  // for the browser that just subscribed; magic-login looks up the
+  // address, not the tag. Never creates a paid Personal subscription.
+  "personal-interest": ["personal-interest"],
 };
 const DEFAULT_LIST = "gallery";
 

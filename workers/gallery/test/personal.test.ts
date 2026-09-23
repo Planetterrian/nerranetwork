@@ -359,9 +359,8 @@ describe("membership plumbing", () => {
     const { tags, list } = resolveSubscribeTags(
       "personal-interest", "src-nerranetwork");
     expect(list).toBe("personal-interest");
-    expect(tags).toContain("personal-interest");
-    expect(tags).toContain("gallery-subscriber");
-    expect(tags).toContain("src-nerranetwork");
+    expect(tags).toEqual(["personal-interest", "src-nerranetwork"]);
+    expect(tags).not.toContain("gallery-subscriber");
     expect(tags).not.toContain("nerra-member");
   });
 
@@ -371,6 +370,7 @@ describe("membership plumbing", () => {
       { networkNewsletter: true });
     expect(tags).toContain("nerra-member");
     expect(tags).toContain("SpaceX Daily");
+    expect(tags).not.toContain("gallery-subscriber");
   });
 
   it("show newsletter tags pass only from the closed set", () => {
