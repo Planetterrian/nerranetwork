@@ -133,16 +133,18 @@ class TestDeskConfig:
             assert "REGION RULE" in dig and "REGION RULE" in pod
             assert "across the region" in pod and "the wider world" in pod
 
-    def test_pages_covers_and_prelaunch(self, slug):
+    def test_pages_covers_and_launched(self, slug):
         page = slug.replace("_", "-")
         assert (ROOT / f"{page}.html").exists()
         assert (ROOT / f"assets/covers/{page}.jpg").exists()
+        # Launch-cohort PR C (2026-09-23): out of the pre-launch set, on the clock.
         import review_episodes
-        assert slug in review_episodes.PRELAUNCH_SLUGS
+        assert slug not in review_episodes.PRELAUNCH_SLUGS
+        assert review_episodes.SHOW_REGISTRY[slug]["schedule"] == "daily"
         wf = (ROOT / ".github/workflows/run-show.yml").read_text()
         assert f"          - {slug}\n" in wf
-        cron_block = wf.split("CRON_MAP", 1)[1][:4000] if "CRON_MAP" in wf else ""
-        assert slug not in cron_block
+        cron_block = wf.split("CRON_MAP", 1)[1][:6000] if "CRON_MAP" in wf else ""
+        assert f'"{slug}"' in cron_block
         nightly = (ROOT / ".github/workflows/nightly-maintenance.yml").read_text()
         assert f"blog/{slug}/**" in nightly and f"{page}.html" in nightly
         meta = yaml.safe_load((ROOT / "shows/network_meta.yaml").read_text())[slug]

@@ -193,6 +193,35 @@
         </div>
     </section>
 
+    {# Sep 23 2026 (launch-cohort PR C): the news shows Mira reads. Rendered
+       from engine.brand.MIRA_NEWS_SHOW_SLUGS through the same builder as the
+       trio above, so the state labels are the committed truth; the claim
+       section above never mentions them — they are not its basis. #}
+    {% if mira_news_shows %}
+    <section class="mira-section" id="mira-reads-the-news">
+        <h2>Mira also reads the news</h2>
+        <p>{{ host_news_role }}</p>
+        <div class="mira-shows">
+            {% for show in mira_news_shows %}
+            <article class="mira-show">
+                <span class="state">{{ show.episode_label }}{% if show.schedule %} · {{ show.schedule }}{% endif %}</span>
+                <h3><a href="{{ show.show_page }}">{{ show.name }}</a></h3>
+                <p>{{ show.description }}</p>
+                <div class="links">
+                    <a href="{{ show.show_page }}">Show page</a>
+                    {%- if show.episode_count and show.summaries_page %}
+                    <a href="{{ show.summaries_page }}">Episodes</a>
+                    {%- endif %}
+                    {%- if show.has_feed %}
+                    <a href="{{ show.rss_file }}">RSS</a>
+                    {%- endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
     <section class="mira-section">
         <h2>What happens if you agree to an interview</h2>
         <p>

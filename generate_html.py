@@ -2948,6 +2948,25 @@ def _interview_episode_cards(slug, cfg):
     return cards
 
 
+def _first_run_note(cfg, today=None):
+    """"First scheduled episode: <weekday, Month D, YYYY>" while the
+    registry's ``first_run`` date is still ahead; "" otherwise. The date is
+    the one the run-show gate and the scheduler Worker honour, so the page
+    can never promise a day the pipeline will not deliver."""
+    import datetime as _dt
+    raw = cfg.get("first_run")
+    if not raw:
+        return ""
+    try:
+        first = _dt.date.fromisoformat(str(raw))
+    except (TypeError, ValueError):
+        return ""
+    today = today or _dt.date.today()
+    if first <= today:
+        return ""
+    return f"First scheduled episode: {first.strftime('%A, %B')} {first.day}, {first.year}"
+
+
 def generate_show_page(slug, *, dry_run=False, output_dir=None):
     """Render and write a show page for a single show.
 
@@ -3237,6 +3256,10 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         # A show registered before its first episode has a feed NAME but no
         # feed FILE; linking it 404s (Nerra Voices).
         "has_feed": (ROOT / cfg["rss_file"]).exists(),
+        # Sep 23 2026 (launch-cohort PR C): a show whose first CRON run is
+        # still ahead says so with the DATE, read from the registry's
+        # ``first_run`` — never typed into a template or a description.
+        "first_run_note": _first_run_note(cfg),
         # The Nerra Personal path, on the show whose promise Personal extends.
         # /nerra-daily.html is the site's #1 landing page and Personal is a
         # personalised Nerra Daily, yet the only route from one to the other was
@@ -4224,12 +4247,16 @@ def _mira_episode_count(cfg):
     return _mira_episode_count_for(cfg.get("json_path", "") or "")
 
 
-def _mira_shows():
-    """The Mira shows in introduction order, with their real state attached."""
+def _mira_shows(slugs=None):
+    """The Mira shows in introduction order, with their real state attached.
+
+    ``slugs`` defaults to the claim-bearing trio; the Mira page also calls it
+    with ``MIRA_NEWS_SHOW_SLUGS`` for the news shows she reads (Sep 23 2026).
+    """
     from engine.brand import MIRA_SHOW_SLUGS
 
     out = []
-    for slug in MIRA_SHOW_SLUGS:
+    for slug in (slugs or MIRA_SHOW_SLUGS):
         cfg = NETWORK_SHOWS.get(slug)
         if not cfg:
             continue
@@ -4283,7 +4310,8 @@ def generate_mira_page(*, dry_run=False, output_dir=None):
     and a drifted copy of it is worse than no copy.
     """
     from engine.brand import (
-        MIRA_HOST_NAME, MIRA_NETWORK_ROLE, MIRA_SHORT_DESCRIPTION,
+        MIRA_HOST_NAME, MIRA_NETWORK_ROLE, MIRA_NEWS_ROLE, MIRA_NEWS_SHOW_SLUGS,
+        MIRA_SHORT_DESCRIPTION,
     )
 
     env = _get_jinja_env()
@@ -4314,6 +4342,8 @@ def generate_mira_page(*, dry_run=False, output_dir=None):
         "host_summary": MIRA_SHORT_DESCRIPTION,
         "host_network_role": MIRA_NETWORK_ROLE,
         "mira_shows": _mira_shows(),
+        "host_news_role": MIRA_NEWS_ROLE,
+        "mira_news_shows": _mira_shows(MIRA_NEWS_SHOW_SLUGS),
         # The hub's headline CTA points at the show that has episodes; each
         # card below links its own form from the registry.
         "apply_url": "age-of-ai-apply.html",

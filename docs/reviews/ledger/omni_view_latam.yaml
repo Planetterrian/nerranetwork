@@ -36,3 +36,44 @@ reviews:
         baseline: "n/a"
         expected: "<=1/7"
         verdict: pending
+  - date: 2026-09-23
+    pr: "#1286 (launch-cohort pass) + PR C (schedule)"
+    doc: docs/experiments.yaml (launch-cohort-pass-2026-09-23, launch-cohort-schedule-2026-09-23)
+    reviewer: claude-code (Episode 1 review + launch, operator brief 2026-09-23)
+    summary: >-
+      Ep1 was the shortest desk (848 words, 5:54): Progress Watch was a six-second closing marker with no result, The Region and the World had no header, and the fetch found 14 articles. Six Spanish/Portuguese publisher feeds added (operator decision); progress_watch_thin and region_world_thin lints ride the regeneration.
+    shipped:
+      - desk format v2: Lead + two developed + Also Today one-liners (story count follows supply); consequence-first hook; validator floor 2; also-today chapter
+      - digest lints: wyntk_hook_match, x_only_lead, progress_watch_thin, region_world_thin (ride the structural regeneration)
+      - X posts credit the article they link; x_posts_as_sources linked_only; fetch_full_text 16
+      - claims item-coverage repair for the grok-4.3 fallback arm
+      - scheduled (PR C) — see the register entry for the slot
+      - six ES/PT publisher feeds (El País América, Folha, O Globo, La Nación, Reforma, Infobae)
+    deferred:
+      - a second Nerra Daily edition from the desks (operator decision after audience data)
+      - music theme (voice-only at launch)
+    predictions:
+      - metric: "Across the Region episodes (first 7) carrying an Also Today section on days with >= 8 qualifying articles"
+        baseline: "n/a (format v2 shipped 09-23)"
+        expected: ">= 5/7"
+        verdict: pending
+      - metric: "episodes with a Lead sourced only to x.com"
+        baseline: "Africa & ME Ep1: 6/6 items X"
+        expected: "0/7"
+        verdict: pending
+      - metric: "digest_lints_fired_after_retry non-empty"
+        baseline: "n/a"
+        expected: "<= 1/7"
+        verdict: pending
+      - metric: "desk digest words vs min_digest_words on days with >= 12 full-text articles"
+        baseline: "826-960 of 1,100 (Ep1s)"
+        expected: ">= 1,100 on 5/7"
+        verdict: pending
+      - metric: "Progress Watch carrying a measured result or the explicit one-sentence none"
+        baseline: "0/1 (Ep1)"
+        expected: "7/7"
+        verdict: pending
+      - metric: "episode run time"
+        baseline: "5:54 (Ep1)"
+        expected: ">= 8:00 median over Ep2-8"
+        verdict: pending

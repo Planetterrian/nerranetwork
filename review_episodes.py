@@ -365,6 +365,117 @@ SHOW_REGISTRY = {
         # scheduled Wednesday is Sep 30, never the day after Ep1.
         "first_run": "2026-09-30",
     },
+    # Launch-cohort PR C (2026-09-23): the nine shows whose Episode 1s were
+    # produced by hand and reviewed; schedules mirror run-show.yml's CRON_MAP.
+    "vancouver": {
+        "name": "Vancouver Daily News",
+        "output_dir": "digests/vancouver",
+        "prefix": "Vancouver_Daily",
+        "min_digest_chars": 2000,
+        "max_digest_chars": 20000,
+        "min_tts_words": 900,
+        "min_audio_s": 240,
+        "max_audio_s": 1500,
+        "required_sections": [],
+        "schedule": "daily",
+    },
+    "collingwood": {
+        "name": "Collingwood Weekly",
+        "output_dir": "digests/collingwood",
+        "prefix": "Collingwood_Weekly",
+        "min_digest_chars": 2000,
+        "max_digest_chars": 20000,
+        "min_tts_words": 600,
+        "min_audio_s": 180,
+        "max_audio_s": 1500,
+        "required_sections": [],
+        "schedule": "friday",
+        "first_run": "2026-10-02",
+    },
+    "prediction_markets": {
+        "name": "Prediction Markets Daily",
+        "output_dir": "digests/prediction_markets",
+        "prefix": "Prediction_Markets",
+        "min_digest_chars": 2000,
+        "max_digest_chars": 20000,
+        "min_tts_words": 1000,
+        "min_audio_s": 240,
+        "max_audio_s": 1500,
+        "required_sections": [],
+        "schedule": "daily",
+    },
+    "omni_view_europe": {
+        "name": "Omni View Europe",
+        "output_dir": "digests/omni_view_europe",
+        "prefix": "Omni_View_Europe",
+        "min_digest_chars": 2000,
+        "max_digest_chars": 20000,
+        "min_tts_words": 900,
+        "min_audio_s": 240,
+        "max_audio_s": 1500,
+        "required_sections": [],
+        "schedule": "daily",
+    },
+    "omni_view_asia_pacific": {
+        "name": "Omni View Asia Pacific",
+        "output_dir": "digests/omni_view_asia_pacific",
+        "prefix": "Omni_View_Asia_Pacific",
+        "min_digest_chars": 2000,
+        "max_digest_chars": 20000,
+        "min_tts_words": 900,
+        "min_audio_s": 240,
+        "max_audio_s": 1500,
+        "required_sections": [],
+        "schedule": "daily",
+    },
+    "omni_view_africa_mideast": {
+        "name": "Omni View Africa & Middle East",
+        "output_dir": "digests/omni_view_africa_mideast",
+        "prefix": "Omni_View_Africa_Mideast",
+        "min_digest_chars": 2000,
+        "max_digest_chars": 20000,
+        "min_tts_words": 900,
+        "min_audio_s": 240,
+        "max_audio_s": 1500,
+        "required_sections": [],
+        "schedule": "daily",
+    },
+    "omni_view_latam": {
+        "name": "Omni View Central & South America",
+        "output_dir": "digests/omni_view_latam",
+        "prefix": "Omni_View_LatAm",
+        "min_digest_chars": 2000,
+        "max_digest_chars": 20000,
+        "min_tts_words": 900,
+        "min_audio_s": 240,
+        "max_audio_s": 1500,
+        "required_sections": [],
+        "schedule": "daily",
+    },
+    "omni_view_north_america": {
+        "name": "Omni View North America",
+        "output_dir": "digests/omni_view_north_america",
+        "prefix": "Omni_View_North_America",
+        "min_digest_chars": 2000,
+        "max_digest_chars": 20000,
+        "min_tts_words": 900,
+        "min_audio_s": 240,
+        "max_audio_s": 1500,
+        "required_sections": [],
+        "schedule": "daily",
+    },
+    "omni_view_world": {
+        "name": "Omni View Top World News",
+        "output_dir": "digests/omni_view_world",
+        "prefix": "Omni_View_World",
+        "min_digest_chars": 2000,
+        "max_digest_chars": 20000,
+        "min_tts_words": 1000,
+        "min_audio_s": 240,
+        "max_audio_s": 1500,
+        "required_sections": [],
+        "schedule": "daily",
+    },
 }
 
 # Shows deliberately outside the daily audit. age_of_ai and nerra_voices
@@ -386,12 +497,9 @@ AUDIT_EXEMPT_SLUGS = frozenset({"age_of_ai", "nerra_voices"})
 #: The four Phase 1 shows launched 2026-09-23. Phase 2 (Mira's local shows)
 #: joined 2026-09-23 in its A-PR and leaves in its B-PR; Prediction Markets
 #: Daily (Phase 2b) the same way.
-PRELAUNCH_SLUGS: frozenset = frozenset({
-    "vancouver", "collingwood", "prediction_markets",
-    # Phase 3: the Omni View regional desks and Top World.
-    "omni_view_europe", "omni_view_asia_pacific", "omni_view_africa_mideast",
-    "omni_view_latam", "omni_view_north_america", "omni_view_world",
-})
+#: Empty since the launch-cohort PR C (2026-09-23) moved the last nine into
+#: SHOW_REGISTRY. A future scaffold adds its slug here in its A-PR.
+PRELAUNCH_SLUGS: frozenset = frozenset()
 
 
 # ---------------------------------------------------------------------------
@@ -2111,7 +2219,7 @@ CATCH_UP_DAYS = 3
 # run after this shipped found a 32-episode backlog. Draining it over a
 # few days costs the same in total but never spikes a single run, and the
 # oldest are taken first so nothing is starved.
-CATCH_UP_MAX_PER_RUN = 10
+CATCH_UP_MAX_PER_RUN = 16  # 10 was sized for 15 shows; 28 run_show shows since 2026-09-23
 _COVERAGE_RETENTION_DAYS = 14
 
 

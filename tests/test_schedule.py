@@ -128,6 +128,11 @@ DAILY_SHOWS = [
     "models_agents", "models_agents_beginners", "modern_investing",
     # Sep 2026 new shows, launched 2026-09-23.
     "ai_chips", "mag7",
+    # Launch-cohort PR C (2026-09-23): the Mira desks, Top World, Vancouver
+    # and Prediction Markets — all daily with the Sunday segment.
+    "vancouver", "prediction_markets", "omni_view_world",
+    "omni_view_europe", "omni_view_asia_pacific", "omni_view_africa_mideast",
+    "omni_view_latam", "omni_view_north_america",
 ]
 ALT_CADENCE_SHOWS = [
     # Weekly on Monday (June 2026): privet_russian + finansy_prosto moved off
@@ -141,6 +146,8 @@ ALT_CADENCE_SHOWS = [
     # Sep 2026 new weeklies (Wednesday / Thursday), launched 2026-09-23. A
     # weekly show IS the week in review, so neither carries the flag.
     "longevity", "peptides",
+    # Friday weekly (launch-cohort PR C, first scheduled run 2026-10-02).
+    "collingwood",
 ]
 
 

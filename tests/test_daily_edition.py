@@ -54,7 +54,14 @@ class TestEditionSpec:
     # new daily in it, and a pre-launch show has no episodes to splice. The
     # desks are a candidate SECOND edition (EDITIONS["world"]) once they have
     # audience data — an operator decision, not a default.
-    EXCLUDED_NEW_SHOWS = {"ai_chips", "mag7", "peptides", "longevity"}
+    EXCLUDED_NEW_SHOWS = {
+        "ai_chips", "mag7", "peptides", "longevity",
+        # Launch-cohort PR C (2026-09-23): the Mira desks, Top World, the two
+        # local shows and Prediction Markets — scheduled, still excluded.
+        "vancouver", "collingwood", "prediction_markets", "omni_view_world",
+        "omni_view_europe", "omni_view_asia_pacific", "omni_view_africa_mideast",
+        "omni_view_latam", "omni_view_north_america",
+    }
 
     def test_new_shows_are_excluded_on_purpose(self):
         assert not self.EXCLUDED_NEW_SHOWS & set(SPEC.lineup)

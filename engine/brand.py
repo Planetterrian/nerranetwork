@@ -32,6 +32,24 @@ from __future__ import annotations
 # the free daily anchor, then the two interview shows.
 MIRA_SHOW_SLUGS = ("nerra_daily", "age_of_ai", "nerra_voices")
 
+#: The news shows Mira reads (Sep 2026 launch cohort). Deliberately NOT in
+#: MIRA_SHOW_SLUGS: that tuple is the claim-bearing trio (the first-of-its-kind
+#: basis rests on the interview shows), and the strand "mira" in the chrome
+#: stays those three. These are listed on /mira.html under their own heading
+#: — before this the page never said she reads the news at all.
+MIRA_NEWS_SHOW_SLUGS = (
+    "omni_view_world", "omni_view_north_america", "omni_view_europe",
+    "omni_view_asia_pacific", "omni_view_africa_mideast", "omni_view_latam",
+    "vancouver", "collingwood",
+)
+
+MIRA_NEWS_ROLE = (
+    "Mira also reads the news: five regional desks and a ranked world edition "
+    "every day, a Vancouver daily and a Collingwood weekly — each one written "
+    "from named publishers, every source listed on the episode page, and the "
+    "AI host disclosed in the first minute."
+)
+
 MIRA_HOST_NAME = "Mira"
 
 # What Mira is, in one sentence, for a reader who has never heard of her.

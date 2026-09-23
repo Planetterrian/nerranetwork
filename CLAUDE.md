@@ -262,15 +262,15 @@ and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 | MAG 7 Daily | — | `shows/mag7.yaml` | Daily | — (X source only) | Grok TTS (custom) |
 | Peptides Weekly | — | `shows/peptides.yaml` | Thursday | — (X source only) | Grok TTS (custom) |
 | Longevity Weekly | — | `shows/longevity.yaml` | Wednesday | — (X source only) | Grok TTS (custom) |
-| Vancouver Daily News | — | `shows/vancouver.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X source only) | Grok TTS (Mira, `ara`) |
-| Collingwood Weekly | — | `shows/collingwood.yaml` | Friday (pre-launch) | — (X disabled) | Grok TTS (Mira, `ara`) |
-| Prediction Markets Daily | — | `shows/prediction_markets.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X source only) | Grok TTS (custom) |
-| Omni View Top World News | — | `shows/omni_view_world.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X source only) | Grok TTS (Mira, `ara`) |
-| Omni View North America | — | `shows/omni_view_north_america.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X source only) | Grok TTS (Mira, `ara`) |
-| Omni View Europe | — | `shows/omni_view_europe.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X source only) | Grok TTS (Mira, `ara`) |
-| Omni View Asia Pacific | — | `shows/omni_view_asia_pacific.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X source only) | Grok TTS (Mira, `ara`) |
-| Omni View Africa & Middle East | — | `shows/omni_view_africa_mideast.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X source only) | Grok TTS (Mira, `ara`) |
-| Omni View Central & South America | — | `shows/omni_view_latam.yaml` | Daily (pre-launch: manual dispatch until Ep1 is heard) | — (X source only) | Grok TTS (Mira, `ara`) |
+| Vancouver Daily News | — | `shows/vancouver.yaml` | Daily | — (X source only) | Grok TTS (Mira, `ara`) |
+| Collingwood Weekly | — | `shows/collingwood.yaml` | Friday | — (X disabled) | Grok TTS (Mira, `ara`) |
+| Prediction Markets Daily | — | `shows/prediction_markets.yaml` | Daily | — (X source only) | Grok TTS (custom) |
+| Omni View Top World News | — | `shows/omni_view_world.yaml` | Daily | — (X source only) | Grok TTS (Mira, `ara`) |
+| Omni View North America | — | `shows/omni_view_north_america.yaml` | Daily | — (X source only) | Grok TTS (Mira, `ara`) |
+| Omni View Europe | — | `shows/omni_view_europe.yaml` | Daily | — (X source only) | Grok TTS (Mira, `ara`) |
+| Omni View Asia Pacific | — | `shows/omni_view_asia_pacific.yaml` | Daily | — (X source only) | Grok TTS (Mira, `ara`) |
+| Omni View Africa & Middle East | — | `shows/omni_view_africa_mideast.yaml` | Daily | — (X source only) | Grok TTS (Mira, `ara`) |
+| Omni View Central & South America | — | `shows/omni_view_latam.yaml` | Daily | — (X source only) | Grok TTS (Mira, `ara`) |
 | Nerra Daily | — | registry-only (`shows/network_meta.yaml`; NOT run_show — assembled by `scripts/build_daily_edition.py`) | Daily, after the English slate | — (X disabled) | Splices published show audio + Mira links (Grok voice `ara`) |
 
 > Weekly-summary segment (July 2026): shows on a daily cadence with
@@ -1084,6 +1084,31 @@ today's work, not just explain yesterday's):
   (`shows/segments/collingwood.json`, 12 evergreen explainers) is on.
   Established shows are untouched; the arm/control hook_shape guard
   excludes the cohort by name.
+- **Launch-cohort PR C (2026-09-23; guards
+  `tests/test_launch_cohort_schedule_2026_09_23.py`).** The nine hand-launched
+  shows are on the clock (plan §6 slots, UTC): Asia Pacific 06:16, Africa &
+  Middle East 06:31, Europe 06:46, Collingwood Friday 10:07
+  (`FIRST_SCHEDULED_RUN` 2026-10-02 — Ep1 was hand-made on the 23rd from a
+  192-hour window), North America 10:16, LatAm 10:31, Prediction Markets
+  11:16, Top World 11:31 (after every desk's budget — its intake reads their
+  digests), Vancouver 12:16. The six places a cadence lives all moved
+  together (CRON_MAP, Worker SLOTS + FIRST_RUN, `review_episodes`
+  SHOW_REGISTRY — `PRELAUNCH_SLUGS` is now EMPTY, daily-audit FEEDS,
+  `test_schedule` lists; the registry `schedule` strings were already
+  right). `CATCH_UP_MAX_PER_RUN` 10 → 16 (sized for 15 shows; 28 run now).
+  **All 13 joined `ENGLISH_SHOWS`** (appended; pool 13 → 26, the surface
+  pool is unchanged so the stride stays coprime) — until now no established
+  show had ever mentioned a new one on air (⚠️ audio — A/B-listen).
+  **`/mira.html` gained "Mira also reads the news"** from
+  `engine.brand.MIRA_NEWS_SHOW_SLUGS` + `MIRA_NEWS_ROLE`; `MIRA_SHOW_SLUGS`
+  (the claim-bearing trio) and the `mira` strand are deliberately untouched
+  — the news shows are not the claim's basis. `_mira_shows(slugs=)` is one
+  builder for both lists. A show page carries a dated "first scheduled
+  episode" line from the registry's `first_run` (Collingwood) while that
+  date is ahead — never a typed date. The nine stay OUT of the Nerra Daily
+  lineup on purpose (`tests/test_daily_edition.py` EXCLUDED_NEW_SHOWS).
+  Operator: `wrangler deploy` the scheduler Worker, then the first
+  on-schedule slate is the listen set.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:

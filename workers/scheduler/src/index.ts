@@ -46,6 +46,16 @@ const SLOTS: Array<[number, number, string, string | null]> = [
   [10, 46, "mag7",                    null],
   [11, 1, "longevity",               "wednesday"],
   [11, 7, "peptides",                "thursday"],
+  // Launch-cohort PR C (2026-09-23): the nine hand-launched shows.
+  [6, 16, "omni_view_asia_pacific",   null],
+  [6, 31, "omni_view_africa_mideast", null],
+  [6, 46, "omni_view_europe",         null],
+  [10, 7, "collingwood",             "friday"],
+  [10, 16, "omni_view_north_america", null],
+  [10, 31, "omni_view_latam",         null],
+  [11, 16, "prediction_markets",      null],
+  [11, 31, "omni_view_world",         null],
+  [12, 16, "vancouver",               null],
 ];
 
 // First scheduled run per show (Sep 2026 launch) — mirrors run-show.yml's
@@ -54,6 +64,7 @@ const SLOTS: Array<[number, number, string, string | null]> = [
 const FIRST_RUN: Record<string, string> = {
   longevity: "2026-09-30",
   peptides: "2026-10-01",
+  collingwood: "2026-10-02",
 };
 
 function launched(show: string, now: Date): boolean {
