@@ -95,15 +95,54 @@ def completed_bars(rows: List[Tuple[str, float]], now: Optional[_dt.datetime] = 
     return close, prev, bar_date
 
 
-def _history_fetch(ticker: str) -> Optional[Tuple[float, Optional[float], str]]:
-    import yfinance as yf
+def expected_last_session(now: Optional[_dt.datetime] = None) -> str:
+    """ISO date of the most recent weekday session that has closed.
 
-    hist = yf.Ticker(ticker).history(period="10d")
-    rows = [
+    Holidays are not modelled: on one, this names a session that never
+    happened, and the only consequence is one extra fetch below.
+    """
+    now = now or _dt.datetime.now(_dt.timezone.utc)
+    try:
+        from zoneinfo import ZoneInfo
+        ny = now.astimezone(ZoneInfo("America/New_York"))
+    except Exception:  # pragma: no cover
+        ny = now - _dt.timedelta(hours=4)
+    day = ny.date()
+    if ny.hour < SESSION_CLOSE_HOUR or day.weekday() >= 5:
+        day -= _dt.timedelta(days=1)
+    while day.weekday() >= 5:
+        day -= _dt.timedelta(days=1)
+    return day.isoformat()
+
+
+def _rows(hist) -> List[Tuple[str, float]]:
+    return [
         (idx.date().isoformat() if hasattr(idx, "date") else str(idx)[:10], float(c))
         for idx, c in zip(hist.index, hist["Close"].tolist()) if c == c
     ]
-    return completed_bars(rows)
+
+
+def _history_fetch(ticker: str) -> Optional[Tuple[float, Optional[float], str]]:
+    import yfinance as yf
+
+    t = yf.Ticker(ticker)
+    got = completed_bars(_rows(t.history(period="10d")))
+    want = expected_last_session()
+    if got and got[2] < want:
+        # MAG 7 Ep1 (run 20:44 New York, 2026-09-22) printed Sep 21 closes:
+        # the period query had not yet carried that day's completed bar.
+        # An explicit start/end range asks for it by date.
+        try:
+            end = (_dt.date.fromisoformat(want) + _dt.timedelta(days=1)).isoformat()
+            start = (_dt.date.fromisoformat(want) - _dt.timedelta(days=14)).isoformat()
+            retry = completed_bars(_rows(t.history(start=start, end=end)))
+            if retry and retry[2] > got[2]:
+                return retry
+        except Exception as exc:  # noqa: BLE001 — keep the older close
+            logger.info("dated history retry failed for %s: %s", ticker, exc)
+        logger.warning("%s: newest close is %s, expected %s — the tape names its date",
+                       ticker, got[2], want)
+    return got
 
 
 def load_cache(path: Path) -> Dict[str, dict]:
@@ -189,16 +228,23 @@ def tape_block(quotes: List[Quote], names: Dict[str, str], expected: Iterable[st
             "no price may appear anywhere in the digest."
         )
     have = {q.ticker for q in quotes}
+    # One session date, said once: MAG 7 Ep1's tape carried the date on all
+    # seven lines and the script spoke "on September twenty one" seven times.
+    dates = {q.bar_date for q in quotes}
+    one_date = next(iter(dates)) if len(dates) == 1 else ""
     lines = [
-        "### MARKET TAPE — regular-session closes (use these numbers verbatim; "
-        "never substitute a price from an article; every price is a CLOSE)",
+        "### MARKET TAPE — regular-session closes"
+        + (f" for the {one_date} session" if one_date else "")
+        + " (use these numbers verbatim; never substitute a price from an "
+        "article; every price is a CLOSE"
+        + ("; say the session date ONCE, never per company)" if one_date else ")"),
     ]
     for q in quotes:
         chg = ""
         if q.change_pct is not None:
             chg = " (unchanged)" if q.change_pct == 0 else f" ({_signed_pct(q.change_pct)})"
         lines.append(f"- {names.get(q.ticker, q.ticker)} ({q.ticker}): closed at "
-                     f"${q.close:,.2f}{chg} on {q.bar_date}")
+                     f"${q.close:,.2f}{chg}" + ("" if one_date else f" on {q.bar_date}"))
     missing = [t for t in expected if t not in have]
     if missing:
         lines.append("- No validated close today for: " + ", ".join(missing)

@@ -66,6 +66,18 @@ on:
     # window language. Races start and finish at weekends, so Monday
     # is also the freshest editorial day for this beat.
     - cron: '1 10 * * 1'
+    # Sep 2026 new shows (docs/new_shows_plan_2026_09_22.md §6), launched
+    # after all four Episode 1s published and were reviewed:
+    # AI Chips & Data Centres Daily: Daily at 9:31 UTC.
+    - cron: '31 9 * * *'
+    # MAG 7 Daily: Daily at 10:46 UTC (06:46 New York, before the
+    # pre-market — the tape is the last completed session's closes).
+    - cron: '46 10 * * *'
+    # Longevity Weekly: Wednesday at 11:01 UTC.
+    - cron: '1 11 * * 3'
+    # Peptides Weekly: Thursday at 11:07 UTC (own minute: the scheduler
+    # Worker takes the FIRST SLOTS row matching h:m).
+    - cron: '7 11 * * 4'
 
   workflow_dispatch:
     inputs:
@@ -145,7 +157,7 @@ jobs:
 
           if event_name == "workflow_dispatch":
               if dispatch_show == "all":
-                  shows = ["tesla", "omni_view", "fascinating_frontiers", "planetterrian", "env_intel", "models_agents", "models_agents_beginners", "finansy_prosto", "privet_russian", "modern_investing", "unintended_consequences", "first_principles", "spacex", "dp_pod", "offshore_north"]
+                  shows = ["tesla", "omni_view", "fascinating_frontiers", "planetterrian", "env_intel", "models_agents", "models_agents_beginners", "finansy_prosto", "privet_russian", "modern_investing", "unintended_consequences", "first_principles", "spacex", "dp_pod", "offshore_north", "ai_chips", "mag7", "peptides", "longevity"]
               else:
                   shows = [dispatch_show]
           else:
@@ -183,6 +195,21 @@ jobs:
                   "37 9 * * 1":       ("finansy_prosto",          "monday"),
                   "46 9 * * 1":       ("dp_pod",                  "monday"),
                   "1 10 * * 1":       ("offshore_north",          "monday"),
+                  "31 9 * * *":       ("ai_chips",                 None),
+                  "46 10 * * *":      ("mag7",                     None),
+                  "1 11 * * 3":       ("longevity",               "wednesday"),
+                  "7 11 * * 4":       ("peptides",                "thursday"),
+              }
+
+              # First scheduled run per show (Sep 2026 launch). A weekly
+              # whose Episode 1 was produced by hand mid-week would
+              # otherwise run again at its first cron — one day later, on
+              # the same week of news. Before this date the slot is a
+              # known no-op. Mirrors review_episodes.SHOW_REGISTRY
+              # "first_run" and the scheduler Worker's FIRST_RUN.
+              FIRST_SCHEDULED_RUN = {
+                  "longevity": "2026-09-30",
+                  "peptides": "2026-10-01",
               }
 
               shows = []
@@ -226,6 +253,12 @@ jobs:
                       run_today = False
                       known_noop = True
                       print(f"Weekly no-op: {show_slug} only runs on {day_filter.title()}s.")
+
+                  _first = FIRST_SCHEDULED_RUN.get(show_slug)
+                  if run_today and _first and now_utc.date().isoformat() < _first:
+                      run_today = False
+                      known_noop = True
+                      print(f"Pre-launch no-op: {show_slug}'s first scheduled run is {_first}.")
 
                   if run_today:
                       shows.append(show_slug)

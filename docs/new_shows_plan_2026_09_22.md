@@ -960,6 +960,20 @@ economics are read per language on the dashboard card first.
   claims gate would otherwise strip an unsourced spotlight to nothing;
   (4) hub pages skip a show with no feed file; (5) the pre-launch band on a
   show page no longer assumes the show takes guests.
+- **Phase 1 B-PR — shipped 2026-09-23** (this branch, after all four
+  Episode 1s published and two review rounds, §9a): AI Chips daily 09:31,
+  MAG 7 daily 10:46, Longevity Wednesday 11:01 (first scheduled run
+  2026-09-30), Peptides Thursday 11:07 (first scheduled run 2026-10-01).
+  The first-run date exists because a weekly's hand-made Episode 1 lands
+  mid-week and its first cron would otherwise fire the next day on the
+  same week of news; it lives in three places that a guard keeps equal
+  (run-show gate `FIRST_SCHEDULED_RUN`, Worker `FIRST_RUN`, registry
+  `first_run`). The Worker change goes live only on `wrangler deploy`.
+  Deliberately NOT in this B-PR: `engine/network_promo.py` rotation (adding
+  four shows changes every existing show's spoken outro rotation — an
+  audio change on thirteen shows, landmine #17, and the stride-3/pool-13
+  echo guard needs re-deriving); the Phase 2 A-PR does it for all new
+  shows at once, with an A/B listen.
 - **Each B-PR** (after Episode 1 is heard): CRON_MAP + `- cron:` line +
   Worker SLOTS row (unique minute) + move the slug from `PRELAUNCH_SLUGS`
   into `SHOW_REGISTRY` + daily-audit FEEDS limit + `ALT_CADENCE_SHOWS` /
@@ -1009,6 +1023,67 @@ phase 0 are removal-only or additive and are not.
 6. `scripts/review_snapshot.py <slug>` runs on Ep3 and Ep7 (length,
    tics, chapters, cost) and the ledger's first predictions are scored at
    the four-week review.
+
+### 9a. What the Phase 1 Episode 1s taught — apply to every later show
+
+Four shows, seven production attempts, two review rounds (22–23 Sep; guards
+`tests/test_new_shows_ep1_review_2026_09_22.py`,
+`tests/test_new_shows_ep1_round2_2026_09_23.py`; ledgers carry the
+predictions). Each line is now either engine behaviour every show gets, or
+a default the Phase 2+ A-PRs copy.
+
+**Engine (every show gets it; nothing to copy)**
+- Chapters cover the opening even when the start marker misses (AI Chips
+  and Longevity Ep1 began at 343 s / 326 s).
+- The debut intro no longer re-reads the hook, and the dedup splitter no
+  longer cuts after "U.S." (MAG 7 Ep1 opened on that one word).
+- Europe PMC research slices take the most-cited REVIEWS first, MEDLINE
+  only (Peptides Ep1's insulin spotlight explained rats and sheep).
+- A hook never caches to `api/<slug>.json` — that path is the public
+  episode API; the collision sent MAG 7 Ep1 to a recovery PR.
+
+**Defaults every new news show's A-PR sets (copy from `shows/mag7.yaml`)**
+- `absence_sentence_filter: true` — drops "No X was disclosed" sentences,
+  empty item headings, and spoken-domain attribution lines (8 of AI Chips'
+  10 items; MAG 7's empty Microsoft item; Peptides' "x dot com" line).
+- `fetch_full_text: 12` — items written from teasers came out two
+  sentences long and padded with absence sentences.
+- `x_fetch_enabled: true` + `x_accounts` that POST DAILY — newsrooms,
+  beat reporters, aggregators. MAG 7's first run: four chief executives
+  and a brand account returned nothing in 24 hours; Mark Gurman and the
+  NVIDIA newsroom carried the news. Weeklies set `x_lookback_hours`. Read
+  the first run's per-handle counts and prune.
+- `llm.min_podcast_words` set to what the format's digest supports, not an
+  aspiration: the skip floor is 60 % of it, and three of seven Ep1 attempts
+  skipped against targets 15–25 % too high (MAG 7 now 1,100; AI Chips
+  1,300; weeklies 1,200).
+- Every podcast prompt carries the COVERAGE rule ("every item in the
+  briefing is told … the floor, not a menu") and a shape-only
+  story-coverage ratio. Without it the script told a 1,100-word digest in
+  660–700 words.
+- The start marker's pattern includes `first episode of` so the debut is
+  chaptered like every later episode.
+
+**Editorial rules the Phase 1 prompts had to learn (write them in on day one)**
+- Scope is a rule, not a keyword: Longevity's bare `trial` keyword let in
+  three unrelated Phase 3 wins; its prompt now states what is in scope.
+- An X post is a pointer, not a source, unless it names the drug, trial or
+  number; a hook names the subject, never "an investigational medicine".
+- A deep section (Thread / Teardown / Spotlight) uses only the day's
+  articles for numbers and never re-tells an item — both MAG 7's Thread
+  and AI Chips' Teardown did, the latter with figures from memory.
+- Curriculum searches are run LIVE before launch (all 52 were, after the
+  insulin miss); ambiguous title terms ("history") are banned.
+- Price tapes say the session date once, and a run after the close must
+  carry that day's close.
+
+**Process**
+- `--test` stops at the digest: the SCRIPT stage — where three of seven
+  attempts failed — is only exercised by a real run. Budget two Episode 1
+  attempts per show, and read the skip marker, not the run's colour.
+- A run that exits through the recovery-PR hatch is GREEN; check main for
+  the `Auto-generated: <slug>` commit before calling an episode published.
+- A weekly's B-PR names its first scheduled run date (above).
 
 ---
 
@@ -1082,13 +1157,15 @@ Tick every row for every YAML show (registry-only shows: rows marked ★).
 - `tests/test_schedule.py` DAILY_SHOWS / ALT_CADENCE_SHOWS; `test_scheduling_punctuality.py` count; `test_mit_benchmark_integrity.py:2698` coverage; `test_show_count_consistency.py`; `test_registry_pass_2026_09_21.py` count + hub snapshot; `test_mira_pass_2026_09_20.py` (strand set unchanged)
 
 **Whitelists**
-- new `api/<slug>*.json` in the run-show commit step AND `nightly-maintenance.yml` `add-paths`
+- new `api/<slug>_<name>.json` (NEVER `api/<slug>.json` — that is the public episode API) in the run-show commit step AND `nightly-maintenance.yml` `add-paths`
 - new per-show pages in nightly `add-paths` where the glob does not cover them
 
 **Pre-launch checks**
 - `python scripts/validate_show.py <slug>`; `python check_feeds.py <slug>` FROM A RUNNER (Actions), anchors ≥ B; `--check-blocked` clean
 - `python run_show.py <slug> --test` on two consecutive days, digests read
-- Ep1 by `workflow_dispatch`; listened; then PR B
+- §9a defaults present: `absence_sentence_filter`, `fetch_full_text`, daily-posting `x_accounts`, a realistic `min_podcast_words`, COVERAGE + shape block, `first episode of` in the start marker
+- curriculum/research queries run live and read
+- Ep1 by `workflow_dispatch` (budget two attempts); the `Auto-generated` commit is on main; listened; then PR B (weeklies: `first_run` date in the three places)
 
 ## Appendix B — feed probe (22 Sep 2026, via this session's proxy)
 

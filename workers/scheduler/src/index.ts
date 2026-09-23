@@ -42,7 +42,24 @@ const SLOTS: Array<[number, number, string, string | null]> = [
   [9, 37, "finansy_prosto",          "monday"],
   [9, 46, "dp_pod",                   "monday"],
   [10, 1, "offshore_north",          "monday"],
+  [9, 31, "ai_chips",                 null],
+  [10, 46, "mag7",                    null],
+  [11, 1, "longevity",               "wednesday"],
+  [11, 7, "peptides",                "thursday"],
 ];
+
+// First scheduled run per show (Sep 2026 launch) — mirrors run-show.yml's
+// FIRST_SCHEDULED_RUN and review_episodes' "first_run". A weekly whose
+// Episode 1 was produced by hand mid-week must not run the next day.
+const FIRST_RUN: Record<string, string> = {
+  longevity: "2026-09-30",
+  peptides: "2026-10-01",
+};
+
+function launched(show: string, now: Date): boolean {
+  const first = FIRST_RUN[show];
+  return !first || now.toISOString().slice(0, 10) >= first;
+}
 
 function dayFilterPasses(filter: string | null, now: Date): boolean {
   const day = now.getUTCDate();
@@ -142,7 +159,7 @@ function nextSlot(now: Date): { show: string; at: string; filter: string | null 
   for (let i = 0; i < 7 * 24 * 60; i++) {
     t.setUTCMinutes(t.getUTCMinutes() + 1);
     const slot = SLOTS.find(([h, m]) => h === t.getUTCHours() && m === t.getUTCMinutes());
-    if (slot && dayFilterPasses(slot[3], t)) {
+    if (slot && dayFilterPasses(slot[3], t) && launched(slot[2], t)) {
       return { show: slot[2], at: t.toISOString(), filter: slot[3] };
     }
   }

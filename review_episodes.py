@@ -309,6 +309,62 @@ SHOW_REGISTRY = {
         "required_sections": [],
         "schedule": "monday",
     },
+    # Sep 2026 new shows — launched 2026-09-23 after all four Episode 1s
+    # published and were reviewed (docs/new_shows_plan_2026_09_22.md §8).
+    "ai_chips": {
+        "name": "AI Chips & Data Centres Daily",
+        "output_dir": "digests/ai_chips",
+        "prefix": "AI_Chips_Ep",
+        "min_digest_chars": 2000,
+        "max_digest_chars": 20000,
+        "min_tts_words": 1300,
+        "min_audio_s": 300,
+        "max_audio_s": 1500,
+        "required_sections": [],
+        "schedule": "daily",
+    },
+    "mag7": {
+        "name": "MAG 7 Daily",
+        "output_dir": "digests/mag7",
+        "prefix": "MAG7_Daily_Ep",
+        "min_digest_chars": 2000,
+        "max_digest_chars": 20000,
+        "min_tts_words": 1100,
+        "min_audio_s": 240,
+        "max_audio_s": 1500,
+        "required_sections": [],
+        "schedule": "daily",
+    },
+    "peptides": {
+        "name": "Peptides Weekly",
+        "output_dir": "digests/peptides",
+        "prefix": "Peptides_Weekly_Ep",
+        "min_digest_chars": 2000,
+        "max_digest_chars": 20000,
+        "min_tts_words": 1200,
+        "min_audio_s": 300,
+        "max_audio_s": 1500,
+        "required_sections": [],
+        "schedule": "thursday",
+        # Episode 1 was produced by hand on Wed 2026-09-23; the first
+        # scheduled Thursday is a week later.
+        "first_run": "2026-10-01",
+    },
+    "longevity": {
+        "name": "Longevity Weekly",
+        "output_dir": "digests/longevity",
+        "prefix": "Longevity_Weekly_Ep",
+        "min_digest_chars": 2000,
+        "max_digest_chars": 20000,
+        "min_tts_words": 1200,
+        "min_audio_s": 300,
+        "max_audio_s": 1500,
+        "required_sections": [],
+        "schedule": "wednesday",
+        # Episode 1 was produced by hand on Tue 2026-09-22; the first
+        # scheduled Wednesday is Sep 30, never the day after Ep1.
+        "first_run": "2026-09-30",
+    },
 }
 
 # Shows deliberately outside the daily audit. age_of_ai and nerra_voices
@@ -327,12 +383,22 @@ AUDIT_EXEMPT_SLUGS = frozenset({"age_of_ai", "nerra_voices"})
 # the show's launch PR moves it from here into SHOW_REGISTRY in the same
 # change that adds its CRON_MAP entry (guard:
 # tests/test_new_shows_2026_09.py::TestPrelaunchShows).
-PRELAUNCH_SLUGS = frozenset({"ai_chips", "mag7", "peptides", "longevity"})
+#: Empty since 2026-09-23: the four Phase 1 shows launched. The Phase 2+
+#: shows join it in their A-PR and leave it in their B-PR.
+PRELAUNCH_SLUGS: frozenset = frozenset()
 
 
 # ---------------------------------------------------------------------------
 # Schedule helpers
 # ---------------------------------------------------------------------------
+
+def _scheduled_on(info: dict, target_date: datetime.date) -> bool:
+    """The show's schedule, honouring a registry ``first_run`` date."""
+    first = info.get("first_run")
+    if first and target_date.isoformat() < str(first):
+        return False
+    return _should_run_on(info.get("schedule", "daily"), target_date)
+
 
 def _should_run_on(schedule: str, target_date: datetime.date) -> bool:
     """Return True if *schedule* means the show should produce an episode on *target_date*."""
@@ -400,7 +466,7 @@ def check_missed_episodes(
         if show_filter and slug != show_filter:
             continue
         schedule = info.get("schedule", "daily")
-        if not _should_run_on(schedule, target_date):
+        if not _scheduled_on(info, target_date):
             continue
         if slug in found_slugs:
             continue
@@ -2112,7 +2178,7 @@ def find_catch_up_episodes(
             if covered.get(_coverage_key(ep.show_slug, day)):
                 continue
             info = SHOW_REGISTRY.get(ep.show_slug, {})
-            if not _should_run_on(info.get("schedule", "daily"), day):
+            if not _scheduled_on(info, day):
                 continue
             caught.append(ep)
     # Oldest first, then capped — a starved episode would otherwise sit
