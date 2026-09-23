@@ -327,3 +327,28 @@ def test_mag7_filters_analyst_price_targets():
                   "Microsoft downgrades Windows 10 support timeline"):
         assert not any(re.search(p, title, re.IGNORECASE) for p in pats), title
     assert "reject analyst price targets" in _prompt("mag7_digest.txt")
+
+
+# ---------------------------------------------------------------------------
+# Sep 23: MAG 7 skipped twice more on a thin script (701 -> 661 words from a
+# 1,109-word digest). The coverage rule had reached only the weeklies.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("slug", NEW_SHOWS)
+def test_every_new_show_script_carries_the_coverage_rule(slug):
+    assert "COVERAGE: every item in the briefing is told" in _prompt(f"{slug}_podcast.txt")
+
+
+@pytest.mark.parametrize("slug", ("ai_chips", "mag7"))
+def test_daily_new_shows_carry_a_coverage_shape_without_a_specimen(slug):
+    p = _prompt(f"{slug}_podcast.txt")
+    assert "SHAPE OF IDEAL STORY COVERAGE" in p and "described, never copied" in p
+    assert "EXAMPLE OF IDEAL STORY COVERAGE" not in p
+
+
+@pytest.mark.parametrize("slug,target", [("mag7", 1100), ("ai_chips", 1300),
+                                         ("peptides", 1200), ("longevity", 1200)])
+def test_length_targets_match_what_the_format_supports(slug, target):
+    from engine.config import load_config
+
+    assert load_config(ROOT / "shows" / f"{slug}.yaml").llm.min_podcast_words == target
