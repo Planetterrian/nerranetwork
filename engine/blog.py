@@ -1697,6 +1697,9 @@ def generate_blog_index_html(
         "posts": posts,
         "interview_cards": interview_cards or {},
         "blog_rss_url": f"https://nerranetwork.com/blog_{show_slug}.rss",
+        # Soft Personal interest band (registry soft_personal_cta). SpaceX
+        # Daily blog was join-only; tips/reminder path never implies a charge.
+        "soft_personal_cta": bool(show_config.get("soft_personal_cta")),
         # Pagination. total_pages == 1 renders no pager at all, so a show
         # with one page is unchanged.
         "page": page,

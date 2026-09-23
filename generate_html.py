@@ -3243,6 +3243,10 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         # the nav pill labelled "Join". Registry-gated so it never becomes a
         # banner on every show.
         "personal_upsell": bool(cfg.get("personal_upsell")),
+        # Soft Personal interest (tips/reminder — never a charge). SpaceX
+        # Daily is the Soft Personal spoken surface; registry-gated so the
+        # band does not become a network-wide banner.
+        "soft_personal_cta": bool(cfg.get("soft_personal_cta")),
         # The strand this show belongs to ("mira" today). Drives the
         # "Hosted by Mira" band and the link to her hub, so the three shows
         # cross-reference each other instead of each being a dead end.

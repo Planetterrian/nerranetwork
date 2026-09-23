@@ -154,7 +154,10 @@ is not SoT.
 
 ### Surfaces
 - Page: `templates/personal_interest_page.html.j2` →
-  `/personal-interest.html` (linked from `/join.html`).
+  `/personal-interest.html`.
+- Soft CTAs (tips/reminder, never a charge): home Personal promo,
+  SpaceX Daily show page + `/blog/spacex/` (registry `soft_personal_cta`),
+  join soft-interest band, site footer Personal line.
 - Client: `POST https://api.nerranetwork.com/api/subscribe`
   `list: "personal-interest"`, `newsletter: true` when the box is on.
 - On Buttondown / Worker failure the page shows Brand fail copy and does

@@ -119,3 +119,74 @@ class TestSoftPersonalInterestPage:
         body = src[start:start + 1200]
         assert "total_episodes" in body
         assert "ctx.pop(\"total_episodes\"" in body or "ctx.pop('total_episodes'" in body
+
+
+class TestSoftPersonalSurfaceCTAs:
+    """Home + SpaceX were join-only; Soft interest must be clearly available."""
+
+    def test_macro_owns_the_copy(self):
+        src = _read("templates/_macros.html.j2")
+        assert "macro soft_personal_interest" in src
+        assert "personal-interest.html" in src
+        assert "Not ready to pay?" in src
+        assert "Shows stay free either way" in src
+        # Must not imply a charge from the soft path.
+        lower = src.lower()
+        for banned in ("$4.99", "stripe", "start checkout", "subscribe now"):
+            # The macro body itself (not the whole file) — soft_personal block.
+            start = src.index("macro soft_personal_interest")
+            body = src[start:start + 1800].lower()
+            assert banned not in body, banned
+
+    def test_home_personal_promo_offers_soft_interest(self):
+        src = _read("templates/network_page.html.j2")
+        assert "soft_personal_interest" in src
+        assert 'id="personal-promo"' in src
+        promo = src.split('id="personal-promo"', 1)[1][:3500]
+        assert "personal-interest.html" in promo or "soft_personal_interest" in promo
+        assert "join.html" in promo  # paid path remains
+
+    def test_footer_no_longer_join_only(self):
+        src = _read("templates/base.html.j2")
+        assert "personal-interest.html" in src
+        assert "Soft Personal" in src
+        assert "no charge" in src.lower()
+        assert "Or start Nerra Personal" in src
+
+    def test_spacex_registry_gates_soft_cta(self):
+        import yaml as _yaml
+        registry = _yaml.safe_load(
+            (ROOT / "shows" / "network_meta.yaml").read_text()
+        )
+        flagged = {
+            slug for slug, cfg in registry.items()
+            if isinstance(cfg, dict) and cfg.get("soft_personal_cta")
+        }
+        assert flagged == {"spacex"}
+
+    def test_blog_index_and_show_page_wire_the_band(self):
+        blog = _read("templates/blog_index.html.j2")
+        show = _read("templates/show_page.html.j2")
+        assert "soft_personal_interest" in blog
+        assert "soft_personal_cta" in blog
+        assert "soft_personal_interest" in show
+        assert "soft_personal_cta" in show
+
+    def test_rendered_home_and_spacex_surfaces(self):
+        home = _read("index.html")
+        assert 'id="personal-promo"' in home
+        promo = home.split('id="personal-promo"', 1)[1][:4000]
+        assert "personal-interest.html" in promo
+        assert "Not ready to pay?" in promo
+
+        spacex = _read("spacex.html")
+        assert "personal-interest.html" in spacex
+        assert 'id="soft-personal"' in spacex or 'id="soft-interest"' in spacex
+
+        blog = _read("blog/spacex/index.html")
+        assert "personal-interest.html" in blog
+        assert "Shows stay free either way" in blog
+        # Soft copy must not imply payment.
+        soft = blog.lower()
+        assert "no charge" in soft or "not ready to pay" in soft
+        assert "waitlist" not in soft

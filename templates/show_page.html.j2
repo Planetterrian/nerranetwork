@@ -73,7 +73,7 @@
 {% endblock %}
 
 {% block content %}
-    {% from "_macros.html.j2" import ai_badge, mira_claim, mira_steps_list %}
+    {% from "_macros.html.j2" import ai_badge, mira_claim, mira_steps_list, soft_personal_interest %}
     <!-- Hero -->
     <section class="show-hero">
         <div class="show-hero-bg"></div>
@@ -548,6 +548,17 @@
     </section>
     {% endif %}
 
+    {#- Soft Personal interest on SpaceX Daily (registry soft_personal_cta).
+        Join-only Personal push was the Brand gap; this band is tips/reminder
+        email only — never implies a charge. Paid Personal stays on /join. -#}
+    {% if soft_personal_cta and not personal_upsell %}
+    <section class="nn-section" id="soft-personal" style="padding-top:0;padding-bottom:0;">
+        <div class="container" style="max-width:920px;">
+            {{ soft_personal_interest(path_prefix) }}
+        </div>
+    </section>
+    {% endif %}
+
     {#- "Make this yours" — the Nerra Personal path, on the one page the data
         says people actually land on. /nerra-daily.html is the most-visited show
         page on the site (46 views against SpaceX's 6 in the 28 days to
@@ -581,6 +592,9 @@
                         <a class="nn-btn nn-btn-primary" href="{{ path_prefix }}join.html"
                            onclick="if(typeof gtag==='function'){gtag('event','select_personal_upsell',{show:'{{ show_slug }}',placement:'show_page'});}">Build your own edition →</a>
                         <a class="nn-btn" href="{{ path_prefix }}{{ rss_file }}">Keep listening free</a>
+                    </p>
+                    <p style="margin:0.9rem 0 0;" id="soft-interest">
+                        {{ soft_personal_interest(path_prefix, compact=true) }}
                     </p>
                     <p style="margin:0.9rem 0 0;font-family:var(--font-ui);font-size:0.78rem;color:var(--nn-text-muted);">
                         Free for 7 days, then $4.99/month. Cancel in one click — your
