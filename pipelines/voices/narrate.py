@@ -198,7 +198,16 @@ def _check_not_truncated(part: Path, text: str) -> None:
             f"(expected about {expected:.0f}s) — {text[:60]!r}")
 
 
-def _stitch(parts: List[Path], out_mp3: Path) -> Path:
+# Episode narration sits beside a conversation mastered to -16 LUFS. A clip
+# the ROOM plays sits beside Mira live, which Viktor Popovic's run measured at
+# -22.9; the Nerra Voices consent notice first came out at -16.4, so a guest
+# would have heard a loud notice and then Mira nearly 7 dB quieter. A spec
+# names its own target with "loudness" when it is not for an episode.
+EPISODE_LOUDNESS = -16.0
+
+
+def _stitch(parts: List[Path], out_mp3: Path,
+            loudness: float = EPISODE_LOUDNESS) -> Path:
     """Concatenate the paragraph takes with a short breath between them."""
     work = out_mp3.parent
     silence = work / "breath.wav"
@@ -219,7 +228,7 @@ def _stitch(parts: List[Path], out_mp3: Path) -> Path:
     subprocess.run(
         ["ffmpeg", "-y", "-v", "error", *inputs, "-filter_complex",
          "".join(filt) + f"concat=n={idx}:v=0:a=1,"
-         "highpass=f=60,dynaudnorm=f=250:g=15,loudnorm=I=-16:TP=-1.5:LRA=11[out]",
+         f"highpass=f=60,dynaudnorm=f=250:g=15,loudnorm=I={loudness}:TP=-1.5:LRA=11[out]",
          "-map", "[out]", "-ac", "1", "-ar", "48000",
          "-c:a", "libmp3lame", "-b:a", "128k", str(out_mp3)],
         check=True)
@@ -258,6 +267,7 @@ def narrate(slug: str) -> Dict[str, str]:
         raise SystemExit("spec has no segments")
     voice = str(spec.get("voice") or os.environ.get("MIRA_VOICE_PRESET")
                 or "ara").strip().lower()
+    loudness = float(spec.get("loudness") or EPISODE_LOUDNESS)
 
     if os.environ.get("NARRATION_ENGINE", "agent").lower() == "tts":
         logger.warning("NARRATION_ENGINE=tts — this will NOT match the "
@@ -326,7 +336,7 @@ def narrate(slug: str) -> Dict[str, str]:
                 parts.append(best)
             if not parts:
                 continue
-            mp3 = _stitch(parts, work / f"{seg_id}.mp3")
+            mp3 = _stitch(parts, work / f"{seg_id}.mp3", loudness)
             out[seg_id] = r2_upload(mp3, show.r2_key("narration", slug, f"{seg_id}.mp3"))
             logger.info("narration %s -> %s (%d takes)", seg_id, out[seg_id], len(parts))
     return out

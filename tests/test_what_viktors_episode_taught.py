@@ -391,15 +391,15 @@ class TestPostInterviewUsesTheAudio:
 import json  # noqa: E402
 
 FIRE = (V / "fire_interviews.py").read_text(encoding="utf-8")
-NV_SYSTEM = json.loads((V / "narration" / "nerra_voices_system.json").read_text(encoding="utf-8"))
+NV_SYSTEM = json.loads((V / "narration" / "nerra_voices_room.json").read_text(encoding="utf-8"))
 
 
 class TestEachShowHasItsOwnRoomClips:
     def test_nerra_voices_names_its_own(self):
         from pipelines.voices.shows import get_show
         nv = get_show("nerra_voices")
-        assert nv.disclosure_clip.endswith("/nerra_voices/narration/nerra_voices_system/disclosure.mp3")
-        assert nv.apology_clip.endswith("/nerra_voices/narration/nerra_voices_system/apology.mp3")
+        assert nv.disclosure_clip.endswith("/nerra_voices/narration/nerra_voices_room/disclosure.mp3")
+        assert nv.apology_clip.endswith("/nerra_voices/narration/nerra_voices_room/apology.mp3")
 
     def test_the_age_of_ai_keeps_the_clips_it_was_voiced_for(self):
         from pipelines.voices.shows import get_show
@@ -419,7 +419,7 @@ class TestEachShowHasItsOwnRoomClips:
         from pipelines.voices.shows import get_show
         nv = get_show("nerra_voices")
         for seg_id, url in (("disclosure", nv.disclosure_clip), ("apology", nv.apology_clip)):
-            assert url.endswith(nv.r2_key("narration", "nerra_voices_system", f"{seg_id}.mp3"))
+            assert url.endswith(nv.r2_key("narration", "nerra_voices_room", f"{seg_id}.mp3"))
 
 
 class TestTheRoomNeverPlaysAMissingClip:
@@ -486,7 +486,7 @@ class TestAFailedRetakeKeepsTheGoodTake:
         monkeypatch.setattr(narrate, "_take_shortfall",
                             lambda part, text: ratios[part.read_bytes().decode()])
         monkeypatch.setattr(narrate, "_check_not_truncated", lambda part, text: None)
-        monkeypatch.setattr(narrate, "_stitch", lambda parts, out: parts[0])
+        monkeypatch.setattr(narrate, "_stitch", lambda parts, out, *level: parts[0])
         uploaded = []
         monkeypatch.setattr(narrate, "r2_upload",
                             lambda path, key: uploaded.append(path.read_bytes().decode()) or key)
@@ -515,3 +515,43 @@ class TestAFailedRetakeKeepsTheGoodTake:
     def test_the_longest_take_still_wins_when_nothing_fails(self, monkeypatch, tmp_path):
         up = self._run(monkeypatch, tmp_path, [0.70, 0.80, 0.84])
         assert up == ["u2"]
+
+
+# ---------------------------------------------------------------------------
+# 8. THE ROOM'S CLIPS AT THE ROOM'S LEVEL.
+#
+# Narration is mastered for an episode at -16 LUFS. Mira live in the room
+# measured -22.9 on Viktor's run, and the first Nerra Voices consent notice
+# came out at -16.4: a loud notice, then Mira nearly 7 dB quieter, in the
+# first ten seconds of every interview.
+
+NARRATE = (V / "narrate.py").read_text(encoding="utf-8")
+
+
+class TestTheRoomClipsMatchHerLiveVoice:
+    def test_a_spec_names_its_own_level(self):
+        assert 'loudness = float(spec.get("loudness") or EPISODE_LOUDNESS)' in NARRATE
+        assert 'mp3 = _stitch(parts, work / f"{seg_id}.mp3", loudness)' in NARRATE
+        assert "loudnorm=I={loudness}" in NARRATE
+
+    def test_episodes_keep_the_episode_level(self):
+        assert "EPISODE_LOUDNESS = -16.0" in NARRATE
+
+    def test_the_room_clips_are_voiced_quieter(self):
+        assert NV_SYSTEM["loudness"] == -23
+
+    def test_the_existence_check_goes_past_the_cdn(self):
+        body = FIRE[FIRE.index("def _clip_is_there("):FIRE.index("def room_clips(")]
+        assert "exists={int(time.time())}" in body
+
+    @pytest.mark.skipif(not shutil.which("ffmpeg"), reason="ffmpeg not installed")
+    def test_the_stitch_actually_lands_where_it_is_told(self, tmp_path):
+        import narrate
+        take = _voice(tmp_path / "take.wav", [(0.2, 5.8)], total=6.0)
+        out = narrate._stitch([take], tmp_path / "out.mp3", -23.0)
+        meas = subprocess.run(
+            ["ffmpeg", "-v", "info", "-i", str(out), "-af",
+             "loudnorm=print_format=json", "-f", "null", "-"],
+            capture_output=True, text=True).stderr
+        got = float(json.loads(meas[meas.rindex("{"):meas.rindex("}") + 1])["input_i"])
+        assert -25.0 < got < -21.0

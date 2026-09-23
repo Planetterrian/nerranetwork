@@ -67,8 +67,14 @@ def _clip_is_there(url: str) -> bool:
     """A clip the room will play must exist: a consent notice that 404s is no
     consent notice at all, and the guest hears nothing."""
     try:
+        import time
         import requests
-        resp = requests.head(url, timeout=10, allow_redirects=True)
+        # Past the CDN: audio.nerranetwork.com caches a 404 for four hours, so
+        # anyone who checked a clip before it was uploaded would otherwise keep
+        # it out of every room until the cache expired (Sept 23 2026).
+        sep = "&" if "?" in url else "?"
+        resp = requests.head(f"{url}{sep}exists={int(time.time())}",
+                             timeout=10, allow_redirects=True)
         return resp.status_code == 200
     except Exception:  # noqa: BLE001 — unreachable counts as absent
         return False
