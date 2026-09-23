@@ -150,10 +150,21 @@ class TestStagingIsStaged:
     August, must not move with a script-stage or reviewer trial.
     """
 
+    #: The ONE sanctioned digest-stage arm (operator-directed 2026-09-23,
+    #: experiment new-shows-grok-47-2026-09-23): the shows launched in the
+    #: Sep 2026 new-shows plan run grok-4.7 on every writing stage so the
+    #: latest model is proven on shows with no audience history to lose,
+    #: before anything carries over to the established shows. A show joins
+    #: this set by being a NEW show, in this list, with the register entry.
+    NEW_SHOWS_47_ARM = frozenset({
+        "ai_chips", "mag7", "peptides", "longevity", "vancouver", "collingwood",
+    })
+
     def test_no_show_digest_left_the_network_default(self):
         """Digest and fetch stages stay on the network default. A show that
         pins its own digest model is opting the facts-first path into a
-        trial, which is the August shape."""
+        trial, which is the August shape — so the only pins allowed are the
+        named new-shows arm, and it may never grow onto an established show."""
         from engine.config import load_config
 
         default_model = str(_defaults()["llm"]["model"])
@@ -164,9 +175,22 @@ class TestStagingIsStaged:
                 pinned.append((slug, cfg.llm.model))
         # spacex pins its DEEP-DIVE model under `deep_dive:`, which is
         # manual-force only and has no daily slot; that is not this key.
-        assert not pinned, (
-            f"shows pinning their own digest model: {pinned} — the digest "
+        stray = [(s, m) for s, m in pinned if s not in self.NEW_SHOWS_47_ARM]
+        assert not stray, (
+            f"shows pinning their own digest model: {stray} — the digest "
             "path is what fell over on 2026-08-18")
+
+    def test_the_new_shows_arm_is_one_model_and_registered(self):
+        from engine.config import load_config
+
+        models = set()
+        for slug in self.NEW_SHOWS_47_ARM:
+            path = ROOT / "shows" / f"{slug}.yaml"
+            if path.exists():
+                models.add(str(load_config(str(path)).llm.model))
+        assert models <= {"grok-4.7", str(_defaults()["llm"]["model"])}, models
+        register = (ROOT / "docs" / "experiments.yaml").read_text(encoding="utf-8")
+        assert "id: new-shows-grok-47-2026-09-23" in register
 
     def test_the_script_trial_covers_one_show_at_most_per_model(self):
         """A script-stage trial is per-show by design. If a single

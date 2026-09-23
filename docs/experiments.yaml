@@ -2689,3 +2689,39 @@ experiments:
     notes: >
       docs/new_shows_plan_2026_09_22.md §4. Distribution off at launch (RSS,
       site, blog). Guards: tests/test_new_shows_2026_09.py.
+  - id: new-shows-grok-47-2026-09-23
+    title: "Grok 4.7 on every writing stage of the new shows (operator-directed)"
+    area: quality
+    shipped: 2026-09-23
+    readout: 2026-10-07
+    status: reading
+    baseline: >
+      The four Phase 1 shows (ai_chips, mag7, peptides, longevity) produced
+      their Episode 1s on the grok-4.3 network default, digest and script in
+      one combined call. The only 4.7 site before this was the reviewer and
+      omni_view's script stage (grok-47-staged-migration). 4.7 had never run
+      a digest; its digest latency is unmeasured.
+    target: >
+      The new shows run llm.model grok-4.7 — digest and script, and combined
+      generation stays eligible because podcast_model is unset. Vancouver and
+      Collingwood join at their Episode 1. Fetch (x_search / web_search)
+      stays on grok-4.3: it gathers posts and writes nothing a listener
+      hears. The established shows stay on grok-4.3
+      (TestStagedGrok46Trial). What reads well here is carried to them only
+      through the playbook's one-show-first rule.
+    criteria: >
+      OPERATIONAL FIRST (docs/model_upgrade_playbook.md). Revert a show's pin
+      if ANY of: `python scripts/model_trial_report.py --since 2026-09-24
+      --shows ai_chips,mag7,peptides,longevity,vancouver,collingwood` shows a
+      generate_digest p95 over 50% of the 600 s request timeout (300 s) or a
+      failed stage; a `Slow LLM completion` warning; a run skipped or killed
+      for time. Then quality, read against each show's own grok-4.3 Episode 1:
+      skip rate, claims-gate stripped sentences, script digest coverage, and
+      the operator's listen. The weeklies give only two episodes each by the
+      readout — their verdict is on the dailies' latency plus their own
+      listen.
+    notes: >
+      Revert = delete the `model:` line in the show's YAML. Priced in
+      engine/tracking.py (same list price as 4.6). Guards:
+      tests/test_grok_47_migration_2026_09_21.py::TestStagingIsStaged names
+      the arm and forbids it growing onto an established show.

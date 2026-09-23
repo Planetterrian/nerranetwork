@@ -21,21 +21,19 @@ slug: longevity
 weekly_summary_segment: false   # a weekly show IS the week in review
 memory_enabled: true
 story_recurrence: true
-description: Education and awareness about the science of aging — the trials, the mechanisms and the claims — with the evidence read carefully every week. Never medical advice.
+description: Education about the science of aging — what people can do, how aging works, and which claims hold up — with the evidence read carefully every week. Never medical advice.
 
 # Weekly show: every feed reads a week and a day (window_hours: 192), and
 # nothing older than nine days by its page or feed date reaches the prompt
 # (stale_article_days). Opt-in by name in the Offshore North guards.
 stale_article_days: 9
-# check_feeds.py 2026-09-22 (this session's egress, pipeline user agent):
+# check_feeds.py 2026-09-22 (this session's egress, pipeline user agent);
+# BioPharma Dive dropped 2026-09-23 (commercial pipeline, operator brief):
 # Endpoints News 403s the fetcher's user agent; Fierce Biotech's pubDate is
 # not a parseable date; ScienceDaily Hormones and Cell Metabolism were stale
 # (monthly issue feeds). Wiley journal feeds 403 GitHub runners (Peptides
 # dry run, 2026-09-22). Dropped. Re-grade from a runner before Episode 1.
 sources:
-- url: https://www.biopharmadive.com/feeds/news/
-  label: BioPharma Dive
-  window_hours: 192
 - url: https://www.fightaging.org/feed/
   label: Fight Aging!
   window_hours: 192
@@ -51,20 +49,35 @@ sources:
 - url: https://www.statnews.com/feed/
   label: STAT News
   window_hours: 192
+# Education-first sources (operator brief 2026-09-23): human research on
+# exercise, diet and sleep, and a clinical journal, in place of the biotech
+# trade press. Probed 200 with posts inside the week, 2026-09-23.
+- url: https://www.sciencedaily.com/rss/health_medicine/fitness.xml
+  label: ScienceDaily Fitness
+  window_hours: 192
+- url: https://www.sciencedaily.com/rss/health_medicine/nutrition.xml
+  label: ScienceDaily Nutrition
+  window_hours: 192
+- url: https://www.sciencedaily.com/rss/mind_brain/sleep_disorders.xml
+  label: ScienceDaily Sleep
+  window_hours: 192
+- url: https://www.nature.com/nm.rss
+  label: Nature Medicine
+  window_hours: 192
 - url: https://news.google.com/rss/search?q=longevity+research+OR+%22aging+research%22+when:7d&hl=en-US&gl=US&ceid=US:en
   label: Google News longevity research
   window_hours: 192
 - url: https://news.google.com/rss/search?q=anti-aging+trial+OR+%22biological+age%22+when:7d&hl=en-US&gl=US&ceid=US:en
   label: Google News aging trials
   window_hours: 192
-- url: https://news.google.com/rss/search?q=longevity+biotech+funding+when:7d&hl=en-US&gl=US&ceid=US:en
-  label: Google News longevity biotech
+- url: https://news.google.com/rss/search?q=%22older+adults%22+study+exercise+OR+sleep+OR+diet+when:7d&hl=en-US&gl=US&ceid=US:en
+  label: Google News healthy aging studies
   window_hours: 192
 
 web_search_queries:
 - longevity aging research news this week
+- healthy aging study older adults this week
 - aging clinical trial results this week
-- longevity biotech news
 
 exclude_title_patterns:
 # Commerce and dosing content only. Never bare "order" (an FDA or
@@ -99,6 +112,9 @@ keywords:
 - sarcopenia
 - epigenetic clock
 - geroscience
+- older adults
+- midlife
+- later life
 
 # X accounts (Sep 22 2026 Ep1 review): the aging-research institutions,
 # journal and researchers who report trials and caveats rather than
@@ -144,6 +160,14 @@ multilingual:
 
 llm:
   provider: xai
+  # grok-4.7 on every stage that writes (digest + script; combined generation
+  # stays eligible because podcast_model is unset), operator-directed
+  # 2026-09-23: the new shows are the proving ground for the latest model,
+  # and what works here is carried to the existing shows afterwards
+  # (experiment new-shows-grok-47-2026-09-23, docs/model_upgrade_playbook.md).
+  # The existing news shows stay on grok-4.3 (TestStagedGrok46Trial).
+  # Revert: delete this line.
+  model: grok-4.7
   system_prompt_file: shows/prompts/longevity_system.txt
   digest_prompt_file: shows/prompts/longevity_digest.txt
   podcast_prompt_file: shows/prompts/longevity_podcast.txt
@@ -181,7 +205,7 @@ audio:
 publishing:
   rss_file: longevity_podcast.rss
   rss_title: Longevity Weekly
-  rss_description: 'The science of aging, read carefully. Every Wednesday: the week in longevity research, trials and regulation, and one mechanism of aging explained properly — what it is, what the evidence shows in animals and in people, and what it does not show. Education only; never medical advice.'
+  rss_description: 'The science of aging, read carefully. Every Wednesday: the week''s most useful aging research — exercise, sleep, diet, the biology and the tests — and one mechanism of aging explained properly — what it is, what the evidence shows in animals and in people, and what it does not show. Education only; never medical advice.'
   rss_link: https://nerranetwork.com/longevity.html
   rss_author: Patrick
   rss_email: patrick@planetterrian.com
@@ -217,6 +241,8 @@ chapters:
     where: start
   - pattern: this week'?s (spotlight|mechanism)|let'?s look (closely|properly) at
     title: Mechanism of the Week
+  - pattern: worth knowing
+    title: Worth Knowing
   - pattern: That's Longevity Weekly|see you next week
     title: Closing
     where: end

@@ -860,16 +860,12 @@ def ai_chips_validation_config() -> ValidationConfig:
 
 
 def mag7_validation_config() -> ValidationConfig:
-    """MAG 7 Daily (Sep 2026)."""
+    """MAG 7 Daily (Sep 2026). The Tape is a reader-only line at the foot of
+    the digest since 2026-09-23 and is omitted when there are no prices, so
+    it is not a required section."""
     return ValidationConfig(
         section_pairs=[],
         sections=[
-            SectionRule(
-                name="The Tape",
-                pattern=r"(?:### The Tape|## The Tape)(.*?)(?=### Top News|## Top News|$)",
-                min_items=0,
-                min_chars=40,
-            ),
             _items_rule("Top News", "Top News", r"### Company Desk|## Company Desk", 2),
             _items_rule("Company Desk", "Company Desk",
                         r"### The Counterpoint|## The Counterpoint", 2),
@@ -888,7 +884,7 @@ def peptides_validation_config() -> ValidationConfig:
             SectionRule(
                 name="Peptide Spotlight",
                 pattern=(r"(?:### Peptide Spotlight|## Peptide Spotlight)(.*?)"
-                         r"(?=### Evidence Ledger|## Evidence Ledger|$)"),
+                         r"(?=### Worth Knowing|## Worth Knowing|### Evidence Ledger|## Evidence Ledger|$)"),
                 min_items=0,
                 min_chars=600,
             ),
@@ -907,7 +903,7 @@ def longevity_validation_config() -> ValidationConfig:
             SectionRule(
                 name="Mechanism of the Week",
                 pattern=(r"(?:### Mechanism of the Week|## Mechanism of the Week)(.*?)"
-                         r"(?=### Evidence Ledger|## Evidence Ledger|$)"),
+                         r"(?=### Worth Knowing|## Worth Knowing|### Evidence Ledger|## Evidence Ledger|$)"),
                 min_items=0,
                 min_chars=600,
             ),

@@ -32,8 +32,17 @@ sources:
 - url: https://www.statnews.com/feed/
   label: STAT News
   window_hours: 192
-- url: https://www.biopharmadive.com/feeds/news/
-  label: BioPharma Dive
+# BioPharma Dive dropped 2026-09-23 (commercial pipeline, operator brief).
+# Education-first sources: human research on obesity, diabetes and GLP-1
+# medicines, and a clinical journal. Probed 200 with posts inside the week.
+- url: https://www.sciencedaily.com/rss/health_medicine/obesity.xml
+  label: ScienceDaily Obesity
+  window_hours: 192
+- url: https://www.sciencedaily.com/rss/health_medicine/diabetes.xml
+  label: ScienceDaily Diabetes
+  window_hours: 192
+- url: https://www.nature.com/nm.rss
+  label: Nature Medicine
   window_hours: 192
 - url: https://rss.sciencedirect.com/publication/science/01969781
   label: Peptides (journal)
@@ -44,8 +53,11 @@ sources:
 - url: https://news.google.com/rss/search?q=peptide+drug+OR+peptide+therapy+when:7d&hl=en-US&gl=US&ceid=US:en
   label: Google News peptide drugs
   window_hours: 192
-- url: https://news.google.com/rss/search?q=GLP-1+OR+semaglutide+OR+tirzepatide+when:7d&hl=en-US&gl=US&ceid=US:en
-  label: Google News GLP-1
+- url: https://news.google.com/rss/search?q=GLP-1+OR+semaglutide+OR+tirzepatide+study+OR+%22side+effects%22+when:7d&hl=en-US&gl=US&ceid=US:en
+  label: Google News GLP-1 research
+  window_hours: 192
+- url: https://news.google.com/rss/search?q=%22collagen+peptides%22+OR+%22antimicrobial+peptide%22+study+when:7d&hl=en-US&gl=US&ceid=US:en
+  label: Google News peptide research
   window_hours: 192
 - url: https://news.google.com/rss/search?q=compounded+peptides+OR+%22research+use+only%22+peptides+when:7d&hl=en-US&gl=US&ceid=US:en
   label: Google News compounding & grey market
@@ -55,8 +67,8 @@ sources:
   window_hours: 192
 
 web_search_queries:
-- peptide drug news this week
-- GLP-1 semaglutide tirzepatide news this week
+- peptide research study results this week
+- GLP-1 semaglutide tirzepatide study findings this week
 - FDA compounded peptides news
 
 exclude_title_patterns:
@@ -135,6 +147,14 @@ multilingual:
 
 llm:
   provider: xai
+  # grok-4.7 on every stage that writes (digest + script; combined generation
+  # stays eligible because podcast_model is unset), operator-directed
+  # 2026-09-23: the new shows are the proving ground for the latest model,
+  # and what works here is carried to the existing shows afterwards
+  # (experiment new-shows-grok-47-2026-09-23, docs/model_upgrade_playbook.md).
+  # The existing news shows stay on grok-4.3 (TestStagedGrok46Trial).
+  # Revert: delete this line.
+  model: grok-4.7
   system_prompt_file: shows/prompts/peptides_system.txt
   digest_prompt_file: shows/prompts/peptides_digest.txt
   podcast_prompt_file: shows/prompts/peptides_podcast.txt
@@ -208,6 +228,8 @@ chapters:
     where: start
   - pattern: this week'?s (spotlight|mechanism)|let'?s look (closely|properly) at
     title: Peptide Spotlight
+  - pattern: worth knowing
+    title: Worth Knowing
   - pattern: That's Peptides Weekly|see you next week
     title: Closing
     where: end

@@ -407,7 +407,7 @@ MAG7_SECTION_PATTERNS: Dict[str, str] = {
     ),
     "deep_dive": (
         r"(?:### The Thread|## The Thread)(.*?)"
-        r"(?=### Calendar|## Calendar|$)"
+        r"(?=### The Tape|## The Tape|$)"
     ),
 }
 
@@ -418,7 +418,7 @@ PEPTIDES_SECTION_PATTERNS: Dict[str, str] = {
     ),
     "deep_dive": (
         r"(?:### Peptide Spotlight|## Peptide Spotlight)(.*?)"
-        r"(?=### Evidence Ledger|## Evidence Ledger|$)"
+        r"(?=### Worth Knowing|## Worth Knowing|### Evidence Ledger|## Evidence Ledger|$)"
     ),
 }
 
@@ -429,7 +429,7 @@ LONGEVITY_SECTION_PATTERNS: Dict[str, str] = {
     ),
     "deep_dive": (
         r"(?:### Mechanism of the Week|## Mechanism of the Week)(.*?)"
-        r"(?=### Evidence Ledger|## Evidence Ledger|$)"
+        r"(?=### Worth Knowing|## Worth Knowing|### Evidence Ledger|## Evidence Ledger|$)"
     ),
     "trials": (
         r"(?:### Trial Tracker|## Trial Tracker)(.*?)"

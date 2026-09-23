@@ -2,19 +2,22 @@
 
 pre_fetch supplies, in one ``hook_context`` block for the digest prompt:
   1. THE TAPE — the seven companies' last regular-session closes with the
-     session date (engine.market_quotes). Every price is a CLOSE; the show
-     runs before New York opens, so nothing it says is "trading at".
-  2. The next earnings date per company when the data source has one —
-     "not listed" otherwise, never a guessed date.
-  3. What Tesla Shorts Time covered in the last day, so MAG 7 speaks Tesla
-     only at company level (results, capital, regulation, the share) and
-     never re-tells TST's product and community stories.
+     session date (engine.market_quotes). It feeds one reader-only line at
+     the foot of the digest; the podcast never reads it (operator brief,
+     2026-09-23: the show is about what the seven build, ship and discover,
+     not their prices).
+  2. What Tesla Shorts Time covered in the last day, so MAG 7 speaks Tesla
+     only at company level and never re-tells TST's product and community
+     stories.
 Plus the show's narrative memory. Every step is non-fatal.
+
+The earnings calendar the first episodes carried is gone for the same
+brief: dates weeks away are not news, and seven yfinance calls spent a
+third of the 60-second pre_fetch budget on them.
 """
 
 from __future__ import annotations
 
-import datetime as _dt
 import logging
 from pathlib import Path
 
@@ -44,44 +47,13 @@ NAMES = {
 }
 
 _TST_LENS = (
-    "MAG 7 covers Tesla only as a company — results, guidance, capital, "
-    "regulation and the share — and leaves products, FSD, energy and "
-    "community to Tesla Shorts Time."
+    "MAG 7 covers Tesla only as a company — capital, regulation, deals and "
+    "stories that run across several of the seven — and leaves products, "
+    "FSD, energy and community to Tesla Shorts Time."
 )
 
 
-def _earnings_block(today: _dt.date) -> str:
-    """Next earnings date per company, or 'not listed'. Best-effort."""
-    lines = ["### EARNINGS CALENDAR (from the market-data source; instruction — "
-             "use only dates listed here, never infer one)"]
-    try:
-        import yfinance as yf
-    except Exception:  # noqa: BLE001
-        return ""
-    for t in TICKERS:
-        when = "not listed"
-        try:
-            cal = yf.Ticker(t).calendar or {}
-            dates = cal.get("Earnings Date") if isinstance(cal, dict) else None
-            future = sorted(d for d in (dates or []) if hasattr(d, "isoformat") and d >= today)
-            if future and (future[0] - today).days <= 60:
-                when = future[0].isoformat()
-        except Exception as exc:  # noqa: BLE001
-            logger.info("earnings date lookup failed for %s: %s", t, exc)
-        lines.append(f"- {NAMES[t]} ({t}): {when}")
-    return "\n".join(lines)
-
-
-#: run_show waits 60 s for pre_fetch, then DROPS the whole hook context. The
-#: tape comes first; the earnings calendar (seven more network calls) is
-#: skipped if the tape has already used this much of that budget.
-_CALENDAR_BUDGET_S = 25.0
-
-
 def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
-    import time
-
-    started = time.monotonic()
     context = show_memory.memory_pre_fetch(config, _SLUG)
     parts = []
     try:
@@ -94,16 +66,6 @@ def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
     except Exception as exc:  # noqa: BLE001
         logger.warning("mag7 tape failed (non-fatal): %s", exc)
         parts.append(tape_block([], NAMES, TICKERS))
-    try:
-        cal = ""
-        if time.monotonic() - started < _CALENDAR_BUDGET_S:
-            cal = _earnings_block(_dt.date.today())
-        else:
-            logger.warning("mag7: tape took >%.0fs — earnings calendar skipped", _CALENDAR_BUDGET_S)
-        if cal:
-            parts.append(cal)
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("mag7 earnings calendar failed (non-fatal): %s", exc)
     try:
         sib = sibling_block("Tesla Shorts Time", "digests/tesla_shorts_time",
                             days=1, lens=_TST_LENS)

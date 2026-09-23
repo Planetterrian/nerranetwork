@@ -60,8 +60,8 @@ and the blog all read them — and add ONE new section directly after the
 **What You Need to Know** paragraph:
 
 **### What This Show Covers** (200-300 words, first episode only)
-- Open on the subject, not the show: seven companies — Alphabet, Amazon, Apple, Meta, Microsoft, NVIDIA and Tesla — treated as one desk because together they move the market and share suppliers, regulators and bets; the daily shape: the closes, the news, one thread that runs across several of them, and the calendar.
-- The boundaries, as a listener promise: Tesla's products and self-driving are Tesla Shorts Time; stock picks are Modern Investing Techniques; this show never gives advice, never predicts a price, and every price it speaks is a close.
+- Open on the subject, not the show: seven companies — Alphabet, Amazon, Apple, Meta, Microsoft, NVIDIA and Tesla — treated as one desk because between them they ship the phones, the clouds, the models and the chips most people use, and they share suppliers, regulators and bets; the daily shape: what they shipped, discovered and were allowed to do, and one thread that runs across several of them.
+- The boundaries, as a listener promise: Tesla's products and self-driving are Tesla Shorts Time; stock picks are Modern Investing Techniques; this is not a stock show — it never gives advice and never predicts a price.
 - The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
 
 Then run the normal sections. Debut discipline: the STRONGEST stories only,
