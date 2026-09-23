@@ -126,6 +126,8 @@ class TestCronConsistency:
 DAILY_SHOWS = [
     "tesla", "omni_view", "planetterrian", "fascinating_frontiers",
     "models_agents", "models_agents_beginners", "modern_investing",
+    # Sep 2026 new shows, launched 2026-09-23.
+    "ai_chips", "mag7",
 ]
 ALT_CADENCE_SHOWS = [
     # Weekly on Monday (June 2026): privet_russian + finansy_prosto moved off
@@ -136,6 +138,9 @@ ALT_CADENCE_SHOWS = [
     # its last complete week — for one episode a week. It never carried the
     # recap flag, so it belongs here and not in DAILY_SHOWS.
     "dp_pod",
+    # Sep 2026 new weeklies (Wednesday / Thursday), launched 2026-09-23. A
+    # weekly show IS the week in review, so neither carries the flag.
+    "longevity", "peptides",
 ]
 
 

@@ -158,3 +158,71 @@ def test_health_evidence_mix_and_on_subject_spotlight(slug):
     assert "EVIDENCE MIX" in p and "At most one cell or animal study item a week" in p
     assert "a pointer, not a source" in p
     assert "Use only the abstracts above that are ABOUT this subject" in p
+
+
+# ---------------------------------------------------------------------------
+# Phase 1 launch (B-PR): the four shows go on the schedule
+# ---------------------------------------------------------------------------
+
+LAUNCH = {
+    "ai_chips": ("31 9 * * *", None),
+    "mag7": ("46 10 * * *", None),
+    "longevity": ("1 11 * * 3", "wednesday"),
+    "peptides": ("7 11 * * 4", "thursday"),
+}
+
+
+class TestPhase1Launch:
+    def _wf(self):
+        return (ROOT / ".github/workflows/run-show.yml").read_text(encoding="utf-8")
+
+    @pytest.mark.parametrize("slug", sorted(LAUNCH))
+    def test_cron_map_and_cron_line(self, slug):
+        import re
+
+        cron, day = LAUNCH[slug]
+        wf = self._wf()
+        assert f"- cron: '{cron}'" in wf
+        m = re.search(r'"' + re.escape(cron) + r'":\s*\("(\w+)",\s*(None|"\w+")\)', wf)
+        assert m and m.group(1) == slug
+        assert m.group(2) == (f'"{day}"' if day else "None")
+
+    @pytest.mark.parametrize("slug", sorted(LAUNCH))
+    def test_audited_and_in_all(self, slug):
+        import review_episodes as R
+
+        assert slug in R.SHOW_REGISTRY and slug not in R.PRELAUNCH_SLUGS
+        want = LAUNCH[slug][1] or "daily"
+        assert R.SHOW_REGISTRY[slug]["schedule"] == want
+        all_line = next(line for line in self._wf().splitlines()
+                        if line.strip().startswith('shows = ["tesla"'))
+        assert f'"{slug}"' in all_line
+        audit = (ROOT / ".github/workflows/daily-audit.yml").read_text(encoding="utf-8")
+        assert f'"{slug}_podcast.rss"' in audit
+
+    def test_first_run_dates_agree_everywhere(self):
+        """A weekly whose Ep1 was produced by hand mid-week never runs the
+        next day on its first cron (Longevity Ep1 Tue 22, Wednesday slot)."""
+        import re
+
+        import review_episodes as R
+
+        reg = {s: i["first_run"] for s, i in R.SHOW_REGISTRY.items() if i.get("first_run")}
+        wf = self._wf()
+        block = wf[wf.index("FIRST_SCHEDULED_RUN = {"):]
+        block = block[:block.index("}")]
+        gate = dict(re.findall(r'"(\w+)":\s*"(\d{4}-\d{2}-\d{2})"', block))
+        worker = (ROOT / "workers/scheduler/src/index.ts").read_text(encoding="utf-8")
+        wblock = worker[worker.index("const FIRST_RUN"):]
+        wblock = wblock[:wblock.index("};")]
+        wk = dict(re.findall(r'(\w+):\s*"(\d{4}-\d{2}-\d{2})"', wblock))
+        assert reg == gate == wk == {"longevity": "2026-09-30", "peptides": "2026-10-01"}
+
+    def test_audit_does_not_expect_a_weekly_before_its_first_run(self):
+        import datetime as _dt
+
+        import review_episodes as R
+
+        info = R.SHOW_REGISTRY["longevity"]
+        assert not R._scheduled_on(info, _dt.date(2026, 9, 23))   # a Wednesday
+        assert R._scheduled_on(info, _dt.date(2026, 9, 30))

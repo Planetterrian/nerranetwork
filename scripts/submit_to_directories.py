@@ -41,6 +41,10 @@ SHOWS = [
     ("age_of_ai", "The Age of AI", "age_of_ai_podcast.rss"),
     ("nerra_voices", "Nerra Voices", "nerra_voices_podcast.rss"),
     ("offshore_north", "Offshore North", "offshore_north_podcast.rss"),
+    ("ai_chips", "AI Chips & Data Centres Daily", "ai_chips_podcast.rss"),
+    ("mag7", "MAG 7 Daily", "mag7_podcast.rss"),
+    ("peptides", "Peptides Weekly", "peptides_podcast.rss"),
+    ("longevity", "Longevity Weekly", "longevity_podcast.rss"),
     # Language dub feeds (localized names, same artwork family)
     ("tesla_fr", "Le Temps des Shorts Tesla", "podcast.fr.rss"),
     ("spacex_fr", "SpaceX Quotidien", "spacex_podcast.fr.rss"),
