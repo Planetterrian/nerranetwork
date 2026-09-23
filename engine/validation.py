@@ -990,6 +990,31 @@ def collingwood_validation_config() -> ValidationConfig:
     )
 
 
+
+def omni_desk_validation_config() -> ValidationConfig:
+    """The Omni View regional desks (Sep 2026, Phase 3). Lead is one item;
+    Across the Region carries four, three is the floor on a thin day."""
+    return ValidationConfig(
+        section_pairs=[],
+        sections=[
+            SectionRule(
+                name="Lead",
+                pattern=r"(?:### Lead|## Lead)(.*?)(?=### Across the Region|## Across the Region|$)",
+                min_items=0,
+                min_chars=250,
+            ),
+            _items_rule("Across the Region", "Across the Region",
+                        r"### The Region and the World|## The Region and the World|### Both Sides|## Both Sides", 3),
+            SectionRule(
+                name="Both Sides",
+                pattern=r"(?:### Both Sides|## Both Sides)(.*?)(?=### Progress Watch|## Progress Watch|$)",
+                min_items=0,
+                min_chars=400,
+            ),
+        ],
+        forbidden_patterns=[r"https?://\S+"],
+    )
+
 SHOW_VALIDATION_CONFIGS = {
     "tesla": tst_validation_config,
     "tesla_shorts_time": tst_validation_config,
@@ -1011,3 +1036,30 @@ SHOW_VALIDATION_CONFIGS = {
     "vancouver": vancouver_validation_config,
     "collingwood": collingwood_validation_config,
 }
+
+# The five Omni View regional desks share one format (engine.omni_desks).
+from engine.omni_desks import DESK_SLUGS as _OMNI_DESK_SLUGS  # noqa: E402
+
+for _slug in _OMNI_DESK_SLUGS:
+    SHOW_VALIDATION_CONFIGS.setdefault(_slug, omni_desk_validation_config)
+
+
+def omni_world_validation_config() -> ValidationConfig:
+    """Omni View Top World News (Sep 2026, Phase 3): The Ten, eight is the
+    floor on a thin day; Both Sides."""
+    return ValidationConfig(
+        section_pairs=[],
+        sections=[
+            _items_rule("The Ten", "The Ten", r"### Both Sides|## Both Sides", 8),
+            SectionRule(
+                name="Both Sides",
+                pattern=r"(?:### Both Sides|## Both Sides)(.*?)(?=### Progress Watch|## Progress Watch|$)",
+                min_items=0,
+                min_chars=400,
+            ),
+        ],
+        forbidden_patterns=[r"https?://\S+"],
+    )
+
+
+SHOW_VALIDATION_CONFIGS.setdefault("omni_view_world", omni_world_validation_config)

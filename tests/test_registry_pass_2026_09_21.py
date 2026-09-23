@@ -45,7 +45,10 @@ EXPECTED_HUB_SHOWS = {
 #: Shows launched after the snapshot (new-shows plan, Sep 2026). Each joins
 #: its hubs when its first episode publishes; see the test below.
 LAUNCHED_AFTER_SNAPSHOT = ("ai_chips", "mag7", "peptides", "longevity",
-                           "vancouver", "collingwood", "prediction_markets")
+                           "vancouver", "collingwood", "prediction_markets",
+                           "omni_view_europe", "omni_view_asia_pacific",
+                           "omni_view_africa_mideast", "omni_view_latam",
+                           "omni_view_north_america", "omni_view_world")
 
 #: The slugs every one of the seven replaced tuples named. ``engine.show_lang``
 #: derives this from ``tts.language_code``; this pins that the derivation still
@@ -97,8 +100,9 @@ class TestTopicHubsDidNotSilentlyShrink:
         shows = G._build_all_shows_list()
         # 22 since 2026-09-22 (new-shows Phase 1); 24 since 2026-09-23
         # (Phase 2: Vancouver Daily News, Collingwood Weekly); 25 with Phase 2b
-        # (Prediction Markets Daily).
-        assert len(shows) == 25
+        # (Prediction Markets Daily); 31 with Phase 3 (the five Omni View
+        # desks and Top World News).
+        assert len(shows) == 31
         missing = [
             s["slug"] for s in shows
             if not ((s.get("picker_tags") or {}).get("topics"))

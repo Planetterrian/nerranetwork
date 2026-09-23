@@ -1608,3 +1608,23 @@ SHOW_MEMORY_CONFIGS: Dict[str, MemoryConfig] = {
     ),
 }
 
+
+def _register_omni_desk_memory() -> None:
+    """The Omni View regional desks (Sep 2026, Phase 3): three or four
+    seeded regional arcs each, named as institutions and conflicts — never
+    outcomes (engine.omni_desks.Desk.arcs)."""
+    from engine.omni_desks import DESKS
+    for d in DESKS:
+        SHOW_MEMORY_CONFIGS.setdefault(d.slug, MemoryConfig(
+            slug=d.slug,
+            label=d.name.upper().replace("&", "AND"),
+            file_prefix=d.slug,
+            default_programs={
+                key: _prog(display, status, list(questions))
+                for key, display, status, questions in d.arcs
+            },
+            theme_keywords=list(d.theme_keywords),
+        ))
+
+
+_register_omni_desk_memory()

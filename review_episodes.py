@@ -386,7 +386,12 @@ AUDIT_EXEMPT_SLUGS = frozenset({"age_of_ai", "nerra_voices"})
 #: The four Phase 1 shows launched 2026-09-23. Phase 2 (Mira's local shows)
 #: joined 2026-09-23 in its A-PR and leaves in its B-PR; Prediction Markets
 #: Daily (Phase 2b) the same way.
-PRELAUNCH_SLUGS: frozenset = frozenset({"vancouver", "collingwood", "prediction_markets"})
+PRELAUNCH_SLUGS: frozenset = frozenset({
+    "vancouver", "collingwood", "prediction_markets",
+    # Phase 3: the Omni View regional desks and Top World.
+    "omni_view_europe", "omni_view_asia_pacific", "omni_view_africa_mideast",
+    "omni_view_latam", "omni_view_north_america", "omni_view_world",
+})
 
 
 # ---------------------------------------------------------------------------

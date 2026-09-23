@@ -663,8 +663,12 @@ class TestDeliverySpec:
         root = Path(__file__).resolve().parent.parent
         prompts = sorted((root / "shows" / "prompts").glob("*_podcast.txt"))
         assert len(prompts) >= 15
+        from engine.generator import _resolve_includes
         for p in prompts:
-            assert "{delivery_spec}" in p.read_text(encoding="utf-8"), p.name
+            # Includes are resolved first: the Omni View desks carry the
+            # placeholder in their shared body (shows/prompts/_shared/).
+            text = _resolve_includes(p.read_text(encoding="utf-8"), p.parent)
+            assert "{delivery_spec}" in text, p.name
 
     def test_runner_always_supplies_it(self):
         """Asserted against engine/pipeline.py — the path that RUNS.

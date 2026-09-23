@@ -513,6 +513,31 @@ SHOW_SECTION_PATTERNS: Dict[str, Dict[str, str]] = {
     "collingwood": COLLINGWOOD_SECTION_PATTERNS,
 }
 
+# The Omni View regional desks (Sep 2026, Phase 3) share one format.
+OMNI_DESK_SECTION_PATTERNS: Dict[str, str] = {
+    "headlines": (
+        r"(?:### Lead|## Lead)(.*?)"
+        r"(?=### The Region and the World|## The Region and the World|### Both Sides|## Both Sides|$)"
+    ),
+    "region_world": (
+        r"(?:### The Region and the World|## The Region and the World)(.*?)"
+        r"(?=### Both Sides|## Both Sides|$)"
+    ),
+    "deep_dive": (
+        r"(?:### Both Sides|## Both Sides)(.*?)(?=### Progress Watch|## Progress Watch|$)"
+    ),
+}
+for _slug in (
+    "omni_view_europe", "omni_view_asia_pacific", "omni_view_africa_mideast",
+    "omni_view_latam", "omni_view_north_america",
+):
+    SHOW_SECTION_PATTERNS.setdefault(_slug, OMNI_DESK_SECTION_PATTERNS)
+
+SHOW_SECTION_PATTERNS.setdefault("omni_view_world", {
+    "headlines": r"(?:### The Ten|## The Ten)(.*?)(?=### Both Sides|## Both Sides|$)",
+    "deep_dive": r"(?:### Both Sides|## Both Sides)(.*?)(?=### Progress Watch|## Progress Watch|$)",
+})
+
 
 # Slur/profanity fragments that must never enter the tracker: recorded
 # headlines are committed to git, publicly fetchable via GitHub Pages,

@@ -299,7 +299,12 @@ def enrich_articles_with_full_text(
     def _rank(item: Tuple[int, Dict]) -> Tuple[int, int]:
         idx, art = item
         src = (art.get("source_name") or "").strip().lower()
-        return (0 if src in prio else 1, idx)
+        # A hook article with no text of its own (Omni View Top World's
+        # desk items: headline + ORIGINAL publisher URL, deliberately no
+        # desk prose) is the show's evidence — its page is fetched first,
+        # so the claims gate verifies against the publisher's copy.
+        first = src in prio or art.get("source_kind") == "hook"
+        return (0 if first else 1, idx)
 
     ordered = sorted(enumerate(articles), key=_rank)
     chosen = [art for _, art in ordered[:max_articles]]

@@ -130,7 +130,9 @@ class TestStaleArticleGate:
         offenders = []
         # Sep 2026: the weekly health shows opt in by name (plan §4.3).
         opt_in = {"offshore_north", "peptides", "longevity", "vancouver", "collingwood",
-                  "prediction_markets"}
+                  "prediction_markets", "omni_view_europe", "omni_view_asia_pacific",
+                  "omni_view_africa_mideast", "omni_view_latam", "omni_view_north_america",
+                  "omni_view_world"}
         for path in sorted((_ROOT / "shows").glob("*.yaml")):
             if path.stem.startswith("_") or path.stem in opt_in:
                 continue

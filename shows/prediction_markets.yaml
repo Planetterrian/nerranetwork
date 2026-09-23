@@ -158,7 +158,10 @@ llm:
   podcast_prompt_file: shows/prompts/prediction_markets_podcast.txt
   digest_temperature: 0.4
   podcast_temperature: 0.7
-  max_tokens: 5500
+  # 8000 (was 5500): Ep1's digest used 5,384 output tokens — grok-4.7's
+  # reasoning counts against the budget — and the claims ledger at the tail
+  # never arrived (ledger_present: false). A ceiling, not a spend.
+  max_tokens: 8000
   podcast_max_tokens: 9000
   # About nine minutes. Set to what the format's digest supports (plan §9a);
   # the skip floor is 60% of this.

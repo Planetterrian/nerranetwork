@@ -171,7 +171,7 @@
                 </div>
             </div>
             <div class="start-shows-row">
-                {% for s in all_shows if s.slug in ['nerra_daily', 'omni_view', 'vancouver', 'collingwood'] %}
+                {% for s in all_shows if s.slug in ['nerra_daily', 'omni_view', 'omni_view_world', 'omni_view_north_america', 'omni_view_europe', 'omni_view_asia_pacific', 'omni_view_africa_mideast', 'omni_view_latam', 'vancouver', 'collingwood'] %}
                 <a href="{{ path_prefix }}{{ s.show_page }}" class="start-show-card" style="--card-color: {{ s.brand_color }}">
                     <picture>
                         <source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp">

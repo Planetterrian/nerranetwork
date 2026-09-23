@@ -1,0 +1,261 @@
+# Omni View Africa & Middle East — Phase 3 of docs/new_shows_plan_2026_09_22.md §4.7.
+# One of the five Omni View regional desks read by Mira, the network's AI
+# host. The desks share ONE format: prompts include
+# shows/prompts/_shared/omni_desk_*.txt, and the only per-desk prompt text is
+# the region file (shows/prompts/omni_desks/). Everything per-desk that a
+# registry needs lives in engine/omni_desks.py.
+#
+# Distribution OFF at launch (RSS + site + blog). NOT on a cron: Episode 1 is
+# produced by manual dispatch and listened to before the launch PR adds the
+# schedule (06:31 UTC (09:31 EAT), plan §6).
+name: Omni View Africa & Middle East
+slug: omni_view_africa_mideast
+weekly_summary_segment: true   # daily cadence; Sunday adds a short week-in-review segment
+memory_enabled: true
+story_recurrence: true
+description: 'The day across Africa and the Middle East, one region deep: the Gulf, the Levant, Iran and Iraq, North, West, East, Central and Southern Africa — decisions, conflicts, economies and elections, with every claim attributed, one contested question argued fairly both ways and one sign of progress. Read by Mira, the Nerra Network''s AI host; every story from named newsrooms.'
+
+fetch_full_text: 12
+absence_sentence_filter: true
+stale_article_days: 3
+
+# Probed 2026-09-23 from this session's egress (200, posts inside the day);
+# re-grade from a runner (`python check_feeds.py omni_view_africa_mideast`) before Episode 1.
+# No `keywords:` list on purpose: these feeds are regional by construction,
+# and a title keyword filter would drop on-region stories whose titles name
+# no country. The REGION RULE in the prompt decides what qualifies.
+sources:
+- url: https://feeds.bbci.co.uk/news/world/africa/rss.xml
+  label: BBC Africa
+- url: https://feeds.bbci.co.uk/news/world/middle_east/rss.xml
+  label: BBC Middle East
+- url: https://www.theguardian.com/world/middleeast/rss
+  label: The Guardian Middle East
+- url: https://www.theguardian.com/world/africa/rss
+  label: The Guardian Africa
+- url: https://www.france24.com/en/africa/rss
+  label: France 24 Africa
+- url: https://www.france24.com/en/middle-east/rss
+  label: France 24 Middle East
+- url: https://rss.dw.com/rdf/rss-en-africa
+  label: DW Africa
+- url: https://www.aljazeera.com/xml/rss/all.xml
+  label: Al Jazeera
+- url: https://www.arabnews.com/rss.xml
+  label: Arab News
+- url: https://www.middleeasteye.net/rss
+  label: Middle East Eye
+- url: https://www.haaretz.com/srv/haaretz-latest-headlines
+  label: Haaretz
+- url: https://www.dailymaverick.co.za/dmrss/
+  label: Daily Maverick
+- url: https://www.premiumtimesng.com/feed
+  label: Premium Times
+- url: https://nation.africa/kenya/rss.xml
+  label: Nation (Kenya)
+- url: https://www.theeastafrican.co.ke/rss.xml
+  label: The East African
+- url: https://allafrica.com/tools/headlines/rdf/latest/headlines.rdf
+  label: AllAfrica
+- url: https://news.google.com/rss/search?q=Gaza+OR+Israel+OR+Lebanon+when:1d&hl=en-US&gl=US&ceid=US:en
+  label: Google News Africa and the Middle East 1
+- url: https://news.google.com/rss/search?q=Iran+OR+Iraq+when:1d&hl=en-US&gl=US&ceid=US:en
+  label: Google News Africa and the Middle East 2
+- url: https://news.google.com/rss/search?q=Saudi+Arabia+OR+UAE+OR+Qatar+when:1d&hl=en-US&gl=US&ceid=US:en
+  label: Google News Africa and the Middle East 3
+- url: https://news.google.com/rss/search?q=Sudan+OR+Sahel+OR+Mali+when:1d&hl=en-US&gl=US&ceid=US:en
+  label: Google News Africa and the Middle East 4
+- url: https://news.google.com/rss/search?q=Nigeria+OR+Ghana+OR+Senegal+when:1d&hl=en-US&gl=US&ceid=US:en
+  label: Google News Africa and the Middle East 5
+- url: https://news.google.com/rss/search?q=Kenya+OR+Ethiopia+OR+Somalia+when:1d&hl=en-US&gl=US&ceid=US:en
+  label: Google News Africa and the Middle East 6
+- url: https://news.google.com/rss/search?q=South+Africa+OR+Zimbabwe+OR+Zambia+when:1d&hl=en-US&gl=US&ceid=US:en
+  label: Google News Africa and the Middle East 7
+
+web_search_queries:
+- Africa news today
+- Middle East news today
+- Gulf and North Africa news today
+
+# Omni View's nine anti-tabloid filters plus the desk additions
+# (engine.omni_desks.ANTI_TABLOID_PATTERNS — keep the two in sync).
+exclude_title_patterns:
+- 'red carpet'
+- '\bLove Island\b'
+- '\bStrictly Come Dancing\b'
+- 'reality TV star'
+- '\broyal\b.*\b(fashion|dress|style|outfit)\b'
+- 'wardrobe malfunction'
+- '\bpaparazzi\b'
+- '\bnet worth\b'
+- 'steps out (?:in|with)'
+- '\b(live updates?|as it happened|live blog)\b'
+- '\b(in pictures|photos of the (day|week)|week in pictures)\b'
+- '\b(quiz|crossword|wordle)\b'
+- '\b(obituar(y|ies)|in memoriam)\b'
+
+x_fetch_enabled: true
+x_accounts:
+- handle: AJEnglish
+  label: Al Jazeera English
+  max_posts: 3
+- handle: BBCAfrica
+  label: BBC Africa
+  max_posts: 3
+- handle: arabnews
+  label: Arab News
+  max_posts: 2
+- handle: dailymaverick
+  label: Daily Maverick
+  max_posts: 2
+
+min_articles: 8
+min_articles_skip: 4
+
+# Cost circuit breaker — TOP LEVEL (nested keys are ignored; see _defaults).
+max_weekly_cost_usd: 7.0
+
+multilingual:
+  enabled: false
+
+llm:
+  provider: xai
+  # grok-4.7 at low effort, like every new show (operator brief 2026-09-23;
+  # experiment new-shows-grok-47-2026-09-23). A run whose pinned model does
+  # not answer falls back to grok-4.3 and records it.
+  model: grok-4.7
+  reasoning_effort: low
+  system_prompt_file: shows/prompts/omni_view_africa_mideast_system.txt
+  digest_prompt_file: shows/prompts/omni_view_africa_mideast_digest.txt
+  podcast_prompt_file: shows/prompts/omni_view_africa_mideast_podcast.txt
+  digest_temperature: 0.4
+  podcast_temperature: 0.7
+  # Room for grok-4.7's reasoning AND the claims ledger at the tail
+  # (Prediction Markets Ep1 used 5,384 of 5,500 and lost its ledger).
+  max_tokens: 8000
+  podcast_max_tokens: 9500
+  # A 10-12 minute brief. The skip floor is 60% of this.
+  min_podcast_words: 1300
+  podcast_expand_below_target: false
+  min_digest_words: 1100
+  digest_expand_below_target: true
+
+tts:
+  # Mira's voice (Grok built-in `ara`), no speech wrap — the Vancouver
+  # calibration shape (plan §2b).
+  voice_id: ara
+  speech_wrap_open: ""
+  speech_wrap_close: ""
+
+audio:
+  # The Omni View theme until the desk variant is commissioned (plan §5c).
+  music_file: assets/music/OmniView.mp3
+  transition_sting: assets/music/transition_sting.mp3
+  voice_intro_delay: 0.0
+  intro_duration: 3.0
+  overlap_duration: 15.0
+  fade_duration: 30.0
+  outro_duration: 30.0
+  outro_crossfade: 0.0
+  outro_fade_out_duration: 10.0
+  intro_volume: 0.6
+  overlap_volume: 0.5
+  fade_volume: 0.4
+  outro_volume: 0.6
+
+publishing:
+  rss_file: omni_view_africa_mideast_podcast.rss
+  rss_title: Omni View Africa & Middle East
+  rss_description: 'The day across Africa and the Middle East, one region deep: the Gulf, the Levant, Iran and Iraq, North, West, East, Central and Southern Africa — decisions, conflicts, economies and elections, with every claim attributed, one contested question argued fairly both ways and one sign of progress. Read by Mira, the Nerra Network''s AI host; every story from named newsrooms.'
+  rss_link: https://nerranetwork.com/omni-view-africa-mideast.html
+  rss_author: Mira (AI host), Nerra Network
+  rss_email: patrick@planetterrian.com
+  rss_image: https://nerranetwork.com/assets/covers/omni-view-africa-mideast.jpg
+  rss_category: News
+  rss_subcategory: Daily News
+  # Secondary must differ from the primary (Apple rejects a duplicate).
+  rss_category2: Government
+  rss_keywords: africa news, middle east news, gulf news, nigeria news, south africa news, daily news briefing
+  guid_prefix: omni-view-africa-mideast
+  base_url: https://nerranetwork.com
+  audio_subdir: digests/omni_view_africa_mideast
+  summaries_json: digests/omni_view_africa_mideast/summaries_omni_view_africa_mideast.json
+  summaries_podcast_name: omni_view_africa_mideast
+  player_html: omni-view-africa-mideast.html
+  summaries_html: omni-view-africa-mideast-summaries.html
+  x_enabled: false
+  x_env_prefix: X_
+  host_name: Mira
+  host_kind: ai
+
+episode:
+  prefix: Omni_View_Africa_Mideast
+  filename_pattern: '{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3'
+  output_dir: digests/omni_view_africa_mideast
+  mp3_glob: Omni_View_Africa_Mideast_Ep*.mp3
+
+chapters:
+  enabled: true
+  # Anchors only — never a topic word. The Lead and Across the Region items
+  # take their chapters from the digest headlines; the segments key on
+  # REQUIRED phrases the podcast prompt builds a sentence around, never
+  # inside the opening window (where: body — the Vancouver Ep1 lesson).
+  section_markers:
+  - pattern: This is Omni View Africa and Middle East|first episode of|Omni View Africa and Middle East, episode
+    title: Introduction
+    where: start
+  - pattern: across the region
+    title: Across the Region
+    where: body
+  - pattern: the wider world
+    title: The Region and the World
+    where: body
+  - pattern: case on both sides
+    title: Both Sides
+    where: body
+  - pattern: a sign of progress
+    title: Progress Watch
+    where: body
+  - pattern: That's Omni View Africa and Middle East|see you tomorrow
+    title: Closing
+    where: end
+
+slow_news:
+  enabled: false
+
+newsletter:
+  enabled: false
+  platform: buttondown
+  api_key_env: BUTTONDOWN_API_KEY
+  status: about_to_send
+  tag: Omni View Africa & Middle East
+  short_label: Africa and the Middle East
+  emoji: 🌍
+  newsletter_start_date: '2026-10-15'
+  requires_financial_disclaimer: false
+  length_target_words: 1300
+
+content_tracking:
+  section_patterns: {}
+
+youtube:
+  enabled: false                 # OFF at launch (plan §7: a second channel is a data decision)
+  channel: en
+  category_id: 25
+  shorts_start_mode: smart
+  shorts_min_score_threshold: 3.5
+  default_language: en
+  privacy_status: public
+  image_provider: grok
+  grok_image_model: grok-imagine-image
+  grok_image_descriptor: "cinematic news photo, natural light, ultra-detailed"
+  image_queries:
+  - Nairobi skyline at sunrise
+  - Cairo and the Nile at dusk
+  - Dubai skyline from the creek
+  - Lagos street market morning
+  image_query_prefix: ''
+  tags:
+  - world news
+  - africa and the middle east
+  - daily news

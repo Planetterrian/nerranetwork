@@ -1146,6 +1146,49 @@ economics are read per language on the dashboard card first.
   and gambling-help lines live in the verbatim closing. Cover glyph
   "gauge"; accent `#A21CAF` inside the markets family (AI Chips owns
   `#4338CA`). Episode 1 waits for the pinned-model fallback to merge.
+- **Phase 2 / 2b Episode 1s — published 2026-09-23.** Vancouver (on grok-4.3:
+  the 4.7 digest call still timed out at default effort), then Collingwood
+  and Prediction Markets on grok-4.7 end to end at `reasoning_effort: low`
+  (147 s and 445 s pipelines; scripts 3.5-6% verbatim against the digest,
+  the lowest on the network). Defects found and fixed: the pre-dedup cap
+  sliced off the two hook articles (Vancouver shipped no forecast); the
+  debut explainer tripped the Getting Around chapter anchor at 16 s (new
+  `where: body`); the entity dedup read the TOWN as every headline's entity
+  (`entity_dedup_ignore`); the digest expansion retry emptied the claims
+  ledger on ~78% of the network's expanded episodes (draft ledger carried
+  over); the generic debut line dropped Mira's identity, so neither Mira
+  debut named her until the closing; Prediction Markets used 5,384 of a
+  5,500-token digest budget on 4.7 and its ledger never arrived (every 4.7
+  show now 8,000); a "two sentences minimum" rule padded headline-only
+  items with "the report is about…" (now one fact, one sentence); board
+  volumes were read to the dollar (now rounded). Open: Vancouver's items
+  lost their commas on 4.3 (a sporadic 4.3 habit, also on FF/MIT/SpaceX);
+  Collingwood ran 4.5 minutes on a thin Wednesday — its Friday slot is the
+  real test.
+- **Phase 3 A-parts — shipped 2026-09-23** (the five Omni View desks and Top
+  World; guards `tests/test_phase3_desks_2026_09_23.py`). What the build
+  settled: (1) ONE definition — `engine/omni_desks.py` holds each desk's
+  sub-regions, seeded arcs, accent and the anti-tabloid filters (Omni View's
+  nine plus live blogs, galleries, quizzes, obituaries), and every registry
+  (intros, first-episode, validation, tracker, memory, covers) loops over
+  it; (2) ONE format — `shows/prompts/_shared/omni_desk_*.txt`, with the
+  region file (`shows/prompts/omni_desks/`) the only per-desk prompt text;
+  system prompts are read raw (no includes), so they are written from one
+  template; (3) no `keywords:` on any desk — the feeds are regional and a
+  title filter would drop stories whose titles name no country; (4) the
+  sub-region balance note names only the sub-regions the last ten digests
+  never reached, as a preference, never a quota; (5) **Top World verifies
+  against the publisher, never a sibling digest**: each desk's Lead and
+  first regional item become hook articles carrying only the headline and
+  the ORIGINAL publisher URL, text-less hook articles take the first
+  page-fetch slots, and the desks' summaries reach the prompt only as a
+  ranking note the claims gate never reads; ≤ 10 desk articles, under the
+  12-article hook cap; (6) segment anchors (`across the region`, `the wider
+  world`, `the case on both sides`, `a sign of progress`) are `where: body`;
+  (7) a globe cover glyph lights each desk's region. Feeds probed from the
+  session egress on 23 Sep (LatAm thinnest, as planned; Kyiv Independent,
+  Euractiv, Times of Israel, Americas Quarterly, Focus Taiwan and Colombia
+  Reports did not answer). Episode 1s wait on the operator's dispatch.
 - **Each B-PR** (after Episode 1 is heard): CRON_MAP + `- cron:` line +
   Worker SLOTS row (unique minute) + move the slug from `PRELAUNCH_SLUGS`
   into `SHOW_REGISTRY` + daily-audit FEEDS limit + `ALT_CADENCE_SHOWS` /

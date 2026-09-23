@@ -244,7 +244,10 @@ class TestContentTrackerIntegration:
                     "ai_chips", "mag7", "peptides", "longevity",
                     # Phase 2 (Mira's local shows).
                     "vancouver", "collingwood",
-                    "prediction_markets"}
+                    "prediction_markets",
+                    # Phase 3: the Omni View desks and Top World.
+                    "omni_view_europe", "omni_view_asia_pacific", "omni_view_africa_mideast",
+                    "omni_view_latam", "omni_view_north_america", "omni_view_world"}
         assert set(SHOW_SECTION_PATTERNS.keys()) == expected
 
     def test_cross_episode_dedup(self, tmp_tracker_dir):

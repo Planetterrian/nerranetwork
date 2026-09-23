@@ -1,0 +1,38 @@
+# Review ledger — Omni View North America. See README.md for schema.
+# Launch registration (Phase 3 of docs/new_shows_plan_2026_09_22.md §4.7-4.8,
+# §9a): no episodes yet. The predictions below are the first review's to score.
+reviews:
+  - date: 2026-09-23
+    pr: null
+    doc: docs/new_shows_plan_2026_09_22.md
+    reviewer: claude-code (new-shows Phase 3 scaffold; launch registration, not a review)
+    summary: >-
+      Mira-hosted regional desk scaffolded from the plan. The desks share one
+      format (shows/prompts/_shared/omni_desk_*.txt) and one definition
+      (engine/omni_desks.py); the only per-desk prompt text is the region file.
+      grok-4.7 at low effort on every writing stage (experiment
+      new-shows-grok-47-2026-09-23). Not on a cron: Episode 1 is produced by
+      manual dispatch and listened to before the launch PR adds the schedule
+      (landmine #17).
+    shipped:
+      - scaffold per docs/new_shows_plan_2026_09_22.md Appendix A and §9a defaults
+    deferred:
+      - Episode 1 by workflow_dispatch (budget two attempts), operator listen, then the cadence PR
+      - re-grade the feed list from a runner (check_feeds.py omni_view_north_america)
+    predictions:
+      - metric: "episodes (first 7) with an item whose subject is outside North America and carries no stated consequence inside it"
+        baseline: "n/a (pre-launch)"
+        expected: "<=1/7"
+        verdict: pending
+      - metric: "Mira claims a body, a home, a trip or an event witnessed (transcript read)"
+        baseline: "n/a"
+        expected: "0/7"
+        verdict: pending
+      - metric: "Both Sides states or implies which side is stronger, or picks a party, government or people"
+        baseline: "n/a"
+        expected: "0/7"
+        verdict: pending
+      - metric: "Progress Watch carries a promise or announcement of intent instead of a measured result"
+        baseline: "n/a"
+        expected: "<=1/7"
+        verdict: pending

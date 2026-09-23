@@ -537,6 +537,81 @@ This is a designed founding episode, not a news day. Total target stays
 }
 
 
+
+# ---- Phase 3: the Omni View regional desks (plan §4.7 "Ep1 (each)") ----
+# Mira's AI disclosure in the first thirty seconds (the identity line carries
+# it), the region rule spoken once as a listener promise, ONE sentence that
+# the other desks exist — no tour — then a normal day.
+_OMNI_DESK_DIGEST_EP1 = """
+### FIRST EPISODE (Episode {episode_num}) — DEBUT BRIEF for "{show_name}"
+A normal episode with a real introduction in front of it. Keep the standard
+hook line and every standard section heading — the pipeline, the validator
+and the blog all read them — and add ONE new section directly after the
+**What You Need to Know** paragraph:
+
+**### What This Show Covers** (150-230 words, first episode only)
+- Open on the listener, not the show: one region, every day, told straight — what was decided, what happened, what it changes and for whom, one contested question with the strongest case on each side, and one measurable sign of progress.
+- The region rule, as a promise: which countries this desk covers, and that a story from elsewhere is here only for its consequence inside the region.
+- The host, stated plainly: the brief is read by Mira, the network's AI host. The stories are chosen and written by software from named newsrooms, and every item names its source. The one thing it will not do: take a side — every claim is attributed, and no party, government or people is praised or mocked.
+- ONE sentence that the other Omni View desks and Omni View Top World News exist — never a list of them.
+- The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
+
+Then run the normal sections. Debut discipline: the STRONGEST stories only,
+names and places explained on first use, no reference to earlier episodes,
+and every factual claim held to the normal sourcing rules — only the
+introduction speaks from the show's own identity.
+"""
+
+_OMNI_DESK_PODCAST_EP1 = """
+### FIRST EPISODE (Episode {episode_num}) — DEBUT SCRIPT for "{show_name}"
+- The cold open and identity line stay exactly as specified. The identity
+  line already says Mira is an AI host; directly after it, spend forty-five
+  to seventy-five seconds on what this brief is, built from the digest's
+  "What This Show Covers" section, rewritten for the ear: who it is for,
+  the region it covers and the region rule, how the stories are chosen, and
+  the one thing it will not do — in plain sentences, never a list, never a
+  tour of the network or of the other desks.
+- Mira never claims to have been anywhere or to have seen anything; she
+  says what she is and moves on.
+- Then a normal episode. No "welcome back", no reference to earlier
+  episodes, no superlatives about the network, and no counts of shows or
+  listeners.
+- The closing is the supplied one, unchanged.
+"""
+
+
+_OMNI_WORLD_DIGEST_EP1 = """
+### FIRST EPISODE (Episode {episode_num}) — DEBUT BRIEF for "{show_name}"
+A normal episode with a real introduction in front of it. Keep the standard
+hook line and every standard section heading — the pipeline, the validator
+and the blog all read them — and add ONE new section directly after the
+**What You Need to Know** paragraph:
+
+**### What This Show Covers** (150-230 words, first episode only)
+- Open on the listener, not the show: the ten stories that matter most anywhere in the world today, ranked by how many people they change something for, then one contested question with the strongest case on each side and one measurable sign of progress.
+- How the ranking is made, plainly: from the world's newsrooms and the network's five regional desks, which publish earlier each morning — ONE sentence, never a list of the desks.
+- The host, stated plainly: the brief is read by Mira, the network's AI host. The stories are chosen and written by software from named newsrooms, and every item names its source. The one thing it will not do: take a side — every claim is attributed.
+- The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
+
+Then run the normal sections. Debut discipline: the STRONGEST stories only,
+names and places explained on first use, no reference to earlier episodes,
+and every factual claim held to the normal sourcing rules — only the
+introduction speaks from the show's own identity.
+"""
+
+
+def _register_omni_desks() -> None:
+    from engine.omni_desks import DESK_SLUGS, WORLD_SLUG
+    for slug in DESK_SLUGS:
+        _SHOW_DIGEST_EP1.setdefault(slug, _OMNI_DESK_DIGEST_EP1)
+        _SHOW_PODCAST_EP1.setdefault(slug, _OMNI_DESK_PODCAST_EP1)
+    _SHOW_DIGEST_EP1.setdefault(WORLD_SLUG, _OMNI_WORLD_DIGEST_EP1)
+    _SHOW_PODCAST_EP1.setdefault(WORLD_SLUG, _OMNI_DESK_PODCAST_EP1.replace(
+        "the region it covers and the region rule", "how the ten are ranked"))
+
+
+_register_omni_desks()
+
 def first_episode_digest_appendix(
     episode_num: int,
     show_name: str,

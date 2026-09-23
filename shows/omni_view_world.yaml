@@ -1,0 +1,235 @@
+# Omni View Top World News — Phase 3 of docs/new_shows_plan_2026_09_22.md §4.8.
+# The ten stories that matter most anywhere in the world today, ranked, with
+# one Both Sides and one sign of progress, read by Mira. Runs LAST (11:31 UTC)
+# so its hook can read the five regional desks' digests: their leading items
+# arrive as hook articles carrying only the headline and the ORIGINAL publisher
+# URL, so the claims gate verifies against the publisher, never against a
+# sibling digest (shows/hooks/omni_view_world.py). Without desk data it is
+# still a valid show on its own world feeds.
+#
+# Distribution OFF at launch (RSS + site + blog). NOT on a cron: Episode 1 is
+# produced by manual dispatch and listened to before the launch PR.
+name: Omni View Top World News
+slug: omni_view_world
+weekly_summary_segment: true   # daily cadence; Sunday adds a short week-in-review segment
+memory_enabled: false   # the desks carry the regional arcs (plan §4.8)
+story_recurrence: true
+description: 'The ten stories that matter most anywhere in the world today, ranked, with one contested question argued fairly both ways and one sign of progress. Read by Mira, the Nerra Network''s AI host; every story from named newsrooms.'
+
+# The desks' leading items arrive with no text of their own; their pages
+# are fetched first (engine.article_text ranks text-less hook articles first).
+fetch_full_text: 24
+absence_sentence_filter: true
+stale_article_days: 3
+
+# Probed 2026-09-23 from this session's egress (200, posts inside the day);
+# re-grade from a runner (`python check_feeds.py omni_view_world`) before Episode 1.
+# No `keywords:` list on purpose: a world show's feeds cover everything, and
+# a title keyword filter would drop stories whose titles name no country.
+sources:
+- url: https://feeds.bbci.co.uk/news/world/rss.xml
+  label: BBC World
+- url: https://www.theguardian.com/world/rss
+  label: The Guardian World
+- url: https://www.aljazeera.com/xml/rss/all.xml
+  label: Al Jazeera
+- url: https://rss.dw.com/rdf/rss-en-world
+  label: DW World
+- url: https://rss.nytimes.com/services/xml/rss/nyt/World.xml
+  label: The New York Times World
+- url: https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/world/
+  label: The Globe and Mail World
+- url: https://www.france24.com/en/rss
+  label: France 24
+- url: https://www.cbc.ca/webfeed/rss/rss-world
+  label: CBC World
+- url: https://news.google.com/rss/search?q=world+leaders+summit+OR+%22United+Nations%22+when:1d&hl=en-US&gl=US&ceid=US:en
+  label: Google News world 1
+- url: https://news.google.com/rss/search?q=ceasefire+OR+war+OR+offensive+when:1d&hl=en-US&gl=US&ceid=US:en
+  label: Google News world 2
+- url: https://news.google.com/rss/search?q=election+results+OR+vote+when:1d&hl=en-US&gl=US&ceid=US:en
+  label: Google News world 3
+- url: https://news.google.com/rss/search?q=central+bank+OR+tariffs+OR+trade+deal+when:1d&hl=en-US&gl=US&ceid=US:en
+  label: Google News world 4
+
+web_search_queries:
+- world news today
+- major international developments today
+- global economy news today
+
+# Omni View's nine anti-tabloid filters plus the desk additions
+# (engine.omni_desks.ANTI_TABLOID_PATTERNS — keep the two in sync).
+exclude_title_patterns:
+- 'red carpet'
+- '\bLove Island\b'
+- '\bStrictly Come Dancing\b'
+- 'reality TV star'
+- '\broyal\b.*\b(fashion|dress|style|outfit)\b'
+- 'wardrobe malfunction'
+- '\bpaparazzi\b'
+- '\bnet worth\b'
+- 'steps out (?:in|with)'
+- '\b(live updates?|as it happened|live blog)\b'
+- '\b(in pictures|photos of the (day|week)|week in pictures)\b'
+- '\b(quiz|crossword|wordle)\b'
+- '\b(obituar(y|ies)|in memoriam)\b'
+
+x_fetch_enabled: true
+x_accounts:
+- handle: BBCWorld
+  label: BBC World
+  max_posts: 3
+- handle: AJEnglish
+  label: Al Jazeera English
+  max_posts: 3
+- handle: dwnews
+  label: DW News
+  max_posts: 2
+
+min_articles: 8
+min_articles_skip: 4
+
+# Cost circuit breaker — TOP LEVEL (nested keys are ignored; see _defaults).
+max_weekly_cost_usd: 6.0
+
+multilingual:
+  enabled: false
+
+llm:
+  provider: xai
+  # grok-4.7 at low effort, like every new show (operator brief 2026-09-23;
+  # experiment new-shows-grok-47-2026-09-23). A run whose pinned model does
+  # not answer falls back to grok-4.3 and records it.
+  model: grok-4.7
+  reasoning_effort: low
+  system_prompt_file: shows/prompts/omni_view_world_system.txt
+  digest_prompt_file: shows/prompts/omni_view_world_digest.txt
+  podcast_prompt_file: shows/prompts/omni_view_world_podcast.txt
+  digest_temperature: 0.4
+  podcast_temperature: 0.7
+  # Room for grok-4.7's reasoning AND the claims ledger at the tail
+  # (Prediction Markets Ep1 used 5,384 of 5,500 and lost its ledger).
+  max_tokens: 8000
+  podcast_max_tokens: 9500
+  # An 11-13 minute brief. The skip floor is 60% of this.
+  min_podcast_words: 1400
+  podcast_expand_below_target: false
+  min_digest_words: 1200
+  digest_expand_below_target: true
+
+tts:
+  # Mira's voice (Grok built-in `ara`), no speech wrap — the Vancouver
+  # calibration shape (plan §2b).
+  voice_id: ara
+  speech_wrap_open: ""
+  speech_wrap_close: ""
+
+audio:
+  # The Omni View theme (plan §5c).
+  music_file: assets/music/OmniView.mp3
+  transition_sting: assets/music/transition_sting.mp3
+  voice_intro_delay: 0.0
+  intro_duration: 3.0
+  overlap_duration: 15.0
+  fade_duration: 30.0
+  outro_duration: 30.0
+  outro_crossfade: 0.0
+  outro_fade_out_duration: 10.0
+  intro_volume: 0.6
+  overlap_volume: 0.5
+  fade_volume: 0.4
+  outro_volume: 0.6
+
+publishing:
+  rss_file: omni_view_world_podcast.rss
+  rss_title: Omni View Top World News
+  rss_description: 'The ten stories that matter most anywhere in the world today, ranked by
+    consequence, with one contested question argued fairly both ways and one sign of
+    progress — in about twelve minutes. Read by Mira, the Nerra Network''s AI host; every
+    story from named newsrooms, every claim attributed.'
+  rss_link: https://nerranetwork.com/omni-view-world.html
+  rss_author: Mira (AI host), Nerra Network
+  rss_email: patrick@planetterrian.com
+  rss_image: https://nerranetwork.com/assets/covers/omni-view-world.jpg
+  rss_category: News
+  rss_subcategory: Daily News
+  # Secondary must differ from the primary (Apple rejects a duplicate).
+  rss_category2: Government
+  rss_keywords: world news, top world news, international news, daily news briefing, omni view
+  guid_prefix: omni-view-world
+  base_url: https://nerranetwork.com
+  audio_subdir: digests/omni_view_world
+  summaries_json: digests/omni_view_world/summaries_omni_view_world.json
+  summaries_podcast_name: omni_view_world
+  player_html: omni-view-world.html
+  summaries_html: omni-view-world-summaries.html
+  x_enabled: false
+  x_env_prefix: X_
+  host_name: Mira
+  host_kind: ai
+
+episode:
+  prefix: Omni_View_World
+  filename_pattern: '{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3'
+  output_dir: digests/omni_view_world
+  mp3_glob: Omni_View_World_Ep*.mp3
+
+chapters:
+  enabled: true
+  # Anchors only — never a topic word. The Ten take their chapters from
+  # the digest headlines; the segments key on
+  # REQUIRED phrases the podcast prompt builds a sentence around, never
+  # inside the opening window (where: body — the Vancouver Ep1 lesson).
+  section_markers:
+  - pattern: This is Omni View Top World News|first episode of|Omni View Top World News, episode
+    title: Introduction
+    where: start
+  - pattern: case on both sides
+    title: Both Sides
+    where: body
+  - pattern: a sign of progress
+    title: Progress Watch
+    where: body
+  - pattern: That's Omni View Top World News|see you tomorrow
+    title: Closing
+    where: end
+
+slow_news:
+  enabled: false
+
+newsletter:
+  enabled: false
+  platform: buttondown
+  api_key_env: BUTTONDOWN_API_KEY
+  status: about_to_send
+  tag: Omni View Top World News
+  short_label: Top World
+  emoji: 🌐
+  newsletter_start_date: '2026-10-15'
+  requires_financial_disclaimer: false
+  length_target_words: 1300
+
+content_tracking:
+  section_patterns: {}
+
+youtube:
+  enabled: false                 # OFF at launch (plan §7: a second channel is a data decision)
+  channel: en
+  category_id: 25
+  shorts_start_mode: smart
+  shorts_min_score_threshold: 3.5
+  default_language: en
+  privacy_status: public
+  image_provider: grok
+  grok_image_model: grok-imagine-image
+  grok_image_descriptor: "cinematic news photo, natural light, ultra-detailed"
+  image_queries:
+  - globe with city lights from orbit
+  - United Nations headquarters in New York
+  - world map on a newsroom wall
+  - container ship on open ocean at dawn
+  image_query_prefix: ''
+  tags:
+  - world news
+  - top stories
+  - daily news
