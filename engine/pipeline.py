@@ -472,6 +472,11 @@ def build_podcast_template_vars(
     pod_vars.update(extra_context)
 
     if episode_num == 1:
+        # The debut intro no longer carries the hook (Sep 23 2026): every
+        # podcast prompt already opens on {hook} (the July 30 cold-open
+        # pass), so the intro re-read it — MAG 7 Ep1 spoke its hook twice,
+        # and the final dedup cut the repeat at "U.S." and aired that one
+        # word as the episode's opening line.
         _slug = getattr(config, "slug", "") or (getattr(args, "show", "") if args is not None else "")
         if getattr(getattr(config, "tts", None), "dialogue_mode", False):
             # Dialogue shows (The DP Pod): the generic single-host Ep1 text
@@ -488,7 +493,7 @@ def build_podcast_template_vars(
             pod_vars.setdefault(
                 "intro_line",
                 f"{_lead}: Welcome to the very first episode of {config.name}! "
-                f"Today is {today_str}. {effective_hook}",
+                f"Today is {today_str}.",
             )
             pod_vars.setdefault(
                 "closing_block",
@@ -514,7 +519,7 @@ def build_podcast_template_vars(
             pod_vars.setdefault(
                 "intro_line",
                 f"Welcome to the very first episode of {config.name}! "
-                f"Today is {today_str}. {effective_hook}",
+                f"Today is {today_str}.",
             )
             pod_vars.setdefault(
                 "closing_block",
@@ -531,7 +536,7 @@ def build_podcast_template_vars(
             pod_vars.setdefault(
                 "intro_line",
                 f"Welcome to the very first episode of {config.name}! "
-                f"Today is {today_str}. {effective_hook}",
+                f"Today is {today_str}.",
             )
             _ep1_close = (
                 f"That wraps up our very first episode of {config.name}! "

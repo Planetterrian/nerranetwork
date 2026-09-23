@@ -63,25 +63,43 @@ def _article(rec: dict) -> Optional[dict]:
     }
 
 
+#: Query slices, in order. Reviews first: a spotlight explains what a thing
+#: is, how it works and what the evidence shows, and the most-cited reviews
+#: carry exactly that. Peptides Ep1 (2026-09-23) ran without this slice:
+#: its insulin spotlight query matched "natural history" and "life-history"
+#: in research-paper titles and the episode explained rat mitochondria and
+#: wild sheep instead of insulin's discovery and manufacture. SRC:MED keeps
+#: the agricultural index (AGRICOLA) out — that is where the sheep came from.
+SLICES = (
+    ("review", 'AND PUB_TYPE:"review"', "CITED desc", 3),
+    ("most_cited", "", "CITED desc", 2),
+    ("recent", "", "P_PDATE_D desc", 2),
+)
+
+
 def abstracts_for(
     query: str,
     *,
-    per_slice: int = 4,
+    per_slice: int = 0,
     get: Callable[[Dict[str, str]], Optional[dict]] = _get,
 ) -> List[dict]:
-    """Most-cited + most-recent abstracts for *query*, de-duplicated."""
+    """Review, most-cited and most-recent abstracts for *query*, de-duplicated.
+
+    ``per_slice`` > 0 overrides every slice's size (tests).
+    """
     if not query:
         return []
     out: List[dict] = []
     seen: set[str] = set()
     # Europe PMC sort keys: CITED (citation count) and P_PDATE_D (publication
     # date) — "FIRST_PDATE" is rejected by the API.
-    for sort in ("CITED desc", "P_PDATE_D desc"):
+    for name, extra, sort, size in SLICES:
+        full = f"({query}) AND HAS_ABSTRACT:y AND SRC:MED {extra}".strip()
         try:
-            data = get({"query": f"({query}) AND HAS_ABSTRACT:y", "format": "json",
-                        "resultType": "core", "pageSize": str(per_slice), "sort": sort})
+            data = get({"query": full, "format": "json", "resultType": "core",
+                        "pageSize": str(per_slice or size), "sort": sort})
         except Exception as exc:  # noqa: BLE001 — research never blocks an episode
-            logger.info("Europe PMC query failed (%s): %s", sort, exc)
+            logger.info("Europe PMC query failed (%s): %s", name, exc)
             continue
         for rec in ((data or {}).get("resultList") or {}).get("result", []) or []:
             art = _article(rec)

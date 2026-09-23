@@ -1215,6 +1215,35 @@ def _build_expansion_retry_prompt(
 
 _EXPANSION_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
 
+# A fragment that ends on an abbreviation is not a sentence (Sep 23 2026,
+# MAG 7 Ep1): the dedup below split "U.S. government files brief…" after
+# "U.S.", dropped the repeated remainder as a duplicate and shipped the
+# lone word "U.S." as the episode's first spoken line. Titles never end a
+# sentence; a dotted initialism does not when the next word is lowercase
+# or when it is all the fragment holds.
+_TITLE_ABBREV_END_RE = re.compile(
+    r"\b(?:Mr|Mrs|Ms|Dr|St|Sr|Jr|Prof|Gen|Sen|Rep|Gov|Lt|Col|Capt|vs|Inc|Corp|Co|Ltd|No)\.$"
+)
+_INITIALISM_END_RE = re.compile(r"(?:^|\s)(?:[A-Z]\.){2,4}$")
+
+
+def _split_sentences(line: str) -> list:
+    """Sentence split that keeps "U.S. government" and "Dr. Smith" whole."""
+    parts = _EXPANSION_SENTENCE_SPLIT_RE.split(line)
+    out: list = []
+    for part in parts:
+        if out:
+            prev = out[-1].rstrip()
+            nxt = part.lstrip()
+            if _TITLE_ABBREV_END_RE.search(prev) or (
+                _INITIALISM_END_RE.search(prev)
+                and (nxt[:1].islower() or _INITIALISM_END_RE.fullmatch(" " + prev.strip()))
+            ):
+                out[-1] = f"{out[-1]} {part}"
+                continue
+        out.append(part)
+    return out
+
 
 def _dedup_expansion_sentences(
     script: str,
@@ -1250,7 +1279,7 @@ def _dedup_expansion_sentences(
             out_lines.append(line)
             continue
         kept_sentences = []
-        for sentence in _EXPANSION_SENTENCE_SPLIT_RE.split(line):
+        for sentence in _split_sentences(line):
             stripped = sentence.strip()
             if len(stripped.split()) >= min_words:
                 if any(

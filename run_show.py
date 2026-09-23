@@ -2420,12 +2420,17 @@ def run(args: argparse.Namespace) -> None:
         # the ledger is checked against the text that ships. Opt-in.
         if getattr(config, "absence_sentence_filter", False):
             try:
-                from engine.absence_sentences import strip_absence_sentences
+                from engine.absence_sentences import (
+                    drop_empty_items, strip_absence_sentences)
                 x_thread, _absent_n = strip_absence_sentences(x_thread)
                 if _absent_n:
                     logger.info("Removed %d absence sentence(s) from the digest",
                                 _absent_n)
                 metrics.record("digest_absence_sentences_removed", _absent_n)
+                x_thread, _empty_n = drop_empty_items(x_thread)
+                if _empty_n:
+                    logger.warning("Removed %d empty digest item heading(s)", _empty_n)
+                metrics.record("digest_empty_items_removed", _empty_n)
             except Exception as _abs_exc:  # noqa: BLE001 — never block a run
                 logger.warning("Absence-sentence filter failed (non-fatal): %s",
                                _abs_exc)
