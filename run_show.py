@@ -59,6 +59,30 @@ _LONG_FORM_RENDER_BUDGET_S = int(
 )
 
 
+# The fetch futures run inside a ``with ThreadPoolExecutor`` block, whose exit
+# JOINS every worker whatever ``result(timeout=)`` said — so a fetch that
+# outlived its first wait was always waited for, then thrown away. Omni View
+# Europe Ep1 (2026-09-23): 17 feeds, 425 articles, returned 21 s after the
+# 120 s wait expired; the run logged a blank "RSS fetch failed:" (a timeout's
+# message is empty) and went on with 8 X posts and zero news articles. A slow
+# fetch now gets a grace period before it counts as failed.
+FETCH_FIRST_WAIT_SECONDS = 120
+FETCH_GRACE_SECONDS = 300
+
+
+def _await_fetch(future, label: str,
+                 first_wait: float = FETCH_FIRST_WAIT_SECONDS,
+                 grace: float = FETCH_GRACE_SECONDS):
+    """Wait for a fetch future, allowing a slow fetch a grace period."""
+    from concurrent.futures import TimeoutError as _FuturesTimeout
+    try:
+        return future.result(timeout=first_wait)
+    except _FuturesTimeout:
+        logger.warning("%s still running after %ds — waiting up to %ds more",
+                       label, int(first_wait), int(grace))
+        return future.result(timeout=grace)
+
+
 def _timeout_handler(signum, frame):
     raise SystemExit(f"PIPELINE TIMEOUT: exceeded {_PIPELINE_TIMEOUT}s — aborting to prevent hung CI job")
 
@@ -1015,9 +1039,9 @@ def run(args: argparse.Namespace) -> None:
 
                 if fetch_future is not None:
                     try:
-                        articles = fetch_future.result(timeout=120)
+                        articles = _await_fetch(fetch_future, "RSS fetch")
                     except Exception as exc:
-                        logger.error("RSS fetch failed: %s", exc)
+                        logger.error("RSS fetch failed: %s: %s", type(exc).__name__, exc)
                         articles = []
                         # Distinguish a structural fetch failure from a genuine
                         # slow-news day. Without this flag, slow_news mode would
@@ -1027,11 +1051,12 @@ def run(args: argparse.Namespace) -> None:
 
                 if x_fetch_future is not None:
                     try:
-                        x_posts = x_fetch_future.result(timeout=120)
+                        x_posts = _await_fetch(x_fetch_future, "X account fetch")
                         if x_posts:
                             tracker["services"]["x_api"]["search_calls"] = len(x_posts)
                     except Exception as exc:
-                        logger.warning("X account fetch failed: %s — continuing with RSS only", exc)
+                        logger.warning("X account fetch failed: %s: %s — continuing with RSS only",
+                                       type(exc).__name__, exc)
                         x_posts = []
 
         if rss_fetch_failed and not articles and not x_posts:

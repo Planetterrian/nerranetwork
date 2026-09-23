@@ -136,3 +136,140 @@ class TestRunShowWiring:
     def test_the_fallback_is_a_metric(self):
         assert 'metrics.record("llm_model_pinned"' in self.SRC
         assert 'metrics.record("llm_model_fallback"' in self.SRC
+
+
+# ---------------------------------------------------------------------------
+# Omni View Europe Ep1 (2026-09-23): the digest call on grok-4.7 answered
+# "503 — the model's availability is currently degraded". A 5xx is an
+# InternalServerError, not one of the transient classes the fallback caught,
+# so the run died with grok-4.3 one exception class away. The script stage had
+# no fallback at all for a whole-show pin.
+# ---------------------------------------------------------------------------
+
+def _server_error():
+    import httpx
+    from openai import InternalServerError
+
+    req = httpx.Request("POST", "https://api.x.ai/v1/chat/completions")
+    resp = httpx.Response(503, request=req)
+    return InternalServerError("Service temporarily unavailable", response=resp, body=None)
+
+
+class TestServerErrorFallback:
+    def test_a_503_on_the_pinned_digest_model_falls_back(self, monkeypatch, tmp_path):
+        pytest.importorskip("openai")
+        calls = []
+
+        def fake(prompt, **kw):
+            calls.append(kw["model"])
+            if kw["model"] == "grok-4.7":
+                raise _server_error()
+            return DIGEST, {"finish_reason": "stop", "usage": {}}
+
+        monkeypatch.setattr(gen, "_call_grok", fake)
+        cfg = _Cfg("grok-4.7", tmp_path)
+        out = gen.generate_digest({"today_str": "2026-09-23", "episode_num": 1}, cfg, tracker=None)
+        assert "Council approved" in out
+        assert calls == ["grok-4.7", "grok-4.3"]
+        assert "InternalServerError" in cfg.llm._model_fallback_reason
+
+    def test_a_503_on_the_default_still_fails_loudly(self, monkeypatch, tmp_path):
+        pytest.importorskip("openai")
+
+        def fake(prompt, **kw):
+            raise _server_error()
+
+        monkeypatch.setattr(gen, "_call_grok", fake)
+        cfg = _Cfg("grok-4.3", tmp_path)
+        with pytest.raises(Exception):
+            gen.generate_digest({"today_str": "2026-09-23", "episode_num": 1}, cfg, tracker=None)
+
+    def test_a_5xx_is_not_added_to_the_retry_set(self):
+        # Retrying a degraded model three times burns the run's budget; the
+        # wider set is for the SWITCH only.
+        pytest.importorskip("openai")
+        from openai import InternalServerError
+        assert InternalServerError not in gen._TRANSIENT_ERRORS
+        assert InternalServerError in gen._MODEL_UNAVAILABLE_ERRORS
+
+
+class TestScriptStageFallback:
+    VARS = {"episode_num": 50, "digest": "body", "today_str": "x",
+            "hook": "h", "intro_line": "i", "closing_block": "c",
+            "tone_hint": "t", "cold_open_spec": "", "delivery_spec": "",
+            "narrative_memory_section": "", "nerra_network_context": "",
+            "tesla_narrative_status_block": "",
+            "tesla_performance_signals_block": "",
+            "tesla_theme_context_block": ""}
+
+    def _cfg(self, model):
+        from engine.config import load_config
+        cfg = load_config(ROOT / "shows" / "tesla.yaml")
+        cfg.llm.model = model
+        cfg.llm.podcast_model = ""
+        cfg.llm.podcast_chain = False
+        return cfg
+
+    def test_a_whole_show_pin_that_fails_at_the_script_falls_back(self, monkeypatch):
+        pytest.importorskip("openai")
+        seen = []
+
+        def fake(prompt, model=None, **kw):
+            seen.append(model)
+            if model == "grok-4.7":
+                raise _server_error()
+            return "word " * 500, {"finish_reason": "stop"}
+
+        monkeypatch.setattr(gen, "_call_grok", fake)
+        monkeypatch.setattr(gen, "_validate_llm_output", lambda *a, **k: 0)
+        cfg = self._cfg("grok-4.7")
+        gen.generate_podcast_script(dict(self.VARS), cfg)
+        assert seen[:2] == ["grok-4.7", "grok-4.3"]
+        assert cfg.llm._pinned_model == "grok-4.7"
+
+    def test_a_non_availability_error_on_the_pin_still_raises(self, monkeypatch):
+        def fake(prompt, model=None, **kw):
+            raise KeyError("prompt bug")
+
+        monkeypatch.setattr(gen, "_call_grok", fake)
+        cfg = self._cfg("grok-4.7")
+        with pytest.raises(KeyError):
+            gen.generate_podcast_script(dict(self.VARS), cfg)
+        assert cfg.llm.model == "grok-4.7"
+
+
+# ---------------------------------------------------------------------------
+# Omni View Europe Ep1: the RSS fetch returned 21 s after run_show's 120 s wait
+# expired. The ThreadPoolExecutor's exit joins the worker anyway, so the run
+# waited for the whole fetch, then discarded 425 articles and went on with 8 X
+# posts. A slow fetch now gets a grace period.
+# ---------------------------------------------------------------------------
+
+class TestFetchGracePeriod:
+    def test_a_slow_fetch_is_waited_for_not_discarded(self):
+        import time
+        from concurrent.futures import ThreadPoolExecutor
+        import run_show
+
+        with ThreadPoolExecutor(max_workers=1) as ex:
+            fut = ex.submit(lambda: (time.sleep(0.3), ["article"])[1])
+            got = run_show._await_fetch(fut, "RSS fetch", first_wait=0.05, grace=5)
+        assert got == ["article"]
+
+    def test_a_fetch_past_the_grace_still_fails(self):
+        import time
+        from concurrent.futures import ThreadPoolExecutor, TimeoutError as FTimeout
+        import run_show
+
+        with ThreadPoolExecutor(max_workers=1) as ex:
+            fut = ex.submit(time.sleep, 0.5)
+            with pytest.raises(FTimeout):
+                run_show._await_fetch(fut, "RSS fetch", first_wait=0.05, grace=0.05)
+
+    def test_both_fetches_use_it_and_the_error_names_its_type(self):
+        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert '_await_fetch(fetch_future, "RSS fetch")' in src
+        assert '_await_fetch(x_fetch_future, "X account fetch")' in src
+        assert "fetch_future.result(timeout=120)" not in src
+        # A timeout's message is empty: the log line must carry the type.
+        assert 'logger.error("RSS fetch failed: %s: %s", type(exc).__name__, exc)' in src

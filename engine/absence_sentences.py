@@ -84,9 +84,12 @@ _SENT_SPLIT = re.compile(r"(?<=[.!?])\s+(?=[A-Z\"“‘'(\[])")
 # A sentence whose only content is WHERE something was read, naming a
 # spoken domain (Peptides Ep1: "The source for these statements appears in
 # reports linked from x dot com."). The run's spoken-URL tripwire only
-# counts these on every show; on the opt-in shows they are removed.
+# counts these on every show; on the opt-in shows they are removed. The
+# filter runs on the script BEFORE the TTS transform speaks the dot, so the
+# written form counts too (Omni View Asia Pacific Ep1 read "The source named
+# for the lead is AP News, at apnews dot com." past it).
 _SPOKEN_DOMAIN_RE = re.compile(
-    r"\b[a-z0-9-]+ dot (?:com|org|net|io|gov|ca|co|uk|ai)\b", re.IGNORECASE)
+    r"\b[a-z0-9-]+(?: dot |\.)(?:com|org|net|io|gov|ca|co|uk|ai)\b", re.IGNORECASE)
 _ATTRIBUTION_RE = re.compile(
     r"\b(?:source|sources|sourced|link|links|linked|appears?|posted|according to|"
     r"reported (?:on|by|at)|read (?:on|at))\b", re.IGNORECASE)
@@ -102,11 +105,52 @@ def is_attribution_only_sentence(sentence: str) -> bool:
     return bool(_ATTRIBUTION_RE.search(s))
 
 
+# Self-narration: a sentence about how the script was made rather than about
+# the news — the briefing it was written from, "the item", this brief's or
+# this desk's rules, the length target. grok-4.7 turns every prompt rule into
+# a sentence: the four Omni View desk Ep1s (2026-09-23) spoke 37 of them in
+# 305 ("The item does not, in the reporting provided here, give a count of
+# the dead…", "That is all the digest states on it, so that is all I will
+# say.", "Stretching this to 1, would mean inventing details or padding items
+# already covered, which this brief does not allow."). Every shape below
+# names the production apparatus, which is never news. A show's debut copy
+# about itself ("This brief is for listeners who…") is left alone.
+_SELF_NARRATION = [
+    # The digest is never the show's own name; "briefing" often is ("That
+    # wraps today's briefing", "this briefing finds you every day"), so it
+    # counts only as a document that says, carries or lacks something.
+    re.compile(r"\b(?:the|this|today's) digest\b", re.IGNORECASE),
+    re.compile(r"\bthe briefing (?:says|states|gives|carries|has|does|lists|names)\b"
+               r"|\b(?:in|from) (?:the|today's) briefing\b", re.IGNORECASE),
+    re.compile(r"\bas provided\b|\bprovided (?:here|for this)\b|\breporting provided\b"
+               r"|\b(?:text|material) (?:given|filed|provided) for\b|\bsource text\b"
+               r"|\bmaterial this (?:desk|brief) has\b", re.IGNORECASE),
+    # "The facts the item does carry are…" — the item as a DOCUMENT with a
+    # verb of saying. Never bare "the item(s)": the required debut disclosure
+    # ("Software picks and writes the items from named newsrooms…") uses it.
+    re.compile(r"\b(?:the|this) item (?:does|did|carries|says|states)\b", re.IGNORECASE),
+    re.compile(r"\bheadline on the\b", re.IGNORECASE),
+    re.compile(r"\b(?:this|the) (?:brief|desk)(?:'s|’s)? (?:does not|doesn't|doesn’t|did not|"
+               r"will not treat|adds|has (?:independently|adjusted)|makes on its own|"
+               r"(?:does not |doesn't )?allow)\b", re.IGNORECASE),
+    re.compile(r"\b(?:by|of|for) this (?:brief|desk)\b|\bthis (?:brief|desk) (?:makes|has)\b",
+               re.IGNORECASE),
+    re.compile(r"\ball I (?:will|can) say\b|\binventing details\b|\bpadding\b"
+               r"|\bword (?:count|target)\b", re.IGNORECASE),
+]
+
+
+def is_self_narration_sentence(sentence: str) -> bool:
+    s = sentence.strip()
+    return bool(s) and any(p.search(s) for p in _SELF_NARRATION)
+
+
 def is_absence_sentence(sentence: str) -> bool:
     s = sentence.strip()
     if not s or s.lower().startswith("source:"):
         return False
-    return any(p.search(s) for p in _PATTERNS) or is_attribution_only_sentence(s)
+    return (any(p.search(s) for p in _PATTERNS) or is_attribution_only_sentence(s)
+            or is_self_narration_sentence(s))
 
 
 def strip_absence_sentences(text: str) -> Tuple[str, int]:

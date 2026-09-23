@@ -25,13 +25,24 @@ from tenacity import (
 # Only retry on transient API errors — permanent errors (KeyError, FileNotFoundError,
 # RuntimeError) will fail immediately instead of wasting 3x API credits.
 try:
-    from openai import APITimeoutError, APIConnectionError, RateLimitError
+    from openai import (
+        APITimeoutError, APIConnectionError, InternalServerError, RateLimitError,
+    )
     _TRANSIENT_ERRORS = (APITimeoutError, APIConnectionError, RateLimitError)
     _RATE_LIMIT_ERRORS = (RateLimitError,)
+    _SERVER_ERRORS = (InternalServerError,)
 except ImportError:
     # Fallback if openai isn't installed (e.g. in tests)
     _TRANSIENT_ERRORS = (TimeoutError, ConnectionError)
     _RATE_LIMIT_ERRORS = ()
+    _SERVER_ERRORS = ()
+
+# What moves a PINNED model onto the network default (switch_to_network_default).
+# Wider than the retry set on purpose: a 5xx is not retried here (retrying a
+# degraded model burns the run's budget), but it IS a model that cannot write
+# this episode — Omni View Europe Ep1 (2026-09-23) died on grok-4.7's
+# "503 availability degraded" with the fallback one exception class away.
+_MODEL_UNAVAILABLE_ERRORS = _TRANSIENT_ERRORS + _SERVER_ERRORS
 
 logger = logging.getLogger(__name__)
 
@@ -2081,7 +2092,7 @@ def generate_digest(
 
     try:
         text, meta = _primary_call()
-    except _TRANSIENT_ERRORS as exc:
+    except _MODEL_UNAVAILABLE_ERRORS as exc:
         # A pinned model that does not answer falls back to the network
         # default ONCE, immediately, instead of spending two more ~260 s
         # stalls on the same model (switch_to_network_default). A run
@@ -2749,21 +2760,32 @@ def generate_podcast_script(
         # a silently-unused override shows up as a metric instead of as
         # an A/B result that never actually ran.
         if script_model == config.llm.model:
-            raise
-        logger.warning(
-            "Script-stage model override '%s' failed (%s: %s) — falling back "
-            "to '%s' for this episode",
-            script_model, type(exc).__name__, exc, config.llm.model,
-        )
-        print(
-            f"::warning::{getattr(config, 'slug', '?')}: script-stage model "
-            f"override '{script_model}' unavailable — episode generated on "
-            f"'{config.llm.model}'. The A/B is NOT running; fix or remove "
-            f"llm.podcast_model.",
-            flush=True,
-        )
-        script_model = config.llm.model
-        text, meta = _script_call(script_model)
+            # A whole-show pin (the new shows on grok-4.7) had no fallback
+            # here at all: a digest written on the pin, then an unavailable
+            # pin at the script call, cost the episode. Same rule as the
+            # digest stage — switch once, sticky, and record it.
+            if (isinstance(exc, _MODEL_UNAVAILABLE_ERRORS)
+                    and switch_to_network_default(
+                        config, f"script call failed: {type(exc).__name__}")):
+                script_model = config.llm.model
+                text, meta = _script_call(script_model)
+            else:
+                raise
+        else:
+            logger.warning(
+                "Script-stage model override '%s' failed (%s: %s) — falling back "
+                "to '%s' for this episode",
+                script_model, type(exc).__name__, exc, config.llm.model,
+            )
+            print(
+                f"::warning::{getattr(config, 'slug', '?')}: script-stage model "
+                f"override '{script_model}' unavailable — episode generated on "
+                f"'{config.llm.model}'. The A/B is NOT running; fix or remove "
+                f"llm.podcast_model.",
+                flush=True,
+            )
+            script_model = config.llm.model
+            text, meta = _script_call(script_model)
 
     # Retry once with 50% more tokens if the response was truncated
     if meta.get("finish_reason") == "length":
