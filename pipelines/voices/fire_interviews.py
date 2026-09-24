@@ -462,8 +462,13 @@ def fire_due_interviews() -> int:
             if when and when > phone_hi:
                 continue
         # Idempotency: a delayed/parallel tick must not double-call.
+        # A run that was cancelled or failed is history, not an active run:
+        # a guest who rebooked onto the same interview row must still be
+        # fired (Sept 24 2026: Dr. Brandt sat in the studio because his
+        # cancelled Sept 22 run blocked the new slot).
         if sb_select("interview_runs",
-                     f"interview_id=eq.{interview['id']}&status=neq.failed"):
+                     f"interview_id=eq.{interview['id']}"
+                     f"&status=not.in.(failed,cancelled)"):
             logger.info("Interview %s already has an active run — skipping",
                         interview["id"])
             continue
