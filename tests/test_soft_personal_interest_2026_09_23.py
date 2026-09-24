@@ -71,6 +71,64 @@ class TestSoftPersonalInterestPage:
         assert 'tags.push("SpaceX Daily")' in src
         assert "newsletter: !!newsletter" in src
 
+    def test_soft_submit_fires_distinct_ga4_event(self):
+        """Soft north star must not conflate with newsletter_signup."""
+        src = _read("templates/personal_interest_page.html.j2")
+        assert 'gtag("event", "soft_personal_interest_submit"' in src
+        assert 'form_id: "personal-interest"' in src
+        assert 'page_path: "/personal-interest.html"' in src
+        # Soft success path: interested branch fires Soft event only.
+        soft_start = src.index("if (interested)")
+        else_at = src.index("} else {", soft_start)
+        soft_block = src[soft_start:else_at]
+        assert "soft_personal_interest_submit" in soft_block
+        assert "newsletter_signup" not in soft_block
+        # Newsletter-only (Soft unchecked) may still use newsletter_signup.
+        news_block = src[else_at:else_at + 350]
+        assert "newsletter_signup" in news_block
+        assert "soft_personal_interest_submit" not in news_block
+        # Event must not collide with gallery / join CTA names.
+        for banned in (
+            "gallery_subscribe", "generate_lead", "select_personal_upsell",
+        ):
+            assert banned not in src
+
+    def test_soft_event_is_fetched_not_as_conversion(self):
+        """A result key is not a metric until the fetcher asks for it —
+        and Soft must never inflate newsletter signup totals."""
+        from scripts.fetch_ga4_stats import CONVERSION_EVENTS, ENGAGEMENT_EVENTS
+
+        assert "soft_personal_interest_submit" in ENGAGEMENT_EVENTS
+        assert "soft_personal_interest_submit" not in CONVERSION_EVENTS
+        assert "newsletter_signup" in CONVERSION_EVENTS
+
+    def test_funnel_exposes_soft_submits_null_when_unmeasured(self):
+        from scripts.build_funnel import _soft_personal_submits
+
+        assert _soft_personal_submits({})["total"] is None
+        assert _soft_personal_submits({"site_events": None})["total"] is None
+        assert _soft_personal_submits(None)["configured"] is False
+        assert _soft_personal_submits({"site_events": []}) == {
+            "configured": True, "total": 0, "by_page": {},
+        }
+
+    def test_funnel_counts_soft_submits_separately_from_upsell(self):
+        from scripts.build_funnel import _soft_personal_submits, _upsell_clicks
+
+        ga4 = {"site_events": [
+            {"eventName": "soft_personal_interest_submit",
+             "pagePath": "/personal-interest.html", "eventCount": "4"},
+            {"eventName": "select_personal_upsell",
+             "pagePath": "/nerra-daily.html", "eventCount": "7"},
+            {"eventName": "newsletter_signup",
+             "pagePath": "/personal-interest.html", "eventCount": "99"},
+        ]}
+        soft = _soft_personal_submits(ga4)
+        assert soft["total"] == 4
+        assert soft["by_page"] == {"/personal-interest.html": 4}
+        # Upsell helper must ignore Soft events.
+        assert _upsell_clicks(ga4)["total"] == 7
+
     def test_never_auto_charges_personal(self):
         src = _read("templates/personal_interest_page.html.j2")
         assert "stripe" not in src.lower()

@@ -39,10 +39,12 @@ class TestTheUpsellEventIsRead:
         from scripts.fetch_ga4_stats import CONVERSION_EVENTS, ENGAGEMENT_EVENTS
 
         assert "select_personal_upsell" in ENGAGEMENT_EVENTS
+        assert "soft_personal_interest_submit" in ENGAGEMENT_EVENTS
         # It must NOT ride in the conversions list: build_funnel sums every
         # row of that report into signup_events_total, so an engagement event
         # there would report an intention as a subscriber.
         assert "select_personal_upsell" not in CONVERSION_EVENTS
+        assert "soft_personal_interest_submit" not in CONVERSION_EVENTS
         assert "newsletter_signup" in CONVERSION_EVENTS
 
     def test_the_two_reports_stay_separate(self):

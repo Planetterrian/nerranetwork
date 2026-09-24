@@ -271,6 +271,7 @@ def _visits(ga4: Optional[dict], destinations: Dict[str, str]) -> Dict[str, Any]
         out["totals"]["sessions"] += sessions
     out["by_destination"] = dict(sorted(agg.items()))
     out["upsell_clicks"] = _upsell_clicks(ga4)
+    out["soft_personal_submits"] = _soft_personal_submits(ga4)
     return out
 
 
@@ -290,6 +291,31 @@ def _upsell_clicks(ga4: Optional[dict]) -> Dict[str, Any]:
     total = 0
     for row in rows:
         if (row.get("eventName") or "") != "select_personal_upsell":
+            continue
+        count = int(row.get("eventCount") or 0)
+        by_page[(row.get("pagePath") or "(unknown)")] = count
+        total += count
+    return {
+        "configured": True,
+        "total": total,
+        "by_page": dict(sorted(by_page.items(), key=lambda kv: -kv[1])),
+    }
+
+
+def _soft_personal_submits(ga4: Optional[dict]) -> Dict[str, Any]:
+    """Successful Soft Personal interest submits (tips/reminder, no charge).
+
+    Distinct from ``newsletter_signup`` / gallery subscribe / paid join.
+    Never folded into capture: Soft is not a newsletter conversion.
+    ``null`` when unmeasured, ``0`` when measured and empty.
+    """
+    rows = (ga4 or {}).get("site_events")
+    if not isinstance(rows, list):
+        return {"configured": False, "total": None, "by_page": {}}
+    by_page: Dict[str, int] = {}
+    total = 0
+    for row in rows:
+        if (row.get("eventName") or "") != "soft_personal_interest_submit":
             continue
         count = int(row.get("eventCount") or 0)
         by_page[(row.get("pagePath") or "(unknown)")] = count

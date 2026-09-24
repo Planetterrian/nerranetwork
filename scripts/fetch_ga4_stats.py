@@ -55,7 +55,10 @@ SCOPES = ["https://www.googleapis.com/auth/analytics.readonly"]
 # ``signup_events_total``, so an engagement event in that list would silently
 # inflate the number of people who subscribed.
 CONVERSION_EVENTS = ["newsletter_signup", "generate_lead"]
-ENGAGEMENT_EVENTS = ["select_personal_upsell"]
+# Soft Personal interest submit is INTENT toward tips/reminder (no charge),
+# never a newsletter conversion — keep it out of CONVERSION_EVENTS so
+# build_funnel._captures() does not count Soft as a subscriber signup.
+ENGAGEMENT_EVENTS = ["select_personal_upsell", "soft_personal_interest_submit"]
 
 
 def _session():
@@ -196,11 +199,11 @@ def fetch(prop: str, days: int) -> Dict[str, Any]:
         conversions = None
 
     # On-site engagement events, reported separately from conversions above.
-    # Today that is the Nerra Personal upsell band on the Nerra Daily show page
-    # (templates/show_page.html.j2), the network's only on-site upsell: it had
-    # been firing into GA4 since 2026-09-19 and was read by nothing, so whether
-    # the one CTA for the paid product gets clicked was unknowable. Split by
-    # page so a second placement is attributable when one is added.
+    # Today: (1) the Nerra Personal upsell band on show pages
+    # (templates/show_page.html.j2) and (2) Soft Personal interest submits on
+    # /personal-interest.html (soft_personal_interest_submit — tips/reminder,
+    # no charge; must not ride in CONVERSION_EVENTS). Split by page so each
+    # placement is attributable.
     try:
         site_events = _rows(_run_report(session, prop, {
             "dateRanges": date_range,
