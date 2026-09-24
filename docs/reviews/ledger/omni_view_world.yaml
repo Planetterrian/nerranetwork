@@ -71,3 +71,26 @@ reviews:
         baseline: "948 (Ep1)"
         expected: ">= 1,200 median Ep2-8"
         verdict: pending
+  - date: 2026-09-24
+    pr: "PR H (grok-4.7 resilience)"
+    doc: docs/experiments.yaml (grok-47-resilience-2026-09-24)
+    reviewer: claude-code (Ep2 job-log read, same day)
+    summary: >-
+      Ep2 ran 15:55 UTC (GitHub fallback; the 11:31 Worker slot did not fire). The grok-4.7 combined call SUCCEEDED in 208 s (digest 1,548 words, script 1,281), then the overlap dedup dropped the only Progress Watch item as a duplicate of The Ten (same URL), the fragment tripped the structural gate, the structural retry re-ran on 4.7, that call died at 264 s (APIConnectionError), the sticky switch moved the run to grok-4.3, and the 4.3 retry (908 -> 1,329 words after expansion; 2 claims; 1.7 commas per 100 words) REPLACED the 4.7 digest. Ep1 had timed out at 600 s on 4.7. Neither is a 4.7 data point.
+    shipped:
+      - retries never change the model arm (generate_digest allow_model_switch=False from the structural retry; PinnedModelUnavailable keeps the original)
+      - Progress Watch exempt from the overlap dedup (progress_watch_thin still judges substance)
+      - llm.stream on the cohort; one budget-gated same-model retry before any switch
+    predictions:
+      - metric: "episodes recording llm_model_fallback"
+        baseline: "2/2 (Ep1-2)"
+        expected: "<= 1 of Ep3-9"
+        verdict: pending
+      - metric: "structural retries that changed the model arm"
+        baseline: "1 (Ep2)"
+        expected: "0"
+        verdict: pending
+      - metric: "claims on a completed 4.7 episode"
+        baseline: "0 / 2 (fallback episodes)"
+        expected: ">= 8 on 5 of Ep3-9"
+        verdict: pending

@@ -2738,6 +2738,45 @@ experiments:
       guards tests/test_pinned_model_fallback_2026_09_23.py). Every such
       episode records `llm_model_pinned` + `llm_model_fallback` and is NOT a
       4.7 data point — read those two keys before scoring anything here.
+      2026-09-24: 9 of the cohort's first 24 episodes fell back (5 dropped
+      connections at ~260 s, 3 full 600 s timeouts, 1 pre-flight ping), and
+      every fallback episode was the thin one (0-3 claims against 8-25 on a
+      completed 4.7 run). Two of the five connection drops happened on the
+      STRUCTURAL RETRY of a good 4.7 digest and replaced it with a 4.3 one.
+      The resilience pass (grok-47-resilience-2026-09-24) is what makes
+      this experiment readable; its live metric is the fallback share.
+  - id: grok-47-resilience-2026-09-24
+    title: "grok-4.7 resilience: stream, one bounded same-model retry, a retry never changes arms"
+    area: quality
+    shipped: 2026-09-24
+    readout: 2026-10-08
+    status: reading
+    metric: llm_pinned_fallback_share_7d
+    baseline: 0.38
+    target: >
+      Under 0.10 over the 7 days before the readout (a dropped socket is a
+      per-request accident; one same-model retry should recover most of
+      them), with llm_pinned_recovered_7d > 0 and no episode whose
+      structural retry moved it off its model arm. Latency: the streamed
+      digest's time-to-first-token (llm_digest_ttft_s) and
+      generate_digest p95 stay under 50% of the 600 s request timeout
+      (scripts/model_trial_report.py --since 2026-09-25).
+    criteria: >
+      Revert (one line per lever: llm.stream false, pinned_model_retries 0)
+      if the fallback share does not fall, if any cohort show hits the
+      3,000 s pipeline budget on a retry, or if streamed completions
+      arrive truncated (finish_reason length without the token bump).
+      A fallback episode is still NOT a 4.7 data point.
+    notes: >
+      engine.generator._stream_completion (idle timeout
+      NERRA_LLM_STREAM_IDLE_SECONDS, default 180 s; the request timeout is
+      a wall between chunks), _call_pinned (PINNED_RETRY_BACKOFF_S 20 s,
+      budget-gated by run_show's registered pipeline budget with a 1,200 s
+      reserve; a 5xx never retries), PinnedModelUnavailable on
+      generate_digest(allow_model_switch=False) from run_show's structural
+      retry, the pre-flight ping at the show's own reasoning_effort with two
+      attempts on a pin, Progress Watch exempt from the overlap dedup on the
+      six Mira desks. Guards: tests/test_grok47_resilience_2026_09_24.py.
   - id: vancouver-launch-2026-09
     title: Vancouver Daily News launch (Mira's first news show)
     area: reach

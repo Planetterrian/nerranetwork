@@ -25,6 +25,11 @@ digest_lints:
 - wyntk_hook_match
 - x_only_lead
 - progress_watch_thin
+# Progress Watch may revisit one of the day's stories by contract; the overlap
+# dedup dropping it left a fragment that bought a full regeneration (Top World
+# Ep2, 2026-09-24). progress_watch_thin judges substance; never a deletion.
+digest_overlap_exempt_sections:
+- Progress Watch
 x_posts_as_sources: linked_only
 stale_article_days: 3
 
@@ -108,6 +113,10 @@ llm:
   # not answer falls back to grok-4.3 and records it.
   model: grok-4.7
   reasoning_effort: low
+  # Sep 24 2026: stream the completion (xAI's guidance for reasoning models);
+  # 9 of the cohort's first 24 episodes fell back on a dropped non-streaming
+  # connection. False = the pre-existing request.
+  stream: true
   system_prompt_file: shows/prompts/omni_view_world_system.txt
   digest_prompt_file: shows/prompts/omni_view_world_digest.txt
   podcast_prompt_file: shows/prompts/omni_view_world_podcast.txt

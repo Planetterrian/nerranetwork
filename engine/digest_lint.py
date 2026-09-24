@@ -335,15 +335,34 @@ _DC_STATE_RE = re.compile(
     r"\b(?:announced|planned|proposed|under construction|being built|energi[sz]ed|"
     r"operational|online|commissioned)\b", re.IGNORECASE)
 _MW_RE = re.compile(r"\d[\d,.]*\s*(?:MW|GW|megawatts?|gigawatts?)\b")
+# What makes an item a SITE (a build with a place), as opposed to a power
+# architecture, a product, a policy or a grid deal: a capacity figure, or a
+# build cue. Sep 24 2026: the lint used to require a state word AND a MW
+# figure of EVERY item in the section, but the prompt exempts non-site items
+# from the state word and forbids estimating a capacity the source did not
+# give — AI Chips Ep3's three power-architecture / product items could never
+# pass, fired 3/3, survived the retry, and the ledger blamed the model.
+# Descriptive words ("campus", "hyperscale") are NOT cues: Ep3's 800 VDC
+# whitepaper item said "not a named campus" and would have counted.
+_DC_BUILD_CUE_RE = re.compile(
+    r"\b(?:breaks? ground|broke ground|groundbreaking|construction|energi[sz]ation|"
+    r"energi[sz]ed|commissioned|hectares?|acres?|square (?:feet|metres|meters)|"
+    r"sq\.? ?ft|substation)\b", re.IGNORECASE)
+
+
+def _is_dc_site_item(item: str) -> bool:
+    return bool(_MW_RE.search(item) or _DC_BUILD_CUE_RE.search(item))
 
 
 def dc_items_unlabelled(digest: str) -> List[str]:
+    """SITE items (a capacity figure or a build cue) whose text carries no
+    build state. An item that is not a site is never a finding."""
     body = section_body(digest, "Data Centres & Power") or section_body(digest, "Data Centers & Power")
     if body is None:
         return []
     bad = []
     for it in items(body):
-        if not (_DC_STATE_RE.search(it) and _MW_RE.search(it)):
+        if _is_dc_site_item(it) and not _DC_STATE_RE.search(it):
             bad.append(it.splitlines()[0].strip("* ")[:80])
     return bad
 
@@ -353,16 +372,22 @@ def lint_dc_items_unlabelled(digest: str) -> Optional[LintFinding]:
     single cooling deal or a site with no published capacity is not a
     defect, a section written without the build-state discipline is."""
     body = section_body(digest, "Data Centres & Power") or section_body(digest, "Data Centers & Power")
-    total = len(items(body or "")) if body else 0
+    all_items = items(body or "") if body else []
+    total = len(all_items)
+    sites = sum(1 for it in all_items if _is_dc_site_item(it))
     bad = dc_items_unlabelled(digest)
-    metrics = {"dc_items_unlabelled": len(bad), "dc_items_total": total}
-    if bad and total and len(bad) * 2 > total:
+    metrics = {"dc_items_unlabelled": len(bad), "dc_items_total": total,
+               "dc_items_sites": sites}
+    # Two site items at least: one ambiguous item is not a section written
+    # without the build-state discipline.
+    if bad and sites >= 2 and len(bad) * 2 > sites:
         return LintFinding(
             "dc_items_unlabelled",
-            f"{len(bad)} Data Centres & Power item(s) carry no build state or no "
-            "capacity — every data-centre item states whether it is announced, "
-            "under construction or energized, its capacity in MW, and its "
-            "location, from the article",
+            f"{len(bad)} data-centre SITE item(s) carry no build state — a site "
+            "item's first sentence says whether it is announced, under "
+            "construction or energized, with the capacity and location the "
+            "source gives (a deal, policy or architecture item needs no state "
+            "word, and a capacity the source omits is never estimated)",
             metrics,
         )
     return LintFinding("dc_items_unlabelled", "", metrics)

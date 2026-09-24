@@ -94,3 +94,20 @@ reviews:
         baseline: "n/a"
         expected: "7/7"
         verdict: pending
+  - date: 2026-09-24
+    pr: "PR H (grok-4.7 resilience)"
+    doc: docs/experiments.yaml (grok-47-resilience-2026-09-24)
+    reviewer: claude-code (Ep2 job-log read, same day)
+    summary: >-
+      Ep2 ran 15:52 UTC (GitHub fallback). The grok-4.7 digest call was dropped after 261 s (APIConnectionError) and the run fell back to grok-4.3 on that one failure: 798 words expanded to 942, 2 claims, 1.3 commas per 100 words, against Ep1's 1,259-word script on 4.7. The ~260 s drop is a per-request event on a non-streaming call (Vancouver completed a single 374 s call the same afternoon), so the fix is to stream and to retry the same model once before switching.
+    shipped:
+      - llm.stream: true; one budget-gated same-model retry before any switch
+    predictions:
+      - metric: "episodes recording llm_model_fallback"
+        baseline: "1/2 (Ep2)"
+        expected: "<= 1 of Ep3-9"
+        verdict: pending
+      - metric: "commas per 100 words in the digest"
+        baseline: "1.3 (Ep2, fallback)"
+        expected: ">= 4.0 median Ep3-9"
+        verdict: pending

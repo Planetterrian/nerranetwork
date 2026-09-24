@@ -106,11 +106,15 @@ class TestDigestStageFallback:
         pytest.importorskip("openai")
         fake, calls = self._fake("grok-4.7")
         monkeypatch.setattr(gen, "_call_grok", fake)
+        monkeypatch.setattr(gen, "_pinned_sleep", lambda *_: None)
         cfg = _Cfg("grok-4.7", tmp_path)
         out = gen.generate_digest({"today_str": "2026-09-23", "episode_num": 1}, cfg, tracker=None)
         assert "Council approved" in out
-        # ONE attempt on the pinned model, then the default — never three stalls.
-        assert calls == ["grok-4.7", "grok-4.3"]
+        # Sep 24 2026: ONE bounded same-model retry on a dropped connection
+        # (a ~260 s per-request accident, not a dead model), then the
+        # default — never three stalls. tests/test_grok47_resilience_2026_09_24.py
+        # covers the budget gate, the 5xx no-retry and retries=0.
+        assert calls == ["grok-4.7", "grok-4.7", "grok-4.3"]
         assert cfg.llm.model == "grok-4.3" and cfg.llm._pinned_model == "grok-4.7"
 
     def test_a_run_already_on_the_default_still_raises_into_the_retry(

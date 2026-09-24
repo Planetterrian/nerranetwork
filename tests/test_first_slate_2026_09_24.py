@@ -28,11 +28,36 @@ EXEMPTIONS = {
     "models_agents": {"On the Horizon"},
     "prediction_markets": {"The Week's Board"},
     "spacex": {"The Counterpoint"},
+    # Sep 24 2026 (PR H): Top World Ep2 lost its only Progress Watch item to
+    # the dedup (same URL as The Ten), the fragment tripped the structural
+    # gate, and the retry cost the episode its grok-4.7 digest.
+    "omni_view_europe": {"Progress Watch"},
+    "omni_view_asia_pacific": {"Progress Watch"},
+    "omni_view_africa_mideast": {"Progress Watch"},
+    "omni_view_latam": {"Progress Watch"},
+    "omni_view_north_america": {"Progress Watch"},
+    "omni_view_world": {"Progress Watch"},
 }
+
+_INCLUDE_RE = re.compile(r"<<include:\s*([^>\s]+)\s*>>")
 
 
 def _yaml(slug):
     return yaml.safe_load((ROOT / "shows" / f"{slug}.yaml").read_text(encoding="utf-8"))
+
+
+def _digest_prompt_text(slug):
+    """The show's digest prompt with its <<include: …>> snippets expanded
+    (the desks' sections live in a shared include)."""
+    path = ROOT / _yaml(slug)["llm"]["digest_prompt_file"]
+
+    def expand(p, depth=0):
+        text = p.read_text(encoding="utf-8")
+        if depth > 5:
+            return text
+        return _INCLUDE_RE.sub(lambda m: expand((p.parent / m.group(1)).resolve(), depth + 1), text)
+
+    return expand(path)
 
 
 class TestDeployDriftCheck:
@@ -109,7 +134,7 @@ class TestOverlapExemptionsAreConfigured:
 
     def test_every_exempt_section_is_a_real_section_of_that_prompt(self):
         for slug, expected in EXEMPTIONS.items():
-            prompt = (ROOT / "shows" / "prompts" / f"{slug}_digest.txt").read_text(encoding="utf-8")
+            prompt = _digest_prompt_text(slug)
             for name in expected:
                 assert name in prompt, (slug, name)
 
