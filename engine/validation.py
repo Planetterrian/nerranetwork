@@ -869,6 +869,19 @@ def mag7_validation_config() -> ValidationConfig:
             _items_rule("Top News", "Top News", r"### Company Desk|## Company Desk", 2),
             _items_rule("Company Desk", "Company Desk",
                         r"### The Counterpoint|## The Counterpoint", 2),
+            # Sep 24 2026: Ep2 shipped with no Counterpoint at all (the
+            # overlap dedup had removed it, header included) and nothing
+            # regenerated — a missing section is a structural defect, same
+            # as an empty one. On the Calendar stays optional: the prompt
+            # says omit it when the articles date nothing.
+            SectionRule(
+                name="The Counterpoint",
+                pattern=(r"(?:### The Counterpoint|## The Counterpoint)(.*?)"
+                         r"(?=### The Thread|## The Thread|### On the Calendar|"
+                         r"## On the Calendar|### The Tape|## The Tape|$)"),
+                min_items=0,
+                min_chars=200,
+            ),
         ],
         forbidden_patterns=[r"https?://\S+"],
     )

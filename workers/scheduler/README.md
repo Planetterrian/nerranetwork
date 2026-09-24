@@ -52,6 +52,23 @@ fine-grained PAT carrying both is fine for both Workers.
 
 ## Keeping it in sync
 
+**What fires is what was last deployed, not what is committed.** On
+2026-09-24 a redeploy from a checkout that predated the launch-cohort PR
+left nine new shows off the live slot table; the cron string already
+covered their hours, so the deploy output looked right and only the
+dispatch pattern gave it away (every old slot fired on the minute, no
+new one did). Always `git pull` on `main` before `npx wrangler deploy`,
+then open `GET /` and count the `slots`. The daily audit runs
+`scripts/check_scheduler_deploy.py`, which diffs the live table against
+`src/index.ts` once the repo variable `SCHEDULER_STATUS_URL` holds the
+Worker's `*.workers.dev` URL (Settings → Secrets and variables → Actions →
+Variables). Until it is set the check is a one-line no-op.
+
+The dispatcher honours `FIRST_RUN` (a show's first scheduled date) the same
+way `next_slot` does; before 2026-09-24 only the status page did, and a
+`workflow_dispatch` bypasses the workflow's own launch-date gate by design.
+
+
 `SLOTS` in `src/index.ts` mirrors `CRON_MAP` in
 `.github/workflows/run-show.yml`. `tests/test_scheduling_punctuality.py`
 parses both and fails CI on drift. When changing the schedule, update both

@@ -2463,6 +2463,32 @@ def run(args: argparse.Namespace) -> None:
                         exc,
                     )
 
+        # Blocking lints (Sep 24 2026): a finding that survives the one-shot
+        # structural regeneration above skips the episode — never a strip
+        # (a half-sentence about dosing is worse than none) and never a
+        # warning (Peptides Ep2 shipped "Doses of 7 mg and 14 mg" past two
+        # dose_terms findings). Opt-in per show via digest_lints_blocking.
+        _blocking = [
+            n for n in (getattr(config, "digest_lints_blocking", []) or [])
+            if n in _lint_names
+        ]
+        if _blocking and not is_deep_dive:
+            from engine.digest_lint import run_digest_lints as _run_blocking
+            _still, _ = _run_blocking(x_thread, _blocking)
+            if _still:
+                _names = ", ".join(f.lint for f in _still)
+                metrics.record("digest_lints_blocked", [f.lint for f in _still])
+                logger.error(
+                    "Blocking digest lint(s) still fire after the structural "
+                    "retry: %s — skipping the episode", _names,
+                )
+                print(f"::error::{config.slug}: blocking digest lint(s) {_names} "
+                      f"still fire after regeneration — episode skipped")
+                _skip_episode(
+                    "digest_lint_blocking",
+                    f"{_names} still fired after the one-shot regeneration",
+                )
+
         # Extract the daily hook (headline) from the digest
         hook = _extract_hook(x_thread)
         if hook:
@@ -5560,7 +5586,10 @@ def _dedupe_digest_sections(x_thread, config, metrics):
         return x_thread
     try:
         from engine.digest_overlap import dedupe_cross_section_items
-        result = dedupe_cross_section_items(x_thread, show_name=config.name)
+        result = dedupe_cross_section_items(
+            x_thread, show_name=config.name,
+            exempt_sections=getattr(config, "digest_overlap_exempt_sections", []) or [],
+        )
     except Exception as exc:  # noqa: BLE001 — a guard must never break a run
         logger.warning("Digest cross-section dedupe failed (non-fatal): %s", exc)
         return x_thread

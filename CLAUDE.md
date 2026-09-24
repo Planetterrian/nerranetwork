@@ -4004,6 +4004,17 @@ decision); everything else has a live status card.
     coexist as fallback without double-publishing. The Worker's SLOTS
     table must stay in sync with the gate's CRON_MAP —
     `tests/test_scheduling_punctuality.py` fails CI on drift.
+    **What FIRES is what was last deployed, not what is committed** (Sep
+    24 2026): a `wrangler deploy` from a checkout that predated the
+    launch-cohort PR left nine new shows off the live slot table while the
+    cron string already covered their hours, so every old slot fired on
+    the minute and no new one did until GitHub's hours-late fallback. The
+    Worker's `GET /` lists the live `slots`; `scripts/check_scheduler_deploy.py`
+    diffs them against `src/index.ts` nightly once the repo variable
+    `SCHEDULER_STATUS_URL` is set. Same day: the dispatcher now honours
+    `FIRST_RUN` (Peptides Ep2 fired a week early — only the status page's
+    `next_slot` had checked it, and a `workflow_dispatch` skips the
+    workflow's own launch-date gate by design).
 
 25. **The TTS engine can speak text we never sent — the spoken-text gate
     is the only thing standing between that and a listener (Sep 14

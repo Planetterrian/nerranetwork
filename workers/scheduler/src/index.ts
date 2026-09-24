@@ -262,6 +262,15 @@ export default {
       console.log(`${show}: day filter '${filter}' not satisfied today — no-op.`);
       return;
     }
+    // Sep 24 2026: the status page's nextSlot() honoured FIRST_RUN and the
+    // dispatcher did not — Peptides Ep2 fired 09-24, a week before its
+    // 10-01 launch date, and a workflow_dispatch bypasses the workflow's
+    // own FIRST_SCHEDULED_RUN gate by design (manual reruns stay possible).
+    // The Worker owns "when"; the launch date is part of when.
+    if (!launched(show, now)) {
+      console.log(`${show}: first scheduled run is ${FIRST_RUN[show]} — not launched yet, no-op.`);
+      return;
+    }
     await dispatch(env, show);
   },
 };

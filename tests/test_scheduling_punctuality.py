@@ -35,13 +35,21 @@ WEEKLY_FILTERS = {"monday", "tuesday", "wednesday", "thursday", "friday",
 
 
 def _worker_slots() -> dict:
-    entries = {}
-    for m in re.finditer(
-        r'\[(\d+),\s*(\d+),\s*"(\w+)",\s*(?:"(\w+)"|null)\]', _TS,
-    ):
-        hour, minute, show, day_filter = m.groups()
-        entries[show] = (int(hour), int(minute), day_filter)
-    return entries
+    # One parser for the test and the nightly deploy-drift check
+    # (scripts/check_scheduler_deploy.py) — Sep 24 2026.
+    from engine.scheduler_slots import worker_slots
+    return worker_slots(_TS)
+
+
+def test_scheduled_handler_honours_the_launch_date():
+    """Sep 24 2026: Peptides Ep2 was dispatched a week before its FIRST_RUN
+    because only nextSlot() (the status page) called launched(); the
+    scheduled() handler checked the day filter and dispatched. A
+    workflow_dispatch bypasses the workflow's FIRST_SCHEDULED_RUN gate by
+    design, so the Worker is the only place the launch date can bind."""
+    body = _TS.split("async scheduled(", 1)[1]
+    assert "launched(" in body, "scheduled() never consults FIRST_RUN"
+    assert body.index("launched(") < body.index("await dispatch(env, show)")
 
 
 def test_cron_minutes_off_peak():

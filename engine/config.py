@@ -1156,6 +1156,18 @@ class ShowConfig:
     # show opts into by name; a finding rides the existing one-shot
     # structural regeneration. Empty (default) = byte-identical.
     digest_lints: List[str] = field(default_factory=list)
+    # Sections whose contract is to cite an earlier story (Sep 24 2026):
+    # MAG 7's Counterpoint rebuts the lead, a calendar dates a covered
+    # story's next step. engine.digest_overlap skips these sections, so
+    # a shared Source URL there is never a "duplicate" — MAG 7 Ep2 lost
+    # both sections, headers included, to the same-URL rule. Empty = every
+    # section is compared (legacy).
+    digest_overlap_exempt_sections: List[str] = field(default_factory=list)
+    # Lints that BLOCK when they still fire after the one-shot structural
+    # regeneration (Sep 24 2026): the episode is skipped with a marker, never
+    # stripped. Opt-in per show; Peptides Ep2 shipped "Doses of 7 mg and
+    # 14 mg" past a dose_terms finding that had fired twice.
+    digest_lints_blocking: List[str] = field(default_factory=list)
     # How X posts may serve as sources (Sep 23 2026). "any" = legacy: every
     # post becomes an article under its x.com URL. "linked_only" = a post is
     # kept only when it links an article, and that article URL becomes the
@@ -1455,6 +1467,8 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         fetch_full_text_chars=int(data.get("fetch_full_text_chars", 2500) or 2500),
         absence_sentence_filter=bool(data.get("absence_sentence_filter", False)),
         digest_lints=[str(x) for x in (data.get("digest_lints") or [])],
+        digest_overlap_exempt_sections=[str(x) for x in (data.get("digest_overlap_exempt_sections") or [])],
+        digest_lints_blocking=[str(x) for x in (data.get("digest_lints_blocking") or [])],
         x_posts_as_sources=str(data.get("x_posts_as_sources", "any") or "any"),
         region_allowlist=[str(x) for x in (data.get("region_allowlist") or [])],
         preferred_domains=[str(x).strip().lower() for x in (data.get("preferred_domains") or []) if str(x).strip()],
