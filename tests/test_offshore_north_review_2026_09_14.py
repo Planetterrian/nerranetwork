@@ -64,7 +64,13 @@ class TestFullTextLayer:
         "offshore_north", "ai_chips", "mag7", "peptides", "longevity",
         "vancouver", "collingwood", "prediction_markets",
         "omni_view_europe", "omni_view_asia_pacific", "omni_view_africa_mideast",
-        "omni_view_latam", "omni_view_north_america", "omni_view_world"})
+        "omni_view_latam", "omni_view_north_america", "omni_view_world",
+        # Network sourcing pass (2026-09-24): the ten established news shows
+        # opted in too (tests/test_network_sourcing_pass_2026_09_24.py pins
+        # their depths); the narrative shows and Привет stay at 0.
+        "tesla", "spacex", "models_agents", "models_agents_beginners",
+        "fascinating_frontiers", "planetterrian", "omni_view", "env_intel",
+        "modern_investing", "finansy_prosto"})
 
     def test_show_opts_in_and_every_other_show_is_untouched(self):
         cfg = load_config(str(_SHOW_YAML))
