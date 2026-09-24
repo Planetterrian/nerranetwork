@@ -25,10 +25,12 @@ import argparse
 import json
 import logging
 import os
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from urllib.parse import quote
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 if str(ROOT) not in sys.path:
@@ -51,6 +53,7 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout,
 
 TEMPLATES = ROOT / "templates" / "email"
 INVITE_TEMPLATE = "producer_guest_invite.j2"
+KNOWN_TEMPLATE = "producer_known_guest.j2"
 HOLD_TEMPLATE = "producer_hold_note.j2"
 JOB = "inbox"
 
@@ -122,6 +125,134 @@ def application_for_thread(thread_id: str) -> Optional[Dict[str, Any]]:
 
 def application_exists(thread_id: str) -> bool:
     return application_for_thread(thread_id) is not None
+
+
+# ---------------------------------------------------------------------------
+# Guests we already know (Sept 23 2026)
+# ---------------------------------------------------------------------------
+# Think Right PR re-pitched John Colascione from a new address on a new
+# thread. The only duplicate check was the thread id, so he got the generic
+# first-contact invite a second time and a second application row, a month
+# after his first one was approved. The same had already happened to John
+# Capobianco three times. Publicists rotate senders and threads; the guest's
+# name is the thing that stays put.
+
+_TITLES = re.compile(r"^(?:dr|doctor|prof|professor|mr|mrs|ms|mx|sir)\.?\s+", re.I)
+
+
+def guest_key(name: Optional[str]) -> str:
+    """Comparable form of a guest's name: titles, post-nominals after a
+    comma, punctuation and case removed. Empty when there is not enough
+    of a name to match safely (a first name alone matches too many)."""
+    text = (name or "").split(",")[0].strip()
+    while True:
+        stripped = _TITLES.sub("", text)
+        if stripped == text:
+            break
+        text = stripped
+    words = re.sub(r"[^\w\s'-]", " ", text.lower()).split()
+    words = [w.strip("'-") for w in words if w.strip("'-")]
+    return " ".join(words) if len(words) >= 2 else ""
+
+
+PUBLISHED = ("published",)
+RECORDED = ("editorial_review", "guest_review", "on_hold")
+BOOKED = ("scheduled", "briefed")
+
+
+def _day(iso: Optional[str]) -> str:
+    try:
+        dt = datetime.fromisoformat(str(iso).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return ""
+    return f"{dt:%A}, {dt:%B} {dt.day}"
+
+
+def known_guest(guest_name: Optional[str], thread_id: str) -> Optional[Dict[str, Any]]:
+    """The guest's history with us, or None when they are new.
+
+    ``standing`` is past_guest (an episode is out), recorded (in review),
+    booked (upcoming slot), declined (we said no before: Patrick decides) or
+    applied (on file, never booked)."""
+    key = guest_key(guest_name)
+    if not key:
+        return None
+    last = key.split()[-1]
+    rows = sb_select("guest_applications",
+                     f"name=ilike.*{quote(last)}*&select={APP_COLUMNS},created_at"
+                     "&order=created_at.asc")
+    apps = [r for r in rows
+            if guest_key(r.get("name")) == key
+            and r.get("email_thread_id") != thread_id
+            and r.get("status") != "withdrawn"]
+    if not apps:
+        return None
+    ids = ",".join(r["id"] for r in apps)
+    ivs = sb_select("interviews",
+                    f"application_id=in.({ids})&select=id,application_id,status,"
+                    "scheduled_at,show&order=scheduled_at.desc")
+    now = datetime.now(timezone.utc).isoformat()
+
+    def pick(statuses, future=False):
+        for iv in ivs:
+            if iv.get("status") in statuses and (not future or (iv.get("scheduled_at") or "") > now):
+                return iv
+        return None
+
+    by_id = {a["id"]: a for a in apps}
+    iv = pick(PUBLISHED)
+    if iv:
+        standing = "past_guest"
+    elif pick(RECORDED):
+        iv, standing = pick(RECORDED), "recorded"
+    elif pick(BOOKED, future=True):
+        iv, standing = pick(BOOKED, future=True), "booked"
+    elif any(a.get("status") == "declined" for a in apps):
+        iv, standing = None, "declined"
+    else:
+        iv, standing = None, "applied"
+    app = by_id.get((iv or {}).get("application_id")) or next(
+        (a for a in reversed(apps) if a.get("status") == "approved"), apps[-1])
+    episode_url = ""
+    if standing == "past_guest":
+        recs = sb_select("episode_records",
+                         f"interview_id=eq.{iv['id']}&select=episode_url&limit=1")
+        episode_url = (recs[0].get("episode_url") or "") if recs else ""
+    return {"app": app, "applications": apps, "interview": iv, "standing": standing,
+            "episode_url": episode_url}
+
+
+def inbox_guest_name(name: str) -> str:
+    """The name with any title taken off, so "Dr. Lena Ortiz" is "Lena"
+    on second mention rather than "Dr."."""
+    text = (name or "").strip()
+    while True:
+        stripped = _TITLES.sub("", text)
+        if stripped == text:
+            return text
+        text = stripped
+
+
+NEEDS_LINK = ("applied", "past_guest")
+
+
+def render_known_guest(known: Dict[str, Any], classification: Dict[str, Any],
+                       sender_name: str, policy: Policy) -> str:
+    ctx = invite_context(classification, sender_name, policy)
+    app, iv = known["app"], known.get("interview") or {}
+    show = get_show(iv.get("show") or app.get("show") or ctx["show_slug"])
+    since = ""
+    try:
+        since = f"{datetime.fromisoformat(str(app.get('created_at')).replace('Z', '+00:00')):%B}"
+    except (TypeError, ValueError):
+        pass
+    guest = ctx["guest_name"]
+    ctx.update(show_slug=show.slug, show_name=show.name, standing=known["standing"],
+               guest_first=first_name(inbox_guest_name(guest)) or guest,
+               episode_url=known.get("episode_url") or "",
+               when=_day(iv.get("scheduled_at")), since=since,
+               booking_url=_followup.booking_url(show.slug))
+    return render_text(KNOWN_TEMPLATE, show.slug, **ctx)
 
 
 def newest_is_inbound(thread: Dict[str, Any], own_email: str) -> bool:
@@ -223,6 +354,7 @@ def process_thread(thread_id: str, *, gmail: GmailClient, policy: Policy,
                    dry_run: bool) -> Dict[str, Any]:
     thread = gmail.get_thread(thread_id)
     inbound = _classify.latest_inbound(thread, gmail.user)
+    known: Optional[Dict[str, Any]] = None
     if inbound is None:
         # Only our own messages in the thread: nothing to answer.
         decision = Decision("skip", "no inbound message in thread")
@@ -239,7 +371,8 @@ def process_thread(thread_id: str, *, gmail: GmailClient, policy: Policy,
                     logger.warning("[dry-run] duplicate check skipped: %s", exc)
                 else:
                     raise
-        if in_db and app_row and (app_row.get("source") or "email") == "email" \
+        if in_db and app_row and ((app_row.get("source") or "email") == "email"
+                                   or app_row.get("producer_action") == "known_guest") \
                 and already_replied(thread, gmail.user) \
                 and newest_is_inbound(thread, gmail.user):
             # They wrote back after our invite: the follow-up conversation
@@ -268,6 +401,20 @@ def process_thread(thread_id: str, *, gmail: GmailClient, policy: Policy,
                 already_replied=already_replied(thread, gmail.user),
                 already_in_db=False, sends_so_far=summary["sent"],
             )
+            if decision.draft_invite and classification.get("guest_name"):
+                try:
+                    known = known_guest(classification.get("guest_name"), thread_id)
+                except Exception as exc:  # noqa: BLE001
+                    if not dry_run:
+                        raise
+                    logger.warning("[dry-run] known-guest check skipped: %s", exc)
+                if known and known["standing"] == "declined":
+                    decision = Decision("draft", "guest was declined before: Patrick decides",
+                                        notify=True, draft_invite=True)
+                elif known and known["standing"] in NEEDS_LINK and decision.action == "send" \
+                        and not _followup.booking_url(known["app"].get("show") or ""):
+                    decision = Decision("draft", "known guest but no booking link configured",
+                                        notify=True, draft_invite=True)
 
     line = decision_log_line(thread_id, classification, decision)
     line["subject"] = thread.get("subject")
@@ -281,7 +428,12 @@ def process_thread(thread_id: str, *, gmail: GmailClient, policy: Policy,
 
     invite_body = ""
     if decision.draft_invite and inbound is not None:
-        invite_body = render_invite(classification, inbound.get("from_name", ""), policy)
+        if known and known["standing"] != "declined":
+            invite_body = render_known_guest(known, classification,
+                                             inbound.get("from_name", ""), policy)
+            line["known_guest"] = {"standing": known["standing"], "application": known["app"]["id"]}
+        else:
+            invite_body = render_invite(classification, inbound.get("from_name", ""), policy)
 
     reply_kwargs = dict(
         thread_id=thread_id,
@@ -329,6 +481,23 @@ def process_thread(thread_id: str, *, gmail: GmailClient, policy: Policy,
     # DB row for anything that produced an invite (sent or drafted).
     if decision.action in ("send", "draft") and decision.draft_invite and inbound is not None:
         action_word = "sent" if decision.action == "send" else "drafted"
+        if known:
+            # No second application: the conversation moves to the row we
+            # already have, so a reply here reaches the follow-up path.
+            app = known["app"]
+            patch = {"email_thread_id": thread["id"], "producer_action": "known_guest",
+                     "producer_acted_at": _now()}
+            if not app.get("publicist_email") and classification.get("publicist_email"):
+                patch["publicist_email"] = classification["publicist_email"]
+            if dry_run:
+                logger.info("[dry-run] would move thread %s to application %s (%s)",
+                            thread["id"], app["id"], known["standing"])
+            else:
+                sb_update("guest_applications", f"id=eq.{app['id']}", patch)
+                line["application"] = app["id"]
+            gmail.add_label(thread_id, policy.processed_label)
+            run.record(line)
+            return line
         row = application_row(thread=thread, inbound=inbound,
                               classification=classification, action=action_word)
         if dry_run:

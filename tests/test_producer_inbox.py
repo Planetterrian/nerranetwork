@@ -194,9 +194,21 @@ class FakeDB:
         self.applications: List[Dict[str, Any]] = []
         self.runs: List[Dict[str, Any]] = []
         self.updates: List[Any] = []
+        self.interviews: List[Dict[str, Any]] = []
+        self.records: List[Dict[str, Any]] = []
 
     def select(self, table, query=""):
+        from urllib.parse import unquote
+        if table == "interviews":
+            ids = query.split("application_id=in.(", 1)[1].split(")", 1)[0].split(",")
+            return [iv for iv in self.interviews if iv["application_id"] in ids]
+        if table == "episode_records":
+            iid = query.split("interview_id=eq.", 1)[1].split("&", 1)[0]
+            return [r for r in self.records if r["interview_id"] == iid]
         assert table == "guest_applications"
+        if "name=ilike." in query:
+            part = unquote(query.split("name=ilike.*", 1)[1].split("*", 1)[0]).lower()
+            return [r for r in self.applications if part in (r.get("name") or "").lower()]
         tid = query.split("email_thread_id=eq.", 1)[1].split("&", 1)[0]
         return [r for r in self.applications if r.get("email_thread_id") == tid]
 
@@ -520,8 +532,7 @@ class TestInviteTemplate:
             "automated news programs and don't take guests, but we do run live interviews, "
             "and I'd like to have Dr. Lena Ortiz on. Our interview host, Mira, is an AI. She "
             "calls real people and interviews them live, every episode says so plainly, and "
-            "guests approve their transcript before anything publishes. I sit in on the "
-            "sessions as co-host.\n\n"
+            "guests approve their transcript before anything publishes.\n\n"
             "For Dr. Lena Ortiz the right home is The Age of AI, our show on how AI is "
             "changing people's work. There is a short application form at "
             f"{AGE_OF_AI_APPLY} if you'd like to send details, but it isn't required: just "

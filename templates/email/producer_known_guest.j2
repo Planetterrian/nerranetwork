@@ -1,0 +1,13 @@
+Hi {{ publicist_first_name }},
+
+Thanks for the note about {{ guest_name }}.{% if standing == "past_guest" %} {{ guest_first }} has already been on {{ show_name }}{% if episode_url %} ({{ episode_url }}){% endif %}, and we would be glad to have {{ guest_first }} back. Mira has grown a lot since that conversation, so a follow-up would not be a repeat. If {{ guest_first }} would like to come on again, this link picks a time:
+
+{{ booking_url }}{% elif standing == "recorded" %} We already recorded with {{ guest_first }}{% if when %} on {{ when }}{% endif %}, and that episode is in review now. We will be in touch as soon as it is published, and there is nothing else needed in the meantime.{% elif standing == "booked" %} {{ guest_first }} is already booked with Mira{% if when %} for {{ when }}{% endif %}, at the time confirmed in the booking email. Nothing else is needed; the studio link is in that confirmation.{% else %} We already have {{ guest_first }}'s details on file{% if since %} from {{ since }}{% endif %}, so there is no need for a new application. This link picks a time:
+
+{{ booking_url }}{% endif %}
+
+Let me know if you have any questions.
+
+Sincerely,
+
+Patrick
