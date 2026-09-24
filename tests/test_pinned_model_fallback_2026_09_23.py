@@ -107,6 +107,10 @@ class TestDigestStageFallback:
         fake, calls = self._fake("grok-4.7")
         monkeypatch.setattr(gen, "_call_grok", fake)
         monkeypatch.setattr(gen, "_pinned_sleep", lambda *_: None)
+        # Any test that imports run_show registers its pipeline budget
+        # (900 s default, counted from import), so a long suite would read
+        # "no room for a retry" here — the budget gate has its own guards.
+        monkeypatch.setattr(gen, "_budget_remaining_fn", None)
         cfg = _Cfg("grok-4.7", tmp_path)
         out = gen.generate_digest({"today_str": "2026-09-23", "episode_num": 1}, cfg, tracker=None)
         assert "Council approved" in out
