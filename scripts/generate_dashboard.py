@@ -2095,6 +2095,91 @@ def build_traffic_mix_section(root: Path) -> Dict[str, Any]:
 _EXPERIMENT_STATUSES = {"reading", "decide", "done"}
 
 
+def _credit_files_for_episode(show_dir: Path, ep: int) -> List[Path]:
+    """The episode's credit files, sorted by name (date first).
+
+    Sep 24 2026: the globs here used ``ep{int}``, and credit files are
+    zero-padded (``credit_usage_2026-09-23_ep001.json``), so every episode
+    under 100 — the whole launch cohort — was invisible to the
+    counter-derived metrics. Accept both spellings.
+    """
+    names = {f"credit_usage_*_ep{ep}.json", f"credit_usage_*_ep{ep:03d}.json"}
+    found: Dict[str, Path] = {}
+    for pattern in names:
+        for p in show_dir.glob(pattern):
+            found[p.name] = p
+    return [found[k] for k in sorted(found)]
+
+
+_DIGEST_DATE_RE = re.compile(r"_Ep0*(\d+)_(\d{8})")
+
+
+def _episode_dates_from_digests(show_dir: Path) -> Dict[int, _dt.date]:
+    """episode number -> date from the committed digest filenames (the
+    model_trial_report rule: never mtime, which a fresh checkout rewrites)."""
+    out: Dict[int, _dt.date] = {}
+    for md in show_dir.glob("*.md"):
+        dm = _DIGEST_DATE_RE.search(md.name)
+        if not dm:
+            continue
+        try:
+            d = _dt.datetime.strptime(dm.group(2), "%Y%m%d").date()
+        except ValueError:
+            continue
+        n = int(dm.group(1))
+        if n not in out or d > out[n]:
+            out[n] = d
+    return out
+
+
+def _pinned_model_metrics(root: Path, anchor_d: _dt.date, days: int = 7,
+                          min_n: int = 5) -> Dict[str, Any]:
+    """Fallback share and recoveries on PINNED runs (Sep 24 2026).
+
+    A pinned run is an episode whose counters carry ``llm_model_pinned``
+    (it fell back) or whose ``llm_digest_model`` is off the network default
+    (it ran on the pin). Unpinned shows can never fall back and are not in
+    the denominator. Null under ``min_n`` — never a fake zero.
+    """
+    try:
+        from engine.generator import network_default_model
+        default = network_default_model()
+    except Exception:  # noqa: BLE001
+        default = "grok-4.3"
+    cutoff = anchor_d - _dt.timedelta(days=days)
+    n = fb = rec = 0
+    digests = root / "digests"
+    for show_dir in (sorted(digests.iterdir()) if digests.is_dir() else []):
+        if not show_dir.is_dir():
+            continue
+        dates = _episode_dates_from_digests(show_dir)
+        for mf in show_dir.glob("metrics_ep*.json"):
+            m = re.search(r"metrics_ep(\d+)\.json$", mf.name)
+            if not m:
+                continue
+            d = dates.get(int(m.group(1)))
+            if d is None or d < cutoff:
+                continue
+            try:
+                counters = (json.loads(mf.read_text(encoding="utf-8")) or {}).get("counters") or {}
+            except (OSError, ValueError, TypeError):
+                continue
+            pinned = bool(counters.get("llm_model_pinned")) or (
+                str(counters.get("llm_digest_model") or default) != default)
+            if not pinned:
+                continue
+            n += 1
+            if counters.get("llm_model_fallback"):
+                fb += 1
+            if counters.get("llm_pinned_recovered"):
+                rec += 1
+    return {
+        "llm_pinned_fallback_share_7d": round(fb / n, 2) if n >= min_n else None,
+        "llm_pinned_recovered_7d": rec if n >= min_n else None,
+        "llm_pinned_episodes_7d": n if n >= min_n else None,
+    }
+
+
 def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     """Compute the small closed vocabulary of live experiment metrics.
 
@@ -2162,7 +2247,7 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
             if not m:
                 continue
             ep = int(m.group(1))
-            dated = sorted(mf.parent.glob(f"credit_usage_*_ep{ep}.json"))
+            dated = _credit_files_for_episode(mf.parent, ep)
             if not dated:
                 continue
             dm = re.search(r"credit_usage_(\d{4}-\d{2}-\d{2})_", dated[-1].name)
@@ -2191,7 +2276,7 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
             m = re.search(r"metrics_ep(\d+)\.json$", mf.name)
             if not m:
                 continue
-            dated = sorted(mf.parent.glob(f"credit_usage_*_ep{int(m.group(1))}.json"))
+            dated = _credit_files_for_episode(mf.parent, int(m.group(1)))
             if not dated:
                 continue
             dm = re.search(r"credit_usage_(\d{4}-\d{2}-\d{2})_", dated[-1].name)
@@ -2358,6 +2443,12 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
                     mo_hit += 1
     out["hook_short_motion_share_14d"] = (
         round(mo_hit / mo_n, 2) if mo_n >= 10 else None)
+
+    # Sep 24 2026 — the grok-4.7 resilience pass reads out here: the share
+    # of pinned-model episodes that fell back to the network default over
+    # the last 7 days (baseline 9/24 = 0.38 on the launch cohort's first
+    # slates) and how many a same-model retry recovered.
+    out.update(_pinned_model_metrics(root, anchor_d))
     return out
 
 

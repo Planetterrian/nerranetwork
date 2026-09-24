@@ -92,6 +92,17 @@ def _pipeline_budget_remaining() -> float:
     return max(0.0, _PIPELINE_TIMEOUT - (time.monotonic() - _PIPELINE_STARTED_AT))
 
 
+# The pinned-model retry (engine.generator._call_pinned) retries a dropped
+# grok-4.7 call only while this budget leaves room for the retry AND the
+# rest of the episode — register it before any LLM call.
+try:
+    from engine import generator as _generator_budget
+
+    _generator_budget.register_pipeline_budget(_pipeline_budget_remaining)
+except Exception:  # noqa: BLE001 — never block the run on a registration
+    pass
+
+
 class _SkipVideo(Exception):
     """Internal sentinel: bail out of the video stage to the image fallback."""
 
@@ -533,17 +544,37 @@ def _preflight_checks(config, *, dry_run: bool = False) -> None:
     # before the expensive fetch + generation stages run. Failures here are
     # treated as warnings, not fatal — network blips shouldn't kill the run,
     # but a persistent deprecation will be obvious in the logs.
-    try:
-        from engine.generator import _call_grok
-        _call_grok(
-            "ping",
-            model=config.llm.model,
-            temperature=0.0,
-            max_tokens=10,
-            timeout=30.0,
-        )
-        logger.info("Pre-flight LLM ping OK (model=%s)", config.llm.model)
-    except Exception as exc:
+    # Sep 24 2026: the ping sends the show's own reasoning_effort (it used
+    # to run a reasoning model at DEFAULT effort against a 30 s timeout —
+    # Omni View Europe Ep1's fallback was that ping, not the digest) and a
+    # PINNED model gets two attempts before it switches.
+    from engine.generator import _call_grok, _is_pinned, _llm_reasoning_effort
+    _ping_attempts = 2 if _is_pinned(config) else 1
+    _ping_started = time.monotonic()
+    _ping_exc = None
+    for _ping_try in range(1, _ping_attempts + 1):
+        try:
+            _call_grok(
+                "ping",
+                model=config.llm.model,
+                temperature=0.0,
+                max_tokens=10,
+                timeout=30.0,
+                reasoning_effort=_llm_reasoning_effort(config),
+            )
+            logger.info("Pre-flight LLM ping OK (model=%s, %.1fs, attempt %d)",
+                        config.llm.model, time.monotonic() - _ping_started, _ping_try)
+            _ping_exc = None
+            break
+        except Exception as exc:  # noqa: BLE001 — classified below
+            _ping_exc = exc
+            if _ping_try < _ping_attempts:
+                logger.warning("Pre-flight LLM ping failed for model=%s (%s) — one more "
+                               "attempt in 10 s", config.llm.model, type(exc).__name__)
+                time.sleep(10)
+    config.llm._preflight_ping_s = round(time.monotonic() - _ping_started, 1)
+    if _ping_exc is not None:
+        exc = _ping_exc
         # A billing stop is the one ping failure worth aborting on.
         # Continuing past it guarantees paying for the fetch, digest and
         # script stages to arrive at the same 403 at the audio step —
@@ -2419,9 +2450,13 @@ def run(args: argparse.Namespace) -> None:
                     )
                 try:
                     with metrics.stage("generate_digest_structural_retry"):
+                        # A retry of an existing digest never changes the
+                        # model arm: a pinned model that fails here raises
+                        # PinnedModelUnavailable and the original is kept.
                         _x_struct = generate_digest(
                             template_vars, config, tracker=tracker,
                             prompt_suffix=_struct_suffix,
+                            allow_model_switch=False,
                         )
                     # Only swap in the retry if it restored the HOOK (the most
                     # reliable structural signal) and isn't shorter garbage.
@@ -3136,6 +3171,18 @@ def run(args: argparse.Namespace) -> None:
                 metrics.record("llm_model_pinned", _pinned)
                 metrics.record("llm_model_fallback",
                                getattr(config.llm, "_model_fallback_reason", "") or "fallback")
+            # Pinned-model resilience (Sep 24 2026): same-model retries and
+            # how many recovered; the streamed digest's time to first token;
+            # the pre-flight ping's wall time. Consumers: the dashboard's
+            # llm_pinned_fallback_share_7d / llm_pinned_recovered_7d and the
+            # model-trial report.
+            for _rk, _mk in (("_pinned_retries", "llm_pinned_retries"),
+                             ("_pinned_recovered", "llm_pinned_recovered"),
+                             ("_last_digest_ttft_s", "llm_digest_ttft_s"),
+                             ("_preflight_ping_s", "llm_preflight_ping_s")):
+                _rv = getattr(config.llm, _rk, None)
+                if _rv is not None:
+                    metrics.record(_mk, _rv)
             metrics.record(
                 "combined_generation",
                 (template_vars or {}).pop("_generation_path", None)

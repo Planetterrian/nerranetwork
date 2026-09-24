@@ -149,6 +149,17 @@ class LLMConfig:
     # to pre-wiring requests on grok-4.3). Do NOT set on digest/podcast
     # paths without an A/B listen when the model change alters prose.
     reasoning_effort: str = ""
+    # Sep 24 2026 (grok-4.7 resilience): read digest/script completions as
+    # a stream. xAI's guidance for its reasoning models; a non-streaming
+    # request that sends nothing for minutes is what the launch cohort's
+    # dropped connections were. False = the exact pre-existing request
+    # (every established show). See engine.generator._stream_completion.
+    stream: bool = False
+    # Same-model retries on a transient error (timeout / dropped connection
+    # / 429) before a PINNED model falls back to the network default. 0 =
+    # the Sep 23 behaviour (one failure switches). Budget-gated in
+    # engine.generator._call_pinned; a 5xx never retries.
+    pinned_model_retries: int = 1
 
 
 @dataclass

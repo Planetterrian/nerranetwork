@@ -47,6 +47,114 @@ _MODEL_UNAVAILABLE_ERRORS = _TRANSIENT_ERRORS + _SERVER_ERRORS
 logger = logging.getLogger(__name__)
 
 
+class PinnedModelUnavailable(RuntimeError):
+    """A PINNED model failed on a call that was not allowed to change arms.
+
+    Raised only when ``generate_digest`` runs with ``allow_model_switch=False``
+    (run_show's structural retry). Deliberately NOT one of the transient
+    classes, so the tenacity wrapper does not spend three more attempts on
+    it: the caller keeps the digest it already has. Sep 24 2026: Top World
+    Ep2's grok-4.7 digest (1,548 words) was thrown away because the
+    structural RETRY's 4.7 call died, the sticky switch moved the run to
+    grok-4.3, and the 4.3 retry (908 words) replaced it.
+    """
+
+
+# ---------------------------------------------------------------------------
+# Pinned-model retry policy (Sep 24 2026)
+# ---------------------------------------------------------------------------
+# 9 of the launch cohort's first 24 episodes fell back from grok-4.7 to the
+# network default on ONE transient error, and every fallback episode was the
+# thin one (0-3 claims against 8-25). The connection drops are a ~260 s
+# event on a non-streaming request (PM Ep2 261 s, Top World Ep2 264 s, the
+# 09-23 deaths "~260 s each") while single 374 s calls complete, so a
+# dropped socket is a per-request accident, not a dead model: the same
+# model gets ONE bounded retry after a short backoff, and only while the
+# pipeline budget leaves room for the retry AND the rest of the episode. A
+# 5xx (a degraded model) still switches at once — the playbook rule.
+PINNED_RETRY_BACKOFF_S = 20.0
+# Seconds the rest of the episode needs after the digest/script call
+# (script, TTS, mix, publish): a retry is skipped when the pipeline budget
+# left is under `request timeout + reserve`.
+PINNED_RETRY_RESERVE_S = 1200.0
+_pinned_sleep = time.sleep
+_budget_remaining_fn = None
+# Set for the rest of the process when the endpoint rejects a streaming
+# request (a 400/422 on `stream_options`): streaming can never cost an
+# episode, so the call is repeated non-streaming and the flag stops the
+# next call from trying again.
+_STREAM_DISABLED = False
+
+
+def register_pipeline_budget(fn) -> None:
+    """run_show registers its ``_pipeline_budget_remaining`` so the retry
+    policy can see the SIGALRM budget; unregistered = unlimited."""
+    global _budget_remaining_fn
+    _budget_remaining_fn = fn
+
+
+def pipeline_budget_remaining() -> float:
+    if _budget_remaining_fn is None:
+        return float("inf")
+    try:
+        return float(_budget_remaining_fn())
+    except Exception:  # noqa: BLE001 — a broken budget read never blocks a call
+        return float("inf")
+
+
+def _request_timeout_s() -> float:
+    return float(os.environ.get("NERRA_LLM_TIMEOUT_SECONDS", 300))
+
+
+def _is_pinned(config) -> bool:
+    """True while the run's model is a per-show pin (not the network default)."""
+    llm = getattr(config, "llm", None)
+    model = str(getattr(llm, "model", "") or "")
+    return bool(model) and model != network_default_model()
+
+
+def _call_pinned(call, config, stage: str):
+    """Run ``call()`` on a pinned model with a bounded same-model retry.
+
+    Transient errors (timeout / dropped connection / 429) are retried up to
+    ``llm.pinned_model_retries`` times (default 1) after
+    ``PINNED_RETRY_BACKOFF_S``, budget permitting; anything else propagates
+    to the caller's fallback. The counters land on the config so run_show
+    records ``llm_pinned_retries`` / ``llm_pinned_recovered``.
+    """
+    llm = config.llm
+    retries = int(getattr(llm, "pinned_model_retries", 1) or 0)
+    attempt = 0
+    while True:
+        try:
+            result = call()
+        except _TRANSIENT_ERRORS as exc:
+            if attempt >= retries:
+                raise
+            timeout = _request_timeout_s()
+            left = pipeline_budget_remaining()
+            if left < timeout + PINNED_RETRY_RESERVE_S:
+                logger.warning(
+                    "Pinned model '%s' failed the %s call (%s) with %.0fs of pipeline "
+                    "budget left — no room for a %.0fs retry plus the episode; "
+                    "falling back now", llm.model, stage, type(exc).__name__, left, timeout,
+                )
+                raise
+            attempt += 1
+            llm._pinned_retries = int(getattr(llm, "_pinned_retries", 0) or 0) + 1
+            logger.warning(
+                "Pinned model '%s' failed the %s call (%s) — retrying the SAME model "
+                "in %.0fs (attempt %d of %d) before any fallback",
+                llm.model, stage, type(exc).__name__, PINNED_RETRY_BACKOFF_S, attempt, retries,
+            )
+            _pinned_sleep(PINNED_RETRY_BACKOFF_S)
+            continue
+        if attempt:
+            llm._pinned_recovered = int(getattr(llm, "_pinned_recovered", 0) or 0) + 1
+            logger.info("Pinned model '%s' answered the %s call on retry %d", llm.model, stage, attempt)
+        return result
+
+
 class LLMRefusalError(RuntimeError):
     """Raised when the LLM refuses to generate content.
 
@@ -232,6 +340,7 @@ def _call_grok(
     timeout: Optional[float] = None,
     cache_key: Optional[str] = None,
     reasoning_effort: Optional[str] = None,
+    stream: bool = False,
 ) -> tuple[str, Dict[str, Any]]:
     """Call xAI Grok via the OpenAI-compatible endpoint.
 
@@ -247,6 +356,17 @@ def _call_grok(
     only when set — required for meaningful grok-4.5 cost control (default
     high is expensive). Empty/None keeps requests byte-identical for
     models that ignore the field (grok-4.3 daily path).
+
+    *stream* (Sep 24 2026) reads the completion as server-sent chunks and
+    joins them. xAI's guidance for its reasoning models is to stream: a
+    non-streaming request sends nothing for minutes while grok-4.7 writes
+    a 200-390 s digest, and some of those connections were dropped at
+    ~260 s (the launch cohort's fallback cause). Streaming also lets a
+    stall be recognised by silence — no chunk for
+    ``NERRA_LLM_STREAM_IDLE_SECONDS`` (default 180) raises
+    ``APITimeoutError`` — instead of after the full request timeout, which
+    stays enforced as a wall between chunks. ``False`` is the exact
+    pre-existing request (every established show).
     """
     from openai import OpenAI
 
@@ -298,7 +418,40 @@ def _call_grok(
         }
 
     _started = time.monotonic()
-    resp = client.chat.completions.create(**create_kwargs)
+    _ttft: Optional[float] = None
+    global _STREAM_DISABLED
+    if stream and _STREAM_DISABLED:
+        stream = False
+    if stream:
+        from openai import APIStatusError
+        try:
+            text, finish_reason, usage, _ttft = _stream_completion(
+                client, create_kwargs, wall_timeout=timeout, model=model,
+            )
+        except APIStatusError as exc:
+            if getattr(exc, "status_code", None) not in (400, 422):
+                raise
+            # The request shape was refused, not the model: repeat this
+            # call the old way and stop streaming for the process.
+            _STREAM_DISABLED = True
+            stream = False
+            logger.warning(
+                "Streaming request rejected by the endpoint (%s: %s) — this call "
+                "and the rest of the run use non-streaming requests", model, exc,
+            )
+        else:
+            if usage is None:
+                logger.warning("Streamed %s completion carried no usage block — "
+                               "this call's tokens are not costed", model)
+    if not stream:
+        resp = client.chat.completions.create(**create_kwargs)
+        # content can come back None on degraded responses (all-reasoning
+        # completions during capacity incidents) — normalize to "" so callers
+        # see a clean empty string instead of an AttributeError.
+        text = (resp.choices[0].message.content or "")
+        finish_reason = getattr(resp.choices[0], "finish_reason", None)
+        usage = resp.usage if hasattr(resp, "usage") else None
+    text = text.strip()
     _elapsed = time.monotonic() - _started
     # Latency canary (model-upgrade early warning): a completion that
     # takes most of its timeout budget is one capacity dip away from a
@@ -312,14 +465,13 @@ def _call_grok(
             model, _elapsed, 100 * _elapsed / timeout, timeout,
         )
 
-    # content can come back None on degraded responses (all-reasoning
-    # completions during capacity incidents) — normalize to "" so callers
-    # see a clean empty string instead of an AttributeError.
-    text = (resp.choices[0].message.content or "").strip()
     meta: Dict[str, Any] = {"provider": "openai_compat", "model": model}
     if cache_key:
         meta["cache_key"] = cache_key
-    finish_reason = getattr(resp.choices[0], "finish_reason", None)
+    if stream:
+        meta["stream"] = True
+        meta["ttft_s"] = None if _ttft is None else round(_ttft, 1)
+        meta["elapsed_s"] = round(_elapsed, 1)
     meta["finish_reason"] = finish_reason
     # Only warn on length-truncation when the caller is actually trying
     # to produce content. Pre-flight LLM ping uses max_tokens=10 by
@@ -333,21 +485,21 @@ def _call_grok(
             "output may end mid-sentence",
             max_tokens,
         )
-    if hasattr(resp, "usage") and resp.usage:
+    if usage:
         usage_meta: Dict[str, Any] = {
-            "prompt_tokens": resp.usage.prompt_tokens,
-            "completion_tokens": resp.usage.completion_tokens,
-            "total_tokens": resp.usage.total_tokens,
+            "prompt_tokens": usage.prompt_tokens,
+            "completion_tokens": usage.completion_tokens,
+            "total_tokens": usage.total_tokens,
         }
         # Prompt-cache telemetry (xAI returns this when a prefix hit).
         # Nested under prompt_tokens_details on Chat Completions; also
         # accept a top-level cached_tokens if the SDK flattens it.
         cached = 0
-        details = getattr(resp.usage, "prompt_tokens_details", None)
+        details = getattr(usage, "prompt_tokens_details", None)
         if details is not None:
             cached = int(getattr(details, "cached_tokens", 0) or 0)
         if not cached:
-            cached = int(getattr(resp.usage, "cached_tokens", 0) or 0)
+            cached = int(getattr(usage, "cached_tokens", 0) or 0)
         if cached:
             usage_meta["cached_tokens"] = cached
             logger.info(
@@ -356,6 +508,81 @@ def _call_grok(
             )
         meta["usage"] = usage_meta
     return text, meta
+
+
+def _stream_idle_timeout_s() -> float:
+    return float(os.environ.get("NERRA_LLM_STREAM_IDLE_SECONDS", 180))
+
+
+def _stream_completion(client, create_kwargs: Dict[str, Any], *, wall_timeout: float,
+                       model: str):
+    """Read one streamed chat completion.
+
+    Returns ``(text, finish_reason, usage, time_to_first_token_s)``. The
+    per-read (idle) timeout is ``NERRA_LLM_STREAM_IDLE_SECONDS``; the wall
+    timeout is enforced between chunks. Both surface as the SDK's own
+    ``APITimeoutError`` and a broken stream as ``APIConnectionError``, so
+    every caller's exception contract (tenacity, the pinned retry, the
+    fallback) is exactly the non-streaming one.
+    """
+    import httpx
+    from openai import APIConnectionError, APITimeoutError
+
+    url = "https://api.x.ai/v1/chat/completions"
+    req = httpx.Request("POST", url)
+    idle = _stream_idle_timeout_s()
+    started = time.monotonic()
+    parts: list[str] = []
+    finish_reason = None
+    usage = None
+    ttft: Optional[float] = None
+    kwargs = dict(create_kwargs)
+    kwargs["stream"] = True
+    kwargs["stream_options"] = {"include_usage": True}
+    kwargs["timeout"] = httpx.Timeout(idle, connect=30.0)
+    stream = client.chat.completions.create(**kwargs)
+    try:
+        try:
+            for chunk in stream:
+                now = time.monotonic()
+                if now - started > wall_timeout:
+                    raise APITimeoutError(request=req)
+                chunk_usage = getattr(chunk, "usage", None)
+                if chunk_usage is not None:
+                    usage = chunk_usage
+                choices = getattr(chunk, "choices", None) or []
+                if not choices:
+                    continue
+                choice = choices[0]
+                delta = getattr(choice, "delta", None)
+                piece = getattr(delta, "content", None) if delta is not None else None
+                if piece:
+                    if ttft is None:
+                        ttft = now - started
+                    parts.append(piece)
+                fr = getattr(choice, "finish_reason", None)
+                if fr:
+                    finish_reason = fr
+        except httpx.TimeoutException as exc:
+            raise APITimeoutError(request=req) from exc
+        except (httpx.HTTPError, httpx.StreamError) as exc:
+            raise APIConnectionError(message=f"stream broke: {exc}", request=req) from exc
+    finally:
+        close = getattr(stream, "close", None)
+        if callable(close):
+            try:
+                close()
+            except Exception:  # noqa: BLE001
+                pass
+    if ttft is not None:
+        logger.info("Streamed %s: first token after %.1fs, %d chars in %.0fs",
+                    model, ttft, sum(len(p) for p in parts), time.monotonic() - started)
+    return "".join(parts), finish_reason, usage, ttft
+
+
+def _llm_stream(config: Any) -> bool:
+    """Whether this show's digest/script calls stream (``llm.stream``)."""
+    return bool(getattr(getattr(config, "llm", None), "stream", False))
 
 
 def _show_cache_key(config: Any, stage: str = "") -> Optional[str]:
@@ -2001,6 +2228,7 @@ def generate_digest(
     config,
     tracker: Optional[dict] = None,
     prompt_suffix: str = "",
+    allow_model_switch: bool = True,
 ) -> str:
     """Generate the news digest text using the show's digest prompt.
 
@@ -2016,6 +2244,12 @@ def generate_digest(
     prompt_suffix:
         Optional text appended to the prompt (e.g. retry instructions
         when a previous attempt was missing required sections).
+    allow_model_switch:
+        ``False`` on a RETRY of a digest that already exists (run_show's
+        structural regeneration): a pinned model that fails here raises
+        ``PinnedModelUnavailable`` instead of moving the whole run onto
+        the network default, so the caller keeps the first digest and
+        the episode stays on its model arm.
 
     Returns
     -------
@@ -2064,6 +2298,7 @@ def generate_digest(
         _digest_tokens = int(config.llm.max_tokens)
 
     def _digest_call(p, **kw):
+        kw.setdefault("stream", _llm_stream(config))
         t, m = _call_grok(p, **kw)
         if _combined_part2:
             t, _s = split_combined_output(t)
@@ -2091,16 +2326,30 @@ def generate_digest(
         )
 
     try:
-        text, meta = _primary_call()
+        if _is_pinned(config):
+            # One bounded same-model retry on a dropped connection / timeout
+            # (_call_pinned), then the fallback below. A 5xx skips the retry.
+            text, meta = _call_pinned(_primary_call, config, "digest")
+        else:
+            text, meta = _primary_call()
     except _MODEL_UNAVAILABLE_ERRORS as exc:
         # A pinned model that does not answer falls back to the network
-        # default ONCE, immediately, instead of spending two more ~260 s
-        # stalls on the same model (switch_to_network_default). A run
-        # already on the default re-raises into the normal retry.
+        # default ONCE instead of spending two more ~260 s stalls on the
+        # same model (switch_to_network_default). A run already on the
+        # default re-raises into the normal retry. A RETRY of an existing
+        # digest never changes arms: it raises and the caller keeps what
+        # it has.
+        if not allow_model_switch and _is_pinned(config):
+            raise PinnedModelUnavailable(
+                f"pinned model '{config.llm.model}' failed the retry call: "
+                f"{type(exc).__name__}") from exc
         if not switch_to_network_default(
                 config, f"digest call failed: {type(exc).__name__}"):
             raise
         text, meta = _primary_call()
+    if meta.get("stream"):
+        # run_show records this beside llm_digest_model (llm_digest_ttft_s).
+        config.llm._last_digest_ttft_s = meta.get("ttft_s")
 
     # Retry once with 50% more tokens if the response was truncated
     if meta.get("finish_reason") == "length":
@@ -2747,10 +2996,15 @@ def generate_podcast_script(
             max_tokens=podcast_tokens,
             cache_key=_show_cache_key(config),
             reasoning_effort=_llm_reasoning_effort(config),
+            stream=_llm_stream(config),
         )
 
     try:
-        text, meta = _script_call(script_model)
+        if script_model == config.llm.model and _is_pinned(config):
+            # Same bounded same-model retry as the digest site.
+            text, meta = _call_pinned(lambda: _script_call(script_model), config, "script")
+        else:
+            text, meta = _script_call(script_model)
     except Exception as exc:
         # A per-stage override names a model this account may not be able
         # to reach — a new release the key is not enrolled for, a

@@ -113,6 +113,39 @@ pins an explicit model id; `tests/test_llm_usage_pass.py` guards the
 translation pin.
 
 
+### 7. A pinned reasoning model streams, gets one bounded retry, and a retry never changes the arm (2026-09-24)
+
+grok-4.7 writes a digest in 200–390 s where grok-4.3 takes 35–85 s, and a
+NON-STREAMING request that sends nothing for that long is what gets
+dropped: 9 of the launch cohort's first 24 episodes fell back to the
+default on one transient error (five dropped connections at ~260 s, three
+600 s timeouts, one pre-flight ping), and every fallback episode was the
+thin one. xAI's own guidance for its reasoning models is to stream and to
+lengthen the client timeout. What binds now:
+
+- `llm.stream: true` on a pinned show (`engine.generator._stream_completion`):
+  the completion is read as chunks, a stall is recognised by SILENCE
+  (`NERRA_LLM_STREAM_IDLE_SECONDS`, default 180 s) and the request timeout
+  is a wall between chunks. `False` is the exact pre-existing request —
+  never flip it on an established show without this playbook's staging.
+- A transient failure on a pinned model gets ONE same-model retry after 20 s
+  (`_call_pinned`, `llm.pinned_model_retries`), only while the pipeline
+  budget leaves room for the retry AND the rest of the episode
+  (`PINNED_RETRY_RESERVE_S`); a 5xx still switches at once. The envelope
+  arithmetic in rule 3 gains that one attempt — recompute it if you raise
+  the retries.
+- A RETRY of a digest that already exists (run_show's structural
+  regeneration) runs with `allow_model_switch=False`: a pinned model that
+  fails there raises `PinnedModelUnavailable` and the first digest is kept.
+  Top World Ep2 (2026-09-24) lost a 1,548-word 4.7 digest to a 908-word 4.3
+  one exactly this way.
+- The pre-flight ping sends the show's own `reasoning_effort` (a reasoning
+  model at default effort against a 30 s ping is the Europe Ep1 fallback)
+  and a pinned model gets two attempts.
+- Read `llm_pinned_fallback_share_7d` / `llm_pinned_recovered_7d` on the
+  dashboard and the trial report's fallback / time-to-first-token line
+  before scoring a trial: a fallback episode is never a trial data point.
+
 ## The instrument (added 2026-09-21)
 
 `scripts/model_trial_report.py` answers rule 2 from the committed record, so
@@ -138,6 +171,7 @@ Render and fetch stages are reported but never gate a MODEL trial.
 | 2026-08-18 | grok-4.3 → 4.6, all stages, one evening | REVERTED same day; 7 of 12 shows failed |
 | 2026-08-18 | staged 4.6 trial (dp_pod script, FPD/UC whole-show, synth, reviewer) | FPD/UC arms withdrawn 08-27 on the latency gate; the rest held |
 | 2026-09-21 | grok-4.6 → 4.7, two sites (reviewer, omni_view script) | `grok-47-staged-migration`, readout 09-25 |
+| 2026-09-23 | grok-4.7 on the 13 new shows' writing stages | `new-shows-grok-47-2026-09-23`; 9/24 episodes fell back by 09-24 → rule 7 |
 
 ## Quick checklist for the PR that changes a model
 
@@ -145,6 +179,7 @@ Render and fetch stages are reported but never gate a MODEL trial.
 - [ ] `GROK_PRICING` has the new id
 - [ ] `docs/experiments.yaml` entry with readout + latency/run-success revert triggers
 - [ ] `NERRA_LLM_TIMEOUT_SECONDS` / envelope arithmetic rechecked if the model is slower
+- [ ] A reasoning model pinned per show carries `llm.stream: true` and the bounded retry (rule 7)
 - [ ] After 3+ scheduled days: metrics durations reviewed, no `Slow LLM completion` warnings
 - [ ] Widen to one flagship-size show before the network
 - [ ] Landmine #17 still applies: prose changes with the model — A/B-listen

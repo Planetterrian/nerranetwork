@@ -126,11 +126,17 @@ def collect(show_dir: Path) -> List[dict]:
         stages = data.get("stages")
         if not isinstance(stages, list):
             continue
+        counters = data.get("counters") if isinstance(data.get("counters"), dict) else {}
         rows.append({
             "episode": num,
             "date": date,
             "stages": [s for s in stages if isinstance(s, dict)],
             "total_duration_s": data.get("total_duration_s"),
+            # Sep 24 2026: a fallback episode is NOT a trial data point, and
+            # a streamed digest's time to first token is the stall canary.
+            "fallback": bool(counters.get("llm_model_fallback")),
+            "ttft_s": counters.get("llm_digest_ttft_s"),
+            "pinned_retries": counters.get("llm_pinned_retries"),
         })
     return rows
 
@@ -234,6 +240,16 @@ def report(
                 failures.append(
                     f"{slug}/{name}: {stats['failures']} failed stage(s) "
                     "in the trial window")
+        trial_rows = [r for r in rows if r["date"] >= since]
+        fallbacks = sum(1 for r in trial_rows if r.get("fallback"))
+        retried = sum(1 for r in trial_rows if r.get("pinned_retries"))
+        ttfts = sorted(float(r["ttft_s"]) for r in trial_rows
+                       if isinstance(r.get("ttft_s"), (int, float)))
+        if fallbacks or retried or ttfts:
+            ttft_txt = (f"{ttfts[len(ttfts) // 2]:.1f}s" if ttfts else "—")
+            print(f"    pinned-model fallbacks {fallbacks}/{len(trial_rows)} episodes "
+                  f"(not trial data points); same-model retries on {retried}; "
+                  f"streamed digest time-to-first-token p50 {ttft_txt}")
         print()
 
     if not any_trial_data:

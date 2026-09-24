@@ -72,3 +72,17 @@ reviews:
         baseline: "0/1 (Ep1)"
         expected: "6/7"
         verdict: pending
+  - date: 2026-09-24
+    pr: "PR H (grok-4.7 resilience)"
+    doc: docs/experiments.yaml (grok-47-resilience-2026-09-24)
+    reviewer: claude-code (Ep2 metrics read, same day)
+    summary: >-
+      Ep2 (published 12:22 UTC, six hours after its 06:16 slot, via the GitHub fallback) recorded llm_model_fallback with the primary grok-4.7 digest stage at 244 s and a 355 s structural retry: the first 4.7 call answered, a validator defect fired the structural regeneration, the retry's 4.7 call dropped at ~260 s, and the sticky switch put the 4.3 retry on air (2 claims, 1.7 commas per 100 words against Ep1's 9 claims on 4.7). Same shape as Top World Ep2; fixed by the no-arm-change rule and the same-model retry.
+    shipped:
+      - retries never change the model arm; llm.stream; one budget-gated same-model retry
+      - Progress Watch exempt from the overlap dedup
+    predictions:
+      - metric: "episodes recording llm_model_fallback"
+        baseline: "1/2 (Ep2)"
+        expected: "<= 1 of Ep3-9"
+        verdict: pending

@@ -96,3 +96,21 @@ reviews:
         baseline: "3 (Ep3)"
         expected: "<= 1 median over Ep4-8; if not, the Data Centres format spec is the lever"
         verdict: pending
+  - date: 2026-09-24
+    pr: "PR H (grok-4.7 resilience; lint correction)"
+    doc: docs/experiments.yaml (grok-47-resilience-2026-09-24)
+    reviewer: claude-code (lint replay over Ep1-3, same day, second entry)
+    summary: >-
+      CORRECTION to the entry above: dc_items_unlabelled did not catch the model omitting build states. It required a state word AND a MW figure of EVERY item in Data Centres & Power, while the prompt exempts non-site items from the state word and forbids estimating a capacity the source did not give; Ep3's three items (an 800 VDC whitepaper, Huawei's UnifiedBus, Nvidia on wasted power) are not sites, so the finding could never clear and the retry was spent for nothing. The lint now judges SITE items only (a capacity figure or a build cue such as ground-breaking, construction, energisation, land area, a substation; "campus" alone is not a cue - Ep3 said "not a named campus") and needs two site items before it fires. Replay: Ep1 0 of 2 sites unlabelled (pass), Ep2 one site item (OpenAI/Anthropic seek 20-30 MW, no state - under the two-site floor), Ep3 no site items. The real Ep3 question is selection - the section carried no build at all - which the prompt's item-mix rule owns, not this lint. Ep2's own fallback (a dropped 4.7 connection at ~260 s) is covered by the resilience pass.
+    shipped:
+      - dc_items_unlabelled: site items only, two-site floor, dc_items_sites metric
+      - llm.stream: true; one budget-gated same-model retry before any switch
+    predictions:
+      - metric: "dc_items_unlabelled after retry"
+        baseline: "3 (Ep3, the old lint)"
+        expected: "0 on Ep4-8 unless a real site item omits its state"
+        verdict: pending
+      - metric: "Data Centres & Power sections with >= 1 site item"
+        baseline: "2 of 3 (Ep1-3)"
+        expected: ">= 5 of Ep4-10; below that the section's item-mix rule is the lever"
+        verdict: pending
