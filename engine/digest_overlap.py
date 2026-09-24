@@ -26,7 +26,7 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple
 from urllib.parse import urlsplit, urlunsplit
 
 from engine.utils import calculate_similarity
@@ -212,18 +212,49 @@ def _renumber(blocks: List[str]) -> List[str]:
     return out
 
 
+def _section_key(name: str) -> str:
+    """``"The Counterpoint: why it matters"`` -> ``"the counterpoint"`` — the
+    header's label before any colon tail, case-folded, for exemption lookups."""
+    return re.split(r"\s*[:—-]\s", (name or "").strip(), maxsplit=1)[0].strip().lower()
+
+
+def _header_only(block: str) -> str:
+    """The block's separator + header lines with its item body removed.
+
+    A ``### Header`` followed directly by its one item is ONE block in
+    :func:`_split_blocks`; dropping that block used to delete the header
+    with the item (MAG 7 Ep2, 2026-09-24: The Counterpoint and On the
+    Calendar vanished from the digest, headers included, so no validator
+    could see a section was missing). The header stays; the item goes.
+    """
+    lines = block.split("\n")
+    for i, line in enumerate(lines):
+        if _HEADER_RE.match(line):
+            return "\n".join(lines[: i + 1])
+    return block
+
+
 def dedupe_cross_section_items(
-    digest_text: str, *, show_name: str = "digest"
+    digest_text: str, *, show_name: str = "digest",
+    exempt_sections: Iterable[str] = (),
 ) -> DedupeResult:
     """Drop later items that repeat an earlier item's URL or headline.
 
     Returns the cleaned text plus a record of what was removed (the caller
     logs it and records the count as a metric). Item numbering is
     re-sequenced within each section after removal.
+
+    ``exempt_sections`` names sections whose contract is to cite an earlier
+    story — a Counterpoint that rebuts the lead, a calendar that dates a
+    covered story's next step. Items under those headers are neither
+    compared nor recorded (a later section repeating THEM is still judged
+    against the sections before). A section header is never removed: when
+    a header's own first item is the duplicate, the header line stays.
     """
     if not digest_text or "\n" not in digest_text:
         return DedupeResult(digest_text or "")
 
+    exempt = {_section_key(n) for n in (exempt_sections or []) if n}
     blocks = _split_blocks(digest_text)
     section = ""
     in_sections = False  # items live under a ##/### header, never in the preamble
@@ -231,6 +262,7 @@ def dedupe_cross_section_items(
     seen_titles: list = []    # (section, title)
     seen_bodies: list = []    # (section, title, body tokens)
     drop: set = set()
+    keep_header: dict = {}    # idx -> header-only replacement text
     removed: List[DuplicateItem] = []
 
     for idx, block in enumerate(blocks):
@@ -248,6 +280,8 @@ def dedupe_cross_section_items(
         if not in_sections or len(stripped) < MIN_ITEM_CHARS:
             # The preamble (title, date, price, the bold HOOK sentence) is
             # not an item — the hook is SUPPOSED to be the lead story.
+            continue
+        if exempt and _section_key(section) in exempt:
             continue
         title = _item_title(stripped)
         urls = [_canonical_url(u) for u in _URL_RE.findall(stripped)]
@@ -276,7 +310,10 @@ def dedupe_cross_section_items(
                     break
 
         if reason:
-            drop.add(idx)
+            if hm:
+                keep_header[idx] = _header_only(block)
+            else:
+                drop.add(idx)
             removed.append(DuplicateItem(
                 section=section, title=(title or urls[0])[:120],
                 kept_section=kept_section, reason=reason,
@@ -289,10 +326,10 @@ def dedupe_cross_section_items(
             seen_titles.append((section, title))
         seen_bodies.append((section, title or "", body_tokens))
 
-    if not drop:
+    if not drop and not keep_header:
         return DedupeResult(digest_text)
 
-    kept = [b for i, b in enumerate(blocks) if i not in drop]
+    kept = [keep_header.get(i, b) for i, b in enumerate(blocks) if i not in drop]
     for item in removed:
         logger.warning(
             "[%s] dropped duplicate digest item from '%s' (%s; first told in "

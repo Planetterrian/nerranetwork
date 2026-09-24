@@ -60,3 +60,21 @@ reviews:
         baseline: "1/1 (Ep1)"
         expected: "0/7"
         verdict: pending
+  - date: 2026-09-24
+    pr: "PR F (first on-schedule slate: overlap exemptions, Counterpoint validator)"
+    doc: /root/.claude/plans/staged-brewing-hanrahan.md (PR F)
+    reviewer: claude-code (Ep2 read, same day)
+    summary: >-
+      Ep2 (10:46 UTC, on the minute; grok-4.7, no fallback; 15 claims / 12 verified; 6.5 commas per 100 words in the digest, 7.3 in the script; zero self-narration) shipped WITHOUT The Counterpoint and On the Calendar. The model wrote both; engine.digest_overlap dropped them as "same source URL; first told in Top News" — both sections cite the lead's article by contract — and a header directly followed by its one item is one block, so the headers went with the items. The validator required only Top News and Company Desk, so nothing regenerated. Ep1 kept both only because that day's Counterpoint cited a different URL. Script 973 words on 1,300 with a 1,051-word digest: the digest ceiling.
+    shipped:
+      - digest_overlap_exempt_sections (The Counterpoint, On the Calendar) — engine.digest_overlap never compares those sections and never removes a header
+      - mag7_validation_config requires The Counterpoint (min 200 chars) — absent or empty rides the one-shot structural regeneration
+    predictions:
+      - metric: "episodes shipping without a ### The Counterpoint header"
+        baseline: "1/2 (Ep2)"
+        expected: "0 of the next 7"
+        verdict: pending
+      - metric: "digest_cross_section_dupes_removed naming The Counterpoint or On the Calendar"
+        baseline: "2 (Ep2)"
+        expected: "0 on 7/7"
+        verdict: pending

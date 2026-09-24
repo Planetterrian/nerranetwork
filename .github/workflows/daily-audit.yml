@@ -261,6 +261,17 @@ jobs:
           else:
               print("RSS freshness: all feeds OK")
 
+      - name: Scheduler Worker deploy drift (live slot table vs committed)
+        # Sep 24 2026: a redeploy from a stale checkout left nine newly
+        # scheduled shows off the live Worker; the old slots fired on the
+        # minute and nothing noticed. Reads the Worker's GET / and diffs its
+        # slot table against workers/scheduler/src/index.ts. Loud, non-
+        # blocking; a clean no-op until the repo variable is set.
+        if: always()
+        env:
+          SCHEDULER_STATUS_URL: ${{ vars.SCHEDULER_STATUS_URL }}
+        run: python scripts/check_scheduler_deploy.py
+
       - name: Automated Remediation (retry missed shows using daily-review.json)
         if: always()
         env:

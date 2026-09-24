@@ -128,6 +128,62 @@ class TestDigestCrossSectionDedupe:
         assert len(takeover) == 5, [d.title for d in result.removed]
 
 
+class TestOverlapExemptSections:
+    """Sep 24 2026 — MAG 7 Ep2 lost The Counterpoint and On the Calendar
+    (headers included) to the same-URL rule: both sections cite the lead's
+    article BY CONTRACT, and a header followed directly by its one item is
+    one block, so dropping the item dropped the header."""
+
+    MAG7 = (
+        "# MAG 7 Daily\n**HOOK:** Amazon puts Prime delivery on MCF.\n\n"
+        "### Top News\n"
+        "1. **Amazon extends Prime delivery to MCF sellers: About Amazon**\n"
+        "   Sellers get the badge from October. Source: https://www.aboutamazon.com/news/retail/mcf\n\n"
+        "2. **Meta previews a hundred-gram headset: The Information**\n"
+        "   The device weighs a third of the pendant. Source: https://www.theinformation.com/meta-headset\n\n"
+        "### Company Desk\n"
+        "1. **Alphabet ships Gemini audio models to Studio: Google**\n"
+        "   Two TTS models land in AI Studio today. Source: https://blog.google/gemini-audio\n\n"
+        "### The Counterpoint\n"
+        "**The Prime-on-site offer still lacks a sales result: About Amazon**\n"
+        "Amazon has not published a conversion figure for the badge in two quarters. Source: https://www.aboutamazon.com/news/retail/mcf\n\n"
+        "### On the Calendar\n"
+        "- October 1: MCF Prime badge goes live for enrolled sellers. Source: https://www.aboutamazon.com/news/retail/mcf\n\n"
+        "### The Tape\nSep 23 · AMZN 231.10 +0.4%\n"
+    )
+
+    def test_exempt_sections_keep_their_items(self):
+        r = do.dedupe_cross_section_items(
+            self.MAG7, show_name="mag7",
+            exempt_sections=["The Counterpoint", "On the Calendar"],
+        )
+        assert r.count == 0, [d.title for d in r.removed]
+        assert r.text == self.MAG7
+
+    def test_without_the_exemption_the_header_survives_the_drop(self):
+        r = do.dedupe_cross_section_items(self.MAG7, show_name="mag7")
+        assert r.count == 2
+        assert {d.section for d in r.removed} == {"The Counterpoint", "On the Calendar"}
+        assert "### The Counterpoint" in r.text and "### On the Calendar" in r.text
+        assert "still lacks a sales result" not in r.text
+        assert "October 1: MCF Prime badge" not in r.text
+        assert "### The Tape" in r.text
+
+    def test_exemption_is_case_and_tail_insensitive(self):
+        text = self.MAG7.replace("### The Counterpoint", "### The Counterpoint: the sales gap")
+        r = do.dedupe_cross_section_items(text, exempt_sections=["the counterpoint"])
+        assert not any(d.section.startswith("The Counterpoint") for d in r.removed)
+
+    def test_empty_exemption_is_byte_identical_on_the_tesla_fixture(self):
+        a = do.dedupe_cross_section_items(TESLA_SHAPED, show_name="tesla")
+        b = do.dedupe_cross_section_items(TESLA_SHAPED, show_name="tesla", exempt_sections=[])
+        assert a.text == b.text and a.count == b.count == 3
+
+    def test_run_show_passes_the_config_list(self):
+        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert 'exempt_sections=getattr(config, "digest_overlap_exempt_sections"' in src
+
+
 class TestScriptAudit:
     DIGEST = (
         "### Top News\n1. **xAI pins Grok outage on Memphis data center**\n"

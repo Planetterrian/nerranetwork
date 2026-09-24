@@ -77,3 +77,27 @@ reviews:
         baseline: "2/5 (Ep1)"
         expected: "0 on 4/4"
         verdict: pending
+  - date: 2026-09-24
+    pr: "PR F (first on-schedule slate: Worker honours FIRST_RUN, dose_terms blocks)"
+    doc: /root/.claude/plans/staged-brewing-hanrahan.md (PR F)
+    reviewer: claude-code (Ep2 read, same day)
+    summary: >-
+      Ep2 was dispatched by the scheduler Worker at 11:07 UTC on Thursday 09-24, a week before FIRST_SCHEDULED_RUN (10-01): the Worker's scheduled() handler checked the day filter but never launched() (only the status page's nextSlot() did), and a workflow_dispatch bypasses the workflow's own launch-date gate by design. It ran on the grok-4.3 fallback (digest call APITimeoutError on 4.7): 1.6 commas per 100 words in the digest, 1.1 in the script; claims 3 / 2 verified; articles_preferred_in_prompt 7 (the preferred_domains lever works). Lints x_only_lead, dose_terms, spotlight_card and evidence_rung fired; after the one-shot retry dose_terms, spotlight_card and evidence_rung still fired and the episode shipped with "Doses of 7 mg and 14 mg once daily" in the Spotlight and again in the Evidence Ledger — the show's standing rule ("never dosing"), broken on the record. Stories did not re-cover Ep1 (GLP-1 deficiencies / Yale access study / Swedish adverse-reaction rise vs Ep1's Novo phase 3 / EVOKE). Operator's call whether Ep2 stays published.
+    shipped:
+      - scheduler Worker: scheduled() honours FIRST_RUN before dispatching
+      - digest_lints_blocking: [dose_terms] — a dose that survives the regeneration skips the episode with a marker (never a strip)
+    deferred:
+      - spotlight_card and evidence_rung persisting after the retry on a grok-4.3 digest — read Ep3 on 4.7 before deciding whether they block too
+    predictions:
+      - metric: "episodes produced before their FIRST_SCHEDULED_RUN"
+        baseline: "1 (Ep2, 09-24)"
+        expected: "0"
+        verdict: pending
+      - metric: "published episodes carrying a dose_terms hit"
+        baseline: "1/2 (Ep2)"
+        expected: "0 of the next 6 (a skip is the accepted cost)"
+        verdict: pending
+      - metric: "commas per 100 words in the digest on a grok-4.7 episode"
+        baseline: "1.6 (Ep2, fallback)"
+        expected: ">= 3.0 on Ep3-5"
+        verdict: pending
