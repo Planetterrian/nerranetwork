@@ -4489,6 +4489,23 @@ def run(args: argparse.Namespace) -> None:
             episode_desc = x_thread[:_cut + 1] + " ..." if _cut > 100 else x_thread[:_desc_limit] + "..."
         else:
             episode_desc = x_thread
+        # Sources line (Sep 24 2026, engine.show_notes): the feed copy had
+        # every Source: line scrubbed, so a listener in Apple or Spotify saw
+        # no source at all while the blog post listed them. Publisher
+        # domains, each linked, publishers before social posts, at most
+        # eight. Read from the digest; never blocks the publish.
+        try:
+            from engine.show_notes import sources_footer as _sources_footer
+            _src_line = _sources_footer(
+                x_thread or "",
+                language=str(getattr(config.publishing, "rss_language", "en") or "en"),
+            )
+        except Exception as _src_exc:  # noqa: BLE001 — the notes ship without it
+            logger.warning("Sources line for show notes failed (non-fatal): %s", _src_exc)
+            _src_line = ""
+        if _src_line:
+            episode_desc = episode_desc.rstrip() + "\n\n" + _src_line
+            metrics.record("show_notes_sources", len(_src_line.split(" · ")))
         _rss_disclosure = _rss_disclosure_for(config, args.show)
         episode_desc = episode_desc.rstrip() + "\n\n" + _rss_disclosure
         # If the episode landed on YouTube, surface the watch link in

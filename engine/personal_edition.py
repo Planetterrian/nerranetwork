@@ -53,8 +53,32 @@ from engine.daily_edition import (
 
 logger = logging.getLogger(__name__)
 
-#: The only shows a personal lineup may contain — the EN edition roster.
-PERSONAL_SHOW_SLUGS: Tuple[str, ...] = EDITIONS["en"].lineup
+#: Shows a member may choose beyond the Nerra Daily roster (Sep 24 2026):
+#: the launch cohort — a member in Vancouver or Collingwood, or one who
+#: wants a regional desk, prediction markets or the semis tape, picks it
+#: here. They stay OUT of the Nerra Daily lineup on purpose (the edition is
+#: a fixed two-hour rundown); a personal edition is the member's own order.
+#: Segments are discovered by the same per-show machinery, on the same
+#: dated episode files, via :func:`personal_edition_spec`.
+PERSONAL_EXTRA_SHOW_SLUGS: Tuple[str, ...] = (
+    "vancouver", "collingwood", "prediction_markets", "mag7", "ai_chips",
+    "peptides", "longevity", "omni_view_world", "omni_view_north_america",
+    "omni_view_europe", "omni_view_asia_pacific", "omni_view_africa_mideast",
+    "omni_view_latam",
+)
+
+#: The only shows a personal lineup may contain — the EN edition roster plus
+#: the extra shows above. The Worker mirrors this exact set
+#: (workers/gallery/src/personal.ts PERSONAL_SHOWS; drift-guarded).
+PERSONAL_SHOW_SLUGS: Tuple[str, ...] = EDITIONS["en"].lineup + PERSONAL_EXTRA_SHOW_SLUGS
+
+
+def personal_edition_spec():
+    """The EN edition spec widened to every show a member may choose — what
+    ``build_personal_feeds`` discovers segments with. The Nerra Daily spec
+    itself is untouched: its lineup, ready gate and rundown do not change."""
+    import dataclasses as _dc
+    return _dc.replace(EDITIONS["en"], lineup=PERSONAL_SHOW_SLUGS)
 
 #: Feed serving goes through the Worker (token-checked, revocable) —
 #: never a public bucket URL.
@@ -1143,6 +1167,8 @@ __all__ = [
     "PERSONAL_FEED_MAX_EPISODES",
     "PERSONAL_R2_PREFIX",
     "PERSONAL_SHOW_SLUGS",
+    "PERSONAL_EXTRA_SHOW_SLUGS",
+    "personal_edition_spec",
     "TIER_LIMITS",
     "PersonalSpec",
     "addons_for_tier",

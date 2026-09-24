@@ -1092,6 +1092,40 @@ today's work, not just explain yesterday's):
   (`shows/segments/collingwood.json`, 12 evergreen explainers) is on.
   Established shows are untouched; the arm/control hook_shape guard
   excludes the cohort by name.
+- **Network sourcing pass (2026-09-24; guards
+  `tests/test_network_sourcing_pass_2026_09_24.py`; register
+  `network-sourcing-pass-2026-09-24`). ⚠️ The digest INPUT changed on ten
+  shows — A/B-listen the first post-merge episode of each.** The launch
+  cohort's sourcing floor, ported to every established news show, after the
+  audit found the flagships recording 0 claims on 7 of their last 10
+  episodes each and `fetch_full_text: 0` on 14 of 15 shows (the digest
+  prompt had headline + teaser only — the Offshore North finding, network
+  wide). Now: `fetch_full_text` 8–12 on tesla, spacex, models_agents, MAB,
+  FF, planetterrian, omni_view, env_intel, modern_investing, finansy_prosto;
+  `preferred_domains` (primary publishers: regulators, journals, the labs'
+  and companies' own newsrooms, the wires) on each; `x_posts_as_sources:
+  secondary` where the show does not own the story (**Tesla and SpaceX stay
+  legacy — their own posts are primary**); the `x_only_lead` lint where a
+  `LEAD_SECTIONS` header exists (replay: 1 firing in 60 digests).
+  `evidence_rung` is deliberately NOT on FF / planetterrian: its rung
+  vocabulary is biomedical and it fired on 15–19 items per six digests of
+  astronomy and paleontology. The narrative shows, the Russian lesson show
+  and the hook_shape arm/control experiment are untouched (guarded).
+  **Listeners:** `engine/show_notes.py` appends a linked `Sources:` line
+  (publisher domains, publishers before social posts, max 8) to every
+  episode's RSS description — the feed copy had every Source line scrubbed
+  while the blog listed them (metric `show_notes_sources`). **Readers:**
+  `script_commas_per_100w` / `digest_commas_per_100w` in `engine.script_audit`
+  and a snapshot column. **Members:** `PERSONAL_EXTRA_SHOW_SLUGS` widens the
+  Nerra Personal vocabulary to the 13-show cohort (Worker list mirrored;
+  `personal_edition_spec()` is what the builder discovers on; the Nerra
+  Daily lineup is unchanged). Feed hygiene from `check_feeds.py` over the
+  established shows: CNBC's two feeds (403 on every UA) moved to CNBC's
+  search endpoint, Space.com's two dead RSS URLs became one Google News site
+  query, two zero-item Google News queries simplified; the reddit 429s, NPR
+  403s and news.gov.bc.ca TLS failures are this container's egress and were
+  left for a runner read. Operator: `wrangler deploy` in `workers/gallery`
+  for the Personal picker.
 - **Launch-cohort PR C (2026-09-23; guards
   `tests/test_launch_cohort_schedule_2026_09_23.py`).** The nine hand-launched
   shows are on the clock (plan §6 slots, UTC): Asia Pacific 06:16, Africa &
@@ -3173,14 +3207,12 @@ description. Pool 12 → 13. Guards:
   A new entry needs **no** funnel change — `network_promo.py:349` already routes
   through `engine.funnel.network_link`, which puts the surface `id` in the
   campaign's variant slot.
-- **Known hole, not fixed here:** `engine/video_metadata.py:499` hand-builds
-  `https://nerranetwork.com/{url}` for the YouTube description's surface line,
-  **untagged** — it passes the hand-rolled-UTM ban because a bare URL has no
-  `utm_campaign`, so ~125k views a month of description clicks are
-  unattributable by construction, the same class the Sep 21 capture pass closed
-  on the signup forms. It also picks the surface from `date.today()` rather than
-  the episode date, so a late render can advertise a surface the episode does
-  not speak.
+- **The YouTube description's surface line was the last untagged funnel
+  link** — `engine/video_metadata.py` hand-built `https://nerranetwork.com/{url}`
+  and picked the surface from the RENDER date. Both fixed 2026-09-21 (it goes
+  through `engine.funnel.network_link` with the surface id in the variant slot,
+  keyed on the episode date); an earlier version of this note said "not fixed
+  here" and was stale by the time it was read on 2026-09-24.
 
 **Sep 21 2026 — the registry grew a second owner for three things, and one
 "dead" key was read raw.** Consolidation pass (C1), whose whole acceptance was

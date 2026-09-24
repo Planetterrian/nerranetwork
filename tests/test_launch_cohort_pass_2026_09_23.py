@@ -211,10 +211,16 @@ class TestXSourcePolicy:
             if slug in DESKS or slug in ("vancouver", "collingwood", "omni_view_world"):
                 assert data["x_posts_as_sources"] == "linked_only", slug
 
-    def test_established_shows_are_untouched(self):
-        for slug in ("tesla", "spacex", "omni_view", "models_agents"):
+    def test_own_voice_shows_keep_the_legacy_x_policy(self):
+        # Sep 24 2026: the network sourcing pass put the policy on every news
+        # show that does not own its story; Tesla's and SpaceX's own posts are
+        # primary sources, so they stay on the legacy policy with no lint.
+        for slug in ("tesla", "spacex"):
             data = yaml.safe_load((ROOT / "shows" / f"{slug}.yaml").read_text(encoding="utf-8"))
             assert "x_posts_as_sources" not in data and "digest_lints" not in data, slug
+        for slug in ("omni_view", "models_agents"):
+            data = yaml.safe_load((ROOT / "shows" / f"{slug}.yaml").read_text(encoding="utf-8"))
+            assert data["x_posts_as_sources"] == "secondary", slug
 
 
 # ---------------------------------------------------------------------------

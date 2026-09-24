@@ -197,7 +197,8 @@ class TestPreferredDomains:
         for slug in ("peptides", "longevity"):
             assert "europepmc.org" in _cfg(slug).preferred_domains, slug
         assert "cbc.ca" in _cfg("vancouver").preferred_domains
-        assert _cfg("tesla").preferred_domains == []
+        # Sep 24 2026: the news shows carry lists too; a narrative show still has none.
+        assert _cfg("unintended_consequences").preferred_domains == []
 
     def test_run_show_tags_the_listing_line(self):
         src = (ROOT / "run_show.py").read_text(encoding="utf-8")

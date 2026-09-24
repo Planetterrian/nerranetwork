@@ -278,4 +278,21 @@ reviews:
       ab_listen_required: false
       rationale: Every behavioral fix needs a drift-guard per playbook.
     agent_cost_usd: 0.1074
+  - date: 2026-09-24
+    pr: "network sourcing pass (the launch cohort's sourcing floor on every news show)"
+    doc: docs/experiments.yaml (network-sourcing-pass-2026-09-24)
+    reviewer: claude-code (network pass after the launch-cohort readouts)
+    summary: >-
+      Full text on 8 articles; canada.ca / Bank of Canada / CRA / FCAC / ontario.ca preferred; X posts secondary; a Russian-labelled Sources line (Источники) in the show notes. The Google News Canada-finance query returned zero items; simplified.
+    shipped:
+      - fetch_full_text 8
+      - preferred_domains
+      - x_posts_as_sources secondary
+      - show-notes Sources line (ru)
+      - GN query
+    predictions:
+      - metric: "source_integrity_claims median"
+        baseline: "n/a"
+        expected: ">= 2"
+        verdict: pending
 do_not_retry: []

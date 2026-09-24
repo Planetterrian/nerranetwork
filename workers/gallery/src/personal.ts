@@ -54,6 +54,20 @@ export const PERSONAL_SHOWS = [
   "env_intel",
   "offshore_north",
   "dp_pod",
+  // Sep 24 2026 — the launch cohort (engine.personal_edition.PERSONAL_EXTRA_SHOW_SLUGS)
+  "vancouver",
+  "collingwood",
+  "prediction_markets",
+  "mag7",
+  "ai_chips",
+  "peptides",
+  "longevity",
+  "omni_view_world",
+  "omni_view_north_america",
+  "omni_view_europe",
+  "omni_view_asia_pacific",
+  "omni_view_africa_mideast",
+  "omni_view_latam",
 ] as const;
 
 // Starter lineup for a paying subscriber who hasn't picked 2+ shows yet

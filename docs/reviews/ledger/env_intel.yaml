@@ -299,6 +299,23 @@ reviews:
       ab_listen_required: false
       rationale: Every behavioral fix gets a drift-guard per playbook; pins the length-lever policy so a future pass cannot reintroduce podcast_expand_below_target (meta-review miss class).
     agent_cost_usd: 0.1165
+  - date: 2026-09-24
+    pr: "network sourcing pass (the launch cohort's sourcing floor on every news show)"
+    doc: docs/experiments.yaml (network-sourcing-pass-2026-09-24)
+    reviewer: claude-code (network pass after the launch-cohort readouts)
+    summary: >-
+      Full text on 10 articles; federal and provincial primary sources (canada.ca, ontario.ca, gov.bc.ca, alberta.ca, quebec.ca, the Gazette, IEA) preferred; X posts secondary; X-only-lead lint; Sources line. The four news.gov.bc.ca feeds fail TLS from this container — a runner read is needed before touching them.
+    shipped:
+      - fetch_full_text 10
+      - preferred_domains
+      - x_posts_as_sources secondary
+      - digest_lints x_only_lead
+      - show-notes Sources line
+    predictions:
+      - metric: "source_integrity_claims median"
+        baseline: "0"
+        expected: ">= 3"
+        verdict: pending
 do_not_retry:
   - idea: Podcast-side length levers for env_intel (word floors in podcast prompt, podcast_expand_below_target re-enable, expand-retries aimed at _tts.txt length) — banned network-wide by July 2026 meta-review; EI now has digest_expand_below_target + min_digest_words:950; further length work is digest/fetch only.
     evidence: flagged 2026-08-10 (Grok review)

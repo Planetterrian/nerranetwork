@@ -677,8 +677,12 @@ def main() -> int:
         logger.info("no active subscribers — nothing to do")
         return 0
 
+    # Sep 24 2026: the member vocabulary is wider than the Nerra Daily
+    # lineup (engine.personal_edition.PERSONAL_EXTRA_SHOW_SLUGS), so the
+    # discovery runs on the widened spec; the Daily's own spec is unchanged.
+    from engine.personal_edition import personal_edition_spec
     all_segments, _missing = discover_segments(
-        EDITIONS["en"], ROOT, target_date)
+        personal_edition_spec(), ROOT, target_date)
     segments_by_slug = {s.slug: s for s in all_segments}
     needed = sorted({slug for spec in specs for slug in spec.shows})
     cache_root = Path(tempfile.gettempdir()) / f"np_cache_{target_date:%Y%m%d}"

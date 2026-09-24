@@ -80,8 +80,14 @@ class TestSpecValidation:
         assert spec.first_name == ""
         assert len(spec.city) == 80
 
-    def test_vocabulary_is_the_en_lineup(self):
-        assert PERSONAL_SHOW_SLUGS == EDITIONS["en"].lineup
+    def test_vocabulary_is_the_en_lineup_plus_the_extras(self):
+        # Sep 24 2026: members may choose the launch cohort too; the Nerra
+        # Daily lineup itself is unchanged and the extras never enter it.
+        from engine.personal_edition import PERSONAL_EXTRA_SHOW_SLUGS, personal_edition_spec
+        assert PERSONAL_SHOW_SLUGS == EDITIONS["en"].lineup + PERSONAL_EXTRA_SHOW_SLUGS
+        assert not set(PERSONAL_EXTRA_SHOW_SLUGS) & set(EDITIONS["en"].lineup)
+        assert personal_edition_spec().lineup == PERSONAL_SHOW_SLUGS
+        assert EDITIONS["en"].lineup[-1] == "dp_pod"  # the Daily still closes on DP Pod
 
     def test_worker_vocabulary_stays_in_sync(self):
         # The Worker validates preferences against its own copy of the

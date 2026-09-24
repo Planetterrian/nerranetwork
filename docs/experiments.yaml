@@ -2898,3 +2898,48 @@ experiments:
       Operator step after merge: `wrangler deploy` in workers/scheduler.
       Guards: tests/test_launch_cohort_schedule_2026_09_23.py. The nine stay
       out of the Nerra Daily lineup on purpose (tests/test_daily_edition.py).
+
+  - id: network-sourcing-pass-2026-09-24
+    title: "Network sourcing pass: the launch cohort's sourcing floor on every news show, a Sources line in the show notes, the cohort in Nerra Personal"
+    area: quality
+    shipped: 2026-09-24
+    readout: 2026-10-08
+    status: reading
+    baseline: >
+      Every established news show fetched headline + teaser only
+      (fetch_full_text 0 on 14 of 15 shows; Offshore North's Sep 14 review
+      had found "the digest prompt had never seen an article"). The flagships
+      recorded 0 claims on 7 of their last 10 episodes each (SpaceX, Tesla,
+      Models & Agents, FF, MIT). X posts were credited as x.com on
+      Modern Investing 16 of 22 sources, Tesla 20/96, M&A 11/63. The RSS
+      show notes carried no source at all (every Source: line scrubbed as
+      leakage) while the blog post listed them. No comma-density instrument
+      existed; Vancouver Ep1 on the grok-4.3 fallback wrote 1.3 commas per
+      100 words. Nerra Personal members could choose from the 13-show Daily
+      lineup only.
+    target: >
+      fetch_full_text 8-12 on the ten news shows; preferred_domains (primary
+      publishers) on each; x_posts_as_sources secondary where the show does
+      not own the story (Tesla and SpaceX stay legacy: their own posts are
+      primary); the x_only_lead lint where a lead section exists; a Sources
+      line (publisher domains, linked, publishers before social, max 8) at
+      the end of every episode's RSS description via engine.show_notes;
+      script_commas_per_100w / digest_commas_per_100w in the script audit
+      and the review snapshot; PERSONAL_EXTRA_SHOW_SLUGS widens the member
+      vocabulary to the 13-show cohort (the Daily lineup is unchanged).
+    readout_plan: >
+      No dashboard metric key: read the per-episode counters. Per show over
+      Ep+1..Ep+14: source_integrity_claims median (target >= 4
+      on the flagships, from 0), source_integrity_stripped_sentences (must
+      not rise — full text feeds the fetched-copy verification), digest
+      words vs min_digest_words (must not fall), articles_full_text >= 8,
+      articles_preferred_in_prompt >= 1 on 5/7, sources on x.com per
+      episode (MIT from 73%), show_notes_sources present on every item,
+      digest_lints_fired rate <= 1 in 4 episodes. A/B-listen the first
+      post-merge episode of each show (the prompt input changed). Personal:
+      picks of the new shows in api/member_metrics.json show histogram.
+    revert: >
+      Per show: delete the "Network sourcing pass" block in shows/<slug>.yaml
+      (byte-identical fetch and prompt). Show notes: remove the sources_footer
+      call in run_show. Personal: empty PERSONAL_EXTRA_SHOW_SLUGS and the
+      Worker list.

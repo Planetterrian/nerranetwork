@@ -449,6 +449,26 @@ reviews:
       evidence: null
     agent_cost_usd: null
 
+  - date: 2026-09-24
+    pr: "network sourcing pass (the launch cohort's sourcing floor on every news show)"
+    doc: docs/experiments.yaml (network-sourcing-pass-2026-09-24)
+    reviewer: claude-code (network pass after the launch-cohort readouts)
+    summary: >-
+      The digest prompt now sees the full text of the 12 newest articles (it had headline + teaser only), tesla.com / ir.tesla.com / SEC / NHTSA articles are marked preferred primary sources, and every episode's RSS show notes end on a linked Sources line. X policy stays legacy: Tesla's own posts are primary. Claims recorded 0 on 7 of the last 10 episodes. CNBC's Tesla feed (403 on every UA) replaced with CNBC's search endpoint.
+    shipped:
+      - fetch_full_text 12
+      - preferred_domains
+      - show-notes Sources line
+      - CNBC feed URL
+    predictions:
+      - metric: "source_integrity_claims median, Ep+1..Ep+14"
+        baseline: "0 (7 of last 10 at zero)"
+        expected: ">= 4"
+        verdict: pending
+      - metric: "digest words vs min_digest_words"
+        baseline: "n/a"
+        expected: "never below the floor more often than before"
+        verdict: pending
 do_not_retry:
   - idea: phonetic respellings or programmatic speech-tag injection
     evidence: 100% regression rate on custom voice kdif6sqjcyiq (May 2026,
