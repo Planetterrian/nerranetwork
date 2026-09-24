@@ -618,11 +618,12 @@ class TestMigrationAndTemplates:
         from common import render_email
         base = dict(guest_name="J", scheduled_at="soon", thesis="T",
                     questions=["Q?"], closing_question="C?")
+        # Sept 24 2026: Patrick no longer joins interviews, so the brief never
+        # promises a co-host, whatever it is passed.
         with_host = render_email("voices_prep_brief.j2", show="age_of_ai",
                                  cohost_name="Patrick Novak", **base)
-        without = render_email("voices_prep_brief.j2", show="age_of_ai", **base)
-        assert "Patrick Novak" in with_host and "co-host" in with_host
-        assert "co-host" not in without
+        assert "co-host" not in with_host and "Patrick Novak" not in with_host
+        assert "I host every interview on my own" in " ".join(with_host.split())
         assert "{{" not in with_host
 
     def test_common_accessors(self, monkeypatch):

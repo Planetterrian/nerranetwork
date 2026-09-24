@@ -1,9 +1,17 @@
 Hi {{ publicist_first_name }},
 
-Thanks for the note about {{ guest_name }}. The Nerra Network's daily shows are automated news programs and don't take guests, but we do run live interviews, and I'd like to have {{ guest_name }} on. Our interview host, Mira, is an AI. She calls real people and interviews them live, every episode says so plainly, and guests approve their transcript before anything publishes.
+Thanks for the note about {{ guest_name }}. I'd like to have {{ guest_first }} on {{ show_name }}, {{ show_blurb }}.{% if page_url %} Past episodes are at {{ page_url }}.{% endif %}{% if pitched_show_name %} I'd also feature the finished interview on the {{ pitched_show_name }} channel, since that's the audience you had in mind.{% endif %}
 
-For {{ guest_name }} the right home is {{ show_name }}, {{ show_blurb }}. There is a short application form at {{ apply_url }} if you'd like to send details, but it isn't required: just reply to this email and I'll send a booking link so {{ guest_name }} can pick a time.{% if pitched_show_name %} I'd also feature the finished interview on the {{ pitched_show_name }} channel, since that's the audience you had in mind.{% endif %}
+The host is Mira, an AI, and every episode says so plainly. She interviews each guest one on one in a live, unscripted conversation of about 45 minutes, from a computer browser with headphones, with nothing to install. {{ guest_first }} gets a short prep brief the day before, nothing publishes until {{ guest_first }} has reviewed and approved it, and there is no fee in either direction.
+{% if booking_url %}
+If it sounds like a fit, {{ guest_first }} can pick a time here:
 
+{{ booking_url }}
+
+Please book with {{ guest_first }}'s own email address, so the prep brief and the studio link reach the person on the call. There is a short application form at {{ apply_url }} if you'd like to send more background, but it isn't required.
+{% else %}
+There is a short application form at {{ apply_url }} if you'd like to send details, but it isn't required: just reply to this email and I'll send a booking link so {{ guest_first }} can pick a time.
+{% endif %}
 Let me know if you have any questions.
 
 Sincerely,

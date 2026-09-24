@@ -524,26 +524,44 @@ class TestInviteTemplate:
                                    sender_name="Sam Reyes", policy=self._policy())
         assert text.startswith("Hi Sam,")
 
-    def test_exact_structure(self):
+    def test_exact_structure(self, monkeypatch):
+        # Sept 24 2026: the booking link goes in the first email, the co-host
+        # claim is gone, and the negative opener about the daily shows is gone.
+        monkeypatch.setenv("CALCOM_BOOKING_URL", "https://cal.com/nerra/age-of-ai")
         text = inbox.render_invite(_classification(), sender_name="", policy=self._policy())
         expected = (
             "Hi Sam,\n\n"
-            "Thanks for the note about Dr. Lena Ortiz. The Nerra Network's daily shows are "
-            "automated news programs and don't take guests, but we do run live interviews, "
-            "and I'd like to have Dr. Lena Ortiz on. Our interview host, Mira, is an AI. She "
-            "calls real people and interviews them live, every episode says so plainly, and "
-            "guests approve their transcript before anything publishes.\n\n"
-            "For Dr. Lena Ortiz the right home is The Age of AI, our show on how AI is "
-            "changing people's work. There is a short application form at "
-            f"{AGE_OF_AI_APPLY} if you'd like to send details, but it isn't required: just "
-            "reply to this email and I'll send a booking link so Dr. Lena Ortiz can pick a "
-            "time. I'd also feature the finished interview on the "
-            "Models & Agents channel, since that's the audience you had in mind.\n\n"
+            "Thanks for the note about Dr. Lena Ortiz. I'd like to have Dr. Ortiz on The Age "
+            "of AI, our show on how AI is changing people's work. Past episodes are at "
+            "https://nerranetwork.com/age-of-ai.html. I'd also feature the finished interview "
+            "on the Models & Agents channel, since that's the audience you had in mind.\n\n"
+            "The host is Mira, an AI, and every episode says so plainly. She interviews each "
+            "guest one on one in a live, unscripted conversation of about 45 minutes, from a "
+            "computer browser with headphones, with nothing to install. Dr. Ortiz gets a short "
+            "prep brief the day before, nothing publishes until Dr. Ortiz has reviewed and "
+            "approved it, and there is no fee in either direction.\n\n"
+            "If it sounds like a fit, Dr. Ortiz can pick a time here:\n\n"
+            "https://cal.com/nerra/age-of-ai\n\n"
+            "Please book with Dr. Ortiz's own email address, so the prep brief and the studio "
+            "link reach the person on the call. There is a short application form at "
+            f"{AGE_OF_AI_APPLY} if you'd like to send more background, but it isn't required.\n\n"
             "Let me know if you have any questions.\n\n"
             "Sincerely,\n\n"
             "Patrick\n"
         )
         assert text == expected
+
+    def test_without_a_booking_link_it_offers_to_send_one(self, monkeypatch):
+        monkeypatch.delenv("CALCOM_BOOKING_URL", raising=False)
+        text = inbox.render_invite(_classification(pitched_show=None), sender_name="",
+                                   policy=self._policy())
+        assert "just reply to this email and I'll send a booking link so Dr. Ortiz" in text
+        assert "cal.com" not in text
+
+    def test_nobody_sits_in(self):
+        text = inbox.render_invite(_classification(), sender_name="", policy=self._policy())
+        assert "co-host" not in text and "sit in" not in text
+        assert "one on one" in text
 
     def test_hold_note_template_exists_and_renders(self):
         note = inbox.render_text("producer_hold_note.j2", reason="r", category="c",

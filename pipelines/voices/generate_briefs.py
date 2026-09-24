@@ -13,11 +13,12 @@ import datetime as dt
 import json
 
 from common import (  # noqa: E402  (sys.path bootstrapped in common)
-    carry_the_show_block, cohost_name, episode_memory_block, llm, load_prompt,
+    carry_the_show_block, episode_memory_block, llm, load_prompt,
     logger, notify_operator,
     parse_json_lenient, render_email, sb_insert, sb_select, sb_update,
     send_email, show_for,
 )
+from address import first_name  # noqa: E402
 from interview_shape import (  # noqa: E402  (after common: it bootstraps sys.path)
     planned_minutes, question_count, shape_block,
 )
@@ -119,26 +120,35 @@ def generate_brief(interview: dict, app: dict) -> dict:
     })
 
 
+def when_text(iso: str) -> str:
+    """"Thursday, September 24 at 16:45 UTC". The raw timestamp used to go
+    into the email as-is ("2026-09-22T17:15:00+00:00")."""
+    try:
+        t = dt.datetime.fromisoformat(str(iso).replace("Z", "+00:00")).astimezone(dt.timezone.utc)
+    except (TypeError, ValueError):
+        return ""
+    return f"{t:%A}, {t:%B} {t.day} at {t:%H:%M} UTC (the time in your calendar invite)"
+
+
 def email_brief_to_guest(interview: dict, app: dict, brief: dict) -> None:
     show = show_for(interview, app)
-    when = interview.get("scheduled_at", "")
     html = render_email(
         "voices_prep_brief.j2",
         show=show,
-        guest_name=app["name"],
-        scheduled_at=when,
+        guest_name=first_name(app),
+        when_text=when_text(interview.get("scheduled_at", "")),
         interview_id=interview["id"],
+        studio_link=f"{show.studio_url(interview['id'])}&role=guest",
         thesis=brief["episode_thesis_draft"],
         questions=brief["likely_questions"],
         closing_question=show.closing_question,
-        # Phase 2: tell the guest who is in the room (empty → no paragraph).
-        cohost_name=cohost_name() if interview.get("host_mode") is not False else "",
     )
     send_email(app["email"],
-               f"Your {show.short_label} interview — what Mira will ask",
+               f"Your {show.short_label} interview: what Mira plans to ask",
                html, cc_operator=True)
     sb_update("interview_briefs", f"id=eq.{brief['id']}",
-              {"sent_to_guest_at": dt.datetime.now(dt.timezone.utc).isoformat()})
+              {"sent_to_guest_at": dt.datetime.now(dt.timezone.utc).isoformat(),
+               "sent_to": app["email"]})
 
 
 def main() -> int:
@@ -175,7 +185,42 @@ def main() -> int:
                 show.slack(f"brief generation FAILED for interview "
                            f"{interview['id']}: {exc}"), critical=True,
             )
-    return 1 if failures else 0
+    return 1 if (failures + resend_to_new_address()) else 0
+
+
+def resend_to_new_address() -> int:
+    """Send the brief again when the guest's address is not the one it went
+    to (a booking moved onto another application, or the guest booked with
+    a different email). Interviews in the next 36 hours only."""
+    now = dt.datetime.now(dt.timezone.utc)
+    hi = (now + dt.timedelta(hours=36)).isoformat().replace("+00:00", "Z")
+    lo = now.isoformat().replace("+00:00", "Z")
+    rows = sb_select("interviews",
+                     f"status=eq.briefed&scheduled_at=gte.{lo}&scheduled_at=lte.{hi}")
+    failures = 0
+    for interview in rows or []:
+        briefs = sb_select("interview_briefs", f"interview_id=eq.{interview['id']}")
+        if not briefs or not briefs[0].get("sent_to_guest_at"):
+            continue
+        try:
+            app = _application(interview)
+        except Exception:  # noqa: BLE001
+            continue
+        sent_to = (briefs[0].get("sent_to") or "").strip().lower()
+        current = (app.get("email") or "").strip().lower()
+        if not current or not sent_to or sent_to == current:
+            # No record of the address (briefs sent before Sept 24 2026) is
+            # treated as correct: re-mailing every guest once is worse.
+            continue
+        try:
+            email_brief_to_guest(interview, app, briefs[0])
+            logger.info("Re-sent brief for %s to %s (was %s)", interview["id"], current, sent_to)
+        except Exception as exc:  # noqa: BLE001
+            failures += 1
+            logger.exception("Brief re-send failed for %s", interview["id"])
+            notify_operator(f"prep brief re-send FAILED for interview {interview['id']}: {exc}",
+                            critical=True)
+    return failures
 
 
 if __name__ == "__main__":

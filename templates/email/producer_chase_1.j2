@@ -1,6 +1,10 @@
 Hi {{ first_name }},
 
-Following up on my note about {{ guest_name }} joining {{ show_name }}. If it's still of interest, the simplest step is to reply here and I'll send over the booking link so {{ guest_name }} can pick a time that suits.
+Following up on my note about {{ guest_name }} joining {{ show_name }}.{% if booking_url %} If it's still of interest, {{ guest_first }} can pick a time here:
+
+{{ booking_url }}
+
+Booking with {{ guest_first }}'s own email address means the prep brief and studio link go straight to {{ guest_first }}. Happy to answer any questions first.{% else %} If it's still of interest, the simplest step is to reply here and I'll send over the booking link so {{ guest_first }} can pick a time that suits.{% endif %}
 
 Sincerely,
 

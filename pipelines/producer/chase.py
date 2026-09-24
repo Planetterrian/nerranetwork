@@ -109,8 +109,12 @@ def candidates(limit: int = 200) -> List[Dict[str, Any]]:
 def chase_body(app: Dict[str, Any], step: int) -> str:
     show = get_show(app.get("show") or "nerra_voices")
     name = first_name(app.get("publicist_name")) or first_name(app.get("name")) or "There"
+    from pipelines.producer.followup import booking_url
+    from pipelines.producer.inbox import guest_first
     return render_text(TEMPLATES[step], show.slug, first_name=name,
-                       guest_name=app.get("name") or "your guest", show_name=show.name)
+                       guest_name=app.get("name") or "your guest",
+                       guest_first=guest_first(app.get("name")),
+                       show_name=show.name, booking_url=booking_url(show.slug))
 
 
 def process(app: Dict[str, Any], *, gmail: GmailClient, policy: Policy,

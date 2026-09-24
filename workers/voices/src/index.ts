@@ -763,6 +763,42 @@ function bookingPhone(p: any): string {
   return "";
 }
 
+/** The booked time as the guest will read it, in the zone they booked in.
+ *  Sept 24 2026: the booking email said "You're booked" and never said
+ *  when; the only record of the time was Cal.com's own email. */
+function bookedWhen(startTime: string, p: any): string {
+  const tz = String(p.attendees?.[0]?.timeZone ?? p.organizer?.timeZone ?? "America/Vancouver");
+  const d = new Date(startTime);
+  if (isNaN(d.getTime())) return "";
+  try {
+    return d.toLocaleString("en-US", { timeZone: tz, weekday: "long", month: "long",
+      day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
+  } catch {
+    return d.toUTCString();
+  }
+}
+
+/** Several approved rows share the address a booking came from: a publicist
+ *  represents more than one guest. Sept 14 2026: Think Right PR booked Chad
+ *  Law, and the newest row under their address was John Colascione's, so
+ *  the booking, the interview and a week of reminders went to the wrong
+ *  guest. Pick by the name on the booking, or its title and notes; if the
+ *  booking names none of them, pick nobody and let the name/phone match and
+ *  the orphan alert below deal with it. One row is still just that row. */
+function chooseApplication(rows: any[], p: any): any[] {
+  if (!rows?.length) return [];
+  const byPerson = new Map<string, any>();
+  for (const r of rows) if (!byPerson.has(nameKey(r.name))) byPerson.set(nameKey(r.name), r);
+  const people = [...byPerson.values()];
+  if (people.length === 1) return [people[0]];
+  const booked = bookingName(p);
+  const hit = people.filter((r) => namesOverlap(r.name, booked));
+  if (hit.length === 1) return hit;
+  const text = ` ${nameKey([p.title, p.eventTitle, bookingNotes(p), booked].join(" "))} `;
+  const named = people.filter((r) => nameKey(r.name).length >= 5 && text.includes(` ${nameKey(r.name)} `));
+  return named.length === 1 ? named : [];
+}
+
 /** Whatever the booker wrote in the notes/"additional notes" question. */
 function bookingNotes(p: any): string {
   const n = p.responses?.notes?.value ?? p.responses?.notes ?? p.additionalNotes ?? p.description;
@@ -785,13 +821,13 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
   const bookedShow = showFromCalCom(env, eventSlug, eventTypeId);
 
   const base = `guest_applications?email=eq.${encodeURIComponent(emailAddr)}&status=eq.approved`;
-  let apps = await sb(env, "GET",
-    `${base}&show=eq.${bookedShow.slug}&order=created_at.desc&limit=1`);
+  let apps = chooseApplication(await sb(env, "GET",
+    `${base}&show=eq.${bookedShow.slug}&order=created_at.desc&limit=10`), p);
   if (!apps?.length) {
     // No approved application for that show — fall back to the newest
     // approved one for the email regardless of show (a guest booked via
     // the other show's event link, or a pre-migration row).
-    apps = await sb(env, "GET", `${base}&order=created_at.desc&limit=1`);
+    apps = chooseApplication(await sb(env, "GET", `${base}&order=created_at.desc&limit=10`), p);
     if (apps?.length) {
       console.warn(`cal-com-booked: no approved ${bookedShow.slug} application for ${emailAddr}; ` +
         `falling back to application ${apps[0].id} (show=${apps[0].show ?? "unset"})`);
@@ -806,7 +842,7 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
     let matchedWith = emailAddr;
     for (const candidate of emails) {
       const alt = `guest_applications?status=eq.approved&or=(publicist_email.eq.${encodeURIComponent(candidate)},email.eq.${encodeURIComponent(candidate)})`;
-      apps = await sb(env, "GET", `${alt}&order=created_at.desc&limit=1`);
+      apps = chooseApplication(await sb(env, "GET", `${alt}&order=created_at.desc&limit=10`), p);
       if (apps?.length) { matchedWith = candidate; break; }
     }
     if (apps?.length) {
@@ -922,19 +958,19 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
     interviewId = existing[0].id;
     await sb(env, "PATCH", `interviews?id=eq.${interviewId}`,
       { scheduled_at: startTime, status: "scheduled", reminder_sent_at: null, show: show.slug,
-        duration_min: plannedMinutes, host_mode: !!apps[0].wants_cohost });
+        duration_min: plannedMinutes, host_mode: false });
   } else {
     const created = await sb(env, "POST", "interviews",
       { application_id: apps[0].id, scheduled_at: startTime, status: "scheduled", show: show.slug,
-        duration_min: plannedMinutes, host_mode: !!apps[0].wants_cohost },
+        duration_min: plannedMinutes, host_mode: false },
       "return=representation");
     interviewId = created?.[0]?.id ?? "";
   }
   const studio = studioUrl(show, interviewId, "guest");
   await email(env, emailAddr, `Your ${show.shortLabel} interview is booked`,
     `<p>Hi ${esc(firstName(apps[0].name))},</p>
-     <p>You're booked. At the scheduled time, join Mira — our AI host — from
-     your personal browser studio:</p>
+     <p>You're booked${bookedWhen(startTime, p) ? ` for <strong>${esc(bookedWhen(startTime, p))}</strong>` : ""}.
+     At that time, join Mira, our AI host, from your personal browser studio:</p>
      <p><a href="${studio}"><strong>Join your interview here</strong></a>
      (bookmark it — it unlocks a few minutes before your slot).</p>
      <p>To sound your best: use a computer in a quiet room and
@@ -950,17 +986,15 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
      <p>We have it down as about ${plannedMinutes} minutes${apps[0].desired_minutes ? ", which is what you asked for" : ""}. Mira paces the
      conversation to that and starts wrapping up near the end rather than
      cutting you off.</p>
-     ${apps[0].wants_cohost
-       ? "<p>You asked for Patrick Novak, the network's creator, to join as co-host. He will be in the room with Mira.</p>"
-       : ""}
-     <p>About a day before, you'll receive a short prep brief with the
-     themes she plans to explore.</p>
+     <p>It's just you and Mira: she hosts every interview on her own. About
+     a day before, you'll receive a short prep brief with the themes she
+     plans to explore. If you need to move the time, use the reschedule link
+     in the calendar confirmation, or reply to this email.</p>
      <p>Two things to know: the conversation is recorded for the podcast,
      and nothing publishes until you've reviewed and approved the
      transcript.</p>
      <p>${esc(signOff(show))}</p>`, true);
-  await slack(env, `${show.shortLabel}: ${apps[0].name} booked ${startTime}` +
-    (apps[0].wants_cohost ? " — guest asked for Patrick as co-host" : ""));
+  await slack(env, `${show.shortLabel}: ${apps[0].name} booked ${startTime}`);
   return json({ ok: true, show: show.slug, interview_id: interviewId });
 }
 
@@ -980,11 +1014,14 @@ async function handleTriageDecision(req: Request, env: Env): Promise<Response> {
     const link = bookingUrl(env, show);
     await email(env, app.email, `You're invited — book your ${show.name} interview`,
       `<p>Hi ${esc(firstName(app.name))},</p>
-       <p>We'd love to have you on ${esc(show.name)}. Pick a time that works and
-       Mira — our AI host — will call you: </p>
+       <p>We'd love to have you on ${esc(show.name)}. Pick a time that works
+       here, booking with this email address so everything reaches you:</p>
        <p><a href="${esc(link)}">${esc(link)}</a></p>
-       <p>The call runs about forty-five minutes. It's recorded, and nothing
-       publishes until you've approved the transcript.</p>
+       <p>Once you book, you'll get a confirmation with your personal studio
+       link. At your time you join Mira, our AI host, from a computer browser,
+       with headphones or earbuds on; there is nothing to install. The
+       conversation runs about forty-five minutes. It's recorded, and nothing
+       publishes until you've reviewed and approved it.</p>
        <p>${esc(signOff(show))}</p>`, true);
   }
   if (app && body.decision === "declined" && app.email) {

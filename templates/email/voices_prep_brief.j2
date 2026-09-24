@@ -1,37 +1,32 @@
-{# Mira interview shows — pre-interview brief, emailed to the guest T-1 day
-   (rendered by pipelines/voices/generate_briefs.py with show=...; it also
-   passes closing_question). #}
+{# Mira interview shows — pre-interview brief, emailed to the guest the day
+   before (rendered by pipelines/voices/generate_briefs.py with show=...; it
+   also passes closing_question, when_text and studio_link). #}
 <div style="font-family:system-ui,sans-serif;max-width:640px;margin:0 auto;color:#1a202c;line-height:1.6">
-  <h2 style="color:{{ brand_color }}">Your {{ show_name }} interview — tomorrow</h2>
+  <h2 style="color:{{ brand_color }}">Your {{ show_name }} interview</h2>
   <p>Hi {{ guest_name }},</p>
-  <p>Mira here — well, Mira's producers. Your interview is scheduled for
-  <strong>{{ scheduled_at }}</strong>;
+  <p>Here is what I'm planning to talk about{% if when_text %} when we speak on
+  <strong>{{ when_text }}</strong>{% endif %}. It's just the two of us: I host
+  every interview on my own.</p>
   <p><strong>How to join:</strong> open your personal studio link a few
-  minutes before your slot, from a computer in a quiet room —
-  <a href="{{ studio_url }}">
-  join your interview here</a>. Headphones or AirPods make you sound far
-  better; a dedicated mic is better still. Camera is optional but
-  appreciated (we record video for a future YouTube version). If the
-  browser route fails for any reason, Mira can fall back to calling your
-  phone — just reply to this email.</p>
-  find a quiet spot and let it be a conversation, not a performance.</p>
-  {% if cohost_name %}
-  <p><strong>Who's in the room:</strong> Mira hosts; {{ cohost_name }},
-  the network's founder, sits in as co-host and may chime in with a
-  question or two. You are the guest and the centre of the conversation.</p>
-  {% endif %}
-  <h3>The angle we're excited about</h3>
+  minutes before your slot, from a computer in a quiet room:
+  <a href="{{ studio_link or studio_url }}">join your interview here</a>. Please wear
+  headphones or earbuds; without them your microphone picks up my voice from
+  your speakers. Camera is optional. If the browser gives you any trouble on
+  the day, reply to this email and I can call your phone instead.</p>
+  <h3>The angle I'm excited about</h3>
   <p style="background:#faf5ff;border-left:4px solid {{ brand_color }};padding:.7em 1em">{{ thesis }}</p>
-  <h3>Themes Mira plans to explore</h3>
-  <ul>
+  <h3>Questions I'm likely to ask</h3>
+  <ol>
   {% for q in questions %}
     <li>{{ q.question if q.question is defined else q }}</li>
   {% endfor %}
-  </ul>
-  <p>No prep required — she follows the conversation, not the list. Near the
-  end there's a quick lightning round and one closing question{% if closing_question %}:
-  <em>{{ closing_question }}</em>{% else %}.{% endif %} Worth a minute's thought.</p>
-  <p>Reminders: the call is recorded for the podcast, and <strong>nothing
-  publishes until you've reviewed and approved the transcript</strong>.</p>
+  </ol>
+  <p>No preparation is needed: I follow the conversation, not the list. If
+  anything here is wrong about you or your work, or there is something you
+  would rather not discuss, reply and tell me, and I'll change it before we
+  talk. Near the end there's a short lightning round and one closing
+  question{% if closing_question %}: <em>{{ closing_question }}</em>{% else %}.{% endif %}</p>
+  <p>The conversation is recorded for the podcast, and <strong>nothing
+  publishes until you've reviewed and approved it</strong>.</p>
   <p>{{ sign_off }}</p>
 </div>

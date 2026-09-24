@@ -41,14 +41,21 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from pipelines.voices.common import parse_json_lenient, sb_update  # noqa: E402
+from pipelines.voices.common import parse_json_lenient, sb_select, sb_update  # noqa: E402
 from pipelines.voices.shows import get_show  # noqa: E402
 from pipelines.producer import classify as _classify  # noqa: E402
 
 logger = logging.getLogger("nerra_producer.followup")
 
 PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "followup_reply.txt"
-INTENTS = ("ready_to_book", "question", "later", "decline", "needs_patrick", "auto_reply")
+INTENTS = ("ready_to_book", "booked", "question", "later", "decline", "no_reply_needed",
+           "needs_patrick", "auto_reply")
+# Intents whose reply is not the model's to write. "booked" is answered from
+# the interview row (a date the model cannot know and must not guess);
+# "no_reply_needed" is a thank-you that needs no answer. Sept 2026 digests:
+# publicists confirming a booking and guests saying thanks were a steady
+# third of everything held for Patrick.
+NO_MODEL_REPLY = ("booked", "no_reply_needed", "needs_patrick", "auto_reply")
 MAX_FOLLOWUPS_PER_THREAD = 4
 MIN_CONFIDENCE = 0.7
 MAX_THREAD_MESSAGES = 8
@@ -151,6 +158,8 @@ def validate_followup(obj: Any) -> Dict[str, Any]:
     if not isinstance(summary, str):
         raise FollowupError("summary must be a string")
     reply = (reply or "").strip() or None
+    if intent in NO_MODEL_REPLY:
+        reply = None
     if intent in ("ready_to_book", "question", "later", "decline") and not reply:
         raise FollowupError(f"intent {intent} requires reply_text")
     return {
@@ -218,14 +227,64 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def upcoming_interview(app: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """The guest's next scheduled interview, or None."""
+    if not app.get("id"):
+        return None
+    now = datetime.now(timezone.utc).isoformat()
+    rows = sb_select("interviews",
+                     f"application_id=eq.{app['id']}&status=in.(scheduled,briefed)"
+                     f"&scheduled_at=gt.{now}&select=id,scheduled_at,show"
+                     "&order=scheduled_at.asc&limit=1")
+    return rows[0] if rows else None
+
+
+def _when(iso: str) -> str:
+    try:
+        dt = datetime.fromisoformat(str(iso).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return ""
+    return f"{dt:%A}, {dt:%B} {dt.day}"
+
+
+def booked_reply(app: Dict[str, Any], interview: Dict[str, Any], to_name: str) -> str:
+    """The answer to "we've booked, anything else?", written from the row."""
+    from pipelines.producer.inbox import first_name, guest_first
+    hi = first_name(to_name) or "There"
+    guest = guest_first(app.get("name"))
+    when = _when(interview.get("scheduled_at") or "")
+    addr = app.get("email") or ""
+    lines = [f"Hi {hi},", "",
+             f"Thank you, {guest} is on the calendar{' for ' + when if when else ''}. "
+             f"The booking confirmation with the studio link went to {addr or 'the address used to book'}, "
+             "and a short prep brief follows the day before. Nothing else is needed.",
+             "", "The one thing that makes the biggest difference on the day is headphones "
+             "or earbuds, so Mira's voice does not leak into the microphone."]
+    return normalise_voice("\n".join(lines))
+
+
 def decide_followup(plan: Dict[str, Any], app: Dict[str, Any], *, mode: str,
-                    inbound_auto: bool) -> Dict[str, Any]:
+                    inbound_auto: bool,
+                    upcoming: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Pure: plan + row facts → {action: send|draft|label|skip, reason,
     status_patch}. ``send`` only in auto mode."""
     if mode == "off":
         return {"action": "skip", "reason": "mode=off"}
     if inbound_auto or plan["intent"] == "auto_reply":
         return {"action": "label", "reason": "autoresponder / bounce"}
+    if plan["intent"] == "no_reply_needed" and plan["confidence"] >= MIN_CONFIDENCE:
+        return {"action": "label", "reason": "thank-you; nothing to answer"}
+    if plan["intent"] == "booked":
+        if not upcoming:
+            # Chad Law, Sept 2026: the publicist said he was booked and the
+            # booking had landed on another guest's row. "Booked" with no
+            # interview behind it is exactly the case a person must look at.
+            return {"action": "draft",
+                    "reason": "they say it is booked but no upcoming interview is on file: check the booking matched"}
+        if plan["confidence"] < MIN_CONFIDENCE:
+            return {"action": "draft", "reason": f"confidence {plan['confidence']:.2f} < {MIN_CONFIDENCE:.2f}"}
+        return {"action": "send" if mode == "auto" else "draft",
+                "reason": "intent=booked", "status_patch": {}}
     count = int(app.get("producer_followup_count") or 0)
     if count >= MAX_FOLLOWUPS_PER_THREAD:
         return {"action": "draft", "reason": f"{count} Producer replies already in this thread"}
@@ -257,7 +316,16 @@ def handle_followup(*, thread: Dict[str, Any], inbound: Dict[str, Any],
     plan = ({"intent": "auto_reply", "confidence": 1.0, "reply_text": None,
              "summary": "autoresponder"} if inbound_auto
             else plan_followup(thread, app, own, policy))
-    decision = decide_followup(plan, app, mode=policy.mode, inbound_auto=inbound_auto)
+    upcoming = None
+    if plan["intent"] == "booked" and not dry_run:
+        try:
+            upcoming = upcoming_interview(app)
+        except Exception as exc:  # noqa: BLE001 — unknown means a person checks
+            logger.warning("upcoming-interview lookup failed: %s", exc)
+    elif plan["intent"] == "booked":
+        upcoming = upcoming_interview(app) if os.environ.get("SUPABASE_URL") else None
+    decision = decide_followup(plan, app, mode=policy.mode, inbound_auto=inbound_auto,
+                               upcoming=upcoming)
     line = {
         "thread_id": thread["id"], "kind": "followup", "action": decision["action"],
         "reason": decision["reason"], "intent": plan["intent"],
@@ -273,7 +341,9 @@ def handle_followup(*, thread: Dict[str, Any], inbound: Dict[str, Any],
         references=inbound.get("references", ""),
     )
     body = ""
-    if plan.get("reply_text"):
+    if plan["intent"] == "booked" and upcoming:
+        body = booked_reply(app, upcoming, inbound.get("from_name") or "")
+    elif plan.get("reply_text"):
         body = normalise_voice(plan["reply_text"])
         if plan["intent"] == "ready_to_book":
             body = ensure_booking_link(body, booking_url(app.get("show") or ""))

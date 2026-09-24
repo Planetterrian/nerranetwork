@@ -87,7 +87,7 @@ class TestAKnownGuest:
                record_url="https://nerranetwork.com/age-of-ai/ep5")
         svc, _ = _pitch(grok)
         mime = decode_raw(svc.sent[0])
-        assert "Lena has already been on The Age of AI" in mime
+        assert "Dr. Ortiz has already been on The Age of AI" in mime
         assert "https://nerranetwork.com/age-of-ai/ep5" in mime
         assert "https://cal.com/nerra/age-of-ai" in mime
 
@@ -95,7 +95,7 @@ class TestAKnownGuest:
         _known(db, interview={"status": "scheduled", "scheduled_at": "2099-10-05T20:45:00+00:00"})
         svc, _ = _pitch(grok)
         mime = decode_raw(svc.sent[0])
-        assert "Lena is already booked with Mira for Monday, October 5" in mime
+        assert "Dr. Ortiz is already booked with Mira for Monday, October 5" in mime
 
     def test_a_recorded_guest_waits_for_the_episode(self, db, slack, grok):
         _known(db, interview={"status": "guest_review", "scheduled_at": "2026-09-20T17:00:00+00:00"})
@@ -117,7 +117,7 @@ class TestAKnownGuest:
     def test_a_withdrawn_application_does_not_count(self, db, slack, grok):
         _known(db, status="withdrawn")
         svc, _ = _pitch(grok)
-        assert "application form" in decode_raw(svc.sent[0])
+        assert "I'd like to have Dr. Ortiz on" in decode_raw(svc.sent[0])
         assert len(db.applications) == 2
 
     def test_a_reply_on_the_moved_thread_reaches_the_follow_up_path(self):

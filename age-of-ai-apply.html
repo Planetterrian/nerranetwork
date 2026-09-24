@@ -144,15 +144,6 @@
     <p class="hint">Mira will not push past what you choose here. You can change
     your mind on the day, and you approve the episode before it is published.</p>
 
-    <label for="wants_cohost">Would you like Patrick in the room?</label>
-    <select id="wants_cohost" name="wants_cohost">
-      <option value="no">Just Mira, thanks</option>
-      <option value="yes">Yes, please have Patrick Novak join as co-host</option>
-    </select>
-    <p class="hint">Patrick Novak created the Nerra Network and Mira. Mira hosts
-    every episode herself; Patrick joins as a second voice when a guest asks
-    for him.</p>
-
     <label for="off_limits">Anything off limits? (optional)</label>
     <input id="off_limits" name="off_limits" maxlength="500" placeholder="Subjects, people or numbers you would rather not discuss">
 
@@ -234,7 +225,6 @@ document.getElementById('applyForm').addEventListener('submit', async (e) => {
     depth: val('depth') || null,
     personal_depth: val('personal_depth') || null,
     off_limits: val('off_limits') || null,
-    wants_cohost: val('wants_cohost') === 'yes',
     preferred_window: val('preferred_window'),
     referrer: document.referrer || null,
     show: 'age_of_ai'

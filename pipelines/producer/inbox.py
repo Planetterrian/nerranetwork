@@ -81,6 +81,23 @@ def first_name(full: Optional[str]) -> str:
     return token
 
 
+def guest_first(name: Optional[str]) -> str:
+    """How the mail refers to the guest after the first mention: "Lena",
+    never "Dr." (and the full name when there is nothing better)."""
+    full = (name or "").strip()
+    text = full.split(",")[0].strip()
+    # A doctor or professor keeps the title on second mention, the way a
+    # publicist writing about them would: "Dr. Brandt", not "Michael".
+    title = re.match(r"^(dr|doctor|prof|professor)\.?\s+", text, flags=re.I)
+    text = re.sub(r"^(?:(?:dr|doctor|prof|professor|mr|mrs|ms|mx|sir)\.?\s+)+", "", text, flags=re.I)
+    words = [w for w in text.split() if w.strip(".")]
+    if title and len(words) >= 2:
+        label = "Dr." if title.group(1).lower().startswith("d") else "Professor"
+        return f"{label} {words[-1]}"
+    first = first_name(text)
+    return first if first and first.lower() not in ("your", "the") else (full or "your guest")
+
+
 def invite_context(classification: Dict[str, Any], sender_name: str,
                    policy: Policy) -> Dict[str, Any]:
     show_slug = classification.get("recommended_show") or "nerra_voices"
@@ -95,9 +112,16 @@ def invite_context(classification: Dict[str, Any], sender_name: str,
         "show_slug": show.slug,
         "publicist_first_name": publicist or "There",
         "guest_name": guest,
+        "guest_first": guest_first(guest),
         "show_name": show.name,
         "show_blurb": policy.blurb(show.slug),
         "apply_url": show.apply_url,
+        "page_url": show.page_url,
+        # Sept 24 2026: the invite used to end "reply and I'll send a booking
+        # link". Forty pitched guests were invited that way and chased twice;
+        # none was ever booked. Of those who replied, the link converted.
+        # The link now goes in the first email.
+        "booking_url": _followup.booking_url(show.slug),
         "pitched_show_name": policy.pitched_show_name(classification.get("pitched_show")),
     }
 
@@ -222,17 +246,6 @@ def known_guest(guest_name: Optional[str], thread_id: str) -> Optional[Dict[str,
             "episode_url": episode_url}
 
 
-def inbox_guest_name(name: str) -> str:
-    """The name with any title taken off, so "Dr. Lena Ortiz" is "Lena"
-    on second mention rather than "Dr."."""
-    text = (name or "").strip()
-    while True:
-        stripped = _TITLES.sub("", text)
-        if stripped == text:
-            return text
-        text = stripped
-
-
 NEEDS_LINK = ("applied", "past_guest")
 
 
@@ -246,13 +259,36 @@ def render_known_guest(known: Dict[str, Any], classification: Dict[str, Any],
         since = f"{datetime.fromisoformat(str(app.get('created_at')).replace('Z', '+00:00')):%B}"
     except (TypeError, ValueError):
         pass
-    guest = ctx["guest_name"]
     ctx.update(show_slug=show.slug, show_name=show.name, standing=known["standing"],
-               guest_first=first_name(inbox_guest_name(guest)) or guest,
                episode_url=known.get("episode_url") or "",
                when=_day(iv.get("scheduled_at")), since=since,
                booking_url=_followup.booking_url(show.slug))
     return render_text(KNOWN_TEMPLATE, show.slug, **ctx)
+
+
+# Mail the network sends itself. Every guest email from mira@ is copied to
+# this inbox, and so are the reconciliation reports, so the inbox used to
+# classify its own output as "personal_or_business" and hold it for Patrick:
+# four of the four held items on Sept 22 were ours.
+HOUSE_ADDRESSES = ("mira@nerranetwork.com", "patricknovak1@gmail.com")
+HOUSE_DOMAINS = ("nerranetwork.com",)
+PIPELINE_SUBJECTS = re.compile(
+    r"(episode is ready for your approval|transcript awaits|interview is booked|"
+    r"what mira will ask|interview is coming up|rebook your .* interview|"
+    r"nerra booking reconciliation|nerra producer daily)", re.I)
+
+
+def house_mail(inbound: Dict[str, Any]) -> bool:
+    addr = (inbound.get("from_email") or "").lower()
+    subject = (inbound.get("subject") or "").strip().lower()
+    if subject.startswith(("fwd:", "fw:")):
+        return False          # Patrick forwarding a pitch is a pitch
+    return addr in HOUSE_ADDRESSES or addr.rsplit("@", 1)[-1] in HOUSE_DOMAINS
+
+
+def reply_to_pipeline_mail(thread: Dict[str, Any], inbound: Dict[str, Any]) -> bool:
+    subject = inbound.get("subject") or thread.get("subject") or ""
+    return bool(PIPELINE_SUBJECTS.search(subject))
 
 
 def newest_is_inbound(thread: Dict[str, Any], own_email: str) -> bool:
@@ -387,7 +423,18 @@ def process_thread(thread_id: str, *, gmail: GmailClient, policy: Policy,
                 summary["approved"] = summary.get("approved", 0) + 1
             run.record(line)
             return line
-        if in_db:
+        if not in_db and house_mail(inbound):
+            decision = Decision("label", "our own mail (Mira or Patrick); nothing to answer")
+            classification = {"category": None, "confidence": None}
+        elif not in_db and reply_to_pipeline_mail(thread, inbound):
+            # A guest answering one of Mira's emails (review, reminder,
+            # booking). Not a pitch: no invite, no Grok call, and the hold
+            # note says what it is instead of "personal_or_business".
+            decision = Decision("draft", "guest replied to one of Mira's emails "
+                                f"({(thread.get('subject') or '')[:80]}); read and answer",
+                                notify=True)
+            classification = {"category": "guest_reply_to_mira", "confidence": 1.0}
+        elif in_db:
             classification = {"category": None, "confidence": None}
             decision = decide(classification, policy=policy,
                               sender_email=inbound.get("from_email", ""),

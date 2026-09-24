@@ -172,11 +172,14 @@ that already has an email-sourced `guest_applications` row gets a new
 inbound message after our invite, the inbox job asks Grok (`grok-latest`)
 for an intent and a reply in Patrick's voice, working only from a fixed
 FAQ (`prompts/followup_reply.txt`: format, 45 minutes, browser link, Mira
-is an AI with Patrick as co-host, transcript approval, no fee either way,
+is an AI who hosts every interview on her own, computer browser and
+headphones, transcript approval, no fee either way, no audience figures,
 booking page, time zone). Intents:
 
 | intent | what happens |
 | --- | --- |
+| `booked` | answered from the interview row (date, where the studio link went, headphones), never by the model; with no upcoming interview on file it is held, because that is how a mismatched booking shows up |
+| `no_reply_needed` | a plain thank-you: labelled, not answered, not held |
 | `ready_to_book` | reply carries the show's Cal.com link (`CALCOM_BOOKING_URL[_NERRA_VOICES]`); row → `approved`. The form is skipped: bio, topics and links were already pulled from the pitch at invite time. |
 | `question` | reply from the FAQ |
 | `later` | reply; `chased_at` stamped so the chase job waits a full cycle |
@@ -190,7 +193,22 @@ dashes). `PRODUCER_MODE=draft` drafts instead of sending; `off` does nothing.
 The Cal.com webhook now also matches a booking by `publicist_email`, and
 records the address the guest actually booked with on the row, so a
 publicist booking for their client (or the guest booking themselves) both
-land on the right application.
+land on the right application. When several approved rows share the
+address (a publicist with more than one client), the name on the booking
+or its title picks the row, and a booking that names none of them is
+not guessed (Sept 24 2026: Chad Law's booking landed on John Colascione).
+
+**The invite and the nudges carry the booking link** (Sept 24 2026). The
+first reply used to end "reply and I'll send a booking link"; forty
+invited guests were chased twice that way and none booked. The link, and
+a request to book with the guest's own address, now go in the invite and
+in both chases. Pitches for a guest already on file (matched by name, not
+thread) get `producer_known_guest.j2` instead of the first-contact invite.
+
+**The network's own mail is not a pitch.** Mail from mira@ or Patrick's
+personal address is labelled and left alone; a guest replying to one of
+Mira's emails (review, reminder, booking, brief) is held with that reason
+instead of being classified.
 
 **Chase job** (`pipelines/producer/chase.py`, in `nerra_producer_daily.yml`
 at 01:00 UTC). Invited, email-sourced rows with no reply since our last

@@ -1655,13 +1655,15 @@ class TestPatrickIsTheCreatorAndAnOccasionalCoHost:
     WORKER = (ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")
 
     def test_the_form_asks_and_the_booking_carries_it(self):
+        # Sept 24 2026: Patrick no longer joins interviews. The form stops
+        # offering him and a booking never turns host mode on; the Worker
+        # still reads the field so old applications parse.
         for page in ("age-of-ai-apply.html", "nerra-voices-apply.html"):
             html = (ROOT / page).read_text(encoding="utf-8")
-            assert 'name="wants_cohost"' in html
-            assert "wants_cohost: val('wants_cohost') === 'yes'" in html
+            assert 'name="wants_cohost"' not in html
         assert "wants_cohost: form.wants_cohost === true" in self.WORKER
-        assert self.WORKER.count("host_mode: !!apps[0].wants_cohost") == 2
-        assert "asked for Patrick as co-host" in self.WORKER
+        assert self.WORKER.count("host_mode: false") >= 2
+        assert "host_mode: !!apps[0].wants_cohost" not in self.WORKER
 
     def test_mira_alone_is_the_default(self):
         fire = (V / "fire_interviews.py").read_text(encoding="utf-8")
