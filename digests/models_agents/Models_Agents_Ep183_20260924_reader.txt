@@ -1,0 +1,139 @@
+Selective cross-model collaboration lifts frontier model accuracy from 23.1 percent to 28.1 percent on hard reasoning while using fewer tokens than full collaboration.
+
+This is Models and Agents, episode 183.
+
+COMED introduces a post-anchor controller that accepts confident answers from a single model.
+
+It probes peers only on ambiguous cases and escalates to collaboration when rescue value exceeds harm.
+
+The method decomposes performance into rescued errors versus collaboration-induced harms.
+
+Selective escalation improves results in all sixteen open-weight settings tested.
+
+On MedQA the approach adds up to 10.7 percentage points while invoking fewer models and decoding fewer tokens than dense collaboration.
+
+The controller relies on anchor self-consistency, router margin, and a lightweight peer probe to make the decision.
+
+Five open-weight models were tested on generating kinship terms in Hindi, Tamil, and Korean.
+
+GPT OSS120B selected the correct term in 90.67 percent of valid cells yet produced an accepted term in only 36.00 percent of the same cells.
+
+Llama 3.370B showed 77.92 percent selection accuracy versus 24.24 percent generation accuracy.
+
+Accuracy on explicitly specified L3 prompts ranged from 72.29 percent for GLM-5.1 to 24.24 percent for Llama-3.370B.
+
+A sentence-level dataset of German Federal Constitutional Court decisions was annotated for seven interpretive canons in the Larenz-Savigny tradition.
+
+Four LLMs from three families were evaluated under expert-written prompts and Genetic-Pareto optimized prompts.
+
+Mean F1 across the seven binary subtasks ranged between 70.4 and 79.2.
+
+Grammatical interpretation proved easiest to identify while systematic interpretation proved hardest.
+
+LEGO combines an expert-annotated civil code graph with greedy normative-coverage retrieval and a structured Provision-Fact-Conclusion reasoning format.
+
+With a Qwen3-8B backbone the system reached 40.53 percent exact-match accuracy on LawExamQA_Civil.
+
+It outperformed evaluated RAG and CoT baselines and matched larger models while remaining robust on multi-hop questions.
+
+Ablation studies confirmed complementary contributions from both the GraphRAG and CoT modules.
+
+The framework uses LLMs to measure repeated observable behaviors then trains a classifier on those behaviors for construct-level labels.
+
+On the TalkMoves dataset the best configuration achieved 0.673 macro-F1 and 0.688 Cohen's kappa.
+
+The approach proved competitive with direct prompting while providing mechanistic insight into label decisions.
+
+Two open tools for operationalizing the framework were released.
+
+UniDataAgent separates ontology acquisition from online execution using expert-authored business skills and constrained generation.
+
+Ontology construction for 27 enterprise tables took hours instead of a week.
+
+Report generation dropped from several working days to minutes.
+
+Strict accuracy on real business questions reached 95.0 percent versus 72.5 percent for document RAG.
+
+The system has already been deployed inside an enterprise.
+
+LOCKR uses hidden-state trajectories to detect early lock-in on incorrect answers during iterative denoising.
+
+Across two diffusion models and three mathematical reasoning benchmarks it delivered absolute accuracy gains of 2.21 to 5.37 percentage points.
+
+Repair rates ranged from 22 percent to 41 percent.
+
+Hidden trajectories outperformed surface signals for both detection and repair selection.
+
+PTTS replaces independent sampling with a planner that generates distinct solution outlines for each branch before an executor completes them.
+
+PTTS-ZS improved pass@64 by up to 6.7 points over repeated sampling.
+
+PTTS-RL raised the gain to 13.4 points across five mathematical reasoning benchmarks with Qwen3-1.7B and 4B models.
+
+The method requires no changes to the underlying executor models.
+
+ISAAC contains 527 million English Reddit posts spanning 2007 to 2023 and filtered for six social group distinctions.
+
+A human-audited pipeline kept irrelevant content below 10 percent.
+
+Each post carries region estimates plus validated labels for moralization, sentiment, emotion, and linguistic generalization.
+
+The corpus is accessible via website, SQL playground, Python package, and Hugging Face.
+
+Replacing DCUF evidence with UnifEE evidence raised strict score by 9.61 percentage points on FEVEROUS while answer accuracy rose only 1.96 points.
+
+The evidence-only contribution accounted for 7.92 to 9.08 points when answers were held fixed.
+
+Increasing context from 256 to 2,048 tokens raised the fixed-answer evidence gain by 3.10 to 3.84 points for two 8B models.
+
+UGTPhon provides the first G2P benchmark for user-generated text in English, Vietnamese, and Korean.
+
+Existing models showed canonical-to-non-canonical gaps reaching 66.8 PER points.
+
+A compositional approach using canonical-form lookup and staged decoding reduced non-canonical errors across ByT5 and Qwen2.5-0.5B backbones.
+
+The 0.5B model performed competitively with larger few-shot frontier LLMs.
+
+The task supplied natural-language definitions for 74 previously unseen specific genres in a zero-shot setting.
+
+Thakaa ranked first with 0.7352 hierarchical macro F1.
+
+HoangPhong followed at 0.7169 and NAMAA at 0.7013.
+
+Broad-genre recognition was strong while fine-grained classification showed a substantial gap under linguistic variation.
+
+Recurrent language models keep applying the same blocks across depth, yet most teams still recompute full attention at every step.
+
+Attention support and distributions actually stabilize well before hidden states finish refining, so you pop the hood on WISE.
+
+WISE therefore runs unrestricted global attention only in the early recurrent steps to discover a sparse working set.
+
+It then reuses that block-structured support for the remaining steps while still allowing dynamic within-support attention.
+
+The approach preserves full-attention quality through 2K context with measurable loss only at 4K.
+
+An optimized sparse implementation delivers up to 1.76 times attention speedup at 4K and 1.36 times speedup across a full 32-step trajectory.
+
+Teams facing long recurrent traces should adopt working-set reuse once context exceeds roughly 1K tokens.
+
+Test COMED-style selective escalation on medical or scientific queries using your current router plus a lightweight peer probe to see token savings firsthand.
+
+Run the UGTPhon compositional G2P approach on sample user-generated text in English or Vietnamese to measure the non-canonical error reduction.
+
+Explore the ISAAC corpus SQL playground or Hugging Face release if you analyze social group discourse at scale.
+
+More results from the NADI 2026 multidialectal Arabic speech tasks are expected in the coming weeks.
+
+Additional papers on test-time scaling and hidden-state trajectory repair are likely in the next arXiv cycles.
+
+Further enterprise ontology-agent deployments may surface as UniDataAgent-style systems move beyond pilot use.
+
+Before we go, a fresh round of test-time scaling results is already circulating in preprint form and should land publicly within days.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — Mag Seven Daily, what the seven largest technology companies actually did today, as businesses. Find every show, free, at nerranetwork.com.
+
+Following the long arcs? Story Trackers on nerranetwork.com follow major programs across episodes — Tesla, SpaceX, AI, space science, and more.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
