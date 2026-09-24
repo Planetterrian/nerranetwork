@@ -114,3 +114,125 @@ reviews:
         baseline: "2 of 3 (Ep1-3)"
         expected: ">= 5 of Ep4-10; below that the section's item-mix rule is the lever"
         verdict: pending
+  - date: '2026-09-24'
+    pr: null
+    doc: docs/reviews/ai_chips_review_2026_09_24.md
+    generated_by: grok-4.5
+    summary: After three on-schedule episodes, ai_chips still ships ~950-word scripts against a 1,300 target because digests top out near 1,000 words; Ep2 re-tore-down the same laser news it just read and admitted consumer phone silicon, while chapter starts are fixed and grok-4.7 comma density is a clear hit.
+    scored_prior_predictions:
+    - metric: episodes (first 7) where a news item's main subject is a model/software release rather than hardware, facilities, power, supply chain or policy
+      verdict: partial
+      evidence: No pure model-release leads in Ep1–3; Ep3 AMD/SuperMicro framed around agentic AI CPU needs but stayed on silicon/systems.
+    - metric: same-day stories shared with Models & Agents told without a new hardware or cost fact (read against the sibling block)
+      verdict: partial
+      evidence: Sibling block wired in hooks/ai_chips.py; Ep1–3 scripts show hardware/cost facts on chip stories — full M&A cross-read not in this bundle.
+    - metric: The Teardown re-explains a news item from the same episode
+      verdict: miss
+      evidence: Ep1 CoWoS news+teardown; Ep2 LitLit/Raven/Menhir lasers are both Supply Chain news and Teardown body.
+    - metric: absence sentences per episode (digest + script, before the filter; metric digest_absence_sentences_removed + script_absence_sentences_removed)
+      verdict: hit
+      evidence: Ep2/Ep3 transcripts ship no 'not disclosed/no figures' lines; Ep1 8+8 was baseline before filter.
+    - metric: first chapter startTime (s) on episodes 2-8
+      verdict: hit
+      evidence: chapters_ep002.json and chapters_ep003.json both startTime 3.0 (≤25).
+    - metric: Teardown numbers not traceable to that day's articles (spot check, 3 episodes)
+      verdict: partial
+      evidence: Ep3 figures tied to named sources; Ep2 '$2.4 billion in 2025' ultrafast-laser market line still unanchored in transcript.
+    - metric: podcast_script_word_count median, first 7 episodes
+      verdict: miss
+      evidence: Ep1–3 scripts 953/1011/938 — median 953 vs expected ≥1100; Ep3 digest ~1034 ceiling.
+    - metric: commas per 100 words in the digest on a grok-4.7 episode
+      verdict: hit
+      evidence: Ep3 digest 5.2 commas/100w (script 7.0) on pinned grok-4.7 — already logged hit 2026-09-24.
+    - metric: x.com Sources per episode
+      verdict: partial
+      evidence: Ep3 still 3/14 x.com Sources; Ep3–9 median window incomplete.
+    - metric: dc_items_unlabelled after retry
+      verdict: partial
+      evidence: Lint corrected to site-only + two-site floor; no Ep4–8 yet to score the new behavior (old Ep3 '3' was a false positive).
+    - metric: Data Centres & Power sections with >= 1 site item
+      verdict: miss
+      evidence: Ep3 Data Centres carried zero site items (800 VDC paper, UnifiedBus, wasted-power claim); Ep4–10 window not open but Ep3 already fails the mix rule the prediction named.
+    shipped: []
+    deferred:
+    - Prune x_accounts handles that log No recent posts once live per-account fetch counts exist (carried from 2026-09-22 Ep1 review).
+    - Network-wide absence-sentence filter (precision not proven on other shows).
+    - Enable newsletter / YouTube / X distribution (launch policy — First Principles pattern; operator date, not review).
+    - Dedicated audio theme (still assets/music/ModelsAgents.mp3 per plan §5c).
+    - Re-grade full RSS list with check_feeds.py ai_chips on a runner (carried from scaffold).
+    - Escalate Data Centres site-mix to an explicit operator decision if Ep4–6 still ship zero sites after the prompt mix rule — do not file the same mix proposal a third time.
+    - preferred_domains tightening if x.com Sources median stays >1 after Ep9 window closes.
+    - Any podcast-side length lever (min_podcast_words raise, podcast_expand_below_target, 'write longer' prompt pressure) — meta-review miss class; digest ceiling only.
+    predictions:
+    - metric: podcast_script_word_count median Ep4–10
+      baseline: median 953 (Ep1–3)
+      expected: '>= 1100 IF digest_word_count median rises to >=1250 (digest-side only; else score n/a-lever and escalate format floors)'
+      verdict: pending
+      evidence: null
+    - metric: digest_word_count median Ep4–10
+      baseline: ~1034 (Ep3 ledger)
+      expected: '>= 1250 on >=5/7 after site-mix + expand path verified'
+      verdict: pending
+      evidence: null
+    - metric: Teardown subject overlap with same-ep news items (manual or lint)
+      baseline: 2/3 (Ep1 CoWoS, Ep2 lasers)
+      expected: 0/7 on Ep4–10 after teardown-overlap lint
+      verdict: pending
+      evidence: null
+    - metric: scripts containing consumer handset/smartphone Silicon items (Vivo/iPhone/OriginOS/Snapdragon flagship phone SKUs)
+      baseline: 1/3 (Ep2)
+      expected: 0/7 on Ep4–10 after exclude_title_patterns + digest reject bullet
+      verdict: pending
+      evidence: null
+    - metric: scripts missing required chapter phrases 'take it apart' OR 'on the horizon'
+      baseline: Ep2 missing 'on the horizon'; Ep1 chapters started 343 s pre-fix
+      expected: 0/7 missing either phrase on Ep4–10
+      verdict: pending
+      evidence: null
+    - metric: Teardown first sentence matching shape 'Take it apart and the…'
+      baseline: 2/3 (Ep1–2)
+      expected: 0/7 on Ep4–10 after shape ban + recent-opens memory
+      verdict: pending
+      evidence: null
+    - metric: Data Centres & Power with >=1 site item when fetch had a site-class article
+      baseline: Ep3 = 0 sites in section
+      expected: '>= 5/7 on Ep4–10; if not, operator decision on item-mix (do not re-file same prompt third time)'
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/ai_chips.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Ep2 transcript admitted Vivo X500 Pro/Dimensity 9600 Pro and iPhone 18 Pro Max A20 as Silicon items; existing patterns only block gaming gear, shopping deals, and how-tos. Fetch-side drop is higher-yield than prompt prose alone.
+    - file: shows/prompts/ai_chips_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Selection-layer mirror of the new exclude patterns so the LLM does not re-admit handset copy that slips past RSS titles (Ep2 A20/Vivo).
+    - file: shows/prompts/ai_chips_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Ep3 Data Centres had no site despite the section's job; dc_items_unlabelled correctly ignores non-sites — selection/mix is the lever (ledger 2026-09-24 correction). Digest-side only; supports length via real MW items.
+    - file: shows/prompts/ai_chips_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Second miss on teardown uniqueness in three episodes; name the Ep2 failure shape (vendor re-read) without seeding a new specimen topic the model can elect next.
+    - file: shows/prompts/ai_chips_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: De-seed by shape (2/3 'take it apart and the') with a verbatim ban and no new example sentence; hard-require Horizon phrase after Ep2 dropped it and shipped sentence-debris chapter titles.
+    - file: tests/test_ai_chips_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Every behavioral fix needs a drift-guard; show has launch tests but no quality-pass module yet for Ep2 handset leak, Horizon phrase, or teardown shape ban.
+    - file: engine/digest_lint.py
+      kind: code
+      ab_listen_required: false
+      rationale: Prompt-only teardown uniqueness missed twice (Ep1 CoWoS, Ep2 lasers). Garble/lint class is highest-yield per meta-review; keep show opt-in like absence_sentence_filter.
+    agent_cost_usd: 0.0974
+do_not_retry:
+  - idea: Podcast-side script length levers for ai_chips (word floors, expand-retries, prompt pressure to hit min_podcast_words) — median 953 on 1300 with digest ~1034 is the digest ceiling; network meta-review length category misses generalize FF/FPD do_not_retry here.
+    evidence: flagged 2026-09-24 (Grok review)
+  - idea: Re-proposing dc_items_unlabelled as the fix for 'no sites in Data Centres' — 2026-09-24 ledger already corrected that the old lint false-fired on non-sites; mix/selection is a different lever.
+    evidence: flagged 2026-09-24 (Grok review)
+  - idea: 'Phonetic respellings or programmatic speech-tag / <fast> injection for chip names (landmine #17, 100% regression on custom voice).'
+    evidence: flagged 2026-09-24 (Grok review)
