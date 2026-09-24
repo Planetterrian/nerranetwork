@@ -61,7 +61,7 @@ class TestSourcingFloorOnTheNewsShows:
         # MIT and the Russian show have no LEAD_SECTIONS header — the lint would
         # be a no-op there, so it is not listed (the config stays honest).
         for slug in ("modern_investing", "finansy_prosto", "tesla", "spacex"):
-            assert not _cfg(slug).get("digest_lints"), slug
+            assert "x_only_lead" not in (_cfg(slug).get("digest_lints") or []), slug
         assert "Top News" in LEAD_SECTIONS and "Top Story" in LEAD_SECTIONS
 
     def test_evidence_rung_is_not_on_the_science_shows(self):

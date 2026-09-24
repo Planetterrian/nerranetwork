@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -160,6 +161,62 @@ class TestBlockingLints:
             pytest.skip("committed digest not present")
         fired, _ = run_digest_lints(p.read_text(encoding="utf-8"), ["dose_terms"])
         assert [f.lint for f in fired] == ["dose_terms"]
+
+
+class TestItemsWithoutSourceLint:
+    """Sep 24 2026: PT Ep193 shipped fifteen numbered items and no Source:
+    line; the replay found PT Ep185/186, FF Ep192-195 and Tesla Ep614 had
+    done the same, unnoticed by every gate."""
+
+    OPT_IN = ("planetterrian", "fascinating_frontiers", "tesla", "spacex", "models_agents",
+              "models_agents_beginners", "mag7", "ai_chips", "peptides", "longevity",
+              "prediction_markets", "omni_view", "env_intel")
+    NEVER = ("modern_investing", "finansy_prosto", "privet_russian", "unintended_consequences",
+             "first_principles", "dp_pod", "offshore_north", "age_of_ai")
+
+    def test_registered_and_opted_in(self):
+        from engine.digest_lint import LINTS
+        assert "items_without_source" in LINTS
+        for slug in self.OPT_IN:
+            assert "items_without_source" in (_yaml(slug).get("digest_lints") or []), slug
+        for slug in self.NEVER:
+            assert "items_without_source" not in (_yaml(slug).get("digest_lints") or []), slug
+
+    def test_fires_on_the_committed_pt_ep193_and_not_on_ep192(self):
+        from engine.digest_lint import run_digest_lints
+        for ep, expect in (("193_20260924", True), ("192_20260923", False)):
+            hits = list((ROOT / "digests/planetterrian").glob(f"*_Ep{ep}.md"))
+            if not hits:
+                pytest.skip("committed digest not present")
+            fired, m = run_digest_lints(hits[0].read_text(encoding="utf-8"), ["items_without_source"])
+            assert bool(fired) is expect, (ep, m)
+
+    def test_bold_labels_are_not_items(self):
+        from engine.digest_lint import items_without_source
+        mit = ("### Portfolio\n**Current status:** the book holds three names. Source: none needed\n\n"
+               "**Next review:** Friday.\n\n**Risk note:** the stop sits at 4%.\n")
+        assert items_without_source(mit) == (0, 0)
+        desk = ("### Across the Region\n**A dam closes: Reuters**\nBody. Source: https://r.example/a\n\n"
+                "**A vote passes: BBC**\nBody.\n\n**A strike ends: AFP**\nBody.\n\n"
+                "**A port opens: DW**\nBody.\n")
+        assert items_without_source(desk) == (4, 3)
+
+    def test_replay_is_quiet_on_the_opted_in_shows_recent_digests(self):
+        # Every opted-in show's last 8 committed digests, minus the known
+        # lapses this lint exists to catch.
+        from engine.digest_lint import run_digest_lints
+        known = {"Planetterrian_Daily_Ep185_20260916.md", "Planetterrian_Daily_Ep186_20260917.md",
+                 "Planetterrian_Daily_Ep193_20260924.md", "Tesla_Shorts_Time_Pod_Ep614_20260923.md",
+                 "MAB_Ep176_20260924.md"}
+        import yaml as _y
+        for slug in self.OPT_IN:
+            cfg = _y.safe_load((ROOT / "shows" / f"{slug}.yaml").read_text(encoding="utf-8"))
+            d = ROOT / ((cfg.get("episode") or {}).get("output_dir") or f"digests/{slug}")
+            for p in sorted(x for x in d.glob("*_Ep*.md") if "_reader" not in x.name)[-8:]:
+                if p.name in known or re.search(r"_Ep19[2-5]_202609", p.name) and slug == "fascinating_frontiers":
+                    continue
+                fired, m = run_digest_lints(p.read_text(encoding="utf-8"), ["items_without_source"])
+                assert not fired, (slug, p.name, m)
 
 
 class TestDocs:

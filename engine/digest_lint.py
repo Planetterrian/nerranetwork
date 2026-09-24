@@ -248,6 +248,58 @@ def lint_region_world_thin(digest: str) -> Optional[LintFinding]:
     return LintFinding("region_world_thin", "", metrics)
 
 
+# --- items_without_source (numbered-item shows) ----------------------------
+# Sep 24 2026: Planetterrian Ep193 shipped fifteen numbered items and not one
+# Source: line — every prior episode carried 12-15 — and nothing noticed:
+# the validator counts items, the claims gate saw "covered by item source:
+# 0", the feed's Sources line and the blog's Sources section were empty.
+# A show whose format ends every numbered item on its Source: line opts in.
+
+# A story item opens on ``N. **Title**`` (Tesla, FF, PT, SpaceX) or on a
+# full-line bold headline ``**Title: Outlet**`` (M&A, MAB, MAG 7, AI Chips,
+# the desks, the health weeklies). A bold LABEL followed by prose on the
+# same line (``**Current status:** …`` — MIT's shape) is not an item, which
+# is why the replay over MIT's last twelve digests fires 7/12 under a
+# bold-anything rule and 0/12 under this one. Opt-in per show; the shows
+# whose format legitimately carries no per-item URL (MIT, the Russian
+# shows, the narrative shows) never opt in.
+_NUMBERED_ITEM_RE = re.compile(r"^\s*\d+\.\s*\*\*")
+_HEADLINE_ITEM_RE = re.compile(r"^\s*\*\*[^*]{10,}\*\*\s*$")
+ITEMS_WITHOUT_SOURCE_MIN_ITEMS = 3
+ITEMS_WITHOUT_SOURCE_MIN_SHARE = 0.5
+
+
+def story_items(digest: str) -> List[str]:
+    """Every story-item block in the digest (blank-line separated,
+    continuation paragraphs folded in), across all sections."""
+    out: List[str] = []
+    for _title, body in sections(digest):
+        for block in items(body):
+            head = block.splitlines()[0]
+            if _NUMBERED_ITEM_RE.match(head) or _HEADLINE_ITEM_RE.match(head):
+                out.append(block)
+    return out
+
+
+def items_without_source(digest: str) -> Tuple[int, int]:
+    """``(story items, of which carry no URL at all)``."""
+    blocks = story_items(digest)
+    return len(blocks), sum(1 for b in blocks if not urls_in(b))
+
+
+def lint_items_without_source(digest: str) -> Optional[LintFinding]:
+    total, missing = items_without_source(digest)
+    metrics = {"items_without_source": missing, "items_with_headline": total}
+    if total >= ITEMS_WITHOUT_SOURCE_MIN_ITEMS and missing / total > ITEMS_WITHOUT_SOURCE_MIN_SHARE:
+        return LintFinding(
+            "items_without_source",
+            f"{missing} of {total} story items carry no Source: line — every "
+            "item ends on its own Source: line with the article's exact URL",
+            metrics,
+        )
+    return LintFinding("items_without_source", "", metrics)
+
+
 # --- counterpoint_keyed_to_lead (MAG 7) ----------------------------------
 
 COUNTERPOINT_MIN_SHARED = 2
@@ -430,6 +482,7 @@ LINTS: Dict[str, Callable[[str], Optional[LintFinding]]] = {
     "progress_watch_thin": lint_progress_watch_thin,
     "region_world_thin": lint_region_world_thin,
     "counterpoint_keyed_to_lead": lint_counterpoint_keyed_to_lead,
+    "items_without_source": lint_items_without_source,
     "dc_items_unlabelled": lint_dc_items_unlabelled,
     "evidence_rung": lint_evidence_rung,
     "dose_terms": lint_dose_terms,

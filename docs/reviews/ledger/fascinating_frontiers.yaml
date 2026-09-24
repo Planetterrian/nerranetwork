@@ -832,6 +832,19 @@ reviews:
         baseline: "0-2"
         expected: ">= 4"
         verdict: pending
+  - date: 2026-09-24
+    pr: "PR G (items_without_source lint)"
+    doc: /root/.claude/plans/staged-brewing-hanrahan.md (PR F/G)
+    reviewer: claude-code (replay, same day)
+    summary: >-
+      Ep203 (today) is fine — 15 Source lines, 17 preferred-domain articles in the prompt, claims 2 / 2 verified, show_notes_sources 7 — but the items_without_source replay found Ep192-195 (Sep 13-16) shipped 14-15 numbered items each with no Source: line at all, unnoticed by every gate. Opted in to the lint.
+    shipped:
+      - digest_lints items_without_source
+    predictions:
+      - metric: "episodes with more than half the items source-less after the retry"
+        baseline: "4/12 (Ep192-195)"
+        expected: "0 of the next 10"
+        verdict: pending
 do_not_retry:
   - idea: Phonetic respellings or programmatic speech-tag injection.
     evidence: >-
