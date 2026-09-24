@@ -123,7 +123,9 @@ autoescaping (`inbox.render_text`), unlike the HTML `voices_*.j2` mails.
    planetterrian.com mail lands in; the service account impersonates this
    user) and `GMAIL_SEND_AS` = `patrick@planetterrian.com` (the send-as
    alias used as the From: on every reply, so publicists see the address
-   they wrote to). Both addresses count as "us" when the Producer checks
+   they wrote to; Patrick confirmed Sept 24 2026 that pitch replies stay
+   from his address, signed Patrick, while guest mail after booking comes
+   from Mira). Both addresses count as "us" when the Producer checks
    whether a thread was already answered. The workflow also
    maps the existing `VOICES_SUPABASE_URL`, `VOICES_SUPABASE_SERVICE_KEY`,
    `GROK_API_KEY`, `SLACK_WEBHOOK` (or `NOTIFICATION_WEBHOOK_URL`).
