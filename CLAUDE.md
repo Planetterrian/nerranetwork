@@ -995,6 +995,15 @@ today's work, not just explain yesterday's):
   attempts on a pin, and Progress Watch is exempt from the overlap dedup on
   the six Mira desks. Dashboard `llm_pinned_fallback_share_7d` (baseline
   0.38) is the readout; `tests/test_grok47_resilience_2026_09_24.py`.
+  **Same evening: Top World Ep2 had shipped eleven items and NO Source line**
+  (that 4.3 structural retry cited nothing; the claims gate passed on two
+  claims; the blog's Sources list was empty; the cohort guard went red on
+  main). Repaired FROM THE RECORD by `scripts/backfill_sources_from_desks.py`
+  — each item paired with the same story in the desks' digests of the day or
+  the show's own content tracker (the URLs the run fetched), the named outlet
+  must fit the URL's publisher, a tie is no match, id-only URLs resolve by
+  page title with `--resolve`; never from memory — and `items_without_source`
+  is on the eight Mira cohort shows too (`tests/test_top_world_sources_2026_09_24.py`).
 - **Prediction Markets Daily** (Sep 2026, pre-launch, Patrick) — the
   ecosystem, never a price tape and never a bet. The Board (≤5 markets) is
   one hook ARTICLE per market from `engine/prediction_board.py` (Polymarket

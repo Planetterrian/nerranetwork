@@ -94,3 +94,18 @@ reviews:
         baseline: "0 / 2 (fallback episodes)"
         expected: ">= 8 on 5 of Ep3-9"
         verdict: pending
+  - date: 2026-09-24
+    pr: "PR I (Top World Ep2 source repair; items_without_source on the Mira cohort)"
+    doc: scripts/backfill_sources_from_desks.py
+    reviewer: claude-code (same day, third entry)
+    summary: >-
+      Ep2's published digest carried NO Source line on any of its eleven items — the grok-4.3 structural retry cited nothing, the claims gate passed on two claims, the blog page's Sources list was empty and the launch-cohort guard went red on main (runs 36030842447 / 36035909223 / the #1298 merge). Repaired from the record, never from memory: each item paired with the same story in the desks' digests of the day or in the show's own content tracker (the URLs the run fetched), with the outlet the item names required to fit the URL's publisher and a tie counted as no match; three id-only BBC URLs and the Yonhap URL were resolved by their page titles (the BBC world feed lists the same three ids). 10 of 10 story items sourced (France 24, BBC x3, The Guardian, Bloomberg Government, UNITED24, Yonhap, O Globo, AllAfrica); Both Sides is an analysis beat and stays unsourced. The items_without_source lint (PR G, 13 news shows) now covers the six Mira desks and Top World plus Vancouver and Collingwood, so the next source-less digest rides the one-shot regeneration; replayed over the cohort it fires on Ep2 alone.
+    shipped:
+      - scripts/backfill_sources_from_desks.py (dry-run default; --resolve for id-only URLs)
+      - Ep2 re-sourced 10/10; blog post and summaries regenerated
+      - digest_lints items_without_source on the eight Mira cohort shows
+    predictions:
+      - metric: "published cohort digests with zero Source lines"
+        baseline: "1 (Top World Ep2)"
+        expected: "0 over the next 14 days"
+        verdict: pending
