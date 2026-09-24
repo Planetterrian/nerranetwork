@@ -218,6 +218,13 @@ class ScriptAudit:
     hook_coverage: Optional[float] = None
     entity_retention: Optional[float] = None
     digest_coverage: Optional[float] = None
+    #: Sep 24 2026 — commas per 100 words in the script and the digest. The
+    #: launch-cohort review found the grok-4.3 fallback writing 1.3 commas per
+    #: 100 words (Vancouver Ep1) against 3-8 across the cohort, and the
+    #: transcript proved the voice paused anyway: the number belongs to the
+    #: text, so it is read here, beside the other text instruments.
+    commas_per_100w: Optional[float] = None
+    digest_commas_per_100w: Optional[float] = None
 
     @property
     def hook_orphaned(self) -> bool:
@@ -243,6 +250,10 @@ class ScriptAudit:
             m["script_entity_retention_pct"] = round(100.0 * self.entity_retention, 1)
         if self.digest_coverage is not None:
             m["script_digest_coverage_pct"] = round(100.0 * self.digest_coverage, 1)
+        if self.commas_per_100w is not None:
+            m["script_commas_per_100w"] = round(self.commas_per_100w, 1)
+        if self.digest_commas_per_100w is not None:
+            m["digest_commas_per_100w"] = round(self.digest_commas_per_100w, 1)
         return m
 
     def warnings(self) -> List[str]:
@@ -587,6 +598,16 @@ def entity_retention(script_text: str, digest_text: str) -> Optional[float]:
     return len(ents & have) / len(ents)
 
 
+def commas_per_100_words(text: str) -> Optional[float]:
+    """Commas per 100 words, or None on an empty text. Read-only: a low
+    number on a fallback-model episode is the model's text, never a TTS
+    defect (Vancouver Ep1: 1.3 in the digest, 52 commas in the audio)."""
+    words = len((text or "").split())
+    if not words:
+        return None
+    return 100.0 * (text or "").count(",") / words
+
+
 def audit_script(
     script_text: str,
     *,
@@ -658,6 +679,8 @@ def audit_script(
         hook_coverage=hook_coverage(script_text, hook),
         entity_retention=entity_retention(script_text, digest_text) if digest_text else None,
         digest_coverage=digest_coverage(script_text, digest_text) if digest_text else None,
+        commas_per_100w=commas_per_100_words(script_text),
+        digest_commas_per_100w=commas_per_100_words(digest_text) if digest_text else None,
     )
 
 

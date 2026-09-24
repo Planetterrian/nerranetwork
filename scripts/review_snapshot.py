@@ -327,8 +327,10 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
                      "(a paraphrase that swaps names for descriptions drops it).")
         lines.append("coverage = share of the digest's sentences the script tells in any wording "
                      "(a script that copies scores ~90%; one that drops stories scores under 55%).")
-        lines.append("| ep | sentences | digest-verbatim | coverage | copied sections | facts×2 | filler | hook restated | hook cov | names kept |")
-        lines.append("|---|---|---|---|---|---|---|---|---|---|")
+        lines.append("commas = commas per 100 words in the script / the digest (a fallback-model "
+                     "episode reads 1-2; the cohort's grok-4.7 episodes 5-8; the voice pauses either way).")
+        lines.append("| ep | sentences | digest-verbatim | coverage | copied sections | facts×2 | filler | hook restated | hook cov | names kept | commas |")
+        lines.append("|---|---|---|---|---|---|---|---|---|---|---|")
         for num, path in tts_files:
             script_text = path.read_text(encoding="utf-8", errors="replace")
             digest_path = path.with_name(path.name.replace("_tts.txt", ".md"))
@@ -346,8 +348,10 @@ def build_snapshot(slug: str, episodes: int = 10) -> str:
             cov = "n/a" if a.hook_coverage is None else f"{100 * a.hook_coverage:.0f}%"
             ents = "n/a" if a.entity_retention is None else f"{100 * a.entity_retention:.0f}%"
             dcov = "n/a" if a.digest_coverage is None else f"{100 * a.digest_coverage:.0f}%"
+            _c = "n/a" if a.commas_per_100w is None else f"{a.commas_per_100w:.1f}"
+            _dc = "n/a" if a.digest_commas_per_100w is None else f"{a.digest_commas_per_100w:.1f}"
             lines.append(f"| ep{num} | {a.sentences} | {ovl} | {dcov} | {secs} | {a.repeated_facts} | "
-                         f"{a.filler_pct:.0f}% | {a.hook_restated} | {cov} | {ents}{flag} |")
+                         f"{a.filler_pct:.0f}% | {a.hook_restated} | {cov} | {ents} | {_c} / {_dc}{flag} |")
         lines.append("")
 
     # --- Fetch-filter leakage (July 18 2026 network meta-review) ---

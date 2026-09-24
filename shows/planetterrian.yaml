@@ -1,4 +1,23 @@
 name: Planetterrian Daily
+
+# --- Network sourcing pass (Sep 24 2026): the launch cohort's sourcing floor,
+# ported to every news show. Full article text under each headline (the digest
+# prompt saw headline + teaser only until now), primary publishers marked
+# [preferred primary source], X posts ranked after every article where set,
+# and the X-only-lead lint riding the one-shot structural regeneration.
+fetch_full_text: 12
+x_posts_as_sources: secondary
+digest_lints:
+- x_only_lead
+preferred_domains:
+- nature.com
+- science.org
+- thelancet.com
+- nejm.org
+- pubmed.ncbi.nlm.nih.gov
+- cell.com
+- pnas.org
+- bmj.com
 slug: planetterrian
 weekly_summary_segment: true   # July 2026: daily cadence; Sunday episode includes a short "week in review" segment (content lake).
 memory_enabled: true           # Phase 3: recursive narrative memory (programs in engine/show_memory.py). Flip to false to disable.
@@ -39,7 +58,7 @@ sources:
   # Google News — supplementary broad coverage
   - url: "https://news.google.com/rss/search?q=longevity+anti-aging+science+when%3A1d&hl=en-US&gl=US&ceid=US:en"
     label: Google News Longevity
-  - url: "https://news.google.com/rss/search?q=biotechnology+gene+therapy+breakthrough+when%3A1d&hl=en-US&gl=US&ceid=US:en"
+  - url: "https://news.google.com/rss/search?q=biotechnology+OR+%22gene+therapy%22+when%3A2d&hl=en-US&gl=US&ceid=US:en"
     label: Google News Biotech
   - url: "https://news.google.com/rss/search?q=medical+science+breakthrough+discovery+when%3A1d&hl=en-US&gl=US&ceid=US:en"
     label: Google News Medical Science

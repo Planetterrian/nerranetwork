@@ -1,4 +1,21 @@
 name: Omni View
+
+# --- Network sourcing pass (Sep 24 2026): the launch cohort's sourcing floor,
+# ported to every news show. Full article text under each headline (the digest
+# prompt saw headline + teaser only until now), primary publishers marked
+# [preferred primary source], X posts ranked after every article where set,
+# and the X-only-lead lint riding the one-shot structural regeneration.
+fetch_full_text: 12
+x_posts_as_sources: secondary
+digest_lints:
+- x_only_lead
+preferred_domains:
+- reuters.com
+- apnews.com
+- bbc.com
+- aljazeera.com
+- france24.com
+- dw.com
 slug: omni_view
 memory_enabled: true   # Aug 2026 expansion: narrative memory (regulatory arcs / world-news arcs) — see engine/show_memory.py.
 weekly_summary_segment: true   # July 2026: daily cadence; Sunday episode includes a short "week in review" segment (content lake).
@@ -36,7 +53,7 @@ sources:
   label: RealClearPolitics
 - url: https://feeds.bloomberg.com/markets/news.rss
   label: Bloomberg
-- url: https://www.cnbc.com/id/100003114/device/rss/rss.html
+- url: https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114
   label: CNBC
 - url: https://www.wired.com/feed/rss
   label: Wired

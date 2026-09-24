@@ -727,6 +727,48 @@ reviews:
       ab_listen_required: false
       rationale: Every behavioral fix gets a drift-guard per playbook; pins Sep-4 chapter marker wins and the new discipline so a later edit cannot silently drop them.
     agent_cost_usd: 0.1507
+
+  - date: 2026-09-24
+
+    pr: "network sourcing pass (the launch cohort's sourcing floor on every news show)"
+
+    doc: docs/experiments.yaml (network-sourcing-pass-2026-09-24)
+
+    reviewer: claude-code (network pass after the launch-cohort readouts)
+
+    summary: >-
+
+      Full text on 12 articles; arXiv and the labs' own newsrooms preferred; X posts ranked after every article (11 of 63 sources were x.com; the X-only-lead lint fired on 1 of the last 6 digests in replay); Sources line in the show notes.
+
+    shipped:
+
+      - fetch_full_text 12
+
+      - preferred_domains
+
+      - x_posts_as_sources secondary
+
+      - digest_lints x_only_lead
+
+      - show-notes Sources line
+
+    predictions:
+
+      - metric: "source_integrity_claims median"
+
+        baseline: "0-2"
+
+        expected: ">= 4"
+
+        verdict: pending
+
+      - metric: "sources on x.com per episode"
+
+        baseline: "11/63 (~2 per episode)"
+
+        expected: "<= 1 median"
+
+        verdict: pending
 do_not_retry:
   - idea: De-seed or rotate the 'Before we go' Tomorrow Teaser opener — Sep-4 closed it as a brand chapter anchor (same class as Tesla/SpaceX); residual keep-an-eye is already cleared
     evidence: flagged 2026-09-08 (Grok review)

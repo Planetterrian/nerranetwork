@@ -234,6 +234,23 @@ reviews:
       ab_listen_required: false
       rationale: ep119 is post-pattern-widen and still has no Closing chapter; guessing more regex synonyms is how this file accreted. Verify the path first (code/config diagnosis, not audio change).
     agent_cost_usd: 0.1045
+  - date: 2026-09-24
+    pr: "network sourcing pass (the launch cohort's sourcing floor on every news show)"
+    doc: docs/experiments.yaml (network-sourcing-pass-2026-09-24)
+    reviewer: claude-code (network pass after the launch-cohort readouts)
+    summary: >-
+      Full text on 10 articles; labs' newsrooms preferred; X posts secondary; X-only-lead lint; Sources line.
+    shipped:
+      - fetch_full_text 10
+      - preferred_domains
+      - x_posts_as_sources secondary
+      - digest_lints x_only_lead
+      - show-notes Sources line
+    predictions:
+      - metric: "source_integrity_claims median"
+        baseline: "0"
+        expected: ">= 3"
+        verdict: pending
 do_not_retry:
   - idea: phonetic respellings / programmatic speech-tag injection on the custom voice
     evidence: landmine #17 — 100% regression rate; reverted May 11 2026. (Note this pass did NOT add any; it recommends REMOVING the stale MAB hook respellings.)

@@ -1141,4 +1141,24 @@ reviews:
       evidence: null
     agent_cost_usd: null
 
+  - date: 2026-09-24
+    pr: "network sourcing pass (the launch cohort's sourcing floor on every news show)"
+    doc: docs/experiments.yaml (network-sourcing-pass-2026-09-24)
+    reviewer: claude-code (network pass after the launch-cohort readouts)
+    summary: >-
+      Full text on 12 articles; SEC / SEDAR+ / Bank of Canada / Fed / OSC / Reuters / Bloomberg preferred; X posts ranked after every article (16 of the last 22 sources were x.com — the network's highest share); Sources line. No lint: MIT has no lead-section header.
+    shipped:
+      - fetch_full_text 12
+      - preferred_domains
+      - x_posts_as_sources secondary
+      - show-notes Sources line
+    predictions:
+      - metric: "sources on x.com per episode"
+        baseline: "16/22 (73%)"
+        expected: "<= 40%"
+        verdict: pending
+      - metric: "source_integrity_claims median"
+        baseline: "0"
+        expected: ">= 3"
+        verdict: pending
 do_not_retry: []
