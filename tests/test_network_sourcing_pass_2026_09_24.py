@@ -138,11 +138,17 @@ class TestSourcesLineInShowNotes:
         assert 'metrics.record("show_notes_sources"' in src[i:j]
 
     def test_the_committed_digests_would_carry_one(self):
+        # The property is "the digest cites sources, so the feed gets a line"
+        # — counted in SOURCES, not domains: M&A Ep183 (2026-09-24) cited
+        # twelve arXiv papers and the line rightly collapsed to one domain.
+        from engine.blog import _extract_source_urls
         from engine.show_notes import source_pairs
         for slug, d in (("spacex", "spacex"), ("models_agents", "models_agents"),
                         ("omni_view_africa_mideast", "omni_view_africa_mideast")):
             latest = sorted(p for p in (ROOT / "digests" / d).glob("*_Ep*.md") if "_reader" not in p.name)[-1]
-            assert len(source_pairs(latest.read_text(encoding="utf-8"))) >= 3, slug
+            text = latest.read_text(encoding="utf-8")
+            assert len(_extract_source_urls(text)) >= 3, slug
+            assert len(source_pairs(text)) >= 1, slug
 
 
 class TestCommaDensityInstrument:
