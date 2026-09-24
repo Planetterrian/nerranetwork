@@ -292,12 +292,25 @@
       form.hidden = true;
       confirmEl.classList.add("is-visible");
       say("", "");
+      // Soft Personal north-star event — distinct from newsletter_signup /
+      // gallery subscribe / join CTA. Soft path must never report as
+      // newsletter_signup (conflates Soft with newsletter in GA4).
       if (typeof window.gtag === "function") {
-        window.gtag("event", "newsletter_signup", {
-          list: list,
-          source: SOURCE || "direct",
-          campaign: "personal-interest"
-        });
+        if (interested) {
+          window.gtag("event", "soft_personal_interest_submit", {
+            form_id: "personal-interest",
+            page_path: "/personal-interest.html",
+            list: list,
+            source: SOURCE || "direct"
+          });
+        } else {
+          // Newsletter-only path (Soft interest unchecked on this page).
+          window.gtag("event", "newsletter_signup", {
+            list: list,
+            source: SOURCE || "direct",
+            campaign: "personal-interest"
+          });
+        }
       }
     }).catch(function () {
       submitBtn.disabled = false;

@@ -160,6 +160,15 @@ is not SoT.
   join soft-interest band, site footer Personal line.
 - Client: `POST https://api.nerranetwork.com/api/subscribe`
   `list: "personal-interest"`, `newsletter: true` when the box is on.
+- On successful Soft interest submit the page fires GA4 event
+  **`soft_personal_interest_submit`** (measurement ID `G-6PWJCVQQ7B`) —
+  never `newsletter_signup`. Soft must stay separate from newsletter /
+  gallery / join CTA events. Optional params: `form_id`, `page_path`,
+  `list`, `source`. Fetched nightly via `ENGAGEMENT_EVENTS` →
+  `api/ga4_stats.json` `site_events` → `funnel.visits.soft_personal_submits`.
+- **Ops (GA4 Admin, out of repo):** mark `soft_personal_interest_submit`
+  as a **key event** for property `G-6PWJCVQQ7B` after merge, or Soft
+  does not appear in Key events reports.
 - On Buttondown / Worker failure the page shows Brand fail copy and does
   not invent keys or charge anything.
 
