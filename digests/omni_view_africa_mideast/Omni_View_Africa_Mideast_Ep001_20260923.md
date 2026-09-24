@@ -16,21 +16,21 @@ Omni View Africa & Middle East is part of the Nerra Network, an independent, ad-
 
 ### Lead
 **11 killed in mass shooting near Durban, South Africa: BBC News Africa**
-Gunmen stormed a house in the KwaMakhutha township, near the South African city of Durban, late on Tuesday and opened fire on 14 people. At least 11 people were killed in that residential building. For the people inside that house, the attack is the day’s hardest counted loss. Source: [x.com](https://x.com/BBCAfrica/status/2102729744491950571)
+Gunmen stormed a house in the KwaMakhutha township, near the South African city of Durban, late on Tuesday and opened fire on 14 people. At least 11 people were killed in that residential building. For the people inside that house, the attack is the day’s hardest counted loss. Source: [bbc.com](https://www.bbc.com/news/articles/crgjqxzl097eo)
 
 ### Across the Region
 **South African police officer charged with sexual offences: BBC News Africa**
-Lieutenant General Shadrack Sibiya, one of South Africa’s highest-ranking police officers, has been charged with sexual offences. He made a brief appearance at a court north-west of Johannesburg. Source: [x.com](https://x.com/BBCAfrica/status/2102738015080558665)
+Lieutenant General Shadrack Sibiya, one of South Africa’s highest-ranking police officers, has been charged with sexual offences. He made a brief appearance at a court north-west of Johannesburg. Source: [bbc.com](https://www.bbc.com/news/articles/cwjdvgx77n0zo)
 
 **Al-Sharaa condemns Israel’s attacks on Syria, calls for 1974 agreement commitment: Al Jazeera English**
-Syria’s President Ahmed al-Sharaa opened his UN General Assembly speech by praising what he called Syria’s “breakthrough” over the past year. He said the country had transformed “from a crisis to an opportunity” under his leadership, which is his account of the year, not an independent finding. He condemned Israel’s attacks on Syria and called for a commitment to the 1974 agreement. Source: [x.com](https://x.com/AJEnglish/status/2102758391974375817)
+Syria’s President Ahmed al-Sharaa opened his UN General Assembly speech by praising what he called Syria’s “breakthrough” over the past year. He said the country had transformed “from a crisis to an opportunity” under his leadership, which is his account of the year, not an independent finding. He condemned Israel’s attacks on Syria and called for a commitment to the 1974 agreement. Source: [aljazeera.com](https://www.aljazeera.com/news/liveblog/2026/9/23/un-general-assembly-live-irans-pezeshkian-ukraines-zelenskyy-to-speak)
 
 **French FM Calls for Palestinians to Hold Polls: Arab News**
 France’s foreign minister has called for Palestinians to hold polls. Source: [x.com](https://x.com/arabnews/status/2102758481325359126)
 
 ### The Region and the World
 **UK reviewing Chagos Islands deal after Trump criticism: BBC News Africa**
-Mauritius’s agreed handover of the Chagos Islands is no longer being treated in London as settled. The UK is reviewing its deal to hand the islands to Mauritius. Defence secretary Wes Streeting confirmed the deal was being looked at after US President Donald Trump called it “terrible” at the UN General Assembly on Tuesday. Source: [x.com](https://x.com/BBCAfrica/status/2102753124389646503)
+Mauritius’s agreed handover of the Chagos Islands is no longer being treated in London as settled. The UK is reviewing its deal to hand the islands to Mauritius. Defence secretary Wes Streeting confirmed the deal was being looked at after US President Donald Trump called it “terrible” at the UN General Assembly on Tuesday. Source: [bbc.com](https://www.bbc.com/news/articles/ck3wjy3pdwdno)
 
 ### Both Sides: The Chagos transfer
 What is being decided is whether the UK goes ahead with its deal to hand the Chagos Islands to Mauritius. Defence secretary Wes Streeting has confirmed the deal is being looked at. BBC News Africa reported that the review follows US President Donald Trump, who at the UN General Assembly on Tuesday called the deal “terrible”.
@@ -43,4 +43,4 @@ The fact the criticism and the review share is that a deal exists to hand the is
 
 ### Progress Watch
 **150 Women Graduate from Syria's New Police Academy: Arab News**
-Some 150 women have graduated from Syria’s new police academy in Al-Tal, north of Damascus. That is a completed first cohort, not a pledge of future recruitment. Source: [x.com](https://x.com/arabnews/status/2102758374450643001)
+Some 150 women have graduated from Syria’s new police academy in Al-Tal, north of Damascus. That is a completed first cohort, not a pledge of future recruitment. Source: [arabnews.com](https://www.arabnews.com/middle-east/first-cohort-of-syrian-policewomen-graduate-from-new-academy-3002728)

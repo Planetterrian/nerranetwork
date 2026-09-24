@@ -8,10 +8,10 @@ A peptide is a short chain of amino acids. The term now appears in contexts that
 
 ### The Week in Peptides
 **Phase 3 Results for Next-Generation Diabetes and Obesity Medicine: Novo Nordisk**
-A randomized phase 3 trial tested an investigational amylin peptide candidate in adults with obesity or diabetes. The company stated the results move the program closer to potential human use. The findings remain at the phase 3 randomized human trial level. Source: [x.com](https://x.com/novonordisk/status/2101981896657748128)
+A randomized phase 3 trial tested an investigational amylin peptide candidate in adults with obesity or diabetes. The company stated the results move the program closer to potential human use. The findings remain at the phase 3 randomized human trial level. Source: [novonordisk.com](https://www.novonordisk.com/news-and-media/news-and-ir-materials/news-details.html?id=916774)
 
 **Oral semaglutide ineffective for mild Alzheimer's in EVOKE trials: The Lancet**
-Two randomized human trials examined oral semaglutide, a GLP-1 peptide, in patients with mild Alzheimer’s disease. Neither trial showed slowing of disease progression. The result is a negative finding from phase 3 randomized trials. Source: [x.com](https://x.com/TheLancet/status/2102066577327730736)
+Two randomized human trials examined oral semaglutide, a GLP-1 peptide, in patients with mild Alzheimer’s disease. Neither trial showed slowing of disease progression. The result is a negative finding from phase 3 randomized trials. Source: [thelancet.com](https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(26)00459-9/fulltext)
 
 **Altered gastrointestinal function and neurotensin signaling in experimental type 2 diabetes: Peptides (journal)**
 An animal study measured neurotensin signaling and gut function in a rodent model of type 2 diabetes. The work is at the experimental animal level. Source: [sciencedirect.com](https://www.sciencedirect.com/science/article/pii/S0196978126000458?dgcid=rss_sd_all)

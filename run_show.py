@@ -1484,6 +1484,23 @@ def run(args: argparse.Namespace) -> None:
         # cap, then restore chronological order for the LLM prompt.  Prompt order
         # influences the model's output format — reordering articles can cause the
         # LLM to break the structured digest template (headings, numbered items).
+        # Launch-cohort follow-up (Sep 23 2026): a show's preferred primary
+        # publishers (config.preferred_domains — regulators, courts, journals,
+        # the city's own newsroom) get a relevance bonus so they survive the
+        # cap below, and their listing carries a tag the digest prompt can
+        # lean on for lead claims. Empty list = byte-identical.
+        try:
+            from engine.preferred_sources import mark_preferred_articles
+            _n_pref = mark_preferred_articles(
+                articles, getattr(config, "preferred_domains", None) or []
+            )
+            if _n_pref:
+                # Consumer: scripts/review_snapshot.py + the per-show ledger
+                # predictions on the x.com source share.
+                metrics.record("articles_preferred_in_prompt", _n_pref)
+        except Exception as _pref_exc:  # noqa: BLE001 — never block a run
+            logger.warning("preferred_domains marking failed (non-fatal): %s", _pref_exc)
+
         articles.sort(
             key=lambda a: (a.get("relevance_score", 0.0), a.get("published_date", "")),
             reverse=True,
@@ -1647,6 +1664,7 @@ def run(args: argparse.Namespace) -> None:
             full_text_block = render_full_text_block(art)
             news_lines.append(
                 f"{i}. **{title}** — {source}"
+                + (" [preferred primary source]" if art.get("preferred_source") else "")
                 + (f" ({pub})" if pub else "")
                 + f"\n   {desc}\n   URL: {url}"
                 + (("\n" + full_text_block) if full_text_block else "")
