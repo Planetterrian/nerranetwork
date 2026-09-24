@@ -529,4 +529,21 @@ reviews:
         expected: "<= 1 median — full text feeds the fetched-copy check"
 
         verdict: pending
+  - date: 2026-09-24
+    pr: "PR G (items_without_source lint; first post-sourcing-pass slate read)"
+    doc: /root/.claude/plans/staged-brewing-hanrahan.md (PR F/G)
+    reviewer: claude-code (Ep193 read, same day)
+    summary: >-
+      Ep193 (07:16 UTC on the minute; combined generation on grok-4.3; 12 of 12 selected articles carried full text; claims 3 / 1 verified, 2 unreachable, strip removed 2 sentences) shipped fifteen numbered items and NOT ONE Source: line — every prior episode carried 12-15. The model wrote "**Title** — Outlet" and stopped. Nothing noticed: the validator counts items, the claims gate saw covered-by-item-source 0, the feed's new Sources line and the blog's Sources section were empty. The replay says it is not new and not the sourcing pass's doing: Ep185 and Ep186 (Sep 16-17) shipped 15/15 source-less items too, as did FF Ep192-195 and Tesla Ep614. The structural regeneration is the right lever (a lint, one retry), not a prompt sentence the model already ignores.
+    shipped:
+      - digest_lints items_without_source (engine/digest_lint.py; opt-in on 13 news shows) — a digest whose story items are more than half source-less rides the one-shot structural regeneration
+    predictions:
+      - metric: "episodes with items_without_source > half of items after the retry"
+        baseline: "3/12 (Ep185, 186, 193)"
+        expected: "0 of the next 10; digest_lints_fired names it when the first draft lapses"
+        verdict: pending
+      - metric: "show_notes_sources on the feed item"
+        baseline: "0 (Ep193)"
+        expected: ">= 5 on 10/10"
+        verdict: pending
 do_not_retry: []

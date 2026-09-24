@@ -217,7 +217,10 @@ class TestXSourcePolicy:
         # primary sources, so they stay on the legacy policy with no lint.
         for slug in ("tesla", "spacex"):
             data = yaml.safe_load((ROOT / "shows" / f"{slug}.yaml").read_text(encoding="utf-8"))
-            assert "x_posts_as_sources" not in data and "digest_lints" not in data, slug
+            assert "x_posts_as_sources" not in data, slug
+            # The only lint they carry is items_without_source (PR G, Sep 24):
+            # a sourcing-shape check, not a policy on whose posts count.
+            assert set(data.get("digest_lints") or []) <= {"items_without_source"}, slug
         for slug in ("omni_view", "models_agents"):
             data = yaml.safe_load((ROOT / "shows" / f"{slug}.yaml").read_text(encoding="utf-8"))
             assert data["x_posts_as_sources"] == "secondary", slug
@@ -257,7 +260,8 @@ class TestSmallFixes:
         assert cfg.x_posts_as_sources == "linked_only"
         assert "Burnaby" in cfg.region_allowlist
         tesla = load_config(ROOT / "shows" / "tesla.yaml")
-        assert tesla.digest_lints == [] and tesla.x_posts_as_sources == "any" and tesla.region_allowlist == []
+        assert tesla.digest_lints == ["items_without_source"]  # PR G, Sep 24 2026
+        assert tesla.x_posts_as_sources == "any" and tesla.region_allowlist == []
 
     def test_run_show_is_wired(self):
         src = (ROOT / "run_show.py").read_text(encoding="utf-8")
