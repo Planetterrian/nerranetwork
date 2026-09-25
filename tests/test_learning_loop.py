@@ -705,8 +705,8 @@ class TestAudioRestoration:
         src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
         assert "channelsplit=channel_layout=stereo[l][r]" in src
         # Sept 14 2026: each side can also carry a voice-match filter.
-        assert "[l]{side}{left_extra}[lg];[r]{side}{right_extra}[rg]" in src
-        i_side = src.index("[l]{side}")
+        assert "{left_extra}[lg];" in src and "{right_extra}[rg];" in src
+        i_side = src.index("[l]{SIDE_CHAIN.format(")
         i_mix = src.index("amix=inputs=2:normalize=0", i_side)
         assert i_side < i_mix, "levelling after the fold is levelling a mixture"
 
@@ -807,9 +807,11 @@ class TestNarrationIsNotLevelled:
 
     def test_conversation_still_gets_it(self):
         src = (ROOT / "pipelines" / "voices" / "assemble_edit.py").read_text(encoding="utf-8")
-        assert "chain.append(NARRATION_GENTLE if narration else GENTLE)" in src
-        gentle = src[src.index("GENTLE = ("):src.index("LOUDNESS =")]
-        assert "dynaudnorm" in gentle
+        assert "chain.append(NARRATION_GENTLE)" in src
+        assert "chain.append(GENTLE.format(gain=_speech_gain(" in src
+        # Levelled with a fixed gain, never per frame (Sept 25 2026).
+        gentle = src[src.index("GENTLE = "):src.index("LOUDNESS =")]
+        assert "dynaudnorm" not in gentle
 
 
 class TestNarrationHissIsRemovedAtSource:

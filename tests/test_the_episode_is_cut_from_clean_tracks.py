@@ -109,9 +109,14 @@ class TestTheFold:
 
     def test_a_silent_track_is_not_levelled_up_into_hiss(self):
         # A per-speaker track is silence for most of an episode, and
-        # dynaudnorm will bring silence up: measured, room tone at -58 dBFS
-        # arrives at -37.2 without the threshold.
-        assert 'CLEAN_SIDE = SIDE_CHAIN + ":t=0.01"' in ASSEMBLE
+        # dynaudnorm brought silence up (-58 dBFS room tone arrived at -37.2);
+        # its threshold fix then faded every sentence out (Sept 25 2026). A
+        # fixed gain measured on the SPEECH lifts neither: the silence keeps
+        # its natural distance under the voice.
+        levelling = ASSEMBLE[ASSEMBLE.index("SIDE_CHAIN ="):ASSEMBLE.index("BALANCE_GLUE =")]
+        assert "dynaudnorm" not in levelling.split("#")[0]
+        assert "CLEAN_SIDE = SIDE_CHAIN" in ASSEMBLE
+        assert "speech = db[db > loud - 25.0]" in ASSEMBLE
         # The stereo path keeps the behaviour it was proven with.
         body = _pyfn("_piece", ASSEMBLE)
         assert "SIDE_CHAIN.format(" in body

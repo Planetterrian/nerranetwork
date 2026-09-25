@@ -67,9 +67,28 @@ from common import (  # noqa: E402
 from shows import get_show  # noqa: E402
 
 EDL_DIR = Path(__file__).parent / "edl"
-GENTLE = ("highpass=f=60,"
-          "acompressor=threshold=-21dB:ratio=3:attack=20:release=250,"
-          "dynaudnorm=f=250:g=15")
+# Sept 25 2026. Every sentence faded out. Patrick heard it on Dr. Michael
+# Brandt and Chad Law, on the guest and on Mira alike: the last words of
+# every question and every answer sank away as though someone were pulling a
+# fader down. It was ours. Each speaker was levelled with dynaudnorm over a
+# 1.8-second window, and with a silence threshold on it (t=0.01, added so the
+# pauses were not lifted) every quiet frame after a sentence was held at
+# unity gain while the speech before it was lifted by up to 21 dB, and the
+# smoothing between the two is a ramp across the last half second of every
+# phrase. Measured on the same eight minutes of Chad's microphone: the tail of
+# a phrase sat 0.8 dB under its body going in and 5.6 dB under coming out;
+# Mira went from 5.7 to 11.1. A fade on every sentence, and on the first
+# syllable of every sentence a fade-in nobody noticed.
+#
+# Levelling a voice does not need a gain that moves with every breath. Each
+# speaker is now measured once over the cut (the median of their speech, not
+# of their silence), brought to one level with a fixed gain, and a gentle
+# compressor handles the rest. A phrase ends at the level it was spoken at.
+SPEECH_TARGET_DB = -20.0
+SPEECH_GAIN_LIMITS = (-12.0, 24.0)
+LEVEL = ("volume={gain:.1f}dB,"
+         "acompressor=threshold=-26dB:ratio=2.5:attack=15:release=200")
+GENTLE = "highpass=f=60," + LEVEL
 LOUDNESS = "loudnorm=I=-16:TP=-1.5:LRA=11"
 # Narration does not get dynaudnorm. Mira's takes already arrive at one
 # level, and Sept 13 2026 measured what levelling them costs: her intro came
@@ -139,7 +158,7 @@ NARRATION_RESTORE = "adeclick=w=75:t=2,afftdn=nf=-45:nr=12,anlmdn=s=0.0005:p=0.0
 # tape the guest sat 6 dB over the host and Mira. Levelling each SIDE before
 # folding fixes that; levelling after the fold cannot, because by then it is
 # one signal. "balance" on a cut turns this on.
-SIDE_CHAIN = ("highpass=f=70,{restore},dynaudnorm=f=200:g=9:p=0.9:m=12")
+SIDE_CHAIN = "highpass=f=70,{restore}," + LEVEL
 # The same chain for a single speaker's own track, with one addition. On the
 # stereo path each side always has somebody on it, so levelling every frame is
 # harmless. A per-speaker track is silence for most of the episode — the
@@ -150,7 +169,10 @@ SIDE_CHAIN = ("highpass=f=70,{restore},dynaudnorm=f=200:g=9:p=0.9:m=12")
 # conversation. The threshold leaves any frame peaking under -40 dBFS at the
 # level it arrived: the same tone comes out at -58.9, and speech pays 1.4 dB,
 # which the master loudnorm takes back.
-CLEAN_SIDE = SIDE_CHAIN + ":t=0.01"
+# (Sept 25 2026: the fixed gain below replaced the per-frame levelling this
+# paragraph describes; a fixed gain lifts silence and speech alike, so the
+# room tone keeps its natural distance under the voice.)
+CLEAN_SIDE = SIDE_CHAIN
 BALANCE_GLUE = "acompressor=threshold=-20dB:ratio=2.5:attack=20:release=250"
 
 # Sept 15 2026. Mira takes a beat before she answers — the model has to
@@ -243,6 +265,66 @@ def _fetch(url: str, dest: Path, cache: Dict[str, Path]) -> Path:
     return dest
 
 
+def _speech_level_db(src: Path, start=None, end=None, pan: str = "") -> float | None:
+    """Median level of the speech in ``src`` between ``start`` and ``end``,
+    in dBFS over 20 ms frames. Speech is whatever sits within 25 dB of the
+    loud end of the recording; the silence between phrases is not counted,
+    so a guest who listens for most of the hour is measured on what they
+    said rather than on the quiet."""
+    cmd = ["ffmpeg", "-v", "error"]
+    if start is not None:
+        cmd += ["-ss", str(start)]
+    if end is not None:
+        cmd += ["-to", str(end)]
+    cmd += ["-i", str(src)]
+    if pan:
+        cmd += ["-af", pan]
+    cmd += ["-ac", "1", "-ar", "16000", "-f", "f32le", "-"]
+    try:
+        raw = subprocess.run(cmd, capture_output=True, timeout=600).stdout
+    except Exception:  # noqa: BLE001 — unity gain is a safe answer
+        logger.exception("speech level probe failed (non-fatal)")
+        return None
+    import numpy as np
+    x = np.frombuffer(raw, dtype=np.float32)
+    hop = 320
+    frames = len(x) // hop
+    if frames < 50:
+        return None
+    rms = np.sqrt(np.mean(x[:frames * hop].reshape(frames, hop) ** 2, axis=1))
+    db = 20.0 * np.log10(np.maximum(rms, 1e-7))
+    loud = np.percentile(db, 95)
+    speech = db[db > loud - 25.0]
+    if len(speech) < 50 or loud < -70:
+        return None
+    return float(np.median(speech))
+
+
+_GAIN_CACHE: Dict[tuple, float] = {}
+
+
+def _speech_gain(src: Path, start=None, end=None, pan: str = "") -> float:
+    """Fixed gain that brings this voice's speech to SPEECH_TARGET_DB.
+
+    Measured over the WHOLE source, not the cut: an episode is several cuts
+    from the same tracks, and a five-second cut measured on its own would
+    come out at a different gain from the forty-minute one beside it, which
+    is a level jump at every seam. ``start``/``end`` are accepted so callers
+    need not care, and ignored."""
+    key = (str(src), pan)
+    if key in _GAIN_CACHE:
+        return _GAIN_CACHE[key]
+    level = _speech_level_db(src, None, None, pan)
+    if level is None:
+        return 0.0
+    lo, hi = SPEECH_GAIN_LIMITS
+    gain = max(lo, min(hi, SPEECH_TARGET_DB - level))
+    _GAIN_CACHE[key] = gain
+    logger.info("level: %s%s speaks at %.1f dBFS -> %+.1f dB",
+                Path(str(src)).name, f" ({pan})" if pan else "", level, gain)
+    return gain
+
+
 def _piece(cut: dict, src: Path, out: Path) -> Path:
     restore = RESTORE if cut.get("restore", True) else None
     cmd = ["ffmpeg", "-y", "-v", "error"]
@@ -255,7 +337,8 @@ def _piece(cut: dict, src: Path, out: Path) -> Path:
     if cut.get("balance"):
         # Level the two sides of a stereo per-person recording separately,
         # then fold. Anything else here would be levelling a mixture.
-        side = SIDE_CHAIN.format(restore=restore or "anull")
+        gl = _speech_gain(src, cut.get("start"), cut.get("end"), "pan=mono|c0=c0")
+        gr = _speech_gain(src, cut.get("start"), cut.get("end"), "pan=mono|c0=c1")
         # "voice_match": "right" treats the side the guest HEARD — Mira and
         # the co-host — rather than the guest's own microphone.
         want = str(cut.get("voice_match") or "")
@@ -263,7 +346,10 @@ def _piece(cut: dict, src: Path, out: Path) -> Path:
         right_extra = ("," + VOICE_MATCH) if want in ("right", "both") else ""
         cmd += ["-filter_complex",
                 f"[0:a]channelsplit=channel_layout=stereo[l][r];"
-                f"[l]{side}{left_extra}[lg];[r]{side}{right_extra}[rg];"
+                f"[l]{SIDE_CHAIN.format(restore=restore or 'anull', gain=gl)}"
+                f"{left_extra}[lg];"
+                f"[r]{SIDE_CHAIN.format(restore=restore or 'anull', gain=gr)}"
+                f"{right_extra}[rg];"
                 f"[lg][rg]amix=inputs=2:normalize=0,{BALANCE_GLUE}"
                 + ("," + GAP_TRIM if cut.get("gaps", True) else "") + "[o]",
                 "-map", "[o]"]
@@ -289,7 +375,12 @@ def _piece(cut: dict, src: Path, out: Path) -> Path:
         # also carries whoever else was in the room.
         if narration or cut.get("voice_match"):
             chain.append(VOICE_MATCH)
-        chain.append(NARRATION_GENTLE if narration else GENTLE)
+        if narration:
+            chain.append(NARRATION_GENTLE)
+        else:
+            chain.append(GENTLE.format(gain=_speech_gain(
+                src, cut.get("start"), cut.get("end"),
+                CHANNEL_FILTERS.get(str(channel or ""), ""))))
         # Narration is already trimmed above; a conversation needs the dead
         # air taken out of it and its real pauses left alone.
         if not narration and cut.get("gaps", True):
@@ -299,6 +390,28 @@ def _piece(cut: dict, src: Path, out: Path) -> Path:
     cmd += ["-ar", "48000", "-ac", "1", "-c:a", "pcm_s16le", str(out)]
     subprocess.run(cmd, check=True)
     return out
+
+
+def _mutes(cut: dict, role: str) -> str:
+    """Silence one speaker for stretches of a cut, leaving everyone else.
+
+    Sept 25 2026, Chad Law. Mira said "That's the moment the jersey stopped
+    feeling like enough" over the middle of his answer, and "Go on" over
+    another. With everyone on one track there is no removing that without
+    removing him too; with one voice per track it is a matter of turning hers
+    off for two seconds while his carries on underneath. ``"mute":
+    [{"role": "mira", "from": 189.3, "to": 192.0}]`` on a mix:clean cut,
+    times on the same clock as the cut's start and end. Pad a mute into the
+    silence either side of what it removes: the switch is instant."""
+    base = float(cut.get("start") or 0.0)
+    parts = []
+    for m in cut.get("mute") or []:
+        if str(m.get("role")) != role:
+            continue
+        a = max(0.0, float(m["from"]) - base)
+        b = max(a, float(m["to"]) - base)
+        parts.append(f"volume=0:enable='between(t,{a:.3f},{b:.3f})'")
+    return ("," + ",".join(parts)) if parts else ""
 
 
 def _piece_clean(cut: dict, srcs: List[tuple], out: Path) -> Path:
@@ -319,7 +432,6 @@ def _piece_clean(cut: dict, srcs: List[tuple], out: Path) -> Path:
     one person's voice rather than on a mixture.
     """
     restore = RESTORE if cut.get("restore", True) else None
-    side = CLEAN_SIDE.format(restore=restore or "anull")
     cmd = ["ffmpeg", "-y", "-v", "error"]
     for _role, src in srcs:
         if cut.get("start") is not None:
@@ -334,6 +446,10 @@ def _piece_clean(cut: dict, srcs: List[tuple], out: Path) -> Path:
         # channel that carries her AND the co-host, so it was quietly
         # equalising a human being too. Here it lands on her alone.
         extra = ("," + VOICE_MATCH) if role == "mira" else ""
+        extra += _mutes(cut, role)
+        side = CLEAN_SIDE.format(
+            restore=restore or "anull",
+            gain=_speech_gain(_src, cut.get("start"), cut.get("end")))
         chains.append(f"[{i}:a]aformat=channel_layouts=mono,{side}{extra}[c{i}]")
         labels.append(f"[c{i}]")
     fold = ("".join(labels) + f"amix=inputs={len(srcs)}:duration=longest:"

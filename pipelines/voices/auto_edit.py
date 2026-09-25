@@ -53,6 +53,12 @@ EDGE_PAD_SEC = 0.6
 # A gap has to be worth the seam. Below this, leave it in — a cut you can
 # hear is worse than two seconds of nothing.
 MIN_DROP_SEC = 25.0
+# ...except in the first two minutes, where the technical check-ins live and
+# a four-second "can you hear me / I can hear you" is exactly what to take out.
+EARLY_WINDOW_SEC = 120.0
+EARLY_DROP_MIN_SEC = 2.0
+# A cold-open clip long enough to be a thought, short enough to be a hook.
+COLD_OPEN_SEC = (4.0, 20.0)
 
 
 def _slug(name: str, when: dt.date) -> str:
@@ -441,7 +447,10 @@ def build(run_id: str) -> dict:
     drops = []
     for d in decided.get("drop") or []:
         a, b = leg(float(d["from_sec"])), leg(float(d["to_sec"]))
-        if b - a >= MIN_DROP_SEC and start < a < b < end:
+        # A "can you hear me" right after the welcome is short and worth the
+        # seam; anywhere else a short drop is not.
+        floor = EARLY_DROP_MIN_SEC if a < start + EARLY_WINDOW_SEC else MIN_DROP_SEC
+        if b - a >= floor and start < a < b < end:
             drops.append({"from": a, "to": b, "why": d.get("why", "")})
     drops.sort(key=lambda d: d["from"])
 
@@ -456,17 +465,36 @@ def build(run_id: str) -> dict:
     # and give the side carrying Mira her presence EQ.
     bed = ({"from": "mix:clean"} if clean else
            {"from": "run:guest", "balance": True, "voice_match": "right"})
-    cuts = [{"from": "narration:intro"}, {"gap": 0.7}]
+    # The cold open: the guest's own voice first, with one line of context
+    # from Mira before it (Sept 25 2026). Needs the guest's own track, which
+    # only the clean bed has; without it the introduction stands alone.
+    lead, clip = _cold_open(decided, clean, leg, start, end)
+    intro = str(decided["intro"]).strip()
+    segments = []
+    cuts = []
+    if clip:
+        segments.append({"id": "lead", "text": lead})
+        cuts += [{"from": "narration:lead"}, {"gap": 0.35}, clip, {"gap": 0.8}]
+    else:
+        intro = re.sub(r"^That's\s+", "My guest is ", intro)
+    segments += [{"id": "intro", "text": intro},
+                 {"id": "outro", "text": decided["outro"]}]
+    cuts += [{"from": "narration:intro"}, {"gap": 0.7}]
+    over = _interruptions(run, leg) if clean else []
+    if over:
+        rationale += (" Mira talked over the guest mid-answer " +
+                      ", ".join(f"at {a // 60:.0f}:{a % 60:04.1f}" for a, _b in over) +
+                      "; her voice is muted there and the guest's carries on.")
     at = start
     for d in drops:
-        cuts.append({**bed,
+        cuts.append(_with_mutes({**bed,
                      "start": round(at, 1), "end": round(d["from"], 1),
-                     "note": f"to {d['from']:.0f}s: {d['why']}"})
+                     "note": f"to {d['from']:.0f}s: {d['why']}"}, over))
         cuts.append({"gap": 0.4})
         at = d["to"]
-    cuts.append({**bed,
+    cuts.append(_with_mutes({**bed,
                  "start": round(at, 1), "end": round(end, 1),
-                 "note": decided.get("end_why", "")})
+                 "note": decided.get("end_why", "")}, over))
     # A breath after the guest's last word before the produced close; 0.7 s
     # ran the outro straight into the end of the sentence.
     cuts += [{"gap": 1.4}, {"from": "narration:outro"}]
@@ -475,8 +503,7 @@ def build(run_id: str) -> dict:
         "show": show_for(interview, app).slug,
         "voice": run.get("voice_preset") or "ara",
         "note": f"Written by auto_edit from the {app.get('name')} interview.",
-        "segments": [{"id": "intro", "text": decided["intro"]},
-                     {"id": "outro", "text": decided["outro"]}],
+        "segments": segments,
     }
     edl = {
         "show": show_for(interview, app).slug,
@@ -507,6 +534,63 @@ def build(run_id: str) -> dict:
 
     _remember(ctx, decided, when)
     return {"slug": slug, "cuts": len(cuts), "drops": len(drops)}
+
+
+def _cold_open(decided: dict, clean: bool, leg, start: float, end: float):
+    """``(lead, cut)`` for the guest's own voice at the top, or ``("", None)``."""
+    co = decided.get("cold_open")
+    if not clean or not isinstance(co, dict):
+        return "", None
+    lead = str(co.get("lead") or "").strip()
+    try:
+        a, b = leg(float(co["from_sec"])), leg(float(co["to_sec"]))
+    except (KeyError, TypeError, ValueError):
+        return "", None
+    lo, hi = COLD_OPEN_SEC
+    if not lead or not (lo <= b - a <= hi) or not (start <= a < b <= end):
+        logger.warning("auto_edit: cold open %.1f-%.1f unusable — intro stands alone", a, b)
+        return "", None
+    return lead, {"from": "track:guest", "start": round(max(0.0, a - 0.1), 2),
+                  "end": round(b + 0.3, 2), "gaps": False,
+                  "note": "Cold open: the guest in their own voice."}
+
+
+def _interruptions(run: dict, leg) -> list:
+    """Where Mira talked over the guest, on the EDL's clock. Best effort: a
+    failure here costs a muted interjection, never the episode."""
+    processed = (((run.get("grok_session_log") or {}).get("tracks") or {})
+                 .get("processed") or {})
+    if not processed.get("guest") or not processed.get("mira"):
+        return []
+    try:
+        import tempfile
+        import requests
+        from audio.overlap import interruptions
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = {}
+            for role in ("guest", "mira"):
+                dest = Path(tmp) / f"{role}.wav"
+                with requests.get(processed[role], stream=True, timeout=900) as r:
+                    r.raise_for_status()
+                    with dest.open("wb") as fh:
+                        for chunk in r.iter_content(1 << 20):
+                            fh.write(chunk)
+                paths[role] = dest
+            found = interruptions(paths["guest"], paths["mira"])
+    except Exception:  # noqa: BLE001
+        logger.exception("auto_edit: interruption scan failed (non-fatal)")
+        return []
+    return [(leg(a), leg(b)) for a, b in found]
+
+
+def _with_mutes(cut: dict, over: list) -> dict:
+    mutes = [{"role": "mira", "from": round(a, 2), "to": round(b, 2)}
+             for a, b in over
+             if cut.get("start") is not None and cut.get("end") is not None
+             and cut["start"] <= a and b <= cut["end"]]
+    if mutes and cut.get("from") == "mix:clean":
+        cut = {**cut, "mute": mutes}
+    return cut
 
 
 def _remember(ctx: dict, decided: dict, when: dt.date) -> None:

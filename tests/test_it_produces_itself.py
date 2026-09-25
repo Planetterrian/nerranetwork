@@ -123,7 +123,8 @@ class TestTheEpisodeCutsItself:
 
     def test_it_will_not_make_a_cut_not_worth_hearing(self):
         assert "MIN_DROP_SEC = 25.0" in AUTO
-        assert "b - a >= MIN_DROP_SEC and start < a < b < end" in AUTO
+        assert "b - a >= floor and start < a < b < end" in AUTO
+        assert "floor = EARLY_DROP_MIN_SEC if a < start + EARLY_WINDOW_SEC else MIN_DROP_SEC" in AUTO
         assert "Nothing under twenty-five seconds is worth a seam" in AUTO_PROMPT
         assert "that is a good outcome" in AUTO_PROMPT
 
@@ -1918,11 +1919,22 @@ class TestTheIntroductionEarnsTheFirstThirtySeconds:
 
     PROMPT = (V / "prompts" / "auto_edit.txt").read_text(encoding="utf-8")
 
-    def test_it_opens_on_the_conversation(self):
+    def test_it_opens_on_the_guest_in_their_own_voice(self):
+        # Sept 25 2026: the old rule ("open on the guest's own words") had
+        # Mira read Dr. Brandt's first-person sentence as her own, with no
+        # context. The open is now a clip of the GUEST, after one line of
+        # context, and the introduction names whose voice that was.
         flat = _flat(self.PROMPT)
-        assert "OPEN ON THE CONVERSATION, NOT ON US" in flat
-        assert "the most concrete, most surprising thing in the hour" in flat
+        assert "The episode opens with the GUEST'S OWN VOICE" in flat
+        assert "NEVER SPEAK THE GUEST'S WORDS AS IF THEY WERE YOURS" in flat
+        assert 'BEGIN EXACTLY "That\'s {{guest_address}},"' in flat
         assert "never more than two sentences on the show before you are back to the guest" in flat
+        assert "110-160 words" in flat and "100-150 words" in flat
+        assert "OPEN ON THE CONVERSATION, NOT ON US" not in flat
+
+    def test_the_conversation_starts_on_the_welcome(self):
+        flat = _flat(self.PROMPT)
+        assert "start on MIRA'S OWN LINE WELCOMING THE GUEST BY NAME" in flat
 
     def test_the_worn_out_shapes_are_banned(self):
         flat = _flat(self.PROMPT)
