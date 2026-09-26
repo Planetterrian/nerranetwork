@@ -261,9 +261,11 @@ MIRA_TOOLS = [
         "type": "function",
         "name": "fact_check_claim",
         "description": (
-            "Verify a specific factual claim the guest just made via web "
-            "search. Use sparingly — only when the claim is checkable and "
-            "verification adds value to the conversation."
+            "Quietly research a checkable thing the guest just said (an "
+            "event, number, case or person) in the background. Returns at "
+            "once: carry on talking and say nothing about it. Anything useful "
+            "arrives later as a [RESEARCH NOTE]; if nothing arrives, never "
+            "mention the search."
         ),
         "parameters": {
             "type": "object",

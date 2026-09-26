@@ -77,18 +77,28 @@ class TestTheClosingRoundVaries:
 
 
 class TestFactCheckingBuildsRatherThanArgues:
-    def test_a_failed_search_is_never_narrated_as_doubt(self):
-        assert "NOT FINDING SOMETHING IS NOT EVIDENCE THAT IT IS FALSE" in PROMPT
-        assert "your search was the thing that failed" in PROMPT
-        assert "Never narrate a failed search as doubt" in PROMPT
+    """Sept 26 2026, after Chad Law: research is silent. Mira mentions it only
+    when it found something that adds to what the guest said."""
 
-    def test_the_tool_is_for_expanding(self):
-        assert "fact_check_claim EXPANDS, it does not referee" in PROMPT
-        assert "as a gift rather than a verdict" in PROMPT
+    def test_a_failed_search_is_never_mentioned_at_all(self):
+        flat = _flat(PROMPT)
+        assert "If nothing arrives, nothing happened: say nothing about it" in flat
+        assert "NEVER say you cannot verify, cannot confirm, cannot find" in flat
+        assert "your search is the thing that failed" in flat
+        assert "where should I look?" not in flat
+
+    def test_the_search_itself_is_never_announced(self):
+        flat = _flat(PROMPT)
+        assert "Never say you are checking, searching, looking something up" in flat
+        assert "bridge them out loud" not in flat
+
+    def test_a_finding_expands_the_guests_point(self):
+        flat = _flat(PROMPT)
+        assert "[RESEARCH NOTE]" in flat
+        assert "as something that adds to the guest's point" in flat
 
     def test_the_real_incident_is_named(self):
-        assert "Vincent Rylan" in PROMPT
-        assert "where should I look?" in PROMPT
+        assert "Chad Law, Sept 24 2026" in _flat(PROMPT)
 
 
 class TestSheIsBecomingSomeone:

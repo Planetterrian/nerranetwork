@@ -1615,6 +1615,124 @@ async function endRoom(reason) {
   setTimeout(function () { VoxEngine.terminate(); }, 1500);
 }
 
+// ---------------------------------------------------------------------------
+// Background research (Sept 26 2026)
+// ---------------------------------------------------------------------------
+//
+// Chad Law, Sept 24: twice in ten minutes Mira said "I cannot verify that from
+// the sources I have" about things he had just told her — the retired NBA
+// players, the WNBA game in Atlanta. The fact-check "tool" searched nothing:
+// the Worker endpoint echoed an instruction telling her to search with
+// grounding she does not have and to "say plainly if it cannot be verified",
+// so every check ended in a public shrug. Patrick's rule: research quietly,
+// mention it only when it found something that substantiates or adds to what
+// the guest said, and never mention the searching or the not-finding.
+//
+// So the search is real (xAI Responses API with web and X search) and it runs
+// off the conversation's clock. A finding is handed to Mira as a system note
+// she can use on her next turn; nothing found means nothing is said at all.
+
+const RESEARCH_MODEL = "grok-latest";      // Patrick: always the latest Grok
+const RESEARCH_MAX_IN_FLIGHT = 2;
+let researchInFlight = 0;
+const researchSeen = {};
+
+function researchPrompt(claim, context) {
+  return "A guest on a live podcast interview just said something you can " +
+    "research. Search the web and X for reliable reporting on it.\n\n" +
+    "What they said: " + claim + "\n" +
+    (context ? "What they were discussing: " + context + "\n" : "") +
+    "\nReply with ONE JSON object and nothing else:\n" +
+    '{"found": true|false, "finding": "one or two spoken sentences a host ' +
+    'could say: the specific fact, number, date or related case that ' +
+    'substantiates or adds to what the guest said", "source": "the ' +
+    'publication or organisation name"}\n' +
+    "found is true ONLY if you found specific, reliable information about " +
+    "this exact thing. If the search is inconclusive, off-topic or only " +
+    "general, found is false. Never speculate.";
+}
+
+function responseText(body) {
+  try {
+    const data = JSON.parse(body || "{}");
+    if (typeof data.output_text === "string" && data.output_text) return data.output_text;
+    const parts = [];
+    (data.output || []).forEach(function (item) {
+      (item.content || []).forEach(function (c) {
+        if (c && (c.type === "output_text" || c.type === "text") && c.text) parts.push(c.text);
+      });
+    });
+    return parts.join("\n");
+  } catch (err) {
+    return "";
+  }
+}
+
+function parseFinding(text) {
+  const m = String(text || "").match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  try {
+    const obj = JSON.parse(m[0]);
+    if (obj && obj.found === true && obj.finding && String(obj.finding).trim()) {
+      return { finding: String(obj.finding).trim().slice(0, 600),
+               source: String(obj.source || "").trim().slice(0, 120) };
+    }
+  } catch (err) { /* not JSON: treat as nothing found */ }
+  return null;
+}
+
+function researchInBackground(claim, context) {
+  const key = claim.toLowerCase().replace(/[^a-z0-9 ]+/g, "").trim().slice(0, 120);
+  if (!key || researchSeen[key] || researchInFlight >= RESEARCH_MAX_IN_FLIGHT) {
+    trace("research", "skipped: " + claim.slice(0, 80));
+    return;
+  }
+  researchSeen[key] = true;
+  researchInFlight += 1;
+  trace("research", "started: " + claim.slice(0, 120));
+  Net.httpRequestAsync("https://api.x.ai/v1/responses", {
+    method: "POST",
+    headers: ["Content-Type: application/json",
+              "Authorization: Bearer " + getSecret("XAI_API_KEY")],
+    postData: JSON.stringify({
+      model: RESEARCH_MODEL,
+      input: [{ role: "user", content: researchPrompt(claim, context) }],
+      tools: [{ type: "web_search" }, { type: "x_search" }],
+    }),
+    timeout: 60,
+  }).then(function (res) {
+    researchInFlight -= 1;
+    if (!(res && res.code >= 200 && res.code < 300)) {
+      trace("research", "HTTP " + (res && res.code) + " (silent)");
+      return;
+    }
+    const found = parseFinding(responseText(res.text));
+    if (!found) {
+      trace("research", "nothing found (silent): " + claim.slice(0, 80));
+      return;
+    }
+    if (!grokAgent || roomEnded) return;
+    trace("research", "found: " + found.finding.slice(0, 150));
+    try {
+      grokAgent.conversationItemCreate({
+        item: { type: "message", role: "system", content: [{ type: "input_text", text:
+          "[RESEARCH NOTE — system note, do not read this label aloud] Background " +
+          "research on what the guest said (\"" + claim.slice(0, 200) + "\") found: " +
+          found.finding + (found.source ? " (Source: " + found.source + ")" : "") +
+          ". If it still fits the conversation, you may bring it up naturally in " +
+          "one sentence on a coming turn, as something that adds to their point, " +
+          "and name the source. Never interrupt the guest to deliver it, never " +
+          "say you searched or checked, and if the moment has passed let it go." }] },
+      });
+    } catch (err) {
+      Logger.write("[aoa " + runId + "] research note inject failed: " + err.message);
+    }
+  }, function (err) {
+    researchInFlight -= 1;
+    trace("research", "failed (silent): " + (err && err.message));
+  });
+}
+
 // Tool dispatch: route Mira's function calls to the Worker endpoints and
 // hand the output back so she can keep talking.
 async function onToolCall(event) {
@@ -1638,12 +1756,19 @@ async function onToolCall(event) {
         (args.show_filter ? "&show_filter=" + encodeURIComponent(args.show_filter) : ""));
       output = res.text || "{}";
     } else if (name === "fact_check_claim") {
-      const res = await Net.httpRequestAsync(API_BASE + "/fact-check", {
-        method: "POST",
-        headers: ["Content-Type: application/json"],
-        postData: JSON.stringify({ claim: args.claim || "", context: args.context || "", run_id: runId }),
+      // Sept 26 2026 (Patrick, after Chad Law): the check runs in the
+      // background and Mira hears about it only if it finds something. She
+      // gets an immediate "carry on" so she never waits on a search, never
+      // bridges ("let me pull that up") and never reports an empty one.
+      researchInBackground(String(args.claim || ""), String(args.context || ""));
+      output = JSON.stringify({
+        status: "noted",
+        instruction: "Research is running quietly in the background. Carry on " +
+          "the conversation exactly as you were. Do not mention checking, " +
+          "searching, looking anything up, verifying or sources. If something " +
+          "useful turns up it will reach you as a RESEARCH NOTE; if nothing " +
+          "does, you will hear nothing and must say nothing about it.",
       });
-      output = res.text || "{}";
     } else {
       output = JSON.stringify({ error: "unknown tool: " + name });
     }
