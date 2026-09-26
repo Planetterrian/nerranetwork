@@ -246,3 +246,13 @@ class TestTheEndKeepsTheGoodbye:
         cut = {"from": "mix:clean", "start": 0.0, "end": 9.2, "exact_end": True}
         ae._end_on_the_last_word(cut, [("guest", Path("/nonexistent"))])
         assert cut["end"] == 9.2
+
+
+class TestTheEditedTranscriptReachesTheLivePackage:
+    """Sept 26 2026, Viktor Popovic: the edited transcript was written to the
+    killed first package, so the review page kept the removed sections."""
+
+    def test_it_prefers_this_runs_live_package(self):
+        body = ASSEMBLE[ASSEMBLE.index("transcript_path = EDL_DIR"):ASSEMBLE.index("# Both review pages prefer")]
+        assert 'f"interview_run_id=eq.{run_id}&status=neq.killed"' in body
+        assert body.count("status=neq.killed") == 2

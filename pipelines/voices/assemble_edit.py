@@ -673,8 +673,17 @@ def assemble(slug: str) -> dict:
     transcript_path = EDL_DIR / f"{slug}.transcript.txt"
     if transcript_path.exists():
         text = transcript_path.read_text(encoding="utf-8")
-        pkgs = sb_select("editorial_packages",
-                         f"interview_id=eq.{_interview_id(spec, run)}&select=id")
+        # Sept 26 2026, Viktor Popovic: an interview can carry more than one
+        # package (a killed first cut beside the live one), and the edited
+        # transcript went to the killed one, so his review page kept showing
+        # the sections his team had asked us to remove. The live package for
+        # THIS run wins; a killed one is never written to.
+        pkgs = (sb_select("editorial_packages",
+                          f"interview_run_id=eq.{run_id}&status=neq.killed"
+                          f"&select=id&order=created_at.desc")
+                or sb_select("editorial_packages",
+                             f"interview_id=eq.{_interview_id(spec, run)}"
+                             f"&status=neq.killed&select=id&order=created_at.desc"))
         if pkgs:
             sb_update("editorial_packages", f"id=eq.{pkgs[0]['id']}",
                       {"transcript_cleaned": text})
