@@ -2268,7 +2268,10 @@ class TestTheEndIsMeasuredNotGuessed:
 
     def test_the_last_stretch_is_trimmed_to_the_last_word(self):
         assert "def _last_silence_before(" in self.SRC
-        assert "silencedetect=n=-45dB:d=0.35" in self.SRC
+        # Sept 26 2026: measured on the fold's own envelope at 10 ms, so a
+        # pause shorter than a third of a second right at the end still counts.
+        assert "loud = db > -45.0" in self.SRC
+        assert "if run == 35:" in self.SRC
         assert "_end_on_the_last_word(cut, src)" in self.SRC
 
     def test_only_the_final_stretch_of_conversation(self):
@@ -2281,10 +2284,13 @@ class TestTheEndIsMeasuredNotGuessed:
         # With the speakers on separate tracks, no single one of them can say
         # whether everyone has stopped: the guest's track is silent through
         # every question. The probe gets all of them and folds them first.
-        assert "_end_on_the_last_word(cut, [src for _role, src in srcs])" in self.SRC
+        # (role, path) pairs since Sept 26 2026, so a muted speaker is muted
+        # in the probe too.
+        assert "_end_on_the_last_word(cut, srcs)" in self.SRC
         body = _pyfn("_last_silence_before", self.SRC)
         assert "srcs = [src] if isinstance(src, (str, Path)) else list(src)" in body
-        assert "amix=inputs={len(srcs)}:duration=longest:normalize=0," in body
+        assert "amix=inputs={len(srcs)}:" in body
+        assert "_mutes(probe_cut, roles[i])" in body
 
     def test_it_keeps_a_breath_after_the_last_word(self):
         assert "END_KEEP_SEC = 0.5" in self.SRC

@@ -483,7 +483,7 @@ END_SEARCH_SEC = 6.0
 END_KEEP_SEC = 0.5
 
 
-def _last_silence_before(src, end: float) -> float | None:
+def _last_silence_before(src, end: float, cut: dict | None = None) -> float | None:
     """Where everyone stopped talking, just before ``end``.
 
     Sept 22 2026. An EDL's end comes from transcript timestamps, and those are
@@ -504,28 +504,64 @@ def _last_silence_before(src, end: float) -> float | None:
     stopped": the guest's track is silent through every question Mira asks.
     """
     srcs = [src] if isinstance(src, (str, Path)) else list(src)
+    # (role, path) pairs: listen to the fold as it will be HEARD, with any
+    # muted speaker already muted. Sept 26 2026, Dr. Brandt: the probe heard
+    # Mira's muted "I'm glad you could join us" over his goodbye, found no
+    # pause after it, settled on the pause before it, and cut "My pleasure,
+    # thank you so much for having me" off the end of the episode.
+    roles = [s[0] if isinstance(s, tuple) else "" for s in srcs]
+    srcs = [s[1] if isinstance(s, tuple) else s for s in srcs]
     lo = max(0.0, end - END_SEARCH_SEC)
-    cmd = ["ffmpeg", "-v", "info"]
+
+    cmd = ["ffmpeg", "-v", "error"]
     for one in srcs:
         cmd += ["-ss", str(lo), "-to", str(end + 0.5), "-i", str(one)]
     if len(srcs) > 1:
-        labels = "".join(f"[{i}:a]" for i in range(len(srcs)))
-        cmd += ["-filter_complex",
-                f"{labels}amix=inputs={len(srcs)}:duration=longest:normalize=0,"
-                f"silencedetect=n=-45dB:d=0.35[o]", "-map", "[o]"]
-    else:
-        cmd += ["-ac", "1", "-af", "silencedetect=n=-45dB:d=0.35"]
-    cmd += ["-f", "null", "-"]
+        probe_cut = {**(cut or {}), "start": lo}
+        # At the level each voice will be played at (a quiet guest's raw
+        # track dips under the silence line between syllables), with anyone
+        # muted already muted.
+        chains = "".join(
+            f"[{i}:a]volume={_speech_gain(srcs[i]):.1f}dB"
+            f"{_mutes(probe_cut, roles[i])}[p{i}];"
+            for i in range(len(srcs)))
+        labels = "".join(f"[p{i}]" for i in range(len(srcs)))
+        cmd += ["-filter_complex", chains + f"{labels}amix=inputs={len(srcs)}:"
+                "duration=longest:normalize=0[o]", "-map", "[o]"]
+    cmd += ["-ac", "1", "-ar", "8000", "-f", "f32le", "-"]
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+        raw = subprocess.run(cmd, capture_output=True, timeout=180).stdout
     except Exception:  # noqa: BLE001 — the nominal end is a fine fallback
         logger.exception("silence probe failed (non-fatal)")
         return None
-    starts = re.findall(r"silence_start: ([0-9.]+)", proc.stderr or "")
-    if not starts:
+    import numpy as np
+    x = np.frombuffer(raw, dtype=np.float32)
+    hop = 80                                   # 10 ms
+    n = len(x) // hop
+    if n == 0:
         return None
-    # ffmpeg reports relative to the -ss point.
-    at = lo + float(starts[-1])
+    db = 20 * np.log10(np.sqrt(np.mean(x[:n * hop].reshape(n, hop) ** 2, axis=1)) + 1e-9)
+    loud = db > -45.0
+    at_end = int(round((end - lo) / 0.01))
+    before = np.where(loud[:at_end])[0]
+    if not len(before):
+        return None
+    last = lo + (before[-1] + 1) * 0.01
+    # Already quiet at the nominal end: the last word stopped at ``last``,
+    # however soon the next speaker comes in afterwards.
+    if end - last >= 0.08:
+        return min(last + END_KEEP_SEC, end)
+    # Still talking at the nominal end: go back to the last real pause
+    # (a third of a second or more) and end there.
+    quiet = ~loud[:at_end]
+    run, found = 0, None
+    for i in range(len(quiet)):
+        run = run + 1 if quiet[i] else 0
+        if run == 35:
+            found = i - 34
+    if found is None:
+        return None
+    at = lo + found * 0.01
     if not (lo < at < end):
         return None
     return at + END_KEEP_SEC
@@ -536,7 +572,11 @@ def _end_on_the_last_word(cut: dict, src) -> None:
     end = cut.get("end")
     if end is None:
         return
-    found = _last_silence_before(src, float(end))
+    # A hand edit that placed its end on the exact pause, word-timed, says so
+    # and is not second-guessed.
+    if cut.get("exact_end"):
+        return
+    found = _last_silence_before(src, float(end), cut)
     if found is None or abs(found - float(end)) < 0.05:
         return
     logger.info("end of the conversation: %.1fs -> %.1fs (the last word ends "
@@ -594,7 +634,7 @@ def assemble(slug: str) -> dict:
                                       cache))
                         for role, url in tracks]
                 if i == last_conversation:
-                    _end_on_the_last_word(cut, [src for _role, src in srcs])
+                    _end_on_the_last_word(cut, srcs)
                 pieces.append(_piece_clean(cut, srcs, out))
                 logger.info("cut %d: %s (%s) -> %.1fs", i, ref,
                             ", ".join(r for r, _ in srcs), _duration(out))

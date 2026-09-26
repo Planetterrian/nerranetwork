@@ -199,3 +199,50 @@ class TestTheTwoEpisodesPatrickHeard:
         mutes = [m for c in spec["cuts"] for m in c.get("mute", [])]
         assert any(m["role"] == "mira" and m["from"] <= 189.5 and m["to"] >= 191.9 for m in mutes)
         assert any(m["role"] == "mira" and m["from"] <= 2277.9 and m["to"] >= 2278.4 for m in mutes)
+
+
+def _wav(path: Path, samples: np.ndarray, sr: int = 48000) -> Path:
+    import wave
+    with wave.open(str(path), "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(sr)
+        wf.writeframes((np.clip(samples, -1, 1) * 32767).astype("<i2").tobytes())
+    return path
+
+
+@pytest.mark.skipif(not HAVE_FFMPEG, reason="needs ffmpeg")
+class TestTheEndKeepsTheGoodbye:
+    """Sept 26 2026, Dr. Brandt. The published cut lost "My pleasure, thank you
+    so much for having me": the end probe heard Mira's muted line over it and
+    found no pause after it, because Mira's live "That's the end of the
+    recording" began a third of a second after his last word."""
+
+    def test_a_goodbye_under_a_muted_line_survives(self, tmp_path):
+        import assemble_edit as ae
+
+        sr = 48000
+        rng = np.random.default_rng(3)
+
+        def talk(total, spans, level):
+            y = np.zeros(int(total * sr), dtype=np.float32)
+            for a, b in spans:
+                y[int(a * sr):int(b * sr)] = rng.standard_normal(int(b * sr) - int(a * sr)) * level
+            return y
+
+        # Mira thanks him (0-5 s), he says goodbye (7.0-9.0 s) while she talks
+        # over it (7.2-8.9 s, muted), and she starts again at 9.3 s.
+        guest = _wav(tmp_path / "g.wav", talk(12, [(7.0, 9.0)], 0.01))
+        mira = _wav(tmp_path / "m.wav", talk(12, [(0.2, 5.0), (7.2, 8.9), (9.3, 11)], 0.05))
+        ae._GAIN_CACHE.clear()
+        cut = {"from": "mix:clean", "start": 0.0, "end": 9.2,
+               "mute": [{"role": "mira", "from": 7.1, "to": 9.2}]}
+        ae._end_on_the_last_word(cut, [("guest", guest), ("mira", mira)])
+        assert cut["end"] >= 9.0, f"the goodbye was cut: end moved to {cut['end']}"
+
+    def test_a_hand_set_end_is_left_alone(self):
+        import assemble_edit as ae
+
+        cut = {"from": "mix:clean", "start": 0.0, "end": 9.2, "exact_end": True}
+        ae._end_on_the_last_word(cut, [("guest", Path("/nonexistent"))])
+        assert cut["end"] == 9.2
