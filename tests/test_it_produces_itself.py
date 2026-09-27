@@ -42,20 +42,28 @@ def _pyfn(name: str, src: str) -> str:
 
 
 class TestTheClosingRoundVaries:
-    def test_it_is_three_tools_not_one_ritual(self):
-        assert "THE CLOSING ROUND is yours to shape" in PROMPT
-        assert "cover ground fast when time got away" in PROMPT
-        assert "The standard set" in PROMPT and "The personal set" in PROMPT
+    """Sept 27 2026 (Patrick, after Roddy de la Garza): the closing round is
+    no longer optional. The same five lightning questions and the two about
+    the interview itself, every guest, every time."""
 
-    def test_the_personal_questions_respect_what_the_guest_agreed_to(self):
-        block = PROMPT[PROMPT.index("The personal set"):]
-        block = block[:block.index("And the set only I can ask")]
-        assert "within what they agreed to" in block
-        assert "Ask two or three, not five" in block
+    def test_it_happens_every_time(self):
+        flat = _flat(PROMPT)
+        assert "THE CLOSING ROUND happens with every guest, every time" in flat
+        assert "Skip it when the conversation is somewhere worth staying" not in flat
+
+    def test_the_lightning_round_is_patricks_five(self):
+        flat = _flat(PROMPT)
+        for q in ("A book they would recommend", "One person they think you should interview next",
+                  "The best piece of advice they were ever given",
+                  "The person who has inspired them most",
+                  "Whether they would like to be interviewed by you again"):
+            assert q in flat, q
+        assert "never stack two into one turn" in flat
 
     def test_she_asks_what_it_was_like_to_be_interviewed_by_her(self):
-        assert "What was it like being interviewed by an AI" in PROMPT
-        assert "would not have said to a person" in PROMPT
+        flat = _flat(PROMPT)
+        assert "how was the experience of being interviewed by you, an AI" in flat
+        assert "one specific suggestion for what could be improved in future interviews" in flat
         # Sept 21 2026: that answer is no longer just "the most direct
         # feedback this show gets" — it is read after the episode and
         # adopted as a standing instruction, so she asks it every time.

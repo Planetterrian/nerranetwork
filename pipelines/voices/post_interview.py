@@ -281,6 +281,51 @@ def longest_leg_recording(run: dict, role: str, workdir: Path) -> Path | None:
 COVERAGE_MIN = 0.80
 
 
+# ...and only if it actually carries a voice rather than a hiss. Sept 27 2026,
+# Roddy de la Garza: his browser's recording was a steady noise floor at
+# -39 dBFS with his voice three decibels above it, while the room's recording
+# of the same leg had a silent floor and his voice 25 dB above it. The
+# pipeline preferred the browser take, the levelling lifted the hiss with the
+# voice, and Patrick heard distortion under every line of the episode,
+# Mira's questions included. The spread between a recording's quiet frames
+# and its loud ones is what a usable voice track has and a hiss does not.
+MIN_SPREAD_DB = 15.0
+
+
+def _spread_db(path: Path) -> float | None:
+    """Loud-minus-quiet spread of a recording (95th minus 10th percentile of
+    its 20 ms levels, first channel), or None if it cannot be read."""
+    try:
+        raw = subprocess.run(
+            ["ffmpeg", "-v", "error", "-i", str(path), "-af", "pan=mono|c0=c0",
+             "-ar", "8000", "-f", "f32le", "-"],
+            capture_output=True, timeout=900).stdout
+    except Exception:  # noqa: BLE001
+        return None
+    import numpy as np
+    x = np.frombuffer(raw, dtype=np.float32)
+    n = len(x) // 160
+    if n < 500:
+        return None
+    db = 20 * np.log10(np.sqrt(np.mean(x[:n * 160].reshape(n, 160) ** 2, axis=1)) + 1e-9)
+    return float(np.percentile(db, 95) - np.percentile(db, 10))
+
+
+def _clean_enough(local: Path, reference: Path | None, who: str) -> bool:
+    """False when the local take is mostly noise and the room's leg is not."""
+    if reference is None:
+        return True
+    local_spread, ref_spread = _spread_db(local), _spread_db(reference)
+    if local_spread is None or ref_spread is None:
+        return True
+    if local_spread < MIN_SPREAD_DB and ref_spread >= local_spread + 10.0:
+        logger.warning("%s: local take spans only %.0f dB between quiet and "
+                       "loud (the room's leg spans %.0f) — it is mostly noise; "
+                       "using the room's recording", who, local_spread, ref_spread)
+        return False
+    return True
+
+
 def _covers(local: Path, reference: Path | None, who: str) -> bool:
     if reference is None:
         return True
@@ -382,7 +427,8 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
     guest = None
     local_guest = fetch_local_track(run.get("local_guest_url") or "",
                                     workdir / "local_guest")
-    if local_guest is not None and _covers(local_guest, guest_vox, "guest"):
+    if (local_guest is not None and _covers(local_guest, guest_vox, "guest")
+            and _clean_enough(local_guest, guest_vox, "guest")):
         guest = align_to_reference(local_guest, guest_vox, workdir / "aligned")
         sources["guest"] = "local"
     if guest is None:

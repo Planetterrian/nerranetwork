@@ -455,12 +455,11 @@ class TestTheCraftRules:
 
     def test_the_closing_round_is_a_tool_not_a_ritual(self):
         flat = _flat(self.PROMPT)
-        assert "THE CLOSING ROUND is yours to shape" in flat
-        assert "Skip it when the conversation is somewhere worth staying" in flat
-        # three uses: a gear change, covering ground fast, or getting personal
-        assert "cover ground fast when time got away from you" in flat
-        assert "The personal set" in flat
-        assert "What was it like being interviewed by an AI" in flat
+        # Sept 27 2026: a fixed round now, not a menu (Patrick, after Roddy
+        # de la Garza): the lightning round, then the interview itself.
+        assert "THE CLOSING ROUND happens with every guest, every time" in flat
+        assert "THE LIGHTNING ROUND" in flat and "THE INTERVIEW ITSELF" in flat
+        assert flat.index("THE LIGHTNING ROUND") < flat.index("THE INTERVIEW ITSELF") < flat.index("THEIR LAST WORD IS THEIRS")
 
     def test_the_co_host_is_a_model_to_learn_from(self):
         assert "LEARN FROM YOUR CO-HOST" in self.PROMPT

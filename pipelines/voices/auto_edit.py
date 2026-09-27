@@ -551,7 +551,7 @@ def _cold_open(decided: dict, clean: bool, leg, start: float, end: float):
         logger.warning("auto_edit: cold open %.1f-%.1f unusable — intro stands alone", a, b)
         return "", None
     return lead, {"from": "track:guest", "start": round(max(0.0, a - 0.1), 2),
-                  "end": round(b + 0.3, 2), "gaps": False,
+                  "end": round(b + 0.3, 2), "gaps": False, "trim_edges": True,
                   "note": "Cold open: the guest in their own voice."}
 
 

@@ -123,6 +123,15 @@ TRIM = ("silenceremove=start_periods=1:start_threshold=-45dB:"
         "start_silence=0.35:detection=rms,"
         "silenceremove=stop_periods=-1:stop_duration=0.35:"
         "stop_threshold=-45dB:detection=rms")
+# Silence off the two ends of a clip and nowhere else (Sept 27 2026, Roddy de
+# la Garza: his cold-open clip ran nine seconds past his last word, into the
+# stretch where Mira was asking her next question on a track that does not
+# carry her, and the episode sat in silence before her introduction). TRIM
+# below would also close up his pauses mid-sentence; this leaves them alone.
+EDGE_TRIM = ("silenceremove=start_periods=1:start_threshold=-45dB:"
+             "start_silence=0.1:detection=rms,areverse,"
+             "silenceremove=start_periods=1:start_threshold=-45dB:"
+             "start_silence=0.25:detection=rms,areverse")
 CHANNEL_FILTERS = {
     "left": "pan=mono|c0=c0",
     "right": "pan=mono|c0=c1",
@@ -247,6 +256,19 @@ def _resolve(ref: str, run: dict, show, narration_slug: str) -> str:
 CLEAN_ROLES = ("guest", "host", "mira")
 
 
+# A processed track that is really one side of a stereo recording (Sept 27
+# 2026, Roddy de la Garza: his browser's own recording was a steady hiss 3 dB
+# under his voice, and the room's recording of his leg was clean, but its
+# right side is everything he HEARD, Mira included). tracks.processed_channels
+# on the run row names the side to take; the fold, the level measurement and
+# the end probe all read that one side.
+_TRACK_PAN: Dict[str, str] = {}
+
+
+def _pan_of(path) -> str:
+    return _TRACK_PAN.get(str(path), "")
+
+
 def _clean_sources(run: dict, show) -> List[tuple]:
     """``[(role, url)]`` for the processed, bleed-stripped speaker tracks."""
     sources = _run_sources(run, show)
@@ -367,6 +389,8 @@ def _piece(cut: dict, src: Path, out: Path) -> Path:
             trim = str(cut.get("from", "")).startswith("narration:")
         if trim:
             chain.append(TRIM)
+        elif cut.get("trim_edges"):
+            chain.append(EDGE_TRIM)
         narration = str(cut.get("from", "")).startswith("narration:")
         if restore:
             chain.append(NARRATION_RESTORE if narration else restore)
@@ -449,8 +473,10 @@ def _piece_clean(cut: dict, srcs: List[tuple], out: Path) -> Path:
         extra += _mutes(cut, role)
         side = CLEAN_SIDE.format(
             restore=restore or "anull",
-            gain=_speech_gain(_src, cut.get("start"), cut.get("end")))
-        chains.append(f"[{i}:a]aformat=channel_layouts=mono,{side}{extra}[c{i}]")
+            gain=_speech_gain(_src, cut.get("start"), cut.get("end"),
+                              _pan_of(_src)))
+        pick = _pan_of(_src) or "aformat=channel_layouts=mono"
+        chains.append(f"[{i}:a]{pick},{side}{extra}[c{i}]")
         labels.append(f"[c{i}]")
     fold = ("".join(labels) + f"amix=inputs={len(srcs)}:duration=longest:"
             f"normalize=0,{BALANCE_GLUE}"
@@ -522,7 +548,8 @@ def _last_silence_before(src, end: float, cut: dict | None = None) -> float | No
         # track dips under the silence line between syllables), with anyone
         # muted already muted.
         chains = "".join(
-            f"[{i}:a]volume={_speech_gain(srcs[i]):.1f}dB"
+            f"[{i}:a]{_pan_of(srcs[i]) or 'anull'},"
+            f"volume={_speech_gain(srcs[i], pan=_pan_of(srcs[i])):.1f}dB"
             f"{_mutes(probe_cut, roles[i])}[p{i}];"
             for i in range(len(srcs)))
         labels = "".join(f"[p{i}]" for i in range(len(srcs)))
@@ -633,6 +660,12 @@ def assemble(slug: str) -> dict:
                 srcs = [(role, _fetch(url, work / f"src_{abs(hash(url))}.bin",
                                       cache))
                         for role, url in tracks]
+                sides = ((run.get("grok_session_log") or {}).get("tracks")
+                         or {}).get("processed_channels") or {}
+                for role, path in srcs:
+                    side = str(sides.get(role) or "")
+                    if side in CHANNEL_FILTERS:
+                        _TRACK_PAN[str(path)] = CHANNEL_FILTERS[side]
                 if i == last_conversation:
                     _end_on_the_last_word(cut, srcs)
                 pieces.append(_piece_clean(cut, srcs, out))
@@ -640,6 +673,12 @@ def assemble(slug: str) -> dict:
                             ", ".join(r for r, _ in srcs), _duration(out))
                 continue
             url = _resolve(ref, run, show, spec.get("narration", ""))
+            if ref.startswith("track:") and not cut.get("channel"):
+                side = str((((run.get("grok_session_log") or {}).get("tracks")
+                             or {}).get("processed_channels") or {})
+                           .get(ref.split(":", 1)[1]) or "")
+                if side in CHANNEL_FILTERS:
+                    cut = {**cut, "channel": side}
             src = _fetch(url, work / f"src_{abs(hash(url))}.bin", cache)
             if i == last_conversation and ref.startswith(conversation):
                 _end_on_the_last_word(cut, src)

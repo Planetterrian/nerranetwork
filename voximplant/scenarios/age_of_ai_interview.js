@@ -1368,14 +1368,22 @@ function startTimeChecks() {
           trace("time", "closing round permitted at " + elapsed + " min");
         }
         note += " You may begin the closing round when the current thread" +
-          " reaches a natural end. There is no hurry; stay if the" +
-          " conversation is somewhere worth staying.";
+          " reaches a natural end: the show's question, the five" +
+          " lightning-round questions, the two about the interview itself," +
+          " then their last word. There is no hurry, but every guest gets" +
+          " all of it.";
       } else if (remainMin > 0) {
         closingPermitted = true;
-        note += " Begin wrapping up now: one final question, then your closing thanks.";
+        note += " Begin the closing round now if you have not: the five" +
+          " lightning-round questions and the two about the interview" +
+          " itself, one at a time, with short reactions, then their last" +
+          " word, then your closing thanks.";
       } else {
         closingPermitted = true;
-        note += " Time is up — deliver your closing thanks and end the interview.";
+        note += " Time is up. If you have not yet asked how the interview was" +
+          " for them and for one suggestion to improve it, ask those two" +
+          " now; then give them the last word and deliver your closing" +
+          " thanks.";
       }
       grokAgent.conversationItemCreate({
         item: { type: "message", role: "system", content: [{ type: "input_text", text: note }] },
