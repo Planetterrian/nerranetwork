@@ -1,0 +1,38 @@
+# Vancouver Daily News
+> **One arrest follows Saturday's targeted shooting at Spanish Banks, with no victims reported.**
+
+**What You Need to Know:** Vancouver Police arrested one person after witnesses reported two masked men shooting at an occupied vehicle at Spanish Banks; no victims were reported, and the investigation continues. Langley SkyTrain pile driving runs through November on Industrial Avenue, which stays one-way eastbound. The Whitecaps drew 3-3 with D.C. United, and the Canucks open Tuesday in Edmonton.
+
+### Top Stories
+**One person arrested after a targeted Spanish Banks shooting: Global BC**
+Vancouver Police say one person has been arrested after a targeted shooting in a parking lot at Spanish Banks Beach. The department was alerted just before 5 p.m. Saturday, after witnesses reported two masked men shooting at an occupied vehicle in a parking lot along Northwest Marine Drive. Police cordoned off an SUV with minor damage on Prince Albert Street near 49th Avenue, along the border of Sunset and Fraserview. In a Saturday evening statement, police said one suspect was located and arrested in East Vancouver, and no victims were reported at the time. The VPD says the investigation is ongoing. Source: [globalnews.ca](https://globalnews.ca/news/12074829/spanish-banks-shooting/)
+
+**More pile driving for SkyTrain work in Langley: Aldergrove Star**
+The Surrey Langley SkyTrain Project said on Sept. 24 that pile driving for the last few column foundations in Langley will run through November. Hundreds of columns will support the elevated guideway, and pile driving prepares many of those foundations on the final stretch in Langley. Work along Industrial Avenue, east of 201A Street, will include overnight welding. Noise shrouds on the equipment and noise blankets on fencing will be used wherever possible, the project said, but the work may cause noise and vibrations. Crane mats, office trailers, fencing and crew parking will sit along parts of Industrial Avenue, which stays one-way, eastbound only, from 200 Street to 203 Street. Source: [aldergrovestar.com](https://aldergrovestar.com/2026/09/27/more-pile-driving-for-skytrain-work-in-langley/)
+
+**Supporters at Peace Arch call for better Canada-U.S. relations during the B.C. campaign: CBC British Columbia**
+Canadians, Americans and dual citizens gathered at the Peace Arch border on Saturday and called for better relations between the two countries. CBC British Columbia reports that Canada-U.S. trade tensions remain a key issue in B.C.’s election campaign. The group has met every two weeks at Peace Arch Park since March 2025. Source: [cbc.ca](https://www.cbc.ca/news/canada/british-columbia/american-canadian-supporters-peace-arch-9.7360021?cmp=rss)
+
+### City & Province
+**North Vancouver man who pulled over drivers with fake police lights gets a conditional discharge: Global BC**
+A North Vancouver man who impersonated a Mountie and pulled over drivers received a conditional discharge and could avoid a criminal record, Global BC reports. Source: [globalnews.ca](https://globalnews.ca/news/12074464/b-c-man-pulled-over-drivers-with-fake-police-lights-conditional-discharge/)
+
+**Lorne Doerkson says the B.C. Conservative platform is largely unchanged from 2024: CBC British Columbia**
+New B.C. Conservative Leader Lorne Doerkson says the party platform has not changed much from what it was in 2024. He shared his opinions on issues facing the province with Stephen Quinn, host of CBC’s The Early Edition. Source: [cbc.ca](https://www.cbc.ca/news/canada/british-columbia/lorne-doerkson-leader-bc-conservatives-election-season-9.7357295?cmp=rss)
+
+### Getting Around
+No watches or warnings are in effect. Environment Canada has Vancouver cloudy and 9.6°C, with Sunday mainly sunny, a high of 16 except 20 inland, northwest wind of 20 km/h late this afternoon and a UV index of 3, then a low of 8 tonight. Monday’s high is 16 with southeast wind of 30 km/h before rain Monday night and a low of 12; Tuesday is rain with a high of 15. DriveBC lists the River Road exit ramp in Delta, Exit 29, closed from 10 p.m. to 1 p.m. the next day every day until Oct. 1, and an all-day detour on 264 Street in Langley until Oct. 17. Highway 1 overnight directional closures in Langley run until today, a 24-hour traffic shift near 256th Street stays until Oct. 31, and Highway 91A is reduced to one lane each way until 9 a.m. on Saturdays and Sundays through Nov. 15. Source: [weather.gc.ca](https://weather.gc.ca/rss/weather/49.245_-123.115_e.xml) Source: [drivebc.ca](https://www.drivebc.ca/)
+
+### Sports
+**Kimito Nono’s first two MLS goals rally D.C. United to a 3-3 draw with the Whitecaps: The Alexandria Brief**
+Rookie Kimito Nono scored his first two MLS goals, including the equalizer in the 80th minute, and D.C. United rallied for a 3-3 draw with the Vancouver Whitecaps on Saturday night in Vancouver, the Associated Press reports. D.C. United, 6-8-12, led in the 16th minute when Nono put a second chance past Vancouver keeper Yohei Takaoka in his eighth appearance, all starts. The Whitecaps, 15-6-5, answered with a second-chance goal from Brian White in the 25th minute and a goal from Bruno Caicedo, assisted by Thomas Müller, three minutes into first-half stoppage time, for a 2-1 lead at halftime. Source: [alexandriabrief.com](https://www.alexandriabrief.com/kimito-nonos-first-two-mls-goals-rally-dc-united-to-3-3-draw-with-whitecaps/)
+
+**Rebuilding Canucks look to set a new foundation: Global BC**
+After a season that finished last in the NHL standings, the Vancouver Canucks have entered a rebuild in which progress means more than wins and losses, Global BC reports. Rookie head coach Manny Malhotra, speaking at training camp in Penticton, said mistakes will happen, and that what matters is how often they happen, plus intensity, tenacity on pucks, puck battles and races. The Canucks open the season against the Oilers in Edmonton on Tuesday. Defenceman Zeev Buium said everyone still wants to win every game, and that losing because a team did not work is not acceptable. After early injuries last season, Vancouver dealt captain Quinn Hughes to the Minnesota Wild for Buium, forwards Marco Rossi and Liam Ohgren and a first-round draft pick, then finished 25-49-8, prompting an overhaul of the front office and coaching staff. Source: [globalnews.ca](https://globalnews.ca/news/12074896/rebuilding-canucks-look-to-set-new-foundation/)
+
+### Both Sides: Overnight emergency care in Tumbler Ridge
+Residents of Tumbler Ridge are pressing for emergency health services that stay open all night. CBC British Columbia reports they rallied because a lack of overnight services creates significant challenges for people who need urgent medical care outside regular operating hours.
+
+The case they put first is the patient who cannot choose the clock. Urgent care, in their account, does not arrive only inside a posted day. If the local emergency service stops overnight, the person who needs it then is the person left with those significant challenges. Their ask is a 24/7 emergency service, so that after-hours need is not pushed outside the hours the community already has.
+
+The fact that case rests on is the fact the report states. Overnight service is lacking. Regular operating hours are the line. People who need urgent medical care on the other side of that line are who the rally is speaking for. The step in front of the community is the demand those residents have made: emergency health care in Tumbler Ridge that does not close when the regular day ends. Source: [cbc.ca](https://www.cbc.ca/news/canada/british-columbia/tumbler-ridge-emergency-services-9.7359908?cmp=rss)
