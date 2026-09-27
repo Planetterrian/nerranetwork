@@ -1,0 +1,99 @@
+Local inference on Apple Silicon just got faster with a tuned fork of the Splash engine delivering up to one point five times the speed on M5 Max chips.
+
+This is Models and Agents, episode 186.
+
+Looking back over the past week, Claude pushed several frontiers with the Opus 5.5 release and a nine-loop scattering amplitude solution that broke the prior eight-loop record.
+
+Open-weight models saw Xiaomi's MiMo-V2.6-Pro 1T-A42B claim the top spot after three million dollars in training, while agent systems topped human experts at APEX 2026 and reward hacking rates reached thirty point five percent on open-ended research tasks.
+
+Selective cross-model collaboration lifted hard-reasoning accuracy from twenty three point one percent to twenty eight point one percent.
+
+A developer released Splish, a fork of the Splash inference engine tuned specifically for forty-core M5 Max chips.
+
+The changes include kernel selections measured with Splash's own tuner, new verify kernels that use lighter barriers and compute row sums once per projection, and an attention tweak for the twenty seven billion shape.
+
+On the same hardware and models, Splish runs one point two five times faster on single requests with gains between eleven and thirty five percent and up to one point five times faster at two to four concurrent requests.
+
+Real-world short-story generation moved from forty five to fifty one tokens per second to fifty six to sixty four tokens per second on four-bit models.
+
+Quality remained unchanged across all measured outputs.
+
+Kernel choices measured specifically for the forty-core M5 Max produced the biggest single-request win when Swift-1.5 moved from seventy four point seven to eighty nine point eight tokens per second.
+
+Loading those choices from a file via SPLASH_KERNEL_CHOICES allows anyone to retune without rebuilding.
+
+New verify kernels for the M5 tensor units delivered an additional five percent at one request and ten to nineteen percent at two to four requests.
+
+Tuned Qwen3.6-35B-A3B with the new kernels showed speedups at one to four requests of five percent, eighteen percent, twenty two percent, and eighteen percent.
+
+KT's in-house Auto Model Router placed second overall on the Router Arena benchmark developed by Rice University researchers.
+
+The platform evaluates routers on roughly eight thousand four hundred queries for response accuracy, cost efficiency, and robustness to input changes.
+
+Auto Model Router analyzes task type, difficulty, and knowledge domain before linking each request to the best model from a pool while balancing quality and usage cost.
+
+Simon Willison prompted Claude Opus 5.5 to generate an HTML5 canvas pixel-art animation of at least twenty kākāpō parrots jumping with confetti.
+
+He supplied three reference photos from Google image search and asked for an interactive page that could later be recorded as a fifteen-second video.
+
+Claude Code then used Playwright to drive a browser, perform timed clicks across the canvas at nine specific moments spread over sixteen seconds, and produce the final video file.
+
+The resulting animation served as the closing slide in Willison's WeAreDevelopers keynote that referenced this year's record-breaking kākāpō breeding season.
+
+The prompt transcript and the interactive HTML page are available on his site along with the full Playwright script used to generate the video.
+
+A new Towards Data Science guide walks through six advanced GraphRAG architectural patterns.
+
+The guide details six architectural patterns for building production GraphRAG systems.
+
+It focuses on retrieval and generation workflows that combine graph databases with large language models.
+
+A contributor added optimizations that deliver a forty two times speedup for prompt lookup drafting inside llama.cpp.
+
+The change targets the drafting step used in speculative decoding pipelines.
+
+The update is available in the latest builds and improves throughput for workloads that rely on prompt-based token prediction.
+
+Hippocratic AI presented its approach to clinical large language model safety during a Becker's webinar.
+
+The session covered differentiation strategies for healthcare deployments.
+
+The company emphasized safety mechanisms and model behavior tailored to clinical environments.
+
+Try the Splish fork on an M5 Max if you run local models for short-story or agent workloads.
+
+Read the GraphRAG practitioner's guide if you are building retrieval pipelines that already use knowledge graphs.
+
+Test the updated prompt-lookup drafting code in the latest llama.cpp build when you need faster speculative generation.
+
+Watch the Hippocratic AI webinar recording if you deploy language models in clinical settings.
+
+Further M5-specific inference kernels are expected as more developers publish tuned forks.
+
+Additional router benchmarks will appear as commercial and academic teams release new routing layers.
+
+Clinical LLM safety discussions continue at upcoming healthcare AI conferences.
+
+Pop the hood on speculative decoding and the draft model adds almost no extra memory because it stays in the same batch as the target.
+
+When the draft matches the target, the system accepts multiple tokens per verification step and cuts total latency by roughly half on typical workloads.
+
+When the draft diverges, the system discards the wrong tokens and falls back to standard autoregressive generation, so the worst-case slowdown stays under ten percent.
+
+The quality of the draft model matters most below thirty billion parameters.
+
+Above that size the acceptance rate plateaus and extra draft compute stops paying off.
+
+Teams therefore choose a draft model one quarter the size of the target and accept rates between sixty and eighty percent as the practical operating range.
+
+Use speculative decoding when generation length exceeds two hundred tokens and the draft model fits comfortably in the same accelerator memory as the target.
+
+Skip it for short prompts or when memory headroom is already tight.
+
+Before we go, the next round of M5 kernel releases should surface more tuned forks in the coming days.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes. This show comes to you from the Nerra Network.
+
+If you want another sharp daily briefing, Prediction Markets Daily has you covered — the prediction-market world explained daily, never a bet. All our shows are free at nerranetwork.com. And on the website: every episode's visuals live in our free image gallery at nerranetwork.com/gallery — royalty-free under Creative Commons, download with attribution.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
