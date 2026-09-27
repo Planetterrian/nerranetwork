@@ -1,0 +1,99 @@
+L'inférence locale sur Apple Silicon vient d'accélérer grâce à une version dérivée et réglée du moteur Splash,
+qui délivre jusqu'à 1,5 fois la vitesse sur les plus M5 max.
+Ici Models & Agents, épisode 196.
+En regardant la semaine écoulée, Claude a fait reculer plusieurs frontières avec la sortie d'opus 5,5 et une solution d'emplitude de diffusion à 9 boucles,
+qui a battu le précédent record à 8 boucles.
+Du côté des modèles à poids ouvert, le MIMO V2.6 Pro 1T42B de Xiaomi a décroché la première
+place après 3 millions de dollars d'entraînement, tandis que les systèmes d'agent ont dépassé
+les experts humains à APEX 2026 et que les taux de détournement de récompense ont atteint
+30,5% sur des tâches de recherche ouverte.
+Une collaboration sélective entre modèles a fait passer la précision en raisonnement
+difficile de 23,1 % à 28,1 %. Un développeur a publié Spliche, une version
+dérivée du moteur d'inférence Splash, régler spécifiquement pour les plus M5 max à 40
+heures. Les changements comprennent des sélections de noyaux mesurés avec le propre outil de réglage
+de Splash, de nouveaux noyaux de vérification qui utilisent des barrières plus légères et calculent
+les sommes de ligne une seule fois par projection et un ajustement de l'attention pour la forme à 27
+7 milliards. Sur le même matériel et les mêmes modèles, spliche tourne 1,25 fois plus vite
+sur des requêtes uniques avec des gains entre 11 et 35% et jusqu'à 1,5 fois plus vite
+à 2 à 4 requêtes concurrentes. En condition réelle, la génération de nouvelles
+courte est passée de 45 à 51 tokens par seconde à 56 à 64 tokens par seconde sur des
+modèles en 4 bits. La qualité est restée un changement sur toutes les sorties mesurées.
+Les choix de noyaux mesurés spécifiquement pour le M5 Max à 40 km ont produit le plus
+gros gain en requête unique quand Swift 1,5 est passé de 64,4 à 99,8 tokens par seconde.
+Charger ces choix depuis un fichier via Splash en Dorscore carnelle en Dorscore Choices permet
+à n'importe qui de régler à nouveau sans reconstruire.
+De nouveaux noyaux de vérification pour les unités tensoriales du M5, on t'apportait
+5% de plus à une requête et 10 à 19% à 2 à 4 requêtes.
+Le QN3 6-35B à 3B, régler avec les nouveaux noyaux à montrer des accélérations à
+1 à 4 requêtes de 5%, 18%, 22% et 18%.
+Le poteau modèle routeur interne de caté, c'est classé deuxième au général sur le bandessé routeur arena développé par des chercheurs de l'université RISE.
+La plateforme évalue les routeurs sur environ 8 400 requêtes, pour la précision des réponses, l'efficacité des coups et la robustesse face aux changements d'entrée.
+Automodelle routeur analyse le type de tâches, la difficulté et le domaine de connaissances avant de relier chaque requête au meilleur modèle d'un vivier,
+tout en équilibrant la qualité et le coup d'usage.
+Simon Willison a demandé à Claude aupus 5,5 de générer une animation en pixel art sur
+Canva HTML5 d'au moins 20 perruqués cacapaux qui sautent avec des confétis.
+Il a fourni trois photos de référence issus de la recherche d'image Google et a demandé
+une page interactive qui pourrait ensuite être enregistrée comme une vidéo de 15 secondes.
+Claude Cod a ensuite utilisé Playwright pour piloter un navigateur, effectuer des
+clique minutez sur le Canva à 9 moments précis, répartis sur 16 secondes, et produire
+le fichier vidéo final.
+L'animation qui en a résultée a servi de diapositives de clotures dans la conférence
+Weare Developers de Williamson, qui faisait référence à la saison de reproduction record
+des cas capots de cette année.
+La transcription de l'invite et la page HTML Interactive sont disponibles sur son site,
+avec le code PlaywrightComplet utilisé pour générer la vidéo.
+Un nouveau guide de Toward's Data Science parcours 6 schema architecturaux avancés de Grafragh.
+Le guide détaille 6 schema architecturaux pour construire des systèmes Grafragh de production.
+Il se concentre sur les flux de récupération et de génération qui combine des bases de données
+Grafh avec de grands modèles de langage. Un contributeur a ajouté des optimisations qui
+délivrent une accélération de 42 fois pour les bouches par recherche d'invite à l'intérieur de
+Lama CPP. Le changement vise l'étape des bouches utilisés dans les chaînes de décodage
+spéculatif. La mise à jour est disponible dans les dernières compilations et améliore
+le débit pour les charges de travail qui s'appuient sur la prédiction de token fondée
+sur l'invite. Hippocratique AI a présenté son approche de la sécurité des grands
+modèles de langage cliniques lors d'un webinaire Bécurse. La session a couvert des stratégies
+de différenciation pour les déploiements dans la santé. L'entreprise a insister sur
+les mécanismes de sécurité et le comportement des modèles adaptés aux environnements cliniques.
+Essayez la version d'érivée Splish sur un M5 Max si vous faites tourner des modèles locaux
+pour des charges de nouvelles courtes ou d'agents. Lisez le guide du praticien Grafrag
+si vous construisez des chaînes de récupération qui utilisent déjà des graves de connaissance.
+Testez le code débauche par recherche d'un vite mise à jour dans la dernière compilation de
+LAMA CPP, quand vous avez besoin d'une génération spéculative plus rapide.
+Regardez l'enregistrement du Webinaire Ipocratique AI si vous déployez des modèles de langage
+en milieu clinique.
+D'autres noyaux d'inférence spécifique au M5 sont attendus à mesure que davantage
+de développeurs publie des versions dérivées et réglées.
+D'autres bandes d'essais de routeurs apparaîteront à mesure que des équipes commerciales et
+académiques publieront de nouvelles couches de routeages.
+Les discussions sur la sécurité des LLM cliniques se poursuivent lors des prochaines
+conférence d'y à dans la santé. On lève le capot du décodage spéculatif et le modèle
+des bouches n'ajoute presque pas de mémoire supplémentaire parce qu'il reste dans le même
+l'eau que la cible. Quand les bouches correspond à la cible, le système accepte plusieurs
+tokens par étape de vérification et réduit la latence totale d'environ de moitié sur
+des charges typiques. Quand les bouches divergent, le système jette les mauvais tokens et retombent
+sur la génération autoregressive standard, donc le ralentissement dans le pire décat reste
+sous les 10%. La qualité du modèle d'ébauche compte le plus en dessous de 30 milliards de paramètres.
+Au-dessus de cette taille, le taux d'acceptation plafonne et le calcul d'ébauche supplémentaire
+cessent d'être rentable. Les équipes choisissent donc un modèle d'ébauche d'un quart de la taille de
+la cible et des taux d'acceptation entre 60 et 80% comme plage de fonctionnement pratique.
+Utilisez le déco d'âge spéculatif quand la longueur de génération dépasse 200 tokens et que le
+Modèles débauchent tiens confortablement dans la même mémoire d'accélérateurs que la cible.
+Passez-le pour les invites courtes, ou quand la marche de mémoire est déjà juste.
+Avant de nous quitter, la prochaine vague de sortie de Noayo M5 devrait faire apparaître d'avantage
+de versions dérives et réglées dans les prochains jours.
+Voilà pour Models & Edjeans aujourd'hui.
+Si vous avez trouvé ça utile, partagez-le avec quelqu'un qui essaye de suivre tous ces changements
+et abonnez-vous pour ne pas rater la mise à jour de demain.
+Le monde de l'IA avance vite, on vous aide à suivre, à demain.
+Et si vous préférez regarder plutôt qu'écouter, retrouvez-nous sur YouTube chez NERANETWORK,
+le lien est dans les notes de l'émission.
+Cette émission vous arrive depuis le NERANETWORK.
+Si vous voulez un autre point quotidien bien tranché, prédiction marque 4 Daily s'occupe
+de vous.
+Le monde des marchés prédictifs expliquez chaque jour, jamais un Paris.
+Toutes nos émissions sont gratuits sur NERANETWORK.com.
+Et sur le site, les visuels de chaque épisode vivent dans notre galerie d'image gratuite
+à néranetwork.com, galerie, libre de droit sous créatif commons à télécharger avec
+attribution.
+Cette épisode a utilisé une synthèse vocale par IA de ma voix, la sélection éditoriale
+et l'analyse sont les miennes.

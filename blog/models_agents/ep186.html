@@ -107,11 +107,22 @@
     },
     "image": "https://nerranetwork.com/assets/covers/models-agents.jpg",
     "transcript": "https://nerranetwork.com/blog/models_agents/ep186.html#transcript",
-    "associatedMedia": {
-      "@type": "MediaObject",
-      "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep186_20260927.mp3",
-      "inLanguage": "en"
-    }
+    "associatedMedia": [
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep186_20260927.mp3",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep186_20260927.fr.mp3",
+        "inLanguage": "fr"
+      }
+    ],
+    "availableLanguage": [
+      "en",
+      "fr"
+    ]
   }
 ]
     </script>
@@ -1958,6 +1969,27 @@
     
 
     
+    <section class="nn-i18n" aria-label="Listen in another language">
+        <div class="nn-i18n-inner">
+            <div class="nn-i18n-row">
+                <span class="nn-i18n-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    Listen in
+                </span>
+                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="fr" aria-pressed="false">Français</button>
+                
+            </div>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep186_20260927.mp3"></audio>
+        </div>
+        <script type="application/json" id="nn-i18n-tracks">
+{
+  "en": {"url": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep186_20260927.mp3", "title": "Local inference on Apple Silicon just got faster with a tuned fork of the Splash engine delivering up to 1.5 times the speed on M5 Max chips.", "desc": "Local inference on Apple Silicon just got faster with a tuned fork of the Splash engine delivering up to 1.5 times the speed on M5 Max chips."},
+  "fr": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep186_20260927.fr.mp3", "title": "Ép. 186 : L’inférence locale sur Apple Silicon vient de s’accélérer grâce à un fork optimisé du moteur Splash…", "desc": "L’inférence locale sur Apple Silicon vient de s’accélérer grâce à un fork optimisé du moteur Splash, qui offre jusqu’à 1,5 fois la vitesse sur les puces M5 Max."}
+}
+        </script>
+    </section>
     
 
     <!-- Article with TOC sidebar -->
@@ -2028,6 +2060,60 @@
 <li>Additional router benchmarks will appear as commercial and academic teams release new routing layers.</li>
 <li>Clinical LLM safety discussions continue at upcoming healthcare AI conferences.</li>
 </ul>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="fr" hidden>
+                <p class="blog-translated-note">Français — AI-translated from the English episode.</p>
+                <p>L&#x27;inférence locale sur Apple Silicon vient d&#x27;accélérer grâce à une version dérivée et réglée du moteur Splash, qui délivre jusqu&#x27;à une virgule cinq fois la vitesse sur les puces M5 Max.</p>
+<p>Ici Models and Agents, épisode cent quatre-vingt-six.</p>
+<p>En regardant la semaine écoulée, Claude a fait reculer plusieurs frontières avec la sortie d&#x27;Opus cinq virgule cinq et une solution d&#x27;amplitude de diffusion à neuf boucles qui a battu le précédent record à huit boucles.</p>
+<p>Du côté des modèles à poids ouverts, le MiMo-V2.6-Pro 1T-A42B de Xiaomi a décroché la première place après trois millions de dollars d&#x27;entraînement, tandis que les systèmes d&#x27;agents ont dépassé les experts humains à APEX 2026 et que les taux de détournement de récompense ont atteint trente virgule cinq pour cent sur des tâches de recherche ouvertes.</p>
+<p>Une collaboration sélective entre modèles a fait passer la précision en raisonnement difficile de vingt-trois virgule un pour cent à vingt-huit virgule un pour cent.</p>
+<p>Un développeur a publié Splish, une version dérivée du moteur d&#x27;inférence Splash, réglée spécifiquement pour les puces M5 Max à quarante cœurs.</p>
+<p>Les changements comprennent des sélections de noyaux mesurées avec le propre outil de réglage de Splash, de nouveaux noyaux de vérification qui utilisent des barrières plus légères et calculent les sommes de lignes une seule fois par projection, et un ajustement de l&#x27;attention pour la forme à vingt-sept milliards.</p>
+<p>Sur le même matériel et les mêmes modèles, Splish tourne une virgule vingt-cinq fois plus vite sur des requêtes uniques, avec des gains entre onze et trente-cinq pour cent, et jusqu&#x27;à une virgule cinq fois plus vite à deux à quatre requêtes concurrentes.</p>
+<p>En conditions réelles, la génération de nouvelles courtes est passée de quarante-cinq à cinquante et un tokens par seconde à cinquante-six à soixante-quatre tokens par seconde sur des modèles en quatre bits.</p>
+<p>La qualité est restée inchangée sur toutes les sorties mesurées.</p>
+<p>Les choix de noyaux mesurés spécifiquement pour le M5 Max à quarante cœurs ont produit le plus gros gain en requête unique quand Swift un virgule cinq est passé de soixante-quatorze virgule sept à quatre-vingt-neuf virgule huit tokens par seconde.</p>
+<p>Charger ces choix depuis un fichier via SPLASH_KERNEL_CHOICES permet à n&#x27;importe qui de régler à nouveau sans reconstruire.</p>
+<p>De nouveaux noyaux de vérification pour les unités tensorielles du M5 ont apporté cinq pour cent de plus à une requête et dix à dix-neuf pour cent à deux à quatre requêtes.</p>
+<p>Le Qwen 3 six-to-trente-cinq B-A3B réglé avec les nouveaux noyaux a montré des accélérations à une à quatre requêtes de cinq pour cent, dix-huit pour cent, vingt-deux pour cent et dix-huit pour cent.</p>
+<p>Le Auto Model Router interne de KT s&#x27;est classé deuxième au général sur le banc d&#x27;essai Router Arena développé par des chercheurs de l&#x27;université Rice.</p>
+<p>La plateforme évalue les routeurs sur environ huit mille quatre cents requêtes, pour la précision des réponses, l&#x27;efficacité des coûts et la robustesse face aux changements d&#x27;entrée.</p>
+<p>Auto Model Router analyse le type de tâche, la difficulté et le domaine de connaissance avant de relier chaque requête au meilleur modèle d&#x27;un vivier, tout en équilibrant la qualité et le coût d&#x27;usage.</p>
+<p>Simon Willison a demandé à Claude Opus cinq virgule cinq de générer une animation en pixel art sur canevas HTML5 d&#x27;au moins vingt perroquets kākāpō qui sautent avec des confettis.</p>
+<p>Il a fourni trois photos de référence issues de la recherche d&#x27;images Google et a demandé une page interactive qui pourrait ensuite être enregistrée comme une vidéo de quinze secondes.</p>
+<p>Claude Code a ensuite utilisé Playwright pour piloter un navigateur, effectuer des clics minutés sur le canevas à neuf moments précis répartis sur seize secondes, et produire le fichier vidéo final.</p>
+<p>L&#x27;animation qui en a résulté a servi de diapositive de clôture dans la conférence WeAreDevelopers de Willison, qui faisait référence à la saison de reproduction record des kākāpō de cette année.</p>
+<p>La transcription de l&#x27;invite et la page HTML interactive sont disponibles sur son site, avec le code Playwright complet utilisé pour générer la vidéo.</p>
+<p>Un nouveau guide de Towards Data Science parcourt six schémas architecturaux avancés de GraphRAG.</p>
+<p>Le guide détaille six schémas architecturaux pour construire des systèmes GraphRAG de production.</p>
+<p>Il se concentre sur les flux de récupération et de génération qui combinent des bases de données graphe avec de grands modèles de langage.</p>
+<p>Un contributeur a ajouté des optimisations qui délivrent une accélération de quarante-deux fois pour l&#x27;ébauche par recherche d&#x27;invite à l&#x27;intérieur de llama.cpp.</p>
+<p>Le changement vise l&#x27;étape d&#x27;ébauche utilisée dans les chaînes de décodage spéculatif.</p>
+<p>La mise à jour est disponible dans les dernières compilations et améliore le débit pour les charges de travail qui s&#x27;appuient sur la prédiction de tokens fondée sur l&#x27;invite.</p>
+<p>Hippocratic A I a présenté son approche de la sécurité des grands modèles de langage cliniques lors d&#x27;un webinaire Becker&#x27;s.</p>
+<p>La session a couvert des stratégies de différenciation pour les déploiements dans la santé.</p>
+<p>L&#x27;entreprise a insisté sur les mécanismes de sécurité et le comportement des modèles adaptés aux environnements cliniques.</p>
+<p>Essayez la version dérivée Splish sur un M5 Max si vous faites tourner des modèles locaux pour des charges de nouvelles courtes ou d&#x27;agents.</p>
+<p>Lisez le guide du praticien GraphRAG si vous construisez des chaînes de récupération qui utilisent déjà des graphes de connaissances.</p>
+<p>Testez le code d&#x27;ébauche par recherche d&#x27;invite mis à jour dans la dernière compilation de llama.cpp quand vous avez besoin d&#x27;une génération spéculative plus rapide.</p>
+<p>Regardez l&#x27;enregistrement du webinaire Hippocratic A I si vous déployez des modèles de langage en milieu clinique.</p>
+<p>D&#x27;autres noyaux d&#x27;inférence spécifiques au M5 sont attendus à mesure que davantage de développeurs publient des versions dérivées réglées.</p>
+<p>D&#x27;autres bancs d&#x27;essai de routeurs apparaîtront à mesure que des équipes commerciales et académiques publieront de nouvelles couches de routage.</p>
+<p>Les discussions sur la sécurité des L L M cliniques se poursuivent lors des prochaines conférences d&#x27;I A dans la santé.</p>
+<p>On lève le capot du décodage spéculatif et le modèle d&#x27;ébauche n&#x27;ajoute presque pas de mémoire supplémentaire, parce qu&#x27;il reste dans le même lot que la cible.</p>
+<p>Quand l&#x27;ébauche correspond à la cible, le système accepte plusieurs tokens par étape de vérification et réduit la latence totale d&#x27;environ de moitié sur des charges typiques.</p>
+<p>Quand l&#x27;ébauche diverge, le système jette les mauvais tokens et retombe sur la génération autorégressive standard, donc le ralentissement dans le pire des cas reste sous les dix pour cent.</p>
+<p>La qualité du modèle d&#x27;ébauche compte le plus en dessous de trente milliards de paramètres.</p>
+<p>Au-dessus de cette taille, le taux d&#x27;acceptation plafonne et le calcul d&#x27;ébauche supplémentaire cesse d&#x27;être rentable.</p>
+<p>Les équipes choisissent donc un modèle d&#x27;ébauche d&#x27;un quart de la taille de la cible et des taux d&#x27;acceptation entre soixante et quatre-vingts pour cent comme plage de fonctionnement pratique.</p>
+<p>Utilisez le décodage spéculatif quand la longueur de génération dépasse deux cents tokens et que le modèle d&#x27;ébauche tient confortablement dans la même mémoire d&#x27;accélérateur que la cible.</p>
+<p>Passez-le pour les invites courtes ou quand la marge de mémoire est déjà juste.</p>
+<p>Avant de nous quitter, la prochaine vague de sorties de noyaux M5 devrait faire apparaître davantage de versions dérivées réglées dans les prochains jours.</p>
+<p>Voilà pour Models and Agents aujourd&#x27;hui. Si vous avez trouvé ça utile, partagez-le avec quelqu&#x27;un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain. Le monde de l&#x27;I A avance vite. On vous aide à suivre. À demain. Et si vous préférez regarder plutôt qu&#x27;écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l&#x27;émission. Cette émission vous arrive depuis le Nerra Network.</p>
+<p>Si vous voulez un autre point quotidien bien tranché, Prediction Markets Daily s&#x27;occupe de vous — le monde des marchés prédictifs expliqué chaque jour, jamais un pari. Toutes nos émissions sont gratuites sur nerranetwork point com. Et sur le site : les visuels de chaque épisode vivent dans notre galerie d&#x27;images gratuite à nerranetwork point com gallery — libres de droits sous Creative Commons, à télécharger avec attribution.</p>
+<p>Cet épisode a utilisé une synthèse vocale par I A de ma voix — la sélection éditoriale et l&#x27;analyse sont les miennes.</p>
             </div>
             
 

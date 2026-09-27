@@ -1,0 +1,99 @@
+L'inférence locale sur Apple Silicon vient d'accélérer grâce à une version dérivée et réglée du moteur Splash, qui délivre jusqu'à une virgule cinq fois la vitesse sur les puces M5 Max.
+
+Ici Models and Agents, épisode cent quatre-vingt-six.
+
+En regardant la semaine écoulée, Claude a fait reculer plusieurs frontières avec la sortie d'Opus cinq virgule cinq et une solution d'amplitude de diffusion à neuf boucles qui a battu le précédent record à huit boucles.
+
+Du côté des modèles à poids ouverts, le MiMo-V2.6-Pro 1T-A42B de Xiaomi a décroché la première place après trois millions de dollars d'entraînement, tandis que les systèmes d'agents ont dépassé les experts humains à APEX 2026 et que les taux de détournement de récompense ont atteint trente virgule cinq pour cent sur des tâches de recherche ouvertes.
+
+Une collaboration sélective entre modèles a fait passer la précision en raisonnement difficile de vingt-trois virgule un pour cent à vingt-huit virgule un pour cent.
+
+Un développeur a publié Splish, une version dérivée du moteur d'inférence Splash, réglée spécifiquement pour les puces M5 Max à quarante cœurs.
+
+Les changements comprennent des sélections de noyaux mesurées avec le propre outil de réglage de Splash, de nouveaux noyaux de vérification qui utilisent des barrières plus légères et calculent les sommes de lignes une seule fois par projection, et un ajustement de l'attention pour la forme à vingt-sept milliards.
+
+Sur le même matériel et les mêmes modèles, Splish tourne une virgule vingt-cinq fois plus vite sur des requêtes uniques, avec des gains entre onze et trente-cinq pour cent, et jusqu'à une virgule cinq fois plus vite à deux à quatre requêtes concurrentes.
+
+En conditions réelles, la génération de nouvelles courtes est passée de quarante-cinq à cinquante et un tokens par seconde à cinquante-six à soixante-quatre tokens par seconde sur des modèles en quatre bits.
+
+La qualité est restée inchangée sur toutes les sorties mesurées.
+
+Les choix de noyaux mesurés spécifiquement pour le M5 Max à quarante cœurs ont produit le plus gros gain en requête unique quand Swift un virgule cinq est passé de soixante-quatorze virgule sept à quatre-vingt-neuf virgule huit tokens par seconde.
+
+Charger ces choix depuis un fichier via SPLASH_KERNEL_CHOICES permet à n'importe qui de régler à nouveau sans reconstruire.
+
+De nouveaux noyaux de vérification pour les unités tensorielles du M5 ont apporté cinq pour cent de plus à une requête et dix à dix-neuf pour cent à deux à quatre requêtes.
+
+Le Qwen 3 six-to-trente-cinq B-A3B réglé avec les nouveaux noyaux a montré des accélérations à une à quatre requêtes de cinq pour cent, dix-huit pour cent, vingt-deux pour cent et dix-huit pour cent.
+
+Le Auto Model Router interne de KT s'est classé deuxième au général sur le banc d'essai Router Arena développé par des chercheurs de l'université Rice.
+
+La plateforme évalue les routeurs sur environ huit mille quatre cents requêtes, pour la précision des réponses, l'efficacité des coûts et la robustesse face aux changements d'entrée.
+
+Auto Model Router analyse le type de tâche, la difficulté et le domaine de connaissance avant de relier chaque requête au meilleur modèle d'un vivier, tout en équilibrant la qualité et le coût d'usage.
+
+Simon Willison a demandé à Claude Opus cinq virgule cinq de générer une animation en pixel art sur canevas HTML5 d'au moins vingt perroquets kākāpō qui sautent avec des confettis.
+
+Il a fourni trois photos de référence issues de la recherche d'images Google et a demandé une page interactive qui pourrait ensuite être enregistrée comme une vidéo de quinze secondes.
+
+Claude Code a ensuite utilisé Playwright pour piloter un navigateur, effectuer des clics minutés sur le canevas à neuf moments précis répartis sur seize secondes, et produire le fichier vidéo final.
+
+L'animation qui en a résulté a servi de diapositive de clôture dans la conférence WeAreDevelopers de Willison, qui faisait référence à la saison de reproduction record des kākāpō de cette année.
+
+La transcription de l'invite et la page HTML interactive sont disponibles sur son site, avec le code Playwright complet utilisé pour générer la vidéo.
+
+Un nouveau guide de Towards Data Science parcourt six schémas architecturaux avancés de GraphRAG.
+
+Le guide détaille six schémas architecturaux pour construire des systèmes GraphRAG de production.
+
+Il se concentre sur les flux de récupération et de génération qui combinent des bases de données graphe avec de grands modèles de langage.
+
+Un contributeur a ajouté des optimisations qui délivrent une accélération de quarante-deux fois pour l'ébauche par recherche d'invite à l'intérieur de llama.cpp.
+
+Le changement vise l'étape d'ébauche utilisée dans les chaînes de décodage spéculatif.
+
+La mise à jour est disponible dans les dernières compilations et améliore le débit pour les charges de travail qui s'appuient sur la prédiction de tokens fondée sur l'invite.
+
+Hippocratic A I a présenté son approche de la sécurité des grands modèles de langage cliniques lors d'un webinaire Becker's.
+
+La session a couvert des stratégies de différenciation pour les déploiements dans la santé.
+
+L'entreprise a insisté sur les mécanismes de sécurité et le comportement des modèles adaptés aux environnements cliniques.
+
+Essayez la version dérivée Splish sur un M5 Max si vous faites tourner des modèles locaux pour des charges de nouvelles courtes ou d'agents.
+
+Lisez le guide du praticien GraphRAG si vous construisez des chaînes de récupération qui utilisent déjà des graphes de connaissances.
+
+Testez le code d'ébauche par recherche d'invite mis à jour dans la dernière compilation de llama.cpp quand vous avez besoin d'une génération spéculative plus rapide.
+
+Regardez l'enregistrement du webinaire Hippocratic A I si vous déployez des modèles de langage en milieu clinique.
+
+D'autres noyaux d'inférence spécifiques au M5 sont attendus à mesure que davantage de développeurs publient des versions dérivées réglées.
+
+D'autres bancs d'essai de routeurs apparaîtront à mesure que des équipes commerciales et académiques publieront de nouvelles couches de routage.
+
+Les discussions sur la sécurité des L L M cliniques se poursuivent lors des prochaines conférences d'I A dans la santé.
+
+On lève le capot du décodage spéculatif et le modèle d'ébauche n'ajoute presque pas de mémoire supplémentaire, parce qu'il reste dans le même lot que la cible.
+
+Quand l'ébauche correspond à la cible, le système accepte plusieurs tokens par étape de vérification et réduit la latence totale d'environ de moitié sur des charges typiques.
+
+Quand l'ébauche diverge, le système jette les mauvais tokens et retombe sur la génération autorégressive standard, donc le ralentissement dans le pire des cas reste sous les dix pour cent.
+
+La qualité du modèle d'ébauche compte le plus en dessous de trente milliards de paramètres.
+
+Au-dessus de cette taille, le taux d'acceptation plafonne et le calcul d'ébauche supplémentaire cesse d'être rentable.
+
+Les équipes choisissent donc un modèle d'ébauche d'un quart de la taille de la cible et des taux d'acceptation entre soixante et quatre-vingts pour cent comme plage de fonctionnement pratique.
+
+Utilisez le décodage spéculatif quand la longueur de génération dépasse deux cents tokens et que le modèle d'ébauche tient confortablement dans la même mémoire d'accélérateur que la cible.
+
+Passez-le pour les invites courtes ou quand la marge de mémoire est déjà juste.
+
+Avant de nous quitter, la prochaine vague de sorties de noyaux M5 devrait faire apparaître davantage de versions dérivées réglées dans les prochains jours.
+
+Voilà pour Models and Agents aujourd'hui. Si vous avez trouvé ça utile, partagez-le avec quelqu'un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain. Le monde de l'I A avance vite. On vous aide à suivre. À demain. Et si vous préférez regarder plutôt qu'écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l'émission. Cette émission vous arrive depuis le Nerra Network.
+
+Si vous voulez un autre point quotidien bien tranché, Prediction Markets Daily s'occupe de vous — le monde des marchés prédictifs expliqué chaque jour, jamais un pari. Toutes nos émissions sont gratuites sur nerranetwork point com. Et sur le site : les visuels de chaque épisode vivent dans notre galerie d'images gratuite à nerranetwork point com gallery — libres de droits sous Creative Commons, à télécharger avec attribution.
+
+Cet épisode a utilisé une synthèse vocale par I A de ma voix — la sélection éditoriale et l'analyse sont les miennes.
