@@ -208,6 +208,7 @@
         'subscribe_button': 'Подписаться' if _is_ru else 'Subscribe',
         'subscribe_button_loading': 'Подписка…' if _is_ru else 'Subscribing…',
         'subscribe_button_done': 'Проверьте почту ✓' if _is_ru else 'Check your email ✓',
+        'subscribe_button_error': 'Не удалось — попробуйте ещё раз' if _is_ru else 'Something went wrong — try again',
         'copyright_line': ('© ' ~ current_year ~ ' Nerra Network. Все шоу — независимое производство.') if _is_ru else ('© ' ~ current_year ~ ' Nerra Network. All shows independently produced.'),
         'ai_notice': 'Nerra Network использует ИИ-инструменты в производстве контента.' if _is_ru else 'Nerra Network uses AI tools in content production.',
         'learn_more': 'Подробнее' if _is_ru else 'Learn more',
@@ -565,8 +566,21 @@
                  account (same identity as the gallery gate), so the
                  member surface and the list grow together. -->
             <div class="nn-footer-subscribe">
+                {#- Handler lives in assets/js/footer-subscribe.js (bound
+                    via data-nn-subscribe). Do NOT put |tojson strings in an
+                    onsubmit="" attribute — double quotes end the attribute
+                    early and the form falls through to a GET that puts the
+                    email in the URL (2026-09-27 audit). method=post keeps
+                    the address out of the query string if JS is off. -#}
                 <form class="nn-subscribe-form"
-                      onsubmit="var f=this,btn=f.querySelector('button[type=submit]');btn.disabled=true;btn.textContent={{ t.subscribe_button_loading | tojson }};var tags=Array.prototype.map.call(f.querySelectorAll('input[name=tag]:checked'),function(c){return c.value;});fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member',tags:tags,source:{{ capture_source_site | tojson }}})}).then(function(r){btn.textContent=r.ok?{{ t.subscribe_button_done | tojson }}:{{ t.subscribe_button | tojson }};if(r.ok){var a=f.querySelector('.nn-account-link');if(a)a.style.display='inline';}}).catch(function(){btn.textContent={{ t.subscribe_button | tojson }};}).then(function(){btn.disabled=false;});return false;">
+                      method="post"
+                      action="#"
+                      data-nn-subscribe="footer"
+                      data-source="{{ capture_source_site }}"
+                      data-label-loading="{{ t.subscribe_button_loading }}"
+                      data-label-done="{{ t.subscribe_button_done }}"
+                      data-label-idle="{{ t.subscribe_button }}"
+                      data-label-error="{{ t.subscribe_button_error }}">
                     <h4>{{ t.subscribe_h4 }}</h4>
                     <p>{{ t.subscribe_subtitle }}</p>
                     <div class="nn-subscribe-tags">
@@ -698,6 +712,7 @@
     <!-- Centralized, improved global search -->
     <script src="{{ path_prefix }}assets/js/search.js" defer></script>
     <script src="{{ path_prefix }}assets/js/language-control.js" defer></script>
+    <script src="{{ path_prefix }}assets/js/footer-subscribe.js" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
     // when the api.nerranetwork.com session cookie answers. Fail-silent —

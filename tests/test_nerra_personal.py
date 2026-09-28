@@ -227,10 +227,16 @@ class TestSurfaces:
     def test_footer_newsletter_posts_to_account_worker(self):
         # Newsletter signups create accounts: the footer form must go
         # through /api/subscribe (list "member"), not Buttondown's embed.
+        # Sep 2026: the POST lives in assets/js/footer-subscribe.js so
+        # |tojson can never break an inline onsubmit attribute again.
         base = (ROOT / "templates" / "base.html.j2").read_text(encoding="utf-8")
         assert "embed-subscribe" not in base
-        assert "api.nerranetwork.com/api/subscribe" in base
-        assert "list:'member'" in base
+        assert 'data-nn-subscribe="footer"' in base
+        js = (ROOT / "assets" / "js" / "footer-subscribe.js").read_text(
+            encoding="utf-8"
+        )
+        assert "api.nerranetwork.com/api/subscribe" in js
+        assert "list: 'member'" in js or 'list: "member"' in js
 
     def test_missing_admin_token_fails_loudly(self):
         """A host that cannot authenticate must not look idle.

@@ -109,11 +109,17 @@ class TestEverySignupFormEmitsASource:
     @pytest.mark.parametrize("rel,label", FORMS)
     def test_form_sends_a_source(self, rel, label):
         src = (ROOT / rel).read_text()
-        assert "/api/subscribe" in src, f"{label}: no subscribe call"
-        assert "source:" in src, (
+        # The POST lives in assets/js/footer-subscribe.js (Sep 2026) so a
+        # |tojson inside onsubmit can never break the attribute again; the
+        # form still names the Worker source via data-source.
+        assert 'data-nn-subscribe=' in src, f"{label}: missing data-nn-subscribe"
+        assert "data-source=" in src or "capture_source_site" in src, (
             f"{label} posts to the Worker without a `source`, so its captures "
             "can never appear in api/funnel.json capture.by_source"
         )
+        js = (ROOT / "assets" / "js" / "footer-subscribe.js").read_text()
+        assert "/api/subscribe" in js
+        assert "source: source" in js
 
     @pytest.mark.parametrize("rel,label", FORMS)
     def test_source_comes_from_the_owning_module(self, rel, label):
