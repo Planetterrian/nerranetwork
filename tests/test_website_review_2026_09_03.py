@@ -193,6 +193,10 @@ class TestNavigationChrome:
     def test_hreflang_and_homepage_canonical_use_bare_origin(self):
         src = _read("templates/base.html.j2")
         assert 'hreflang="x-default" href="https://nerranetwork.com/"' in src
+        # RU side must use the RU homepage canonical (/ru/index.html), not
+        # the directory form /ru/ — Google ignores mismatched pairs.
+        assert 'hreflang="ru" href="https://nerranetwork.com/ru/index.html"' in src
+        assert 'hreflang="ru" href="https://nerranetwork.com/ru/"' not in src
         gen = _read("generate_html.py")
         assert '"canonical_url": f"{GITHUB_RAW}/",' in gen
 
@@ -312,7 +316,9 @@ class TestShowAndInfoPages:
 
     def test_blog_index_rss_button_gated_on_posts(self):
         src = (_T / "blog_index.html.j2").read_text(encoding="utf-8")
-        assert src.index("{% if posts %}") < src.index('class="blog-rss-btn"')
+        # Button requires both posts AND an on-disk blog_*.rss file.
+        assert "site_file_exists('blog_' ~ show_slug ~ '.rss')" in src
+        assert src.index("{% if posts and site_file_exists('blog_' ~ show_slug ~ '.rss') %}") < src.index('class="blog-rss-btn"')
 
 
 # ---------------------------------------------------------------------------

@@ -5,7 +5,12 @@
 {#- A paginated series tells a crawler so in the head, not only in the body. -#}
 {% if prev_page_url %}<link rel="prev" href="{{ prev_page_url }}">{% endif %}
 {% if next_page_url %}<link rel="next" href="{{ next_page_url }}">{% endif %}
+{#- Only advertise a blog RSS feed that exists on disk. Nerra Voices had
+    posts=0 for months but still emitted blog_nerra_voices.rss (404) —
+    Sep 2026 audit. Do not invent the feed file from the template. -#}
+{% if site_file_exists('blog_' ~ show_slug ~ '.rss') %}
     <link rel="alternate" type="application/rss+xml" title="{{ show_name }} Blog RSS" href="{{ blog_rss_url }}">
+{% endif %}
 
     <style>
         .blog-idx-hero {
@@ -102,8 +107,10 @@
             <h1>{{ show_name }} Blog</h1>
             <p>{{ description }}</p>
             {# The per-show blog feed is only written once a show has posts
-               (Age of AI's link 404'd — Sep 2026 review). #}
-            {% if posts %}
+               AND the feed file exists (Age of AI's link 404'd — Sep 2026
+               review; Nerra Voices advertised a missing blog_*.rss — Sep
+               2026 audit). #}
+            {% if posts and site_file_exists('blog_' ~ show_slug ~ '.rss') %}
             <a href="{{ blog_rss_url }}" class="blog-rss-btn">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
                 Subscribe via RSS

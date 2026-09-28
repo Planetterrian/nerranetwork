@@ -1171,6 +1171,15 @@
             return rel ? PATH_PREFIX + rel : '';
         }
 
+        /* Build article links via concatenation so crawlers that regex for
+           href= attributes inside <script> do not treat JS template
+           placeholders as crawlable URLs (Sep 2026 audit). */
+        function articleLinkHtml(href) {
+            if (!href) return '';
+            const label = {% if _is_ru %}'Статья и расшифровка →'{% else %}'Article & transcript →'{% endif %};
+            return '<a class="episode-card-article" href="' + href + '">' + label + '</a>';
+        }
+
         /* The RSS fallback has no episode field, only a title like
            "Ep 611: ...". Reading the number back out is what lets those cards
            carry the same link as the JSON-built ones. */
@@ -1275,7 +1284,7 @@
                     <div style="color:var(--nn-text-muted);font-size:0.85rem;margin-bottom:var(--sp-3);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(getPreviewText(epSummary(ep)))}</div>
                     <audio controls preload="none" data-role="audio" src="${ep.audio_url || ''}" aria-label="Play ${escapeHtml(epTitle(ep) || 'episode')}" style="width:100%;height:36px;border-radius:8px;"></audio>
                     <div data-role="langs" style="display:none;margin-top:6px;"></div>
-                    ${postUrlFor(epNumber(ep)) ? `<a class="episode-card-article" href="${postUrlFor(epNumber(ep))}">{% if _is_ru %}Статья и расшифровка{% else %}Article &amp; transcript{% endif %} &rarr;</a>` : ''}
+                    ${articleLinkHtml(postUrlFor(epNumber(ep)))}
                 `;
                 grid.appendChild(card);
                 // Per-episode language switcher (any translated archive episode,
@@ -1422,8 +1431,8 @@
                             <div class="episode-card-date">${pd ? formatDate(pd) : ''}</div>
                             <div class="episode-card-title">${escapeHtml(title)}</div>
                             <div style="color:var(--nn-text-muted);font-size:0.85rem;margin-bottom:var(--sp-3);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(getPreviewText(desc))}</div>
-                            <audio controls preload="none" src="${url}" aria-label="Play ${escapeHtml(title)}" style="width:100%;height:36px;border-radius:8px;"></audio>
-                            ${postUrlFor(epNumberFromTitle(title)) ? `<a class="episode-card-article" href="${postUrlFor(epNumberFromTitle(title))}">{% if _is_ru %}Статья и расшифровка{% else %}Article &amp; transcript{% endif %} &rarr;</a>` : ''}
+                            <audio controls preload="none" src="` + (url || '') + `" aria-label="Play ` + escapeHtml(title) + `" style="width:100%;height:36px;border-radius:8px;"></audio>
+                            ` + articleLinkHtml(postUrlFor(epNumberFromTitle(title))) + `
                         `;
                         grid.appendChild(card);
                     });
