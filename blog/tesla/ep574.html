@@ -2435,17 +2435,23 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 <a href="mailto:patrick@planetterrian.com?subject=Suggestion%20for%20Tesla%20Shorts%20Time&body=Re: https://nerranetwork.com/blog/tesla/ep574.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
             </div>
 
-            <!-- Subscribe CTA -->
+            <!-- Subscribe CTA (Worker-backed — no Buttondown popup / fake 500ms success) -->
             
             <div id="subscribe-cta" class="show-subscribe-inline" style="margin-top:var(--sp-6);margin-bottom:var(--sp-6);">
                 <h3>Enjoy this episode? Get Tesla Shorts Time in your inbox</h3>
                 <p>New episode alerts — no spam, unsubscribe anytime.</p>
-                <form action="https://buttondown.com/api/emails/embed-subscribe/patricknovak1" method="post" target="popupwindow"
-                      onsubmit="var btn=this.querySelector('button[type=submit]');btn.disabled=true;btn.textContent='Subscribing…';setTimeout(function(){btn.textContent='Check your email ✓';btn.disabled=false;},500);">
+                <form method="post" action="#"
+                      data-nn-subscribe="blog-cta"
+                      data-list="member"
+                      data-source="src-nerranetwork"
+                      data-form-id="blog-tesla-newsletter"
+                      data-label-loading="Subscribing…"
+                      data-label-done="Check your email ✓"
+                      data-label-idle="Subscribe"
+                      data-label-error="Something went wrong — try again">
                     <input type="hidden" name="tag" value="Tesla Shorts Time">
-                    <input type="hidden" value="1" name="embed">
                     <div class="nn-subscribe-row">
-                        <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
+                        <input type="email" name="email" placeholder="your@email.com" required autocomplete="email" aria-label="Email address">
                         <button type="submit">Subscribe</button>
                     </div>
                 </form>
