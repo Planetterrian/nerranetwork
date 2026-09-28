@@ -22,6 +22,13 @@
   five minutes before we start.</p>{% endif %}
   <h3>The angle I'm excited about</h3>
   <p style="background:#faf5ff;border-left:4px solid {{ brand_color }};padding:.7em 1em">{{ thesis }}</p>
+  {% if agenda_points %}<h3>What you asked me to cover</h3>
+  <p>Every one of these will be part of the conversation. I'll ask about them in my own
+  words and in whatever order the conversation allows, and ask my own questions around
+  them. If I drift, just say you'd like to come back to one; I'll take the cue.</p>
+  <ul>
+  {% for p in agenda_points %}<li>{{ p }}</li>
+  {% endfor %}</ul>{% endif %}
   <h3>Questions I'm likely to ask</h3>
   <ol>
   {% for q in questions %}

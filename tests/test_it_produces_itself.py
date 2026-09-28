@@ -688,7 +688,8 @@ class TestSheDoesNotEndTheShowInTheMiddle:
         assert "Three questions deep into one real thing" in self.PROMPT
 
     def test_the_personal_questions_are_not_optional_or_only_at_the_end(self):
-        assert "ASK ABOUT THE PERSON, NOT ONLY THE SUBJECT" in self.PROMPT
+        # Sept 29 2026 (Chad Law): still asked, now in service of the subject.
+        assert "ASK ABOUT THE PERSON, IN SERVICE OF THE SUBJECT" in self.PROMPT
         assert "spread through the hour" in self.PROMPT
 
     def test_the_personal_rule_still_defers_to_the_application(self):

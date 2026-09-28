@@ -142,6 +142,11 @@
     <p class="hint">Mira will not push past what you choose here. You can change
     your mind on the day, and you approve the episode before it is published.</p>
 
+    <label for="must_cover">Points you want to be sure we cover (optional)</label>
+    <textarea id="must_cover" name="must_cover" rows="4" maxlength="2000" placeholder="One per line, up to five: questions or points you'd like the conversation to reach"></textarea>
+    <p class="hint">Mira reaches every one, in her own words and in whatever order the
+    conversation allows, and asks her own questions around them.</p>
+
     <label for="off_limits">Anything off limits? (optional)</label>
     <input id="off_limits" name="off_limits" maxlength="500" placeholder="Subjects, people or numbers you would rather not discuss">
 
@@ -208,6 +213,7 @@ document.getElementById('applyForm').addEventListener('submit', async (e) => {
     depth: val('depth') || null,
     personal_depth: val('personal_depth') || null,
     off_limits: val('off_limits') || null,
+    must_cover: val('must_cover').split('\n').map(s => s.replace(/^[-•*\d.)\s]+/, '').trim()).filter(Boolean).slice(0, 5),
     preferred_window: val('preferred_window'),
     referrer: document.referrer || null,
     show: 'nerra_voices'

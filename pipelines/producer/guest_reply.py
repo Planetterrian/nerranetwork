@@ -52,7 +52,7 @@ MIN_CONFIDENCE = 0.7
 MAX_REPLY_CHARS = 1400
 MAX_MIRA_REPLIES_PER_THREAD = 3
 APP_COLUMNS = ("id,name,email,phone,show,status,publicist_name,publicist_email,"
-               "guest_notes,desired_minutes")
+               "guest_notes,guest_agenda,desired_minutes")
 UPCOMING = ("scheduled", "briefed")
 RECORDED = ("in_progress", "completed", "editorial_review", "guest_review", "on_hold",
             "approved")
@@ -165,6 +165,15 @@ def facts_for(guest: Dict[str, Any]) -> Dict[str, Any]:
             lines.append(f"- To move or cancel, one tap: {manage}")
             links.append(manage)
         lines.append("- About a day before, they receive a short brief with the themes you plan to explore.")
+    elif latest and latest.get("status") in RECORDED and _redo_agreed(latest["id"]):
+        standing = ("they asked to record the interview again and that was agreed; the first "
+                    "recording will not be published")
+        lines.append("- The first recording will not be published. A new interview has been "
+                     "agreed and will be set up around the subject and points they sent.")
+        url = booking_url(show.slug)
+        if url:
+            lines.append(f"- They can book the new interview here: {url}")
+            links.append(url)
     elif latest and latest.get("status") in RECORDED:
         standing = f"interview recorded ({latest.get('status')}); the episode is in production or review"
         lines.append("- The interview is recorded. They will get (or have had) an email with a link "
@@ -186,8 +195,21 @@ def facts_for(guest: Dict[str, Any]) -> Dict[str, Any]:
         if url:
             lines.append(f"- They can pick a time here, booking with their own email address: {url}")
             links.append(url)
+    agenda = app.get("guest_agenda") if isinstance(app.get("guest_agenda"), dict) else {}
+    if agenda.get("points"):
+        lines.append("- The points they asked you to cover in the interview (already on file): "
+                     + " | ".join(str(x) for x in agenda["points"][:8]))
     return {"show": show, "standing": standing, "facts": "\n".join(lines) or "- (none)",
             "links": [l for l in links if l], "upcoming": upcoming}
+
+
+def _redo_agreed(interview_id: str) -> bool:
+    try:
+        rows = sb_select("editorial_packages",
+                         f"interview_id=eq.{interview_id}&guest_followup=eq.redo&select=id&limit=1")
+    except Exception:  # noqa: BLE001 — unknown means no
+        return False
+    return bool(rows)
 
 
 # ---------------------------------------------------------------------------
@@ -233,6 +255,18 @@ def validate(obj: Any) -> Dict[str, Any]:
     note = obj.get("interview_note")
     if note is not None and not isinstance(note, str):
         raise GuestReplyError("interview_note must be a string or null")
+    agenda = obj.get("agenda")
+    if agenda is not None:
+        if not isinstance(agenda, dict):
+            raise GuestReplyError("agenda must be an object or null")
+        pts = agenda.get("points") or []
+        if not isinstance(pts, list) or not all(isinstance(x, str) for x in pts):
+            raise GuestReplyError("agenda.points must be a list of strings")
+        topic = agenda.get("topic")
+        agenda = {"topic": (" ".join(topic.split())[:500] if isinstance(topic, str) else None),
+                  "points": [" ".join(x.split())[:400] for x in pts if x.strip()][:8]}
+        if not agenda["topic"] and not agenda["points"]:
+            agenda = None
     reply = (reply or "").strip() or None
     if intent not in REPLY_INTENTS:
         reply = None
@@ -240,6 +274,7 @@ def validate(obj: Any) -> Dict[str, Any]:
         raise GuestReplyError(f"intent {intent} requires reply_text")
     return {"intent": intent, "confidence": float(conf), "reply_text": reply,
             "interview_note": (note or "").strip()[:900] or None,
+            "agenda": agenda,
             "summary": " ".join(str(obj.get("summary") or "").split())[:160]}
 
 
@@ -291,7 +326,8 @@ def plan(thread: Dict[str, Any], guest: Dict[str, Any], facts: Dict[str, Any],
             last = exc
             logger.warning("guest-reply plan invalid for thread %s: %s", thread.get("id"), exc)
     return {"intent": "needs_patrick", "confidence": 0.0, "reply_text": None,
-            "interview_note": None, "summary": f"model output invalid twice: {last}"[:160]}
+            "interview_note": None, "agenda": None,
+            "summary": f"model output invalid twice: {last}"[:160]}
 
 
 # ---------------------------------------------------------------------------
@@ -317,6 +353,20 @@ def file_note(app: Dict[str, Any], text: str, thread_id: str, dry_run: bool) -> 
         return
     sb_update("guest_applications", f"id=eq.{app['id']}", {"guest_notes": notes})
     app["guest_notes"] = notes
+
+
+def file_agenda(app: Dict[str, Any], agenda: Dict[str, Any], dry_run: bool) -> None:
+    """The guest's own subject and points (Sept 29 2026, Chad Law). New
+    points replace old ones; a topic is kept unless a new one is given."""
+    old = app.get("guest_agenda") if isinstance(app.get("guest_agenda"), dict) else {}
+    new = {"topic": agenda.get("topic") or old.get("topic"),
+           "points": agenda.get("points") or old.get("points") or [],
+           "updated_at": _now(), "source": "email"}
+    if dry_run:
+        logger.info("[dry-run] would file an agenda for %s: %s", app.get("name"), new)
+        return
+    sb_update("guest_applications", f"id=eq.{app['id']}", {"guest_agenda": new})
+    app["guest_agenda"] = new
 
 
 def tell_patrick(*, guest_name: str, show_name: str, inbound: Dict[str, Any],
@@ -387,7 +437,13 @@ def handle_guest_reply(*, thread: Dict[str, Any], inbound: Dict[str, Any],
     p = plan(thread, guest, facts, gmail.user)
     line.update(intent=p["intent"], confidence=p["confidence"], summary=p["summary"])
 
-    if p["intent"] == "interview_input":
+    if p.get("agenda"):
+        try:
+            file_agenda(app, p["agenda"], dry_run)
+            line["agenda_filed"] = True
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("filing the guest agenda failed: %s", exc)
+    if p["intent"] == "interview_input" and (p.get("interview_note") or not p.get("agenda")):
         note = p.get("interview_note") or _classify.truncate(inbound.get("body") or "", 900)
         try:
             file_note(app, note, thread["id"], dry_run)

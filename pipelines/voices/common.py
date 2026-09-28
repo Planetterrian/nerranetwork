@@ -330,6 +330,44 @@ def send_email(to: str, subject: str, html_body: str,
     logger.info("Email sent to %s: %s", to, subject)
 
 
+def guest_agenda_block(app: Optional[Dict[str, Any]]) -> str:
+    """The subject the guest came for, and the points they asked to cover.
+
+    Sept 29 2026, Chad Law: he came to discuss The Velvet Monopoly and the
+    conversation followed his last sentence into biography and a tangent,
+    and never came back. His publicist asked for a re-record. The guest's
+    subject is the spine of the hour; the points they send are destinations
+    Mira reaches in her own words, not a script she reads.
+
+    ``guest_applications.guest_agenda`` = {topic, points: [..]} (from the
+    guest by email, filed by the Producer, or set by hand). Without it the
+    stated topics and the pitch summary still name the subject."""
+    app = app or {}
+    agenda = app.get("guest_agenda") if isinstance(app.get("guest_agenda"), dict) else {}
+    topic = " ".join(str(agenda.get("topic") or "").split())
+    if not topic:
+        topics = app.get("topics") if isinstance(app.get("topics"), list) else []
+        topic = "; ".join(str(t).strip() for t in topics if str(t).strip())[:400]
+    if not topic:
+        topic = " ".join(str(app.get("pitch_summary") or "").split())[:400]
+    points = [" ".join(str(p).split())[:400] for p in (agenda.get("points") or [])
+              if str(p).strip()][:8]
+    if not topic and not points:
+        return ""
+    out = "\nTHE SUBJECT THEY CAME FOR"
+    out += f": {topic}\n" if topic else "\n"
+    out += ("This is the spine of the hour. Everything else, their story "
+            "included, is there to get deeper into it.\n")
+    if points:
+        out += ("They asked for these to be covered. Every one is reached before "
+                "the closing round, in your own words and in whatever order the "
+                "conversation allows. They are destinations, not a script: never "
+                "read them out, number them or mention that they were sent. Stay "
+                "with each long enough for a complete answer.\n"
+                + "\n".join(f"- {p}" for p in points) + "\n")
+    return out
+
+
 def guest_notes_block(app: Optional[Dict[str, Any]]) -> str:
     """What the guest wrote to Mira before the interview, for her prompt.
 

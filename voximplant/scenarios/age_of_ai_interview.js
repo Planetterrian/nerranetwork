@@ -1404,17 +1404,21 @@ function startTimeChecks() {
           " and do not say anything about the recording finishing. You have" +
           " about " + left + " more minutes of real questions to ask before" +
           " any of that. If you have reached the end of the prepared" +
-          " questions, that is normal and early: go back to the most" +
-          " interesting thing she has said so far and ask the next question" +
-          " down from it — how it actually worked, what it cost, who" +
-          " disagreed, what happened next. One question per turn, and let" +
-          " the answer finish.";
+          " questions, that is normal and early: go back to the subject they" +
+          " came for. If any point under THE SUBJECT THEY CAME FOR has not" +
+          " been reached yet, go there next; otherwise take the most" +
+          " interesting thing they have said about that subject and ask the" +
+          " next question down from it. If the last few minutes have been on" +
+          " a tangent, bring it back now, out loud (Chad Law, Sept 24 2026)." +
+          " One question per turn, and let the answer finish.";
       } else if (remainMin > 3) {
         if (!closingPermitted) {
           closingPermitted = true;
           trace("time", "closing round permitted at " + elapsed + " min");
         }
-        note += " You may begin the closing round when the current thread" +
+        note += " Before the closing round, make sure every point under THE" +
+          " SUBJECT THEY CAME FOR has been reached; if one has not, go there" +
+          " first. You may begin the closing round when the current thread" +
           " reaches a natural end: the show's question, the five" +
           " lightning-round questions, the two about the interview itself," +
           " then their last word. There is no hurry, but every guest gets" +

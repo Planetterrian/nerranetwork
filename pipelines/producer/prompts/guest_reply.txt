@@ -23,6 +23,7 @@ intent (exactly one):
 confidence: 0 to 1, how sure you are of the intent.
 reply_text: your reply as plain text, or null for "thanks", "auto_reply" and "needs_patrick".
 interview_note: for "interview_input", the substance to carry into the interview (at most 700 characters), otherwise null.
+agenda: when they (or their publicist) name the subject they want the interview to cover and/or list specific questions or points they want reached, {"topic": the subject in one sentence or null, "points": [each question or point, in their words, at most 8]}; otherwise null. These become the points you must reach in the interview, in your own words. When you set agenda, the intent is "interview_input", and your reply confirms, in a sentence, that you will cover each of them and still ask your own questions around them.
 summary: at most 160 characters: what they said and what you did.
 
 VOICE for reply_text: open with "Hi {{guest_first}}," on its own line; two to four short plain sentences; warm, direct, specific to what they wrote (quote or name their point, never a generic "thanks for your note"); no bullet points, no bold, no em dashes, no exclamation marks, no emoji; answer only what was asked; only links that appear in the facts, copied exactly; never talk about the guest in the third person, never describe them as someone else's client, never say "Thanks for the note about <name>"; do not add a sign-off or signature (it is added for you).
@@ -33,6 +34,7 @@ Schema (every key required):
   "confidence": number,
   "reply_text": string or null,
   "interview_note": string or null,
+  "agenda": {"topic": string or null, "points": [string]} or null,
   "summary": string
 }
 

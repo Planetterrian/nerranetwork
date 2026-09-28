@@ -24,7 +24,7 @@ import os
 
 from common import (  # noqa: E402
     OPERATOR_EMAIL, ROOT, carry_the_show_block, cohost_name, load_prompt, logger,
-    mira_signature_html, guest_notes_block,
+    mira_signature_html, guest_notes_block, guest_agenda_block,
     notify_operator,
     operator_phone, render_email, sb_insert, sb_select, sb_update, send_email,
     show_for, to_e164,
@@ -330,6 +330,7 @@ def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
         guest_brief=brief.get("bio_research", ""),
         likely_questions=q_text,
         guest_notes=guest_notes_block(app),
+        guest_agenda=guest_agenda_block(app),
         cohost_name=cohost_name(),
         cohost_first=cohost_name().split()[0],
         cohost_block=cohost_block(host_mode_enabled(interview)),

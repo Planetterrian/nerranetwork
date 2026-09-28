@@ -461,6 +461,13 @@ async function handleApply(req: Request, env: Env): Promise<Response> {
     depth: oneOf(form.depth, ["accessible", "standard", "deep"]),
     personal_depth: oneOf(form.personal_depth, ["none", "light", "open"]),
     off_limits: form.off_limits ? String(form.off_limits).slice(0, 500) : null,
+    // Sept 29 2026 (Chad Law): the points the guest wants reached. Mira
+    // covers every one, in her own words; they reach her prompt through
+    // guest_agenda_block in pipelines/voices/common.py.
+    guest_agenda: Array.isArray(form.must_cover) && form.must_cover.some((x: unknown) => String(x ?? "").trim())
+      ? { topic: null, points: form.must_cover.map((x: unknown) => String(x ?? "").trim().slice(0, 400))
+            .filter(Boolean).slice(0, 5), updated_at: new Date().toISOString(), source: "application" }
+      : null,
     // Sept 18 2026: Mira carries the room on her own. Patrick Novak, who
     // created the network, joins as co-host only when the guest asks.
     wants_cohost: form.wants_cohost === true || String(form.wants_cohost ?? "").toLowerCase() === "yes",

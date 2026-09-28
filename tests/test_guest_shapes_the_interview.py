@@ -199,7 +199,7 @@ class TestTheShapeReachesMira:
                 "cohost_intro_step", "cohost_craft", "carry_the_show",
                 "planned_minutes", "lightning_at", "guest_shape",
                 "guest_address", "guest_address_rule", "lessons",
-                "guest_notes",
+                "guest_notes", "guest_agenda",
             },
             "question_generation.txt": {
                 "show_name", "show_premise", "name", "bio_research", "topics",

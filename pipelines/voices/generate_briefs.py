@@ -149,6 +149,10 @@ def email_brief_to_guest(interview: dict, app: dict, brief: dict) -> None:
         # the day before, on the same page, so a quiet microphone is found
         # while there is still time to fix it. Failures email Patrick.
         setup_test_link=setup_test_url(show, interview["id"]),
+        # Sept 29 2026 (Chad Law): the points the guest asked to cover, shown
+        # back to them so they know Mira has them.
+        agenda_points=((app.get("guest_agenda") or {}).get("points") or [])
+        if isinstance(app.get("guest_agenda"), dict) else [],
         thesis=brief["episode_thesis_draft"],
         questions=brief["likely_questions"],
         closing_question=show.closing_question,
