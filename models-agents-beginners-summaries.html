@@ -26,8 +26,6 @@
     <link rel="canonical" href="https://nerranetwork.com/models-agents-beginners-summaries.html">
     <link rel="alternate" type="application/rss+xml" title="Models & Agents for Beginners RSS" href="models_agents_beginners_podcast.rss">
     
-    
-    
 
     <!-- Google Fonts: DM Sans + Source Serif 4 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -97,7 +95,7 @@
     <!-- Navigation -->
     <nav class="nn-nav" aria-label="Main navigation">
         <div class="nn-nav-inner">
-            <a href="index.html" class="nn-nav-logo">
+            <a href="/" class="nn-nav-logo">
                 <img src="assets/nerra-logo-icon.svg" alt="Nerra Network" width="36" height="36">
                 <span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span>
             </a>
@@ -2019,7 +2017,7 @@
             </div>
             <div class="nn-footer-bottom">
                 <span>© 2026 Nerra Network. All shows independently produced.</span>
-                <a href="index.html">nerranetwork.com</a>
+                <a href="/">nerranetwork.com</a>
             </div>
             <div class="nn-footer-legal">
                 <p class="ai-notice">Nerra Network uses AI tools in content production. <a href="ai-disclosure.html">Learn more</a></p>
@@ -2266,19 +2264,30 @@
                     const date = s.date || '';
 
                     const epNum = s.episode_num;
-                    const transcriptHtml = epNum ? `
-                        <a class="nn-summary-link" href="blog/models_agents_beginners/ep${String(epNum).padStart(3, '0')}.html" aria-label="Read full transcript and article for episode ${epNum}">Read transcript</a>
-                    ` : '';
+                    /* Concatenate hrefs — template-literal href placeholders
+                       are crawlable junk URLs (Sep 2026 audit). */
+                    const transcriptHtml = epNum
+                        ? ('<a class="nn-summary-link" href="'
+                           + "blog/models_agents_beginners/"
+                           + 'ep' + String(epNum).padStart(3, '0') + '.html"'
+                           + ' aria-label="Read full transcript and article for episode '
+                           + epNum + '">Read transcript</a>')
+                        : '';
 
-                    const audioHtml = audioUrl ? `
-                        <div class="nn-summary-actions">
-                            <audio class="nn-summary-audio" controls preload="none" src="${escapeAttr(audioUrl)}" aria-label="${escapeAttr(title || 'Episode')} audio"
-                                   onerror="this.replaceWith(Object.assign(document.createElement('div'),{innerHTML:'<span style=&quot;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.85rem;&quot;>Audio unavailable. <a href=&quot;${escapeAttr(audioUrl)}&quot; style=&quot;color:var(--show-color-text, var(--show-color));&quot;>Try download</a>.</span>'}))"></audio>
-                            <a class="nn-summary-link" href="${escapeAttr(audioUrl)}" target="_blank" rel="noopener">Download</a>
-                            ${transcriptHtml}
-                            <button class="nn-summary-link" data-share-url="${escapeAttr(audioUrl)}" title="Copy link">Share</button>
-                        </div>
-                    ` : '';
+                    const safeAudio = escapeAttr(audioUrl);
+                    const audioHtml = audioUrl ? (
+                        '<div class="nn-summary-actions">'
+                        + '<audio class="nn-summary-audio" controls preload="none" src="'
+                        + safeAudio + '" aria-label="' + escapeAttr(title || 'Episode')
+                        + ' audio" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{innerHTML:\'<span style=&quot;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.85rem;&quot;>Audio unavailable. <a href=&quot;'
+                        + safeAudio + '&quot; style=&quot;color:var(--show-color-text, var(--show-color));&quot;>Try download</a>.</span>\'}))"></audio>'
+                        + '<a class="nn-summary-link" href="' + safeAudio
+                        + '" target="_blank" rel="noopener">Download</a>'
+                        + transcriptHtml
+                        + '<button class="nn-summary-link" data-share-url="' + safeAudio
+                        + '" title="Copy link">Share</button>'
+                        + '</div>'
+                    ) : '';
 
                     const titleHtml = title ? `<div class="nn-summary-title" style="font-weight:600;color:var(--show-color-text, var(--show-color));font-family:var(--font-ui);font-size:0.88rem;">${escapeHtml(title)}</div>` : '<div class="nn-summary-title" hidden></div>';
 
@@ -2303,12 +2312,18 @@
                     // the order the publish step normalised.
                     const guestLinks = Array.isArray(s.guest_links) ? s.guest_links.filter(l => l && l.url) : [];
                     const linkStyle = 'font-family:var(--font-ui);font-size:0.7rem;font-weight:600;padding:2px 9px;border-radius:100px;text-decoration:none;border:1px solid color-mix(in srgb, var(--show-color) 35%, transparent);color:var(--show-color-text, var(--show-color));background:color-mix(in srgb, var(--show-color) 8%, transparent);';
-                    const guestLinksHtml = guestLinks.length ? `
-                        <div class="nn-summary-guest-links" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center;">
-                            <span style="font-family:var(--font-ui);font-size:0.7rem;color:var(--nn-text-muted);">${escapeHtml(s.guest ? s.guest : 'Guest')}:</span>
-                            ${guestLinks.map(l => `<a href="${escapeAttr(l.url)}" target="_blank" rel="noopener" style="${linkStyle}">${escapeHtml(l.label || l.url)}</a>`).join('')}
-                        </div>
-                    ` : '';
+                    const guestLinksHtml = guestLinks.length
+                        ? ('<div class="nn-summary-guest-links" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center;">'
+                           + '<span style="font-family:var(--font-ui);font-size:0.7rem;color:var(--nn-text-muted);">'
+                           + escapeHtml(s.guest ? s.guest : 'Guest') + ':</span>'
+                           + guestLinks.map(function (l) {
+                                 return '<a href="' + escapeAttr(l.url)
+                                     + '" target="_blank" rel="noopener" style="'
+                                     + linkStyle + '">'
+                                     + escapeHtml(l.label || l.url) + '</a>';
+                             }).join('')
+                           + '</div>')
+                        : '';
 
                     return `
                         <div class="nn-summary-item" data-date="${escapeAttr(date)}" data-i18n='${escapeAttr(JSON.stringify(i18n))}'>

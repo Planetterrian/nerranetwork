@@ -2260,6 +2260,12 @@ def _get_jinja_env():
     # Footer copyright year (Sep 2026 review: "© 2026" was a literal in
     # base.html.j2 and would have rolled over to wrong on Jan 1).
     env.globals["current_year"] = datetime.now(timezone.utc).year
+    # Canonical site home. Internal links must point at ``/`` (the homepage
+    # canonical), never ``/index.html`` — Sep 2026 Search Console hygiene.
+    env.globals["home_url"] = "/"
+    # Template-side existence check for optional assets (blog RSS feeds).
+    # Used so a missing ``blog_<slug>.rss`` is not advertised as a 404 link.
+    env.globals["site_file_exists"] = lambda rel: (ROOT / str(rel)).is_file()
     env.filters["with_utm"] = _with_utm
     # Jinja's default ``tojson`` filter inherits Python's
     # ``ensure_ascii=True``, which escapes Cyrillic to ``Ф...``
@@ -3306,6 +3312,7 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         "performance_data": performance_data,
         "page_lang": "ru" if is_russian else "en",
         "hreflang_self": f"ru-{cfg['slug']}" if is_russian else "en",
+        "hreflang_alternates": _hreflang_for_show(slug, is_russian_show=is_russian),
         # Per-show embedded gallery (Phase 2).
         "gallery_enabled": gallery_enabled,
         "section_id": "gallery",
@@ -5054,6 +5061,44 @@ def _ru_landing_target(slug: str) -> str:
     return path if path.startswith("ru/") and path.endswith(".html") else ""
 
 
+def _hreflang_alternates(en_path: str, ru_path: str) -> list[dict]:
+    """Reciprocal absolute hreflang entries on canonical URLs + x-default.
+
+    ``en_path`` / ``ru_path`` are site-relative paths (``""`` or ``"/"`` for
+    the English homepage; ``"ru/index.html"`` for the Russian root; 
+    ``"spacex.html"`` / ``"ru/spacex.html"`` for a show pair). Both sides
+    of a pair must list the SAME absolute URLs or Google ignores them.
+    """
+    def _abs(path: str) -> str:
+        path = (path or "").lstrip("/")
+        return f"{GITHUB_RAW}/" if not path else f"{GITHUB_RAW}/{path}"
+
+    en_href = _abs(en_path)
+    ru_href = _abs(ru_path)
+    return [
+        {"lang": "en", "href": en_href},
+        {"lang": "ru", "href": ru_href},
+        {"lang": "x-default", "href": en_href},
+    ]
+
+
+def _hreflang_for_show(slug: str, *, is_russian_show: bool) -> list[dict] | None:
+    """EN show page ↔ RU funnel landing, when that pair genuinely exists.
+
+    Native-Russian shows (Финансы Просто, Привет) live under ``ru/`` already
+    and have no English equivalent — do not invent a pair for them.
+    """
+    if is_russian_show:
+        return None
+    ru_target = _ru_landing_target(slug)
+    if not ru_target:
+        return None
+    en_page = NETWORK_SHOWS.get(slug, {}).get("show_page") or ""
+    if not en_page:
+        return None
+    return _hreflang_alternates(en_page, ru_target)
+
+
 def _ru_landing_episodes(slug: str, limit: int = 4) -> list:
     """Recent episodes that actually have a Russian audio track."""
     yaml_path = SHOWS_DIR / f"{slug}.yaml"
@@ -5151,6 +5196,7 @@ def generate_ru_landing_page(slug, *, dry_run=False):
                                    cfg.get("brand_color", "#6B47FF")),
         "og_image": f"{GITHUB_RAW}/{_url_encode_image(cfg.get('podcast_image', ''))}",
         "canonical_url": f"{GITHUB_RAW}/{target}",
+        "hreflang_alternates": _hreflang_alternates(cfg.get("show_page", ""), target),
         "cover_url": f"{prefix}{cfg.get('podcast_image', '')}",
         "all_shows": _build_all_shows_list(),
         "episodes": _ru_landing_episodes(slug),

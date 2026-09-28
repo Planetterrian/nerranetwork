@@ -41,11 +41,20 @@
     {% if rss_url and (has_feed is not defined or has_feed) %}
     <link rel="alternate" type="application/rss+xml" title="{{ show_name | default('Nerra Network') }} RSS" href="{{ rss_url }}">
     {% endif %}
-    {# Bilingual hreflang — English root ↔ Russian root. Only emitted on the
-       top-level Nerra landing pages, not per-show pages. #}
-    {% if emit_bilingual_hreflang %}
+    {#- Bilingual hreflang — every href MUST be the page's canonical URL.
+        Google ignores the pair when either side points at a non-canonical
+        (Sep 2026 audit: EN home said /ru/ while RU canonical is
+        /ru/index.html; RU home said /index.html while EN canonical is /).
+        ``hreflang_alternates`` is the closed list for any EN↔RU pair
+        (homepage, RU funnel landings, their EN show pages). The
+        emit_bilingual_hreflang flag remains for the network homepage. -#}
+    {% if hreflang_alternates %}
+    {% for alt in hreflang_alternates %}
+    <link rel="alternate" hreflang="{{ alt.lang }}" href="{{ alt.href }}">
+    {% endfor %}
+    {% elif emit_bilingual_hreflang %}
     <link rel="alternate" hreflang="en" href="https://nerranetwork.com/">
-    <link rel="alternate" hreflang="ru" href="https://nerranetwork.com/ru/">
+    <link rel="alternate" hreflang="ru" href="https://nerranetwork.com/ru/index.html">
     <link rel="alternate" hreflang="x-default" href="https://nerranetwork.com/">
     {% endif %}
 
@@ -239,7 +248,7 @@
     <!-- Navigation -->
     <nav class="nn-nav" aria-label="{{ t.main_navigation }}">
         <div class="nn-nav-inner">
-            <a href="{{ path_prefix }}index.html" class="nn-nav-logo">
+            <a href="{{ home_url }}" class="nn-nav-logo">
                 <img src="{{ path_prefix }}assets/nerra-logo-icon.svg" alt="Nerra Network" width="36" height="36">
                 <span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span>
             </a>
@@ -589,7 +598,7 @@
             {%- endif %}
             <div class="nn-footer-bottom">
                 <span>{{ t.copyright_line }}</span>
-                <a href="{{ path_prefix }}index.html">nerranetwork.com</a>
+                <a href="{{ home_url }}">nerranetwork.com</a>
             </div>
             <div class="nn-footer-legal">
                 <p class="ai-notice">{{ t.ai_notice }} <a href="{{ path_prefix }}ai-disclosure.html">{{ t.learn_more }}</a></p>
