@@ -24,8 +24,6 @@
     <meta name="twitter:creator" content="@nerranetwork">
 
     <link rel="canonical" href="https://nerranetwork.com/blog/tesla/ep551.html">
-    
-    
 
     <!-- Google Fonts: DM Sans + Source Serif 4 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1046,7 +1044,7 @@
     <!-- Navigation -->
     <nav class="nn-nav" aria-label="Main navigation">
         <div class="nn-nav-inner">
-            <a href="../../index.html" class="nn-nav-logo">
+            <a href="/" class="nn-nav-logo">
                 <img src="../../assets/nerra-logo-icon.svg" alt="Nerra Network" width="36" height="36">
                 <span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span>
             </a>
@@ -1903,7 +1901,7 @@
     <!-- Breadcrumb -->
     <nav aria-label="Breadcrumb" style="max-width:900px;margin:calc(72px + var(--sp-4)) auto 0;padding:0 var(--sp-6);font-family:var(--font-ui);font-size:0.82rem;">
         <ol style="list-style:none;display:flex;flex-wrap:wrap;gap:var(--sp-1);padding:0;margin:0;color:var(--nn-text-muted);">
-            <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
+            <li><a href="/" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../tesla.html" style="color:var(--nn-text-muted);text-decoration:none;">Tesla Shorts Time</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/tesla/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
             <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 551</li>
@@ -2712,9 +2710,15 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                  2026): every newsletter signup now creates a Nerra
                  account (same identity as the gallery gate), so the
                  member surface and the list grow together. -->
-            <div class="nn-footer-subscribe">
-                <form class="nn-subscribe-form"
-                      onsubmit="var f=this,btn=f.querySelector('button[type=submit]');btn.disabled=true;btn.textContent="Subscribing…";var tags=Array.prototype.map.call(f.querySelectorAll('input[name=tag]:checked'),function(c){return c.value;});fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member',tags:tags,source:"src-nerranetwork"})}).then(function(r){btn.textContent=r.ok?"Check your email ✓":"Subscribe";if(r.ok){var a=f.querySelector('.nn-account-link');if(a)a.style.display='inline';}}).catch(function(){btn.textContent="Subscribe";}).then(function(){btn.disabled=false;});return false;">
+            <div class="nn-footer-subscribe"><form class="nn-subscribe-form"
+                      method="post"
+                      action="#"
+                      data-nn-subscribe="footer"
+                      data-source="src-nerranetwork"
+                      data-label-loading="Subscribing…"
+                      data-label-done="Check your email ✓"
+                      data-label-idle="Subscribe"
+                      data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
                     <p>Pick the shows you want in your inbox:</p>
                     <div class="nn-subscribe-tags">
@@ -2796,7 +2800,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
             </div>
             <div class="nn-footer-bottom">
                 <span>© 2026 Nerra Network. All shows independently produced.</span>
-                <a href="../../index.html">nerranetwork.com</a>
+                <a href="/">nerranetwork.com</a>
             </div>
             <div class="nn-footer-legal">
                 <p class="ai-notice">Nerra Network uses AI tools in content production. <a href="../../ai-disclosure.html">Learn more</a></p>
@@ -2989,6 +2993,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
     <script src="../../assets/js/language-control.js" defer></script>
+    <script src="../../assets/js/footer-subscribe.js" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
     // when the api.nerranetwork.com session cookie answers. Fail-silent —
