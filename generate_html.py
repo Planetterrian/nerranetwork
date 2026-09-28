@@ -1698,6 +1698,16 @@ _STOCK_WIDGETS: dict = {
     "spacex": {"ticker": "SPCX", "json_path": "/api/spcx.json", "yahoo_symbol": "SPCX"},
 }
 
+# Soft Personal one-field hero form — pages YouTube actually lands on
+# (Sep 2026 capture pass). Closed set; not a network-wide banner.
+SOFT_PERSONAL_HERO_SLUGS = frozenset({
+    "fascinating_frontiers",
+    "spacex",
+    "tesla",
+    "models_agents",
+    "models_agents_beginners",
+})
+
 
 # Curated "best source of <topic> information" resource blocks for
 # scaffolded shows (the hardcoded NETWORK_SHOWS entries carry their own;
@@ -3276,6 +3286,9 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         # Daily is the Soft Personal spoken surface; registry-gated so the
         # band does not become a network-wide banner.
         "soft_personal_cta": bool(cfg.get("soft_personal_cta")),
+        # One-field Soft Personal hero form on the pages YouTube actually
+        # lands on (Sep 2026 capture pass). Closed set — not every show.
+        "soft_personal_hero": slug in SOFT_PERSONAL_HERO_SLUGS,
         # The strand this show belongs to ("mira" today). Drives the
         # "Hosted by Mira" band and the link to her hub, so the three shows
         # cross-reference each other instead of each being a dead end.

@@ -223,12 +223,27 @@
 <script>
 (function () {
   var API_BASE = "https://api.nerranetwork.com";
-  var SOURCE = {{ capture_source_site | tojson }};
+  // Default when no utm_source is present — same Jinja global as every
+  // other capture form. Prefer URL utm_source via NNSubscribe.resolveSource
+  // (assets/js/footer-subscribe.js) so youtube / youtube_ru / youtube_fr
+  // land as src-youtube* instead of always src-nerranetwork.
+  var SOURCE_DEFAULT = {{ capture_source_site | tojson }};
   var form = document.getElementById("spi-form");
   var statusEl = document.getElementById("spi-status");
   var confirmEl = document.getElementById("spi-confirm");
   var submitBtn = document.getElementById("spi-submit");
   if (!form) return;
+
+  function resolveSource() {
+    if (window.NNSubscribe && typeof window.NNSubscribe.resolveSource === "function") {
+      // Stamp data-source so the shared helper's fallback matches this page.
+      if (!form.getAttribute("data-source")) {
+        form.setAttribute("data-source", SOURCE_DEFAULT);
+      }
+      return window.NNSubscribe.resolveSource(form);
+    }
+    return SOURCE_DEFAULT;
+  }
 
   function say(text, state) {
     statusEl.textContent = text || "";
@@ -242,6 +257,7 @@
     var company = (document.getElementById("spi-company").value || "").trim();
     var interested = document.getElementById("spi-interest").checked;
     var newsletter = document.getElementById("spi-newsletter").checked;
+    var SOURCE = resolveSource();
 
     if (!email || email.indexOf("@") < 1 || email.indexOf(".") < 0) {
       say("That email doesn’t look right. Try again, or start Personal now at nerranetwork.com/join.", "error");

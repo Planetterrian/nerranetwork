@@ -236,7 +236,14 @@ class TestSurfaces:
             encoding="utf-8"
         )
         assert "api.nerranetwork.com/api/subscribe" in js
-        assert "list: 'member'" in js or 'list: "member"' in js
+        # Default list is member (Soft Personal forms override via data-list).
+        assert (
+            "list: 'member'" in js
+            or 'list: "member"' in js
+            or ": 'member'" in js
+            or ': "member"' in js
+        )
+        assert "list: list" in js or "list:list" in js
 
     def test_missing_admin_token_fails_loudly(self):
         """A host that cannot authenticate must not look idle.
