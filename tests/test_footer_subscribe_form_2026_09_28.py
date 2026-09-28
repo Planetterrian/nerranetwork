@@ -87,6 +87,9 @@ class TestFooterSubscribeFormMarkup:
             "data-source", "data-require-tags", "data-success-redirect",
             "data-label-loading", "data-label-done", "data-label-idle",
             "data-label-error", "data-label-need-tags",
+            "data-list", "data-form-id", "data-show",
+            "data-label-soft-done", "data-label-invalid-email",
+            "data-hide-on-success", "data-confirm-selector",
         }
         unexpected = sorted(k for k in attrs if k and k not in allowed)
         assert unexpected == [], (
@@ -129,6 +132,10 @@ class TestFooterSubscribeFormMarkup:
             encoding="utf-8"
         )
         assert "api.nerranetwork.com/api/subscribe" in src
-        assert "list: 'member'" in src or 'list: "member"' in src
+        assert "list: 'member'" in src or 'list: "member"' in src or "list: list" in src
         assert "preventDefault" in src
         assert "JSON.stringify" in src
+        # utm_source mapping must be present so YouTube landings are not
+        # always credited to src-nerranetwork.
+        assert "utm_source" in src
+        assert "src-youtube" in src

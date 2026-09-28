@@ -70,6 +70,10 @@ class TestSoftPersonalInterestPage:
         assert 'API_BASE + "/api/subscribe"' in src
         assert 'tags.push("SpaceX Daily")' in src
         assert "newsletter: !!newsletter" in src
+        # utm_source → src-* via the shared helper (never hardcode only
+        # src-nerranetwork when a YouTube landing is present).
+        assert "NNSubscribe.resolveSource" in src
+        assert "SOURCE_DEFAULT" in src
 
     def test_soft_submit_fires_distinct_ga4_event(self):
         """Soft north star must not conflate with newsletter_signup."""
