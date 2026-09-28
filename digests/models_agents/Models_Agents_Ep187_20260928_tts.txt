@@ -1,0 +1,129 @@
+Sparse neuron sets in frozen BERT enable efficient A I text detection across generators with eighty-six to ninety-four percent retained accuracy.
+
+This is Models and Agents, episode one hundred eighty-seven.
+
+Researchers mapped under one percent of neurons in a frozen BERT-base-uncased model that drive A I text detection on the RAID benchmark.
+
+The selected neurons retain most accuracy when used alone.
+
+They flip predictions an order of magnitude more often than random sets under bidirectional patching.
+
+A separate production study at Spotify shows a synthetic-data pipeline plus self-improvement loop raised conversational recommendation quality by eight percent.
+
+It delivered fourteen percent more user listening in live A B tests.
+
+The study applied L1-to-L2 sparse probing to all nine thousand two hundred sixteen CLS hidden-state dimensions across twelve layers of a frozen BERT-base-uncased encoder on the RAID benchmark.
+
+It recovered a stable set of under one percent of neurons per generator that remained consistent across folds and seeds.
+
+A probe restricted to that set retained most of the full-feature detection accuracy.
+
+Bidirectional activation patching flipped predictions an order of magnitude more often than size-matched random sets.
+
+Mean-ablating the same neurons left accuracy largely intact.
+
+Instruction-tuned generators concentrated thirty to thirty-six percent of stable neurons in the final layer while base generators stayed below fourteen percent.
+
+Leave-one-family-out evaluation showed the neurons retained eighty-six to ninety-four percent of full-feature ceiling on unseen generator families.
+
+The architecture replaces attention with a stack of autoencoder-based mixing modules operating over local neighborhoods, the full sequence, and across attention heads.
+
+Each module compresses and reconstructs its input through a low-rank bottleneck whose width is a hyperparameter.
+
+An iterative refinement procedure in masked positions first pulls an embedding toward a weighted average of neighbors then projects the result back to the learned manifold.
+
+When pretrained on C4 and compared with parameter-matched BERT baselines the model reached a significant portion of attention performance at roughly one point nine times fewer FLOPs.
+
+A frequency-aware training schedule that oversamples rare tokens allowed the model to equal parameter-matched BERT and TinyBERT baselines on the rarest-token frequency bucket.
+
+The survey organizes two hundred eleven studies published from twenty eighteen to early twenty twenty-six by evidence source and fusion level.
+
+It covers review text, sentiment, rating behavior, temporal metadata, user-product graphs, multimodal content, external knowledge, and L L M generated signals.
+
+Performance trends are reported on Amazon, Yelp, and OpSpam benchmark families while noting limitations from differing label construction, data splits, and evaluation protocols.
+
+SlideLab is a training-free multi-agent framework that plans a presentation narrative then builds and iteratively refines a shared slide deck using agents for content planning, visual generation, layout refinement, and grounding verification.
+
+In a blind human preference study it was preferred over both open-source and commercial systems on seventy-seven percent of papers while using roughly four times fewer inference tokens than the strongest open-source baseline.
+
+Cartograph is a federated M C P proxy that reduces agent-visible tool discovery from O of n catalog traversal to O of k progressive disclosure.
+
+It combines operator-attested Ed25519-signed capability cards, a three-layer confusable-cluster analysis called Rift, and two-stage retrieval that ranks servers before tools.
+
+On a twenty-two-server, three-hundred-seventy-four-tool deployment it exposes three proxy tools instead of three hundred seventy-four definitions.
+
+A forty-nine-query benchmark yields R at five of zero point eight one six versus zero point five nine two for a Jaccard keyword baseline.
+
+A measured top-five discovery exchange uses four hundred seventy-five tokens rather than forty-two thousand four hundred fifty.
+
+Rift identifies forty-nine confusable clusters including four high-risk clusters in bootstrap-generated cards.
+
+Gateway measurements add five milliseconds mean latency, or zero point eight percent, relative to direct stdio M C P calls.
+
+HiCoMER maintains validity of team and individual memories then retrieves only currently valid memories rather than ranking a flat pool by semantic relevance or recency.
+
+It consists of a Hierarchical Memory Conflict Updater, a Validity-Aware Memory Retriever, and a Memory-Grounded Answer Generator.
+
+Two new datasets were constructed for memory-grounded question answering in collaborative settings.
+
+Experiments show HiCoMER consistently outperforms strong baselines by reducing outdated retrieval, preserving current team consensus, and improving downstream QA quality.
+
+SignTrace integrates L L M based dictionary enrichment, action extraction, dictionary-style rewriting, seven-channel retrieval, and candidate reranking over six thousand six hundred ninety-nine Chinese sign-language dictionary entries.
+
+On a dictionary-derived benchmark of five hundred movement-description queries it achieves ninety-four point zero percent Hit at one, ninety-seven point four percent Hit at nine, and mean reciprocal rank of zero point nine five four zero.
+
+Reranking raises Hit at one from seventy-one point eight percent to ninety-four point zero percent.
+
+Median query-processing time is thirteen point three seven seconds with six concurrent queries.
+
+The benchmark supplies forty-five thousand sixty-four labeled entries for evaluating L L M performance in systematic-review screening across thirty-two curated secondary studies.
+
+An evaluation framework accounts for class imbalance between excluded and included articles.
+
+PromptSR supports prompt experimentation, experiment management, and result analysis for L L M based screening.
+
+Inquesto Score measures voice-agent reliability as the percentage of calls in a fixed, versioned evaluation population that achieve the caller's goal without functional failure.
+
+It defines explicit failure events and severity levels, measures timing failures directly from audio, and evaluates semantic failures with scenario predicates, tool traces, and a pinned open-model judge.
+
+Version zero point one evaluates thirty scenarios, three acoustic conditions, four speaker groups, and three hundred six calls per agent across thirteen configurations.
+
+The synthetic-data pipeline and self-improvement loop described earlier have been productionized at Spotify and significantly accelerated iteration cycles for the launch of a conversational recommendation agent.
+
+Try applying the sparse-probing protocol from the BERT detection paper to your own frozen encoder on a small labeled set to test whether a one-percent neuron subset retains detection accuracy.
+
+Run the Cartograph federated proxy against an M C P server catalog to measure token savings versus full-catalog traversal on your own tool set.
+
+Test SignTrace on movement descriptions from your local sign-language learners to see whether the seven-channel retrieval plus reranking reaches the reported ninety-four percent Hit at one.
+
+Additional leave-one-family-out results on the RAID benchmark are expected in follow-up work from the same lab.
+
+Production metrics from wider deployment of the Spotify conversational agent will be reported in an upcoming industry case study.
+
+Expanded user trials for SignTrace are planned with independent movement descriptions collected from learners.
+
+Pop the hood on low-rank bottleneck autoencoders and you see they replace attention's dynamic weighting with a stack of fixed-width modules that compress then reconstruct token representations.
+
+Each module operates on local neighborhoods, the full sequence, or across heads, with bottleneck width treated as a hyperparameter rather than learned.
+
+The iterative refinement step first averages an embedding with its neighbors then projects the result back onto the manifold learned by the autoencoder.
+
+On C4 pretraining this approach reaches a substantial fraction of attention performance while using roughly one point nine times fewer FLOPs than parameter-matched BERT baselines.
+
+The frequency-aware masking schedule that oversamples rare tokens allows the model to match BERT and TinyBERT on the lowest-frequency bucket.
+
+When the bottleneck is too narrow, reconstruction error rises sharply and downstream accuracy collapses.
+
+When it is too wide, the FLOPs advantage disappears.
+
+Teams should therefore sweep bottleneck width on a small validation slice before scaling, and retain the frequency-aware schedule whenever rare-token performance matters.
+
+Before we go, watch for expanded user trials of SignTrace that will test the system on movement descriptions written independently by learners rather than drawn from the dictionary.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — Vancouver Daily News, what changed in Metro Vancouver today, with the roads and the weather. Find every show, free, at nerranetwork dot com.
+
+The Age of A I puts real builders on the phone with an A I host — apply at nerranetwork dot com age of A I apply.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
