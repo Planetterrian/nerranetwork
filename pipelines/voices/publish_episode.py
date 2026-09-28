@@ -33,7 +33,7 @@ from common import (  # noqa: E402
     ROOT, VoiceShow, logger, notify_operator, sb_select, sb_update, show_for,
     guest_links,
     guest_links_markdown,
-    send_email,
+    send_email, mira_signature_html,
 )
 
 
@@ -253,11 +253,11 @@ def published_email(show: VoiceShow, app: dict, pkg: dict,
                      + "</ul>")
     parts += [
         "<p>If anything on the page is wrong, a link, a title, a spelling, "
-        "reply to this and it is fixed the same day. If you post about it, "
-        "send the link and we will share it on. The network is "
+        "reply to this and I'll have it fixed the same day. If you post about it, "
+        "send me the link and I'll share it on. The network is "
         f"{link(show.base_url)} and @planetterrian on X if you want to tag it.</p>",
-        f"<p>Thank you again for the hour.</p>",
-        f"<p>{e(show.sign_off)}</p>",
+        "<p>Thank you again for the conversation.</p>",
+        mira_signature_html(show),
     ]
     subject = f"Your {show.short_label} episode is live: Ep{int(episode_num)}"
     return subject, "".join(parts)

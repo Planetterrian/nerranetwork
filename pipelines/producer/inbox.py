@@ -37,12 +37,14 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from pipelines.voices.common import (  # noqa: E402
-    notify_operator, sb_insert, sb_select, sb_update, show_email_context,
+    mira_signature_text, notify_operator, sb_insert, sb_select, sb_update,
+    show_email_context,
 )
 from pipelines.voices.shows import get_show  # noqa: E402
 from pipelines.producer import classify as _classify  # noqa: E402
 from pipelines.producer.gmail_client import GmailClient  # noqa: E402
 from pipelines.producer import followup as _followup  # noqa: E402
+from pipelines.producer import guest_reply as _guest_reply  # noqa: E402
 from pipelines.producer.policy import (  # noqa: E402
     Decision, Policy, decide, decision_log_line, load_policy,
 )
@@ -67,6 +69,8 @@ def render_text(template_name: str, show: Optional[str] = None, **context: Any) 
     env = Environment(loader=FileSystemLoader(str(TEMPLATES)), autoescape=False,
                       keep_trailing_newline=True)
     merged: Dict[str, Any] = show_email_context(show) if show else {}
+    # Plain text: Mira's text signature, not the HTML one the context carries.
+    merged["signature"] = mira_signature_text(show)
     merged.update(context)
     return env.get_template(template_name).render(**merged)
 
@@ -272,10 +276,18 @@ def render_known_guest(known: Dict[str, Any], classification: Dict[str, Any],
 # four of the four held items on Sept 22 were ours.
 HOUSE_ADDRESSES = ("mira@nerranetwork.com", "patricknovak1@gmail.com")
 HOUSE_DOMAINS = ("nerranetwork.com",)
+# A backstop only (Sept 28 2026): the brief's subject changed to "what Mira
+# plans to ask" and this list still said "what mira will ask", which is how
+# Elliot's reply reached the pitch classifier. Guest replies are recognised
+# by sender and thread now (pipelines/producer/guest_reply.py); the subjects
+# below only catch a reply from an address we do not know.
 PIPELINE_SUBJECTS = re.compile(
-    r"(episode is ready for your approval|transcript awaits|interview is booked|"
-    r"what mira will ask|interview is coming up|rebook your .* interview|"
-    r"nerra booking reconciliation|nerra producer daily)", re.I)
+    r"(episode is ready|transcript awaits|episode is waiting|interview is booked|"
+    r"you're booked|what mira (will|plans to) ask|what i would like to ask|"
+    r"interview is coming up|interview is in about|studio is open|rebook your|"
+    r"missed each other|thank you for applying|you're invited to|"
+    r"call your phone|episode is live|sorry about|"
+    r"nerra booking reconciliation|nerra producer daily|mira's daily)", re.I)
 
 
 def house_mail(inbound: Dict[str, Any]) -> bool:
@@ -407,10 +419,44 @@ def process_thread(thread_id: str, *, gmail: GmailClient, policy: Policy,
                     logger.warning("[dry-run] duplicate check skipped: %s", exc)
                 else:
                     raise
-        if in_db and app_row and ((app_row.get("source") or "email") == "email"
-                                   or app_row.get("producer_action") == "known_guest") \
-                and already_replied(thread, gmail.user) \
-                and newest_is_inbound(thread, gmail.user):
+        producer_convo = bool(
+            in_db and app_row and ((app_row.get("source") or "email") == "email"
+                                   or app_row.get("producer_action") == "known_guest")
+            and already_replied(thread, gmail.user)
+            and newest_is_inbound(thread, gmail.user))
+        # Sept 28 2026 (Elliot Justin): a guest writing to Mira is recognised
+        # by who they are and by the thread, never by its subject line, and
+        # is never classified as a pitch. The guest themselves always gets
+        # the guest path; a publicist on a thread the Producer started keeps
+        # the follow-up path below.
+        guest = None
+        if not house_mail(inbound):
+            try:
+                guest = _guest_reply.find_guest(inbound.get("from_email", ""))
+            except Exception as exc:  # noqa: BLE001
+                if not dry_run:
+                    raise
+                logger.warning("[dry-run] guest lookup skipped: %s", exc)
+            # The thread itself says it: Mira wrote in it (her mail copies
+            # patrick@planetterrian.com, so her message is in this inbox).
+            # A subject is only a backstop, and only on a reply ("Re: ..."):
+            # Spotify's "Your episode is live" is not a guest.
+            subject = (inbound.get("subject") or thread.get("subject") or "").strip()
+            to_mira = (_guest_reply.thread_has_mira(thread)
+                       or (subject.lower().startswith("re:")
+                           and reply_to_pipeline_mail(thread, inbound)))
+            if (guest and guest.get("role") == "guest") or \
+                    (not producer_convo and (guest or to_mira)):
+                line = _guest_reply.handle_guest_reply(
+                    thread=thread, inbound=inbound, guest=guest, gmail=gmail,
+                    policy=policy, dry_run=dry_run)
+                key = {"send": "guest_replies_sent", "draft": "guest_replies_held",
+                       "label": "guest_replies_filed"}.get(line.get("action"))
+                if key:
+                    summary[key] = summary.get(key, 0) + 1
+                run.record(line)
+                return line
+        if producer_convo:
             # They wrote back after our invite: the follow-up conversation
             # (pipelines/producer/followup.py) — booking link, FAQ answer,
             # or a hold for Patrick.
@@ -426,14 +472,6 @@ def process_thread(thread_id: str, *, gmail: GmailClient, policy: Policy,
         if not in_db and house_mail(inbound):
             decision = Decision("label", "our own mail (Mira or Patrick); nothing to answer")
             classification = {"category": None, "confidence": None}
-        elif not in_db and reply_to_pipeline_mail(thread, inbound):
-            # A guest answering one of Mira's emails (review, reminder,
-            # booking). Not a pitch: no invite, no Grok call, and the hold
-            # note says what it is instead of "personal_or_business".
-            decision = Decision("draft", "guest replied to one of Mira's emails "
-                                f"({(thread.get('subject') or '')[:80]}); read and answer",
-                                notify=True)
-            classification = {"category": "guest_reply_to_mira", "confidence": 1.0}
         elif in_db:
             classification = {"category": None, "confidence": None}
             decision = decide(classification, policy=policy,
@@ -564,8 +602,97 @@ def process_thread(thread_id: str, *, gmail: GmailClient, policy: Policy,
 # Run
 # ---------------------------------------------------------------------------
 
+# Mira's own mailbox (Sept 28 2026). Everything the Producer and the
+# pipelines send comes from mira@, so a guest or publicist who presses
+# "reply" rather than "reply all" writes only to her. Those messages were
+# read by nobody. The window is short on purpose: the first run must not
+# answer weeks-old mail as if it had just arrived.
+MIRA_INBOX_QUERY = os.environ.get("MIRA_INBOX_QUERY") or "newer_than:3d in:inbox"
+
+
+def addressed_to_main_inbox(inbound: Dict[str, Any], main: GmailClient) -> bool:
+    """True when the main inbox got its own copy (To/Cc), so it answers."""
+    import email.utils as _eu
+    main_addrs = {a for a in _classify._own_set(main.user)} - {_mira_address()}
+    rcpts = {addr.lower() for _n, addr in _eu.getaddresses(
+        [inbound.get("to") or "", inbound.get("cc") or ""])}
+    return bool(rcpts & main_addrs)
+
+
+def _mira_address() -> str:
+    from pipelines.producer.gmail_client import mira_mailbox
+    return mira_mailbox()
+
+
+def open_application_for_contact(addr: str) -> Optional[Dict[str, Any]]:
+    """The one open Producer conversation this address is the contact on."""
+    addr = (addr or "").strip().lower()
+    if "@" not in addr:
+        return None
+    q = quote(f'"{addr}"', safe="@.")
+    rows = sb_select("guest_applications",
+                     f"or=(publicist_email.ilike.{q},email.ilike.{q})&source=eq.email"
+                     f"&status=in.(invited,approved)&select={APP_COLUMNS}")
+    return rows[0] if len(rows) == 1 else None
+
+
+def process_mira_thread(thread_id: str, *, mira: GmailClient, main: GmailClient,
+                        policy: Policy, run: RunLog, summary: Dict[str, Any],
+                        dry_run: bool) -> Dict[str, Any]:
+    thread = mira.get_thread(thread_id)
+    inbound = _classify.latest_inbound(thread, mira.user)
+    line: Dict[str, Any] = {"thread_id": thread_id, "mailbox": "mira",
+                            "subject": thread.get("subject"),
+                            "from": (inbound or {}).get("from_email")}
+    if inbound is None or house_mail(inbound) or addressed_to_main_inbox(inbound, main):
+        line.update(action="label", reason="nothing new for Mira's mailbox to answer")
+        mira.add_label(thread_id, policy.processed_label)
+        run.record(line)
+        return line
+    guest = _guest_reply.find_guest(inbound.get("from_email", ""))
+    if guest:
+        line = _guest_reply.handle_guest_reply(thread=thread, inbound=inbound, guest=guest,
+                                               gmail=mira, policy=policy, dry_run=dry_run)
+        line["mailbox"] = "mira"
+        key = {"send": "guest_replies_sent", "draft": "guest_replies_held",
+               "label": "guest_replies_filed"}.get(line.get("action"))
+        if key:
+            summary[key] = summary.get(key, 0) + 1
+        run.record(line)
+        return line
+    app = open_application_for_contact(inbound.get("from_email", ""))
+    if app:
+        line = _followup.handle_followup(thread=thread, inbound=inbound, app=app,
+                                         gmail=mira, policy=policy, dry_run=dry_run)
+        line["mailbox"] = "mira"
+        run.record(line)
+        return line
+    if inbound.get("auto_submitted"):
+        mira.add_label(thread_id, policy.processed_label)
+        line.update(action="label", reason="autoresponder")
+        run.record(line)
+        return line
+    classification = _classify.classify_thread(thread, mira.user)
+    if classification.get("category") in ("guest_pitch", "guest_followup"):
+        mira.add_label(thread_id, policy.hold_label)
+        _guest_reply.tell_patrick(
+            guest_name=classification.get("guest_name") or inbound.get("from_name") or "Someone",
+            show_name="the network", inbound=inbound,
+            reason=("the pitch came to my address directly, not to patrick@planetterrian.com, "
+                    "so it has no conversation on file. Forward it to "
+                    "patrick@planetterrian.com and I'll answer it from there"),
+            suggestion="", thread_url=thread.get("url", ""), dry_run=dry_run)
+        line.update(action="draft", reason="pitch sent to Mira's address")
+    else:
+        line.update(action="label", reason=f"category={classification.get('category')}")
+    mira.add_label(thread_id, policy.processed_label)
+    run.record(line)
+    return line
+
+
 def run_inbox(*, gmail: Optional[GmailClient] = None, policy: Optional[Policy] = None,
-              dry_run: bool = False, limit: int = 50) -> Dict[str, Any]:
+              dry_run: bool = False, limit: int = 50,
+              mira_gmail: Optional[GmailClient] = None) -> Dict[str, Any]:
     policy = policy or load_policy()
     summary: Dict[str, Any] = {"mode": policy.mode, "dry_run": dry_run, "seen": 0,
                                "sent": 0, "drafted": 0, "skipped": 0, "failed": 0, "seen_processed": 0,
@@ -574,8 +701,12 @@ def run_inbox(*, gmail: Optional[GmailClient] = None, policy: Optional[Policy] =
         logger.info("PRODUCER_MODE=off: inbox job does nothing")
         return summary
 
-    gmail = gmail or GmailClient.from_env(dry_run=dry_run,
-                                          processed_label=policy.processed_label)
+    if gmail is None:
+        gmail = GmailClient.from_env(dry_run=dry_run, processed_label=policy.processed_label)
+        if mira_gmail is None:
+            mira_gmail = GmailClient.for_mira(dry_run=dry_run,
+                                              processed_label=policy.processed_label)
+            summary["mira_mailbox"] = "connected" if mira_gmail else "not reachable"
     run = RunLog(enabled=not dry_run)
     run.start(notes=f"mode={policy.mode} limit={limit}")
 
@@ -602,6 +733,19 @@ def run_inbox(*, gmail: Optional[GmailClient] = None, policy: Optional[Policy] =
             summary["failed"] += 1
             summary["errors"].append({"thread_id": tid, "error": f"{type(exc).__name__}: {exc}"[:500]})
 
+    if mira_gmail is not None:
+        for tid in mira_gmail.list_unprocessed_threads(MIRA_INBOX_QUERY, max_results=limit):
+            summary["seen"] += 1
+            summary["seen_processed"] = summary.get("seen_processed", 0) + 1
+            try:
+                process_mira_thread(tid, mira=mira_gmail, main=gmail, policy=policy, run=run,
+                                    summary=summary, dry_run=dry_run)
+            except Exception as exc:  # noqa: BLE001 — one thread never aborts the run
+                logger.exception("Mira's mailbox: thread %s failed: %s", tid, exc)
+                summary["failed"] += 1
+                summary["errors"].append({"thread_id": tid, "mailbox": "mira",
+                                          "error": f"{type(exc).__name__}: {exc}"[:500]})
+
     run.finish(summary, summary["errors"])
 
     by = summary["by_show"]
@@ -610,7 +754,10 @@ def run_inbox(*, gmail: Optional[GmailClient] = None, policy: Optional[Policy] =
             f"{summary['drafted']} drafted, {summary['skipped']} skipped, "
             f"{summary.get('followups_sent', 0)} follow-ups answered "
             f"({summary.get('approved', 0)} sent a booking link), "
-            f"{summary.get('followups_held', 0)} awaiting Patrick")
+            f"{summary.get('followups_held', 0)} awaiting Patrick, "
+            f"guest emails: {summary.get('guest_replies_sent', 0)} answered by Mira / "
+            f"{summary.get('guest_replies_held', 0)} for Patrick / "
+            f"{summary.get('guest_replies_filed', 0)} filed")
     if summary["failed"]:
         text += f", {summary['failed']} FAILED"
     if dry_run:

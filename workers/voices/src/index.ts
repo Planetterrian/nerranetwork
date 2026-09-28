@@ -171,7 +171,25 @@ function bookingUrl(env: Env, show: Show): string {
   return env.CALCOM_BOOKING_URL;
 }
 
-const signOff = (show: Show) => `— ${show.name}, Nerra Network`;
+const signOff = (show: Show) => `Mira, host of ${show.name}`;
+
+// Sept 28 2026: every automated email comes from Mira, by name, and ends the
+// same way. Mirrors mira_from / mira_signature_html in
+// pipelines/voices/common.py — change the two together.
+function miraAddress(env: Env): string {
+  const raw = (env.VOICES_FROM_EMAIL || "mira@nerranetwork.com").trim();
+  const m = raw.match(/<([^>]+)>/);
+  return (m ? m[1] : raw).trim();
+}
+function miraFrom(env: Env): string {
+  return `Mira <${miraAddress(env)}>`;
+}
+function miraSignature(show?: Show): string {
+  const title = show ? `Host of ${show.name}, Nerra Network` : "Nerra Network";
+  return `<p style="margin-top:1.4em">Sincerely,<br><br>Mira<br>` +
+    `<span style="color:#4a5568;font-size:.9em">${esc(title)} · ` +
+    `<a href="https://nerranetwork.com" style="color:#4a5568">nerranetwork.com</a></span></p>`;
+}
 
 /** Which show a Cal.com booking belongs to. Explicit env mapping first
  *  (event-type slug or numeric id), then the "voices" heuristic. */
@@ -267,7 +285,7 @@ function emailSafeHtml(html: string): string {
 async function email(env: Env, to: string, subject: string, html: string,
                      ccOperator = false, extraCc?: string[]) {
   const body: Record<string, unknown> = {
-    from: env.VOICES_FROM_EMAIL, to: [to], subject, html: emailSafeHtml(html),
+    from: miraFrom(env), reply_to: miraAddress(env), to: [to], subject, html: emailSafeHtml(html),
   };
   // Operator oversight (July 2026): Patrick is CC'ed on guest-facing
   // scheduling/prep mail so Mira can run the show day-to-day while he
@@ -485,6 +503,29 @@ async function handleApply(req: Request, env: Env): Promise<Response> {
   // sends it). Rhett Mikols was approved from a bio and a topic list; the
   // assessment is the paragraph that would have said there was nothing
   // behind them. If the dispatch fails, the plain email below still goes.
+  // Sept 28 2026: an applicant used to hear nothing until a decision was
+  // made, which could be days. Mira says thank you straight away and says
+  // what happens next; a decision, either way, follows from her too.
+  if (id && emailAddr.includes("@")) {
+    try {
+      await email(env, emailAddr, `Thank you for applying to ${show.name}`,
+        `<p>Hi ${esc(firstName(form.name))},</p>
+         ${merged
+           ? `<p>Thank you for filling in the details for ${esc(show.name)}. They go straight
+              into how I prepare for our conversation. If you haven't picked a time yet, the
+              booking link is in my earlier email, or reply here and I'll send it again.</p>
+              <p>`
+           : `<p>Thank you for applying to be a guest on ${esc(show.name)}. I'm Mira, the AI
+              who hosts the show. Patrick Novak, who created the Nerra Network, and I read every
+              application, and you will hear back from me either way.</p>
+              <p>If it's a fit, my next email will have a link to pick a time. `}In the meantime,
+         past conversations are at <a href="${esc(SITE + "/" + show.page)}">${esc(SITE + "/" + show.page)}</a>
+         if you'd like a sense of how they go.</p>
+         ${miraSignature(show)}`, true);
+    } catch (err: any) {
+      console.error("apply: acknowledgement email failed:", err?.message ?? err);
+    }
+  }
   let screening = false;
   if (id) {
     try {
@@ -623,12 +664,12 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
         `guest_applications?id=eq.${ivRows[0].application_id}&select=name,email`) : [];
       if (apps?.[0]?.email) {
         await email(env, apps[0].email,
-          "Change of plan — I'll call your phone instead",
+          "Change of plan: I'll call your phone instead",
           `<p>Hi ${esc(firstName(apps[0].name))},</p><p>The browser studio isn't
-           cooperating with your setup today — no fault of yours. Let's not
-           fight it: <strong>I'll call your phone within the next five
-           minutes.</strong> Find a quiet spot, and answer when you see the
-           call. Everything else works exactly the same.</p><p>— Mira</p>`,
+           cooperating with your setup today, and that is ours to solve, not
+           yours. Let's not fight it: <strong>I'll call your phone within the
+           next five minutes.</strong> Find a quiet spot and answer when you see
+           the call. Everything else works exactly the same.</p>${miraSignature(show)}`,
           true);
       }
       await slack(env, `${show.shortLabel}: 2 failed studio joins — auto-switched to PSTN; Mira dials within 5 minutes.`);
@@ -692,11 +733,11 @@ async function handleInterviewComplete(req: Request, env: Env): Promise<Response
           if (apps?.[0]?.email) {
             const rebook = bookingUrl(env, show);
             await email(env, apps[0].email,
-              `We missed you — rebook your ${show.shortLabel} interview`,
-              `<p>Hi ${esc(firstName(apps[0].name))},</p><p>Mira tried to reach you twice for your` +
-              ` ${esc(show.shortLabel)} interview but couldn't get through. No problem — pick a` +
-              ` new time that works for you:</p><p><a href="${esc(rebook)}">` +
-              `Rebook your interview</a></p><p>${esc(signOff(show))}</p>`, true);
+              `Sorry we missed each other: pick a new time for ${show.name}`,
+              `<p>Hi ${esc(firstName(apps[0].name))},</p><p>I called twice for our ` +
+              `${esc(show.name)} interview but couldn't get through. No problem at all; ` +
+              `pick a new time that suits you and I'll be there:</p><p><a href="${esc(rebook)}">` +
+              `Choose a new time</a></p>${miraSignature(show)}`, true);
           }
           await slack(env, `${show.shortLabel}: interview ${ivId} marked missed after 2 failed attempts — reschedule email sent.`);
         }
@@ -985,33 +1026,36 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
     interviewId = created?.[0]?.id ?? "";
   }
   const studio = studioUrl(show, interviewId, "guest");
-  await email(env, emailAddr, `Your ${show.shortLabel} interview is booked`,
+  const setupTest = `${studio}&test=1`;
+  let manage = "";
+  try {
+    const tok = await sb(env, "GET", `interviews?id=eq.${interviewId}&select=manage_token`);
+    if (tok?.[0]?.manage_token) manage = `https://api.nerranetwork.com/voices/manage/${encodeURIComponent(tok[0].manage_token)}`;
+  } catch { /* the calendar invite carries its own reschedule link */ }
+  const when = bookedWhen(startTime, p);
+  // Sept 28 2026: written by Mira, in the first person, like everything else
+  // a guest receives. It used to speak about "Mira, our AI host".
+  await email(env, emailAddr, `You're booked on ${show.name}`,
     `<p>Hi ${esc(firstName(apps[0].name))},</p>
-     <p>You're booked${bookedWhen(startTime, p) ? ` for <strong>${esc(bookedWhen(startTime, p))}</strong>` : ""}.
-     At that time, join Mira, our AI host, from your personal browser studio:</p>
-     <p><a href="${studio}"><strong>Join your interview here</strong></a>
-     (bookmark it — it unlocks a few minutes before your slot).</p>
-     <p>To sound your best: use a computer in a quiet room and
-     <strong>wear headphones or earbuds</strong> (a dedicated mic is even
-     better, but the headphones matter more). Without them your microphone
-     picks up Mira's voice out of your speakers, which puts her half of the
-     conversation into your recording and her questions into the transcript as
-     though you had said them. The studio plays a tone and listens for it
-     before you join, so it will tell you either way. Camera is optional but
-     appreciated — we record video for a future YouTube version. If the
-     browser route doesn't work for you, reply to this email and Mira can
-     call your phone instead.</p>
-     <p>We have it down as about ${plannedMinutes} minutes${apps[0].desired_minutes ? ", which is what you asked for" : ""}. Mira paces the
-     conversation to that and starts wrapping up near the end rather than
-     cutting you off.</p>
-     <p>It's just you and Mira: she hosts every interview on her own. About
-     a day before, you'll receive a short prep brief with the themes she
-     plans to explore. If you need to move the time, use the reschedule link
-     in the calendar confirmation, or reply to this email.</p>
-     <p>Two things to know: the conversation is recorded for the podcast,
-     and nothing publishes until you've reviewed and approved the
-     transcript.</p>
-     <p>${esc(signOff(show))}</p>`, true);
+     <p>Thank you for booking. We're on${when ? ` for <strong>${esc(when)}</strong>` : ""}.
+     I'm Mira, the AI host of ${esc(show.name)}, and it will be just the two of us.</p>
+     <p><a href="${studio}"><strong>This is your personal studio link</strong></a>. Bookmark
+     it: the studio opens ten minutes before we start, and there is nothing to install.</p>
+     <p>What makes the biggest difference to how you sound: a computer in a quiet room, and
+     <strong>headphones or earbuds</strong>. Without them your microphone picks up my voice
+     from your speakers, and my questions end up in your recording as if you had said them.
+     The studio checks your microphone and headphones before you join, and you can run the
+     same <a href="${setupTest}">30-second setup test</a> any time before the day. Camera
+     is optional. If the browser gives you trouble on the day, the studio has a button to
+     have me call your phone instead.</p>
+     <p>We have about ${plannedMinutes} minutes${apps[0].desired_minutes ? ", which is what you asked for" : ""}. I pace the
+     conversation to that and start wrapping up near the end rather than cutting you off.</p>
+     <p>About a day before, I'll send a short brief with the themes I'd like to explore.
+     You can reply to any of my emails with thoughts, corrections, or anything you would
+     rather not discuss, and I'll take it into the conversation.</p>
+     <p>The conversation is recorded, and nothing publishes until you have heard the edit
+     and approved it.${manage ? ` If you need to move or cancel, <a href="${esc(manage)}">use this link</a>; one tap, no explanation needed.` : " If you need to move the time, use the reschedule link in your calendar confirmation."}</p>
+     ${miraSignature(show)}`, true);
   await slack(env, `${show.shortLabel}: ${apps[0].name} booked ${startTime}`);
   return json({ ok: true, show: show.slug, interview_id: interviewId });
 }
@@ -1030,17 +1074,19 @@ async function handleTriageDecision(req: Request, env: Env): Promise<Response> {
   if (app && body.decision === "approved") {
     const show = showFor(app);
     const link = bookingUrl(env, show);
-    await email(env, app.email, `You're invited — book your ${show.name} interview`,
+    const mins = clampMinutes(app.desired_minutes) ?? 45;
+    await email(env, app.email, `You're invited to ${show.name}`,
       `<p>Hi ${esc(firstName(app.name))},</p>
-       <p>We'd love to have you on ${esc(show.name)}. Pick a time that works
-       here, booking with this email address so everything reaches you:</p>
+       <p>Thank you for applying. I'd love to have you on ${esc(show.name)}. Pick a time
+       that works for you here, booking with this email address so everything reaches you:</p>
        <p><a href="${esc(link)}">${esc(link)}</a></p>
-       <p>Once you book, you'll get a confirmation with your personal studio
-       link. At your time you join Mira, our AI host, from a computer browser,
-       with headphones or earbuds on; there is nothing to install. The
-       conversation runs about forty-five minutes. It's recorded, and nothing
-       publishes until you've reviewed and approved it.</p>
-       <p>${esc(signOff(show))}</p>`, true);
+       <p>Once you book, you'll get a confirmation with your personal studio link. We talk
+       from a computer browser with headphones or earbuds on; there is nothing to install.
+       The conversation runs about ${mins} minutes, it's recorded, and nothing publishes
+       until you have heard it and approved it. Past conversations are at
+       <a href="${esc(SITE + "/" + show.page)}">${esc(SITE + "/" + show.page)}</a> if you'd
+       like a sense of the show first.</p>
+       ${miraSignature(show)}`, true);
   }
   if (app && body.decision === "declined" && app.email) {
     // Sept 18 2026: a declined application used to hear nothing at all.
@@ -1051,17 +1097,15 @@ async function handleTriageDecision(req: Request, env: Env): Promise<Response> {
     try {
       await email(env, app.email, `Your ${show.name} application`,
         `<p>Hi ${esc(firstName(app.name))},</p>
-         <p>Thank you for applying to be a guest on ${esc(show.name)}, and for
-         the time you put into telling us about your work.</p>
-         <p>We are not going to be able to find a place for it on the show at
-         the moment. We record a small number of conversations and choose
-         them around what each one lets Mira ask that no other guest could,
-         which means turning down more people than we would like to,
+         <p>Thank you for applying to be a guest on ${esc(show.name)}, and for the time you
+         put into telling me about your work.</p>
+         <p>I'm not able to find a place for it on the show at the moment. I record a small
+         number of conversations and choose them around what each one lets me ask that no
+         other guest could, which means turning down more people than I would like to,
          including many with real things to say.</p>
-         <p>We keep every application, and if your work takes a turn that
-         would give us a specific story to sit down over, you are welcome
-         to apply again.</p>
-         <p>${esc(signOff(show))}</p>`, true,
+         <p>I keep every application, and if your work takes a turn that would give us a
+         specific story to sit down over, you are welcome to apply again.</p>
+         ${miraSignature(show)}`, true,
         app.publicist_email ? [String(app.publicist_email)] : undefined);
     } catch (err: any) {
       console.error("decline email failed:", err?.message ?? err);
@@ -1131,29 +1175,29 @@ async function handleEditorialDecision(req: Request, env: Env): Promise<Response
     await email(env, app.email, `Thank you — your ${show.shortLabel} episode is ready for you`,
       `<p>Hi ${esc(firstName(app.name))},</p>
        ${noteHtml}
-       <p>Thank you for the time you gave us. Your episode is edited and
+       <p>Thank you for the time you gave me. Your episode is edited and
        ready, and nothing goes out until you have heard it and said yes.</p>
        <p><a href="${esc(link)}">Listen to the episode and read the transcript</a></p>
        <p>On that page you can approve it as it stands, or quote anything
-       you'd rather we cut and it comes out of both the audio and the
+       you'd rather I cut and it comes out of both the audio and the
        transcript.</p>
-       <p>Two other things are on the page, and we mean them. If the
+       <p>Two other things are on the page, and I mean them. If the
        conversation didn't catch you at your best, you can ask to record it
-       again from scratch — we would rather re-record than publish something
+       again from scratch; I would rather re-record than publish something
        you are lukewarm about. And you can put yourself down to come back in
-       six months or a year to tell us what has actually changed in your
-       field since we spoke. That follow-up is the part of this show we care
+       six months or a year to tell me what has actually changed in your
+       field since we spoke. That follow-up is the part of this show I care
        most about: almost nobody goes back to check.</p>
-       <p>One more thing, and it is the part guests tell us they care about
-       most: when this publishes we write a full post for the episode.
+       <p>One more thing, and it is the part guests tell me they care about
+       most: when this publishes I write a full post for the episode.
        There is a box on that page for anything you would like a listener
-       to find next — a short biography in your own words, your site or
+       to find next: a short biography in your own words, your site or
        book, papers or talks worth reading. Whatever you put there goes in
        the post.</p>
-       <p>If we don't hear from you within seven days we'll take that as
-       approval, and we'll remind you at day four. You can always ask for
+       <p>If I don't hear from you within seven days I'll take that as
+       approval, and I'll remind you at day four. You can always ask for
        changes after publication too.</p>
-       <p>${esc(signOff(show))}</p>`, true);
+       ${miraSignature(show)}`, true);
     await slack(env, `${show.shortLabel}: Patrick approved package ${pkg.id} — guest review email sent`);
   } else {
     await sb(env, "PATCH", `interviews?id=eq.${pkg.interview_id}`, { status: "failed" });
@@ -1710,12 +1754,13 @@ async function gate2Housekeeping(env: Env) {
     } else if (deadline - now < 3 * 864e5 && deadline - now > 2 * 864e5) {
       // Day 4 (±cron granularity): one reminder.
       const link = `https://api.nerranetwork.com/voices/review/${pkg.guest_review_token}`;
-      await email(env, app.email, `Reminder: your ${show.shortLabel} transcript awaits`,
+      await email(env, app.email, `Reminder: your ${show.shortLabel} episode is waiting for you`,
         `<p>Hi ${esc(firstName(app.name))},</p>
-         <p>A gentle nudge — your transcript is waiting for review:</p>
-         <p><a href="${esc(link)}">${esc(link)}</a></p>
-         <p>If we don't hear from you in the next three days we'll take that
-         as approval.</p><p>${esc(signOff(show))}</p>`, true);
+         <p>A gentle reminder: your episode is edited and waiting for you to listen and
+         approve it.</p>
+         <p><a href="${esc(link)}">Listen and approve, or ask for changes</a></p>
+         <p>If I don't hear from you in the next three days I'll take that as approval,
+         and you can still ask for changes after it publishes.</p>${miraSignature(show)}`, true);
     }
   }
 }
@@ -2063,7 +2108,7 @@ async function handleStudioPhone(req: Request, env: Env): Promise<Response> {
       `<p>Hi ${esc(firstName(app.name))},</p><p>Thank you for switching. I'll call your phone
        ending in ${esc(last4)} within the next few minutes. Find a quiet spot, answer when it
        rings, and we'll carry on from there. Everything else works exactly the same.</p>
-       <p>— Mira</p>`, true);
+       ${miraSignature(show)}`, true);
   } catch (err: any) {
     console.error("studio-phone guest email failed:", err?.message ?? err);
   }

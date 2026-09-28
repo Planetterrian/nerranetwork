@@ -133,4 +133,4 @@ class TestTheDayBeforeTest:
         assert "setup_test_link" in BRIEF_T
         assert "setup_test_link=setup_test_url(" in BRIEFS
         assert "&test=1" in BRIEFS
-        assert FIRE.count("&role=guest&test=1") >= 1
+        assert "&test=1" in FIRE and '+ "&role=guest"' in FIRE

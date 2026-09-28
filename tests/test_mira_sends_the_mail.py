@@ -67,10 +67,10 @@ class TestTheGuestMailPatrickSeesToo:
         assert " ".join(self._call("episode is ready for you").split()).endswith("`, true")
 
     def test_the_day_four_reminder(self):
-        assert " ".join(self._call("transcript awaits").split()).endswith("`, true")
+        assert " ".join(self._call("episode is waiting for you").split()).endswith("`, true")
 
     def test_the_rebook_note(self):
-        assert " ".join(self._call("rebook your ${show.shortLabel} interview").split()).endswith("`, true")
+        assert " ".join(self._call("pick a new time for ${show.name}").split()).endswith("`, true")
 
     def test_no_guest_mail_is_sent_with_nobody_copied(self):
         # Every email(env, <a guest address>, ...) either copies the operator
@@ -94,7 +94,7 @@ class TestAWordFromPatrick:
     def test_it_goes_above_the_standard_text_not_instead_of_it(self):
         at = WORKER.index("${noteHtml}")
         after = WORKER[at:at + 400]
-        assert "Thank you for the time you gave us" in after
+        assert "Thank you for the time you gave me" in after
 
     def test_an_empty_note_adds_nothing(self):
         assert 'noteHtml = note\n' in WORKER
@@ -138,4 +138,6 @@ class TestGuestsAreGreetedByFirstName:
     def test_the_pipeline_reminders_do_too(self):
         fire = (ROOT / "pipelines" / "voices" / "fire_interviews.py").read_text(encoding="utf-8")
         assert "Hi {app.get('name', 'there')}" not in fire
-        assert fire.count("<p>Hi {first_name(app)},</p>") == 2
+        # Sept 28 2026: one reminder builder, greeting by first name.
+        assert 'first = _h.escape(first_name(app))' in fire
+        assert 'f"<p>Hi {first},</p>"' in fire

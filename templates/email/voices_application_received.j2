@@ -4,9 +4,12 @@
    the Worker (workers/voices) with an inline copy of this content, because
    Workers can't render jinja; keep the two in sync if you edit tone. #}
 <div style="font-family:system-ui,sans-serif;max-width:640px;margin:0 auto;color:#1a202c;line-height:1.6">
-  <h2 style="color:{{ brand_color }}">Application received</h2>
+  <p style="margin:0 0 1.2em;font-size:.78em;letter-spacing:.08em;text-transform:uppercase;color:{{ brand_color }}">{{ show_name }}</p>
   <p>Hi {{ guest_name }},</p>
-  <p>Thanks for applying to {{ show_name }}. A human (Patrick) reads every
-  application; if it's a fit, a booking link lands in this inbox.</p>
-  <p>{{ sign_off }}</p>
+  <p>Thank you for applying to be a guest on {{ show_name }}. I'm Mira, the AI
+  who hosts the show. Patrick Novak, who created the Nerra Network, and I read
+  every application, and you will hear back from me either way.</p>
+  <p>If it's a fit, my next email will have a link to pick a time. In the
+  meantime, past conversations are at <a href="{{ page_url }}">{{ page_url }}</a>.</p>
+  {{ signature }}
 </div>

@@ -24,6 +24,7 @@ import os
 
 from common import (  # noqa: E402
     OPERATOR_EMAIL, ROOT, carry_the_show_block, cohost_name, load_prompt, logger,
+    mira_signature_html, guest_notes_block,
     notify_operator,
     operator_phone, render_email, sb_insert, sb_select, sb_update, send_email,
     show_for, to_e164,
@@ -328,6 +329,7 @@ def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
         or brief.get("episode_thesis_draft", ""),
         guest_brief=brief.get("bio_research", ""),
         likely_questions=q_text,
+        guest_notes=guest_notes_block(app),
         cohost_name=cohost_name(),
         cohost_first=cohost_name().split()[0],
         cohost_block=cohost_block(host_mode_enabled(interview)),
@@ -346,6 +348,66 @@ def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
         # was cut to a third so they carry the weight they are meant to.
         lessons=lessons_block(show.slug),
     ) + variety_block(show.slug)
+
+
+def when_text(iso: str) -> str:
+    """Same wording as the prep brief: the day and the UTC time, pointing at
+    the calendar invite for the guest's own zone."""
+    t = _parse(iso)
+    if not t:
+        return ""
+    t = t.astimezone(dt.timezone.utc)
+    return f"{t:%A}, {t:%B} {t.day} at {t:%H:%M} UTC (the time in your calendar invite)"
+
+
+def reminder_email(interview: dict, app: dict, show, manage: str,
+                   soon: bool = False) -> "tuple[str, str]":
+    """Mira's reminder, in her own voice (Sept 28 2026). ``soon`` is the
+    short-notice version sent when the studio opens."""
+    import html as _h
+    studio = show.studio_url(interview["id"]) + "&role=guest"
+    phone_mode = (interview.get("call_mode") or "webrtc") != "webrtc"
+    when = when_text(interview.get("scheduled_at", ""))
+    first = _h.escape(first_name(app))
+    if soon:
+        subject = (f"I'll call you in a few minutes for {show.name}" if phone_mode
+                   else f"Your {show.name} studio is open")
+        lead = ("I'm about to call your phone for our interview. Find a quiet spot "
+                "and answer when it rings." if phone_mode else
+                "The studio is open and I'm ready when you are. We start in about "
+                "ten minutes.")
+    else:
+        subject = f"Our {show.name} interview is in about two hours"
+        lead = (f"We're on for {_h.escape(when)}, about two hours from now."
+                if when else "We're on in about two hours.")
+    parts = [f"<p>Hi {first},</p>", f"<p>{lead}</p>"]
+    if phone_mode:
+        parts.append("<p>I'll call the number you gave us. If you'd rather join from a "
+                     f'computer, <a href="{studio}">your studio link</a> works too.</p>')
+    else:
+        parts.append(f'<p><a href="{studio}"><strong>Join your interview here</strong></a>.'
+                     + ("" if soon else " The studio opens ten minutes before we start.")
+                     + "</p>")
+        if not soon:
+            parts.append(
+                f'<p>If you have two minutes before then, <a href="{studio}&test=1">run '
+                "the 30-second microphone test</a> on the computer you'll use. Please wear "
+                "headphones or earbuds: without them your microphone picks up my voice "
+                "from your speakers, and my questions end up in your recording.</p>")
+        parts.append("<p>If the browser gives you any trouble, the studio has a button to "
+                     "have me call your phone instead.</p>")
+    if manage and not soon:
+        parts.append(f'<p>If today doesn\'t work after all, <a href="{manage}">move or '
+                     "cancel it here</a>. One tap, no explanation needed; I would much "
+                     "rather know.</p>")
+    parts.append(mira_signature_html(show))
+    return subject, "".join(parts)
+
+
+def send_guest_reminder(interview: dict, app: dict, show, manage: str,
+                        soon: bool = False) -> None:
+    subject, body = reminder_email(interview, app, show, manage, soon=soon)
+    send_email(app.get("email", ""), subject, body)
 
 
 def send_reminders() -> None:
@@ -381,30 +443,7 @@ def send_reminders() -> None:
             # text, two hours out — which is early enough to be useful.
             manage = manage_url(interview)
             try:
-                send_email(
-                    app.get("email", ""),
-                    f"Your {show.short_label} interview is in about two hours",
-                    f"<p>Hi {first_name(app)},</p>"
-                    f"<p>Mira is ready for you at <strong>"
-                    f"{interview.get('scheduled_at', '')}</strong>. Join from a "
-                    f"computer in a quiet room, and please wear headphones or "
-                    f"earbuds — without them your microphone records Mira's "
-                    f"voice as well as yours, and her questions end up in the "
-                    f"transcript as if you had said them. The studio checks "
-                    f"this for you before you join:</p>"
-                    f'<p><a href="{show.studio_url(interview["id"])}">Join your '
-                    f"interview</a></p>"
-                    # Sept 28 2026 (Elliot): the setup test, two hours out,
-                    # for anyone who skipped it yesterday.
-                    f'<p>Have two minutes now? <a href="{show.studio_url(interview["id"])}'
-                    f'&role=guest&test=1">Run the 30-second microphone test</a> on '
-                    f"the computer you'll use. It is much easier to fix a quiet "
-                    f"microphone now than at the start of the interview.</p>"
-                    + (f'<p>If today does not work after all, '
-                       f'<a href="{manage}">move it or cancel here</a> — one tap, '
-                       f'no explanation needed. We would much rather know.</p>'
-                       if manage else "")
-                    + f"<p>{show.sign_off}</p>")
+                send_guest_reminder(interview, app, show, manage)
             except Exception:  # noqa: BLE001 — the SMS is the primary reminder
                 logger.exception("Reminder email failed for %s (non-fatal)",
                                  interview["id"])
@@ -513,34 +552,18 @@ def fire_due_interviews() -> int:
             # reminder now offers the other door, in the message and in the
             # text, two hours out — which is early enough to be useful.
             manage = manage_url(interview)
-            try:
-                send_email(
-                    app.get("email", ""),
-                    f"Your {show.short_label} interview is in about two hours",
-                    f"<p>Hi {first_name(app)},</p>"
-                    f"<p>Mira is ready for you at <strong>"
-                    f"{interview.get('scheduled_at', '')}</strong>. Join from a "
-                    f"computer in a quiet room, and please wear headphones or "
-                    f"earbuds — without them your microphone records Mira's "
-                    f"voice as well as yours, and her questions end up in the "
-                    f"transcript as if you had said them. The studio checks "
-                    f"this for you before you join:</p>"
-                    f'<p><a href="{show.studio_url(interview["id"])}">Join your '
-                    f"interview</a></p>"
-                    # Sept 28 2026 (Elliot): the setup test, two hours out,
-                    # for anyone who skipped it yesterday.
-                    f'<p>Have two minutes now? <a href="{show.studio_url(interview["id"])}'
-                    f'&role=guest&test=1">Run the 30-second microphone test</a> on '
-                    f"the computer you'll use. It is much easier to fix a quiet "
-                    f"microphone now than at the start of the interview.</p>"
-                    + (f'<p>If today does not work after all, '
-                       f'<a href="{manage}">move it or cancel here</a> — one tap, '
-                       f'no explanation needed. We would much rather know.</p>'
-                       if manage else "")
-                    + f"<p>{show.sign_off}</p>")
-            except Exception:  # noqa: BLE001 — the SMS is the primary reminder
-                logger.exception("Reminder email failed for %s (non-fatal)",
-                                 interview["id"])
+            # Sept 28 2026: this used to send the "in about two hours" email a
+            # second time, ten minutes before the start. Only a guest who never
+            # got the two-hour reminder (a short-notice booking) hears from Mira
+            # here, and what they hear is true: we start in a few minutes.
+            if not interview.get("reminder_sent_at"):
+                try:
+                    send_guest_reminder(interview, app, show, manage, soon=True)
+                    sb_update("interviews", f"id=eq.{interview['id']}",
+                              {"reminder_sent_at": _iso(_now())})
+                except Exception:  # noqa: BLE001 — never blocks the fire
+                    logger.exception("Start-time email failed for %s (non-fatal)",
+                                     interview["id"])
             phone = to_e164(app.get("phone"))
             if not phone:
                 if (interview.get("call_mode") or "webrtc") != "webrtc":

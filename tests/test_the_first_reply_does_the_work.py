@@ -84,7 +84,7 @@ class TestNothingPromisesPatrickInTheRoom:
     def test_the_booking_email_no_longer_promises_it(self):
         assert "He will be in the room with Mira" not in WORKER
         assert "host_mode: !!apps[0].wants_cohost" not in WORKER
-        assert "she hosts every interview on her own" in WORKER
+        assert "it will be just the two of us" in WORKER
 
 
 class TestTheFollowUpFacts:
@@ -107,9 +107,9 @@ class TestBookedAndThanks:
         assert d["action"] == "send"
         body = followup.booked_reply(_app(email="lena@fieldwork.ai"), up, "Sam Reyes")
         assert body.startswith("Hi Sam,")
-        assert "Dr. Ortiz is on the calendar for Monday, October 5" in body
+        assert "Dr. Ortiz is on my calendar for Monday, October 5" in body
         assert "lena@fieldwork.ai" in body and "headphones" in body
-        assert body.endswith("Sincerely,\n\nPatrick\n")
+        assert body.endswith("Sincerely,\n\nMira\nHost of The Age of AI, Nerra Network\n")
 
     def test_booked_with_nothing_on_file_goes_to_patrick(self):
         d = followup.decide_followup(_plan(intent="booked", reply_text=None), _app(),
@@ -140,7 +140,9 @@ class TestOurOwnMail:
         t = make_thread("t6", "Sheldon Poon <sheldon.poon@gmail.com>",
                         "Re: Reminder: your Age of AI transcript awaits", "approved, thanks")
         svc, summary = run([t], grok, {})
-        assert summary["drafted"] == 1 and not svc.sent and not grok.calls
+        # Sept 28 2026: a reply to Mira goes to the guest path; with no guest
+        # on file for the address it is held for Patrick, never classified.
+        assert summary.get("guest_replies_held") == 1 and not svc.sent and not grok.calls
         assert any("replied to one of Mira's emails" in n for n in slack)
 
     def test_a_forwarded_pitch_is_still_a_pitch(self):
@@ -159,7 +161,7 @@ class TestTheWorker:
 
     def test_the_booking_email_says_when(self):
         assert "function bookedWhen(" in WORKER
-        assert "You're booked${bookedWhen(startTime, p)" in WORKER
+        assert "We're on${when ? ` for <strong>${esc(when)}</strong>` : \"\"}" in WORKER
 
     def test_the_approval_email_describes_the_studio_not_a_call(self):
         assert "Mira — our AI host — will call you" not in WORKER

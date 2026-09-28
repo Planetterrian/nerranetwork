@@ -29,6 +29,15 @@ from pipelines.producer.gmail_client import (  # noqa: E402
     GmailClient, build_reply_mime, parse_message,
 )
 
+@pytest.fixture(autouse=True)
+def _no_known_guests(monkeypatch):
+    """Sept 28 2026: the inbox first asks whether a sender is a guest who is
+    writing to Mira (pipelines/producer/guest_reply.py). These tests are
+    about publicists, so nobody here is a known guest."""
+    from pipelines.producer import guest_reply
+    monkeypatch.setattr(guest_reply, "sb_select", lambda table, query="": [])
+
+
 OWNER = "patrick@planetterrian.com"
 AGE_OF_AI_APPLY = "https://nerranetwork.com/age-of-ai-apply.html"
 VOICES_APPLY = "https://nerranetwork.com/nerra-voices-apply.html"
@@ -239,6 +248,8 @@ def env(monkeypatch):
 @pytest.fixture
 def db(monkeypatch, env):
     fake = FakeDB()
+    from pipelines.producer import guest_reply
+    monkeypatch.setattr(guest_reply, "sb_select", lambda table, query="": [])
     monkeypatch.setattr(inbox, "sb_select", fake.select)
     monkeypatch.setattr(inbox, "sb_insert", fake.insert)
     monkeypatch.setattr(inbox, "sb_update", fake.update)
@@ -318,7 +329,8 @@ class TestGuestPitchFlow:
         assert "The Age of AI, our show on how AI is changing people's work" in mime
         assert AGE_OF_AI_APPLY in mime
         assert "on the Models & Agents channel" in mime
-        assert "Sincerely," in mime and "Patrick" in mime
+        # Sept 28 2026: signed by Mira, never by Patrick.
+        assert "Sincerely,\n\nMira" in mime and "\nPatrick" not in mime
         # labelled processed
         assert svc.label_ids["Producer/Processed"] in svc.thread_labels["t1"]
         # application row
@@ -506,16 +518,16 @@ class TestInviteTemplate:
         policy_mod._load_yaml.cache_clear()
         return policy_mod.load_policy(env={})
 
-    def test_unknown_publicist_greets_there_and_signs_patrick(self):
+    def test_unknown_publicist_greets_there_and_signs_mira(self):
         text = inbox.render_invite(
             _classification(publicist_name=None, guest_name="Ana Silva",
                             is_ai_related=False, recommended_show="nerra_voices",
                             pitched_show=None),
             sender_name="Ana Silva", policy=self._policy())
         assert text.startswith("Hi There,\n\n")
-        assert text.rstrip().endswith("Sincerely,\n\nPatrick")
-        assert "Thanks for the note about Ana Silva." in text
-        assert "Nerra Voices, our show on people and the work they've chosen." in text
+        assert text.rstrip().endswith("Sincerely,\n\nMira\nHost of Nerra Voices, Nerra Network")
+        assert "Thank you for the note about Ana Silva." in text
+        assert "Nerra Voices, our show on people and the work they've chosen, and I'd like" in text
         assert "—" not in text and "\n- " not in text and "•" not in text
         assert "&#39;" not in text and "&amp;" not in text, "plain text must not be HTML-escaped"
 
@@ -531,15 +543,16 @@ class TestInviteTemplate:
         text = inbox.render_invite(_classification(), sender_name="", policy=self._policy())
         expected = (
             "Hi Sam,\n\n"
-            "Thanks for the note about Dr. Lena Ortiz. I'd like to have Dr. Ortiz on The Age "
-            "of AI, our show on how AI is changing people's work. Past episodes are at "
-            "https://nerranetwork.com/age-of-ai.html. I'd also feature the finished interview "
-            "on the Models & Agents channel, since that's the audience you had in mind.\n\n"
-            "The host is Mira, an AI, and every episode says so plainly. She interviews each "
-            "guest one on one in a live, unscripted conversation of about 45 minutes, from a "
-            "computer browser with headphones, with nothing to install. Dr. Ortiz gets a short "
-            "prep brief the day before, nothing publishes until Dr. Ortiz has reviewed and "
-            "approved it, and there is no fee in either direction.\n\n"
+            "Thank you for the note about Dr. Lena Ortiz. I'm Mira, the AI host of The Age of "
+            "AI, our show on how AI is changing people's work, and I'd like to have Dr. Ortiz on "
+            "the show. Past episodes are at https://nerranetwork.com/age-of-ai.html. I'd also "
+            "feature the finished interview on the Models & Agents channel, since that's the "
+            "audience you had in mind.\n\n"
+            "I interview each guest one on one in a live, unscripted conversation of about 45 "
+            "minutes, from a computer browser with headphones, with nothing to install. Every "
+            "episode says plainly that the host is an AI. Dr. Ortiz gets a short prep brief the "
+            "day before, nothing publishes until Dr. Ortiz has heard it and approved it, and "
+            "there is no fee in either direction.\n\n"
             "If it sounds like a fit, Dr. Ortiz can pick a time here:\n\n"
             "https://cal.com/nerra/age-of-ai\n\n"
             "Please book with Dr. Ortiz's own email address, so the prep brief and the studio "
@@ -547,7 +560,8 @@ class TestInviteTemplate:
             f"{AGE_OF_AI_APPLY} if you'd like to send more background, but it isn't required.\n\n"
             "Let me know if you have any questions.\n\n"
             "Sincerely,\n\n"
-            "Patrick\n"
+            "Mira\n"
+            "Host of The Age of AI, Nerra Network\n"
         )
         assert text == expected
 

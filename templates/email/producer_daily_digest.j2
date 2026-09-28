@@ -1,11 +1,13 @@
 <!doctype html>
 <html><body style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;color:#1f2937;max-width:640px;margin:0 auto;padding:24px">
-<p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#6b7280">Nerra Producer</p>
+<p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#6b7280">From Mira</p>
 <h1 style="font-size:20px;margin:0 0 16px">Daily summary for {{ day }}</h1>
 
 <table style="border-collapse:collapse;margin:0 0 20px">
 <tr><td style="padding:2px 16px 2px 0">Invitations sent</td><td style="padding:2px 0;font-weight:600">{{ s.invited }}</td></tr>
 <tr><td style="padding:2px 16px 2px 0">Follow-ups answered</td><td style="padding:2px 0;font-weight:600">{{ s.followups }}</td></tr>
+<tr><td style="padding:2px 16px 2px 0">Guest emails I answered</td><td style="padding:2px 0;font-weight:600">{{ s.guest_answered or 0 }}</td></tr>
+<tr><td style="padding:2px 16px 2px 0">Guest notes filed for interviews</td><td style="padding:2px 0;font-weight:600">{{ s.guest_notes or 0 }}</td></tr>
 <tr><td style="padding:2px 16px 2px 0">Booking links sent</td><td style="padding:2px 0;font-weight:600">{{ s.approved }}</td></tr>
 <tr><td style="padding:2px 16px 2px 0">Interviews booked</td><td style="padding:2px 0;font-weight:600">{{ s.booked }}</td></tr>
 <tr><td style="padding:2px 16px 2px 0">Nudges sent</td><td style="padding:2px 0;font-weight:600">{{ s.chased }}</td></tr>
@@ -16,7 +18,7 @@
 
 {% if held %}
 <h2 style="font-size:16px;margin:24px 0 8px">Waiting on you ({{ held|length }})</h2>
-<p style="margin:0 0 8px;color:#6b7280;font-size:13px">Each has a draft in Gmail under Producer/Hold. Send, edit, or discard.</p>
+<p style="margin:0 0 8px;color:#6b7280;font-size:13px">Each is labelled Producer/Hold in Gmail. Where I could, I left a draft in my mailbox; otherwise I emailed you what I would have said.</p>
 {% for h in held %}
 <p style="margin:0 0 10px"><a href="{{ h.url }}" style="color:{{ brand }}">{{ h.subject or '(no subject)' }}</a><br>
 <span style="color:#374151">{{ h.guest or h.sender }}</span> &middot; {{ h.reason }}</p>

@@ -568,7 +568,7 @@ class TestAGuestCanSayNotToday:
 
     def test_the_link_rides_on_the_reminder(self):
         assert "def manage_url(interview: dict) -> str:" in self.FIRE
-        assert "move it or cancel here" in self.FIRE
+        assert "cancel it here</a>" in self.FIRE and "move or " in self.FIRE
         assert "can't make it?" in self.FIRE.lower()
 
     def test_an_old_interview_without_a_token_is_not_broken(self):
@@ -1330,7 +1330,7 @@ class TestEveryEpisodeGetsItsOwnPost:
     def test_the_guest_is_asked_for_materials_where_they_are_approving(self):
         assert 'id="materials"' in self.WORKER
         assert "guest_materials: materials" in self.WORKER
-        assert "when this publishes we write a full post" in self.WORKER
+        assert "when this publishes I write a full post" in self.WORKER
 
 
 class TestTheGuestKnowsWhenItIsOver:
@@ -1763,7 +1763,7 @@ class TestTheReadArrivesBeforeTheDecision:
     def test_a_decline_is_answered_politely(self):
         body = self.WORKER[self.WORKER.index("async function handleTriageDecision"):self.WORKER.index("async function handleTriageReassign")]
         assert 'body.decision === "declined" && app.email' in body
-        assert "not going to be able to find a place for it" in body
+        assert "not able to find a place for it" in body
         assert "you are welcome\n         to apply again" in body or "welcome" in body
         assert "app.publicist_email ? [String(app.publicist_email)] : undefined" in body
 
@@ -1869,7 +1869,7 @@ class TestTheGuestHearsTheMomentTheyAreOut:
         # Both of Patrick's addresses, then the publicist, no duplicates.
         assert sent["cc"] == [common.OPERATOR_EMAIL, *common.OPERATOR_CC,
                               "pr@example.com"]
-        assert sent["from"] == "mira@nerranetwork.com"
+        assert sent["from"] == "Mira <mira@nerranetwork.com>"  # Sept 28 2026: by name
 
 
 class TestSheDoesNotEndTheInterviewInTheFirstThird:
@@ -2219,8 +2219,8 @@ class TestTheStudioChecksForHeadphonesRatherThanAskingNicely:
     def test_the_emails_say_what_goes_wrong_not_just_what_to_do(self):
         # "Headphones help a lot" is advice nobody acted on.
         assert "headphones help a lot" not in self.FIRE
-        assert "her questions end up in the" in self.FIRE
-        assert "as though you had said" in self.BOOKING
+        assert "my questions end up in your recording" in self.FIRE
+        assert "as if you had said" in self.BOOKING
         assert "wearing headphones or" in self.BOOKING
 
 

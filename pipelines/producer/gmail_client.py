@@ -50,9 +50,17 @@ def send_as_address() -> str:
     return (os.environ.get("GMAIL_SEND_AS", "") or delegated_user()).strip()
 
 
+def mira_mailbox() -> str:
+    """Mira's own Workspace mailbox (Sept 28 2026). Everything the Producer
+    sends comes from Mira; replies addressed only to her land here."""
+    from pipelines.voices.common import mira_address
+    return (os.environ.get("GMAIL_MIRA_USER", "") or mira_address()).strip().lower()
+
+
 def own_addresses() -> tuple:
-    """Every address that counts as 'us' when reading a thread."""
-    return tuple({delegated_user().lower(), send_as_address().lower()})
+    """Every address that counts as 'us' when reading a thread: the
+    delegated mailbox, its send-as alias, and Mira."""
+    return tuple({delegated_user().lower(), send_as_address().lower(), mira_mailbox()})
 
 
 def build_service(delegated: Optional[str] = None):
@@ -145,6 +153,7 @@ def parse_message(msg: Dict[str, Any]) -> Dict[str, Any]:
         "from_name": from_name,
         "from_email": from_addr.lower(),
         "to": _header(headers, "To"),
+        "cc": _header(headers, "Cc"),
         "date": _header(headers, "Date"),
         "internal_date": int(msg.get("internalDate") or 0),
         "subject": _header(headers, "Subject"),
@@ -211,9 +220,15 @@ def thread_url(thread_id: str) -> str:
 class GmailClient:
     def __init__(self, service: Any, user: Optional[str] = None,
                  *, dry_run: bool = False,
-                 processed_label: str = PROCESSED_LABEL) -> None:
+                 processed_label: str = PROCESSED_LABEL,
+                 mailer: Any = None) -> None:
         self.service = service
         self.user = user or delegated_user()
+        # Sept 28 2026: outbound mail goes through Mira (pipelines/producer/
+        # mira_mail.py) whenever a mailer is attached, which from_env always
+        # does. Without one (tests with a fake service) the old in-mailbox
+        # send is used.
+        self.mailer = mailer
         # From: on replies — the send-as alias when configured, else the mailbox.
         self.send_as = (os.environ.get("GMAIL_SEND_AS", "") or self.user).strip()
         self.dry_run = dry_run
@@ -224,8 +239,28 @@ class GmailClient:
     def from_env(cls, *, dry_run: bool = False,
                  processed_label: str = PROCESSED_LABEL) -> "GmailClient":
         user = delegated_user()
+        from pipelines.producer.mira_mail import MiraMailer
         return cls(build_service(user), user, dry_run=dry_run,
-                   processed_label=processed_label)
+                   processed_label=processed_label,
+                   mailer=MiraMailer.from_env(dry_run=dry_run))
+
+    @classmethod
+    def for_mira(cls, *, dry_run: bool = False,
+                 processed_label: str = PROCESSED_LABEL) -> Optional["GmailClient"]:
+        """Mira's own mailbox, or None when the service account cannot open
+        it (domain-wide delegation not granted for her user yet). Never
+        raises: the main inbox must run either way."""
+        from pipelines.producer.mira_mail import MiraMailer
+        user = mira_mailbox()
+        try:
+            service = build_service(user)
+            service.users().labels().list(userId="me").execute()
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Mira's mailbox %s is not reachable (%s); replies sent only "
+                           "to her are not being read", user, exc)
+            return None
+        return cls(service, user, dry_run=dry_run, processed_label=processed_label,
+                   mailer=MiraMailer.from_env(dry_run=dry_run, drafts_service=service))
 
     # -- labels ------------------------------------------------------------
 
@@ -309,6 +344,9 @@ class GmailClient:
 
     def send_reply(self, thread_id: str, to: str, subject: str, body_text: str,
                    in_reply_to: str = "", references: str = "") -> Optional[str]:
+        if self.mailer is not None:
+            return self.mailer.send(to=to, subject=subject, body_text=body_text,
+                                    in_reply_to=in_reply_to, references=references)
         raw = build_reply_mime(sender=self.send_as, to=to, subject=subject,
                                body_text=body_text, in_reply_to=in_reply_to,
                                references=references)
@@ -340,6 +378,9 @@ class GmailClient:
 
     def create_draft(self, thread_id: str, to: str, subject: str, body_text: str,
                      in_reply_to: str = "", references: str = "") -> Optional[str]:
+        if self.mailer is not None:
+            return self.mailer.draft(to=to, subject=subject, body_text=body_text,
+                                     in_reply_to=in_reply_to, references=references)
         raw = build_reply_mime(sender=self.send_as, to=to, subject=subject,
                                body_text=body_text, in_reply_to=in_reply_to,
                                references=references)

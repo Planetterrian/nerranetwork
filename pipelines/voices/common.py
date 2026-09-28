@@ -128,6 +128,46 @@ def sb_update(table: str, query: str, patch: Dict[str, Any]) -> List[Dict[str, A
 # told about either of them.
 FROM_EMAIL = os.environ.get("VOICES_FROM_EMAIL") or "mira@nerranetwork.com"
 
+# Sept 28 2026: every automated email comes from Mira, by name. The bare
+# address showed up in inboxes as "mira" (or, from the Producer, as Patrick),
+# and a guest could not tell who they were dealing with. The display name is
+# forced here, whatever the secret holds, so no configuration can undo it.
+MIRA_NAME = "Mira"
+
+
+def mira_address() -> str:
+    """Mira's bare address (mira@nerranetwork.com unless configured)."""
+    m = re.search(r"<([^>]+)>", FROM_EMAIL)
+    return (m.group(1) if m else FROM_EMAIL).strip()
+
+
+def mira_from() -> str:
+    """The From: header on everything automated: ``Mira <mira@...>``."""
+    return f"{MIRA_NAME} <{mira_address()}>"
+
+
+def mira_title(show: "ShowRef" = None) -> str:
+    """The line under her name: "Host of The Age of AI, Nerra Network"."""
+    try:
+        name = resolve_show(show).name
+    except Exception:  # noqa: BLE001 — a signature must never fail a send
+        name = ""
+    return f"Host of {name}, Nerra Network" if name else "Nerra Network"
+
+
+def mira_signature_text(show: "ShowRef" = None) -> str:
+    """Mira's sign-off for plain-text mail. One wording everywhere."""
+    return f"Sincerely,\n\nMira\n{mira_title(show)}"
+
+
+def mira_signature_html(show: "ShowRef" = None) -> str:
+    """Mira's sign-off for HTML mail (safe to drop into a template)."""
+    import html as _h
+    return ('<p style="margin-top:1.4em">Sincerely,<br><br>Mira<br>'
+            f'<span style="color:#4a5568;font-size:.9em">{_h.escape(mira_title(show))} · '
+            '<a href="https://nerranetwork.com" style="color:#4a5568">nerranetwork.com</a>'
+            '</span></p>')
+
 
 OPERATOR_EMAIL = os.environ.get("OPERATOR_EMAIL") or "patricknovak1@gmail.com"
 # Sept 21 2026: Mira runs the correspondence end to end and Patrick reads it
@@ -220,7 +260,9 @@ def email_safe_html(html: str) -> str:
 
 
 def send_email(to: str, subject: str, html_body: str,
-               cc_operator: bool = False, cc: Optional[List[str]] = None) -> None:
+               cc_operator: bool = False, cc: Optional[List[str]] = None,
+               *, text_body: Optional[str] = None,
+               headers: Optional[Dict[str, str]] = None) -> None:
     """Send mail as Mira. ``cc_operator=True`` copies Patrick — the July
     2026 oversight process: Mira runs guest comms, the operator sees
     everything without being in the critical path. ``cc`` copies anyone
@@ -236,8 +278,16 @@ def send_email(to: str, subject: str, html_body: str,
     resend_key = os.environ.get("RESEND_API_KEY", "")
     postmark_token = os.environ.get("POSTMARK_TOKEN", "")
     html_body = email_safe_html(html_body)
-    payload: dict = {"from": FROM_EMAIL, "to": [to],
-                     "subject": subject, "html": html_body}
+    payload: dict = {"from": mira_from(), "to": [to], "subject": subject,
+                     "reply_to": mira_address()}
+    if html_body:
+        payload["html"] = html_body
+    if text_body:
+        payload["text"] = text_body
+    if headers:
+        # In-Reply-To / References: a reply Mira sends lands in the same
+        # thread as the message it answers (the Producer's replies).
+        payload["headers"] = {k: v for k, v in headers.items() if v}
     copies: List[str] = []
     if cc_operator:
         copies.append(OPERATOR_EMAIL)
@@ -262,8 +312,12 @@ def send_email(to: str, subject: str, html_body: str,
             "https://api.postmarkapp.com/email",
             headers={"X-Postmark-Server-Token": postmark_token,
                      "Content-Type": "application/json"},
-            json={"From": FROM_EMAIL, "To": to,
-                  "Subject": subject, "HtmlBody": html_body,
+            json={"From": mira_from(), "To": to, "ReplyTo": mira_address(),
+                  "Subject": subject,
+                  **({"HtmlBody": html_body} if html_body else {}),
+                  **({"TextBody": text_body} if text_body else {}),
+                  **({"Headers": [{"Name": k, "Value": v} for k, v in (headers or {}).items() if v]}
+                     if headers else {}),
                   **({"Cc": ", ".join(copies)} if copies else {})},
             timeout=30,
         )
@@ -274,6 +328,31 @@ def send_email(to: str, subject: str, html_body: str,
         )
     resp.raise_for_status()
     logger.info("Email sent to %s: %s", to, subject)
+
+
+def guest_notes_block(app: Optional[Dict[str, Any]]) -> str:
+    """What the guest wrote to Mira before the interview, for her prompt.
+
+    Sept 28 2026, Elliot Justin: he answered the prep brief with the point
+    he most wanted to make (venous leak, not arterial insufficiency, is the
+    leading cause) and the Producer answered him as if he were a publicist.
+    What a guest sends between booking and the call is the best research
+    there is. The Producer files it on the application (``guest_notes``),
+    and it reaches Mira here, in the guest's own words."""
+    notes = (app or {}).get("guest_notes") or []
+    if not isinstance(notes, list):
+        return ""
+    lines = []
+    for n in notes[-6:]:
+        text = " ".join(str((n or {}).get("text") or "").split())
+        if text:
+            lines.append(f"- {text[:900]}")
+    if not lines:
+        return ""
+    return ("\nWHAT THE GUEST SENT YOU BEFORE THE CALL (by email, in reply to your "
+            "messages). They took the trouble to write it; bring it into the "
+            "conversation, ideally early, and let them make the point in their "
+            "own words:\n" + "\n".join(lines) + "\n")
 
 
 def show_email_context(show: ShowRef = None,
@@ -291,8 +370,18 @@ def show_email_context(show: ShowRef = None,
         "apply_url": s.apply_url,
         "page_url": s.page_url,
         "sign_off": s.sign_off,
+        # Mira's signature as markup, for `{{ signature }}` in templates.
+        "signature": _markup(mira_signature_html(s)),
         "closing_question": s.closing_question,
     }
+
+
+def _markup(html: str):
+    try:
+        from markupsafe import Markup
+        return Markup(html)
+    except ImportError:  # pragma: no cover — jinja2 always ships markupsafe
+        return html
 
 
 def render_email(template_name: str, show: ShowRef = None,

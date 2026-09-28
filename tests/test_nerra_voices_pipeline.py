@@ -234,7 +234,8 @@ class TestEmailTemplates:
             html = _html.unescape(render_email(tpl.name, show=show, **ctx))
             if tpl.name != "voices_weekly_digest.j2":  # unbranded wrapper
                 assert show.brand_color in html, (slug, tpl.name)
-                assert show.sign_off in html, (slug, tpl.name)
+                # Sept 28 2026: every guest email ends with Mira's signature.
+                assert f"Mira<br>" in html and f"Host of {show.name}" in html, (slug, tpl.name)
             assert show.name in html, (slug, tpl.name)
             other = [s for s in all_shows() if s.slug != slug][0]
             assert other.name not in html, (slug, tpl.name)

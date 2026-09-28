@@ -779,7 +779,7 @@ class TestGuestIsOfferedMoreThanApproval:
     def test_the_invitation_email_thanks_them_and_says_what_is_on_offer(self):
         decision = WORKER[WORKER.index("async function handleEditorialDecision("):]
         decision = decision[:decision.index("\n}\n") + 3]
-        assert "Thank you for the time you gave us" in decision
+        assert "Thank you for the time you gave me" in decision
         assert "record it" in decision and "again from scratch" in decision
         assert "six months or a year" in decision
 

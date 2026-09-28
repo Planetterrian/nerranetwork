@@ -10,7 +10,7 @@ Flow (called from ``inbox.process_thread`` when the thread is already in
 the DB and its newest message is inbound):
 
 1. autoresponder / bounce → label, nothing else;
-2. ask Grok (``grok-latest``) for an intent + Patrick-voice reply, with a
+2. ask Grok (``grok-latest``) for an intent + a reply in Mira's voice, with a
    fixed FAQ of facts it may use (``prompts/followup_reply.txt``);
 3. ``ready_to_book`` → reply with the show's Cal.com link in-thread and
    flip the application to ``approved`` (no form needed — the Producer
@@ -23,7 +23,8 @@ the DB and its newest message is inbound):
    thread everything further is held for Patrick.
 
 Every send goes through the same voice guard as the invite: the sign-off
-is normalised to "Sincerely, / Patrick" and any em dash is replaced.
+is normalised to Mira's signature and any em dash is replaced. Since Sept 28
+2026 nothing the Producer sends is signed Patrick (see mira_mail.py).
 """
 
 from __future__ import annotations
@@ -41,7 +42,9 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from pipelines.voices.common import parse_json_lenient, sb_select, sb_update  # noqa: E402
+from pipelines.voices.common import (  # noqa: E402
+    mira_signature_text, parse_json_lenient, sb_select, sb_update,
+)
 from pipelines.voices.shows import get_show  # noqa: E402
 from pipelines.producer import classify as _classify  # noqa: E402
 
@@ -61,7 +64,11 @@ MIN_CONFIDENCE = 0.7
 MAX_THREAD_MESSAGES = 8
 MAX_MESSAGE_CHARS = 1800
 
-SIGN_OFF = "Sincerely,\n\nPatrick"
+def sign_off(show_slug: Optional[str] = None) -> str:
+    return mira_signature_text(show_slug or None)
+
+
+SIGN_OFF = sign_off()   # default-show form, kept for callers that import it
 
 
 class FollowupError(ValueError):
@@ -90,7 +97,7 @@ def _render_thread(thread: Dict[str, Any], own_email: str) -> str:
     msgs = (thread.get("messages") or [])[-MAX_THREAD_MESSAGES:]
     out: List[str] = []
     for m in msgs:
-        who = "OURS (Patrick)" if (m.get("from_email") or "").lower() in own else (m.get("from") or "unknown")
+        who = "OURS (Mira)" if (m.get("from_email") or "").lower() in own else (m.get("from") or "unknown")
         body = _classify.truncate(m.get("body") or m.get("snippet") or "", MAX_MESSAGE_CHARS)
         body = _strip_quoted(body)
         out.append(f"--- From: {who} | {m.get('date') or ''}\n{body}")
@@ -171,25 +178,26 @@ def validate_followup(obj: Any) -> Dict[str, Any]:
 
 
 _SIGNOFF_RE = re.compile(
-    r"\n\s*(sincerely|best|best regards|regards|thanks|thank you|cheers|warmly|kind regards)[,.]?\s*\n+\s*patrick(\s+novak)?\s*$",
-    re.I)
+    r"\n\s*(sincerely|best|best regards|regards|thanks|thank you|cheers|warmly|kind regards)[,.]?"
+    r"\s*\n+\s*(patrick(\s+novak)?|mira)\b.*$",
+    re.I | re.S)
 
 
-def normalise_voice(text: str) -> str:
-    """Patrick's voice guard: no em dashes, one canonical sign-off."""
+def normalise_voice(text: str, show_slug: Optional[str] = None) -> str:
+    """Mira's voice guard: no em dashes, one canonical sign-off (hers)."""
     text = (text or "").replace(" — ", ", ").replace("—", ", ").replace("–", "-")
     text = text.replace("\r\n", "\n").rstrip()
     text = _SIGNOFF_RE.sub("", text).rstrip()
-    return f"{text}\n\n{SIGN_OFF}\n"
+    return f"{text}\n\n{sign_off(show_slug)}\n"
 
 
-def ensure_booking_link(text: str, url: str) -> str:
+def ensure_booking_link(text: str, url: str, show_slug: Optional[str] = None) -> str:
     if not url or url in text:
         return text
     body, _, _ = text.rpartition("\n\nSincerely,")
     if not body:
         body = text.rstrip()
-    return f"{body}\n\nHere is the booking link:\n{url}\n\n{SIGN_OFF}\n"
+    return f"{body}\n\nHere is the booking link:\n{url}\n\n{sign_off(show_slug)}\n"
 
 
 def _call_grok(prompt: str) -> str:
@@ -255,12 +263,12 @@ def booked_reply(app: Dict[str, Any], interview: Dict[str, Any], to_name: str) -
     when = _when(interview.get("scheduled_at") or "")
     addr = app.get("email") or ""
     lines = [f"Hi {hi},", "",
-             f"Thank you, {guest} is on the calendar{' for ' + when if when else ''}. "
+             f"Thank you, {guest} is on my calendar{' for ' + when if when else ''}. "
              f"The booking confirmation with the studio link went to {addr or 'the address used to book'}, "
              "and a short prep brief follows the day before. Nothing else is needed.",
              "", "The one thing that makes the biggest difference on the day is headphones "
-             "or earbuds, so Mira's voice does not leak into the microphone."]
-    return normalise_voice("\n".join(lines))
+             "or earbuds, so my voice does not leak into the microphone."]
+    return normalise_voice("\n".join(lines), app.get("show"))
 
 
 def decide_followup(plan: Dict[str, Any], app: Dict[str, Any], *, mode: str,
@@ -344,9 +352,9 @@ def handle_followup(*, thread: Dict[str, Any], inbound: Dict[str, Any],
     if plan["intent"] == "booked" and upcoming:
         body = booked_reply(app, upcoming, inbound.get("from_name") or "")
     elif plan.get("reply_text"):
-        body = normalise_voice(plan["reply_text"])
+        body = normalise_voice(plan["reply_text"], app.get("show"))
         if plan["intent"] == "ready_to_book":
-            body = ensure_booking_link(body, booking_url(app.get("show") or ""))
+            body = ensure_booking_link(body, booking_url(app.get("show") or ""), app.get("show"))
 
     patch: Dict[str, Any] = {"producer_last_inbound_at": _now()}
     if decision["action"] == "send":

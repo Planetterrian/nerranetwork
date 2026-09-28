@@ -122,7 +122,7 @@ def test_worker_booking_url_falls_back():
     body = WORKER.split("function bookingUrl(")[1].split("\n}")[0]
     assert "CALCOM_BOOKING_URL_NERRA_VOICES" in body
     assert "return env.CALCOM_BOOKING_URL;" in body
-    assert "You're invited — book your ${show.name} interview" in WORKER
+    assert "You're invited to ${show.name}" in WORKER
 
 
 def test_worker_apply_accepts_show_and_merges_invited():

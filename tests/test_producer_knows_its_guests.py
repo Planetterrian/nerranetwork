@@ -19,6 +19,15 @@ from tests.test_producer_inbox import (  # noqa: F401  (fixtures)
     _classification, db, decode_raw, env, grok, make_thread, run, slack,
 )
 
+@pytest.fixture(autouse=True)
+def _no_known_guests(monkeypatch):
+    """Sept 28 2026: the inbox first asks whether a sender is a guest who is
+    writing to Mira (pipelines/producer/guest_reply.py). These tests are
+    about publicists, so nobody here is a known guest."""
+    from pipelines.producer import guest_reply
+    monkeypatch.setattr(guest_reply, "sb_select", lambda table, query="": [])
+
+
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -95,7 +104,7 @@ class TestAKnownGuest:
         _known(db, interview={"status": "scheduled", "scheduled_at": "2099-10-05T20:45:00+00:00"})
         svc, _ = _pitch(grok)
         mime = decode_raw(svc.sent[0])
-        assert "Dr. Ortiz is already booked with Mira for Monday, October 5" in mime
+        assert "Dr. Ortiz is already booked with me for Monday, October 5" in mime
 
     def test_a_recorded_guest_waits_for_the_episode(self, db, slack, grok):
         _known(db, interview={"status": "guest_review", "scheduled_at": "2026-09-20T17:00:00+00:00"})
@@ -131,8 +140,8 @@ class TestNobodyClaimsACoHost:
             text = (ROOT / "templates" / "email" / name).read_text(encoding="utf-8")
             assert "co-host" not in text and "sit in" not in text
 
-    def test_the_known_guest_mail_is_in_patricks_voice(self):
+    def test_the_known_guest_mail_is_in_miras_voice(self):
         text = (ROOT / "templates" / "email" / "producer_known_guest.j2").read_text(encoding="utf-8")
         assert text.startswith("Hi {{ publicist_first_name }},")
-        assert text.rstrip().endswith("Sincerely,\n\nPatrick")
+        assert text.rstrip().endswith("{{ signature }}")
         assert "—" not in text

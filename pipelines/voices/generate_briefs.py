@@ -154,7 +154,7 @@ def email_brief_to_guest(interview: dict, app: dict, brief: dict) -> None:
         closing_question=show.closing_question,
     )
     send_email(app["email"],
-               f"Your {show.short_label} interview: what Mira plans to ask",
+               f"Our {show.name} interview: what I would like to ask you",
                html, cc_operator=True)
     sb_update("interview_briefs", f"id=eq.{brief['id']}",
               {"sent_to_guest_at": dt.datetime.now(dt.timezone.utc).isoformat(),

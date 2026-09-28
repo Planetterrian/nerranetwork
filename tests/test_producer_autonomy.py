@@ -29,6 +29,15 @@ from pipelines.producer import chase, classify, digest, followup, inbox  # noqa:
 from pipelines.producer.gmail_client import GmailClient, parse_message  # noqa: E402
 from pipelines.producer.policy import load_policy  # noqa: E402
 
+@pytest.fixture(autouse=True)
+def _no_known_guests(monkeypatch):
+    """Sept 28 2026: the inbox first asks whether a sender is a guest who is
+    writing to Mira (pipelines/producer/guest_reply.py). These tests are
+    about publicists, so nobody here is a known guest."""
+    from pipelines.producer import guest_reply
+    monkeypatch.setattr(guest_reply, "sb_select", lambda table, query="": [])
+
+
 BOOKING_AOA = "https://cal.com/patrick-novak-lkcqo4/age-of-ai-interview"
 BOOKING_NV = "https://cal.com/patrick-novak-lkcqo4/nerra-voices-interview"
 
@@ -78,14 +87,14 @@ def fdb(monkeypatch, db):
 class TestVoice:
     def test_sign_off_is_normalised_and_em_dashes_removed(self):
         out = followup.normalise_voice("Hi Sam,\n\nIt runs 45 minutes — remote.\n\nBest regards,\nPatrick Novak")
-        assert out.endswith("\n\nSincerely,\n\nPatrick\n")
-        assert "—" not in out and out.count("Patrick") == 1
+        assert out.endswith("\n\nSincerely,\n\nMira\nHost of The Age of AI, Nerra Network\n")
+        assert "—" not in out and "Patrick" not in out
         assert "45 minutes, remote." in out
 
     def test_booking_link_is_appended_when_model_forgot_it(self):
         body = followup.normalise_voice("Hi Sam,\n\nGreat, here is how to book.")
         out = followup.ensure_booking_link(body, BOOKING_AOA)
-        assert BOOKING_AOA in out and out.endswith("Sincerely,\n\nPatrick\n")
+        assert BOOKING_AOA in out and out.endswith("Sincerely,\n\nMira\nHost of The Age of AI, Nerra Network\n")
         assert out.count("Sincerely") == 1
         # Present already → untouched.
         assert followup.ensure_booking_link(out, BOOKING_AOA) == out
@@ -173,9 +182,9 @@ class TestFollowupSchema:
         t = GmailClient(FakeGmailService([replied_thread()]), OWNER).get_thread("t1")
         p = followup.build_prompt(t, _app(), OWNER, load_policy())
         assert BOOKING_AOA in p and "The Age of AI" in p and "Models & Agents" in p
-        assert "OURS (Patrick)" in p and "How do we book?" in p
+        assert "OURS (Mira)" in p and "How do we book?" in p
         assert "{{" not in p and "{%" not in p
-        assert "no fee" in p.lower() and "Sincerely," in p
+        assert "no fee" in p.lower() and "do not add a sign-off" in p
 
     def test_prompt_without_pitched_show(self, booking):
         t = GmailClient(FakeGmailService([replied_thread()]), OWNER).get_thread("t1")
@@ -209,7 +218,7 @@ class TestFollowupFlow:
         svc, summary = _run([t], grok, {"THREAD (oldest first": plan})
         assert len(svc.sent) == 1 and not svc.drafted
         text = decode_raw(svc.sent[0])
-        assert BOOKING_AOA in text and text.rstrip().endswith("Sincerely,\n\nPatrick")
+        assert BOOKING_AOA in text and text.rstrip().endswith("Sincerely,\n\nMira\nHost of The Age of AI, Nerra Network")
         assert "In-Reply-To: <t1m3@example.com>" in text
         assert summary["followups_sent"] == 1 and summary["approved"] == 1 and summary["sent"] == 0
         (_, q, patch), = [u for u in fdb.updates if u[0] == "guest_applications"]
@@ -398,7 +407,7 @@ class TestChaseRun:
         assert summary["sent"] == 1 and len(svc.sent) == 1
         text = decode_raw(svc.sent[0])
         assert "Hi Sam," in text and "Dr. Lena Ortiz joining The Age of AI" in text
-        assert text.rstrip().endswith("Sincerely,\n\nPatrick")
+        assert text.rstrip().endswith("Sincerely,\n\nMira\nHost of The Age of AI, Nerra Network")
         assert "In-Reply-To: <t1m2@example.com>" in text
         assert svc.sent[0]["threadId"] == "t1"
         patch = [u for u in cdb.updates if u[0] == "guest_applications"][-1][2]
@@ -499,7 +508,7 @@ class TestDigest:
         out = digest.run_digest(hours=24)
         (to, subject, html), = ddb
         assert to == "patricknovak1@gmail.com"
-        assert subject == "Nerra Producer daily: 1 invited, 1 booking links, 1 booked, 1 waiting on you, 1 errors"
+        assert subject == "Mira's daily report: 1 invited, 1 booking links, 1 booked, 1 waiting on you, 1 errors"
         assert "Waiting on you (1)" in html and "possible guest?" in html
         assert "https://mail.google.com/mail/u/0/#all/t2" in html
         assert "Dr. Lena Ortiz" in html and "2026-09-10 17:00 UTC" in html

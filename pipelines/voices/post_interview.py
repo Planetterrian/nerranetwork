@@ -46,7 +46,7 @@ from common import (  # noqa: E402
 )
 
 sys.path.insert(0, str(Path(__file__).parent))
-from address import written as written_address  # noqa: E402
+from address import first_name, written as written_address  # noqa: E402
 from audio.local_tracks import (  # noqa: E402
     ROOM_MIN_WINDOWS, align_to_reference, align_to_room, fetch_local_track,
     place_at,
@@ -129,12 +129,17 @@ def handle_missed(run: dict, interview: dict, app: dict) -> int:
     sb_update("interviews", f"id=eq.{interview['id']}",
               {"status": status, "no_show_count": no_shows})
     if no_shows < 2:
+        # Sept 28 2026: the show's own booking page (Nerra Voices guests were
+        # sent the Age of AI one), and Mira's own words.
+        booking = (os.environ.get("CALCOM_BOOKING_URL_NERRA_VOICES", "")
+                   if show.slug == "nerra_voices" else "") \
+            or os.environ.get("CALCOM_BOOKING_URL", "")
         html = render_email("voices_interview_reminder.j2", show=show,
-                            guest_name=app["name"], missed=True,
-                            booking_url=os.environ.get("CALCOM_BOOKING_URL", ""))
+                            guest_name=first_name(app), missed=True,
+                            booking_url=booking)
         send_email(app["email"],
-                   f"We missed you — reschedule your {show.short_label} interview",
-                   html)
+                   f"Sorry we missed each other: pick a new time for {show.name}",
+                   html, cc_operator=True)
         notify_operator(show.slack(
             f"{app['name']} no-show #{no_shows} — reschedule email sent"))
     else:

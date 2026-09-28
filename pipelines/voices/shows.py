@@ -56,7 +56,7 @@ _AGE_OF_AI_VOICES_DEFAULTS: Dict[str, Any] = {
     "music_bed": "assets/music/age_of_ai.mp3",
     "cover": "assets/covers/age-of-ai.jpg",
     "prompt_dir": None,
-    "sign_off": "— The Age of AI, Nerra Network",
+    "sign_off": "Mira, host of The Age of AI",
     "premise": (
         "The Age of AI is a documentary podcast about artificial "
         "intelligence's emergence and impact. Mira, an AI, interviews real "

@@ -195,6 +195,13 @@ def _own_set(own_email: str) -> set:
     """The delegated mailbox plus its send-as alias (GMAIL_SEND_AS)."""
     import os
     own = {(own_email or "").lower()}
+    # Mira sends everything the Producer writes (Sept 28 2026), so her
+    # address is "us" in every thread.
+    try:
+        from pipelines.producer.gmail_client import mira_mailbox
+        own.add(mira_mailbox())
+    except Exception:  # noqa: BLE001
+        own.add("mira@nerranetwork.com")
     for key in ("GMAIL_SEND_AS", "GMAIL_DELEGATED_USER"):
         val = (os.environ.get(key) or "").strip().lower()
         if val:

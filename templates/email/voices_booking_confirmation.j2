@@ -1,19 +1,18 @@
 {# Mira interview shows — booking confirmation (show fields injected by render_email(show=...)). Live send is the Worker's inline copy
    (cal-com-booked handler); keep in sync if you edit tone. #}
 <div style="font-family:system-ui,sans-serif;max-width:640px;margin:0 auto;color:#1a202c;line-height:1.6">
-  <h2 style="color:{{ brand_color }}">You're booked</h2>
+  <p style="margin:0 0 1.2em;font-size:.78em;letter-spacing:.08em;text-transform:uppercase;color:{{ brand_color }}">{{ show_name }}</p>
   <p>Hi {{ guest_name }},</p>
-  <p>Your {{ show_name }} interview is set for <strong>{{ scheduled_at }}</strong>.
-  You'll join from your personal browser studio —
-  <a href="{{ studio_url }}">bookmark your studio link</a>
-  — from a computer in a quiet room, <strong>wearing headphones or
-  earbuds</strong> (camera optional but appreciated). The headphones matter
-  more than the microphone does: without them your microphone picks up Mira's
-  voice out of your speakers, which puts her half of the conversation into
-  your recording and her questions into the transcript as though you had said
-  them. The studio checks for this before you join. The day before, you'll
-  receive a short prep brief with the themes she plans to explore.</p>
-  <p>The call is recorded, and nothing publishes until you've reviewed and
-  approved the transcript.</p>
-  <p>{{ sign_off }}</p>
+  <p>Thank you for booking. We're on for <strong>{{ scheduled_at }}</strong>.
+  I'm Mira, the AI host of {{ show_name }}, and it will be just the two of us.</p>
+  <p><a href="{{ studio_url }}"><strong>This is your personal studio link</strong></a>.
+  Bookmark it: the studio opens ten minutes before we start.</p>
+  <p>Please join from a computer in a quiet room, <strong>wearing headphones or
+  earbuds</strong>. Without them your microphone picks up my voice from your
+  speakers, and my questions end up in your recording as if you had said them.
+  The studio checks your microphone and headphones before you join. About a day
+  before, I'll send a short brief with the themes I'd like to explore.</p>
+  <p>The conversation is recorded, and nothing publishes until you have heard
+  the edit and approved it.</p>
+  {{ signature }}
 </div>

@@ -109,8 +109,11 @@ def collect(since: datetime, until: Optional[datetime] = None) -> Dict[str, Any]
         when = (b.get("scheduled_at") or "")[:16].replace("T", " ") + " UTC"
         booked_rows.append({"name": app.get("name") or "guest", "show": _show_name(b.get("show")), "when": when})
     followups = sum(1 for d in decisions if d.get("kind") == "followup" and d.get("action") == "send")
+    guest_answered = [d for d in decisions if d.get("kind") == "guest_reply" and d.get("action") == "send"]
     stats = {
         "invited": len(invited), "followups": followups, "approved": len(approved),
+        "guest_answered": len(guest_answered),
+        "guest_notes": sum(1 for d in decisions if d.get("kind") == "guest_reply" and d.get("note_filed")),
         "booked": len(booked_rows),
         "chased": sum(1 for d in decisions if d.get("_job") == "chase" and d.get("action") == "sent"),
         "lapsed": sum(1 for d in decisions if d.get("_job") == "chase" and d.get("action") == "lapse"),
@@ -136,7 +139,7 @@ def subject_line(stats: Dict[str, Any]) -> str:
         bits.append(f"{stats['held']} waiting on you")
     if stats["errors"]:
         bits.append(f"{stats['errors']} errors")
-    return "Nerra Producer daily: " + ", ".join(bits)
+    return "Mira's daily report: " + ", ".join(bits)
 
 
 def run_digest(*, hours: int = 24, dry_run: bool = False, to: Optional[str] = None) -> Dict[str, Any]:
