@@ -1062,10 +1062,10 @@
                show — your picks, in your order, anchored by Mira, delivered
                as a private podcast feed that works in any app.</p>
             <div class="np-cta-row">
-                <a class="np-cta primary" href="#plans">Try it free for 7 days</a>
+                <a class="np-cta primary" href="#plans">Start from $4.99/mo</a>
                 <a class="np-cta ghost" href="#sample">Hear a sample</a>
             </div>
-            <p class="np-trust"><span>7-day free trial</span> ·
+            <p class="np-trust">
                <span>Cancel in one click</span> ·
                <span>Chapters for every segment</span> ·
                <span>Yours alone — no algorithm</span></p>
@@ -1119,7 +1119,7 @@
 
 <div class="np-stats" aria-label="Network stats">
     <div class="np-stat"><strong>26</strong><span>shows to pick from</span></div>
-    <div class="np-stat"><strong>2125+</strong><span>episodes shipped</span></div>
+    <div class="np-stat"><strong>2151+</strong><span>episodes shipped</span></div>
     <div class="np-stat"><strong>0</strong><span>ads, ever</span></div>
     <div class="np-stat"><strong>1</strong><span>feed made for you</span></div>
 </div>
@@ -1151,7 +1151,7 @@
 <div class="nn-section-head" id="plans">
     <h2>Simple, honest pricing</h2>
     <p>The account is free forever. Personal is the price of a coffee a
-       month, the first 7 days are free, and stopping takes one click.</p>
+       month and stopping takes one click.</p>
 </div>
 <section class="nn-tiers">
     <div class="nn-tier">
@@ -1180,7 +1180,7 @@
             <li>Markets-minute add-on: TSLA &amp; SPCX closes, spoken daily</li>
         </ul>
         
-        <a class="cta" href="https://buy.stripe.com/8x26oI4Ho7Lc6Qa1VB0Ba00">Try Personal free for 7 days<small>then $4.99/mo · cancel any time</small></a>
+        <a class="cta secondary" href="#join-free">Launching soon — join free for first access</a>
         
     </div>
     <div class="nn-tier">
@@ -1200,7 +1200,7 @@
                 click, prorated</li>
         </ul>
         
-        <a class="cta" href="https://buy.stripe.com/dRm6oI7TAfdEgqK9o30Ba01">Try Personal News Network free for 7 days<small>then $8.99/mo · cancel any time</small></a>
+        <a class="cta secondary" href="#join-free">Launching soon — join free for first access</a>
         
     </div>
 </section>
@@ -1609,7 +1609,14 @@
 <section class="nn-join-form" id="join-free">
     <h2>Create your free Nerra account</h2>
     <p>One email. No password — we send you a sign-in link whenever you need one.</p>
-    <form onsubmit="var f=this,b=f.querySelector('button');b.disabled=true;b.textContent='Joining…';fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member',source:"src-nerranetwork"})}).then(function(r){if(r.ok){window.location='account.html';}else{b.textContent='Try again';b.disabled=false;}}).catch(function(){b.textContent='Try again';b.disabled=false;});return false;">
+    <form method="post"
+          action="#"
+          data-nn-subscribe="join"
+          data-source="src-nerranetwork"
+          data-success-redirect="account.html"
+          data-label-loading="Joining…"
+          data-label-error="Try again"
+          data-label-idle="Join free">
         <input type="email" name="email" placeholder="you@example.com" required aria-label="Email address">
         <button type="submit">Join free</button>
     </form>
@@ -1783,9 +1790,15 @@
                  2026): every newsletter signup now creates a Nerra
                  account (same identity as the gallery gate), so the
                  member surface and the list grow together. -->
-            <div class="nn-footer-subscribe">
-                <form class="nn-subscribe-form"
-                      onsubmit="var f=this,btn=f.querySelector('button[type=submit]');btn.disabled=true;btn.textContent="Subscribing…";var tags=Array.prototype.map.call(f.querySelectorAll('input[name=tag]:checked'),function(c){return c.value;});fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member',tags:tags,source:"src-nerranetwork"})}).then(function(r){btn.textContent=r.ok?"Check your email ✓":"Subscribe";if(r.ok){var a=f.querySelector('.nn-account-link');if(a)a.style.display='inline';}}).catch(function(){btn.textContent="Subscribe";}).then(function(){btn.disabled=false;});return false;">
+            <div class="nn-footer-subscribe"><form class="nn-subscribe-form"
+                      method="post"
+                      action="#"
+                      data-nn-subscribe="footer"
+                      data-source="src-nerranetwork"
+                      data-label-loading="Subscribing…"
+                      data-label-done="Check your email ✓"
+                      data-label-idle="Subscribe"
+                      data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
                     <p>Pick the shows you want in your inbox:</p>
                     <div class="nn-subscribe-tags">
@@ -1967,6 +1980,7 @@
     <!-- Centralized, improved global search -->
     <script src="assets/js/search.js" defer></script>
     <script src="assets/js/language-control.js" defer></script>
+    <script src="assets/js/footer-subscribe.js" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
     // when the api.nerranetwork.com session cookie answers. Fail-silent —

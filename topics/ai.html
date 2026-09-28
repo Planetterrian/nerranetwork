@@ -1105,11 +1105,31 @@
     <section class="hub-section">
         <h2>Recent episodes</h2>
         <p style="font-family:var(--font-body);color:var(--nn-text-secondary);margin:0 0 var(--sp-4);">
-            378 episodes in this subject so far. The newest
+            382 episodes in this subject so far. The newest
             24 are below; every one is a full article with its
             sources and a transcript.
         </p>
         <ul class="hub-eps">
+            
+            <li>
+                <a href="..//blog/models_agents/ep187.html">Sparse neuron sets in frozen BERT enable efficient AI-text detection across generators with 86-94% retained accuracy.</a>
+                <span class="hub-ep-meta">Models & Agents · 2026-09-28</span>
+            </li>
+            
+            <li>
+                <a href="..//blog/models_agents_beginners/ep180.html">Sachin Tendulkar just teamed up with OpenAI to explore everyday ways ChatGPT can help with curiosity and real life.</a>
+                <span class="hub-ep-meta">Models & Agents for Beginners · 2026-09-28</span>
+            </li>
+            
+            <li>
+                <a href="..//blog/ai_chips/ep007.html">VisionPower Semiconductor opens its first 300 mm fab in Singapore and enters risk production with volume output due in the first quarter of 2027.</a>
+                <span class="hub-ep-meta">AI Chips & Data Centres Daily · 2026-09-28</span>
+            </li>
+            
+            <li>
+                <a href="..//blog/mag7/ep006.html">Two new Nvidia tools shut down AI agents that break the rules.</a>
+                <span class="hub-ep-meta">MAG 7 Daily · 2026-09-28</span>
+            </li>
             
             <li>
                 <a href="..//blog/models_agents/ep186.html">Local inference on Apple Silicon just got faster with a tuned fork of the Splash engine delivering up to 1.5 times the speed on M5 Max chips.</a>
@@ -1209,26 +1229,6 @@
             <li>
                 <a href="..//blog/age_of_ai/ep008.html">A mining engineer turned AI builder weighs how platforms guiding career choice and soft skills can keep human judgment central when the models risk automating the decisions they claim to augment.</a>
                 <span class="hub-ep-meta">The Age of AI · 2026-09-23</span>
-            </li>
-            
-            <li>
-                <a href="..//blog/ai_chips/ep002.html">Supermicro has started shipping complete NVIDIA Vera Rubin NVL72 racks with direct liquid cooling.</a>
-                <span class="hub-ep-meta">AI Chips & Data Centres Daily · 2026-09-23</span>
-            </li>
-            
-            <li>
-                <a href="..//blog/mag7/ep001.html">U.S. government files brief urging Supreme Court to reverse Apple contempt ruling in Epic case.</a>
-                <span class="hub-ep-meta">MAG 7 Daily · 2026-09-23</span>
-            </li>
-            
-            <li>
-                <a href="..//blog/models_agents/ep181.html">Open weights just crowned a new leader as Xiaomi's MiMo-V2.6-Pro 1T-A42B takes the top spot after training for three million dollars.</a>
-                <span class="hub-ep-meta">Models & Agents · 2026-09-22</span>
-            </li>
-            
-            <li>
-                <a href="..//blog/models_agents_beginners/ep174.html">AI just turned a famously tricky poem into an interactive, voice-narrated guide you can explore right now.</a>
-                <span class="hub-ep-meta">Models & Agents for Beginners · 2026-09-22</span>
             </li>
             
         </ul>
@@ -1436,9 +1436,15 @@
                  2026): every newsletter signup now creates a Nerra
                  account (same identity as the gallery gate), so the
                  member surface and the list grow together. -->
-            <div class="nn-footer-subscribe">
-                <form class="nn-subscribe-form"
-                      onsubmit="var f=this,btn=f.querySelector('button[type=submit]');btn.disabled=true;btn.textContent="Subscribing…";var tags=Array.prototype.map.call(f.querySelectorAll('input[name=tag]:checked'),function(c){return c.value;});fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member',tags:tags,source:"src-nerranetwork"})}).then(function(r){btn.textContent=r.ok?"Check your email ✓":"Subscribe";if(r.ok){var a=f.querySelector('.nn-account-link');if(a)a.style.display='inline';}}).catch(function(){btn.textContent="Subscribe";}).then(function(){btn.disabled=false;});return false;">
+            <div class="nn-footer-subscribe"><form class="nn-subscribe-form"
+                      method="post"
+                      action="#"
+                      data-nn-subscribe="footer"
+                      data-source="src-nerranetwork"
+                      data-label-loading="Subscribing…"
+                      data-label-done="Check your email ✓"
+                      data-label-idle="Subscribe"
+                      data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
                     <p>Pick the shows you want in your inbox:</p>
                     <div class="nn-subscribe-tags">
@@ -1620,6 +1626,7 @@
     <!-- Centralized, improved global search -->
     <script src="../assets/js/search.js" defer></script>
     <script src="../assets/js/language-control.js" defer></script>
+    <script src="../assets/js/footer-subscribe.js" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
     // when the api.nerranetwork.com session cookie answers. Fail-silent —

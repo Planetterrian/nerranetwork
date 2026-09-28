@@ -1069,11 +1069,21 @@
     <section class="hub-section">
         <h2>Recent episodes</h2>
         <p style="font-family:var(--font-body);color:var(--nn-text-secondary);margin:0 0 var(--sp-4);">
-            240 episodes in this subject so far. The newest
+            242 episodes in this subject so far. The newest
             24 are below; every one is a full article with its
             sources and a transcript.
         </p>
         <ul class="hub-eps">
+            
+            <li>
+                <a href="..//blog/unintended_consequences/ep128.html">Denmark paired generous benefits with mandatory training to protect workers, yet employers cycled them through short contracts instead.</a>
+                <span class="hub-ep-meta">Unintended Consequences · 2026-09-28</span>
+            </li>
+            
+            <li>
+                <a href="..//blog/first_principles/ep114.html">A hotel room rents for hundreds nightly, yet its concrete, steel, and energy suggest a far lower physical cost.</a>
+                <span class="hub-ep-meta">First Principles Daily · 2026-09-28</span>
+            </li>
             
             <li>
                 <a href="..//blog/unintended_consequences/ep127.html">Sweden's 2016 nuclear capacity tax aimed to favor renewables but triggered early reactor closures and higher coal imports.</a>
@@ -1183,16 +1193,6 @@
             <li>
                 <a href="..//blog/first_principles/ep103.html">Electric arc furnaces let one engineer melt scrap into specialty steel in hours instead of days by treating electricity and raw scrap as the true starting constraints.</a>
                 <span class="hub-ep-meta">First Principles Daily · 2026-09-17</span>
-            </li>
-            
-            <li>
-                <a href="..//blog/unintended_consequences/ep116.html">Airbags were engineered to protect unbelted adults in frontal crashes, yet the same deployment force killed children in otherwise survivable low-speed accidents.</a>
-                <span class="hub-ep-meta">Unintended Consequences · 2026-09-16</span>
-            </li>
-            
-            <li>
-                <a href="..//blog/first_principles/ep102.html">Replacement razor cartridges sell for five dollars when five blades and their plastic housing can be stamped and assembled for under thirty cents.</a>
-                <span class="hub-ep-meta">First Principles Daily · 2026-09-16</span>
             </li>
             
         </ul>
@@ -1394,9 +1394,15 @@
                  2026): every newsletter signup now creates a Nerra
                  account (same identity as the gallery gate), so the
                  member surface and the list grow together. -->
-            <div class="nn-footer-subscribe">
-                <form class="nn-subscribe-form"
-                      onsubmit="var f=this,btn=f.querySelector('button[type=submit]');btn.disabled=true;btn.textContent="Subscribing…";var tags=Array.prototype.map.call(f.querySelectorAll('input[name=tag]:checked'),function(c){return c.value;});fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member',tags:tags,source:"src-nerranetwork"})}).then(function(r){btn.textContent=r.ok?"Check your email ✓":"Subscribe";if(r.ok){var a=f.querySelector('.nn-account-link');if(a)a.style.display='inline';}}).catch(function(){btn.textContent="Subscribe";}).then(function(){btn.disabled=false;});return false;">
+            <div class="nn-footer-subscribe"><form class="nn-subscribe-form"
+                      method="post"
+                      action="#"
+                      data-nn-subscribe="footer"
+                      data-source="src-nerranetwork"
+                      data-label-loading="Subscribing…"
+                      data-label-done="Check your email ✓"
+                      data-label-idle="Subscribe"
+                      data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
                     <p>Pick the shows you want in your inbox:</p>
                     <div class="nn-subscribe-tags">
@@ -1578,6 +1584,7 @@
     <!-- Centralized, improved global search -->
     <script src="../assets/js/search.js" defer></script>
     <script src="../assets/js/language-control.js" defer></script>
+    <script src="../assets/js/footer-subscribe.js" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
     // when the api.nerranetwork.com session cookie answers. Fail-silent —

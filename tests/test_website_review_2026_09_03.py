@@ -222,7 +222,9 @@ class TestHomepageClaims:
     def test_homepage_newsletter_uses_account_worker(self):
         src = _read("templates/network_page.html.j2")
         assert "buttondown.com/api/emails/embed-subscribe" not in src
-        assert "https://api.nerranetwork.com/api/subscribe" in src
+        assert 'data-nn-subscribe="homepage"' in src
+        js = _read("assets/js/footer-subscribe.js")
+        assert "https://api.nerranetwork.com/api/subscribe" in js
         assert 'target="popupwindow"' not in src
 
     def test_inline_keyframes_removed(self):

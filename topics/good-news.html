@@ -1057,11 +1057,16 @@
     <section class="hub-section">
         <h2>Recent episodes</h2>
         <p style="font-family:var(--font-body);color:var(--nn-text-secondary);margin:0 0 var(--sp-4);">
-            57 episodes in this subject so far. The newest
+            58 episodes in this subject so far. The newest
             24 are below; every one is a full article with its
             sources and a transcript.
         </p>
         <ul class="hub-eps">
+            
+            <li>
+                <a href="..//blog/dp_pod/ep077.html">One CRISPR dose cut LDL cholesterol by 52.5 percent and held the drop for a full year.</a>
+                <span class="hub-ep-meta">The DP Pod: The Do Positive Podcast · 2026-09-28</span>
+            </li>
             
             <li>
                 <a href="..//blog/dp_pod/ep076.html">A urine test spotted bladder-cancer genes in 71 of 77 patients while ruling out the disease with high accuracy in a UK observational study.</a>
@@ -1176,11 +1181,6 @@
             <li>
                 <a href="..//blog/dp_pod/ep054.html">At-home nucleic acid tests could soon deliver lab-grade results in a single 30-minute tube reaction.</a>
                 <span class="hub-ep-meta">The DP Pod: The Do Positive Podcast · 2026-09-01</span>
-            </li>
-            
-            <li>
-                <a href="..//blog/dp_pod/ep053.html">Record solar and battery deployments are now cutting household energy costs in real time across Australia.</a>
-                <span class="hub-ep-meta">The DP Pod: The Do Positive Podcast · 2026-08-31</span>
             </li>
             
         </ul>
@@ -1380,9 +1380,15 @@
                  2026): every newsletter signup now creates a Nerra
                  account (same identity as the gallery gate), so the
                  member surface and the list grow together. -->
-            <div class="nn-footer-subscribe">
-                <form class="nn-subscribe-form"
-                      onsubmit="var f=this,btn=f.querySelector('button[type=submit]');btn.disabled=true;btn.textContent="Subscribing…";var tags=Array.prototype.map.call(f.querySelectorAll('input[name=tag]:checked'),function(c){return c.value;});fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member',tags:tags,source:"src-nerranetwork"})}).then(function(r){btn.textContent=r.ok?"Check your email ✓":"Subscribe";if(r.ok){var a=f.querySelector('.nn-account-link');if(a)a.style.display='inline';}}).catch(function(){btn.textContent="Subscribe";}).then(function(){btn.disabled=false;});return false;">
+            <div class="nn-footer-subscribe"><form class="nn-subscribe-form"
+                      method="post"
+                      action="#"
+                      data-nn-subscribe="footer"
+                      data-source="src-nerranetwork"
+                      data-label-loading="Subscribing…"
+                      data-label-done="Check your email ✓"
+                      data-label-idle="Subscribe"
+                      data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
                     <p>Pick the shows you want in your inbox:</p>
                     <div class="nn-subscribe-tags">
@@ -1564,6 +1570,7 @@
     <!-- Centralized, improved global search -->
     <script src="../assets/js/search.js" defer></script>
     <script src="../assets/js/language-control.js" defer></script>
+    <script src="../assets/js/footer-subscribe.js" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
     // when the api.nerranetwork.com session cookie answers. Fail-silent —

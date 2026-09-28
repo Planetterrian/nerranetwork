@@ -1081,11 +1081,16 @@
     <section class="hub-section">
         <h2>Recent episodes</h2>
         <p style="font-family:var(--font-body);color:var(--nn-text-secondary);margin:0 0 var(--sp-4);">
-            176 episodes in this subject so far. The newest
+            177 episodes in this subject so far. The newest
             24 are below; every one is a full article with its
             sources and a transcript.
         </p>
         <ul class="hub-eps">
+            
+            <li>
+                <a href="..//blog/planetterrian/ep197.html">Adult retinas in dogs rewired themselves after single-dose gene therapy, rebuilding damaged connections and recovering vision.</a>
+                <span class="hub-ep-meta">Planetterrian Daily · 2026-09-28</span>
+            </li>
             
             <li>
                 <a href="..//blog/planetterrian/ep196.html">A new analysis of eight major randomized trials shows mammograms lead to far less breast cancer overdiagnosis than earlier estimates suggested.</a>
@@ -1200,11 +1205,6 @@
             <li>
                 <a href="..//blog/planetterrian/ep177.html">Large prospective study of over 500,000 people links borderline anemia to higher all-cause mortality.</a>
                 <span class="hub-ep-meta">Planetterrian Daily · 2026-09-08</span>
-            </li>
-            
-            <li>
-                <a href="..//blog/planetterrian/ep176.html">Advanced optical imaging now maps metabolic activity inside individual immune cells drawn from routine blood samples.</a>
-                <span class="hub-ep-meta">Planetterrian Daily · 2026-09-07</span>
             </li>
             
         </ul>
@@ -1408,9 +1408,15 @@
                  2026): every newsletter signup now creates a Nerra
                  account (same identity as the gallery gate), so the
                  member surface and the list grow together. -->
-            <div class="nn-footer-subscribe">
-                <form class="nn-subscribe-form"
-                      onsubmit="var f=this,btn=f.querySelector('button[type=submit]');btn.disabled=true;btn.textContent="Subscribing…";var tags=Array.prototype.map.call(f.querySelectorAll('input[name=tag]:checked'),function(c){return c.value;});fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member',tags:tags,source:"src-nerranetwork"})}).then(function(r){btn.textContent=r.ok?"Check your email ✓":"Subscribe";if(r.ok){var a=f.querySelector('.nn-account-link');if(a)a.style.display='inline';}}).catch(function(){btn.textContent="Subscribe";}).then(function(){btn.disabled=false;});return false;">
+            <div class="nn-footer-subscribe"><form class="nn-subscribe-form"
+                      method="post"
+                      action="#"
+                      data-nn-subscribe="footer"
+                      data-source="src-nerranetwork"
+                      data-label-loading="Subscribing…"
+                      data-label-done="Check your email ✓"
+                      data-label-idle="Subscribe"
+                      data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
                     <p>Pick the shows you want in your inbox:</p>
                     <div class="nn-subscribe-tags">
@@ -1592,6 +1598,7 @@
     <!-- Centralized, improved global search -->
     <script src="../assets/js/search.js" defer></script>
     <script src="../assets/js/language-control.js" defer></script>
+    <script src="../assets/js/footer-subscribe.js" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
     // when the api.nerranetwork.com session cookie answers. Fail-silent —

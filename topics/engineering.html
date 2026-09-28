@@ -1069,11 +1069,21 @@
     <section class="hub-section">
         <h2>Recent episodes</h2>
         <p style="font-family:var(--font-body);color:var(--nn-text-secondary);margin:0 0 var(--sp-4);">
-            119 episodes in this subject so far. The newest
+            121 episodes in this subject so far. The newest
             24 are below; every one is a full article with its
             sources and a transcript.
         </p>
         <ul class="hub-eps">
+            
+            <li>
+                <a href="..//blog/first_principles/ep114.html">A hotel room rents for hundreds nightly, yet its concrete, steel, and energy suggest a far lower physical cost.</a>
+                <span class="hub-ep-meta">First Principles Daily · 2026-09-28</span>
+            </li>
+            
+            <li>
+                <a href="..//blog/ai_chips/ep007.html">VisionPower Semiconductor opens its first 300 mm fab in Singapore and enters risk production with volume output due in the first quarter of 2027.</a>
+                <span class="hub-ep-meta">AI Chips & Data Centres Daily · 2026-09-28</span>
+            </li>
             
             <li>
                 <a href="..//blog/first_principles/ep113.html">Laser pits stamped into polycarbonate discs cut album replication to a few cents, far below vinyl's mechanical costs.</a>
@@ -1183,16 +1193,6 @@
             <li>
                 <a href="..//blog/first_principles/ep098.html">A running shoe built from roughly eight dollars of foam, nylon, and rubber sells for one hundred thirty dollars, showing how far current methods sit from the material floor.</a>
                 <span class="hub-ep-meta">First Principles Daily · 2026-09-12</span>
-            </li>
-            
-            <li>
-                <a href="..//blog/first_principles/ep097.html">The Linotype cast full lines of type from molten metal, turning hours of hand-setting a newspaper page into minutes.</a>
-                <span class="hub-ep-meta">First Principles Daily · 2026-09-11</span>
-            </li>
-            
-            <li>
-                <a href="..//blog/first_principles/ep096.html">Sofas sell for eight hundred to fifteen hundred dollars while the wood, foam, and fabric inside them can be assembled for under two hundred.</a>
-                <span class="hub-ep-meta">First Principles Daily · 2026-09-10</span>
             </li>
             
         </ul>
@@ -1394,9 +1394,15 @@
                  2026): every newsletter signup now creates a Nerra
                  account (same identity as the gallery gate), so the
                  member surface and the list grow together. -->
-            <div class="nn-footer-subscribe">
-                <form class="nn-subscribe-form"
-                      onsubmit="var f=this,btn=f.querySelector('button[type=submit]');btn.disabled=true;btn.textContent="Subscribing…";var tags=Array.prototype.map.call(f.querySelectorAll('input[name=tag]:checked'),function(c){return c.value;});fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member',tags:tags,source:"src-nerranetwork"})}).then(function(r){btn.textContent=r.ok?"Check your email ✓":"Subscribe";if(r.ok){var a=f.querySelector('.nn-account-link');if(a)a.style.display='inline';}}).catch(function(){btn.textContent="Subscribe";}).then(function(){btn.disabled=false;});return false;">
+            <div class="nn-footer-subscribe"><form class="nn-subscribe-form"
+                      method="post"
+                      action="#"
+                      data-nn-subscribe="footer"
+                      data-source="src-nerranetwork"
+                      data-label-loading="Subscribing…"
+                      data-label-done="Check your email ✓"
+                      data-label-idle="Subscribe"
+                      data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
                     <p>Pick the shows you want in your inbox:</p>
                     <div class="nn-subscribe-tags">
@@ -1578,6 +1584,7 @@
     <!-- Centralized, improved global search -->
     <script src="../assets/js/search.js" defer></script>
     <script src="../assets/js/language-control.js" defer></script>
+    <script src="../assets/js/footer-subscribe.js" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
     // when the api.nerranetwork.com session cookie answers. Fail-silent —

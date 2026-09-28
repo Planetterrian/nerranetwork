@@ -1081,11 +1081,26 @@
     <section class="hub-section">
         <h2>Recent episodes</h2>
         <p style="font-family:var(--font-body);color:var(--nn-text-secondary);margin:0 0 var(--sp-4);">
-            347 episodes in this subject so far. The newest
+            350 episodes in this subject so far. The newest
             24 are below; every one is a full article with its
             sources and a transcript.
         </p>
         <ul class="hub-eps">
+            
+            <li>
+                <a href="..//blog/tesla/ep619.html">Twenty-eight Tesla Supercharger bays were damaged in the largest attack yet on EV charging sites in Australia.</a>
+                <span class="hub-ep-meta">Tesla Shorts Time · 2026-09-28</span>
+            </li>
+            
+            <li>
+                <a href="..//blog/dp_pod/ep077.html">One CRISPR dose cut LDL cholesterol by 52.5 percent and held the drop for a full year.</a>
+                <span class="hub-ep-meta">The DP Pod: The Do Positive Podcast · 2026-09-28</span>
+            </li>
+            
+            <li>
+                <a href="..//blog/env_intel/ep070.html">Bill C-39 targets one-year federal project decisions while amending multiple environmental statutes.</a>
+                <span class="hub-ep-meta">Environmental Intelligence · 2026-09-28</span>
+            </li>
             
             <li>
                 <a href="..//blog/tesla/ep618.html">Tesla Cybercab drew crowds during Hangzhou public tours as interest builds ahead of planned commercial launches in Nevada and Florida.</a>
@@ -1190,21 +1205,6 @@
             <li>
                 <a href="..//blog/dp_pod/ep069.html">Assam recorded zero rhino poaching last year while the global one-horned rhino population kept climbing.</a>
                 <span class="hub-ep-meta">The DP Pod: The Do Positive Podcast · 2026-09-16</span>
-            </li>
-            
-            <li>
-                <a href="..//blog/tesla/ep606.html">An Illinois congressman is urging NHTSA to investigate Tesla Autopilot and FSD after videos show drivers asleep.</a>
-                <span class="hub-ep-meta">Tesla Shorts Time · 2026-09-15</span>
-            </li>
-            
-            <li>
-                <a href="..//blog/dp_pod/ep068.html">Mature captive crocodiles released in Bangladesh are staying put in new habitats rather than returning home, improving recovery odds for depleted populations.</a>
-                <span class="hub-ep-meta">The DP Pod: The Do Positive Podcast · 2026-09-15</span>
-            </li>
-            
-            <li>
-                <a href="..//blog/tesla/ep605.html">Tesla's 4680 battery improvements could lift output rates for vehicles and Megapacks at the same time.</a>
-                <span class="hub-ep-meta">Tesla Shorts Time · 2026-09-14</span>
             </li>
             
         </ul>
@@ -1408,9 +1408,15 @@
                  2026): every newsletter signup now creates a Nerra
                  account (same identity as the gallery gate), so the
                  member surface and the list grow together. -->
-            <div class="nn-footer-subscribe">
-                <form class="nn-subscribe-form"
-                      onsubmit="var f=this,btn=f.querySelector('button[type=submit]');btn.disabled=true;btn.textContent="Subscribing…";var tags=Array.prototype.map.call(f.querySelectorAll('input[name=tag]:checked'),function(c){return c.value;});fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member',tags:tags,source:"src-nerranetwork"})}).then(function(r){btn.textContent=r.ok?"Check your email ✓":"Subscribe";if(r.ok){var a=f.querySelector('.nn-account-link');if(a)a.style.display='inline';}}).catch(function(){btn.textContent="Subscribe";}).then(function(){btn.disabled=false;});return false;">
+            <div class="nn-footer-subscribe"><form class="nn-subscribe-form"
+                      method="post"
+                      action="#"
+                      data-nn-subscribe="footer"
+                      data-source="src-nerranetwork"
+                      data-label-loading="Subscribing…"
+                      data-label-done="Check your email ✓"
+                      data-label-idle="Subscribe"
+                      data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
                     <p>Pick the shows you want in your inbox:</p>
                     <div class="nn-subscribe-tags">
@@ -1592,6 +1598,7 @@
     <!-- Centralized, improved global search -->
     <script src="../assets/js/search.js" defer></script>
     <script src="../assets/js/language-control.js" defer></script>
+    <script src="../assets/js/footer-subscribe.js" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
     // when the api.nerranetwork.com session cookie answers. Fail-silent —
