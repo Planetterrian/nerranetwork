@@ -1493,7 +1493,11 @@ async function handleAdminTriage(req: Request, env: Env): Promise<Response> {
 .prov{color:#4a5568}.move{margin-left:.8rem;font-size:.9rem;color:#4a5568}</style>
 <h1>Pending applications (${all.length})</h1>${sections}
 <script>
-const token = new URL(location).searchParams.get('token');
+const token = new URL(location).searchParams.get('token')
+  // Sept 27 2026: the emailed link is /voices/admin/review/<id>/<token>, and the
+  // browser keeps that path, so the token has to be read from it too, or every
+  // Approve from an email fails with "check the token" (Roddy de la Garza).
+  || ((p) => p.length === 40 ? p : '')(location.pathname.split('/').filter(Boolean).pop() || '');
 async function decide(id, decision){
   await fetch('/voices/triage-decision?token='+token, {method:'POST',
     headers:{'Content-Type':'application/json'},
@@ -1573,7 +1577,11 @@ of the mail she sends them. Leave it empty for the standard note.</p>
 <button onclick="decide('kill')">Kill episode</button></p>
 <p id="status"></p>
 <script>
-const token = new URL(location).searchParams.get('token');
+const token = new URL(location).searchParams.get('token')
+  // Sept 27 2026: the emailed link is /voices/admin/review/<id>/<token>, and the
+  // browser keeps that path, so the token has to be read from it too, or every
+  // Approve from an email fails with "check the token" (Roddy de la Garza).
+  || ((p) => p.length === 40 ? p : '')(location.pathname.split('/').filter(Boolean).pop() || '');
 async function decide(decision){
   const resp = await fetch('/voices/editorial-decision?token='+token, {method:'POST',
     headers:{'Content-Type':'application/json'},
