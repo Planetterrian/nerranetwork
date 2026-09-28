@@ -98,7 +98,10 @@ const COHOST_WAIT_MAX_MS = 12 * 60 * 1000; // ... but never hold longer than thi
 // Measured from the scheduled start, not from room open, because the room
 // opens twelve minutes early and a guest ten minutes late is normal.
 const NO_SHOW_GRACE_MS = 12 * 60 * 1000;
-const AUDIO_CHECK_AFTER_MS = 12 * 1000; // trace whether the mix has carried speech yet (diagnostic only)
+const AUDIO_CHECK_AFTER_MS = 12 * 1000;
+// Sept 28 2026: 35 s became 25 s after the opening (about 30 s after the guest
+// joins, with the settle beat). The first nudge also emails Patrick.
+const SILENT_MIC_AFTER_MS = 25 * 1000; // trace whether the mix has carried speech yet (diagnostic only)
 const ROLES = { guest: true, host: true };
 // Voice Agent model (Sept 10 2026). The Voximplant connector's built-in
 // default is `grok-voice-fast-1.0`, which xAI has DEPRECATED — once xAI
@@ -1106,7 +1109,7 @@ function openWhenReady(reason) {
     grokAgent.responseCreate({});
     startTimeChecks();
     armAudioCheck();
-    micCheckTimer = setTimeout(function () { silentMicNudge(1); }, 35 * 1000);
+    micCheckTimer = setTimeout(function () { silentMicNudge(1); }, SILENT_MIC_AFTER_MS);
   } catch (err) {
     Logger.write("[aoa " + runId + "] opening responseCreate failed: " + err.message);
   }
@@ -1283,21 +1286,65 @@ function armAudioCheck() {
   }, AUDIO_CHECK_AFTER_MS);
 }
 
+// Sept 28 2026, Elliot. His microphone sent almost nothing for the first
+// hundred seconds; what he heard from Mira was some version of "are you
+// there?", which tells a guest nothing they can act on, and he left sure
+// his microphone worked. She now says exactly what to do, in the words the
+// studio page uses (its yellow box, its microphone list, its phone button),
+// and Patrick is emailed the moment it happens instead of after the
+// cancellation.
+const SILENCE_URL = API_BASE + "/studio-silence";
+let silenceAlerted = false;
+function postSilenceAlert(seconds) {
+  if (silenceAlerted || !runId) return;
+  silenceAlerted = true;
+  trace("audio_path", "nothing heard for " + seconds + "s — Patrick alerted");
+  try {
+    Net.httpRequestAsync(SILENCE_URL, {
+      method: "POST",
+      headers: ["Content-Type: application/json"],
+      postData: JSON.stringify({ run_id: runId, source: "scenario", seconds: seconds }),
+    }).then(function () {}, function (err) {
+      Logger.write("[aoa " + runId + "] silence alert failed: " + err.message);
+    });
+  } catch (err) {
+    Logger.write("[aoa " + runId + "] silence alert threw: " + err.message);
+  }
+}
+
+function silentMicHelpLine(attempt) {
+  if (callMode === "pstn") {
+    return attempt === 1
+      ? "\"I can't hear you yet. If your phone is on mute, or on speaker far away, bring it " +
+        "close and unmute, then just say hello.\""
+      : "\"Still nothing on my end. I'll stay on the line; if it doesn't come through, hang up " +
+        "and I'll call you straight back.\"";
+  }
+  return attempt === 1
+    ? "\"I can't hear you yet, so your microphone isn't reaching me. There's a yellow box on " +
+      "your screen: pick a different microphone from the list in it, and check you're not on " +
+      "mute. If that doesn't fix it, press 'Have Mira call my phone' and I'll ring you " +
+      "straight away.\""
+    : "\"Still nothing from your microphone on my end. The quickest fix is the 'Have Mira call " +
+      "my phone' button in the yellow box. Press it and I'll call you right now.\"";
+}
+
 function silentMicNudge(attempt) {
   try {
     if (anyoneHeard || !grokAgent || roomEnded || legs.length === 0) return;
     Logger.write("[aoa " + runId + "] no audio from anyone after greeting (attempt " + attempt + ")");
+    if (attempt === 1) postSilenceAlert(Math.round((Date.now() - (firstJoinAt || Date.now())) / 1000));
     grokAgent.conversationItemCreate({
       item: { type: "message", role: "system",
         content: [{ type: "input_text", text:
-          "[MIC CHECK — system note] You have not received ANY audio from " +
-          "the room since the call began — the guest's microphone is not " +
-          "reaching you. Tell them warmly that you can't hear them yet, " +
-          "and ask them to check the microphone meter on their screen: if " +
-          "it isn't moving when they speak, they should pick a different " +
-          "microphone from the selector and rejoin, or reply to their " +
-          "booking email to switch to a phone call. Keep it short, then " +
-          "wait." }] },
+          "[MIC CHECK — system note, not part of the interview] You have not received ANY " +
+          "audio from the room since the call began: the guest's microphone is not reaching " +
+          "you. Do NOT ask \"are you there?\" or \"can you hear me?\"; they can hear you, " +
+          "you cannot hear them, and asking gives them nothing to do. Say this, warmly and " +
+          "close to word for word, then stop and wait in silence: " +
+          silentMicHelpLine(attempt) + " Do not start the interview questions until you hear " +
+          "them. When they come through, say one short line (\"There you are, perfect.\") " +
+          "and carry on." }] },
     });
     grokAgent.responseCreate({});
     if (attempt < 2) {

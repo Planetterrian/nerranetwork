@@ -130,6 +130,12 @@ def when_text(iso: str) -> str:
     return f"{t:%A}, {t:%B} {t.day} at {t:%H:%M} UTC (the time in your calendar invite)"
 
 
+def setup_test_url(show, interview_id: str) -> str:
+    """The studio page in its day-before test mode (``&test=1``): the
+    microphone check and the headphones check, nothing joined or recorded."""
+    return f"{show.studio_url(interview_id)}&role=guest&test=1"
+
+
 def email_brief_to_guest(interview: dict, app: dict, brief: dict) -> None:
     show = show_for(interview, app)
     html = render_email(
@@ -139,6 +145,10 @@ def email_brief_to_guest(interview: dict, app: dict, brief: dict) -> None:
         when_text=when_text(interview.get("scheduled_at", "")),
         interview_id=interview["id"],
         studio_link=f"{show.studio_url(interview['id'])}&role=guest",
+        # Sept 28 2026 (Elliot): a 30-second microphone and headphones test
+        # the day before, on the same page, so a quiet microphone is found
+        # while there is still time to fix it. Failures email Patrick.
+        setup_test_link=setup_test_url(show, interview["id"]),
         thesis=brief["episode_thesis_draft"],
         questions=brief["likely_questions"],
         closing_question=show.closing_question,

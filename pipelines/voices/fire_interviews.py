@@ -394,6 +394,12 @@ def send_reminders() -> None:
                     f"this for you before you join:</p>"
                     f'<p><a href="{show.studio_url(interview["id"])}">Join your '
                     f"interview</a></p>"
+                    # Sept 28 2026 (Elliot): the setup test, two hours out,
+                    # for anyone who skipped it yesterday.
+                    f'<p>Have two minutes now? <a href="{show.studio_url(interview["id"])}'
+                    f'&role=guest&test=1">Run the 30-second microphone test</a> on '
+                    f"the computer you'll use. It is much easier to fix a quiet "
+                    f"microphone now than at the start of the interview.</p>"
                     + (f'<p>If today does not work after all, '
                        f'<a href="{manage}">move it or cancel here</a> — one tap, '
                        f'no explanation needed. We would much rather know.</p>'
@@ -521,6 +527,12 @@ def fire_due_interviews() -> int:
                     f"this for you before you join:</p>"
                     f'<p><a href="{show.studio_url(interview["id"])}">Join your '
                     f"interview</a></p>"
+                    # Sept 28 2026 (Elliot): the setup test, two hours out,
+                    # for anyone who skipped it yesterday.
+                    f'<p>Have two minutes now? <a href="{show.studio_url(interview["id"])}'
+                    f'&role=guest&test=1">Run the 30-second microphone test</a> on '
+                    f"the computer you'll use. It is much easier to fix a quiet "
+                    f"microphone now than at the start of the interview.</p>"
                     + (f'<p>If today does not work after all, '
                        f'<a href="{manage}">move it or cancel here</a> — one tap, '
                        f'no explanation needed. We would much rather know.</p>'

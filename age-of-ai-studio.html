@@ -67,6 +67,23 @@
   .hostnote { color: var(--muted); font-size: .95rem; }
   .footer { color: var(--muted); font-size: .8rem; letter-spacing: .08em; margin-top: 2.5rem; text-transform: uppercase; }
   a { color: var(--accent); }
+  /* Sept 28 2026: microphone check, silence warning, phone switch. */
+  .check { border: 1px solid var(--line); border-radius: 10px; padding: .9rem 1rem; margin: .4rem 0 1rem; }
+  .check.pass { border-color: var(--ok); }
+  .check.fail { border-color: var(--warn); }
+  .check .say { font-style: italic; color: var(--text); }
+  #micCheckMsg, #testSummary { margin: .6rem 0 0; font-weight: 600; }
+  .help { font-size: .92rem; margin: .6rem 0 0; padding-left: 1.2rem; }
+  .help li { margin-bottom: .35rem; }
+  .linkish { background: none; border: 0; padding: 0; color: var(--muted); text-decoration: underline; font-weight: 400; font-size: .9rem; cursor: pointer; }
+  .banner { background: #fff4d6; color: #3b2a00; border-radius: 10px; padding: .9rem 1rem; margin: .8rem 0; }
+  .banner b { color: #3b2a00; }
+  .banner select { background: #fff; color: #1a1a1a; border-color: #d8b24c; }
+  .banner .help { color: #3b2a00; }
+  .phonebox { margin-top: .6rem; }
+  .phonebox input { font: inherit; padding: .55rem .6rem; border-radius: 8px; border: 1px solid var(--line); width: 100%; max-width: 260px; margin: .3rem .5rem .3rem 0; }
+  .phone { background: #0f766e; color: #fff; }
+  #phoneMsg, #phoneMsgCall { font-size: .92rem; margin: .4rem 0 0; }
 </style>
 </head>
 <body>
@@ -96,6 +113,33 @@
     <label for="micSel">Microphone</label>
     <select id="micSel"></select>
     <div id="miclevel"><div></div></div>
+    <!-- Sept 28 2026 (Elliot): the meter above moved a sliver and he took
+         that as "my microphone works". Join now waits for a real check:
+         one sentence, spoken normally, measured. -->
+    <div class="guest-only check" id="micCheck">
+      <p style="margin:0"><b>Microphone check.</b> Press the button, then say this at your normal
+      speaking volume:</p>
+      <p class="say" style="margin:.4rem 0">"Hi Mira, this is my microphone check, and I'm looking forward to our conversation."</p>
+      <button class="ghost" id="micCheckBtn" type="button">Check my microphone</button>
+      <p id="micCheckMsg"></p>
+      <ol class="help hidden" id="micHelp">
+        <li><b>Pick another microphone</b> from the list above and check again. Headsets and
+        AirPods usually show up by name.</li>
+        <li><b>Turn the input up.</b> Mac: System Settings, Sound, Input, choose your microphone
+        and drag Input volume to the right. Windows: Settings, System, Sound, Input, choose your
+        microphone and raise the Volume.</li>
+        <li><b>AirPods or a Bluetooth headset?</b> Make sure they're connected to this computer,
+        not your phone, and that any mute switch on the headset is off.</li>
+        <li><b>Still stuck?</b> Mira can call your phone instead, with nothing else to set up.
+        <div class="phonebox" id="phoneBoxSetup">
+          <button class="phone" type="button" id="phoneBtnSetup">Have Mira call my phone</button>
+          <div class="hidden" id="phoneAskSetup"><input type="tel" id="phoneInSetup"
+            placeholder="+1 604 555 0123" autocomplete="tel"><button class="phone" type="button"
+            id="phoneGoSetup">Call me</button></div>
+          <p id="phoneMsg"></p>
+        </div></li>
+      </ol>
+    </div>
     <div class="guest-only" id="echoRow" style="margin:.5rem 0">
       <button class="ghost" id="echoBtn" type="button">Check my headphones</button>
       <span id="echoMsg" style="margin-left:.6rem;color:var(--muted)"></span>
@@ -109,7 +153,15 @@
       <button class="primary" id="joinBtn">Join your interview</button>
       <button class="ghost guest-only" id="camToggle">Turn camera off</button>
     </div>
-    <p class="tips guest-only" style="color:var(--muted);margin-bottom:0">
+    <p class="guest-only" id="joinGate" style="color:var(--muted);font-size:.9rem;margin:.5rem 0 0">
+      Join unlocks once the microphone check passes.
+      <button class="linkish hidden" id="joinAnyway" type="button">Join anyway</button></p>
+    <!-- Day-before setup test (?test=1): nothing joins, nothing records. -->
+    <div class="hidden check" id="testResult">
+      <p id="testSummary">Run the microphone check and the headphones check above.</p>
+      <p class="tips" id="testDetail" style="color:var(--muted);margin:.4rem 0 0"></p>
+    </div>
+    <p class="tips guest-only" id="consentNote" style="color:var(--muted);margin-bottom:0">
       By joining you'll hear a short recording-consent notice from Mira, then
       the conversation begins. Plan for about 45 minutes.
     </p>
@@ -146,6 +198,26 @@
     <label>Your microphone (this should move when you speak — if it
     doesn't, Mira can't hear you)</label>
     <div id="micLevelCall"><div style="height:8px;width:0%;background:var(--ok);border-radius:4px;transition:width .08s linear"></div></div>
+    <div class="banner hidden" id="silenceBanner" role="alert">
+      <p style="margin:0" id="silenceHead"><b>Mira can't hear you yet.</b> Your microphone is sending
+      almost no sound.</p>
+      <ol class="help">
+        <li id="silenceMuted">Check you're not on mute: the Mute button above, and any mute switch on your headset.</li>
+        <li>Pick a different microphone below. It switches straight away, no need to rejoin.</li>
+      </ol>
+      <div class="hidden" id="phoneOffer">
+        <p style="margin:.5rem 0 0">Still nothing? Mira can call your phone and carry on there.</p>
+        <div class="phonebox">
+          <button class="phone" type="button" id="phoneBtnCall">Have Mira call my phone</button>
+          <div class="hidden" id="phoneAskCall"><input type="tel" id="phoneInCall"
+            placeholder="+1 604 555 0123" autocomplete="tel"><button class="phone" type="button"
+            id="phoneGoCall">Call me</button></div>
+          <p id="phoneMsgCall"></p>
+        </div>
+      </div>
+    </div>
+    <label for="micSelCall">Microphone</label>
+    <select id="micSelCall"></select>
     <video id="selfview" class="hidden"></video>
     <p class="tips guest-only" style="color:var(--muted)">
       Interrupt her whenever you like — she can handle it. Ask her questions
@@ -162,8 +234,9 @@
 
   <!-- State: done -->
   <div id="stateDone" class="card hidden">
-    <p class="status ok">That's a wrap — thank you!</p>
-    <p class="guest-only">Your conversation is processing. You'll get an email with the full
+    <p class="status ok" id="doneHead">That's a wrap — thank you!</p>
+    <p class="hidden" id="donePhone"></p>
+    <p class="guest-only" id="doneBody">Your conversation is processing. You'll get an email with the full
     transcript to review before anything is published, and you can request
     removals there. Talk soon.</p>
     <p class="host-only hidden">The interview is over; post-production is
@@ -205,6 +278,11 @@
   var loggedIn = false;
   var leaving = false;            // host pressed Leave (don't re-arm)
   var pollHandle = null;
+  // Sept 28 2026: ?test=1 is the day-before setup test linked from the prep
+  // and reminder emails. Same page, same checks, nothing joins or records.
+  var testMode = params.get("test") === "1";
+  var micOk = false, micVerdict = "unknown", micDb = null, micFails = 0, joinOverride = false;
+  var echoVerdict = "not_run", signinState = "unknown", signinError = "";
 
   // ---- 0. Show branding (Sept 2026) ---------------------------------------
   // Mirrors the SHOWS map in workers/voices/src/index.ts and the `voices:`
@@ -284,6 +362,7 @@
       .then(function (s) {
         if (s.error) return fail("We couldn't find this interview. Check the link from your email.");
         if (s.show) brand(s.show, s.show_name);
+        if (testMode) return startTest(s);
         setPresence(s);
         if (isHost && s.host_mode === false) {
           return fail("This interview runs without a co-host (host_mode is off).");
@@ -332,6 +411,7 @@
   // ---- 2. Device check -----------------------------------------------------
   function startSetup() {
     show("stateSetup");
+    updateJoinGate();
     var want = isHost ? { audio: true } : { audio: true, video: true };
     navigator.mediaDevices.getUserMedia(want)
       .catch(function () {
@@ -370,9 +450,14 @@
     if (loggedIn || preLoginPromise) return preLoginPromise;
     setStudioStatus("Signing in to the studio…");
     preLoginPromise = studioLogin().then(function () {
-      setStudioStatus("Signed in to the studio. Press Join when you're ready.", true);
+      signinState = "ok";
+      setStudioStatus(testMode ? "Connection to the studio: working."
+        : "Signed in to the studio. Press Join when you're ready.", true);
+      testUpdate();
     }).catch(function (e) {
       console.error("[studio] pre-login failed at step", joinStep, e);
+      signinState = "failed"; signinError = explainJoinError(e);
+      testUpdate();
       setStudioStatus("Studio sign-in failed: " + explainJoinError(e) + " (Join will retry.)", false);
       preLoginPromise = null;
     });
@@ -405,6 +490,12 @@
     navigator.mediaDevices.getUserMedia(constraints).then(function (s) {
       localStream = s; wirePreview(); meterMic();
     });
+    if (micOk || micVerdict !== "unknown") {
+      micOk = false; micVerdict = "unknown";
+      setMicMsg("New microphone selected. Press Check my microphone again.", "var(--muted)");
+      document.getElementById("micCheck").classList.remove("pass", "fail");
+      updateJoinGate();
+    }
   }
   document.getElementById("micSel").addEventListener("change", switchDevices);
   document.getElementById("camSel").addEventListener("change", switchDevices);
@@ -479,6 +570,8 @@
     }
     var done = function (verdict, colour, text) {
       echoChecked = true;
+      echoVerdict = verdict;
+      setTimeout(testUpdate, 0);
       msg.style.color = colour;
       msg.textContent = text;
       btn.disabled = false;
@@ -523,6 +616,201 @@
   }
   document.getElementById("echoBtn").addEventListener("click", echoCheck);
 
+  // ---- 2c. Microphone check: Join waits for one real sentence ------------
+  // Sept 28 2026, Elliot. His microphone sent -40 to -55 dB for the first
+  // hundred seconds (a normal voice through the same path is about -20 to
+  // -30). The preview meter moved a sliver, he read that as working, joined,
+  // and Mira heard nothing. The check measures the loudest part of a spoken
+  // sentence through exactly the stream the call will use (browser defaults,
+  // the selected device) and keeps Join locked until it is loud enough.
+  var MIC_OK_DB = -42;      // speech RMS (loudest 15% of 50 ms frames)
+  var MIC_SILENT_DB = -60;  // below this: no voice at all
+  var CHECK_MS = 6000;
+  function setMicMsg(text, colour) {
+    var el = document.getElementById("micCheckMsg");
+    el.textContent = text; el.style.color = colour || "var(--text)";
+  }
+  function frameDb(an, buf) {
+    an.getFloatTimeDomainData(buf);
+    var sum = 0;
+    for (var i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+    var rms = Math.sqrt(sum / buf.length);
+    return rms > 0 ? 20 * Math.log10(rms) : -120;
+  }
+  function measureSpeech(ms, tick, cb) {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    var ctx = new AC();
+    var an = ctx.createAnalyser(); an.fftSize = 2048;
+    ctx.createMediaStreamSource(localStream).connect(an);
+    var buf = new Float32Array(an.fftSize);
+    var frames = [], start = Date.now();
+    var h = setInterval(function () {
+      frames.push(frameDb(an, buf));
+      var left = Math.max(0, Math.ceil((ms - (Date.now() - start)) / 1000));
+      tick(left);
+      if (Date.now() - start >= ms) {
+        clearInterval(h);
+        try { ctx.close(); } catch (e) { /* ignore */ }
+        frames.sort(function (a, b) { return a - b; });
+        var top = frames.length ? frames[Math.floor(frames.length * 0.85)] : -120;
+        cb(Math.round(top));
+      }
+    }, 50);
+  }
+  function micCheck() {
+    var btn = document.getElementById("micCheckBtn");
+    var box = document.getElementById("micCheck");
+    if (!localStream) { setMicMsg("Allow the microphone first (see the address bar).", "var(--warn)"); return; }
+    btn.disabled = true;
+    box.classList.remove("pass", "fail");
+    measureSpeech(CHECK_MS, function (left) {
+      setMicMsg("Listening… say the sentence now (" + left + ")", "var(--muted)");
+    }, function (db) {
+      btn.disabled = false; btn.textContent = "Check again";
+      micDb = db;
+      var help = document.getElementById("micHelp");
+      if (db >= MIC_OK_DB) {
+        micVerdict = "ok"; micOk = true;
+        box.classList.add("pass"); help.classList.add("hidden");
+        setMicMsg("Sounds good. Mira will hear you clearly.", "var(--ok)");
+        if (!testMode) reportCheck();
+      } else {
+        micVerdict = db <= MIC_SILENT_DB ? "silent" : "quiet"; micOk = false; micFails++;
+        box.classList.add("fail"); help.classList.remove("hidden");
+        setMicMsg(micVerdict === "silent"
+          ? "We didn't hear anything from this microphone. Try the steps below, then check again."
+          : "We can only just hear you. Mira needs you louder: try the steps below, then check again.",
+          "var(--warn)");
+      }
+      updateJoinGate();
+      testUpdate();
+      // In the setup test the headphones check follows on its own.
+      if (testMode && micOk && !echoChecked) setTimeout(echoCheck, 600);
+    });
+  }
+  document.getElementById("micCheckBtn").addEventListener("click", micCheck);
+  function updateJoinGate() {
+    var btn = document.getElementById("joinBtn");
+    if (isHost || testMode) { btn.disabled = false; return; }
+    var open = micOk || joinOverride;
+    btn.disabled = !open;
+    document.getElementById("joinGate").classList.toggle("hidden", open);
+    // A way through for the guest whose microphone is fine but whose voice
+    // the check misjudges. Offered only after two honest attempts.
+    document.getElementById("joinAnyway").classList.toggle("hidden", micFails < 2);
+  }
+  document.getElementById("joinAnyway").addEventListener("click", function () {
+    joinOverride = true; micVerdict = micVerdict === "unknown" ? "skipped" : micVerdict;
+    reportCheck("skipped");
+    updateJoinGate();
+  });
+  function deviceLabel() {
+    var sel = document.getElementById("micSel");
+    return sel && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].textContent : "";
+  }
+  function reportCheck(forceMic) {
+    try {
+      fetch(API + "/studio-check", {
+        method: "POST", headers: { "Content-Type": "application/json" }, keepalive: true,
+        body: JSON.stringify({ interview: interviewId, role: role, test: testMode,
+          mic: forceMic || micVerdict, mic_db: micDb, echo: echoVerdict,
+          signin: signinState, signin_error: signinError,
+          device: deviceLabel(), ua: navigator.userAgent }),
+      }).catch(function () { /* advisory only */ });
+    } catch (e) { /* advisory only */ }
+  }
+
+  // ---- 2d. Day-before setup test (?test=1) --------------------------------
+  function startTest(s) {
+    var when = s.scheduled_at ? new Date(s.scheduled_at) : null;
+    document.getElementById("setupMsg").textContent = "Setup test: about 30 seconds. Nothing is recorded.";
+    document.getElementById("checkDetail").textContent = "";
+    document.querySelectorAll("#stateSetup .row, #joinGate, #consentNote")
+      .forEach(function (el) { el.classList.add("hidden"); });
+    // No phone switch from a test: that button dials now.
+    document.getElementById("phoneBoxSetup").innerHTML =
+      "<p style='margin:.3rem 0 0'>Reply to your booking email and we'll set the interview up as a phone call"
+      + (when ? " for " + when.toLocaleString() : "") + ".</p>";
+    document.getElementById("testResult").classList.remove("hidden");
+    startSetup();
+  }
+  var lastReported = "";
+  function testUpdate() {
+    if (!testMode) return;
+    var sum = document.getElementById("testSummary");
+    var detail = document.getElementById("testDetail");
+    var box = document.getElementById("testResult");
+    if (micVerdict === "unknown" || echoVerdict === "not_run") {
+      sum.textContent = micVerdict === "unknown"
+        ? "Step 1: press Check my microphone and read the sentence."
+        : "Step 2: press Check my headphones.";
+      return;
+    }
+    var issues = [];
+    if (micVerdict !== "ok") issues.push("your microphone is too quiet for Mira to hear (follow the steps under the microphone check)");
+    if (echoVerdict === "speakers" || echoVerdict === "borderline") issues.push("your microphone can hear your speakers, so please wear headphones or earbuds tomorrow");
+    if (signinState === "failed") issues.push("this network blocks the studio connection (a VPN or work firewall is the usual cause; try another network or a phone hotspot)");
+    box.classList.toggle("pass", !issues.length);
+    box.classList.toggle("fail", !!issues.length);
+    if (!issues.length) {
+      sum.textContent = "You're all set. Mira will hear you clearly, and nothing is leaking from your speakers.";
+      sum.style.color = "var(--ok)";
+      detail.textContent = "On the day, use this same computer, browser and microphone. The studio link in your email opens 10 minutes before the start.";
+    } else {
+      sum.textContent = "Almost there: " + issues.join("; and ") + ".";
+      sum.style.color = "var(--warn)";
+      detail.textContent = "Fix it and run the checks again here. We've let Patrick know, so if it won't cooperate, reply to your booking email and we'll switch you to a phone call.";
+    }
+    var key = [micVerdict, echoVerdict, signinState].join("/");
+    if (key !== lastReported) { lastReported = key; reportCheck(); }
+  }
+
+  // ---- 2e. "Have Mira call my phone" ---------------------------------------
+  // Offered in the microphone help before joining and in the silence banner
+  // during the call. The Worker flips the interview to a phone call and
+  // dispatches the dial at once; with no usable number on file it asks.
+  var phoneSwitched = false;
+  function requestPhone(where) {
+    var msg = document.getElementById(where === "Call" ? "phoneMsgCall" : "phoneMsg");
+    var input = document.getElementById("phoneIn" + where);
+    var ask = document.getElementById("phoneAsk" + where);
+    var body = { interview: interviewId, run_id: runId };
+    if (!ask.classList.contains("hidden") && input.value.trim()) body.phone = input.value.trim();
+    msg.style.color = "inherit";
+    msg.textContent = "One moment…";
+    fetch(API + "/studio-phone", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    }).then(function (r) { return r.json(); }).then(function (res) {
+      if (res.need_phone) {
+        ask.classList.remove("hidden");
+        document.getElementById("phoneBtn" + where).classList.add("hidden");
+        msg.textContent = res.error || "What number should Mira call? Include the country code.";
+        input.focus();
+        return;
+      }
+      if (!res.ok) { msg.textContent = res.error || "That didn't work. Reply to your booking email and we'll call you."; return; }
+      phoneSwitched = true;
+      var text = "Mira will call your phone ending in " + res.phone_last4 + " within a few minutes. "
+        + "Find a quiet spot and answer when it rings. You can close this page.";
+      document.getElementById("doneHead").textContent = "Switching to your phone";
+      document.getElementById("donePhone").textContent = text;
+      document.getElementById("donePhone").classList.remove("hidden");
+      document.getElementById("doneBody").classList.add("hidden");
+      stopCallMeter();
+      if (activeCall) { try { activeCall.hangup(); } catch (e) { /* ignore */ } }
+      if (localStream) { localStream.getTracks().forEach(function (t) { t.stop(); }); }
+      show("stateDone");
+    }).catch(function () {
+      msg.textContent = "That didn't go through. Reply to your booking email and we'll call you.";
+    });
+  }
+  ["Setup", "Call"].forEach(function (w) {
+    var b = document.getElementById("phoneBtn" + w);
+    if (b) b.addEventListener("click", function () { requestPhone(w); });
+    var g = document.getElementById("phoneGo" + w);
+    if (g) g.addEventListener("click", function () { requestPhone(w); });
+  });
+
   // ---- 3. Join: SDK connect → one-time-key auth → call / auto-answer -------
   document.getElementById("joinBtn").addEventListener("click", function () {
     var btn = this;
@@ -533,6 +821,7 @@
       echoChecked = true;
       try { echoCheck(); } catch (e) { /* advisory only */ }
     }
+    if (!isHost && !micOk && !joinOverride) return;   // the gate (see 2c)
     btn.disabled = true; btn.textContent = "Connecting…";
     join().catch(function (e) {
       console.error("[studio] join failed at step", joinStep, e);
@@ -599,7 +888,7 @@
     });
   });
 
-  function selectCallDevices() {
+  async function selectCallDevices() {
     // Use the classic SDK's REAL device-selection APIs. The original code
     // called sdk.setAudioInputDevice, which does not exist — the guard
     // made it a silent no-op, so the CALL captured the system-default
@@ -607,17 +896,28 @@
     // Aug 5 dry run: he heard Mira perfectly; she never heard him.
     var micId = document.getElementById("micSel").value;
     var camId = document.getElementById("camSel").value;
+    //
+    // Sept 28 2026: and that "fix" was not one either. setCallAudioSettings
+    // takes (call, params); called with params alone before the call exists
+    // it rejects inside its promise, silently, so every call since has used
+    // the system default microphone whatever the guest picked. A new call
+    // takes the manager's DEFAULT settings, so those are what we set here;
+    // mid-call switching uses setCallAudioSettings(activeCall, ...).
+    // The SDK also ignores an inputId it has not seen in its own device
+    // list ("There is no audio input device with id ..."), and that list is
+    // empty until getInputDevices() has run once. Fill it first.
     try {
       if (micId) {
-        VoxImplant.Hardware.AudioDeviceManager.get()
-          .setCallAudioSettings({ inputId: micId });
+        var adm = VoxImplant.Hardware.AudioDeviceManager.get();
+        try { await adm.getInputDevices(); } catch (e) { console.warn("device list failed", e); }
+        adm.setDefaultAudioSettings(Object.assign({}, adm.getDefaultAudioSettings() || {}, { inputId: micId }));
       }
     } catch (e) { console.warn("audio device select failed", e); }
     try {
       if (!isHost && camOn && camId) {
-        VoxImplant.Hardware.CameraManager.get()
-          .setCallVideoSettings({ cameraId: camId,
-                                  frameWidth: 1280, frameHeight: 720 });
+        var p = VoxImplant.Hardware.CameraManager.get()
+          .setDefaultVideoSettings({ cameraId: camId, frameWidth: 1280, frameHeight: 720 });
+        if (p && p.catch) p.catch(function (e) { console.warn("camera select failed", e); });
       }
     } catch (e) { console.warn("camera select failed", e); }
   }
@@ -687,7 +987,7 @@
       if (!loggedIn) await studioLogin();
     }
 
-    selectCallDevices();
+    await selectCallDevices();
 
     // Everyone places the same call. The scenario answers it as a
     // participant session, records this person, and bridges them into
@@ -720,31 +1020,17 @@
     }, 1000);
     // In-call mic meter on the SAME device the call selected: a silent
     // mic becomes visible in seconds instead of minutes of "can you hear
-    // me?". Chrome allows a second consumer on the same device.
-    try {
-      var micId = document.getElementById("micSel").value;
-      navigator.mediaDevices.getUserMedia(
-        { audio: micId ? { deviceId: { exact: micId } } : true })
-        .then(function (s) {
-          var ctx = new (window.AudioContext || window.webkitAudioContext)();
-          var an = ctx.createAnalyser(); an.fftSize = 512;
-          ctx.createMediaStreamSource(s).connect(an);
-          var data = new Uint8Array(an.frequencyBinCount);
-          var bar = document.querySelector("#micLevelCall > div");
-          (function loop() {
-            an.getByteTimeDomainData(data);
-            var peak = 0;
-            for (var i = 0; i < data.length; i++) peak = Math.max(peak, Math.abs(data[i] - 128));
-            if (bar) bar.style.width = Math.min(100, (peak / 128) * 220) + "%";
-            requestAnimationFrame(loop);
-          })();
-        }).catch(function () { /* meter is best-effort */ });
-    } catch (e) { /* best-effort */ }
+    // me?". Chrome allows a second consumer on the same device. Since
+    // Sept 28 2026 it also drives the silence watchdog (section 3b).
+    fillCallMics();
+    startCallMeter(document.getElementById("micSel").value);
     startLocalRecording();
   }
   function onCallEnded() {
     if (timerHandle) clearInterval(timerHandle);
     activeCall = null;
+    stopCallMeter();
+    if (phoneSwitched) { stopLocalRecording(); show("stateDone"); return; }
     var flush = stopLocalRecording();
     if (isHost) {
       // The co-host left (or dropped). The room goes on without him; the
@@ -775,6 +1061,106 @@
   document.getElementById("hangupBtn").addEventListener("click", function () {
     if (isHost) leaving = true;
     if (activeCall) activeCall.hangup();
+  });
+
+  // ---- 3b. In-call silence watchdog and microphone switcher --------------
+  // Sept 28 2026 (Elliot). Nothing on the page said "Mira can't hear you";
+  // the only signal was her asking whether he was there. Now:
+  //   15 s with no voice since joining  -> yellow banner + mic switcher
+  //   30 s                              -> "Have Mira call my phone" + Patrick emailed
+  // After they have been heard once, a later silence gets more room (60 s /
+  // 90 s): listening to Mira is not a fault. A muted guest who is talking
+  // gets told they are muted.
+  var VOICED_DB = -48;
+  var BANNER_NEVER_MS = 15000, PHONE_NEVER_MS = 30000;
+  var BANNER_AGAIN_MS = 60000, PHONE_AGAIN_MS = 90000;
+  var meter = null;
+  function stopCallMeter() {
+    if (!meter) return;
+    clearInterval(meter.timer);
+    try { meter.stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) { /* ignore */ }
+    try { meter.ctx.close(); } catch (e) { /* ignore */ }
+    meter = null;
+  }
+  function startCallMeter(deviceId) {
+    stopCallMeter();
+    navigator.mediaDevices.getUserMedia({ audio: deviceId ? { deviceId: { exact: deviceId } } : true })
+      .then(function (stream) {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        var ctx = new AC();
+        var an = ctx.createAnalyser(); an.fftSize = 2048;
+        ctx.createMediaStreamSource(stream).connect(an);
+        var buf = new Float32Array(an.fftSize);
+        var bar = document.querySelector("#micLevelCall > div");
+        var m = { stream: stream, ctx: ctx, timer: null, since: Date.now(), everHeard: false,
+                  lastHeard: 0, run: 0, loudest: -120, mutedTalk: 0, alerted: false };
+        m.timer = setInterval(function () {
+          var db = frameDb(an, buf);
+          if (bar) bar.style.width = Math.max(0, Math.min(100, (db + 60) * 2.5)) + "%";
+          var now = Date.now();
+          m.loudest = Math.max(m.loudest, db);
+          var voice = db > VOICED_DB;
+          m.run = voice ? m.run + 1 : 0;
+          if (muted) { m.mutedTalk = voice ? m.mutedTalk + 1 : Math.max(0, m.mutedTalk - 1); }
+          else if (m.run >= 2) { m.everHeard = true; m.lastHeard = now; }
+          var quiet = m.everHeard ? now - m.lastHeard : now - m.since;
+          var bannerAt = m.everHeard ? BANNER_AGAIN_MS : BANNER_NEVER_MS;
+          var phoneAt = m.everHeard ? PHONE_AGAIN_MS : PHONE_NEVER_MS;
+          var mutedTalking = muted && m.mutedTalk >= 10;
+          if (mutedTalking || quiet >= bannerAt) {
+            showSilence(mutedTalking, !mutedTalking && quiet >= phoneAt);
+          } else if (m.run >= 2) {
+            hideSilence();
+          }
+          if (!m.everHeard && !m.alerted && quiet >= PHONE_NEVER_MS && runId && !isHost) {
+            m.alerted = true;
+            try {
+              fetch(API + "/studio-silence", {
+                method: "POST", headers: { "Content-Type": "application/json" }, keepalive: true,
+                body: JSON.stringify({ run_id: runId, source: "studio",
+                  seconds: Math.round(quiet / 1000), level_db: Math.round(m.loudest) }),
+              }).catch(function () { /* advisory */ });
+            } catch (e) { /* advisory */ }
+          }
+        }, 100);
+        meter = m;
+      }).catch(function () { /* the watchdog is best-effort */ });
+  }
+  function showSilence(isMuted, offerPhone) {
+    var b = document.getElementById("silenceBanner");
+    document.getElementById("silenceHead").innerHTML = isMuted
+      ? "<b>You're on mute.</b> Mira can't hear you. Press Unmute above."
+      : "<b>Mira can't hear you yet.</b> Your microphone is sending almost no sound.";
+    b.classList.remove("hidden");
+    if (offerPhone && !isHost) document.getElementById("phoneOffer").classList.remove("hidden");
+  }
+  function hideSilence() {
+    document.getElementById("silenceBanner").classList.add("hidden");
+    document.getElementById("phoneOffer").classList.add("hidden");
+  }
+  function fillCallMics() {
+    var from = document.getElementById("micSel"), to = document.getElementById("micSelCall");
+    to.innerHTML = from.innerHTML;
+    to.value = from.value;
+  }
+  document.getElementById("micSelCall").addEventListener("change", function () {
+    var id = this.value;
+    document.getElementById("micSel").value = id;
+    if (activeCall) {
+      try {
+        var adm = VoxImplant.Hardware.AudioDeviceManager.get();
+        var cur = adm.getCallAudioSettings(activeCall) || adm.getDefaultAudioSettings() || {};
+        var call = activeCall;
+        Promise.resolve(adm.getInputDevices ? adm.getInputDevices() : null).catch(function () {})
+          .then(function () { return adm.setCallAudioSettings(call, Object.assign({}, cur, { inputId: id })); })
+          .catch(function (e) { console.warn("[studio] mid-call mic switch failed", e); });
+        adm.setDefaultAudioSettings(Object.assign({}, adm.getDefaultAudioSettings() || {}, { inputId: id }));
+      } catch (e) { console.warn("[studio] mid-call mic switch failed", e); }
+    }
+    startCallMeter(id);
+    // The local high-quality take follows the microphone: the old device's
+    // take is closed and a new one starts (each join/take has its own id).
+    stopLocalRecording().then(function () { if (activeCall) startLocalRecording(); });
   });
 
   // ---- 4. Local high-quality recording (Riverside model, Phase 2) ---------

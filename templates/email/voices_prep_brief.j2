@@ -1,6 +1,6 @@
 {# Mira interview shows — pre-interview brief, emailed to the guest the day
    before (rendered by pipelines/voices/generate_briefs.py with show=...; it
-   also passes closing_question, when_text and studio_link). #}
+   also passes closing_question, when_text, studio_link and setup_test_link). #}
 <div style="font-family:system-ui,sans-serif;max-width:640px;margin:0 auto;color:#1a202c;line-height:1.6">
   <h2 style="color:{{ brand_color }}">Your {{ show_name }} interview</h2>
   <p>Hi {{ guest_name }},</p>
@@ -13,6 +13,13 @@
   headphones or earbuds; without them your microphone picks up my voice from
   your speakers. Camera is optional. If the browser gives you any trouble on
   the day, reply to this email and I can call your phone instead.</p>
+  {% if setup_test_link %}<p style="background:#fffbeb;border-left:4px solid #d97706;padding:.7em 1em">
+  <strong>Please do the 30-second setup test today:</strong>
+  <a href="{{ setup_test_link }}">test your microphone and headphones here</a>.
+  Use the computer, browser and headphones you'll use for the interview. It
+  checks that I'll be able to hear you clearly, which is the one thing that
+  has gone wrong for guests before, and it's much easier to fix today than
+  five minutes before we start.</p>{% endif %}
   <h3>The angle I'm excited about</h3>
   <p style="background:#faf5ff;border-left:4px solid {{ brand_color }};padding:.7em 1em">{{ thesis }}</p>
   <h3>Questions I'm likely to ask</h3>
