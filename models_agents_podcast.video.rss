@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 28 Sep 2026 08:22:21 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 29 Sep 2026 08:18:52 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,120 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 188: NVIDIA's open platform now enforces agent guardrails in silicon from the first test run…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;NVIDIA's open platform now enforces agent guardrails in silicon from the first test run through full deployment.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; NVIDIA released its Open Agent Safety Platform with hardware-enforced policy and continuous monitoring. Anthropic's Sonnet 5.5 model now runs the free tier on Claude.ai. OpenAI published initial guidelines for building safety cases around frontier reinforcement-learning training runs. Microsoft extended Fabric with new agentic data engineering tools. Bloomberg introduced an Enterprise MCP layer for financial data access by agents.
+
+Top Story
+ The system combines OpenShell for external policy, BlueField-4 DPUs, and DOCA software to create a host-independent layer. One hundred firms have already joined the effort. The platform is available now for developers building agent fleets at enterprise scale. TrendAI extended the same platform with threat intelligence that informs policy boundaries across the model, harness, and tool layers. Rachel Jin, Chief Platform and Business Officer at TrendAI, noted that security must cover every component an agent touches. The integration supplies visibility and response capabilities that complement NVIDIA's enforcement layer. Source: &lt;a href="https://nvidianews.nvidia.com/news/open-agent-safety-platform"&gt;nvidianews.nvidia.com&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;Claude Sonnet 5.5 — Simon Willison (AI builder) (X)&lt;/b&gt;
+Sonnet 5.5 runs more than thirty percent faster and costs up to thirty percent less than the prior Sonnet version while beating it on every benchmark. It is now the default model for the free tier at claude.ai. Free users can therefore run the same coding and animation experiments previously limited to paid accounts. ChatGPT's free tier still uses the less capable GPT-5.6 Luna model. Simon Willison highlighted that free-tier users can now build three-dimensional WebGL animations that previously required paid access. The model also resolves the same long-thinking bug observed in Opus 5.5 when using maximum effort settings. Source: &lt;a href="https://x.com/simonw/status/2104682232522944909"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;OpenAI on securing frontier RL training runs — &lt;a href="https://x.com/OpenAI"&gt;@OpenAI&lt;/a&gt; (X)&lt;/b&gt;
+OpenAI released a document outlining how it constructs safety cases for frontier reinforcement-learning training runs. The guidelines cover technical safeguards, operational practices, and procedures for investigating misalignment incidents. The post links directly to the full openai.com index page. The approach requires documented arguments and evidence that each identified hazard is either eliminated or reduced below an acceptable threshold. Source: &lt;a href="https://x.com/OpenAI/status/2104815409522483470"&gt;x.com&lt;/a&gt;
+
+&lt;b&gt;OpenAI shelves new AI model release over safety concerns — Reuters&lt;/b&gt;
+OpenAI decided not to release a new frontier model after internal tests revealed safety issues. The decision follows similar pauses at other labs and comes after public statements from former researchers about extinction-level risks. No release date or model name was provided. The move aligns with calls from multiple lab leaders for tighter controls on frontier development. Source: &lt;a href="https://www.reuters.com/business/openai-shelves-new-ai-model-after-internal-safety-tests-wsj-reports-2026-09-28/"&gt;reuters.com&lt;/a&gt;
+
+&lt;b&gt;CoWindow and MassAlloc Attention: collective causal coverage and distribution-adaptive compute [R] — r/MachineLearning&lt;/b&gt;
+Two new attention methods reduce redundant computation in long-context models. CoWindow distributes distant context across KV heads with complementary windows while sharing local and prefix-sink windows. MassAlloc uses softmax statistics to skip low-contribution tiles after full causal QK scoring. At 128K tokens on eight H100 GPUs the methods delivered forward speedups of 7.4x and 2.2x respectively versus full attention. Backward speedups reached 8.6x for CoWindow and 3.0x for MassAlloc. At 14B parameters with 32K context the techniques reduced total training FLOPs by 28.5 percent and 23.1 percent while maintaining comparable capabilities on reported evaluations. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1wt1gbk/cowindow_and_massalloc_attention_collective/"&gt;reddit.com&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;Bloomberg Launches Enterprise MCP to Seamlessly Connect Bloomberg Data with Clients' Enterprise AI Applications — PR Newswire&lt;/b&gt;
+Bloomberg released Enterprise Model Context Protocol, an AI access layer for Data License Plus. The protocol supplies AI-ready metadata, semantic context, and workflow-focused Skills so agents can interpret data across more than one hundred million securities and fifty thousand fields. Clients can now query in plain language and receive context-carrying results without manual identifier reconciliation. The solution targets research, portfolio, risk, and operations workflows in capital markets. Source: &lt;a href="https://www.prnewswire.com/news-releases/bloomberg-launches-enterprise-mcp-to-seamlessly-connect-bloomberg-data-with-clients-enterprise-ai-applications-302891331.html"&gt;prnewswire.com&lt;/a&gt;
+
+&lt;b&gt;Microsoft updates Fabric for agentic transformation — cio.com&lt;/b&gt;
+Microsoft added Fabric Apps, agentic data engineering features from the Osmos acquisition, and a Monitor Hub for proactive operations inside Microsoft Fabric. Fabric Apps lets teams build end-to-end governed applications directly on OneLake without deploying containers. The new agentic engineering tools let users define an outcome and boundaries while an agent executes, validates, and refines the work autonomously. The Monitor Hub provides a unified view across jobs, capacities, workspaces, and workloads to support proactive operations. Source: &lt;a href="https://www.cio.com/article/4227790/microsoft-updates-fabric-for-agentic-transformation.html"&gt;cio.com&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;How we found 24 Android vulnerabilities using our open source AI security agent — GitHub Blog&lt;/b&gt;
+GitHub researchers used an open-source AI security agent to discover twenty-four vulnerabilities in Android. The post details the targeted taskflows that produced the findings and explains how developers can run the same agent against their own applications. The agent is released under an open-source license. The work demonstrates concrete taskflows for automated security testing on mobile platforms. Source: &lt;a href="https://github.blog/security/how-we-found-24-android-vulnerabilities-using-our-open-source-ai-security-agent/"&gt;github.blog&lt;/a&gt;
+
+&lt;b&gt;From Autonomous Cars to Autonomous Agents: The Five Levels of AI Agent Autonomy — MIT Media Lab&lt;/b&gt;
+MIT Media Lab published a framework mapping five levels of AI agent autonomy, drawing parallels to the SAE levels used for autonomous vehicles. The document provides a structured way to classify agent capabilities and required safeguards at each level. It is available on the Media Lab site. The framework helps teams define required controls as autonomy increases. Source: &lt;a href="https://www.media.mit.edu/articles/from-autonomous-cars-to-autonomous-agents-the-five-levels-of-ai-agent-autonomy/"&gt;media.mit.edu&lt;/a&gt;
+
+&lt;b&gt;Holo4: powering generalist computer-use agents — Hugging Face Blog&lt;/b&gt;
+Hugging Face released Holo4, a model aimed at generalist computer-use agents. The announcement includes details on training approach and intended use cases for agents that interact with graphical interfaces. The model and associated resources are hosted on the Hugging Face platform. The release targets agents that perform actions across desktop and web environments. Source: &lt;a href="https://huggingface.co/blog/Hcompany/holo4"&gt;huggingface.co&lt;/a&gt;
+
+Under the Hood: Safety Cases for Frontier RL Training
+Safety cases for frontier reinforcement-learning runs require evidence that specific hazards have been controlled rather than relying on a single test score. The approach begins with hazard identification, then demands documented arguments and evidence that each hazard is either eliminated or its likelihood reduced below an acceptable threshold. Technical safeguards such as sandboxed execution and output filtering form one layer while operational practices such as staged rollouts and independent review boards form another. When an incident occurs the case must be updated with new evidence showing why the controls failed and how they were strengthened. The method forces teams to quantify uncertainty instead of claiming safety from the absence of observed failures. Teams should adopt this structure when the training run involves novel capabilities whose failure modes are not yet fully characterized; simpler evaluation checklists remain sufficient for narrower fine-tuning projects. The OpenAI document emphasizes that safety cases must address both technical and operational dimensions simultaneously.
+
+Things to Try This Week
+• Try Sonnet 5.5 on the free tier at claude.ai for coding or animation tasks that previously required a paid account.
+• Test the GitHub open-source AI security agent against an Android app you maintain to surface vulnerabilities the same way the researchers did.
+• Explore Bloomberg Enterprise MCP if you build financial agents that need context-rich data retrieval without manual identifier mapping.
+• Run the CoWindow or MassAlloc attention implementations from the arXiv papers if you train or serve long-context models on multiple H100 GPUs.
+
+On the Horizon
+• OpenAI DevDay takes place tomorrow with expected announcements on new capabilities.
+• Anthropic indicated Haiku 5.5 will arrive in the coming weeks.
+• More labs are expected to publish safety-case frameworks following OpenAI's release.</description>
+      <guid isPermaLink="false">models-agents-video-ep188-20260929</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep188_20260929.mp4" length="171257193" type="video/mp4" />
+      <pubDate>Tue, 29 Sep 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep188_20260929.jpg" />
+      <itunes:duration>08:59</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **NVIDIA's open platform now enforces agent guardrails in silicon from the first test run through full deployment.**
+
+**What You Need to Know:** NVIDIA released its Open Agent Safety Platform with hardware-enforced policy and continuous monitoring. Anthropic's Sonnet 5.5 model now runs the free tier on Claude.ai. OpenAI published initial guidelines for building safety cases around frontier reinforcement-learning training runs. Microsoft extended Fabric with new agentic data engineering tools. Bloomberg introduced an Enterprise MCP layer for financial data access by agents.
+---
+### Top Story
+ The system combines OpenShell for external policy, BlueField-4 DPUs, and DOCA software to create a host-independent layer. One hundred firms have already joined the effort. The platform is available now for developers building agent fleets at enterprise scale. TrendAI extended the same platform with threat intelligence that informs policy boundaries across the model, harness, and tool layers. Rachel Jin, Chief Platform and Business Officer at TrendAI, noted that security must cover every component an agent touches. The integration supplies visibility and response capabilities that complement NVIDIA's enforcement layer. Source: [nvidianews.nvidia.com](https://nvidianews.nvidia.com/news/open-agent-safety-platform)
+---
+### Model Updates
+**Claude Sonnet 5.5 — Simon Willison (AI builder) (X)**
+Sonnet 5.5 runs more than thirty percent faster and costs up to thirty percent less than the prior Sonnet version while beating it on every benchmark. It is now the default model for the free tier at claude.ai. Free users can therefore run the same coding and animation experiments previously limited to paid accounts. ChatGPT's free tier still uses the less capable GPT-5.6 Luna model. Simon Willison highlighted that free-tier users can now build three-dimensional WebGL animations that previously required paid access. The model also resolves the same long-thinking bug observed in Opus 5.5 when using maximum effort settings. Source: [x.com](https://x.com/simonw/status/2104682232522944909)
+
+**OpenAI on securing frontier RL training runs — [@OpenAI](https://x.com/OpenAI) (X)**
+OpenAI released a document outlining how it constructs safety cases for frontier reinforcement-learning training runs. The guidelines cover technical safeguards, operational practices, and procedures for investigating misalignment incidents. The post links directly to the full openai.com index page. The approach requires documented arguments and evidence that each identified hazard is either eliminated or reduced below an acceptable threshold. Source: [x.com](https://x.com/OpenAI/status/2104815409522483470)
+
+**OpenAI shelves new AI model release over safety concerns — Reuters**
+OpenAI decided not to release a new frontier model after internal tests revealed safety issues. The decision follows similar pauses at other labs and comes after public statements from former researchers about extinction-level risks. No release date or model name was provided. The move aligns with calls from multiple lab leaders for tighter controls on frontier development. Source: [reuters.com](https://www.reuters.com/business/openai-shelves-new-ai-model-after-internal-safety-tests-wsj-reports-2026-09-28/)
+
+**CoWindow and MassAlloc Attention: collective causal coverage and distribution-adaptive compute [R] — r/MachineLearning**
+Two new attention methods reduce redundant computation in long-context models. CoWindow distributes distant context across KV heads with complementary windows while sharing local and prefix-sink windows. MassAlloc uses softmax statistics to skip low-contribution tiles after full causal QK scoring. At 128K tokens on eight H100 GPUs the methods delivered forward speedups of 7.4x and 2.2x respectively versus full attention. Backward speedups reached 8.6x for CoWindow and 3.0x for MassAlloc. At 14B parameters with 32K context the techniques reduced total training FLOPs by 28.5 percent and 23.1 percent while maintaining comparable capabilities on reported evaluations. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1wt1gbk/cowindow_and_massalloc_attention_collective/)
+---
+### Agent &amp; Tool Developments
+**Bloomberg Launches Enterprise MCP to Seamlessly Connect Bloomberg Data with Clients' Enterprise AI Applications — PR Newswire**
+Bloomberg released Enterprise Model Context Protocol, an AI access layer for Data License Plus. The protocol supplies AI-ready metadata, semantic context, and workflow-focused Skills so agents can interpret data across more than one hundred million securities and fifty thousand fields. Clients can now query in plain language and receive context-carrying results without manual identifier reconciliation. The solution targets research, portfolio, risk, and operations workflows in capital markets. Source: [prnewswire.com](https://www.prnewswire.com/news-releases/bloomberg-launches-enterprise-mcp-to-seamlessly-connect-bloomberg-data-with-clients-enterprise-ai-applications-302891331.html)
+
+**Microsoft updates Fabric for agentic transformation — cio.com**
+Microsoft added Fabric Apps, agentic data engineering features from the Osmos acquisition, and a Monitor Hub for proactive operations inside Microsoft Fabric. Fabric Apps lets teams build end-to-end governed applications directly on OneLake without deploying containers. The new agentic engineering tools let users define an outcome and boundaries while an agent executes, validates, and refines the work autonomously. The Monitor Hub provides a unified view across jobs, capacities, workspaces, and workloads to support proactive operations. Source: [cio.com](https://www.cio.com/article/4227790/microsoft-updates-fabric-for-agentic-transformation.html)
+---
+### Practical &amp; Community
+**How we found 24 Android vulnerabilities using our open source AI security agent — GitHub Blog**
+GitHub researchers used an open-source AI security agent to discover twenty-four vulnerabilities in Android. The post details the targeted taskflows that produced the findings and explains how developers can run the same agent against their own applications. The agent is released under an open-source license. The work demonstrates concrete taskflows for automated security testing on mobile platforms. Source: [github.blog](https://github.blog/security/how-we-found-24-android-vulnerabilities-using-our-open-source-ai-security-agent/)
+
+**From Autonomous Cars to Autonomous Agents: The Five Levels of AI Agent Autonomy — MIT Media Lab**
+MIT Media Lab published a framework mapping five levels of AI agent autonomy, drawing parallels to the SAE levels used for autonomous vehicles. The document provides a structured way to classify agent capabilities and required safeguards at each level. It is available on the Media Lab site. The framework helps teams define required controls as autonomy increases. Source: [media.mit.edu](https://www.media.mit.edu/articles/from-autonomous-cars-to-autonomous-agents-the-five-levels-of-ai-agent-autonomy/)
+
+**Holo4: powering generalist computer-use agents — Hugging Face Blog**
+Hugging Face released Holo4, a model aimed at generalist computer-use agents. The announcement includes details on training approach and intended use cases for agents that interact with graphical interfaces. The model and associated resources are hosted on the Hugging Face platform. The release targets agents that perform actions across desktop and web environments. Source: [huggingface.co](https://huggingface.co/blog/Hcompany/holo4)
+---
+### Under the Hood: Safety Cases for Frontier RL Training
+Safety cases for frontier reinforcement-learning runs require evidence that specific hazards have been controlled rather than relying on a single test score. The approach begins with hazard identification, then demands documented arguments and evidence that each hazard is either eliminated or its likelihood reduced below an acceptable threshold. Technical safeguards such as sandboxed execution and output filtering form one layer while operational practices such as staged rollouts and independent review boards form another. When an incident occurs the case must be updated with new evidence showing why the controls failed and how they were strengthened. The method forces teams to quantify uncertainty instead of claiming safety from the absence of observed failures. Teams should adopt this structure when the training run involves novel capabilities whose failure modes are not yet fully characterized; simpler evaluation checklists remain sufficient for narrower fine-tuning projects. The OpenAI document emphasizes that safety cases must address both technical and operational dimensions simultaneously.
+---
+### Things to Try This Week
+- Try Sonnet 5.5 on the free tier at claude.ai for coding or animation tasks that previously required a paid account.
+- Test the GitHub open-source AI security agent against an Android app you maintain to surface vulnerabilities the same way the researchers did.
+- Explore Bloomberg Enterprise MCP if you build financial agents that need context-rich data retrieval without manual identifier mapping.
+- Run the CoWindow or MassAlloc attention implementations from the arXiv papers if you train or serve long-context models on multiple H100 GPUs.
+---
+### On the Horizon
+- OpenAI DevDay takes place tomorrow with expected announcements on new capabilities.
+- Anthropic indicated Haiku 5.5 will arrive in the coming weeks.
+- More labs are expected to publish safety-case frameworks following OpenAI's release.</itunes:summary>
+      <itunes:episode>188</itunes:episode>
+      <itunes:title>Ep 188: NVIDIA's open platform now enforces agent guardrails in silicon from the first test run…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep188_20260929_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep188.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 187: Sparse neuron sets in frozen BERT enable efficient AI-text detection across generators…</title>
       <description>Models &amp; Agents
@@ -3562,117 +3676,5 @@ Everyone talks about swapping the final linear layer for a vector index as if it
       <itunes:title>Ep 159: ChatGPT Work's agent tools finally get a clear map from a builder who tested them end-to…</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep159_20260831_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep159.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 158: Tencent just dropped a 770B-parameter open-weight MoE model with a 1M-token context and…</title>
-      <description>Models &amp; Agents
-&lt;b&gt;Tencent just dropped a 770B-parameter open-weight MoE model with a 1M-token context and explicit reasoning controls that builders can toggle today.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; Tencent released Hy4 Preview, a 770B total / 49B active parameter text-only model with a 1M token context window now available on Hugging Face. The model ships with a chat template that defaults to "high" reasoning effort and supports a "no_think" mode for faster responses. Builders should test it on long-context reasoning tasks where the explicit reasoning trace and parameter scale may shift the cost/performance curve versus current open-weight options. This builds on yesterday’s discussion of open-weight progress by showing continued scaling from Chinese labs.
-
-DEPTH OVER BREADTH (news items)
-
-Top Story
-Tencent released Hy4 Preview, a new open-weight text-only LLM with 770B total parameters and 49B active parameters. It features a 1M token context window and ships as a 1.56TB download on Hugging Face, a substantial jump from the company's prior Hy3 model released in July. The chat template exposes a reasoning_effort parameter that defaults to "high" and accepts only "high" or "no_think" values, producing visible reasoning traces before the final answer. The template code explicitly raises an exception for any other value, including None, and sets the default to high when the variable is undefined. Early tests with prompts such as generating an SVG of a pelican riding a bicycle show the model producing truncated internal reasoning that still yields usable outputs, including considerations about adding a helmet or sunglasses that the model ultimately rejects. Developers working on long-context or reasoning-heavy tasks should try the model via OpenRouter this week to evaluate whether the scale and controllable reasoning deliver practical gains over smaller open-weight alternatives. Source: &lt;a href="https://simonwillison.net/2026/Aug/29/hy4/"&gt;simonwillison.net&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;Benchmark Variation in Production LLMs: r/MachineLearning&lt;/b&gt;
-An analysis of 31,352 hourly benchmark scores across 49 model identifiers found within-day score variation of 2.8 points versus between-day variation of 8.4 points. The study used consistent tasks for coding, reasoning, and tool calling executed inside Docker environments, with results aggregated over five runs per task. Between-day changes proved roughly three times larger than same-day stochastic noise, supporting the use of daily medians and change-point detection for drift monitoring. The resulting open-source AIStupidLevel system now tracks 22 models across six providers after collecting 169,858 total benchmark runs and processing over 88 million tokens. The dashboard classifies models as stable, volatile, degraded, or recovering and powers an OpenAI-compatible router that selects models based on current task-specific performance, stability, and cost. Builders running production LLM workloads should integrate similar continuous evaluation to separate normal variation from sustained degradation. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1w1jp1j/i_analyzed_31352_hourly_llm_benchmark_scores/"&gt;reddit.com&lt;/a&gt;
-
-&lt;b&gt;Gnani AI Releases Evon v3.3 and Plexus Platform: APAC Media&lt;/b&gt;
-Gnani AI launched Evon v3.3, its latest LLM, alongside the Plexus agentic AI platform. The release targets enterprise use cases with both the model and an accompanying agent framework. No specific parameter counts, benchmarks, or pricing details were disclosed in the announcement. Developers focused on agentic workflows in regulated industries should monitor early access programs for integration details. Source: &lt;a href="https://apacnewsnetwork.com/2026/08/gnani-ai-launches-evon-v3-3-llm-and-plexus-agentic-ai-platform/"&gt;apacnewsnetwork.com&lt;/a&gt;
-
-&lt;b&gt;Anthropic Study on Models Training Models: The Indian Express&lt;/b&gt;
-Anthropic published findings showing AI models are improving at the task of training other models. The study examines how newer systems can generate training data or supervision signals for subsequent models. No concrete benchmark numbers or training recipes were released in the coverage. Researchers tracking scaling laws and synthetic data pipelines should review the full paper for methodology details. Source: &lt;a href="https://indianexpress.com/article/technology/artificial-intelligence/ai-getting-better-training-anthropic-study-findings-10855501/"&gt;indianexpress.com&lt;/a&gt;
-
-Agent &amp; Tool Developments
-&lt;b&gt;RAG Access Control Checker: r/MachineLearning&lt;/b&gt;
-An open-source tool was released that tests whether RAG applications retrieve documents a user should not access. It supports both offline test cases and live HTTP API testing using bearer tokens or API keys. The project is available at https://github.com/InfraGuard-Labs/rag-access-check and is seeking feedback from engineers running non-sensitive environments. Teams building retrieval systems with access controls should add this checker to their test suites to catch leakage before production. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1w1zm5m/opensource_accesscontrol_checker_for/"&gt;reddit.com&lt;/a&gt;
-
-&lt;b&gt;Survey on Language Models to Autonomous Agents: Bioengineer.org&lt;/b&gt;
-A new survey maps the technical progression from standard language models to autonomous AI agents. It covers capability milestones and architectural shifts that enable greater independence. No specific performance numbers or framework comparisons are provided in the summary. Researchers designing agent systems should consult the survey for a consolidated view of recent agent literature. Source: &lt;a href="https://bioengineer.org/survey-tracks-the-evolution-from-language-models-to-autonomous-ai-agents/"&gt;bioengineer.org&lt;/a&gt;
-
-Practical &amp; Community
-&lt;b&gt;Statistical Process Control Beats Modern TSAD Methods: r/MachineLearning&lt;/b&gt;
-A researcher demonstrated that a 100-year-old Statistical Process Control algorithm outperforms current state-of-the-art time series anomaly detection methods on the popular TSB-AD-M benchmark. Multiple traces, including ECG data, showed perfect detection with the simple baseline while published deep learning approaches struggled. The post includes links to supporting slide decks and argues that many benchmark datasets are too trivial to support strong claims. Practitioners evaluating anomaly detection pipelines should re-run their models against SPC before adopting newer techniques. Source: &lt;a href="https://www.reddit.com/r/MachineLearning/comments/1w1wt1s/you_can_beat_sota_time_series_anomaly_detection/"&gt;reddit.com&lt;/a&gt;
-
-&lt;b&gt;Open Weight vs Proprietary Licensing Guide: Fast Company&lt;/b&gt;
-An explainer outlines the practical differences between proprietary, open-weight, and open-source AI models for developers and organizations. It covers licensing implications for commercial use and modification rights. The piece focuses on current examples from major labs without new release details. Teams choosing between hosted APIs and self-hosted models should review the distinctions before committing to a deployment path. Source: &lt;a href="https://www.fastcompany.com/91594272/what-is-the-difference-between-proprietary-open-weight-open-source-ai-llm-openai-anthropic-llama-deepseek"&gt;fastcompany.com&lt;/a&gt;
-
-Under the Hood: Benchmark Drift Detection
-Everyone treats a single benchmark score as a stable property of a model. In practice, production APIs exhibit measurable day-to-day variation that single-point evaluations miss entirely. The core mechanism is straightforward: run the same prompt set repeatedly under fixed parameters, compute daily medians, then apply change-point detection only when movement exceeds historical within-day noise. This approach adds roughly 5–10× the evaluation cost of a one-time benchmark but surfaces sustained degradation that would otherwise be masked by stochastic sampling. The 31k-score study showed between-day swings three times larger than same-day noise, confirming that isolated hourly readings are dominated by normal variance. When the gap between daily medians crosses a minimum-effect threshold, the system flags the model as degraded or recovering. Use continuous monitoring when you route traffic across providers or when token cost differences justify switching; skip it for one-off experiments where a single benchmark snapshot is sufficient. The gotcha that bites most teams is treating every score movement as signal rather than first subtracting the expected daily variance floor.
-
-Things to Try This Week
-• Try Hy4 Preview via OpenRouter on a long-context reasoning task to see whether the 1M token window and controllable reasoning effort change your current open-weight choices.
-• Run the RAG access-control checker from InfraGuard-Labs on a test retrieval setup to verify document-level permissions before scaling to production data.
-• Re-evaluate any time-series anomaly detection pipeline against basic Statistical Process Control to establish whether newer models deliver gains beyond the trivial benchmark cases.
-• Test the AIStupidLevel continuous evaluation pipeline on your own model mix to separate normal daily variation from actual performance drift.
-
-On the Horizon
-• More details expected on Hy4 capabilities and commercial availability as Tencent expands testing.
-• Follow-up analysis likely on the Anthropic model-training study once the full paper circulates.
-• Additional open-source access and monitoring tools will probably appear as RAG and agent deployments grow.
-
-```claims
-[{"id":"1","claim":"Tencent released Hy4 Preview, a 770B total / 49B active parameter text-only model with a 1M token context window.","episode_span":"Tencent released Hy4 Preview, a 770B total / 49B active parameter text-only model with a 1M token context window now available on Hugging Face.","source_url":"https://simonwillison.net/2026/Aug/29/hy4/","source_title":"Introducing Hy4 Preview","supporting_quote":"Introducing Hy4 Preview New open weight text input (no vision) LLM from Chinese company Tencent today: 770B total parameters, 49B active parameters, 1M token context window, 1.56TB on Hugging Face .","confidence":"high"},{"id":"2","claim":"An analysis of 31,352 hourly benchmark scores across 49 model identifiers found within-day score variation of 2.8 points versus between-day variation of 8.4 points.","episode_span":"An analysis of 31,352 hourly benchmark scores across 49 model identifiers found within-day score variation of 2.8 points versus between-day variation of 8.4 points.","source_url":"https://www.reddit.com/r/MachineLearning/comments/1w1jp1j/i_analyzed_31352_hourly_llm_benchmark_scores/","source_title":"I analyzed 31,352 hourly LLM benchmark scores: within-day variation was 2.8 points, while between-day variation was 8.4","supporting_quote":"I analyzed 31,352 hourly benchmark scores across 49 model identifiers... within-day variation was 2.8 points, while between-day variation was 8.4","confidence":"high"}]</description>
-      <guid isPermaLink="false">models-agents-video-ep158-20260830</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep158_20260830.mp4" length="206404771" type="video/mp4" />
-      <pubDate>Sun, 30 Aug 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep158_20260830.jpg" />
-      <itunes:duration>08:11</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **Tencent just dropped a 770B-parameter open-weight MoE model with a 1M-token context and explicit reasoning controls that builders can toggle today.**
-
-**What You Need to Know:** Tencent released Hy4 Preview, a 770B total / 49B active parameter text-only model with a 1M token context window now available on Hugging Face. The model ships with a chat template that defaults to "high" reasoning effort and supports a "no_think" mode for faster responses. Builders should test it on long-context reasoning tasks where the explicit reasoning trace and parameter scale may shift the cost/performance curve versus current open-weight options. This builds on yesterday’s discussion of open-weight progress by showing continued scaling from Chinese labs.
----
-### DEPTH OVER BREADTH (news items)
-
-### Top Story
-Tencent released Hy4 Preview, a new open-weight text-only LLM with 770B total parameters and 49B active parameters. It features a 1M token context window and ships as a 1.56TB download on Hugging Face, a substantial jump from the company's prior Hy3 model released in July. The chat template exposes a reasoning_effort parameter that defaults to "high" and accepts only "high" or "no_think" values, producing visible reasoning traces before the final answer. The template code explicitly raises an exception for any other value, including None, and sets the default to high when the variable is undefined. Early tests with prompts such as generating an SVG of a pelican riding a bicycle show the model producing truncated internal reasoning that still yields usable outputs, including considerations about adding a helmet or sunglasses that the model ultimately rejects. Developers working on long-context or reasoning-heavy tasks should try the model via OpenRouter this week to evaluate whether the scale and controllable reasoning deliver practical gains over smaller open-weight alternatives. Source: [simonwillison.net](https://simonwillison.net/2026/Aug/29/hy4/)
----
-### Model Updates
-**Benchmark Variation in Production LLMs: r/MachineLearning**
-An analysis of 31,352 hourly benchmark scores across 49 model identifiers found within-day score variation of 2.8 points versus between-day variation of 8.4 points. The study used consistent tasks for coding, reasoning, and tool calling executed inside Docker environments, with results aggregated over five runs per task. Between-day changes proved roughly three times larger than same-day stochastic noise, supporting the use of daily medians and change-point detection for drift monitoring. The resulting open-source AIStupidLevel system now tracks 22 models across six providers after collecting 169,858 total benchmark runs and processing over 88 million tokens. The dashboard classifies models as stable, volatile, degraded, or recovering and powers an OpenAI-compatible router that selects models based on current task-specific performance, stability, and cost. Builders running production LLM workloads should integrate similar continuous evaluation to separate normal variation from sustained degradation. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1w1jp1j/i_analyzed_31352_hourly_llm_benchmark_scores/)
-
-**Gnani AI Releases Evon v3.3 and Plexus Platform: APAC Media**
-Gnani AI launched Evon v3.3, its latest LLM, alongside the Plexus agentic AI platform. The release targets enterprise use cases with both the model and an accompanying agent framework. No specific parameter counts, benchmarks, or pricing details were disclosed in the announcement. Developers focused on agentic workflows in regulated industries should monitor early access programs for integration details. Source: [apacnewsnetwork.com](https://apacnewsnetwork.com/2026/08/gnani-ai-launches-evon-v3-3-llm-and-plexus-agentic-ai-platform/)
-
-**Anthropic Study on Models Training Models: The Indian Express**
-Anthropic published findings showing AI models are improving at the task of training other models. The study examines how newer systems can generate training data or supervision signals for subsequent models. No concrete benchmark numbers or training recipes were released in the coverage. Researchers tracking scaling laws and synthetic data pipelines should review the full paper for methodology details. Source: [indianexpress.com](https://indianexpress.com/article/technology/artificial-intelligence/ai-getting-better-training-anthropic-study-findings-10855501/)
----
-### Agent &amp; Tool Developments
-**RAG Access Control Checker: r/MachineLearning**
-An open-source tool was released that tests whether RAG applications retrieve documents a user should not access. It supports both offline test cases and live HTTP API testing using bearer tokens or API keys. The project is available at https://github.com/InfraGuard-Labs/rag-access-check and is seeking feedback from engineers running non-sensitive environments. Teams building retrieval systems with access controls should add this checker to their test suites to catch leakage before production. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1w1zm5m/opensource_accesscontrol_checker_for/)
-
-**Survey on Language Models to Autonomous Agents: Bioengineer.org**
-A new survey maps the technical progression from standard language models to autonomous AI agents. It covers capability milestones and architectural shifts that enable greater independence. No specific performance numbers or framework comparisons are provided in the summary. Researchers designing agent systems should consult the survey for a consolidated view of recent agent literature. Source: [bioengineer.org](https://bioengineer.org/survey-tracks-the-evolution-from-language-models-to-autonomous-ai-agents/)
----
-### Practical &amp; Community
-**Statistical Process Control Beats Modern TSAD Methods: r/MachineLearning**
-A researcher demonstrated that a 100-year-old Statistical Process Control algorithm outperforms current state-of-the-art time series anomaly detection methods on the popular TSB-AD-M benchmark. Multiple traces, including ECG data, showed perfect detection with the simple baseline while published deep learning approaches struggled. The post includes links to supporting slide decks and argues that many benchmark datasets are too trivial to support strong claims. Practitioners evaluating anomaly detection pipelines should re-run their models against SPC before adopting newer techniques. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1w1wt1s/you_can_beat_sota_time_series_anomaly_detection/)
-
-**Open Weight vs Proprietary Licensing Guide: Fast Company**
-An explainer outlines the practical differences between proprietary, open-weight, and open-source AI models for developers and organizations. It covers licensing implications for commercial use and modification rights. The piece focuses on current examples from major labs without new release details. Teams choosing between hosted APIs and self-hosted models should review the distinctions before committing to a deployment path. Source: [fastcompany.com](https://www.fastcompany.com/91594272/what-is-the-difference-between-proprietary-open-weight-open-source-ai-llm-openai-anthropic-llama-deepseek)
----
-### Under the Hood: Benchmark Drift Detection
-Everyone treats a single benchmark score as a stable property of a model. In practice, production APIs exhibit measurable day-to-day variation that single-point evaluations miss entirely. The core mechanism is straightforward: run the same prompt set repeatedly under fixed parameters, compute daily medians, then apply change-point detection only when movement exceeds historical within-day noise. This approach adds roughly 5–10× the evaluation cost of a one-time benchmark but surfaces sustained degradation that would otherwise be masked by stochastic sampling. The 31k-score study showed between-day swings three times larger than same-day noise, confirming that isolated hourly readings are dominated by normal variance. When the gap between daily medians crosses a minimum-effect threshold, the system flags the model as degraded or recovering. Use continuous monitoring when you route traffic across providers or when token cost differences justify switching; skip it for one-off experiments where a single benchmark snapshot is sufficient. The gotcha that bites most teams is treating every score movement as signal rather than first subtracting the expected daily variance floor.
----
-### Things to Try This Week
-- Try Hy4 Preview via OpenRouter on a long-context reasoning task to see whether the 1M token window and controllable reasoning effort change your current open-weight choices.
-- Run the RAG access-control checker from InfraGuard-Labs on a test retrieval setup to verify document-level permissions before scaling to production data.
-- Re-evaluate any time-series anomaly detection pipeline against basic Statistical Process Control to establish whether newer models deliver gains beyond the trivial benchmark cases.
-- Test the AIStupidLevel continuous evaluation pipeline on your own model mix to separate normal daily variation from actual performance drift.
----
-### On the Horizon
-- More details expected on Hy4 capabilities and commercial availability as Tencent expands testing.
-- Follow-up analysis likely on the Anthropic model-training study once the full paper circulates.
-- Additional open-source access and monitoring tools will probably appear as RAG and agent deployments grow.
-
-```claims
-[{"id":"1","claim":"Tencent released Hy4 Preview, a 770B total / 49B active parameter text-only model with a 1M token context window.","episode_span":"Tencent released Hy4 Preview, a 770B total / 49B active parameter text-only model with a 1M token context window now available on Hugging Face.","source_url":"https://simonwillison.net/2026/Aug/29/hy4/","source_title":"Introducing Hy4 Preview","supporting_quote":"Introducing Hy4 Preview New open weight text input (no vision) LLM from Chinese company Tencent today: 770B total parameters, 49B active parameters, 1M token context window, 1.56TB on Hugging Face .","confidence":"high"},{"id":"2","claim":"An analysis of 31,352 hourly benchmark scores across 49 model identifiers found within-day score variation of 2.8 points versus between-day variation of 8.4 points.","episode_span":"An analysis of 31,352 hourly benchmark scores across 49 model identifiers found within-day score variation of 2.8 points versus between-day variation of 8.4 points.","source_url":"https://www.reddit.com/r/MachineLearning/comments/1w1jp1j/i_analyzed_31352_hourly_llm_benchmark_scores/","source_title":"I analyzed 31,352 hourly LLM benchmark scores: within-day variation was 2.8 points, while between-day variation was 8.4","supporting_quote":"I analyzed 31,352 hourly benchmark scores across 49 model identifiers... within-day variation was 2.8 points, while between-day variation was 8.4","confidence":"high"}]</itunes:summary>
-      <itunes:episode>158</itunes:episode>
-      <itunes:title>Ep 158: Tencent just dropped a 770B-parameter open-weight MoE model with a 1M-token context and…</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep158_20260830_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep158.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
