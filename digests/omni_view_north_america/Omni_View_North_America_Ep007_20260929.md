@@ -1,0 +1,40 @@
+# Omni View North America
+> **Six thousand U.S. job ads still require a political essay a judge has barred.**
+
+**What You Need to Know:** Six thousand U.S. job ads still require a political essay a judge has barred. Judge George A. O'Toole Jr. stayed the prompt on September 11, the Justice Department says new announcements cannot include it, and agencies were told to ignore answers on older postings. Ontario's premier, separately, offered patient capital for a pipeline from Alberta to Sarnia.
+
+### Lead
+**Federal hiring ads still carry a political essay after a judge's stay: Dagens.com**
+On September 11, Judge George A. O'Toole Jr. stayed a Trump administration hiring prompt that asked applicants to explain how they would advance the president's agenda and to name their favorite executive orders, finding it likely unconstitutional. In a Friday court filing, the Justice Department said human resources departments cannot include the political essay in new job announcements. Officials say deleting the text by hand from roughly six thousand active postings would disrupt the hiring system, so agencies were ordered to ignore submitted answers. Managers must use a revised prompt asking candidates to describe a time they followed leadership directions that differed from their own recommendations. The White House introduced the essay in May 2025 and later made it optional after backlash from civil servants; ethics groups had argued that civil-service hiring must rest on merit. Source: [dagens.com](https://www.dagens.com/news/insider-reveals-trump-admin-keeps-defying-judges-order-5-times-in-two-weeks)
+
+### Across the Region
+**Ford says Ontario willing to bankroll a pipeline from Alberta to Sarnia: Financial Post**
+Ontario Premier Doug Ford told a Calgary luncheon on Monday that the province is willing to finance the proposed Northern Shield pipeline, which would move up to 500,000 barrels a day from Hardisty, Alberta, to Sarnia, Ontario. He said Ontario is ready to supply the patient capital to get the project built, then told reporters the province will not pay alone and expects outside investors. A feasibility study of costs and commercialization options is due by the end of this year. When Ford and Alberta Premier Danielle Smith unveiled the idea in July, Ford said Ontario could own the pipeline and pay for construction if needed. Smith said just three percent of Alberta's 188 billion dollars in exports to the United States face the tariffs, compared with roughly 20 percent of Ontario's 500 billion dollars; Washington imposed 50 percent tariffs on a range of Canadian goods in August, and Ottawa answered with matching levies on 28 billion dollars of U.S. imports. Source: [financialpost.com](https://financialpost.com/commodities/energy/oil-gas/doug-ford-ontario-alberta-pipeline)
+
+**Nashville Democrat sues Tennessee lieutenant governor over committee suspension: Tennessee Lookout**
+State Senator Charlane Oliver of Nashville has sued Lieutenant Governor Randy McNally over her suspension from the Government Operations Committee, reassignment to State and Local Government, and bars on per diem and state-funded conference travel. The limits followed a May special session in which Oliver stood on her Senate desk and unfurled a banner while lawmakers redrew Tennessee's U.S. House map. The Tennessee Lookout reports that Republican lawmakers divided Memphis across three districts and that the party is favored to win all nine seats. Oliver said in a news release that she protested because she believed the legislature moved to silence Black Tennesseans. A spokesperson for McNally had not responded by publication; the remap followed an April U.S. Supreme Court ruling that states with a history of racial discrimination were no longer required to draw majority-minority House seats. Source: [tennesseelookout.com](https://tennesseelookout.com/2026/09/29/nashville-democrat-sues-tennessee-lieutenant-governor-over-committee-suspension-other-restrictions/)
+
+### Also Today
+**Uncontested Minnesota legislative races leave Republicans off 21 ballots: MinnPost**
+MinnPost reports that Republicans have no candidate in 17 state House races and four Senate races, while the DFL has a name on every state House and Senate ballot. Source: [minnpost.com](https://www.minnpost.com/elections/2026/09/29/the-walkover-districts-uncontested-minnesota-legislative-races-tilt-strongly-in-dfls-favor/)
+
+**Trump administration rolls back fuel-efficiency standards: NPR**
+NPR's morning brief reports that the Trump administration has rolled back fuel-efficiency standards for new vehicles. Source: [npr.org](https://www.npr.org/2026/09/29/nx-s1-5979951/morning-news-brief)
+
+**Clancy lawyers ask a judge for a not-guilty finding: The New York Times**
+Lawyers for Lindsay Clancy, whose murder trial ended in a mistrial this month, have asked a judge to find her not guilty for insufficient evidence and to investigate a holdout juror. Source: [nytimes.com](https://www.nytimes.com/2026/09/29/us/lindsay-clancy-hearing.html)
+
+### The Region and the World
+**As the U.S. signals a smaller Middle East footprint, Turkey is ready to step in: NPR**
+NPR reports that as the United States signals a smaller footprint in the Middle East, Turkey is ready to step in. The network places that bid against shocks that began with the Hamas-led 2023 attack on Israel. Those shocks, NPR says, continue with a stalemated, seven-month-old war on Iran. Source: [npr.org](https://www.npr.org/2026/09/29/nx-s1-5983685/turkey-influence)
+
+### Both Sides: Whether Alberta should move toward leaving Canada
+Albertans will answer ten referendum questions on October 19, including whether the province stays in Canada or moves toward a binding vote on leaving. Tyler Dawson writes in The Globe and Mail that Forever Canadian, which he calls the most significant pro-Canada group, has shifted to a get-out-the-vote push so federalists cast ballots. The government of Alberta has launched advertising of its own. Premier Danielle Smith has spoken against separation and, Dawson writes, has also made an emotional plea built on provincial grievances.
+
+The caution against leaving is sharpest in a Canada West Foundation report by eight experts. They stress uncertainty: the share of Canada's national debt Alberta would assume is not settled, yet they say either share would sharply raise Alberta's debt, and they ask how borders would be drawn around First Nations lands. The case that independence could be managed comes from the Alberta Transition Council. It says the world would not implode after a secession vote, that incentives exist on every side to keep a divorce amicable, and that Albertans can expect their lives not to be wildly disrupted. It has also released what it presents as a budget and a planning document.
+
+Both efforts accept that October 19 is the decision point and that the fight now is over how that choice is framed. Dawson adds that, in his view, the votes are largely set and few people will be moved by the papers. The next dated step is that October ballot. Source: [theglobeandmail.com](https://www.theglobeandmail.com/opinion/article-when-weighing-albertas-future-trust-the-experts/)
+
+### Progress Watch
+**Canada's top court grants more appeals than in recent years: The Globe and Mail**
+The Supreme Court of Canada has agreed to 13 percent of appeal applications this year, up from 7 percent across the 2020s, The Globe and Mail reports. Last week it granted two more, bringing new cases for 2026 to 41, the most since 42 in 2018. Daniel Byma, executive legal officer to Chief Justice Richard Wagner, said the court does not set targets for how many applications it grants. Justice Mahmud Jamal said in February the judges are not looking to take fewer cases. The 2020s average remains 34 cases a year, against 52 in the 2010s. Source: [theglobeandmail.com](https://www.theglobeandmail.com/canada/article-supreme-court-takes-on-more-cases-than-in-recent-years-reversing-trend/)
