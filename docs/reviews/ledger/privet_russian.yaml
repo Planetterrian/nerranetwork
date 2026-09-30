@@ -131,4 +131,108 @@ reviews:
       ab_listen_required: false
       rationale: 'Playbook: every behavioral fix gets a drift-guard test.'
     agent_cost_usd: 0.1085
+  - date: '2026-09-24'
+    pr: null
+    doc: docs/reviews/privet_russian_review_2026_09_24.md
+    generated_by: grok-4.5
+    summary: 'Aug-13 levers never shipped: 9/10 scripts still under 800 words, AI-disclosure tails remain Whisper-garbage, chapters still collapse (ep66/70 WOTD megachapters; Origins ~7s stubs), while WOTD/theme diversity holds and the secret-opener tic only partially faded without MEMORY.'
+    scored_prior_predictions:
+    - metric: tts_word_count last 5 episodes vs min_podcast_words 800
+      verdict: miss
+      evidence: 'ep66–70 words 699/987/690/635/636 (1/5 ≥800); Aug-13 section-band+digest-floor proposals never applied (ledger shipped: [])'
+    - metric: want_to_know_a_secret opener rate in Word Origins (last 8 eps)
+      verdict: partial
+      evidence: ep61–63 still use secret-question Origins open; ep64–70 mostly required glue only; MEMORY de-seed never shipped so not a clean 0/8 hit
+    - metric: chapters with ≥6 pedagogical sections (Welcome/WOTD/Vocab/Grammar/Origins/Culture/Practice/Closing)
+      verdict: miss
+      evidence: ep66/70 WOTD megachapters (4–5 sections); ep61/62 Origins ~7s; only ~6/10 reach ≥6 titles — marker/glue proposals unapplied
+    - metric: spoken AI disclosure intelligibility (English, stable wording)
+      verdict: miss
+      evidence: ep61–70 tails still e-synth/person/Vypusk garble or RU credit paragraph; stable English line never shipped
+    - metric: Я есть / ungrammatical eat-construction in shipped _tts.txt
+      verdict: partial
+      evidence: no clear Я есть in ep61–70; ep70 correctly uses я ем; residual wrong forms (ep61 он купишь); code lint never shipped
+    - metric: off-theme магазин false-friend in Origins when магазин ∉ episode vocab
+      verdict: partial
+      evidence: ep63 travel Origins still drops magazine→shop filler; ep64–70 clear of that drop; on-list constraint unapplied
+    shipped: []
+    deferred:
+    - 'Operator: June-22 2026 double-publish (Ep046+Ep047) + June 26/28 skip forensics — still open from 2026-07-02 unless closed elsewhere'
+    - 'Product: rss_language ru vs English-majority learner audience / podcast-directory filing — do not silent-flip'
+    - 'Product: dedicated spaced-repetition review episode cadence beyond vocab_tracker callbacks'
+    - Full written scope-and-sequence (CEFR-ish beginner path) outside vocab_tracker windows
+    - No podcast-side min_podcast_words raise / expand-below-target paraphrase retry (network length do_not_retry class)
+    - 'No phonetic respellings or speech-tag injection (landmine #17)'
+    - Stop narrating plan-field labels ('The memory hook notes that…') — watch; not dominant in ep61–70
+    - Escalate length to operator-decision only if digest floors ship and last-5 ≥800 still misses on two subsequent scored passes — do not re-file identical podcast expand-retry a third time
+    - 'Growth: near-zero first-week downloads — distribution/discovery outside prompt scope this pass'
+    predictions:
+    - metric: tts_word_count last 5 episodes ≥ min_podcast_words 800
+      baseline: 1/5 of ep66–70 ≥800 (only ep67)
+      expected: ≥3/5 ≥800 after digest countable floors + forced full-section glue ship (no podcast expand-retry)
+      verdict: pending
+      evidence: null
+    - metric: want_to_know_a_secret OR did-you-know reveal-question Origins opener rate (last 8 eps)
+      baseline: 3/10 clear secret-question opens (ep61–63); closer formula common early window
+      expected: 0/8 after shape-ban + Origins MEMORY ships
+      verdict: pending
+      evidence: null
+    - metric: chapters_ep*.json with ≥6 of 8 pedagogical titles and Origins duration >15s (last 10)
+      baseline: ~6/10 ≥6 titles; multiple Origins ~7s; ep66/70 collapses
+      expected: ≥8/10 meet both gates after marker+glue proposals ship
+      verdict: pending
+      evidence: null
+    - metric: spoken AI disclosure tail stable English line (last 10 transcripts)
+      baseline: 10/10 garble or RU paragraph class
+      expected: 10/10 end with the same short English credit; zero e-synth/person/Vypusk garble class
+      verdict: pending
+      evidence: null
+    - metric: grammar lint hits reaching TTS (Я есть / я счастливы / off-list magazine false-friend)
+      baseline: lint absent; ep63 off-list magazine; historical Ep043/060 class
+      expected: 0 shipped hits in next 8 episodes after lint ships
+      verdict: pending
+      evidence: null
+    - metric: successor Origins opener tic (language detective / hidden journey / picture this root) rate last 8
+      baseline: not dominant yet; secret-question fading without MEMORY
+      expected: flag if ≥4/8 converge on one new opener shape — next review de-seeds that generation
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: engine/publisher.py
+      kind: code
+      ab_listen_required: true
+      rationale: 'P0.1: ep61–70 tails are listener-facing garbage; July+Aug deferred English disclosure still open. A/B-listen credit only (landmine #17).'
+    - file: engine/generator.py
+      kind: code
+      ab_listen_required: false
+      rationale: 'P0.3: prompt-only missed twice on this show''s core product (correct Russian). Deterministic code guard; ep63 still shows off-list magazine drop.'
+    - file: shows/hooks/privet_russian.py
+      kind: code
+      ab_listen_required: false
+      rationale: 'P0.4: verbatim ban already in podcast prompt and still missed ep61–63; network de-seed lesson = shape ban + MEMORY (DP Pod pattern).'
+    - file: shows/privet_russian.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: 'P0.2: Culture `did you know` steals Origins; align markers with forced podcast glue; stop 7s Origins stubs and missing section titles.'
+    - file: shows/prompts/privet_russian_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'P1.1 network length rule: digest-substrate levers only. Vague ''meaty'' language already failed; countable floors match DP Pod digest arithmetic fix without podcast expand-retry.'
+    - file: shows/prompts/privet_russian_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'P0.2+P1.1: current 35–48 sentence budget caps ~525–720 words under min 800; missing glue causes chapter collapse. Completeness bands + glue, not expand-retry or min_podcast_words raise.'
+    - file: shows/prompts/privet_russian_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'P0.4: ban-alone failed (ep61–63); closer formula still templated; off-list magazine on ep63. Shape-ban + MEMORY + on-list constraint; ledger successor-tic prediction.'
+    - file: shows/prompts/privet_russian_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'P1.2: ep70 ''I am Olga'', ep67 ''I''m Olia'' — identity drift in shipped audio.'
+    - file: tests/test_privet_russian_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: 'Playbook: every behavioral fix gets a drift-guard test (tesla/mit/network quality_pass pattern).'
+    agent_cost_usd: 0.1204
 do_not_retry: []
