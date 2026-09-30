@@ -145,6 +145,25 @@ have very different real-world hit rates. Apply these rules:
   with the identical proposal attached, do not file the proposal a third
   time — write an explicit operator-decision item in the review doc
   naming the two misses and the decision needed.
+- **A script-density threshold is not a prediction** (Sep 2026
+  meta-review: 12 of 14 overlap/coverage-threshold predictions missed,
+  0 hit; the numbers moved with the MODEL, never with a prompt or gate).
+  Predict the data-side change a fix ships — a dropped duplicate, a
+  banned opener, a dated article — never a percentage the script stage
+  will reach.
+- **Data-side rotation memory over prompt-only de-seeds.** The same
+  phrase families (FF "keep an eye on" ×5, M&A ×3, FPD ×3, SpaceX ×3)
+  missed on consecutive prompt-only de-seeds while DP Pod's lever
+  memory, Nerra Daily's opener memory and `engine/frame_memory.py`
+  ship. A prompt-only de-seed of a family that has already missed twice
+  is an operator-decision item, never a third filing.
+- **A guard that reads today's committed data must tolerate today.**
+  Main was red for four days in Sep 2026 over a fixture (an interview
+  transcript with no 200-character line) and four more data-driven
+  guards sat behind it. A test that asserts on the newest episode's
+  shape, the current stock of a queue, or a file the day's runs have not
+  committed yet is red on days nothing is wrong: judge episodes at least
+  a day old, treat floors as runways, pin fixtures on what they mean.
 - **Closed-unmerged review PRs are NOT automatically rejections.** Before
   writing `do_not_retry` from a closed PR, check its closure comment:
   infrastructure closes (content landed via another PR, unmergeable

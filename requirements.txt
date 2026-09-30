@@ -18,6 +18,14 @@ pyyaml>=6.0.3
 jinja2>=3.1.6
 boto3>=1.43.103
 faster-whisper>=1.2.1
+# Sep 30 2026: PyAV 19.0.0 (PyPI 2026-09-29) removed the ``metadata_errors``
+# keyword faster-whisper 1.2.1 still passes to ``av.open`` — every episode
+# of 2026-09-30 (23 shows) shipped with NO transcript, the spoken-text gate
+# ran blind ("no_transcript") and Shorts went out without captions.
+# faster-whisper declares ``av>=11`` unbounded, so the runner picked the
+# new release the morning it appeared. Lift the ceiling only after
+# faster-whisper releases against it.
+av>=11,<19
 google-api-python-client>=2.200.0
 google-auth>=2.58.1
 google-auth-oauthlib>=1.4.1

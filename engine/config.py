@@ -1238,6 +1238,19 @@ class ShowConfig:
     # campaign's own channels are read on a 30-day window by design).
     # 0 (default) = off, every other show byte-identical.
     stale_article_days: int = 0
+    # Sep 30 2026 (network review): pages the run may open to date the
+    # articles nothing trustworthy dated — undated feed entries, Google
+    # News items (an index date, not the article's), web-search results,
+    # X-linked articles. The page's own date then feeds the stale gate
+    # and the prompt's newest-first order. 0 = off. A clean-feed day
+    # opens nothing; see engine/article_dates.py.
+    date_probe_max: int = 12
+    # Sep 30 2026 (network review): opt-in rotation memory for sentence
+    # FRAMES — the show's last scripts are mined for openers that recur
+    # with different tails and the podcast prompt gets a do-not-open-with
+    # list for today (engine/frame_memory.py, rendered through the shared
+    # snippets' {recent_frames_block}). Prompt context changes: A/B-listen.
+    frame_memory: bool = False
     min_articles: int = 3  # Minimum articles before expanding search
     min_articles_skip: int = 3  # Hard cutoff — skip episode if fewer articles
     # Progressive fetch-window ladder, in hours, widest last. Empty = use
@@ -1485,6 +1498,8 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         preferred_domains=[str(x).strip().lower() for x in (data.get("preferred_domains") or []) if str(x).strip()],
         x_lookback_hours=int(data.get("x_lookback_hours", 24) or 24),
         stale_article_days=int(data.get("stale_article_days", 0) or 0),
+        date_probe_max=int(data.get("date_probe_max", 12) if data.get("date_probe_max") is not None else 12),
+        frame_memory=bool(data.get("frame_memory", False)),
         min_articles=data.get("min_articles", 3),
         min_articles_skip=data.get("min_articles_skip", 3),
         fetch_expansion_hours=[

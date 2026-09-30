@@ -594,6 +594,17 @@ def build_podcast_template_vars(
     pod_vars.setdefault("tone_hint", "natural and conversational")
     pod_vars.setdefault("nerra_network_context", "")
 
+    # Frame rotation memory (Sep 30 2026, engine/frame_memory.py): the
+    # openers this show leaned on across its last scripts, as a ban list
+    # for today. Opt-in per show (``frame_memory: true``); "" otherwise,
+    # so a show that has not opted in renders the shared snippets
+    # byte-identically. Best-effort — the module never raises.
+    if getattr(config, "frame_memory", False):
+        from engine.frame_memory import build_recent_frames_block
+        pod_vars["recent_frames_block"] = build_recent_frames_block(
+            config, exclude_contains=f"Ep{int(episode_num):03d}_")
+    pod_vars.setdefault("recent_frames_block", "")
+
     # Hook-failure safety. A memory show's pre-fetch hook normally injects
     # {narrative_memory_section} (and Привет, Русский! injects
     # {vocab_review_section}) through extra_context. If the hook fails to

@@ -515,8 +515,17 @@ def generate_transcript(
             segments, info = model.transcribe(
                 str(audio_path), vad_filter=vad_filter, **kwargs)
             segments = list(segments)
-        except Exception as exc:  # noqa: BLE001 — usually a missing VAD runtime
-            if not vad_filter:
+        except Exception as exc:  # noqa: BLE001
+            # Sep 30 2026: this branch read EVERY failure as a missing VAD
+            # runtime and retried without it. PyAV 19.0.0 removed the
+            # ``metadata_errors`` keyword faster-whisper passes to
+            # ``av.open`` and the retry failed identically on all 23
+            # episodes of the day — logged as "VAD unavailable", so the
+            # outage looked like a known degradation. Only a VAD-shaped
+            # error (onnxruntime / silero) earns the retry.
+            _msg = str(exc).lower()
+            _vad_shaped = any(t in _msg for t in ("onnx", "silero", "vad"))
+            if not vad_filter or not _vad_shaped:
                 raise
             logger.warning("VAD unavailable (%s) — transcribing without it", exc)
             segments, info = model.transcribe(str(audio_path), **kwargs)
@@ -575,5 +584,12 @@ def generate_transcript(
         )
 
     except Exception as exc:
+        # Loud on purpose (Sep 30 2026): a missing transcript blinds the
+        # spoken-text gate (landmine #25), the Shorts captions, the
+        # caption track and Nerra Daily's promo cut. A GitHub error
+        # annotation is what the daily audit and the run summary read.
         logger.warning("Transcript generation failed (non-fatal): %s", exc)
+        print(f"::error::transcription failed for {episode_prefix}: "
+              f"{type(exc).__name__}: {str(exc)[:200]} — the episode ships "
+              "with NO transcript (spoken-text gate blind, no captions)")
         return None

@@ -421,7 +421,11 @@ chapters:
 
 content_tracking:
   enabled: true
-  max_days: 14
+  # Sep 30 2026: 45 days, and the URL-dedup window follows it (was a fixed
+  # 7 days inside a 14-day file, so a URL aired 8-14 days ago re-aired —
+  # Tesla spoke one 2013 Teslarati page on 08-17, 09-08 and 09-23). The
+  # story-recurrence annotations read the same window.
+  max_days: 45
 
 # Source-integrity claim ledger (Aug 2026, engine/claims.py). enabled=true
 # makes digest generation emit a verifiable claims ledger (extracted before

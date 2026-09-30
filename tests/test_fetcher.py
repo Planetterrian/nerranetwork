@@ -516,15 +516,25 @@ class TestFetchSingleFeed:
             # one, else "" — read only by shows that opt into
             # fetch_full_text (engine/article_text.py, Sep 14 2026).
             "content_text",
+            # Where the date came from (engine/article_dates.py, Sep 30
+            # 2026): feed / index / url_path / unknown on this path.
+            "date_source",
         }
         assert set(article.keys()) == expected_keys
+        assert article["date_source"] == "feed"
         assert article["content_text"] == ""  # this entry has no body
         assert article["author"] == "John Doe"
         assert article["relevance_score"] == 0.0
 
     @patch("engine.fetcher.requests")
-    def test_no_date_uses_current_time(self, mock_requests, mock_feedparser):
-        """Entry with no date gets assigned current time as published_date."""
+    def test_no_date_is_undated_not_now(self, mock_requests, mock_feedparser):
+        """Entry with no date ships UNDATED (Sep 30 2026 network review).
+
+        It used to be stamped with the run clock, which sorted it to the
+        top of the prompt and printed today's date beside a story nothing
+        had dated — the route a 2013 Teslarati page took onto Tesla three
+        times. An empty published_date sorts last and renders no date.
+        """
         entry = _make_entry(
             title="No Date Article",
             link="https://example.com/nodate",
@@ -547,10 +557,8 @@ class TestFetchSingleFeed:
         )
         _, articles, _ = result
         assert len(articles) == 1
-        # Should be a valid ISO timestamp
-        pd = articles[0]["published_date"]
-        parsed = datetime.datetime.fromisoformat(pd)
-        assert parsed.tzinfo is not None
+        assert articles[0]["published_date"] == ""
+        assert articles[0]["date_source"] == "unknown"
 
     @patch("engine.fetcher.requests")
     def test_http_status_error(self, mock_requests, mock_feedparser):

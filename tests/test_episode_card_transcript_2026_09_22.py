@@ -201,10 +201,15 @@ class TestTheRenderedTranscriptBox:
             self, interview_post):
         text = interview_transcript_markdown(
             INTERVIEW_DIGESTS[-1].read_text(encoding="utf-8"))
-        # A line long enough to be unmistakable, from the middle of the file.
-        long_lines = [ln for ln in text.splitlines() if len(ln) > 200]
-        assert long_lines
-        sample = long_lines[len(long_lines) // 2]
+        # A line long enough to be unmistakable. Sep 30 2026: this used to
+        # demand a >200-character line and Ep009 (09-26) had none — the
+        # guest spoke in short turns — so main went red on every push for
+        # four days over a test fixture, not a defect. Take the longest
+        # lines the transcript actually has; a transcript with no line of
+        # sixty characters is not an interview.
+        lines = sorted((ln for ln in text.splitlines() if ln.strip()), key=len)
+        assert lines and len(lines[-1]) >= 60, "no line long enough to be unmistakable"
+        sample = lines[-1]
         assert interview_post.count(sample) == 1
 
     def test_the_whole_transcript_is_still_in_the_page(self, interview_post):

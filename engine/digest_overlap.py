@@ -71,6 +71,10 @@ class DuplicateItem:
     title: str
     kept_section: str
     reason: str
+    # Sep 30 2026: the removed block's text, so a script written from the
+    # UN-deduped digest (combined generation writes PART 2 in the same
+    # call) can have its second telling of the story stripped too.
+    body: str = ""
 
 
 @dataclass
@@ -316,7 +320,7 @@ def dedupe_cross_section_items(
                 drop.add(idx)
             removed.append(DuplicateItem(
                 section=section, title=(title or urls[0])[:120],
-                kept_section=kept_section, reason=reason,
+                kept_section=kept_section, reason=reason, body=stripped,
             ))
             continue
 
@@ -346,3 +350,84 @@ def digest_overlap_summary(result: DedupeResult) -> Tuple[int, str]:
     parts = [f"{d.section or '?'} ← {d.kept_section or '?'}: {d.title[:50]}"
              for d in result.removed]
     return len(result.removed), "; ".join(parts)
+
+
+# ---------------------------------------------------------------------------
+# The script side of a dropped duplicate (Sep 30 2026, network review)
+# ---------------------------------------------------------------------------
+
+_SENT_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
+_WORD_RE = re.compile(r"[A-Za-zА-Яа-я0-9][A-Za-zА-Яа-я0-9'-]+")
+_TELLING_STOP = frozenset("""
+the a an and or of to in on for with at by from as is are was were be been
+this that these those it its into over under about after before than then
+their there they them we our you your he she his her has have had not no
+but so if while when where which who what how why also more most very
+""".split())
+
+
+def _telling_tokens(text: str) -> frozenset:
+    return frozenset(
+        w.lower() for w in _WORD_RE.findall(text or "")
+        if len(w) > 2 and w.lower() not in _TELLING_STOP
+    )
+
+
+def strip_second_tellings(
+    script: str, removed_bodies: Iterable[str], *, min_share: float = 0.5,
+) -> Tuple[str, int]:
+    """Remove the SECOND telling of a dropped duplicate item from a script.
+
+    Combined generation writes the script in the same call as the digest,
+    so when ``dedupe_cross_section_items`` drops a later item that
+    re-tells an earlier one, the script has already told the story
+    twice (SpaceX Ep112, 09-26: three waves of GB300 GPUs at L33, L67 and
+    L87; ``script_repeated_facts`` 7-12 on Ep112-116 against 1-5 before,
+    with ``digest_cross_section_dupes_removed`` a median 3 a day on the
+    show). A blind strip of the removed item's sentences would also take
+    the FIRST telling — the Sep 18 review deferred it for exactly that —
+    so this keeps the earliest script sentence that carries each removed
+    sentence and removes only the later ones. Sentences under eight words
+    are never judged (a short sentence shares words with everything).
+
+    Returns ``(script, removed_count)``; ``(script, 0)`` when nothing
+    matched or there is nothing to match against.
+    """
+    targets = []
+    for body in removed_bodies or []:
+        for sent in _SENT_SPLIT_RE.split(" ".join((body or "").split())):
+            toks = _telling_tokens(sent)
+            if len(toks) >= 4:
+                targets.append(toks)
+    if not targets or not script:
+        return script, 0
+    told = [False] * len(targets)
+    out_lines: List[str] = []
+    removed = 0
+    for line in script.splitlines():
+        if not line.strip():
+            out_lines.append(line)
+            continue
+        m = re.match(r"^(\s*[A-ZА-Я][A-Za-zА-Яа-я .'-]{0,30}:\s*)", line)
+        prefix = m.group(1) if m else ""
+        body = line[len(prefix):]
+        kept = []
+        for sent in _SENT_SPLIT_RE.split(body):
+            toks = _telling_tokens(sent)
+            if len(sent.split()) < 8 or not toks:
+                kept.append(sent)
+                continue
+            hits = [i for i, t in enumerate(targets)
+                    if len(toks & t) >= max(3, int(min_share * len(t)))]
+            if hits and all(told[i] for i in hits):
+                removed += 1
+                continue
+            for i in hits:
+                told[i] = True
+            kept.append(sent)
+        new_body = " ".join(k for k in kept if k.strip()).strip()
+        if new_body:
+            out_lines.append(prefix + new_body)
+        elif not prefix:
+            out_lines.append("")
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(out_lines)), removed
