@@ -1,0 +1,45 @@
+# Omni View Africa & Middle East
+> **About one hundred fifty people were on a Flydubai jet that sent a hijack code, and Israel scrambled fighters.**
+
+**What You Need to Know:** About one hundred fifty people were on a Flydubai jet from Dubai toward Tel Aviv that sent a hijack code on Wednesday, and Israel scrambled fighters. An Israeli security official said there was no definitive information of a hijacking and that the pilot had activated a distress signal. October petrol in the Emirates rises for a third month, and Nigeria used a UN disarmament meeting to demand that nuclear arsenals be eliminated.
+
+### Lead
+**Dubai-Tel Aviv flight reports suspected hijacking; Israeli fighter jets scrambled: Ynetnews**
+A Flydubai aircraft bound from Dubai to Tel Aviv, with about 150 people aboard, sent an emergency signal on Wednesday that indicated a possible hijacking, and Israel scrambled two fighter jets to escort it, Ynetnews reports. The alert came as the jet was descending manually and making a U-turn. It had left Dubai at 7:05 a.m. and was scheduled into Ben Gurion Airport near Tel Aviv at about 9:30 a.m. About 90 minutes out, entering Jordanian airspace, it transmitted squawk code 7700, the general-emergency code, then code 7500, used for unlawful interference including a possible hijacking. It turned back into Saudi airspace, flew lower, went south, then west, and stayed over the kingdom. Prime Minister Benjamin Netanyahu and Defense Minister Israel Katz convened an urgent security consultation.
+
+### Across the Region
+**UAE petrol prices to rise by about 16% in October: The National**
+UAE petrol prices will rise in October for a third consecutive month, The National reports, with global crude still elevated and a US-Iran truce uncertain. Super 98 goes to Dh4.40 from Dh3.80, a 15.7 percent increase. Special 95 goes to Dh4.28 from Dh3.69, and E-Plus 91 to Dh4.21 from Dh3.61, rises of nearly 16 percent and 16.6 percent. Diesel goes to Dh4.80 from Dh4.30, up 11.6 percent. The National links the pump moves to September crude, when Brent neared $110 and West Texas Intermediate topped $105 after the United States and Iran resumed offensives and Yemen’s Houthis escalated attacks on Saudi facilities in the Red Sea; since early July, when UAE petrol last fell, Brent is up nearly 45 percent. Source: [thenationalnews.com](https://www.thenationalnews.com/business/energy/2026/09/30/uae-petrol-prices-to-rise-by-about-16-in-october/)
+
+**Ghana’s minister calls LPG investments key to 2030 target: MyJoyOnline**
+Ghana’s Minister of Energy and Green Transition, John Abdulai Jinapor, said sustained investment in liquefied petroleum gas infrastructure matters for the government’s goal of at least 50 percent LPG access by 2030, MyJoyOnline reported. He cited the commissioning of a 6,000-metric-ton LPG storage terminal and the first gas delivery by the vessel MT Asharami Ghana. He said projects of that kind should widen access to cleaner cooking fuel and harden energy security and the LPG supply chain. He praised Asharami Ghana and Sahara Group, and said the terminal could open work in trade, logistics, transportation and distribution. Source: [ua.news](https://ua.news/en/energetika/ministr-gani-nazvav-investitsiyi-u-zvg-kliuchovimi-dlia-meti-do-2030-roku-myjoyonline)
+
+### Also Today
+**Tanzania Removes Special Visa Clearance for Nigerians: AllAfrica**
+Tanzania has removed Nigerian nationals from its referred visa category, ending the special clearance they needed before they could obtain visas, Vanguard reports. Source: [allafrica.com](https://allafrica.com/stories/202609300086.html)
+
+**Araghchi receives US feedback on trust-building plan, set to discuss with Iranian leadership: Middle East Eye**
+Iranian Foreign Minister Abbas Araghchi received US feedback in Doha late Tuesday, via Qatari mediators, on a seven-day trust-building plan, and will discuss that response with Tehran’s leadership on Wednesday, an official told Reuters. Source: [middleeasteye.net](https://www.middleeasteye.net/live-blog/live-blog-update/araghchi-receives-us-feedback-trust-building-plan-set-discuss-iranian)
+
+**Burkina Faso Launches First Gold Refinery: AllAfrica**
+Burkina Faso has launched its first gold refinery, and Mr Traore, in a government Information Service statement, said the country has reached a historic milestone in its quest for economic independence, Premium Times reports. Source: [allafrica.com](https://allafrica.com/stories/202609300060.html)
+
+**2027 AFCON qualifiers: first win for Patrick Vieira and Senegal: France 24**
+Patrick Vieira won his first match as Senegal’s manager,, France 24 reports. Source: [france24.com](https://www.france24.com/en/tv-shows/sports/20260930-2027-afcon-qualifiers-first-win-for-patrick-vieira-and-senegal)
+
+### The Region and the World
+**Nigeria rejects nuclear deterrence, demands total elimination of atomic weapons: Realnews Magazine**
+Nigeria’s Permanent Representative to the United Nations, Ambassador Jimoh Ibrahim, told a high-level UN meeting in New York on Tuesday that the only absolute guarantee against the use or threat of nuclear weapons is their total elimination. The session marked the International Day for the Total Elimination of Nuclear Weapons during the 81st General Assembly. He said Nigeria does not possess nuclear weapons, has never pursued a nuclear-weapons programme, has no intention of doing so, and does not rest its security on them. He said thousands of warheads remain while nuclear-weapon states continue modernisation programmes. He urged those states to honour Article VI of the Treaty on the Non-Proliferation of Nuclear Weapons and to eliminate their arsenals in a manner that is irreversible, transparent and verifiable. Source: [realnewsmagazine.net](https://realnewsmagazine.net/nigeria-rejects-nuclear-deterrence-demands-total-elimination-of-atomic-weapons/)
+
+### Both Sides: Whether Nigeria should enlarge its budget while years still overlap
+Nigeria has extended implementation of the 2025 capital budget to 31 December 2026. Minister of Budget and Economic Planning Senator Abubakar Bagudu has again called for a much larger national budget. The argument is whether spending should grow toward a one-trillion-dollar economy while budget years overlap and the revenue base stays narrow.
+
+Bagudu’s case, as Arise News reports it, starts with scale. He argues that public spending at its present level cannot fund the infrastructure and development that a one-trillion-dollar economy requires, so the budget has to grow if that ambition is serious.
+
+Dr Chijioke Ekechukwu, an economist and vice president of the Abuja Chamber of Commerce and Industry, starts with discipline. He told Arise News that budget overlaps give the impression Nigeria is not a very serious country and do not show fiscal discipline. A larger budget, he said, means larger expenditure, and expenditure has to be set against revenue. He put Nigeria’s revenue-to-GDP ratio at less than 10 percent. Without a wider revenue base, he argued, a bigger budget only widens the deficit and the borrowing that fills it. Investors watching from outside, he said, will ask whether a government that cannot hold a budget cycle should be taken seriously. What he wants next is a return to January-to-December, with capital and recurrent funds released so the spending falls inside the year.
+
+The fact both are working from is the extension: the 2025 capital budget now runs through 31 December 2026. Ekechukwu’s test is whether money is released inside a normal financial year; the extension already on the books runs to the end of 2026. Source: [arise.tv](https://www.arise.tv/chijioke-ekechukwu-budget-overlaps-show-nigeria-is-not-a-serious-country/)
+
+### Progress Watch
+**Saudi Restarts Yanbu Oil Loadings After East-West Pipeline Reopens: Egypt Oil & Gas**
+Saudi Arabia has resumed crude and refined-product loadings at the Red Sea port of Yanbu after restarting the East-West Pipeline, Egypt Oil & Gas reports, citing Reuters. The line was shut on 11 September after drone attacks that Saudi Arabia attributed to Iraqi militias, and operations resumed on 22 September. Saudi Aramco has notified customers of an October loading schedule from Yanbu, and tanker-tracking data showed loadings already under way. European Space Agency imagery from 27 September, read by TankerTrackers, indicated nearly 10 million barrels of crude being loaded at Yanbu and the nearby Al Muajjiz terminal. Industry sources put throughput near 2 million barrels a day and Kpler near 2.65 million; Kpler expects 3 million to 4 million barrels a day in the coming days, and says a return to the pre-attack level of about 5.5 million could take another month. Source: [egyptoil-gas.com](https://egyptoil-gas.com/news/saudi-restarts-yanbu-oil-loadings-after-east-west-pipeline-reopens/)
