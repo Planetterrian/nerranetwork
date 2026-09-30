@@ -274,7 +274,11 @@ class TestRunShowWiring:
         first = self.SRC.index("x_thread = _dedupe_digest_sections(x_thread, config, metrics)")
         validate = self.SRC.index("_val_passed, _val_issues, _exact_dups = _validate_digest(")
         assert first < validate
-        assert "x_thread = _dedupe_digest_sections(_x_struct, config, metrics)" in self.SRC
+        # Sep 30 2026: the regenerated digest is deduped into a CANDIDATE
+        # and adopted only when it introduces no lint the original passed
+        # (Tesla Ep617); the dedupe still runs on every retry.
+        assert "_candidate = _dedupe_digest_sections(_x_struct, config, metrics)" in self.SRC
+        assert "x_thread = _candidate" in self.SRC
 
     def test_audit_runs_before_disclosure_append(self):
         audit = self.SRC.index("_audit_podcast_script(podcast_script, x_thread, hook, config, metrics)")
