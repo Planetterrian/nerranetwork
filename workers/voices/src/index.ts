@@ -1143,13 +1143,16 @@ async function handleTriageReassign(req: Request, env: Env): Promise<Response> {
 
 async function handleEditorialDecision(req: Request, env: Env): Promise<Response> {
   const body = await req.json<any>().catch(() => null);
-  if (!body?.package_id || !["approve", "kill"].includes(body.decision)) {
-    return json({ error: "package_id + decision(approve|kill) required" }, 400);
+  if (!body?.package_id || !["approve", "kill", "archive"].includes(body.decision)) {
+    return json({ error: "package_id + decision(approve|kill|archive) required" }, 400);
   }
   // Scoped to the package being decided: a review link can approve or kill
   // its own episode and nothing else.
   const denied = await requirePackageAccess(req, env, String(body.package_id));
   if (denied) return denied;
+  if (body.decision === "archive") {
+    return archivePackage(env, String(body.package_id), String(body.notes ?? "").trim() || "archived from the review page");
+  }
   const status = body.decision === "approve" ? "approved_by_patrick" : "killed";
   const rows = await sb(env, "PATCH", `editorial_packages?id=eq.${body.package_id}`, {
     status,
@@ -1352,6 +1355,12 @@ async function handleGuestReviewPage(env: Env, token: string): Promise<Response>
   if (["approved_by_guest", "published"].includes(pkg.status)) {
     return html("<h1>Already approved — thank you!</h1>");
   }
+  if (pkg.status === "archived") {
+    return html(page("This recording has been retired",
+      "<p>This recording will not be published, so there is nothing to review here. " +
+      "If a new recording is planned, you will get a new link for it. Questions? " +
+      "Reply to any of Mira's emails.</p>"));
+  }
   const { show } = await interviewWithApp(env, pkg.interview_id);
   // A failed cleaning pass stores "" rather than null, so "??" happily
   // rendered the empty string and John Capobianco's review page went out
@@ -1451,6 +1460,7 @@ async function submitReview(approve){
 async function handleGuestReviewSubmit(req: Request, env: Env, token: string): Promise<Response> {
   const pkg = await pkgByToken(env, token);
   if (!pkg) return json({ error: "not found" }, 404);
+  if (pkg.status === "archived") return json({ error: "this recording has been retired and will not be published" }, 409);
   const body = await req.json<any>().catch(() => ({}));
   const now = new Date().toISOString();
   const { interview, app, show } = await interviewWithApp(env, pkg.interview_id);
@@ -1583,6 +1593,84 @@ async function reassign(id){
 </script>`);
 }
 
+// ---------------------------------------------------------------------------
+// The archive (Sept 30 2026)
+// ---------------------------------------------------------------------------
+// Meridan Zerner and Chad Law are both recording again, and the rehearsals
+// Patrick ran on Sept 9-10 were never meant for anyone. None of them should
+// be published and none of them should be deleted. "archived" is a status
+// nothing downstream acts on: the auto-approval looks only at
+// approved_by_patrick, the publish step requires approved_by_guest, and the
+// guest review page and its submit refuse an archived package. The archive
+// page lists them, token-gated, with their audio and transcript.
+
+async function archiveToken(env: Env): Promise<string> {
+  const token = (env.ADMIN_TOKEN || "").trim();
+  if (!token) throw new Error("ADMIN_TOKEN required");
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw", enc.encode(token), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode("nerra-archive"));
+  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 40);
+}
+
+async function archivePackage(env: Env, packageId: string, reason: string): Promise<Response> {
+  const rows = await sb(env, "PATCH", `editorial_packages?id=eq.${packageId}`, {
+    status: "archived", patrick_reviewed_at: new Date().toISOString(),
+    patrick_notes: `Archived: ${reason}`.slice(0, 2000),
+  }, "return=representation");
+  const pkg = rows?.[0];
+  if (!pkg) return json({ error: "package not found" }, 404);
+  await sb(env, "PATCH", `interviews?id=eq.${pkg.interview_id}`, { status: "archived" });
+  const { app, show } = await interviewWithApp(env, pkg.interview_id);
+  await slack(env, `${show.shortLabel}: ${app?.name ?? "episode"} archived (${reason}) — kept, never published.`);
+  return json({ ok: true, archived: pkg.id });
+}
+
+async function handleArchivePage(req: Request, env: Env, pathToken?: string): Promise<Response> {
+  const url = new URL(req.url);
+  const given = pathToken || url.searchParams.get("token") || "";
+  if (!given || (given !== (env.ADMIN_TOKEN || "") && given !== await archiveToken(env))) {
+    return html("<h1>Link not found</h1>", 404);
+  }
+  const pkgs = (await sb(env, "GET",
+    "editorial_packages?status=eq.archived&order=created_at.desc&limit=200" +
+    "&select=id,interview_id,interview_run_id,created_at,patrick_notes,transcript_cleaned,transcript_raw")) ?? [];
+  const items: string[] = [];
+  for (const pkg of pkgs) {
+    const { interview, app, show } = await interviewWithApp(env, pkg.interview_id);
+    const runs = pkg.interview_run_id ? await sb(env, "GET",
+      `interview_runs?id=eq.${pkg.interview_run_id}&select=grok_session_log,duration_sec`) : [];
+    const tracks = runs?.[0]?.grok_session_log?.tracks ?? {};
+    const audio = tracks?.edit?.url || tracks?.preview || runs?.[0]?.grok_session_log?.voximplant_mix_record_url || "";
+    const when = interview?.scheduled_at ? new Date(interview.scheduled_at).toUTCString().slice(0, 16) : "";
+    const transcript = String(pkg.transcript_cleaned || pkg.transcript_raw || "").trim();
+    items.push(`<section style="border-top:1px solid #e2e8f0;padding:1rem 0">
+      <h2 style="margin:.2rem 0">${esc(app?.name ?? "Unknown guest")}</h2>
+      <p style="color:#4a5568;margin:.2rem 0">${esc(show.name)} · recorded ${esc(when)} ·
+        ${esc(String(pkg.patrick_notes ?? "archived").replace(/^Archived:\s*/, ""))}</p>
+      ${audio ? `<audio controls preload="none" src="${esc(audio)}" style="width:100%"></audio>
+        <p><a href="${esc(audio)}">Download the audio</a></p>` : "<p>No edited audio on file.</p>"}
+      ${transcript ? `<details><summary>Transcript</summary><pre style="white-space:pre-wrap;font:14px/1.5 system-ui">${esc(transcript.slice(0, 60000))}</pre></details>` : ""}
+    </section>`);
+  }
+  const body = `<p>Recordings kept but never published: replaced by a new recording,
+    retired at the guest's request, or tests. Nothing here appears on the site or in
+    any feed. Only this link opens it.</p>` + (items.join("") || "<p>Nothing archived yet.</p>");
+  return html(page("Archived episodes", body));
+}
+
+async function handleArchiveLink(env: Env): Promise<Response> {
+  // Emails the archive link to Patrick and only to him: safe to call from anywhere.
+  const link = `https://api.nerranetwork.com/voices/admin/archive/${await archiveToken(env)}`;
+  await email(env, operatorEmail(env), "The episode archive",
+    `<p>Hi Patrick,</p><p>Here is the private archive: recordings that are kept but never
+     published (replaced by a new recording, retired at a guest's request, or tests).</p>
+     <p><a href="${link}">Open the archive</a></p><p>Keep the link to yourself; it is the
+     only key.</p><p>— Mira</p>`);
+  return html(page("Sent", "<p>The archive link is on its way to Patrick's inbox.</p>"));
+}
+
 async function handleAdminReview(req: Request, env: Env, id: string): Promise<Response> {
   const denied = await requirePackageAccess(req, env, id);
   if (denied) return denied;
@@ -1643,7 +1731,8 @@ ${activeLessons.length
 of the mail she sends them. Leave it empty for the standard note.</p>
 <textarea id="to_guest" placeholder="A word to the guest — an apology, a thank-you, what changed since they recorded"></textarea>
 <p><button onclick="decide('approve')">Approve → guest review</button>
-<button onclick="decide('kill')">Kill episode</button></p>
+<button onclick="decide('kill')">Kill episode</button>
+<button onclick="decide('archive')">Archive (keep, never publish)</button></p>
 <p id="status"></p>
 <script>
 const token = new URL(location).searchParams.get('token')
@@ -2574,6 +2663,9 @@ export default {
           : handleGuestReviewPage(env, review[1]);
       }
       if (req.method === "GET" && path === "/voices/admin/triage") return handleAdminTriage(req, env);
+      if (req.method === "GET" && path === "/voices/admin/archive-link") return handleArchiveLink(env);
+      const archive = path.match(/^\/voices\/admin\/archive(?:\/([0-9a-f]{40}))?$/);
+      if (archive && req.method === "GET") return handleArchivePage(req, env, archive[1]);
       // The token rides in the path as well as the query string: mail
       // transports have twice now mangled the "=" in "?token=..." on the way
       // to Patrick's inbox, and a link that does not survive email is not a
