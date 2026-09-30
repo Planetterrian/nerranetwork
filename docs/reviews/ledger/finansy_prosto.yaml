@@ -1,298 +1,359 @@
-# Review ledger for finansy_prosto. Schema: docs/reviews/ledger/README.md
 reviews:
-  - date: 2026-06-16
-    pr: 658
-    doc: docs/reviews/finansy_prosto_review_2026_06_16.md
-    summary: >
-      First DEDICATED FP pass (June 10 covered FP+PR together). Scored the
-      June-10 floor-raise as a MISS (episodes still ~5 min / ~700w because the
-      podcast tracks a ~700w digest and may not pad). Shipped: localized the
-      English YouTube call-out to Russian for the Olya voice; stripped the "@"
-      sigil the TTS voiced as "at" ("...YouTube at at Nerra Network", 75+
-      times across 6 shows); cadence-neutral FP closings (was "до завтра" on an
-      even-days show); _extract_hook now recognizes the Russian "ЗАГОЛОВОК:"
-      label (stops a wasted structural regen every episode); de-Tesla'd the
-      structural-retry suffix; deepened the digest (3-4 tips / 3 quick-news /
-      5-7 articles) to re-attack under-length at the digest, where the content
-      is (69-129 articles/day).
-    shipped:
-      - Russian YouTube call-out for FP (engine/intros._RUSSIAN_SPOKEN_SHOWS)
-      - '"@" stripped from spoken handle network-wide (fixes "at at" stutter)'
-      - cadence-neutral FP closings ("до встречи" replaces "до завтра")
-      - _extract_hook matches "HOOK|ЗАГОЛОВОК"
-      - structural-retry suffix de-Tesla'd (generic section language)
-      - digest prompt: 3-4 tips, 3 quick-news, 5-7 articles (matches podcast min-3)
-    deferred:
-      - podcast-prompt length-target reconciliation (1300-1700 unreachable from ~700w digest) — re-score after digest-depth lands
-      - digest-stage expansion retry (standing network lever, shared with FF/UC/FPD)
-      - schedule anomaly: Ep53 aired Jun 15 (odd) — operator to confirm even-days dispatch (not a pipeline bug)
-    predictions:
-      - metric: transcripts ending with an English YouTube call-out (FP)
-        baseline: "5/5 recent FP episodes (English on the Olya voice)"
-        expected: "0 post-merge; the call-out is Russian ('Ссылка в описании выпуска')"
-        verdict: hit
-        evidence: "2026-07-02 network pass: window FP episodes end with the
-          Russian call-out; no English CTA on the Olya voice."
-      - metric: episodes voicing "at at Nerra …" (network-wide)
-        baseline: "75+ across 6 shows (49 'at at Nerra Network', 8+10 'Nerra RU')"
-        expected: "0 post-merge; handle spoken without the '@' sigil"
-        verdict: hit
-        evidence: "2026-07-02 network pass: no 'at at' stutter in any window
-          transcript, network-wide."
-      - metric: FP transcripts saying "до завтра" in the closing
-        baseline: "present in both closing-pool variants (even-days show)"
-        expected: "0 post-merge; closings cadence-neutral ('до встречи')"
-        verdict: hit
-        evidence: "2026-07-02 network pass: closings cadence-neutral; no
-          'до завтра' in the window."
-      - metric: FP episodes with digest_structural_regen=true
-        baseline: "10/10 (Ep45-54, every episode — ЗАГОЛОВОК hook unrecognized)"
-        expected: "0 (or near 0) post-merge — ЗАГОЛОВОК now recognized"
-        verdict: hit
-        evidence: "2026-07-02 network pass: digest_structural_regen no longer
-          fires every episode; the Russian hook label is recognized."
-      - metric: median FP _tts.txt words / audio minutes, last ~5 post-merge eps
-        baseline: "~700w / ~5.0 min (Ep50-54)"
-        expected: ">= 950w / >= 7 min on normal-news even-days; not lower than baseline"
-        verdict: miss
-        evidence: "2026-07-02 network pass: episodes still ~700w / ~5 min —
-          the digest-depth prompt did not lift shipped length. Chronic
-          under-length stays deferred (digest ceiling; four-show length A/B)."
-      - metric: FP practical-tips count per episode (digest)
-        baseline: "2-3 (digest) vs podcast's required minimum of 3"
-        expected: ">= 3 tips every episode"
-        verdict: hit
-        evidence: "2026-07-02 network pass: window episodes carry >= 3
-          practical tips."
-    agent_cost_usd: null
+- date: 2026-06-16
+  pr: 658
+  doc: docs/reviews/finansy_prosto_review_2026_06_16.md
+  summary: 'First DEDICATED FP pass (June 10 covered FP+PR together). Scored the June-10 floor-raise as a MISS (episodes still ~5 min / ~700w because the podcast tracks a ~700w digest and may not pad). Shipped: localized the English YouTube call-out to Russian for the Olya voice; stripped the "@" sigil the TTS voiced as "at" ("...YouTube at at Nerra Network", 75+ times across 6 shows); cadence-neutral FP closings (was "до завтра" on an even-days show); _extract_hook now recognizes the Russian "ЗАГОЛОВОК:" label (stops a wasted structural regen every episode); de-Tesla''d the structural-retry suffix; deepened the digest (3-4 tips / 3 quick-news / 5-7 articles) to re-attack under-length at the digest, where the content is (69-129 articles/day).
 
-  - date: 2026-07-02
-    pr: null
-    doc: docs/reviews/network_review_2026_07_02.md
-    reviewer: claude-code (network editorial pass)
-    summary: >
-      Network editorial pass. Scored June-16: five HITs (Russian CTA, at-at,
-      до-завтра, ЗАГОЛОВОК regen, tips), length MISS (deferred). P0: Ep059
-      spoke a raw digest scaffold line on air («Сорс MoneySense…»). Also:
-      one fabricated tip; a template echo the Cyrillic-blind snapshot missed
-      — «не так уж и сложно, правда?» 7/8 and «Подруга спросила меня вчера»
-      6/8. Real niche, real localization otherwise. Cadence is stated three
-      contradictory ways across YAML / CLAUDE.md / ledger (operator item).
-    shipped:
-      - Source-line scrub in the script-save path (network-wide; kills the
-        spoken «Сорс …» scaffold class)
-    deferred:
-      - "A/B proposals (NOT applied): de-seed «не так уж и сложно, правда?»
-        and «Подруга спросила меня вчера» (keep the method, fresh phrasing);
-        cap «Коротко и ясно» at 2-3 sentences + finance-relevance rule;
-        disclaimer line in all closing variants; deep-dive may not
-        re-explain the episode's own main topic"
-      - chronic under-length (carried; digest ceiling, four-show length A/B)
-      - "operator: align the cadence (YAML daily vs CLAUDE.md-table Monday
-        vs ledger even-days; actual mixed)"
-    predictions:
-      - metric: spoken source-scaffold lines («Сорс …» / «Source …») in _tts.txt
-        baseline: "Ep059 spoke «Сорс MoneySense…» on air"
-        expected: "0 post-merge (script-save scrub)"
-        verdict: pending
-        evidence: null
-    agent_cost_usd: null
+    '
+  shipped:
+  - Russian YouTube call-out for FP (engine/intros._RUSSIAN_SPOKEN_SHOWS)
+  - '"@" stripped from spoken handle network-wide (fixes "at at" stutter)'
+  - cadence-neutral FP closings ("до встречи" replaces "до завтра")
+  - _extract_hook matches "HOOK|ЗАГОЛОВОК"
+  - structural-retry suffix de-Tesla'd (generic section language)
+  - digest prompt: 3-4 tips, 3 quick-news, 5-7 articles (matches podcast min-3)
+  deferred:
+  - podcast-prompt length-target reconciliation (1300-1700 unreachable from ~700w digest) — re-score after digest-depth lands
+  - digest-stage expansion retry (standing network lever, shared with FF/UC/FPD)
+  - schedule anomaly: Ep53 aired Jun 15 (odd) — operator to confirm even-days dispatch (not a pipeline bug)
+  predictions:
+  - metric: transcripts ending with an English YouTube call-out (FP)
+    baseline: 5/5 recent FP episodes (English on the Olya voice)
+    expected: 0 post-merge; the call-out is Russian ('Ссылка в описании выпуска')
+    verdict: hit
+    evidence: '2026-07-02 network pass: window FP episodes end with the Russian call-out; no English CTA on the Olya voice.'
+  - metric: episodes voicing "at at Nerra …" (network-wide)
+    baseline: 75+ across 6 shows (49 'at at Nerra Network', 8+10 'Nerra RU')
+    expected: 0 post-merge; handle spoken without the '@' sigil
+    verdict: hit
+    evidence: '2026-07-02 network pass: no ''at at'' stutter in any window transcript, network-wide.'
+  - metric: FP transcripts saying "до завтра" in the closing
+    baseline: present in both closing-pool variants (even-days show)
+    expected: 0 post-merge; closings cadence-neutral ('до встречи')
+    verdict: hit
+    evidence: '2026-07-02 network pass: closings cadence-neutral; no ''до завтра'' in the window.'
+  - metric: FP episodes with digest_structural_regen=true
+    baseline: 10/10 (Ep45-54, every episode — ЗАГОЛОВОК hook unrecognized)
+    expected: 0 (or near 0) post-merge — ЗАГОЛОВОК now recognized
+    verdict: hit
+    evidence: '2026-07-02 network pass: digest_structural_regen no longer fires every episode; the Russian hook label is recognized.'
+  - metric: median FP _tts.txt words / audio minutes, last ~5 post-merge eps
+    baseline: ~700w / ~5.0 min (Ep50-54)
+    expected: '>= 950w / >= 7 min on normal-news even-days; not lower than baseline'
+    verdict: miss
+    evidence: '2026-07-02 network pass: episodes still ~700w / ~5 min — the digest-depth prompt did not lift shipped length. Chronic under-length stays deferred (digest ceiling; four-show length A/B).'
+  - metric: FP practical-tips count per episode (digest)
+    baseline: 2-3 (digest) vs podcast's required minimum of 3
+    expected: '>= 3 tips every episode'
+    verdict: hit
+    evidence: '2026-07-02 network pass: window episodes carry >= 3 practical tips.'
+  agent_cost_usd: null
+- date: 2026-07-02
+  pr: null
+  doc: docs/reviews/network_review_2026_07_02.md
+  reviewer: claude-code (network editorial pass)
+  summary: 'Network editorial pass. Scored June-16: five HITs (Russian CTA, at-at, до-завтра, ЗАГОЛОВОК regen, tips), length MISS (deferred). P0: Ep059 spoke a raw digest scaffold line on air («Сорс MoneySense…»). Also: one fabricated tip; a template echo the Cyrillic-blind snapshot missed — «не так уж и сложно, правда?» 7/8 and «Подруга спросила меня вчера» 6/8. Real niche, real localization otherwise. Cadence is stated three contradictory ways across YAML / CLAUDE.md / ledger (operator item).
 
-  - date: '2026-08-06'
-    pr: null
-    doc: docs/reviews/finansy_prosto_review_2026_08_06.md
-    generated_by: grok-4.5
-    summary: FP still ships chronic under-length (9/10 eps below 1000w), live boilerplate tics the July-2 pass only deferred, and residual spoken source-scaffold («Источник информации…») plus off-topic Коротко beats—attack digest-side length and scrub/de-seed, not podcast expand.
-    scored_prior_predictions:
-    - metric: spoken source-scaffold lines («Сорс …» / «Source …») in _tts.txt
-      verdict: miss
-      evidence: 'Russian shapes still ship: ep71/75/76 «Источник информации…» / «Источник Медузы» / bare BNN Bloomberg attributions in Коротко'
-    shipped: []
-    deferred:
-    - 'Operator: resolve cadence contradiction (YAML «ежедневный» vs CLAUDE.md Monday vs historical even-days cron; actual July run was near-daily).'
-    - 'Operator: YOUTUBE_REFRESH_TOKEN_RU so RU YouTube uploads are real.'
-    - 'Operator A/B: fully localized AI-disclosure wording on Olya (still garble-prone «с помощью и синтеза голоса»).'
-    - 'If digest-side lever misses length again after a full post-merge window: operator product decision (accept ~5–6 min vs restructure segments)—do not re-propose podcast expand/word-floor.'
-    - 'Optional later: stabilize YouTube CTA spoken brand as pure Cyrillic «Нерра РУ» if handle garble persists after source scrub (A/B; no phonetic respelling).'
-    - Closing-pool disclaimer already on 8/10; only chase the short closer path (ep69/76) if it drops the advisor line after other prompt edits.
-    predictions:
-    - metric: spoken Russian/English source-scaffold lines in FP _tts.txt (Источник информации / Информация размещена на / Source / Сорс)
-      baseline: ≥3 episodes in ep71–76 window with explicit источник/outlet scaffold in Коротко
-      expected: 0 in episodes produced after scrub extension merges
-      verdict: pending
-      evidence: null
-    - metric: median FP _tts.txt words, last ~5 episodes after digest-side lever
-      baseline: 'median ~800w (ep73–77: 812/789/823/787/742); 9/10 below 1000w'
-      expected: median ≥950w and ≥3/5 episodes ≥1000w on normal news days; not lower than baseline
-      verdict: pending
-      evidence: null
-    - metric: podcast_expand_below_target firings / cost spikes on FP
-      baseline: flag true; ep76 $0.205 ep77 $0.354 vs ~$0.09 earlier in window
-      expected: flag false post-merge; no expand-retry cost signature; avg $/ep back near ~$0.10 unless digest expand is doing real work
-      verdict: pending
-      evidence: null
-    - metric: episodes using «а теперь моя любимая часть» OR «Подруга спросила меня вчера» OR «не так уж и сложно, правда?» shapes
-      baseline: любимая часть 9/10; подруга ≥4/10; не так уж и сложно ≥6/10
-      expected: 0/10 for all three shapes in post-merge window (successor tic may appear—score that separately next pass)
-      verdict: pending
-      evidence: null
-    - metric: Коротко и ясно items with no household-finance hook (pure tech/corp/geopolitics)
-      baseline: ≥1 off-niche item in ep68,69,74,76
-      expected: 0 off-niche items per episode post-relevance rule
-      verdict: pending
-      evidence: null
-    - metric: ep chapters including both Практические советы and Коротко when those segments exist in transcript
-      baseline: ep77 chapters omit both despite body copy present
-      expected: patterns match «коротко о» / practical-step variants; no 3-chapter collapse on full five-segment scripts
-      verdict: pending
-      evidence: null
-    proposed_changes_in_pr:
-    - file: engine/generator.py (or run_show script-save scrub path used July-2)
-      kind: code
-      ab_listen_required: false
-      rationale: 'July-2 prediction missed: FP still speaks source scaffold in Russian. Deterministic, high-yield garble/fetch class; no A/B.'
-    - file: shows/finansy_prosto.yaml
-      kind: config
-      ab_listen_required: true
-      rationale: Length miss ×2 at podcast/digest-depth prompts; network policy forbids another podcast-side lever. Digest is the ceiling; env_intel already moved this way. Audio length/content will change → operator A/B-listen net episodes.
-    - file: shows/finansy_prosto.yaml
-      kind: config
-      ab_listen_required: false
-      rationale: ep77 used «коротко о других новостях» and «практическим шагам» and lost two chapters; metadata-only fix.
-    - file: shows/prompts/fp_podcast.txt
-      kind: prompt
-      ab_listen_required: true
-      rationale: July-2 deferred de-seed never applied; snapshot still shows 7–9/10 recurrence. Shape ban + memory per playbook anti-seed rule.
-    - file: shows/prompts/fp_podcast.txt
-      kind: prompt
-      ab_listen_required: true
-      rationale: Stops runtime theft and niche dilution verified in ep68/69/74/76.
-    - file: shows/prompts/fp_podcast.txt
-      kind: prompt
-      ab_listen_required: true
-      rationale: July-2 deferred item; still wastes the longest segment on duplicate teaching.
-    - file: shows/prompts/fp_digest.txt
-      kind: prompt
-      ab_listen_required: true
-      rationale: Digest is the substrate; without digest floor the podcast cannot honestly hit 1000w. Complements yaml lever; A/B because spoken length/content changes.
-    - file: tests/test_finansy_prosto_quality_pass.py
-      kind: code
-      ab_listen_required: false
-      rationale: Every behavioral fix needs a drift-guard per playbook.
-    agent_cost_usd: 0.101
-  - date: '2026-09-07'
-    pr: null
-    doc: docs/reviews/finansy_prosto_review_2026_09_07.md
-    generated_by: grok-4.5
-    summary: FP still ships chronic under-length (10/10 below 1000w), live Russian source-scaffold and section-chapter collapses the Aug-6 proposals never fixed, plus unchanged boilerplate tics and off-niche Коротко—re-propose digest-side length + scrub/chapter/de-seed only; escalate length to operator if digest lever is declined again.
-    scored_prior_predictions:
-    - metric: spoken Russian/English source-scaffold lines in FP _tts.txt (Источник информации / Информация размещена на / Source / Сорс)
-      verdict: miss
-      evidence: Scrub never shipped; ep75 «Источник информации BNN…» ×3, ep76 «Источник Медузы», ep73/79/82 «Информация размещена/доступна на …» still on air
-    - metric: median FP _tts.txt words, last ~5 episodes after digest-side lever
-      verdict: miss
-      evidence: Lever never merged; ep78–82 words 732/768/634/741/938, median ~741w, 10/10 still under 1000w
-    - metric: podcast_expand_below_target firings / cost spikes on FP
-      verdict: miss
-      evidence: YAML still podcast_expand_below_target true; avg $0.249/ep, ep82 $0.447 expand-burn signature
-    - metric: episodes using «а теперь моя любимая часть» OR «Подруга спросила меня вчера» OR «не так уж и сложно, правда?» shapes
-      verdict: miss
-      evidence: De-seed never applied; ep73 all three shapes; ep74–76 keep любимая часть ± подруга/не так уж
-    - metric: Коротко и ясно items with no household-finance hook (pure tech/corp/geopolitics)
-      verdict: miss
-      evidence: ep74 bosses RTO + Meta–Anthropic; ep75 Chinese AI freeze; ep76 Rostov storm + Japan delegation still shipped
-    - metric: ep chapters including both Практические советы and Коротко when those segments exist in transcript
-      verdict: miss
-      evidence: chapters_ep077/079/081.json still 3-chapter collapses; ep80/82 body-text titles; YAML patterns never broadened
-    - metric: spoken source-scaffold lines («Сорс …» / «Source …») in _tts.txt
-      verdict: miss
-      evidence: July-2 Latin scrub held but Russian equivalents replaced it; still open as Aug-6 miss
-    shipped: []
-    deferred:
-    - 'Operator: resolve cadence contradiction (YAML «ежедневный» vs CLAUDE.md Monday vs historical even-days; actual ep73–82 roughly weekly).'
-    - 'Operator: YOUTUBE_REFRESH_TOKEN_RU so RU YouTube uploads are real.'
-    - 'Operator A/B: fully localized AI-disclosure wording on Olya (still garble-prone «с помощью и синтеза голоса» / ИИ drop).'
-    - 'If digest-side lever is declined again OR misses length after a full post-merge window: operator product decision (accept ~5–6 min vs restructure segments) — do not re-propose podcast expand/word-floor.'
-    - 'Optional later: stabilize YouTube CTA spoken brand as pure Cyrillic «Нерра РУ» if handle garble persists after source scrub (A/B; no phonetic respelling).'
-    - 'Optional: first-use Russian expansion of RRSP/TFSA/FHSA then Russian short name (A/B; no letter-salad Latin).'
-    - Closing-pool disclaimer already on most eps; only chase short closer path (ep76/78/80-style) if advisor line drops after other prompt edits.
-    predictions:
-    - metric: spoken Russian source-scaffold lines in FP _tts.txt (Источник… / Информация размещена|доступна|поступила… / Подробности доступны на / История опубликована на)
-      baseline: ≥6/10 episodes in ep73–82 window with explicit scaffold or outlet-attribution lines in Коротко
-      expected: 0 in episodes produced after scrub extension merges
-      verdict: pending
-      evidence: null
-    - metric: FP episodes whose chapters omit Практические советы or Коротко when those segments exist in transcript
-      baseline: ep77/79/81 full collapse; ep78 missing practical; ep80/82 mis-titled markers
-      expected: 0 collapses on full five-segment scripts after pattern broaden; titles match section names not body clauses
-      verdict: pending
-      evidence: null
-    - metric: median FP _tts.txt words, last ~5 episodes after digest-side lever merges
-      baseline: median ~741w (ep78–82); 10/10 below 1000w
-      expected: median ≥950w and ≥3/5 episodes ≥1000w on normal news days; not lower than baseline — if lever not shipped, score n/a-lever-not-shipped next pass
-      verdict: pending
-      evidence: null
-    - metric: podcast_expand_below_target true and expand-retry cost spikes on FP
-      baseline: flag true; avg $0.249/ep, ep82 $0.447
-      expected: flag false post-merge; no podcast-expand cost signature; avg $/ep back near pre-spike unless digest expand is doing real work
-      verdict: pending
-      evidence: null
-    - metric: episodes using «а теперь моя любимая часть» OR «Подруга спросила меня вчера» OR «не так уж и сложно, правда?» shapes
-      baseline: ep73–76 still carry the cluster; de-seed never applied
-      expected: 0/10 for all three shapes in post-merge window (successor tic may appear—score separately)
-      verdict: pending
-      evidence: null
-    - metric: Коротко и ясно items with no household-finance hook in sentence one
-      baseline: ≥1 off-niche item in ep74,75,76
-      expected: 0 off-niche items per episode post-relevance rule
-      verdict: pending
-      evidence: null
-    - metric: successor deep-dive/transition tic after de-seed (rhetorical Q or «по полочкам»/equivalent cute closer)
-      baseline: not yet dominant; prior cluster still live
-      expected: track only — if ≥4/10 adopt one new shape, next pass de-seeds that shape (no prompt example phrase)
-      verdict: pending
-      evidence: null
-    proposed_changes_in_pr:
-    - file: engine/generator.py
-      kind: code
-      ab_listen_required: false
-      rationale: 'Aug-6 miss: Latin scrub left Russian scaffold on air (ep75/76/73/79/82). Deterministic high-yield garble class; no A/B.'
-    - file: shows/finansy_prosto.yaml
-      kind: config
-      ab_listen_required: false
-      rationale: 'ep77/79/81 collapse and ep78/80/82 mis-markers: body uses «коротко о других новостях», «практическим шагам», «практической стороне» which current regex misses. Metadata-only.'
-    - file: shows/finansy_prosto.yaml
-      kind: config
-      ab_listen_required: true
-      rationale: 'Length miss ×2 at podcast/digest-depth prompts; network policy = digest-substrate only. FP last podcast-expand holdout. Flipping expand off stops $0.25–0.45 burn; digest floor is the real ceiling. Net audio longer/richer → operator A/B-listen. If declined or misses after full window: operator product decision, do not re-file.'
-    - file: shows/prompts/fp_podcast.txt
-      kind: prompt
-      ab_listen_required: true
-      rationale: July-2/Aug-6 deferred de-seed + relevance + non-repeat never applied; ep73–76 still tic; ep74–76 off-niche Коротко; ep76/80 deep-dive re-teaches. Shape ban + memory per playbook.
-    - file: shows/prompts/fp_digest.txt
-      kind: prompt
-      ab_listen_required: true
-      rationale: Podcast cannot hit 1000w from a ~700w digest; June depth steer alone missed. Digest is the lever; A/B because spoken length/content change.
-    - file: tests/test_finansy_prosto_quality_pass.py
-      kind: code
-      ab_listen_required: false
-      rationale: Every behavioral fix needs a drift-guard per playbook.
-    agent_cost_usd: 0.1074
-  - date: 2026-09-24
-    pr: "network sourcing pass (the launch cohort's sourcing floor on every news show)"
-    doc: docs/experiments.yaml (network-sourcing-pass-2026-09-24)
-    reviewer: claude-code (network pass after the launch-cohort readouts)
-    summary: >-
-      Full text on 8 articles; canada.ca / Bank of Canada / CRA / FCAC / ontario.ca preferred; X posts secondary; a Russian-labelled Sources line (Источники) in the show notes. The Google News Canada-finance query returned zero items; simplified.
-    shipped:
-      - fetch_full_text 8
-      - preferred_domains
-      - x_posts_as_sources secondary
-      - show-notes Sources line (ru)
-      - GN query
-    predictions:
-      - metric: "source_integrity_claims median"
-        baseline: "n/a"
-        expected: ">= 2"
-        verdict: pending
+    '
+  shipped:
+  - Source-line scrub in the script-save path (network-wide; kills the spoken «Сорс …» scaffold class)
+  deferred:
+  - 'A/B proposals (NOT applied): de-seed «не так уж и сложно, правда?» and «Подруга спросила меня вчера» (keep the method, fresh phrasing); cap «Коротко и ясно» at 2-3 sentences + finance-relevance rule; disclaimer line in all closing variants; deep-dive may not re-explain the episode''s own main topic'
+  - chronic under-length (carried; digest ceiling, four-show length A/B)
+  - 'operator: align the cadence (YAML daily vs CLAUDE.md-table Monday vs ledger even-days; actual mixed)'
+  predictions:
+  - metric: spoken source-scaffold lines («Сорс …» / «Source …») in _tts.txt
+    baseline: Ep059 spoke «Сорс MoneySense…» on air
+    expected: 0 post-merge (script-save scrub)
+    verdict: pending
+    evidence: null
+  agent_cost_usd: null
+- date: '2026-08-06'
+  pr: null
+  doc: docs/reviews/finansy_prosto_review_2026_08_06.md
+  generated_by: grok-4.5
+  summary: FP still ships chronic under-length (9/10 eps below 1000w), live boilerplate tics the July-2 pass only deferred, and residual spoken source-scaffold («Источник информации…») plus off-topic Коротко beats—attack digest-side length and scrub/de-seed, not podcast expand.
+  scored_prior_predictions:
+  - metric: spoken source-scaffold lines («Сорс …» / «Source …») in _tts.txt
+    verdict: miss
+    evidence: 'Russian shapes still ship: ep71/75/76 «Источник информации…» / «Источник Медузы» / bare BNN Bloomberg attributions in Коротко'
+  shipped: []
+  deferred:
+  - 'Operator: resolve cadence contradiction (YAML «ежедневный» vs CLAUDE.md Monday vs historical even-days cron; actual July run was near-daily).'
+  - 'Operator: YOUTUBE_REFRESH_TOKEN_RU so RU YouTube uploads are real.'
+  - 'Operator A/B: fully localized AI-disclosure wording on Olya (still garble-prone «с помощью и синтеза голоса»).'
+  - 'If digest-side lever misses length again after a full post-merge window: operator product decision (accept ~5–6 min vs restructure segments)—do not re-propose podcast expand/word-floor.'
+  - 'Optional later: stabilize YouTube CTA spoken brand as pure Cyrillic «Нерра РУ» if handle garble persists after source scrub (A/B; no phonetic respelling).'
+  - Closing-pool disclaimer already on 8/10; only chase the short closer path (ep69/76) if it drops the advisor line after other prompt edits.
+  predictions:
+  - metric: spoken Russian/English source-scaffold lines in FP _tts.txt (Источник информации / Информация размещена на / Source / Сорс)
+    baseline: ≥3 episodes in ep71–76 window with explicit источник/outlet scaffold in Коротко
+    expected: 0 in episodes produced after scrub extension merges
+    verdict: pending
+    evidence: null
+  - metric: median FP _tts.txt words, last ~5 episodes after digest-side lever
+    baseline: 'median ~800w (ep73–77: 812/789/823/787/742); 9/10 below 1000w'
+    expected: median ≥950w and ≥3/5 episodes ≥1000w on normal news days; not lower than baseline
+    verdict: pending
+    evidence: null
+  - metric: podcast_expand_below_target firings / cost spikes on FP
+    baseline: flag true; ep76 $0.205 ep77 $0.354 vs ~$0.09 earlier in window
+    expected: flag false post-merge; no expand-retry cost signature; avg $/ep back near ~$0.10 unless digest expand is doing real work
+    verdict: pending
+    evidence: null
+  - metric: episodes using «а теперь моя любимая часть» OR «Подруга спросила меня вчера» OR «не так уж и сложно, правда?» shapes
+    baseline: любимая часть 9/10; подруга ≥4/10; не так уж и сложно ≥6/10
+    expected: 0/10 for all three shapes in post-merge window (successor tic may appear—score that separately next pass)
+    verdict: pending
+    evidence: null
+  - metric: Коротко и ясно items with no household-finance hook (pure tech/corp/geopolitics)
+    baseline: ≥1 off-niche item in ep68,69,74,76
+    expected: 0 off-niche items per episode post-relevance rule
+    verdict: pending
+    evidence: null
+  - metric: ep chapters including both Практические советы and Коротко when those segments exist in transcript
+    baseline: ep77 chapters omit both despite body copy present
+    expected: patterns match «коротко о» / practical-step variants; no 3-chapter collapse on full five-segment scripts
+    verdict: pending
+    evidence: null
+  proposed_changes_in_pr:
+  - file: engine/generator.py (or run_show script-save scrub path used July-2)
+    kind: code
+    ab_listen_required: false
+    rationale: 'July-2 prediction missed: FP still speaks source scaffold in Russian. Deterministic, high-yield garble/fetch class; no A/B.'
+  - file: shows/finansy_prosto.yaml
+    kind: config
+    ab_listen_required: true
+    rationale: Length miss ×2 at podcast/digest-depth prompts; network policy forbids another podcast-side lever. Digest is the ceiling; env_intel already moved this way. Audio length/content will change → operator A/B-listen net episodes.
+  - file: shows/finansy_prosto.yaml
+    kind: config
+    ab_listen_required: false
+    rationale: ep77 used «коротко о других новостях» and «практическим шагам» and lost two chapters; metadata-only fix.
+  - file: shows/prompts/fp_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: July-2 deferred de-seed never applied; snapshot still shows 7–9/10 recurrence. Shape ban + memory per playbook anti-seed rule.
+  - file: shows/prompts/fp_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: Stops runtime theft and niche dilution verified in ep68/69/74/76.
+  - file: shows/prompts/fp_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: July-2 deferred item; still wastes the longest segment on duplicate teaching.
+  - file: shows/prompts/fp_digest.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: Digest is the substrate; without digest floor the podcast cannot honestly hit 1000w. Complements yaml lever; A/B because spoken length/content changes.
+  - file: tests/test_finansy_prosto_quality_pass.py
+    kind: code
+    ab_listen_required: false
+    rationale: Every behavioral fix needs a drift-guard per playbook.
+  agent_cost_usd: 0.101
+- date: '2026-09-07'
+  pr: null
+  doc: docs/reviews/finansy_prosto_review_2026_09_07.md
+  generated_by: grok-4.5
+  summary: FP still ships chronic under-length (10/10 below 1000w), live Russian source-scaffold and section-chapter collapses the Aug-6 proposals never fixed, plus unchanged boilerplate tics and off-niche Коротко—re-propose digest-side length + scrub/chapter/de-seed only; escalate length to operator if digest lever is declined again.
+  scored_prior_predictions:
+  - metric: spoken Russian/English source-scaffold lines in FP _tts.txt (Источник информации / Информация размещена на / Source / Сорс)
+    verdict: miss
+    evidence: Scrub never shipped; ep75 «Источник информации BNN…» ×3, ep76 «Источник Медузы», ep73/79/82 «Информация размещена/доступна на …» still on air
+  - metric: median FP _tts.txt words, last ~5 episodes after digest-side lever
+    verdict: miss
+    evidence: Lever never merged; ep78–82 words 732/768/634/741/938, median ~741w, 10/10 still under 1000w
+  - metric: podcast_expand_below_target firings / cost spikes on FP
+    verdict: miss
+    evidence: YAML still podcast_expand_below_target true; avg $0.249/ep, ep82 $0.447 expand-burn signature
+  - metric: episodes using «а теперь моя любимая часть» OR «Подруга спросила меня вчера» OR «не так уж и сложно, правда?» shapes
+    verdict: miss
+    evidence: De-seed never applied; ep73 all three shapes; ep74–76 keep любимая часть ± подруга/не так уж
+  - metric: Коротко и ясно items with no household-finance hook (pure tech/corp/geopolitics)
+    verdict: miss
+    evidence: ep74 bosses RTO + Meta–Anthropic; ep75 Chinese AI freeze; ep76 Rostov storm + Japan delegation still shipped
+  - metric: ep chapters including both Практические советы and Коротко when those segments exist in transcript
+    verdict: miss
+    evidence: chapters_ep077/079/081.json still 3-chapter collapses; ep80/82 body-text titles; YAML patterns never broadened
+  - metric: spoken source-scaffold lines («Сорс …» / «Source …») in _tts.txt
+    verdict: miss
+    evidence: July-2 Latin scrub held but Russian equivalents replaced it; still open as Aug-6 miss
+  shipped: []
+  deferred:
+  - 'Operator: resolve cadence contradiction (YAML «ежедневный» vs CLAUDE.md Monday vs historical even-days; actual ep73–82 roughly weekly).'
+  - 'Operator: YOUTUBE_REFRESH_TOKEN_RU so RU YouTube uploads are real.'
+  - 'Operator A/B: fully localized AI-disclosure wording on Olya (still garble-prone «с помощью и синтеза голоса» / ИИ drop).'
+  - 'If digest-side lever is declined again OR misses length after a full post-merge window: operator product decision (accept ~5–6 min vs restructure segments) — do not re-propose podcast expand/word-floor.'
+  - 'Optional later: stabilize YouTube CTA spoken brand as pure Cyrillic «Нерра РУ» if handle garble persists after source scrub (A/B; no phonetic respelling).'
+  - 'Optional: first-use Russian expansion of RRSP/TFSA/FHSA then Russian short name (A/B; no letter-salad Latin).'
+  - Closing-pool disclaimer already on most eps; only chase short closer path (ep76/78/80-style) if advisor line drops after other prompt edits.
+  predictions:
+  - metric: spoken Russian source-scaffold lines in FP _tts.txt (Источник… / Информация размещена|доступна|поступила… / Подробности доступны на / История опубликована на)
+    baseline: ≥6/10 episodes in ep73–82 window with explicit scaffold or outlet-attribution lines in Коротко
+    expected: 0 in episodes produced after scrub extension merges
+    verdict: pending
+    evidence: null
+  - metric: FP episodes whose chapters omit Практические советы or Коротко when those segments exist in transcript
+    baseline: ep77/79/81 full collapse; ep78 missing practical; ep80/82 mis-titled markers
+    expected: 0 collapses on full five-segment scripts after pattern broaden; titles match section names not body clauses
+    verdict: pending
+    evidence: null
+  - metric: median FP _tts.txt words, last ~5 episodes after digest-side lever merges
+    baseline: median ~741w (ep78–82); 10/10 below 1000w
+    expected: median ≥950w and ≥3/5 episodes ≥1000w on normal news days; not lower than baseline — if lever not shipped, score n/a-lever-not-shipped next pass
+    verdict: pending
+    evidence: null
+  - metric: podcast_expand_below_target true and expand-retry cost spikes on FP
+    baseline: flag true; avg $0.249/ep, ep82 $0.447
+    expected: flag false post-merge; no podcast-expand cost signature; avg $/ep back near pre-spike unless digest expand is doing real work
+    verdict: pending
+    evidence: null
+  - metric: episodes using «а теперь моя любимая часть» OR «Подруга спросила меня вчера» OR «не так уж и сложно, правда?» shapes
+    baseline: ep73–76 still carry the cluster; de-seed never applied
+    expected: 0/10 for all three shapes in post-merge window (successor tic may appear—score separately)
+    verdict: pending
+    evidence: null
+  - metric: Коротко и ясно items with no household-finance hook in sentence one
+    baseline: ≥1 off-niche item in ep74,75,76
+    expected: 0 off-niche items per episode post-relevance rule
+    verdict: pending
+    evidence: null
+  - metric: successor deep-dive/transition tic after de-seed (rhetorical Q or «по полочкам»/equivalent cute closer)
+    baseline: not yet dominant; prior cluster still live
+    expected: track only — if ≥4/10 adopt one new shape, next pass de-seeds that shape (no prompt example phrase)
+    verdict: pending
+    evidence: null
+  proposed_changes_in_pr:
+  - file: engine/generator.py
+    kind: code
+    ab_listen_required: false
+    rationale: 'Aug-6 miss: Latin scrub left Russian scaffold on air (ep75/76/73/79/82). Deterministic high-yield garble class; no A/B.'
+  - file: shows/finansy_prosto.yaml
+    kind: config
+    ab_listen_required: false
+    rationale: 'ep77/79/81 collapse and ep78/80/82 mis-markers: body uses «коротко о других новостях», «практическим шагам», «практической стороне» which current regex misses. Metadata-only.'
+  - file: shows/finansy_prosto.yaml
+    kind: config
+    ab_listen_required: true
+    rationale: 'Length miss ×2 at podcast/digest-depth prompts; network policy = digest-substrate only. FP last podcast-expand holdout. Flipping expand off stops $0.25–0.45 burn; digest floor is the real ceiling. Net audio longer/richer → operator A/B-listen. If declined or misses after full window: operator product decision, do not re-file.'
+  - file: shows/prompts/fp_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: July-2/Aug-6 deferred de-seed + relevance + non-repeat never applied; ep73–76 still tic; ep74–76 off-niche Коротко; ep76/80 deep-dive re-teaches. Shape ban + memory per playbook.
+  - file: shows/prompts/fp_digest.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: Podcast cannot hit 1000w from a ~700w digest; June depth steer alone missed. Digest is the lever; A/B because spoken length/content change.
+  - file: tests/test_finansy_prosto_quality_pass.py
+    kind: code
+    ab_listen_required: false
+    rationale: Every behavioral fix needs a drift-guard per playbook.
+  agent_cost_usd: 0.1074
+- date: 2026-09-24
+  pr: network sourcing pass (the launch cohort's sourcing floor on every news show)
+  doc: docs/experiments.yaml (network-sourcing-pass-2026-09-24)
+  reviewer: claude-code (network pass after the launch-cohort readouts)
+  summary: Full text on 8 articles; canada.ca / Bank of Canada / CRA / FCAC / ontario.ca preferred; X posts secondary; a Russian-labelled Sources line (Источники) in the show notes. The Google News Canada-finance query returned zero items; simplified.
+  shipped:
+  - fetch_full_text 8
+  - preferred_domains
+  - x_posts_as_sources secondary
+  - show-notes Sources line (ru)
+  - GN query
+  predictions:
+  - metric: source_integrity_claims median
+    baseline: n/a
+    expected: '>= 2'
+    verdict: pending
+- date: '2026-09-14'
+  pr: null
+  doc: docs/reviews/finansy_prosto_review_2026_09_14.md
+  generated_by: grok-4.5
+  summary: FP still ships 10/10 under-length scripts, live Russian source-scaffold and section-chapter collapses never fixed across two proposal-only passes, plus unchanged boilerplate tics and off-niche Коротко—re-propose scrub/chapters/de-seed/cost-flag only and escalate length to an operator product decision.
+  scored_prior_predictions:
+  - metric: spoken Russian source-scaffold lines in FP _tts.txt (Источник… / Информация размещена|доступна|поступила… / Подробности доступны на / История опубликована на)
+    verdict: miss
+    evidence: Scrub never shipped; ep75/76/79/82/83 still speak Источник/Информация размещена|поступила/История опубликована and bare outlet hosts in Коротко
+  - metric: FP episodes whose chapters omit Практические советы or Коротко when those segments exist in transcript
+    verdict: miss
+    evidence: ep77/79/81 still 3-chapter collapses; ep78 drops practical; ep80/82 body-sentence titles; YAML patterns never broadened
+  - metric: median FP _tts.txt words, last ~5 episodes after digest-side lever merges
+    verdict: miss
+    evidence: Lever never merged; ep79–83 = 768/634/741/938/663, median ~741w; 10/10 under 1000w
+  - metric: podcast_expand_below_target true and expand-retry cost spikes on FP
+    verdict: miss
+    evidence: 'YAML still podcast_expand_below_target: true; avg $0.259/ep, ep82 $0.447 expand-burn signature'
+  - metric: episodes using «а теперь моя любимая часть» OR «Подруга спросила меня вчера» OR «не так уж и сложно, правда?» shapes
+    verdict: miss
+    evidence: De-seed never applied; ep74 cluster all three; ep75 любимая + не так уж и сложно; ep76 любимая часть
+  - metric: Коротко и ясно items with no household-finance hook in sentence one
+    verdict: miss
+    evidence: ep74 RTO bosses + Meta–Anthropic; ep75 Chinese AI freeze; ep76 Rostov storm + Japan delegation; ep83 ferry-to-China + summit deals
+  - metric: successor deep-dive/transition tic after de-seed (rhetorical Q or «по полочкам»/equivalent cute closer)
+    verdict: partial
+    evidence: Prior cluster still live; soft successors recurring — bank-counter «Представьте, что вы стоите в банке» (ep76/78/79/80/83) and «по шагам» (ep79)
+  shipped: []
+  deferred:
+  - 'OPERATOR PRODUCT DECISION on length (escalated — identical digest-side lever proposed Aug-6 and Sep-7, never merged; June-16 digest-depth miss; 10/10 still <1000w): (A) ship min_digest_words ~950 + digest expand-below-target and keep podcast_expand false, or (B) accept ~5–6 min product and lower honest floor/metadata, or (C) restructure segments. Do not re-file podcast word-floor/expand/«пиши длиннее».'
+  predictions:
+  - metric: spoken Russian source-scaffold lines in FP _tts.txt (Источник… / Информация размещена|доступна|поступила|опубликована… / Подробности доступны на / История опубликована на / bare outlet hosts in Коротко)
+    baseline: ≥5/10 episodes in ep74–83 window with explicit scaffold or outlet-attribution lines
+    expected: 0 in episodes produced after scrub extension merges
+    verdict: pending
+    evidence: null
+  - metric: FP episodes whose chapters omit Практические советы or Коротко when those segments exist in transcript
+    baseline: ep77/79/81 full collapse; ep78 missing practical; ep80/82 mis-titled markers; ep83 missing deep-dive chapter
+    expected: 0 collapses on full five-segment scripts after pattern broaden; titles match section names not body clauses
+    verdict: pending
+    evidence: null
+  - metric: podcast_expand_below_target true and expand-retry cost spikes on FP
+    baseline: flag true; avg $0.259/ep, ep82 $0.447
+    expected: flag false post-merge; no podcast-expand cost signature; avg $/ep back near pre-spike band unless operator ships digest expand separately
+    verdict: pending
+    evidence: null
+  - metric: episodes using «а теперь моя любимая часть» OR «Подруга спросила меня вчера» OR «не так уж и сложно, правда?» shapes
+    baseline: ep74–76 still carry the cluster; de-seed never applied
+    expected: 0/10 for all three shapes in post-merge window (successor tic may appear—score separately)
+    verdict: pending
+    evidence: null
+  - metric: Коротко и ясно items with no household-finance hook in sentence one
+    baseline: ≥1 off-niche item in ep74,75,76,83
+    expected: 0 off-niche items per episode post-relevance rule
+    verdict: pending
+    evidence: null
+  - metric: successor deep-dive/transition tic after de-seed (bank-counter «стоите в банке» / «по шагам» / next cute rhetorical Q)
+    baseline: bank-counter shape already recurring ep76/78/79/80/83 while old cluster still live
+    expected: track only — if ≥4/10 adopt one new shape after old cluster dies, next pass de-seeds that shape (no prompt example phrase)
+    verdict: pending
+    evidence: null
+  - metric: median FP _tts.txt words after operator length decision
+    baseline: median ~741w (ep79–83); 10/10 below 1000w; digest lever never tried
+    expected: n/a-lever-not-shipped unless operator ships digest floor or accepts lower honest target; do not score as a prompt/code miss
+    verdict: pending
+    evidence: null
+  proposed_changes_in_pr:
+  - file: engine/generator.py
+    kind: code
+    ab_listen_required: false
+    rationale: 'Sep-7/Aug-6 miss: Latin scrub left Russian scaffold on air (ep75/76/79/82/83). Deterministic high-yield garble/fetch class; no A/B.'
+  - file: shows/finansy_prosto.yaml
+    kind: config
+    ab_listen_required: false
+    rationale: 'ep77/79/81 collapse and ep78/80/82/83 mis-markers: body uses «коротко о других новостях», «практическим шагам», «практической стороне» which current regex misses. Metadata-only.'
+  - file: shows/finansy_prosto.yaml
+    kind: config
+    ab_listen_required: false
+    rationale: 'Cost-only fix: FP is last podcast-expand holdout burning $0.25–0.45/ep without clearing 1000w. Network policy forbids podcast-side length levers; flipping the flag stops expand-burn. NOT a length claim — length escalated to operator digest-floor decision.'
+  - file: shows/prompts/fp_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: July-2/Aug-6/Sep-7 deferred de-seed never applied; ep74–76 still tic; playbook anti-seed rule = shape ban + memory, never a quotable example.
+  - file: shows/prompts/fp_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: Stops niche dilution verified in ep74/75/76/83 and runtime theft from deep-dive re-teach (ep76/80). A/B because spoken content changes.
+  - file: tests/test_finansy_prosto_quality_pass.py
+    kind: code
+    ab_listen_required: false
+    rationale: Every behavioral fix needs a drift-guard per playbook.
+  agent_cost_usd: 0.1124
 do_not_retry: []
