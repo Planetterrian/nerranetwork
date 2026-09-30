@@ -1,0 +1,117 @@
+Memory systems for agents now split fast judgments from slow reasoning, cutting token use dramatically while boosting task success.
+
+This is Models and Agents, episode 189.
+
+Mnemon keeps full conversation histories as raw dated records instead of rewriting them into facts or graphs at write time.
+
+A lightweight decision model called Jev makes dozens of independent yes-no judgments per record in under a third of a second.
+
+An LLM handles the slower System-2 work of planning searches and naming what a reply needs.
+
+On LoCoMo the system reaches 91.7 percent with gpt-4.1-mini while using under four thousand tokens of context per question.
+
+With a reasoning model it hits 92.2 percent on LoCoMo and 94.4 percent on LongMemEval-S.
+
+The approach scales from one hundred thousand to ten million tokens of history with only a 1.11 times cost increase per question.
+
+Sieve screens retrieved documents for distracting or adversarial content before a heavier Sage model performs grounded generation and abstention.
+
+The two-stage split improves accuracy by up to 69.4 percentage points and Macro-F1 by 55.2 percentage points over one-stage baselines.
+
+It also delivers up to 1.99 times speedup across general and high-stakes expert domains.
+
+Alignment Forecasting predicts whether fine-tuning on a given dataset will increase failure modes such as deception or sycophancy before training begins.
+
+ALIGNMENTFORECASTBENCH contains over five thousand forecasting questions spanning seventeen target models, thirty-two datasets, and sixteen failure modes.
+
+A forecasting scaffold that rates dataset influence and combines it with base rates beats both direct frontier-model prompting and a model fine-tuned on the task itself.
+
+TRACE builds an updatable tree-relational structure of oncology concepts and relations offline, then retrieves compact prompt evidence at inference time.
+
+It improves both label-free and supervised performance across ten oncology classification tasks and one MedQuAD CancerGov QA benchmark.
+
+The method outperforms vanilla RAG and generic GraphRAG while remaining useful under leakage-controlled METABRIC inputs.
+
+Less Uniform Diffusion adds a less-uniform loss that directs each reverse transition toward the clean token and equips the model with per-token time embeddings.
+
+A seven-billion-parameter UDLM trained this way achieves a three-token-per-step speedup over autoregressive decoding while remaining competitive with masked diffusion baselines.
+
+The approach continues training from a seven-billion autoregressive checkpoint into a capable reasoning UDLM.
+
+Environment Steering models the agent and execution state as database tables, tracks record-level data flows, and checks them against declarative policies at runtime.
+
+When violations occur, policy-specific feedback steers the agent toward safe trajectories.
+
+On AgentDyn the method raises task success rate above the no-defense baseline while holding attack success rate at zero percent.
+
+Lookahead-R uses a lightweight execution-aware surrogate world model that predicts tool success, latency, and semantic utility without calling real APIs.
+
+A cost-sensitive Monte Carlo Tree Search navigates the tool space under strict budgets.
+
+On the hardest I3 split of ToolBench it reaches NDCG@5 of 91.40 percent, 1.24 points above the prior state-of-the-art ToolGen.
+
+SCOUT first reasons over task and trajectory to generate task-specific completion and safety rubrics, then uses a probing agent to gather post-execution evidence through tool calls.
+
+On AutoElicit-Bench it achieves 75.4 unsafe F1 and 74.5 completion F1.
+
+Test-time reflection lowers unsafe execution rates from 30.2 percent to 17.2 percent.
+
+BreakingWeb pairs each base task with deterministic interventions at different web-stack layers while preserving the original instruction and success criterion.
+
+The benchmark contains 519 clean-intervention pairs across seven sites and twenty-nine intervention families.
+
+Interventions cut agent pass rates by 22.9 percent on average; seventy-five percent of agent failures end with a declared success even though the required change never occurred.
+
+evalstats implements nine hypothesis tests via prediction-powered inference, including the first PPI corrections for four rank-based tests.
+
+Bootstrap-adaptive power tuning keeps estimates stable with small human calibration sets.
+
+The package automatically selects calibrated methods for evaluations with fewer than one hundred samples.
+
+PACT adds four training terms that exploit contrastive pairs and machine-checked certificates without new annotation.
+
+On a 324-item holdout it matches published accuracy at 84.6 percent while halving position bias and lowering ordinal error on rubric fields.
+
+Seed-to-seed variance drops by half and negative log likelihood falls 26 percent versus plain cross-entropy.
+
+CruxBench grades LLM-generated questions by their value of information on 293 future-world forecasting targets.
+
+Value-of-information correlates 0.90 with independent capability measures.
+
+Even frontier models only narrowly beat a random-timing baseline on the open-ended task.
+
+Predictive entropy on the first few generated tokens already correlates 0.85 with hallucination rate on a two-thousand-generation held-out set.
+
+The router therefore escalates only when that early entropy exceeds a validation-tuned threshold.
+
+In practice the system keeps 97.4 percent of pure long-context accuracy while cutting total token spend by 70.7 percent and escalating just 18.2 percent of queries.
+
+The accuracy gap to the full long-context baseline is statistically indistinguishable from zero at standard sample sizes.
+
+The same entropy signal works across any retriever and any long-context backbone because it is produced by the model itself during ordinary decoding.
+
+Teams running mixed RAG and long-context workloads should therefore log first-token entropy on a small validation slice, sweep the threshold against their accuracy and cost targets, and deploy the resulting policy.
+
+The main gotcha is that very short or highly templated queries can produce artificially low entropy even when retrieval is incomplete.
+
+Try Mnemon on your longest agent conversation histories to see whether the raw-record plus fast-judgment split reduces context cost while preserving accuracy.
+
+Run SCOUT's two-stage verifier on any computer-use agent trajectories you already have to measure unsafe execution rates before and after reflection.
+
+Compare Lookahead-R against your current semantic tool retriever on the I3 split of ToolBench if budget-aware selection matters for your agent.
+
+Add evalstats to your next small-sample LLM-judge evaluation to obtain properly calibrated confidence intervals and hypothesis tests.
+
+New open-weight diffusion language models are expected to continue scaling beyond the seven-billion-parameter LUDI checkpoint.
+
+Additional multilingual voice-agent benchmarks extending the tau-Multilingual language packs are in preparation.
+
+Further releases of agent safety platforms that embed policy checks directly in execution environments are anticipated from multiple labs.
+
+Before we go, watch for more results from the ALIGNMENTFORECASTBENCH suite as additional labs publish their forecasting numbers.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+Quick tip from the network: try Omni View North America next — the day's decisions across the United States and Canada, from outside either party. Every Nerra Network show is free at nerranetwork.com. And if you would rather hear only your shows, in your order, Nerra Personal builds you a private daily edition — the details are at nerranetwork.com/join.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

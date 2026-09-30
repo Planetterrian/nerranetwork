@@ -9,7 +9,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 29 Sep 2026 08:18:52 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 30 Sep 2026 08:20:56 +0000</lastBuildDate>
     <itunes:author>Patrick</itunes:author>
     <itunes:category text="Technology" />
     <itunes:category text="News">
@@ -23,6 +23,133 @@
     </itunes:owner>
     <itunes:summary>Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners.</itunes:summary>
     <itunes:type>episodic</itunes:type>
+    <item>
+      <title>Ep 189: Memory systems for agents now split fast judgments from slow reasoning, cutting token use…</title>
+      <description>Models &amp; Agents
+&lt;b&gt;Memory systems for agents now split fast judgments from slow reasoning, cutting token use dramatically while boosting task success.&lt;/b&gt;
+
+&lt;b&gt;What You Need to Know:&lt;/b&gt; Mnemon keeps raw conversation records and uses a lightweight decision model for quick yes-no judgments alongside an LLM for search planning. New papers introduce environment steering for agent safety, budget-aware tool retrieval, and statistical tools for LLM-judge evaluations. Builders should test the memory split and the new safety verifier on their agent workloads this week.
+
+Top Story
+Mnemon keeps full conversation histories as raw dated records instead of rewriting them into facts or graphs at write time. A lightweight decision model called Jev makes dozens of independent yes-no judgments per record in under a third of a second. An LLM handles the slower System-2 work of planning searches and naming what a reply needs. On LoCoMo the system reaches 91.7 percent with gpt-4.1-mini while using under four thousand tokens of context per question. With a reasoning model it hits 92.2 percent on LoCoMo and 94.4 percent on LongMemEval-S. The approach scales from one hundred thousand to ten million tokens of history with only a 1.11 times cost increase per question. Source: &lt;a href="https://arxiv.org/abs/2609.36059"&gt;arxiv.org&lt;/a&gt;
+
+Model Updates
+&lt;b&gt;Sieve and Sage: Efficient Distraction Filtering for Reliable RALM Abstention:&lt;/b&gt; arXiv NLP
+Sieve screens retrieved documents for distracting or adversarial content before a heavier Sage model performs grounded generation and abstention. The two-stage split improves accuracy by up to 69.4 percentage points and Macro-F1 by 55.2 percentage points over one-stage baselines. It also delivers up to 1.99 times speedup across general and high-stakes expert domains. Source: &lt;a href="https://arxiv.org/abs/2609.35794"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Alignment Forecasting: Predicting Misalignment From Training Data:&lt;/b&gt; arXiv NLP
+Alignment Forecasting predicts whether fine-tuning on a given dataset will increase failure modes such as deception or sycophancy before training begins. ALIGNMENTFORECASTBENCH contains over five thousand forecasting questions spanning seventeen target models, thirty-two datasets, and sixteen failure modes. A forecasting scaffold that rates dataset influence and combines it with base rates beats both direct frontier-model prompting and a model fine-tuned on the task itself. Source: &lt;a href="https://arxiv.org/abs/2609.35805"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;TRACE: Deployable Tree-Relational Structure Enhancement for Oncology LLMs:&lt;/b&gt; arXiv NLP
+TRACE builds an updatable tree-relational structure of oncology concepts and relations offline, then retrieves compact prompt evidence at inference time. It improves both label-free and supervised performance across ten oncology classification tasks and one MedQuAD CancerGov QA benchmark. The method outperforms vanilla RAG and generic GraphRAG while remaining useful under leakage-controlled METABRIC inputs. Source: &lt;a href="https://arxiv.org/abs/2609.35810"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Less Uniform Discrete Diffusion is More Powerful and Scalable:&lt;/b&gt; arXiv NLP
+Less Uniform Diffusion adds a less-uniform loss that directs each reverse transition toward the clean token and equips the model with per-token time embeddings. A seven-billion-parameter UDLM trained this way achieves a three-token-per-step speedup over autoregressive decoding while remaining competitive with masked diffusion baselines. The approach continues training from a seven-billion autoregressive checkpoint into a capable reasoning UDLM. Source: &lt;a href="https://arxiv.org/abs/2609.35817"&gt;arxiv.org&lt;/a&gt;
+
+Agent &amp; Tool Developments
+&lt;b&gt;Environment Steering: Using Data Flow Control to Improve Agent Utility and Safety:&lt;/b&gt; arXiv NLP
+Environment Steering models the agent and execution state as database tables, tracks record-level data flows, and checks them against declarative policies at runtime. When violations occur, policy-specific feedback steers the agent toward safe trajectories. On AgentDyn the method raises task success rate above the no-defense baseline while holding attack success rate at zero percent. Source: &lt;a href="https://arxiv.org/abs/2609.35807"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Lookahead-R: Budget-Aware Tool Retrieval via Execution-Centric Planning:&lt;/b&gt; arXiv NLP
+Lookahead-R uses a lightweight execution-aware surrogate world model that predicts tool success, latency, and semantic utility without calling real APIs. A cost-sensitive Monte Carlo Tree Search navigates the tool space under strict budgets. On the hardest I3 split of ToolBench it reaches NDCG@5 of 91.40 percent, 1.24 points above the prior state-of-the-art ToolGen. Source: &lt;a href="https://arxiv.org/abs/2609.35811"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;SCOUT: Synergizing Reasoning and Tool-Use for Computer-Use Safety:&lt;/b&gt; arXiv NLP
+SCOUT first reasons over task and trajectory to generate task-specific completion and safety rubrics, then uses a probing agent to gather post-execution evidence through tool calls. On AutoElicit-Bench it achieves 75.4 unsafe F1 and 74.5 completion F1. Test-time reflection lowers unsafe execution rates from 30.2 percent to 17.2 percent. Source: &lt;a href="https://arxiv.org/abs/2609.36201"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;Constructing Challenging Browser-Use Tasks by Controlled Environment Interventions:&lt;/b&gt; arXiv NLP
+BreakingWeb pairs each base task with deterministic interventions at different web-stack layers while preserving the original instruction and success criterion. The benchmark contains 519 clean-intervention pairs across seven sites and twenty-nine intervention families. Interventions cut agent pass rates by 22.9 percent on average; seventy-five percent of agent failures end with a declared success even though the required change never occurred. Source: &lt;a href="https://arxiv.org/abs/2609.35814"&gt;arxiv.org&lt;/a&gt;
+
+Practical &amp; Community
+&lt;b&gt;How to Run Statistics over LLM Judges and Trust the Results: Calibrated Inference for Small-Sample AI Evaluation with evalstats:&lt;/b&gt; arXiv NLP
+evalstats implements nine hypothesis tests via prediction-powered inference, including the first PPI corrections for four rank-based tests. Bootstrap-adaptive power tuning keeps estimates stable with small human calibration sets. The package automatically selects calibrated methods for evaluations with fewer than one hundred samples. Source: &lt;a href="https://arxiv.org/abs/2609.35815"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;PACT: Pairwise-Anchored Calibrated Tuning for Single-Token Typed Decisions:&lt;/b&gt; arXiv NLP
+PACT adds four training terms that exploit contrastive pairs and machine-checked certificates without new annotation. On a 324-item holdout it matches published accuracy at 84.6 percent while halving position bias and lowering ordinal error on rubric fields. Seed-to-seed variance drops by half and negative log likelihood falls 26 percent versus plain cross-entropy. Source: &lt;a href="https://arxiv.org/abs/2609.35865"&gt;arxiv.org&lt;/a&gt;
+
+&lt;b&gt;CruxBench: A Benchmark of Information Discovery:&lt;/b&gt; arXiv NLP
+CruxBench grades LLM-generated questions by their value of information on 293 future-world forecasting targets. Value-of-information correlates 0.90 with independent capability measures. Even frontier models only narrowly beat a random-timing baseline on the open-ended task. Source: &lt;a href="https://arxiv.org/abs/2609.35879"&gt;arxiv.org&lt;/a&gt;
+
+Under the Hood: Entropy-Driven Routing Between Retrieval and Long-Context Inference
+Predictive entropy on the first few generated tokens already correlates 0.85 with hallucination rate on a two-thousand-generation held-out set. The router therefore escalates only when that early entropy exceeds a validation-tuned threshold. In practice the system keeps 97.4 percent of pure long-context accuracy while cutting total token spend by 70.7 percent and escalating just 18.2 percent of queries. The accuracy gap to the full long-context baseline is statistically indistinguishable from zero at standard sample sizes. The same entropy signal works across any retriever and any long-context backbone because it is produced by the model itself during ordinary decoding. Teams running mixed RAG and long-context workloads should therefore log first-token entropy on a small validation slice, sweep the threshold against their accuracy and cost targets, and deploy the resulting policy; the main gotcha is that very short or highly templated queries can produce artificially low entropy even when retrieval is incomplete.
+
+Things to Try This Week
+• Try Mnemon on your longest agent conversation histories to see whether the raw-record plus fast-judgment split reduces context cost while preserving accuracy.
+• Run SCOUT's two-stage verifier on any computer-use agent trajectories you already have to measure unsafe execution rates before and after reflection.
+• Compare Lookahead-R against your current semantic tool retriever on the I3 split of ToolBench if budget-aware selection matters for your agent.
+• Add evalstats to your next small-sample LLM-judge evaluation to obtain properly calibrated confidence intervals and hypothesis tests.
+
+On the Horizon
+• New open-weight diffusion language models are expected to continue scaling beyond the seven-billion-parameter LUDI checkpoint.
+• Additional multilingual voice-agent benchmarks extending the tau-Multilingual language packs are in preparation.
+• Further releases of agent safety platforms that embed policy checks directly in execution environments are anticipated from multiple labs.</description>
+      <guid isPermaLink="false">models-agents-video-ep189-20260930</guid>
+      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep189_20260930.mp4" length="220727948" type="video/mp4" />
+      <pubDate>Wed, 30 Sep 2026 08:00:00 +0000</pubDate>
+      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep189_20260930.jpg" />
+      <itunes:duration>09:31</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary># Models &amp; Agents
+&gt; **Memory systems for agents now split fast judgments from slow reasoning, cutting token use dramatically while boosting task success.**
+
+**What You Need to Know:** Mnemon keeps raw conversation records and uses a lightweight decision model for quick yes-no judgments alongside an LLM for search planning. New papers introduce environment steering for agent safety, budget-aware tool retrieval, and statistical tools for LLM-judge evaluations. Builders should test the memory split and the new safety verifier on their agent workloads this week.
+---
+### Top Story
+Mnemon keeps full conversation histories as raw dated records instead of rewriting them into facts or graphs at write time. A lightweight decision model called Jev makes dozens of independent yes-no judgments per record in under a third of a second. An LLM handles the slower System-2 work of planning searches and naming what a reply needs. On LoCoMo the system reaches 91.7 percent with gpt-4.1-mini while using under four thousand tokens of context per question. With a reasoning model it hits 92.2 percent on LoCoMo and 94.4 percent on LongMemEval-S. The approach scales from one hundred thousand to ten million tokens of history with only a 1.11 times cost increase per question. Source: [arxiv.org](https://arxiv.org/abs/2609.36059)
+---
+### Model Updates
+**Sieve and Sage: Efficient Distraction Filtering for Reliable RALM Abstention:** arXiv NLP
+Sieve screens retrieved documents for distracting or adversarial content before a heavier Sage model performs grounded generation and abstention. The two-stage split improves accuracy by up to 69.4 percentage points and Macro-F1 by 55.2 percentage points over one-stage baselines. It also delivers up to 1.99 times speedup across general and high-stakes expert domains. Source: [arxiv.org](https://arxiv.org/abs/2609.35794)
+
+**Alignment Forecasting: Predicting Misalignment From Training Data:** arXiv NLP
+Alignment Forecasting predicts whether fine-tuning on a given dataset will increase failure modes such as deception or sycophancy before training begins. ALIGNMENTFORECASTBENCH contains over five thousand forecasting questions spanning seventeen target models, thirty-two datasets, and sixteen failure modes. A forecasting scaffold that rates dataset influence and combines it with base rates beats both direct frontier-model prompting and a model fine-tuned on the task itself. Source: [arxiv.org](https://arxiv.org/abs/2609.35805)
+
+**TRACE: Deployable Tree-Relational Structure Enhancement for Oncology LLMs:** arXiv NLP
+TRACE builds an updatable tree-relational structure of oncology concepts and relations offline, then retrieves compact prompt evidence at inference time. It improves both label-free and supervised performance across ten oncology classification tasks and one MedQuAD CancerGov QA benchmark. The method outperforms vanilla RAG and generic GraphRAG while remaining useful under leakage-controlled METABRIC inputs. Source: [arxiv.org](https://arxiv.org/abs/2609.35810)
+
+**Less Uniform Discrete Diffusion is More Powerful and Scalable:** arXiv NLP
+Less Uniform Diffusion adds a less-uniform loss that directs each reverse transition toward the clean token and equips the model with per-token time embeddings. A seven-billion-parameter UDLM trained this way achieves a three-token-per-step speedup over autoregressive decoding while remaining competitive with masked diffusion baselines. The approach continues training from a seven-billion autoregressive checkpoint into a capable reasoning UDLM. Source: [arxiv.org](https://arxiv.org/abs/2609.35817)
+---
+### Agent &amp; Tool Developments
+**Environment Steering: Using Data Flow Control to Improve Agent Utility and Safety:** arXiv NLP
+Environment Steering models the agent and execution state as database tables, tracks record-level data flows, and checks them against declarative policies at runtime. When violations occur, policy-specific feedback steers the agent toward safe trajectories. On AgentDyn the method raises task success rate above the no-defense baseline while holding attack success rate at zero percent. Source: [arxiv.org](https://arxiv.org/abs/2609.35807)
+
+**Lookahead-R: Budget-Aware Tool Retrieval via Execution-Centric Planning:** arXiv NLP
+Lookahead-R uses a lightweight execution-aware surrogate world model that predicts tool success, latency, and semantic utility without calling real APIs. A cost-sensitive Monte Carlo Tree Search navigates the tool space under strict budgets. On the hardest I3 split of ToolBench it reaches NDCG@5 of 91.40 percent, 1.24 points above the prior state-of-the-art ToolGen. Source: [arxiv.org](https://arxiv.org/abs/2609.35811)
+
+**SCOUT: Synergizing Reasoning and Tool-Use for Computer-Use Safety:** arXiv NLP
+SCOUT first reasons over task and trajectory to generate task-specific completion and safety rubrics, then uses a probing agent to gather post-execution evidence through tool calls. On AutoElicit-Bench it achieves 75.4 unsafe F1 and 74.5 completion F1. Test-time reflection lowers unsafe execution rates from 30.2 percent to 17.2 percent. Source: [arxiv.org](https://arxiv.org/abs/2609.36201)
+
+**Constructing Challenging Browser-Use Tasks by Controlled Environment Interventions:** arXiv NLP
+BreakingWeb pairs each base task with deterministic interventions at different web-stack layers while preserving the original instruction and success criterion. The benchmark contains 519 clean-intervention pairs across seven sites and twenty-nine intervention families. Interventions cut agent pass rates by 22.9 percent on average; seventy-five percent of agent failures end with a declared success even though the required change never occurred. Source: [arxiv.org](https://arxiv.org/abs/2609.35814)
+---
+### Practical &amp; Community
+**How to Run Statistics over LLM Judges and Trust the Results: Calibrated Inference for Small-Sample AI Evaluation with evalstats:** arXiv NLP
+evalstats implements nine hypothesis tests via prediction-powered inference, including the first PPI corrections for four rank-based tests. Bootstrap-adaptive power tuning keeps estimates stable with small human calibration sets. The package automatically selects calibrated methods for evaluations with fewer than one hundred samples. Source: [arxiv.org](https://arxiv.org/abs/2609.35815)
+
+**PACT: Pairwise-Anchored Calibrated Tuning for Single-Token Typed Decisions:** arXiv NLP
+PACT adds four training terms that exploit contrastive pairs and machine-checked certificates without new annotation. On a 324-item holdout it matches published accuracy at 84.6 percent while halving position bias and lowering ordinal error on rubric fields. Seed-to-seed variance drops by half and negative log likelihood falls 26 percent versus plain cross-entropy. Source: [arxiv.org](https://arxiv.org/abs/2609.35865)
+
+**CruxBench: A Benchmark of Information Discovery:** arXiv NLP
+CruxBench grades LLM-generated questions by their value of information on 293 future-world forecasting targets. Value-of-information correlates 0.90 with independent capability measures. Even frontier models only narrowly beat a random-timing baseline on the open-ended task. Source: [arxiv.org](https://arxiv.org/abs/2609.35879)
+---
+### Under the Hood: Entropy-Driven Routing Between Retrieval and Long-Context Inference
+Predictive entropy on the first few generated tokens already correlates 0.85 with hallucination rate on a two-thousand-generation held-out set. The router therefore escalates only when that early entropy exceeds a validation-tuned threshold. In practice the system keeps 97.4 percent of pure long-context accuracy while cutting total token spend by 70.7 percent and escalating just 18.2 percent of queries. The accuracy gap to the full long-context baseline is statistically indistinguishable from zero at standard sample sizes. The same entropy signal works across any retriever and any long-context backbone because it is produced by the model itself during ordinary decoding. Teams running mixed RAG and long-context workloads should therefore log first-token entropy on a small validation slice, sweep the threshold against their accuracy and cost targets, and deploy the resulting policy; the main gotcha is that very short or highly templated queries can produce artificially low entropy even when retrieval is incomplete.
+---
+### Things to Try This Week
+- Try Mnemon on your longest agent conversation histories to see whether the raw-record plus fast-judgment split reduces context cost while preserving accuracy.
+- Run SCOUT's two-stage verifier on any computer-use agent trajectories you already have to measure unsafe execution rates before and after reflection.
+- Compare Lookahead-R against your current semantic tool retriever on the I3 split of ToolBench if budget-aware selection matters for your agent.
+- Add evalstats to your next small-sample LLM-judge evaluation to obtain properly calibrated confidence intervals and hypothesis tests.
+---
+### On the Horizon
+- New open-weight diffusion language models are expected to continue scaling beyond the seven-billion-parameter LUDI checkpoint.
+- Additional multilingual voice-agent benchmarks extending the tau-Multilingual language packs are in preparation.
+- Further releases of agent safety platforms that embed policy checks directly in execution environments are anticipated from multiple labs.
+</itunes:summary>
+      <itunes:episode>189</itunes:episode>
+      <itunes:title>Ep 189: Memory systems for agents now split fast judgments from slow reasoning, cutting token use…</itunes:title>
+      <itunes:episodeType>full</itunes:episodeType>
+    <podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep189.json" type="application/json+chapters" /></item>
     <item>
       <title>Ep 188: NVIDIA's open platform now enforces agent guardrails in silicon from the first test run…</title>
       <description>Models &amp; Agents
@@ -3530,151 +3657,5 @@ Everyone treats test-time scaling as simply “spend more tokens and get better 
       <itunes:title>Ep 160: Anthropic simulations show reward hacking during training turns otherwise safe agents into…</itunes:title>
       <itunes:episodeType>full</itunes:episodeType>
     <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep160_20260901_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep160.json" type="application/json+chapters" /></item>
-    <item>
-      <title>Ep 159: ChatGPT Work's agent tools finally get a clear map from a builder who tested them end-to…</title>
-      <description>Models &amp; Agents
-&lt;b&gt;ChatGPT Work's agent tools finally get a clear map from a builder who tested them end-to-end.&lt;/b&gt;
-
-&lt;b&gt;What You Need to Know:&lt;/b&gt; Simon Willison published a detailed breakdown of ChatGPT Work's capabilities and released an auto-generated reference site listing every available tool. The posts highlight differences like the "collaboration.spawn_agent" tool that exists in Work but not regular Chat. Builders exploring agentic workflows should review the linked resources this week.
-
-Top Story
-Simon Willison published a hands-on explanation of what ChatGPT Work can actually do, calling it a deeply confusing but extremely powerful tool with features unavailable in regular ChatGPT. The post walks through practical capabilities including tool access and agent spawning that differ sharply from the standard interface. A follow-up prompt produced a live reference site cataloging every tool with descriptions. The work clarifies how Work supports collaboration patterns that standard ChatGPT does not expose. Builders working with OpenAI's agent features now have a concrete starting point for experimentation. Watch for further community testing of the spawn_agent behavior across accounts. Source: &lt;a href="https://simonwillison.net/2026/Aug/30/understanding-chatgpt-work/"&gt;simonwillison.net&lt;/a&gt;
-
-Model Updates
-&lt;b&gt;Accelerating LLM Inference via Vector Index Based Output Embeddings: arXiv NLP&lt;/b&gt;
-The paper introduces an HNSW-based vector index that replaces dense vocabulary projection during autoregressive decoding. On CPU inference with Gemma 3, Llama 3.2, and Qwen 3 models the method improves end-to-end batch-size-one throughput by up to 82% for Gemma 3 270M while preserving AlpacaEval quality. The approach retrieves only high-scoring token candidates and scatters logits into a sparse tensor. Builders running small-batch CPU inference should test the integration on their current Gemma or Llama setups this week. Source: &lt;a href="https://arxiv.org/abs/2608.27460"&gt;arxiv.org&lt;/a&gt;
-
-&lt;b&gt;The Effect of Emotional Context on Large Language Models' Endorsement of Premature Decisions: arXiv NLP&lt;/b&gt;
-Six commercial models were tested across career, business, and emigration scenarios under neutral versus distress conditions. Emotional expression raised endorsement scores from 18.6 to 31.5 on average, with five of the six models showing significant effects. Claude Opus was the only model that did not shift. Teams building decision-support agents should add emotional-context testing to their evaluation suites.
-
-&lt;b&gt;Select, Don't Train: The Benefits of Modular Entity Disambiguation with LLM-Based Selection: arXiv NLP&lt;/b&gt;
-A training-free BM25 retriever paired with an LLM selector reached 86.3 inKB micro-F1 on the ZELDA benchmark, improving on prior 82.3. Adding a trained dense retriever pushed the score to 88.5. The framework also supports abstention when retrieval fails. Developers maintaining knowledge graphs should evaluate the BM25-plus-LLM pipeline before investing in retriever training.
-
-&lt;b&gt;INSPIRE: An Internalize-Then-Improve Approach for Example-Driven Mathematical Reasoning: arXiv NLP&lt;/b&gt;
-The method first uses Reference-Guided Student Internalization to create preference candidates, then applies staged rubric training. Experiments across model scales showed consistent gains and no degradation on out-of-distribution benchmarks. Teams working on mathematical reasoning agents can adopt the two-stage preference pipeline.
-
-&lt;b&gt;Trajectory-Level Speculative Decoding for Diffusion Language Models: arXiv NLP&lt;/b&gt;
-The framework constructs draft denoising trajectories via confidence-stratified tree exploration and verifies them with blockwise parallel evaluation. It reduces denoising iterations by 30-40% and raises tokens-per-step from 2.6 to 4.3, delivering 7-14x speedup over vanilla diffusion LMs. Builders experimenting with diffusion language models should integrate the dual-cache approach.
-
-Agent &amp; Tool Developments
-&lt;b&gt;Inside the mesh: How autonomous AI agent teams actually ship in production: The Economic Times&lt;/b&gt;
-The article examines real production deployments of multi-agent systems and the coordination patterns that succeed at scale. It focuses on how teams move from prototype to reliable shipping workflows. Operations leaders evaluating agent meshes should read the case details for deployment checklists. Source: &lt;a href="https://m.economictimes.com/ai/ai-insights/inside-the-mesh-how-autonomous-ai-agent-teams-actually-ship-in-production/articleshow/133644197.cms"&gt;m.economictimes.com&lt;/a&gt;
-
-&lt;b&gt;Kyndryl and Google Cloud advance agentic AI at Incore Bank: Kyndryl&lt;/b&gt;
-The partnership deploys agentic AI capabilities inside a banking environment using Google Cloud infrastructure. The work targets specific operational processes at Incore Bank. Financial-services teams exploring agentic automation can review the announced scope for comparable use cases. Source: &lt;a href="https://www.kyndryl.com/in/en/about-us/news/2026/08/agentic-ai-incore-bank"&gt;kyndryl.com&lt;/a&gt;
-
-&lt;b&gt;What Makes Agent Memory Useful for Reliable Unanswerable Question Handling?: arXiv NLP&lt;/b&gt;
-Four memory methods were evaluated across three UAQ datasets and two base models under a unified agentic RAG framework. Gains proved selective and fragile under dataset shift, with procedural and rule-based memories providing the most reliable support. Agent developers should prioritize decision-guidance memory formats over raw trajectory storage.
-
-&lt;b&gt;Entity-Memory Graph Retrieval Improves Evidence Coverage in Long-Conversation Question Answering: arXiv NLP&lt;/b&gt;
-Graph retrieval on 1,986 questions from ten LoCoMo conversations raised evidence recall at top-k 25 from 79.75% to 84.48%. The gain held across cutoffs from 5 to 50 while final-answer F1 showed no consistent difference. Teams building long-conversation agents should test graph-structured retrieval for evidence coverage.
-
-Practical &amp; Community
-&lt;b&gt;Bonus ChatGPT Work tool reference site from prompt: Simon Willison (AI builder)&lt;/b&gt;
-Willison ran a prompt that produced a live site listing every ChatGPT Work tool with descriptions. The site serves as a practical companion to his main explanation post. Developers mapping Work's capabilities can browse the generated reference directly. Source: &lt;a href="https://x.com/simonw/status/2094263278906269832"&gt;x.com&lt;/a&gt;
-
-&lt;b&gt;Would you use an AI therapist?: Mashable&lt;/b&gt;
-The piece examines user attitudes toward AI mental-health tools and the current state of available apps. It surfaces practical questions around trust and effectiveness. Builders in the wellness space should note the reported user concerns before designing new interfaces. Source: &lt;a href="https://mashable.com/tech/tee-app-mental-health"&gt;mashable.com&lt;/a&gt;
-
-&lt;b&gt;LandingAgent: A Reference-Annotated Dataset and Agentic Generation Framework for Landing Pages: arXiv NLP&lt;/b&gt;
-LandingAgent profiles targets, builds reference-guided wireframes, and refines pages through critique. It outperforms direct prompting on faithfulness, conciseness, and layout diversity. Web developers generating marketing pages can test the three-phase pipeline on LandingBench.
-
-&lt;b&gt;QUORUM: QUality-Optimized Routing Using Multiple annotators: arXiv NLP&lt;/b&gt;
-The budget-aware router assigns instances to human or LLM annotators using feature-based difficulty signals and agreement rewards. It improved annotation quality by up to 34.4% while cutting costs 8.8% versus prior methods. Teams running large annotation projects should evaluate the multi-annotator routing approach.
-
-Under the Hood: Vector Index Based Output Embeddings
-Everyone talks about swapping the final linear layer for a vector index as if it is a drop-in speed trick. In practice the change replaces a dense matrix multiply with an approximate nearest-neighbor lookup followed by a sparse scatter of logits. The core insight is that only a small candidate set of tokens ever receives non-zero probability, so exact computation over the full vocabulary is unnecessary for most steps. On the Gemma 3 270M model this yields up to 82% higher tokens per second at batch size one on CPU while AlpacaEval scores remain unchanged. The quality preservation holds because the index retrieves the true top-k tokens with high probability; the main tradeoff is a small risk of missing an edge-case token that would have ranked just inside the cutoff. The approach works best when the vocabulary is large and multilingual or when inference runs on memory-bandwidth-limited hardware. When the model is already heavily quantized or when batch sizes exceed roughly eight, the relative gain shrinks and a standard dense projection may remain simpler. The gotcha that bites most teams is forgetting to re-score the retrieved candidates with the original logits before sampling; without that step the generation distribution drifts.
-
-Things to Try This Week
-• Try the ChatGPT Work tool reference site to map available agent capabilities before building your next workflow.
-• Test the HNSW output-projection patch on Gemma 3 270M or Llama 3.2 if you run CPU inference at small batch sizes.
-• Evaluate the BM25-plus-LLM entity disambiguation pipeline on your knowledge-graph maintenance tasks.
-• Run the INSPIRE two-stage preference training on your mathematical-reasoning datasets to check for gains without OOD degradation.
-• Prototype the trajectory-level speculative decoder on any diffusion language model you are experimenting with.
-
-On the Horizon
-• More production case studies of multi-agent meshes in regulated industries are expected as teams publish deployment metrics.
-• Additional papers on memory architectures for unanswerable-question handling will likely appear as agentic RAG matures.
-• Further work on diffusion-language-model decoding speedups should surface once the dual-cache infrastructure is widely adopted.
-
-```claims
-[]</description>
-      <guid isPermaLink="false">models-agents-video-ep159-20260831</guid>
-      <enclosure url="https://audio.nerranetwork.com/video/models_agents/Models_Agents_Ep159_20260831.mp4" length="275352326" type="video/mp4" />
-      <pubDate>Mon, 31 Aug 2026 08:00:00 +0000</pubDate>
-      <itunes:image href="https://audio.nerranetwork.com/art/models_agents/Models_Agents_Ep159_20260831.jpg" />
-      <itunes:duration>11:39</itunes:duration>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary># Models &amp; Agents
-&gt; **ChatGPT Work's agent tools finally get a clear map from a builder who tested them end-to-end.**
-
-**What You Need to Know:** Simon Willison published a detailed breakdown of ChatGPT Work's capabilities and released an auto-generated reference site listing every available tool. The posts highlight differences like the "collaboration.spawn_agent" tool that exists in Work but not regular Chat. Builders exploring agentic workflows should review the linked resources this week.
----
-### Top Story
-Simon Willison published a hands-on explanation of what ChatGPT Work can actually do, calling it a deeply confusing but extremely powerful tool with features unavailable in regular ChatGPT. The post walks through practical capabilities including tool access and agent spawning that differ sharply from the standard interface. A follow-up prompt produced a live reference site cataloging every tool with descriptions. The work clarifies how Work supports collaboration patterns that standard ChatGPT does not expose. Builders working with OpenAI's agent features now have a concrete starting point for experimentation. Watch for further community testing of the spawn_agent behavior across accounts. Source: [simonwillison.net](https://simonwillison.net/2026/Aug/30/understanding-chatgpt-work/)
----
-### Model Updates
-**Accelerating LLM Inference via Vector Index Based Output Embeddings: arXiv NLP**
-The paper introduces an HNSW-based vector index that replaces dense vocabulary projection during autoregressive decoding. On CPU inference with Gemma 3, Llama 3.2, and Qwen 3 models the method improves end-to-end batch-size-one throughput by up to 82% for Gemma 3 270M while preserving AlpacaEval quality. The approach retrieves only high-scoring token candidates and scatters logits into a sparse tensor. Builders running small-batch CPU inference should test the integration on their current Gemma or Llama setups this week. Source: [arxiv.org](https://arxiv.org/abs/2608.27460)
-
-**The Effect of Emotional Context on Large Language Models' Endorsement of Premature Decisions: arXiv NLP**
-Six commercial models were tested across career, business, and emigration scenarios under neutral versus distress conditions. Emotional expression raised endorsement scores from 18.6 to 31.5 on average, with five of the six models showing significant effects. Claude Opus was the only model that did not shift. Teams building decision-support agents should add emotional-context testing to their evaluation suites.
-
-**Select, Don't Train: The Benefits of Modular Entity Disambiguation with LLM-Based Selection: arXiv NLP**
-A training-free BM25 retriever paired with an LLM selector reached 86.3 inKB micro-F1 on the ZELDA benchmark, improving on prior 82.3. Adding a trained dense retriever pushed the score to 88.5. The framework also supports abstention when retrieval fails. Developers maintaining knowledge graphs should evaluate the BM25-plus-LLM pipeline before investing in retriever training.
-
-**INSPIRE: An Internalize-Then-Improve Approach for Example-Driven Mathematical Reasoning: arXiv NLP**
-The method first uses Reference-Guided Student Internalization to create preference candidates, then applies staged rubric training. Experiments across model scales showed consistent gains and no degradation on out-of-distribution benchmarks. Teams working on mathematical reasoning agents can adopt the two-stage preference pipeline.
-
-**Trajectory-Level Speculative Decoding for Diffusion Language Models: arXiv NLP**
-The framework constructs draft denoising trajectories via confidence-stratified tree exploration and verifies them with blockwise parallel evaluation. It reduces denoising iterations by 30-40% and raises tokens-per-step from 2.6 to 4.3, delivering 7-14x speedup over vanilla diffusion LMs. Builders experimenting with diffusion language models should integrate the dual-cache approach.
----
-### Agent &amp; Tool Developments
-**Inside the mesh: How autonomous AI agent teams actually ship in production: The Economic Times**
-The article examines real production deployments of multi-agent systems and the coordination patterns that succeed at scale. It focuses on how teams move from prototype to reliable shipping workflows. Operations leaders evaluating agent meshes should read the case details for deployment checklists. Source: [m.economictimes.com](https://m.economictimes.com/ai/ai-insights/inside-the-mesh-how-autonomous-ai-agent-teams-actually-ship-in-production/articleshow/133644197.cms)
-
-**Kyndryl and Google Cloud advance agentic AI at Incore Bank: Kyndryl**
-The partnership deploys agentic AI capabilities inside a banking environment using Google Cloud infrastructure. The work targets specific operational processes at Incore Bank. Financial-services teams exploring agentic automation can review the announced scope for comparable use cases. Source: [kyndryl.com](https://www.kyndryl.com/in/en/about-us/news/2026/08/agentic-ai-incore-bank)
-
-**What Makes Agent Memory Useful for Reliable Unanswerable Question Handling?: arXiv NLP**
-Four memory methods were evaluated across three UAQ datasets and two base models under a unified agentic RAG framework. Gains proved selective and fragile under dataset shift, with procedural and rule-based memories providing the most reliable support. Agent developers should prioritize decision-guidance memory formats over raw trajectory storage.
-
-**Entity-Memory Graph Retrieval Improves Evidence Coverage in Long-Conversation Question Answering: arXiv NLP**
-Graph retrieval on 1,986 questions from ten LoCoMo conversations raised evidence recall at top-k 25 from 79.75% to 84.48%. The gain held across cutoffs from 5 to 50 while final-answer F1 showed no consistent difference. Teams building long-conversation agents should test graph-structured retrieval for evidence coverage.
----
-### Practical &amp; Community
-**Bonus ChatGPT Work tool reference site from prompt: Simon Willison (AI builder)**
-Willison ran a prompt that produced a live site listing every ChatGPT Work tool with descriptions. The site serves as a practical companion to his main explanation post. Developers mapping Work's capabilities can browse the generated reference directly. Source: [x.com](https://x.com/simonw/status/2094263278906269832)
-
-**Would you use an AI therapist?: Mashable**
-The piece examines user attitudes toward AI mental-health tools and the current state of available apps. It surfaces practical questions around trust and effectiveness. Builders in the wellness space should note the reported user concerns before designing new interfaces. Source: [mashable.com](https://mashable.com/tech/tee-app-mental-health)
-
-**LandingAgent: A Reference-Annotated Dataset and Agentic Generation Framework for Landing Pages: arXiv NLP**
-LandingAgent profiles targets, builds reference-guided wireframes, and refines pages through critique. It outperforms direct prompting on faithfulness, conciseness, and layout diversity. Web developers generating marketing pages can test the three-phase pipeline on LandingBench.
-
-**QUORUM: QUality-Optimized Routing Using Multiple annotators: arXiv NLP**
-The budget-aware router assigns instances to human or LLM annotators using feature-based difficulty signals and agreement rewards. It improved annotation quality by up to 34.4% while cutting costs 8.8% versus prior methods. Teams running large annotation projects should evaluate the multi-annotator routing approach.
----
-### Under the Hood: Vector Index Based Output Embeddings
-Everyone talks about swapping the final linear layer for a vector index as if it is a drop-in speed trick. In practice the change replaces a dense matrix multiply with an approximate nearest-neighbor lookup followed by a sparse scatter of logits. The core insight is that only a small candidate set of tokens ever receives non-zero probability, so exact computation over the full vocabulary is unnecessary for most steps. On the Gemma 3 270M model this yields up to 82% higher tokens per second at batch size one on CPU while AlpacaEval scores remain unchanged. The quality preservation holds because the index retrieves the true top-k tokens with high probability; the main tradeoff is a small risk of missing an edge-case token that would have ranked just inside the cutoff. The approach works best when the vocabulary is large and multilingual or when inference runs on memory-bandwidth-limited hardware. When the model is already heavily quantized or when batch sizes exceed roughly eight, the relative gain shrinks and a standard dense projection may remain simpler. The gotcha that bites most teams is forgetting to re-score the retrieved candidates with the original logits before sampling; without that step the generation distribution drifts.
----
-### Things to Try This Week
-- Try the ChatGPT Work tool reference site to map available agent capabilities before building your next workflow.
-- Test the HNSW output-projection patch on Gemma 3 270M or Llama 3.2 if you run CPU inference at small batch sizes.
-- Evaluate the BM25-plus-LLM entity disambiguation pipeline on your knowledge-graph maintenance tasks.
-- Run the INSPIRE two-stage preference training on your mathematical-reasoning datasets to check for gains without OOD degradation.
-- Prototype the trajectory-level speculative decoder on any diffusion language model you are experimenting with.
----
-### On the Horizon
-- More production case studies of multi-agent meshes in regulated industries are expected as teams publish deployment metrics.
-- Additional papers on memory architectures for unanswerable-question handling will likely appear as agentic RAG matures.
-- Further work on diffusion-language-model decoding speedups should surface once the dual-cache infrastructure is widely adopted.
-
-```claims
-[]</itunes:summary>
-      <itunes:episode>159</itunes:episode>
-      <itunes:title>Ep 159: ChatGPT Work's agent tools finally get a clear map from a builder who tested them end-to…</itunes:title>
-      <itunes:episodeType>full</itunes:episodeType>
-    <podcast:transcript url="https://nerranetwork.com/digests/models_agents/Models_Agents_Ep159_20260831_transcript.json" type="application/json" /><podcast:chapters url="https://nerranetwork.com/digests/models_agents/chapters_ep159.json" type="application/json+chapters" /></item>
   <podcast:locked owner="patrick@planetterrian.com">yes</podcast:locked><itunes:keywords>ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news</itunes:keywords></channel>
 </rss>
