@@ -1,323 +1,371 @@
-# Review ledger for env_intel. Schema: docs/reviews/ledger/README.md
 reviews:
-  - date: 2026-06-10
-    pr: null
-    doc: docs/reviews/env_intel_review_2026_06_10.md
-    summary: >
-      First dedicated env_intel pass. Show was missed by the Tesla/PT/
-      four-show chapter fixes and carried two bug classes those passes
-      eliminated (mis-positioned chapters + orphan closing variant) plus
-      an odd-weekday cadence-accuracy bug in the spoken intro/closing.
-    shipped:
-      - chapter positional `where` anchors (Introduction=start, Tomorrow Teaser/Closing=end)
-      - Closing pattern now matches both closing-pool variants
-      - Industry pattern excludes the closing's "your practice" (lookbehind)
-      - cadence-neutral spoken copy (dropped "daily" / "back tomorrow")
-      - unified prompt length target 1500-2200 -> 900-1300 words
-    deferred:
-      - digest-driven / position-aware mid-section chapter titles (medium effort, shared)
-      - thin-news-day handling (slow_news library not backfilling; Ep043 aired "no news")
-    predictions:
-      - metric: episodes with duplicate/misordered chapter titles, last 10
-        baseline: "5/10 (snapshot 2026-06-10)"
-        expected: "0/10 within 2 weeks of episodes generated post-merge"
-        verdict: partial
-        evidence: "Ep044 (first post-fix episode) has 0 duplicate titles; only 1 post-fix episode so far, re-score next pass."
-      - metric: transcripts saying "daily" or "back tomorrow"
-        baseline: "7/10 ('back tomorrow') + 'daily' in every intro"
-        expected: "0/10 post-merge"
-        verdict: hit
-        evidence: "Ep044 intro 'Let's get into the latest…' (no 'daily'); closing 'We'll be back with the next briefing' (no 'tomorrow' in cadence copy)."
-      - metric: episodes shipping with no Closing chapter (variant-2 closings)
-        baseline: ">0 (closing variant 2 matched no pattern)"
-        expected: "0 post-merge"
-        verdict: miss
-        evidence: "Ep044 shipped with NO Closing chapter — new root cause: LLM merged Tomorrow Teaser + closing_block into one paragraph, Tomorrow Teaser won the line-level race. Reopened; fixed this pass via marker reorder."
-      - metric: median _tts.txt words, last 10 eps
-        baseline: "~750 (avg); target was contradictory 1500"
-        expected: ">= 900 median; stable, not lower than baseline"
-        verdict: miss
-        evidence: "2026-06-17 snapshot: last-10 median 814.5w; post-fix-only (Ep044/045/046) median 867w — both under the 900 floor. Chronic under-length persists; digest ceiling, deferred behind the four-show length A/B."
-    agent_cost_usd: null
+- date: 2026-06-10
+  pr: null
+  doc: docs/reviews/env_intel_review_2026_06_10.md
+  summary: 'First dedicated env_intel pass. Show was missed by the Tesla/PT/ four-show chapter fixes and carried two bug classes those passes eliminated (mis-positioned chapters + orphan closing variant) plus an odd-weekday cadence-accuracy bug in the spoken intro/closing.
 
-  - date: 2026-06-11
-    pr: null
-    doc: docs/reviews/env_intel_review_2026_06_11.md
-    summary: >
-      Follow-up pass scoring the June 10 predictions against Ep044 (first
-      post-fix episode). Fixed the reopened orphan-Closing bug (new root
-      cause: teaser+closing merged into one paragraph) via marker reorder,
-      and attacked the deferred thin-news issue at the HOOK — Ep044
-      headlined "No major announcements appeared in today's feed" across
-      blog title / chapter / spoken opener.
-    shipped:
-      - reorder chapter markers so Closing precedes Tomorrow Teaser (Closing wins a merged final line)
-      - digest prompt forbids absence-of-news HOOK; thin days lead the hook with a forward-looking item
-    deferred:
-      - digest-driven / position-aware mid-section chapter titles (medium effort, shared)
-      - numbers/dates spell-out drift (Roman-numeral II/III risk) — landmine #17, needs A/B before any repair layer
-      - median length >= 900 on a normal-news day (re-score with non-thin post-fix episodes)
-    predictions:
-      - metric: episodes shipping with no Closing chapter, last 10
-        baseline: "Ep044 had none (merged teaser+closing paragraph)"
-        expected: "0/10 post-merge — merged final paragraph now titles 'Closing'"
-        verdict: hit
-        evidence: "Ep045 (first true post-merge episode) ends on 'Closing'; chapters_ep045.json last title = Closing. Pre-merge eps still lack it by definition."
-      - metric: digest HOOKs that state the absence of news (thin-news days)
-        baseline: "Ep044 hook = 'No major Canadian regulatory announcements … appeared in today's feed'"
-        expected: "0 absence-hooks; thin-day hooks lead with a deadline/consultation/deep-dive topic"
-        verdict: hit
-        evidence: "Ep045 hook = 'Newfoundland advances 25-year fish sauce site remediation…' (a real story). No post-fix thin-news day yet to stress-test, but mechanism is live."
-      - metric: blog <title>/<h1> on thin-news episodes
-        baseline: "Ep044 blog titled 'No major … appeared in today's feed — Episode 44'"
-        expected: "thin-news blog titles read as actionable intelligence, not absence statements"
-        verdict: partial
-        evidence: "No post-fix thin-news episode to observe (Ep045 was a normal-news day). Carry forward."
-    agent_cost_usd: null
+    '
+  shipped:
+  - chapter positional `where` anchors (Introduction=start, Tomorrow Teaser/Closing=end)
+  - Closing pattern now matches both closing-pool variants
+  - Industry pattern excludes the closing's "your practice" (lookbehind)
+  - cadence-neutral spoken copy (dropped "daily" / "back tomorrow")
+  - unified prompt length target 1500-2200 -> 900-1300 words
+  deferred:
+  - digest-driven / position-aware mid-section chapter titles (medium effort, shared)
+  - thin-news-day handling (slow_news library not backfilling; Ep043 aired "no news")
+  predictions:
+  - metric: episodes with duplicate/misordered chapter titles, last 10
+    baseline: 5/10 (snapshot 2026-06-10)
+    expected: 0/10 within 2 weeks of episodes generated post-merge
+    verdict: partial
+    evidence: Ep044 (first post-fix episode) has 0 duplicate titles; only 1 post-fix episode so far, re-score next pass.
+  - metric: transcripts saying "daily" or "back tomorrow"
+    baseline: 7/10 ('back tomorrow') + 'daily' in every intro
+    expected: 0/10 post-merge
+    verdict: hit
+    evidence: Ep044 intro 'Let's get into the latest…' (no 'daily'); closing 'We'll be back with the next briefing' (no 'tomorrow' in cadence copy).
+  - metric: episodes shipping with no Closing chapter (variant-2 closings)
+    baseline: '>0 (closing variant 2 matched no pattern)'
+    expected: 0 post-merge
+    verdict: miss
+    evidence: 'Ep044 shipped with NO Closing chapter — new root cause: LLM merged Tomorrow Teaser + closing_block into one paragraph, Tomorrow Teaser won the line-level race. Reopened; fixed this pass via marker reorder.'
+  - metric: median _tts.txt words, last 10 eps
+    baseline: ~750 (avg); target was contradictory 1500
+    expected: '>= 900 median; stable, not lower than baseline'
+    verdict: miss
+    evidence: '2026-06-17 snapshot: last-10 median 814.5w; post-fix-only (Ep044/045/046) median 867w — both under the 900 floor. Chronic under-length persists; digest ceiling, deferred behind the four-show length A/B.'
+  agent_cost_usd: null
+- date: 2026-06-11
+  pr: null
+  doc: docs/reviews/env_intel_review_2026_06_11.md
+  summary: 'Follow-up pass scoring the June 10 predictions against Ep044 (first post-fix episode). Fixed the reopened orphan-Closing bug (new root cause: teaser+closing merged into one paragraph) via marker reorder, and attacked the deferred thin-news issue at the HOOK — Ep044 headlined "No major announcements appeared in today''s feed" across blog title / chapter / spoken opener.
 
-  - date: 2026-06-15
-    pr: null
-    doc: docs/reviews/env_intel_review_2026_06_15.md
-    summary: >
-      Third pass. Scored the prior passes' predictions against Ep045 (first
-      true post-merge, normal-news episode — Closing chapter present, real
-      hook, cadence-neutral closing, 958w). Attacked the next tier: the
-      Practitioner Deep Dive opened "You arrive at a…" in 9/10 episodes
-      (root cause: the DIGEST prompt seeded that literal example), plus a
-      verbatim podcast transition seed ("here's something I wish someone had
-      told me…", 5/10). Both are the Omni-View "strongest case" tic class.
-    shipped:
-      - digest prompt drops the seeded "You arrive at a former gas station site" example; requires a rotated deep-dive entry point
-      - podcast prompt bans the repetitive "You arrive at a…" opener + "here's something I wish someone had told me…" lead-in, requires rotation
-    deferred:
-      - digest-driven / position-aware mid-section chapter titles (medium effort, shared) — carried from Jun 10/11
-      - numbers/dates spell-out drift ("1 meters intervals"; digit dates) — landmine #17, needs A/B before any repair layer
-      - chronic under-length on thin-news days (digest ceiling, FF/UC root cause) — re-score median on 2-3 normal-news post-fix episodes
-      - thin-news blog title reads as intelligence — re-score on a post-fix thin-news day
-    predictions:
-      - metric: deep-dive openers using "You arrive at a…", last 10 episodes
-        baseline: "9/10 (Ep036-045, all but the short Ep043)"
-        expected: "<= 3/10 within 2 weeks of post-merge episodes; openers rotate among the menu framings"
-        verdict: hit
-        evidence: "Ep046 (first true post-merge episode) opens the deep dive 'There's a nuance here worth understanding when benzene detections appear inconsistent…' — no 'You arrive at a…'. Only 1 post-merge episode; re-score rotation next pass."
-      - metric: transcripts using "here's something I wish someone had told me early in my career"
-        baseline: "5/10"
-        expected: "0/10 post-merge"
-        verdict: hit
-        evidence: "Absent from Ep046 (tts.txt). Present in pre-merge Ep045 line 51."
-    agent_cost_usd: null
+    '
+  shipped:
+  - reorder chapter markers so Closing precedes Tomorrow Teaser (Closing wins a merged final line)
+  - digest prompt forbids absence-of-news HOOK; thin days lead the hook with a forward-looking item
+  deferred:
+  - digest-driven / position-aware mid-section chapter titles (medium effort, shared)
+  - numbers/dates spell-out drift (Roman-numeral II/III risk) — landmine
+  - median length >= 900 on a normal-news day (re-score with non-thin post-fix episodes)
+  predictions:
+  - metric: episodes shipping with no Closing chapter, last 10
+    baseline: Ep044 had none (merged teaser+closing paragraph)
+    expected: 0/10 post-merge — merged final paragraph now titles 'Closing'
+    verdict: hit
+    evidence: Ep045 (first true post-merge episode) ends on 'Closing'; chapters_ep045.json last title = Closing. Pre-merge eps still lack it by definition.
+  - metric: digest HOOKs that state the absence of news (thin-news days)
+    baseline: Ep044 hook = 'No major Canadian regulatory announcements … appeared in today's feed'
+    expected: 0 absence-hooks; thin-day hooks lead with a deadline/consultation/deep-dive topic
+    verdict: hit
+    evidence: Ep045 hook = 'Newfoundland advances 25-year fish sauce site remediation…' (a real story). No post-fix thin-news day yet to stress-test, but mechanism is live.
+  - metric: blog <title>/<h1> on thin-news episodes
+    baseline: Ep044 blog titled 'No major … appeared in today's feed — Episode 44'
+    expected: thin-news blog titles read as actionable intelligence, not absence statements
+    verdict: partial
+    evidence: No post-fix thin-news episode to observe (Ep045 was a normal-news day). Carry forward.
+  agent_cost_usd: null
+- date: 2026-06-15
+  pr: null
+  doc: docs/reviews/env_intel_review_2026_06_15.md
+  summary: 'Third pass. Scored the prior passes'' predictions against Ep045 (first true post-merge, normal-news episode — Closing chapter present, real hook, cadence-neutral closing, 958w). Attacked the next tier: the Practitioner Deep Dive opened "You arrive at a…" in 9/10 episodes (root cause: the DIGEST prompt seeded that literal example), plus a verbatim podcast transition seed ("here''s something I wish someone had told me…", 5/10). Both are the Omni-View "strongest case" tic class.
 
-  - date: 2026-06-17
-    pr: 671
-    doc: docs/reviews/env_intel_review_2026_06_17.md
-    summary: >
-      Fourth pass. Scored the June 15 tic fixes against Ep046 (first true
-      post-merge episode) — both hit. Fixed a latent orphan-Introduction
-      chapter bug the June 10 where-anchor pass left half-fixed: the
-      Introduction marker only matched the "This is Environmental
-      Intelligence" greeting, so every "Welcome to Environmental
-      Intelligence" episode (Ep037/038/042/046 of the last ten) shipped
-      with no Introduction chapter.
-    shipped:
-      - Introduction chapter pattern broadened to match all three intros.py greetings ("(?:This is|Welcome to) Environmental Intelligence"); metadata-only, no audio/prompt change
-    deferred:
-      - chronic under-length / digest ceiling (median 814w vs 900 floor) — non-padding lever is deep-dive expansion, behind the four-show length A/B
-      - digest-driven / position-aware mid-section chapter titles (Ep046 had no Week Ahead chapter; week-ahead content merged into Action Items) — medium effort, shared
-      - numbers/dates spell-out drift ("Protocol 4", "Q three") — landmine #17, needs A/B
-      - thin-news blog title reads as intelligence — re-score on a post-fix thin-news day
-    predictions:
-      - metric: episodes shipping with no Introduction chapter, last 10
-        baseline: "4/10 (Ep037/038/042/046 — the 'Welcome to' greeting variant)"
-        expected: "0/10 post-merge — all three greeting shapes now title an Introduction chapter"
-        verdict: hit
-        evidence: "2026-07-02 network pass: every window episode (incl. the
-          'Welcome to' greeting variant) has an Introduction chapter."
-      - metric: deep-dive opener "There's a nuance here worth understanding" (potential new tic)
-        baseline: "1/1 post-merge episode (Ep046)"
-        expected: "openers rotate; this lead-in does not become a 5+/10 template echo"
-        verdict: miss
-        evidence: "2026-07-02 network pass: exactly as feared — 'There's a
-          nuance here worth understanding' opened the deep dive in 6/6 window
-          episodes; the replacement became the template (third-generation
-          tic). Reopened; menu removal + rotation memory proposed under A/B."
-    agent_cost_usd: null
+    '
+  shipped:
+  - digest prompt drops the seeded "You arrive at a former gas station site" example; requires a rotated deep-dive entry point
+  - podcast prompt bans the repetitive "You arrive at a…" opener + "here's something I wish someone had told me…" lead-in, requires rotation
+  deferred:
+  - digest-driven / position-aware mid-section chapter titles (medium effort, shared) — carried from Jun 10/11
+  - numbers/dates spell-out drift ("1 meters intervals"; digit dates) — landmine
+  - chronic under-length on thin-news days (digest ceiling, FF/UC root cause) — re-score median on 2-3 normal-news post-fix episodes
+  - thin-news blog title reads as intelligence — re-score on a post-fix thin-news day
+  predictions:
+  - metric: deep-dive openers using "You arrive at a…", last 10 episodes
+    baseline: 9/10 (Ep036-045, all but the short Ep043)
+    expected: <= 3/10 within 2 weeks of post-merge episodes; openers rotate among the menu framings
+    verdict: hit
+    evidence: Ep046 (first true post-merge episode) opens the deep dive 'There's a nuance here worth understanding when benzene detections appear inconsistent…' — no 'You arrive at a…'. Only 1 post-merge episode; re-score rotation next pass.
+  - metric: transcripts using "here's something I wish someone had told me early in my career"
+    baseline: 5/10
+    expected: 0/10 post-merge
+    verdict: hit
+    evidence: Absent from Ep046 (tts.txt). Present in pre-merge Ep045 line 51.
+  agent_cost_usd: null
+- date: 2026-06-17
+  pr: 671
+  doc: docs/reviews/env_intel_review_2026_06_17.md
+  summary: 'Fourth pass. Scored the June 15 tic fixes against Ep046 (first true post-merge episode) — both hit. Fixed a latent orphan-Introduction chapter bug the June 10 where-anchor pass left half-fixed: the Introduction marker only matched the "This is Environmental Intelligence" greeting, so every "Welcome to Environmental Intelligence" episode (Ep037/038/042/046 of the last ten) shipped with no Introduction chapter.
 
-  - date: 2026-07-02
-    pr: null
-    doc: docs/reviews/network_review_2026_07_02.md
-    reviewer: claude-code (network editorial pass)
-    summary: >
-      Network editorial pass. Scored June-17: Introduction HIT; nuance-tic
-      MISS (6/6 — the ledger predicted exactly this; reopened, menu removal
-      proposed). P0: orphan-Closing chapters RETURNED (variant 3) — 3/5
-      window episodes ended on a promo-collision body chapter. Also: thin
-      days triple-tell one story (Ep047/049 told one story 4x); "federal
-      register" spoken instead of "Canada Gazette" (Ep051 x4); "Tomorrow,
-      watch for…" on an every-other-day show. The Practitioner Deep Dive
-      remains the network's best B2B content.
-    shipped:
-      - chapter reorder — Closing/Tomorrow Teaser ordered before ALL body
-        markers; bare "deep dive" dropped; science|technical marker
-        promo-proofed; re-parsed all five real window episodes to verify
-        (metadata-only, no audio)
-    deferred:
-      - "A/B proposals (NOT applied): thin-day rule (a 1-2-story day tells
-        the story ONCE; Regulatory Watch/Industry from the forward
-        calendar); remove 'There's a nuance here worth understanding' from
-        the menu (prefer rotation memory over another menu); 'Next briefing,
-        watch for…'; always 'Canada Gazette'; spoken script carries cited
-        instrument references"
-      - chronic under-length (carried; digest ceiling, four-show length A/B)
-      - "operator: verify Ep050's 'coordinated federal-provincial
-        permitting' claim; QC/SK/Atlantic got ZERO mentions despite the
-        Phase-4 queries — French-language sources or soften the RSS promise"
-    predictions:
-      - metric: episodes whose LAST chapter is Closing (chapters_ep*.json)
-        baseline: "2 of 5 in the window (3/5 ended on a promo-collision body chapter)"
-        expected: "all of the next 5 episodes end with a Closing chapter"
-        verdict: pending
-        evidence: null
-    agent_cost_usd: null
+    '
+  shipped:
+  - Introduction chapter pattern broadened to match all three intros.py greetings ("(?:This is|Welcome to) Environmental Intelligence"); metadata-only, no audio/prompt change
+  deferred:
+  - chronic under-length / digest ceiling (median 814w vs 900 floor) — non-padding lever is deep-dive expansion, behind the four-show length A/B
+  - digest-driven / position-aware mid-section chapter titles (Ep046 had no Week Ahead chapter; week-ahead content merged into Action Items) — medium effort, shared
+  - numbers/dates spell-out drift ("Protocol 4", "Q three") — landmine
+  - thin-news blog title reads as intelligence — re-score on a post-fix thin-news day
+  predictions:
+  - metric: episodes shipping with no Introduction chapter, last 10
+    baseline: 4/10 (Ep037/038/042/046 — the 'Welcome to' greeting variant)
+    expected: 0/10 post-merge — all three greeting shapes now title an Introduction chapter
+    verdict: hit
+    evidence: '2026-07-02 network pass: every window episode (incl. the ''Welcome to'' greeting variant) has an Introduction chapter.'
+  - metric: deep-dive opener "There's a nuance here worth understanding" (potential new tic)
+    baseline: 1/1 post-merge episode (Ep046)
+    expected: openers rotate; this lead-in does not become a 5+/10 template echo
+    verdict: miss
+    evidence: '2026-07-02 network pass: exactly as feared — ''There''s a nuance here worth understanding'' opened the deep dive in 6/6 window episodes; the replacement became the template (third-generation tic). Reopened; menu removal + rotation memory proposed under A/B.'
+  agent_cost_usd: null
+- date: 2026-07-02
+  pr: null
+  doc: docs/reviews/network_review_2026_07_02.md
+  reviewer: claude-code (network editorial pass)
+  summary: 'Network editorial pass. Scored June-17: Introduction HIT; nuance-tic MISS (6/6 — the ledger predicted exactly this; reopened, menu removal proposed). P0: orphan-Closing chapters RETURNED (variant 3) — 3/5 window episodes ended on a promo-collision body chapter. Also: thin days triple-tell one story (Ep047/049 told one story 4x); "federal register" spoken instead of "Canada Gazette" (Ep051 x4); "Tomorrow, watch for…" on an every-other-day show. The Practitioner Deep Dive remains the network''s best B2B content.
 
-  - date: '2026-07-13'
-    pr: null
-    doc: docs/reviews/env_intel_review_2026_07_13.md
-    generated_by: grok-4.3
-    summary: Grok did not return the JSON envelope; raw output kept.
-    scored_prior_predictions: []
-    shipped: []
-    deferred: []
-    predictions: []
-    proposed_changes_in_pr: []
-    agent_cost_usd: 0.048
-  - date: '2026-07-27'
-    pr: null
-    doc: docs/reviews/env_intel_review_2026_07_27.md
-    generated_by: grok-4.3
-    summary: Chronic under-length (7/10 eps <900w), recurring 'nuance here worth understanding' deep-dive tic (8+/10 transcripts, prior prediction miss), and boilerplate network-promo tics in every episode.
-    scored_prior_predictions:
-    - metric: episodes whose LAST chapter is Closing, last 10
-      verdict: hit
-      evidence: 9/10 episodes end with Closing per chapters_ep*.json after July-2 reorder
-    - metric: deep-dive opener 'There's a nuance here worth understanding' does not become 5+/10 template
-      verdict: miss
-      evidence: 8/10 transcripts (Ep052-Ep061) use it verbatim
-    shipped: []
-    deferred:
-    - Chronic under-length (digest ceiling only)
-    - Mid-section chapter markers rely on literal keywords
-    - 'Numbers/dates spell-out drift (landmine #17)'
-    predictions:
-    - metric: episodes below min_podcast_words:900, last 10
-      baseline: 7/10
-      expected: <=3/10 after digest expansion levers
-      verdict: pending
-      evidence: null
-    - metric: transcripts using 'There's a nuance here worth understanding' as deep-dive opener, last 10
-      baseline: 8/10
-      expected: <=2/10 after menu removal + rotation memory
-      verdict: pending
-      evidence: null
-    proposed_changes_in_pr:
-    - file: shows/prompts/env_intel_digest.txt
-      kind: prompt
-      ab_listen_required: true
-      rationale: De-seed by shape + verbatim ban + rotation memory per ledger rule; prevents third-generation tic
-    - file: shows/prompts/env_intel_podcast.txt
-      kind: prompt
-      ab_listen_required: true
-      rationale: Mirror digest de-seed; podcast faithfully echoes digest opener
-    agent_cost_usd: 0.0492
-  - date: '2026-08-10'
-    pr: null
-    doc: docs/reviews/env_intel_review_2026_08_10.md
-    generated_by: grok-4.5
-    summary: Post-July-31 digest length lever is working on the two newest episodes (ep62/63 both >1000w) but the 10-ep window is still 7/10 under floor; the third-generation deep-dive opener tic partially cleared by drift while a 'Consider a…' successor converged; highest-yield fixes are TTS garble/pronunciation (Simpcw, Kincardine, Terrace/Kamloops, spoken underscore/hyphen, The Tyee) plus banning spoken absence-of-news lines that shipped in ep57.
-    scored_prior_predictions:
-    - metric: episodes below min_podcast_words:900, last 10
-      verdict: partial
-      evidence: Still 7/10 under floor in ep54–63, but 2/2 post-July-31 digest-lever episodes (ep62=1023w, ep63=1021w) cleared 900+; pre-lever shorts dominate the window.
-    - metric: transcripts using 'There's a nuance here worth understanding' as deep-dive opener, last 10
-      verdict: partial
-      evidence: 4/10 (ep54–57 only; absent ep58–63). July-27 menu-removal never shipped; successor opener 'Consider a…' now 4/10 (ep58/60/62/63).
-    - metric: episodes whose LAST chapter is Closing (chapters_ep*.json)
-      verdict: hit
-      evidence: 10/10 of ep54–63 end with title Closing after the July-2 marker reorder.
-    shipped: []
-    deferred:
-    - Digest-driven / position-aware mid-section chapter titles (shared engine; carried since 2026-06-10) — ep56 missing Deep Dive chapter and ep60 collapsed mid-markers are symptoms but full fix is cross-show.
-    - 'Numbers/dates spell-out drift (Protocol 4, digit dates, ''PM, 2.5'' comma pause) — landmine #17; needs A/B before any repair layer; never phonetic injection.'
-    - 'If next 5+ post-lever episodes median still <900w: operator decision on raising min_digest_words further and/or full-text article fetch / licensed-knowledge floors — do NOT re-file podcast-side length levers (escalate, don''t repeat).'
-    - French-language / QC-SK-Atlantic source coverage gap vs Phase-4 web_search_queries promise (operator/editorial).
-    - OP3 download collapse [20,21,10,3] — distribution/discoverability operator review (Apple/Spotify/YouTube Shorts), not a prompt change this pass.
-    - Thin-news blog <title> intelligence re-score — no clean post-fix absence-hook episode observed in ep54–63 window.
-    predictions:
-    - metric: deep-dive openers using 'There's a nuance here worth understanding' OR 'Consider a…' (or close paraphrase), last 10 transcripts
-      baseline: nuance 4/10 + Consider-a 4/10 (ep54–63); combined unique eps 8/10
-      expected: ≤2/10 within 2 weeks of post-merge episodes after shape de-seed + verbatim ban + recent-MEMORY; openers rotate without a new single template
-      verdict: pending
-      evidence: null
-    - metric: episodes below min_podcast_words:900 among episodes generated after digest lever (ep62+)
-      baseline: 0/2 (ep62=1023, ep63=1021); full last-10 still 7/10
-      expected: ≤2/10 of the next 10 post-lever episodes under 900; median ≥900 — if miss, escalate to operator decision on min_digest_words/fetch, do not re-file podcast-side length
-      verdict: pending
-      evidence: null
-    - metric: transcripts containing spoken absence-of-section lines ('No qualifying… appeared today' / 'No major… appeared') or spoken bare URLs
-      baseline: ep57 absence lines + ep54 news.gov.bc.ca URL in current window
-      expected: 0 in post-merge episodes
-      verdict: pending
-      evidence: null
-    - metric: transcripts reading hyphen/underscore as words ('contaminated underscore/dash/hyphen sites')
-      baseline: ep54 (3 instances in one episode)
-      expected: 0 post-merge after sanitization guard
-      verdict: pending
-      evidence: null
-    - metric: successor deep-dive opener tic prediction (third-generation watch)
-      baseline: none yet post-proposed-deseeds
-      expected: next review checks whether openers converged on 'Picture a…', 'A client calls…', or bare unmarked scene; if ≥5/10, reopen with MEMORY ban of that shape
-      verdict: pending
-      evidence: null
-    proposed_changes_in_pr:
-    - file: shows/hooks/env_intel.py
-      kind: code
-      ab_listen_required: false
-      rationale: Highest-yield category (~100% hit historically). ep58 mangled Simpcw six ways; ep61 Kincardine three ways; ep59 Terrace→terrorists, Kamloops→cam loops; ep54 Tyee→TAE; ep55 Nerra→Narrow. Extend the existing hook channel only — no prompt phonetic injection.
-    - file: shows/prompts/env_intel_podcast.txt
-      kind: prompt
-      ab_listen_required: true
-      rationale: 'Locks three verified P0/P1 classes: (1) fourth-generation deep-dive opener convergence on ''Consider a…'' after nuance partially cleared by drift; (2) ep57 spoken empty-section failure mode; (3) ''Tomorrow'' cadence on an odd-weekday show. De-seed by shape + verbatim ban + MEMORY per July 2026 ledger rule — no quotable replacement example.'
-    - file: shows/prompts/env_intel_digest.txt
-      kind: prompt
-      ab_listen_required: true
-      rationale: Podcast faithfully echoes digest deep-dive openers (June-15/July-2/July-27 lineage). Digest is the seed surface; de-seed here or the podcast ban alone will lose. Also hardens thin-day double-tell and Canada Gazette / proper-noun spelling at source.
-    - file: engine/generator.py
-      kind: code
-      ab_listen_required: false
-      rationale: ep54 shipped hyphen/underscore read as words and a spoken URL despite prompt bans. Prompt-only bans have incomplete hit rate on this class; a deterministic sanitizer + drift-guard is the garble-restore pattern that historically hits ~100% and needs no A/B.
-    - file: tests/test_env_intel_quality_pass.py
-      kind: code
-      ab_listen_required: false
-      rationale: Every behavioral fix gets a drift-guard per playbook; pins the length-lever policy so a future pass cannot reintroduce podcast_expand_below_target (meta-review miss class).
-    agent_cost_usd: 0.1165
-  - date: 2026-09-24
-    pr: "network sourcing pass (the launch cohort's sourcing floor on every news show)"
-    doc: docs/experiments.yaml (network-sourcing-pass-2026-09-24)
-    reviewer: claude-code (network pass after the launch-cohort readouts)
-    summary: >-
-      Full text on 10 articles; federal and provincial primary sources (canada.ca, ontario.ca, gov.bc.ca, alberta.ca, quebec.ca, the Gazette, IEA) preferred; X posts secondary; X-only-lead lint; Sources line. The four news.gov.bc.ca feeds fail TLS from this container — a runner read is needed before touching them.
-    shipped:
-      - fetch_full_text 10
-      - preferred_domains
-      - x_posts_as_sources secondary
-      - digest_lints x_only_lead
-      - show-notes Sources line
-    predictions:
-      - metric: "source_integrity_claims median"
-        baseline: "0"
-        expected: ">= 3"
-        verdict: pending
+    '
+  shipped:
+  - chapter reorder — Closing/Tomorrow Teaser ordered before ALL body markers; bare "deep dive" dropped; science|technical marker promo-proofed; re-parsed all five real window episodes to verify (metadata-only, no audio)
+  deferred:
+  - 'A/B proposals (NOT applied): thin-day rule (a 1-2-story day tells the story ONCE; Regulatory Watch/Industry from the forward calendar); remove ''There''s a nuance here worth understanding'' from the menu (prefer rotation memory over another menu); ''Next briefing, watch for…''; always ''Canada Gazette''; spoken script carries cited instrument references'
+  - chronic under-length (carried; digest ceiling, four-show length A/B)
+  - 'operator: verify Ep050''s ''coordinated federal-provincial permitting'' claim; QC/SK/Atlantic got ZERO mentions despite the Phase-4 queries — French-language sources or soften the RSS promise'
+  predictions:
+  - metric: episodes whose LAST chapter is Closing (chapters_ep*.json)
+    baseline: 2 of 5 in the window (3/5 ended on a promo-collision body chapter)
+    expected: all of the next 5 episodes end with a Closing chapter
+    verdict: pending
+    evidence: null
+  agent_cost_usd: null
+- date: '2026-07-13'
+  pr: null
+  doc: docs/reviews/env_intel_review_2026_07_13.md
+  generated_by: grok-4.3
+  summary: Grok did not return the JSON envelope; raw output kept.
+  scored_prior_predictions: []
+  shipped: []
+  deferred: []
+  predictions: []
+  proposed_changes_in_pr: []
+  agent_cost_usd: 0.048
+- date: '2026-07-27'
+  pr: null
+  doc: docs/reviews/env_intel_review_2026_07_27.md
+  generated_by: grok-4.3
+  summary: Chronic under-length (7/10 eps <900w), recurring 'nuance here worth understanding' deep-dive tic (8+/10 transcripts, prior prediction miss), and boilerplate network-promo tics in every episode.
+  scored_prior_predictions:
+  - metric: episodes whose LAST chapter is Closing, last 10
+    verdict: hit
+    evidence: 9/10 episodes end with Closing per chapters_ep*.json after July-2 reorder
+  - metric: deep-dive opener 'There's a nuance here worth understanding' does not become 5+/10 template
+    verdict: miss
+    evidence: 8/10 transcripts (Ep052-Ep061) use it verbatim
+  shipped: []
+  deferred:
+  - Chronic under-length (digest ceiling only)
+  - Mid-section chapter markers rely on literal keywords
+  - 'Numbers/dates spell-out drift (landmine #17)'
+  predictions:
+  - metric: episodes below min_podcast_words:900, last 10
+    baseline: 7/10
+    expected: <=3/10 after digest expansion levers
+    verdict: pending
+    evidence: null
+  - metric: transcripts using 'There's a nuance here worth understanding' as deep-dive opener, last 10
+    baseline: 8/10
+    expected: <=2/10 after menu removal + rotation memory
+    verdict: pending
+    evidence: null
+  proposed_changes_in_pr:
+  - file: shows/prompts/env_intel_digest.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: De-seed by shape + verbatim ban + rotation memory per ledger rule; prevents third-generation tic
+  - file: shows/prompts/env_intel_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: Mirror digest de-seed; podcast faithfully echoes digest opener
+  agent_cost_usd: 0.0492
+- date: '2026-08-10'
+  pr: null
+  doc: docs/reviews/env_intel_review_2026_08_10.md
+  generated_by: grok-4.5
+  summary: Post-July-31 digest length lever is working on the two newest episodes (ep62/63 both >1000w) but the 10-ep window is still 7/10 under floor; the third-generation deep-dive opener tic partially cleared by drift while a 'Consider a…' successor converged; highest-yield fixes are TTS garble/pronunciation (Simpcw, Kincardine, Terrace/Kamloops, spoken underscore/hyphen, The Tyee) plus banning spoken absence-of-news lines that shipped in ep57.
+  scored_prior_predictions:
+  - metric: episodes below min_podcast_words:900, last 10
+    verdict: partial
+    evidence: Still 7/10 under floor in ep54–63, but 2/2 post-July-31 digest-lever episodes (ep62=1023w, ep63=1021w) cleared 900+; pre-lever shorts dominate the window.
+  - metric: transcripts using 'There's a nuance here worth understanding' as deep-dive opener, last 10
+    verdict: partial
+    evidence: 4/10 (ep54–57 only; absent ep58–63). July-27 menu-removal never shipped; successor opener 'Consider a…' now 4/10 (ep58/60/62/63).
+  - metric: episodes whose LAST chapter is Closing (chapters_ep*.json)
+    verdict: hit
+    evidence: 10/10 of ep54–63 end with title Closing after the July-2 marker reorder.
+  shipped: []
+  deferred:
+  - Digest-driven / position-aware mid-section chapter titles (shared engine; carried since 2026-06-10) — ep56 missing Deep Dive chapter and ep60 collapsed mid-markers are symptoms but full fix is cross-show.
+  - 'Numbers/dates spell-out drift (Protocol 4, digit dates, ''PM, 2.5'' comma pause) — landmine #17; needs A/B before any repair layer; never phonetic injection.'
+  - 'If next 5+ post-lever episodes median still <900w: operator decision on raising min_digest_words further and/or full-text article fetch / licensed-knowledge floors — do NOT re-file podcast-side length levers (escalate, don''t repeat).'
+  - French-language / QC-SK-Atlantic source coverage gap vs Phase-4 web_search_queries promise (operator/editorial).
+  - OP3 download collapse [20,21,10,3] — distribution/discoverability operator review (Apple/Spotify/YouTube Shorts), not a prompt change this pass.
+  - Thin-news blog <title> intelligence re-score — no clean post-fix absence-hook episode observed in ep54–63 window.
+  predictions:
+  - metric: deep-dive openers using 'There's a nuance here worth understanding' OR 'Consider a…' (or close paraphrase), last 10 transcripts
+    baseline: nuance 4/10 + Consider-a 4/10 (ep54–63); combined unique eps 8/10
+    expected: ≤2/10 within 2 weeks of post-merge episodes after shape de-seed + verbatim ban + recent-MEMORY; openers rotate without a new single template
+    verdict: pending
+    evidence: null
+  - metric: episodes below min_podcast_words:900 among episodes generated after digest lever (ep62+)
+    baseline: 0/2 (ep62=1023, ep63=1021); full last-10 still 7/10
+    expected: ≤2/10 of the next 10 post-lever episodes under 900; median ≥900 — if miss, escalate to operator decision on min_digest_words/fetch, do not re-file podcast-side length
+    verdict: pending
+    evidence: null
+  - metric: transcripts containing spoken absence-of-section lines ('No qualifying… appeared today' / 'No major… appeared') or spoken bare URLs
+    baseline: ep57 absence lines + ep54 news.gov.bc.ca URL in current window
+    expected: 0 in post-merge episodes
+    verdict: pending
+    evidence: null
+  - metric: transcripts reading hyphen/underscore as words ('contaminated underscore/dash/hyphen sites')
+    baseline: ep54 (3 instances in one episode)
+    expected: 0 post-merge after sanitization guard
+    verdict: pending
+    evidence: null
+  - metric: successor deep-dive opener tic prediction (third-generation watch)
+    baseline: none yet post-proposed-deseeds
+    expected: next review checks whether openers converged on 'Picture a…', 'A client calls…', or bare unmarked scene; if ≥5/10, reopen with MEMORY ban of that shape
+    verdict: pending
+    evidence: null
+  proposed_changes_in_pr:
+  - file: shows/hooks/env_intel.py
+    kind: code
+    ab_listen_required: false
+    rationale: Highest-yield category (~100% hit historically). ep58 mangled Simpcw six ways; ep61 Kincardine three ways; ep59 Terrace→terrorists, Kamloops→cam loops; ep54 Tyee→TAE; ep55 Nerra→Narrow. Extend the existing hook channel only — no prompt phonetic injection.
+  - file: shows/prompts/env_intel_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: 'Locks three verified P0/P1 classes: (1) fourth-generation deep-dive opener convergence on ''Consider a…'' after nuance partially cleared by drift; (2) ep57 spoken empty-section failure mode; (3) ''Tomorrow'' cadence on an odd-weekday show. De-seed by shape + verbatim ban + MEMORY per July 2026 ledger rule — no quotable replacement example.'
+  - file: shows/prompts/env_intel_digest.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: Podcast faithfully echoes digest deep-dive openers (June-15/July-2/July-27 lineage). Digest is the seed surface; de-seed here or the podcast ban alone will lose. Also hardens thin-day double-tell and Canada Gazette / proper-noun spelling at source.
+  - file: engine/generator.py
+    kind: code
+    ab_listen_required: false
+    rationale: ep54 shipped hyphen/underscore read as words and a spoken URL despite prompt bans. Prompt-only bans have incomplete hit rate on this class; a deterministic sanitizer + drift-guard is the garble-restore pattern that historically hits ~100% and needs no A/B.
+  - file: tests/test_env_intel_quality_pass.py
+    kind: code
+    ab_listen_required: false
+    rationale: Every behavioral fix gets a drift-guard per playbook; pins the length-lever policy so a future pass cannot reintroduce podcast_expand_below_target (meta-review miss class).
+  agent_cost_usd: 0.1165
+- date: 2026-09-24
+  pr: network sourcing pass (the launch cohort's sourcing floor on every news show)
+  doc: docs/experiments.yaml (network-sourcing-pass-2026-09-24)
+  reviewer: claude-code (network pass after the launch-cohort readouts)
+  summary: Full text on 10 articles; federal and provincial primary sources (canada.ca, ontario.ca, gov.bc.ca, alberta.ca, quebec.ca, the Gazette, IEA) preferred; X posts secondary; X-only-lead lint; Sources line. The four news.gov.bc.ca feeds fail TLS from this container — a runner read is needed before touching them.
+  shipped:
+  - fetch_full_text 10
+  - preferred_domains
+  - x_posts_as_sources secondary
+  - digest_lints x_only_lead
+  - show-notes Sources line
+  predictions:
+  - metric: source_integrity_claims median
+    baseline: '0'
+    expected: '>= 3'
+    verdict: pending
+- date: '2026-09-21'
+  pr: null
+  doc: docs/reviews/env_intel_review_2026_09_21.md
+  generated_by: grok-4.5
+  summary: 'Post-Aug-10 proposals never shipped: length lever partially held then relapsed (6/10 under 900; 4/8 post-lever under), deep-dive openers rotated past Consider-a into Picture-a/A-client while absence-of-section lines still ship, and chapters degraded with truncated titles plus missing Deep Dive on thin days.'
+  scored_prior_predictions:
+  - metric: deep-dive openers using 'There's a nuance here worth understanding' OR 'Consider a…' (or close paraphrase), last 10 transcripts
+    verdict: partial
+    evidence: nuance 0/10; Consider-a 4/10 (ep60/62/63/64); de-seed never shipped; Picture-a (ep67) + A-client/scene-open (ep65/66/68/69) already succeeding it
+  - metric: episodes below min_podcast_words:900 among episodes generated after digest lever (ep62+)
+    verdict: miss
+    evidence: 4/8 post-lever under 900 (ep66=783, ep67=867, ep68=850, ep69=896); escalate per Aug-10 deferral — no podcast-side re-file
+  - metric: transcripts containing spoken absence-of-section lines ('No qualifying… appeared today' / 'No major… appeared') or spoken bare URLs
+    verdict: miss
+    evidence: ep65/66/67 still speak the 'No qualifying peer reviewed… appeared today' failure mode; no bare URL in ep60-69
+  - metric: transcripts reading hyphen/underscore as words ('contaminated underscore/dash/hyphen sites')
+    verdict: hit
+    evidence: 0 instances in ep60-69 Whisper transcripts
+  - metric: successor deep-dive opener tic prediction (third-generation watch)
+    verdict: hit
+    evidence: ep67 'Picture a client filing…'; ep65/68/69 A-client/scene-open — watch fired as predicted
+  - metric: episodes whose LAST chapter is Closing (chapters_ep*.json)
+    verdict: hit
+    evidence: 10/10 of ep60-69 end with title Closing
+  shipped: []
+  deferred:
+  - 'ESCALATE to operator decision (two post-lever misses): raise min_digest_words above 950 and/or full-text article fetch for Gazette/provincial releases and/or licensed-knowledge floors for Regulatory Calendar + Practice Spotlight on thin days — do NOT re-file podcast-side length levers'
+  - Digest-driven / position-aware mid-section chapter titles (shared engine; carried since 2026-06-10) — ep67 truncated sentence-title and ep68 story-headline chapters are the latest symptom; marker tighten this pass is a local patch only
+  - 'Numbers/dates spell-out drift (PM, 2.5 comma pause; phase one slash two; digit dates) — landmine #17; needs A/B before any repair layer; never phonetic injection'
+  - French-language / QC-SK-Atlantic source coverage gap vs Phase-4 web_search_queries promise (operator/editorial)
+  - OP3 download flatline (7d=7, 30d=27, first-week median=3) + YouTube already paused — distribution/discoverability operator review, not a prompt change
+  - Thin-news blog <title> intelligence re-score — HOOK-level absence banned since June-11; residual is section-level absence lines (P0 this pass)
+  - Digest-verbatim paste rate 66-67% on ep62/64/68/69 with copied section headers — monitor; reinforce content_discipline only if it stays elevated post de-seed, no length pressure
+  predictions:
+  - metric: transcripts containing spoken absence-of-section lines ('No qualifying… appeared today' / 'No major… appeared' / 'No new peer-reviewed…'), last 10
+    baseline: 3/10 (ep65/66/67)
+    expected: 0/10 post-merge after podcast+digest ban
+    verdict: pending
+    evidence: null
+  - metric: deep-dive openers using 'Consider a…' OR 'Picture a…' OR 'A client…' (or close paraphrase), last 10 transcripts
+    baseline: Consider-a 4/10 + Picture-a 1/10 + A-client/scene 3/10 in ep60-69
+    expected: ≤2/10 within 2 weeks of post-merge episodes after shape de-seed + verbatim ban + recent-MEMORY; openers rotate without a new single template
+    verdict: pending
+    evidence: null
+  - metric: successor deep-dive opener tic prediction (fifth-generation watch)
+    baseline: none yet post-proposed-deseeds
+    expected: next review checks convergence on bare unmarked scene, 'Walk into…', 'On a [weekday]…', or 'You get a call…'; if ≥5/10, reopen with MEMORY ban of that shape
+    verdict: pending
+    evidence: null
+  - metric: chapters_ep*.json titles outside the known section-title set (Introduction/Executive Summary/Lead Story/Regulatory & Policy Watch/Science & Technical/Industry & Practice/Practitioner Deep Dive/Action Items/Week Ahead/Tomorrow Teaser/Closing), last 10
+    baseline: 2/10 (ep67 truncated sentence title; ep68 two story-headline titles)
+    expected: 0/10 post-merge after marker tighten
+    verdict: pending
+    evidence: null
+  - metric: episodes whose LAST chapter is Closing, last 10
+    baseline: 10/10
+    expected: 10/10 maintained (no regression from marker edits)
+    verdict: pending
+    evidence: null
+  - metric: Whisper garble of Kincardine / Ksi Lisims / Nerra / CEPA-as-see-EPA / Terrace / Kamloops in post-merge transcripts
+    baseline: ep61 Kincardine; ep64 Ksi Lisims; ep62/64/68/69 Nerra variants; ep62 see-EPA — open in current window
+    expected: 0 post-merge after hook override extension
+    verdict: pending
+    evidence: null
+  - metric: episodes below min_podcast_words:900 among ep62+ (carry; lever-gated)
+    baseline: 4/8 under in ep62-69
+    expected: n/a-lever-not-shipped unless operator ships a new digest-substrate lever; do not score as miss against unshipped podcast-side work
+    verdict: pending
+    evidence: null
+  proposed_changes_in_pr:
+  - file: shows/hooks/env_intel.py
+    kind: code
+    ab_listen_required: false
+    rationale: Highest-yield category (~100% hit, deterministic, no A/B). Current window still ships Kincardine/Ksi Lisims/Nerra/CEPA garble because Aug-10 hook extension never applied; extend the existing hook channel only.
+  - file: shows/prompts/env_intel_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: 'Locks three verified P0/P1 classes still shipping: (1) absence-of-section lines in ep65/66/67; (2) 4th/5th-gen deep-dive opener convergence (Consider-a 4/10, Picture-a already live); (3) durable cadence already drifted to ''next briefing'' — keep it banned from reverting to Tomorrow. De-seed by shape + verbatim ban + MEMORY per July 2026 ledger rule; no quotable replacement.'
+  - file: shows/prompts/env_intel_digest.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: Podcast faithfully echoes digest deep-dive openers and empty-section placeholders (June-15/July-2/July-27/Aug-10 lineage). Digest is the seed surface; de-seed + empty-section omit here or the podcast ban alone loses. No quotable replacement example.
+  - file: shows/env_intel.yaml
+    kind: config
+    ab_listen_required: false
+    rationale: Metadata-only. ep67 truncated sentence-title and ep68 story-headline chapters come from body-prose keyword hits; tighten Science/Industry to section-announce shapes and extend Deep Dive beat aliases so thin-day mistake+fix still titles correctly. Closing-first order untouched.
+  - file: tests/test_env_intel_quality_pass.py
+    kind: code
+    ab_listen_required: false
+    rationale: Every behavioral fix gets a drift-guard per playbook; pins the length-lever policy so a future pass cannot reintroduce podcast_expand_below_target, and locks absence-ban / shape-deseed / hook garble set / chapter title set.
+  agent_cost_usd: 0.143
 do_not_retry:
-  - idea: Podcast-side length levers for env_intel (word floors in podcast prompt, podcast_expand_below_target re-enable, expand-retries aimed at _tts.txt length) — banned network-wide by July 2026 meta-review; EI now has digest_expand_below_target + min_digest_words:950; further length work is digest/fetch only.
-    evidence: flagged 2026-08-10 (Grok review)
-  - idea: Replacing deep-dive opener ban with a new quotable example phrase in the prompt menu (the June-15 'nuance' replacement and the 'Consider a' convergence both came from example echo) — de-seed by shape + MEMORY only.
-    evidence: flagged 2026-08-10 (Grok review)
+- idea: Podcast-side length levers for env_intel (word floors in podcast prompt, podcast_expand_below_target re-enable, expand-retries aimed at _tts.txt length) — banned network-wide by July 2026 meta-review; EI now has digest_expand_below_target + min_digest_words:950; further length work is digest/fetch only.
+  evidence: flagged 2026-08-10 (Grok review)
+- idea: Replacing deep-dive opener ban with a new quotable example phrase in the prompt menu (the June-15 'nuance' replacement and the 'Consider a' convergence both came from example echo) — de-seed by shape + MEMORY only.
+  evidence: flagged 2026-08-10 (Grok review)
