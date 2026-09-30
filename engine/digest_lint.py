@@ -536,3 +536,16 @@ def run_digest_lints(digest: str, names: List[str]) -> Tuple[List[LintFinding], 
         if f.note:
             fired.append(f)
     return fired, metrics
+
+
+def new_lint_names(before, after) -> List[str]:
+    """Lints the retry digest fails that the original digest passed.
+
+    Sep 30 2026 (Tesla Ep617): the one-shot structural regeneration can
+    introduce a defect the first digest did not have — the retry wrote
+    every item as "**Title** — Outlet" and dropped all 17 Source: lines
+    while the post-retry lint was recorded as metrics only. run_show keeps
+    the ORIGINAL digest when this list is non-empty.
+    """
+    before_names = {getattr(f, "lint", f) for f in (before or [])}
+    return sorted({getattr(f, "lint", f) for f in (after or [])} - before_names)
