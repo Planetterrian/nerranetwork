@@ -525,3 +525,41 @@ class TestHealthCheckFloor:
         res = m.check_word_count("word " * 1316, "tesla")
         assert res["floor"] == floor
         assert [f["type"] for f in res["findings"]] == ["below_target_length"]
+
+
+# ---------------------------------------------------------------------------
+# The structural retry never ships a digest worse than the one it replaced
+# (Tesla Ep617, 2026-09-26: the retry dropped every Source: line and the
+# post-retry lint was recorded as metrics only)
+# ---------------------------------------------------------------------------
+
+class TestStructuralRetryCannotIntroduceALintDefect:
+    def test_new_lint_names_is_the_set_difference_on_lint(self):
+        from engine.digest_lint import LintFinding, new_lint_names
+        before = [LintFinding("wyntk_hook_match", "x", {})]
+        after = [LintFinding("wyntk_hook_match", "x", {}),
+                 LintFinding("items_without_source", "17 of 17", {})]
+        assert new_lint_names(before, after) == ["items_without_source"]
+        assert new_lint_names(after, before) == []
+        assert new_lint_names([], []) == []
+
+    def test_run_show_keeps_the_original_when_the_retry_adds_a_defect(self):
+        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
+        i = src.index("_new_lints = new_lint_names(_lint_findings, _after)")
+        block = src[i:i + 1600]
+        assert 'metrics.record("digest_structural_retry_rejected_lints"' in block
+        assert "x_thread = _candidate" in block
+        # The candidate is assigned only on the no-new-lint branch.
+        assert block.index("digest_structural_retry_rejected_lints") < block.index("x_thread = _candidate")
+
+    def test_ep617_replay_fires_the_lint_the_retry_introduced(self):
+        """The committed Ep617 is the specimen: 15 of 17 items unsourced.
+        With the guard above, a retry like it is rejected and the first
+        digest (which carried URLs — the overlap dedupe matched one) ships."""
+        from engine.digest_lint import run_digest_lints
+        path = ROOT / "digests" / "tesla_shorts_time" / "Tesla_Shorts_Time_Pod_Ep617_20260926.md"
+        if not path.exists():
+            pytest.skip("specimen not on this checkout")
+        findings, metrics = run_digest_lints(path.read_text(encoding="utf-8"), ["items_without_source"])
+        assert [f.lint for f in findings] == ["items_without_source"]
+        assert metrics["items_without_source"] >= 15

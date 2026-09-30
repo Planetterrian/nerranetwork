@@ -2532,19 +2532,49 @@ def run(args: argparse.Namespace) -> None:
                         and len(_x_struct.strip()) >= _MIN_DIGEST_CHARS
                         and (not _hook_too_long or len(_retry_hook) <= _HOOK_MAX)
                     ):
-                        logger.info(
-                            "Structural retry produced a digest with a HOOK "
-                            "(%d chars) — using it",
-                            len(_x_struct.strip()),
-                        )
-                        x_thread = _dedupe_digest_sections(_x_struct, config, metrics)
+                        _candidate = _dedupe_digest_sections(_x_struct, config, metrics)
+                        _new_lints: list = []
                         if _lint_names:
                             from engine.digest_lint import run_digest_lints as _rdl
-                            _after, _after_m = _rdl(x_thread, _lint_names)
+                            _after, _after_m = _rdl(_candidate, _lint_names)
                             metrics.record("digest_lints_fired_after_retry",
                                            [f.lint for f in _after])
                             for _lk, _lv in _after_m.items():
                                 metrics.record(_lk, _lv)
+                            # Sep 30 2026 (Tesla Ep617, 09-26): the retry can
+                            # introduce a defect the first digest did not have
+                            # — the retry model wrote every item as
+                            # "**Title** — Outlet" and dropped all 17 Source:
+                            # lines; the post-retry lint measured it (17/17)
+                            # and nothing read the finding, so a digest with
+                            # no sources shipped, the claims gate saw two
+                            # items with a source and the blog listed none.
+                            # A lint the ORIGINAL passed and the retry fails
+                            # is a worse digest, not a repaired one: keep the
+                            # original (its structural defect, an empty
+                            # section, costs less than an unsourced day).
+                            from engine.digest_lint import new_lint_names
+                            _new_lints = new_lint_names(_lint_findings, _after)
+                        if _new_lints:
+                            logger.warning(
+                                "Structural retry introduced lint defect(s) the "
+                                "original digest did not have (%s) — keeping the "
+                                "original digest", ", ".join(_new_lints),
+                            )
+                            print(
+                                f"::warning::{config.slug}: structural retry rejected — "
+                                f"it introduced {', '.join(_new_lints)}; the original "
+                                "digest ships with its structural defect instead"
+                            )
+                            metrics.record("digest_structural_retry_rejected_lints",
+                                           _new_lints)
+                        else:
+                            logger.info(
+                                "Structural retry produced a digest with a HOOK "
+                                "(%d chars) — using it",
+                                len(_x_struct.strip()),
+                            )
+                            x_thread = _candidate
                     else:
                         logger.warning(
                             "Structural retry did not restore a usable HOOK — "
