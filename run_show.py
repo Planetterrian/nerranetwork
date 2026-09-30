@@ -873,9 +873,16 @@ def run(args: argparse.Namespace) -> None:
             else SHOW_SECTION_PATTERNS.get(config.slug, {})
         )
         ct_cfg = config.content_tracking
+        # Sep 30 2026: ``content_tracking.max_days`` was declared in
+        # _defaults.yaml and never passed — the dataclass default happened
+        # to match. It is the URL-dedup window now (a URL aired once is
+        # never news again inside it): Tesla re-aired one 2013 Teslarati
+        # page on 08-17, 09-08 and 09-23 while the tracker held the exact
+        # URL under a date the 7-day URL window no longer reached.
         content_tracker = ContentTracker(
             config.slug,
             digests_dir,
+            max_days=int(getattr(ct_cfg, "max_days", 14) or 14),
             quote_author_cooldown_days=getattr(ct_cfg, "quote_author_cooldown_days", 30),
         )
         content_tracker.load()
@@ -1149,6 +1156,19 @@ def run(args: argparse.Namespace) -> None:
             skipped = len(x_posts) - len(filtered_x)
             if skipped:
                 logger.info("Cross-dedup filtered %d X post(s) that overlapped with RSS articles", skipped)
+            # Sep 30 2026: X posts (and web-search results below) were the
+            # two article paths that never met the content tracker — a
+            # story aired last week arrived again through a post and was
+            # not even title-deduped. Same filter the RSS ladder runs.
+            try:
+                _n_before_ct = len(filtered_x)
+                filtered_x = content_tracker.filter_recent_articles(filtered_x)
+                if len(filtered_x) != _n_before_ct:
+                    logger.info(
+                        "Content tracker dropped %d X post(s) already covered",
+                        _n_before_ct - len(filtered_x))
+            except Exception as _ct_exc:  # noqa: BLE001 — never block a run
+                logger.warning("tracker filter on X posts failed (non-fatal): %s", _ct_exc)
             articles.extend(filtered_x)
             x_posts = filtered_x  # Update for accurate count below
         # X-source policy (Sep 23 2026): a show says how X posts may serve as
@@ -1294,6 +1314,18 @@ def run(args: argparse.Namespace) -> None:
                         "Web search: %d articles found, %d after cross-dedup",
                         len(web_articles), len(deduped_web),
                     )
+                    # Sep 30 2026: same tracker filter the RSS ladder runs
+                    # (see the X merge above) — a web result is not exempt
+                    # from "already covered" because it arrived by search.
+                    try:
+                        _n_before_ct = len(deduped_web)
+                        deduped_web = content_tracker.filter_recent_articles(deduped_web)
+                        if len(deduped_web) != _n_before_ct:
+                            logger.info(
+                                "Content tracker dropped %d web-search article(s) already covered",
+                                _n_before_ct - len(deduped_web))
+                    except Exception as _ct_exc:  # noqa: BLE001
+                        logger.warning("tracker filter on web results failed (non-fatal): %s", _ct_exc)
                     articles.extend(deduped_web)
                     web_articles = deduped_web
             except Exception as exc:
@@ -1658,6 +1690,37 @@ def run(args: argparse.Namespace) -> None:
         # under a fresh index date is caught here (Ep005 reported the
         # 1 Sep race start on 14 Sep). Campaign feeds with their own
         # window_hours are exempt. 0 = off, every other show unchanged.
+        # Sep 30 2026 (network review): before the stale gate reads dates,
+        # give every article that nothing trustworthy dated a real one.
+        # Undated feed entries, Google News items (feed date = INDEX date),
+        # web-search results and X-linked articles used to carry the run
+        # clock; the sweep of 09-16..30 found a 2013 Teslarati page, a
+        # 2021 Mashable story and a January-2025 Starlink deal aired as
+        # today's news, every one behind an undated URL whose page carried
+        # its real date. Bounded page opens (``date_probe_max``; 0 = off),
+        # best-effort, never blocks a run. Metrics name their consumer:
+        # scripts/review_snapshot.py + the ledger's freshness predictions.
+        _probe_max = int(getattr(config, "date_probe_max", 12) or 0)
+        if _probe_max and articles:
+            try:
+                from engine.article_dates import (
+                    count_undated, probe_page_dates, summarize_date_sources)
+                _probe = probe_page_dates(articles, max_probes=_probe_max)
+                metrics.record("articles_date_probe_candidates", _probe["candidates"])
+                metrics.record("articles_date_probed", _probe["probed"])
+                metrics.record("articles_date_probe_dated", _probe["dated"])
+                metrics.record("articles_undated_in_prompt", count_undated(articles))
+                _src_mix = summarize_date_sources(articles)
+                metrics.record("articles_date_source_untrusted", sum(
+                    n for k, n in _src_mix.items()
+                    if k not in ("feed", "url_path", "page")))
+                # The prompt lists newest first; an article the probe just
+                # dated must take its real place, and an undated one sits
+                # last ("" sorts below every ISO string).
+                articles.sort(key=lambda a: a.get("published_date", ""), reverse=True)
+            except Exception as _dp_exc:  # noqa: BLE001 — never block a run
+                logger.warning("Date probe failed (non-fatal): %s", _dp_exc)
+
         _stale_days = int(getattr(config, "stale_article_days", 0) or 0)
         if _stale_days and articles:
             try:
@@ -5647,6 +5710,26 @@ def _dedupe_digest_sections(x_thread, config, metrics):
         prior = 0
     metrics.record("digest_cross_section_dupes_removed", prior + result.count)
     if result.count:
+        # Sep 30 2026: combined generation wrote the script from the
+        # UN-deduped digest, so the story the digest just lost its second
+        # copy of is still told twice in the script (SpaceX: dupes removed
+        # a median 3/day, script_repeated_facts 7-12 on Ep112-116). Keep
+        # the first telling, drop the later ones. Best-effort.
+        try:
+            from engine.digest_overlap import strip_second_tellings
+            from engine.generator import amend_combined_script, peek_combined_script
+            _stash_script = peek_combined_script()
+            if _stash_script:
+                _stripped_script, _n_told = strip_second_tellings(
+                    _stash_script, [d.body for d in result.removed if d.body])
+                if _n_told:
+                    amend_combined_script(_stripped_script)
+                    logger.info(
+                        "Combined script: removed %d sentence(s) that re-told "
+                        "a dropped duplicate digest item", _n_told)
+                metrics.record("combined_script_second_tellings_removed", _n_told)
+        except Exception as _tell_exc:  # noqa: BLE001 — never block a run
+            logger.warning("second-telling strip failed (non-fatal): %s", _tell_exc)
         detail = "; ".join(
             f"{d.section or '?'} repeated {d.kept_section or '?'} ({d.reason}): "
             f"{d.title[:60]}" for d in result.removed

@@ -552,7 +552,12 @@ experiments:
     area: quality
     shipped: 2026-09-01
     readout: 2026-09-26
-    status: decide
+    status: done
+    update_2026_09_30: >
+      Decided 2026-09-30. omni_view left the arm 09-22 (its script stage moved 
+      to grok-4.7 under grok-47-staged-migration). MAB: 0.38 reviewer 
+      flags/episode 09-22..29, at or below same-window peers on 4.3 (tesla 
+      0.5, M&A 0.38, spacex 1.0); 0 missed slots. KEEP the MAB pin.
     update_2026_09_18: >
       Read 2026-09-18 (six days late). No missed slot on either show since 09-01
       (OV and MAB published every day; 09-18 both on tier A/B with long-forms).
@@ -733,6 +738,15 @@ experiments:
     shipped: 2026-09-21
     readout: 2026-09-25
     status: reading
+    update_2026_09_30: >
+      Read 2026-09-30. omni_view script stage: GATE PASS (model_trial_report 
+      --since 09-22 --timeout 600: p95 67.6 s, +11%), 9/9 episodes on 4.7, 
+      listener-value 7.4-8.9. The Sep-23 COHORT's 4.7 DIGEST stages FAIL the 
+      same gate (ai_chips p95 747 s, prediction_markets 870 s against a 600 s 
+      timeout). Widen script stages only; digest stages wait on latency. The 
+      network review of the same day reads the cohort writing (4-17% verbatim, 
+      13-19 claims) where the 4.3 flagships copy (49-78%, 0-3) - the case for 
+      a script-stage pin on one chained flagship next.
     baseline: >
       Eleven production sites run grok-4.6: the episode reviewer and the
       weekly synthesizer (network defaults), three shows' SCRIPT stage
@@ -994,7 +1008,12 @@ experiments:
     area: reach
     shipped: 2026-09-03
     readout: 2026-09-24
-    status: reading
+    status: done
+    update_2026_09_30: >
+      Read 2026-09-30 (six days late). edition_title_source=llm on 14/14 
+      builds (mechanism HIT). OP3 per-edition downloads_7d 3-4, inside the 2-5 
+      SpaceX-titled baseline: flat. Per the criteria, zero movement with the 
+      feed unsubmitted is distribution, not the title. DONE.
     target: >
       Every one of the first 14 editions was titled with SpaceX Daily's
       hook (the lead show), so the all-network product read as a SpaceX
@@ -1332,7 +1351,10 @@ experiments:
     area: reach
     shipped: 2026-09-09
     readout: 2026-09-30
-    status: reading
+    status: done
+    update_2026_09_30: >
+      Read 2026-09-30: 1.99 subscribers per 1,000 EN Short views (14 d) 
+      against a 2.0 target from a 1.51 baseline. HIT within noise; keep.
     metric: short_subs_per_1k_views_14d_en
     baseline: 1.51
     target: >
@@ -1361,7 +1383,11 @@ experiments:
     area: retention
     shipped: 2026-09-09
     readout: 2026-09-30
-    status: reading
+    status: done
+    update_2026_09_30: >
+      Read 2026-09-30: long_open_hold_5pct_en 0.48 = baseline (target 0.52). 
+      MISS; the open is the spoken open, not the first image (the 09-22 
+      arm/control read carries on).
     metric: long_open_hold_5pct_en
     baseline: 0.48
     target: >
@@ -1381,7 +1407,12 @@ experiments:
     area: retention
     shipped: 2026-09-09
     readout: 2026-09-30
-    status: reading
+    status: done
+    update_2026_09_30: >
+      Read 2026-09-30: treatment 16.6 vs control 12.5 AVP on longs after 
+      09-10, but the pre-period gap was already +5.4, so the 
+      difference-in-differences is -1.3. NO EFFECT; leave the cards on 
+      (render-only, no cost) or off at the operator's preference.
     metric: long_form_median_avp_en_14d
     baseline: 12.6
     target: >
@@ -1442,7 +1473,12 @@ experiments:
     area: reach
     shipped: 2026-09-09
     readout: 2026-09-30
-    status: reading
+    status: done
+    update_2026_09_30: >
+      Read 2026-09-30: 0 uploads from the paused shows; EN weekly views 19.4k 
+      -> 16.0k -> 8.8k -> 10.0k across the 09-13/16 distribution drop. 
+      INCONCLUSIVE with the confound named (the Sep 22 scoring rule). Nothing 
+      to restore.
     metric: channel_views_wow_en
     baseline: 55.7
     target: >
@@ -1586,7 +1622,13 @@ experiments:
     area: reach
     shipped: 2026-09-04
     readout: 2026-09-25
-    status: reading
+    status: done
+    update_2026_09_30: >
+      Read 2026-09-30. short_vpd measured (1.81) but the show entered the 
+      dead-Shorts weekly probe on 09-26 (age-3 median 6.5); OP3 8-12/week 
+      against the ~27 baseline, confounded by the 09-21 weekly move; 0 funnel 
+      sessions from Shorts. MISS on the target. Keep-or-pause is the 
+      operator's call; nothing further to read from a weekly probe.
     baseline: "0 YouTube views; OP3 113 downloads/30d, ~27/week, 3.5/episode (below network median); Spotify 0 followers"
     target: >
       Shorts velocity earns its own tier line in api/youtube_policy.json
@@ -1662,7 +1704,14 @@ experiments:
     area: quality
     shipped: 2026-09-05
     readout: 2026-09-26
-    status: reading
+    status: done
+    update_2026_09_30: >
+      Read 2026-09-30. Overlap medians SpaceX 47 / Tesla 51 / M&A 38 against a 
+      <=25 target: MISS. Filler 1.5-3.4: HIT. Cross-section dupes still firing 
+      (SpaceX 78 over 26 episodes). PARTIAL overall. The Sep 30 network review 
+      reads the overlap number as a MODEL property (the grok-4.7 cohort sits 
+      at 4-17% on the same snippet) and moves the question to the migration 
+      playbook; a density threshold is no longer a review prediction.
     baseline: "flagship scripts 44-66% median digest-verbatim 8-grams (SpaceX 66, Tesla 49, M&A 44); 33 cross-section duplicate digest items in 160 digests; filler 6-10% of sentences on SpaceX; deep dive re-told a covered story in 5/6 M&A episodes"
     notes: >
       Sep 6 readout (first full slate): whole-script verbatim fell on
@@ -1720,6 +1769,15 @@ experiments:
     shipped: 2026-09-12
     readout: 2026-09-26
     status: reading
+    update_2026_09_30: >
+      Read 2026-09-30. combined on 120/244 news episodes (49%) against 80%: 
+      MISS on share (two_pass on the podcast_model shows and the retry days). 
+      overlap<=25 AND coverage>=70 on the same episode: Tesla 2/19, SpaceX 
+      0/19, M&A 3/19: MISS. Entity retention 73/80/67: PARTIAL. 0 episodes 
+      lost: HIT. New on 09-30: a dropped cross-section duplicate's SECOND 
+      telling is now stripped from the stashed script 
+      (combined_script_second_tellings_removed) - SpaceX had told a story 2-3x 
+      per episode. Re-read 2026-10-14 on script_repeated_facts.
     baseline: "two-pass: first drafts 55-77% digest-verbatim with 85-97% coverage; rewrites 1-4% verbatim with 40-60% coverage (Sep 9-12, nine gated shows); one extra script call per gated episode"
     target: >
       combined_generation = "combined" on >= 80% of news-show episodes
@@ -1754,7 +1812,13 @@ experiments:
     area: quality
     shipped: 2026-09-12
     readout: 2026-09-26
-    status: reading
+    status: done
+    update_2026_09_30: >
+      Read 2026-09-30. passed_after_strip 75/75 stripped episodes; 0 news-show 
+      skips; median strip 1 sentence. HIT on the criteria. Open: 83 of 244 
+      episodes recorded an EMPTY ledger, so the gate on those days was the 
+      citation-shape lint alone (the Sep 5 finding, network-wide) - the 
+      grok-4.7 cohort records 13-19 claims where the 4.3 flagships record 0-3.
     baseline: "shadow mode would have blocked SpaceX 2/7, Tesla 2/7, FF 4/7, PT 4/7, MIT 1/7 of the last seven episodes (malformed ledger entries, one uncovered shape on empty-ledger episodes, 403s) - none a proven fabrication; UC blocked 5x/14d"
     target: >
       source_integrity_passed_after_strip = true on >= 95% of news-show
@@ -2982,3 +3046,67 @@ experiments:
       (byte-identical fetch and prompt). Show notes: remove the sources_footer
       call in run_show. Personal: empty PERSONAL_EXTRA_SHOW_SLUGS and the
       Worker list.
+
+  - id: freshness-dating-2026-09-30
+    title: "Every article has a date it can defend — page-date probe + stale gate on the established shows"
+    area: quality
+    shipped: 2026-09-30
+    readout: 2026-10-14
+    status: reading
+    baseline: "7 months-old stories on the flagships in 14 days (a 2013 Teslarati page aired 3x on Tesla; 2021 Mashable and Jan-2025 Starlink on SpaceX), every one behind an undated URL; 1,254 of 2,053 shipped items behind undated URLs; stale_article_days off on every flagship; undated/GN/web/X articles stamped with the run clock"
+    target: >
+      0 items whose page date is > 3 days older than the digest date on
+      the 12 stale_article_days shows over the 14 days after merge;
+      articles_undated_in_prompt < 5 and articles_date_probe_dated >= 3 on
+      a median flagship day; 0 same-URL recurrences inside the 45-day
+      tracker window. articles_dropped_stale > 0 on some days is the gate
+      working.
+    criteria: >
+      Miss = a months-old story ships behind a URL the probe opened (the
+      page had no date the extractor reads) -> extend extract_published_date,
+      never widen the window. A thin day is acceptable; a fabricated one is
+      not.
+    notes: >
+      docs/reviews/network_review_2026_09_30.md. engine/article_dates.py
+      owns the date; date_probe_max (default 12, YAML) bounds the page
+      opens; digests/xai_grok.py never answers a search from memory. A/B:
+      the digest INPUT changed on the 12 shows.
+  - id: frame-memory-2026-09-30
+    title: "Rotation memory for sentence frames on 17 shows"
+    area: quality
+    shipped: 2026-09-30
+    readout: 2026-10-14
+    status: reading
+    baseline: "'(Before we go,) keep an eye on' FF 15/15 and PT 13/15; 'If you want to go deeper' OV 15/15; 'The case on both sides' 7/8 on each desk, Vancouver 8/8; 'You know that feeling' MAB 7/15 (09-16..30)"
+    target: >
+      Each named frame opens a sentence in <= 4 of the first 14 post-merge
+      scripts of its show, AND no successor frame exceeds 6/14 (the
+      third-generation convergence). Measured on _tts.txt with the
+      repetition-sweep method, not on Whisper transcripts.
+    criteria: >
+      Hit = both. Successor frame > 6/14 = the memory is working and the
+      shape rule in the shared snippet needs the successor named by shape.
+      Miss on the A/B-listen = frame_memory: false on that show (one line).
+    notes: >
+      engine/frame_memory.py: data-side, no model call; furniture and
+      chapter anchors exempt; content openers (a ticker, an index, a
+      proper noun) never listed; MIT off until it can see its ledger
+      lines. Rendered through {recent_frames_block} in
+      _shared/content_discipline.txt and _shared/omni_desk_podcast_body.txt.
+  - id: whisper-av-pin-2026-09-30
+    title: "PyAV pinned below 19 after the 09-30 transcript outage"
+    area: quality
+    shipped: 2026-09-30
+    readout: 2026-10-07
+    status: reading
+    baseline: "23/23 episodes of 2026-09-30 with no transcript (spoken_text_gate: no_transcript), av-19.0.0 on every runner; 0-1 per day before"
+    target: >
+      spoken_text_gate == no_transcript on 0 episodes per day after the
+      pin merges; any transcription failure appears as a ::error::
+      annotation in the same run.
+    notes: >
+      faster-whisper 1.2.1 passes metadata_errors to av.open; PyAV 19.0.0
+      (PyPI 2026-09-29) removed it. engine/transcripts.py now retries
+      without VAD only on a VAD-shaped error. Operator item: a lockfile
+      (pip-compile constraints) for the run-show job, the second
+      transitive bump to take a stage down in a fortnight.

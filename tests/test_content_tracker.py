@@ -373,8 +373,12 @@ class TestFilterRecentArticles:
         assert len(filtered) == 1  # title match at 5d is beyond the 3d title window
 
     def test_url_match_beyond_window_kept(self, tmp_path):
-        """A same-URL article older than the 7-day URL window is kept."""
-        tracker = ContentTracker("test_show", tmp_path)
+        """A same-URL article older than the URL window is kept — and since
+        Sep 30 2026 the URL window is the tracker's RETENTION (max_days),
+        not a fixed 7 days: the same URL is never news twice while the
+        file still holds it (Tesla aired one 2013 Teslarati page on 08-17,
+        09-08 and 09-23 with the URL in the tracker each time)."""
+        tracker = ContentTracker("test_show", tmp_path, max_days=7)
         tracker.load()
         tracker.data["episodes"].append(
             self._ep(9, ["Old Story"], ["https://space.com/nine-days-old"])
@@ -382,6 +386,16 @@ class TestFilterRecentArticles:
         articles = [{"title": "Old Story resurfaces", "url": "https://space.com/nine-days-old"}]
         filtered = tracker.filter_recent_articles(articles, days=3)
         assert len(filtered) == 1
+
+    def test_url_match_inside_retention_dropped(self, tmp_path):
+        """Same URL nine days ago, default retention (14 d): dropped."""
+        tracker = ContentTracker("test_show", tmp_path)
+        tracker.load()
+        tracker.data["episodes"].append(
+            self._ep(9, ["Old Story"], ["https://space.com/nine-days-old"])
+        )
+        articles = [{"title": "Old Story resurfaces", "url": "https://space.com/nine-days-old"}]
+        assert tracker.filter_recent_articles(articles, days=3) == []
 
 
 class TestGetSummaryForPrompt:

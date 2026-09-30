@@ -129,10 +129,17 @@ class TestStaleArticleGate:
         assert ShowConfig().stale_article_days == 0
         offenders = []
         # Sep 2026: the weekly health shows opt in by name (plan §4.3).
+        # Sep 30 2026: the established news shows joined at 3 days (network
+        # review — a 2013 page, a 2021 story and a Jan-2025 deal had aired
+        # as today's news behind undated URLs); see
+        # tests/test_freshness_pass_2026_09_30.py for the pinned values.
         opt_in = {"offshore_north", "peptides", "longevity", "vancouver", "collingwood",
                   "prediction_markets", "omni_view_europe", "omni_view_asia_pacific",
                   "omni_view_africa_mideast", "omni_view_latam", "omni_view_north_america",
-                  "omni_view_world"}
+                  "omni_view_world",
+                  "tesla", "spacex", "models_agents", "models_agents_beginners",
+                  "fascinating_frontiers", "planetterrian", "omni_view", "env_intel",
+                  "modern_investing", "finansy_prosto", "mag7", "ai_chips"}
         for path in sorted((_ROOT / "shows").glob("*.yaml")):
             if path.stem.startswith("_") or path.stem in opt_in:
                 continue

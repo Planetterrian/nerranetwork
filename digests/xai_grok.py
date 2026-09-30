@@ -22,6 +22,17 @@ from tenacity import (
 
 logger = logging.getLogger(__name__)
 
+
+class SearchUnavailable(RuntimeError):
+    """A search-backed request could not be served by a search.
+
+    Raised instead of falling back to tool-less generation (Sep 30 2026):
+    callers that asked for ``web_search`` / ``x_search`` parse the answer
+    as fetched results, so an answer from the model's memory would enter
+    the pipeline as today's news. Callers treat it like any other fetch
+    failure — log, and continue with what they have.
+    """
+
 # Capacity-class failures from xAI (429 "model at capacity", 503 during
 # incidents) recover on the minutes scale — the OpenAI SDK's built-in
 # sub-second retries alone are not enough (July 21 2026: the Tesla X-post
@@ -205,10 +216,24 @@ def grok_generate_text(
             return text, {"provider": "openai_responses", "model": model}
 
         except Exception as exc:
+            # Sep 30 2026 (network review): a search request that fails
+            # used to fall through to Chat Completions with NO tools — the
+            # same "search the web for the last 24 hours" prompt answered
+            # from training data. Every caller parses that answer as if
+            # it were search results: months-old stories with plausible
+            # URLs, stamped with today's date by the fetcher and sorted to
+            # the top of the digest prompt. A thin day is recoverable; a
+            # fabricated one is not. Every search caller already catches
+            # this exception and continues with what it has.
             logging.error(
-                "Responses API failed: %s — %s. Falling back to plain generation.",
+                "Responses API failed: %s — %s. Search requests never fall "
+                "back to plain generation (an answer from memory is not a "
+                "search result).",
                 type(exc).__name__, str(exc)[:300],
             )
+            raise SearchUnavailable(
+                f"{type(exc).__name__}: {str(exc)[:200]}"
+            ) from exc
 
     # Plain generation: Chat Completions (no search tools).
     from openai import OpenAI

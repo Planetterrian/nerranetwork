@@ -6,6 +6,13 @@ name: Финансы Просто
 # [preferred primary source], X posts ranked after every article where set,
 # and the X-only-lead lint riding the one-shot structural regeneration.
 fetch_full_text: 8
+# Sep 30 2026 (network review): nothing older than three days is news.
+# The page-date probe (engine/article_dates.py, date_probe_max) dates the
+# articles nothing trustworthy dated, and this gate drops what it finds
+# — the 09-16..30 sweep found a 2013 page, a 2021 story and a Jan-2025
+# deal aired on this network as today's news, every one behind an
+# undated URL. A/B-listen the first post-merge episode (digest input).
+stale_article_days: 3
 x_posts_as_sources: secondary
 preferred_domains:
 - canada.ca

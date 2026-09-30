@@ -200,7 +200,13 @@ class TestPredictionMarkets:
     def test_curriculum_restocked(self):
         data = yaml.safe_load((ROOT / "shows" / "curricula" / "prediction_markets.yaml").read_text(encoding="utf-8"))
         unproduced = [e for e in data["queue"] if not e.get("produced")]
-        assert len(unproduced) >= 40
+        # Sep 30 2026: this pinned the stock level the restock LEFT (41)
+        # and a daily show drains one a day, so it went red on main a
+        # week later with nothing wrong. It is a runway alarm now: three
+        # weeks of subjects, the same floor class the narrative queues
+        # carry (tests/test_queue_restock.py). Below it, restock the
+        # curriculum — there is no automation for it yet.
+        assert len(unproduced) >= 21, f"{len(unproduced)} unproduced subjects: restock the curriculum"
         ids = [e["id"] for e in data["queue"]]
         assert len(ids) == len(set(ids))
 

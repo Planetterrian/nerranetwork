@@ -1003,7 +1003,12 @@ class ContentTracker:
         cross-episode repetition is more noticeable to listeners.
         """
         day_window = days or 3
-        url_window = url_days or max(day_window, 7)
+        # Sep 30 2026: the URL window is the whole retention window, not
+        # 7 days. The same URL is never news twice, and the file already
+        # held the URLs the 7-day query could not reach — Tesla aired one
+        # 2013 Teslarati page three times (08-17, 09-08, 09-23) with its
+        # exact URL sitting in the tracker each time.
+        url_window = url_days or max(day_window, 7, int(self.max_days or 0))
         recent_headlines = self.get_recent_headlines(days=day_window)
         recent_urls = self.get_recent_urls(days=url_window)
 

@@ -24,6 +24,17 @@ from engine.utils import (
     HTTP_TIMEOUT_SECONDS,
     remove_similar_items,
 )
+from engine.article_dates import (
+    DATE_SOURCE_FEED as _DATE_SOURCE_FEED,
+    DATE_SOURCE_INDEX as _DATE_SOURCE_INDEX,
+    DATE_SOURCE_MODEL as _DATE_SOURCE_MODEL,
+    DATE_SOURCE_UNKNOWN as _DATE_SOURCE_UNKNOWN,
+    DATE_SOURCE_URL_PATH as _DATE_SOURCE_URL_PATH,
+    DATE_SOURCE_X_POST as _DATE_SOURCE_X_POST,
+    parse_date_token as _parse_date_token,
+    too_old as _date_too_old,
+)
+
 
 logger = logging.getLogger(__name__)
 
@@ -519,19 +530,36 @@ def _fetch_single_feed(
                 if not any(kw.lower() in text_lower for kw in keywords):
                     continue
 
+            # Sep 30 2026 (network review): an entry with no parseable date
+            # used to be stamped with the run clock, which sorted it to
+            # the TOP of the prompt and printed today's date beside it —
+            # an evergreen page or a re-surfaced old story read as the
+            # freshest item of the day. Now: the feed date when there is
+            # one (an aggregator's date is an INDEX date and is marked so
+            # the page probe re-dates it), else the URL path's date, else
+            # NO date at all ("" sorts last and renders no date). The
+            # cutoff check above already dropped a URL-dated stale entry.
+            _is_aggregated = bool(aggregator_url) or is_google_news_url(link) or (
+                "google news" in source_name.lower()
+            )
+            if published_time is not None:
+                _pub_iso = published_time.isoformat()
+                _date_source = _DATE_SOURCE_INDEX if _is_aggregated else _DATE_SOURCE_FEED
+            elif url_date is not None:
+                _pub_iso = url_date.isoformat()
+                _date_source = _DATE_SOURCE_URL_PATH
+            else:
+                _pub_iso = ""
+                _date_source = _DATE_SOURCE_UNKNOWN
+
             articles.append(
                 {
                     "title": title,
                     "description": description,
                     "url": link,
                     "source_name": article_source,
-                    "published_date": (
-                        published_time.isoformat()
-                        if published_time
-                        else datetime.datetime.now(
-                            datetime.timezone.utc
-                        ).isoformat()
-                    ),
+                    "published_date": _pub_iso,
+                    "date_source": _date_source,
                     "relevance_score": 0.0,
                     "author": entry.get("author", ""),
                     "aggregator_url": aggregator_url,
@@ -801,7 +829,8 @@ def fetch_x_posts(
             f"POST_TEXT: [The full text of the post]\n"
             f"POST_URL: [The URL, e.g. https://x.com/{handle}/status/...]\n"
             f"POST_LINK: [The full URL of the article or page the post links "
-            f"to, if it links one; otherwise the single word none]\n\n"
+            f"to, if it links one; otherwise the single word none]\n"
+            f"POST_DATE: [The date the post was published, as YYYY-MM-DD]\n\n"
             f"Rules:\n"
             f"- Up to {max_posts} posts maximum\n"
             f"- Only posts from the last {window}\n"
@@ -935,6 +964,8 @@ def _parse_structured_blocks(
         title_m = re.search(r"POST_TITLE\s*:\s*(.+?)(?:\n|$)", block)
         text_m = re.search(r"POST_TEXT\s*:\s*(.+?)(?=POST_URL|POST_AUTHOR|\Z)", block, re.DOTALL)
         url_m = re.search(r"POST_URL\s*:\s*(https?://\S+)", block)
+        link_m = re.search(r"POST_LINK\s*:\s*(https?://\S+)", block)
+        date_m = re.search(r"POST_DATE\s*:\s*(.+?)(?:\n|$)", block)
 
         title = title_m.group(1).strip() if title_m else ""
         desc = text_m.group(1).strip() if text_m else ""
@@ -947,17 +978,63 @@ def _parse_structured_blocks(
             continue
 
         label = labels.get(current_author, f"@{current_author}")
-        posts.append({
-            "title": title or desc[:100],
-            "description": desc,
-            "url": url,
-            "source_name": f"{label} (X)",
-            "published_date": now_iso,
-            "relevance_score": 0.7,
-            "author": f"@{current_author}",
-        })
+        posts.append(_x_post_entry(
+            title=title, desc=desc, url=url,
+            link=link_m.group(1) if link_m else "",
+            post_date=date_m.group(1) if date_m else "",
+            label=label, handle=current_author, now_iso=now_iso,
+        ))
 
     return posts
+
+
+def _x_post_entry(
+    *, title: str, desc: str, url: str, link: str, post_date: str,
+    label: str, handle: str, now_iso: str,
+) -> Dict:
+    """One X post as an article dict — the ONE builder both parsers use.
+
+    Sep 30 2026 (network review): ``_parse_x_posts`` learned on Sep 23 to
+    credit a newsroom's post to the ARTICLE it links (``POST_LINK``), but
+    the live fetch path (``fetch_x_posts`` → ``_parse_x_posts_multi`` →
+    ``_parse_structured_blocks``) never called it, so no post was ever
+    ``x_linked`` in production: every ``linked_only`` desk dropped 100% of
+    its posts (``x_posts_dropped_unlinked`` 4-8 = all of them) and the
+    six-outlets-credited-to-x.com defect the fix was written for stayed.
+    Both parsers now build the entry here.
+
+    Dates: the post's date is what the model REPORTED (``date_source``
+    ``x_post``), never the run clock; a post the model does not date is
+    undated. A linked article whose URL path dates it outside the window
+    is not promoted — the post stays a post (and ``linked_only`` drops it),
+    because a fresh post about a two-year-old explainer is not a fresh
+    article. ``now_iso`` is kept for the legacy call shape only.
+    """
+    link = (link or "").strip().rstrip(".,)")
+    if link and _X_POST_HOSTS_RE.match(link):
+        link = ""
+    link_date = _url_path_date(link) if link else None
+    link_stale = link_date is not None and _date_too_old(link_date, max_age_hours=72)
+    if link_stale:
+        logger.info(
+            "X post from @%s links an article dated %s — not credited as a "
+            "fresh source: %s", handle, link_date.date(), (title or desc)[:80],
+        )
+        link = ""
+    when = _parse_date_token(post_date)
+    return {
+        "title": title or desc[:100],
+        "description": desc,
+        "url": link or url,
+        "x_url": url,
+        "source_name": f"{label} (X)" if not link else label,
+        "published_date": when.isoformat() if when is not None else "",
+        "date_source": _DATE_SOURCE_X_POST if when is not None else _DATE_SOURCE_UNKNOWN,
+        "relevance_score": 0.7,
+        "author": f"@{handle}",
+        "source_kind": "x_post",
+        "x_linked": bool(link),
+    }
 
 
 def _parse_url_extraction(
@@ -996,14 +1073,20 @@ def _parse_url_extraction(
         title = desc[:100] if desc else f"Post by @{author_handle}"
 
         label = labels.get(author_handle, f"@{author_handle}")
+        # Sep 30 2026: a post the fallback parser could not date is undated,
+        # never stamped with the run clock (``now_iso`` kept for the call shape).
         posts.append({
             "title": title,
             "description": desc,
             "url": url,
+            "x_url": url,
             "source_name": f"{label} (X)",
-            "published_date": now_iso,
+            "published_date": "",
+            "date_source": _DATE_SOURCE_UNKNOWN,
             "relevance_score": 0.7,
             "author": f"@{author_handle}",
+            "source_kind": "x_post",
+            "x_linked": False,
         })
 
     return posts
@@ -1053,22 +1136,13 @@ def _parse_x_posts(
         # x.com — BBC Africa, Al Jazeera and Arab News posting their own
         # stories). A post with no link keeps the x.com URL and is dropped
         # or demoted by the show's ``x_posts_as_sources`` setting.
-        link = link_m.group(1).strip().rstrip(".,)") if link_m else ""
-        if link and re.match(r"https?://(?:www\.|mobile\.)?(?:x\.com|twitter\.com|t\.co)/", link, re.I):
-            link = ""
-        entry = {
-            "title": title or desc[:100],
-            "description": desc,
-            "url": link or url,
-            "x_url": url,
-            "source_name": f"{label} (X)" if not link else label,
-            "published_date": now_iso,
-            "relevance_score": 0.7,
-            "author": f"@{handle}",
-            "source_kind": "x_post",
-            "x_linked": bool(link),
-        }
-        posts.append(entry)
+        date_m = re.search(r"POST_DATE\s*:\s*(.+?)(?:\n|$)", block)
+        posts.append(_x_post_entry(
+            title=title, desc=desc, url=url,
+            link=link_m.group(1) if link_m else "",
+            post_date=date_m.group(1) if date_m else "",
+            label=label, handle=handle, now_iso=now_iso,
+        ))
 
     return posts
 
@@ -1081,6 +1155,7 @@ def fetch_web_search_articles(
     queries: List[str],
     keywords: Optional[List[str]] = None,
     max_results_per_query: int = 10,
+    max_age_hours: int = 72,
 ) -> List[Dict]:
     """Fetch recent news articles using xAI's web_search tool.
 
@@ -1102,7 +1177,6 @@ def fetch_web_search_articles(
         Articles with standard keys: ``title``, ``description``, ``url``,
         ``source_name``, ``published_date``, ``relevance_score``, ``author``.
     """
-    import datetime as _dt
     import os
     import re
 
@@ -1115,7 +1189,9 @@ def fetch_web_search_articles(
         return []
 
     all_articles: List[Dict] = []
-    now_iso = _dt.datetime.now(_dt.timezone.utc).isoformat()
+    # Sep 30 2026: results the model dates outside the window are dropped
+    # (counted here for the log); an undated result is undated, not "now".
+    stale_dropped = 0
 
     for query in queries:
         logger.info("Web search: querying '%s' ...", query)
@@ -1129,10 +1205,14 @@ def fetch_web_search_articles(
                 f"ARTICLE_TITLE: [exact headline]\n"
                 f"ARTICLE_URL: [full URL]\n"
                 f"ARTICLE_DESCRIPTION: [2-3 sentence summary]\n"
-                f"ARTICLE_SOURCE: [publication name]\n\n"
+                f"ARTICLE_SOURCE: [publication name]\n"
+                f"ARTICLE_DATE: [the article's publication date as YYYY-MM-DD, "
+                f"or the single word unknown]\n\n"
                 f"Rules:\n"
                 f"- Include up to {max_results_per_query} articles maximum\n"
                 f"- Only include articles from the last 24 hours\n"
+                f"- ARTICLE_DATE is the date the article was PUBLISHED, read from "
+                f"the page or the search result — never today's date by default\n"
                 f"- Skip opinion pieces, editorials, and social media posts\n"
                 f"- If no recent articles found, return exactly: NO_RECENT_ARTICLES\n"
                 f"- Do NOT add any commentary — just the structured list\n"
@@ -1173,6 +1253,7 @@ def fetch_web_search_articles(
                     block, re.DOTALL,
                 )
                 source_m = re.search(r"ARTICLE_SOURCE\s*:\s*(.+?)(?:\n|$)", block)
+                date_m = re.search(r"ARTICLE_DATE\s*:\s*(.+?)(?:\n|$)", block)
 
                 title = title_m.group(1).strip() if title_m else ""
                 url = url_m.group(1).strip() if url_m else ""
@@ -1182,12 +1263,35 @@ def fetch_web_search_articles(
                 if not title or not url:
                     continue
 
+                # Sep 30 2026: a search result used to be stamped with the
+                # run clock. The URL path's date is trusted; the date the
+                # model reports is recorded as the model's claim; neither
+                # means "today" when absent. A result the model itself
+                # dates outside the window is dropped here — it was asked
+                # for the last 24 hours and answered with something older.
+                url_date = _url_path_date(url)
+                model_date = _parse_date_token(date_m.group(1) if date_m else "")
+                if url_date is not None:
+                    pub_iso, date_source = url_date.isoformat(), _DATE_SOURCE_URL_PATH
+                elif model_date is not None:
+                    pub_iso, date_source = model_date.isoformat(), _DATE_SOURCE_MODEL
+                else:
+                    pub_iso, date_source = "", _DATE_SOURCE_UNKNOWN
+                if _date_too_old(url_date or model_date, max_age_hours=max_age_hours):
+                    stale_dropped += 1
+                    logger.info(
+                        "Web search: dropping result dated %s (older than %dh): %s",
+                        (url_date or model_date).date(), max_age_hours, title[:80],
+                    )
+                    continue
+
                 all_articles.append({
                     "title": title,
                     "description": desc,
                     "url": url,
                     "source_name": f"{source} (web)",
-                    "published_date": now_iso,
+                    "published_date": pub_iso,
+                    "date_source": date_source,
                     "relevance_score": 0.0,
                     "author": "",
                 })
@@ -1198,6 +1302,10 @@ def fetch_web_search_articles(
         except Exception as exc:
             logger.warning("Web search failed for '%s': %s", query, exc)
             continue
+
+    if stale_dropped:
+        logger.info("Web search: dropped %d result(s) dated outside the %dh window",
+                    stale_dropped, max_age_hours)
 
     # Keyword filter
     if keywords and all_articles:

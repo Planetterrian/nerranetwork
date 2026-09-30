@@ -133,6 +133,23 @@ def check_phonetic_garbles(tts_txt: str, _transcript_txt: str) -> Dict[str, Any]
     }
 
 
+def _config_word_floor(show_slug: str) -> int:
+    """The show YAML's ``llm.min_podcast_words``, or 0 when unreadable.
+
+    Sep 30 2026: the table below said Tesla 2000 while tesla.yaml enforces
+    1400, so the daily health file flagged Tesla "66% of target" every day
+    against a floor the pipeline never uses (14 of 28 shows disagreed; the
+    six desks read 900 against 1300). Same rule as review_episodes.py's
+    ``_config_min_words``: the YAML is the one owner of a show's length.
+    """
+    try:
+        from engine.config import load_config
+        cfg = load_config(Path(__file__).resolve().parent.parent / "shows" / f"{show_slug}.yaml")
+        return int(getattr(cfg.llm, "min_podcast_words", 0) or 0)
+    except Exception:  # noqa: BLE001
+        return 0
+
+
 def check_word_count(tts_txt: str, show_slug: str) -> Dict[str, Any]:
     """
     Check episode word count against show-specific targets.
@@ -157,7 +174,7 @@ def check_word_count(tts_txt: str, show_slug: str) -> Dict[str, Any]:
         "privet_russian": 800,
     }
 
-    floor = floors.get(show_slug, 900)
+    floor = _config_word_floor(show_slug) or floors.get(show_slug, 900)
 
     # Severe branch first — anything < 0.9*floor also satisfies < floor, so
     # the old (< floor, elif < 0.9*floor) ordering made this unreachable.

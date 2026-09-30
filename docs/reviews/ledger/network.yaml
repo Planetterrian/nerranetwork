@@ -722,6 +722,66 @@ reviews:
       evidence: null
     agent_cost_usd: null
 
+  - date: 2026-09-30
+    pr: null
+    doc: docs/reviews/network_review_2026_09_30.md
+    summary: "Operator: comprehensive quality + workflow review; heard repetition and months-old stories. Both confirmed with one cause each. Freshness: every undated path (undated feed entries, Google News index dates, web-search results, X posts) stamped the RUN CLOCK and sorted to the top of the prompt; 7 months-old stories on the flagships in 14 days (a 2013 Teslarati page aired 3x on Tesla, 2021 Mashable + Jan-2025 Starlink on SpaceX), every one behind an undated URL whose page carried its real date; stale_article_days off on every flagship; the tracker URL window 7 d inside a 14 d file; the xAI search fallback answered from memory. Repetition: 0 exact duplicates anywhere; SpaceX tells a dropped-duplicate story 2-3x per episode (combined script written from the un-deduped PART 1); frames recur daily (FF/PT keep-an-eye-on 13-15/15, OV compare-how 15/15, desks the-case-on-both-sides 7/8). Reproducibility: main red since 09-26 on a fixture; PyAV 19 broke Whisper on all 23 of today's episodes (gate blind); health check floors hard-coded (Tesla 2000 vs 1400)."
+    shipped:
+      - "engine/article_dates.py: date_source per article; unknown = \"\" (sorts last, renders no date); probe_page_dates opens <= date_probe_max pages (default 12) for untrusted dates and re-dates from the publisher page"
+      - "engine/fetcher.py: undated entries undated (never now); GN items marked index; web-search ARTICLE_DATE (model-dated results outside the window dropped); X POST_DATE; _x_post_entry is the ONE builder both parsers use (the Sep 23 POST_LINK credit had shipped into a dead path: no post was ever x_linked, linked_only desks dropped 100%)"
+      - "digests/xai_grok.py: SearchUnavailable — a failed search never falls back to tool-less generation"
+      - "run_show: page-date probe before the stale gate (+5 metrics); X posts and web results pass content_tracker.filter_recent_articles; content_tracking.max_days passed (never was)"
+      - "engine/content_tracker: URL-dedup window = retention; _defaults.yaml max_days 14 -> 45"
+      - "stale_article_days: 3 on the 12 established news shows (A/B: digest input)"
+      - "engine/digest_overlap: DuplicateItem.body + strip_second_tellings (first telling kept); generator peek/amend_combined_script; run_show amends the stash (metric combined_script_second_tellings_removed)"
+      - "engine/frame_memory.py: data-side rotation memory for sentence openers, opt-in frame_memory: true on 17 shows, rendered via {recent_frames_block} in the two shared podcast snippets (A/B)"
+      - "requirements.txt av>=11,<19; engine/transcripts.py VAD-shaped errors only get the retry, ::error:: on failure; scripts/grok_show_check.py floors from the YAML"
+      - "guards re-pinned: interview-transcript fixture (longest line), video-feed metadata (episodes >= 1 day old), curriculum floor = 21-subject runway; vancouver ledger YAML repaired; 11 experiments scored; 3 registered"
+    deferred:
+      - "the model question by the playbook: a script-stage-only grok-4.7 pin on one chained flagship (SpaceX) under the latency gate — the 4.7 cohort writes (4-17% verbatim, 13-19 claims) where the 4.3 flagships copy (49-78%, 0-3)"
+      - "UC skipped by its own claims gate 4 of the last 7 days (verified=0): on_failure: strip for UC or a claims-appendix pass — operator decision"
+      - "Tesla Ep617 17/17 items without a Source line while digest_lints_fired read [] (test_first_slate replay red since 09-26) — needs a run trace"
+      - "Tesla weekend price line repeats verbatim Fri/Sat/Sun (hook wording, A/B)"
+      - "frame memory on modern_investing once it can see the prompt context (its ledger-supplied lines dominated the list)"
+      - "test_transcript_brand (NaraDaily/NARA in two 09-27 word arrays) and test_show_page_episode_links remain red on main; a dependency lockfile for the runner; a 09-30 transcript backfill for the feeds"
+    predictions:
+    - metric: "items whose Source URL page date is > 3 days older than the digest date, flagship digests (stale-sweep method: URL-path/snowflake date, else the page's meta/JSON-LD date)"
+      baseline: "7 in 14 days on tesla/spacex/planetterrian/prediction_markets (09-16..30); 0 among URL-dated items"
+      expected: "0 in the 14 days after merge on the 12 stale_article_days shows; articles_dropped_stale > 0 on some days is the gate working, not a regression"
+      verdict: pending
+      evidence: null
+    - metric: "articles_undated_in_prompt and articles_date_probe_dated (metrics_ep*.json)"
+      baseline: "unmeasured; the sweep found 1,254 of 2,053 shipped items behind undated URLs, 667 of the 960 fetched pages carried a date"
+      expected: "recorded on every news episode from the first post-merge run; probe_dated >= 3 on a median flagship day; undated_in_prompt < 5"
+      verdict: pending
+      evidence: null
+    - metric: "same-URL recurrence across a show's episodes >= 2 days apart (stale-sweep recurrence method)"
+      baseline: "22 pairs in 14 days (Tesla 6, MIT 8 spotlight, PT 2, SpaceX 2, FP 1)"
+      expected: "0 same-URL pairs inside 45 days from merge; headline-similar pairs may remain (update coverage is allowed)"
+      verdict: pending
+      evidence: null
+    - metric: "script_repeated_facts on SpaceX and combined_script_second_tellings_removed"
+      baseline: "SpaceX 12/10/7/7/11 on Ep112-116; second-tellings metric unmeasured"
+      expected: "SpaceX script_repeated_facts median <= 4 over the 14 days after merge with the metric recording > 0 on days dupes were removed"
+      verdict: pending
+      evidence: null
+    - metric: "share of scripts opening a sentence with the top recurring frame, per opted-in show (repetition-sweep method on _tts.txt: FF/PT 'keep an eye on', OV 'if you want to', desks 'the case on both sides')"
+      baseline: "FF 15/15, PT 13/15, OV 15/15, desks 7/8, Vancouver 8/8 (09-16..30)"
+      expected: "<= 4/14 on each over the 14 days after merge; successor-frame check: the top NEW opener on each show must not exceed 6/14 (the third-generation convergence the de-seed rule warns of)"
+      verdict: pending
+      evidence: null
+    - metric: "spoken_text_gate == no_transcript per day (metrics_ep*.json)"
+      baseline: "23/23 on 2026-09-30; 0-1 per day before"
+      expected: "0 on every day after the av<19 pin merges; a transcription failure surfaces as a ::error:: annotation the same run"
+      verdict: pending
+      evidence: null
+    - metric: "main-branch Run Tests conclusion"
+      baseline: "red on every push 09-26..28 (fixture) with 5 more data-driven reds behind it"
+      expected: "green on the merge of this PR except the two documented reds (transcript_brand, show_page_episode_links), and no NEW data-driven red in the 7 days after"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
 do_not_retry:
   - idea: podcast-side length levers (word floors, expand-retries, prompt
       pressure on the podcast stage) for ANY show

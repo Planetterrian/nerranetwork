@@ -2153,6 +2153,23 @@ def take_combined_script() -> Optional[Dict[str, str]]:
     return stash
 
 
+def amend_combined_script(script: str) -> bool:
+    """Replace the stashed combined script's text in place (the digest it
+    was written from is kept, so the stash test is unchanged). Sep 30 2026:
+    run_show's cross-section dedupe strips a dropped duplicate's second
+    telling from the script here. False when nothing is stashed."""
+    global _STASHED_COMBINED
+    if not _STASHED_COMBINED or not script:
+        return False
+    _STASHED_COMBINED = dict(_STASHED_COMBINED, script=script)
+    return True
+
+
+def peek_combined_script() -> Optional[str]:
+    """The stashed combined script's text without clearing the stash."""
+    return (_STASHED_COMBINED or {}).get("script") if _STASHED_COMBINED else None
+
+
 _COMBINED_MD_LINK_RE = re.compile(r"\[([^\]]*)\]\((?:https?://)[^)]*\)")
 _COMBINED_URL_RE = re.compile(r"https?://\S+")
 _COMBINED_SOURCE_TAIL_RE = re.compile(
@@ -2928,6 +2945,12 @@ def generate_podcast_script(
     str
         The generated podcast script text.
     """
+    # Sep 30 2026: the shared snippets carry {recent_frames_block}
+    # (engine/frame_memory.py); run_show fills it through
+    # build_podcast_template_vars, every other caller of this function
+    # renders the prompt exactly as before.
+    if "recent_frames_block" not in template_vars:
+        template_vars = dict(template_vars, recent_frames_block="")
     prompt = load_prompt(config.llm.podcast_prompt_file, template_vars)
 
     ep_num = int(template_vars.get("episode_num") or 0)

@@ -166,9 +166,15 @@ class TestGrokShowCheck:
 
     def test_word_count_mild_shortfall_still_flagged(self):
         mod = _load_script("grok_show_check")
-        result = mod.check_word_count("word " * 1950, "tesla")  # 90-100% of floor
+        # Sep 30 2026: the floor is the show YAML's min_podcast_words
+        # (tesla 1,400), no longer the script's own table (2,000) — the
+        # health file had flagged Tesla "66% of target" every day against
+        # a number the pipeline never used. 95% of whatever the floor is.
+        floor = mod._config_word_floor("tesla") or 2000
+        result = mod.check_word_count("word " * int(floor * 0.95), "tesla")  # 90-100% of floor
         types_found = [f["type"] for f in result["findings"]]
         assert types_found == ["below_target_length"]
+        assert result["floor"] == floor
 
     def test_escalation_webhook_no_op_when_unset(self, monkeypatch):
         mod = _load_script("grok_show_check")
