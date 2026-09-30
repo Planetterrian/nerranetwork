@@ -78,3 +78,104 @@ reviews:
         baseline: "2 (Ep2)"
         expected: "0 on 7/7"
         verdict: pending
+  - date: '2026-09-27'
+    pr: null
+    doc: docs/reviews/mag7_review_2026_09_27.md
+    generated_by: grok-4.5
+    summary: Five episodes in, MAG 7’s launch gates mostly hold (no advice language, repeated-facts median fixed, fetch filters clean) but Ep4’s Thread is a Tesla Semi product story (TST boundary miss), scripts collapsed to 814/735 words on Ep4/Ep5 on a digest ceiling, the teaser locked onto a “nearest date on…” tic, Ep5 spoke a week-in-review from memory, and Whisper’s 5/5 “mag 0” plus chapter-marker “Mag Seven” vs spoken “MAG 7” show a show-name form split.
+    scored_prior_predictions:
+    - metric: episodes (first 7) speaking any price as 'trading at' or a price absent from the tape block
+      verdict: hit
+      evidence: 'Ep2–Ep5: no ''trading at''; Ep1 closes were tape-block ''closed at'' (format later removed).'
+    - metric: Tesla product/FSD/community stories told as news (TST's beat)
+      verdict: miss
+      evidence: Ep4 Thread is Tesla Semi volume production/product debut (500-mile truck, factory event, sports-car framing).
+    - metric: episodes with any buy/sell/target/prediction language
+      verdict: hit
+      evidence: 'Ep1–Ep5 transcripts: no buy/sell/hold/target/opportunity advice language.'
+    - metric: MAG 7 episodes that reach main without a recovery PR (first 7)
+      verdict: partial
+      evidence: Ep1 recovery-PR path; Ep2–Ep5 present in digests/mag7 (4/5 clean); only five episodes exist.
+    - metric: script_repeated_facts (numbers spoken more than once)
+      verdict: hit
+      evidence: 'Snapshot facts×2 last 5: 9,1,2,2,0 → median 2 (≤4).'
+    - metric: Counterpoint items that are chart/price-level commentary
+      verdict: hit
+      evidence: Post-fix Ep2–Ep5 counterpoints rebut the lead with arguments; no TA/resistance pieces.
+    - metric: 'episodes shipping without a ### The Counterpoint header'
+      verdict: partial
+      evidence: Ep2 was the known miss; fix shipped; Ep3–Ep5 audio has counterpoint blocks but digest headers not in bundle.
+    - metric: digest_cross_section_dupes_removed naming The Counterpoint or On the Calendar
+      verdict: partial
+      evidence: Exempt sections shipped Sep 24; no post-fix drop signal in snapshot; dupe logs not re-checked.
+    shipped: []
+    deferred:
+    - Live-prune x_accounts after per-handle fetch counts (ledger carry).
+    - Network-wide absence-sentence filter default (still opt-in on mag7).
+    - Dedicated music_file (still assets/music/ModernInvesting.mp3).
+    - Hard drop of Tesla product URLs in hooks/mag7.py pre_fetch if prompt boundary misses a second time (operator decision — escalate, do not silently expand scope).
+    - 'Next pass: measure digest word hit rate vs min_digest_words 1300 on Ep6–Ep12; if scripts stay <900 after section fixes, escalate digest substrate — do not propose podcast_expand or higher min_podcast_words.'
+    - OP3/audience rows once directories distribution is on; newsletter from 2026-10-01.
+    - YouTube enable decision (currently false).
+    - 'Successor-tic watch: after teaser de-seed, next review checks for a new fixed teaser shape (third-generation convergence).'
+    predictions:
+    - metric: Tesla vehicle/product/FSD/energy/Semi stories as Top News, Company Desk, or Thread (next 7 eps)
+      baseline: 1/5 (Ep4 Thread)
+      expected: 0/7
+      verdict: pending
+      evidence: null
+    - metric: Whisper/transcript show-name form 'mag 0' or digit 'MAG 7' in identity/closing (next 7)
+      baseline: 5/5 identity or closing ASR as mag 0 / scripts saying MAG 7
+      expected: ≤1/7 (spoken Mag Seven)
+      verdict: pending
+      evidence: null
+    - metric: episodes whose script contains a week-in-review / 'look back over the past week' recap
+      baseline: 1/5 (Ep5)
+      expected: 0/7
+      verdict: pending
+      evidence: null
+    - metric: teaser opening continuation matching shape 'the nearest date on …'
+      baseline: 3/5
+      expected: 0/7
+      verdict: pending
+      evidence: null
+    - metric: script word count median (next 7 _tts.txt)
+      baseline: median of last 5 ≈ 1012; Ep4/Ep5 814/735
+      expected: median ≥ 1000 via digest substance (no podcast expand); if miss, escalate digest hit-rate not podcast floor
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/mag7_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Ep4 Thread shipped a Tesla Semi product debut despite existing one-line TST boundary; selection needs an explicit reject class so the Thread cannot launder TST beat as 'across the seven'.
+    - file: shows/prompts/mag7_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'Pins the Ep4 failure mode at the section contract: Thread requires multi-company business spine, not one product story with valuation asides.'
+    - file: shows/prompts/mag7_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Ep2–Ep5 identity lines use digit 'MAG 7'; snapshot ASR is 5/5 'mag 0'; chapter yaml keys on 'Mag Seven'. Converge spoken form to words (no phonetic respelling of other tokens).
+    - file: shows/prompts/mag7_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Podcast-side hard skip when digest boundary fails, so Ep4-class Threads do not reach audio.
+    - file: shows/prompts/mag7_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 3/5 teasers converged on 'Before we go, the nearest date on…' — de-seed by shape + ban, not by giving a new specimen sentence.
+    - file: shows/prompts/mag7_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Ep5 spoke a full past-week recap; memory block is injected into the podcast prompt without a non-speech fence.
+    - file: shows/mag7.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Shipped audio already says 'MAG 7 Daily, episode N'; intro regex only listed Mag Seven — broaden matcher while prompts converge (metadata/chapters only; no TTS field change).
+    - file: shows/mag7.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Same digit/word split on closing lines; keep broad 'for today' alt and explicit digit forms until scripts are all Mag Seven.
+    agent_cost_usd: 0.0865
+do_not_retry: []
