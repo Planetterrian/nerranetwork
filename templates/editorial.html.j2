@@ -174,14 +174,22 @@
                 enforced on every show. A claim that fails gets one
                 repair pass — the model re-sources only the failed
                 claims, with the claim text pinned, and the whole gate
-                runs again — and any sentence the gate still cannot
-                vouch for is removed from the episode before it is
-                published. A source we cannot reach counts as a
-                failure, not a pass; every sourced item must be covered
-                by a verified claim; and a fact-checker's note left in
-                the prose fails the gate on its own. On the narrative
-                shows the episode is held back instead of edited.
-                Verified ledgers are committed alongside each digest,
+                runs again. A claim the gate still cannot confirm is
+                <strong>published and marked, not removed</strong>: a
+                source can be unreachable from our servers, and a story
+                newer than the model's training data can only be checked
+                against its source, never against memory — and a true,
+                timely story is worth more than a clean ledger. The
+                status sits beside the claim on the episode page and on
+                the public <a href="{{ path_prefix }}claims.html">claims
+                &amp; corrections ledger</a>, and a marked claim that
+                names a source is re-checked nightly for
+                {{ claims_recheck_days }} days and upgraded when it
+                passes. A source we cannot reach is marked unverified,
+                never passed; every sourced item must be covered by a
+                verified claim; and a fact-checker's note left in the
+                prose is cut, because it is the model's note, never
+                news. Ledgers are committed alongside each digest,
                 rendered on every episode page as a "Verified claims"
                 panel, and used as endnotes in the anthology books.
             </p>
@@ -299,8 +307,11 @@
             filed in the show's corrections record and from there it
             reaches every surface: a dated correction box at the top
             of the episode's page, a line in that episode's show
-            notes, and a "Correction to episode N" line in the next
-            episode's show notes. Audio is never edited silently: if
+            notes, a "Correction to episode N" line in the next
+            episode's show notes, and the show's page on the public
+            <a href="{{ path_prefix }}claims.html">claims &amp; corrections ledger</a>,
+            which also shows every claim's verification status for the
+            last thirty days. Audio is never edited silently: if
             the spoken episode was wrong, it is re-synthesized from
             the corrected script and replaced in full, or the error is
             noted and the audio left as aired.

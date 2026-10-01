@@ -166,6 +166,74 @@ QUOTE_MATCH_THRESHOLD = 0.9
 # Hard cap — a ledger is a list of checkable specifics, not a transcript.
 MAX_CLAIMS_PER_EPISODE = 40
 
+# ---------------------------------------------------------------------------
+# Claim status vocabulary (Oct 1 2026, flag mode)
+# ---------------------------------------------------------------------------
+# Operator direction 2026-10-01: strip mode removed TRUE sentences (SpaceX
+# Ep104's five, MIT Ep187's NASDAQ close, Prediction Markets' hurricane
+# contract) and UC skipped 11 of its last 28 days on its own gate — and
+# the model's training data lags the 24-hour news cycle, so "cannot verify"
+# must never be a reason to drop a sourced, timely story. ``on_failure:
+# flag`` publishes with the status VISIBLE on every ledger entry and the
+# nightly re-verification (scripts/reverify_claims.py) checks again later.
+# A status is DATA on the entry; the vocabulary is closed so every surface
+# (sidecar, dashboard, web ledger) reads one set of words.
+CLAIM_STATUS_VERIFIED = "verified"
+CLAIM_STATUS_VERIFIED_FROM_FETCHED = "verified_from_fetched"
+#: Set by the nightly re-verification when a claim that failed at publish
+#: time verifies later (the original failure is kept in ``first_status``).
+CLAIM_STATUS_VERIFIED_LATER = "verified_later"
+#: 403 / 429 / 5xx / transport — the source could not be fetched.
+CLAIM_STATUS_UNREACHABLE = "unverified_unreachable"
+#: 404 (or another non-2xx / empty body that is not an unreachable code).
+CLAIM_STATUS_NOT_FOUND = "unverified_not_found"
+#: The page resolved; the supporting quote was not found at the 0.9 check.
+CLAIM_STATUS_QUOTE_MISMATCH = "unverified_quote_mismatch"
+#: A citation-shaped sentence no verified entry covers (the lint).
+CLAIM_STATUS_UNCOVERED = "unverified_uncovered"
+#: A ledger entry missing a required key (claim / source_url / quote).
+CLAIM_STATUS_MALFORMED = "malformed"
+
+VERIFIED_STATUSES = frozenset({
+    CLAIM_STATUS_VERIFIED, CLAIM_STATUS_VERIFIED_FROM_FETCHED,
+    CLAIM_STATUS_VERIFIED_LATER,
+})
+UNVERIFIED_STATUSES = frozenset({
+    CLAIM_STATUS_UNREACHABLE, CLAIM_STATUS_NOT_FOUND,
+    CLAIM_STATUS_QUOTE_MISMATCH, CLAIM_STATUS_UNCOVERED,
+    CLAIM_STATUS_MALFORMED,
+})
+#: Statuses the nightly re-verification may flip to ``verified_later`` —
+#: an uncovered sentence has no url and a malformed entry no quote, so
+#: neither can be re-checked mechanically.
+REVERIFIABLE_STATUSES = frozenset({
+    CLAIM_STATUS_UNREACHABLE, CLAIM_STATUS_NOT_FOUND,
+    CLAIM_STATUS_QUOTE_MISMATCH,
+})
+#: Sidecar ``gate.policy_version``: 2 = the flag-mode schema (every entry
+#: carries ``status``; ``flagged_sentences`` / ``flagged_count`` /
+#: ``verified_count`` / ``mode`` on the gate). Additive over version 1.
+SIDECAR_POLICY_VERSION = 2
+
+
+def is_verified_status(status: Optional[str]) -> bool:
+    """A missing status is a legacy (pre-Oct 2026) entry — those sidecars
+    committed only verified claims, so absence means verified."""
+    return not status or str(status) in VERIFIED_STATUSES
+
+
+def status_for_verification(verification: dict) -> str:
+    """Map one :func:`verify_claim_sources` result to a closed status."""
+    if verification.get("passed"):
+        return (CLAIM_STATUS_VERIFIED_FROM_FETCHED
+                if verification.get("via") == "fetched_copy"
+                else CLAIM_STATUS_VERIFIED)
+    if verification.get("unreachable"):
+        return CLAIM_STATUS_UNREACHABLE
+    if not verification.get("resolved"):
+        return CLAIM_STATUS_NOT_FOUND
+    return CLAIM_STATUS_QUOTE_MISMATCH
+
 
 # ---------------------------------------------------------------------------
 # Prompt constraint (injected by engine.generator when enabled)
@@ -755,6 +823,21 @@ class GateResult:
     #: post-strip sidecar had read "claims=0, passed" on SpaceX Ep104 for
     #: five true sentences whose quotes were paraphrases.
     pre_strip: Optional[dict] = None
+    #: Oct 1 2026 (flag mode): every verification result, verified ones
+    #: included — the per-claim ``status`` is derived from these.
+    verifications: List[dict] = field(default_factory=list)
+    #: The failure policy that handled this result ("block" | "strip" |
+    #: "flag" | "shadow"); set by the caller, "" when unknown.
+    mode: str = ""
+    #: Flag mode: the FULL ledger (verified AND unverified entries, each
+    #: with ``status``) that the sidecar commits in place of
+    #: ``verified_claims``. ``None`` outside flag mode.
+    ledger: Optional[List[dict]] = None
+    #: Flag mode: the sentences whose claims are unverified, for the
+    #: surfaces that mark them; the counts the dashboard reads.
+    flagged_sentences: List[str] = field(default_factory=list)
+    flagged_count: int = 0
+    verified_count: int = 0
 
     def summary(self) -> str:
         unreachable = sum(
@@ -788,6 +871,14 @@ class GateResult:
             "covered_by_item_source": self.covered_by_item_source,
             "repair_recovered": self.repair_recovered,
             "pre_strip": self.pre_strip,
+            # Oct 1 2026 (flag mode) — additive over the version-1 keys.
+            "policy_version": SIDECAR_POLICY_VERSION,
+            "mode": self.mode,
+            "flagged_sentences": list(self.flagged_sentences),
+            "flagged_count": self.flagged_count,
+            "verified_count": (self.verified_count
+                               if self.ledger is not None
+                               else self.claims_verified),
         }
 
 
@@ -834,6 +925,7 @@ def run_source_integrity_gate(
     if verify_sources and anchored:
         verifications = verify_claim_sources(anchored, fetch=fetch, local_texts=local_texts)
         by_id = {v["id"]: v for v in verifications}
+        result.verifications = list(verifications)
         result.verified_claims = [
             c for c in anchored if by_id.get(c.get("id", ""), {}).get("passed")
         ]
@@ -1583,6 +1675,295 @@ def strip_script_sentences(script: str, removed_sentences: List[str],
 
 
 # ---------------------------------------------------------------------------
+# Flag mode (Oct 1 2026) — publish with the status visible, verify again later
+# ---------------------------------------------------------------------------
+#
+# Strip mode kept the contract "nothing unverified ships" and paid for it in
+# TRUE sentences: SpaceX Ep104 lost five (every source resolved; the quotes
+# were paraphrases), MIT Ep187 lost the NASDAQ close, Prediction Markets
+# lost the hurricane contract on 10-01, and UC — on block — skipped 11 of
+# its last 28 days. The model's training data lags the 24-hour cycle, so a
+# sourced, timely story is exactly what the gate cannot vouch for on the
+# day. Flag mode removes NOTHING from the digest or the script: every ledger
+# entry carries a ``status``, the unverified sentences are listed for the
+# surfaces, the episode publishes, and ``scripts/reverify_claims.py``
+# re-runs the mechanical check nightly for a week (``verified_later``).
+# The one thing still REMOVED is a reviewer-note parenthetical: it is the
+# model's note to itself, never news.
+
+
+@dataclass
+class FlagResult:
+    text: str
+    #: The full ledger — every entry with ``status`` (verified and not).
+    claims: List[dict]
+    flagged_sentences: List[str] = field(default_factory=list)
+    removed_notes: List[str] = field(default_factory=list)
+    covered_by_item_source: int = 0
+    gate: Optional[GateResult] = None
+
+
+def _sentence_for_entry(entry: dict, episode_text: str) -> str:
+    """The digest sentence an entry describes: its anchor when it has one,
+    else the sentence sharing most of the claim's content words (the
+    strip-mode lookup for a malformed, anchorless entry)."""
+    span = str(entry.get("episode_span") or entry.get("script_span") or "").strip()
+    if span:
+        return span
+    toks = _content_tokens(str(entry.get("claim") or ""))
+    if len(toks) < 3:
+        return ""
+    for ln in episode_text.splitlines():
+        if _HEADER_RE.match(ln):
+            continue
+        for sent in _SENTENCE_SPLIT_RE.split(ln):
+            if len(toks & _content_tokens(sent)) >= max(3, int(0.6 * len(toks))):
+                return sent.strip()
+    return ""
+
+
+def _item_source_url_for_sentence(sentence: str, lines: List[str],
+                                  blocks: List[Tuple[int, int]]) -> str:
+    for s, e in blocks:
+        if any(sentence in ln or fuzzy_contains(sentence, ln, threshold=0.85)
+               for ln in lines[s:e]):
+            return _block_source_url(lines, s, e)
+    return ""
+
+
+def flag_unverified(
+    episode_text: str,
+    gate: GateResult,
+    claims: List[dict],
+    fetch: Optional[Callable[[str], Tuple[int, str]]] = None,
+    verify_sources: bool = True,
+) -> FlagResult:
+    """Flag-mode enforcement: label every ledger entry, remove nothing.
+
+    Every entry in *claims* gets a ``status`` from the gate's verdicts
+    (``verified`` / ``verified_from_fetched`` / ``unverified_unreachable``
+    / ``unverified_not_found`` / ``unverified_quote_mismatch`` /
+    ``malformed``); each uncovered citation shape becomes an entry with
+    ``status: unverified_uncovered`` carrying the sentence as ``claim``
+    and no url — unless its item carries a resolving ``Source:`` URL,
+    which counts as sourcing the item (the strip-mode rule, counted in
+    ``covered_by_item_source``). Reviewer-note parentheticals are the one
+    thing removed from the text. The returned gate carries ``mode="flag"``,
+    the full ``ledger``, ``flagged_sentences`` and the two counts; its
+    mechanical ``passed`` verdict is left as the gate found it — the
+    sidecar must say the episode shipped with unverified claims, not that
+    they passed.
+    """
+    if fetch is None:
+        fetch = default_fetch
+    _cache: Dict[str, Tuple[Optional[int], str]] = {}
+
+    def _resolves(url: str) -> bool:
+        if not url:
+            return False
+        if url not in _cache:
+            try:
+                _cache[url] = fetch(url)
+            except Exception:  # noqa: BLE001 — transport failure
+                _cache[url] = (None, "")
+        status, body = _cache[url]
+        return status is not None and 200 <= status < 300 and bool((body or "").strip())
+
+    _cid = lambda i, c: str(c.get("id") or f"c{i + 1}")  # noqa: E731
+    verdict_by_id = {str(v.get("id", "")): v for v in gate.verifications}
+    failed_ids = {str(v.get("id", "")) for v in gate.failed_verifications}
+    verified_ids = {str(c.get("id", "")) for c in gate.verified_claims}
+    malformed_ids = {str(e).split(":", 1)[0].strip() for e in gate.shape_errors}
+    dropped_ids = {str(d.get("id", "")) for d in gate.dropped_claims}
+
+    ledger: List[dict] = []
+    flagged: List[str] = []
+    for i, claim in enumerate(claims):
+        cid = _cid(i, claim)
+        if cid in dropped_ids:
+            # Describes text that was edited away — recorded under
+            # ``gate.dropped_claims``, never a citation for absent prose.
+            continue
+        entry = dict(claim)
+        entry["id"] = cid
+        if cid in malformed_ids:
+            status = CLAIM_STATUS_MALFORMED
+        elif cid in verified_ids:
+            v = verdict_by_id.get(cid) or {}
+            status = (CLAIM_STATUS_VERIFIED_FROM_FETCHED
+                      if v.get("via") == "fetched_copy" else CLAIM_STATUS_VERIFIED)
+        elif cid in failed_ids:
+            status = status_for_verification(verdict_by_id.get(cid) or {})
+        elif cid in verdict_by_id:
+            status = status_for_verification(verdict_by_id[cid])
+        else:
+            # No verdict (verify_sources off): anchored but unchecked —
+            # the gate counts it verified in that configuration.
+            status = CLAIM_STATUS_VERIFIED
+        entry["status"] = status
+        if status in UNVERIFIED_STATUSES:
+            v = verdict_by_id.get(cid) or {}
+            if v.get("reason"):
+                entry["status_reason"] = str(v["reason"])
+            sentence = _sentence_for_entry(entry, episode_text)
+            if sentence:
+                flagged.append(sentence)
+        ledger.append(entry)
+
+    covered_by_item = 0
+    lines = episode_text.splitlines()
+    blocks = _blocks(lines)
+    n_uncovered = 0
+    for u in gate.uncovered_shapes:
+        sentence = str(u.get("sentence") or "").strip()
+        if not sentence:
+            continue
+        item_url = _item_source_url_for_sentence(sentence, lines, blocks)
+        if item_url and (not verify_sources or _resolves(item_url)):
+            covered_by_item += 1
+            continue
+        n_uncovered += 1
+        ledger.append({
+            "id": f"u{n_uncovered}",
+            "claim": sentence,
+            "episode_span": sentence,
+            "source_url": "",
+            "supporting_quote": "",
+            "status": CLAIM_STATUS_UNCOVERED,
+            "status_reason": f"citation shape {str(u.get('match') or '')!r} "
+                             "with no covering verified claim",
+        })
+        flagged.append(sentence)
+
+    text = episode_text
+    removed_notes: List[str] = []
+    for n in gate.reviewer_notes:
+        match = str(n.get("match") or "")
+        if match and match in text:
+            text = text.replace(match, "", 1)
+            removed_notes.append(match)
+    if removed_notes:
+        text = re.sub(r"[ \t]{2,}", " ", text)
+        text = re.sub(r" +([.,;:])", r"\1", text)
+
+    seen: set = set()
+    flagged = [s for s in flagged if not (s in seen or seen.add(s))]
+
+    new_gate = GateResult(**{k: v for k, v in gate.__dict__.items()})
+    new_gate.mode = "flag"
+    new_gate.ledger = ledger
+    new_gate.flagged_sentences = flagged
+    new_gate.flagged_count = sum(
+        1 for e in ledger if e.get("status") in UNVERIFIED_STATUSES)
+    new_gate.verified_count = sum(
+        1 for e in ledger if is_verified_status(e.get("status")))
+    new_gate.covered_by_item_source = covered_by_item
+    new_gate.stripped_notes = list(removed_notes)
+    # Reviewer notes are gone from the text; the mechanical verdict on
+    # what remains no longer counts them.
+    new_gate.reviewer_notes = [
+        n for n in gate.reviewer_notes
+        if str(n.get("match") or "") not in removed_notes]
+    new_gate.passed = not (
+        new_gate.failed_verifications or new_gate.uncovered_shapes
+        or new_gate.shape_errors or new_gate.reviewer_notes
+    )
+    logger.warning(
+        "source-integrity flag: %d unverified claim(s) PUBLISHED with status "
+        "(%d sentence(s) flagged), %d verified, %d reviewer note(s) removed, "
+        "%d uncovered shape(s) covered by their item's Source URL",
+        new_gate.flagged_count, len(flagged), new_gate.verified_count,
+        len(removed_notes), covered_by_item,
+    )
+    return FlagResult(
+        text=text, claims=ledger, flagged_sentences=flagged,
+        removed_notes=removed_notes, covered_by_item_source=covered_by_item,
+        gate=new_gate,
+    )
+
+
+def _recount_ledger(payload: dict) -> None:
+    """Recompute ``gate.verified_count`` / ``flagged_count`` /
+    ``flagged_sentences`` from the entries' statuses (flag-mode sidecars)."""
+    gate = payload.setdefault("gate", {})
+    entries = [e for e in (payload.get("claims") or []) if isinstance(e, dict)]
+    gate["verified_count"] = sum(
+        1 for e in entries if is_verified_status(e.get("status")))
+    gate["flagged_count"] = sum(
+        1 for e in entries if e.get("status") in UNVERIFIED_STATUSES)
+    seen: set = set()
+    flagged: List[str] = []
+    for e in entries:
+        if e.get("status") not in UNVERIFIED_STATUSES:
+            continue
+        s = str(e.get("episode_span") or e.get("claim") or "").strip()
+        if s and s not in seen:
+            seen.add(s)
+            flagged.append(s)
+    gate["flagged_sentences"] = flagged
+    gate["verified_later_count"] = sum(
+        1 for e in entries if e.get("status") == CLAIM_STATUS_VERIFIED_LATER)
+
+
+def reverify_ledger_payload(
+    payload: dict,
+    fetch: Optional[Callable[[str], Tuple[int, str]]] = None,
+    today: Optional[str] = None,
+) -> Tuple[dict, dict]:
+    """Re-run the mechanical check on a committed sidecar's unverified
+    entries. Returns ``(new_payload, stats)``; *payload* is not mutated.
+
+    Only entries whose status is in :data:`REVERIFIABLE_STATUSES` are
+    re-checked (an uncovered sentence has no url, a malformed entry no
+    quote). An entry that now verifies becomes ``verified_later`` with
+    ``verified_at`` and keeps its original failure in ``first_status``
+    (set once — a second pass never overwrites it). A verified entry is
+    NEVER downgraded: a source that rots after it verified is a different
+    question, answered by ``scripts/verify_claims.py``. Idempotent.
+    """
+    import copy as _copy
+    new = _copy.deepcopy(payload)
+    entries = [e for e in (new.get("claims") or []) if isinstance(e, dict)]
+    candidates = [e for e in entries
+                  if str(e.get("status") or "") in REVERIFIABLE_STATUSES
+                  and str(e.get("source_url") or "").startswith(("http://", "https://"))]
+    stats = {"candidates": len(candidates), "verified_later": 0,
+             "still_unverified": 0, "changed": False}
+    if not candidates:
+        return new, stats
+    stamp = today or _dt_today()
+    results = verify_claim_sources(candidates, fetch=fetch)
+    by_id = {str(r.get("id", "")): r for r in results}
+    for e in candidates:
+        r = by_id.get(str(e.get("id", "")))
+        if r and r.get("passed"):
+            e.setdefault("first_status", e.get("status"))
+            e["status"] = CLAIM_STATUS_VERIFIED_LATER
+            e["verified_at"] = stamp
+            e.pop("status_reason", None)
+            stats["verified_later"] += 1
+            stats["changed"] = True
+        else:
+            stats["still_unverified"] += 1
+            if r and r.get("reason"):
+                # Keep the newest failure reason, never the status: an
+                # unreachable claim that now 404s is still unverified,
+                # and the first verdict is what the pass is scored on.
+                e["last_reverify_reason"] = str(r["reason"])
+                e["last_reverified_at"] = stamp
+                stats["changed"] = True
+    if stats["changed"]:
+        _recount_ledger(new)
+        new.setdefault("gate", {})["reverified_at"] = stamp
+    return new, stats
+
+
+def _dt_today() -> str:
+    import datetime as _dt
+    return _dt.date.today().isoformat()
+
+
+# ---------------------------------------------------------------------------
 # Sidecar persistence (the committed, public half of the ledger)
 # ---------------------------------------------------------------------------
 
@@ -1598,10 +1979,16 @@ def save_ledger(digest_md_path: Path, gate: GateResult) -> Path:
     so show notes and the book compiler can render real citations from it.
     """
     path = claims_sidecar_path(Path(digest_md_path))
+    # Flag mode (Oct 1 2026) commits the FULL ledger — verified and
+    # unverified entries, each with ``status`` — so the web ledger can
+    # render the status per claim. Every other mode commits only the
+    # verified entries, exactly as before; ``gate.policy_version`` says
+    # which schema a reader is looking at, and ``status`` is additive.
     payload = {
         "version": 1,
         "gate": gate.to_report(),
-        "claims": gate.verified_claims,
+        "claims": (gate.ledger if gate.ledger is not None
+                   else gate.verified_claims),
     }
     path.write_text(
         json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
@@ -1610,8 +1997,15 @@ def save_ledger(digest_md_path: Path, gate: GateResult) -> Path:
     return path
 
 
-def load_ledger(digest_md_path: Path) -> List[dict]:
-    """Verified claims for a digest, or ``[]`` when no sidecar exists."""
+def load_ledger(digest_md_path: Path, verified_only: bool = True) -> List[dict]:
+    """Claims for a digest, or ``[]`` when no sidecar exists.
+
+    ``verified_only`` (the default) drops entries whose ``status`` is
+    unverified — a flag-mode sidecar carries them so the web ledger can
+    show the status, but a book endnote or a citation renderer must never
+    print an unverified claim as a source. A legacy entry with no status
+    is verified (those sidecars committed verified entries only).
+    """
     path = claims_sidecar_path(Path(digest_md_path))
     if not path.exists():
         return []
@@ -1621,7 +2015,12 @@ def load_ledger(digest_md_path: Path) -> List[dict]:
         logger.warning("Unreadable claims sidecar %s: %s", path, exc)
         return []
     claims = payload.get("claims")
-    return claims if isinstance(claims, list) else []
+    if not isinstance(claims, list):
+        return []
+    if not verified_only:
+        return claims
+    return [c for c in claims
+            if not isinstance(c, dict) or is_verified_status(c.get("status"))]
 
 
 # ---------------------------------------------------------------------------

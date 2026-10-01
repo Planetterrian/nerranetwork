@@ -125,12 +125,17 @@ class TestEpisodeProvenance:
         assert {"claim", "source_url", "source_domain", "source_title"} <= set(claims[0])
         assert claims[0]["source_domain"] == "macrumors.com"
         claims0, summary0 = load_verified_claims(_digest(*ZERO_CLAIMS))
+        # Re-pinned 2026-10-01 (claims-and-corrections pass): the summary
+        # gained ``flagged`` (published and marked) and ``verified_later``
+        # for flag-mode sidecars; both are 0 on a legacy ledger.
         assert claims0 == [] and summary0 == {
-            "present": True, "total": 0, "verified": 0, "stripped": 0}
+            "present": True, "total": 0, "verified": 0, "stripped": 0,
+            "flagged": 0, "verified_later": 0}
 
     def test_a_missing_sidecar_is_not_an_error(self, tmp_path):
         assert load_verified_claims(tmp_path / "nope.md") == (
-            [], {"present": False, "total": 0, "verified": 0, "stripped": 0})
+            [], {"present": False, "total": 0, "verified": 0, "stripped": 0,
+                 "flagged": 0, "verified_later": 0})
         assert load_verified_claims(None)[0] == []
 
 
@@ -422,27 +427,47 @@ def gate_config():
 
 
 class TestGateCopyTellsTheTruth:
-    def test_the_network_default_is_enforce_strip(self, gate_config):
+    def test_the_network_default_is_enforce_flag(self, gate_config):
         assert gate_config["enabled"] is True
         assert gate_config["enforce"] is True
-        assert gate_config["on_failure"] == "strip"
+        # 2026-10-01: re-pinned strip -> flag (operator-directed). The
+        # disclosure/editorial copy still describes removal; the copy test
+        # below only asserts "every show"/"removed" under strip.
+        assert gate_config["on_failure"] == "flag"
 
     @pytest.mark.parametrize("name", ["ai_disclosure.html.j2", "editorial.html.j2"])
-    def test_the_copy_says_every_show_and_removed(self, name, gate_config):
+    def test_the_copy_matches_the_configured_failure_policy(self, name, gate_config):
+        """Re-pinned 2026-10-01 (the claims-and-corrections pass): the gate's
+        default moved strip -> flag the same day, so this guard now pairs the
+        copy with WHATEVER ``_defaults.yaml`` says — under ``flag`` the pages
+        must say a failed claim is published and marked (and never claim
+        removal); under ``strip`` the reverse. The full contract, including
+        the mutation in both directions, is
+        ``tests/test_claims_pages_2026_10_01.py::TestPolicyCopyTellsTheTruth``."""
         src = (TEMPLATES / name).read_text(encoding="utf-8")
         passage = re.search(r"Source-integrity gate.*?</(?:li|p)>", src, re.S).group(0)
         flat = " ".join(passage.split())
-        if gate_config["enforce"] and gate_config["on_failure"] == "strip":
-            assert "every show" in flat, f"{name}: the gate is enforced on every show"
-            assert "removed" in flat, f"{name}: strip mode removes the sentence"
-        # The Sep 12 state, exactly: one repair pass, unreachable = failure,
-        # item coverage, reviewer notes, narrative shows block.
-        for phrase in ("repair pass", "cannot reach", "covered by a verified claim",
-                       "note", "narrative shows"):
+        assert gate_config["enforce"] is True
+        assert "every show" in flat, f"{name}: the gate is enforced on every show"
+        if gate_config["on_failure"] == "flag":
+            assert "published and marked, not removed" in flat, (
+                f"{name}: _defaults.yaml says flag; the copy must say publish-and-mark")
+            assert "cannot vouch for is removed" not in flat, (
+                f"{name}: _defaults.yaml says flag but the copy still claims removal")
+            assert "claims.html" in flat, f"{name}: the gate copy must link the ledger"
+        elif gate_config["on_failure"] == "strip":
+            assert "removed from the episode" in flat, (
+                f"{name}: _defaults.yaml says strip; the copy must say removal")
+            assert "published and marked, not removed" not in flat
+        else:
+            raise AssertionError(f"no copy exists for on_failure={gate_config['on_failure']!r}")
+        # Still true in either mode: one repair pass, unreachable is never a
+        # pass, item coverage, reviewer notes.
+        for phrase in ("repair pass", "cannot reach", "covered by a verified claim", "note"):
             assert phrase in flat, f"{name}: missing '{phrase}'"
-        # And no more than that.
-        assert "narrative shows a failed claim blocks" not in flat
-        assert "On our narrative shows a failed claim blocks the episode" not in flat
+        # And no more than that. The narrative shows no longer block (they
+        # pin flag too since 2026-10-01), so the copy may not say they do.
+        assert "narrative shows" not in flat, f"{name}: the narrative shows no longer block"
         assert "reviewed by a human" not in flat
         assert "every episode is reviewed" not in flat
 

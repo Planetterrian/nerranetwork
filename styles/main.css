@@ -2836,3 +2836,144 @@ body.nn-no-scroll { overflow: hidden; }
 .mira-steps.mira-steps--compact { margin-top: var(--sp-4); }
 .mira-steps.mira-steps--compact li { padding-bottom: var(--sp-4); }
 .mira-steps.mira-steps--compact p { color: var(--nn-text-muted); }
+
+/* ============================================================
+   Claims & corrections (Oct 1 2026)
+   ------------------------------------------------------------
+   The public ledger pages (/claims.html, /claims/<slug>.html) and the
+   status badge the blog's verified-claims panel shares with them
+   (the ``claims_badge`` macro in templates/_macros.html.j2). Status
+   colours are TOKENS — one per outcome — so no surface picks its own
+   green. Verified = green, verified later = green with the clock
+   icon, unverified = amber, not found / mismatch = red, correction =
+   blue. Markup never carries an inline colour.
+   ============================================================ */
+:root {
+  --nn-claims-verified:    #2FBF71;
+  --nn-claims-later:       #2FBF71;
+  --nn-claims-unverified:  #F0B429;
+  --nn-claims-failed:      #F0626A;
+  --nn-claims-correction:  #4DA3FF;
+  --nn-claims-badge-bg:    rgba(255, 255, 255, 0.06);
+}
+
+.nn-claims-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  background: var(--nn-claims-badge-bg);
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  white-space: nowrap;
+  vertical-align: middle;
+  color: var(--nn-claims-unverified);
+}
+.nn-claims-badge-icon { flex: 0 0 auto; }
+.nn-claims-badge--verified,
+.nn-claims-badge--verified_from_fetched { color: var(--nn-claims-verified); }
+.nn-claims-badge--verified_later { color: var(--nn-claims-later); }
+.nn-claims-badge--unverified_unreachable,
+.nn-claims-badge--unverified_uncovered,
+.nn-claims-badge--malformed { color: var(--nn-claims-unverified); }
+.nn-claims-badge--unverified_not_found,
+.nn-claims-badge--unverified_quote_mismatch { color: var(--nn-claims-failed); }
+.nn-claims-badge--correction { color: var(--nn-claims-correction); }
+.nn-claims-meaning {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: var(--nn-text-muted);
+}
+
+/* The ledger pages themselves. */
+.nn-claims-page { max-width: 960px; margin: 0 auto; padding: 0 var(--sp-4) var(--sp-16); }
+.nn-claims-page .legal-body { max-width: none; }
+.nn-claims-intro {
+  font-family: var(--font-body);
+  color: var(--nn-text);
+  line-height: 1.7;
+  max-width: 720px;
+}
+.nn-claims-steps { list-style: none; counter-reset: nn-claims-step; padding: 0; margin: var(--sp-4) 0 var(--sp-8); }
+.nn-claims-steps li {
+  position: relative;
+  padding: var(--sp-4) var(--sp-4) var(--sp-4) 56px;
+  margin: 0 0 var(--sp-3);
+  background: var(--nn-card);
+  border: 1px solid var(--nn-border);
+  border-radius: 12px;
+}
+.nn-claims-steps li::before {
+  counter-increment: nn-claims-step;
+  content: counter(nn-claims-step);
+  position: absolute;
+  left: var(--sp-4);
+  top: var(--sp-4);
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--nn-gradient);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.nn-claims-steps h3 { font-family: var(--font-heading); font-size: 1.05rem; color: var(--nn-white); margin: 0 0 var(--sp-2); }
+.nn-claims-steps p { font-family: var(--font-body); color: var(--nn-text); line-height: 1.65; margin: 0; }
+
+.nn-claims-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--sp-3); margin: var(--sp-4) 0 var(--sp-6); }
+.nn-claims-tile { background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 12px; padding: var(--sp-4); }
+.nn-claims-tile-num { font-family: var(--font-heading); font-size: 1.6rem; font-weight: 700; color: var(--nn-white); line-height: 1.1; }
+.nn-claims-tile-label { font-family: var(--font-ui); font-size: 0.78rem; color: var(--nn-text-muted); margin-top: var(--sp-1); }
+.nn-claims-tile--verified .nn-claims-tile-num { color: var(--nn-claims-verified); }
+.nn-claims-tile--flagged .nn-claims-tile-num { color: var(--nn-claims-unverified); }
+.nn-claims-tile--corrections .nn-claims-tile-num { color: var(--nn-claims-correction); }
+
+.nn-claims-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 0 var(--sp-6); }
+.nn-claims-table { width: 100%; border-collapse: collapse; font-family: var(--font-ui); font-size: 0.9rem; min-width: 560px; }
+.nn-claims-table th, .nn-claims-table td { text-align: left; padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--nn-border); color: var(--nn-text); vertical-align: top; }
+.nn-claims-table th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--nn-text-muted); }
+.nn-claims-table td.nn-claims-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nn-claims-table th.nn-claims-num { text-align: right; }
+.nn-claims-table a { color: var(--nn-cyan); text-decoration: none; }
+.nn-claims-table a:hover { text-decoration: underline; }
+.nn-claims-table .nn-claims-na { color: var(--nn-text-muted); font-style: italic; }
+.nn-claims-null { color: var(--nn-text-muted); }
+
+.nn-claims-episode { border: 1px solid var(--nn-border); border-radius: 12px; background: var(--nn-surface); margin: 0 0 var(--sp-4); }
+.nn-claims-episode > summary { cursor: pointer; list-style: none; padding: var(--sp-4); display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-3); align-items: center; font-family: var(--font-ui); }
+.nn-claims-episode > summary::-webkit-details-marker { display: none; }
+.nn-claims-episode-title { font-family: var(--font-heading); font-weight: 700; color: var(--nn-white); font-size: 1rem; }
+.nn-claims-episode-date { color: var(--nn-text-muted); font-size: 0.85rem; }
+.nn-claims-episode-counts { display: inline-flex; flex-wrap: wrap; gap: var(--sp-2); margin-left: auto; }
+.nn-claims-episode-body { padding: 0 var(--sp-4) var(--sp-4); }
+.nn-claims-episode-links { font-family: var(--font-ui); font-size: 0.85rem; margin: 0 0 var(--sp-3); }
+.nn-claims-episode-links a { color: var(--nn-cyan); text-decoration: none; }
+.nn-claims-episode-links a:hover { text-decoration: underline; }
+.nn-claims-list { list-style: none; padding: 0; margin: 0; }
+.nn-claims-list li { padding: var(--sp-3) 0; border-top: 1px solid var(--nn-border); font-family: var(--font-body); color: var(--nn-text); line-height: 1.6; }
+.nn-claims-list li:first-child { border-top: 0; }
+.nn-claims-claim-head { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; margin-bottom: var(--sp-1); font-family: var(--font-ui); font-size: 0.82rem; }
+.nn-claims-source a { color: var(--nn-cyan); text-decoration: none; font-weight: 600; }
+.nn-claims-source a:hover { text-decoration: underline; }
+.nn-claims-why { display: block; margin-top: var(--sp-1); font-family: var(--font-ui); font-size: 0.82rem; color: var(--nn-text-muted); }
+.nn-claims-sub { font-family: var(--font-ui); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--nn-text-muted); margin: var(--sp-4) 0 var(--sp-2); }
+.nn-claims-correction { border-left: 3px solid var(--nn-claims-correction); padding: var(--sp-2) var(--sp-3); margin: var(--sp-2) 0; background: var(--nn-card); border-radius: 0 8px 8px 0; }
+.nn-claims-correction-date { font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-left: var(--sp-2); }
+.nn-claims-removed { border-left: 3px solid var(--nn-claims-failed); }
+.nn-claims-empty { font-family: var(--font-body); color: var(--nn-text-muted); font-style: italic; }
+.nn-claims-note { font-family: var(--font-body); color: var(--nn-text); line-height: 1.65; background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 12px; padding: var(--sp-4); }
+.nn-claims-legend { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); margin: var(--sp-3) 0 var(--sp-6); }
+.nn-claims-legend-item { display: flex; align-items: baseline; gap: var(--sp-2); font-family: var(--font-ui); font-size: 0.82rem; color: var(--nn-text-muted); max-width: 420px; }
+.nn-claims-back { font-family: var(--font-ui); font-size: 0.85rem; margin: 0 0 var(--sp-4); }
+.nn-claims-back a { color: var(--nn-cyan); text-decoration: none; }
+@media (max-width: 640px) {
+  .nn-claims-page { padding: 0 var(--sp-4) var(--sp-10); }
+  .nn-claims-episode-counts { margin-left: 0; width: 100%; }
+  .nn-claims-tile-num { font-size: 1.3rem; }
+}

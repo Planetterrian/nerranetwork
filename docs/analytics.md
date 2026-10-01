@@ -203,6 +203,44 @@ Public, display-safe extracts live in `site/data/` (e.g.
 * GA4 numbers are consent-gated (Consent Mode v2) — they undercount
   visitors who decline analytics cookies.
 
+## Claim ledger — verified share and flagged claims
+
+`api/dashboard.json` → **`claims`** (built by
+`build_claims_section` in `scripts/generate_dashboard.py`) rolls up every
+committed `digests/**/*_claims.json` sidecar (the source-integrity gate's
+public record, `engine/claims.py`) over the last **7** and **30** days,
+dated from each sidecar's filename (`_EpNNN_YYYYMMDD_claims.json`), never
+its mtime. Per window and per show:
+
+* `sidecars` — episodes with a ledger; `claims_total` — ledger entries
+  plus uncovered citation-shaped sentences (the denominator the shares
+  use); `verified` / `verified_share` — entries that verified at publish
+  time or later; `flagged` / `flagged_share` — unverified entries, broken
+  down in `flagged_by_reason` (`unreachable` 403/429/5xx/transport,
+  `not_found` 404, `quote_mismatch` page resolved but the quote failed
+  the 0.9 check, `uncovered` citation shape with no covering claim,
+  `malformed` entry missing a required key); `verified_later` — entries
+  the nightly re-verification flipped after publication; `by_mode` —
+  sidecars per failure policy (`flag` / `strip` / `block` / `shadow`).
+* **Honesty:** a window with no sidecar is `null` on every number, never
+  0 (the page renders "—"); a sidecar with zero claims is a measured 0.
+  Legacy (pre-Oct 2026) sidecars carry no per-entry status, so their
+  reasons are derived from the gate record (`pre_strip` on strip-mode
+  sidecars, else `failed_verifications` / `uncovered_shapes` /
+  `shape_errors`).
+
+Since **2026-10-01** the network's failure policy is **`on_failure:
+flag`** (`shows/_defaults.yaml`): nothing is removed from a digest or a
+script; every entry carries a `status`; the episode publishes; and
+`scripts/reverify_claims.py --apply --days 7` (nightly, right after the
+audience fetches) re-runs the mechanical check on every re-checkable
+unverified entry and marks the ones that now verify `verified_later`
+(`first_status` keeps the original failure, `verified_at` the date). It
+never downgrades a verified claim, never raises, paces one second
+between requests to the same host, and is idempotent. The sidecar glob
+`digests/**/*_claims.json` is in nightly's safe-commit `add-paths`
+whitelist — remove it and the rewrite is discarded every night.
+
 ## Directory / distribution status
 
 Where each show is submitted (Apple, Spotify, Amazon, …) is tracked in

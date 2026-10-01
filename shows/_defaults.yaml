@@ -431,19 +431,25 @@ content_tracking:
 # makes digest generation emit a verifiable claims ledger (extracted before
 # any published surface sees it), verifies every claim (URL resolves +
 # supporting quote appears in the source) and lints citation-shaped prose
-# against it. ENFORCED network-wide since Sep 12 2026 in STRIP mode: after
-# the one repair pass, every sentence the gate cannot vouch for (a claim
-# whose source failed or was unreachable, a malformed ledger entry, an
-# uncovered citation shape whose item has no resolving Source URL, a
-# reviewer note) is REMOVED from the digest and, in step, from the script;
-# the mechanical gate re-runs on what is left and blocks only if it still
-# fails. Nothing unverified reaches the blog, the feed or the newsletter,
-# and a news day is not lost. The narrative shows (UC / FPD) pin
-# on_failure: block — there a blocked episode costs a rerun, never a slot.
+# against it. ENFORCED network-wide since Sep 12 2026. Since Oct 1 2026
+# (operator-directed) the failure policy is FLAG: after the one repair
+# pass, nothing is removed from the digest or the script — every ledger
+# entry in the committed sidecar carries a status (verified /
+# unverified_unreachable / unverified_not_found / unverified_quote_mismatch
+# / unverified_uncovered / malformed), the unverified sentences are listed
+# for the surfaces, the episode PUBLISHES, and scripts/reverify_claims.py
+# re-checks the unverified entries nightly for a week (verified_later).
+# Reviewer-note parentheticals are still removed (the model's notes, never
+# news). Why: strip removed TRUE sentences (SpaceX Ep104's five, MIT
+# Ep187's NASDAQ close, Prediction Markets' hurricane contract on 10-01)
+# and block cost UC 11 of its last 28 days — the model's training data
+# lags the 24-hour cycle, so "cannot verify against memory" must never
+# drop a sourced, timely story. `strip` and `block` remain available per
+# show.
 source_integrity:
   enabled: true
   enforce: true
-  on_failure: strip
+  on_failure: flag
 
 youtube:
   # Off by default — flip per-show in the show YAML once an OAuth refresh

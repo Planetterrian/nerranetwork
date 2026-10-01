@@ -332,6 +332,7 @@ def episode_provenance_parts(
     claims_verified: int = 0,
     stripped: int = 0,
     host_kind: str = "human",
+    flagged: int = 0,
 ) -> list:
     """The provenance phrases for one episode, in reading order.
 
@@ -356,6 +357,13 @@ def episode_provenance_parts(
     if n_strip:
         parts.append(f"{_plural(n_strip, 'unverified sentence')} removed "
                      "before publication")
+    # Oct 1 2026, flag mode: what the gate could not confirm is published
+    # and marked, and the line says how many — the panel below carries each
+    # one's status. Zero is omitted like the other counts.
+    n_flag = max(int(flagged or 0), 0)
+    if n_flag:
+        parts.append(f"{_plural(n_flag, 'claim')} published and marked "
+                     "not yet verified")
     if (host_kind or "human").strip().lower() == "ai":
         parts.append(f"{AI_HOST_PROVENANCE}, {VOICE_PROVENANCE}")
     else:
@@ -368,11 +376,160 @@ def episode_provenance(
     claims_verified: int = 0,
     stripped: int = 0,
     host_kind: str = "human",
+    flagged: int = 0,
 ) -> str:
     """:func:`episode_provenance_parts` joined into one line, e.g.
     ``Written from 14 sources · 6 claims checked against their sources ·
     1 unverified sentence removed before publication · voiced with Grok TTS``.
     """
     return " · ".join(
-        episode_provenance_parts(sources_count, claims_verified, stripped, host_kind)
+        episode_provenance_parts(sources_count, claims_verified, stripped,
+                                 host_kind, flagged)
     )
+
+
+# ---------------------------------------------------------------------------
+# The claims-and-corrections process — the one owner of the policy copy
+# ---------------------------------------------------------------------------
+#
+# 2026-10-01, operator-directed. The source-integrity gate's default moved
+# from "strip" (remove every sentence the check cannot vouch for) to "flag"
+# (publish the sentence, mark it, re-check it nightly). The reason is the
+# calendar: a language model's training data ends months before today, so
+# a story newer than the model is exactly the one it cannot have learned —
+# it is verified against its source, never against memory — and when that
+# source is unreachable from our servers (a regulator that 403s a cloud
+# runner, a journal behind a wall) the old gate read "cannot fetch" as
+# "fabricated" and deleted a true, timely sentence. A listener is better
+# served by the sentence with its status beside it than by a clean ledger
+# with the news missing.
+#
+# These steps render on /claims.html, on every claims/<slug>.html, and are
+# the text the AI-disclosure and editorial pages summarise. They are owned
+# here for the reason every other paragraph in this module is: a policy
+# retyped in three templates is a policy that disagrees with itself inside
+# a month. ``tests/test_claims_pages_2026_10_01.py`` reads
+# ``shows/_defaults.yaml`` and fails if the copy says one thing and the
+# configured ``on_failure`` says another.
+
+#: How many nights an unverified claim is re-checked before it is left as
+#: it stands (the nightly re-verification job's window).
+CLAIMS_RECHECK_DAYS = 7
+
+CLAIMS_PROCESS_STEPS = (
+    ("Every episode starts with a ledger",
+     "When a show's digest is written, the model also writes a claims ledger: "
+     "each factual sentence it asserts, the URL it took it from, and the "
+     "passage in that source that supports it. The ledger is extracted before "
+     "any published surface sees the text."),
+    ("Each claim is checked by a machine, not trusted",
+     "Before the episode is saved, every entry is checked mechanically: first "
+     "against the copy of the source the pipeline fetched that morning, then "
+     "against the live page. The supporting quote has to actually appear in "
+     "the source. A sentence written in the shape of a citation with no ledger "
+     "entry behind it is caught by the same check — that shape is the "
+     "signature of a fabricated reference."),
+    ("A claim the check cannot confirm is published and marked, not removed",
+     "Sometimes the source cannot be reached from our servers, sometimes the "
+     "page has moved, and sometimes the model paraphrased where it should have "
+     "quoted. None of those means the sentence is false. A story newer than the "
+     "model's training data is verified against its source, never against "
+     "memory, and a true, timely story is worth more to a listener than a "
+     "clean ledger. So the sentence ships, and its status is shown beside it "
+     "— on the episode page, and on this ledger — in plain words that say "
+     "what the check could and could not do."),
+    ("Unverified claims are re-checked every night for a week",
+     f"For {CLAIMS_RECHECK_DAYS} nights after publication a job re-runs the "
+     "check on every marked claim that names a source. A claim that passes later is "
+     "upgraded on the ledger with the date it was confirmed and the status it "
+     "carried first. A claim that never passes stays marked; nothing is "
+     "quietly deleted and nothing is quietly promoted."),
+    ("Corrections are filed in the open",
+     "When a published sentence turns out to be wrong, a dated correction is "
+     "filed in the show's corrections record. From there it reaches the top of "
+     "the episode's page, that episode's show notes, the next episode's show "
+     "notes, and this ledger. Audio is never edited silently: either the "
+     "episode is re-synthesized and replaced in full, or the error is noted "
+     "and the audio left as aired."),
+    ("Anyone can report an error",
+     f"Write to {CONTACT_EMAIL} with the episode and the sentence. Every "
+     "episode page carries a Report an error link that fills in both. A person "
+     "reads every report and checks it against the sources."),
+    ("What we do not claim",
+     "No human reads every episode before it ships. The checks above are "
+     "automated and the record of them is public; that record, not a promise "
+     "of review, is what we ask you to judge the shows on."),
+)
+
+#: Every status a ledger entry can carry → (listener-facing label, one-line
+#: meaning). The keys are the closed vocabulary ``engine.claims`` writes into
+#: the committed sidecar (``policy_version: 2``); a sidecar older than that
+#: carries no status and every entry in it is read as ``verified``, because
+#: only verified entries were committed before. ``correction`` is not a
+#: claim status — it is the badge the corrections record renders with, kept
+#: here so every surface colours it the same way.
+CLAIMS_STATUS_LABELS = {
+    "verified": (
+        "Verified",
+        "The source was fetched and the supporting quote was found in it.",
+    ),
+    "verified_from_fetched": (
+        "Verified",
+        "The supporting quote was found in the copy of the source fetched for "
+        "the episode.",
+    ),
+    "verified_later": (
+        "Verified later",
+        "The claim did not pass when the episode was published; a nightly "
+        "re-check later found the quote in the source.",
+    ),
+    "unverified_unreachable": (
+        "Published, not yet verified",
+        "The source could not be fetched from our servers (a block, a rate "
+        "limit or a server error), so the claim could not be checked. It is "
+        "re-checked nightly for a week.",
+    ),
+    "unverified_not_found": (
+        "Published, source not found",
+        "The source URL answered 'not found'. The sentence stands as "
+        "published; treat it with care.",
+    ),
+    "unverified_quote_mismatch": (
+        "Published, quote not matched",
+        "The source was reached but the supporting passage was not found in "
+        "it, usually because the quote was paraphrased rather than copied.",
+    ),
+    "unverified_uncovered": (
+        "Published, no source entry",
+        "The sentence reads like a citation but no ledger entry names a source "
+        "for it, so there is nothing to re-check it against.",
+    ),
+    "malformed": (
+        "Published, ledger entry unusable",
+        "The ledger entry for this claim was incomplete, so it could not be "
+        "checked and is not re-checked.",
+    ),
+    "correction": (
+        "Correction",
+        "A published sentence was wrong and a dated correction has been filed.",
+    ),
+}
+
+#: The statuses that count as verified on a ledger total.
+CLAIMS_VERIFIED_STATUSES = ("verified", "verified_from_fetched", "verified_later")
+
+
+def claims_status_label(status: str) -> str:
+    """The listener-facing label for *status* (unknown → the raw status)."""
+    entry = CLAIMS_STATUS_LABELS.get(str(status or "").strip().lower())
+    return entry[0] if entry else str(status or "").replace("_", " ")
+
+
+def claims_status_meaning(status: str) -> str:
+    entry = CLAIMS_STATUS_LABELS.get(str(status or "").strip().lower())
+    return entry[1] if entry else ""
+
+
+def claims_process_steps() -> list:
+    """The steps as ``[(title, text), ...]`` in reading order."""
+    return list(CLAIMS_PROCESS_STEPS)

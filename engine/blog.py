@@ -458,18 +458,25 @@ def _claims_sidecar_for(md_path) -> Optional[Path]:
 
 
 def load_verified_claims(md_path) -> tuple[list[dict], dict]:
-    """``(verified_claims, claims_summary)`` from the digest's claims sidecar.
+    """``(claims, claims_summary)`` from the digest's claims sidecar.
 
-    The sidecar (``<stem>_claims.json``, written by the source-integrity
-    gate) commits only entries that verified, so every entry in ``claims``
-    is rendered as verified. ``claims_summary`` is read from ``gate``:
-    ``total`` (``claims_total``), ``verified`` (``claims_verified``),
-    ``stripped`` (``len(stripped_sentences)``) and ``present`` (the sidecar
-    exists) — so a post can tell "no ledger" from "ledger with zero claims"
-    and say which. An absent or unreadable sidecar is ``([], {present:
-    False, ...zeros})``; it never raises.
+    Two sidecar generations (``engine.claims_ledger`` has the full reading):
+    a pre-Oct-2026 sidecar commits only the entries that verified, so every
+    entry reads as ``verified``; a ``policy_version: 2`` sidecar (``on_failure:
+    flag``) commits EVERY entry with a ``status`` — the unverified ones were
+    published and marked, never removed — and the panel renders each one
+    with its badge. Each claim carries ``status`` / ``status_label`` /
+    ``status_meaning`` / ``is_verified``, plus ``verified_at`` and
+    ``first_status`` when a nightly re-check upgraded it. ``claims_summary``
+    is read from ``gate``: ``total``, ``verified``, ``flagged`` (published
+    and marked), ``verified_later``, ``stripped`` (sentences a strip-era
+    gate removed) and ``present`` (the sidecar exists) — so a post can tell
+    "no ledger" from "ledger with zero claims" and say which. An absent or
+    unreadable sidecar is ``([], {present: False, ...zeros})``; it never
+    raises.
     """
-    summary = {"present": False, "total": 0, "verified": 0, "stripped": 0}
+    summary = {"present": False, "total": 0, "verified": 0, "stripped": 0,
+               "flagged": 0, "verified_later": 0}
     path = _claims_sidecar_for(md_path)
     if path is None or not path.is_file():
         return [], summary
@@ -482,18 +489,41 @@ def load_verified_claims(md_path) -> tuple[list[dict], dict]:
         return [], summary
     gate = data.get("gate") if isinstance(data.get("gate"), dict) else {}
     entries = data.get("claims") if isinstance(data.get("claims"), list) else []
+    # Legacy = no entry carries a status: only verified entries were
+    # committed, so absence means verified (engine.claims.is_verified_status).
+    legacy = not any(isinstance(e, dict) and e.get("status") for e in entries)
+    from engine.brand import (
+        CLAIMS_VERIFIED_STATUSES as _verified_statuses,
+        claims_status_label as _status_label, claims_status_meaning as _status_meaning,
+    )
     claims: list[dict] = []
     for entry in entries:
         if not isinstance(entry, dict):
             continue
         claim = " ".join(str(entry.get("claim") or "").split())
         url = str(entry.get("source_url") or "").strip()
-        if not claim or not url.startswith(("http://", "https://")):
+        if not url.startswith(("http://", "https://")):
+            url = ""
+        status = "verified" if legacy else (
+            str(entry.get("status") or "").strip().lower() or "malformed")
+        # A legacy entry without a URL carries nothing a reader can check;
+        # a flag-era entry without one is an uncovered sentence, and the
+        # point of the panel is to show it marked.
+        if not claim or (legacy and not url):
             continue
+        first_status = str(entry.get("first_status") or "").strip().lower()
         claims.append({
             "claim": claim,
+            "status": status,
+            "status_label": _status_label(status),
+            "status_meaning": _status_meaning(status),
+            "is_verified": status in _verified_statuses,
+            "reason": " ".join(str(entry.get("reason") or "").split()),
+            "verified_at": str(entry.get("verified_at") or "").strip()[:10],
+            "first_status": first_status,
+            "first_status_label": _status_label(first_status) if first_status else "",
             "source_url": url,
-            "source_domain": _domain_from_url(url),
+            "source_domain": _domain_from_url(url) if url else "",
             "source_title": " ".join(str(entry.get("source_title") or "").split()),
         })
 
@@ -504,10 +534,15 @@ def load_verified_claims(md_path) -> tuple[list[dict], dict]:
             return fallback
 
     stripped = gate.get("stripped_sentences")
+    n_verified = sum(1 for c in claims if c["is_verified"])
+    n_flagged = sum(1 for c in claims if not c["is_verified"])
     summary = {
         "present": True,
         "total": _int("claims_total", len(claims)),
-        "verified": _int("claims_verified", len(claims)),
+        "verified": (_int("claims_verified", n_verified) if legacy
+                     else _int("verified_count", n_verified)),
+        "flagged": 0 if legacy else _int("flagged_count", n_flagged),
+        "verified_later": sum(1 for c in claims if c["status"] == "verified_later"),
         "stripped": len(stripped) if isinstance(stripped, list) else 0,
     }
     return claims, summary
@@ -1520,6 +1555,15 @@ def generate_blog_post_html(
     episode_provenance = _brand.episode_provenance_parts(
         len(_source_urls_cited), claims_summary["verified"],
         claims_summary["stripped"], _host_kind,
+        flagged=claims_summary.get("flagged", 0),
+    )
+    # The show's page on the public claims ledger (Oct 1 2026). Every show
+    # with a YAML gets one from generate_claims_pages; a registry-only show
+    # (Nerra Daily) links the network page instead. Internal link: no UTM.
+    _shows_dir = Path(__file__).resolve().parent.parent / "shows"
+    claims_page_url = (
+        f"claims/{show_slug}.html" if (_shows_dir / f"{show_slug}.yaml").is_file()
+        else "claims.html"
     )
     # Corrections filed against this episode (engine.corrections) render as
     # a dated box at the top of the article. Empty on the ordinary day.
@@ -1651,6 +1695,7 @@ def generate_blog_post_html(
         # exists at all; ``total`` 0 renders the honest one-liner.
         "verified_claims": verified_claims,
         "claims_summary": claims_summary,
+        "claims_page_url": claims_page_url,
         "episode_provenance": episode_provenance,
         "host_kind": _host_kind,
         # The one listener-facing address (engine.brand.CONTACT_EMAIL) and

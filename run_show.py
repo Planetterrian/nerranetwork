@@ -2973,7 +2973,52 @@ def run(args: argparse.Namespace) -> None:
                     metrics.record("source_integrity_passed_after_strip",
                                    _si_gate.passed)
 
-                if not _si_gate.passed:
+                # Flag mode (Oct 1 2026, operator-directed; the network
+                # default): PUBLISH with the status visible, verify again
+                # afterwards. Nothing leaves the digest or the script —
+                # every ledger entry gets a status, the unverified
+                # sentences are listed for the surfaces, and
+                # scripts/reverify_claims.py re-checks them nightly for a
+                # week. Strip removed TRUE sentences (SpaceX Ep104, MIT
+                # Ep187, Prediction Markets 10-01) and block cost UC 11 of
+                # 28 days: the model's training data lags the 24-hour
+                # cycle, so "cannot verify" never drops a timely story.
+                # Reviewer notes are the one thing still removed. Runs on
+                # a PASSING gate too, so every flag-mode sidecar carries
+                # the per-claim status.
+                _si_flagged = _si_enforce and _si_on_failure == "flag"
+                if _si_flagged:
+                    with metrics.stage("source_integrity_flag"):
+                        _flag = _si_mod.flag_unverified(
+                            x_thread, _si_gate, _si_claims or [],
+                            fetch=_si_fetch, verify_sources=_si_verify,
+                        )
+                    metrics.record("source_integrity_flagged_sentences",
+                                   len(_flag.flagged_sentences))
+                    metrics.record("source_integrity_flagged_claims",
+                                   _flag.gate.flagged_count)
+                    metrics.record("source_integrity_stripped_notes",
+                                   len(_flag.removed_notes))
+                    metrics.record("source_integrity_covered_by_item_source",
+                                   _flag.covered_by_item_source)
+                    for _s in _flag.flagged_sentences:
+                        logger.warning("  flagged unverified sentence: %s", _s)
+                    for _s in _flag.removed_notes:
+                        logger.warning("  stripped reviewer note: %s", _s)
+                    if _flag.flagged_sentences or _flag.removed_notes:
+                        print(
+                            "::warning::Source-integrity flag for "
+                            f"{config.name}: {_flag.gate.flagged_count} "
+                            "unverified claim(s) published with status "
+                            f"({len(_flag.flagged_sentences)} sentence(s) "
+                            f"flagged, {len(_flag.removed_notes)} reviewer "
+                            "note(s) removed); re-verified nightly"
+                        )
+                    x_thread = _flag.text
+                    _si_claims = _flag.claims
+                    _si_gate = _flag.gate
+
+                if not _si_gate.passed and not _si_flagged:
                     logger.error(
                         "Source-integrity gate FAILED: %s", _si_gate.summary())
                     for _v in _si_gate.failed_verifications:
@@ -3059,6 +3104,14 @@ def run(args: argparse.Namespace) -> None:
         # the book compiler render real citations from this sidecar.
         if _si_gate is not None and _si_mod is not None:
             try:
+                # The sidecar says which policy handled this episode
+                # (block / strip / flag, or shadow when not enforced) —
+                # the dashboard's claims card and the web ledger read it.
+                if not getattr(_si_gate, "mode", ""):
+                    _si_gate.mode = (_si_on_failure
+                                     if bool(getattr(_si_cfg, "enforce", False))
+                                     else "shadow")
+                metrics.record("source_integrity_mode", _si_gate.mode)
                 _ledger_path = _si_mod.save_ledger(digest_md, _si_gate)
                 logger.info("Claim ledger saved: %s", _ledger_path)
             except Exception as _ledger_exc:  # noqa: BLE001
@@ -3661,7 +3714,8 @@ def run(args: argparse.Namespace) -> None:
                                 f"stripped ({len(_n_lint_stripped)}) for "
                                 f"{config.name}"
                             )
-                        elif getattr(_si_cfg, "enforce", False):
+                        elif (getattr(_si_cfg, "enforce", False)
+                              and _si_on_failure != "flag"):
                             logger.error(
                                 "Source-integrity script lint FAILED — %d "
                                 "citation-shaped assertion(s) appear in the "
@@ -3671,6 +3725,16 @@ def run(args: argparse.Namespace) -> None:
                             )
                             save_usage(tracker, digests_dir)
                             sys.exit(1)
+                        elif getattr(_si_cfg, "enforce", False):
+                            # Flag mode (Oct 1 2026): the episode publishes;
+                            # the invented shape is on the record, never a
+                            # lost day.
+                            print(
+                                "::warning::Script-stage citation shapes "
+                                f"uncovered ({len(_script_uncovered)}) for "
+                                f"{config.name} — flag mode, published "
+                                "with the count on the record"
+                            )
                         print(
                             "::warning::Script-stage citation shapes "
                             f"uncovered ({len(_script_uncovered)}) for "
