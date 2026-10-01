@@ -14,45 +14,67 @@
 
 4. **Tesla Owner Makes Accidental Discovery While Playing Around With His Settings—It's Going To Come In Handy This Winter** — Motor1.com
    Matthias Tayala discovered a charge port heater option in the service menu. The feature heats the recessed charge port to prevent frost issues. The video has been viewed over three hundred seventy-two thousand times. Tayala lives in Ohio and believes the feature will come in handy during winter months. Viewers reported checking their own vehicles after seeing the video.
+    Source: [motor1.com](https://www.motor1.com/news/809284/tesla-charge-port-stuck-winter/)
+
 
 5. **Transcript: CMG Interview with Tesla CEO Elon Musk** — The Singju Post
    Elon Musk praised President Xi for visible progress in China during his tenure. He credited Chinese manufacturing ability for the success of Gigafactory Shanghai. The interview covered Tesla's global blueprint and AI progress including Grok four point seven. Musk noted that progress in China is visible year to year through new buildings and infrastructure.
 
 6. **Tesla Investor Ross Gerber Questions Elon Musk's EV Strategy as Gas Prices Soar: 'Why Are There Starlink** — Benzinga
    Ross Gerber asked why Starlink runs television ads but Tesla does not when gasoline prices are elevated. He suggested the company could sell more vehicles with advertising. The national average for regular gasoline reached four dollars and forty-four cents per gallon as of September twenty-one. Goldman Sachs lowered its third-quarter delivery estimate to four hundred thirty-five thousand vehicles.
+    Source: [benzinga.com](https://www.benzinga.com/markets/tech/26/09/62010589/tesla-investor-ross-gerber-questions-elon-musks-ev-strategy-as-gas-prices-soar-why-are-there-starlink-ads-on-tv-but-no-tesla-ads)
+
 
 7. **Tesla's Optimus Output Jumps Tenfold, But Hand Assembly and Software Gaps Force a Lease-First Strategy** — finance.biggo.com
    Weekly Optimus production reached several hundred units last month. The goal is a continuous automated line producing over one thousand robots a week by year end. Each hand contains more than one hundred screws that still require human assembly. Touch sensors in the hands have shown reliability issues. Tesla plans to integrate a glove-like sensor layer in a future model next year.
 
 8. **Australian Tesla driver clocks up 600,000 miles in Model S, with just one battery change and one change of brake pads** — The Driven IO
    Nigel Raynard reached six hundred thousand miles after eight years of ownership. He upgraded to a ninety kilowatt-hour pack under warranty at six hundred sixty-six thousand kilometers. The car has achieved one hundred eighty-six watt-hours per kilometer efficiency since the replacement. Raynard obtains between fifty thousand and seventy-five thousand kilometers per tire set. He estimates nearly one hundred thousand dollars in fuel savings over that time.
+    Source: [thedriven.io](https://thedriven.io/2026/09/26/australian-tesla-driver-clocks-up-600000-miles-in-model-s-with-just-one-battery-change-and-one-change-of-brake-pads/)
+
 
 9. **Tesla’s surprise Roadster video hints the 2017 design is gone** — Teslarati
    Tesla ended its Semi event with a Roadster teaser showing a new front light bar. The video suggests changes from the original two thousand seventeen design. The post appeared on Teslarati as the preferred primary source.
+    Source: [teslarati.com](https://www.teslarati.com/tesla-roadster-lightbar-tease-semi-truck/)
+
 
 10. **Tesla (TSLA) Sets an October 1 Roadster Unveiling. Can the Long-Delayed Car Restore Confidence?** — Yahoo Finance
     Tesla scheduled an October one Roadster unveiling. The event follows years of delays on the high-performance vehicle. The article questions whether the long-delayed car can restore confidence.
+    Source: [finance.yahoo.com](https://finance.yahoo.com/markets/stocks/articles/tesla-tsla-sets-october-1-031844844.html)
+
 
 11. **Tesla (TSLA) Gains U.S. EV Share as its Sales Fall. Can it Protect Automotive Margins?** — Yahoo Finance
     Tesla increased its share of the U.S. electric vehicle market even as overall sales declined. The company is working to maintain margins amid the shift. The article examines whether Tesla can protect automotive margins.
+    Source: [finance.yahoo.com](https://finance.yahoo.com/markets/stocks/articles/tesla-tsla-gains-u-ev-031246693.html)
+
 
 12. **Tesla Opens New Semi Plant, Production Accelerates** — Intellectia AI
     Tesla opened a new Semi production facility in Nevada. Output is scaling toward an annual capacity of fifty thousand trucks. The facility supports high-volume production of the electric semi.
 ---
 ### Tesla X Takeover
 Tesla X Takeover - What's breaking in the Tesla world today! Here are the most interesting, fresh Tesla developments that have everyone talking.
+    Source: [intellectia.ai](https://intellectia.ai/news/stock/tesla-opens-new-semi-plant-production-accelerates)
+
 
 1. **Florida family’s home destroyed and dog killed after Tesla exploded in garage** — independent.co.uk
    A lawsuit claims a Tesla vehicle exploded inside a Florida garage. The incident destroyed the home and killed the family dog. The case is moving forward in court. The family is pursuing legal action over the damage.
+    Source: [independent.co.uk](https://www.independent.co.uk/news/world/americas/tesla-explodes-dog-killed-home-exploded-lawsuit-florida-b3056640.html)
+
 
 2. **Tesla Full Self-Driving release in the EU gets delayed** — Teslarati
    The European Union postponed a vote on Tesla Full Self-Driving supervised until at least December. The Technical Committee on Motor Vehicles agenda lists only continuation of discussions. The delay affects the planned October six review.
+    Source: [teslarati.com](https://www.teslarati.com/tesla-full-self-driving-release-eu-gets-delayed/)
+
 
 3. **EU delays Tesla ‘Full Self-Driving’ vote to December at the earliest** — Electrek
    The Technical Committee on Motor Vehicles will not vote on Full Self-Driving supervised before December. The agenda item was reduced to twenty-five minutes of continued discussion. Regulators in the Netherlands had raised prior concerns.
+    Source: [electrek.co](https://electrek.co/2026/09/25/eu-delays-tesla-fsd-vote-december-tcmv-agenda/)
+
 
 4. **Tesla workers balk at training Optimus humanoid robots as replacements** — Ars Technica
    Some Tesla employees have expressed reluctance to train Optimus robots that could eventually replace human roles. The resistance centers on job security concerns during the humanoid rollout. The article details internal pushback at the company.
+    Source: [arstechnica.com](https://arstechnica.com/ai/2026/09/tesla-workers-balk-at-training-optimus-humanoid-robots-as-replacements/)
+
 
 5. **Elon Musk: At least 1 billion humanoid robots in the next decade, scenarios include elder care, child supervision, and one-on-one tutoring** — ababnews.com
    Elon Musk stated at least one billion humanoid robots could be deployed within ten years. He listed elder care, child supervision, and personalized tutoring as example uses. The statement came in a recent interview.
