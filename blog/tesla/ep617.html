@@ -71,7 +71,7 @@
     "headline": "An Australian Tesla driver has clocked six hundred thousand miles on his Model S with only one battery change.",
     "description": "An Australian Tesla driver has clocked six hundred thousand miles on his Model S with only one battery change.",
     "datePublished": "2026-09-26",
-    "wordCount": 1289,
+    "wordCount": 1311,
     "articleSection": "Tesla Shorts Time",
     "inLanguage": "en",
     "author": {
@@ -767,6 +767,58 @@
             margin: 0.35rem 0 0;
         }
         .nn-iv-provenance span { white-space: nowrap; }
+        /* Episode provenance (Oct 2026): the one line under the AI badge on
+           a news post, from engine.brand.episode_provenance_parts, plus the
+           "Report an error" link beside it. Same type as the interview
+           provenance so the two shows read as one network. */
+        .nn-ep-provenance { text-align: center; }
+        .nn-ep-provenance a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .nn-ep-provenance a:hover { text-decoration: underline; }
+        /* Verified-claims panel: a collapsed list under Sources, one row per
+           claim with a link to the source it was checked against. Reuses
+           the transcript box's summary idiom (no marker, +/− at the end). */
+        .blog-claims { margin-top: var(--sp-6); }
+        .blog-claims details summary {
+            display: flex; align-items: center; gap: var(--sp-2);
+            cursor: pointer; padding: var(--sp-3) 0; list-style: none;
+            font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600;
+            color: var(--nn-white);
+        }
+        .blog-claims details summary::-webkit-details-marker { display: none; }
+        .blog-claims details summary::after {
+            content: '+'; margin-left: auto; font-size: 1.2rem; color: var(--nn-text-muted);
+        }
+        .blog-claims details[open] summary::after { content: '\2212'; }
+        .blog-claims .claims-note, .blog-claims .claims-none {
+            font-family: var(--font-ui); font-size: 0.85rem; color: var(--nn-text-muted);
+            line-height: 1.6; margin: 0 0 var(--sp-2);
+        }
+        .blog-claims ol { list-style: none; padding: 0; margin: var(--sp-2) 0 0; }
+        .blog-claims li {
+            padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-2);
+            background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 10px;
+            font-size: 0.95rem; line-height: 1.6;
+        }
+        .blog-claims .claim-source {
+            display: block; margin-top: 4px; font-family: var(--font-ui); font-size: 0.8rem;
+        }
+        .blog-claims .claim-source a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claim-source a:hover { text-decoration: underline; }
+        /* Correction box (engine.corrections): dated, at the top of the
+           article, before a reader meets the sentence that was wrong. */
+        .nn-correction {
+            margin: 0 0 var(--sp-6); padding: var(--sp-4) var(--sp-5);
+            border: 1px solid var(--show-color); border-left-width: 4px; border-radius: 10px;
+            background: var(--nn-card); font-size: 0.95rem; line-height: 1.6;
+        }
+        .nn-correction .nn-correction-label {
+            font-family: var(--font-ui); font-size: 0.75rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--show-color-text, var(--show-color)); margin: 0 0 var(--sp-1);
+        }
+        .nn-correction p { margin: 0 0 var(--sp-2); }
+        .nn-correction p:last-child { margin-bottom: 0; }
+        .nn-correction .nn-correction-where { font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); }
         .nn-iv-blurb-label {
             font-family: var(--font-ui);
             font-size: 0.72rem;
@@ -2044,35 +2096,46 @@
 <p class="blog-list-cont">Elon Musk said in a China Media Group interview that Neuralink aims to bridge the gap between humans and AI. Humans communicate at roughly one hundred bits per second while computers exchange trillions. Musk argued boosting human bandwidth may be essential for alignment. The post received eight hundred eighty-one views.</p>
 <li><strong>Tesla Owner Makes Accidental Discovery While Playing Around With His Settings—It's Going To Come In Handy This Winter</strong> — Motor1.com</li>
 <p class="blog-list-cont">Matthias Tayala discovered a charge port heater option in the service menu. The feature heats the recessed charge port to prevent frost issues. The video has been viewed over three hundred seventy-two thousand times. Tayala lives in Ohio and believes the feature will come in handy during winter months. Viewers reported checking their own vehicles after seeing the video.</p>
+<p class="blog-list-cont">Source: <a href="https://www.motor1.com/news/809284/tesla-charge-port-stuck-winter/" target="_blank" rel="noopener">motor1.com</a></p>
 <li><strong>Transcript: CMG Interview with Tesla CEO Elon Musk</strong> — The Singju Post</li>
 <p class="blog-list-cont">Elon Musk praised President Xi for visible progress in China during his tenure. He credited Chinese manufacturing ability for the success of Gigafactory Shanghai. The interview covered Tesla's global blueprint and AI progress including Grok four point seven. Musk noted that progress in China is visible year to year through new buildings and infrastructure.</p>
 <li><strong>Tesla Investor Ross Gerber Questions Elon Musk's EV Strategy as Gas Prices Soar: 'Why Are There Starlink</strong> — Benzinga</li>
 <p class="blog-list-cont">Ross Gerber asked why Starlink runs television ads but Tesla does not when gasoline prices are elevated. He suggested the company could sell more vehicles with advertising. The national average for regular gasoline reached four dollars and forty-four cents per gallon as of September twenty-one. Goldman Sachs lowered its third-quarter delivery estimate to four hundred thirty-five thousand vehicles.</p>
+<p class="blog-list-cont">Source: <a href="https://www.benzinga.com/markets/tech/26/09/62010589/tesla-investor-ross-gerber-questions-elon-musks-ev-strategy-as-gas-prices-soar-why-are-there-starlink-ads-on-tv-but-no-tesla-ads" target="_blank" rel="noopener">benzinga.com</a></p>
 <li><strong>Tesla's Optimus Output Jumps Tenfold, But Hand Assembly and Software Gaps Force a Lease-First Strategy</strong> — finance.biggo.com</li>
 <p class="blog-list-cont">Weekly Optimus production reached several hundred units last month. The goal is a continuous automated line producing over one thousand robots a week by year end. Each hand contains more than one hundred screws that still require human assembly. Touch sensors in the hands have shown reliability issues. Tesla plans to integrate a glove-like sensor layer in a future model next year.</p>
 <li><strong>Australian Tesla driver clocks up 600,000 miles in Model S, with just one battery change and one change of brake pads</strong> — The Driven IO</li>
 <p class="blog-list-cont">Nigel Raynard reached six hundred thousand miles after eight years of ownership. He upgraded to a ninety kilowatt-hour pack under warranty at six hundred sixty-six thousand kilometers. The car has achieved one hundred eighty-six watt-hours per kilometer efficiency since the replacement. Raynard obtains between fifty thousand and seventy-five thousand kilometers per tire set. He estimates nearly one hundred thousand dollars in fuel savings over that time.</p>
+<p class="blog-list-cont">Source: <a href="https://thedriven.io/2026/09/26/australian-tesla-driver-clocks-up-600000-miles-in-model-s-with-just-one-battery-change-and-one-change-of-brake-pads/" target="_blank" rel="noopener">thedriven.io</a></p>
 <li><strong>Tesla’s surprise Roadster video hints the 2017 design is gone</strong> — Teslarati</li>
 <p class="blog-list-cont">Tesla ended its Semi event with a Roadster teaser showing a new front light bar. The video suggests changes from the original two thousand seventeen design. The post appeared on Teslarati as the preferred primary source.</p>
+<p class="blog-list-cont">Source: <a href="https://www.teslarati.com/tesla-roadster-lightbar-tease-semi-truck/" target="_blank" rel="noopener">teslarati.com</a></p>
 <li><strong>Tesla (TSLA) Sets an October 1 Roadster Unveiling. Can the Long-Delayed Car Restore Confidence?</strong> — Yahoo Finance</li>
 <p class="blog-list-cont">Tesla scheduled an October one Roadster unveiling. The event follows years of delays on the high-performance vehicle. The article questions whether the long-delayed car can restore confidence.</p>
+<p class="blog-list-cont">Source: <a href="https://finance.yahoo.com/markets/stocks/articles/tesla-tsla-sets-october-1-031844844.html" target="_blank" rel="noopener">finance.yahoo.com</a></p>
 <li><strong>Tesla (TSLA) Gains U.S. EV Share as its Sales Fall. Can it Protect Automotive Margins?</strong> — Yahoo Finance</li>
 <p class="blog-list-cont">Tesla increased its share of the U.S. electric vehicle market even as overall sales declined. The company is working to maintain margins amid the shift. The article examines whether Tesla can protect automotive margins.</p>
+<p class="blog-list-cont">Source: <a href="https://finance.yahoo.com/markets/stocks/articles/tesla-tsla-gains-u-ev-031246693.html" target="_blank" rel="noopener">finance.yahoo.com</a></p>
 <li><strong>Tesla Opens New Semi Plant, Production Accelerates</strong> — Intellectia AI</li>
 <p class="blog-list-cont">Tesla opened a new Semi production facility in Nevada. Output is scaling toward an annual capacity of fifty thousand trucks. The facility supports high-volume production of the electric semi.</p>
 </ol>
 <hr>
 <h4 id="tesla-x-takeover">Tesla X Takeover</h4>
 <p>Tesla X Takeover - What's breaking in the Tesla world today! Here are the most interesting, fresh Tesla developments that have everyone talking.</p>
+<p>Source: <a href="https://intellectia.ai/news/stock/tesla-opens-new-semi-plant-production-accelerates" target="_blank" rel="noopener">intellectia.ai</a></p>
 <ol>
 <li><strong>Florida family’s home destroyed and dog killed after Tesla exploded in garage</strong> — independent.co.uk</li>
 <p class="blog-list-cont">A lawsuit claims a Tesla vehicle exploded inside a Florida garage. The incident destroyed the home and killed the family dog. The case is moving forward in court. The family is pursuing legal action over the damage.</p>
+<p class="blog-list-cont">Source: <a href="https://www.independent.co.uk/news/world/americas/tesla-explodes-dog-killed-home-exploded-lawsuit-florida-b3056640.html" target="_blank" rel="noopener">independent.co.uk</a></p>
 <li><strong>Tesla Full Self-Driving release in the EU gets delayed</strong> — Teslarati</li>
 <p class="blog-list-cont">The European Union postponed a vote on Tesla Full Self-Driving supervised until at least December. The Technical Committee on Motor Vehicles agenda lists only continuation of discussions. The delay affects the planned October six review.</p>
+<p class="blog-list-cont">Source: <a href="https://www.teslarati.com/tesla-full-self-driving-release-eu-gets-delayed/" target="_blank" rel="noopener">teslarati.com</a></p>
 <li><strong>EU delays Tesla ‘Full Self-Driving’ vote to December at the earliest</strong> — Electrek</li>
 <p class="blog-list-cont">The Technical Committee on Motor Vehicles will not vote on Full Self-Driving supervised before December. The agenda item was reduced to twenty-five minutes of continued discussion. Regulators in the Netherlands had raised prior concerns.</p>
+<p class="blog-list-cont">Source: <a href="https://electrek.co/2026/09/25/eu-delays-tesla-fsd-vote-december-tcmv-agenda/" target="_blank" rel="noopener">electrek.co</a></p>
 <li><strong>Tesla workers balk at training Optimus humanoid robots as replacements</strong> — Ars Technica</li>
 <p class="blog-list-cont">Some Tesla employees have expressed reluctance to train Optimus robots that could eventually replace human roles. The resistance centers on job security concerns during the humanoid rollout. The article details internal pushback at the company.</p>
+<p class="blog-list-cont">Source: <a href="https://arstechnica.com/ai/2026/09/tesla-workers-balk-at-training-optimus-humanoid-robots-as-replacements/" target="_blank" rel="noopener">arstechnica.com</a></p>
 <li><strong>Elon Musk: At least 1 billion humanoid robots in the next decade, scenarios include elder care, child supervision, and one-on-one tutoring</strong> — ababnews.com</li>
 <p class="blog-list-cont">Elon Musk stated at least one billion humanoid robots could be deployed within ten years. He listed elder care, child supervision, and personalized tutoring as example uses. The statement came in a recent interview.</p>
 </ol>
@@ -2320,6 +2383,97 @@
             
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.motor1.com/news/809284/tesla-charge-port-stuck-winter/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=motor1.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">motor1.com</span>
+                    </a>
+                    
+                    <a href="https://www.benzinga.com/markets/tech/26/09/62010589/tesla-investor-ross-gerber-questions-elon-musks-ev-strategy-as-gas-prices-soar-why-are-there-starlink-ads-on-tv-but-no-tesla-ads" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=benzinga.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">benzinga.com</span>
+                    </a>
+                    
+                    <a href="https://thedriven.io/2026/09/26/australian-tesla-driver-clocks-up-600000-miles-in-model-s-with-just-one-battery-change-and-one-change-of-brake-pads/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=thedriven.io&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">thedriven.io</span>
+                    </a>
+                    
+                    <a href="https://www.teslarati.com/tesla-roadster-lightbar-tease-semi-truck/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=teslarati.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">teslarati.com</span>
+                    </a>
+                    
+                    <a href="https://finance.yahoo.com/markets/stocks/articles/tesla-tsla-sets-october-1-031844844.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=finance.yahoo.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">finance.yahoo.com</span>
+                    </a>
+                    
+                    <a href="https://finance.yahoo.com/markets/stocks/articles/tesla-tsla-gains-u-ev-031246693.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=finance.yahoo.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">finance.yahoo.com</span>
+                    </a>
+                    
+                    <a href="https://intellectia.ai/news/stock/tesla-opens-new-semi-plant-production-accelerates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=intellectia.ai&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">intellectia.ai</span>
+                    </a>
+                    
+                    <a href="https://www.independent.co.uk/news/world/americas/tesla-explodes-dog-killed-home-exploded-lawsuit-florida-b3056640.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=independent.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">independent.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.teslarati.com/tesla-full-self-driving-release-eu-gets-delayed/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=teslarati.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">teslarati.com</span>
+                    </a>
+                    
+                    <a href="https://electrek.co/2026/09/25/eu-delays-tesla-fsd-vote-december-tcmv-agenda/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=electrek.co&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">electrek.co</span>
+                    </a>
+                    
+                    <a href="https://arstechnica.com/ai/2026/09/tesla-workers-balk-at-training-optimus-humanoid-robots-as-replacements/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arstechnica.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arstechnica.com</span>
+                    </a>
+                    
+                </div>
+            </section>
+            
+            <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
+                
+                <details>
+                    <summary>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Verified claims (5)
+                    </summary>
+                    <p class="claims-note">Each claim below was checked before publication: its source was fetched and the supporting quote was found in it.</p>
+                    <ol>
+                        <li>An Australian Tesla driver reached six hundred thousand miles on a Model S with only one battery change and one brake pad replacement.
+                            <span class="claim-source"><a href="https://thedriven.io/2026/09/26/australian-tesla-driver-clocks-up-600000-miles-in-model-s-with-just-one-battery-change-and-one-change-of-brake-pads/" target="_blank" rel="noopener">thedriven.io</a></span>
+                        </li>
+                        <li>Weekly Optimus production reached several hundred units last month, up from a few dozen per week in the second quarter.
+                            <span class="claim-source"><a href="https://finance.biggo.com/news/9e55bbd8-923a-474b-99e7-abfc7b761cbc" target="_blank" rel="noopener" title="Tesla's Optimus Output Jumps Tenfold, But Hand Assembly and Software Gaps Force a Lease-First Strategy">finance.biggo.com</a></span>
+                        </li>
+                        <li>Each Optimus hand contains more than one hundred screws that still require human assembly.
+                            <span class="claim-source"><a href="https://finance.biggo.com/news/9e55bbd8-923a-474b-99e7-abfc7b761cbc" target="_blank" rel="noopener" title="Tesla's Optimus Output Jumps Tenfold, But Hand Assembly and Software Gaps Force a Lease-First Strategy">finance.biggo.com</a></span>
+                        </li>
+                        <li>The national average for regular gasoline reached four dollars and forty-four cents per gallon as of September twenty-one.
+                            <span class="claim-source"><a href="https://www.benzinga.com/markets/tech/26/09/62010589/tesla-investor-ross-gerber-questions-elon-musks-ev-strategy-as-gas-prices-soar-why-are-there-starlink-ads-on-tv-but-no-tesla-ads" target="_blank" rel="noopener" title="Tesla Investor Ross Gerber Questions Elon Musk's EV Strategy as Gas Prices Soar">benzinga.com</a></span>
+                        </li>
+                        <li>Goldman Sachs lowered its third-quarter Tesla delivery estimate to four hundred thirty-five thousand vehicles.
+                            <span class="claim-source"><a href="https://www.benzinga.com/markets/tech/26/09/62010589/tesla-investor-ross-gerber-questions-elon-musks-ev-strategy-as-gas-prices-soar-why-are-there-starlink-ads-on-tv-but-no-tesla-ads" target="_blank" rel="noopener" title="Tesla Investor Ross Gerber Questions Elon Musk's EV Strategy as Gas Prices Soar">benzinga.com</a></span>
+                        </li>
+                    </ol>
+                </details>
+                
+            </section>
             
 
             <!-- Chapters (July 2026): generated and shipped in the feeds
@@ -2614,10 +2768,13 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v4h1"/></svg>
   Made with AI — transparently
 </a>
-            </div><div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
+            </div>
+            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 12 sources</span><span aria-hidden="true"> · </span><span>5 claims checked against their sources</span><span aria-hidden="true"> · </span><span>voiced with Grok TTS</span><span aria-hidden="true"> · </span><a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20Tesla%20Shorts%20Time%20Ep617&body=Re%3A%20https%3A//nerranetwork.com/blog/tesla/ep617.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
+            </p>
+            <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>👋 Did this episode land?</span>
-                <a href="mailto:patrick@planetterrian.com?subject=I%20liked%20Tesla%20Shorts%20Time%20Ep617&body=Re: https://nerranetwork.com/blog/tesla/ep617.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
-                <a href="mailto:patrick@planetterrian.com?subject=Suggestion%20for%20Tesla%20Shorts%20Time&body=Re: https://nerranetwork.com/blog/tesla/ep617.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
+                <a href="mailto:hello@nerranetwork.com?subject=I%20liked%20Tesla%20Shorts%20Time%20Ep617&body=Re: https://nerranetwork.com/blog/tesla/ep617.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
+                <a href="mailto:hello@nerranetwork.com?subject=Suggestion%20for%20Tesla%20Shorts%20Time&body=Re: https://nerranetwork.com/blog/tesla/ep617.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
             </div>
 
             <!-- Subscribe CTA (Worker-backed — no Buttondown popup / fake 500ms success) -->
