@@ -3220,3 +3220,36 @@ experiments:
       Requires the operator to `wrangler deploy` workers/gallery (the tag
       allow-list) — until then the forms still subscribe the address to
       the member list and drop the show tag.
+  - id: claims-flag-policy-2026-10-01
+    title: "Publish and mark: on_failure flag on every show, nightly re-verification, public claims ledger"
+    area: trust
+    shipped: 2026-10-01
+    readout: 2026-10-22
+    status: reading
+    baseline: "09-17..10-01: 68 sentences stripped across 261 episodes (omni_view 12, planetterrian 10, europe 7, spacex 5 — every audited strip a TRUE sentence behind an unreachable or paraphrased source); UC skipped 11 of 28 days and FPD 1 on the claims gate; 4 of 15 flagship episodes recorded 0 claims"
+    target: >
+      source_integrity_stripped_sentences == 0 and claims-gate skips == 0 on
+      every show for 21 days; >= 40% of claims first marked
+      unverified_unreachable reach verified_later within 7 nights; the
+      network claims page shows a verified share >= 85% over 30 days; UC
+      publishes >= 19 of 21 days.
+    criteria: >
+      Hit = all four. A verified_later rate under 20% = the unreachable
+      class is mostly runner-blocked publishers, so the nightly needs a
+      second egress or the fetch-cache corpus; a verified share under 75%
+      = the ledger is thin (the empty-ledger class), not the policy.
+      Any flagged claim later shown FALSE by a reader report = file the
+      correction (the mechanism exists) and read the reason mix before
+      changing the policy; one false flagged claim is not a reason to
+      return to stripping true ones.
+    notes: >
+      engine/claims.py on_failure: flag — nothing removed but reviewer
+      notes; every entry carries a status in the sidecar;
+      scripts/reverify_claims.py re-checks unverified claims nightly for
+      seven days; claims.html + claims/<slug>.html render the record;
+      engine.brand.CLAIMS_PROCESS_STEPS is the one owner of the process
+      copy. The model's training data lags the 24-hour cycle: a story
+      newer than the model is verified against its fetched source, never
+      against memory, and "cannot verify" is a status, not a reason to
+      drop the story.
+
