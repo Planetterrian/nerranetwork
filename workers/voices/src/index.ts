@@ -1074,13 +1074,10 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
      I'm Mira, the AI host of ${esc(show.name)}, and it will be just the two of us.</p>
      <p><a href="${studio}"><strong>This is your personal studio link</strong></a>. Bookmark
      it: the studio opens ten minutes before we start, and there is nothing to install.</p>
-     <p>What makes the biggest difference to how you sound: a computer in a quiet room, and
-     <strong>headphones or earbuds</strong>. Without them your microphone picks up my voice
-     from your speakers, and my questions end up in your recording as if you had said them.
-     The studio checks your microphone and headphones before you join, and you can run the
-     same <a href="${setupTest}">30-second setup test</a> any time before the day. Camera
-     is optional. If the browser gives you trouble on the day, the studio has a button to
-     have me call your phone instead.</p>
+     ${GUEST_AUDIO_HTML}
+     <p>You can run the <a href="${setupTest}">30-second setup test</a> any time before
+     the day. It confirms I'll hear you clearly. Camera is optional.</p>
+     ${studioStepsHtml(studio)}
      <p>We have about ${plannedMinutes} minutes${apps[0].desired_minutes ? ", which is what you asked for" : ""}. I pace the
      conversation to that and start wrapping up near the end rather than cutting you off.</p>
      <p>About a day before, I'll send a short brief with the themes I'd like to explore.
@@ -1654,6 +1651,28 @@ async function callGuestSig(env: Env, interviewId: string): Promise<string> {
 
 async function callGuestLink(env: Env, interviewId: string): Promise<string> {
   return `https://api.nerranetwork.com/voices/admin/call-guest?interview=${interviewId}&sig=${await callGuestSig(env, interviewId)}`;
+}
+
+// Oct 1 2026: the same audio paragraph and steps as pipelines/voices/common.py
+// (GUEST_AUDIO_HTML, studio_steps_html); keep the two in step.
+const GUEST_AUDIO_HTML =
+  '<p style="background:#f0fdfa;border-left:4px solid #0f766e;padding:.7em 1em">' +
+  "<strong>For the best sound:</strong> please join from a computer, wearing " +
+  "headphones or earbuds, ideally with a good microphone. Phone audio is compressed " +
+  "and sounds noticeably thinner, while a computer with headphones and a good " +
+  "microphone sounds clear and full, and listeners tell us those are the interviews " +
+  "they enjoy most. AirPods or a headset connected to your computer work well, and a " +
+  "USB microphone is even better. Headphones also stop your microphone picking up my " +
+  "voice from your speakers; without them my questions end up in your recording as if " +
+  "you had said them.</p>";
+
+function studioStepsHtml(studio: string): string {
+  return "<p><strong>On the day, three steps and we're on:</strong></p><ol>" +
+    `<li>Open <a href="${esc(studio)}">your studio link</a> on your computer, up to ten minutes before we start.</li>` +
+    "<li>Press <strong>Check my microphone</strong> and read the sentence out loud until it says <strong>Sounds good</strong>.</li>" +
+    "<li>Press <strong>Join your interview</strong>. You're in when you hear me say hello.</li></ol>" +
+    "<p>If anything gets stuck, the studio's <strong>Have Mira call my phone</strong> button " +
+    "gets us going by phone straight away, so we never lose the slot.</p>";
 }
 
 async function handleCallGuest(req: Request, env: Env): Promise<Response> {

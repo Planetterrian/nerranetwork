@@ -7,12 +7,8 @@
   <p>Here is what I'm planning to talk about{% if when_text %} when we speak on
   <strong>{{ when_text }}</strong>{% endif %}. It's just the two of us: I host
   every interview on my own.</p>
-  <p><strong>How to join:</strong> open your personal studio link a few
-  minutes before your slot, from a computer in a quiet room:
-  <a href="{{ studio_link or studio_url }}">join your interview here</a>. Please wear
-  headphones or earbuds; without them your microphone picks up my voice from
-  your speakers. Camera is optional. If the browser gives you any trouble on
-  the day, reply to this email and I can call your phone instead.</p>
+  {% if audio_html %}{{ audio_html }}{% else %}<p>Please join from a computer in a quiet
+  room, wearing headphones or earbuds.</p>{% endif %}
   {% if setup_test_link %}<p style="background:#fffbeb;border-left:4px solid #d97706;padding:.7em 1em">
   <strong>Please do the 30-second setup test today:</strong>
   <a href="{{ setup_test_link }}">test your microphone and headphones here</a>.
@@ -20,6 +16,7 @@
   checks that I'll be able to hear you clearly, which is the one thing that
   has gone wrong for guests before, and it's much easier to fix today than
   five minutes before we start.</p>{% endif %}
+  {% if steps_html %}{{ steps_html }}{% else %}<p><a href="{{ studio_link or studio_url }}">Join your interview here</a>.</p>{% endif %}
   <h3>The angle I'm excited about</h3>
   <p style="background:#faf5ff;border-left:4px solid {{ brand_color }};padding:.7em 1em">{{ thesis }}</p>
   {% if agenda_points %}<h3>What you asked me to cover</h3>

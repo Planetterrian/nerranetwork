@@ -25,7 +25,7 @@ import os
 from common import (  # noqa: E402
     OPERATOR_EMAIL, ROOT, carry_the_show_block, cohost_name, load_prompt, logger,
     mira_signature_html, guest_notes_block, guest_agenda_block, pacific_time,
-    notify_operator,
+    notify_operator, GUEST_AUDIO_HTML, studio_steps_html,
     operator_phone, render_email, sb_insert, sb_select, sb_update, send_email,
     show_for, to_e164,
 )
@@ -379,20 +379,29 @@ def reminder_email(interview: dict, app: dict, show, manage: str,
                 if when else "We're on in about two hours.")
     parts = [f"<p>Hi {first},</p>", f"<p>{lead}</p>"]
     if phone_mode:
-        parts.append("<p>I'll call the number you gave us. If you'd rather join from a "
-                     f'computer, <a href="{studio}">your studio link</a> works too.</p>')
+        parts.append("<p>I'll call the number you gave us. If you're able to join from a "
+                     "computer with headphones instead, it sounds noticeably better than a "
+                     f'phone line: <a href="{studio}">your studio link</a> works right up to '
+                     "the start.</p>")
+    elif soon:
+        # Oct 1 2026: the last email before the interview repeats the way in,
+        # step by step. Jonathan had the page open and never got past step 2.
+        parts.append("<p>Headphones on, and from your computer for the best sound.</p>")
+        parts.append(str(studio_steps_html(studio)))
     else:
-        parts.append(f'<p><a href="{studio}"><strong>Join your interview here</strong></a>.'
-                     + ("" if soon else " The studio opens ten minutes before we start.")
-                     + "</p>")
-        if not soon:
+        parts.append(GUEST_AUDIO_HTML)
+        check = interview.get("setup_check") or {}
+        if isinstance(check, dict) and check.get("mic") == "ok":
+            parts.append("<p>Your setup test passed, thank you. Use the same computer, "
+                         "browser and headphones today and you're all set.</p>")
+        else:
             parts.append(
-                f'<p>If you have two minutes before then, <a href="{studio}&test=1">run '
-                "the 30-second microphone test</a> on the computer you'll use. Please wear "
-                "headphones or earbuds: without them your microphone picks up my voice "
-                "from your speakers, and my questions end up in your recording.</p>")
-        parts.append("<p>If the browser gives you any trouble, the studio has a button to "
-                     "have me call your phone instead.</p>")
+                '<p style="background:#fffbeb;border-left:4px solid #d97706;padding:.7em 1em">'
+                f'<strong>Please take 30 seconds now:</strong> <a href="{studio}&test=1">run '
+                "the setup test</a> on the computer, browser and headphones you'll use. It "
+                "confirms I'll hear you clearly, and anything it finds is easy to fix now and "
+                "hard to fix at the start time.</p>")
+        parts.append(str(studio_steps_html(studio)))
     if manage and not soon:
         parts.append(f'<p>If today doesn\'t work after all, <a href="{manage}">move or '
                      "cancel it here</a>. One tap, no explanation needed; I would much "
@@ -461,10 +470,11 @@ def send_reminders() -> None:
             if (interview.get("call_mode") or "webrtc") == "webrtc":
                 text = (
                     f"Mira here, from {show.name} (Nerra Network). Your "
-                    "interview starts in about two hours. Join from a "
-                    "computer in a quiet room, wearing headphones (without "
-                    "them your mic records Mira too): "
-                    f"{show.studio_url(interview['id'])}"
+                    "interview starts in about two hours. For the best sound, "
+                    "join from a computer with headphones and a good mic "
+                    "(phone audio is much thinner). Open your link, press "
+                    "Check my microphone until it says Sounds good, then "
+                    f"Join: {show.studio_url(interview['id'])}"
                     + (f" — can't make it? {manage}" if manage else "")
                     + " — Mira"
                 )
