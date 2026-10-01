@@ -1,0 +1,208 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.840
+Claude designed novel protein binders from scratch for 14 of 15 targets, with 22 to 35 percent success rates that beat the field's typical 10 to 15 percent. This is Models &amp; Agents, episode 146. Andthropic demonstrated Claude autonomously creating functional protein binders that were then built and validated by adaptive bio and twist bioscience. Open weight releases from Ornith and Inclusion ai add new dense
+
+00:00:29.840 --> 00:00:48.080
+and MOE options for local use. Open ai paused frontier RL training for two weeks to strengthen security and monitoring before resuming larger runs. Anthropic tested whether Claude could perform denovo protein binder design, using a prompt written by a human expert.
+
+00:00:48.080 --> 00:01:09.480
+The model produced candidate binders against 14 out of 15 targets, independent labs synthesized and tested the designs, confirming that 22 to 35 percent of them bound successfully, depending on the experimental setup. Some binders showed several times tighter affinity than the best previously published denovo examples.
+
+00:01:09.480 --> 00:01:25.880
+Protein binders represent only the first step toward drug development, not drugs themselves. Anthropic also reiterated plans to launch a scientist access program and noted that Opus 5 remains its most capable model for life science research.
+
+00:01:26.380 --> 00:01:37.500
+This builds on yesterday's frontier model coverage by showing concrete capability gains in a specialized scientific domain. Ornith ai released the Ornith 1.5 family
+
+00:01:37.500 --> 00:01:58.260
+that includes a 9 billion dense model, a 35 billion MOE, and a 397 billion MOE. The largest variant reports 86.1 on terminal bench 2.1, 86 on sweet bench verified, 65.1 on sweet bench pro, and 56 on deep sweet.
+
+00:01:58.260 --> 00:02:12.000
+These scores place the 397 billion model in the same range as Claude Opus 4.8 on reasoning, agentic, and coding tasks. Checkpoints are available on hugging face under the Ornith ai collection.
+
+00:02:12.860 --> 00:02:28.400
+Inclusion ai released six base model checkpoints for the Ling 3.0 tiny base, at 7.9 billion active parameters, and the Ling 3.0 flash base at 124 billion total, with 5.1 billion active.
+
+00:02:28.400 --> 00:02:36.400
+None have received post-training, giving researchers clean starting points for continued pre-training, fine-tuning, and MOE studies.
+
+00:02:37.340 --> 00:02:49.740
+The tiny base model delivers performance comparable or superior to Ling 2.5 mini base on most benchmarks, despite having only half the total parameters, with particularly strong coding results.
+
+00:02:49.740 --> 00:02:58.080
+The flash variant shows strong results on coding, reasoning, and long context tasks relative to models 2 to 3 times larger.
+
+00:02:58.760 --> 00:03:08.340
+The WSM merging technique replaces traditional learning rate decay, enabling offline exploration of different decay strategies on the shared training recipe.
+
+00:03:08.340 --> 00:03:21.300
+A controlled head-to-head compared Kimi K3, with a full 127,000 token prompt, against a top 5 rag pipeline on the same 12 questions, using identical system prompts.
+
+00:03:21.960 --> 00:03:27.800
+Blind grading measured correctness, completeness, and grounding, while tracking cost and latency differences.
+
+00:03:28.440 --> 00:03:36.300
+The experiment isolates the effect of providing the entire context window, versus retrieval augmented generation on anso quality.
+
+00:03:36.300 --> 00:03:46.400
+Results highlight trade-offs in token cost, response latency, and grounding accuracy, when the model can attend to 127,000 tokens directly.
+
+00:03:47.200 --> 00:04:01.040
+Unsloth released new 10% higher accuracy GGUFs for the Quinn 3.827 billion model, along with 1-bit quants that retain 77% accuracy, and run on 8GB of RAM.
+
+00:04:01.040 --> 00:04:07.840
+The update uses post-training quantization only, with the iMatrix file published for community reuse.
+
+00:04:08.400 --> 00:04:16.220
+The team also released an updated unsloth desktop build, introducing auto-compaction and external API tool calling support.
+
+00:04:16.880 --> 00:04:25.740
+Droid Run gives AI agents direct control over Android apps and devices, extending agent reach beyond browser and desktop environments.
+
+00:04:25.740 --> 00:04:32.620
+It targets mobile specific workflows, such as in-app navigation, and device level automation on Android.
+
+00:04:33.320 --> 00:04:40.060
+Early demonstrations focus on giving agents the same level of control previously limited to mobile chat GPT apps.
+
+00:04:40.760 --> 00:04:47.640
+Honeybook added a native cloud connector that lets small businesses run autonomous agents for client management and operations.
+
+00:04:47.640 --> 00:04:56.740
+The integration focuses on streamlining repetitive service business tasks, without requiring custom infrastructure or additional orchestration layers.
+
+00:04:57.360 --> 00:05:04.780
+Small merchants and solopreneurs can now connect their existing Honeybook workflows directly to cloud for agent driven automation.
+
+00:05:05.520 --> 00:05:14.340
+Forward Lane is helping financial firms move agent AI past pilot stage by providing production grade orchestration and compliance layers.
+
+00:05:14.340 --> 00:05:22.180
+The work targets repeatable deployment patterns for regulated environments, where auditability and policy enforcement are required.
+
+00:05:22.680 --> 00:05:32.400
+Financial institutions receive concrete guidance on moving from isolated experiments to scaled agent populations that respect data residency and oversight constraints.
+
+00:05:32.400 --> 00:05:40.240
+Apodex released traces, a new benchmark specifically designed to measure AI performance on scientific discovery tasks.
+
+00:05:40.880 --> 00:05:50.520
+The benchmark aims to provide standardized evaluation for models operating in research workflows, where success metrics differ from general coding or reasoning suites.
+
+00:05:51.080 --> 00:06:01.240
+It fills a gap between existing agent benchmarks and the specialized requirements of hypothesis generation, experimental design, and result interpretation in life sciences.
+
+00:06:01.240 --> 00:06:10.700
+A Beijing bar is offering unlimited free deep seat coding tokens with every $1.50 drink, running on two Nvidia DGX systems.
+
+00:06:11.280 --> 00:06:18.540
+The owner reports the promotion is losing money but continues as a marketing draw that attracts developers and AI enthusiasts.
+
+00:06:19.240 --> 00:06:29.600
+The setup uses the bar's DGX infrastructure to serve tokens on site, creating a physical location where local model experimentation is subsidized by beverage sales.
+
+00:06:29.600 --> 00:06:41.120
+A new pull request adds CPU offload controls for dense model FFN layers to llama dot CPP, mirroring the existing NCPU MOE flags.
+
+00:06:41.820 --> 00:06:52.100
+Early testers report it enables quen 3.827 billion Q4KM at 130,000 context on 16 gigabytes of VRAM systems.
+
+00:06:52.100 --> 00:07:03.860
+The change provides fine grained control over which feed forward layers stay on GPU versus CPU for dense architectures that previously lacked equivalent flexibility to MOE models.
+
+00:07:04.580 --> 00:07:12.160
+A recent paper argues that intermediate thinking tokens function as prompt augmentation rather than human-like reasoning traces.
+
+00:07:12.780 --> 00:07:20.340
+Models trained on corrupted traces still achieve comparable accuracy and trace length shows little correlation with problem difficulty.
+
+00:07:20.340 --> 00:07:31.440
+The study finds no consistent link between trace validity and solution correctness and reinforcement learning can improve final accuracy while sometimes decreasing trace validity.
+
+00:07:32.300 --> 00:07:35.600
+Okay, let's pop the hood on agent population scaling.
+
+00:07:36.100 --> 00:07:41.520
+Everyone talks about more agents as if simply adding instances will produce better collective behavior.
+
+00:07:41.520 --> 00:07:53.180
+In practice, the transition from single agents to populations introduces coordination overhead, communication topology choices, and emergent failure modes that are not visible at small scale.
+
+00:07:53.820 --> 00:08:02.520
+At low agent counts, simple voting or sequential handoff works because conflicts remain rare and shared state stays consistent with minimal synchronization.
+
+00:08:02.520 --> 00:08:15.760
+Once dozens of agents operate concurrently on shared state, message volume grows quadratically unless explicit summarization or hierarchical routing is added to keep each agent's context window manageable.
+
+00:08:16.560 --> 00:08:29.960
+Experiments show that beyond roughly 20 to 30 agents, the dominant cost shifts from individual inference to maintaining consistent world models across the group, often requiring dedicated memory or consensus layers.
+
+00:08:29.960 --> 00:08:44.420
+The practical decision point is whether your workflow benefits from parallel exploration, favoring loose coupling and periodic merge steps, or requires tight consensus, favoring explicit coordination layers and shared memory buses.
+
+00:08:45.180 --> 00:08:53.980
+Teams that skip this analysis usually hit either redundant work or deadlock once population size exceeds the single agent regime they originally tested.
+
+00:08:54.980 --> 00:09:01.540
+When scaling past 30 agents, start by measuring message volume and world model divergence before adding more instances.
+
+00:09:02.140 --> 00:09:06.280
+The first bottleneck is almost always coordination rather than raw compute.
+
+00:09:06.940 --> 00:09:20.200
+Try the Ornith 1.535 billion MOE checkpoint on SWE bench style tasks to see how self-improving training affects long horizon coding compared with Quinn 3.827 billion.
+
+00:09:20.200 --> 00:09:33.120
+Run the new unslothed dynamic version 3 Quinn 3.827 billion GGUF on an 8 gigabyte system and measure whether the one bit quant preserves enough accuracy for your local agent loops.
+
+00:09:33.800 --> 00:09:40.620
+Test droid run on a mobile app workflow you currently handle with browser agents to quantify their deduction in context switching.
+
+00:09:40.620 --> 00:09:51.440
+Compare Kimi K3 full context prompting against your existing RAG stack on a 100,000 plus token internal documents set using the same grading rubric.
+
+00:09:51.860 --> 00:10:03.440
+Open AI expects to resume larger frontier RL runs once the two week security hardening period completes and smaller scale evaluations validate the new isolation and monitoring controls.
+
+00:10:03.440 --> 00:10:10.100
+And Thropic plans to share details soon on the scientist access program for its most capable models.
+
+00:10:10.600 --> 00:10:20.000
+All in 2026 will feature sessions with leaders from co here, Meestral AI, NVIDIA and Open AI on production agent deployments.
+
+00:10:20.380 --> 00:10:29.280
+Before we go, open AI's resumed frontier runs should produce the first public signals on whether the new isolation controls change training throughput.
+
+00:10:29.920 --> 00:10:31.900
+That's models and agents for today.
+
+00:10:31.900 --> 00:10:39.540
+If you found this useful, share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+
+00:10:40.080 --> 00:10:43.840
+The AI world moves fast. We'll help you keep up. See you tomorrow.
+
+00:10:44.460 --> 00:10:48.560
+And if you'd rather watch than listen, find us on YouTube at Nerra Network.
+
+00:10:49.060 --> 00:10:57.640
+Links in the show notes. And before you go, this show is part of the Nerra network, a family of daily podcasts on tech, science and markets.
+
+00:10:57.640 --> 00:11:01.360
+Each one a short, sharp briefing you can finish on the commute.
+
+00:11:02.060 --> 00:11:10.120
+If today earned its place in your feed, here's your next listen, environmental intelligence, the environment and climate policy brief for Canada.
+
+00:11:10.680 --> 00:11:14.160
+Find every show free at www.nerranetwork.com.
+
+00:11:14.560 --> 00:11:16.480
+Want the written briefing with source links?
+
+00:11:17.100 --> 00:11:22.240
+Each show keeps a summaries page on www.nerranetwork.com, scanable, dated and free.
+
+00:11:22.240 --> 00:11:28.900
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

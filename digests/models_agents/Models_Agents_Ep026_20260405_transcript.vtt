@@ -1,0 +1,499 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:04.640
+Hey, everyone. Welcome to Models and Agents Episode 26 for April 5th, 2026.
+
+00:00:04.860 --> 00:00:07.180
+Let's dive into what happened in the AI world today.
+
+00:00:07.420 --> 00:00:10.500
+And trust me, it's been one of those genuinely exciting days
+
+00:00:10.500 --> 00:00:13.140
+where you can feel the pace of progress accelerating.
+
+00:00:14.040 --> 00:00:17.840
+The top story of this episode is one of those moments that makes you sit back and smile
+
+00:00:17.840 --> 00:00:21.160
+because it directly attacks one of the biggest complaints in the agent space.
+
+00:00:21.980 --> 00:00:25.340
+Kevin Goo open-sourced auto agent, a system that builds a meta agent
+
+00:00:25.340 --> 00:00:29.480
+capable of autonomously upgrading its own harness until it reaches number one
+
+00:00:29.480 --> 00:00:31.300
+on whatever target task you give it.
+
+00:00:31.860 --> 00:00:35.160
+The harness here refers to everything outside the raw model,
+
+00:00:35.700 --> 00:00:39.280
+the system prompts, the tool definitions, the output schemas,
+
+00:00:39.680 --> 00:00:42.100
+the evaluation logic, the few shot examples,
+
+00:00:42.380 --> 00:00:47.140
+basically all the brittle scaffolding that usually makes agents frustrating to deploy in production.
+
+00:00:48.060 --> 00:00:52.000
+What's particularly elegant is that auto agent uses the same base model,
+
+00:00:52.260 --> 00:00:55.680
+in this case, Claude, for both execution and evaluation.
+
+00:00:55.680 --> 00:01:01.040
+This shared architecture gives it superior failure analysis and iteration quality
+
+00:01:01.040 --> 00:01:03.820
+compared to human oversight or using a different judge model.
+
+00:01:04.020 --> 00:01:05.920
+The meta agent doesn't just guess what's wrong,
+
+00:01:06.380 --> 00:01:10.060
+it understands the exact quirks, tokenization behavior,
+
+00:01:10.320 --> 00:01:14.900
+and instruction following tendencies of the executor because they're the same model family.
+
+00:01:15.260 --> 00:01:19.340
+In under 24 hours, this system topped terminal bench for coding tasks
+
+00:01:19.340 --> 00:01:23.020
+and completely dominated spreadsheet-based financial modeling benchmarks.
+
+00:01:23.660 --> 00:01:25.000
+That's not a small achievement.
+
+00:01:25.680 --> 00:01:29.160
+This result directly challenges the common complaint that agents suck.
+
+00:01:30.240 --> 00:01:34.660
+Auto agent suggests that the real limiter has rarely been the underlying model itself.
+
+00:01:35.240 --> 00:01:37.540
+It's almost always been the quality of the harness.
+
+00:01:38.280 --> 00:01:41.140
+Once you remove the human bottleneck from the optimization loop,
+
+00:01:41.360 --> 00:01:43.400
+the performance jump can be dramatic.
+
+00:01:43.960 --> 00:01:45.920
+For practitioners, this is huge.
+
+00:01:46.160 --> 00:01:49.580
+You can now point this system at almost any domain-specific task,
+
+00:01:50.100 --> 00:01:52.720
+legal contract analysis, financial forecasting,
+
+00:01:52.720 --> 00:01:55.880
+DevOps automation, scientific literature review,
+
+00:01:56.200 --> 00:01:59.200
+and let itself optimize into a specialized expert.
+
+00:01:59.660 --> 00:02:02.160
+The full implementation is already available on GitHub
+
+00:02:02.160 --> 00:02:05.400
+and the barrier to experimentation is remarkably low.
+
+00:02:05.860 --> 00:02:06.280
+My take?
+
+00:02:06.780 --> 00:02:11.480
+This is one of the most important practical advances in agent development we've seen in the last year.
+
+00:02:12.020 --> 00:02:15.300
+It shifts the mindset from how do I prompt this model better
+
+00:02:15.300 --> 00:02:20.160
+to how do I build a system that discovers the best possible harness for my use case?
+
+00:02:20.760 --> 00:02:24.180
+The biggest limiter for agent performance isn't intelligence.
+
+00:02:24.800 --> 00:02:26.140
+It's configuration quality.
+
+00:02:26.940 --> 00:02:30.560
+Auto agent turns that configuration problem into an optimization problem
+
+00:02:30.560 --> 00:02:31.780
+the model can solve itself.
+
+00:02:32.420 --> 00:02:36.700
+Let's stay on this theme for a moment because the engineering insight here is deeper than it first appears.
+
+00:02:37.620 --> 00:02:41.280
+Everyone talks about self-improving agents as if the model simply gets smarter
+
+00:02:41.280 --> 00:02:43.260
+through some magical feedback loop.
+
+00:02:43.760 --> 00:02:47.520
+In practice, auto agents real breakthrough is that it treats the harness itself
+
+00:02:47.520 --> 00:02:52.380
+as the primary optimization target rather than trying to improve model weights.
+
+00:02:52.980 --> 00:02:56.540
+The core insight is that most agent failures are actually systematic
+
+00:02:56.540 --> 00:02:59.120
+and reproducible once you have a reliable critic.
+
+00:02:59.640 --> 00:03:02.460
+By using the same model family for both acting and judging,
+
+00:03:02.640 --> 00:03:06.960
+the critic shares the exact same strengths, weaknesses, tokenization quirks,
+
+00:03:07.160 --> 00:03:09.720
+and instruction following patterns as the executor.
+
+00:03:10.160 --> 00:03:13.820
+This creates much tighter, more coherent feedback than a human reviewer
+
+00:03:13.820 --> 00:03:15.800
+or a different model family can provide.
+
+00:03:15.800 --> 00:03:19.080
+The meta agent then performs a kind of program synthesis
+
+00:03:19.080 --> 00:03:23.020
+over the entire configuration space, mutating system prompts,
+
+00:03:23.080 --> 00:03:25.920
+adjusting JSON schemas, rewriting tool descriptions,
+
+00:03:26.320 --> 00:03:28.260
+changing error recovery strategies,
+
+00:03:28.540 --> 00:03:32.160
+and continuously measuring success on a held out validation set.
+
+00:03:32.580 --> 00:03:34.140
+Of course, this comes with overhead.
+
+00:03:34.600 --> 00:03:38.560
+Each iteration requires multiple full test runs which can get expensive,
+
+00:03:38.960 --> 00:03:42.560
+but it completely removes the human bottleneck that traditionally made
+
+00:03:42.560 --> 00:03:47.580
+high-quality domain specific agent tuning prohibitively expensive and slow.
+
+00:03:48.300 --> 00:03:52.820
+The quality gains are most pronounced on long horizon or highly structured tasks
+
+00:03:52.820 --> 00:03:57.500
+where brittle tool calling, prompt drift, or subtle schema mismatches
+
+00:03:57.500 --> 00:04:00.180
+usually kill performance after a few steps.
+
+00:04:01.020 --> 00:04:03.020
+That said, there's an important gotcha.
+
+00:04:03.540 --> 00:04:07.060
+The meta optimization process itself needs careful bounding.
+
+00:04:07.460 --> 00:04:09.700
+Without limits on search depth or compute budget,
+
+00:04:09.700 --> 00:04:14.400
+the system can drift toward ever more complex but increasingly fragile configurations
+
+00:04:14.400 --> 00:04:16.720
+that overfit to the validation set.
+
+00:04:17.220 --> 00:04:19.720
+So when should you actually reach for this approach?
+
+00:04:19.880 --> 00:04:24.760
+I'd say use it for any recurring domain task where you can define clear success metrics
+
+00:04:24.760 --> 00:04:28.840
+and you're willing to spend 10 to 100 times more upfront compute
+
+00:04:28.840 --> 00:04:31.040
+to get a truly specialized harness.
+
+00:04:32.180 --> 00:04:36.360
+The old alternative of hand crafting prompts across many different models
+
+00:04:36.360 --> 00:04:39.880
+scales extremely poorly as task complexity grows.
+
+00:04:40.840 --> 00:04:44.420
+Moving from frontier agent techniques to practical local deployment,
+
+00:04:44.760 --> 00:04:48.760
+this week also saw strong community validation of the new Gemma 4 models
+
+00:04:48.760 --> 00:04:53.840
+as genuinely useful local agents, especially the 26 billion parameter mixture
+
+00:04:53.840 --> 00:04:56.500
+of experts variant when running on constrained hardware.
+
+00:04:57.060 --> 00:05:01.680
+The local LLM community ran a fascinating 30-question blind test covering
+
+00:05:01.680 --> 00:05:05.240
+code, reasoning, analysis, communication, and meta alignment.
+
+00:05:05.240 --> 00:05:08.820
+With Claude Opus, 4.6 acting as the judge.
+
+00:05:09.320 --> 00:05:11.400
+The results were closer than many expected,
+
+00:05:11.660 --> 00:05:16.420
+twin 3.527b, one 46.7% of the matchups,
+
+00:05:16.560 --> 00:05:20.580
+but suffered noticeable format and refusal failures on about 10% of questions.
+
+00:05:21.380 --> 00:05:26.400
+Meanwhile, both Gemma 4.31b and the 26bA for BMOE variant
+
+00:05:26.400 --> 00:05:30.740
+achieved identical average scores of 8.82, remarkably competitive.
+
+00:05:30.740 --> 00:05:35.720
+Gemma 4.31b particularly dominated in communication and writing tasks,
+
+00:05:36.120 --> 00:05:40.160
+while the 26b mixture of experts version showed impressive efficiency
+
+00:05:40.160 --> 00:05:41.400
+when it didn't error out.
+
+00:05:41.560 --> 00:05:45.920
+Even more impressively, Gemma 4.31b placed third on the challenging food truck
+
+00:05:45.920 --> 00:05:51.480
+bench beating GLM5, twin 3.5397b and several Claude Sonnet variants.
+
+00:05:51.820 --> 00:05:56.120
+On the practical side, community reports are increasingly highlighting Gemma 4,
+
+00:05:56.420 --> 00:05:59.120
+especially that 26bA for BMOE.
+
+00:05:59.120 --> 00:06:03.980
+As an exceptionally strong local agent for Windows machines and 16 gigabyte hardware.
+
+00:06:04.520 --> 00:06:10.900
+Users consistently reported outperforming twin 3.527b in real-world coding speed,
+
+00:06:11.380 --> 00:06:15.280
+multilingual support, systems and DevOps tasks, and creative work.
+
+00:06:16.000 --> 00:06:20.360
+People are getting impressive results with far fewer prompts and much less looping behavior,
+
+00:06:20.760 --> 00:06:24.060
+things like generating clean SVGs on the first or second try,
+
+00:06:24.060 --> 00:06:28.880
+or building a surprisingly capable Doom-style raycaster in HTML and JavaScript.
+
+00:06:29.740 --> 00:06:33.720
+Alibaba's twin team also dropped an interesting new reasoning algorithm this week
+
+00:06:33.720 --> 00:06:36.820
+that could have significant downstream impact on future models.
+
+00:06:37.240 --> 00:06:41.620
+They introduced a reinforcement learning variant that waits each reasoning step
+
+00:06:41.620 --> 00:06:44.240
+by its actual influence on future tokens,
+
+00:06:44.500 --> 00:06:47.980
+rather than applying the traditional uniform reward across all steps.
+
+00:06:48.460 --> 00:06:53.220
+Early reports suggest this change can roughly double the length of coherent thought processes
+
+00:06:53.220 --> 00:06:55.840
+in reasoning models before they start to degrade.
+
+00:06:56.280 --> 00:07:00.640
+This feels like a meaningful step toward more reliable long-chain reasoning,
+
+00:07:00.860 --> 00:07:05.480
+especially for local models that need to maximize capability within tight compute budgets.
+
+00:07:06.120 --> 00:07:07.580
+On the agent and tooling front,
+
+00:07:07.740 --> 00:07:12.180
+there were several notable releases that make local and autonomous workflows much more practical.
+
+00:07:12.820 --> 00:07:20.280
+First, there's now a one-click open-class setup that combines Gemma 4 and twin 3.5 with turboquant caching and context warming.
+
+00:07:20.280 --> 00:07:25.460
+This makes viable local agents possible on a 16-gigabyte MacBook Air or Mac Mini
+
+00:07:25.460 --> 00:07:27.420
+at 10-15 tokens per second.
+
+00:07:27.860 --> 00:07:32.140
+The team also pushed patches to the law-mod.cpp turboquant implementation
+
+00:07:32.140 --> 00:07:34.440
+that significantly improved tool-calling reliability.
+
+00:07:35.300 --> 00:07:37.240
+In the practical tools section,
+
+00:07:37.500 --> 00:07:42.100
+the Kreitsberg document intelligence library just hit version 4.7.0.
+
+00:07:42.480 --> 00:07:47.340
+This rust core extraction library now supports 248 languages through tree-sitter
+
+00:07:47.340 --> 00:07:52.620
+and delivers AST-level code intelligence for functions, classes, imports, and symbols.
+
+00:07:53.160 --> 00:07:54.540
+The improvements are striking.
+
+00:07:54.920 --> 00:07:58.220
+Structural F1 scores jumped across 23 different formats.
+
+00:07:58.860 --> 00:08:01.620
+LiteX went from 0% to 100%,
+
+00:08:01.620 --> 00:08:07.980
+and PDF table extraction improved from 15.5% to 53.7%.
+
+00:08:07.980 --> 00:08:12.720
+It now ships as a clean open-web UI backend and includes a new tune format
+
+00:08:12.720 --> 00:08:16.600
+that reduces token usage in agent prompts by 30-50%.
+
+00:08:16.600 --> 00:08:22.320
+This is going to be a game-changer for any agent that needs to deeply understand code bases or complex documents.
+
+00:08:23.040 --> 00:08:29.520
+Simon Willison also released a small but very useful Python tool called Scan for Secrets, version 0.1.
+
+00:08:30.060 --> 00:08:35.920
+It scans directories for API keys and secrets, including common encodings and escaping variants.
+
+00:08:36.420 --> 00:08:40.900
+Built with Cloud Code using read-me-driven development and red-green test-driven development,
+
+00:08:40.900 --> 00:08:46.600
+it's perfect for safely publishing transcripts of local agent sessions without accidentally leaking credentials.
+
+00:08:47.180 --> 00:08:52.780
+Finally, there's a new project called Cadenza that adds intelligent 1B integration for agents.
+
+00:08:53.220 --> 00:09:00.440
+The CLI and Python SDK can import 1B projects, index runs by configuration and metrics,
+
+00:09:00.760 --> 00:09:04.200
+and return only the highest performing experiments to your agents.
+
+00:09:04.500 --> 00:09:08.940
+It's specifically designed to reduce context rot and help autonomous research loops
+
+00:09:08.940 --> 00:09:11.860
+make better exploration versus exploitation trade-offs.
+
+00:09:12.600 --> 00:09:14.320
+Here are the things you should try this week.
+
+00:09:15.060 --> 00:09:19.820
+1. Take auto agent and point the meta-optimizer at one of your existing agent tasks.
+
+00:09:20.260 --> 00:09:23.540
+Give it your current harness for terminal bench style coding or data analysis
+
+00:09:23.540 --> 00:09:27.620
+and see how many iterations it takes to outperform your manually tuned version.
+
+00:09:28.100 --> 00:09:29.420
+The results can be eye-opening.
+
+00:09:29.960 --> 00:09:38.500
+2. Run Gemma 426BA4B locally using unslots IQ for XS or IQ for NL quants.
+
+00:09:38.500 --> 00:09:42.140
+Try it on coding and vision tasks on 16GB hardware.
+
+00:09:42.640 --> 00:09:50.420
+Use temperature 0.3, Min-P0.1, and Image-Min-Token's 300 for strong vision performance.
+
+00:09:51.260 --> 00:09:56.800
+3. Test Kreutzberg 4.7.0 as your new document extraction backend.
+
+00:09:57.280 --> 00:10:03.880
+Feed it code repositories or mixed PDFs and spreadsheets, then compare token efficiency using the new tune format.
+
+00:10:04.720 --> 00:10:10.240
+4. If you're running autonomous research agents into great cadenza with your WAN B projects,
+
+00:10:10.760 --> 00:10:13.020
+the reduction in context rot is dramatic.
+
+00:10:14.040 --> 00:10:20.760
+5. Get in the habit of running scan for secrets before publishing any local clawed code or agent transcripts,
+
+00:10:20.760 --> 00:10:24.200
+especially detailed logs from auto agent or open claw runs.
+
+00:10:24.620 --> 00:10:29.640
+On the horizon, we should expect more releases and quant optimizations for the Gemma 4 family
+
+00:10:29.640 --> 00:10:33.920
+as the community continues pushing local agent performance on consumer hardware.
+
+00:10:34.420 --> 00:10:41.200
+The twin teams per step weighted reinforcement learning technique will likely make its way into future twin 3.6 releases.
+
+00:10:41.680 --> 00:10:47.860
+We'll also probably see more agent frameworks adopting structured document intelligence backends like Kreutzberg
+
+00:10:47.860 --> 00:10:53.800
+now that it offers clean AST level code extraction and smooth open web UI integration.
+
+00:10:53.800 --> 00:11:01.060
+And I expect the auto agent pattern of same model critic loops to spread rapidly through other open source agent projects.
+
+00:11:01.540 --> 00:11:08.480
+Before we go, tomorrow keep an eye on how quickly the auto agent pattern gets adopted across the broader open source ecosystem.
+
+00:11:09.000 --> 00:11:11.020
+This one feels like it could move fast.
+
+00:11:11.380 --> 00:11:17.720
+That wraps up today's AI briefing. If you found this valuable, share it with a developer or builder who wants to stay current.
+
+00:11:18.340 --> 00:11:20.560
+Subscribe wherever you listen and I'll see you tomorrow.
+
+00:11:20.560 --> 00:11:27.680
+This podcast is curated by Patrick but generated using AI voice synthesis of my voice using 11 labs.
+
+00:11:28.000 --> 00:11:34.000
+The primary reason to do this is I unfortunately don't have the time to be consistent with generating all the content
+
+00:11:34.000 --> 00:11:40.620
+and wanted to focus on creating consistent and regular episodes for all the themes that I enjoy and I hope others do as well.

@@ -158,6 +158,26 @@ const SHOW_NEWSLETTER_TAGS = new Set([
   "The Age of AI",
   "Offshore North",
   "Nerra Daily",
+  // September 2026 launch cohort (added 2026-10-01 — every show page had
+  // been offering a subscribe tag this Set silently dropped).
+  "AI Chips & Data Centres Daily",
+  "MAG 7 Daily",
+  "Peptides Weekly",
+  "Longevity Weekly",
+  "Vancouver Daily News",
+  "Collingwood Weekly",
+  "Prediction Markets Daily",
+  "Omni View Top World News",
+  "Omni View North America",
+  "Omni View Europe",
+  "Omni View Asia Pacific",
+  "Omni View Africa & Middle East",
+  "Omni View Central & South America",
+  // Two tags the show YAMLs had carried all along that this Set never
+  // did: DP Pod's short tag (the YAML's, which the tagging script writes)
+  // and Nerra Voices.
+  "DP Pod",
+  "Nerra Voices",
 ]);
 
 /** Resolve the client's `list` + `source` (+ optional show newsletter

@@ -744,6 +744,58 @@
             margin: 0.35rem 0 0;
         }
         .nn-iv-provenance span { white-space: nowrap; }
+        /* Episode provenance (Oct 2026): the one line under the AI badge on
+           a news post, from engine.brand.episode_provenance_parts, plus the
+           "Report an error" link beside it. Same type as the interview
+           provenance so the two shows read as one network. */
+        .nn-ep-provenance { text-align: center; }
+        .nn-ep-provenance a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .nn-ep-provenance a:hover { text-decoration: underline; }
+        /* Verified-claims panel: a collapsed list under Sources, one row per
+           claim with a link to the source it was checked against. Reuses
+           the transcript box's summary idiom (no marker, +/− at the end). */
+        .blog-claims { margin-top: var(--sp-6); }
+        .blog-claims details summary {
+            display: flex; align-items: center; gap: var(--sp-2);
+            cursor: pointer; padding: var(--sp-3) 0; list-style: none;
+            font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600;
+            color: var(--nn-white);
+        }
+        .blog-claims details summary::-webkit-details-marker { display: none; }
+        .blog-claims details summary::after {
+            content: '+'; margin-left: auto; font-size: 1.2rem; color: var(--nn-text-muted);
+        }
+        .blog-claims details[open] summary::after { content: '\2212'; }
+        .blog-claims .claims-note, .blog-claims .claims-none {
+            font-family: var(--font-ui); font-size: 0.85rem; color: var(--nn-text-muted);
+            line-height: 1.6; margin: 0 0 var(--sp-2);
+        }
+        .blog-claims ol { list-style: none; padding: 0; margin: var(--sp-2) 0 0; }
+        .blog-claims li {
+            padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-2);
+            background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 10px;
+            font-size: 0.95rem; line-height: 1.6;
+        }
+        .blog-claims .claim-source {
+            display: block; margin-top: 4px; font-family: var(--font-ui); font-size: 0.8rem;
+        }
+        .blog-claims .claim-source a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claim-source a:hover { text-decoration: underline; }
+        /* Correction box (engine.corrections): dated, at the top of the
+           article, before a reader meets the sentence that was wrong. */
+        .nn-correction {
+            margin: 0 0 var(--sp-6); padding: var(--sp-4) var(--sp-5);
+            border: 1px solid var(--show-color); border-left-width: 4px; border-radius: 10px;
+            background: var(--nn-card); font-size: 0.95rem; line-height: 1.6;
+        }
+        .nn-correction .nn-correction-label {
+            font-family: var(--font-ui); font-size: 0.75rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--show-color-text, var(--show-color)); margin: 0 0 var(--sp-1);
+        }
+        .nn-correction p { margin: 0 0 var(--sp-2); }
+        .nn-correction p:last-child { margin-bottom: 0; }
+        .nn-correction .nn-correction-where { font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); }
         .nn-iv-blurb-label {
             font-family: var(--font-ui);
             font-size: 0.72rem;
@@ -2026,6 +2078,95 @@
                 </div>
             </section>
             
+            <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
+                
+                <details>
+                    <summary>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Verified claims (25)
+                    </summary>
+                    <p class="claims-note">Each claim below was checked before publication: its source was fetched and the supporting quote was found in it.</p>
+                    <ol>
+                        <li>Argentina’s statistics institute reported poverty at 32.3 percent in the first half of 2026, up 4.1 points from 28.2 percent in the second half of 2025.
+                            <span class="claim-source"><a href="https://en.mercopress.com/2026/09/25/poverty-in-argentina-rises-to-32.3-ending-two-years-of-decline?utm_source=feed&utm_medium=rss&utm_content=main&utm_campaign=rss" target="_blank" rel="noopener" title="Poverty in Argentina rises to 32.3%, ending two years of decline">en.mercopress.com</a></span>
+                        </li>
+                        <li>Extreme poverty in Argentina rose from 6.3 percent to 7.5 percent.
+                            <span class="claim-source"><a href="https://en.mercopress.com/2026/09/25/poverty-in-argentina-rises-to-32.3-ending-two-years-of-decline?utm_source=feed&utm_medium=rss&utm_content=main&utm_campaign=rss" target="_blank" rel="noopener" title="Poverty in Argentina rises to 32.3%, ending two years of decline">en.mercopress.com</a></span>
+                        </li>
+                        <li>In 31 urban agglomerations, 9,729,000 people were below the poverty line and 2,249,000 below the extreme poverty line.
+                            <span class="claim-source"><a href="https://en.mercopress.com/2026/09/25/poverty-in-argentina-rises-to-32.3-ending-two-years-of-decline?utm_source=feed&utm_medium=rss&utm_content=main&utm_campaign=rss" target="_blank" rel="noopener" title="Poverty in Argentina rises to 32.3%, ending two years of decline">en.mercopress.com</a></span>
+                        </li>
+                        <li>Argentine media estimates put national poverty near 15.4 to 15.5 million people and extreme poverty around 3.6 million.
+                            <span class="claim-source"><a href="https://en.mercopress.com/2026/09/25/poverty-in-argentina-rises-to-32.3-ending-two-years-of-decline?utm_source=feed&utm_medium=rss&utm_content=main&utm_campaign=rss" target="_blank" rel="noopener" title="Poverty in Argentina rises to 32.3%, ending two years of decline">en.mercopress.com</a></span>
+                        </li>
+                        <li>44.5 percent of Argentines under 14 live in households below the poverty line.
+                            <span class="claim-source"><a href="https://en.mercopress.com/2026/09/25/poverty-in-argentina-rises-to-32.3-ending-two-years-of-decline?utm_source=feed&utm_medium=rss&utm_content=main&utm_campaign=rss" target="_blank" rel="noopener" title="Poverty in Argentina rises to 32.3%, ending two years of decline">en.mercopress.com</a></span>
+                        </li>
+                        <li>United Russia will hold 349 of 450 Duma seats, a record.
+                            <span class="claim-source"><a href="https://www.theglobeandmail.com/world/article-full-results-russian-parliamentary-election/" target="_blank" rel="noopener" title="Full results from Russia’s parliamentary election confirm Kremlin’s dominance">theglobeandmail.com</a></span>
+                        </li>
+                        <li>United Russia polled 58 percent of the party-list ballot and won 209 single-seat races.
+                            <span class="claim-source"><a href="https://www.theglobeandmail.com/world/article-full-results-russian-parliamentary-election/" target="_blank" rel="noopener" title="Full results from Russia’s parliamentary election confirm Kremlin’s dominance">theglobeandmail.com</a></span>
+                        </li>
+                        <li>Nearly 60 percent of 111 million eligible voters turned out.
+                            <span class="claim-source"><a href="https://www.theglobeandmail.com/world/article-full-results-russian-parliamentary-election/" target="_blank" rel="noopener" title="Full results from Russia’s parliamentary election confirm Kremlin’s dominance">theglobeandmail.com</a></span>
+                        </li>
+                        <li>Kyiv denounced voting in illegally annexed Ukrainian regions as illegal.
+                            <span class="claim-source"><a href="https://www.theglobeandmail.com/world/article-full-results-russian-parliamentary-election/" target="_blank" rel="noopener" title="Full results from Russia’s parliamentary election confirm Kremlin’s dominance">theglobeandmail.com</a></span>
+                        </li>
+                        <li>Putin said the election results showed public support for Kremlin policies.
+                            <span class="claim-source"><a href="https://www.theglobeandmail.com/world/article-full-results-russian-parliamentary-election/" target="_blank" rel="noopener" title="Full results from Russia’s parliamentary election confirm Kremlin’s dominance">theglobeandmail.com</a></span>
+                        </li>
+                        <li>Russia’s Supreme Court removed Yabloko from the ballot last month.
+                            <span class="claim-source"><a href="https://www.theglobeandmail.com/world/article-full-results-russian-parliamentary-election/" target="_blank" rel="noopener" title="Full results from Russia’s parliamentary election confirm Kremlin’s dominance">theglobeandmail.com</a></span>
+                        </li>
+                        <li>Macron said France would send soldiers, radar systems and defence systems to protect Yanbu and would not join combat.
+                            <span class="claim-source"><a href="https://www.scmp.com/news/world/middle-east/article/3368772/france-protect-key-saudi-oil-terminal-houthis-step-missile-attacks" target="_blank" rel="noopener" title="France to protect key Saudi oil terminal as Houthis step up missile attacks">scmp.com</a></span>
+                        </li>
+                        <li>Saudi Arabia said it intercepted missiles fired toward Yanbu and Taif, and the Houthis took responsibility for new attacks.
+                            <span class="claim-source"><a href="https://www.scmp.com/news/world/middle-east/article/3368772/france-protect-key-saudi-oil-terminal-houthis-step-missile-attacks" target="_blank" rel="noopener" title="France to protect key Saudi oil terminal as Houthis step up missile attacks">scmp.com</a></span>
+                        </li>
+                        <li>The Guardian reported Saudi Arabia intercepted six ballistic missiles and that a US war-powers measure failed 49-50.
+                            <span class="claim-source"><a href="https://www.theguardian.com/us-news/2026/sep/25/first-thing-netanyahu-lambast-israel-critics-un" target="_blank" rel="noopener" title="Netanyahu lambasts Israel’s critics at UN as New York protesters detained | First Thing">theguardian.com</a></span>
+                        </li>
+                        <li>A Russian drone strike hit central Kyiv before 8am on 25 September and killed a 14-year-old.
+                            <span class="claim-source"><a href="https://www.france24.com/en/video/20260925-ukraine-deadly-russian-drone-strike-hits-central-kyiv" target="_blank" rel="noopener" title="Ukraine: Deadly Russian drone strike hits central Kyiv">france24.com</a></span>
+                        </li>
+                        <li>The TPLF said it is in a full-blown war after seizing key airports and attacking into Amhara and Afar, days after joining six other armed groups.
+                            <span class="claim-source"><a href="https://www.france24.com/en/ethiopia-tigray-rebels-claim-full-blown-war" target="_blank" rel="noopener" title="Ethiopia: Tigray rebels claim "full-blown war"">france24.com</a></span>
+                        </li>
+                        <li>The 2020-2022 Ethiopia conflict killed at least 600,000 people, according to France 24.
+                            <span class="claim-source"><a href="https://www.france24.com/en/ethiopia-tigray-rebels-claim-full-blown-war" target="_blank" rel="noopener" title="Ethiopia: Tigray rebels claim "full-blown war"">france24.com</a></span>
+                        </li>
+                        <li>Ethiopia’s federal army said 272 rebels were killed and 260 wounded in the north.
+                            <span class="claim-source"><a href="https://www.france24.com/en/ethiopia-what-s-driving-the-renewed-violence-in-tigray" target="_blank" rel="noopener" title="Ethiopia: what's driving the renewed violence in Tigray?">france24.com</a></span>
+                        </li>
+                        <li>Odisha’s government evacuated more than 8,000 people after a deep depression crossed the Andhra Pradesh coast near Kalingapatnam.
+                            <span class="claim-source"><a href="https://www.thehindu.com/news/national/cyclone-arnab-heavy-rain-lashes-odisha-andhra-pradesh-red-alert-weather-live-updates-september-25-2026/article71506926.ece" target="_blank" rel="noopener" title="Heavy rain lashes Odisha; over 8,000 people evacuated, ministers rush to affected districts">thehindu.com</a></span>
+                        </li>
+                        <li>Nigeria’s electoral commission says it is deploying AI to detect discrepancies in election results before the 16 January 2027 elections.
+                            <span class="claim-source"><a href="https://www.bbc.com/pidgin/articles/cqlykxkemnldo" target="_blank" rel="noopener" title="Inec wan deploy AI for 2027 general elections">bbc.com</a></span>
+                        </li>
+                        <li>An Ipsos poll of 600 Alberta residents from September 18 to 22 found seven in ten plan to vote for Alberta to remain in Canada on October 19.
+                            <span class="claim-source"><a href="https://globalnews.ca/news/12072083/alberta-referendum-ipsos-september-2026/" target="_blank" rel="noopener" title="As referendum looms, 70% of Albertans want province to remain in Canada">globalnews.ca</a></span>
+                        </li>
+                        <li>Netanyahu said Israel’s war in Gaza is the opposite of genocide; delegates walked out and more than 100 people were arrested outside the UN.
+                            <span class="claim-source"><a href="https://www.theguardian.com/us-news/2026/sep/25/first-thing-netanyahu-lambast-israel-critics-un" target="_blank" rel="noopener" title="Netanyahu lambasts Israel’s critics at UN as New York protesters detained | First Thing">theguardian.com</a></span>
+                        </li>
+                        <li>The Trump-Xi White House summit produced no breakthrough on AI, trade, Taiwan or the war with Iran.
+                            <span class="claim-source"><a href="https://www.theglobeandmail.com/world/video-what-happened-when-trump-met-xi-big-fanfare-but-no-breakthrough/" target="_blank" rel="noopener" title="What happened when Trump met Xi: big fanfare, but no breakthrough">theglobeandmail.com</a></span>
+                        </li>
+                        <li>The European Commission fined X and Elon Musk jointly and severally 120 million euros, about 136.5 million dollars, in December 2025 for Digital Services Act violations.
+                            <span class="claim-source"><a href="https://www.tradingview.com/news/seekingalpha:6097c55f6094b:0-u-s-backs-elon-musk-s-challenge-to-eu-s-120m-fine-on-x/" target="_blank" rel="noopener" title="U.S. backs Elon Musk’s challenge to EU’s €120M fine on X">tradingview.com</a></span>
+                        </li>
+                        <li>Assistant Attorney General Brett Shumate said the Commission tried to expand its authority to American companies not present or operating in its jurisdiction.
+                            <span class="claim-source"><a href="https://www.tradingview.com/news/seekingalpha:6097c55f6094b:0-u-s-backs-elon-musk-s-challenge-to-eu-s-120m-fine-on-x/" target="_blank" rel="noopener" title="U.S. backs Elon Musk’s challenge to EU’s €120M fine on X">tradingview.com</a></span>
+                        </li>
+                    </ol>
+                </details>
+                
+            </section>
+            
 
             <!-- Chapters (July 2026): generated and shipped in the feeds
                  for months but surfaced nowhere on the site. Data is on
@@ -2236,10 +2377,13 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v4h1"/></svg>
   Made with AI — transparently
 </a>
-            </div><div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
+            </div>
+            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 12 sources</span><span aria-hidden="true"> · </span><span>25 claims checked against their sources</span><span aria-hidden="true"> · </span><span>hosted by an AI, voiced with Grok TTS</span><span aria-hidden="true"> · </span><a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20Omni%20View%20Top%20World%20News%20Ep3&body=Re%3A%20https%3A//nerranetwork.com/blog/omni_view_world/ep003.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
+            </p>
+            <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>👋 Did this episode land?</span>
-                <a href="mailto:patrick@planetterrian.com?subject=I%20liked%20Omni%20View%20Top%20World%20News%20Ep3&body=Re: https://nerranetwork.com/blog/omni_view_world/ep003.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
-                <a href="mailto:patrick@planetterrian.com?subject=Suggestion%20for%20Omni%20View%20Top%20World%20News&body=Re: https://nerranetwork.com/blog/omni_view_world/ep003.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
+                <a href="mailto:hello@nerranetwork.com?subject=I%20liked%20Omni%20View%20Top%20World%20News%20Ep3&body=Re: https://nerranetwork.com/blog/omni_view_world/ep003.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
+                <a href="mailto:hello@nerranetwork.com?subject=Suggestion%20for%20Omni%20View%20Top%20World%20News&body=Re: https://nerranetwork.com/blog/omni_view_world/ep003.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
             </div>
 
             <!-- Subscribe CTA (Worker-backed — no Buttondown popup / fake 500ms success) -->

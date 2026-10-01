@@ -1,0 +1,202 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:07.600
+What's up? Welcome to Models and Agents, episode 54 for May 20th, 2026, your daily AI briefing.
+
+00:00:08.040 --> 00:00:12.080
+Another day, another round of AI developments. Let's break it down.
+
+00:00:12.880 --> 00:00:19.340
+Gemini 3.5 Flash gives builders faster, cheaper frontier performance on coding and agent tasks,
+
+00:00:19.840 --> 00:00:23.780
+while Gemini Omni adds real-time multi-modal scene editing.
+
+00:00:24.580 --> 00:00:31.700
+Google released Gemini 3.5 Flash today with claims it outperforms the prior 3.1 pro on coding
+
+00:00:31.700 --> 00:00:38.100
+and agentic work. The model reportedly runs four times faster than competing frontier models
+
+00:00:38.100 --> 00:00:44.600
+and at roughly half the cost. Early users inside anti-gravity report 12 times speed-ups and
+
+00:00:44.600 --> 00:00:49.700
+800 tokens per second. It is already available in the Gemini app and anti-gravity,
+
+00:00:49.700 --> 00:00:55.800
+with a full pro variant promise soon. Builders working on agentic systems or high-volume
+
+00:00:55.800 --> 00:01:00.340
+coding tools should evaluate it immediately for latency-sensitive deployments.
+
+00:01:00.920 --> 00:01:05.980
+Watch for expanded context windows and deeper tool-calling integrations in the coming weeks.
+
+00:01:07.000 --> 00:01:14.180
+Alibaba simultaneously shipped twin 3.5 live-translate Flash for low-latency multi-modal translation
+
+00:01:14.180 --> 00:01:21.840
+across 60 languages. Now let's move into the model updates. Alibaba's Quen 3.5 live-translate
+
+00:01:21.840 --> 00:01:29.000
+Flash handles simultaneous audio and video input across 60 languages. It outputs speech in 29
+
+00:01:29.000 --> 00:01:35.920
+languages at 2.8 second latency. The model adds speaker voice cloning, lip-reading vision support,
+
+00:01:36.220 --> 00:01:42.340
+and dynamic keyword configuration for domain terms. It outperforms prior commercial systems on
+
+00:01:42.580 --> 00:01:49.120
+floors and co-votes two benchmarks. Access runs only through the Alibaba Cloud Model Studio
+
+00:01:49.120 --> 00:01:56.680
+WebSocket API. Gemini Omni brings major gains in world understanding and multimodal editing.
+
+00:01:57.380 --> 00:02:04.160
+The system accepts photos, video, and audio to generate entirely new scenes. Users can upload
+
+00:02:04.160 --> 00:02:09.400
+their own videos and iteratively refine outputs, with video handling as the initial focus.
+
+00:02:10.360 --> 00:02:14.680
+Over time, the system aims to support arbitrary input and output modalities.
+
+00:02:15.400 --> 00:02:21.560
+Now for the agent and tool developments. Red Hat expanded its AI factory platform with new
+
+00:02:21.560 --> 00:02:25.800
+Nvidia integrations and broader support for enterprise autonomous agents.
+
+00:02:26.660 --> 00:02:31.680
+The update targets production deployment of agentec workflows inside existing Red Hat
+
+00:02:31.680 --> 00:02:37.960
+infrastructure. Organizations already running OpenShift can now add agent capabilities without
+
+00:02:37.960 --> 00:02:44.440
+new hardware provisioning. K.AI launched an agent designed to automate back office insurance
+
+00:02:44.440 --> 00:02:50.960
+processes, including claims handling and policy servicing. The system focuses on structured workflows
+
+00:02:50.960 --> 00:02:57.140
+that require both document understanding and external tool calls. Early pilots target mid-size
+
+00:02:57.140 --> 00:03:02.900
+carriers looking to reduce manual review cycles. In the practical and community space,
+
+00:03:02.900 --> 00:03:10.320
+a new pre-print shows guardrails lifting an 8 billion parameter model from 53% to 99% success
+
+00:03:10.320 --> 00:03:16.740
+on agentec tasks. The approach adds lightweight safety layers without changing base model weights.
+
+00:03:17.640 --> 00:03:22.720
+Teams running smaller open models for agents should review the paper for immediate implementation
+
+00:03:22.720 --> 00:03:35.200
+patterns. A user running Quinn 3.6-27b on dual 6000 blackwell cards Vialama.cpp reports 100-110 tokens per
+
+00:03:35.200 --> 00:03:40.960
+second. The setup leaves headroom for embeddings and comfy UI, while using tenser splitting,
+
+00:03:41.280 --> 00:03:47.540
+flash attention, and speculative MTP decoding. Developers with similar hardware can copy the command
+
+00:03:47.540 --> 00:03:52.940
+flags to test further gains. Okay, let's pop the hood on guardrails for small agent models.
+
+00:03:53.580 --> 00:03:59.280
+Everyone talks about guardrails as a simple safety toggle. In practice, they are a layered
+
+00:03:59.280 --> 00:04:05.440
+filtering system that runs before and after the main model call. The first layer uses lightweight
+
+00:04:05.440 --> 00:04:11.740
+classifiers to block obvious policy violations in the prompt. A second layer inspects the
+
+00:04:11.740 --> 00:04:18.400
+model's planned tool calls and rewrites or rejects risky actions. The final layer scores the
+
+00:04:18.400 --> 00:04:24.920
+completed trajectory against task success and safety rubrics. Failures feed back into a short-term
+
+00:04:24.920 --> 00:04:30.860
+memory buffer. On the 8 billion parameter model in the recent pre-print, this stack raised agent
+
+00:04:30.860 --> 00:04:39.760
+success from 53% to 99%. It added roughly 15-25 milliseconds per turn and less than one gigabyte
+
+00:04:39.760 --> 00:04:46.680
+of extra VRAM. The quality lift shrinks one's base models exceed 30 billion parameters because
+
+00:04:46.680 --> 00:04:52.720
+their native instruction following already reduces unsafe outputs. Use guardrails when you
+
+00:04:52.720 --> 00:04:58.240
+must ship small models into production agents. Skip them only if you have both a large base
+
+00:04:58.240 --> 00:05:05.180
+model and exhaustive red teaming coverage. The gacha most teams miss is that guardrails must be
+
+00:05:05.180 --> 00:05:10.960
+updated whenever the underlying model or tool set changes. Otherwise, false negative rates climb
+
+00:05:10.960 --> 00:05:16.200
+quickly. So when should you actually reach for this versus the alternative? Reach for the guard
+
+00:05:16.200 --> 00:05:21.680
+rail stack on smaller models headed for customer-facing agents where safety margins matter most.
+
+00:05:22.580 --> 00:05:26.940
+Skip the overhead once your base model already clears red team checks at scale.
+
+00:05:27.660 --> 00:05:35.320
+Now for things to try this week. Try Gemini 3.5 Flash inside the Gemini app or anti-gravity for
+
+00:05:35.320 --> 00:05:41.420
+any coding or multi-step agent workflow. The speed and cost improvements are immediately noticeable
+
+00:05:41.420 --> 00:05:49.440
+versus prior frontier options. Test Quinn 3.5 Live Translate Flash via Alibaba Cloud Model Studio
+
+00:05:49.440 --> 00:05:55.600
+if you need real-time speech translation with vision or voice cloning. Add the guard rail patterns
+
+00:05:55.600 --> 00:06:03.620
+from the 8 billion agent paper to your local Lama-Ox CPP or VLLM setups before deploying smaller
+
+00:06:03.620 --> 00:06:12.100
+models in customer-facing agents. Run the provided blackwell lemma.cpp command on any dual GPU
+
+00:06:12.100 --> 00:06:20.000
+workstation to benchmark Quinn 3.6 to 27b throughput against your current inference stack.
+
+00:06:20.640 --> 00:06:26.800
+On the horizon, OpenAI plans to repeat its discounted token program for YC startups once
+
+00:06:26.800 --> 00:06:32.640
+current capacity sells out. And Thropic continues its series of dialogues with philosophers and
+
+00:06:32.640 --> 00:06:39.660
+ethicists on frontier AI character and alignment questions. Red Hat and NVIDIA are expected to release
+
+00:06:39.660 --> 00:06:44.980
+additional enterprise agent tooling on the updated AI factory platform in the coming quarter.
+
+00:06:45.700 --> 00:06:51.160
+Before we go, tomorrow keep an eye on updates to open AI's discounted token program for startups.
+
+00:06:51.800 --> 00:06:56.880
+That's models and agents for today. If you found this useful, share it with someone who's trying
+
+00:06:56.880 --> 00:07:01.200
+to keep up with all these changes, and subscribe so you don't miss tomorrow's update.
+
+00:07:01.920 --> 00:07:08.100
+The AI world moves fast. We'll help you keep up. See you tomorrow. This episode used AI voice
+
+00:07:08.100 --> 00:07:12.580
+synthesis of my voice. Editorial selection and analysis are my own.

@@ -1,0 +1,319 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:04.920
+Pull up a chair. This is Models and Agents Episode 95 for June 28, 2026.
+
+00:00:05.640 --> 00:00:09.300
+Let's see what happened in the AI world today, and trust me, it's been busy.
+
+00:00:09.880 --> 00:00:15.380
+The week's biggest developments pulled together, what actually moved, why it matters, and what to watch next.
+
+00:00:16.120 --> 00:00:21.000
+Openweight releases from Chinese labs kept landing with little warning while open AI
+
+00:00:21.000 --> 00:00:25.400
+pushed multiple GTT updates aimed at security and agent workflows.
+
+00:00:26.120 --> 00:00:32.120
+Inference techniques such as block diffusion and two tower designs showed measurable throughput gains
+
+00:00:32.120 --> 00:00:37.420
+on existing hardware. Agent memory frameworks and environment simulating models
+
+00:00:37.420 --> 00:00:43.720
+appeared alongside internal reports of longer running codex tasks inside open AI itself.
+
+00:00:44.780 --> 00:00:49.720
+GLM 5.2 arrived as the latest openweight release from a Chinese startup.
+
+00:00:50.180 --> 00:00:54.420
+Multiple outlets report the model is attracting attention in Silicon Valley
+
+00:00:54.420 --> 00:00:59.940
+for its performance relative to current open families. The release continues the pattern
+
+00:00:59.940 --> 00:01:05.720
+of rapid iteration from labs such as those behind Quen and DeepSeek, where new weights appear
+
+00:01:05.720 --> 00:01:11.520
+with minimal fanfare and quickly circulate through developer communities. Early coverage notes the
+
+00:01:11.520 --> 00:01:17.340
+model is being tested for both research and agent workloads, though concrete benchmark numbers and
+
+00:01:17.340 --> 00:01:23.380
+context length details remain sparse in initial reports. Builders working on cost-sensitive
+
+00:01:23.380 --> 00:01:29.240
+inference or fine-tuning experiments now have another candidate to benchmark against llama and
+
+00:01:29.240 --> 00:01:35.300
+mistral derivatives. Watch for fast inference integrations and any follow-on fine-tunes that
+
+00:01:35.300 --> 00:01:41.260
+typically appear within days of these releases. Remember the ongoing story of openweight models
+
+00:01:41.260 --> 00:01:45.820
+narrowing the gap with closed frontier systems that we tracked through last week.
+
+00:01:46.640 --> 00:01:52.820
+GLM 5.2 moves that arc forward by giving developers another immediate option without
+
+00:01:52.820 --> 00:02:01.560
+licensing friction. OpenAI expanded its daybreak program with GPT 5.5 cyber, codex security,
+
+00:02:02.200 --> 00:02:09.000
+and patch the planet. The release includes a full GPT 5.5 cyber model for tracing vulnerabilities,
+
+00:02:09.780 --> 00:02:16.100
+validating issues, and generating patches. The codex security plugin runs deep scans and exports
+
+00:02:16.100 --> 00:02:22.380
+to existing tools. It also adds a cyber partner program and direct work with maintainers via trail
+
+00:02:22.380 --> 00:02:28.840
+of bits and hacker one. The stack targets authorize defensive work only and keeps human review
+
+00:02:28.840 --> 00:02:35.140
+at the center of every remediation. Teams can now move from findings to merged fixes inside the
+
+00:02:35.140 --> 00:02:41.120
+same environment they already use for code. Watch for how security vendors integrate the new model
+
+00:02:41.120 --> 00:02:45.540
+through the partner program and whether open source projects see faster patch turnaround.
+
+00:02:46.160 --> 00:02:52.320
+This fits the frontier models thread we have followed since episode 94, where capability gains
+
+00:02:52.320 --> 00:02:59.700
+continue alongside tighter governance rules. UC San Diego's D Flash replaces standard speculative
+
+00:02:59.700 --> 00:03:06.160
+decoding with a lightweight block diffusion model that drafts entire token blocks in one forward pass.
+
+00:03:06.980 --> 00:03:12.960
+It conditions on target model hidden features via KV injection and ships with 20 checkpoints plus
+
+00:03:12.960 --> 00:03:24.200
+support for SGLANG, VALA-LM, and TENSER-RT-HIFEN-LLM. The approach reports up to 6.08 times lossless speedup
+
+00:03:24.200 --> 00:03:31.660
+on Quinn 38B and NVIDIA measured peaks of 15 times throughput on Blackwell hardware at fixed
+
+00:03:31.660 --> 00:03:37.880
+interactivity. Builders working on high throughput inference pipelines can now test the integration
+
+00:03:37.880 --> 00:03:43.940
+without custom drafting logic. Watch for community benchmarks on other model families and whether
+
+00:03:43.940 --> 00:03:50.040
+the block diffusion drafting generalizes beyond the reported setups. That development lands squarely
+
+00:03:50.040 --> 00:03:55.680
+in the AI compute and inference program we covered last week, where the focus remains on moving the
+
+00:03:55.680 --> 00:04:03.460
+cost curve without new silicon. Quinn released a 35B parameter mixture of experts model with only about
+
+00:04:03.460 --> 00:04:09.780
+3B active parameters per token. The model was trained to predict environment states rather than
+
+00:04:09.780 --> 00:04:15.860
+generate chat responses directly. Two additional agent world variants followed each focused on
+
+00:04:15.860 --> 00:04:23.260
+simulating tool, terminal, and GUI interactions. Developers can now fine tune or prompt these
+
+00:04:23.260 --> 00:04:29.260
+checkpoints to improve agent planning loops before deployment. The release keeps the open-weight
+
+00:04:29.260 --> 00:04:34.720
+family's conversation moving, testing whether environment specific pre-training closes more
+
+00:04:34.720 --> 00:04:43.760
+of the reliability gap on long horizon tasks. Open AI released an updated GPT 5.5 instant that improves
+
+00:04:43.760 --> 00:04:49.820
+intent understanding behind questions and adapts responses more reliably to complex constraints.
+
+00:04:50.520 --> 00:04:56.380
+The update also makes shopping and local recommendations more cohesive. It is rolling out today to
+
+00:04:56.380 --> 00:05:02.840
+paid users and tomorrow to free users. Builders should test prompts that previously produced inconsistent
+
+00:05:02.840 --> 00:05:09.060
+outputs on multi-constraint tasks to see whether the new version reduces follow-up clarification turns.
+
+00:05:09.920 --> 00:05:15.400
+Watch how the update interacts with agent workflows that chain multiple tool calls.
+
+00:05:16.040 --> 00:05:22.020
+Open AI stated that agents powered by codecs are now transforming work across every department,
+
+00:05:22.020 --> 00:05:27.600
+handling tasks that are more complex, longer running, and increasingly cross-functional.
+
+00:05:28.120 --> 00:05:35.020
+The company positions this internal usage as an early signal of how agentic tools will reshape workflows
+
+00:05:35.020 --> 00:05:40.760
+once they reach broader availability. No specific benchmarks or model versions were shared,
+
+00:05:41.240 --> 00:05:47.120
+but the emphasis on cross-functional scope suggests agents are moving beyond single user chat interfaces
+
+00:05:47.120 --> 00:05:53.580
+into multi-step, multi-stakeholder processes. Builders should note the implied requirements around
+
+00:05:53.580 --> 00:05:59.040
+reliability, state management, and tool interoperability that such deployments demand.
+
+00:05:59.700 --> 00:06:05.620
+Nvidia introduced Nemotron 2 Tower, a block-wise auto-regressive diffusion model built on
+
+00:06:05.620 --> 00:06:14.080
+Nemotron 3 Nano 30B A3B. The architecture splits context handling from diffusion denoising and
+
+00:06:14.080 --> 00:06:20.640
+delivers 2.4 two times throughput at near parity quality. The design targets the same inference
+
+00:06:20.640 --> 00:06:28.020
+economics questions we tracked earlier in the week. Open AI announced the GPT 5.6 family with
+
+00:06:28.020 --> 00:06:36.200
+soul as the new flagship, Terra for competitive performance at half the cost of GPT 5.5 and Luna as
+
+00:06:36.200 --> 00:06:42.020
+the lowest cost option. The family ships with a strengthened real-time safety stack that includes
+
+00:06:42.020 --> 00:06:50.460
+human red teaming and over 700,000 A100 equivalent GPU hours of testing. Soul sets a new state of the
+
+00:06:50.460 --> 00:06:57.540
+art on terminal bench 2.1 for complex command line workflows. The models introduce explicit cache
+
+00:06:57.540 --> 00:07:04.880
+breakpoints and a guaranteed 30-minute cache lifetime build at 1.25 times the uncashed input rate.
+
+00:07:05.640 --> 00:07:11.340
+The models are currently restricted to a limited preview for roughly 20 trusted partners after open
+
+00:07:11.340 --> 00:07:16.780
+AI shared plans with the US government. Broughter releases expected in the coming weeks.
+
+00:07:17.180 --> 00:07:22.440
+Builders gain clear tiered choices for intelligence versus cost on long horizon tasks.
+
+00:07:23.140 --> 00:07:29.860
+Anthropic regained limited US government approval to redeploy its Mythos 5 cybersecurity model
+
+00:07:29.860 --> 00:07:36.720
+to critical infrastructure operators. A new MR agent framework cuts long horizon agent memory
+
+00:07:36.720 --> 00:07:43.880
+costs dramatically versus Langmem. Simon Willison shipped the ski-light-dashed utles version 4 release
+
+00:07:43.880 --> 00:07:49.660
+candidate, adding built-in migrations and nested transaction support for developers working with
+
+00:07:49.660 --> 00:07:56.160
+local data. Temporary cloud flare accounts now let agents spin up ephemeral workers deployments in
+
+00:07:56.160 --> 00:08:01.940
+under a minute without an account. The seven types of agent memory guide and a detailed matrix
+
+00:08:01.940 --> 00:08:07.940
+recurrent units update provide concrete engineering references for builders. Naga translate
+
+00:08:07.940 --> 00:08:14.360
+demonstrates a full translation and voice pipeline for low resource nagaland creoles built on whisper,
+
+00:08:14.740 --> 00:08:21.880
+vits, and large language models. If you work with local databases the SQL ETU 12 release candidate
+
+00:08:21.880 --> 00:08:26.520
+is worth installing this week to test the new migration commands on a copy of your data.
+
+00:08:26.520 --> 00:08:31.720
+Developers exploring agent environments can pull the quen agent world checkpoints for
+
+00:08:31.720 --> 00:08:37.600
+model scope and run a short terminal simulation loop. Anyone testing inference speedups should add
+
+00:08:37.600 --> 00:08:45.040
+the deflash integration to an existing sglang or vllm setup and measure block level throughput on
+
+00:08:45.040 --> 00:08:52.760
+blackwell hardware. Keep an eye on devday 2026 in San Francisco on September 29 where the keynote will
+
+00:08:52.760 --> 00:09:00.160
+be live streamed. Brotter access to the GPT 5.6 family is also expected in the coming weeks.
+
+00:09:01.020 --> 00:09:04.900
+Okay let's pop the hood on the inference techniques that surface this week.
+
+00:09:05.560 --> 00:09:10.840
+Deflash moves beyond token by token speculative decoding by training a lightweight block
+
+00:09:10.840 --> 00:09:17.540
+diffusion model that proposes entire blocks in a single forward pass. KV injection from the target
+
+00:09:17.540 --> 00:09:23.420
+model hidden states conditions the draft removing the need for separate drafting logic at runtime.
+
+00:09:24.100 --> 00:09:32.880
+The reported 6.08 times lossless gain on quen 3.8 b and 15 times peak on blackwell comes from
+
+00:09:32.880 --> 00:09:37.360
+immortalizing the cost of the diffusion step across many tokens at once.
+
+00:09:38.340 --> 00:09:43.620
+Nemotron 2 tower takes a different route by decoupling auto regressive context in coding
+
+00:09:43.620 --> 00:09:50.680
+from diffusion based denoising in a two tower layout. The split allows the context tower to run once
+
+00:09:50.680 --> 00:09:57.600
+while the diffusion tower iterates only on the denoising task producing the measured 2.42 times
+
+00:09:57.600 --> 00:10:03.460
+throughput at near parity quality. When deciding between these approaches reach for deflash if you
+
+00:10:03.460 --> 00:10:12.340
+already run sglang or vllm and want plug-in speedups without retraining. Reach for two tower designs
+
+00:10:12.340 --> 00:10:18.600
+when your workload benefits from explicit separation of context and generation steps on Nvidia hardware.
+
+00:10:19.200 --> 00:10:27.180
+Before we go keep an eye on how the limited gpt 5.6 preview expands and whether follow on fine
+
+00:10:27.180 --> 00:10:33.640
+tunes of glm slash 5.2 appear in the next few days. That's models and agents for today.
+
+00:10:34.000 --> 00:10:37.980
+If you found this useful share it with someone who's trying to keep up with all these changes
+
+00:10:37.980 --> 00:10:45.020
+and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up.
+
+00:10:45.480 --> 00:10:51.620
+See you tomorrow and if you'd rather watch than listen find us on youtube at nura network links in
+
+00:10:51.620 --> 00:10:58.580
+the show notes. And before you go this show is part of the nera network, a family of daily podcasts on
+
+00:10:58.580 --> 00:11:05.200
+tech science and markets. Each one a short sharp briefing you can finish on the commute. If today
+
+00:11:05.200 --> 00:11:11.500
+earned its place in your feed, here's your next lesson. Tesla shorts time. Your daily deep dive into
+
+00:11:11.500 --> 00:11:19.440
+everything Tesla. Find every show free at nera network.com. This episode used AI voice synthesis of my
+
+00:11:19.440 --> 00:11:23.000
+voice. Editorial selection and analysis are my own.

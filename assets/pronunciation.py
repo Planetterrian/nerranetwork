@@ -38,7 +38,18 @@ def strip_emojis(text: str) -> str:
         "\U0001F680-\U0001F6FF"  # transport & map
         "\U0001F1E0-\U0001F1FF"  # flags
         "\U00002702-\U000027B0"  # dingbats
-        "\U000024C2-\U0001F251"  # enclosed chars
+        # Enclosed characters. Until Oct 1 2026 this one range read
+        # U+24C2..U+1F251 — which spans Hangul, every CJK block, kana and
+        # Yi — so any non-Latin publisher name was silently deleted from
+        # the spoken text: Tesla Ep622 aired "  reported the patent suit
+        # exposure…" for 디지털투데이. The four real enclosed blocks only:
+        "\U00002460-\U000024FF"  # enclosed alphanumerics
+        "\U00003200-\U000032FF"  # enclosed CJK letters and months
+        "\U0001F100-\U0001F1FF"  # enclosed alphanumeric supplement
+        "\U0001F200-\U0001F251"  # enclosed ideographic supplement
+        "\U000025A0-\U000025FF"  # geometric shapes (▲ ▼ ■ — the old range covered them)
+        "\U00002B00-\U00002BFF"  # misc symbols and arrows (⬆ ⭐)
+        "\U00002190-\U000021FF"  # arrows (→ ↑)
         "\U0001F900-\U0001F9FF"  # supplemental symbols
         "\U0001FA00-\U0001FA6F"  # chess symbols
         "\U0001FA70-\U0001FAFF"  # symbols extended-A
@@ -758,6 +769,8 @@ def replace_versus(text: str) -> str:
 
 
 _SUBREDDIT_RE = re.compile(r"(?<![\w/])r/([A-Za-z0-9_]{2,40})\b")
+_SUBREDDIT_DETERMINERS = ("the", "a", "an", "another", "one", "this", "that", "every",
+                          "each", "some", "any", "its", "his", "her", "their", "our", "my")
 
 
 def replace_subreddit_paths(text: str) -> str:
@@ -771,7 +784,11 @@ def replace_subreddit_paths(text: str) -> str:
     def _sub(m: re.Match) -> str:
         # "the r/SpaceXLounge area" must not become "the the SpaceXLounge
         # subreddit area" (SpaceX Ep093, 2026-09-07).
-        preceded = text[max(0, m.start() - 4):m.start()].lower().endswith("the ")
+        # …and "Another r/teslamotors thread" must not become "Another the
+        # teslamotors subreddit thread" (Tesla Ep622, 2026-10-01): any
+        # determiner already in place means no article is added.
+        before = text[max(0, m.start() - 12):m.start()].lower().rstrip()
+        preceded = before.endswith(_SUBREDDIT_DETERMINERS)
         return f"{'' if preceded else 'the '}{m.group(1)} subreddit"
 
     return _SUBREDDIT_RE.sub(_sub, text)

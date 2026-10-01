@@ -28,6 +28,19 @@ it back to "an AI host interviews people" — that sentence is not ours to claim
 
 from __future__ import annotations
 
+# ---------------------------------------------------------------------------
+# The one listener-facing address
+# ---------------------------------------------------------------------------
+#
+# 2026-10-01. The site disagreed with itself: ``editorial.html.j2`` told a
+# reader to send corrections to one mailbox, ``faq.html.j2`` and
+# ``contact.html.j2`` to another. A reader who finds a factual error is the
+# most valuable visitor a trust page ever gets, and three pages naming two
+# addresses is how that report ends up unanswered. This is the ONE address a
+# listener or reader is given, everywhere (the RSS owner email in
+# ``shows/_defaults.yaml`` is a directory-facing field and stays what it is).
+CONTACT_EMAIL = "hello@nerranetwork.com"
+
 # The three shows Mira hosts, in the order they should be introduced:
 # the free daily anchor, then the two interview shows.
 MIRA_SHOW_SLUGS = ("nerra_daily", "age_of_ai", "nerra_voices")
@@ -102,7 +115,7 @@ MIRA_FIRST_CLAIM_BASIS = (
 # should believe.
 MIRA_FIRST_CLAIM_FOOTNOTE = (
     "If you know of an interview show that was already doing this, we would "
-    "genuinely like to hear about it — write to hello@nerranetwork.com and "
+    f"genuinely like to hear about it — write to {CONTACT_EMAIL} and "
     "this page will say so."
 )
 
@@ -285,3 +298,81 @@ MIRA_INTERVIEW_STEPS = [
 #: conversation, the human edit, the transcript). The full list is on
 #: /mira.html. Indexes into :data:`MIRA_INTERVIEW_STEPS`.
 MIRA_INTERVIEW_STEPS_COMPACT = (0, 1, 4, 5, 6)
+
+
+# ---------------------------------------------------------------------------
+# Episode provenance — the one line under a news post's AI badge
+# ---------------------------------------------------------------------------
+#
+# 2026-10-01. The AI badge said "Made with AI — transparently" and then said
+# nothing. What a reader deciding whether to trust an AI-made news show wants
+# is the specific record of THIS episode: how many sources it was written
+# from, how many claims were checked against those sources, and whether
+# anything was removed because it could not be. All three numbers exist per
+# episode (the Sources section and the committed ``*_claims.json`` sidecar),
+# so the line is rendered from them — never typed, never rounded up. A zero
+# clause is omitted rather than written as "0 claims checked", EXCEPT the
+# sources clause, which is the one a reader must always be able to see.
+
+#: What voices every run_show episode. The TTS request has no model
+#: parameter (CLAUDE.md, LLM usage review), so there is no version to name.
+VOICE_PROVENANCE = "voiced with Grok TTS"
+
+#: The AI-host shows (``publishing.host_kind: ai`` — Mira) say so in the same
+#: line; the disclosure the episode speaks on air is the same fact.
+AI_HOST_PROVENANCE = "hosted by an AI"
+
+
+def _plural(n: int, singular: str, plural: str = "") -> str:
+    return f"{n:,} {singular if n == 1 else (plural or singular + 's')}"
+
+
+def episode_provenance_parts(
+    sources_count: int,
+    claims_verified: int = 0,
+    stripped: int = 0,
+    host_kind: str = "human",
+) -> list:
+    """The provenance phrases for one episode, in reading order.
+
+    ``sources_count`` is the number of distinct source cards the post
+    renders; ``claims_verified`` and ``stripped`` come from the claims
+    sidecar's ``gate`` block (``claims_verified``, ``len(stripped_sentences)``).
+    Zero claims and zero stripped sentences are omitted — the sentence must
+    not pad itself — but the sources clause is always present, and an
+    episode with no listed source says so in words rather than vanishing.
+    """
+    n_src = max(int(sources_count or 0), 0)
+    n_claims = max(int(claims_verified or 0), 0)
+    n_strip = max(int(stripped or 0), 0)
+    parts = []
+    if n_src:
+        parts.append(f"Written from {_plural(n_src, 'source')}")
+    else:
+        parts.append("No sources listed for this episode")
+    if n_claims:
+        parts.append(f"{_plural(n_claims, 'claim')} checked against "
+                     f"{'its source' if n_claims == 1 else 'their sources'}")
+    if n_strip:
+        parts.append(f"{_plural(n_strip, 'unverified sentence')} removed "
+                     "before publication")
+    if (host_kind or "human").strip().lower() == "ai":
+        parts.append(f"{AI_HOST_PROVENANCE}, {VOICE_PROVENANCE}")
+    else:
+        parts.append(VOICE_PROVENANCE)
+    return parts
+
+
+def episode_provenance(
+    sources_count: int,
+    claims_verified: int = 0,
+    stripped: int = 0,
+    host_kind: str = "human",
+) -> str:
+    """:func:`episode_provenance_parts` joined into one line, e.g.
+    ``Written from 14 sources · 6 claims checked against their sources ·
+    1 unverified sentence removed before publication · voiced with Grok TTS``.
+    """
+    return " · ".join(
+        episode_provenance_parts(sources_count, claims_verified, stripped, host_kind)
+    )

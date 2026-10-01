@@ -1,0 +1,169 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:28.420
+Gemini 3.7 Flash ships with targeted gains in software engineering and knowledge tasks, while carrying an introductory price set at half the original 3.6 Flash cost. The model also runs noticeably faster than prior Flash versions according to Demis Hassebus. This is Models &amp; Agents, episode 141. Google released the new Flash model with major upgrades for software engineering, web development, and knowledge work.
+
+00:00:28.420 --> 00:00:40.880
+Demis Hassebus highlighted the speed gains and positioned the release as immediately usable for builders. The move directly addresses the capability gains versus cost trajectory question that was active yesterday.
+
+00:00:41.580 --> 00:00:56.620
+Teams working on coding agents or web tooling should test the new pricing tier first to see where it beats existing options. DeepMind launched SL2T, a sign language to text model that lets users sign directly to phones for the first time.
+
+00:00:56.620 --> 00:01:09.360
+The model was developed in close collaboration with the deaf community. It marks the first time a production grade system supports direct signing input on consumer devices without intermediate translation steps.
+
+00:01:10.100 --> 00:01:21.600
+DeepSeek raised prices on its flagship models by a factor of 4. The move reverses earlier aggressive discounting and will affect cost calculations for teams relying on the open-weight family.
+
+00:01:21.600 --> 00:01:33.540
+Enterprises that had built workflows around the previous pricing must now re-evaluate total inference spend. The change applies across the company's main model lineup and takes effect immediately.
+
+00:01:34.320 --> 00:01:43.980
+A dedicated analysis from latent space frames the Gemini 3.7 Flash launch as bringing Google DeepMind back to the forefront of the frontier model race.
+
+00:01:43.980 --> 00:01:52.540
+The piece examines how the combination of speed, engineering focus and price reduction positions the model against competing offerings.
+
+00:01:53.080 --> 00:02:02.380
+Open AI added computer history to the chat GPT desktop app allowing the model to remember activity across apps and websites on the user's computer.
+
+00:02:02.380 --> 00:02:13.380
+The feature builds on the earlier chronicle preview with lower token usage and added privacy controls including timeline view, selective clearing and app or website exclusions.
+
+00:02:14.460 --> 00:02:23.040
+Users on Pro, Business and Enterprise plans can opt in via settings to integrations on Mac with EEA rollout coming later.
+
+00:02:23.040 --> 00:02:37.620
+The system also supports pausing and resuming history collection directly from the menu bar. Open AI released an ultrafast mode powered by cerebrus that reaches up to 750 tokens per second on its most intelligent model.
+
+00:02:38.260 --> 00:02:46.440
+The offering targets real-time voice, customer support, coding, design, financial research and security workflows where latency matters.
+
+00:02:46.440 --> 00:02:52.960
+It is positioned for enterprise use cases that need frontier intelligence without waiting on slower generation.
+
+00:02:53.680 --> 00:02:59.420
+A new timeline view lets users review past work and identify frequent tasks for skill building.
+
+00:03:00.060 --> 00:03:07.600
+Controls allow pausing history, excluding specific apps or sites and clearing partial or full records directly from the menu bar.
+
+00:03:07.600 --> 00:03:16.220
+The implementation reduces overall token consumption compared with the prior chronicle preview while maintaining personalization benefits.
+
+00:03:16.780 --> 00:03:24.300
+To activate computer history, users select the feature under settings to integrations inside the chat GPT desktop app on Mac.
+
+00:03:24.740 --> 00:03:34.100
+The rollout is currently global for Pro, Business and Enterprise tiers with access in the EEA, UK and Switzerland scheduled for the coming weeks.
+
+00:03:34.100 --> 00:03:43.500
+Simon Willison shared a live markdown to SVG renderer that accepts a just URL and renders at high, medium and low thinking levels.
+
+00:03:44.140 --> 00:03:49.000
+The tool exposes how different reasoning budgets affect output quality on the same prompt.
+
+00:03:49.720 --> 00:03:54.660
+Developers working on visual generation pipelines can test it immediately at the linked demo.
+
+00:03:54.660 --> 00:04:00.340
+The renderer also surfaces browser specific rendering differences that affect final output.
+
+00:04:01.220 --> 00:04:08.000
+Willison posted a high quality Pelican riding a bicycle image produced only when the model ran at the highest thinking level.
+
+00:04:08.760 --> 00:04:11.940
+Lower levels produced visibly weaker results on the same prompt.
+
+00:04:12.460 --> 00:04:18.580
+The example illustrates the practical value of spending extra test time compute on creative visual tasks.
+
+00:04:18.580 --> 00:04:28.020
+Willison also posted direct links to the full transcripts for the high, medium and low thinking runs so others can inspect the exact reasoning traces.
+
+00:04:28.600 --> 00:04:31.440
+Okay, let's pop the hood on constraint reasoning.
+
+00:04:32.000 --> 00:04:42.880
+Everyone talks about large language models knowing a rule when accuracy rises, yet the actual mechanism is often just surface level pattern matching rather than internal routing of the constraint.
+
+00:04:42.880 --> 00:04:53.400
+In practice, the model encodes the constraint symmetrically, whether the prompt contains it or not, but only sometimes activates that encoding during the final decision step.
+
+00:04:53.940 --> 00:05:03.660
+When activation fails, the model defaults to a conservative answer even though the constraint was represented in the hidden states at above 88% probe accuracy.
+
+00:05:04.440 --> 00:05:14.300
+Activation patching can restore the correct behavior in one failure mode, lifting log probability by roughly six knots, while the second mode shows almost no repair.
+
+00:05:15.000 --> 00:05:24.020
+The distinction matters because prompt-based interventions only inflate conservative bias through a single mediation path and never open the blocked routing channel.
+
+00:05:24.680 --> 00:05:32.600
+A quartet of diagnostic tests run across 14 models confirmed two distinct failure modes rather than a single uniform deficit.
+
+00:05:32.600 --> 00:05:48.980
+Teams building agents that must respect implicit feasibility constraints therefore need to measure routing success, not just final accuracy, and should prefer architectures or fine-tuning regimes that strengthen the activation step rather than adding more surface instructions.
+
+00:05:49.660 --> 00:05:57.580
+The same pattern appears in both open weight and closed models, indicating the bottleneck is architectural rather than training data specific.
+
+00:05:57.580 --> 00:06:05.800
+When the constraint is present but not routed, downstream repair via donor activation succeeds in only one of the two observed modes.
+
+00:06:06.360 --> 00:06:09.460
+So when should you actually reach for this versus the alternative?
+
+00:06:10.120 --> 00:06:18.000
+Run the four-conditioned diagnostic first to determine whether accuracy shortfalls stem from missing knowledge or from failed activation.
+
+00:06:18.000 --> 00:06:27.880
+Test Gemini 3.7 Flash on a current coding or web-dev task to see whether the halved price and speed gains change your daily modded choice.
+
+00:06:28.540 --> 00:06:37.620
+Enable computer history in the chat GPT desktop app if you work across multiple sites and want the model to retain context without repeated explanations.
+
+00:06:37.620 --> 00:06:47.980
+Run Simon Willison's SVG renderer on a visual generation prompt at high versus medium thinking levels to observe the quality jump for yourself.
+
+00:06:48.740 --> 00:06:58.460
+Compare the new ultra-fast cerebris backed endpoint against your current inference setup on a latency-sensitive workflow such as real-time support or code completion.
+
+00:06:58.460 --> 00:07:07.620
+Further regional rollout of chat GPT computer history to EEA, UK, and Switzerland users is expected in the coming weeks.
+
+00:07:08.280 --> 00:07:16.420
+Continued price and speed experiments across frontier flash-class models will likely continue as labs respond to the recent Gemini release.
+
+00:07:17.240 --> 00:07:24.580
+More sign language and accessibility multimodal releases may follow the SL2T pattern of community collaborative training.
+
+00:07:24.580 --> 00:07:32.740
+Before we go, further price adjustments from other labs are worth watching as the recent 4-fold increase from deep-seek ripples outward.
+
+00:07:33.400 --> 00:07:35.440
+That wraps up today's AI briefing.
+
+00:07:36.140 --> 00:07:39.220
+Share this with a developer or builder who wants to stay current.
+
+00:07:39.800 --> 00:07:42.180
+Subscribe wherever you listen. See you tomorrow.
+
+00:07:42.760 --> 00:07:48.420
+And if you'd rather watch than listen, find us on YouTube at Narrow Network, links in the show notes.
+
+00:07:48.420 --> 00:07:51.060
+This show comes to you from the Narrow Network.
+
+00:07:51.520 --> 00:07:59.680
+If you want another sharp daily briefing, Offshore North has you covered. Offshore Ocean Racing explained every Monday with a Canadian angle.
+
+00:08:00.300 --> 00:08:03.120
+All our shows are free at NarrowNetwork.com.
+
+00:08:03.500 --> 00:08:09.780
+New to the network, NarrowNetwork.com start here, picks the right daily briefing for you in about two minutes.
+
+00:08:10.440 --> 00:08:16.840
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

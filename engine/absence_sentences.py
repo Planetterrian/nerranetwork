@@ -77,7 +77,19 @@ _PATTERNS = [
 ]
 
 # Lines that are structure, not prose.
-_SKIP_LINE = re.compile(r"^\s*(?:#|>|\*\*[^*]+\*\*\s*$|[-*]\s|\d+[.)]\s|```|Source:)")
+_SKIP_LINE = re.compile(r"^\s*(?:#|>|\*\*[^*]+\*\*\s*$|[-*]\s|\d+[.)]\s|```|Source:|Ranks:)")
+
+# Oct 1 2026, Top World Ep009: the model joined each item's reader-only
+# ``Ranks:`` line and its ``Source:`` line into ONE line ("Ranks: … · no
+# figure given · now Source: https://…"). The ranking clause reads as an
+# absence sentence by design (the prompt asks for "two words" where the item
+# cannot support a clause), the line had one "sentence", so the whole line
+# went — URL included. Eight of ten items shipped with no Source, the
+# published lint metric still read 0 missing (it ran before this filter),
+# and the claims gate saw two sourced items. A line that carries a URL or
+# a Source label is never dropped whole: the Source tail is kept verbatim.
+_SOURCE_TAIL_RE = re.compile(r"(\bSource:\s*\S.*)$")
+_URL_RE = re.compile(r"https?://\S+")
 _SENT_SPLIT = re.compile(r"(?<=[.!?])\s+(?=[A-Z\"“‘'(\[])")
 
 
@@ -174,18 +186,35 @@ def strip_absence_sentences(text: str) -> Tuple[str, int]:
             out.append(line)
             continue
         lead = line[: len(line) - len(line.lstrip())]
-        parts = _SENT_SPLIT.split(line.strip())
+        body = line.strip()
+        tail = ""
+        m_tail = _SOURCE_TAIL_RE.search(body)
+        if m_tail and m_tail.start() > 0:
+            # A Source tail glued onto prose: judge the prose, keep the tail.
+            body, tail = body[: m_tail.start()].rstrip(), m_tail.group(1)
+        elif _URL_RE.search(body):
+            # A URL inside prose is a citation; the sentence that carries it
+            # is never an absence sentence to remove.
+            out.append(line)
+            continue
+        parts = _SENT_SPLIT.split(body)
         keep = [p for p in parts if not is_absence_sentence(p)]
         prose_kept = [p for p in keep if not p.lower().startswith("source:")]
         if not prose_kept:
             # Every sentence was an absence sentence. A one-sentence line
             # (a script line) goes; a multi-sentence item keeps its first.
-            if len(parts) == 1:
+            if len(parts) == 1 and not tail:
                 removed += 1
+                continue
+            if len(parts) == 1:
+                # The only prose was an absence clause but a Source rides
+                # on the line: the citation stays, the clause goes.
+                removed += 1
+                out.append(lead + tail)
                 continue
             keep = [parts[0]] + [p for p in keep if p.lower().startswith("source:")]
         removed += len(parts) - len(keep)
-        out.append(lead + " ".join(keep))
+        out.append(lead + " ".join(keep + ([tail] if tail else [])))
     result = "\n".join(out)
     result = re.sub(r"\n{3,}", "\n\n", result)
     return result, removed

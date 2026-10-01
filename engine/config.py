@@ -1205,6 +1205,12 @@ class ShowConfig:
     # in 5 of 10 Tesla episodes past three existing dedup layers.
     # Default False; the daily news shows opt in per-YAML.
     story_recurrence: bool = False
+    # Same-story clustering (Oct 2026, engine/story_clusters.py): articles
+    # that tell ONE story from several outlets carry an inline "write one
+    # item, fold this angle in" note in the digest prompt. Tesla Ep622
+    # carried the Model 3 refresh as eight items and spoke it five times.
+    # Default False; the news shows opt in per-YAML.
+    story_clusters: bool = False
     web_search_queries: List[str] = field(default_factory=list)
     # Run web_search_queries on EVERY episode, not only when the on-topic
     # article count falls below min_articles. For shows whose key sources
@@ -1485,6 +1491,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         exclude_title_patterns=data.get("exclude_title_patterns", []),
         entity_dedup_ignore=[str(w) for w in (data.get("entity_dedup_ignore") or [])],
         story_recurrence=bool(data.get("story_recurrence", False)),
+        story_clusters=bool(data.get("story_clusters", False)),
         web_search_queries=data.get("web_search_queries", []),
         web_search_always=bool(data.get("web_search_always", False)),
         fetch_full_text=int(data.get("fetch_full_text", 0) or 0),

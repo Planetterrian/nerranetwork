@@ -1,0 +1,748 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:04.420
+It's a new day on Tesla Short's time, episode 553.
+
+00:00:04.980 --> 00:00:08.960
+It's July 26th, 2026, and I'm Patrick and Vancouver.
+
+00:00:09.720 --> 00:00:11.820
+Here's what you need to know about Tesla today.
+
+00:00:12.860 --> 00:00:17.180
+Tesla's wafer scale AI design can now isolate an overheating
+
+00:00:17.180 --> 00:00:20.020
+dye and keep the rest of the training fabric running
+
+00:00:20.020 --> 00:00:21.740
+without engineer intervention.
+
+00:00:22.400 --> 00:00:25.780
+Each dye carries embedded sensors that report temperature,
+
+00:00:25.780 --> 00:00:30.080
+voltage, current, power, workload, bandwidth, and latency,
+
+00:00:30.360 --> 00:00:31.760
+along with its wafer address.
+
+00:00:33.000 --> 00:00:35.180
+Microcontrollers at the edge filter the stream
+
+00:00:35.180 --> 00:00:38.580
+and escalate only relevant readings to a central controller.
+
+00:00:39.260 --> 00:00:42.560
+When thresholds are crossed, the controller can throttle power,
+
+00:00:42.940 --> 00:00:46.260
+deactivate the dye, or repartition compute fabric,
+
+00:00:46.580 --> 00:00:48.500
+so healthier sections absorb the load.
+
+00:00:49.140 --> 00:00:51.600
+Stored telemetry creates a live health map
+
+00:00:51.600 --> 00:00:54.600
+and digital flight recorder for the entire data center.
+
+00:00:55.320 --> 00:00:58.940
+Signals from power and cooling infrastructure feed the same loop,
+
+00:00:59.580 --> 00:01:02.440
+widening oversight from single dyes to full racks.
+
+00:01:03.200 --> 00:01:05.640
+The approach turns a local silicon fault
+
+00:01:05.640 --> 00:01:09.000
+into a contained event rather than a system-wide throttle
+
+00:01:09.000 --> 00:01:09.680
+or shutdown.
+
+00:01:10.520 --> 00:01:13.620
+A wafer scale processor packs thousands of dyes
+
+00:01:13.620 --> 00:01:16.080
+so tightly that one local fault can throttle
+
+00:01:16.080 --> 00:01:17.660
+or halt the entire array.
+
+00:01:18.500 --> 00:01:21.700
+Tesla's approach embeds sensors and a control fabric
+
+00:01:21.700 --> 00:01:24.860
+that lets the system detect heat or voltage problems,
+
+00:01:25.340 --> 00:01:28.280
+isolate the affected dye and reallocate work
+
+00:01:28.280 --> 00:01:31.580
+to the remaining silicon without waiting for human intervention.
+
+00:01:32.340 --> 00:01:35.280
+The result is a compute cluster that behaves more
+
+00:01:35.280 --> 00:01:37.960
+like a resilient organism than a brittle machine
+
+00:01:37.960 --> 00:01:40.820
+whose weakest square dictates overall performance.
+
+00:01:41.840 --> 00:01:44.340
+Every dye reports its own vital signs
+
+00:01:44.340 --> 00:01:47.740
+through dedicated telemetry paths and microcontrollers
+
+00:01:47.740 --> 00:01:50.680
+at the edge decide what data deserves escalation.
+
+00:01:51.640 --> 00:01:53.100
+When a threshold is crossed,
+
+00:01:53.420 --> 00:01:56.600
+the central controller can choke power, quarantine the dye,
+
+00:01:57.140 --> 00:02:00.000
+or hand its workload to neighboring healthy sections.
+
+00:02:00.680 --> 00:02:03.120
+That resilience matters because training runs
+
+00:02:03.120 --> 00:02:06.900
+for FSD and Optimus stretch across weeks or months.
+
+00:02:07.700 --> 00:02:09.580
+By handling faults at the dye level,
+
+00:02:09.800 --> 00:02:13.080
+the design reduces the frequency of full system restarts
+
+00:02:13.080 --> 00:02:16.140
+and keeps utilization higher across the cortex
+
+00:02:16.140 --> 00:02:17.460
+and dojo clusters.
+
+00:02:18.380 --> 00:02:21.220
+Higher sustained utilization means fewer racks
+
+00:02:21.220 --> 00:02:23.820
+are needed to deliver the same training throughput,
+
+00:02:24.380 --> 00:02:27.300
+which directly lowers the cost per inference hour
+
+00:02:27.300 --> 00:02:29.140
+and per robot training cycle.
+
+00:02:29.820 --> 00:02:32.400
+From keeping training clusters running reliably,
+
+00:02:32.800 --> 00:02:35.200
+we turned to how that training is already showing up
+
+00:02:35.200 --> 00:02:36.100
+on public roads.
+
+00:02:36.960 --> 00:02:40.220
+Tesla reported more than 380,000 miles
+
+00:02:40.220 --> 00:02:43.720
+of unsupervised ride hailing across several states
+
+00:02:43.720 --> 00:02:45.300
+with no notable incidents.
+
+00:02:46.060 --> 00:02:49.620
+AI Vice President Ashok Ellis-Wami shared the figure
+
+00:02:49.620 --> 00:02:51.400
+during the Q2 earnings call.
+
+00:02:51.960 --> 00:02:54.300
+The data covers real-world operation
+
+00:02:54.300 --> 00:02:55.620
+without safety drivers.
+
+00:02:56.260 --> 00:02:59.740
+The mileage total spans multiple regulatory jurisdictions
+
+00:02:59.740 --> 00:03:02.640
+where unsupervised service is already active.
+
+00:03:03.240 --> 00:03:05.840
+No safety critical interventions were required
+
+00:03:05.840 --> 00:03:07.640
+across the accumulated distance.
+
+00:03:08.340 --> 00:03:11.660
+The new service is now active in Orlando and Tampa
+
+00:03:11.660 --> 00:03:14.060
+alongside Texas and California.
+
+00:03:14.800 --> 00:03:17.940
+While the fleet miles grow, individual driver reports
+
+00:03:17.940 --> 00:03:20.540
+give a ground-level view of the same software.
+
+00:03:21.220 --> 00:03:24.280
+One driver reported a smooth 31 mile run
+
+00:03:24.280 --> 00:03:27.940
+with minimal interventions on both public roads and highways.
+
+00:03:28.720 --> 00:03:30.980
+The system handled standard highway segments
+
+00:03:30.980 --> 00:03:34.260
+and city streets without notable issues during the session.
+
+00:03:35.160 --> 00:03:36.820
+The first phantom break occurred
+
+00:03:36.820 --> 00:03:39.040
+when passing shadows of utility poles.
+
+00:03:39.800 --> 00:03:42.260
+A scenario the driver noted happens frequently
+
+00:03:42.260 --> 00:03:43.460
+in the current build.
+
+00:03:43.960 --> 00:03:46.900
+The incident was logged during an evening demo drive
+
+00:03:46.900 --> 00:03:48.740
+of the V14 light release.
+
+00:03:49.500 --> 00:03:51.880
+A passenger identified the shadow pattern
+
+00:03:51.880 --> 00:03:53.180
+as a recurring trigger.
+
+00:03:53.800 --> 00:03:56.740
+This continues the pattern of incremental supervised
+
+00:03:56.740 --> 00:04:00.260
+FSD improvements seen in recent software versions
+
+00:04:00.920 --> 00:04:03.000
+from software on the road to the hardware
+
+00:04:03.000 --> 00:04:05.080
+that will eventually carry it at scale.
+
+00:04:06.040 --> 00:04:07.980
+Eight cyber cab units were observed
+
+00:04:07.980 --> 00:04:09.940
+at the San Antonio Tesla Center,
+
+00:04:10.340 --> 00:04:12.800
+some equipped with steering wheels and others without.
+
+00:04:13.620 --> 00:04:15.920
+The sighting shows continued physical presence
+
+00:04:15.920 --> 00:04:18.260
+of the vehicle ahead of wider deployment.
+
+00:04:19.000 --> 00:04:21.920
+Owners and visitors documented the vehicles on site.
+
+00:04:22.640 --> 00:04:25.480
+The mix of steered and steered by wire examples
+
+00:04:25.480 --> 00:04:28.020
+indicates parallel hardware configurations
+
+00:04:28.020 --> 00:04:29.440
+still in circulation.
+
+00:04:30.240 --> 00:04:31.900
+The location places the units
+
+00:04:31.900 --> 00:04:34.500
+at a major Texas service and delivery hub.
+
+00:04:35.120 --> 00:04:37.500
+While the Robotaxi hardware takes shape,
+
+00:04:37.920 --> 00:04:40.500
+Optimus production expectations are being set.
+
+00:04:41.080 --> 00:04:44.000
+Elon Musk stated that Optimus production will begin
+
+00:04:44.000 --> 00:04:47.200
+with a long and flat ramp before volume increases.
+
+00:04:47.940 --> 00:04:50.900
+The update aligns with ongoing factory construction
+
+00:04:50.900 --> 00:04:52.080
+at Yiga, Texas.
+
+00:04:52.740 --> 00:04:55.400
+Early output remains targeted for internal use
+
+00:04:55.400 --> 00:04:56.940
+before external sales.
+
+00:04:57.580 --> 00:04:59.300
+The warning sets expectations
+
+00:04:59.300 --> 00:05:03.000
+that initial weekly rates will stay low for an extended period.
+
+00:05:03.560 --> 00:05:05.440
+Supply chain readiness is cited
+
+00:05:05.440 --> 00:05:08.760
+as the primary pacing factor ahead of any acceleration.
+
+00:05:09.560 --> 00:05:11.340
+From humanoid production timelines
+
+00:05:11.340 --> 00:05:14.300
+to supporting hardware updates on current vehicles.
+
+00:05:15.220 --> 00:05:17.140
+Unreleased camera washer components
+
+00:05:17.140 --> 00:05:19.140
+for the refreshed Model Y appeared
+
+00:05:19.140 --> 00:05:21.240
+in official service parts databases.
+
+00:05:22.040 --> 00:05:25.080
+The addition indicates preparation for hardware support
+
+00:05:25.080 --> 00:05:26.380
+on upcoming vehicles.
+
+00:05:27.340 --> 00:05:29.320
+Service centers can now order the parts
+
+00:05:29.320 --> 00:05:30.920
+ahead of customer deliveries.
+
+00:05:31.560 --> 00:05:33.760
+The components address a known limitation
+
+00:05:33.760 --> 00:05:36.620
+in camera cleanliness during adverse weather.
+
+00:05:37.280 --> 00:05:39.600
+Catalog presence typically precedes
+
+00:05:39.600 --> 00:05:41.940
+broader availability by several weeks.
+
+00:05:42.640 --> 00:05:44.060
+From vehicle hardware tweaks
+
+00:05:44.060 --> 00:05:46.280
+to energy storage performance limits.
+
+00:05:46.760 --> 00:05:49.180
+A homeowner reported that extreme heat
+
+00:05:49.180 --> 00:05:50.840
+prevented the power wall three
+
+00:05:50.840 --> 00:05:53.600
+from reaching a complete charge during peak conditions.
+
+00:05:54.560 --> 00:05:56.120
+The unit continued operating
+
+00:05:56.120 --> 00:05:59.760
+but delivered reduced capacity under the high temperature load.
+
+00:06:00.220 --> 00:06:02.820
+The 104 degree environment directly
+
+00:06:02.820 --> 00:06:05.960
+limited the battery's ability to accept full input.
+
+00:06:06.680 --> 00:06:08.340
+This highlights a practical limit
+
+00:06:08.340 --> 00:06:11.300
+for residential storage performance in hot climates.
+
+00:06:12.060 --> 00:06:15.240
+Thermal constraints appear to cap daily energy throughput
+
+00:06:15.240 --> 00:06:17.520
+even when the system remains online.
+
+00:06:18.220 --> 00:06:20.200
+Sustained high ambient temperatures
+
+00:06:20.200 --> 00:06:22.880
+appear to constrain daily energy acceptance
+
+00:06:22.880 --> 00:06:25.520
+even when solar input remains available.
+
+00:06:26.080 --> 00:06:27.980
+From residential storage limits
+
+00:06:27.980 --> 00:06:31.020
+to service challenges on least solar systems.
+
+00:06:31.740 --> 00:06:33.760
+Owners with least solar installations
+
+00:06:33.760 --> 00:06:37.320
+report repeated service delays when panels cease output.
+
+00:06:38.080 --> 00:06:40.620
+Each missed repair appointment extends downtime
+
+00:06:40.620 --> 00:06:42.300
+by an additional two weeks.
+
+00:06:43.120 --> 00:06:44.860
+The pattern affects system reliability
+
+00:06:45.400 --> 00:06:48.100
+and customer experience for least solar assets.
+
+00:06:48.740 --> 00:06:51.900
+Multiple no-shows compound the lost generation period
+
+00:06:51.900 --> 00:06:53.320
+beyond the initial failure.
+
+00:06:54.040 --> 00:06:56.900
+Least customers face longer resolution timelines
+
+00:06:56.900 --> 00:06:59.480
+than direct owners in similar situations.
+
+00:07:00.160 --> 00:07:01.940
+From Tesla's own energy products
+
+00:07:01.940 --> 00:07:04.400
+to competitive pressure in electric trucking.
+
+00:07:04.980 --> 00:07:06.600
+Windrose announced deployment
+
+00:07:06.600 --> 00:07:10.700
+of 10 electric semis along the I-35 freight route in Texas.
+
+00:07:11.540 --> 00:07:13.300
+The trucks will operate in a corridor
+
+00:07:13.300 --> 00:07:16.220
+already served by Tesla's own semi-program.
+
+00:07:16.900 --> 00:07:18.840
+The move adds competitive pressure
+
+00:07:18.840 --> 00:07:22.080
+on long haul electric truck economics in the state.
+
+00:07:22.720 --> 00:07:25.520
+10 units represent an early commercial foothold
+
+00:07:25.520 --> 00:07:26.780
+for the rival platform.
+
+00:07:27.700 --> 00:07:31.660
+Texas freight volume on I-35 provides a direct test bed
+
+00:07:31.660 --> 00:07:33.400
+for real-world duty cycles.
+
+00:07:33.980 --> 00:07:35.800
+From competing trucks on the road
+
+00:07:35.800 --> 00:07:38.480
+to other vehicles using Tesla's charging network.
+
+00:07:38.920 --> 00:07:41.440
+Ford is testing its upcoming electric pickups
+
+00:07:41.440 --> 00:07:43.420
+on the Tesla Supercharger network.
+
+00:07:44.360 --> 00:07:46.280
+The sessions evaluate compatibility
+
+00:07:46.280 --> 00:07:50.280
+and charging performance ahead of wider NACS adoption.
+
+00:07:51.040 --> 00:07:53.600
+Results will inform how non-Tesla trucks
+
+00:07:53.600 --> 00:07:56.020
+integrate into the open access network.
+
+00:07:56.940 --> 00:07:59.540
+Multiple vehicle configurations are being run
+
+00:07:59.540 --> 00:08:01.300
+through standard stall sequences.
+
+00:08:02.120 --> 00:08:03.900
+Data collected will shape firmware
+
+00:08:03.900 --> 00:08:06.940
+and connector expectations for future Ford models.
+
+00:08:07.400 --> 00:08:09.480
+From charging access to a quick look
+
+00:08:09.480 --> 00:08:11.520
+at other market and regulatory notes.
+
+00:08:12.340 --> 00:08:15.240
+Tesla disclosed its Bitcoin activity for the quarter
+
+00:08:15.240 --> 00:08:17.300
+without major sales or purchases.
+
+00:08:17.940 --> 00:08:19.940
+The filing shows the company maintained
+
+00:08:19.940 --> 00:08:21.940
+its existing holdings through the period.
+
+00:08:22.660 --> 00:08:24.900
+This continues Tesla's longstanding
+
+00:08:24.900 --> 00:08:27.300
+but low activity approach to the asset.
+
+00:08:28.120 --> 00:08:30.560
+Investors watch these updates for any shift
+
+00:08:30.560 --> 00:08:31.820
+in treasury strategy.
+
+00:08:32.420 --> 00:08:35.000
+No material gains or losses were realized
+
+00:08:35.000 --> 00:08:37.440
+from crypto movements in the reported quarter.
+
+00:08:38.040 --> 00:08:41.060
+The position remains unchanged from prior disclosures.
+
+00:08:41.420 --> 00:08:44.240
+The investment firm Entropy Technologies LP
+
+00:08:44.240 --> 00:08:48.620
+added a modest position in TSLA during the recent period.
+
+00:08:49.060 --> 00:08:51.800
+The purchase appears in regulatory filings
+
+00:08:51.800 --> 00:08:54.460
+and reflects continued institutional interest
+
+00:08:54.460 --> 00:08:56.040
+despite price volatility.
+
+00:08:56.720 --> 00:08:58.520
+Such moves provide a snapshot
+
+00:08:58.520 --> 00:09:01.100
+of smaller fund activity around the stock.
+
+00:09:01.780 --> 00:09:06.280
+The 13,444 share stake represents a new entry
+
+00:09:06.280 --> 00:09:08.840
+rather than an increase to an existing holding.
+
+00:09:09.760 --> 00:09:11.040
+Filings place the transaction
+
+00:09:11.040 --> 00:09:13.160
+in the most recent reporting window.
+
+00:09:13.880 --> 00:09:16.860
+A non-Tesla non-BYD manufacturer
+
+00:09:16.860 --> 00:09:19.060
+launched the first production electric car
+
+00:09:19.060 --> 00:09:21.020
+using sodium ion cells.
+
+00:09:21.500 --> 00:09:23.900
+The vehicle targets lower cost segments
+
+00:09:23.900 --> 00:09:26.220
+where energy density demands are modest.
+
+00:09:26.860 --> 00:09:29.580
+Its arrival marks the first real world test
+
+00:09:29.580 --> 00:09:31.960
+of sodium chemistry in passenger cars
+
+00:09:31.960 --> 00:09:33.960
+outside major Chinese players.
+
+00:09:34.720 --> 00:09:37.680
+The chemistry trades range for lower material costs
+
+00:09:37.680 --> 00:09:39.720
+and improved cold weather tolerance.
+
+00:09:40.500 --> 00:09:42.720
+Production timing places the model ahead
+
+00:09:42.720 --> 00:09:45.140
+of any announced TSLA sodium program.
+
+00:09:45.940 --> 00:09:48.840
+TSLA's Model Y topped the EV sales chart
+
+00:09:48.840 --> 00:09:53.040
+as battery electric vehicles reached 37.7%
+
+00:09:53.040 --> 00:09:54.020
+of the German market.
+
+00:09:54.640 --> 00:09:56.620
+The result shows continued strength
+
+00:09:56.620 --> 00:09:59.620
+for the current Model Y in a key European market
+
+00:09:59.620 --> 00:10:01.820
+even as refreshed versions approach.
+
+00:10:02.740 --> 00:10:05.760
+Market share data provides a concrete read on demand
+
+00:10:05.760 --> 00:10:07.940
+ahead of potential juniper changes.
+
+00:10:08.760 --> 00:10:12.180
+The Model Y outpaced other battery electric nameplates
+
+00:10:12.180 --> 00:10:14.060
+in the monthly registration figures.
+
+00:10:14.840 --> 00:10:19.820
+Overall, EV penetration at 37.7% marks a new high
+
+00:10:19.820 --> 00:10:21.920
+for the German passenger car segment.
+
+00:10:22.880 --> 00:10:25.000
+Uber filed comments seeking limits
+
+00:10:25.000 --> 00:10:28.640
+on owner-operated TSLA and Weimau Robotaxies
+
+00:10:28.640 --> 00:10:30.080
+in upcoming regulations.
+
+00:10:30.960 --> 00:10:33.140
+The move aims to protect the company's
+
+00:10:33.140 --> 00:10:36.800
+existing ride hailing model as unsupervised fleets expand.
+
+00:10:37.620 --> 00:10:39.640
+Regulatory outcomes in these states
+
+00:10:39.640 --> 00:10:42.400
+will shape how quickly third-party TSLA vehicles
+
+00:10:42.400 --> 00:10:44.080
+can enter commercial service.
+
+00:10:44.820 --> 00:10:47.880
+Uber's position focuses on insurance, licensing
+
+00:10:47.880 --> 00:10:50.100
+and operational oversight requirements.
+
+00:10:51.120 --> 00:10:53.460
+The comments arrive as multiple jurisdictions
+
+00:10:53.460 --> 00:10:56.260
+finalize rules for driverless ride hailing.
+
+00:10:56.860 --> 00:11:00.060
+Keep an eye on regulatory updates in Florida and Texas
+
+00:11:00.060 --> 00:11:03.800
+as the unsupervised Robotaxie footprint expands there.
+
+00:11:04.600 --> 00:11:07.180
+And that's everything worth knowing about TSLA today.
+
+00:11:07.880 --> 00:11:11.720
+TSLA, a close that $313.03,
+
+00:11:11.920 --> 00:11:16.400
+down $10.97, 3.4%.
+
+00:11:16.400 --> 00:11:17.880
+If the show saves you time,
+
+00:11:18.140 --> 00:11:21.900
+a quick rating on Apple podcasts or Spotify goes a long way.
+
+00:11:22.560 --> 00:11:25.740
+You can also find us on X at Tesla Short's Time.
+
+00:11:26.560 --> 00:11:28.940
+I'm Patrick in Vancouver, I'll see you tomorrow.
+
+00:11:29.780 --> 00:11:32.160
+This show comes to you from the Narra Network.
+
+00:11:32.700 --> 00:11:34.700
+If you want another sharp daily briefing,
+
+00:11:34.700 --> 00:11:37.200
+unintended consequences has you covered.
+
+00:11:37.860 --> 00:11:40.380
+True stories of good intentions that backfired.
+
+00:11:40.960 --> 00:11:44.020
+All our shows are free at NarraNetwork.com.
+
+00:11:44.440 --> 00:11:46.940
+And on the website, every episode's visuals
+
+00:11:46.940 --> 00:11:51.660
+live in our free image gallery at NarraNetwork.com slash gallery.
+
+00:11:52.380 --> 00:11:54.380
+Royalty free under Creative Commons,
+
+00:11:54.880 --> 00:11:55.980
+download with Attribution.
+
+00:11:56.900 --> 00:12:00.300
+This episode used AI voice synthesis of my voice.
+
+00:12:00.600 --> 00:12:03.220
+Editorial selection and analysis are my own.

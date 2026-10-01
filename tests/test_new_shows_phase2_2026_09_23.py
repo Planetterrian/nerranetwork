@@ -171,7 +171,8 @@ class TestPhase2Wiring:
     def test_launch_shape(self, slug):
         c = _cfg(slug)
         assert c.max_weekly_cost_usd > 0
-        assert c.youtube.enabled is False and c.newsletter.enabled is False
+        # Oct 1 2026: newsletter ON (see test_phase3_desks); YouTube still off.
+        assert c.youtube.enabled is False and c.newsletter.enabled is True
         assert c.publishing.x_enabled is False
         assert c.llm.model == "grok-4.7"
 

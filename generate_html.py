@@ -2239,6 +2239,10 @@ def _get_jinja_env():
     # structurally incapable of ever holding a row: the Worker accepted the
     # whole allow-list and nothing exercised it.
     env.globals["capture_source_site"] = F.source_tag(F.SOURCE_SITE)
+    # One listener-facing address, owned by engine.brand (Oct 1 2026: the
+    # editorial page said one address and the FAQ/contact pages another).
+    from engine.brand import CONTACT_EMAIL as _contact_email
+    env.globals["contact_email"] = _contact_email
     # The Mira claim, its basis and its correction invitation. Registered as a
     # global rather than threaded through each generator's context so that
     # every surface renders the same three paragraphs from engine/brand.py —

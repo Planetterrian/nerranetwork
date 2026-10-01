@@ -1,0 +1,208 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:04.360
+Welcome to the very first episode of the DP Pod, the due positive podcast.
+
+00:00:05.020 --> 00:00:12.020
+Today is July 4th, 2026. Two friends built a 14-show daily podcast network with an AI pipeline
+
+00:00:12.020 --> 00:00:17.720
+and no studio or staff. We actually did that. We did. And now we're sitting here talking about it
+
+00:00:17.720 --> 00:00:22.280
+on the first show where the two of us are the ones in front of the mic. Feels weird in the best way.
+
+00:00:22.680 --> 00:00:26.040
+The feeds are built to make everyone feel powerless. We got tired of that.
+
+00:00:26.040 --> 00:00:31.940
+So we started from the opposite bed. Individuals are not powerless. 10 minutes a day of real
+
+00:00:31.940 --> 00:00:37.720
+movement can prove it. That's the whole club right there. The Narrow Network, Novak Plus Para.
+
+00:00:38.380 --> 00:00:44.600
+We kept adding shows until we hit 14 daily ones. All add free, all independent, all running on one
+
+00:00:44.600 --> 00:00:50.280
+pipeline we built ourselves. This episode is the 14th. The first dialogue show and the first time
+
+00:00:50.280 --> 00:00:55.300
+we step out from behind the scripts. It's for builders. People already trying to move something
+
+00:00:55.300 --> 00:01:00.820
+forward and people who want to start. We review what actually matters and celebrate the people
+
+00:01:00.820 --> 00:01:06.640
+building through it. The pledge gets you in at NarrowNetwork.com. Then there's the lever each week
+
+00:01:06.640 --> 00:01:12.140
+and the dispatch where we read what listeners actually did. We want to turn de-groom scrolling into a
+
+00:01:12.140 --> 00:01:17.680
+daily habit of acting instead. One real thing, then another. That brings us to think positive.
+
+00:01:18.080 --> 00:01:23.640
+Tony Robbins has pointed out for years that motivation follows action. Waiting to feel ready
+
+00:01:23.640 --> 00:01:29.700
+keeps most people stuck. Move first and the energy shows up after. Does that hold when the days
+
+00:01:29.700 --> 00:01:35.280
+already gone sideways? The network itself is the test case. Every working piece came after an
+
+00:01:35.280 --> 00:01:41.700
+earlier imperfect attempt. The mental rep is pick one task you've been postponing. Set a two-minute
+
+00:01:41.700 --> 00:01:47.780
+timer and begin anyway. Simple enough to actually do. Time for the positive papers. The story we're
+
+00:01:47.780 --> 00:01:52.940
+telling is our own build. Two people asked whether they could run what used to need an entire company.
+
+00:01:52.940 --> 00:01:58.800
+The answer turned into 14 shows. Started with separate scripts, thousands of lines each glued
+
+00:01:58.800 --> 00:02:06.200
+together by cron jobs. That duplicated everything, so we refactored into one runner, one config per show,
+
+00:02:06.520 --> 00:02:11.680
+and a shared engine. Adding a new show went from writing 2,000 lines to writing a config and a few
+
+00:02:11.680 --> 00:02:17.080
+prompts. That part still feels like cheating. The cost curves made it possible. Newer model cut
+
+00:02:17.080 --> 00:02:24.640
+per episode expense in half. Voices dropped to roughly $136 the old price, about $4 per million
+
+00:02:24.640 --> 00:02:31.000
+characters. That single change is why two people can keep 14 shows running. I kept asking where the
+
+00:02:31.000 --> 00:02:36.520
+reliability would break. We ended up with more than 3.5,000 automated tests before every publish,
+
+00:02:36.800 --> 00:02:42.300
+plus an external dispatcher because GitHub Scheduler was too slow. And the human listen gate stayed
+
+00:02:42.300 --> 00:02:47.860
+non-negotiable. No audio change ships without one of us hearing it first. The network went
+
+00:02:47.860 --> 00:02:52.320
+multilingual early. Two Russian language shows launch with their own custom Russian voice.
+
+00:02:52.940 --> 00:02:57.800
+Every English episode now translates and revoices automatically into French, Russian, Spanish,
+
+00:02:58.020 --> 00:03:03.280
+and Chinese for about 18 cents in episode. Each language carries its own subscribeable feed,
+
+00:03:03.400 --> 00:03:08.900
+plus a Russian dubbed YouTube channel. Every episode also publishes a blog post containing the
+
+00:03:08.900 --> 00:03:14.400
+full transcript and chapters. Early posts carry the identical title, the show name, which killed
+
+00:03:14.400 --> 00:03:21.680
+search visibility. Each post is now titled by the episodes hook. Full videos and shorts are auto-produced
+
+00:03:21.680 --> 00:03:28.480
+with AI generated imagery. Per word captions timed from speech recognition, a heuristic that starts
+
+00:03:28.480 --> 00:03:35.000
+each short at the most engaging beat, and thumbnails that auto shrink text to fit. YouTube's quota of
+
+00:03:35.000 --> 00:03:41.300
+10,000 API units per day once forced brutal choices about which shows recede video. An increase to
+
+00:03:41.300 --> 00:03:47.940
+200,000 units now allows all 14 shows to publish, roughly two dozen uploads daily. Retention data
+
+00:03:47.940 --> 00:03:54.460
+feeds back into how titles are written. Reliability required its own war stories. A management dashboard
+
+00:03:54.460 --> 00:04:00.800
+tracks every known landmine in the system. The running list of past mistakes and how each was fixed.
+
+00:04:01.500 --> 00:04:06.660
+Duplicate guards prevent a late backup trigger from double publishing and automatic recovery,
+
+00:04:07.000 --> 00:04:13.060
+pull requests handle cases when a push fails mid-publish. Okay, but if we're scaling, what actually stays
+
+00:04:13.060 --> 00:04:18.740
+load-bearing? The listen gates, the review ledger, the no fabrication rule, I still think the ledger
+
+00:04:18.740 --> 00:04:24.780
+is the one we can't fully hand off. Fair. The seeded template problem taught us that. Give the model
+
+00:04:24.780 --> 00:04:30.440
+one example phrase and it repeats it forever. We had to learn to decede by shape instead.
+
+00:04:30.840 --> 00:04:37.500
+That rule came from watching it fail in real time. A review agent audits one program twice a week,
+
+00:04:37.740 --> 00:04:42.700
+records predictions in a ledger, and the next review scores those predictions as hits or misses.
+
+00:04:43.440 --> 00:04:49.580
+The reviewer itself moved from an expensive model to a cheap one, roughly 30 cents a run instead of
+
+00:04:49.580 --> 00:04:55.900
+$6 to $9. 10 shows existed at the first network review. Two narrative programs driven by topic
+
+00:04:55.900 --> 00:05:01.760
+cues rather than news were added next. First principles daily built around the magic wand number and
+
+00:05:01.760 --> 00:05:08.960
+the idiot index and unintended consequences. SpaceX daily launched the day of the IPO. The 14th show
+
+00:05:08.960 --> 00:05:14.760
+is the one airing now. Open questions remain. What does it mean that two people can now do what once
+
+00:05:14.760 --> 00:05:19.900
+required a media company? Where does human judgments stay load bearing? The listen gates,
+
+00:05:20.280 --> 00:05:26.000
+the editorial standards, the review ledger, and which of these could never be automated? What breaks
+
+00:05:26.000 --> 00:05:33.240
+first at 50 shows? Is AI made media honest enough and does full disclosure plus no fabrication rules
+
+00:05:33.240 --> 00:05:38.780
+actually earn trust? I keep coming back to the builder listening today. The cost curves show that
+
+00:05:38.780 --> 00:05:44.000
+the expensive parts can collapse fast if you own the pipeline. The part that doesn't collapse is the
+
+00:05:44.000 --> 00:05:50.100
+judgment on what stays honest. That brings us to the lever. Take the pledge at nerranetwork.com and
+
+00:05:50.100 --> 00:05:55.020
+send this episode to one person who's been doom scrolling. It costs one minute and zero dollars.
+
+00:05:55.520 --> 00:06:00.680
+If even 1% of early listeners do the same, the starting point becomes a small club inside a week.
+
+00:06:01.100 --> 00:06:07.280
+The awkwardness is the real barrier. Keep the message short. This is the first episode of something new,
+
+00:06:07.580 --> 00:06:13.120
+worth 10 minutes. Now the due positive dispatch. I'm doing this lever myself this week. I'll report
+
+00:06:13.120 --> 00:06:18.980
+back on what happened. Send us what you tried. We'll read the first ones on air. We made an anthem for
+
+00:06:18.980 --> 00:06:23.540
+the club. It's called do positive. We're playing the whole thing to close the very first episode.
+
+00:06:23.820 --> 00:06:29.040
+Stay for it. That wraps today's DP pod. Subscribe wherever you listen so tomorrow's good news
+
+00:06:29.040 --> 00:06:34.460
+finds you. And when you pull today's lever right in and tell us, the dispatch only works if you do.
+
+00:06:35.240 --> 00:06:41.860
+I'm Patrick Novak. I'm Dan Perra. Do something about it. This episode used AI voice synthesis of our
+
+00:06:41.860 --> 00:06:45.980
+voices. The editorial selection and analysis are our own.

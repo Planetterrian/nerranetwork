@@ -247,9 +247,15 @@ NETWORK_SURFACES: list[dict[str, str]] = [
     },
     {
         "id": "age_of_ai",
+        # Oct 1 2026: this line still said "on the phone" — the studio room
+        # has been the default since 2026-09-09 and the phone is the
+        # fallback; no surface may describe the show as a phone-call show
+        # (CLAUDE.md). The spoken line carries the narrow basis the claim
+        # actually rests on.
         "spoken": (
-            "The Age of AI puts real builders on the phone with an AI host "
-            "— apply at nerranetwork.com/age-of-ai-apply."
+            "The Age of AI: an AI host interviews real builders in a live "
+            "studio, and every guest decides whether their conversation is "
+            "published — apply at nerranetwork.com/age-of-ai-apply."
         ),
         "x_line": (
             "More from the Nerra Network: apply to be a guest on The Age of AI"

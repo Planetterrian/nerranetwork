@@ -1,0 +1,502 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.700
+Hey everyone, welcome to Models and Agents Episode 97 for June 30th, 2026.
+
+00:00:06.500 --> 00:00:07.960
+Your daily AI briefing.
+
+00:00:08.400 --> 00:00:12.860
+Your daily briefing on the AI models and agents that are changing everything.
+
+00:00:13.580 --> 00:00:16.220
+And no, not those kinds of models and agents.
+
+00:00:16.720 --> 00:00:17.600
+Let's get into it.
+
+00:00:18.200 --> 00:00:23.200
+Maytwan just open sourced a 1.6 trillion MOE coding agent
+
+00:00:23.200 --> 00:00:26.640
+that ran the top open router leaderboard for two months
+
+00:00:26.640 --> 00:00:29.460
+while training entirely on Chinese A6.
+
+00:00:30.340 --> 00:00:35.000
+Longcat 2.0 scored 59.5 on squee bench pro.
+
+00:00:35.720 --> 00:00:42.940
+It reached 70.8 on terminal bench 2.1 and 77.3 on steady bench multi-lingual.
+
+00:00:43.460 --> 00:00:48.320
+The model activates between 33 and 56 billion parameters per token.
+
+00:00:49.040 --> 00:00:54.160
+It supports a native 1 million token context window through longcat sparse attention.
+
+00:00:54.960 --> 00:00:58.720
+Training ran on more than 50,000 domestic Chinese A6
+
+00:00:58.720 --> 00:01:02.880
+and processed 10.1 trillion tokens during its anonymous run.
+
+00:01:03.240 --> 00:01:07.880
+The release carries an MIT license with free context cache hits
+
+00:01:07.880 --> 00:01:11.220
+and a limited time 30 cents per million input tokens
+
+00:01:11.220 --> 00:01:15.800
+and $1.20 per million output tokens API promo.
+
+00:01:16.280 --> 00:01:19.740
+This development moves the open weight models arc forward
+
+00:01:19.740 --> 00:01:21.540
+because it places a near frontier
+
+00:01:21.540 --> 00:01:24.620
+agentic coding system under a permissive license
+
+00:01:24.620 --> 00:01:27.460
+without recurring Western API costs.
+
+00:01:28.240 --> 00:01:30.800
+Builders now have a commercially usable model
+
+00:01:30.800 --> 00:01:33.040
+they can run or fine-tune locally.
+
+00:01:33.660 --> 00:01:37.100
+The next signal to watch is whether other Chinese labs follow
+
+00:01:37.100 --> 00:01:39.340
+with similar ASIC-trained releases.
+
+00:01:40.140 --> 00:01:44.200
+Intern science released a 35 billion parameter MOE model
+
+00:01:44.200 --> 00:01:47.400
+called agents hyphen A1 on hugging face.
+
+00:01:48.200 --> 00:01:55.240
+The accompanying tech report appears as RARX-5-2606.30616.
+
+00:01:56.020 --> 00:01:59.360
+No public benchmarks have been independently verified yet.
+
+00:02:00.040 --> 00:02:04.100
+Local LLMA users are already requesting confirmation runs
+
+00:02:04.100 --> 00:02:05.940
+on standard agent harnesses.
+
+00:02:06.620 --> 00:02:10.500
+This item continues the open weight models conversation from yesterday
+
+00:02:10.500 --> 00:02:13.620
+because it adds another candidate that may narrow the gap
+
+00:02:13.620 --> 00:02:15.520
+with closed frontier systems.
+
+00:02:16.240 --> 00:02:18.320
+Builders working on multi-agent systems
+
+00:02:18.320 --> 00:02:20.220
+should test the weights this week.
+
+00:02:20.800 --> 00:02:24.180
+Bert Tamello is a new monolingual Portuguese encoder
+
+00:02:24.180 --> 00:02:26.920
+built on the modern BRIT architecture.
+
+00:02:27.440 --> 00:02:30.980
+It uses a 1,024 token context window
+
+00:02:30.980 --> 00:02:33.180
+and flash attention optimizations.
+
+00:02:33.720 --> 00:02:37.060
+Training covered 106 million Portuguese documents.
+
+00:02:37.720 --> 00:02:40.920
+The model outperforms prior Portuguese encoders
+
+00:02:40.920 --> 00:02:44.440
+on STS and NER tasks while remaining later
+
+00:02:44.440 --> 00:02:46.340
+than large multilingual models.
+
+00:02:47.100 --> 00:02:50.260
+Both base and large checkpoints are released publicly.
+
+00:02:50.920 --> 00:02:53.460
+Teams building Portuguese language retrieval
+
+00:02:53.460 --> 00:02:56.740
+or classification systems now have a drop-in option
+
+00:02:56.740 --> 00:02:58.620
+without multilingual overhead.
+
+00:02:59.440 --> 00:03:02.700
+Atemory replaces online repository exploration
+
+00:03:02.700 --> 00:03:06.720
+with offline semantic search hints before feeding cloud code.
+
+00:03:07.280 --> 00:03:12.840
+On 720 paired SWE QA samples across 15 repos,
+
+00:03:13.400 --> 00:03:17.360
+the method cut total tokens by 43.8%.
+
+00:03:17.360 --> 00:03:19.500
+The official five-dimension judge score
+
+00:03:19.500 --> 00:03:25.020
+states statistically flat at 83.39 versus 83.17.
+
+00:03:25.660 --> 00:03:28.360
+The approach uses pre-fill only retrieval
+
+00:03:28.360 --> 00:03:30.880
+instead of a second trained explorer agent.
+
+00:03:31.600 --> 00:03:34.540
+Anyone running coding agents on large code bases
+
+00:03:34.540 --> 00:03:38.860
+can index once and reuse the same hint layer across many tasks.
+
+00:03:39.700 --> 00:03:42.900
+This update advances the agents and tool use program
+
+00:03:42.900 --> 00:03:45.780
+we covered yesterday because it improves reliability
+
+00:03:45.780 --> 00:03:50.120
+of long horizon coding agents without extra decode cost.
+
+00:03:50.980 --> 00:03:52.900
+CTOW bench adapts TOW bench
+
+00:03:52.900 --> 00:03:55.000
+to five Southeast Asian languages.
+
+00:03:55.740 --> 00:03:59.040
+The benchmark tests agents under progressively localized
+
+00:03:59.040 --> 00:03:59.860
+conditions.
+
+00:04:00.240 --> 00:04:03.000
+English only agent scores transfer reasonably
+
+00:04:03.000 --> 00:04:05.340
+when only conversation language changes.
+
+00:04:05.860 --> 00:04:09.040
+Quality collapses once tool specs and task domains
+
+00:04:09.040 --> 00:04:10.360
+are also localized.
+
+00:04:11.060 --> 00:04:14.480
+The benchmark and adaptation pipeline are released on GitHub
+
+00:04:14.480 --> 00:04:16.700
+for anyone building reliable agents
+
+00:04:16.700 --> 00:04:18.740
+in linguistically diverse regions.
+
+00:04:19.180 --> 00:04:24.120
+A detailed guide shows single and dual in V-link V100 hash
+
+00:04:24.120 --> 00:04:28.860
+XM to 16 gigabyte cards running Gemma 426B
+
+00:04:29.460 --> 00:04:32.920
+at roughly 100 tokens per second in TCC mode.
+
+00:04:33.680 --> 00:04:36.700
+The setup scales to 8 to 16 concurrent agents
+
+00:04:36.700 --> 00:04:41.200
+at 150 to 175 aggregate tokens per second
+
+00:04:41.200 --> 00:04:44.000
+under realistic 24k prompt loads.
+
+00:04:44.620 --> 00:04:49.320
+The write-up covers driver window R570 to R580.
+
+00:04:49.680 --> 00:04:53.900
+PSU transient requirements and NV-link P2P measured
+
+00:04:53.900 --> 00:04:56.120
+at 33 gigabytes per second.
+
+00:04:56.960 --> 00:04:59.440
+Builders wanting cheap offline coding agents
+
+00:04:59.440 --> 00:05:02.480
+now have concrete numbers and pre-built binaries
+
+00:05:02.480 --> 00:05:05.860
+for a 32 gigabyte dual card desktop rig.
+
+00:05:06.540 --> 00:05:10.900
+Longcat 2.0 is now available under the same MIT license
+
+00:05:10.900 --> 00:05:12.660
+on GitHub and hugging face.
+
+00:05:13.520 --> 00:05:15.320
+Developers can immediately swap it
+
+00:05:15.320 --> 00:05:18.620
+into existing clawed code or open claw workflows
+
+00:05:18.620 --> 00:05:20.320
+for agentic coding tasks.
+
+00:05:21.040 --> 00:05:23.300
+This release keeps the open-weight models
+
+00:05:23.300 --> 00:05:26.800
+and agents threads moving because it removes both export
+
+00:05:26.800 --> 00:05:29.380
+restrictions and recurring API costs
+
+00:05:29.380 --> 00:05:31.880
+for production-grade agentic work.
+
+00:05:32.440 --> 00:05:35.940
+Run longcat 2.0 through its open router endpoint
+
+00:05:35.940 --> 00:05:39.680
+on a multi-file coding task to test the 1 million token
+
+00:05:39.680 --> 00:05:42.140
+context and free cash hit pricing.
+
+00:05:42.900 --> 00:05:45.160
+Index a private repo with a temporary,
+
+00:05:45.580 --> 00:05:48.520
+add the retrieval hint layer and measure token savings
+
+00:05:48.520 --> 00:05:51.360
+on your own SWE style tasks.
+
+00:05:51.940 --> 00:05:55.320
+Set up the dual V100 rig following the linked guide
+
+00:05:55.320 --> 00:05:58.080
+if you need cheap offline agent concurrency
+
+00:05:58.080 --> 00:05:59.840
+without new hardware purchases.
+
+00:06:00.640 --> 00:06:03.480
+Download the set-tow bench adaptation scripts
+
+00:06:03.480 --> 00:06:07.140
+and run a quick localization test on any agent you maintain
+
+00:06:07.140 --> 00:06:08.660
+for non-English markets.
+
+00:06:09.360 --> 00:06:11.600
+More Chinese labs are expected to release
+
+00:06:11.600 --> 00:06:15.280
+ASIC-trained open models following Maytwan's playbook.
+
+00:06:16.100 --> 00:06:19.700
+Independent verification runs of agent size A1
+
+00:06:19.700 --> 00:06:23.300
+should appear on local LLAMA within days.
+
+00:06:24.080 --> 00:06:27.140
+Additional long-context interpretability techniques
+
+00:06:27.140 --> 00:06:30.340
+building on turn averaged SAEs are likely
+
+00:06:30.340 --> 00:06:33.520
+in the next batch of archive interpretability papers.
+
+00:06:34.040 --> 00:06:37.000
+Okay, let's pop the hood on turn average
+
+00:06:37.000 --> 00:06:38.620
+sparse auto encoders.
+
+00:06:39.100 --> 00:06:41.640
+Everyone talks about sparse auto encoders
+
+00:06:41.640 --> 00:06:43.960
+as if they simply extract clean features
+
+00:06:43.960 --> 00:06:45.540
+from token activations.
+
+00:06:46.040 --> 00:06:48.640
+In practice, the standard per token approach
+
+00:06:48.640 --> 00:06:51.040
+scales linearly with context length.
+
+00:06:51.760 --> 00:06:55.500
+A 100K token transcript quickly becomes unusable
+
+00:06:55.500 --> 00:06:58.020
+for attribution graphs or manual inspection.
+
+00:06:58.880 --> 00:07:03.460
+Turn averaged SAEs instead reconstruct the average activation
+
+00:07:03.460 --> 00:07:06.160
+across an entire human or assistant turn.
+
+00:07:06.940 --> 00:07:09.700
+This collapses the feature count to a fixed budget
+
+00:07:09.700 --> 00:07:10.900
+regardless of length.
+
+00:07:11.620 --> 00:07:14.140
+The resulting features are judged more complete
+
+00:07:14.140 --> 00:07:17.900
+by LLAMs for describing high-level turn characteristics.
+
+00:07:18.800 --> 00:07:21.900
+Downstream attribution graphs become far simpler to build.
+
+00:07:22.580 --> 00:07:25.440
+The trade-off is loss of token level granularity.
+
+00:07:25.800 --> 00:07:28.440
+The method works best when the goal is turn level
+
+00:07:28.440 --> 00:07:30.940
+interpretability rather than pinpointing
+
+00:07:30.940 --> 00:07:33.340
+exactly which token triggered a behavior.
+
+00:07:34.060 --> 00:07:36.860
+Teams doing long context analysis should reach
+
+00:07:36.860 --> 00:07:40.120
+for turn averaged SAEs when context exceeds
+
+00:07:40.120 --> 00:07:41.800
+roughly 8K tokens.
+
+00:07:42.540 --> 00:07:45.260
+They should fall back to per token SAEs
+
+00:07:45.260 --> 00:07:47.560
+only for short, high-precision debugging.
+
+00:07:48.360 --> 00:07:50.360
+So when should you actually reach for this
+
+00:07:50.360 --> 00:07:51.540
+versus the alternative?
+
+00:07:52.240 --> 00:07:55.260
+Use turn averaged SAEs for any transcript
+
+00:07:55.260 --> 00:07:57.700
+longer than 8K tokens where you need
+
+00:07:57.700 --> 00:07:59.440
+interpretable turn summaries.
+
+00:08:00.060 --> 00:08:03.480
+Stick with per token SAEs only when you must trace
+
+00:08:03.480 --> 00:08:05.200
+behavior to a single token.
+
+00:08:05.860 --> 00:08:08.940
+Tomorrow, keep an eye on independent verification runs
+
+00:08:08.940 --> 00:08:12.560
+of agents hyphen A1 on local LAMA.
+
+00:08:13.040 --> 00:08:15.040
+That's models and agents for today.
+
+00:08:15.720 --> 00:08:17.980
+If you found this useful, share it with someone
+
+00:08:17.980 --> 00:08:20.100
+who's trying to keep up with all these changes
+
+00:08:20.100 --> 00:08:22.620
+and subscribe so you don't miss tomorrow's update.
+
+00:08:23.140 --> 00:08:24.780
+The AI world moves fast.
+
+00:08:25.120 --> 00:08:26.180
+We'll help you keep up.
+
+00:08:26.460 --> 00:08:27.080
+See you tomorrow.
+
+00:08:27.540 --> 00:08:29.040
+And if you'd rather watch than listen,
+
+00:08:29.640 --> 00:08:31.820
+find us on YouTube at Narrow Network.
+
+00:08:32.300 --> 00:08:33.260
+Links in the show notes.
+
+00:08:33.540 --> 00:08:36.860
+And before you go, this show is part of the Narrow Network,
+
+00:08:37.180 --> 00:08:40.820
+a family of daily podcasts on tech, science, and markets.
+
+00:08:41.200 --> 00:08:43.920
+Each one, a short, sharp briefing you can finish
+
+00:08:43.920 --> 00:08:44.580
+on the commute.
+
+00:08:45.140 --> 00:08:47.360
+If today earned its place in your feed,
+
+00:08:47.360 --> 00:08:48.940
+here's your next listen.
+
+00:08:49.420 --> 00:08:52.260
+Fascinating frontiers, the most fascinating news
+
+00:08:52.260 --> 00:08:53.740
+from space and science.
+
+00:08:54.140 --> 00:08:57.820
+Find every show free at NarrowNetwork.com.
+
+00:08:58.080 --> 00:09:01.580
+This episode used AI voice synthesis of my voice.
+
+00:09:01.940 --> 00:09:04.520
+Editorial selection and analysis are my own.

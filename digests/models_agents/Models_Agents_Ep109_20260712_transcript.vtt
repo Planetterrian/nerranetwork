@@ -1,0 +1,325 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.760
+What's up? Welcome to Models and Agents, episode 109. It's July 12, 2026.
+
+00:00:06.620 --> 00:00:10.020
+The AI world never sleeps. Here's what you need to know today.
+
+00:00:10.840 --> 00:00:18.620
+New 8B retrieval models top MT-EB while cutting index size 16 times, making fully offline edge
+
+00:00:18.620 --> 00:00:26.540
+rag practical for the first time. The Ultron Retriever Prime 8B leads its class on the MT-EB leaderboard
+
+00:00:26.540 --> 00:00:31.480
+with dramatically smaller indexes and higher throughput than prior 9B models.
+
+00:00:32.220 --> 00:00:38.060
+BNB agent studio now deploys persistent agents on AWS bedrock agent core.
+
+00:00:38.740 --> 00:00:44.000
+Developers continue to report that context and memory plumbing consumes the majority of their
+
+00:00:44.000 --> 00:00:51.000
+build time when working with multiple LLM providers. The Ultron Retriever family of models released
+
+00:00:51.000 --> 00:00:57.640
+on hugging face today. The release includes three sizes, Ultron Retriever Prime 8B,
+
+00:00:58.320 --> 00:01:07.600
+Ultron Retriever Core 4.5B, and Ultron Retriever Flash 0.8B. All three were trained on data sets with
+
+00:01:07.600 --> 00:01:15.640
+zero cross data set duplication or e-val contamination. Prime 8B delivers up to 16 times smaller index
+
+00:01:15.640 --> 00:01:22.620
+storage and 12 times higher throughput than previous 9B class leaders while ranking first on MT-EB.
+
+00:01:23.460 --> 00:01:32.920
+Core 4.5B outperforms models twice its size. Flash 0.8B runs fully offline on edge devices and indexes
+
+00:01:32.920 --> 00:01:39.120
+up to 60 images per minute. The models use the Hydra architecture for late interaction retrieval
+
+00:01:39.120 --> 00:01:44.140
+at high precision with generation at roughly half the memory of comparable systems.
+
+00:01:44.860 --> 00:01:50.560
+This open-weight release continues the tracked narrowing of the open versus closed performance gap
+
+00:01:50.560 --> 00:01:56.140
+with the zero contamination training data directly addressing one of the key open questions
+
+00:01:56.140 --> 00:02:02.680
+around e-val integrity. Builders working on offline or resource constrained rag should test these
+
+00:02:02.680 --> 00:02:09.160
+immediately for embedding and retrieval workloads. Watch for community fine tunes and integration into
+
+00:02:09.160 --> 00:02:15.080
+existing vector pipelines over the next week. Thinking machines lab published an essay titled
+
+00:02:15.080 --> 00:02:21.420
+The Future Worth Building is Human. The piece frames human participation and model ownership as
+
+00:02:21.420 --> 00:02:27.220
+technical problems solve through decentralized alignment and interaction models. It highlights
+
+00:02:27.220 --> 00:02:32.960
+Tinker's Laura fine-tuning approach that lets teams train and retain their own model weights rather
+
+00:02:32.960 --> 00:02:40.060
+than relying on shared frontier checkpoints. Builders focused on domain specific adaptation should
+
+00:02:40.060 --> 00:02:46.220
+experiment with the Laura workflow described to keep weights private and auditable. The founder of
+
+00:02:46.220 --> 00:02:52.200
+Z-Poo publicly advocated prioritizing open source models over restricted frontier systems.
+
+00:02:52.820 --> 00:02:58.280
+The statement argues that openness accelerates progress more effectively than closed development.
+
+00:02:58.920 --> 00:03:03.840
+Teams evaluating licensing terms should factor this stance into decisions about whether to
+
+00:03:03.840 --> 00:03:10.340
+standardize on fully open families such as Quinn or Deepseek. The comments reinforce the view
+
+00:03:10.340 --> 00:03:17.400
+that restricted access slows collective iteration on core capabilities. Sam Altman noted that multiple
+
+00:03:17.400 --> 00:03:24.540
+benchmarks position 5.6 sole as the current strongest model. He highlighted physician preference for
+
+00:03:24.540 --> 00:03:30.760
+its responses over human written ones in flawed detection. The comments continue the frontier model
+
+00:03:30.760 --> 00:03:37.180
+cadence discussion from yesterday without new release details. Watch for any follow-on announcements
+
+00:03:37.180 --> 00:03:43.620
+on cost or availability. This update keeps the tracked frontier release cadence visible while
+
+00:03:43.620 --> 00:03:51.280
+physicians reported preference for GPT 5.6 responses adds a concrete capability signal on medical
+
+00:03:51.280 --> 00:04:00.040
+text quality. BNB agent studio now launches autonomous agents that run continuously on AWS bedrock agent
+
+00:04:00.040 --> 00:04:05.880
+core. The platform supports quick deployment of agents that persist beyond single sessions.
+
+00:04:06.520 --> 00:04:12.580
+Developers building long running agent workflows gain a managed path that avoids custom orchestration
+
+00:04:12.580 --> 00:04:18.360
+code. Early users should verify sandbox constraints before routing production traffic.
+
+00:04:18.360 --> 00:04:24.640
+This deployment option advances the tracked question of long horizon agent reliability by
+
+00:04:24.640 --> 00:04:30.300
+providing a hosted runtime that removes the need for teams to maintain their own persistent execution
+
+00:04:30.300 --> 00:04:37.820
+layer. A 4 agent crew AI system for literature reviews adds explicit claim level citation verification
+
+00:04:37.820 --> 00:04:45.680
+with a 6 class support taxonomy and confidence gated escalation. The pilot achieved 100% citation
+
+00:04:45.680 --> 00:04:52.880
+metadata validity in ablation conditions without the editor pass. The full system flagged 23% of
+
+00:04:52.880 --> 00:05:00.480
+291 citations as unsupported. The editor to writer revision loop was not exercised in the pilot,
+
+00:05:00.780 --> 00:05:05.420
+so the work functions primarily as a detector rather than a self-correcting pipeline.
+
+00:05:06.160 --> 00:05:11.720
+Researchers needing verifiable citations should examine the released reference implementation and
+
+00:05:11.720 --> 00:05:18.240
+its 72 automated tests. The framework's asymmetric evaluation highlights the value of the
+
+00:05:18.240 --> 00:05:24.600
+verification layer even when full self-correction remains untested. Builders report that memory
+
+00:05:24.600 --> 00:05:30.360
+persistence rolling vector DB setups and multi model routing now dominate development time
+
+00:05:30.360 --> 00:05:36.560
+over core product logic. Common pain points include session to session context handling,
+
+00:05:36.560 --> 00:05:43.120
+painful provider switches and production retrieval failures. The thread surfaces concrete questions
+
+00:05:43.120 --> 00:05:50.460
+around third-party tools such as Mem0 or Langchaint memory versus custom stacks. Several developers
+
+00:05:50.460 --> 00:05:55.520
+describe spending the majority of their engineering effort on the plumbing layer rather than domain
+
+00:05:55.520 --> 00:06:02.640
+specific features. The NVIDIA tile-based GPU programming guide walks through CU tile and
+
+00:06:02.720 --> 00:06:09.880
+triton kernels on colab hardware. It implements vector addition, fused gelu, row-wise softmax,
+
+00:06:10.380 --> 00:06:15.360
+tiled matrix multiplication, and flash attention with direct PyTorch comparisons.
+
+00:06:16.000 --> 00:06:22.480
+It provides a fallback path when the Q tile stack is unavailable. Practitioners optimizing inference
+
+00:06:22.480 --> 00:06:28.240
+on NVIDIA hardware should run the colab workflow to measure tile size trade-offs for their specific
+
+00:06:28.240 --> 00:06:34.620
+models. The guide demonstrates each kernel against equivalent PyTorch baselines so readers can
+
+00:06:34.620 --> 00:06:41.420
+quantify the arithmetic intensity gains on their own hardware. A deterministic pruning layer removes
+
+00:06:41.420 --> 00:06:47.740
+redundant tokens from growing prompts while preserving dependencies. The approach cuts token usage
+
+00:06:47.740 --> 00:06:54.100
+and latency without quality loss and is backed by production benchmarks. The approach targets the
+
+00:06:54.100 --> 00:06:59.040
+common failure mode where models degrade from remembering too much rather than too little.
+
+00:06:59.880 --> 00:07:04.720
+Teams running high-volume chat or agent sessions should test the layer against their current
+
+00:07:04.720 --> 00:07:11.180
+context window strategy. The layer's deterministic nature ensures no hidden non-determinism is
+
+00:07:11.180 --> 00:07:17.940
+introduced into downstream generation. AI coding tools hallucinate plausible but non-existent
+
+00:07:17.940 --> 00:07:26.620
+package names at rates between 3.59 percent for GPT-40 turbo and 13.63 percent for the best
+
+00:07:26.620 --> 00:07:33.140
+open-source model tested. Prepriotary models show roughly four times lower hallucination rates than
+
+00:07:33.140 --> 00:07:42.300
+open source ones in the 30 model study. The analysis examined 576,000 code samples and 2.23 million
+
+00:07:42.300 --> 00:07:48.520
+packages across 30 systems confirming that hallucinated names are consistent enough for targeted
+
+00:07:48.520 --> 00:07:55.320
+registration attacks. Developers using AI assistance for dependency suggestions must add registry
+
+00:07:55.320 --> 00:08:02.860
+validation steps before committing code. Okay, let's pop the hood on tile-based GPU execution.
+
+00:08:03.620 --> 00:08:09.460
+Everyone talks about just using the GPU as if the hardware automatically maximizes throughput.
+
+00:08:10.100 --> 00:08:16.020
+In practice, tile-based execution forces the programmer to treat memory access as the primary
+
+00:08:16.020 --> 00:08:23.200
+constraint rather than arithmetic throughput. The core move is to load an entire tile of data into fast
+
+00:08:23.200 --> 00:08:30.420
+on-chip memory, perform all possible compute on that tile, then write results back. This eliminates
+
+00:08:30.420 --> 00:08:37.200
+repeated round trips to high latency HBM and explains why tiled matrix multiplication and flash
+
+00:08:37.200 --> 00:08:45.560
+attention show large speed ups once tile sizes exceed roughly 128 by 128 elements. The trade-off
+
+00:08:45.560 --> 00:08:52.160
+appears immediately in register pressure. Larger tiles improve arithmetic intensity but can spill
+
+00:08:52.160 --> 00:08:58.020
+registers and reduce occupancy, with the crossover point varying by architecture and kernel.
+
+00:08:58.700 --> 00:09:03.940
+On consumer cards, without the full queue tile stack, the same logic still applies through
+
+00:09:03.940 --> 00:09:10.700
+Triton, though you lose some automatic scheduling. Use tiles when your working set fits in shared memory
+
+00:09:10.700 --> 00:09:17.220
+and you confuse multiple operations. Fallback to standard kernels when the data is too sparse or
+
+00:09:17.220 --> 00:09:23.220
+the launch overhead dominates. The gotcha that bites most teams is choosing tile dimensions once
+
+00:09:23.220 --> 00:09:30.100
+and never retuning them when model width or batch size changes. Retuning becomes especially important
+
+00:09:30.100 --> 00:09:35.220
+when moving from training to inference workloads where activation shapes differ markedly.
+
+00:09:35.880 --> 00:09:42.840
+Grab Voltron Retriever Prime-8B from Hugging Face and Bench Market on your current retrieval workload
+
+00:09:42.840 --> 00:09:50.220
+to measure the 16 times index size reduction. Run the Mark Tech Post Colab notebook for tiled matrix
+
+00:09:50.220 --> 00:09:56.580
+multiplication and flash attention to see concrete speed ups on your GPU before committing to custom
+
+00:09:56.580 --> 00:10:03.500
+kernels. Add a simple registry existence check before accepting any package name suggested by an
+
+00:10:03.500 --> 00:10:10.040
+LLM coding assistant to guard against slop squatting. Test the deterministic prompt pruning layer
+
+00:10:10.040 --> 00:10:15.960
+on a long running agent session to quantify token savings versus your current context strategy.
+
+00:10:16.620 --> 00:10:22.840
+Continued community testing of the Voltron Retriever Hydra architecture on edge devices is expected.
+
+00:10:23.560 --> 00:10:29.540
+Potential follow up from thinking machines lab on open tooling for decentralized alignment is on the
+
+00:10:29.540 --> 00:10:35.640
+way. More developer reports on multi model routing and memory persistence as the Reddit thread
+
+00:10:35.640 --> 00:10:42.400
+evolves should appear soon. Further analysis of slop squatting vectors as open source model usage
+
+00:10:42.400 --> 00:10:49.000
+grows will likely surface next. Tomorrow keep an eye on community fine tunes of the Voltron
+
+00:10:49.000 --> 00:10:56.020
+Retriever models and any new edge device benchmarks that wraps up today's AI briefing share this with
+
+00:10:56.020 --> 00:11:02.380
+a developer or builder who wants to stay current subscribe wherever you listen see you tomorrow and if
+
+00:11:02.380 --> 00:11:08.600
+you'd rather watch then listen find us on YouTube at nerra network links in the show notes and before
+
+00:11:08.600 --> 00:11:15.060
+you go this show is part of the nerra network a family of daily podcasts on tech science and markets
+
+00:11:15.060 --> 00:11:21.240
+each one a short sharp briefing you can finish on the commute if today earned its place in your feed
+
+00:11:21.240 --> 00:11:28.380
+here's your next listen first principles daily reasoning from raw materials not analogy on the
+
+00:11:28.380 --> 00:11:35.860
+breakthroughs that actually cut cost find every show free at nerra network dot com and on the website
+
+00:11:35.860 --> 00:11:42.920
+every episodes visuals live in our free image gallery at nerra network dot com slash gallery royalty
+
+00:11:42.920 --> 00:11:50.480
+free under creative commons download with attribution this episode used AI voice synthesis of my voice
+
+00:11:50.480 --> 00:11:53.560
+editorial selection and analysis are my own

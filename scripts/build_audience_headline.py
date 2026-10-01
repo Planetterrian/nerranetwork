@@ -152,13 +152,24 @@ def build_headline(root: Path, today: Optional[_dt.date] = None) -> Dict[str, An
     op3_shows = op3.get("shows") or {}
     yt_shows = youtube_videos_by_slug(yt)
     network_weekly: List[int] = []
+    unindexed: List[str] = []
     for slug in sorted(set(op3_shows) | set(yt_shows)):
         s = op3_shows.get(slug) or {}
+        # Oct 1 2026: fetch_op3_stats writes an explicit ``resolved: false``
+        # marker for a feed OP3 has not indexed (the thirteen launch-cohort
+        # shows). It carries no download keys worth reading — treat it as
+        # unmeasured, and NAME it, so "not indexed" is a fact on the page
+        # rather than a show that looks like it has never been fetched.
+        if s and s.get("resolved") is False:
+            unindexed.append(slug)
+            s = {}
         entry: Dict[str, Any] = {
             "downloads_7d": s.get("downloads_7d") if s else None,
             "downloads_30d": s.get("downloads_30d") if s else None,
             "weekly_downloads": list(s.get("weekly_downloads") or []) if s else [],
         }
+        if slug in unindexed:
+            entry["op3_unindexed"] = True
         entry.update(weekly_wow(entry["weekly_downloads"]))
         entry["first_week"] = first_week_downloads(s.get("episodes") or [], today) if s else {"median": None, "episodes": 0}
         entry["youtube"] = youtube_retention(yt_shows.get(slug) or [], today)
@@ -190,6 +201,9 @@ def build_headline(root: Path, today: Optional[_dt.date] = None) -> Dict[str, An
         "youtube": youtube_retention(all_videos, today),
         "newsletter_subscribers": bd.get("subscriber_count") if bd else None,
         "shows_measured": len(measured),
+        # Feeds OP3 answered 404 for this run — prefixed and recording,
+        # but not yet indexed. Never counted in shows_measured.
+        "shows_unindexed": unindexed,
     }
     return {
         "generated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
@@ -230,6 +244,9 @@ def headline_line(doc: Dict[str, Any]) -> str:
         parts.append(f"YouTube retention shorts {yt.get('short') if yt.get('short') is not None else '—'}% / long {yt.get('long') if yt.get('long') is not None else '—'}%")
     subs = n.get("newsletter_subscribers")
     parts.append(f"newsletter: {subs if subs is not None else 'unmeasured'}")
+    unindexed = n.get("shows_unindexed") or []
+    if unindexed:
+        parts.append(f"{len(unindexed)} feed(s) not yet indexed by OP3")
     return "Audience headline — " + " · ".join(parts)
 
 

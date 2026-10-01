@@ -838,6 +838,21 @@
           { title: slug + ": " + fmt(v.downloads_30d || 0) + " in 30d · " + fmt(v.downloads_7d || 0) +
                    " in 7d · " + fmt(v.downloads_all_time || 0) + " all-time · weekly avg " + fmt(v.weekly_avg || 0) }));
       });
+      // Feeds OP3 has not indexed yet (Oct 1 2026): prefixed and
+      // recording, but answering 404 on lookup — the thirteen September
+      // launch-cohort shows. Named here, never summed, never "—".
+      if ((op3.unindexed || []).length) {
+        card.appendChild(h("p", { class: "platform-note", text:
+          "Not yet indexed by OP3 (" + op3.unindexed.length + "): " +
+          op3.unindexed.join(", ") + " — downloads attach retroactively " +
+          "once OP3 indexes the feed; a 404 persisting for weeks means " +
+          "check the prefix (docs/analytics.md)." }));
+      }
+      if ((op3.not_refreshed || []).length) {
+        card.appendChild(h("p", { class: "fine-list", text:
+          "Not refreshed this run (previous reading kept): " +
+          op3.not_refreshed.join(", ") }));
+      }
       if ((op3.top_episodes_7d || []).length) {
         const ul = h("ul", { class: "fine-list" });
         op3.top_episodes_7d.slice(0, 5).forEach((ep, i) => {
@@ -1050,6 +1065,58 @@
         card.appendChild(h("p", { class: "fine-list",
           text: "fetched " + ageText(ap.fetched_at) + staleNote(ap.fetched_at) }));
       }
+    }
+    audGrid.appendChild(card);
+  }
+
+  // Apple ratings — the public show pages' star ratings (Oct 1 2026).
+  // The only readout of the on-air "rate us on Apple Podcasts" ask.
+  // null = the page carried no rating block (unmeasured, "—");
+  // 0 = the page said zero ratings (a measured zero, rendered as 0).
+  {
+    const ar = data.apple_ratings || {};
+    const card = sectionCard("Apple ratings", "public show pages · the on-air 'rate us' ask");
+    if (!ar.configured) {
+      card.appendChild(h("p", { class: "fine-list",
+        text: "Not fetched yet — nightly runs scripts/fetch_apple_ratings.py (no secret needed)." }));
+    } else if (ar.error) {
+      card.appendChild(h("p", { class: "fine-list", text: "Apple ratings error: " + ar.error }));
+    } else {
+      const net = ar.network || {};
+      const dTot = net.count_delta_7d_total;
+      card.appendChild(h("div", { class: "headline",
+        html: fmtOrDash(net.rating_count_total) + "<small>ratings</small>" +
+              "&nbsp;&nbsp;" + (net.weighted_rating != null ? "★ " + Number(net.weighted_rating).toFixed(2) : "—") +
+              "<small>weighted avg</small>" +
+              "&nbsp;&nbsp;" + (dTot != null ? ((dTot >= 0 ? "+" : "") + fmt(dTot)) : "—") +
+              "<small>ratings · 7d</small>" }));
+      card.appendChild(h("p", { class: "fine-list", text:
+        fmt(net.shows_rated || 0) + " rated of " + fmt(net.shows_measured || 0) + " measured (" +
+        fmt(net.shows_with_url || 0) + " with an Apple page)" +
+        (dTot == null ? " · 7-day delta needs a week of history" : "") }));
+      const per = ar.per_show || {};
+      const slugs = Object.keys(per).sort((a, b) => (per[b].count || 0) - (per[a].count || 0));
+      const maxC = Math.max.apply(null, slugs.map((s) => per[s].count || 0).concat([1]));
+      slugs.forEach((slug) => {
+        const v = per[slug] || {};
+        const d = v.count_delta_7d;
+        const stars = v.rating != null ? "★ " + Number(v.rating).toFixed(1) : (v.count === 0 ? "no ratings yet" : "unmeasured");
+        const txt = stars + " · " + fmtOrDash(v.count) + " ratings" +
+          (d != null ? " (" + (d >= 0 ? "+" : "") + d + " · 7d)" : "") +
+          (v.not_refreshed_this_run ? " · stale" : "");
+        card.appendChild(barRow(slug, v.count || 0, maxC, txt,
+          { color: "var(--series-4)",
+            title: slug + ": " + (v.measured ? fmtOrDash(v.count) + " ratings" : "page carried no rating block") +
+                   (v.review_count != null ? " · " + fmt(v.review_count) + " written reviews" : "") +
+                   (v.source ? " · source " + v.source : "") +
+                   (v.not_refreshed_this_run ? " · NOT refreshed this run (previous reading kept)" : "") }));
+      });
+      if ((net.shows_unmeasured || []).length) {
+        card.appendChild(h("p", { class: "platform-note", text:
+          "No rating block on the page (unmeasured, not zero): " + net.shows_unmeasured.join(", ") }));
+      }
+      if (ar.fetched_at) card.appendChild(h("p", { class: "fine-list",
+        text: "fetched " + ageText(ar.fetched_at) + staleNote(ar.fetched_at) }));
     }
     audGrid.appendChild(card);
   }
@@ -2307,7 +2374,12 @@
     addStat(money(s.cost_last_7_days_usd), "cost · 7d");
     // Not measured is not zero: age_of_ai / offshore_north have no OP3
     // row and dp_pod no YouTube row — they read "—", not a fabricated 0.
-    addStat(fmtOrDash(dl.downloads_7d), "RSS · 7d");
+    // A feed OP3 has not INDEXED is a third state (Oct 1 2026): the
+    // prefix is live and recording, the lookup answers 404 — say so.
+    const unindexedRss = (op3.unindexed || []).indexOf(s.slug) >= 0;
+    addStat(unindexedRss
+      ? "<span title='OP3 answered 404 for this feed — not indexed yet; downloads attach retroactively'>not indexed</span>"
+      : fmtOrDash(dl.downloads_7d), "RSS · 7d");
     addStat(fmtOrDash(yRow.views != null ? yRow.views : eRow.youtube_views), "YT views");
     addStat(
       (sRow.streams != null ? fmt(sRow.streams) :

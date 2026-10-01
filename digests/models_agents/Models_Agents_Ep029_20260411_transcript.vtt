@@ -1,0 +1,841 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:04.740
+Welcome back to Models and Agents, episode 29 for April 11th, 2026.
+
+00:00:05.040 --> 00:00:06.880
+Another day, another round of AI developments.
+
+00:00:07.140 --> 00:00:07.800
+Let's break it down.
+
+00:00:08.220 --> 00:00:10.560
+Knowledge distillation now compresses full ensembles
+
+00:00:10.560 --> 00:00:12.720
+into single deployable models while preserving
+
+00:00:12.720 --> 00:00:13.800
+their collective intelligence.
+
+00:00:14.360 --> 00:00:16.480
+That is the big practical advance today.
+
+00:00:17.180 --> 00:00:19.560
+We also have fresh performance numbers on local hardware,
+
+00:00:19.820 --> 00:00:22.100
+several new RSIVE papers pushing long context
+
+00:00:22.100 --> 00:00:25.140
+and geospatial reasoning and some genuinely useful techniques
+
+00:00:25.140 --> 00:00:26.140
+you can try this week.
+
+00:00:26.580 --> 00:00:28.800
+Stick around, there is a lot here that will change
+
+00:00:28.800 --> 00:00:30.820
+what you can actually run in production this year.
+
+00:00:31.520 --> 00:00:34.160
+The top story today is how knowledge distillation
+
+00:00:34.160 --> 00:00:37.620
+turns slow multi-model ensembles into fast single models
+
+00:00:37.620 --> 00:00:40.240
+that still carry most of the ensembles' smarts.
+
+00:00:40.620 --> 00:00:42.100
+The core idea is straightforward.
+
+00:00:42.560 --> 00:00:45.140
+You keep your high accuracy but expensive ensemble
+
+00:00:45.140 --> 00:00:46.000
+as the teacher.
+
+00:00:46.360 --> 00:00:48.760
+Then you train a smaller, faster student model
+
+00:00:48.760 --> 00:00:51.500
+to match the teacher's softened probability outputs
+
+00:00:51.500 --> 00:00:52.520
+instead of hard labels.
+
+00:00:53.060 --> 00:00:55.560
+Those softened outputs sometimes call dark knowledge
+
+00:00:55.560 --> 00:00:57.960
+encode the relative confidence between classes
+
+00:00:57.960 --> 00:00:59.700
+that the ensemble figured out together.
+
+00:01:00.220 --> 00:01:01.820
+The student inherits reduced variance
+
+00:01:01.820 --> 00:01:04.980
+and better pattern recognition in a single forward pass.
+
+00:01:05.620 --> 00:01:07.700
+Instead of paying latency and memory costs
+
+00:01:07.700 --> 00:01:10.640
+for multiple models, you get most of the benefit from one.
+
+00:01:11.100 --> 00:01:12.940
+This has become especially relevant now
+
+00:01:12.940 --> 00:01:15.580
+that ensembles are common for complex prediction tasks
+
+00:01:15.580 --> 00:01:17.840
+where single models miss edge cases.
+
+00:01:18.340 --> 00:01:21.820
+The distilled model suddenly fits inside production inference budgets
+
+00:01:21.820 --> 00:01:24.160
+that would never tolerate the original ensemble.
+
+00:01:24.520 --> 00:01:26.780
+Practitioners should experiment with temperature scaling
+
+00:01:26.780 --> 00:01:29.460
+and feature map distillation on their own setups.
+
+00:01:29.960 --> 00:01:32.840
+See how much of that collective boost survives the compression.
+
+00:01:33.680 --> 00:01:35.640
+The MarkTech post piece also flags
+
+00:01:35.640 --> 00:01:38.020
+that we still need better distillation objectives
+
+00:01:38.020 --> 00:01:40.680
+to preserve calibration on out of distribution data.
+
+00:01:40.960 --> 00:01:42.160
+That is worth watching closely.
+
+00:01:42.940 --> 00:01:44.280
+Now let's look at some model updates
+
+00:01:44.280 --> 00:01:45.680
+that matter for local inference.
+
+00:01:45.920 --> 00:01:48.520
+The local LLM scene is getting really interesting
+
+00:01:48.520 --> 00:01:50.800
+at the 20 to 30 billion parameter range.
+
+00:01:51.520 --> 00:01:54.660
+A detailed community comparison on 24 gigabyte class hardware
+
+00:01:54.660 --> 00:01:58.360
+where pitted Gemma 431B against twin 3.527B
+
+00:01:58.360 --> 00:01:59.840
+on long context tasks.
+
+00:02:00.300 --> 00:02:04.140
+Both models now deliver usable reasoning at 50 to 90,000 tokens.
+
+00:02:04.540 --> 00:02:07.220
+That is a noticeable step up from what we had locally
+
+00:02:07.220 --> 00:02:08.340
+just a few months ago.
+
+00:02:09.140 --> 00:02:14.140
+Twin 3.527B in Q5 or Q6 quantization is faster,
+
+00:02:14.500 --> 00:02:17.940
+more thorough with references, writes longer coherent outputs
+
+00:02:17.940 --> 00:02:21.160
+and handles nuanced instructions particularly well.
+
+00:02:21.840 --> 00:02:24.720
+Gemma 431B in Q4 hallucinates less,
+
+00:02:25.080 --> 00:02:26.760
+has a more pleasant writing voice,
+
+00:02:27.060 --> 00:02:28.840
+sometimes digs deeper on ideas
+
+00:02:29.360 --> 00:02:32.500
+and got twice as fast after a recent unsloth update.
+
+00:02:32.940 --> 00:02:35.020
+For lore analysis, story reasoning
+
+00:02:35.020 --> 00:02:38.060
+or any task needing deep context understanding,
+
+00:02:38.340 --> 00:02:40.840
+both outperform everything else at this size.
+
+00:02:41.460 --> 00:02:44.880
+Many people in the R slash local LLAMA thread
+
+00:02:44.880 --> 00:02:47.860
+said they will just keep both rather than choosing one.
+
+00:02:48.460 --> 00:02:49.540
+On the hardware side,
+
+00:02:49.800 --> 00:02:52.980
+the Intel ARC Pro B70 with 32 gigabytes
+
+00:02:52.980 --> 00:02:54.620
+is showing surprising strength.
+
+00:02:54.980 --> 00:02:57.560
+It delivers about 12 tokens per second
+
+00:02:57.560 --> 00:03:03.080
+on single query generation with VLLM on twin 3.527B
+
+00:03:03.080 --> 00:03:04.060
+at INT4.
+
+00:03:04.580 --> 00:03:07.760
+That scales nicely to 135 tokens per second
+
+00:03:07.760 --> 00:03:11.020
+at 32 concurrent queries using pipeline parallelism.
+
+00:03:11.580 --> 00:03:13.600
+Tensor parallelism actually hurt performance
+
+00:03:13.600 --> 00:03:15.600
+on the tested PCIe setup.
+
+00:03:15.600 --> 00:03:19.700
+Power draw sits roughly 50% higher than an RTX PRO
+
+00:03:19.700 --> 00:03:22.260
+4,500 at peak concurrency.
+
+00:03:22.680 --> 00:03:27.240
+The latest beta Intel LLM scalar VLLM4 Plus Ubuntu
+
+00:03:27.240 --> 00:03:30.080
+26.04 makes the whole thing straightforward.
+
+00:03:30.620 --> 00:03:33.360
+The Docker command in the post works out of the box
+
+00:03:33.360 --> 00:03:34.540
+if you have the hardware.
+
+00:03:35.140 --> 00:03:36.520
+There is also important research
+
+00:03:36.520 --> 00:03:38.280
+on cross tokenizer distillation.
+
+00:03:38.740 --> 00:03:40.620
+The new byte level distillation method
+
+00:03:40.620 --> 00:03:43.000
+sidesteps messy vocabulary alignment
+
+00:03:43.000 --> 00:03:46.060
+by converting teacher outputs to byte level probabilities
+
+00:03:46.060 --> 00:03:48.740
+and attaching a lightweight byte decoder to the student.
+
+00:03:48.940 --> 00:03:51.360
+It performs competitively with or better than
+
+00:03:51.360 --> 00:03:52.980
+far more sophisticated techniques
+
+00:03:52.980 --> 00:03:56.280
+across 1B to 8B models on several benchmarks.
+
+00:03:56.920 --> 00:03:59.860
+The work shows the byte level is a natural shared interface
+
+00:03:59.860 --> 00:04:02.100
+but also confirms that consistent gains
+
+00:04:02.100 --> 00:04:03.960
+across all tasks remain elusive.
+
+00:04:04.460 --> 00:04:06.580
+Cross tokenizer distillation is still very much
+
+00:04:06.580 --> 00:04:07.720
+an open research problem.
+
+00:04:08.360 --> 00:04:10.080
+Moving to agent and tool developments,
+
+00:04:10.380 --> 00:04:12.480
+two new RXIV papers caught my eye.
+
+00:04:12.480 --> 00:04:16.600
+First, EMS dialogue uses a multi-LLM agent pipeline
+
+00:04:16.600 --> 00:04:20.060
+to create synthetic multi-person emergency medical service
+
+00:04:20.060 --> 00:04:20.520
+dialogues.
+
+00:04:21.120 --> 00:04:23.420
+The agent's iteratively planned, generate,
+
+00:04:23.740 --> 00:04:25.640
+and self-refined conversations grounded
+
+00:04:25.640 --> 00:04:27.680
+in real electronic patient care reports.
+
+00:04:28.180 --> 00:04:32.240
+They produce the data set of 4,414 conversations
+
+00:04:32.240 --> 00:04:34.740
+complete with speaker roles, turn-level topics,
+
+00:04:35.020 --> 00:04:36.900
+and 43 diagnosis labels.
+
+00:04:37.540 --> 00:04:41.140
+Rule-based factual and topic flow checks keep quality high,
+
+00:04:41.140 --> 00:04:44.960
+both human and LLM evaluations found the synthetic
+
+00:04:44.960 --> 00:04:46.140
+dialogue's realistic.
+
+00:04:46.920 --> 00:04:49.260
+Training on this data set improves accuracy,
+
+00:04:49.480 --> 00:04:52.040
+timeliness, and stability of conversational diagnosis
+
+00:04:52.040 --> 00:04:53.080
+prediction models.
+
+00:04:53.640 --> 00:04:57.600
+The second paper introduces decompose look and reason
+
+00:04:57.600 --> 00:05:00.300
+or DLR for vision language models.
+
+00:05:00.840 --> 00:05:03.800
+It dynamically breaks queries into textual premises,
+
+00:05:04.320 --> 00:05:06.800
+extracts premise-conditioned continuous visual
+
+00:05:06.800 --> 00:05:10.040
+latents, and produces grounded rationales.
+
+00:05:10.040 --> 00:05:13.260
+The three-stage training pipeline plus spherical Gaussian
+
+00:05:13.260 --> 00:05:16.400
+latent policy lets it outperform text-only,
+
+00:05:16.780 --> 00:05:20.360
+interleaved multimodal chain of thought, and existing latent
+
+00:05:20.360 --> 00:05:22.980
+reasoning methods on vision-centric benchmarks.
+
+00:05:23.500 --> 00:05:26.140
+It also gives better step-wise interpretability
+
+00:05:26.140 --> 00:05:27.260
+than patch-based approaches.
+
+00:05:27.700 --> 00:05:29.980
+Best part, it avoids expensive tool calls
+
+00:05:29.980 --> 00:05:31.880
+while still grounding every reasoning step
+
+00:05:31.880 --> 00:05:33.320
+in actual visual features.
+
+00:05:33.700 --> 00:05:35.780
+On the practical and community side,
+
+00:05:35.900 --> 00:05:38.160
+three new RXIV papers offer immediate value.
+
+00:05:38.160 --> 00:05:41.700
+DFR Gemma injects high-dimensional geospatial embeddings
+
+00:05:41.700 --> 00:05:43.660
+directly into an LLM's latent space
+
+00:05:43.660 --> 00:05:44.900
+through a lightweight projector.
+
+00:05:45.260 --> 00:05:48.020
+This lets the model reason over dense population dynamics
+
+00:05:48.020 --> 00:05:50.780
+foundation model embeddings without turning them into text
+
+00:05:50.780 --> 00:05:51.120
+first.
+
+00:05:51.560 --> 00:05:54.940
+You eliminate token inefficiency and numerical approximation errors
+
+00:05:54.940 --> 00:05:57.580
+that come with retrieval or description baselines.
+
+00:05:58.140 --> 00:06:00.560
+On a new multi-task geospatial benchmark,
+
+00:06:00.880 --> 00:06:02.580
+it shows strong zero-shot performance
+
+00:06:02.580 --> 00:06:04.040
+and major efficiency gains.
+
+00:06:04.840 --> 00:06:06.860
+If you work with dense geospatial data,
+
+00:06:06.860 --> 00:06:08.340
+this approach is worth testing.
+
+00:06:09.480 --> 00:06:11.940
+Next, CEPSEC is a training-free framework
+
+00:06:11.940 --> 00:06:14.060
+for long numerical sequence processing.
+
+00:06:14.300 --> 00:06:16.000
+It simply inserts separator tokens
+
+00:06:16.000 --> 00:06:17.480
+that act as attention sinks.
+
+00:06:17.880 --> 00:06:19.960
+These let the model focus on local segments
+
+00:06:19.960 --> 00:06:21.760
+while still keeping global context.
+
+00:06:22.260 --> 00:06:24.340
+Across nine popular LLMs,
+
+00:06:24.480 --> 00:06:28.660
+it delivers an average 35.6% relative accuracy improvement
+
+00:06:28.660 --> 00:06:31.760
+and uses 16.4% fewer inference tokens.
+
+00:06:32.080 --> 00:06:33.580
+No training or fine-tuning needed.
+
+00:06:33.940 --> 00:06:35.860
+Just add the separators at inference time.
+
+00:06:35.860 --> 00:06:38.060
+That is the kind of practical win I love.
+
+00:06:38.580 --> 00:06:41.140
+Finally, grass brings gradient-based adaptive
+
+00:06:41.140 --> 00:06:44.260
+layer-wise important sampling for memory-efficient fine-tuning.
+
+00:06:44.580 --> 00:06:46.880
+It uses mean gradient norms to estimate
+
+00:06:46.880 --> 00:06:48.720
+per layer importance on the fly
+
+00:06:48.720 --> 00:06:50.780
+than adaptively samples layers
+
+00:06:50.780 --> 00:06:53.060
+while offloading optimizer states.
+
+00:06:53.320 --> 00:06:54.940
+This improves average accuracy
+
+00:06:54.940 --> 00:06:58.940
+by up to 4.38 points over prior layer-wise methods.
+
+00:06:59.540 --> 00:07:02.040
+It also cuts memory usage by nearly 20%
+
+00:07:02.040 --> 00:07:03.900
+with almost no impact on throughput.
+
+00:07:03.900 --> 00:07:07.520
+The method works across multiple model families and tasks.
+
+00:07:08.100 --> 00:07:10.600
+Now, let's pop the hood on knowledge distillation
+
+00:07:10.600 --> 00:07:12.600
+because everyone talks about it like it is magic,
+
+00:07:13.020 --> 00:07:14.840
+but the engineering trade-offs are everything.
+
+00:07:15.280 --> 00:07:17.160
+In practice, you are balancing temperature,
+
+00:07:17.420 --> 00:07:19.960
+loss-weighting, and deciding exactly what to distill.
+
+00:07:20.580 --> 00:07:21.740
+The ensemble's real strength
+
+00:07:21.740 --> 00:07:24.620
+lives in its average, softened probability distribution.
+
+00:07:24.920 --> 00:07:26.920
+That distribution encodes dark knowledge
+
+00:07:26.920 --> 00:07:29.220
+about relative confidence between classes.
+
+00:07:29.840 --> 00:07:32.040
+The student learns to match this distribution
+
+00:07:32.040 --> 00:07:33.200
+rather than hard labels.
+
+00:07:33.200 --> 00:07:36.620
+The gain only appears when temperature is tuned high enough
+
+00:07:36.620 --> 00:07:39.160
+for the teacher to reveal uncertainty structure
+
+00:07:39.160 --> 00:07:42.080
+yet low enough that the student can actually imitate it.
+
+00:07:42.640 --> 00:07:45.280
+Feature map distillation adds another dimension
+
+00:07:45.280 --> 00:07:47.580
+by matching intermediate activations.
+
+00:07:47.820 --> 00:07:49.580
+This often improves generalization
+
+00:07:49.580 --> 00:07:51.460
+more than logit-only methods,
+
+00:07:51.820 --> 00:07:53.900
+but it increases compute during training
+
+00:07:53.900 --> 00:07:55.940
+and can destabilize optimization
+
+00:07:55.940 --> 00:07:57.860
+if the teacher and student architectures
+
+00:07:57.860 --> 00:07:59.600
+differ too much in depth or width.
+
+00:08:00.160 --> 00:08:02.980
+The biggest practical trade-off is capacity mismatch.
+
+00:08:03.380 --> 00:08:05.160
+A student that is dramatically smaller
+
+00:08:05.160 --> 00:08:07.140
+cannot absorb all the ensemble's nuance.
+
+00:08:07.780 --> 00:08:09.400
+Beyond a certain compression ratio,
+
+00:08:09.560 --> 00:08:10.860
+the distilled model collapses
+
+00:08:10.860 --> 00:08:12.540
+to the teacher's average behavior
+
+00:08:12.540 --> 00:08:14.500
+and loses the variance reduction
+
+00:08:14.500 --> 00:08:15.960
+that made the ensemble valuable.
+
+00:08:16.740 --> 00:08:18.320
+Most teams see peak quality
+
+00:08:18.320 --> 00:08:21.040
+when the student sits roughly 40-60%
+
+00:08:21.040 --> 00:08:22.640
+of the teacher's parameter count.
+
+00:08:23.020 --> 00:08:25.200
+Calibration drift is another hidden cost.
+
+00:08:25.860 --> 00:08:28.340
+Distillation can produce overconfident students
+
+00:08:28.340 --> 00:08:30.540
+unless you add an explicit calibration term
+
+00:08:30.540 --> 00:08:32.440
+or continue temperature annealing.
+
+00:08:32.880 --> 00:08:34.540
+The gacha that bites most teams
+
+00:08:34.540 --> 00:08:37.560
+is assuming the distilled model will keep the ensembles
+
+00:08:37.560 --> 00:08:39.360
+out of distribution robustness.
+
+00:08:39.780 --> 00:08:42.340
+In reality, you must keep a validation set
+
+00:08:42.340 --> 00:08:43.940
+that mirrors production shift
+
+00:08:43.940 --> 00:08:46.580
+and monitor expected calibration error separately.
+
+00:08:47.020 --> 00:08:49.240
+So when should you actually reach for distillation?
+
+00:08:49.560 --> 00:08:51.360
+Use it when your inference latency budget
+
+00:08:51.360 --> 00:08:52.880
+is three to five times tighter
+
+00:08:52.880 --> 00:08:54.300
+than the ensemble can deliver
+
+00:08:54.300 --> 00:08:55.780
+and you have a stable teacher.
+
+00:08:56.180 --> 00:08:57.660
+Skip it and stay with the ensemble
+
+00:08:57.660 --> 00:08:59.780
+or quantization plus batching
+
+00:08:59.780 --> 00:09:02.560
+when you need maximum robustness on rare events
+
+00:09:02.560 --> 00:09:04.240
+and can afford the extra hardware.
+
+00:09:04.680 --> 00:09:07.440
+The sweet spot is usually a modestly smaller student
+
+00:09:07.440 --> 00:09:10.060
+plus continued pre-training on domain data
+
+00:09:10.060 --> 00:09:11.160
+after distillation.
+
+00:09:11.720 --> 00:09:13.600
+If you have not tried any of these yet,
+
+00:09:13.740 --> 00:09:14.860
+this week is perfect timing.
+
+00:09:15.020 --> 00:09:16.420
+Run the exact Docker command
+
+00:09:16.420 --> 00:09:18.620
+from the Intel Arc B70 post
+
+00:09:18.620 --> 00:09:21.500
+to test twin 3.527b
+
+00:09:21.500 --> 00:09:23.860
+at Q4 on your own hardware.
+
+00:09:24.180 --> 00:09:26.540
+You will get real concurrency scaling numbers
+
+00:09:26.540 --> 00:09:27.440
+in under an hour.
+
+00:09:27.720 --> 00:09:29.760
+Load both Gemma 431bq4
+
+00:09:29.760 --> 00:09:32.360
+and twin 3.527bq5
+
+00:09:32.360 --> 00:09:33.980
+on a 24 gigabyte card.
+
+00:09:34.440 --> 00:09:37.300
+Feed each the same 60,000 token lore document
+
+00:09:37.300 --> 00:09:39.740
+and compare reference density and coherence
+
+00:09:39.740 --> 00:09:41.660
+on identical analytical questions.
+
+00:09:42.000 --> 00:09:43.720
+Try sepsack separator tokens
+
+00:09:43.720 --> 00:09:45.720
+on any long numerical reasoning tasks
+
+00:09:45.720 --> 00:09:49.060
+such as financial tables, sensor logs, or math benchmarks.
+
+00:09:49.660 --> 00:09:51.120
+The accuracy jump is immediate
+
+00:09:51.120 --> 00:09:52.880
+and requires zero training.
+
+00:09:53.300 --> 00:09:55.220
+Experiment with bite level distillation
+
+00:09:55.220 --> 00:09:56.760
+on your own teacher student pair
+
+00:09:56.760 --> 00:09:58.600
+that uses mismatched tokenizers.
+
+00:09:58.980 --> 00:10:00.920
+The baseline is surprisingly strong
+
+00:10:00.920 --> 00:10:03.580
+and far simpler than vocabulary mapping heuristics.
+
+00:10:04.220 --> 00:10:05.860
+And if you work with geospatial data,
+
+00:10:06.260 --> 00:10:09.180
+pull a population dynamics foundation model embedding
+
+00:10:09.180 --> 00:10:10.500
+and test direct injection
+
+00:10:10.500 --> 00:10:12.580
+versus converting the embedding to text.
+
+00:10:12.780 --> 00:10:14.400
+The efficiency difference is dramatic.
+
+00:10:15.200 --> 00:10:17.500
+On the horizon, expect more architecture
+
+00:10:17.500 --> 00:10:19.540
+specific sparse attention kernels
+
+00:10:19.540 --> 00:10:21.040
+to land in VLLM
+
+00:10:21.040 --> 00:10:23.200
+and hugging face text generation inference
+
+00:10:23.200 --> 00:10:24.140
+in the coming weeks.
+
+00:10:24.140 --> 00:10:26.460
+Several labs are teasing tone aware
+
+00:10:26.460 --> 00:10:28.740
+or prosody aware discrete speech units
+
+00:10:28.740 --> 00:10:31.240
+following recent lexical tone probing work.
+
+00:10:31.640 --> 00:10:33.740
+Layer wise adaptive fine tuning methods
+
+00:10:33.740 --> 00:10:36.840
+like grass will likely spawn efficient open source trainers
+
+00:10:36.840 --> 00:10:38.580
+that automatically pick which layers
+
+00:10:38.580 --> 00:10:39.800
+to update per task.
+
+00:10:40.220 --> 00:10:42.540
+And continued progress on relaxed speculative
+
+00:10:42.540 --> 00:10:44.820
+decoding and emotional robustness benchmarks
+
+00:10:44.820 --> 00:10:47.580
+suggests inference time mitigation techniques
+
+00:10:47.580 --> 00:10:49.140
+will become first-class citizens
+
+00:10:49.140 --> 00:10:51.420
+in production serving stacks by mid-year.
+
+00:10:51.900 --> 00:10:54.820
+Before we go, tomorrow keep an eye on further refinements
+
+00:10:54.820 --> 00:10:56.160
+and distillation objectives
+
+00:10:56.160 --> 00:10:57.980
+for out-of-distribution calibration.
+
+00:10:58.340 --> 00:10:59.940
+That wraps up today's AI briefing.
+
+00:11:00.220 --> 00:11:01.800
+Share this with a developer or builder
+
+00:11:01.800 --> 00:11:02.880
+who wants to stay current.
+
+00:11:03.060 --> 00:11:04.260
+Subscribe wherever you listen.
+
+00:11:04.460 --> 00:11:04.940
+See you tomorrow.
+
+00:11:05.180 --> 00:11:07.000
+This podcast is curated by Patrick
+
+00:11:07.000 --> 00:11:09.080
+but generated using AI voice synthesis
+
+00:11:09.080 --> 00:11:10.780
+of my voice using 11 labs.
+
+00:11:11.240 --> 00:11:12.580
+The primary reason to do this
+
+00:11:12.580 --> 00:11:14.180
+is I unfortunately don't have the time
+
+00:11:14.180 --> 00:11:16.260
+to be consistent with generating all the content
+
+00:11:16.260 --> 00:11:18.300
+and wanted to focus on creating consistent
+
+00:11:18.300 --> 00:11:20.720
+and regular episodes for all the themes that I enjoy.
+
+00:11:20.720 --> 00:11:22.040
+And I hope others do as well.

@@ -1,0 +1,295 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.700
+Glad you're here. Welcome to Models and Agents, Episode 110 for July 13th, 2026.
+
+00:00:07.660 --> 00:00:12.360
+Monday in the AI world, which means a weekend's worth of announcements to catch up on.
+
+00:00:13.000 --> 00:00:18.620
+Let's go. A new 30-billion-parameter, sovereign MOE model delivers frontier class,
+
+00:00:18.920 --> 00:00:23.760
+English and German performance while activating just 3-billion parameters per token.
+
+00:00:24.720 --> 00:00:32.700
+Sufi S30billion A3B launches as a hybrid Mamba transformer trained on 27 trillion tokens with heavy
+
+00:00:32.700 --> 00:00:39.260
+German waiting. It matches or beats larger dense models on code and bilingual benchmarks while
+
+00:00:39.260 --> 00:00:46.160
+keeping inference cache size nearly constant as context grows. The model was trained end-to-end
+
+00:00:46.160 --> 00:00:52.360
+on the German industrial AI cloud and ships with weights, intermediate checkpoints, full data
+
+00:00:52.360 --> 00:00:58.220
+accounting and training code under permissive terms. This latest openweight release continues
+
+00:00:58.220 --> 00:01:04.200
+the pattern we saw yesterday of families like Lama and Mistral narrowing the performance gap with
+
+00:01:04.200 --> 00:01:11.900
+closed frontier systems, particularly on non-English workloads. Builders working on bilingual or long
+
+00:01:11.900 --> 00:01:18.200
+context European tasks should test it immediately against current Lama and Mistral equivalents.
+
+00:01:18.840 --> 00:01:24.080
+Next to watch is how the released checkpoints affect fine-tuning recipes for domain-specific
+
+00:01:24.080 --> 00:01:30.980
+German agents. Stanford's trace system turns recurring agent failures into targeted synthetic RL
+
+00:01:30.980 --> 00:01:36.720
+environments. The approach diagnoses capability gaps from an agent's own trajectories,
+
+00:01:37.140 --> 00:01:44.060
+synthesizes one verifiable RL environment per gap, trains a Laura adapter, and routes tokens across
+
+00:01:44.060 --> 00:01:54.420
+experts. It improves Towsquared Bench by 15.3 points and reaches 73.2% Passat1 on SWE Bench verified.
+
+00:01:55.300 --> 00:02:01.020
+Agent builders should capture trajectory logs and feed them into trace style capability targeting,
+
+00:02:01.500 --> 00:02:08.380
+rather than generic fine-tuning. Prime intellect released Verifiers V1, which splits environments
+
+00:02:08.380 --> 00:02:14.520
+into task set, harness, and runtime layers with an interception server that records training ready
+
+00:02:14.520 --> 00:02:21.980
+traces. Any task set runs under any compatible harness and ships with full prime RL training support.
+
+00:02:22.620 --> 00:02:30.280
+The rewrite under the verifiers.v1 namespace makes agentic RL pipelines modular and reproducible.
+
+00:02:31.120 --> 00:02:35.980
+RL practitioners can now swap evaluation harnesses without retraining policies.
+
+00:02:36.940 --> 00:02:43.000
+Agent KGV combines dynamic routing and iterative query rewriting for document-level
+
+00:02:43.000 --> 00:02:49.800
+knowledge graph fact verification, then applies turn-level distillation SFT followed by trajectory
+
+00:02:49.800 --> 00:02:58.640
+level GRPO. On the long-tail T-Rex split, it lifts macro F1 by 9.4 points over single-turn
+
+00:02:58.640 --> 00:03:07.200
+rag while cutting average search calls from 3.24 to 1.63. The two-stage recipe transfers reasoning
+
+00:03:07.200 --> 00:03:14.000
+from a large teacher into a smaller deployable model. Knowledge graph maintenance teams should evaluate
+
+00:03:14.000 --> 00:03:21.680
+the GRPO policy stage for retrieval cost reduction. Halo adds a course refinement stage plus selective
+
+00:03:21.680 --> 00:03:27.100
+second-stage latent refinement on a scored subset of tokens with monotonic halting.
+
+00:03:27.980 --> 00:03:35.640
+On the MMLU Pro and GPQA diamond benchmarks it posts the best average among paper-facing methods
+
+00:03:35.640 --> 00:03:41.620
+while using fewer average refine steps than either fixed one or fixed two baselines.
+
+00:03:42.360 --> 00:03:47.760
+The approach shows that better allocation of refinement, not simply more of it, drives the gains.
+
+00:03:48.560 --> 00:03:54.400
+Teams running long reasoning traces should experiment with token scoring controllers to cut unnecessary
+
+00:03:54.400 --> 00:04:03.860
+compute. Freya TTS is a 183.2 million parameter non-auto regressive conditional flow matching diffusion
+
+00:04:03.860 --> 00:04:11.020
+transformer that maps directly from a 92 symbol Turkish character vocabulary into the frozen audio
+
+00:04:11.020 --> 00:04:22.020
+VAE2 latent space. It achieves 8.0 percent WER and 3.0 percent CER on the Freya TREVAL benchmark
+
+00:04:22.580 --> 00:04:30.860
+while running at 0.11 real-time factor on consumer GPUs. The two-stage post-training recipe locks speaker
+
+00:04:30.860 --> 00:04:37.580
+identity and covers short utterances for production robustness. Turkish voice agent developers now have a
+
+00:04:37.580 --> 00:04:46.080
+compact tokenizer free option that outperforms larger open systems. STTT lets the model first identify
+
+00:04:46.080 --> 00:04:53.260
+relevant evidence spans inside a long context then applies language modeling adaptation only to those
+
+00:04:53.260 --> 00:05:01.860
+spans. On long bench V2 and long bench pro it delivers up to 15% relative accuracy gains for Quint
+
+00:05:01.860 --> 00:05:12.720
+3 to 4B thinking 2507 and Lama 3.1 to 8B instruct. Random span test time training hurts performance
+
+00:05:12.720 --> 00:05:18.840
+while Oracle span test time training helps dramatically confirming the value of self-guided
+
+00:05:18.840 --> 00:05:26.280
+selection. Long context rag teams should test the span selection step before full context adaptation.
+
+00:05:27.880 --> 00:05:33.840
+Workspace entropy from anthropics Jacobian lens compliments output confidence for factual
+
+00:05:33.840 --> 00:05:41.860
+retrieval on pop QA and trivia QA but fails to flag internalized misconceptions on truthful QA.
+
+00:05:42.500 --> 00:05:49.700
+Calibration is highly task dependent and a trivia QA threshold collapses on GSME 2000.
+
+00:05:50.580 --> 00:05:56.760
+The study supplies full notebooks and raw metrics for cross-model validation. Retrieval augmented
+
+00:05:56.760 --> 00:06:01.960
+teams can add it as a low cost routing signal for high confidence factual answers.
+
+00:06:02.960 --> 00:06:11.120
+Wildtrace supplies 481 tasks over 214 naturally occurring long documents where evidence trails follow
+
+00:06:11.120 --> 00:06:17.100
+the source's own causal and narrative logic rather than planted needles. It defines seven
+
+00:06:17.100 --> 00:06:23.540
+source internal evidence geometries and applies multi-stage validation for groundedness and contamination
+
+00:06:23.540 --> 00:06:30.340
+resistance. Long context reasoning benchmarks have historically relied on artificial distributions.
+
+00:06:31.180 --> 00:06:36.440
+Evaluation suites should add wild trace to measure genuine multi-hop integration.
+
+00:06:37.160 --> 00:06:43.860
+DKCD mines domain knowledge to surface latent causal factors then uses that knowledge to guide
+
+00:06:43.860 --> 00:06:50.260
+reasoning and produce accurate annotations for graph construction. On two high expertise domain
+
+00:06:50.260 --> 00:06:56.520
+datasets it materially improves both factor identification and final graph quality over plain
+
+00:06:56.520 --> 00:07:03.320
+LLM baselines. The three-stage pipeline directly attacks the lack of domain grounding that previously
+
+00:07:03.320 --> 00:07:09.940
+limited unstructured causal discovery. Domain analysts can now bootstrap causal graphs from reports
+
+00:07:09.940 --> 00:07:17.460
+without exhaustive manual factor listing. Ant group released SINGARD or NSFA as an open source
+
+00:07:17.460 --> 00:07:23.900
+safety model aimed at agents and multimodal systems. The release targets security paradigms for
+
+00:07:23.900 --> 00:07:30.220
+autonomous operation rather than generic content filtering. Agent deployments that interact with
+
+00:07:30.220 --> 00:07:35.900
+external tools or multimodal inputs now have a concrete starting point for safety layers.
+
+00:07:36.580 --> 00:07:41.560
+Teams should review the model weights and integration patterns for their own guard rail stacks.
+
+00:07:42.180 --> 00:07:48.160
+Okay, let's pop the hood on selective token refinement. Everyone talks about adding more thinking
+
+00:07:48.160 --> 00:07:55.280
+steps as if extra refinement is always free. In practice refinement is a staged allocation problem
+
+00:07:55.280 --> 00:08:01.600
+where each additional pass costs full sequence compute. Halo-style systems first run a cheap
+
+00:08:01.600 --> 00:08:08.760
+core stage across every token then score tokens and apply a second heavier refinement only to a halted
+
+00:08:08.760 --> 00:08:15.220
+subset. The scoring function learns to predict which tokens still carry high residual error after
+
+00:08:15.220 --> 00:08:22.380
+the first pass. Monotonic halting prevents later tokens from triggering unnecessary work. This yields
+
+00:08:22.380 --> 00:08:28.680
+nearly the same token level accuracy as always running two full passes while cutting average applied
+
+00:08:28.680 --> 00:08:36.140
+steps below even a single fixed pass. The quality gain vanishes once models exceed roughly 70 billion
+
+00:08:36.140 --> 00:08:43.000
+parameters because the base representations are already low error. So when your traces are long and
+
+00:08:43.000 --> 00:08:49.960
+most tokens are already stable after one pass selective refinement wins. When every token still needs
+
+00:08:49.960 --> 00:08:58.800
+work fixed multi pass or full test time training remains simpler. Test Sufi S 30 billion A3B on bilingual
+
+00:08:58.800 --> 00:09:04.840
+German English code tasks to see whether the three billion active parameter footprint changes your
+
+00:09:04.840 --> 00:09:12.180
+latency budget versus dense 14 billion alternatives. Run Stanford trace on your agent's recent failure
+
+00:09:12.180 --> 00:09:19.680
+trajectories to generate targeted Laura adapters instead of generic continued pre-training. Swap in prime
+
+00:09:19.680 --> 00:09:26.560
+intellect verifiers V1 tasksets for your current agent evil harness to measure how modular run times
+
+00:09:26.560 --> 00:09:34.600
+affect trace collection cost. Add wild trace tasks to your long context evil suite so you stop optimizing
+
+00:09:34.600 --> 00:09:41.780
+for planted needles and start measuring real evidence integration. Prototype DKCD's knowledge guided
+
+00:09:41.780 --> 00:09:47.880
+reasoning stage on your domain reports to surface latent causal factors before building production graphs.
+
+00:09:48.600 --> 00:09:55.040
+Expect more open-weight hybrid Mamba transformer releases as teams replicate Sufi's constant cash
+
+00:09:55.040 --> 00:10:01.380
+scaling. Watch for production deployments of trace style capability targeted training once the
+
+00:10:01.380 --> 00:10:08.680
+synthetic environment generation code is shared. And groups Singard NSFA safety models will likely
+
+00:10:08.680 --> 00:10:15.720
+see rapid community fine tunes for specific agent tool use policies. Tomorrow keep an eye on how the
+
+00:10:15.720 --> 00:10:21.520
+released Sufi checkpoints influence fine tuning recipes for domain specific German agents.
+
+00:10:21.900 --> 00:10:27.200
+That's models and agents for today. If you found this useful share it with someone who's
+
+00:10:27.200 --> 00:10:31.820
+trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+
+00:10:32.500 --> 00:10:38.000
+The AI world moves fast will help you keep up. See you tomorrow. And if you'd rather watch than
+
+00:10:38.000 --> 00:10:45.060
+listen find us on YouTube at Nerra Network links in the show notes. And before you go this show is part
+
+00:10:45.060 --> 00:10:51.980
+of the Nerra Network. A family of daily podcasts on tech science and markets. Each one a short,
+
+00:10:52.140 --> 00:10:57.640
+sharp briefing you can finish on the commute. If today earned its place in your feed here's your next
+
+00:10:57.640 --> 00:11:04.220
+listen. The do positive pod good news and science and tech plus one concrete action you can take.
+
+00:11:04.760 --> 00:11:12.340
+Find every show free at nerra network dot com. Prefer reading. Today's full write up sources and
+
+00:11:12.340 --> 00:11:18.440
+transcript are on the episode blog at nerra network dot com. Same briefing readable format.
+
+00:11:19.120 --> 00:11:25.500
+This episode used AI voice synthesis of my voice editorial selection and analysis are my own

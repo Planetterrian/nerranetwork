@@ -1,0 +1,190 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.480
+Welcome back to Models and Agents episode FITF3 from May 19, 2026.
+
+00:00:06.120 --> 00:00:10.380
+Your daily AI briefing, another day, another round of AI developments.
+
+00:00:11.080 --> 00:00:12.040
+Let's break it down.
+
+00:00:12.680 --> 00:00:15.240
+Anthropics acquisition of stainless API,
+
+00:00:15.600 --> 00:00:21.260
+hands-developers, cleaner SDKs, and MCP server tooling for building production agents today.
+
+00:00:22.100 --> 00:00:25.160
+The acquisition centers on a platform that has powered every
+
+00:00:25.160 --> 00:00:28.340
+Anthropic SDK since the API first launched.
+
+00:00:29.020 --> 00:00:35.120
+Stainless API also supplies the model context protocol servers that many current agent frameworks
+
+00:00:35.120 --> 00:00:40.320
+depend on. Until now, the service ran independently and served multiple labs.
+
+00:00:41.180 --> 00:00:46.460
+The deal brings that expertise inside Anthropic for tighter integration with cloud models.
+
+00:00:47.240 --> 00:00:53.420
+Developers can expect quicker updates to endpoints and more complete MCP server examples in the
+
+00:00:53.420 --> 00:00:59.140
+months ahead. The move also shows Anthropic pushing further into the infrastructure layer
+
+00:00:59.140 --> 00:01:05.360
+between models and production use. On the model side, Alibaba released early previews of
+
+00:01:05.360 --> 00:01:10.620
+updated twin systems. These checkpoints currently sit at the top of the Chinese entries on the
+
+00:01:10.620 --> 00:01:16.600
+LMS-VS Arena leaderboard. The focus is on stronger reasoning and tool use performance.
+
+00:01:17.380 --> 00:01:23.280
+Teams looking for competitive open-weight options at lower costs than Frontier APIs should
+
+00:01:23.280 --> 00:01:29.440
+test the new releases once they appear on hugging face. Circle introduced an agent stack that
+
+00:01:29.440 --> 00:01:33.540
+lets autonomous agents handle payments directly over stable coin rails.
+
+00:01:34.460 --> 00:01:39.880
+The toolkit supplies wallet primitives, policy controls, and on-chain verification steps
+
+00:01:39.880 --> 00:01:45.860
+built for agent to agent transactions. Builders can try the stack in sandbox environments without
+
+00:01:45.860 --> 00:01:51.980
+setting up full banking connections. Missouri reported that Solana-based AI agents generated
+
+00:01:51.980 --> 00:01:58.180
+measurable on-chain activity during the first quarter of 2026. The numbers include transaction
+
+00:01:58.180 --> 00:02:04.420
+volume and smart contract interactions that go beyond simple token swaps. Builders exploring
+
+00:02:04.420 --> 00:02:09.960
+blockchain agents can review the reported patterns to set realistic throughput expectations for
+
+00:02:09.960 --> 00:02:16.840
+more complex DeFi workflows. Mark Tech Post published a ranked comparison of 10 enterprise agent
+
+00:02:16.840 --> 00:02:23.280
+platforms for 2026. The list covers Salesforce agent force, Microsoft co-pilot studio,
+
+00:02:23.740 --> 00:02:28.180
+service now, and land graph along with verified pricing and adoption figures.
+
+00:02:28.880 --> 00:02:34.460
+The report flags concrete governance limits and integration overhead that teams face when moving
+
+00:02:34.460 --> 00:02:41.300
+pilots into production. Mark Tech Post also released a tutorial for building a multi-role agent pipeline
+
+00:02:41.300 --> 00:02:48.780
+with the open AI API. The guide separates planner, executor, and critic components and adds structured
+
+00:02:48.780 --> 00:02:55.600
+tool calling plus memory. It includes a hidden terminal pattern for API key handling and shows how
+
+00:02:55.600 --> 00:03:01.260
+to wire the roles into one loop. Developers can follow the code to prototype agents that keep
+
+00:03:01.260 --> 00:03:11.280
+strategy separate from execution without heavy framework dependencies. A practitioner on the
+
+00:03:11.280 --> 00:03:19.140
+portfolios. The projects are RDAB for agent benchmarking, cost guard for reliability and cost
+
+00:03:19.140 --> 00:03:25.040
+tracking, and tether for trace replay. The discussion centers on framing the work around whether
+
+00:03:25.040 --> 00:03:31.100
+cheaper models can replace expensive ones without quality loss. Readers can review the thread for
+
+00:03:31.100 --> 00:03:36.900
+concrete advice on readme structure and demo priorities when targeting LLM infrastructure roles.
+
+00:03:37.460 --> 00:03:43.560
+Okay, let's pop the hood on scale library scaling in agent systems. Performance does not
+
+00:03:43.560 --> 00:03:49.820
+improve just by swapping in stronger models or adding more tools. Two tightly coupled scaling laws
+
+00:03:49.820 --> 00:03:56.480
+govern whether results rise or collapse as the library grows. The rooting law shows single-step
+
+00:03:56.480 --> 00:04:02.900
+accuracy decaying logarithmically with library size. Errors shift from local competition to cross
+
+00:04:02.900 --> 00:04:09.880
+family drift and eventual capture by overly general black hole skills. The execution law shows that
+
+00:04:09.880 --> 00:04:16.460
+joint rooting behaves multiplicatively before state realization. Correct execution can still rescue
+
+00:04:16.460 --> 00:04:22.840
+difficult downstream decisions by roughly four times. A single parameter, the rooting logarithmic
+
+00:04:22.840 --> 00:04:29.840
+decay slope, predicts both pre-execution collapse and later recoverability across 15 frontier models
+
+00:04:29.840 --> 00:04:41.380
+1,141 real skills. Law guided optimization raised held out routing accuracy from 71.3% to 91.7%.
+
+00:04:41.380 --> 00:04:49.900
+It also cut hijacking from 22.4% to 4.1%. The gains transferred to claw bench and claw mark. When
+
+00:04:49.900 --> 00:04:55.600
+libraries exceed a few hundred entries, teams should apply explicit routing policies and periodic
+
+00:04:55.600 --> 00:05:02.660
+skill pruning. Without those steps, silent degradation appears only after deployment. If you need strong,
+
+00:05:02.900 --> 00:05:09.720
+open-weight performance at lower cost than frontier APIs, test the new Twin Preview checkpoints on
+
+00:05:09.720 --> 00:05:16.580
+tool use tasks this week. Prototype a payment-enabled agent with circles stack to explore stablecoin
+
+00:05:16.580 --> 00:05:23.160
+settlement flows without a full banking setup. Run the marked tech-post agent tutorial with your own
+
+00:05:23.160 --> 00:05:28.380
+tools to separate planner, executor, and critic roles before adding heavier frameworks.
+
+00:05:29.020 --> 00:05:35.140
+Review the skill library scaling paper and apply the routing decay slope metric to any agent you
+
+00:05:35.140 --> 00:05:41.160
+maintain with growing tool sets. Compare land graph against the enterprise platforms listed in the
+
+00:05:41.160 --> 00:05:48.960
+marked tech-post guide if you are evaluating production orchestration options. Google IO 2026 is locked in
+
+00:05:48.960 --> 00:05:55.460
+with deep-mind leadership signaling major model and agent announcements. More trend-preview checkpoints
+
+00:05:55.460 --> 00:06:03.060
+are expected after Alibaba's recent arena gains. Additional RXI releases on agent benchmarks such as
+
+00:06:03.060 --> 00:06:09.280
+Keybench and PQR are likely in the coming weeks. Tomorrow, keep an eye on the next round of
+
+00:06:09.280 --> 00:06:15.660
+Twin Checkpoints and any early Google IO details that surface. That wraps up today's AI briefing.
+
+00:06:15.660 --> 00:06:21.220
+Share this with a developer or builder who wants to stay current. Subscribe wherever you listen.
+
+00:06:21.640 --> 00:06:27.720
+See you tomorrow. This episode used AI voice synthesis of my voice. Editorial selection and
+
+00:06:27.720 --> 00:06:28.940
+analysis are my own.

@@ -170,11 +170,20 @@
                 re-fetches every source and checks that the quote
                 actually appears there, and it lints the prose for
                 citation-shaped sentences that have no ledger entry
-                (the signature of a fabricated citation). On the
-                narrative shows the gate is enforced — a failed claim
-                blocks the episode rather than airing. Verified ledgers
-                are committed alongside each digest and rendered as
-                endnotes in the anthology books.
+                (the signature of a fabricated citation). The gate is
+                enforced on every show. A claim that fails gets one
+                repair pass — the model re-sources only the failed
+                claims, with the claim text pinned, and the whole gate
+                runs again — and any sentence the gate still cannot
+                vouch for is removed from the episode before it is
+                published. A source we cannot reach counts as a
+                failure, not a pass; every sourced item must be covered
+                by a verified claim; and a fact-checker's note left in
+                the prose fails the gate on its own. On the narrative
+                shows the episode is held back instead of edited.
+                Verified ledgers are committed alongside each digest,
+                rendered on every episode page as a "Verified claims"
+                panel, and used as endnotes in the anthology books.
             </p>
         </div>
 
@@ -285,9 +294,16 @@
         <p>
             Find a factual error? Heard something off? Got a story
             we should cover? Email
-            <a href="mailto:patrick@planetterrian.com">patrick@planetterrian.com</a>
-            — Patrick reads every message. Substantive corrections
-            are noted in the next episode's show notes.
+            <a href="mailto:{{ contact_email | default('hello@nerranetwork.com') }}">{{ contact_email | default('hello@nerranetwork.com') }}</a>
+            — Patrick reads every message. A substantive correction is
+            filed in the show's corrections record and from there it
+            reaches every surface: a dated correction box at the top
+            of the episode's page, a line in that episode's show
+            notes, and a "Correction to episode N" line in the next
+            episode's show notes. Audio is never edited silently: if
+            the spoken episode was wrong, it is re-synthesized from
+            the corrected script and replaced in full, or the error is
+            noted and the audio left as aired.
         </p>
     </section>
 
