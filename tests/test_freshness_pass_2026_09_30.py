@@ -31,6 +31,12 @@ import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
+
+#: Tesla Ep617 as it was PUBLISHED (15 of 17 items without a Source line),
+#: frozen on 2026-10-01 when the committed digest was re-sourced from the
+#: record — the working tree is no longer the specimen.
+EP617_AS_PUBLISHED = ROOT / "tests" / "fixtures" / "tesla_ep617_as_published.md"
+
 sys.path.insert(0, str(ROOT))
 
 from engine import article_dates as ad  # noqa: E402
@@ -553,13 +559,17 @@ class TestStructuralRetryCannotIntroduceALintDefect:
         assert block.index("digest_structural_retry_rejected_lints") < block.index("x_thread = _candidate")
 
     def test_ep617_replay_fires_the_lint_the_retry_introduced(self):
-        """The committed Ep617 is the specimen: 15 of 17 items unsourced.
+        """Ep617 AS PUBLISHED is the specimen: 15 of 17 items unsourced.
         With the guard above, a retry like it is rejected and the first
-        digest (which carried URLs — the overlap dedupe matched one) ships."""
+        digest (which carried URLs — the overlap dedupe matched one) ships.
+
+        2026-10-01: the committed digest was repaired FROM THE RECORD
+        (scripts/backfill_sources_from_desks.py; 12 of 17 items carry a
+        Source now), which is right for readers and wrong for a specimen,
+        so the as-published text is frozen under tests/fixtures/ — CI is
+        a depth-1 clone, so git history is not a place a guard can read."""
         from engine.digest_lint import run_digest_lints
-        path = ROOT / "digests" / "tesla_shorts_time" / "Tesla_Shorts_Time_Pod_Ep617_20260926.md"
-        if not path.exists():
-            pytest.skip("specimen not on this checkout")
-        findings, metrics = run_digest_lints(path.read_text(encoding="utf-8"), ["items_without_source"])
+        text = EP617_AS_PUBLISHED.read_text(encoding="utf-8")
+        findings, metrics = run_digest_lints(text, ["items_without_source"])
         assert [f.lint for f in findings] == ["items_without_source"]
         assert metrics["items_without_source"] >= 15
