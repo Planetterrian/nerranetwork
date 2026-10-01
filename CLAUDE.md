@@ -55,8 +55,12 @@ and the Shorts motion A/B: [`docs/funnel.md`](docs/funnel.md).
 
 **A claim's provenance is DATA, not formatting — `engine/claims.py` owns
 it.** Never add a new stripper for source/citation text without checking
-the ledger path first, and never soften the gate's failure policy to a
-warning where `source_integrity.enforce` is true.
+the ledger path first. **Since Oct 1 2026 the gate's enforcement is the
+STATUS and the public record, not removal**: `on_failure: flag` on every
+show publishes the sentence and marks its claim (see "Oct 1 2026 — publish
+and mark" below); `strip` and `block` remain selectable per show but are
+no longer the network policy. Never turn a flagged claim's status into a
+silent pass, and never render a surface that hides the flag.
 
 Same shape as the two rules above, discovered Aug 2026: three functions
 in `run_show.py` stripped every attribution the model produced (each for
@@ -152,6 +156,31 @@ so an unsourced sentence still blocks), and UC's episode prompt no longer
 seeds the literal "A 1962 Nature paper warned…" example — the exact
 fabricated citation this section opens with. Guards:
 `TestClaimRepairUncoveredShapes`.
+
+**Oct 1 2026 — publish and mark, never strip (operator-directed).** In the
+14 days to 10-01 strip mode removed 68 sentences across 261 episodes and
+every audited one was TRUE (a 403 journal, an X post the fetch stage held,
+a paraphrase, MIT's NASDAQ close); UC skipped 11 of 28 days on its own
+gate; four of fifteen flagship episodes had zero claims. The model's
+training data lags the 24-hour cycle, so a sourced story newer than the
+model must never be dropped for failing memory. Now `on_failure: flag`
+(network default, UC and FPD too): after the one repair pass nothing is
+removed but reviewer notes; every ledger entry commits with a `status`
+(`verified` / `verified_from_fetched` / `verified_later` /
+`unverified_unreachable` / `unverified_not_found` /
+`unverified_quote_mismatch` / `unverified_uncovered` / `malformed`),
+`gate.flagged_sentences` names the sentences, `gate.policy_version` is 2;
+metrics `source_integrity_flagged_*`. `scripts/reverify_claims.py` re-checks
+unverified claims nightly for seven days (`verified_later`, `verified_at`,
+`first_status`; the sidecar glob is in nightly's add-paths). The record is
+public — `claims.html` and `claims/<slug>.html` (`engine/claims_ledger.py`,
+`generate_claims_pages`, in `--static-pages` and the sitemap), status
+badges on every post's claims panel, links from show pages, nav and
+footer; `engine.brand.CLAIMS_PROCESS_STEPS` / `CLAIMS_STATUS_LABELS` own
+the process copy and the AI-disclosure / editorial / FAQ pages describe
+this policy and no stronger one. Register `claims-flag-policy-2026-10-01`;
+guards `tests/test_claims_flag_mode_2026_10_01.py`,
+`tests/test_claims_pages_2026_10_01.py`.
 
 **Sep 18 2026 — the quote was the problem, not the source.** SpaceX
 Ep104 lost five TRUE sentences to strip mode (Shotwell telling Boeing

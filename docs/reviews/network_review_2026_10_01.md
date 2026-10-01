@@ -249,3 +249,48 @@ every blog post (the editorial page had carried a different one).
   disagree are better than one that cannot be wrong.
 - A story told once per outlet is not a duplicate the overlap dedupe can
   see; cluster upstream and annotate, never drop.
+
+## 8. Same-day policy change — publish and mark, never strip (operator-directed)
+
+The operator's second brief of the day: a transparent claims-and-corrections
+process for every show, so resources stop going into removing possible
+problems from episodes as they are made — and so the shows stop missing
+important, timely news because the gate could not vouch for it. The model's
+training data lags the 24-hour cycle; a story newer than the model is
+verified against its fetched source, never against memory, and "cannot
+verify" has to be a status, not a reason to drop the story.
+
+**What the old policy cost, measured.** In the 14 days to 10-01 the strip
+mode removed 68 sentences across 261 episodes — Omni View 12, Planetterrian
+10, Europe 7, SpaceX 5 — and every one audited in the Sep 17, Sep 18 and
+Oct 1 passes was TRUE (a 403 journal, an X post the fetch stage held, a
+paraphrased quote, MIT's NASDAQ close). Unintended Consequences skipped 11
+of 28 days on its own gate; First Principles one. Four of fifteen flagship
+episodes recorded zero claims, so on those days the gate protected nothing
+and cost nothing — the silent half of the same problem.
+
+**The policy now.** `on_failure: flag` on every show, UC and FPD included.
+After the one repair pass, nothing is removed from the digest or the
+script except the model's own reviewer notes; every ledger entry commits
+with a status — verified (direct, from the fetched copy, or later),
+unverified with its reason (source unreachable, not found, quote mismatch,
+uncovered citation shape) — and `gate.flagged_sentences` names the
+sentences a reader should weigh. A nightly job re-checks every unverified
+claim for seven days and upgrades it to `verified_later` with the date.
+The record is public: `claims.html` for the network and `claims/<slug>.html`
+per show render every episode's claims with status badges, the flagged
+sentences in plain words, later verifications with their dates, and every
+correction filed; the blog's claims panel shows the same badges; the show
+pages, nav and footer link it; the AI-disclosure, editorial and FAQ pages
+describe this policy and no stronger one, and `engine.brand` owns the
+process copy. Corrections (`engine/corrections.py`) reach the post, its
+notes and the next episode's notes. What is still not claimed anywhere: a
+human reading every episode before it ships.
+
+**What this is not.** Not a return to shadow mode: enforcement is the
+status and the public record, and a false flagged claim is corrected in the
+open rather than pre-emptively deleted along with the true ones. Register
+`claims-flag-policy-2026-10-01` scores it: zero strips and zero gate skips
+for 21 days, at least 40% of unreachable claims verified within a week, a
+network verified share of 85% or better, UC publishing 19 of 21 days.
+
