@@ -330,6 +330,43 @@ def send_email(to: str, subject: str, html_body: str,
     logger.info("Email sent to %s: %s", to, subject)
 
 
+# Sept 30 2026: every time Patrick or a guest reads is Pacific, the network's
+# zone (Vancouver), with the guest's own clock alongside when we know it.
+# Mirrors pacificTime() in workers/voices/src/index.ts.
+PACIFIC_TZ = "America/Vancouver"
+
+
+def pacific_time(iso: Any, guest_tz: Optional[str] = None, *,
+                 date_only: bool = False) -> str:
+    """"Monday, October 5 at 1:45 PM Pacific Time", plus "(4:45 PM EDT where
+    you are)" when the guest's zone is known and differs. "" if unparseable."""
+    import datetime as _dt
+    from zoneinfo import ZoneInfo
+    try:
+        t = _dt.datetime.fromisoformat(str(iso).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return ""
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=_dt.timezone.utc)
+    p = t.astimezone(ZoneInfo(PACIFIC_TZ))
+    day = f"{p:%A}, {p:%B} {p.day}"
+    if date_only:
+        return day
+
+    def clock(x):
+        return f"{x.hour % 12 or 12}:{x:%M} {'AM' if x.hour < 12 else 'PM'}"
+    out = f"{day} at {clock(p)} Pacific Time"
+    if guest_tz:
+        try:
+            g = t.astimezone(ZoneInfo(str(guest_tz)))
+            if g.utcoffset() != p.utcoffset():
+                other_day = "" if g.date() == p.date() else f"{g:%A} "
+                out += f" ({other_day}{clock(g)} {g.tzname()} where you are)"
+        except Exception:  # noqa: BLE001 — an unknown zone never breaks a mail
+            pass
+    return out
+
+
 def guest_agenda_block(app: Optional[Dict[str, Any]]) -> str:
     """The subject the guest came for, and the points they asked to cover.
 

@@ -27,7 +27,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from pipelines.voices.common import (  # noqa: E402
-    OPERATOR_EMAIL, render_email, sb_insert, sb_select, send_email,
+    OPERATOR_EMAIL, pacific_time, render_email, sb_insert, sb_select, send_email,
 )
 from pipelines.voices.shows import get_show  # noqa: E402
 from pipelines.producer.gmail_client import thread_url  # noqa: E402
@@ -106,7 +106,7 @@ def collect(since: datetime, until: Optional[datetime] = None) -> Dict[str, Any]
     booked_rows = []
     for b in booked:
         app = b.get("guest_applications") or {}
-        when = (b.get("scheduled_at") or "")[:16].replace("T", " ") + " UTC"
+        when = pacific_time(b.get("scheduled_at"))
         booked_rows.append({"name": app.get("name") or "guest", "show": _show_name(b.get("show")), "when": when})
     followups = sum(1 for d in decisions if d.get("kind") == "followup" and d.get("action") == "send")
     guest_answered = [d for d in decisions if d.get("kind") == "guest_reply" and d.get("action") == "send"]
@@ -126,7 +126,7 @@ def collect(since: datetime, until: Optional[datetime] = None) -> Dict[str, Any]
 
 
 def render(data: Dict[str, Any]) -> str:
-    day = data["until"].astimezone(timezone(timedelta(hours=-7))).strftime("%A, %B %-d")
+    day = pacific_time(data["until"].isoformat(), date_only=True)
     return render_email("producer_daily_digest.j2", "nerra_voices", day=day, s=data["stats"],
                         held=data["held"], booked=data["booked"], approved=data["approved"],
                         invited=data["invited"], errors=data["errors"], brand=BRAND)

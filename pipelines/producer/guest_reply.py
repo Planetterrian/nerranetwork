@@ -69,12 +69,9 @@ def _parse(iso: Any) -> Optional[datetime]:
         return None
 
 
-def when_text(iso: Any) -> str:
-    t = _parse(iso)
-    if not t:
-        return ""
-    t = t.astimezone(timezone.utc)
-    return f"{t:%A}, {t:%B} {t.day} at {t:%H:%M} UTC (the time in their calendar invite)"
+def when_text(iso: Any, guest_tz: Optional[str] = None) -> str:
+    from pipelines.voices.common import pacific_time
+    return pacific_time(iso, guest_tz)
 
 
 def first_name(name: Optional[str]) -> str:
@@ -91,7 +88,7 @@ def first_name(name: Optional[str]) -> str:
 def interviews_for(app_id: str) -> List[Dict[str, Any]]:
     return sb_select("interviews",
                      f"application_id=eq.{app_id}&select=id,status,scheduled_at,show,"
-                     "call_mode,manage_token,cancel_reason&order=scheduled_at.desc")
+                     "call_mode,manage_token,cancel_reason,guest_timezone&order=scheduled_at.desc")
 
 
 def find_guest(sender_email: str) -> Optional[Dict[str, Any]]:
@@ -149,8 +146,8 @@ def facts_for(guest: Dict[str, Any]) -> Dict[str, Any]:
     links: List[str] = [show.page_url, show.base_url]
     if upcoming:
         studio = f"{show.studio_url(upcoming['id'])}&role=guest"
-        standing = f"booked for {when_text(upcoming.get('scheduled_at'))}, not yet recorded"
-        lines.append(f"- The interview is on {when_text(upcoming.get('scheduled_at'))}. "
+        standing = f"booked for {when_text(upcoming.get('scheduled_at'), upcoming.get('guest_timezone'))}, not yet recorded"
+        lines.append(f"- The interview is on {when_text(upcoming.get('scheduled_at'), upcoming.get('guest_timezone'))}. "
                      f"It lasts about {app.get('desired_minutes') or 45} minutes.")
         if (upcoming.get("call_mode") or "webrtc") == "webrtc":
             lines.append(f"- Their personal studio link (it opens ten minutes before the start): {studio}")

@@ -189,11 +189,9 @@ BOOKED = ("scheduled", "briefed")
 
 
 def _day(iso: Optional[str]) -> str:
-    try:
-        dt = datetime.fromisoformat(str(iso).replace("Z", "+00:00"))
-    except (TypeError, ValueError):
-        return ""
-    return f"{dt:%A}, {dt:%B} {dt.day}"
+    """The day in Pacific Time (a 6 pm Pacific slot is tomorrow in UTC)."""
+    from pipelines.voices.common import pacific_time
+    return pacific_time(iso, date_only=True) if iso else ""
 
 
 def known_guest(guest_name: Optional[str], thread_id: str) -> Optional[Dict[str, Any]]:

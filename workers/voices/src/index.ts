@@ -829,19 +829,42 @@ function bookingPhone(p: any): string {
   return "";
 }
 
-/** The booked time as the guest will read it, in the zone they booked in.
- *  Sept 24 2026: the booking email said "You're booked" and never said
- *  when; the only record of the time was Cal.com's own email. */
-function bookedWhen(startTime: string, p: any): string {
-  const tz = String(p.attendees?.[0]?.timeZone ?? p.organizer?.timeZone ?? "America/Vancouver");
-  const d = new Date(startTime);
-  if (isNaN(d.getTime())) return "";
-  try {
-    return d.toLocaleString("en-US", { timeZone: tz, weekday: "long", month: "long",
-      day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
-  } catch {
-    return d.toUTCString();
+// Sept 30 2026: every time a person reads is Pacific, the network's zone
+// (Vancouver), with the guest's own clock alongside when we know it. Mirrors
+// pacific_time in pipelines/voices/common.py.
+const PACIFIC_TZ = "America/Vancouver";
+
+function pacificTime(iso: unknown, guestTz?: string | null, dateOnly = false): string {
+  const d = new Date(String(iso ?? ""));
+  if (!iso || isNaN(d.getTime())) return "";
+  const day = (tz: string) => d.toLocaleDateString("en-US",
+    { timeZone: tz, weekday: "long", month: "long", day: "numeric" });
+  const clock = (tz: string) => d.toLocaleTimeString("en-US",
+    { timeZone: tz, hour: "numeric", minute: "2-digit" });
+  const pDay = day(PACIFIC_TZ);
+  if (dateOnly) return pDay;
+  let out = `${pDay} at ${clock(PACIFIC_TZ)} Pacific Time`;
+  if (guestTz) {
+    try {
+      const gClock = clock(guestTz);
+      if (gClock !== clock(PACIFIC_TZ) || day(guestTz) !== pDay) {
+        const zone = d.toLocaleTimeString("en-US", { timeZone: guestTz, timeZoneName: "short" })
+          .split(" ").pop();
+        const gDay = day(guestTz) !== pDay ? `${d.toLocaleDateString("en-US", { timeZone: guestTz, weekday: "long" })} ` : "";
+        out += ` (${gDay}${gClock} ${zone} where you are)`;
+      }
+    } catch { /* an unknown zone never breaks a mail */ }
   }
+  return out;
+}
+
+/** The booked time as the guest reads it: Pacific, and their own clock. */
+function attendeeTimeZone(p: any): string | null {
+  const tz = p?.attendees?.[0]?.timeZone ?? null;
+  return tz ? String(tz) : null;
+}
+function bookedWhen(startTime: string, p: any): string {
+  return pacificTime(startTime, attendeeTimeZone(p));
 }
 
 /** Several approved rows share the address a booking came from: a publicist
@@ -982,7 +1005,7 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
         `Patrick was told; kill the interview from the triage page if this is not a guest we invited.`,
     }, "return=representation");
     apps = stub?.length ? stub : [];
-    await slack(env, `:rotating_light: Cal.com booking for ${who} at ${startTime} matched NO application. ` +
+    await slack(env, `:rotating_light: Cal.com booking for ${who} at ${pacificTime(startTime)} matched NO application. ` +
       (apps.length
         ? "A placeholder application and the interview were created so Mira still calls; check the triage page."
         : "And the placeholder could not be created — nobody is calling them."));
@@ -990,7 +1013,7 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
       await email(env, operatorEmail(env),
         `A booked ${bookedShow.shortLabel} interview matched no application`,
         `<p>Hi Patrick,</p><p><strong>${esc(who)}</strong> booked a time at
-         <strong>${esc(String(startTime))}</strong> and it matched no application
+         <strong>${esc(pacificTime(startTime) || String(startTime))}</strong> and it matched no application
          by address, name or phone.</p>
          ${apps.length
            ? `<p>So that nobody is left waiting for a call, I created an application
@@ -1024,10 +1047,12 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
     interviewId = existing[0].id;
     await sb(env, "PATCH", `interviews?id=eq.${interviewId}`,
       { scheduled_at: startTime, status: "scheduled", reminder_sent_at: null, show: show.slug,
+        guest_timezone: attendeeTimeZone(p),
         duration_min: plannedMinutes, host_mode: false });
   } else {
     const created = await sb(env, "POST", "interviews",
       { application_id: apps[0].id, scheduled_at: startTime, status: "scheduled", show: show.slug,
+        guest_timezone: attendeeTimeZone(p),
         duration_min: plannedMinutes, host_mode: false },
       "return=representation");
     interviewId = created?.[0]?.id ?? "";
@@ -1063,7 +1088,7 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
      <p>The conversation is recorded, and nothing publishes until you have heard the edit
      and approved it.${manage ? ` If you need to move or cancel, <a href="${esc(manage)}">use this link</a>; one tap, no explanation needed.` : " If you need to move the time, use the reschedule link in your calendar confirmation."}</p>
      ${miraSignature(show)}`, true);
-  await slack(env, `${show.shortLabel}: ${apps[0].name} booked ${startTime}`);
+  await slack(env, `${show.shortLabel}: ${apps[0].name} booked ${pacificTime(startTime)}`);
   return json({ ok: true, show: show.slug, interview_id: interviewId });
 }
 
@@ -1283,7 +1308,7 @@ async function handleManagePage(env: Env, token: string): Promise<Response> {
   const app = apps?.[0] ?? {};
   const show = showFor(interview, app);
   const when = interview.scheduled_at
-    ? new Date(interview.scheduled_at).toUTCString().replace("GMT", "UTC")
+    ? pacificTime(interview.scheduled_at, interview.guest_timezone)
     : "your scheduled time";
   const booking = env.CALCOM_BOOKING_URL || "";
   if (interview.status === "cancelled" || interview.cancelled_at) {
@@ -1328,7 +1353,7 @@ async function handleManageSubmit(req: Request, env: Env, token: string): Promis
     await email(env, operatorEmail(env),
       `${show.shortLabel}: ${app.name ?? "a guest"} cancelled`,
       `<p>${esc(app.name ?? "A guest")} cancelled their interview` +
-      `${interview.scheduled_at ? ` (was ${esc(new Date(interview.scheduled_at).toUTCString())})` : ""}.</p>` +
+      `${interview.scheduled_at ? ` (was ${esc(pacificTime(interview.scheduled_at))})` : ""}.</p>` +
       (note ? `<p>They said: ${esc(note)}</p>` : "<p>No reason given.</p>"));
     return html(page("Cancelled", `
       <p>Done — nobody is waiting for you, and Mira will not call.</p>
@@ -1643,7 +1668,7 @@ async function handleArchivePage(req: Request, env: Env, pathToken?: string): Pr
       `interview_runs?id=eq.${pkg.interview_run_id}&select=grok_session_log,duration_sec`) : [];
     const tracks = runs?.[0]?.grok_session_log?.tracks ?? {};
     const audio = tracks?.edit?.url || tracks?.preview || runs?.[0]?.grok_session_log?.voximplant_mix_record_url || "";
-    const when = interview?.scheduled_at ? new Date(interview.scheduled_at).toUTCString().slice(0, 16) : "";
+    const when = interview?.scheduled_at ? pacificTime(interview.scheduled_at, null, true) : "";
     const transcript = String(pkg.transcript_cleaned || pkg.transcript_raw || "").trim();
     items.push(`<section style="border-top:1px solid #e2e8f0;padding:1rem 0">
       <h2 style="margin:.2rem 0">${esc(app?.name ?? "Unknown guest")}</h2>
@@ -2080,7 +2105,7 @@ async function handleStudioCheck(req: Request, env: Env): Promise<Response> {
   if (echo === "borderline") problems.push("the microphone faintly hears the speakers");
   if (signin === "failed") problems.push(`the studio sign-in failed (${esc(record.signin_error || "no detail")}); a VPN or firewall is the usual cause`);
   const who = app?.name ? String(app.name) : "A guest";
-  const when = iv.scheduled_at ? new Date(iv.scheduled_at).toUTCString() : "an unscheduled slot";
+  const when = iv.scheduled_at ? pacificTime(iv.scheduled_at) : "an unscheduled slot";
 
   if (problems.length && (test || mic === "skipped")) {
     try {

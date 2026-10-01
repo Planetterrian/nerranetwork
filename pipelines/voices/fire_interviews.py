@@ -24,7 +24,7 @@ import os
 
 from common import (  # noqa: E402
     OPERATOR_EMAIL, ROOT, carry_the_show_block, cohost_name, load_prompt, logger,
-    mira_signature_html, guest_notes_block, guest_agenda_block,
+    mira_signature_html, guest_notes_block, guest_agenda_block, pacific_time,
     notify_operator,
     operator_phone, render_email, sb_insert, sb_select, sb_update, send_email,
     show_for, to_e164,
@@ -196,7 +196,7 @@ def notify_host(interview: dict, app: dict, show, *, when: str) -> None:
         html = render_email(
             "voices_host_link.j2", show=show,
             host_url=url, guest_name=guest_name,
-            scheduled_at=interview.get("scheduled_at", ""),
+            scheduled_at=pacific_time(interview.get("scheduled_at", "")),
             cohost_name=cohost_name(), when=when,
             interview_id=interview["id"],
         )
@@ -351,14 +351,10 @@ def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
     ) + variety_block(show.slug)
 
 
-def when_text(iso: str) -> str:
-    """Same wording as the prep brief: the day and the UTC time, pointing at
-    the calendar invite for the guest's own zone."""
-    t = _parse(iso)
-    if not t:
-        return ""
-    t = t.astimezone(dt.timezone.utc)
-    return f"{t:%A}, {t:%B} {t.day} at {t:%H:%M} UTC (the time in your calendar invite)"
+def when_text(iso: str, guest_tz: str = "") -> str:
+    """Same wording as the prep brief: Pacific Time (the network's zone), with
+    the guest's own clock alongside when the booking told us their zone."""
+    return pacific_time(iso, guest_tz or None)
 
 
 def reminder_email(interview: dict, app: dict, show, manage: str,
@@ -368,7 +364,7 @@ def reminder_email(interview: dict, app: dict, show, manage: str,
     import html as _h
     studio = show.studio_url(interview["id"]) + "&role=guest"
     phone_mode = (interview.get("call_mode") or "webrtc") != "webrtc"
-    when = when_text(interview.get("scheduled_at", ""))
+    when = when_text(interview.get("scheduled_at", ""), interview.get("guest_timezone") or "")
     first = _h.escape(first_name(app))
     if soon:
         subject = (f"I'll call you in a few minutes for {show.name}" if phone_mode

@@ -120,14 +120,11 @@ def generate_brief(interview: dict, app: dict) -> dict:
     })
 
 
-def when_text(iso: str) -> str:
-    """"Thursday, September 24 at 16:45 UTC". The raw timestamp used to go
-    into the email as-is ("2026-09-22T17:15:00+00:00")."""
-    try:
-        t = dt.datetime.fromisoformat(str(iso).replace("Z", "+00:00")).astimezone(dt.timezone.utc)
-    except (TypeError, ValueError):
-        return ""
-    return f"{t:%A}, {t:%B} {t.day} at {t:%H:%M} UTC (the time in your calendar invite)"
+def when_text(iso: str, guest_tz: str = "") -> str:
+    """"Thursday, September 24 at 9:45 AM Pacific Time", with the guest's own
+    clock alongside when we know their zone (Sept 30 2026: was UTC)."""
+    from pipelines.voices.common import pacific_time
+    return pacific_time(iso, guest_tz or None)
 
 
 def setup_test_url(show, interview_id: str) -> str:
@@ -142,7 +139,7 @@ def email_brief_to_guest(interview: dict, app: dict, brief: dict) -> None:
         "voices_prep_brief.j2",
         show=show,
         guest_name=first_name(app),
-        when_text=when_text(interview.get("scheduled_at", "")),
+        when_text=when_text(interview.get("scheduled_at", ""), interview.get("guest_timezone") or ""),
         interview_id=interview["id"],
         studio_link=f"{show.studio_url(interview['id'])}&role=guest",
         # Sept 28 2026 (Elliot): a 30-second microphone and headphones test
