@@ -1,0 +1,104 @@
+Out-of-order speculative execution for LLM agents cuts latency on long-tool calls while keeping correctness intact. This is Models & Agents, episode 190. Tomasu LLM runs future agent actions in isolated sandboxes, and commits results only after validation against committed state. The runtime improves performance on three benchmarks that spans sub-second to minutes long-tool calls. It reaches 1.31 times on one
+100 sweet bench verified tasks. It reaches 1.35 times on 28 terminal bench 2.0 tasks.
+It reaches 1.27 times matched progress on 18 sweet marathon sessions.
+4,010 audited commit validation records show zero false accepts.
+The approach targets idle time created by compilers, test suites, and repository commands.
+In Model Updates, Frontier LLMs reached censored mean absolute error within 10% of state-of-the-art
+random survival forests on several cancer types in the MSK-chored cohort.
+GPT 5.6-sol posts lower error than the random survival forest baseline for prostate cancer
+in that cohort.
+Feature ablations indicate the models prioritize clinical variables similarly to specialized
+survival models.
+Accuracy remains inconsistent across cancer types and institutions, and concordance index
+scores stay lower than the specialized baselines.
+Across 17 instruction tuned models ranging from 1.5 billion to 72 billion parameters, persona
+and formatting instructions restructure intermediate representations.
+Safety instructions produce changes statistically indistinguishable from a minimal baseline.
+line. Restrictive and explicitly permissive safety instructions engage near-identical
+computational pathways, with mean-centered kernel alignment correlation of 0.997.
+Safety penetration remains below 10% even at 70 billion to 72 billion scale.
+Representational depth predicts behavioral effect size with spearman row of 0.761.
+Split conformal claim filtering applied to multi-hop retrieval augmented generation raises
+the fraction of fully supported retained claims to between 95.80 and 97.20% at the 95%
+target. Only 4.41 to 31.09% of generated claims are retained at that target. 9.70 to 51.40%
+of responses remain non-empty. The evaluation covers LOMA 3.18B and GPT-40 mini. Changing terminology
+alone reverses which side of an issue a model supports in 16.9% of matched comparisons across
+seven open-weight models and 10 contentious topics. Stated political ideology systematically shifts
+responses toward the user's position. 12 LLMs achieve 95.6% mean appropriateness on honesty,
+autonomy, and confidentiality scenarios across medicine, law, finance, and national security.
+Correct domain-specific justification use varies from 25.6% to 76.9% across models.
+Varying stakes reveal severe but localized failures where models alter responses even though
+the underlying professional obligation remains unchanged.
+Evoke supplies goal diversity at fixed states during post-training to elicit pre-trained
+world knowledge without additional world model training.
+It reports improved task performance, unseen environment generalization, and data efficiency
+across diverse tasks in three backbones.
+The heterogeneity-driven team selection framework profiles individual capability plus decorrelation
+in error patterns and divergence in predictive behavior.
+It applies an efficient greedy search to select a small team from a candidate pool and consistently
+outperforms quality-only baselines.
+D-Edit adds iterative token-to-token editing to a diffusion-based drafter, so later predictions
+can repair earlier errors using bidirectional context.
+On QN34B and QN38B, it reaches macro average speed-ups of 5.72 times and 5.97 times over
+auto-regressive generation under greedy decoding.
+Anchor label relabeling replaces corpus labels with distributions from greedy target rollouts.
+In rollout anchors places draft blocks inside target rollouts to expose the drafter to target
+generated context at no extra target cost.
+The framework increases greedy accepted length by up to 36.5% over D-flash on fixed vision
+language and text corpora.
+Nina Zander connects layers of frozen models from different families with a single train
+shared latent adapter.
+The configuration combining the first five layers of Pythia, with the remaining 27 layers
+of RWKV, reduces transformer key value cache by 84.4%, with accuracy not significantly
+differently from RWKV alone.
+No composed model matched parent model Pythia on multiple choice accuracy.
+Doct 2-Lora generates a Lora adapter for each paper, so every point in the embedding
+space corresponds to an LLM that can be queried in natural language.
+On American Physical Society papers, the average of subfield instruction produces labels closer
+to official names than five baselines.
+A small, invertible transform makes the embedding's competitive for search while remaining
+mappable back to an LLM.
+A multi-domain benchmark of approximately 9.2000 instances tests narrative-infilling across
+encyclopedic text, common-sense stories, news articles, and visual narratives.
+Gemma 22B achieves the highest qualitative score of 4.02 out of 5, outperforming models
+over 10 times larger.
+Explicit chain of thought reasoning yields only a 0.6% marginal improvement.
+Clinique bench contains 333 clinician-authored tasks, each with a virtual patient, clinical
+tools, and task-specific success criteria.
+More than 35 clinicians contributed to case-authoring and evaluation.
+Best performing models succeed on less than 30% of tasks, even though diagnosis accuracy
+reaches 90.7%. Speculative decoding lets a small drafter propose tokens that a larger
+target verifies in parallel. The quality gain disappears above roughly 70 billion parameters,
+because the drafter's error rate begins to offset the parallel verification benefit.
+A single early mismatch forces the entire block to be discarded. Adding iterative editing passes
+lets later predictions supply bidirectional context that repairs earlier errors without restarting
+the draft. This raises accepted length but adds a second forward pass per editing round,
+trading roughly 200 milliseconds of latency for the observed 5.7 times speed up on Q334b.
+Use plain speculative decoding when the drafter matches the target family and context length stays
+under 8,000 tokens. Switch to editing or anchor relabeling once the drafter is drawn from a different
+family or the corpus contains many long toolcalls. Try Tamasu LLM on SWE bench verified tasks
+to measure the 1.31 times latency reduction on long running toolcalls. Run context-adap scenarios
+on any of the 12 evaluated models to check domain-specific justification rates. Test evoke post-training on
+a held-out environment to observe gains in unseen generalization without extra-world
+model training.
+Apply doc to Lora embeddings to a set of APS papers and query the resulting Lora adapters
+for sub-field descriptions.
+Additional results from the Hallou Scoring 2026 shared task on Arabic hallucination detection
+are expected in the coming weeks.
+Further scaling experiments on NAMO's sparse attention are anticipated from the same research
+group.
+Expanded Clinique Bench Tasks covering additional clinical specialties are under development by the authoring clinicians.
+Before we go, watch for new numbers on long horizon agent reliability from the next round of terminal bench evaluations.
+That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+The AI world moves fast, we'll help you keep up.
+See you tomorrow, and if you'd rather watch then listen, find us on YouTube at Nerra Network.
+Links in the show notes.
+This show comes to you from the Nerra Network.
+If you want another sharp daily briefing, OmniView Europe has you covered.
+The day across Europe, one lead, and the stories behind it.
+All our shows are free at Nerra Network dot com.
+The do-positive pod is the club for people who do something about it.
+Episodes and the Dispatch Wall at NerraNetwork.com, the DP Pod.
+This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.

@@ -1,0 +1,131 @@
+Out-of-order speculative execution for L L M agents cuts latency on long tool calls while keeping correctness intact.
+
+This is Models and Agents, episode one hundred ninety.
+
+TomasuLLM runs future agent actions in isolated sandboxes and commits results only after validation against committed state.
+
+The runtime improves performance on three benchmarks that span sub-second to minutes-long tool calls.
+
+It reaches one point three one times on one hundred SWE-bench Verified tasks.
+
+It reaches one point three five times on twenty eight Terminal-Bench two point zero tasks.
+
+It reaches one point two seven times matched progress on eighteen SWE-Marathon sessions.
+
+Four thousand ten audited commit-validation records show zero false accepts.
+
+The approach targets idle time created by compilers, test suites, and repository commands.
+
+In model updates, frontier L L M's reach censored mean absolute error within ten percent of state-of-the-art random survival forests on several cancer types in the MSK-CHORD cohort.
+
+G P T five point six Sol posts lower error than the random survival forest baseline for prostate cancer in that cohort.
+
+Feature ablations indicate the models prioritize clinical variables similarly to specialized survival models.
+
+Accuracy remains inconsistent across cancer types and institutions, and concordance index scores stay lower than the specialized baselines.
+
+Across seventeen instruction-tuned models ranging from one point five billion to seventy two billion parameters, persona and formatting instructions restructure intermediate representations.
+
+Safety instructions produce changes statistically indistinguishable from a minimal baseline.
+
+Restrictive and explicitly permissive safety instructions engage near-identical computational pathways with mean centered kernel alignment correlation of zero point nine nine seven.
+
+Safety penetration remains below ten percent even at seventy billion to seventy two billion scale.
+
+Representational depth predicts behavioral effect size with Spearman rho of zero point seven six one.
+
+Split-conformal claim filtering applied to multi-hop retrieval-augmented generation raises the fraction of fully supported retained claims to between ninety five point eight zero and ninety seven point two zero percent at the ninety five percent target.
+
+Only four point four one to thirty one point zero nine percent of generated claims are retained at that target.
+
+Nine point seven zero to fifty one point four zero percent of responses remain non-empty.
+
+The evaluation covers Llama three point one eight B and G P T four o mini.
+
+Changing terminology alone reverses which side of an issue a model supports in sixteen point nine percent of matched comparisons across seven open-weight models and ten contentious topics.
+
+Stated political ideology systematically shifts responses toward the user's position.
+
+Twelve L L M's achieve ninety five point six percent mean appropriateness on honesty, autonomy, and confidentiality scenarios across medicine, law, finance, and national security.
+
+Correct domain-specific justification use varies from twenty five point six percent to seventy six point nine percent across models.
+
+Varying stakes reveals severe but localised failures where models alter responses even though the underlying professional obligation remains unchanged.
+
+EVOKE supplies goal diversity at fixed states during post-training to elicit pretrained world knowledge without additional world-model training.
+
+It reports improved task performance, unseen environment generalization, and data efficiency across diverse tasks in three backbones.
+
+The heterogeneity-driven team selection framework profiles individual capability plus decorrelation in error patterns and divergence in predictive behavior.
+
+It applies an efficient greedy search to select a small team from a candidate pool and consistently outperforms quality-only baselines.
+
+DEdit adds iterative token-to-token editing to a diffusion-based drafter so later predictions can repair earlier errors using bidirectional context.
+
+On Qwen three four B and Qwen three eight B it reaches macro-average speedups of five point seven two times and five point nine seven times over autoregressive generation under greedy decoding.
+
+Anchor-Label Relabelling replaces corpus labels with distributions from greedy target rollouts.
+
+In-Rollout Anchors places draft blocks inside target rollouts to expose the drafter to target-generated context at no extra target cost.
+
+The framework increases greedy accepted length by up to thirty six point five percent over DFlash on fixed vision-language and text corpora.
+
+NinaXander connects layers of frozen models from different families with a single trained shared-latent adapter.
+
+The configuration combining the first five layers of Pythia with the remaining twenty seven layers of RWKV reduces Transformer key-value cache by eighty four point four percent with accuracy not significantly different from RWKV alone.
+
+No composed model matched parent model Pythia on multiple-choice accuracy.
+
+Doc2LoRA generates a Laura adapter for each paper so every point in the embedding space corresponds to an L L M that can be queried in natural language.
+
+On American Physical Society papers the average-of-subfield instruction produces labels closer to official names than five baselines.
+
+A small invertible transform makes the embeddings competitive for search while remaining mappable back to an L L M.
+
+A multi-domain benchmark of approximately nine point two thousand instances tests narrative infilling across encyclopedic text, commonsense stories, news articles, and visual narratives.
+
+Gemma two two B achieves the highest qualitative score of four point zero two out of five, outperforming models over ten times larger.
+
+Explicit chain-of-thought reasoning yields only a zero point six percent marginal improvement.
+
+KlinikeBench contains three hundred thirty three clinician-authored tasks each with a virtual patient, clinical tools, and task-specific success criteria.
+
+More than thirty five clinicians contributed to case authoring and evaluation.
+
+Best-performing models succeed on less than thirty percent of tasks even though diagnosis accuracy reaches ninety point seven percent.
+
+Speculative decoding lets a small drafter propose tokens that a larger target verifies in parallel.
+
+The quality gain disappears above roughly seventy billion parameters because the drafter's error rate begins to offset the parallel verification benefit.
+
+A single early mismatch forces the entire block to be discarded.
+
+Adding iterative editing passes lets later predictions supply bidirectional context that repairs earlier errors without restarting the draft.
+
+This raises accepted length but adds a second forward pass per editing round, trading roughly two hundred milliseconds of latency for the observed five point seven times speedup on Qwen three four B.
+
+Use plain speculative decoding when the drafter matches the target family and context length stays under eight thousand tokens.
+
+Switch to editing or anchor-relabelling once the drafter is drawn from a different family or the corpus contains many long tool calls.
+
+Try TomasuLLM on SWE-bench Verified tasks to measure the one point three one times latency reduction on long-running tool calls.
+
+Run ContextAdapt scenarios on any of the twelve evaluated models to check domain-specific justification rates.
+
+Test EVOKE post-training on a held-out environment to observe gains in unseen generalization without extra world-model training.
+
+Apply Doc2LoRA embeddings to a set of APS papers and query the resulting Laura adapters for subfield descriptions.
+
+Additional results from the HalluScoring twenty twenty six shared task on Arabic hallucination detection are expected in the coming weeks.
+
+Further scaling experiments on NAMOH sparse attention are anticipated from the same research group.
+
+Expanded KlinikeBench tasks covering additional clinical specialties are under development by the authoring clinicians.
+
+Before we go, watch for new numbers on long-horizon agent reliability from the next round of terminal-bench evaluations.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes. This show comes to you from the Nerra Network.
+
+If you want another sharp daily briefing, Omni View Europe has you covered — the day across Europe, one lead and the stories behind it. All our shows are free at nerranetwork dot com. The Do Positive Pod is the club for people who do something about it — episodes and the Dispatch Wall at nerranetwork dot com thedppod.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
