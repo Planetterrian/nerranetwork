@@ -3110,3 +3110,113 @@ experiments:
       without VAD only on a VAD-shaped error. Operator item: a lockfile
       (pip-compile constraints) for the run-show job, the second
       transitive bump to take a stage down in a fortnight.
+  - id: frame-memory-wired-2026-10-01
+    title: "Frame memory actually renders (read config.episode.output_dir)"
+    area: quality
+    shipped: 2026-10-01
+    readout: 2026-10-15
+    status: reading
+    baseline: "0 of 17 opted-in shows received a block on 2026-10-01 — the builder read config.output_dir, an attribute only the test double had; 6 banned-frame sentences shipped across 17 scripts that day"
+    target: >
+      The frame-memory-2026-09-30 target, measured from the first episode
+      AFTER this merge (the 09-30 entry's clock restarts here; its
+      pre-merge days are a no-op control, not a baseline).
+    notes: >
+      The 09-30 guard passed on a fake config with a flat output_dir. The
+      new guard loads shows/omni_view.yaml and points its episode dir at a
+      fixture. Playbook rule: a wiring guard renders through the REAL
+      config object, never a stand-in.
+  - id: story-clusters-2026-10-01
+    title: "Same-story clustering in the digest prompt on 22 news shows"
+    area: quality
+    shipped: 2026-10-01
+    readout: 2026-10-15
+    status: reading
+    baseline: "Tesla Ep622: the Model 3 refresh as 8 of 17 digest items from 8 outlets, told 5 times in the script; SpaceX Ep117 Needham run rate x2, orbital compute restated in the deep dive; script_repeated_facts network sum 38 on 10-01"
+    target: >
+      story_clusters_retold_in_digest == 0 on >= 12 of the first 14
+      episodes of tesla, spacex and models_agents (a cluster that still
+      surfaced as two items), AND Tesla's script_repeated_facts median over
+      those 14 <= 3 (was 4-5).
+    criteria: >
+      Hit = both. retold > 0 on a majority = the annotation is being read
+      past; move the rule into the one-shot structural regeneration (a
+      cluster told twice is a structural defect, like a missing section).
+      Clusters that are NOT the same story (false joins) on the A/B read =
+      raise MIN_SHARED before anything else.
+    notes: >
+      engine/story_clusters.py — salient-token overlap on title+teaser,
+      furniture filtered against the tracker's 45-day headline window,
+      later members carry an inline one-item note, nothing dropped. The
+      overlap dedupe cannot see this shape (angles differ, vocabulary
+      overlap <= 0.38 on the Ep622 pairs). Calibrated on four shows' last
+      four days of tracker headlines: every proposed cluster was a real
+      same-story pair once the window filter was in.
+  - id: platform-ask-2026-10-01
+    title: "Follow-or-rate ask on the 17 closings that asked for nothing"
+    area: growth
+    shipped: 2026-10-01
+    readout: 2026-11-01
+    status: reading
+    baseline: "Apple ratings on 2026-10-01 (first fetch, 15 shows with a page): age_of_ai 1, MAB 1, spacex 2, twelve shows 0; no closing anywhere said 'follow'; 11 English shows + 6 desks had no ask"
+    target: >
+      Apple rating_count_total up by >= 10 across the network by the readout
+      (api/apple_ratings.json history), with at least three shows gaining
+      their first rating; Spotify follows are not measurable here.
+    criteria: >
+      Hit = both. Zero movement on the shows that gained the ask while the
+      shows with their own ask move = the sentence, not the idea: rewrite
+      by shape. A/B-listen the first two episodes of two silent shows
+      (an Omni desk and ai_chips) — the ask lands after the sign-off, the
+      same slot the YouTube call-out uses.
+    notes: >
+      engine/intros.py: one sentence, two shapes alternating, every other
+      day, offset per show; Russian on finansy_prosto; a closing that
+      already asks is untouched. AUDIO — landmine #17.
+  - id: apple-ratings-instrument-2026-10-01
+    title: "Apple ratings read nightly from the public show pages"
+    area: instrument
+    shipped: 2026-10-01
+    readout: 2026-10-15
+    status: reading
+    baseline: "ratings read nowhere; the on-air and show-notes asks were unmeasurable"
+    target: >
+      api/apple_ratings.json present with >= 14 of 15 shows measured on
+      the readout date; a 7-day count delta renders on Mission Control.
+    notes: >
+      scripts/fetch_apple_ratings.py — JSON-LD aggregateRating first, the
+      page's serialised ratings metadata for the measured-zero case, null
+      (never 0) when neither block exists; previous reading kept and
+      flagged on a failed fetch. No auth, no paid API.
+  - id: vtt-transcripts-2026-10-01
+    title: "WebVTT transcripts in every feed item (Apple reads these)"
+    area: growth
+    shipped: 2026-10-01
+    readout: 2026-10-29
+    status: reading
+    baseline: "every item carried podcast:transcript type=application/json pointing at a raw Whisper dump no app reads; 0 shows with an in-app transcript on Apple Podcasts"
+    target: >
+      Apple Podcasts shows a transcript on the newest episode of tesla,
+      spacex and models_agents by the readout (operator spot-check in the
+      app); 1,968 backfilled items carry the text/vtt tag.
+    notes: >
+      engine/transcripts.py writes <prefix>_transcript.vtt beside the JSON;
+      engine/publisher.py emits text/vtt first and keeps the JSON tag;
+      scripts/backfill_transcript_vtt.py wrote 1,972 files (22.7 MB) and
+      retagged 30 feeds. Channel tags itunes:type, podcast:guid and a
+      branded itunes:author landed in the same pass.
+  - id: launch-cohort-newsletters-2026-10-01
+    title: "Per-show newsletters ON for the 13 launch-cohort shows"
+    area: growth
+    shipped: 2026-10-01
+    readout: 2026-11-01
+    status: reading
+    baseline: "every cohort show page offered a per-show signup whose tag the Worker dropped; 0 cohort subscribers; network newsletter 11 subscribers"
+    target: >
+      >= 1 tagged subscriber on >= 4 cohort shows by the readout
+      (api/buttondown_stats.json tag_counts), and no cohort newsletter
+      blocked by the sanitizer or the contrast check in that window.
+    notes: >
+      Requires the operator to `wrangler deploy` workers/gallery (the tag
+      allow-list) — until then the forms still subscribe the address to
+      the member list and drop the show tag.
