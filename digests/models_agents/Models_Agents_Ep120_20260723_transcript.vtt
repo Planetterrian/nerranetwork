@@ -1,0 +1,253 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:07.400
+Glad you're here. Welcome to Models and Agents, episode 120. It's July 23, 2026.
+
+00:00:08.080 --> 00:00:12.400
+Their signal and noise in AI every day. Let's get to the signal.
+
+00:00:12.960 --> 00:00:18.980
+Anthropics new Cloud Security plugin turns your terminal into a multi-agent vulnerability scanner
+
+00:00:18.980 --> 00:00:25.940
+that proposes patches you still review and apply. Anthropic released the Cloud Security plugin for
+
+00:00:25.940 --> 00:00:33.000
+Cloud Code in beta. The tool runs a multi-agent vulnerability scan of a repository from inside an
+
+00:00:33.000 --> 00:00:39.360
+existing Cloud Code session. It converts selected findings into patch files for manual review.
+
+00:00:40.140 --> 00:00:44.840
+The plugin operates directly in the terminal without requiring separate infrastructure.
+
+00:00:45.320 --> 00:00:51.020
+Builders working on internal code bases now have an integrated way to surface issues before deployment.
+
+00:00:51.660 --> 00:00:56.300
+The announcement highlights its ability to scan and propose fixes without leaving the
+
+00:00:56.300 --> 00:01:04.140
+Cloud Code environment. This development continues the tracked agents and tool use arc from episode 119
+
+00:01:04.140 --> 00:01:10.460
+by extending multi-turn agent reliability into security workflows. Watch for how the plugin
+
+00:01:10.460 --> 00:01:16.640
+handles larger repositories and whether Anthropic expands the set of supported vulnerability classes
+
+00:01:16.640 --> 00:01:25.760
+in follow-up updates. A new Rust-BPE tokenizer called Gigatoken hits 24.53 gigabytes per second on
+
+00:01:25.760 --> 00:01:35.280
+144 core hardware. A detailed cost study across GPT, Claude, Gemini, and Kimmy shows real task costs
+
+00:01:35.280 --> 00:01:42.980
+varying 10.6 times despite only two times published price differences. Poolside's small research team
+
+00:01:42.980 --> 00:01:50.720
+trained Laguna S, a 118 billion mixture of experts model that beats think he's roughly one trillion
+
+00:01:50.720 --> 00:01:56.920
+parameter open weights model through efficient infrastructure. Researchers released a session layer
+
+00:01:56.920 --> 00:02:03.420
+conversational risk accumulation framework that tracks semantic drift across multi-turn dialogues.
+
+00:02:04.140 --> 00:02:12.120
+PiPI now rejects new file uploads to releases older than 14 days. A new paper studies hyper networks for
+
+00:02:12.120 --> 00:02:17.920
+train time knowledge injection using a data set of tens of millions of multi-hop question answering
+
+00:02:17.920 --> 00:02:25.240
+examples across 39 domains. The Claude security plugin integrates directly into existing Claude
+
+00:02:25.240 --> 00:02:31.860
+code sessions. Users can trigger multi-agent scans and receive patch files without switching tools.
+
+00:02:32.680 --> 00:02:39.620
+The beta focuses on terminal-based operation for immediate workflow fit. This builds on prior agent
+
+00:02:39.620 --> 00:02:45.600
+tool use coverage by adding concrete security scanning inside the same session. Gigatoken
+
+00:02:45.600 --> 00:02:52.820
+achieves its speed through a handwritten swar pre tokenizer and pre token caching. The implementation runs
+
+00:02:52.820 --> 00:03:01.480
+989 times faster than hugging face tokenizers on the same GPT2 workload. The gains come specifically
+
+00:03:01.480 --> 00:03:07.300
+from the pre tokenizer and caching strategy rather than changes to the BPE merge loop.
+
+00:03:08.180 --> 00:03:12.680
+Teams handling large scale pre-processing should test it for throughput gains.
+
+00:03:13.400 --> 00:03:18.760
+PoolSides model factory shows how smaller teams can close gaps through process improvements.
+
+00:03:19.540 --> 00:03:26.000
+The co-CEO Esokant discussed construction of the factory capable of producing competitive models
+
+00:03:26.000 --> 00:03:33.740
+at this size. This continues the tracked open weight models story from Episode 119 by demonstrating
+
+00:03:33.740 --> 00:03:39.920
+training efficiency gains. Watch for released details on the next model iteration as the factory
+
+00:03:39.920 --> 00:03:47.820
+scales further. The real task cost benchmark ran 10 realistic product tasks across providers using
+
+00:03:47.820 --> 00:03:55.000
+each cost optimized tier. Total costs spread 10.6 times even though published rates differed by
+
+00:03:55.000 --> 00:04:02.080
+only two times. One model used 197 reasoning tokens to produce a single word classification
+
+00:04:02.080 --> 00:04:10.300
+answer. The study references cost bench from ACL 2026 and terminal world findings on failed agent
+
+00:04:10.300 --> 00:04:18.200
+attempts burning more tokens. This data fits into the tracked reasoning models arc from Episode 119 by
+
+00:04:18.200 --> 00:04:24.760
+highlighting invisible token costs that affect real world budgeting. The full methodology and 10
+
+00:04:24.760 --> 00:04:32.480
+task prompts are public on GitHub at usewecker.com slash benchmark. The hyper network paper introduces
+
+00:04:32.480 --> 00:04:40.300
+mega wiki qa constructed from wiki data 5m results show predictive power loss scaling along depth
+
+00:04:40.300 --> 00:04:47.800
+width and target size axes plus reliable out of distribution generalization. The design decouples
+
+00:04:47.800 --> 00:04:54.040
+the hyper networks injection capacity from the target models general capability. Teams exploring
+
+00:04:54.040 --> 00:04:59.120
+efficient knowledge updates should examine the scaling curves for depth and width choices.
+
+00:04:59.900 --> 00:05:05.280
+Researchers propose a conversational risk accumulation framework that tracks semantic drift,
+
+00:05:05.980 --> 00:05:13.020
+sensitivity weighted entity graphs and compliance gradients. The approach releases CRA bench with
+
+00:05:13.020 --> 00:05:22.500
+1,208 turn sessions plus a five family extension reaching 2,000 sessions. Evaluation uses trajectory
+
+00:05:22.500 --> 00:05:31.480
+AUROC turns to detection calibrated false positive metrics and leave one family out diagnostic stress tests.
+
+00:05:31.880 --> 00:05:39.100
+This directly extends the tracked agents and tool use arc from Episode 119 by addressing gradual
+
+00:05:39.100 --> 00:05:45.700
+intent drift that single turn guard rails miss. Pipi implemented the upload restriction after
+
+00:05:45.700 --> 00:05:52.560
+analysis showed no technical barrier had previously existed. Seth Larson noted that attacker simply had
+
+00:05:52.560 --> 00:05:59.180
+not yet abused the prior openness. Maintainers of older releases should review their publishing workflows.
+
+00:05:59.880 --> 00:06:06.800
+The restriction applies only to new files on existing older releases. The M diversity tool provides
+
+00:06:06.800 --> 00:06:12.120
+a standardized set of embedding based diversity measures that work with any embedding model.
+
+00:06:12.760 --> 00:06:19.140
+The package supports stylistic semantic language and speaker diversity calculations through a single
+
+00:06:19.140 --> 00:06:26.160
+interface. Researchers can install it directly from the linked GitHub repository. The tool addresses
+
+00:06:26.160 --> 00:06:32.800
+fragmentation of prior diversity measurement approaches. Install gigatoken and benchmark your current
+
+00:06:32.800 --> 00:06:38.920
+pre-processing pipeline against hugging face tokenizers on large text corporate. Add the
+
+00:06:38.920 --> 00:06:45.260
+Claude security plugin to an existing Claude code session and scan a non-production repository to see
+
+00:06:45.260 --> 00:06:52.040
+the patch workflow. Run the public 10 task, cost benchmark prompts against your top two providers to
+
+00:06:52.040 --> 00:06:59.260
+measure real versus advertised spend. Explore the mega wiki QA dataset if you are testing hyper network
+
+00:06:59.260 --> 00:07:06.200
+or Laura based knowledge injection methods. Continued rollout of open AI presence enterprise agent
+
+00:07:06.200 --> 00:07:12.940
+features to additional eligible customers is expected. Further releases from pool sides model factory
+
+00:07:12.940 --> 00:07:20.580
+following Laguna S are on the way. Expanded CRA bench evaluations as more teams adopt the multi-turn
+
+00:07:20.580 --> 00:07:27.360
+risk framework will appear soon. Additional scaling studies on hyper network knowledge injection as the
+
+00:07:27.360 --> 00:07:33.920
+mega wiki QA results circulate are coming next. Okay, let's pop the hood on the invisible reasoning
+
+00:07:33.920 --> 00:07:41.380
+tokens that drive the 10.6 times cost spread. Published per token prices suggest predictable spend.
+
+00:07:42.080 --> 00:07:48.640
+In practice, many models generate substantial hidden reasoning traces, build at output rates but never
+
+00:07:48.640 --> 00:07:56.500
+shown to the user. The Reddit benchmark revealed one model consuming 197 internal tokens to emit a
+
+00:07:56.500 --> 00:08:03.360
+single classification word. These traces arise because current reasoning training encourages step-by-step
+
+00:08:03.360 --> 00:08:10.640
+computation even when the final answer is trivial. The effect compounds on agentic or multi-turn tasks
+
+00:08:10.640 --> 00:08:17.620
+where failed attempts burn extra tokens at high rates. This matches the reported negative 0.62
+
+00:08:17.620 --> 00:08:24.380
+correlation between failed attempts and token burn. When choosing providers, run your actual workload
+
+00:08:24.380 --> 00:08:31.520
+rather than relying on list prices. The practical decision rule is to measure end-to-end token usage on
+
+00:08:31.520 --> 00:08:38.500
+representative tasks before committing to a cost-optimized tier. Tomorrow keep an eye on further pool
+
+00:08:38.500 --> 00:08:45.660
+side model factory updates and expanded CRA bench results. That's models and agents for today.
+
+00:08:46.080 --> 00:08:50.540
+If you found this useful, share it with someone who's trying to keep up with all these changes
+
+00:08:50.540 --> 00:08:57.400
+and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep
+
+00:08:57.400 --> 00:09:03.000
+up, see you tomorrow, and if you'd rather watch than listen, find us on YouTube at Nerra Network,
+
+00:09:03.420 --> 00:09:09.800
+links in the show notes. One more thing. If you like today's episode, our sister show First Principles
+
+00:09:09.800 --> 00:09:16.460
+Daily is worth a spot in your feed. Reasoning from raw materials, not analogy, on the breakthroughs
+
+00:09:16.460 --> 00:09:23.720
+that actually cut cost. It's one of the Nerra Network's daily briefings, all free at NerraNetwork.com.
+
+00:09:24.420 --> 00:09:31.120
+Following the long arcs, story trackers on NerraNetwork.com follow major programs across episodes,
+
+00:09:31.580 --> 00:09:39.880
+Tesla, SpaceX, AI, Space Science, and more. This episode used AI voice synthesis of my voice. Editorial
+
+00:09:39.880 --> 00:09:41.980
+selection and analysis are my own.

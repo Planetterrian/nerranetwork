@@ -1,0 +1,292 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.260
+What's up? Welcome to Models and Agents. Episode 79 is June 13th, 2026. Another day,
+
+00:00:06.460 --> 00:00:12.000
+another round of AI developments. Let's break it down. US export controls just forced and
+
+00:00:12.520 --> 00:00:18.600
+thropic to pull its newest frontier models offline for every user worldwide. The US government
+
+00:00:18.600 --> 00:00:24.640
+issued an export control directive requiring anthropic to suspend all access to Fable 5 and Mythos 5
+
+00:00:24.640 --> 00:00:31.020
+by any foreign national, including its own employees. The company responded by disabling the two
+
+00:00:31.020 --> 00:00:36.500
+newest models for every customer to maintain compliance, while all other clawed models remain
+
+00:00:36.500 --> 00:00:42.560
+available. The directive cites national security authorities and applies both inside and outside
+
+00:00:42.560 --> 00:00:48.800
+the United States. Anthropic called the order a misunderstanding and stated it is working to restore
+
+00:00:48.800 --> 00:00:55.360
+access. Builders relying on the latest clawed releases for agentic coding or research tasks must
+
+00:00:55.360 --> 00:01:02.220
+immediately re-root workloads to unaffected models or alternative providers. This continues the safety
+
+00:01:02.220 --> 00:01:07.960
+and policy developments from recent episodes, where regulatory actions are directly altering which
+
+00:01:07.960 --> 00:01:16.540
+frontier models stay accessible. Moonshot AI open-sourced Kimi K2.7 code, a coding model that reduces
+
+00:01:16.540 --> 00:01:22.260
+thinking token usage by roughly 30% while claiming double-digit gains on internal benchmarks.
+
+00:01:23.020 --> 00:01:30.240
+That brings us to the model updates. Moonshot AI released Kimi K2.7 code under a modified
+
+00:01:30.240 --> 00:01:37.420
+MIT license as an open source update to its K2.6 coding model. The new model uses the same
+
+00:01:37.420 --> 00:01:44.180
+trillion parameter M-extra of experts architecture, adds a 256,000 token context window,
+
+00:01:44.180 --> 00:01:52.700
+and reduces reasoning token usage by approximately 30%. It reports gains of 21.8% on Kimi code
+
+00:01:52.700 --> 00:02:01.080
+bench V2, 11% on program bench, and 31.5% on MLS bench light, all proprietary benchmarks.
+
+00:02:01.880 --> 00:02:07.480
+The model runs exclusively in thinking mode with temperature fixed at 1.0 and is available
+
+00:02:07.480 --> 00:02:14.120
+through the Kimi API and Kimi code. This moves the open-weight models conversation forward by showing
+
+00:02:14.120 --> 00:02:20.820
+concrete token efficiency gains on coding benchmarks. Open AI began rolling out the ability for go,
+
+00:02:21.180 --> 00:02:27.820
+plus pro, and business users to bank codex rate limit resets for later use, starting each with
+
+00:02:27.820 --> 00:02:33.940
+one free reset. Plus, and pro users can also invite up to three friends to try codex for two weeks.
+
+00:02:33.940 --> 00:02:38.800
+Both parties receive an extra banked reset when the friend sends their first message.
+
+00:02:39.340 --> 00:02:44.160
+The changes address user requests for more flexible usage timing. Developers running
+
+00:02:44.160 --> 00:02:49.720
+sustained codex workloads can now plan around saved resets rather than daily explorations.
+
+00:02:50.360 --> 00:02:56.420
+Now for agent and tool developments, GitHub updated co-pilot CLI with better orchestration logic
+
+00:02:56.420 --> 00:03:02.800
+that reduces unnecessary hand-offs between agents. The change improves progress speed on multi-step
+
+00:03:02.800 --> 00:03:08.620
+tasks without requiring users to adjust any new settings. It builds on existing delegation patterns
+
+00:03:08.620 --> 00:03:15.120
+while tightening when the CLI decides to pass work to another component. Teams using co-pilot CLI
+
+00:03:15.120 --> 00:03:19.700
+for terminal-based coding can test the update immediately for fewer context switches.
+
+00:03:20.700 --> 00:03:25.840
+This fits the ongoing agents and tool use arc, where small refinements to orchestration
+
+00:03:25.840 --> 00:03:32.860
+are improving reliability on multi-step workflows. NanoClaw agents now root all package, CLI
+
+00:03:32.860 --> 00:03:39.020
+tool, and MCP server requests exclusively through jfrog registries, blocking installation of
+
+00:03:39.020 --> 00:03:45.800
+unvetted or malicious dependencies. When a request is rejected, the agent receives a 403 policy error
+
+00:03:45.800 --> 00:03:52.120
+and is guided to an approved alternative. The integration is free for open source users via jfrog's
+
+00:03:52.120 --> 00:03:58.000
+public-vetted registry and plugs directly into enterprise jfrog environments for compliance tracking.
+
+00:03:58.760 --> 00:04:04.520
+Operators gain a system of record for every package and agent consumes without manual approval steps.
+
+00:04:05.060 --> 00:04:10.540
+UC Berkeley, Princeton, EP, FL, and Databricks researchers released PixelRag,
+
+00:04:10.800 --> 00:04:17.460
+which renders web pages as screenshots, indexes image tiles with Quinn 3VL embedding 2B
+
+00:04:17.460 --> 00:04:26.180
+and feeds them to vision language models. On simple QA, it reaches 78.8% accuracy versus 71.6%
+
+00:04:26.180 --> 00:04:31.060
+for the strongest text parser, with similar gains on table and multi-modal tasks.
+
+00:04:31.720 --> 00:04:39.400
+An agent using PixelRag consumed 3.6 million prompt tokens versus 37.5 million for text retrieval
+
+00:04:39.400 --> 00:04:46.020
+on the same workload. The system requires Quinn 3VL 4B class models or larger.
+
+00:04:46.640 --> 00:04:51.620
+Smaller models lose the accuracy advantage. In the practical and community section,
+
+00:04:52.240 --> 00:04:59.380
+a community developer has made available a fresh C++ port of paddle OCR versions 3-6 that
+
+00:04:59.380 --> 00:05:05.420
+leverages the NCNN inference engine. This implementation eliminates reliance on the resource
+
+00:05:05.420 --> 00:05:12.000
+intensive official paddle C++ runtime components. As a result, setup for OCR functionality
+
+00:05:12.000 --> 00:05:18.260
+becomes more straightforward and execution times improve. The full source code along with usage
+
+00:05:18.260 --> 00:05:24.700
+examples resides in a GitHub repository maintained by the original contributor. Anyone working on
+
+00:05:24.700 --> 00:05:29.840
+device local or minimal dependency OCR applications can integrate this solution directly.
+
+00:05:30.460 --> 00:05:34.780
+It bypasses the need to handle the complete paddle software environment during deployment.
+
+00:05:35.420 --> 00:05:38.940
+The release was shared via a post in the machine learning subreddit.
+
+00:05:39.740 --> 00:05:44.720
+Allen AI has introduced Olmo EVAL as a dedicated evaluation workbench.
+
+00:05:45.140 --> 00:05:50.460
+The tool is structured to integrate directly into cycles of model development and refinement.
+
+00:05:51.020 --> 00:05:55.860
+It provides standardized metrics along with logging capabilities for consistent tracking.
+
+00:05:56.540 --> 00:06:00.760
+Open models benefit from this setup during rapid experimentation phases.
+
+00:06:01.480 --> 00:06:06.540
+Teams engaged in training or fine-tuning processes can utilize it to maintain uniform
+
+00:06:06.540 --> 00:06:12.700
+evaluation standards. No requirement exists to construct bespoke evaluation harnesses when
+
+00:06:12.700 --> 00:06:18.980
+using this workbench. Details on initial configuration appear in the Allen AI portion of the
+
+00:06:18.980 --> 00:06:24.060
+hugging face blog. Okay, let's pop the hood on this faithful uncertainty technique from the
+
+00:06:24.060 --> 00:06:29.640
+Google researchers. Everyone talks about reducing hallucinations as if the only options are
+
+00:06:29.640 --> 00:06:36.140
+answer everything or refuse when uncertain. In practice, faithful uncertainty separates a model's
+
+00:06:36.140 --> 00:06:41.200
+internal statistical confidence from the linguistic signals it uses to express doubt.
+
+00:06:41.880 --> 00:06:45.960
+The core mechanism trains the model to output hedging phrases such as
+
+00:06:45.960 --> 00:06:51.760
+my best guess is only when it's own token probabilities for the factual claim fall below a
+
+00:06:51.760 --> 00:06:56.800
+learned threshold. This alignment avoids the utility tax that occurs when strict
+
+00:06:56.800 --> 00:07:02.800
+abstention discards large numbers of correct answers the model actually knows. Adding the technique
+
+00:07:02.800 --> 00:07:08.620
+requires supervised fine-tuning on uncertainty labeled data which creates a bootstrapping problem
+
+00:07:08.620 --> 00:07:12.920
+because the correct label depends on what that specific model knows at training time.
+
+00:07:13.800 --> 00:07:19.380
+In agentic systems, the payoff appears in tool use decisions. The model can decide whether to
+
+00:07:19.380 --> 00:07:25.400
+invoke search or trusted parameters without external classifiers. The practical limit is that
+
+00:07:25.400 --> 00:07:31.420
+prompting alone cannot fully close the gap. Reinforcement learning on uncertainty aware trajectories
+
+00:07:31.420 --> 00:07:37.360
+is still required for production reliability. Teams should adopt faithful uncertainty prompting
+
+00:07:37.360 --> 00:07:44.040
+today for low stakes chat while planning RL stages for any long horizon agent. This reasoning
+
+00:07:44.040 --> 00:07:49.460
+models development points toward future stages that bake metacognition deeper into frontier models.
+
+00:07:50.180 --> 00:07:56.700
+Here are the things to try this week. Swap kimi key 2.7 code into any open AI compatible gateway
+
+00:07:56.700 --> 00:08:02.380
+you already run for coding agents and measure thinking, hang token, reduction on your own workloads.
+
+00:08:03.400 --> 00:08:08.640
+Wrote nano-cloth agents through a jfrog registry, free for open source if you need an immediate
+
+00:08:08.640 --> 00:08:15.520
+block on unvetted package installs. Test pixel rag on a Wikipedia scale factual QA task.
+
+00:08:15.520 --> 00:08:22.780
+If your current text rag pipeline loses structured content, start with QN3VL4B or larger.
+
+00:08:23.420 --> 00:08:29.300
+Update your codex usage pattern to bank rate limit resets now that the feature is rolling out to
+
+00:08:29.300 --> 00:08:35.500
+paid tiers. Add hedging prompts that mirror faithful uncertainty phrasing to any agent that
+
+00:08:35.500 --> 00:08:40.800
+currently oscillates between overconfident answers and full refusals. On the horizon,
+
+00:08:40.800 --> 00:08:47.760
+Anthropic continues working with regulators to restore fable 5 and mythos 5 access. Watch for
+
+00:08:47.760 --> 00:08:54.640
+an update on affected customer workloads. Moonshot AI has not yet submitted kimi key 2.7 code
+
+00:08:54.640 --> 00:09:00.180
+to independent benchmarks such as dbestwe. Expect community runs in the coming weeks.
+
+00:09:00.900 --> 00:09:06.180
+More visual retrieval systems are likely to appear as teams replicate the pixel rag screenshot
+
+00:09:06.180 --> 00:09:13.520
+tiling approach on domain specific corpora. Before we go, tomorrow keep an eye on any anthropic
+
+00:09:13.520 --> 00:09:18.440
+update about restoring access to the suspended models. That's models and agents for today.
+
+00:09:19.200 --> 00:09:23.080
+If you found this useful, share it with someone who's trying to keep up with all these changes
+
+00:09:23.080 --> 00:09:29.100
+and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep
+
+00:09:29.100 --> 00:09:35.220
+up. See you tomorrow. And before you go, this show is part of the Nerra network, a family of daily
+
+00:09:35.220 --> 00:09:41.700
+podcasts covering tech, science, markets, and more. If you enjoyed today's episode, give Planetarian
+
+00:09:41.700 --> 00:09:47.860
+Daily a listen. Daily breakthroughs in science, health, and longevity. You can explore the whole
+
+00:09:47.860 --> 00:09:55.080
+lineup at NerraNetwork.com. This episode used AI voice synthesis of my voice. Editorial selection
+
+00:09:55.080 --> 00:09:56.700
+and analysis are my own.

@@ -228,6 +228,59 @@ def _fetch_show_stats(slug: str, feed_url: str, token: str,
         return None
 
 
+#: Note written on a show entry OP3 could not resolve this run.
+UNINDEXED_NOTE = (
+    "OP3 has no record of this feed yet (not indexed via Podcast Index) — "
+    "downloads attach retroactively once it does; a 404 persisting for "
+    "weeks means check the prefix (docs/analytics.md)"
+)
+
+
+def is_resolved_show_entry(entry: Any) -> bool:
+    """True for a real OP3 reading; False for the unresolved marker.
+
+    Every consumer of ``op3_stats["shows"]`` (dashboard rollups, the
+    audience headline, the performance trackers, the popular rail, the
+    funnel) should ask THIS before reading download keys, so an unindexed
+    show can never be summed as a zero-download show.
+    """
+    return isinstance(entry, dict) and entry.get("resolved") is not False
+
+
+def unresolved_show_entry(rss_file: str, feed_url: str) -> Dict[str, Any]:
+    """The marker written for a show OP3 answered 404 for (Oct 1 2026).
+
+    Until now a None result wrote NOTHING for the show — the thirteen
+    September launch-cohort shows were simply absent from the file, so
+    "OP3 has not indexed this feed" was indistinguishable from "nobody
+    ever fetched it", and Mission Control rendered them with the same
+    "—" as a show that has no feed at all. The language-feed loop had
+    carried an explicit marker since Aug 15 2026; this mirrors it.
+    """
+    return {
+        "resolved": False,
+        "rss_file": rss_file,
+        "feed_url": feed_url,
+        "downloads_7d": None,
+        "downloads_30d": None,
+        "note": UNINDEXED_NOTE,
+    }
+
+
+def _carry_or_mark(slug: str, prev_shows: Dict[str, Any],
+                   rss_file: str, feed_url: str) -> Dict[str, Any]:
+    """What to write for a show whose fetch returned None this run: the
+    previous REAL reading tagged ``not_refreshed_this_run`` (a resolved
+    show that hiccups must not look like one OP3 forgot), else the
+    unresolved marker."""
+    prev = prev_shows.get(slug)
+    if is_resolved_show_entry(prev) and prev:
+        log.warning("op3: %s not refreshed — keeping the previous reading", slug)
+        return {**prev, "not_refreshed_this_run": True}
+    log.warning("op3: %s unresolved — writing the unindexed marker", slug)
+    return unresolved_show_entry(rss_file, feed_url)
+
+
 def _language_feed_targets(root: Path) -> List[Dict[str, str]]:
     """Every per-language feed the network actually pays to produce.
 
@@ -301,6 +354,8 @@ def build_popular_episodes(stats: Dict[str, Any], root: Path) -> List[Dict[str, 
 
     candidates: List[Dict[str, Any]] = []
     for slug, show_stats in (stats.get("shows") or {}).items():
+        if not is_resolved_show_entry(show_stats):
+            continue  # unindexed marker: no episodes to rank
         meta = NETWORK_SHOWS.get(slug) or {}
         rss_file = meta.get("rss_file") or ""
         audio_urls = _episode_audio_urls(root / rss_file) if rss_file else {}
@@ -372,11 +427,12 @@ def main(argv: Optional[List[str]] = None) -> int:
         cached_uuid = (prev_shows.get(slug) or {}).get("show_uuid")
         if shows:
             time.sleep(2)  # politeness — OP3 rate-limits bursts (429)
-        result = _fetch_show_stats(
-            slug, _feed_url_for(rss_file), token, cached_uuid,
-        )
+        feed_url = _feed_url_for(rss_file)
+        result = _fetch_show_stats(slug, feed_url, token, cached_uuid)
         if result is not None:
             shows[slug] = result
+        else:
+            shows[slug] = _carry_or_mark(slug, prev_shows, rss_file, feed_url)
 
     # Registry-only virtual shows (no shows/<slug>.yaml): Nerra Daily etc.
     covered = {p.stem for p in _list_show_yaml_paths(root / "shows")}
@@ -384,12 +440,16 @@ def main(argv: Optional[List[str]] = None) -> int:
         slug = target["slug"]
         if shows:
             time.sleep(2)  # politeness — OP3 rate-limits bursts (429)
+        feed_url = _feed_url_for(target["rss_file"])
         result = _fetch_show_stats(
-            slug, _feed_url_for(target["rss_file"]), token,
+            slug, feed_url, token,
             (prev_shows.get(slug) or {}).get("show_uuid"),
         )
         if result is not None:
             shows[slug] = result
+        else:
+            shows[slug] = _carry_or_mark(
+                slug, prev_shows, target["rss_file"], feed_url)
 
     # Per-language feeds live in their OWN top-level section, never mixed
     # into ``shows``: every consumer (dashboard rollups, popular-episode

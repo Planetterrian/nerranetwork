@@ -226,3 +226,31 @@ class TestPromptsStillRender:
                 path = ROOT / path
             rendered = load_prompt(str(path), _Forgiving(recent_frames_block="ROTATION MEMORY — x"))
             assert "ROTATION MEMORY — x" in rendered, slug
+
+
+class TestFrameMemoryReadsTheRealConfig:
+    """Oct 1 2026 readout: the block read ``config.output_dir`` — an attribute
+    only the test double had — so production rendered "" on all 17 opted-in
+    shows for a day. The directory lives on ``config.episode.output_dir``."""
+
+    def test_a_loaded_show_config_reaches_its_scripts(self, tmp_path):
+        from engine.config import load_config
+        # Omni View exempts "Before we go" as a chapter anchor, so the
+        # fixture frame is one no show exempts.
+        for i, s in enumerate(SCRIPTS):
+            s = s.replace("Before we go, keep an eye on", "One thing worth watching is")
+            (tmp_path / f"Omni_View_Ep{i:03d}_2026092{i}_tts.txt").write_text(s, encoding="utf-8")
+        cfg = load_config(ROOT / "shows" / "omni_view.yaml")
+        assert not hasattr(cfg, "output_dir"), "the flat attribute must not quietly reappear"
+        cfg.episode.output_dir = str(tmp_path)
+        block = fm.build_recent_frames_block(cfg)
+        assert block.startswith("ROTATION MEMORY") and '"one thing worth watching …"' in block
+
+    def test_the_helper_prefers_the_nested_directory(self, tmp_path):
+        class Ep:
+            output_dir = str(tmp_path)
+
+        class Cfg:
+            episode = Ep()
+            output_dir = "/nowhere"
+        assert fm._config_output_dir(Cfg()) == str(tmp_path)

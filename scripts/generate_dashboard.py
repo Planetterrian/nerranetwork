@@ -3342,6 +3342,9 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         # snapshot section, the daily summary line. Built by
         # scripts/build_audience_headline.py from the same stats files.
         "audience_headline": audience_headline,
+        # Oct 1 2026: Apple star ratings from the public show pages — the
+        # readout for the on-air "rate us on Apple Podcasts" ask.
+        "apple_ratings": build_apple_ratings_section(root),
         "efficiency": efficiency,
         "catalog": catalog_section,
         "gallery": gallery_section,
@@ -3449,6 +3452,133 @@ def _merge_op3_history(
         return empty
 
 
+#: A 7-day ratings delta reads the history entry at least this many days
+#: before the latest reading (the closest such entry).
+APPLE_RATINGS_DELTA_DAYS = 7
+
+
+def _apple_count_delta(history: List[Any], latest_date: Optional[_dt.date],
+                       latest_count: Optional[int]) -> Optional[int]:
+    """Ratings gained since the newest history entry ≥ 7 days old.
+
+    Null (never 0) when the history does not reach back a week or when
+    either end is unmeasured — a delta needs two real readings.
+    """
+    if latest_date is None or latest_count is None:
+        return None
+    cutoff = latest_date - _dt.timedelta(days=APPLE_RATINGS_DELTA_DAYS)
+    baseline: Optional[int] = None
+    baseline_date: Optional[_dt.date] = None
+    for h in history or []:
+        if not isinstance(h, dict):
+            continue
+        try:
+            d = _dt.date.fromisoformat(str(h.get("date"))[:10])
+        except (TypeError, ValueError):
+            continue
+        if d <= cutoff and h.get("rating_count") is not None:
+            if baseline_date is None or d > baseline_date:
+                baseline_date, baseline = d, int(h["rating_count"])
+    if baseline is None:
+        return None
+    return int(latest_count) - baseline
+
+
+def build_apple_ratings_section(root: Path,
+                                today: Optional[_dt.date] = None) -> Dict[str, Any]:
+    """Apple Podcasts star ratings per show (Oct 1 2026).
+
+    Reads ``api/apple_ratings.json`` (``scripts/fetch_apple_ratings.py``,
+    public show pages, no secret). The on-air "rate us on Apple Podcasts"
+    ask had no readout at all before this; the 7-day ratings delta is the
+    number that ask is scored against. Honesty: a show whose page carried
+    no rating block is ``null``; a page that said zero ratings is a
+    measured 0; a show kept from a failed fetch is flagged
+    ``not_refreshed_this_run``. The network average is ratings-weighted
+    over rated shows only.
+    """
+    path = root / "api" / "apple_ratings.json"
+    data = _load_json(path)
+    if not isinstance(data, dict) or not isinstance(data.get("shows"), dict):
+        return {"configured": False}
+    try:
+        now = _dt.datetime.now(_dt.timezone.utc)
+        fetched = _parse_iso(data.get("fetched_at") or "")
+        if fetched is not None and fetched.tzinfo is None:
+            fetched = fetched.replace(tzinfo=_dt.timezone.utc)
+        age_hours = (round((now - fetched).total_seconds() / 3600.0, 1)
+                     if fetched is not None else None)
+
+        per_show: Dict[str, Any] = {}
+        total_count = 0
+        weighted = 0.0
+        rated = 0
+        delta_total = 0
+        delta_measured = 0
+        unmeasured: List[str] = []
+        for slug, s in sorted(data["shows"].items()):
+            if not isinstance(s, dict):
+                continue
+            count = s.get("rating_count")
+            value = s.get("rating_value")
+            latest_date = None
+            for h in reversed(s.get("history") or []):
+                if isinstance(h, dict) and h.get("date"):
+                    try:
+                        latest_date = _dt.date.fromisoformat(str(h["date"])[:10])
+                    except ValueError:
+                        latest_date = None
+                    break
+            delta = _apple_count_delta(s.get("history") or [], latest_date,
+                                       int(count) if count is not None else None)
+            row = {
+                "apple_url": s.get("apple_url"),
+                "rating": value,
+                "count": count,
+                "review_count": s.get("review_count"),
+                "count_delta_7d": delta,
+                "source": s.get("source"),
+                "fetched_at": s.get("fetched_at"),
+                "not_refreshed_this_run": bool(s.get("not_refreshed_this_run")),
+                "measured": count is not None,
+            }
+            per_show[slug] = row
+            if count is None:
+                unmeasured.append(slug)
+                continue
+            total_count += int(count)
+            if value is not None and int(count) > 0:
+                weighted += float(value) * int(count)
+                rated += 1
+            if delta is not None:
+                delta_total += delta
+                delta_measured += 1
+        measured = [s for s, r in per_show.items() if r["measured"]]
+        return {
+            "configured": True,
+            "fetched_at": data.get("fetched_at"),
+            "age_hours": age_hours,
+            "per_show": per_show,
+            "network": {
+                "shows_with_url": len(per_show),
+                "shows_measured": len(measured),
+                "shows_rated": rated,
+                "shows_unmeasured": unmeasured,
+                "rating_count_total": total_count if measured else None,
+                "weighted_rating": (round(weighted / total_count, 2)
+                                    if rated and total_count else None),
+                "count_delta_7d_total": (delta_total if delta_measured else None),
+                "count_delta_7d_shows": delta_measured,
+            },
+            "note": ("Public podcasts.apple.com show pages, read nightly. "
+                     "null = the page carried no rating block (unmeasured); "
+                     "0 = the page said zero ratings. Delta is ratings "
+                     "gained vs the newest reading at least 7 days old."),
+        }
+    except Exception as exc:  # noqa: BLE001 — never break the dashboard
+        return {"configured": True, "error": str(exc)}
+
+
 def build_audience_headline_section(root: Path) -> Dict[str, Any]:
     """The audience headline (Sep 12 2026): computed fresh from the stats
     files by ``scripts.build_audience_headline`` so the dashboard never
@@ -3490,7 +3620,23 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
     if op3_path.exists():
         try:
             data = json.loads(op3_path.read_text(encoding="utf-8"))
-            shows = data.get("shows") or {}
+            all_shows = data.get("shows") or {}
+            # Oct 1 2026: a feed OP3 has not indexed arrives as an explicit
+            # ``resolved: false`` marker (fetch_op3_stats). It carries no
+            # downloads, and the ``or 0`` below would have minted a
+            # zero-download show out of it — the fabricated-zero class.
+            # It leaves per_show (so the history ledger, the benchmark
+            # placement and the unit-economics join never see it) and is
+            # NAMED in ``unindexed`` for the page to say "not indexed".
+            unindexed = sorted(
+                slug for slug, s in all_shows.items()
+                if isinstance(s, dict) and s.get("resolved") is False)
+            not_refreshed = sorted(
+                slug for slug, s in all_shows.items()
+                if isinstance(s, dict) and s.get("resolved") is not False
+                and s.get("not_refreshed_this_run"))
+            shows = {slug: s for slug, s in all_shows.items()
+                     if isinstance(s, dict) and s.get("resolved") is not False}
             per_show = {
                 slug: {
                     "downloads_7d": s.get("downloads_7d") or 0,
@@ -3555,6 +3701,11 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
                 "network_weekly_history": history["network_series"],
                 "per_show": per_show,
                 "top_episodes_7d": top_episodes,
+                # Feeds OP3 answered 404 for: prefixed, recording, not yet
+                # indexed. The page renders these as "not indexed" — never
+                # "—" (that is a show with no feed) and never 0.
+                "unindexed": unindexed,
+                "not_refreshed": not_refreshed,
             }
         except Exception as exc:  # noqa: BLE001 — never break the dashboard
             section["op3"] = {"configured": True, "error": str(exc)}

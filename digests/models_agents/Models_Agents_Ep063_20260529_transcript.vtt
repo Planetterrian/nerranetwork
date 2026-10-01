@@ -1,0 +1,193 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.700
+Hey, welcome to Models and Agents, episode 63 on May 29, 2026. Let's see what shipped.
+
+00:00:07.160 --> 00:00:11.160
+Let's see what happened in the AI world today. And trust me, it's been busy.
+
+00:00:11.920 --> 00:00:20.460
+Anthropic's $65 billion series age at $965 billion valuation and $47 billion run rate revenue
+
+00:00:20.460 --> 00:00:25.740
+show Claude demand is scaling faster than most labs can match. Liquid AI shipped
+
+00:00:25.740 --> 00:00:33.420
+LFM 2.58B A1B with 128K context after 38 trillion pre-training tokens.
+
+00:00:34.180 --> 00:00:42.340
+A model kernel on 8 AMD MI 300X cards reached 3,300 output tokens per second on small models.
+
+00:00:43.040 --> 00:00:50.340
+Researchers also dropped right now Arabic 0.5B turbo and Arya Bata 2, while local builders
+
+00:00:50.340 --> 00:00:57.780
+mode agents toward direct HTML rendering. Anthropic announced a $65 billion series age round
+
+00:00:57.780 --> 00:01:04.160
+at a $965 billion post-money valuation. The round was led by Altimeter,
+
+00:01:04.600 --> 00:01:10.520
+Dragonear, Green Oaks, and Sequoia. The company separately reported that run rate revenue crossed
+
+00:01:10.520 --> 00:01:17.920
+$47 billion earlier this month from enterprise Claude deployments. The new capital will expand
+
+00:01:17.920 --> 00:01:23.540
+research and inference capacity. The round highlights how quickly production usage of frontier
+
+00:01:23.540 --> 00:01:32.920
+models is growing across industries. Liquid AI released LFM 2.58B A1B as an edge-focused model.
+
+00:01:33.320 --> 00:01:43.160
+It expands the prior LFM 2A B1B with a 128K context window and 38 trillion tokens of pre-training
+
+00:01:43.160 --> 00:01:48.480
+plus large-scale reinforcement learning. The model doubles the vocabulary to improve
+
+00:01:48.480 --> 00:01:55.480
+non-latent tokenization and supports tool-chaining on entry-level laptops. It is available now on
+
+00:01:55.480 --> 00:02:04.580
+hugging face. Right now, Arabic 0.5B turbo is a 518 million parameter Arabic specialized decoder.
+
+00:02:04.580 --> 00:02:14.060
+It was built on twin 2.5 0.5B by adding 27,032 Arabic tokens and continued pre-training on
+
+00:02:14.060 --> 00:02:22.220
+504 million Arabic tokens. The model reaches 35.9% mean accuracy on Arabic COPA,
+
+00:02:22.880 --> 00:02:30.340
+Heliswag and MMLU benchmarks. The quantized build runs at 635 tokens per second on a single
+
+00:02:30.340 --> 00:02:38.940
+H100. Ariobata 2 is a reasoning-focused model post-trained from GPT OSS 20B via reinforcement
+
+00:02:38.940 --> 00:02:46.260
+learning on physics-wala question banks. It all performs the base model on JEEE main, JEEE
+
+00:02:46.260 --> 00:02:56.560
+advanced, NEET, AIME and GPQA while using up to 64% fewer output tokens. The training combined
+
+00:02:56.560 --> 00:03:04.180
+prolonged reinforcement learning with larger rollout groups. Users report Gemma 426 BA4B
+
+00:03:04.180 --> 00:03:10.460
+running well on M5 Pro hardware. It shows strong generalist performance across creative writing,
+
+00:03:10.880 --> 00:03:17.380
+debugging, image classification, and tool augmented chat. The model uses less memory than twin
+
+00:03:17.380 --> 00:03:25.920
+3.635 BA3B while displaying more personality. A coding agent setup now renders responses directly
+
+00:03:25.920 --> 00:03:33.180
+as HTML in the browser. Switching the system prompt from markdown to HTML improved diagram
+
+00:03:33.180 --> 00:03:42.420
+quality and structure with inline SVGs, tables, and diagrams. The approach works with twin 3.627B
+
+00:03:42.420 --> 00:03:49.680
+and requires only a simple prompt change plus a web UI. A new model kernel runs the full
+
+00:03:49.840 --> 00:03:57.520
+decode sequence as one GPU resident program on 8 times MI 300X. It maps memory access to
+
+00:03:57.520 --> 00:04:04.460
+die topology and achieves up to 3,300 output tokens per second per request at batch size 1
+
+00:04:04.460 --> 00:04:10.260
+with no quantization. The team plans future support for large mixture of experts models.
+
+00:04:10.940 --> 00:04:16.740
+A Laura-based method uses hidden state probes to teach models to verbalize their actual confidence.
+
+00:04:17.460 --> 00:04:23.640
+The approach works across 7B to 70B models from four families with only a few hundred examples
+
+00:04:23.640 --> 00:04:30.340
+and under 10 minutes on an M3 Ultra. Activation patching confirms the effect is causal.
+
+00:04:31.040 --> 00:04:39.240
+Early benchmarks on an M5 Max with 128GB show stepfund 3.7 Flash delivering usable speeds
+
+00:04:39.240 --> 00:04:48.700
+at 32K to 64K context in Q4KS quantization. The model remains responsive below 16K context.
+
+00:04:49.280 --> 00:04:58.280
+Test LFM 2.58BA1. Be on a local laptop for tool chaining workflows, where 128K context
+
+00:04:58.280 --> 00:05:04.360
+matters more than raw size. Switch an existing coding agent prompt to HTML output
+
+00:05:04.360 --> 00:05:09.180
+and measure how quickly diagram rendering improves without extra post processing.
+
+00:05:09.880 --> 00:05:16.360
+Run the probe-targeted Laura recipe on a 7B to 13B model you already use for agent decision
+
+00:05:16.360 --> 00:05:24.740
+making to reduce overconfident errors. Benchmark stepfund 3.7 Flash against Gemma 426B
+
+00:05:24.740 --> 00:05:31.040
+on your M series hardware for mixed creative and coding tasks. More teams are expected to release
+
+00:05:31.040 --> 00:05:36.060
+small specialized models after the Arabic and SDEM examples shown today.
+
+00:05:37.360 --> 00:05:43.220
+Additional model kernel and single program inference work on AMD and Apple Silicon hardware is
+
+00:05:43.220 --> 00:05:49.840
+likely as memory bandwidth remains the bottleneck. Continued experiments with HTML and structured
+
+00:05:49.840 --> 00:05:55.000
+output formats for agents will appear as builders move away from markdown defaults.
+
+00:05:55.720 --> 00:06:02.400
+Okay, let's pop the hood on the probe-targeted fine-tuning approach. Everyone talks about LLM
+
+00:06:02.400 --> 00:06:08.520
+confidence as a simple prompt fix and practice the model already encodes correctness signals in
+
+00:06:08.520 --> 00:06:18.020
+its hidden states at 0.76 to 0.88AUROC. Yet surface text stays stuck at 99% because of training
+
+00:06:18.020 --> 00:06:24.460
+dynamics. The method extracts those internal signals with linear probes then uses the probe outputs
+
+00:06:24.460 --> 00:06:31.380
+as fine-tuning targets. This adds almost no inference cost after the short LLM and works across
+
+00:06:31.380 --> 00:06:37.920
+model scales because the probe only needs to read one activation position. The quality gain is
+
+00:06:37.920 --> 00:06:45.060
+largest on mid-sized models. At 70B the softmax already carries usable signal but the argmax
+
+00:06:45.060 --> 00:06:51.020
+text still collapses. Activation patching at the exact confidence token moves the output
+
+00:06:51.020 --> 00:06:58.180
+distribution with correlation 0.976. Apply it when you need the model to admit uncertainty on
+
+00:06:58.180 --> 00:07:05.240
+factual or multi-step tasks. Skip it if your pipeline already filters low probability tokens downstream.
+
+00:07:06.080 --> 00:07:11.760
+The gacha that bites most teams is seed sensitivity in the shape of the confidence distribution
+
+00:07:11.760 --> 00:07:18.920
+even when discrimination stays stable. Tomorrow keep an eye on more small specialized models
+
+00:07:18.920 --> 00:07:25.620
+and further monocernal inference experiments on AMD hardware. That wraps up today's AI briefing.
+
+00:07:26.340 --> 00:07:31.220
+Share this with a developer or builder who wants to stay current. Subscribe wherever you listen.
+
+00:07:31.660 --> 00:07:37.800
+See you tomorrow. This episode used AI voice synthesis of my voice. Editorial selection and
+
+00:07:37.800 --> 00:07:39.140
+analysis are my own.

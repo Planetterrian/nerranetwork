@@ -1,0 +1,229 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.980
+Versel &amp; Aura just shipped a free public audit tool that scores any websites readiness for ai agents across 118 checks. The service evaluates factors such as API discoverability, structured data, rate limit behavior, and authentication patterns that agents commonly need. It returns a single readiness score plus per check breakdowns, making it easy to identify blockers before wiring an agent to the endpoint. Teams that previously guessed it
+
+00:00:29.980 --> 00:00:53.300
+agent compatibility can now run an objective test in seconds and iterate on the results. The tool is live now at no cost, aimed at developers shipping production agent workflows. The underlying Aura engine applies more than 100 individual checks that surface concrete failure modes, such as missing open API descriptions, or overly restrictive cores headers.
+
+00:00:53.300 --> 00:01:13.260
+Early users report the audit completes in under 30 seconds for typical marketing or documentation sites. This is Models &amp; Agents, episode 150. The biggest concrete release today is Versels is a gentic score, which lets developers quickly test whether their sites can support autonomous agents.
+
+00:01:13.260 --> 00:01:35.980
+A detailed deep-dock detection tutorial shows how to wire layout analysis, dock TR-OCR, and table extraction into structured JSON-L for RAG. Simon Willis and also shipped LLM 0.33 with upgraded open AI client support and template chaining. Builders should test the new audit tool on their own endpoints this week.
+
+00:01:35.980 --> 00:01:59.320
+Remember, we covered agent frameworks yesterday. Today's news moves that forward because the audit tool gives teams a concrete way to test compatibility before scaling. Over the past week, the conversation around frontier models from open AI, Claude, and GPT has centered on capability gains and pricing, while agent reliability remains the key open question.
+
+00:01:59.320 --> 00:02:14.500
+Open Weight families have continued narrowing the performance gap, though licensing terms still vary across releases. A post on towards data science walks through a Laura fine tune of Siglip that fixed under labeling in an internal image data set.
+
+00:02:15.020 --> 00:02:22.380
+The team reports the fine tune recovered usable labels on previously noisy examples without retraining the full vision backbone.
+
+00:02:22.380 --> 00:02:31.140
+They note the approach only made sense after confirming the label gap was the actual bottleneck rather than data volume or model capacity.
+
+00:02:31.640 --> 00:02:41.120
+In their case, the adapter added less than 3% overhead while lifting usable label coverage from 62% to 89% on the held-out set.
+
+00:02:42.120 --> 00:03:04.140
+The author's document, the exact rank and alpha values used so others can replicate the sweep with minimal compute. A tutorial on Mark Tech Post demonstrates configuring layout analysis, docked TR-OCR, and table extraction inside deep docked texture, then adding custom entity recognition services that output structured JSON-L.
+
+00:03:04.140 --> 00:03:17.840
+The pipeline is explicitly built for rag ingestion, turning raw PDFs into clean, queryable records. It includes code for swapping in different OCR backends and for persisting intermediate layout predictions.
+
+00:03:18.620 --> 00:03:29.820
+The walkthrough shows how to register a custom service that runs after table extraction and writes entity spans directly into the JSON-L record, eliminating a separate post processing step.
+
+00:03:29.820 --> 00:03:37.460
+The post also supplies a minimal Docker compose file that brings up the full stack with GPU support for the docked TR models.
+
+00:03:38.220 --> 00:03:50.620
+An author on Reddit released Delve RL, a deterministic human playable roguelike with a structured API, procedural levels, partial observability, and batched renderer-free environments.
+
+00:03:50.620 --> 00:04:05.020
+A recurrent PPO baseline reaches a median floor of 18 and extended runs reach floor 33. Everything runs locally with training code, checkpoints, and bridge documentation included under an open source license.
+
+00:04:05.660 --> 00:04:15.120
+The environment exposes a Jim compatible step function that returns partial observations, reward, and a done flag after each turn-based action.
+
+00:04:15.120 --> 00:04:23.460
+Procedural generation uses a fixed seed plus a small set of tunable parameters so experiments remain reproducible across labs.
+
+00:04:24.140 --> 00:04:32.300
+An article on the new stack outlines six concrete identity controls required to keep autonomous agents from overstepping their intended scope.
+
+00:04:32.820 --> 00:04:40.700
+It focuses on verifiable delegation, scoped credentials, and real-time revocation rather than generic policy enforcement.
+
+00:04:40.700 --> 00:04:51.420
+The six controls are presented as a checklist that maps directly onto OAuth-style token issuance and capability-based access systems, already familiar to security teams.
+
+00:04:52.220 --> 00:05:01.340
+The author notes that revocation latency must stay under one second for high-velocity agent loops, or else compromised agents can still act after detection.
+
+00:05:01.340 --> 00:05:10.120
+No major framework yet bundles these controls, so the article supplies example middleware patterns that wrap existing tool-calling interfaces.
+
+00:05:10.880 --> 00:05:23.760
+Version 0.33 of LLM upgrades the open AI Python client to 3.x, switches the HTTP dependency to HTTPX2, and adds key support to embedding commands.
+
+00:05:24.760 --> 00:05:31.060
+Template chaining now lets users combine multiple templates so model settings from one can pair with a prompt from another.
+
+00:05:31.580 --> 00:05:36.240
+The release also brings reasoning summary options for responses API models.
+
+00:05:36.920 --> 00:05:45.920
+The change log lists 14 merged pull requests, including fixes for embedding key propagation that previously required workarounds in plugin code.
+
+00:05:45.920 --> 00:05:57.220
+Users can now pass key on the command line for both LLM embed and LLM embed hyphen multi, and the same parameter is accepted by the Python embedding model methods.
+
+00:05:58.020 --> 00:06:09.600
+A post on towards data science shows how to treat a folder of unrelated PDFs as a single logical document by extracting each file's table of contents and building a nested outline for retrieval.
+
+00:06:10.600 --> 00:06:15.420
+Retrieval then routes first by file level summary, then by section within the chosen file.
+
+00:06:15.980 --> 00:06:22.600
+The author demonstrates the pattern on a folder of 47 quarterly financial reports that share no common field names.
+
+00:06:23.280 --> 00:06:29.660
+The nested outline still yields section level answers with 0.81 recall at k equals 5.
+
+00:06:30.200 --> 00:06:37.220
+Retrieval code is released as a short Python module that can be dropped into existing LLM index or LLM chain pipelines.
+
+00:06:38.220 --> 00:06:50.180
+Linus Torvalds described an AI assisted debug session on the DRM slash XE driver where the model generated debug code and analyzed output even after declaring the problem unsolvable.
+
+00:06:50.720 --> 00:06:59.480
+He credited the AI with handling repetitive grunt work, while noting it still required human stubbornness to push past its early impossible verdicts.
+
+00:07:00.000 --> 00:07:05.720
+Torvalds published the full commit message and the sequence of AI generated patches on the public mailing list,
+
+00:07:05.720 --> 00:07:12.080
+giving the community a concrete trace of where the model succeeded and where it required manual overrides.
+
+00:07:12.360 --> 00:07:21.760
+The session lasted several hours and involved repeated cycles of the model proposing debug instrumentation that was then compiled and run on actual hardware.
+
+00:07:22.880 --> 00:07:27.240
+Okay, let's pop the hood on the nested outline method for heterogeneous documents.
+
+00:07:28.240 --> 00:07:33.500
+Everyone talks about multi-document rag as if you simply stuff more files into one vector store.
+
+00:07:33.940 --> 00:07:39.960
+In practice, the technique only works when you first impose an explicit hierarchy that retrieval can traverse.
+
+00:07:40.760 --> 00:07:48.320
+The core move is to treat each PDF's table of contents as a first class index layer rather than flattening everything into chunks.
+
+00:07:48.880 --> 00:07:56.300
+At query time, the system first matches against file level summaries, then descends one level into the chosen documents outline
+
+00:07:56.300 --> 00:07:57.880
+before fetching leaf chunks.
+
+00:07:58.580 --> 00:08:06.780
+This two-stage route cuts irrelevant chunk noise by roughly half on mixed report collections, while adding only a single extra embedding call.
+
+00:08:07.560 --> 00:08:11.200
+The trade-off appears when documents lack consistent internal structure.
+
+00:08:11.800 --> 00:08:16.260
+The outline layer then becomes noisy and retrieval falls back to flat similarity.
+
+00:08:17.140 --> 00:08:22.580
+Use the nested approach when your corpus contains many independent files with their own logical sections.
+
+00:08:22.580 --> 00:08:31.820
+Fall back to standard chunking when the collection is already thematically uniform, or when documents are short enough that outline extraction adds no value.
+
+00:08:32.380 --> 00:08:42.140
+The extra embedding call costs approximately 1.2 milliseconds on current embedding models, a negligible fraction of total latency for most retrieval workloads.
+
+00:08:42.860 --> 00:08:51.640
+When outline headings are sparse or inconsistently formatted, precision at k equals 5 drops by 18% relative to flat chunking.
+
+00:08:51.640 --> 00:08:55.420
+So teams should measure heading quality on a sample before committing.
+
+00:08:56.020 --> 00:09:03.080
+The method also preserves provenance because every return chunk carries both its file identifier and its outline path.
+
+00:09:03.660 --> 00:09:06.680
+So when should you actually reach for this versus the alternative?
+
+00:09:07.500 --> 00:09:15.220
+Reach for the nested outline when you need section level answers across independent files and can afford one extra embedding call per query.
+
+00:09:15.220 --> 00:09:22.940
+Stick with flat chunking when your documents share a uniform structure or when heading quality is too low to justify the added layer.
+
+00:09:23.520 --> 00:09:32.240
+Run the is-agentic audit on any public endpoint you plan to expose to agents and fix the top three failing checks before wiring up tool calls.
+
+00:09:32.860 --> 00:09:42.320
+Clone the Delve RL repo and train a new recurrent PPO agent on it to see whether your current harness handles partial observability better than the published baseline.
+
+00:09:42.320 --> 00:09:52.720
+Upgrade to LLM 0.33 and test the new template chaining pattern on a prompt that mixes a high reasoning effort model with a reusable output format.
+
+00:09:53.400 --> 00:10:01.140
+Apply the nested outline retrieval pattern to a folder of mixed PDFs you already use for RAG and measure the drop in off topic chunks.
+
+00:10:01.760 --> 00:10:09.460
+Reproduce the SIGLIP Laura sweep on your own sparse label image task using the exact rank and alpha values reported in the post.
+
+00:10:09.460 --> 00:10:17.320
+More teams are expected to publish public IS-agentic scores as a lightweight trust signal for agent facing APIs.
+
+00:10:18.200 --> 00:10:24.500
+Additional open roguelike environments tune for agent research are likely to appear following Delve RL's release.
+
+00:10:25.320 --> 00:10:32.800
+Further updates to the LLM CLI are anticipated as the open AI client 3.x ecosystem stabilizes.
+
+00:10:32.800 --> 00:10:40.220
+Before we go, security teams are watching for the first agent framework to ship native support for those six identity controls.
+
+00:10:40.880 --> 00:10:42.880
+That's models and agents for today.
+
+00:10:43.480 --> 00:10:50.560
+If you found this useful, share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+
+00:10:51.180 --> 00:10:54.920
+The AI world moves fast, will help you keep up. See you tomorrow.
+
+00:10:54.920 --> 00:11:01.140
+And if you'd rather watch than listen, find us on YouTube at Nerra Network. Links in the show notes.
+
+00:11:01.720 --> 00:11:08.740
+And before you go, this show is part of the Nerra Network, a family of daily podcasts on tech, science, and markets.
+
+00:11:09.260 --> 00:11:12.460
+Each one a short, sharp briefing you can finish on the commute.
+
+00:11:13.100 --> 00:11:16.420
+If today earned its place in your feed, here's your next lesson.
+
+00:11:17.020 --> 00:11:24.000
+SpaceX Daily, the daily companion for following SpaceX as a public company, from Starship to the Stockticker.
+
+00:11:24.000 --> 00:11:28.320
+Find every show free at Nerra Network dot com.
+
+00:11:28.920 --> 00:11:35.600
+And on the website, every episode's visuals live in our free image gallery at Nerra Network dot com slash gallery.
+
+00:11:36.160 --> 00:11:39.840
+Royalty free under creative commons, download with attribution.
+
+00:11:40.420 --> 00:11:46.860
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

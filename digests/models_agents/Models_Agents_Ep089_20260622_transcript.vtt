@@ -1,0 +1,247 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:07.460
+Hey everyone, welcome to Models and Agents, Episode 89, it's June 22nd, 2026, Monday in the AI
+
+00:00:07.460 --> 00:00:13.360
+world, which means a weekend's worth of announcements to catch up on. Let's go. Openweight GLM
+
+00:00:13.360 --> 00:00:19.920
+price.2 is drawing Silicon Valley attention as Chinese labs close the capability gap with a new
+
+00:00:19.920 --> 00:00:26.920
+publicly available model. GLM price.2 arrives as the latest openweight release from a Chinese startup,
+
+00:00:26.920 --> 00:00:32.040
+with early reports highlighting strong performance that has caught the eye of Western labs.
+
+00:00:32.780 --> 00:00:39.800
+Simon Wilson shipped the Suikli-Yudels V4 release candidate, adding built-in migrations and
+
+00:00:39.800 --> 00:00:45.700
+nested transaction support for developers working with local data. Temporary Cloudflare accounts
+
+00:00:45.700 --> 00:00:51.080
+now let agents spin up ephemeral workers deployments in under a minute without an account.
+
+00:00:51.720 --> 00:00:57.800
+The seven types of agent memory guide and a detailed matrix for current units update provide
+
+00:00:57.800 --> 00:01:04.360
+concrete engineering references for builders. The Chinese AI startup behind GLM detailed matrix
+
+00:01:04.360 --> 00:01:11.480
+freecocks 2025 released the openweight model and multiple outlets report it is attracting attention
+
+00:01:11.480 --> 00:01:16.940
+in Silicon Valley for its performance relative to current open families. The release continues
+
+00:01:16.940 --> 00:01:23.420
+the pattern of rapid iteration from labs such as those behind Quinn and DeepSeek, where new weights
+
+00:01:23.420 --> 00:01:29.340
+appear with minimal fanfare and quickly circulate through developer communities. Early coverage notes,
+
+00:01:29.640 --> 00:01:35.500
+the model is being tested for both research and agent workloads, though concrete benchmark numbers
+
+00:01:35.500 --> 00:01:41.360
+and context-length details remain sparse in initial reports. Builders working on cost-sensitive
+
+00:01:41.360 --> 00:01:47.200
+inference or fine-tuning experiments now have another candidate to benchmark against llama and
+
+00:01:47.200 --> 00:01:53.460
+mistral derivatives. Watch for fast inference integrations and any follow-on fine-tunes that
+
+00:01:53.460 --> 00:01:59.020
+typically appear within days of these releases. This openweight release continues the steady
+
+00:01:59.020 --> 00:02:04.260
+narrowing of the performance gap between open and closed models that we tracked in yesterday's
+
+00:02:04.260 --> 00:02:10.440
+episode. A new openweight model for my Chinese startup is being evaluated by researchers and labs
+
+00:02:10.440 --> 00:02:17.360
+outside China for both base capability and downstream agent use. Coverage indicates the release
+
+00:02:17.360 --> 00:02:23.040
+follows the recent pattern of weights appearing with limited official documentation yet spreading
+
+00:02:23.040 --> 00:02:29.260
+quickly through developer channels. No specific parameter count, context-length, or benchmark scores
+
+00:02:29.260 --> 00:02:35.620
+are detailed in the initial reporting. Builders should test it against current open models on tasks
+
+00:02:35.620 --> 00:02:42.380
+where licensing terms or inference cost matter. Nokia is integrating Gemini-based agents directly
+
+00:02:42.380 --> 00:02:47.280
+into its autonomous network products for telecommunications infrastructure management.
+
+00:02:47.840 --> 00:02:53.760
+The partnership targets operational tasks in critical networks where agents must act on live
+
+00:02:53.760 --> 00:03:00.120
+telemetry and configuration data. No public benchmarks or deployment timelines beyond the announcement
+
+00:03:00.120 --> 00:03:05.840
+are provided. Network operators and infrastructure teams should monitor early access programs for
+
+00:03:05.840 --> 00:03:12.800
+domain-specific agent tooling. This agent integration in telecom infrastructure adds another concrete
+
+00:03:12.800 --> 00:03:18.900
+domain example to the maturing agent tooling story we covered yesterday. CloudFlare now supports
+
+00:03:18.900 --> 00:03:27.100
+fully ephemeral workers projects that deploy via a single NPX Wrangler command and run for 60 minutes
+
+00:03:27.100 --> 00:03:33.560
+without requiring an account. The feature was demonstrated with a redirect following tool built in
+
+00:03:33.560 --> 00:03:42.520
+GPT 5.5 showing agents can obtain a live URL immediately. A claim link is provided if the project needs
+
+00:03:42.520 --> 00:03:48.960
+to persist beyond the temporary window. Developers testing agent tool calling loops or short-lived
+
+00:03:48.960 --> 00:03:55.920
+sandboxes gain a zero-setup path that avoids account creation friction. The V4 release candidate folds
+
+00:03:55.920 --> 00:04:02.200
+the previously separate eSchoolLite migrate tool into the core package and adds support for nested
+
+00:04:02.200 --> 00:04:08.440
+transactions. Existing users can upgrade to test migration workflows and transaction nesting
+
+00:04:08.440 --> 00:04:14.700
+without additional dependencies. The change simplifies local data tooling for scripts that previously
+
+00:04:14.700 --> 00:04:21.940
+relied on external migration packages. The post enumerates seven memory types working semantic,
+
+00:04:21.940 --> 00:04:29.400
+episodic, procedural, retrieval, parametric, and perspective with storage locations and implementation
+
+00:04:29.400 --> 00:04:35.880
+notes for each. A comparison table and working Python examples are included for engineers building
+
+00:04:35.880 --> 00:04:41.940
+stateful agents. Readers implementing long-running agents gain a concrete reference for choosing
+
+00:04:41.940 --> 00:04:48.580
+memory mechanisms rather than defaulting to conversation history along. The guide walks through how
+
+00:04:48.580 --> 00:04:55.020
+LLM select and invoke tools moving from data retrieval to taking actions in external systems.
+
+00:04:55.440 --> 00:05:01.860
+It focuses on the decision loop that turns stateless models into agents capable of multi-step workflows.
+
+00:05:02.440 --> 00:05:07.340
+Builders new to tool-calling patterns can use the explanations to map model outputs
+
+00:05:07.860 --> 00:05:11.980
+to concrete function calls without relying on higher-level frameworks initially.
+
+00:05:12.780 --> 00:05:19.920
+Test GLM Partisao 5.2 on agent-style tasks if you currently run QN or deep-seek models
+
+00:05:19.920 --> 00:05:25.220
+and want another open-weight option to compare inference cost and output quality.
+
+00:05:26.020 --> 00:05:32.760
+Run the SQL Fight U-Tiles V4 release candidate on a local project that uses migrations to see how
+
+00:05:32.760 --> 00:05:38.360
+the built-in system changes your workflow versus the standalone SQL Fight migrate package.
+
+00:05:39.080 --> 00:05:45.060
+Spin up a temporary CloudFlare worker with the NPX Wrangler Deploy-Temporary command
+
+00:05:45.060 --> 00:05:51.280
+to prototype an agent tool without creating an account. Walk through the seven types of agent
+
+00:05:51.280 --> 00:05:57.100
+memory guide and add one new memory type such as episodic or procedural to an existing
+
+00:05:57.100 --> 00:06:05.480
+land graph or crew AI agent. Further GLM 5.2 fine-tunes and inference optimizations are expected
+
+00:06:05.480 --> 00:06:11.560
+within days as weights circulate. Additional CloudFlare agent tooling announcements are likely
+
+00:06:11.560 --> 00:06:17.760
+as ephemeral deployments gain adoption. Continued exploration of linear time architectures
+
+00:06:17.760 --> 00:06:24.440
+is following the MRU update and stability experiments. Okay, let's pop the hood on the matrix
+
+00:06:24.440 --> 00:06:30.200
+recurrent unit update. Everyone talks about linear time sequence models as simple drop-in
+
+00:06:30.200 --> 00:06:35.980
+replacements for attention, yet the engineering reality involves careful handling of state matrices
+
+00:06:35.980 --> 00:06:42.940
+to avoid instability. The matrix recurrent unit works by reshaping token embeddings into an input
+
+00:06:42.940 --> 00:06:49.360
+state matrix then cumulatively multiplying those matrices across the sequence so each position
+
+00:06:49.360 --> 00:06:56.600
+incorporates all prior transformations in a single associative operation. Parallel scan implementations
+
+00:06:56.600 --> 00:07:02.900
+exploit this associativity to keep training tractable on GPUs despite the sequential dependency.
+
+00:07:03.700 --> 00:07:09.120
+Early experiments showed that naive reshaping produced lost spikes on larger datasets,
+
+00:07:09.840 --> 00:07:16.200
+switching to LDU factorization with an activation on the diagonal to enforce determinant one
+
+00:07:16.200 --> 00:07:21.300
+removed the spikes while preserving the model's ability to learn shear transformations
+
+00:07:21.940 --> 00:07:28.360
+rather than pure rotations. On the tiny stories task the MRU still trailed a comparable
+
+00:07:28.360 --> 00:07:34.840
+transformer indicating lower storage capacity remains a core tradeoff even after stability fixes.
+
+00:07:35.640 --> 00:07:42.840
+Use MRU when cumulative per token computation matters more than raw capacity and you can tolerate
+
+00:07:42.840 --> 00:07:49.320
+extra engineering to bound the state matrices. The obvious alternative of attention or state space
+
+00:07:49.320 --> 00:07:56.720
+models wins when you need higher memory bandwidth across long contexts. Tomorrow keep an eye on any
+
+00:07:56.720 --> 00:08:03.580
+early GLM 5.2 fine tunes that surface in developer channels. That's models and agents for today.
+
+00:08:04.000 --> 00:08:08.080
+If you found this useful share it with someone who's trying to keep up with all these changes
+
+00:08:08.080 --> 00:08:14.440
+and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up.
+
+00:08:14.440 --> 00:08:20.080
+See you tomorrow and before you go this show is part of the NERA Network, a family of daily
+
+00:08:20.080 --> 00:08:26.180
+podcasts covering tech, science, markets and more. If you enjoyed today's episode give Planet
+
+00:08:26.180 --> 00:08:31.660
+Terri and Daily a listen, daily breakthroughs in science, health and longevity. You can explore
+
+00:08:31.660 --> 00:08:38.320
+the whole lineup at NERAnetwork.com. This episode used AI voice synthesis of my voice, editorial
+
+00:08:38.320 --> 00:08:40.520
+selection and analysis are my own.

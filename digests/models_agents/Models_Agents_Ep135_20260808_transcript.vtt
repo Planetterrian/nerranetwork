@@ -1,0 +1,157 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:27.980
+OpenAI is adding extra controls to its upcoming Astra model after classifying it as the first critical cyber security system under its preparedness framework. The company flagged the model's cyber capabilities as high-risk during internal evaluation, and is extending the timeline for general availability to add stronger safeguards. Sam Altman confirmed the model remains on track for broad release rather than staying limited to a small group.
+
+00:00:27.980 --> 00:00:53.080
+The extra safety work will delay the launch but not by a long period. This marks the first time OpenAI has publicly applied the critical classification to a model still in active development. Yesterday's frontier model safety discussion already highlighted similar evaluation thresholds, and today's announcement moves that thread forward by putting the framework into practice on a frontier system.
+
+00:00:53.080 --> 00:01:13.760
+This is models and agents, episode 135. OpenAI announced it is treating the upcoming Astra model as its first critical cyber security model under the preparedness framework. The company is adding extra controls during further development after internal evaluation showed advanced cyber capabilities.
+
+00:01:13.760 --> 00:01:34.740
+Sam Altman stated the model is powerful and that OpenAI plans to make it broadly available rather than keep it restricted to a small group. The extra safety work is expected to delay release but not by a long period. Builders should watch how the company balances advanced tool use with the new safety layer.
+
+00:01:34.740 --> 00:02:01.040
+A user ran the Ava said INT4 quantized QN 3.627 billion and 35 billion A3B models on a single radion AI pro are 9700 using a custom VLLM container. The 27 billion dense model with MTP speculative decoding set to 4 tokens delivered 53 to 62 tokens per second,
+
+00:02:01.040 --> 00:02:26.800
+decode across 4,000 to 100,000 context lengths, while maintaining mean accepted lengths of 4.4 to 4.6. The 35 billion mixture of experts variant reached 49 to 61 tokens per second, decode at KV pool sizes up to 440,241 tokens, while fitting the 32 gigabyte card at INT4.
+
+00:02:26.800 --> 00:02:45.860
+The 35 billion at FP8 would not fit at useful context lengths on one card. Pre-fill speeds for the 35 billion ranged from 7,800 tokens per second at 4,000 context down to 3,690 tokens per second at 150,000.
+
+00:02:45.860 --> 00:02:59.460
+A developer running the deep seek V4 Flash 0731 model on dual DGX spark cards reported strong sustained performance across two hour coding sessions and document workflows.
+
+00:02:59.980 --> 00:03:09.280
+The model handled integration code generation, email search, DOCX generation, and OS admin tasks without dropping context.
+
+00:03:10.280 --> 00:03:19.720
+The user ordered a second pair of sparks after seeing clear gains over prior Quinn 3.627 billion FP8 runs on the same hardware.
+
+00:03:19.720 --> 00:03:32.940
+A pull request adds long cat flash model support to llama.cpp with GGUF files already available for testing on the GGML org hugging face page.
+
+00:03:33.320 --> 00:03:42.100
+The submitter verified a small 8 billion sub model extracted from the original weights and is requesting feedback on the full size version.
+
+00:03:43.100 --> 00:04:06.020
+Direct comparison on a radion AI Pro R9700 showed the 35 billion A3B mixture of experts model generating at roughly 116 tokens per second, versus roughly 30 tokens per second for the 27 billion dense model under Q5KM and Q4KXL quantization respectively.
+
+00:04:07.020 --> 00:04:16.580
+Quality difference remains small on ordinary bug fixes and multi-file edits, with both models scoring 7 out of 10 on an early parser repair test.
+
+00:04:17.240 --> 00:04:24.840
+The dense model pulled ahead mainly on implicit invariance, unusual edge cases, and consequences beyond the literal request.
+
+00:04:25.680 --> 00:04:32.500
+Cloudflare introduced wallets that let AI agents pay for APIs directly while keeping transactions contained.
+
+00:04:32.500 --> 00:04:40.580
+The system aims to reduce the risk of agents making uncontrolled or malicious purchases by isolating payment credentials.
+
+00:04:41.300 --> 00:04:46.240
+The feature is positioned as infrastructure for an emerging autonomous agent economy.
+
+00:04:47.100 --> 00:04:54.600
+The Dream Framework converts literary text into an event-aware memory graph that links events causally and temporally.
+
+00:04:54.600 --> 00:05:01.620
+It adds dual granularity profiles capturing both stable traits and event-driven behavioral evolution.
+
+00:05:02.400 --> 00:05:08.260
+A new temporal causal memory benchmark was introduced to measure long-range narrative coherence.
+
+00:05:08.920 --> 00:05:15.980
+The approach improved consistency on Coser, LifeChoice, and the new benchmark over multiple strong baselines.
+
+00:05:16.800 --> 00:05:22.900
+CFR extracts problem constraints in stage 1, then checks solutions against them in stage 2.
+
+00:05:22.900 --> 00:05:29.660
+Routed CFR applies the two-stage process only when a RegX router detects restrictive cues.
+
+00:05:30.400 --> 00:05:40.880
+The method lifted direct chain of thought performance on AEMI, CMIMC, Brumo, and AEMI, AMC across multiple backbones.
+
+00:05:41.880 --> 00:05:54.540
+Users with multiple GFX 1,030 cards can avoid memory corruption by setting UB384 and making batch size a multiple of that value scaled by GPU count.
+
+00:05:55.080 --> 00:06:08.920
+The change enabled stable 27 billion and 35 billion A3B runs at 40 to 110 plus tokens per second on 2V620 cards with Q80 weights and KV.
+
+00:06:09.920 --> 00:06:18.940
+SkillZip compresses recurring contract valid motifs into reversible macros while preserving dependency closure and verifier reachability.
+
+00:06:19.920 --> 00:06:32.360
+It delivered up to 3.46 times compression with 99.2% dependency preservation and 98.7% verifier reachability on technical and embodied benchmarks.
+
+00:06:33.360 --> 00:06:36.980
+Okay, let's pop the hood on diffusion LLMs for a moment.
+
+00:06:37.600 --> 00:06:43.200
+Everyone talks about diffusion LLMs as if their any order token commitment is pure upside.
+
+00:06:43.900 --> 00:06:52.120
+In practice, the freedom creates a reachability problem where the model can lock in a final answer while most of the reasoning canvas is still masked.
+
+00:06:53.120 --> 00:07:09.580
+Logging every step on LLADA 8B showed the answer token committed at 15 to 24% of the trajectory on GSM 8K, after which the model often collapsed to answer only outputs on up to 90% of problems as context grew.
+
+00:07:10.480 --> 00:07:14.200
+Chain of thought only helped when commitment order was constrained.
+
+00:07:14.200 --> 00:07:25.540
+A 2 by 2 prompt decoder design isolated the interaction where adding reasoning text improved accuracy by 34.8% points only under ordered commitment.
+
+00:07:26.260 --> 00:07:43.360
+The same interaction held on Dream 7B and Math 500, a simple frontier gated window that forces early tokens to stay open until a quality threshold is met, recovered most of the gap while still allowing 4 times parallel decoding once the window advanced.
+
+00:07:44.200 --> 00:07:53.620
+The practical rule is to keep the first 8 to 12 tokens under ordered commitment on reasoning tasks, then relax the constraint for later refinement steps.
+
+00:07:54.380 --> 00:08:07.600
+Run the AVISID QEN 3.627 billion INT 4 weights on a single R9700 with the still-dead code VLLM image to test current AMD inference limits.
+
+00:08:08.600 --> 00:08:19.420
+Add the new llama dot CPP long cat flash support and the provided GGUF files to compare against your existing 7 billion to 13 billion local setups.
+
+00:08:19.980 --> 00:08:27.800
+Test cloud flare wallets in a small agent workflow that calls paid APIs to see how the payment containment works in practice.
+
+00:08:28.800 --> 00:08:37.680
+Apply the constraint first reasoning to stage prompt on AIME style problems to measure the lift over plain chain of thought on your current model.
+
+00:08:38.360 --> 00:08:44.380
+Open AI is expected to share more details on Astra's additional controls before broader release.
+
+00:08:45.340 --> 00:08:51.520
+Further QEN 3.8 dense variants are anticipated in the coming weeks based on community discussion.
+
+00:08:51.520 --> 00:09:01.240
+Before we go, the next round of diffusion LLM decoding order papers should land soon and will likely shift prompting best practices again.
+
+00:09:01.900 --> 00:09:03.840
+That's models and agents for today.
+
+00:09:04.600 --> 00:09:11.780
+If you found this useful, share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+
+00:09:12.320 --> 00:09:16.620
+The AI world moves fast. We'll help you keep up. See you tomorrow.
+
+00:09:17.620 --> 00:09:23.380
+And if you'd rather watch then listen, find us on YouTube at Narrow Network. Links in the show notes.
+
+00:09:23.860 --> 00:09:31.060
+One more thing. If you like today's episode, our sister show models and agents for beginners is worth a spot in your feed.
+
+00:09:31.680 --> 00:09:41.500
+Artificial intelligence explains simply for beginners and curious teens. It's one of the Narrow Network's daily briefings all free at NarrowNetwork.com.
+
+00:09:41.500 --> 00:09:51.360
+Prefer reading. Today's full write-up, sources and transcript are on the episode blog at NarrowNetwork.com. Same briefing, readable format.
+
+00:09:52.040 --> 00:09:58.380
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

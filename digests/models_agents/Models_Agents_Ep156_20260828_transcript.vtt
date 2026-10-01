@@ -1,0 +1,124 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.980
+Anthropics New Hardware Standard gives ai agents a unified way to control lab and manufacturing equipment without custom drivers per device. This is Models &amp; Agents, episode 156. Andthropic opened a research preview of its model hardware standard today. The preview invites partners in science, robotics, and manufacturing to extend Claude's hardware reach. Google released Gemini 3.5 Transcribe with separate streaming and batch endpoint.
+
+00:00:29.980 --> 00:00:54.420
+A community developer reverse engineered an Xera NPU engine format to run GGUF models directly at 1.5 times the vendor runtime speed on Raspberry Pi hardware. Anthropic launched the research preview of the model hardware standard in collaboration that began with the Howard Hughes Medical Institute. The standard currently covers lab and manufacturing equipment best.
+
+00:00:54.420 --> 00:01:16.340
+The preview aims to extend it to boards, cameras, and other devices already driven by Claude code, so everything works through one interface. Andthropic notes that large language models still lack physical intuition because they learned the physical world only from text and images. The preview will also produce more safety evaluations before any open source release.
+
+00:01:16.340 --> 00:01:28.120
+Builders working on physical world agents should watch the preview for early access and feedback channels. The effort directly addresses the gap between text only agents and real hardware control.
+
+00:01:28.120 --> 00:01:44.020
+Google released Gemini 3.5 Transcribe as two endpoints rather than one. The streaming endpoint delivers sub-second transcription but drops speaker diurization and word timestamps. The batch endpoint retains both features at half the cost.
+
+00:01:44.020 --> 00:02:04.560
+Google reports 4.0% word error rate on streaming and 2.6% on non-streaming, with 70% faster finalization than chirp3. Community users report Ornith 1.5 delivers strong tool calling performance at roughly 130 tokens per second with MTP on consumer hardware.
+
+00:02:04.560 --> 00:02:16.900
+Testers describe it as filling the gap between Quinn 3.827b and a hypothetical faster 35b variant. The model runs well where larger Quinn variants felt too slow.
+
+00:02:16.900 --> 00:02:43.160
+Researchers released Telecom GPT-Rone to 9B, a unified open source reasoner fine-tuned from Quinn 3.59B on a 67,427 example corpus. The model ranks first among open source Telecom large language models on seven public benchmarks after multi-teacher Laura SFT, followed by GRPO with access aligned verifiers.
+
+00:02:43.160 --> 00:03:01.500
+It reaches performance comparable to closed frontier reasoners on telco-specific tasks. A developer reverse engineered the AXIRA AX 8,850NPU engine format to patch GGUF weights directly into pre-compiled engines without vendor compilation.
+
+00:03:01.500 --> 00:03:14.800
+The approach stores in-8 weights as 2 nibble planes and achieves 96% token agreement with CPU reference while running at 24.5 tokens per second decode on a Raspberry Pi 5.
+
+00:03:15.420 --> 00:03:22.500
+The same work fixed a previously unused batched pre-fill path, reaching 716 tokens per second prompt processing.
+
+00:03:23.780 --> 00:03:38.000
+The full back end is a single 4.5K line file in Alama.cpp fork. TreeGraft introduces a multi-draft or framework where drafters of different sizes jointly build a shared draft tree for speculative decoding.
+
+00:03:38.680 --> 00:03:44.760
+A lightweight scheduler distilled from an offline value system decides when to invoke the stronger drafter.
+
+00:03:44.760 --> 00:03:53.760
+Across 10 model pairs and six benchmarks, the method outperforms the better single drafter baseline by 15.1% on average.
+
+00:03:54.420 --> 00:04:05.440
+First pass provides 3668 multi-round editorial dialogues from nature communications across biology, chemistry, neuroscience, physics and earth science.
+
+00:04:06.020 --> 00:04:11.420
+The data set captures initial referee reports, author responses and updated assessments.
+
+00:04:12.420 --> 00:04:21.220
+Upheld supplies hundreds of complete human-to-human dialogues written by professional scriptwriters with 36,000 plus per-turn human annotations.
+
+00:04:21.780 --> 00:04:36.900
+A mixture of judges framework improves correlation by approximately 30%. VagDenu adds a Vruta aware front end and reference matching mechanism to an off-the-shelf flow matching TTS backbone for faithful Sanskrit chant output.
+
+00:04:36.900 --> 00:04:44.120
+Two deployments already cover 5,183 versus and 18,000 versus respectively.
+
+00:04:44.820 --> 00:04:51.120
+Everyone talks about adaptive thinking in multimodal models as if the model simply decides how hard per reason.
+
+00:04:51.780 --> 00:04:57.880
+In practice, the decision lives at a single token whose probability distribution entropy becomes the training signal.
+
+00:04:58.520 --> 00:05:03.480
+High entropy at that token means the model is still exploring whether to engage chain of thought.
+
+00:05:03.480 --> 00:05:17.860
+Low entropy signals convergence on a policy. The training process therefore moves from high entropy exploration where many thinking strategies are tried to low entropy convergence where the model confidently chooses when to think.
+
+00:05:18.420 --> 00:05:29.500
+The practical payoff appears on mixed workloads. Complex questions receive full reasoning while simple ones skip it, cutting unnecessary compute without accuracy loss on easy items.
+
+00:05:29.500 --> 00:05:46.180
+The gotcha that bites most teams is assuming the entropy threshold transfers across domains. Test Gemini 3.5 transcribe batch endpoint on any existing transcription pipeline to measure the 70% faster finalization against your current latency budget.
+
+00:05:47.000 --> 00:05:56.760
+Build a small hardware control prototype against the model hardware standard research preview if you have access to lab or robotics equipment already driven by Claude code.
+
+00:05:56.760 --> 00:06:10.020
+Run the llama.cppaxl back end on an ARCH 64 device with the provided quick start to compare 24.5 tokens per second decode against your current edge inference setup.
+
+00:06:10.600 --> 00:06:23.580
+Evaluate Ornith 1.5 on a tool calling loop you currently run with Quinn 3.827b to see whether the reported 130 tokens per second speed justifies switching your daily driver.
+
+00:06:23.580 --> 00:06:32.380
+Anthropic expects to share more model hardware standard safety evaluations once the research preview gathers sufficient partner feedback.
+
+00:06:32.980 --> 00:06:41.540
+Google has not yet announced whether Gemini 3.5 transcribe will receive additional language coverage beyond the current 85+.
+
+00:06:41.540 --> 00:06:47.140
+The tree graft authors plan to release full training code after the anonymous review period.
+
+00:06:47.140 --> 00:06:55.680
+Before we go, Anthropic will gather partner feedback on the model hardware standard preview before releasing further safety evaluations.
+
+00:06:56.300 --> 00:07:02.000
+That wraps up today's AI briefing. Share this with a developer or builder who wants to stay current.
+
+00:07:02.540 --> 00:07:04.900
+Subscribe wherever you listen. See you tomorrow.
+
+00:07:04.900 --> 00:07:11.220
+And if you'd rather watch than listen, find us on YouTube at Nerra Network, links in the show notes.
+
+00:07:11.740 --> 00:07:17.860
+One more thing, if you like today's episode, our sister show OmniView is worth a spot in your feed.
+
+00:07:18.360 --> 00:07:21.960
+A balanced daily world news briefing that takes every side seriously.
+
+00:07:22.540 --> 00:07:27.440
+It's one of the Nerra Network's daily briefings, all free at narenametwork.com.
+
+00:07:27.440 --> 00:07:34.940
+Prefer reading? Today's full write-up, sources and transcript are on the episode blog at nerranetwork.com.
+
+00:07:35.380 --> 00:07:37.080
+Same briefing, readable format.
+
+00:07:37.720 --> 00:07:43.920
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

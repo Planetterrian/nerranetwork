@@ -1,0 +1,310 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:08.540
+Glad you're here. Welcome to Models and Agents, episode 87 for June 20th, 2026. Your daily AI briefing.
+
+00:00:09.240 --> 00:00:15.900
+There's signal and noise in AI every day. Let's get to the signal. Virtuals just wired latens
+
+00:00:15.900 --> 00:00:24.380
+distributed GPU engine into its agent network to run GLM 5.2 at scale. A security report out this
+
+00:00:24.380 --> 00:00:31.400
+week flags active exploits targeting Langflow and related agent frameworks. A major security report
+
+00:00:31.400 --> 00:00:38.180
+details active exploits against Langflow and related frameworks. Builders should audit any
+
+00:00:38.180 --> 00:00:45.820
+self-hosted agent tooling this week. Patches for Langgraph, Langflow and Langchain Core are already
+
+00:00:45.820 --> 00:00:52.820
+available. Teams should verify upgrades before the next wave of reported exploits. The report highlights
+
+00:00:52.820 --> 00:00:59.060
+risks in self-hosted agent tooling. Related frameworks face ongoing exploit activity.
+
+00:00:59.620 --> 00:01:05.820
+Verification of upgrades is recommended ahead of further incidents. Teams running self-hosted
+
+00:01:05.820 --> 00:01:12.340
+tooling should audit upgrades before the next wave hits. The virtual's integration now routes GLM
+
+00:01:12.340 --> 00:01:19.580
+times 5.2 calls through latens distributed engine. Agents execute without managing individual
+
+00:01:19.580 --> 00:01:27.000
+GPU nodes themselves. Existing virtual users get immediate access to the model on the new back end.
+
+00:01:27.700 --> 00:01:33.380
+The move follows earlier reports that the same model performs well on fast custom silicon.
+
+00:01:34.320 --> 00:01:39.500
+Other agent platforms are already watching whether similar distributed back ends appear soon.
+
+00:01:40.200 --> 00:01:46.340
+This development sits in the ongoing maturation of agent tool use tracked since episode 86.
+
+00:01:47.140 --> 00:01:55.000
+Vive thinker 3B is a 3 billion parameter dense model built on quen 2.5 coder 3B.
+
+00:01:55.300 --> 00:02:03.400
+It uses the spectrum to signal post-training pipeline. The model reaches parity with deep seek v3.2
+
+00:02:03.400 --> 00:02:12.140
+and kimi k 2.5 on verifiable reasoning benchmarks. It ships under an MIT license that permits commercial
+
+00:02:12.140 --> 00:02:18.880
+use and fine tuning. Builders focused on code or math tasks can now compare its 3 billion scale
+
+00:02:18.880 --> 00:02:25.580
+directly against larger open-weight families. This release continues the narrowing performance gap
+
+00:02:25.580 --> 00:02:33.160
+between open-weight and closed frontier models noted in episode 85. Min flux offers a minimal
+
+00:02:33.160 --> 00:02:41.380
+pie torch re-implementation of both flux 1 and flux 2. The repo supplies explicit VAE and transformer
+
+00:02:41.380 --> 00:02:46.520
+components along with line by line mappings to the hugging-faced diffusers library.
+
+00:02:47.240 --> 00:02:52.240
+Training and inference loops use flow matching and Euler ODE steps.
+
+00:02:53.160 --> 00:03:02.060
+Flux 2 updates transformer blocks modulation FFN VAE normalization and position IDs over the first
+
+00:03:02.060 --> 00:03:08.340
+version. Anyone studying diffusion architectures can run the loops locally without the full diffusers
+
+00:03:08.340 --> 00:03:17.040
+abstractions. DVD-gepa demonstrates a minimal joint embedding predictive architecture on a bouncing
+
+00:03:17.040 --> 00:03:25.680
+logo video task. A context encoder EMA target encoder and latent predictor learn 32-dimensional
+
+00:03:25.680 --> 00:03:32.440
+representations without labels or a decoder. An optional decoder lets the model dream correct future
+
+00:03:32.440 --> 00:03:38.920
+frames for roughly 20 steps before drift sets in. The entire project runs in the browser through
+
+00:03:38.920 --> 00:03:47.600
+a 40-line JavaScript re-implementation of the trained MLPs. A new open handbook covers LLM inference
+
+00:03:47.600 --> 00:03:56.440
+at scale with chapters on GPU internals, KV cache behavior and batching. It explains why GPU sit idle
+
+00:03:56.440 --> 00:04:01.820
+during generation and where memory bottlenecks occur, complete with mermaid diagrams.
+
+00:04:02.240 --> 00:04:11.680
+The latest section walks through VLLM SG-Lang and tensor-RT-LLM trade-offs. Practitioners can review
+
+00:04:11.680 --> 00:04:19.140
+the GPU internals chapter to sharpen their mental model of production inference. This handbook directly
+
+00:04:19.140 --> 00:04:27.280
+addresses the AI compute and inference questions tracked since episode 86. Sui deployed CLMPC on
+
+00:04:27.280 --> 00:04:35.960
+mainnet to give AI agents secure multi-party computation. Sui deployed CLMPC on mainnet to give AI
+
+00:04:35.960 --> 00:04:42.600
+agents secure multi-party computation capabilities. The feature allows agents to perform joint
+
+00:04:42.600 --> 00:04:49.120
+computations without exposing private inputs. The feature lets agents perform joint computations
+
+00:04:49.120 --> 00:04:55.280
+without exposing private inputs. Teams building workflows that require shared secret handling
+
+00:04:55.280 --> 00:05:01.600
+now have a production ready on-chain option. Teams building agent workflows that require shared
+
+00:05:01.600 --> 00:05:07.900
+secret handling now have a production ready on-chain option. The deployment occurred on mainnet.
+
+00:05:07.900 --> 00:05:14.480
+It supplies secure multi-party computation for agents. Nvidia AI released spatial claw,
+
+00:05:14.780 --> 00:05:20.800
+a training-free agent that writes and executes Python inside a persistent kernel for 3D spatial
+
+00:05:20.800 --> 00:05:26.680
+reasoning. It composes existing perception tools through code rather than learned policies.
+
+00:05:27.420 --> 00:05:32.140
+The approach removes additional training while still handling complex spatial queries.
+
+00:05:32.700 --> 00:05:39.020
+Developers working on robotics or 3D scene understanding can test the code as action pattern
+
+00:05:39.020 --> 00:05:46.400
+immediately. Atomic Mail now lets agents create and manage their own email inboxes with no human
+
+00:05:46.400 --> 00:05:53.720
+account creation step. Atomic Mail now allows agents to create and manage their own email inboxes
+
+00:05:53.720 --> 00:06:00.200
+autonomously. No human account creation step is required. The service target's agent workflows
+
+00:06:00.200 --> 00:06:06.240
+that need persistent independent email identities. The service target's agent workflows that need
+
+00:06:06.240 --> 00:06:12.880
+persistent independent email identities. Agents can register their own inboxes with no human
+
+00:06:12.880 --> 00:06:19.980
+involvement. The release enables autonomous inbox management. It removes any requirement for human
+
+00:06:19.980 --> 00:06:27.160
+account creation. Data set apps reimagines Claude style artifacts with a full relational database
+
+00:06:27.160 --> 00:06:34.320
+and JSON API back end. Data set apps gives developers the interactive artifact experience but
+
+00:06:34.320 --> 00:06:42.380
+back by a full relational database and JSON API. HTML plus JS applications can read and write
+
+00:06:42.380 --> 00:06:49.880
+structured data directly instead of relying on local storage. HTML plus JS applications can read
+
+00:06:49.880 --> 00:06:56.080
+and write structured data directly instead of relying on local storage. The project post includes
+
+00:06:56.080 --> 00:07:03.480
+live demo details and UV1 liners for quick local testing. The project blog post includes live demo
+
+00:07:03.480 --> 00:07:09.740
+details and UV1 liners for local testing. It provides a relational back end for artifacts.
+
+00:07:10.500 --> 00:07:17.460
+Applications gain direct data access through the JSON API. A recorded workshop posted to YouTube
+
+00:07:17.460 --> 00:07:24.100
+covers the full LLM stack from perceptrons through pre-training, instruction tuning and RL.
+
+00:07:24.660 --> 00:07:30.900
+The recorded workshop covers the full LLM stack from perceptrons through pre-training, instruction
+
+00:07:30.900 --> 00:07:38.840
+tuning, and RL using slides, Excel examples, and PyTorch code. It uses slides, Excel examples,
+
+00:07:38.840 --> 00:07:44.740
+and PyTorch code with no prior machine learning background assumed beyond comfort with code.
+
+00:07:45.420 --> 00:07:52.660
+No prior ML background is assumed beyond comfort with code. Slides and exercises remain available
+
+00:07:52.660 --> 00:07:59.480
+for self-paced study. Slides and exercises are available for self-paced study. The workshop teaches
+
+00:07:59.480 --> 00:08:08.260
+ML, LLM, and math intuition. It assumes only basic comfort with code. Yandex open sourced Yaf,
+
+00:08:08.700 --> 00:08:17.080
+a zero copy wire format for proto-buff that offers four memory layouts. The flat layout reaches 1.2 times
+
+00:08:17.080 --> 00:08:25.240
+the speed of a raw C++ struct in benchmarks. Production advertising systems have already reported 10-20%
+
+00:08:25.240 --> 00:08:32.700
+CPU savings after adoption. TimeColePilot supplies an end-to-end forecasting pipeline that combines
+
+00:08:32.700 --> 00:08:40.540
+statistical, foundation, and GPU-accelerated models. TimeColePilot provides an end-to-end workflow
+
+00:08:40.540 --> 00:08:48.500
+that combines statistical, foundation, and GPU-accelerated models with rolling cross-validation and
+
+00:08:48.500 --> 00:08:56.000
+probabilistic forecasts. It includes rolling cross-validation, probabilistic forecasts, and an optional
+
+00:08:56.000 --> 00:09:04.260
+LLM agent that selects models and explains predictions. An optional LLM agent can select models and
+
+00:09:04.260 --> 00:09:10.640
+explain predictions. The tutorial demonstrates the workflow on real airline passenger data plus
+
+00:09:10.640 --> 00:09:17.240
+synthetic series with injected anomalies. The tutorial uses real airline passenger data plus
+
+00:09:17.240 --> 00:09:24.560
+synthetic series with injected anomalies. It supplies automated anomaly detection. The pipeline supports
+
+00:09:24.560 --> 00:09:31.420
+foundation models. Okay, let's pop the hood on flow matching as it appears in the min flux implementation.
+
+00:09:32.220 --> 00:09:38.860
+The technique re-parameterizes generation as learning of velocity field that transports noise to
+
+00:09:38.860 --> 00:09:45.220
+data along straight paths in probability space. The model therefore predicts the instantaneous
+
+00:09:45.220 --> 00:09:51.660
+direction of the probability flow rather than a score or noise estimate. Straight paths let the
+
+00:09:51.660 --> 00:09:57.380
+Odesimal Disciver Solver take larger steps at inference time and cut the number of function
+
+00:09:57.380 --> 00:10:03.920
+evaluations required. Training pays a cost because the velocity target must be estimated from paired
+
+00:10:03.920 --> 00:10:09.640
+noise data points, which raises gradient variance compared with the simpler noise prediction loss.
+
+00:10:10.480 --> 00:10:17.360
+In the min-flx loop, the VAE first encodes images, the flow matching velocity is computed,
+
+00:10:17.920 --> 00:10:24.480
+and an MSE loss regresses against that velocity. Choose flow matching when your inference budget is
+
+00:10:24.480 --> 00:10:30.720
+dominated by solver steps. Stick with classic diffusion when training stability matters more than
+
+00:10:30.720 --> 00:10:37.500
+step count. Try the virtual's plus latent integration if you already run agents that need fast GLM
+
+00:10:37.500 --> 00:10:45.520
+5.2 access without managing GPUs yourself. Clown the min-flux repo and run its training and inference
+
+00:10:45.520 --> 00:10:53.440
+loops to study flux internals without the full diffusers complexity. Test Vive thinker 3B on code or
+
+00:10:53.440 --> 00:11:00.700
+math tasks where you want deep-seek level reasoning at 3B scale under MIT license terms.
+
+00:11:01.500 --> 00:11:07.780
+Walk through the data set apps demo and UV one-liners to see how a relational backend changes what
+
+00:11:07.780 --> 00:11:15.540
+HTML plus JS artifacts can do. More agent platforms are expected to announce distributed inference
+
+00:11:15.540 --> 00:11:23.960
+backends for GLM 5.2. Patches for Lang graph, Lang flow, and Lang chain core are already available.
+
+00:11:24.660 --> 00:11:32.720
+Yandex, YAHFF may appear in additional ProtoBuff heavy pipelines as the reported CPU saving spread.
+
+00:11:33.460 --> 00:11:40.460
+Tomorrow, keep an eye on whether additional agent platforms confirm distributed backends for GLM 5.2.
+
+00:11:41.180 --> 00:11:46.420
+That wraps up today's AI briefing. Share this with a developer or builder who wants to stay
+
+00:11:46.420 --> 00:11:53.740
+current. Subscribe wherever you listen. See you tomorrow and before you go, this show is part of the
+
+00:11:53.740 --> 00:12:00.640
+Nerra network, a family of daily podcasts covering tech, science, markets, and more. If you enjoyed
+
+00:12:00.640 --> 00:12:07.960
+today's episode, give OmniView a listen. A balanced daily world news briefing that takes every side
+
+00:12:07.960 --> 00:12:15.580
+seriously. You can explore the whole lineup at NerraNetwork.com. This episode used AI voice synthesis
+
+00:12:15.580 --> 00:12:19.460
+of my voice. Editorial selection and analysis are my own.

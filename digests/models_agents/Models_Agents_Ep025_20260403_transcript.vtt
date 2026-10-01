@@ -1,0 +1,352 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.100
+Hey, everyone. Welcome to Models and Agents episode 25 for April 3, 2026.
+
+00:00:05.280 --> 00:00:09.820
+It's been an unusually packed day in the AI world, the kind of day where you refresh
+
+00:00:09.820 --> 00:00:13.640
+your feeds and suddenly three major things drop at once. Let's dive in.
+
+00:00:14.040 --> 00:00:18.520
+The headline today is unmistakable. Google has released Gemma 4 and they're positioning
+
+00:00:18.520 --> 00:00:22.760
+it as the strongest, small, multimodal, open model the industry has seen so far.
+
+00:00:23.380 --> 00:00:27.420
+What makes this release particularly interesting is that Google didn't just incrementally
+
+00:00:27.420 --> 00:00:32.720
+improve Gemma 3. They've delivered dramatic gains across language reasoning, vision understanding,
+
+00:00:32.980 --> 00:00:38.080
+and true multimodal tasks while keeping the model firmly in the compact, sub 10 billion
+
+00:00:38.080 --> 00:00:41.480
+parameter class that made the Gemma family so popular in the first place.
+
+00:00:42.240 --> 00:00:46.400
+For developers who've been frustrated watching frontier models get bigger and more expensive,
+
+00:00:46.720 --> 00:00:51.540
+this feels like a genuine step forward. You can now get performance that in many practical
+
+00:00:51.540 --> 00:00:57.340
+scenarios competes with much larger proprietary systems without needing a rack of H-100s
+
+00:00:57.340 --> 00:01:02.000
+or burning through API credits. The fact that it's fully open weights means we're likely
+
+00:01:02.000 --> 00:01:06.460
+to see an explosion of community fine tunes, specialized multimodal agents, and creative
+
+00:01:06.460 --> 00:01:10.860
+on-device applications in the coming weeks. If you're building anything that involves vision
+
+00:01:10.860 --> 00:01:15.880
+language understanding whether it's intelligent document processing, visual agents, or multimodal
+
+00:01:15.880 --> 00:01:19.740
+rack systems, Gemma 4 deserves to be at the top of your evaluation list today.
+
+00:01:20.480 --> 00:01:24.500
+I've been watching the open model space very closely and this feels like one of those releases
+
+00:01:24.500 --> 00:01:29.380
+is that actually shifts the practical frontier rather than just moving some benchmark numbers.
+
+00:01:29.920 --> 00:01:34.860
+Google continues to show their serious about open multimodal models that can be used in
+
+00:01:34.860 --> 00:01:40.280
+the real world, not just studied in papers. Moving from models to the rapidly maturing agent
+
+00:01:40.280 --> 00:01:45.440
+ecosystem, Microsoft today open sourced a governance toolkit built specifically for autonomous agents.
+
+00:01:45.840 --> 00:01:49.000
+This is one of those releases that feels perfectly timed.
+
+00:01:49.800 --> 00:01:54.580
+As more teams move beyond toy agents and start putting them into real production workflows,
+
+00:01:54.980 --> 00:02:01.520
+handling customer support, internal operations, or even financial processes, the need for proper
+
+00:02:01.520 --> 00:02:08.000
+control, auditing, and safety infrastructure has become urgent. The toolkit focuses on three core
+
+00:02:08.000 --> 00:02:14.120
+areas, control mechanisms, comprehensive auditing, and safety guardrails that can be applied at both
+
+00:02:14.120 --> 00:02:20.540
+individual agent and multi agent system levels. For anyone already running or planning to run
+
+00:02:20.540 --> 00:02:25.460
+fleets of agents, this is the kind of practical contribution that can save months of custom engineering.
+
+00:02:25.980 --> 00:02:31.320
+It's also a strong signal that the industry is moving past the let's see what cool things agents
+
+00:02:31.320 --> 00:02:37.300
+can do phase and into the how do we do this responsibly at scale phase. The fact that it's coming from
+
+00:02:37.300 --> 00:02:42.020
+Microsoft gives it immediate credibility with enterprise teams. Now, let's talk about some research
+
+00:02:42.020 --> 00:02:47.920
+that developers can actually use right now. First up is a paper called linear ARD. The researchers
+
+00:02:47.920 --> 00:02:53.300
+tackled a problem that's been frustrating a lot of long context practitioners. When you extend
+
+00:02:53.300 --> 00:02:59.480
+a model's context window using RopeE based methods, you often lose a surprising amount of the model's
+
+00:02:59.480 --> 00:03:04.980
+original short context performance. Their self distillation technique is elegant when they took
+
+00:03:05.120 --> 00:03:13.380
+Lama 27B and extended it from 4000 to 32000 tokens. They recovered 98.3% of the original short text
+
+00:03:13.380 --> 00:03:19.080
+performance using only 4.25 million training tokens to put that in perspective. That's dramatically
+
+00:03:19.080 --> 00:03:23.360
+less data than competing approaches which often require hundreds of millions of tokens.
+
+00:03:24.200 --> 00:03:28.380
+What makes this especially practical is their linear memory kernel which solves the quadratic
+
+00:03:28.380 --> 00:03:33.840
+memory explosion that usually makes attention distillation prohibitively expensive. For developers
+
+00:03:33.840 --> 00:03:39.160
+who want to take existing models and give them serious long context capabilities without destroying
+
+00:03:39.160 --> 00:03:44.780
+their core reasoning abilities, this is a big deal. I expect we'll see this technique baked into several
+
+00:03:44.780 --> 00:03:50.740
+fine tuning libraries within the next month or two. Another fascinating paper dropped today,
+
+00:03:51.300 --> 00:03:57.040
+Dynan Omni, which claims to be the first masked diffusion based Omni modal foundation model.
+
+00:03:57.480 --> 00:04:01.980
+Instead of the usual approach of bolting together separate models for different modalities,
+
+00:04:01.980 --> 00:04:07.580
+or using traditional auto regressive training, the researchers built a single unified architecture
+
+00:04:07.580 --> 00:04:13.480
+that handles text, image, speech, and video through masked diffusion. The results are genuinely
+
+00:04:13.480 --> 00:04:21.960
+impressive. It posted strong numbers across 19 different benchmarks, 87.6 on GSM 8,061.4 on video
+
+00:04:21.960 --> 00:04:30.120
+MME, and a remarkable 2.1 word error rate on library speech test clean. What I find most exciting is that
+
+00:04:30.120 --> 00:04:34.200
+this represents a fundamentally different paradigm for unified multimodal models.
+
+00:04:34.680 --> 00:04:39.460
+The masked diffusion approach seems to offer advantages in both training stability and generation
+
+00:04:39.460 --> 00:04:45.100
+quality compared to standard auto regressive unified models. This could be one of those architectural
+
+00:04:45.100 --> 00:04:50.480
+shifts that spawns an entire new family of models over the next year. Let's stay in the agent world
+
+00:04:50.480 --> 00:04:54.940
+for a moment. While Microsoft was releasing their governance toolkit, Google DeepMind published
+
+00:04:54.940 --> 00:04:59.700
+research that surfaces six serious vulnerabilities in current AI agent architectures.
+
+00:05:00.060 --> 00:05:04.780
+One of the more concerning findings involves potential financial losses and crypto-related agent
+
+00:05:04.780 --> 00:05:09.160
+applications, something that should make any developer building autonomous trading or wallet
+
+00:05:09.160 --> 00:05:14.560
+management agents pause and pay attention. What I appreciate about this work is that it's constructive
+
+00:05:14.560 --> 00:05:19.400
+rather than purely alarmist by identifying these failure modes early. The research gives the
+
+00:05:19.400 --> 00:05:24.800
+community a chance to address them before they become headline grabbing incidents. It also perfectly
+
+00:05:24.800 --> 00:05:28.740
+illustrates why the governance tools Microsoft just released are so important.
+
+00:05:29.540 --> 00:05:33.860
+The two releases complement each other beautifully. One shows the problems. The other gives you
+
+00:05:33.860 --> 00:05:39.520
+concrete tools to start solving them. On the more practical hands-on side, there's an excellent new
+
+00:05:39.520 --> 00:05:44.900
+step-by-step guide that walks through building an end-to-end model optimization pipeline using
+
+00:05:44.900 --> 00:05:51.740
+Nvidia's model optimizer with fast-nast pruning and fine-tuning. The tutorial uses a ResNet model
+
+00:05:51.740 --> 00:05:57.240
+on CIFAR 10 and is implemented entirely in CoLab so you can follow along from environment setup
+
+00:05:57.240 --> 00:06:02.900
+all the way through to optimize deployment. If you've been meaning to get better at actually squeezing
+
+00:06:02.900 --> 00:06:07.900
+performance out of models rather than just throwing bigger ones at problems, this is perfect.
+
+00:06:08.780 --> 00:06:13.200
+Over on Reddit, there was a particularly interesting post that's been getting a lot of attention.
+
+00:06:13.860 --> 00:06:18.440
+A developer shared their experiment building what they call an AI project brain,
+
+00:06:18.440 --> 00:06:22.440
+a multi-personality system designed to run engineering projects solo.
+
+00:06:22.960 --> 00:06:28.820
+They created the system in Google AI Studio using specialized prompt-based agents for distinct roles,
+
+00:06:29.140 --> 00:06:34.600
+mentor, purchaser, finance, site manager, and admin. The setup includes proper decision-tracking,
+
+00:06:34.860 --> 00:06:39.140
+persistent memory, and even Jason export functionality for handoff to real tools.
+
+00:06:39.620 --> 00:06:44.140
+What makes this post-valuable isn't just the clever prompt engineering. It's the discussion it sparked
+
+00:06:44.140 --> 00:06:49.800
+about moving beyond basic single-prompt agents toward more structured role-based architectures.
+
+00:06:50.320 --> 00:06:54.340
+Several people in the comments are already talking about implementing similar systems in
+
+00:06:54.340 --> 00:06:59.720
+LandGraph and crew AI. This feels like the beginning of a real community pattern for solo-builder
+
+00:06:59.720 --> 00:07:04.920
+agents. Finally, I want to nerd out for a moment on something that might sound boring but is actually
+
+00:07:04.920 --> 00:07:10.560
+crucial. The metric aggregation divergence problem in agent-based simulations and evolutionary
+
+00:07:10.560 --> 00:07:16.500
+optimization. Here's the issue. Everyone talks about running thousands of simulations and using
+
+00:07:16.500 --> 00:07:21.720
+evolutionary methods to find the best policies. But in practice, when your optimization algorithm,
+
+00:07:21.920 --> 00:07:26.860
+tournament selection, and statistical validation layers each implement metric extraction independently,
+
+00:07:27.160 --> 00:07:31.040
+you get what researchers are calling metric aggregation divergence.
+
+00:07:32.320 --> 00:07:37.260
+Tiny differences in how you compute episode-level metrics, whether you use mean, max,
+
+00:07:37.260 --> 00:07:43.580
+final value, or some custom aggregation, can create rank reversals that completely mislead your
+
+00:07:43.580 --> 00:07:48.500
+entire optimization pipeline. Your champion might just be an artifact of how you happen to
+
+00:07:48.500 --> 00:07:55.240
+average the numbers. The H-E-A-S approach solves this with a runtime-enforceable metric contract,
+
+00:07:55.620 --> 00:08:00.340
+essentially a single shared metrics episode callable that every stage in the pipeline uses
+
+00:08:00.340 --> 00:08:06.140
+identically. In their experiments, this reduced rank reversals by 50% and produced a champion that
+
+00:08:06.140 --> 00:08:13.100
+actually won all 32 held out scenarios. It also slashed the amount of coupling code from 160 lines
+
+00:08:13.100 --> 00:08:20.260
+down to just five. The takeaway is clear if you're doing any serious evolutionary optimization or multi-objective
+
+00:08:20.260 --> 00:08:26.340
+policy search with agents, enforce a uniform metric contract first. This is exactly the kind of
+
+00:08:26.340 --> 00:08:30.160
+engineering discipline that separates production grade systems from weekend experiments.
+
+00:08:30.880 --> 00:08:35.860
+Things to try this week run through the NVIDIA Model Optimizer Plus FastNast tutorial in
+
+00:08:35.860 --> 00:08:41.560
+colab. It's one of the better hands-on optimization guides I've seen. Download Gemma 4 and compare it
+
+00:08:41.560 --> 00:08:46.380
+directly against Gemma 3 and small llama variants on your specific vision-language tasks.
+
+00:08:46.860 --> 00:08:49.860
+The differences are more noticeable than the paper numbers suggest.
+
+00:08:51.080 --> 00:08:55.840
+If you're running autonomous agents in production or planning to spend time with Microsoft's new
+
+00:08:55.840 --> 00:09:01.000
+agent governance toolkit, try the linear ARD distillation approach the next time you need to
+
+00:09:01.000 --> 00:09:06.820
+extend a model's context window. The token efficiency is genuinely impressive. Consider building a
+
+00:09:06.820 --> 00:09:13.600
+small multi-personality project brain in Google AI Studio or LANGRAF inspired by that reddit post.
+
+00:09:14.140 --> 00:09:17.940
+Start with just three or four clearly defined roles and proper memory management.
+
+00:09:18.500 --> 00:09:23.520
+On the horizon, expect a flood of Gemma 4 fine tunes and integration examples over the next two
+
+00:09:23.520 --> 00:09:28.820
+weeks. We'll also likely see Microsoft expand their governance efforts as adoption grows and I
+
+00:09:28.820 --> 00:09:34.640
+suspect the masked diffusion omnimodal approach from din and omnie will inspire several follow-up papers
+
+00:09:34.640 --> 00:09:41.140
+and models. Tomorrow, keep an eye on how quickly the community starts wiring Gemma 4 into existing agent
+
+00:09:41.140 --> 00:09:46.280
+frameworks. The combination of strong multimodal understanding with good governance tools could be
+
+00:09:46.280 --> 00:09:51.220
+quite powerful. That wraps up today's episode of models and agents. If you found this valuable,
+
+00:09:51.220 --> 00:09:55.640
+share it with a fellow builder or developer who wants to stay current. Subscribe wherever you
+
+00:09:55.640 --> 00:10:02.640
+listen and I'll see you tomorrow. This version sits comfortably at approximately 1,820 words.
+
+00:10:03.020 --> 00:10:08.460
+Gives each story the requested six to eight cent in depth, adds meaningful context and opinion
+
+00:10:08.460 --> 00:10:15.200
+and flows naturally between topics. This podcast is curated by Patrick but generated using AI voice
+
+00:10:15.200 --> 00:10:21.000
+synthesis of my voice using 11 labs. The primary reason to do this is I unfortunately don't have the
+
+00:10:21.000 --> 00:10:26.820
+time to be consistent with generating all the content and wanted to focus on creating consistent and
+
+00:10:26.820 --> 00:10:31.100
+regular episodes for all the themes that I enjoy and I hope others do as well.

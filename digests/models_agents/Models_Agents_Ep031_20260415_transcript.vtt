@@ -1,0 +1,349 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.480
+What's up? Welcome to Models in Agents Episode 31. It's April 15th, 2026. Let's see what happened
+
+00:00:06.480 --> 00:00:13.220
+in the AI world today. And trust me, it's been busy. Google DeepMind's Gemini Robotics ER 1.6
+
+00:00:13.220 --> 00:00:18.620
+upgrade delivers enhanced embodied reasoning and instrument reading for real world robot control.
+
+00:00:19.000 --> 00:00:22.220
+If you are building physical AI systems, this one is worth your attention.
+
+00:00:23.040 --> 00:00:28.060
+What you need to know today is that DeepMind released Gemini Robotics ER 1.6 as a high-level
+
+00:00:28.060 --> 00:00:32.880
+reasoning model focused on visual spatial understanding, task planning, and success detection for physical
+
+00:00:32.880 --> 00:00:37.960
+robots. Several new agent protocols and infrastructure projects also launched targeting autonomous
+
+00:00:37.960 --> 00:00:42.140
+agent commerce and on-chain coordination. Pay attention to the wave of new reasoning evaluation
+
+00:00:42.140 --> 00:00:46.820
+techniques and production grounded agent benchmarks that better reflect real deployment challenges.
+
+00:00:47.520 --> 00:00:52.560
+Let's start with the top story. Google DeepMind released Gemini Robotics ER 1.6,
+
+00:00:53.100 --> 00:00:57.940
+an upgraded embodied reasoning model designed to act as the cognitive brain for robots in real world
+
+00:00:57.940 --> 00:01:03.340
+environments. The model specializes in visual and spatial understanding, task planning, success
+
+00:01:03.340 --> 00:01:09.120
+detection, and instrument reading. Those capabilities are critical for physical AI systems operating
+
+00:01:09.120 --> 00:01:15.040
+beyond simulation. Compared to prior versions, the 1.6 release brings measurable gains in reasoning
+
+00:01:15.040 --> 00:01:20.260
+depth required for complex manipulation and environmental interaction. Practitioners building
+
+00:01:20.260 --> 00:01:25.360
+robotics applications can now integrate this as the high-level planner while pairing it with lower
+
+00:01:25.360 --> 00:01:31.300
+level motor control systems. Early adopters should test it on instrument-heavy tasks where previous
+
+00:01:31.300 --> 00:01:36.820
+models struggled with accurate reading and sequential planning. I am genuinely excited about this
+
+00:01:36.820 --> 00:01:42.220
+because embodied reasoning has been one of the hardest gaps to close. Watch for broader rollout
+
+00:01:42.220 --> 00:01:48.000
+across DeepMind's robotic stack and potential integration paths with existing robot operating systems.
+
+00:01:48.640 --> 00:01:52.780
+Now on the model updates front, researchers introduced something called filtered reasoning score.
+
+00:01:52.780 --> 00:01:57.500
+Filtered reasoning score evaluates reasoning quality only on a model's top-k percent most
+
+00:01:57.500 --> 00:02:02.080
+confident traces rather than averaging across all outputs. This approach differentiates models that
+
+00:02:02.080 --> 00:02:05.900
+achieve similar benchmark accuracy but differs substantially in faithfulness, coherence,
+
+00:02:06.060 --> 00:02:10.900
+utility, and factuality. Models with higher filtered reasoning score on one benchmark
+
+00:02:10.900 --> 00:02:14.520
+tend to transfer better to others in both accuracy and reasoning quality.
+
+00:02:15.260 --> 00:02:19.160
+The team open sourced the evaluation code base so you can start using it immediately in your own
+
+00:02:19.160 --> 00:02:27.240
+experiments. Next there is a new training method called self-distillation 0 or SD0. SD0 turns binary
+
+00:02:27.240 --> 00:02:32.640
+rewards into dense token level supervision without needing an external teacher model or high-quality
+
+00:02:32.640 --> 00:02:37.920
+demonstrations. A single model alternates between generator and reviser roles then distills the
+
+00:02:37.920 --> 00:02:43.720
+revisers improved outputs back into the generator via on-policy self-distillation. On math and code
+
+00:02:43.880 --> 00:02:50.320
+benchmarks using Quen3-4B instruct an ALMO 3-7B instruct it delivered at least 10% gains over
+
+00:02:50.320 --> 00:02:56.180
+base models. It also outperformed rejection fine-tuning GRPO and self-distillation fine-tuning under
+
+00:02:56.180 --> 00:03:01.200
+identical compute budgets. The method shows clear token level self-localization and iterative
+
+00:03:01.200 --> 00:03:06.260
+self-evolution which is pretty cool to see. Then there is the cure framework for long-form
+
+00:03:06.260 --> 00:03:12.200
+factuality. Cure teaches large language models to reason about uncertainty at the individual claim
+
+00:03:12.200 --> 00:03:17.720
+level. It uses a claim-aware reasoning protocol that pairs atomic claims with explicit confidence
+
+00:03:17.720 --> 00:03:23.280
+estimates. A multi-stage pipeline first aligns confidence with correctness, then optimizes for
+
+00:03:23.280 --> 00:03:28.380
+factuality. This enables selective prediction where the model can abstain on uncertain claims
+
+00:03:28.380 --> 00:03:34.960
+instead of hallucinating. It improved claim level accuracy by up to 39.9% on biography generation.
+
+00:03:35.480 --> 00:03:41.580
+It also increased AUROC by 16% on fact bench while preserving recall that is a serious jump
+
+00:03:41.580 --> 00:03:46.040
+in trustworthy long-form generation. Shifting over to agent and tool developments,
+
+00:03:46.320 --> 00:03:52.020
+CROO officially launched the CROO agent protocol. This creates decentralized commercial
+
+00:03:52.020 --> 00:03:57.620
+infrastructure specifically for autonomous AI agents to conduct commerce. The protocol aims to
+
+00:03:57.620 --> 00:04:03.780
+power reliable agent to agent and agent to human economic interactions without centralized intermediaries.
+
+00:04:04.220 --> 00:04:08.400
+Developers building agent economies should monitor the protocol for integration points
+
+00:04:08.400 --> 00:04:13.920
+in decentralized marketplaces. It feels like another step toward truly autonomous economic agents.
+
+00:04:14.460 --> 00:04:18.340
+Lithosphere also released infrastructure enabling autonomous agents to perform
+
+00:04:18.340 --> 00:04:23.560
+on-chain coordination and decision making. The platform focuses on reliable blockchain
+
+00:04:23.560 --> 00:04:28.300
+native coordination primitives that agents can use for collective action and resource allocation.
+
+00:04:28.980 --> 00:04:34.360
+Teams working on decentralized autonomous organizations or on-chain agent swarms now have new tooling
+
+00:04:34.360 --> 00:04:40.520
+for production grade coordination. This could accelerate real on-chain agent swarms in meaningful ways.
+
+00:04:41.300 --> 00:04:47.220
+Finally, in this category, GupShop launched Super Agent, an autonomous AI agent built for large-scale
+
+00:04:47.220 --> 00:04:53.220
+customer conversations across messaging channels. The system handles complex multi-turn customer
+
+00:04:53.220 --> 00:04:58.480
+service interactions with minimal human oversight. Companies running high-volume support operations
+
+00:04:58.480 --> 00:05:04.600
+can deploy it today for conversation orchestration at scale. That is a practical win for anyone drowning
+
+00:05:04.600 --> 00:05:09.320
+in support tickets. On the practical and community side, a community member named Evil Engineer
+
+00:05:09.320 --> 00:05:23.480
+released an experimental merge called Quoppus 3.5 to 27b-v3-RYS-Uncensored-Fernflower AI-KL-RELU-GGUF.
+
+00:05:24.040 --> 00:05:29.720
+It is based on twin 3.5-27b and optimized for local agent programming with tools like
+
+00:05:29.720 --> 00:05:38.280
+clawcoder-z.dev. The model combines uncensored weights, RYS-layer duplication, and fixed SSM-conv1D
+
+00:05:38.280 --> 00:05:46.620
+tensors for better long-context stability. Q80 and Q4K-MG-GUF-quants are available on hugging face.
+
+00:05:47.060 --> 00:05:52.320
+It ships with an updated chat template that includes tool fixes and a deep thinking system prompt.
+
+00:05:52.320 --> 00:05:58.300
+If you have an RTX 3060 or similar, this is worth downloading for local experiments.
+
+00:05:59.100 --> 00:06:05.420
+Researchers also introduced AlphaEVAL, a production-grounded benchmark of 94 real tasks sourced from
+
+00:06:05.420 --> 00:06:12.460
+seven companies deploying AI agents. It covers six ONET occupational domains and evaluates complete
+
+00:06:12.460 --> 00:06:17.820
+agent products against implicit constraints, heterogeneous documents, and evolving expert standards.
+
+00:06:18.460 --> 00:06:23.240
+Unlike synthetic benchmarks, this one reflects actual deployment pain. The accompanying
+
+00:06:23.240 --> 00:06:28.240
+requirement to benchmark framework helps organizations rapidly convert authentic production
+
+00:06:28.240 --> 00:06:34.500
+requirements into executable evaluations. That could save teams months of evaluation engineering.
+
+00:06:35.100 --> 00:06:40.880
+There is also a new method called Thought Retriever. Thought Retriever is a model agnostic approach that
+
+00:06:40.880 --> 00:06:46.240
+retrieves and reuses in LLM's own filtered intermediate thoughts from past queries instead of raw
+
+00:06:46.240 --> 00:06:51.580
+data chunks. This bypasses context-length limits while maintaining a self-evolving long-term
+
+00:06:51.580 --> 00:06:56.640
+memory of useful thoughts. The memory grows more capable with continued use. A new benchmark called
+
+00:06:56.640 --> 00:07:01.920
+academic-eval tests, faithful use of ultra-long academic paper contexts. The method showed at
+
+00:07:01.920 --> 00:07:08.800
+least 7.6% F1 and 16% winrate gains over baselines. Now, let's pop the hood on something interesting
+
+00:07:08.800 --> 00:07:14.060
+that ties a lot of these reasoning improvements together. Everyone talks about best-of-end selection
+
+00:07:14.060 --> 00:07:19.040
+as if majority voting or simple probability averaging magically surfaces the best answer.
+
+00:07:19.260 --> 00:07:24.280
+In practice, radial consensus score reveals that semantic geometry carries far more signal than
+
+00:07:24.280 --> 00:07:30.180
+discrete counts or raw logits. The core insight is to embed candidate answers, compute their weighted
+
+00:07:30.180 --> 00:07:36.160
+fresh A mean as the geometric center of mass, then rank each answer by its radial Euclidean distance to
+
+00:07:36.160 --> 00:07:41.960
+that center. This turns consensus detection into a continuous geometric operation rather than a
+
+00:07:41.960 --> 00:07:47.720
+combinatorial vote. Different waiting schemes, whether uniform frequency-based or model probability,
+
+00:07:48.300 --> 00:07:52.960
+plug directly into the same framework without retraining. The efficiency comes from operating
+
+00:07:52.960 --> 00:07:59.140
+an embedding space rather than token space. Radial consensus score adds negligible overhead yet
+
+00:07:59.140 --> 00:08:04.940
+consistently outperforms self-consistency and probability baselines. The gains widen as the
+
+00:08:04.940 --> 00:08:11.400
+sampling budget grows from 4 to 64 candidates. It also serves as a drop-in replacement inside multi-agent
+
+00:08:11.400 --> 00:08:16.840
+debate loops. The gotcha that bites most teams is assuming all embeddings are equally calibrated.
+
+00:08:17.140 --> 00:08:22.400
+Poor embedding models collapse the radial signal. The quality gain is most pronounced on long-form
+
+00:08:22.400 --> 00:08:28.380
+reasoning where surface-level agreement diverges from semantic correctness. Use radial consensus score
+
+00:08:28.380 --> 00:08:34.400
+when you have at least 8 to 16 samples and care about robustness over raw speed. Skip it for tiny
+
+00:08:34.400 --> 00:08:39.440
+sample sizes or when your embedding model has not been tuned on your domain. In those cases,
+
+00:08:39.440 --> 00:08:46.360
+fall back to probability-weighted selection. If you have not tried Gemini Robotics ER1.6 on
+
+00:08:46.360 --> 00:08:51.160
+instrument reading and sequential manipulation tasks, this week is the time, especially if you
+
+00:08:51.160 --> 00:08:57.140
+have access to DeepMind's Robotics APIs. The embodied reasoning improvements hit exactly where prior
+
+00:08:57.140 --> 00:09:09.040
+models fell short. Download the Quoppus 3.5-27BV3RYSGGUFQuant and run it locally in LM studio with the
+
+00:09:09.040 --> 00:09:14.820
+provided deep-thinking system prompt for agentic coding experiments. It is ideal if you want an
+
+00:09:14.820 --> 00:09:23.480
+uncensored 27 billion parameter class model on something like an RTX 3060. Run AlphaEval style
+
+00:09:23.480 --> 00:09:29.180
+evaluations on your own deployed agents using the new requirement to benchmark construction framework.
+
+00:09:29.640 --> 00:09:35.100
+It dramatically shortens the gap between lab benchmarks and production reality. Experiment with
+
+00:09:35.100 --> 00:09:40.760
+thought retriever on long academic PDFs or internal knowledge bases. Watch how the self-evolving
+
+00:09:40.760 --> 00:09:46.560
+thought memory improves over successive queries. Compare radial consensus score against majority voting
+
+00:09:46.560 --> 00:09:51.520
+on your existing best-of-end pipelines. You can implement the fresh A mean ranking in under 50 lines
+
+00:09:51.520 --> 00:09:57.740
+and measure gains on long-form reasoning tasks. On the horizon, expect broader ecosystem adoption of
+
+00:09:57.740 --> 00:10:03.840
+order-aware hypergraph retrieval augmented generation techniques as more teams realize set-based retrieval
+
+00:10:03.840 --> 00:10:10.320
+fails on temporally sensitive reasoning. Watch for production deployments of SD-0 and Cure-style
+
+00:10:10.320 --> 00:10:16.680
+self-calibration methods in math, code, and long-form generation pipelines. Several labs are likely to
+
+00:10:16.680 --> 00:10:21.080
+release updated agent memory benchmarks that incorporate the new production grounded evaluation
+
+00:10:21.080 --> 00:10:26.380
+paradigms introduced this week. Continued community experimentation around locality-aware,
+
+00:10:26.600 --> 00:10:31.020
+sparse attention for block-wise diffusion language models could yield practical speed-ups on
+
+00:10:31.020 --> 00:10:35.920
+consumer GPUs within the next quarter. Before we go, tomorrow keep an eye on how these
+
+00:10:35.920 --> 00:10:41.260
+production grounded benchmarks start showing up in more open leaderboards. That wraps up today's AI
+
+00:10:41.260 --> 00:10:46.120
+briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you
+
+00:10:46.120 --> 00:10:52.100
+listen. See you tomorrow. This podcast is curated by Patrick, but generated using AI voice synthesis of
+
+00:10:52.100 --> 00:10:57.320
+my voice using 11 labs. The primary reason to do this is I unfortunately don't have the time to be
+
+00:10:57.320 --> 00:11:02.540
+consistent with generating all the content and wanted to focus on creating consistent and regular
+
+00:11:02.540 --> 00:11:06.660
+episodes for all the themes that I enjoy and I hope others do as well.

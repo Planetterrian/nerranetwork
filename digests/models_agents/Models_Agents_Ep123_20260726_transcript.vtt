@@ -1,0 +1,232 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.640
+Good to have you on models and agents, episode 123 for July 26th, 2026.
+
+00:00:07.520 --> 00:00:10.940
+Plenty of model releases and agent benchmarks moving today.
+
+00:00:11.720 --> 00:00:17.360
+Photon 1 pre-trains on raw video alone to simulate desktops and play checkers,
+
+00:00:17.840 --> 00:00:22.100
+removing the action label requirement that has limited most video agents.
+
+00:00:22.900 --> 00:00:30.620
+Induction labs released a 106 billion A5B sparse mixture of experts imagination model called
+
+00:00:30.620 --> 00:00:36.400
+Photon 1. It was pre-trained on raw video with no action labels at all.
+
+00:00:37.200 --> 00:00:42.900
+The model learns desktops simulation, checkers play, and billiard physics directly from passive
+
+00:00:42.900 --> 00:00:49.040
+video. This removes the explicit action frame pairings that most prior video agents required.
+
+00:00:49.840 --> 00:00:54.940
+The test system targets the data bottleneck that constrained earlier video based agents.
+
+00:00:55.640 --> 00:01:01.520
+Builders working on long horizon agents or world models can now explore pre-training pipelines
+
+00:01:01.520 --> 00:01:07.900
+that skip expensive action annotation. Watch for follow-up releases testing whether the same
+
+00:01:07.900 --> 00:01:14.520
+label-free approach scales to more complex environments. In model updates, the Gemma 4 family has
+
+00:01:14.520 --> 00:01:21.420
+now been downloaded more than 300 million times. The full Gemma open model series exceeds 900
+
+00:01:21.420 --> 00:01:27.920
+million downloads. Deep-mind positions these releases as core contributions to an open ecosystem
+
+00:01:27.920 --> 00:01:36.160
+alongside JX and Transformers. Demi's Hassabis noted that a strong open ecosystem supports responsible
+
+00:01:36.160 --> 00:01:43.220
+deployment of both open and proprietary models. Builders evaluating open models for production can
+
+00:01:43.220 --> 00:01:48.700
+factor these download figures into decisions about community support and fine-tuning momentum.
+
+00:01:49.840 --> 00:01:56.100
+Sakana AI released Fugu Cyber, a security-tuned endpoint on its Fugu orchestration model.
+
+00:01:56.640 --> 00:02:08.020
+It reports 86.9% on CyberGym and 72.1% on CTI RAM. The scores edge pass GPT 5.5 Cyber and
+
+00:02:08.140 --> 00:02:14.560
+Cloud Mythos preview on the same benchmarks. Access requires manual approval plus a defensive
+
+00:02:14.560 --> 00:02:21.820
+use policy and token plan. Security teams evaluating orchestration models for endpoint tasks should
+
+00:02:21.820 --> 00:02:29.220
+request access and run their own CyberGym evaluations before deployment. A bachelor's project implemented
+
+00:02:29.220 --> 00:02:37.920
+full YOLO 26N inference in ARM 64 assembly plus C on Raspberry Pi 4. The work includes neon
+
+00:02:37.920 --> 00:02:46.940
+siling winnograd convolution, optimized gem kernels, and custom micro kernels for CONV, C3K2, SPPF,
+
+00:02:47.220 --> 00:02:54.540
+C2 PSA, and detect layers. The custom binary format and operator fusion produced correct detections,
+
+00:02:54.540 --> 00:03:00.720
+though measured speedups fell short of initial targets. Edge developers targeting ARM devices
+
+00:03:00.720 --> 00:03:06.840
+without full frameworks can study the released repository for memory layout and cache tiling patterns.
+
+00:03:07.620 --> 00:03:14.020
+Signal pilot labs evaluated Frontier and sub Frontier models on the 2026 International
+
+00:03:14.020 --> 00:03:21.520
+Mathematical Olympiad problems, using multiple harnesses including Autofine. Frontier models reached
+
+00:03:21.520 --> 00:03:28.680
+perfect or near perfect scores regardless of harness. Sonnet, Opus, and GLM4 improved with the
+
+00:03:28.680 --> 00:03:35.260
+multi-agent harness, but still trailed. Every sub Frontier model missed the key reduction on the hardest
+
+00:03:35.260 --> 00:03:43.260
+problem P3, even in 20 hour runs that proved all other problems. Grading combined a separate Frontier
+
+00:03:43.260 --> 00:03:50.660
+model with manual verification by former IMO medallists. Teams building math or reasoning agents should
+
+00:03:50.660 --> 00:03:56.140
+test whether their current harness supplies the missing high-level idea generation, rather than
+
+00:03:56.140 --> 00:04:05.020
+only retrieval and verification. Rough 0.16.0 raised the number of default-enabled rules from 59 to
+
+00:04:05.020 --> 00:04:15.120
+413. It flagged 1,618 issues across E-squalite-yudels alone. The update also expanded the total
+
+00:04:15.120 --> 00:04:23.780
+rule count from 708 to 968 since the last default change. Simon Willison used UVX rough at
+
+00:04:23.780 --> 00:04:30.040
+latest check dot with fix and unsafe fixes to auto-resolve the bulk of issues in data set,
+
+00:04:30.240 --> 00:04:37.580
+ski light, hyphen utels, and LLM. Roughly 80 issues per project remained for manual review,
+
+00:04:37.580 --> 00:04:45.540
+including DTC-005 daytime calls without time zone arguments. Python developers should run the
+
+00:04:45.540 --> 00:04:51.820
+latest rough with unsafe fixes on their largest repositories this week, and review the remaining
+
+00:04:51.820 --> 00:05:00.160
+issues for manual attention. Reactor released Open Dreamer, a JX-Flax NNX reproduction of the Dreamer
+
+00:05:00.160 --> 00:05:07.200
+4 world model pipeline that includes the full training recipe. The repositories provide a causal
+
+00:05:07.200 --> 00:05:14.000
+video tokenizer, action-conditioned latent dynamics model, rollout generation, and FVD scoring.
+
+00:05:14.860 --> 00:05:20.100
+Two separate repos were published, with next state Open Dreamer holding the training pipeline.
+
+00:05:20.760 --> 00:05:26.060
+Researchers reproducing world models can now start from the published training code instead of
+
+00:05:26.060 --> 00:05:32.580
+re-implementing the pipeline from papers. Okay, let's pop the hood on vector search indexes.
+
+00:05:33.140 --> 00:05:39.540
+In memory, HNSW delivers single-digit millisecond queries, but requires the entire graph to
+
+00:05:39.540 --> 00:05:45.940
+fit in RAM. Teams quickly hit expensive instance sizes once collections exceed a few hundred million
+
+00:05:45.940 --> 00:05:53.320
+vectors. Disk-based approaches, such as span and disk A&amp;N, keep only a small hot set in memory,
+
+00:05:53.940 --> 00:06:00.300
+and fetch compressed neighbor lists from SSD. This adds roughly 10 to 30 milliseconds per query,
+
+00:06:00.300 --> 00:06:06.860
+while cutting RAM needs by five to ten times on the same data set. The quality gap appears mainly
+
+00:06:06.860 --> 00:06:13.480
+at high recall targets above 95%, where disk methods need extra re-ranking passes.
+
+00:06:14.260 --> 00:06:19.860
+When your working set stays under roughly 50 million vectors and sub-ten millisecond latency
+
+00:06:19.860 --> 00:06:26.700
+matters more than cost, stay in RAM. Once collections grow larger or you need to serve many tenants on
+
+00:06:26.700 --> 00:06:32.560
+the same hardware. Move to a disk-aware index and budget for the extra re-ranking step.
+
+00:06:33.220 --> 00:06:40.040
+The gacha that bites most teams is underestimating how quickly re-ranking cost grows once recall targets
+
+00:06:40.040 --> 00:06:50.200
+push past 0.95 on billion scale collections. Run UVXRough at latestcheck.withfix and unsafe fixes on
+
+00:06:50.200 --> 00:06:55.460
+your largest Python project to surface the new default rules before they break CI.
+
+00:06:56.240 --> 00:07:03.360
+Request access to Fougu Cyber and run it on your own CyberGym subset to see whether the 86.9%
+
+00:07:03.360 --> 00:07:10.600
+score holds on your security tasks. Clone the Open Dreamer repositories and train a small world model
+
+00:07:10.600 --> 00:07:19.500
+on your own video data to test label-free pre-training. Study the ARM 64, YOLO 26, and repository if you
+
+00:07:19.500 --> 00:07:26.040
+need to deploy detection without heavy frameworks on Raspberry Pi class hardware. More label-free
+
+00:07:26.040 --> 00:07:31.640
+video foundation models are expected as teams replicate the Photon-1 pre-training approach.
+
+00:07:32.600 --> 00:07:39.380
+Sakana AI may expand the Fougu family beyond the security-tuned endpoint now under manual approval.
+
+00:07:40.400 --> 00:07:46.660
+Additional IMO-style benchmarks from independent groups will likely appear as the 2026 problems
+
+00:07:46.660 --> 00:07:53.280
+circulate. Tomorrow, keep an eye on further rough rule expansions given Astral's recent pace of
+
+00:07:53.280 --> 00:08:00.220
+enabling previously opt-in checks. That wraps up today's AI briefing. Share this with a developer or
+
+00:08:00.220 --> 00:08:05.980
+builder who wants to stay current. Subscribe wherever you listen, see you tomorrow, and if you'd
+
+00:08:05.980 --> 00:08:11.380
+rather watch then listen, find us on YouTube at Nerra Network, links in the show notes.
+
+00:08:12.020 --> 00:08:17.840
+And before you go, this show is part of the Nerra Network, a family of daily podcasts on tech,
+
+00:08:18.240 --> 00:08:23.140
+science, and markets. Each one a short, sharp briefing you can finish on the commute.
+
+00:08:23.960 --> 00:08:30.140
+If today earned its place in your feed, here's your next listen. OmniView, a balanced daily world
+
+00:08:30.140 --> 00:08:37.180
+news briefing that takes every side seriously. Find every show free at NerraNetwork.com.
+
+00:08:37.740 --> 00:08:44.560
+The age of AI puts real builders on the phone with an AI host. Apply at NerraNetwork.com,
+
+00:08:44.700 --> 00:08:51.660
+slash age hyphen of hyphen AI Apply. This episode used AI voice synthesis of my voice.
+
+00:08:52.020 --> 00:08:54.580
+Editorial selection and analysis are my own.

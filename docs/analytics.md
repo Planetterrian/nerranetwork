@@ -24,6 +24,7 @@ degraded, not deleted — check the secret before assuming data loss.
 | `api/ga4_stats.json` | GA4 Data API (official) | nerranetwork.com site traffic, 28d: totals, day series, top pages, channels, countries. Property `533581233`. | `scripts/fetch_ga4_stats.py` | `GA4_SERVICE_ACCOUNT_JSON` (+ optional `GA4_PROPERTY_ID`) |
 | `api/spotify_stats.json` | Spotify for Podcasters (**unofficial**, cookie-auth) | Per-show followers / streams / listeners + demographics, 30d. Fills the OP3 blind spot. | `scripts/fetch_spotify_stats.py` | `SPOTIFY_SP_DC`, `SPOTIFY_SP_KEY` |
 | `api/apple_stats.json` | Apple Podcasts Connect (**unofficial**, cookie-auth) | Apple **engagement**: plays, listeners, followers, time-listened per show, 30d. Apple *downloads* are already in OP3 — this adds the follow/finish signal nothing else measures. Needs `apple_show_id:` in each `shows/<slug>.yaml` (numeric ID from the Podcasts Connect URL). | `scripts/fetch_apple_stats.py` | `APPLE_MYACINFO`, `APPLE_ITCTX` |
+| `api/apple_ratings.json` | podcasts.apple.com show pages (**public**, no auth) | Apple **star ratings** per show: `rating_value`, `rating_count`, `review_count`, read from each show page's JSON-LD `aggregateRating` (Apple labels the ratings count `reviewCount`) with the page's serialised `ratings` metadata as the fallback that states an explicit zero. One dated `history` entry per day (max 90) so the dashboard can compute a 7-day ratings delta — the only readout of the on-air "rate us on Apple Podcasts" ask. **null = the page carried no rating block; 0 = the page said zero ratings**; a failed fetch keeps the previous reading tagged `not_refreshed_this_run`. Shows resolve the way the site does: registry `apple_podcasts_url`, else the YAML `apple_show_id`. | `scripts/fetch_apple_ratings.py` | — |
 | `api/buttondown_stats.json` | Buttondown API (official) | Newsletter subscriber count. | `scripts/fetch_buttondown_stats.py` | `BUTTONDOWN_API_KEY` |
 | `api/op3_history.json` | derived (accumulated) | Weekly download ledger keyed by ISO-week Monday. OP3 has no all-time endpoint, so each dashboard build overwrites the current 4 rolling weeks and freezes older ones; "all-time" = sum of stored weeks ("since tracking began", 2026-06-29). Must stay in nightly's safe-commit-push add-paths (youtube_channel_history landmine class). | `scripts/generate_dashboard.py` | — |
 | `api/youtube_policy.json` | derived (nightly) | Adaptive publishing tier per show × channel (A/B/C/D) + the views-per-day velocity behind it; decides long-form on/off and Shorts count. Surfaced in the dashboard's Distribution section. | `scripts/update_youtube_policy.py` | — |
@@ -160,6 +161,18 @@ Public, display-safe extracts live in `site/data/` (e.g.
   had only gone LIVE on Apple two days earlier. **A 404 that persists
   for weeks is different** — check the feed's enclosures actually carry
   the `https://op3.dev/e/` prefix before assuming it's an indexing lag.
+  **Since 2026-10-01 an unindexed show is WRITTEN, not skipped:** its
+  `shows` entry is `{"resolved": false, "note": …, "rss_file": …,
+  "feed_url": …, "downloads_7d": null, "downloads_30d": null}` (the
+  thirteen September launch-cohort shows were simply absent before,
+  indistinguishable from "never fetched"). A show that resolved on an
+  earlier run and fails this one keeps its previous entry tagged
+  `not_refreshed_this_run`. Every consumer must check `resolved` (or
+  `fetch_op3_stats.is_resolved_show_entry`) before reading download keys:
+  the dashboard lists these under `audience.op3.unindexed` and renders
+  "not indexed" on the show card (never "—", never 0), and the audience
+  headline keeps them out of `shows_measured` and names them in
+  `network.shows_unindexed`.
 * **The prefix is applied by each publish path, not by
   `update_rss_feed`.** `run_show.py`, `engine/pipeline.py`,
   `engine/language_feeds.py` and `pipelines/voices/publish_episode.py`

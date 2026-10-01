@@ -1,0 +1,340 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.140
+Good to have you on models and agents, episode 74 on June 8, 2026.
+
+00:00:06.080 --> 00:00:11.320
+Let's see what shipped, new week in AI, and if last week was anything to go by, buckle
+
+00:00:11.320 --> 00:00:11.560
+up.
+
+00:00:11.880 --> 00:00:12.660
+Let's get into it.
+
+00:00:13.360 --> 00:00:19.700
+Enterprise agents just gained a built-in, factuality check that keeps requiring until multi-hop questions
+
+00:00:19.700 --> 00:00:20.800
+have enough evidence.
+
+00:00:21.620 --> 00:00:27.020
+Google Research added a sufficient context agent to the Gemini Enterprise Agent platform.
+
+00:00:28.020 --> 00:00:33.040
+The agent repeatedly issues new searches until collected passages provide enough grounding
+
+00:00:33.040 --> 00:00:35.480
+from multi-hop, multi-source questions.
+
+00:00:35.920 --> 00:00:42.800
+This raises factuality accuracy by as much as 34% compared with ordinary, retrieval, augmented
+
+00:00:42.800 --> 00:00:45.260
+generation pipelines on the same queries.
+
+00:00:46.080 --> 00:00:50.780
+The approach targets enterprise deployments where hallucinated multi-hop answers create
+
+00:00:50.780 --> 00:00:51.620
+real risk.
+
+00:00:52.620 --> 00:00:57.020
+Builders working on research or compliance agents should test the new capability against
+
+00:00:57.020 --> 00:00:59.380
+their existing retrieval stacks this week.
+
+00:00:59.620 --> 00:01:06.060
+This development fits into the maturing, agent, and tool use arc, where reliability of long
+
+00:01:06.060 --> 00:01:10.340
+horizon agents remains a key open question the show continues to track.
+
+00:01:11.340 --> 00:01:17.560
+Local inference users can now combine D-flash speculative decoding with KV cache compression
+
+00:01:17.560 --> 00:01:26.680
+on twin 3.627b for up to 3.26 times throughput on an RTX 5,090 while keeping perplexity within
+
+00:01:26.680 --> 00:01:28.920
+0.04% of baseline.
+
+00:01:29.800 --> 00:01:35.240
+Open clinical de-identification and VLLM monitoring tools also drop today.
+
+00:01:36.180 --> 00:01:41.740
+Google Research released an agentic retrieval augmented generation framework inside the Gemini
+
+00:01:41.740 --> 00:01:46.100
+Enterprise Agent platform built around a sufficient context agent.
+
+00:01:47.100 --> 00:01:51.360
+The agent repeatedly issues new searches until the collected passages provide enough
+
+00:01:51.360 --> 00:01:54.860
+grounding to answer multi-hop, multi-source questions reliably.
+
+00:01:55.520 --> 00:02:02.040
+This raises factuality accuracy by as much as 34% compared with ordinary, retrieval, augmented
+
+00:02:02.040 --> 00:02:04.380
+generation pipelines on the same queries.
+
+00:02:04.960 --> 00:02:10.200
+The approach is aimed at enterprise deployments where hallucinated multi-hop answers create
+
+00:02:10.200 --> 00:02:10.960
+real risk.
+
+00:02:11.960 --> 00:02:16.260
+Builders working on research or compliance agents should test the new capability against
+
+00:02:16.260 --> 00:02:18.500
+their existing retrieval stacks this week.
+
+00:02:19.120 --> 00:02:24.840
+Watch for whether the same re-query loop appears in consumer Gemini interfaces or open agent
+
+00:02:24.840 --> 00:02:25.300
+frameworks.
+
+00:02:27.160 --> 00:02:36.760
+Twin 3.627b with D-flash speculative decoding and KV cache compression on an RTX 5,090 reached
+
+00:02:36.760 --> 00:02:42.400
+3.26x throughput using the Q40 turbo-4 strategy.
+
+00:02:43.160 --> 00:02:50.840
+Perplexity on wiki text 2 stayed within 0.02% of the KQ8 VQ51 baseline.
+
+00:02:52.120 --> 00:03:00.940
+Q5KXL quantization outperformed NVFP4 Q80 across every tested KV strategy, delivering both
+
+00:03:00.940 --> 00:03:04.460
+higher baseline tokens per second and better scaling under compression.
+
+00:03:05.460 --> 00:03:11.580
+The Draftor model achieved 30-51% acceptance rates thanks to cross-attention rather than
+
+00:03:11.580 --> 00:03:13.180
+token by token speculation.
+
+00:03:14.020 --> 00:03:19.500
+Code quality on Tetris generation tasks actually improves slightly under the best compression setting.
+
+00:03:20.340 --> 00:03:25.120
+This update narrows the open-weight performance gap while directly addressing inference cost
+
+00:03:25.120 --> 00:03:26.040
+curve questions.
+
+00:03:26.440 --> 00:03:29.500
+The show has been following in AI compute and inference.
+
+00:03:30.360 --> 00:03:35.980
+Medi's released an open multilingual clinical de-identification model and synthetic data
+
+00:03:35.980 --> 00:03:41.340
+set designed to strip patient identifiers while preserving symptoms, labs, medications,
+
+00:03:41.640 --> 00:03:42.520
+and treatment timelines.
+
+00:03:43.540 --> 00:03:48.860
+The model was trained on dynamically prompted synthetic notes that vary language, document
+
+00:03:48.860 --> 00:03:53.320
+type, length, and identifier families to match messy hospital exports.
+
+00:03:54.320 --> 00:03:59.600
+It is available on hugging face along with the data set and an interactive demo extractor.
+
+00:04:00.200 --> 00:04:05.320
+Hospitals still need policy and audit layers around the model, but it provides a reproducible
+
+00:04:05.320 --> 00:04:08.520
+starting point for privacy preserving clinical pipelines.
+
+00:04:09.400 --> 00:04:17.700
+Google's Gemma 4 QAT Q40 GGUF files for the E2B and E4B variants contain additional
+
+00:04:17.700 --> 00:04:24.280
+per layer projection tensors that are absent from larger 12B plus checkpoints and from unsloss
+
+00:04:24.280 --> 00:04:27.160
+UDQ4K XL equivalents.
+
+00:04:28.100 --> 00:04:36.040
+The Google Q40 files are larger on disk than unsloss Q4K XL versions despite the nominally
+
+00:04:36.040 --> 00:04:41.240
+lower precision because the extra tensors are stored at higher internal precision.
+
+00:04:42.240 --> 00:04:49.620
+Users analyzing GGUF structure with cobald CPP or Lama bundle tools can now compare these
+
+00:04:49.620 --> 00:04:50.620
+layouts directly.
+
+00:04:51.500 --> 00:04:57.020
+Recent open checkpoints now handle multi-object spatial relationships and short text rendering
+
+00:04:57.020 --> 00:04:59.180
+at roughly 70-80% reliability.
+
+00:05:00.080 --> 00:05:05.840
+Two megapixel images can be generated in under two minutes on a single consumer GPU when
+
+00:05:05.840 --> 00:05:08.220
+resolution and step count are reduced for iteration.
+
+00:05:08.220 --> 00:05:14.100
+The post argues that structured prompting, often viewed as a limitation, is actually what
+
+00:05:14.100 --> 00:05:15.620
+production pipelines require.
+
+00:05:16.620 --> 00:05:23.160
+VLLM doctor is a new open source command line interface that pulls metrics from a VLLM
+
+00:05:23.160 --> 00:05:29.180
+at metrics endpoint or Prometheus and runs rule-based checks for Q pressure, high time to first
+
+00:05:29.180 --> 00:05:34.560
+token over time, per output token, and KV cache exhaustion across pods.
+
+00:05:35.400 --> 00:05:40.640
+Each diagnosis includes the triggering metrics, confidence level, likely causes, and
+
+00:05:40.640 --> 00:05:42.320
+concrete remediation steps.
+
+00:05:43.040 --> 00:05:47.780
+Output is available in human readable text or JSON, plus a watch mode.
+
+00:05:48.480 --> 00:05:52.480
+The project is still early and welcomes feedback on missing diagnoses.
+
+00:05:53.140 --> 00:05:58.280
+Install from the GitHub repo and point it at any running VLLM server to start.
+
+00:05:59.000 --> 00:06:04.580
+The full benchmark scripts, config.yaml, raw data, and generated Tetris artifacts from
+
+00:06:04.580 --> 00:06:10.000
+the D-flash plus KV compression tests are available on request, while the author prepares
+
+00:06:10.000 --> 00:06:11.300
+a public GitHub repo.
+
+00:06:12.000 --> 00:06:18.560
+Reproduction commands cover perplexity on wiki text to coding task throughput and code quality
+
+00:06:18.560 --> 00:06:19.000
+scoring.
+
+00:06:19.900 --> 00:06:25.960
+Anyone running blama.cpp with D-flash support can request the exact model keys used.
+
+00:06:26.680 --> 00:06:28.660
+OK, let's pop the hood on this one.
+
+00:06:29.260 --> 00:06:33.120
+Everyone talks about speculative decoding as a simple speed knob.
+
+00:06:33.800 --> 00:06:39.340
+In practice, it is a tight coupling between drafter size, acceptance rate, and KV cache layout
+
+00:06:39.920 --> 00:06:44.000
+that only works when the drafter and target share enough cross-attention structure.
+
+00:06:44.820 --> 00:06:49.800
+The D-flash approach replaces token by token speculation with a single cross-attention
+
+00:06:49.800 --> 00:06:55.860
+forward pass from a smaller drafter, which is why a five-bit drafter can still propose
+
+00:06:55.860 --> 00:06:59.420
+useful sequences at 30 to 51 percent acceptance.
+
+00:07:00.120 --> 00:07:04.200
+Adding KV compression on top changes the memory bandwidth trade-off.
+
+00:07:04.980 --> 00:07:12.980
+Q40-Turbo-4 keeps perplexity statistically identical to the KQ8-VQ51 baseline while
+
+00:07:12.980 --> 00:07:19.380
+cutting cache traffic enough to reach 3.18 times throughput on an RTX 5,090.
+
+00:07:20.160 --> 00:07:25.540
+The quality gain disappears once the drafter's acceptance rate falls below about 25 percent.
+
+00:07:26.100 --> 00:07:32.120
+Which is why Turbo2-TCQ variants show both higher speed-up and measurable perplexity degradation.
+
+00:07:32.780 --> 00:07:35.900
+Run the compressed path on memory-bound local setups.
+
+00:07:36.500 --> 00:07:42.200
+Fall back to full precision KV when you need maximum acceptance on long-context agent traces.
+
+00:07:42.960 --> 00:07:49.540
+The gacha that bites most teams is assuming the drafter and target quantizations can be chosen independently.
+
+00:07:50.480 --> 00:07:53.580
+Mis-matched layouts destroy the cross-attention benefit.
+
+00:07:54.140 --> 00:08:02.640
+Run the Q40-Turbo-4D flash configuration on twin 3.627b if you need faster local coding agents
+
+00:08:02.640 --> 00:08:09.000
+without measurable quality loss. Test Medi's PII on your own synthetic clinical notes
+
+00:08:09.000 --> 00:08:14.300
+to see how well it preserves lab values and medication timelines while stripping identifiers.
+
+00:08:15.220 --> 00:08:23.120
+Point VLLM doctor at any production VLLM endpoint to surface KV cache pressure before it causes timeouts.
+
+00:08:23.580 --> 00:08:34.280
+Compare Google's Gemma 4 QAT-Q4-0GGUF against unslots the UD-Q4K-XL on the same E4B checkpoint
+
+00:08:34.280 --> 00:08:37.860
+to measure the effect of the extra projection tensors.
+
+00:08:38.400 --> 00:08:44.160
+Further releases of Gemma 4 QAT variants at additional sizes are expected in the coming weeks.
+
+00:08:44.820 --> 00:08:50.620
+A public GitHub repo with full D-flash benchmark scripts and artifacts is scheduled after cleanup.
+
+00:08:51.180 --> 00:08:57.180
+Expanded agentic retrieval augmented generation patterns are likely to appear in open frameworks
+
+00:08:57.180 --> 00:09:02.440
+following the Gemma 9 Enterprise announcement. Tomorrow, keep an eye on whether the
+
+00:09:02.440 --> 00:09:08.660
+sufficient context agent pattern surfaces in open agent frameworks or consumer Gemma 9 interfaces.
+
+00:09:09.440 --> 00:09:13.900
+That's models and agents for today. If you found this useful, share it with someone who's
+
+00:09:13.900 --> 00:09:18.500
+trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+
+00:09:18.500 --> 00:09:23.940
+The AI world moves fast. We'll help you keep up. See you tomorrow and before you go,
+
+00:09:24.300 --> 00:09:29.280
+this show is part of the Nerra Network, a family of daily podcasts covering tech,
+
+00:09:29.800 --> 00:09:35.860
+science, markets and more. If you enjoyed today's episode, give environmental intelligence a listen.
+
+00:09:36.420 --> 00:09:43.400
+The environment and climate policy brief for Canada. You can explore the whole lineup at NerraNetwork.com.
+
+00:09:43.400 --> 00:09:50.040
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

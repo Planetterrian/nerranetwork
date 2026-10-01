@@ -1,0 +1,154 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:28.640
+OpenAI's next internal model just produced 10 new results on longstanding math and theoretical computer science problems for roughly $2000 in tokens. This is Models &amp; Agents, episode 131. OpenAI reported that an internal version of its next major model solved 10 open problems in mathematics and theoretical computer science, using about $2000 worth of tokens at GPT 5.6 sole API rates.
+
+00:00:28.640 --> 00:00:57.520
+The same day, why combinator open sourced QM, a multiplayer agent harness that gives every slack room scoped memory, files, and permissions. Builders should watch how these developments shift both frontier reasoning cost curves and practical agent deployment patterns this week. OpenAI announced that an internal version of its next major model produced 10 new results on longstanding open problems in mathematics and theoretical computer science.
+
+00:00:57.520 --> 00:01:23.160
+The work used roughly $2000 worth of tokens at GPT 5.6 sole API rates, showing that test time compute at frontier scale can now target unsolved research questions rather than only benchmark tasks. This sits in the ongoing frontier models arc that was active yesterday, where closed labs continue trading capability leads while cost trajectories drop.
+
+00:01:23.160 --> 00:01:38.380
+The result matters for teams that need reliable reasoning on hard open ended problems instead of just higher benchmark scores. Watch for whether similar internal runs appear in public APIs or whether the pattern spreads to other labs.
+
+00:01:38.380 --> 00:02:06.060
+QN 3.8 Max and Mini Max H3 released hours apart. Two new large models appeared within hours of each other, with QN 3.8 Max joining the QN family, while Mini Max H3 arrives from a separate lab. No public benchmarks or parameter counts were shared in the announcement. Builders should test both against current QN and deep seek releases on reasoning and coding tasks this week.
+
+00:02:06.060 --> 00:02:22.180
+To map the latest open weight frontier, deep seek now leads Chinese model rankings according to the latest evaluation. The result reinforces the ongoing narrowing of the open weight versus closed model gap that the show has tracked since yesterday.
+
+00:02:22.180 --> 00:02:42.180
+Teams choosing between domestic and international providers should rerun their standard evals on the newest deep seek checkpoint. A 0.6 billion parameter model called DLLM TTS formulates text-to-speech as conditional block discrete diffusion over X codec 2 tokens.
+
+00:02:42.180 --> 00:03:05.540
+It reaches a real-time factor of 0.15 while remaining competitive on the seed TTS eval benchmark after training on 20,000 hours of data. The approach trades sequential auto regressive decoding for parallel block prediction. Builders working on on device or low latency voice synthesis should try the open weights once released.
+
+00:03:05.540 --> 00:03:25.200
+Diffusion Gemma fine-tunes the 3.8 billion active 25.2 billion total Gemma 4 mixture of experts model with discrete diffusion to generate roughly 20 tokens per forward pass and about 1500 output tokens per second on a single H100.
+
+00:03:25.200 --> 00:03:38.440
+The two-stage training used less than 10% of the original model's token budget. It keeps support for thinking mode, multi-modal inputs and long context while adding a hybrid diffusion AR path.
+
+00:03:39.300 --> 00:03:54.740
+Teams needing high throughput generation should benchmark it against current speculative decoding setups. Simon Willison shared a data set based MCP server as a starting point and described extending it into a fitness tracker that logs weights and reps.
+
+00:03:54.740 --> 00:04:07.900
+Once the basic MCP connection works, additional tools become straightforward to add. Developers building personal data agents should clone the repo and wire it to their own logging workflows this week.
+
+00:04:07.900 --> 00:04:29.660
+Y-combinator released QM under an MIT license. The harness gives each employee an isolated workspace and each slack room its own scoped memory, files, keychain, permissions, crons and web apps, pi, open code, codex, and clawed code all drive the same headless core, avoiding vendor lock-in.
+
+00:04:29.660 --> 00:04:48.380
+Teams running multi-user agent workflows inside slack should evaluate QM as a drop-in coordination layer. Memory Forge synthesizes autobiographical memory bases from brief target personas using a context generator, life organizer and multi-resolution simulator.
+
+00:04:48.380 --> 00:05:00.020
+On Persona Gym and Simulator Arena, it produces more human-like roleplay and user simulation behavior than static profile conditioning across multiple LLM backbones.
+
+00:05:00.960 --> 00:05:07.760
+Builders creating persistent agents should test the synthesized memory approach instead of prompt only persona injection.
+
+00:05:07.760 --> 00:05:21.040
+Agent MemBench evaluates five memory strategies across locomo, multi-dock, two dial and MSC using recall at KMRR and LLM judge faithfulness.
+
+00:05:21.720 --> 00:05:31.080
+External key value store dominates every quality access while in context windowing, summarization and graph methods collapse on long horizon recall.
+
+00:05:31.080 --> 00:05:44.020
+The benchmark and code are released for full reproducibility. Teams building conversational agents with multi-session memory should adopt external key value store or run the harness on their own data.
+
+00:05:44.780 --> 00:05:54.180
+Rubric reviewer separates rubric generation as an explicit step before review writing and combines a training-free scout agent with a trained aligner model.
+
+00:05:54.180 --> 00:06:03.020
+It produces more comprehensive and discriminative reviews than prior systems while showing stronger robustness to adversarial prompt injection.
+
+00:06:03.860 --> 00:06:08.620
+Authors and conference organizers should test the framework on real submissions this cycle.
+
+00:06:09.120 --> 00:06:20.040
+CDEM extracts hidden states from an intermediate transformer layer, compresses them into memory blocks and selectively decompresses only query relevant blocks into the decoder.
+
+00:06:20.040 --> 00:06:33.200
+On four long context QA benchmarks, it outperforms prior compression methods in both one billion and three billion settings and exceeds full context fine tuning on three data sets with the three billion backbone.
+
+00:06:33.980 --> 00:06:45.060
+The approach reduces time to first token and improves throughput versus ICAE. Retrieval augmented teams should evaluate the selector on their own document collections.
+
+00:06:45.060 --> 00:07:03.780
+Excel doc bench contains 1,519 human verified questions from six professional domains with context up to 2,303 pages. 72.6% require multiple evidence pages and 36.6% involve tables or figures.
+
+00:07:04.620 --> 00:07:10.280
+Current systems still struggle with multi-page evidence and structured reasoning over professional documents.
+
+00:07:10.280 --> 00:07:15.220
+Compliance and legal teams should add the benchmark to their evaluation suites.
+
+00:07:15.620 --> 00:07:23.080
+Okay, let's pop the hood on this one. Everyone talks about scaling laws as if bigger models simply get better at everything.
+
+00:07:23.680 --> 00:07:36.980
+In practice, the new capability driven multi-modal scaling law shows that VLM performance is better predicted from a low-dimensional textual capability score extracted via PCA than from raw compute.
+
+00:07:36.980 --> 00:07:46.440
+The framework measures a per backbone transfer rate and an absorption rate that quantifies how efficiently additional multi-modal data improves results.
+
+00:07:46.920 --> 00:07:59.120
+Experiments training over 150 VLMs across seven model families confirm the law extrapolates from 8 billion to 72 billion backbones and generalizes to held out families.
+
+00:07:59.120 --> 00:08:08.800
+Base LLMs consistently outperform instruction tuned counterparts because they exhibit higher absorption rates and slower data scaling decay.
+
+00:08:09.280 --> 00:08:17.060
+The practical takeaway is that backbone selection can now be treated as a quantitative decision rather than an empirical sweep.
+
+00:08:17.780 --> 00:08:25.680
+Run the textual capability score first, then choose the family with the best transfer absorption profile for your target multi-modal benchmarks.
+
+00:08:25.680 --> 00:08:34.800
+Run the open QM harness inside a slack workspace to test scoped memory and multi-user agent coordination without vendor lock-in.
+
+00:08:36.080 --> 00:08:45.940
+Clone Simon Willison's data set MCP example and extend it with a simple personal logging tool such as weight tracking to explore custom MCP servers.
+
+00:08:45.940 --> 00:08:53.600
+Benchmark the new diffusion Gemma weights against your current speculative decoding setup on high throughput generation workloads.
+
+00:08:54.300 --> 00:09:02.200
+Add agent mem bench and Excel doc bench to your evaluation harness if you maintain long context or multi-session agents.
+
+00:09:02.880 --> 00:09:10.380
+Test C-Dem style selective hidden state decompression on your largest rag collections to measure time to first token gains.
+
+00:09:10.380 --> 00:09:19.120
+Further public releases or API access tied to open AI's internal next gen model that produced the recent math results.
+
+00:09:19.800 --> 00:09:25.580
+Additional open weight checkpoints from the Quinn and Minimax families following this week's paired launches.
+
+00:09:26.280 --> 00:09:32.380
+Expanded agent harness features from the newly open sourced QM project as more teams integrated.
+
+00:09:32.380 --> 00:09:42.820
+Before we go, the next set of open AI internal runs on unsolved problems should clarify whether the $2,000 cost point holds up in wider testing.
+
+00:09:43.460 --> 00:09:53.580
+That's models and agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+
+00:09:53.580 --> 00:10:02.940
+The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network.
+
+00:10:03.460 --> 00:10:11.500
+Links in the show notes. One more thing. If you liked today's episode, our sister show, the do positive pod is worth a spot in your feed.
+
+00:10:12.140 --> 00:10:16.160
+Good news and science and tech plus one concrete action you can take.
+
+00:10:16.760 --> 00:10:21.880
+It's one of the Nerra Network's daily briefings all free at Nerra Network dot com.
+
+00:10:21.880 --> 00:10:28.880
+New to the network. Nerra Network dot com start here picks the right daily briefing for you in about two minutes.
+
+00:10:29.460 --> 00:10:35.820
+This episode used AI voice synthesis of my voice editorial selection and analysis are my own.

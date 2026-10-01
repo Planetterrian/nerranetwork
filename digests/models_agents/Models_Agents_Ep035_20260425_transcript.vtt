@@ -1,0 +1,418 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:04.940
+Hey, everyone. Welcome to Models and Agents episode 35. It's April 25th, 2026.
+
+00:00:05.140 --> 00:00:08.660
+You're daily briefing on the AI models and agents that are changing everything.
+
+00:00:09.240 --> 00:00:13.060
+And no, not those kinds of models and agents. Let's get into it.
+
+00:00:13.540 --> 00:00:18.260
+Google DeepMind's Vision Banana shows image generation pre-training may be the true foundation
+
+00:00:18.260 --> 00:00:23.940
+model path for computer vision beating SAM 3 on segmentation and depth anything V3 on metric depth.
+
+00:00:24.580 --> 00:00:28.100
+What you need to know today is that DeepMind argues convincingly that
+
+00:00:28.100 --> 00:00:32.900
+generative pre-training for images delivers the same leap for vision that GPT style
+
+00:00:32.900 --> 00:00:37.840
+pre-training delivered for language. The benchmark results back this up in impressive fashion.
+
+00:00:38.520 --> 00:00:43.720
+At the same time, the local LLM community keeps getting more excited about sparse models that
+
+00:00:43.720 --> 00:00:50.340
+punch well above their weight on agentic coding. And we have fresh prompting guidance for GPT 5.5
+
+00:00:50.340 --> 00:00:54.780
+that basically says, forget everything you knew about previous versions and start fresh.
+
+00:00:55.420 --> 00:01:01.380
+This week, pay attention to the accelerating quality of sparse and MOE local models alongside
+
+00:01:01.380 --> 00:01:05.720
+fresh guidance on how to actually extract performance from the latest frontier releases.
+
+00:01:06.560 --> 00:01:11.340
+The top story is Google DeepMind introducing Vision Banana. It is an instruction tuned image
+
+00:01:11.340 --> 00:01:16.260
+generator whose pre-training approach they position as the vision equivalent of GPT style language
+
+00:01:16.260 --> 00:01:21.020
+pre-training. The model reportedly outperforms SAM 3 on segmentation tasks.
+
+00:01:21.900 --> 00:01:25.480
+It also beats depth anything V3 on metric depth estimation.
+
+00:01:26.240 --> 00:01:31.080
+What makes this significant is the suggestion that scaling generative objectives on images yields
+
+00:01:31.080 --> 00:01:35.100
+more transferable representations than traditional supervised vision pipelines.
+
+00:01:35.540 --> 00:01:39.960
+This reframes computer vision foundation models around generation rather than pure
+
+00:01:39.960 --> 00:01:45.600
+discriminative training. It potentially unifies image understanding and creation under one pre-training
+
+00:01:45.600 --> 00:01:50.900
+paradigm. For developers working on segmentation depth estimation or multimodal agents,
+
+00:01:51.120 --> 00:01:55.400
+this is immediately relevant. You can now experiment with a single generative backbone that appears
+
+00:01:55.400 --> 00:02:00.220
+stronger on core geometric tasks than specialized models built for those exact purposes.
+
+00:02:00.800 --> 00:02:05.160
+Keep watching for follow-up releases that integrate this approach into agentic vision workflows.
+
+00:02:05.980 --> 00:02:10.040
+Openweight variants would let the community stress test the claims at real scale.
+
+00:02:10.680 --> 00:02:15.520
+Moving to model updates, the sparse quen 3.6-35ba3b continues to impress.
+
+00:02:16.440 --> 00:02:20.980
+One community tester used it to port a non-trivial C++ audio synthesis library called
+
+00:02:20.980 --> 00:02:26.020
+odd voices over to rust. It took roughly five hours across two nights, the resulting code produced
+
+00:02:26.020 --> 00:02:31.040
+output that sounds virtually identical to the original despite some minor speed and edge case bugs.
+
+00:02:31.580 --> 00:02:35.960
+The model showed strong self-correction referencing the source implementation when asked,
+
+00:02:35.960 --> 00:02:41.260
+and updating its own code accordingly. That level of behavior used to be associated mainly
+
+00:02:41.260 --> 00:02:47.540
+with much larger cloud models. Users reported outperforms Gemma 4 on agentic coding tasks while
+
+00:02:47.540 --> 00:02:52.380
+running several times faster thanks to its sparsity. This continues the encouraging trend of highly
+
+00:02:52.380 --> 00:02:58.080
+capable local models closing the gap with proprietary APIs for software engineering workloads.
+
+00:02:58.780 --> 00:03:03.020
+Deepseek also dropped both base and instruct versions of its newest models.
+
+00:03:03.020 --> 00:03:09.780
+We are talking about the V4 Pro at 1.6 trillion total parameters with 49 billion activated
+
+00:03:09.780 --> 00:03:14.300
+plus the smaller flash version. These are now runnable on Huawei Ascend hardware.
+
+00:03:14.820 --> 00:03:19.600
+While no longer the outright benchmark leader, the release shows deepseek's continued commitment
+
+00:03:19.600 --> 00:03:25.020
+to openweight space models and detailed research papers. Many other labs have been pulling back
+
+00:03:25.020 --> 00:03:30.840
+from that level of openness. The model's target practical inference on non-end video silicon that
+
+00:03:30.840 --> 00:03:35.540
+expands accessible high parameter options for practitioners running on Ascend clusters are
+
+00:03:35.540 --> 00:03:40.580
+looking for alternatives to closed ecosystems. The instruct variants are worth evaluating for
+
+00:03:40.580 --> 00:03:46.260
+coding and reasoning tasks. Another interesting result from the local community involves KV-cash
+
+00:03:46.260 --> 00:03:54.040
+quantization on QN 3.6 to 27B. Perplexity testing at 200,000 contexts showed remarkably small
+
+00:03:54.070 --> 00:04:01.350
+degradation. The Q40 quantization added only 0.0148 perplexity versus the F16 baseline.
+
+00:04:01.970 --> 00:04:08.370
+Even the aggressive turbo-33 bit version added just 0.0888. That is still considered safe for
+
+00:04:08.370 --> 00:04:13.670
+many programming workloads. The model's density above 20 billion parameters seems to make it unusually
+
+00:04:13.670 --> 00:04:19.390
+robust to aggressive KV-cash compression. Some commenters caution that perplexity alone can
+
+00:04:19.390 --> 00:04:25.910
+understate impact on math heavy benchmarks like AIME. Still, if you run dense 27 billion class
+
+00:04:25.910 --> 00:04:33.070
+models on limited VRAM, these Q4 or turbo-3KV cache settings are now worth testing aggressively.
+
+00:04:33.670 --> 00:04:40.410
+On the GPT 5.5 front, open AI released detailed prompting guidance alongside API availability.
+
+00:04:41.070 --> 00:04:46.630
+The core recommendation is to treat it as an entirely new model family. Start prompt tuning from
+
+00:04:46.630 --> 00:04:50.810
+the smallest viable prompt rather than porting legacy stacks from earlier versions.
+
+00:04:51.590 --> 00:04:56.650
+For long running agent tasks, they suggest emitting a short user visible progress message before
+
+00:04:56.650 --> 00:05:01.850
+toolcalls. This improves perceived responsiveness. The guide also includes migration advice for code
+
+00:05:01.850 --> 00:05:06.990
+bases that use their codex agent. Now let us talk about agent and tool developments that actually
+
+00:05:06.990 --> 00:05:11.950
+matter for builders. Git Nexus has gained serious traction with over 19,000 GitHub stars.
+
+00:05:12.590 --> 00:05:17.210
+It is an open source MCP native knowledge graph engine created by Abigail Petwari.
+
+00:05:17.610 --> 00:05:21.450
+The tool directly addresses a core failure mode of coding agents,
+
+00:05:21.730 --> 00:05:26.350
+which is editing code they do not truly understand. By building a live structural graph of the
+
+00:05:26.350 --> 00:05:31.650
+repository, it supplies agents with explicit awareness of dependencies, call graphs, and architectural
+
+00:05:31.650 --> 00:05:37.150
+intent. Both cloud code and cursor users can integrate it today. This should meaningfully reduce
+
+00:05:37.150 --> 00:05:43.050
+hallucinated refactors and improve large scale changes. There is also a new fully local implementation
+
+00:05:43.050 --> 00:05:50.610
+that combines Hermes agent. The recently praised Quinn 3.6 to 35ba3b and 4bit and Kua driver.
+
+00:05:51.190 --> 00:05:56.030
+It delivers multi cursor and background computer control that feels surprisingly close to frontier
+
+00:05:56.030 --> 00:06:01.950
+agentic capabilities. The project demonstrates that current open models plus lightweight drivers
+
+00:06:01.950 --> 00:06:07.950
+can already approximate what used to require cloud dependencies. Builders experimenting with local
+
+00:06:07.950 --> 00:06:13.990
+agents should examine this stack for self hosted automation or coding workflows. On the practical
+
+00:06:13.990 --> 00:06:19.290
+and community side, there is a really useful open source nine task benchmark for coding agent
+
+00:06:19.290 --> 00:06:25.090
+retrieval augmentation. The paper lantern challenges repo contains fully reproducible prompts,
+
+00:06:25.630 --> 00:06:31.630
+agent code paths, and evaluation scripts. It covers practical software tasks including test
+
+00:06:31.630 --> 00:06:37.570
+generation, text to SQL, PDF, and contract extraction, PR review, classification, routing,
+
+00:06:37.730 --> 00:06:42.130
+and summarization. When they added a retrieval tool over recent computer science literature,
+
+00:06:42.330 --> 00:06:49.190
+the performance delta is ranged from 0.010 to 0.320. The largest gains came on extraction and test
+
+00:06:49.190 --> 00:06:54.850
+generation tasks that benefited from 2025 and 2026 techniques unknown to the base models.
+
+00:06:55.310 --> 00:07:01.050
+Every prediction file and the approach documentation is public. This makes it an excellent test harness
+
+00:07:01.050 --> 00:07:07.030
+for anyone building rag enhanced coding agents. Microsoft has published a collab ready tutorial on open
+
+00:07:07.030 --> 00:07:12.530
+mementos. It walks through streaming the data set, parsing its block and memento token format,
+
+00:07:13.030 --> 00:07:17.950
+measuring compression ratios across domains, and preparing reasoning traces for fine tuning.
+
+00:07:18.470 --> 00:07:23.370
+The memento representation offers substantial context compression while preserving structured
+
+00:07:23.370 --> 00:07:29.790
+reasoning summaries. Fine tuning practitioners working on long horizon agent memory or chain of
+
+00:07:29.790 --> 00:07:34.530
+thought distillation should run the notebook. It will help you understand the format before building
+
+00:07:34.530 --> 00:07:41.990
+your own data sets. Simon Willison also shipped version 0.31 of his popular LLM command line tool.
+
+00:07:42.230 --> 00:07:48.850
+It adds direct support for the new GPT 5.5 model. You now get a verbosity option set to low
+
+00:07:48.850 --> 00:07:55.370
+medium or high for GPT 5 and later models. There are also image detail controls ranging from low to high,
+
+00:07:55.370 --> 00:08:01.170
+auto or original. Extra open A, I models defined in YAML are now registered for async use as well.
+
+00:08:01.570 --> 00:08:07.290
+If you already use LLM for local experimentation or rapid prototyping, upgrading gives immediate access
+
+00:08:07.290 --> 00:08:12.590
+to these finer controls. Okay, let us pop the hood on how these sparse architectures actually work
+
+00:08:12.590 --> 00:08:17.590
+at scale because the gap between marketing claims and engineering reality is worth understanding.
+
+00:08:18.030 --> 00:08:22.650
+Everyone talks about router networks as if they magically pick the best expert every time once you
+
+00:08:22.810 --> 00:08:28.390
+have enough total parameters. In practice, the router is a tiny neural network trained jointly
+
+00:08:28.390 --> 00:08:33.550
+with the rest of the model. It uses the main loss plus an auxiliary load balancing loss that
+
+00:08:33.550 --> 00:08:38.870
+prevents the system from collapsing to just a few dominant experts. Without that auxiliary term,
+
+00:08:39.110 --> 00:08:44.490
+routers tend to converge on a handful of favorites, leaving most capacity idle. The auxiliary loss
+
+00:08:44.490 --> 00:08:49.850
+penalizes uneven token to expert assignment across each batch, usually measured by the coefficient
+
+00:08:49.850 --> 00:08:54.930
+of variation of expert load. Modern setups add noise or stochastic routing during training,
+
+00:08:55.170 --> 00:09:01.090
+then switch to deterministic top-case selection at inference time. At the scale of a 1.6 trillion
+
+00:09:01.090 --> 00:09:07.090
+parameter model with only 49 billion activated, the real costs come from expert parallelism all to
+
+00:09:07.090 --> 00:09:12.710
+all communication patterns and careful placement of experts across accelerators. The heavily compressed
+
+00:09:12.710 --> 00:09:17.570
+attention techniques mentioned in recent releases are often a direct response to the memory wall
+
+00:09:17.570 --> 00:09:22.910
+created by storing full key value states for million token contexts across dozens of experts.
+
+00:09:23.710 --> 00:09:28.770
+These systems trade exact attention for approximate retrieval plus heavy quantization just to keep
+
+00:09:28.770 --> 00:09:33.630
+activation memory manageable. The trade-offs are real, stronger load balancing can slightly hurt
+
+00:09:33.630 --> 00:09:38.950
+final loss because it forces the model to use suboptimal experts on some tokens. Aggressive
+
+00:09:38.950 --> 00:09:44.490
+compression of attention states can degrade needle and haystack retrieval once context grows beyond
+
+00:09:44.490 --> 00:09:49.590
+a few hundred thousand tokens. The quality advantage of these architectures tends to be largest
+
+00:09:49.590 --> 00:09:55.770
+in the 30 to 200 billion active parameter regime. Beyond that, the returns diminish and communication
+
+00:09:55.770 --> 00:10:00.930
+overhead can start to dominate, so when should you actually reach for one of these versus a dense
+
+00:10:00.930 --> 00:10:06.390
+model of similar activated size? Prefer the sparse route if your workload has high variance in token
+
+00:10:06.390 --> 00:10:11.970
+difficulties such as coding math or multilingual text, and you have infrastructure that can handle
+
+00:10:11.970 --> 00:10:17.470
+the all-too-all traffic. The gotcha that bites most teams is treating the router as an afterthought
+
+00:10:17.470 --> 00:10:22.650
+during fine-tuning. Without retuning the auxiliary loss and possibly reintroducing noise,
+
+00:10:22.890 --> 00:10:27.710
+the specialization learned in pre-training collapses, and you lose the speed and quality advantage
+
+00:10:27.710 --> 00:10:35.490
+you paid for. If you have not tried the Quinn 3.6 to 35 BA 3B in Q4 or Q5 quantization inside
+
+00:10:35.490 --> 00:10:40.610
+Cline Plus VS Codeium for local agentic coding, this week is a great time. The self-correction
+
+00:10:40.610 --> 00:10:46.310
+and code-based exploration quality is reportedly closer to recent cloud models than previous local
+
+00:10:46.310 --> 00:10:51.910
+attempts. Integrate Git Nexus into your Claude code or cursor workflow if you routinely see agents
+
+00:10:51.910 --> 00:10:57.450
+edit files without understanding surrounding architecture. That 19,000 star knowledge graph gives
+
+00:10:57.450 --> 00:11:02.870
+immediate structural awareness. Run the paper lantern challenges benchmark suite against your own
+
+00:11:02.870 --> 00:11:08.110
+rag coding agent to quantify exactly how much retrieval over recent literature improves extraction,
+
+00:11:08.350 --> 00:11:16.270
+test generation and review tasks. Upgrade to LLM 0.31 and test the new verbosity and image detail
+
+00:11:16.270 --> 00:11:22.650
+controls with GPT 5.5. Following the guidance to start prompt tuning from a fresh minimal baseline
+
+00:11:22.650 --> 00:11:30.330
+is worth doing before you port old stacks. Experiment with Turbo 3 or Q4KV cache on Quinn 3.6 to 27B
+
+00:11:30.330 --> 00:11:36.710
+at 128,000 to 200,000 context if you are VRM constrained. The perplexity numbers suggest you may
+
+00:11:36.710 --> 00:11:41.170
+be able to run larger effective contexts than common wisdom allows. On the horizon,
+
+00:11:41.650 --> 00:11:48.030
+news research is hosting an AMA on Wednesday, April 29th, focusing on Hermes agent with deeper discussion
+
+00:11:48.030 --> 00:11:53.230
+on open source agent orchestration and memory techniques. We should also see continued releases
+
+00:11:53.230 --> 00:11:59.150
+in the deep seek vibe for family, including potential smaller variants or further ascend specific
+
+00:11:59.150 --> 00:12:05.430
+optimizations. The ecosystem around MCP native tools is growing as more coding environments adopt
+
+00:12:05.430 --> 00:12:11.350
+structured knowledge graphs and context protocols. Expect further guidance and fine tuning recipes for
+
+00:12:11.350 --> 00:12:18.010
+GPT 5.5 as developers migrate production agents and discover which prompting patterns no longer transfer
+
+00:12:18.010 --> 00:12:23.950
+from earlier versions. Before we go, tomorrow keep an eye on deeper community exploration of how these
+
+00:12:23.950 --> 00:12:30.190
+new sparse coding agents handle complex multi-file refactors in real projects. That wraps up today's
+
+00:12:30.190 --> 00:12:35.070
+AI briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you
+
+00:12:35.070 --> 00:12:40.970
+listen. See you tomorrow. This podcast is curated by Patrick but generated using AI voice synthesis of
+
+00:12:40.970 --> 00:12:46.210
+my voice using 11 labs. The primary reason to do this is I unfortunately don't have the time to be
+
+00:12:46.210 --> 00:12:51.230
+consistent with generating all the content and wanted to focus on creating consistent and regular
+
+00:12:51.230 --> 00:12:55.310
+episodes for all the themes that I enjoy and I hope others do as well.

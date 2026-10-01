@@ -1,0 +1,223 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.680
+Hey everyone, welcome to Models and Agents, Episode 75. It's June 9th, 2026. Lots of news to
+
+00:00:06.680 --> 00:00:12.260
+walk through. Let's start with what actually matters. AI agents now deliver 26 minutes of
+
+00:00:12.260 --> 00:00:18.000
+autonomous work per session, shifting the build versus buy math for developers who need more than
+
+00:00:18.000 --> 00:00:23.940
+search snippets. A Harvard and Proplexity Study compared autonomous agents against search assistance
+
+00:00:23.940 --> 00:00:31.280
+on the same tasks. Agents completed 26 minutes of independent work per session versus 33 seconds
+
+00:00:31.280 --> 00:00:37.120
+for search assistance. The evaluation drew from real user sessions rather than synthetic benchmarks.
+
+00:00:37.920 --> 00:00:43.380
+Agents showed gains in multi-step reasoning and tool chaining. Builders working on research or
+
+00:00:43.380 --> 00:00:48.520
+data gathering workflows can now prototype agent loops that replace multiple search and summarize
+
+00:00:48.520 --> 00:00:54.720
+steps. Watch for follow-up work on failure modes when tasks require external verification or
+
+00:00:54.720 --> 00:01:00.360
+long context retention. This development sits within the ongoing maturation of autonomous agents
+
+00:01:00.360 --> 00:01:06.440
+and tool use. It begins to address questions around reliability of long horizon agents by providing
+
+00:01:06.440 --> 00:01:14.780
+session length measurements from actual usage. Gemma 426BA4BIT models were tested in MLX 4bit,
+
+00:01:14.780 --> 00:01:22.980
+6bit and 8bit QAT variants on MMLU underscore PRO and human eVAL using an M5 Pro MacBook.
+
+00:01:23.740 --> 00:01:33.340
+The 6bit non QAT version reached 58% MMLU underscore PRO and 98% human eVAL. That version outperformed
+
+00:01:33.340 --> 00:01:40.640
+the QAT 8bit model on both benchmarks. The QAT version showed no statistically significant edge
+
+00:01:40.640 --> 00:01:46.820
+over standard 4bit quantization in these runs. Builders testing code understanding should compare
+
+00:01:46.820 --> 00:01:54.720
+Q6 against QAT 8bit on their own data sets before switching. Gemma 431b outperformed both
+
+00:01:54.720 --> 00:02:04.360
+twin 3.627b slash 35b and Opus 4.7 at explaining and refactoring messy academic code bases with niche
+
+00:02:04.360 --> 00:02:09.900
+variable names. It tracked cross-file dependencies more reliably than twin models,
+
+00:02:10.340 --> 00:02:17.400
+but often attempted unauthorized directory changes. The 31b variant handled 65,000
+
+00:02:17.400 --> 00:02:23.180
+contexts while maintaining coherent multi-part edits. Researches maintaining legacy research
+
+00:02:23.180 --> 00:02:30.160
+code should test Gemma 431b before defaulting to larger closed models. This result continues the
+
+00:02:30.160 --> 00:02:35.440
+narrowing performance gap between open-weight families and closed frontier models on specialized
+
+00:02:35.440 --> 00:02:43.440
+tasks. Users are actively seeking head-to-head numbers between Unsloth Gemma 4 4bit QAT and
+
+00:02:43.440 --> 00:02:50.820
+standard 8bit PTQ on the same base weights. Early anecdotal reports suggest QAT preserves more
+
+00:02:50.820 --> 00:02:57.140
+accuracy at 4bit than expected, but controlled benchmarks remain sparse. Anyone running local code
+
+00:02:57.140 --> 00:03:04.580
+or math workloads should publish their own MMLU underscore PRAO or psychode results to close the
+
+00:03:04.580 --> 00:03:13.020
+gap. More Gemma 4 QAT versus standard quant comparisons are expected as Unsloth and MLX users publish
+
+00:03:13.020 --> 00:03:19.020
+larger test suites. An agent successfully changed two separate hugging-faced spaces to generate
+
+00:03:19.020 --> 00:03:26.300
+and assemble a navigable 3D Paris gallery without custom orchestration code. The workflow demonstrates
+
+00:03:26.300 --> 00:03:33.280
+current limits of zero-shot multi-space composition using only public endpoints. Developers experimenting
+
+00:03:33.280 --> 00:03:39.260
+with visual agents can replicate the pattern today by exposing their own spaces as callable tools.
+
+00:03:40.300 --> 00:03:45.360
+Additional agent-chainy examples on hugging-faced spaces are likely as the pattern spreads.
+
+00:03:45.980 --> 00:03:54.760
+A modified Jetson Orrin NX running Gemma 4 26b a 4b Ud Q2, underscore K underscore XL,
+
+00:03:54.760 --> 00:04:03.900
+achieved 14.65 tokens per second at 8000 context and 10.21 tokens per second at 60,000 context
+
+00:04:03.900 --> 00:04:09.700
+while supporting multiple tool calls. The build required a custom heat sink and case to stay under
+
+00:04:09.700 --> 00:04:16.740
+40 watts while hitting 65,000 context targets. Local agent builders needing silent, low-power
+
+00:04:16.740 --> 00:04:22.660
+inference should review the exact quant and cooling choices. Further local hardware builds for
+
+00:04:22.660 --> 00:04:30.840
+Hermes style agents on Jetson and similar edge platforms are on the horizon. Tiny Search V 0.2.0
+
+00:04:30.840 --> 00:04:38.100
+switched its default backend to CRXNG, capping output at 8000 tokens for smaller local models used
+
+00:04:38.100 --> 00:04:45.540
+with MCP agents. The tool crawls, chunks, and re-ranks results before returning a compact context blob.
+
+00:04:46.340 --> 00:04:54.800
+Users running twin 3.5 to 9b or similar with Klein or Roo should test the CRXNG option to reduce prompt
+
+00:04:54.800 --> 00:05:01.440
+bloat. The NVIDIA Q-Tile Python tutorial walks through Q-Tile setup in Colab, implementing
+
+00:05:01.440 --> 00:05:07.240
+tiled kernels for vector addition, matrix addition, and matrix multiplication with PyTorch fallbacks.
+
+00:05:07.960 --> 00:05:13.700
+It includes driver checks, correctness validation, and median runtime benchmarks at each stage.
+
+00:05:13.700 --> 00:05:20.600
+Anyone moving matrix workloads to custom kudos style Python kernels should follow the Colab notebook.
+
+00:05:21.480 --> 00:05:26.780
+Anthropics new posts examines why agent tooling progressed faster in code than biology,
+
+00:05:27.180 --> 00:05:33.140
+citing pre-car era database designs that hinder agent navigation. It calls for new infrastructure
+
+00:05:33.140 --> 00:05:38.920
+that treats biode databases as first-class agent environments. Researchers building biology
+
+00:05:38.920 --> 00:05:44.520
+agents should read the full piece before designing retrieval layers. Everyone treats high-level
+
+00:05:44.520 --> 00:05:50.800
+frameworks like PyTorch as sufficient for matrix work. In practice, tiling decisions determine whether
+
+00:05:50.800 --> 00:05:57.860
+a kernel stays memory bound or becomes compute bound on modern GPUs. CU Tile exposes explicit
+
+00:05:57.860 --> 00:06:03.640
+tile sizes so developers can match L2 cache lines and register pressure to the specific operation.
+
+00:06:04.280 --> 00:06:09.920
+For vector addition, the overhead of tiling is small, but matrix multiplication sees clear wins
+
+00:06:09.920 --> 00:06:15.900
+once tiled dimensions align with warp scheduling. The trade-off appears in launch latency and the need
+
+00:06:15.900 --> 00:06:22.200
+to keep fallback path for unsupported shapes. Teams should profile both tiled and untiled versions
+
+00:06:22.200 --> 00:06:29.960
+on their target batch sizes before committing to custom kernels. Test Gemma 431b on a messy academic
+
+00:06:29.960 --> 00:06:36.020
+code base you maintain. Compare dependency tracking against your current model. Chain 2 public
+
+00:06:36.020 --> 00:06:41.340
+hugging face spaces following the Paris gallery example if you need quick visual agent prototypes.
+
+00:06:42.200 --> 00:06:51.380
+Run tiny search v0.2.0 with your local CRX-NG instance against TWIN 3.5-9b to measure context
+
+00:06:51.380 --> 00:06:58.260
+reduction on research queries. Follow the QTile colab notebook and benchmark tiled matrix multiplication
+
+00:06:58.260 --> 00:07:05.020
+against PyTorch on your own GPU shapes. Keep an eye on more Gemma 4QAT versus standard
+
+00:07:05.020 --> 00:07:12.020
+quant comparisons expected as unsloth and MLX users published larger test suites. Additional agent
+
+00:07:12.020 --> 00:07:17.940
+chaining examples on hugging face spaces are likely as the pattern spreads. Further local hardware
+
+00:07:17.940 --> 00:07:24.780
+builds for Hermes style agents on Jetson and similar edge platforms will appear soon. Tomorrow keep an
+
+00:07:24.780 --> 00:07:30.160
+eye on new agent reliability measurements that may extend the Harvard and perplexity session length
+
+00:07:30.160 --> 00:07:35.760
+findings. That's models and agents for today. If you found this useful, share it with someone who's
+
+00:07:35.760 --> 00:07:40.120
+trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+
+00:07:40.820 --> 00:07:45.680
+The AI world moves fast. We'll help you keep up. See you tomorrow. And before you go,
+
+00:07:45.980 --> 00:07:51.340
+this show is part of the Nerra network, a family of daily podcasts covering tech, science,
+
+00:07:51.340 --> 00:07:56.860
+markets, and more. If you enjoyed today's episode, give models and agents for beginners a listen.
+
+00:07:57.500 --> 00:08:03.100
+Artificial intelligence explains simply for beginners and curious teens. You can explore the whole
+
+00:08:03.100 --> 00:08:10.240
+lineup at NerraNetwork.com. This episode used AI voice synthesis of my voice. Editorial selection
+
+00:08:10.240 --> 00:08:11.600
+and analysis are my own.

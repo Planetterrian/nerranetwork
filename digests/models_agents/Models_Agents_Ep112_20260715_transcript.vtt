@@ -1,0 +1,265 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:07.260
+What's up? Welcome to Models and Agents Episode 112 on July 15th, 2026. Let's see what shipped.
+
+00:00:07.940 --> 00:00:12.180
+Your daily briefing on the AI models and agents that are changing everything.
+
+00:00:12.860 --> 00:00:16.800
+And no, not those kinds of models and agents. Let's get into it.
+
+00:00:17.440 --> 00:00:19.960
+Browser inference just got a serious upgrade.
+
+00:00:20.420 --> 00:00:26.660
+Google's LiteRT.js now runs .t flight models directly via web GPU
+
+00:00:26.660 --> 00:00:30.480
+with up to three times gains over prior web runtimes.
+
+00:00:31.120 --> 00:00:39.540
+Google released LiteRT.js on July 9th, 2026. It is a JavaScript binding of the LiteRT
+
+00:00:39.540 --> 00:00:44.960
+on device inference library that executes .t flight models in the browser.
+
+00:00:45.660 --> 00:00:49.840
+The runtime supports web assembly with XNNPake on CPU,
+
+00:00:50.720 --> 00:00:56.420
+ML drift over web GPU and experimental web NN for NPUs.
+
+00:00:56.740 --> 00:01:04.140
+It delivers up to three times gains over other web runtimes and five to 60 times for GPU or NPU
+
+00:01:04.140 --> 00:01:11.140
+paths versus its own CPU baseline. Tensors must still be manually managed and deleted.
+
+00:01:11.840 --> 00:01:17.640
+Builders working on client side ML can now ship models without server round trips for many
+
+00:01:17.640 --> 00:01:23.520
+inference workloads. This continues the thread on falling token costs and edge deployment.
+
+00:01:24.220 --> 00:01:30.460
+Watch for follow on web GPU and web NN optimizations as more teams test the binding.
+
+00:01:31.140 --> 00:01:38.780
+Sam Alt-Man stated that GPT 5.6 sole is half the price and roughly twice as token efficient
+
+00:01:38.780 --> 00:01:44.520
+as the prior version for many tasks. He noted the inference team's work supporting growth
+
+00:01:44.520 --> 00:01:51.120
+and warned of possible near-term scaling hiccups. Researchers trained decoder-only transformers
+
+00:01:51.120 --> 00:01:56.400
+up to 4 billion parameters on one trillion chronologically filtered fine web tokens.
+
+00:01:56.840 --> 00:02:06.400
+They produced monthly checkpoints from 2013 through 2024. The models approach Gemma 34b and LAAMA 7b
+
+00:02:06.400 --> 00:02:11.860
+performance on common sense and language benchmarks despite strict temporal filtering.
+
+00:02:12.580 --> 00:02:18.340
+Laura instruction tuning further improved usability and the full pipeline data set construction
+
+00:02:18.340 --> 00:02:26.540
+and evaluation code are released. The new Kandai QA data set evaluates LLMs on context-sensitive
+
+00:02:26.540 --> 00:02:32.860
+user-aligned answers in medical and financial settings. It uses expert curated pairs
+
+00:02:32.860 --> 00:02:39.160
+split into information assistance and applied inference questions. MTSS Net, a lightweight
+
+00:02:39.160 --> 00:02:45.740
+neurosymbolic baseline combining neural retrieval with rule-based reasoning was introduced alongside
+
+00:02:45.740 --> 00:02:53.100
+evaluations of over 10 models. Results highlight persistent limitations in current LLMs without enhanced
+
+00:02:53.100 --> 00:03:01.080
+contextual or symbolic integration. G-Share operationalizes the CNNP 9-step human factor event
+
+00:03:01.080 --> 00:03:07.020
+diagnosis guideline into a multi-stage pipeline. The pipeline includes evidence extraction,
+
+00:03:07.020 --> 00:03:13.340
+step-wise reasoning, and post-hawk consistency repair. On real nuclear industry reports,
+
+00:03:13.740 --> 00:03:19.340
+the strongest version outperformed one-shot prompting and traditional ML baselines on accuracy
+
+00:03:19.340 --> 00:03:26.100
+and macro-F1. Ablations confirmed structured reasoning and consistency enforcement are critical
+
+00:03:26.100 --> 00:03:32.040
+under weak prompting. Checkmarks launched autonomous agents designed to detect and repair
+
+00:03:32.040 --> 00:03:39.340
+code flaws without manual intervention. The agents target security and quality issues in developer workflows.
+
+00:03:40.140 --> 00:03:46.300
+This moves the reliability of long horizon agents forward as teams evaluate false positive rates
+
+00:03:46.300 --> 00:03:52.980
+on internal code bases. Entrust introduced an AI trust accelerator aimed at autonomous agents.
+
+00:03:53.380 --> 00:03:59.120
+It focuses on verification and governance layers for enterprise deployments where agent actions
+
+00:03:59.120 --> 00:04:05.620
+require auditability. Organizations running multi-agent systems should review the accelerator's
+
+00:04:05.620 --> 00:04:11.880
+integration points with existing identity frameworks. Finn Analyst combines an eight-specialist
+
+00:04:11.880 --> 00:04:18.720
+LLM pipeline over news, filings, fundamentals, and sentiment with a lightweight rule-based vote
+
+00:04:18.720 --> 00:04:29.220
+for Bitcoin. On the final Finn MME Val 2026 Task 3 leaderboard, it ranked first on TSLA with a 13.51
+
+00:04:29.220 --> 00:04:36.920
+percent return and 88 percent win rate. Ablations showed 8K disclosures as the strongest signal while
+
+00:04:36.920 --> 00:04:44.540
+memory-less agents repeated errors across days. A study evaluated seven-agentic LLM pipelines on
+
+00:04:44.540 --> 00:04:54.400
+72 real clinical cases using 1147 K-specific rubrics. Claude Opus 4.8 with the D and C plus
+
+00:04:54.400 --> 00:05:02.460
+SA pipeline reached the highest global score of 0.594. Tool use and added autonomy produced mixed
+
+00:05:02.460 --> 00:05:09.200
+results with persistent failures in missing recommendations and overconfidence. Researchers fine-tuned
+
+00:05:09.200 --> 00:05:17.440
+LLMA-38B as a re-ranker using supervised fine-tuning on a custom relevance data set via unsloth and
+
+00:05:17.440 --> 00:05:24.220
+Laura. They followed with 4-bit quantization. The resulting model replaced the crossing coder in a
+
+00:05:24.220 --> 00:05:31.960
+dual retriever rag pipeline and improved answer relevancy by 14 percent, context precision by 16 percent,
+
+00:05:31.960 --> 00:05:39.140
+answer similarity by 19 percent and answer correctness by 21 percent on a domain-specific benchmark
+
+00:05:39.140 --> 00:05:46.380
+while lowering inference cost. Mage combines episodic memory, multi-objective Pareto selection and
+
+00:05:46.380 --> 00:05:54.400
+adaptive evaluation to study component interactions in iterative prompt optimization. On GSM 8K hard,
+
+00:05:54.400 --> 00:06:03.740
+it reached 46.4 percent versus GEPA's 34.0 percent. The prompt optimization coupling effect emerged
+
+00:06:03.740 --> 00:06:10.720
+when candidate diversity increased. In low-data regimes with 30-trainy examples well-designed fixed
+
+00:06:10.720 --> 00:06:17.120
+prompts outperformed reflective optimizers. Medezoa announced Oregon Intelligence Server for
+
+00:06:17.370 --> 00:06:23.950
+snapshot. It delivers AI-ready Salesforce org context to admins, developers, and agent force.
+
+00:06:24.470 --> 00:06:30.370
+The server surfaces structured org metadata for downstream agent consumption without custom
+
+00:06:30.370 --> 00:06:38.150
+extraction pipelines. Okay, let's pop the hood on belief reality separation in LLMs. Everyone talks
+
+00:06:38.150 --> 00:06:43.970
+about theory of mind capabilities as if the model simply understands that a character can hold a
+
+00:06:43.970 --> 00:06:50.870
+false belief. In practice, the separation lives in two narrow, dissociable mechanisms inside the
+
+00:06:50.870 --> 00:06:57.810
+residual stream. A generic value slot at one layer binds the attributed value whether asserted directly
+
+00:06:57.810 --> 00:07:04.430
+or derived via visibility gated look back. A router at the query position selects which frame
+
+00:07:04.430 --> 00:07:11.690
+character belief or reality reads that slot. The slot itself carries no belief tag and intervening
+
+00:07:11.690 --> 00:07:17.530
+on it moves both readouts equally. Only the derived root depends on described visibility
+
+00:07:17.530 --> 00:07:24.070
+and a single subspace trained on one root can steer the other. The behavior emerges reliably between
+
+00:07:24.070 --> 00:07:30.810
+three B and seven B parameters across multiple families. When building agents that must track multiple
+
+00:07:30.810 --> 00:07:36.810
+mental states, the practical takeaway is to probe and steer these routing subspaces rather than
+
+00:07:36.910 --> 00:07:45.230
+relying on scale alone. Test litert.js on a small .t fleet vision or language model inside a
+
+00:07:45.230 --> 00:07:51.830
+browser extension to measure end-to-end latency versus a server call. Swap your current rag crossing
+
+00:07:51.830 --> 00:07:59.050
+coder for the four-bit LLMA-3 re-ranker on a domain-specific QA set and compare answer correctness
+
+00:07:59.050 --> 00:08:06.070
+before and after. Evaluate the g-share pipeline on any narrative diagnostic task you already run
+
+00:08:06.070 --> 00:08:12.910
+with one shot prompting to quantify the consistency lift. Load the candy QA dataset into your
+
+00:08:12.910 --> 00:08:18.850
+evaluation harness to see where your current models lose context alignment on multi-hop applied
+
+00:08:18.850 --> 00:08:27.450
+inference questions. Further web gpu and web nn optimizations for litert.js are expected as more
+
+00:08:27.450 --> 00:08:34.030
+teams report browser side benchmarks. Additional agentic clinical pipelines are likely to appear
+
+00:08:34.030 --> 00:08:40.070
+following the breast cancer agent study. More point and time model releases are coming as the
+
+00:08:40.070 --> 00:08:46.610
+release training code lowers the barrier for temporal validity research. Tomorrow keep an eye on expanded
+
+00:08:46.610 --> 00:08:52.730
+autonomous code repair agent evaluations. Once check marks tooling reaches broader developer access.
+
+00:08:53.450 --> 00:08:59.130
+That wraps up today's AI briefing. Share this with a developer or builder who wants to stay current.
+
+00:08:59.690 --> 00:09:04.210
+Subscribe wherever you listen. See you tomorrow. And if you'd rather watch than listen,
+
+00:09:04.550 --> 00:09:09.710
+find us on YouTube at Nerra Network. Links in the show notes. And before you go,
+
+00:09:10.090 --> 00:09:16.230
+this show is part of the Nerra Network. A family of daily podcasts on tech, science, and markets.
+
+00:09:16.650 --> 00:09:22.810
+Each one a short sharp briefing you can finish on the commute. If today earned its place in your feed,
+
+00:09:23.150 --> 00:09:28.650
+here's your next lesson. OmniView, a balanced daily world news briefing that takes every side
+
+00:09:28.650 --> 00:09:35.730
+seriously. Find every show free at nerranetwork.com. Following the long arcs,
+
+00:09:36.110 --> 00:09:43.590
+story trackers on nerranetwork.com follow major programs across episodes. Tesla, SpaceX, AI,
+
+00:09:44.010 --> 00:09:50.590
+space science, and more. This episode used AI voice synthesis of my voice, editorial selection,
+
+00:09:50.590 --> 00:09:52.210
+and analysis are my own.

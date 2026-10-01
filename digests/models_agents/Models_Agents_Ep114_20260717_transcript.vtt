@@ -1,0 +1,286 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.140
+Good to have you on models and agents, episode 114 on July 17th, 2026.
+
+00:00:07.000 --> 00:00:10.800
+Let's see what's shipped. Let's see what happened in the AI world today.
+
+00:00:11.540 --> 00:00:16.980
+And trust me, it's been busy. Nvidia just dropped an open embedding collection whose 8
+
+00:00:16.980 --> 00:00:23.400
+billion checkpoint tops the RTEB benchmark while the 1 billion variant keeps nearly all accuracy
+
+00:00:23.400 --> 00:00:31.120
+at two times blackwell throughput. Nvidia released Nemotron 3 embed on July 15 and 16.
+
+00:00:31.800 --> 00:00:42.620
+The three open checkpoints are Nemotron 3 embed 8Bbf16. Nemotron 3 embed 1bbf16 and Nemotron 3
+
+00:00:42.620 --> 00:00:53.560
+embed 1bbf4. All three accept 32,768 token inputs under OpenMDW-1-1.
+
+00:00:53.960 --> 00:00:58.780
+Remember, we tracked open weight models and inference economics yesterday.
+
+00:00:59.360 --> 00:01:04.840
+This release adds a concrete new baseline for retrieval workloads on Nvidia hardware
+
+00:01:04.840 --> 00:01:11.760
+and moves the open inference cost curve forward. The 8 billion BF16 checkpoint
+
+00:01:11.760 --> 00:01:21.320
+leads the RTEB leaderboard at 78.46 average NDCG at 10. The 1 billion models were created
+
+00:01:21.320 --> 00:01:27.920
+through model opt NAS pruning and COS plus MSE distillation from the 8 billion teacher.
+
+00:01:28.660 --> 00:01:37.200
+The NVFP4 version stays within 1% of BF16 retrieval accuracy while delivering up to two times blackwell
+
+00:01:37.200 --> 00:01:43.540
+throughput. Teams running RAG or retrieval pipelines now have an open option that trades minimal
+
+00:01:43.540 --> 00:01:50.640
+quality for large speed ups on Nvidia Silicon. Open AI's new voice model crossed a usability
+
+00:01:50.640 --> 00:01:58.420
+threshold for SAM Altman. He now talks to chat GPT more than he types. Altman described the shift
+
+00:01:58.420 --> 00:02:04.580
+as moving past a prior friction point in daily interaction. The change reflects broader improvements
+
+00:02:04.580 --> 00:02:11.120
+in handling extended spoken exchanges without repeated corrections. Internal testing at Open AI
+
+00:02:11.120 --> 00:02:17.920
+highlighted reduced latency and higher coherence in multi-turn voice sessions. The update aligns
+
+00:02:17.920 --> 00:02:24.440
+with ongoing work to make voice the default interface for many users. Altman noted the transition
+
+00:02:24.440 --> 00:02:30.960
+occurred after recent refinements to the underlying generation pipeline. TTCD runs diffusion
+
+00:02:30.960 --> 00:02:36.940
+language modeling in continuous space. Each token receives its own progression rate from noise to
+
+00:02:36.940 --> 00:02:44.380
+final state. A 160 million parameter model trained on open web text and then self distilled matches
+
+00:02:44.380 --> 00:02:51.320
+or beats discrete baselines at high speed ups. The method avoids parallel sampling errors common in
+
+00:02:51.320 --> 00:02:57.680
+discrete diffusion at aggressive acceleration. Researchers contest the self distilled checkpoint on
+
+00:02:57.760 --> 00:03:05.080
+Sudoku or short form conditional tasks. Polestar uses token representation drift under bidirectional attention.
+
+00:03:05.860 --> 00:03:10.320
+It decides when to refresh KV cache entries and when to commit tokens.
+
+00:03:11.300 --> 00:03:19.040
+On math and coding benchmarks the approach delivers up to 10.73% accuracy gains and 3.7 times higher
+
+00:03:19.040 --> 00:03:26.540
+throughput versus prior diffusion LLM baselines. It reaches 3.67 tokens per forward pass.
+
+00:03:27.260 --> 00:03:33.620
+The training-free method works across multiple diffusion LLM families, introspection fine tuning
+
+00:03:33.620 --> 00:03:40.760
+fine tunes models on their own perturbed forward passes. Tasks include sentence localization and
+
+00:03:40.760 --> 00:03:50.400
+strength comparison. Lama 1 billion accuracy on localization rises from 9.6% to 60.6% after the fine
+
+00:03:50.400 --> 00:03:56.620
+tuning. The method generalizes to the held out strength task with negligible degradation on
+
+00:03:56.620 --> 00:04:05.000
+standard capability benchmarks. T5 CS boost keeps the original T5 next token objective. It adds a
+
+00:04:05.000 --> 00:04:10.800
+margin-based triplet loss on decoder embeddings. The model reaches state-of-the-art multi-class
+
+00:04:10.800 --> 00:04:19.580
+attribution and human versus LLM detection on open LLM text and HC3. It shows strong robustness
+
+00:04:19.580 --> 00:04:25.620
+to 90% intensity word and character level perturbations on the mage and deep fake suite.
+
+00:04:26.160 --> 00:04:31.340
+Q raised $5 million to scale its autonomous AI customer service agents.
+
+00:04:32.020 --> 00:04:38.160
+The Cape Town startup is expanding across the UK and South Africa. The agents operate without
+
+00:04:38.160 --> 00:04:43.960
+human handoff and targeted verticals. Early traction centers on high-volume support workflows
+
+00:04:43.960 --> 00:04:50.700
+where full autonomy reduces cost per ticket. Open AI shared details on its racing collaboration.
+
+00:04:51.400 --> 00:04:57.720
+Joyce Ruffel and race tech systems discuss turning track data into faster decisions with chat GPT
+
+00:04:57.720 --> 00:05:03.820
+and codex. The work builds on an earlier research collaboration with Chip Gnassy Racing.
+
+00:05:04.360 --> 00:05:10.720
+Small margins in racing map directly to agentic tool use patterns where rapid iteration on structured
+
+00:05:10.720 --> 00:05:16.500
+data matters. Key bank analysts flagged weak customer adoption of Salesforce agent force.
+
+00:05:17.220 --> 00:05:22.720
+The critique centers on deployment friction and unclear return on investment for enterprise buyers.
+
+00:05:23.460 --> 00:05:29.040
+Teams evaluating autonomous agent platforms should compare current capabilities against narrower
+
+00:05:29.040 --> 00:05:36.360
+tools before committing. Crowd strikes field CTO warned that compromised AI agents could amplify
+
+00:05:36.360 --> 00:05:42.780
+living off the land attacks. The concern centers on agents that already hold broad system access.
+
+00:05:43.560 --> 00:05:49.400
+Security teams running agentic workflows should add explicit tool use auditing and least privilege
+
+00:05:49.400 --> 00:05:58.040
+scoping now. The EU AI Act Open Rag data set contains 933 legally structured chunks of regulation
+
+00:05:58.040 --> 00:06:06.880
+EU 2024 over 1689. Chunks follow the regulations native structure of articles, recitals, definitions
+
+00:06:06.880 --> 00:06:16.260
+and annexes. Structural chunking improved recall at 20-0.541 versus 0.449 for a baseline.
+
+00:06:17.160 --> 00:06:26.080
+Legal NLP and compliance teams can download the SQLite file with BGE-M3 embeddings for immediate rag
+
+00:06:26.080 --> 00:06:32.680
+experimentation. LBA builds an approximate distribution of high quality adversarial examples
+
+00:06:32.680 --> 00:06:38.400
+by combining prior and posterior knowledge. It then samples from the resulting distribution
+
+00:06:38.400 --> 00:06:44.760
+to generate candidates. The method was evaluated on six language models and four data sets.
+
+00:06:45.460 --> 00:06:50.140
+It outperforms prior state-of-the-art approaches across every reported metric.
+
+00:06:50.780 --> 00:06:56.000
+Outputs maintain greater semantic preservation compared with earlier hard label techniques.
+
+00:06:56.480 --> 00:07:01.140
+The sampling step lowers the query cost relative to exhaustive search methods.
+
+00:07:02.000 --> 00:07:07.920
+Researchers building robustness evaluations should test LBA on their current hard label setups.
+
+00:07:07.920 --> 00:07:15.280
+AGGOPS uses a prompt writer, LLM, solver LLM, and evolutionary loop.
+
+00:07:15.840 --> 00:07:20.080
+It generates guidelines from reference answers without manual engineering.
+
+00:07:20.800 --> 00:07:27.820
+The method recovers 15.5 to 81.7% of the performance loss to underspecified prompts.
+
+00:07:28.640 --> 00:07:32.980
+Recovery was measured across math, medical QA, and coding tasks.
+
+00:07:33.860 --> 00:07:38.240
+Existing task examples are converted directly into reusable guidelines.
+
+00:07:38.880 --> 00:07:45.120
+Teams struggling with prompt consistency on a fixed task should run AGGOPS on their reference set
+
+00:07:45.120 --> 00:07:52.000
+this week. Okay, let's pop the hood on multi-agent cascades. Intermediate transformations between
+
+00:07:52.000 --> 00:07:57.860
+agents systematically compress the semantic distinctions needed for accurate downstream decisions.
+
+00:07:57.860 --> 00:08:04.320
+In the Collector Evaluator Decider Pipeline, critical evaluation reduces label separability
+
+00:08:04.320 --> 00:08:10.580
+by 41.7% in embedding space on fact checking, sentiment, and triage tasks.
+
+00:08:11.360 --> 00:08:14.840
+Simple identity pass-through preserves nearly all separation.
+
+00:08:15.520 --> 00:08:19.160
+Prompt-level regression explains 78% of the variance.
+
+00:08:19.960 --> 00:08:25.800
+When building multi-agent flows, measure inter-label separation in sentence-transformer space
+
+00:08:25.800 --> 00:08:29.640
+after each stage rather than trusting final accuracy alone.
+
+00:08:30.520 --> 00:08:36.260
+Test the Nemotron 3 and Bed 1B, new fee for checkpoint on your current retrieval workload,
+
+00:08:36.560 --> 00:08:40.380
+to measure latency and cost gains versus your existing embedder.
+
+00:08:41.220 --> 00:08:48.960
+Download the EU AI Act Open Rags SQL Light File and run a structural-chunking rag experiment
+
+00:08:48.960 --> 00:08:57.600
+on the 933 legal paragraphs. Run AGGOPS on one of your existing task datasets with reference answers
+
+00:08:57.600 --> 00:09:06.500
+to generate reusable prompt guidelines. Evaluate T5-CS boost on your own adversarial AI GT test set
+
+00:09:06.500 --> 00:09:14.080
+to check robustness under 90% perturbation intensity. Add drift-based KV cache refresh from the
+
+00:09:14.420 --> 00:09:19.300
+star paper to any diffusion LLM inference loop you are already running.
+
+00:09:19.780 --> 00:09:24.680
+Sam Altman expects Open AI's next 12 months to be its strongest yet.
+
+00:09:25.380 --> 00:09:31.160
+More details on Open AI's chip-ganassi racing collaboration may surface as teams publish
+
+00:09:31.160 --> 00:09:37.620
+telemetry to decision tooling. Additional Nemotron 3 family checkpoints are likely given the rapid
+
+00:09:37.620 --> 00:09:45.420
+8 billion and 1 billion release cadence. Tomorrow keep an eye on further AR-XY releases on per-token
+
+00:09:45.420 --> 00:09:51.820
+diffusion timing and introspection fine-tuning. That's models and agents for today. If you found
+
+00:09:51.820 --> 00:09:57.200
+this useful, share it with someone who's trying to keep up with all these changes and subscribe so
+
+00:09:57.200 --> 00:10:03.560
+you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow
+
+00:10:03.560 --> 00:10:09.640
+and if you'd rather watch than listen, find us on YouTube at Narra Network, links in the show notes.
+
+00:10:10.000 --> 00:10:14.940
+This show comes to you from the Narra Network. If you want another sharp daily briefing,
+
+00:10:15.480 --> 00:10:21.000
+Planetarian Daily has you covered. Daily breakthroughs in science, health, and longevity.
+
+00:10:21.520 --> 00:10:30.180
+All our shows are free at NarraNetwork.com. New to the network, NarraNetwork.com slash start-here.
+
+00:10:30.180 --> 00:10:37.060
+Picks the right daily briefing for you in about two minutes. This episode used AI voice synthesis of
+
+00:10:37.060 --> 00:10:40.760
+my voice. Editorial selection and analysis are my own.

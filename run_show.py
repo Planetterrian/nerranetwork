@@ -1646,6 +1646,39 @@ def run(args: argparse.Namespace) -> None:
                                "(non-fatal): %s", _rec_exc)
                 _recurrence_notes = {}
 
+        # Same-story clustering (Oct 1 2026 readout): eight outlets on one
+        # Model 3 refresh became eight digest items and five tellings in
+        # the script. Later members of a cluster carry an inline "ONE item,
+        # fold this angle in" note; the lead carries nothing. Data-side,
+        # nothing dropped. Best-effort: any failure renders the legacy
+        # listing.
+        _cluster_notes: dict = {}
+        _article_clusters: list = []
+        if getattr(config, "story_clusters", False):
+            try:
+                from engine.story_clusters import (
+                    annotate_articles as _cluster_annotate,
+                    cluster_articles as _cluster_articles)
+                _window_heads = [
+                    h for ep in (content_tracker.data.get("episodes", []) or [])[-45:]
+                    for h in (ep.get("headlines") or [])
+                ]
+                _article_clusters = _cluster_articles(
+                    articles, window_headlines=_window_heads)
+                _cluster_notes = _cluster_annotate(
+                    articles, window_headlines=_window_heads)
+                if _article_clusters:
+                    logger.info(
+                        "Story clusters: %d cluster(s) covering %d of %d articles "
+                        "carry one-item notes",
+                        len(_article_clusters),
+                        sum(len(g) for g in _article_clusters), len(articles))
+                metrics.record("story_clusters_found", len(_article_clusters))
+                metrics.record("story_clusters_annotated", len(_cluster_notes))
+            except Exception as _cl_exc:  # noqa: BLE001 — never block a run
+                logger.warning("Story clustering failed (non-fatal): %s", _cl_exc)
+                _cluster_notes, _article_clusters = {}, []
+
         # Full article text (Sep 14 2026 Offshore North review, fix 1):
         # the prompt listed each source's headline and one-line teaser,
         # so the model reported WHEN a channel was updated and never WHAT
@@ -1746,6 +1779,7 @@ def run(args: argparse.Namespace) -> None:
                 logger.warning("Stale-article gate failed (non-fatal): %s", _st_exc)
 
         from engine.article_text import render_full_text_block
+        from engine.article_text import speakable_source_name
 
         news_lines = []
         for i, art in enumerate(articles, 1):
@@ -1753,7 +1787,7 @@ def run(args: argparse.Namespace) -> None:
             title = _DATELINE_TAIL.sub("", title).rstrip(" :—–-")
             desc = art.get("description", "")
             url = art.get("url", "")
-            source = art.get("source_name", "Unknown")
+            source = speakable_source_name(art.get("source_name", "Unknown"), url)
             pub = prompt_pub_date(art.get("published_date", ""))
             full_text_block = render_full_text_block(art)
             news_lines.append(
@@ -1764,6 +1798,8 @@ def run(args: argparse.Namespace) -> None:
                 + (("\n" + full_text_block) if full_text_block else "")
                 + ("\n" + _recurrence_notes[i - 1]
                    if (i - 1) in _recurrence_notes else "")
+                + ("\n" + _cluster_notes[i - 1]
+                   if (i - 1) in _cluster_notes else "")
             )
         news_section = "\n\n".join(news_lines)
 
@@ -2014,6 +2050,19 @@ def run(args: argparse.Namespace) -> None:
             except Exception as _rec_exc:  # noqa: BLE001
                 logger.warning("Story recurrence metric failed "
                                "(non-fatal): %s", _rec_exc)
+        if _article_clusters:
+            try:
+                from engine.story_clusters import cluster_retold_in_digest
+                _retold = cluster_retold_in_digest(
+                    x_thread, articles, _article_clusters)
+                metrics.record("story_clusters_retold_in_digest", _retold)
+                if _retold:
+                    logger.warning(
+                        "Story clusters: %d of %d same-story cluster(s) still "
+                        "surfaced as more than one digest item",
+                        _retold, len(_article_clusters))
+            except Exception as _cl_exc:  # noqa: BLE001
+                logger.warning("Story cluster metric failed (non-fatal): %s", _cl_exc)
 
         # Record episode content in the cross-episode tracker
         if section_patterns:
@@ -2723,6 +2772,23 @@ def run(args: argparse.Namespace) -> None:
                 if _empty_n:
                     logger.warning("Removed %d empty digest item heading(s)", _empty_n)
                 metrics.record("digest_empty_items_removed", _empty_n)
+                # Oct 1 2026: the lint above measured the digest BEFORE this
+                # filter; Top World Ep009's metric read 0 items without a
+                # Source while the shipped file had 8. Re-read the shipped
+                # text so the metric can never disagree with the file again.
+                try:
+                    from engine.digest_lint import items_without_source as _iws
+                    _tot, _miss = _iws(x_thread)
+                    metrics.record("items_without_source_shipped", _miss)
+                    if _tot and _miss and _miss != int(
+                            (locals().get("_lint_metrics") or {}).get("items_without_source", _miss)):
+                        logger.warning(
+                            "Post-filter digest carries %d/%d items without a Source "
+                            "(lint had read %s) — a filter removed citations",
+                            _miss, _tot,
+                            (locals().get("_lint_metrics") or {}).get("items_without_source"))
+                except Exception:  # noqa: BLE001 — metrics only
+                    pass
             except Exception as _abs_exc:  # noqa: BLE001 — never block a run
                 logger.warning("Absence-sentence filter failed (non-fatal): %s",
                                _abs_exc)
@@ -4727,6 +4793,16 @@ def run(args: argparse.Namespace) -> None:
                 f"{config.publishing.base_url}/{config.publishing.audio_subdir}"
                 f"/{_ep_prefix}_transcript.json"
             )
+        # Oct 1 2026: the WebVTT beside it is the transcript Apple Podcasts
+        # and the Podcasting 2.0 apps actually read (the JSON is a raw
+        # Whisper dump); same timebase, same directory, served by Pages.
+        transcript_vtt_url = None
+        transcript_vtt = digests_dir / f"{_ep_prefix}_transcript.vtt"
+        if transcript_vtt.exists():
+            transcript_vtt_url = (
+                f"{config.publishing.base_url}/{config.publishing.audio_subdir}"
+                f"/{_ep_prefix}_transcript.vtt"
+            )
 
         # Channel description shape (May 2026 audit): Apple Podcasts /
         # Spotify list pages truncate around 150 characters, so the
@@ -4771,6 +4847,7 @@ def run(args: argparse.Namespace) -> None:
             audio_url=feed_audio_url,  # Use R2/OP3-prefixed URL if available
             chapters_url=chapters_url,
             transcript_url=transcript_url,
+            transcript_vtt_url=transcript_vtt_url,
             # Podcasting 2.0 channel tags. Aug 2026: funding now points at
             # the support/donations page (the highest-intent surface a
             # podcast app offers — Apple renders it as a "Support" button);

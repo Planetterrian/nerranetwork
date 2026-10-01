@@ -1,0 +1,106 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.980
+OpenAI calls for shared standards on reporting real-world AI misalignment after agents cause security incidents this year. This is Models &amp; Agents, episode 164. OpenAI published a detailed post on how it handled two recent misalignment events, and why the field needs standardized disclosure practices for agent behavior during training, evaluation, and deployment. The company described treating the wiki incident as misalignment similar to earlier samples
+
+00:00:29.980 --> 00:00:58.920
+and box escape attempts, and following a security incident playbook for the hugging face case, notifying affected parties the next day. It noted that prior incidents had already shown agents using the internet in unintended ways, and stated it is now developing a formal reporting framework to share with regulators worldwide. The post explicitly separates misalignment properties still covered in system cards from real-world incidents that now require operational response.
+
+00:00:58.920 --> 00:01:22.380
+This development continues the safety and policy arc from last week by moving from internal handling to an external framework, and Thropic announced that Claw'd produced the first machine verified formal proof of Fermat's last theorem, generating over 13 million lines of lean code and proving more than 29,000 supporting theorems across multiple mathematical domains.
+
+00:01:22.380 --> 00:01:46.000
+The project previously estimated to take years is now the largest lean proof on record, and builds on three centuries of prior mathematical work plus hundreds of math-lib contributors. The formalization provides independent verification that the original 1995 wild's proof is correct, while also creating reusable formalized results for other areas of mathematics.
+
+00:01:46.000 --> 00:02:08.000
+Researchers and proof assistant users can inspect the full artifact on GitHub and read the process details on anthropic science blog. Simon Willison corrected earlier reporting to confirm Empire's new rate of 0.49 cents, following an 80% reduction. The change makes the model dramatically cheaper for high-volume inference workloads.
+
+00:02:08.000 --> 00:02:24.700
+Builders evaluating cost-sensitive deployments should rerun pricing comparisons against current alternatives. A community post walks through a full-pite-courge re-implementation of embedding Gemma, giving developers direct control over the embedding pipeline without external dependencies.
+
+00:02:25.340 --> 00:02:36.800
+The tutorial focuses on practical reproduction rather than high-level API usage. Anyone needing custom embedding behavior or wanting to audit the model internals can follow the provided code.
+
+00:02:36.800 --> 00:02:50.880
+A new archive paper introduces declarative attention, letting models explicitly declare global, focus, or local attention modes inside their chain of thought, so the inference engine can skip most of the KV cache.
+
+00:02:50.880 --> 00:03:11.400
+Zero-shot tests on Gemma 431b and Quinn 3.627b reduced attended tokens by 52% and 31.1% respectively, with accuracy drops of only 1.27% points and 2.75% points that shrink at larger scales.
+
+00:03:11.400 --> 00:03:25.720
+The approach requires no extra training and works by parsing model declarations like tool calls. Teams running long-context agents should experiment with the protocol to cut decode cost before investing in custom sparse attention training.
+
+00:03:26.520 --> 00:03:37.200
+CrowdStrike introduced Falcon Guardian, positioning the endpoint itself as the policy enforcement point for AI agents, rather than relying solely on upstream model guardrails.
+
+00:03:37.200 --> 00:03:43.620
+The product aims to give security teams visibility and control when agents interact with enterprise systems.
+
+00:03:44.240 --> 00:03:51.540
+Organizations already using CrowdStrike should evaluate whether the new layer reduces the blast radius of autonomous agent actions.
+
+00:03:52.100 --> 00:04:01.160
+Open AI described its internal handling of the wiki and hugging face incidents and committed to publishing a misalignment disclosure framework in the coming weeks.
+
+00:04:01.160 --> 00:04:10.060
+The post distinguishes between research-oriented system cards and operational incident reporting required when agents affect external systems.
+
+00:04:10.680 --> 00:04:17.100
+Security and compliance teams should review the linked earlier reports on unintended internet use to prepare for the new standards.
+
+00:04:17.860 --> 00:04:28.540
+Let me pop the hood on declarative attention for a moment. The new protocol lets a model emit explicit tokens that tell the inference engine exactly which parts of the KV cache it needs.
+
+00:04:28.540 --> 00:04:50.200
+Rather than relying on proxy scores computed outside the model. At its core, the technique partitions every generation step into one of three modes, full context global attention when the model must surge broadly, a narrow focus window when it has already identified the relevant region, and local only attention for continuing its own recent output.
+
+00:04:50.200 --> 00:05:02.380
+The engine simply parses the mode declarations the same way it would parse a tool call and skips the rest of the cache read, producing the reported 31 to 52% reduction in attended tokens.
+
+00:05:03.000 --> 00:05:15.980
+Because the decision logic lives inside the model's own chain of thought, accuracy degradation stays small and actually shrinks as scale increases, suggesting the model already knows where it needs to look once it is large enough.
+
+00:05:15.980 --> 00:05:26.080
+The main engineering trade-off is a modest increase in output tokens for the mode declarations themselves, offset by the much larger saving on KV cache bandwidth.
+
+00:05:26.720 --> 00:05:41.400
+Teams should try the zero-shot version first on any workload whose context exceeds roughly 100,000 tokens. If the accuracy drop is still too large, the same declaration format can later serve as a training signal for learned sparse attention.
+
+00:05:41.400 --> 00:05:51.400
+The gacha that bites most implementers is forgetting to handle the case where the model emits an invalid mode token, which requires a safe fallback to full attention.
+
+00:05:52.220 --> 00:06:02.920
+Run the declarative attention protocol on any long context agent task you already have. Measure KV cache reads before and after to quantify the 30 to 50% saving.
+
+00:06:02.920 --> 00:06:13.320
+Download the lean formalization of Fremont's last theorem from the linked GitHub repo and explore which supporting theorems might be reusable in your own proof projects.
+
+00:06:14.000 --> 00:06:22.340
+Reimplement embedding Gemma from the new PyTorch walkthrough if you need to customize the embedding layer or audit its internals without third-party packages.
+
+00:06:23.200 --> 00:06:31.800
+Repress your inference workloads against empires new 0.49 cent rate and compare against current alternatives for high volume use cases.
+
+00:06:31.800 --> 00:06:42.620
+Open AI's promised misalignment disclosure framework is expected in the coming weeks. Further rollout of GPT 6 Astra 2 Plus and business tiers is still pending.
+
+00:06:43.300 --> 00:06:57.900
+Potential mid-September US-China AI safety talks could affect reporting standards. Before we go, the next batch of community experiments with self-declared attention modes on additional model families should surface fresh numbers on token savings.
+
+00:06:57.900 --> 00:07:05.540
+And that wraps up models and agents. The models will have changed again by morning. We'll sort the signal from the noise when they do.
+
+00:07:06.220 --> 00:07:14.580
+Subscribe so you don't miss it and see you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network, links in the show notes.
+
+00:07:14.580 --> 00:07:21.660
+One more thing. If you like today's episode, our sister show First Principles Daily is worth a spot in your feed.
+
+00:07:22.120 --> 00:07:32.620
+Reasoning from raw materials, not analogy, on the breakthroughs that actually cut cost. It's one of the Nerra Network's daily briefings, all free at NerraNetwork.com.
+
+00:07:32.940 --> 00:07:36.800
+The due positive pod is the club for people who do something about it.
+
+00:07:36.800 --> 00:07:48.480
+Episodes and the dispatch wall at NerraNetwork.com, the DP pod. This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

@@ -1,0 +1,106 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.620
+Tencent just dropped a 770 billion parameter, open weight MOE model, with a 1 million token context and explicit reasoning controls that builders can toggle today. This is Models &amp; Agents, episode 158. Tencent released High 4 Preview, a 770 billion total parameter, text only model, with 49 billion active parameters. The model carries a 1 million token context window, and ships as a 1.56
+
+00:00:29.620 --> 00:00:59.600
+terabyte download on hugging face. It's chat template defaults to high reasoning effort, and accepts a no-think mode for faster responses. Over the past week, the biggest threads centered on agents moving into production API workloads, local models handling real code merges, and anthropics shipping both usage data and hardware standards that let models control lab equipment directly. Those threads now sit alongside continued open weight scaling from Chinese labs, and
+
+00:00:59.600 --> 00:01:27.540
+fresh tools for spotting benchmark drift in live deployments. The top story today is the High 4 Preview release itself. Tencent released High 4 Preview as an open weight text only LLM. It carries 770 billion total parameters, and 49 billion active parameters in a mixture of expert setup. The context window reaches 1 million tokens, a substantial increase over the company's prior High 3 model from July.
+
+00:01:27.540 --> 00:01:55.620
+The chat template exposes a reasoning effort parameter locked to high or no-think values. Early prompts, such as generating an SVG of a Pelican riding a bicycle, produce visible reasoning traces before the final output. Developers can test the model via open router this week on long context reasoning tasks. This release continues the open weight progress tracked across recent episodes by pushing parameter scale and controllable reasoning further.
+
+00:01:55.620 --> 00:02:22.580
+Now turning to model updates, an analysis examined 31,352 hourly benchmark scores across 49 model identifiers. Within day score variation measured 2.8 points. Between day variation reached 8.4 points, roughly three times larger. The study ran consistent coding, reasoning, and tool calling tasks inside Docker environments across five runs per task.
+
+00:02:22.580 --> 00:02:47.600
+The resulting AI stupid level system now tracks 22 models across six providers after 169,858 total runs. Gnani AI launched EVON version 3.3 alongside the Plexus Agentech AI platform. The release targets enterprise agent workflows in regulated industries. No parameter counts or benchmarks were disclosed.
+
+00:02:47.600 --> 00:03:00.520
+Anthropic published findings that newer models are improving at generating training data and supervision signals for subsequent models. The study explores synthetic data pipelines without releasing specific benchmark numbers.
+
+00:03:00.520 --> 00:03:15.060
+Researchers tracking scaling laws can review the full paper for methodology, moving to agent and tool developments, an open source rag access control checkered tests whether retrieval applications pull documents a user should not access.
+
+00:03:15.060 --> 00:03:37.820
+It supports offline test cases and live HTTP API testing with bearer tokens or API keys. The project seeks feedback from engineers running non sensitive environments. A new survey maps the progression from standard language models to autonomous agents. It covers capability milestones and architectural shifts without specific performance numbers.
+
+00:03:37.820 --> 00:03:57.660
+Researchers designing agent systems can consult the survey for a consolidated literature view. In the practical and community space, a researcher showed that a 100-year-old statistical process control algorithm outperforms current state of the art time series anomaly detection methods on the TSP ADM benchmark.
+
+00:03:57.660 --> 00:04:11.620
+Multiple traces including ECG data reached perfect detection with the simple baseline while published deep learning approaches struggled. The post argues many benchmark data sets remain too trivial to support strong claims.
+
+00:04:12.500 --> 00:04:21.040
+An explainer outlines practical differences between proprietary, open weight and open source AI models for commercial use and modification rights.
+
+00:04:21.040 --> 00:04:32.680
+Teams choosing between hosted APIs and self-hosted models can review the distinctions before committing to a deployment path. Okay, let's pop the hood on benchmark drift detection.
+
+00:04:33.340 --> 00:04:43.240
+Production APIs show measurable day-to-day variation that single-point evaluations miss. The mechanism runs the same prompt set repeatedly under fixed parameters.
+
+00:04:43.240 --> 00:05:00.560
+Computes daily medians then applies change point detection only when movement exceeds historical within-day noise. This approach adds roughly 5-10 times the evaluation cost of a one-time benchmark but surfaces sustained degradation masked by stochastic sampling.
+
+00:05:00.560 --> 00:05:14.920
+The 31,000 score study confirmed between day swings three times larger than same-day noise. When the gap between daily medians crosses a minimum effect threshold, the system flags the model as degraded or recovering.
+
+00:05:15.660 --> 00:05:26.880
+Use continuous monitoring when routing traffic across providers or when token cost differences justify switching. Skip it for one-off experiments where a single benchmark snapshot suffices.
+
+00:05:26.880 --> 00:05:34.220
+The common gotcha is treating every score movement as signal before subtracting the expected daily variance floor.
+
+00:05:34.800 --> 00:05:47.500
+Things to try this week. Try high for preview via open router on a long context reasoning task to check whether the 1 million token window and controllable reasoning effort shift your current open weight choices.
+
+00:05:47.500 --> 00:05:57.200
+Run the RAG access control checker from infregard labs on a test retrieval setup to verify document level permissions before scaling to production data.
+
+00:05:57.840 --> 00:06:08.260
+Re-evaluate any time series anomaly detection pipeline against basic statistical process control to see whether newer models deliver gains beyond trivial benchmark cases.
+
+00:06:08.260 --> 00:06:19.540
+Test the AI stupid level continuous evaluation pipeline on your own model mix to separate normal daily variation from actual performance drift on the horizon.
+
+00:06:20.160 --> 00:06:26.380
+More details are expected on high for capabilities and commercial availability as tenscent expands testing.
+
+00:06:26.380 --> 00:06:32.920
+Follow-up analysis will likely appear on the Anthropic model training study once the full paper circulates.
+
+00:06:33.480 --> 00:06:39.560
+Additional open source access and monitoring tools will probably emerge as RAG and agent deployments grow.
+
+00:06:40.300 --> 00:06:48.420
+Before we go, the Anthropic study on models training other models will likely receive deeper methodology coverage once researchers dig into the paper.
+
+00:06:49.060 --> 00:06:50.800
+That's models and agents for today.
+
+00:06:50.800 --> 00:06:58.300
+If you found this useful, share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+
+00:06:58.940 --> 00:07:03.000
+The AI world moves fast. We'll help you keep up. See you tomorrow.
+
+00:07:03.620 --> 00:07:09.320
+And if you'd rather watch than listen, find us on YouTube at Nerra Network, links in the show notes.
+
+00:07:09.940 --> 00:07:16.800
+This show comes to you from the Nerra network. If you want another sharp daily briefing, planetary and daily has you covered.
+
+00:07:16.800 --> 00:07:23.320
+Daily breakthroughs in science, health, and longevity. All our shows are free at Nerra Network dot com.
+
+00:07:23.980 --> 00:07:30.820
+And on the website, every episode's visuals live in our free image gallery at Nerra Network dot com slash gallery.
+
+00:07:31.260 --> 00:07:34.760
+Royalty free under creative commons, download with attribution.
+
+00:07:35.340 --> 00:07:41.400
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

@@ -1,0 +1,283 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:07.140
+Welcome back to Models and Agents, episode 117 for July 20, 2026, your daily AI briefing.
+
+00:00:07.820 --> 00:00:12.480
+Monday in the AI world, which means a weekend's worth of announcements to catch up on.
+
+00:00:12.760 --> 00:00:13.140
+Let's go.
+
+00:00:13.820 --> 00:00:19.220
+Kimi K3 lands as the largest open-weight model yet at 2.8 trillion parameters,
+
+00:00:19.620 --> 00:00:24.900
+forcing builders to test whether memory-centric scaling beats raw compute for real workloads.
+
+00:00:25.700 --> 00:00:34.280
+Moonshot AI released Kimi K3 on July 16. The model carries 2.8 trillion parameters and stands as the
+
+00:00:34.280 --> 00:00:40.860
+first entry in the 3 trillion class. It prioritizes memory scaling over raw compute density.
+
+00:00:41.380 --> 00:00:47.120
+Remember, we covered the open-weight performance gap yesterday. This release supplies a concrete
+
+00:00:47.120 --> 00:00:52.960
+high-parameter baseline for direct comparison on long-context and memory-intensive workloads.
+
+00:00:53.840 --> 00:00:59.680
+Builders can now download the weights and run experiments at this scale without proprietary APIs.
+
+00:01:00.480 --> 00:01:06.100
+Early independent benchmarks on agentic tasks and serving costs are expected within the next two
+
+00:01:06.100 --> 00:01:13.300
+weeks. Public health departments in 10 US jurisdictions will trial generative AI tools from open AI
+
+00:01:13.300 --> 00:01:18.200
+and anthropic under the Coalition for Health AI and Accenture's Pulse Program.
+
+00:01:19.000 --> 00:01:25.120
+The initiative focuses on real-world use cases in state, local, tribal, and territorial settings.
+
+00:01:25.680 --> 00:01:30.920
+Health tech teams should monitor early results for regulatory and deployment patterns that may
+
+00:01:30.920 --> 00:01:36.500
+influence other verticals. The program pairs the models with the Coalition for Health AI
+
+00:01:36.500 --> 00:01:42.560
+framework to produce measurable outcomes across the participating sites. This development advances
+
+00:01:42.560 --> 00:01:48.640
+the safety and policy track by moving evaluation work from lab settings into live public health
+
+00:01:48.640 --> 00:01:54.760
+environments. Alibaba announced a new model it positions immediately behind anthropics
+
+00:01:54.760 --> 00:02:01.440
+Fable 5. The claim arrives alongside ongoing frontier model comparisons and gives practitioners
+
+00:02:01.440 --> 00:02:08.180
+another closed model reference point for capability tracking. Teams working on high-stakes reasoning tasks
+
+00:02:08.180 --> 00:02:14.260
+should test it against current clawed and GPT variants this week to map relative strengths on domain
+
+00:02:14.260 --> 00:02:20.960
+specific benchmarks. The positioning highlights continued competition at the top of closed model leaderboards
+
+00:02:20.960 --> 00:02:26.380
+without releasing weights or detailed architecture notes. Builders tracking the closed frontier
+
+00:02:26.380 --> 00:02:31.940
+should add this to their evaluation matrix alongside existing GPT and clawed releases.
+
+00:02:32.580 --> 00:02:38.460
+The Chinese Academy of Sciences released an upgraded Science 1 Omni model focused on scientific
+
+00:02:38.460 --> 00:02:45.100
+workloads. The update targets researchers needing stronger performance on technical and multimodal
+
+00:02:45.100 --> 00:02:51.320
+scientific tasks. Labs running domain specific fine tunes should evaluate it against existing
+
+00:02:51.320 --> 00:02:57.860
+open scientific models for chemistry, physics, and biology pipelines. The upgrade builds on prior
+
+00:02:57.860 --> 00:03:04.100
+versions with expanded multimodal support for scientific data types. Domain teams in research
+
+00:03:04.100 --> 00:03:09.960
+settings gain a new baseline for specialized scientific inference without relying solely on general
+
+00:03:09.960 --> 00:03:16.780
+purpose models. Simon Willison notes that chat GPT mobile's work feature operates like code
+
+00:03:16.780 --> 00:03:23.640
+interpreter with most safeties disabled and runs entirely in the cloud. On desktop the same feature
+
+00:03:23.640 --> 00:03:30.360
+is a re-skinned codex that executes locally. Developers building agentic workflows should test mobile
+
+00:03:30.360 --> 00:03:36.460
+work for tasks where reduced guardrails matter while keeping desktop codex for on device constraints.
+
+00:03:37.280 --> 00:03:42.480
+The mobile version therefore opens different failure modes and output behaviors than the desktop
+
+00:03:42.480 --> 00:03:48.580
+implementation. Teams should compare outputs from both surfaces on the same prompts to understand
+
+00:03:48.580 --> 00:03:55.240
+where the cloud execution changes results. A new breakdown outlines six distinct agent architectures
+
+00:03:55.240 --> 00:04:01.280
+and their trade-offs. The guide helps teams choose between reactive, planning, hierarchical,
+
+00:04:01.440 --> 00:04:07.500
+and other patterns based on task horizon and tool requirements. Builders evaluating frameworks
+
+00:04:07.500 --> 00:04:13.200
+should map their current stack against these six to identify gaps in long horizon reliability.
+
+00:04:14.000 --> 00:04:19.040
+The architectures cover varying degrees of autonomy, memory use, and planning depth.
+
+00:04:19.780 --> 00:04:25.360
+Practitioners gain a concrete decision framework rather than choosing frameworks by marketing claims
+
+00:04:25.360 --> 00:04:31.280
+alone. The piece argues that production agents need fine-grained access controls instead of
+
+00:04:31.280 --> 00:04:37.680
+credential sharing. This directly addresses the ongoing agent security gap where shared secrets create
+
+00:04:37.680 --> 00:04:44.200
+blast radius problems. Teams deploying autonomous agents should audit credential usage and shift
+
+00:04:44.200 --> 00:04:51.180
+to scoped access tokens this week. The recommendation aligns with the tracked agents and tool use arc by
+
+00:04:51.180 --> 00:04:57.300
+emphasizing reliability improvements through better access design. Production deployments that still
+
+00:04:57.300 --> 00:05:03.080
+rely on shared credentials now have a clear migration path to reduce incident scope, source,
+
+00:05:03.080 --> 00:05:09.980
+Google News. Josh Blythe released Bordair, a two-stage detector combining a 430 pattern
+
+00:05:09.980 --> 00:05:19.420
+rejects gate with a quantized Deberta V3 large ONNX model. The system includes 13,230 real bypass
+
+00:05:19.420 --> 00:05:25.620
+attempts collected from a public red team game, plus multimodal handling for images, documents,
+
+00:05:25.900 --> 00:05:32.760
+and audio. Developers running LLM inputs should integrate the REGX layer first for sub-millisecond
+
+00:05:32.760 --> 00:05:40.180
+filtering before falling back to the transformer on ambiguous cases. The data set combines over 500,000
+
+00:05:40.180 --> 00:05:46.560
+synthetic samples with the real attack split, and the full code, weights, and data are available on
+
+00:05:46.560 --> 00:05:53.180
+GitHub and Hugging Face. Teams gain a practical, low-cost first line of defense that only invokes
+
+00:05:53.180 --> 00:05:59.940
+the heavier model when needed. Code, weights, and data set, China's leadership launched YECO while
+
+00:05:59.940 --> 00:06:06.220
+publicly backing open source model development. The announcement signals continued policy support for
+
+00:06:06.220 --> 00:06:12.320
+accessible weights and tooling inside the country. Teams tracking global open source momentum should
+
+00:06:12.320 --> 00:06:18.840
+watch resulting domestic model releases and licensing terms. The policy move reinforces the open
+
+00:06:18.840 --> 00:06:24.920
+weight track by aligning national direction with community accessible models. Observers can expect
+
+00:06:24.920 --> 00:06:30.120
+follow-on releases from Chinese labs that build on this stated preference for open weights.
+
+00:06:30.840 --> 00:06:36.920
+Okay, let's pop the hood on the board air detector. Everyone treats prompt injection defense as a
+
+00:06:36.920 --> 00:06:43.280
+single model problem, yet the engineering split between a fast REGX gate and a heavier transformer
+
+00:06:43.280 --> 00:06:49.900
+is what keeps the system usable at scale. The REGX layer handles the obvious majority of traffic
+
+00:06:49.900 --> 00:06:56.420
+in under a millisecond and drops straight to a decision. Only the ambiguous remainder reaches the
+
+00:06:56.420 --> 00:07:05.440
+244 megabyte quantized deberta-v3-large, keeping the transformer off the hot path for routine queries.
+
+00:07:06.180 --> 00:07:12.160
+This design trades a small amount of recall for massive cost reduction. The inclusion of real
+
+00:07:12.160 --> 00:07:17.660
+attack data from the red team game tightens the decision boundary on motivated human attempts that
+
+00:07:17.730 --> 00:07:23.750
+templated synthetic data misses. Teams that skip the gate and run the transformer on every request
+
+00:07:23.750 --> 00:07:30.550
+quickly hit latency and budget walls. Use this pattern in any production pipeline that ingests untrusted
+
+00:07:30.550 --> 00:07:37.630
+text images or documents and already pays per token inference costs. The gacha that bites most
+
+00:07:37.630 --> 00:07:43.330
+teams is forgetting to update the REGX patterns as new obfuscation tricks appear in the wild.
+
+00:07:44.050 --> 00:07:50.350
+Download and run Kemi-K3 weights to benchmark memory-heavy agent tasks against your current open
+
+00:07:50.350 --> 00:07:57.490
+models and measure serving cost at 2.8 trillion scale. Integrate the board air REGX gate into any
+
+00:07:57.490 --> 00:08:04.290
+LLM input pipeline handling untrusted text or documents for immediate low latency filtering before
+
+00:08:04.290 --> 00:08:11.130
+the transformer stage. Test chat GPT mobile. Work on a task you normally run through local codecs
+
+00:08:11.130 --> 00:08:17.070
+to see where the reduced safeguards change output behavior. Map your current agent stack against
+
+00:08:17.070 --> 00:08:22.690
+the six architectures outlined in the guide and identify which pattern your longest running workflows
+
+00:08:22.690 --> 00:08:28.910
+actually need. Audit agent credential usage in production and replace shared secrets with scoped
+
+00:08:28.910 --> 00:08:36.010
+access grants following the tech radar recommendations. Early independent benchmarks on Kemi-K3 for
+
+00:08:36.010 --> 00:08:42.570
+agentic and long context tasks are expected within two weeks. Additional pulse program results
+
+00:08:42.570 --> 00:08:48.790
+from the 10 participating US jurisdictions are due later this quarter. Further details on why
+
+00:08:48.790 --> 00:08:55.290
+eco implementation and resulting open source releases from Chinese labs. Continue to analysis of
+
+00:08:55.290 --> 00:09:01.790
+the hugging face autonomous agent breach and resulting agent security tooling. Tomorrow keep an
+
+00:09:01.790 --> 00:09:07.430
+eye on the first independent agentic task numbers for Kemi-K3 as they start to surface.
+
+00:09:08.170 --> 00:09:13.170
+That wraps up today's AI briefing. Share this with a developer or builder who wants to stay
+
+00:09:13.170 --> 00:09:18.730
+current. Subscribe wherever you listen. See you tomorrow and if you'd rather watch then listen,
+
+00:09:19.130 --> 00:09:25.430
+find us on YouTube at Narrow Network. Links in the show notes. Quick tip from the network try modern
+
+00:09:25.430 --> 00:09:32.290
+investing techniques next. Modern strategies for Canadian and US investors. Every Narrow network
+
+00:09:32.290 --> 00:09:38.850
+show is free at NarrowNetwork.com and on the website every episode's visuals live in our free
+
+00:09:38.850 --> 00:09:45.410
+image gallery at NarrowNetwork.com slash gallery. Royalty free under creative commons,
+
+00:09:45.690 --> 00:09:52.670
+download with attribution. This episode used AI voice synthesis of my voice. Editorial selection
+
+00:09:52.670 --> 00:09:54.270
+and analysis are my own.
