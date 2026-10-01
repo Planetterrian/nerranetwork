@@ -24,7 +24,8 @@
  *   POST /voices/leg-event            scenario: per-leg joined/left (Phase 2)
  *   POST /voices/upload-chunk         studio: local MediaRecorder chunk → R2 (Phase 2)
  *   POST /voices/upload-done          studio: local recording manifest → R2 + run row
- *   POST /voices/studio-check         studio: pre-join mic check / day-before setup test
+ *   POST /voices/studio-check         studio: pre-join mic check / day-before setup test / guest stuck outside
+ *   GET|POST /voices/admin/call-guest admin: signed link → switch a stuck guest to a phone call
  *   POST /voices/studio-silence       studio or scenario: guest unheard → email Patrick once
  *   POST /voices/studio-phone         studio: guest's "Have Mira call my phone" → PSTN now
  *   GET  /voices/host-link            admin: Patrick's co-host studio link
@@ -1629,14 +1630,62 @@ async function reassign(id){
 // guest review page and its submit refuse an archived package. The archive
 // page lists them, token-gated, with their audio and transcript.
 
-async function archiveToken(env: Env): Promise<string> {
+async function adminSig(env: Env, message: string): Promise<string> {
   const token = (env.ADMIN_TOKEN || "").trim();
   if (!token) throw new Error("ADMIN_TOKEN required");
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey(
     "raw", enc.encode(token), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  const sig = await crypto.subtle.sign("HMAC", key, enc.encode("nerra-archive"));
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(message));
   return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 40);
+}
+
+async function archiveToken(env: Env): Promise<string> {
+  return adminSig(env, "nerra-archive");
+}
+
+/** Oct 1 2026: the "call their phone" link in Patrick's stuck-guest email.
+ *  GET shows a confirm button (mail scanners prefetch links, and this one
+ *  dials); POST checks the signature and switches the interview to a phone
+ *  call through the same path as the guest's own button. */
+async function callGuestSig(env: Env, interviewId: string): Promise<string> {
+  return adminSig(env, `call-guest:${interviewId}`);
+}
+
+async function callGuestLink(env: Env, interviewId: string): Promise<string> {
+  return `https://api.nerranetwork.com/voices/admin/call-guest?interview=${interviewId}&sig=${await callGuestSig(env, interviewId)}`;
+}
+
+async function handleCallGuest(req: Request, env: Env): Promise<Response> {
+  const url = new URL(req.url);
+  const interviewId = url.searchParams.get("interview") ?? "";
+  const sig = url.searchParams.get("sig") ?? "";
+  const page = (title: string, body: string) => new Response(
+    `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+     <title>${esc(title)}</title><body style="font:16px/1.5 system-ui,sans-serif;max-width:520px;margin:3rem auto;padding:0 1rem">
+     <h1 style="font-size:1.3rem">${esc(title)}</h1>${body}</body>`,
+    { headers: { "content-type": "text/html; charset=utf-8" } });
+  if (!UUID_RE.test(interviewId) || sig !== await callGuestSig(env, interviewId)) {
+    return page("Link not valid", "<p>This link is incomplete or has been changed.</p>");
+  }
+  const { iv, app } = await interviewGuest(env, interviewId);
+  if (!iv || !app) return page("Interview not found", "<p>No interview matches this link.</p>");
+  const who = esc(String(app.name ?? "the guest"));
+  if (req.method !== "POST") {
+    return page(`Call ${who}'s phone?`,
+      `<p>Mira will call ${who} on ${esc(String(app.phone ?? "the number on file"))} within a minute or two
+       and do the interview by phone. Their browser session, if any, is closed.</p>
+       <form method="post"><button style="font:inherit;padding:.6rem 1.2rem;border-radius:8px;border:0;background:#0F766E;color:#fff">
+       Call ${who} now</button></form>`);
+  }
+  const res = await handleStudioPhone(new Request(req.url, {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ interview: interviewId, by: "patrick" }),
+  }), env);
+  const out = await res.json<any>().catch(() => ({}));
+  if (out.ok) return page("Calling now", `<p>Mira is calling ${who} on the number ending in ${esc(String(out.phone_last4))}. ${who} has been emailed to expect the call.</p>`);
+  if (out.need_phone) return page("No phone number on file", `<p>There's no usable number for ${who}. Reply to them and ask for one.</p>`);
+  return page("Couldn't switch to phone", `<p>${esc(String(out.error ?? "Unknown error"))}</p>`);
 }
 
 async function archivePackage(env: Env, packageId: string, reason: string): Promise<Response> {
@@ -2071,6 +2120,41 @@ const ECHO_VERDICTS = new Set(["clean", "borderline", "speakers", "unknown", "no
  *  either before a live join or from the day-before setup test (test=true).
  *  Stored on interviews.setup_check. A failed day-before test emails
  *  Patrick, because that is the one moment there is still time to fix it. */
+async function alertStuckGuest(env: Env, iv: any, app: any, show: any, record: any, body: any) {
+  const who = app?.name ? String(app.name) : "A guest";
+  const when = iv.scheduled_at ? pacificTime(iv.scheduled_at) : "an unscheduled slot";
+  const late = Math.max(0, Math.round(Number(body?.minutes_late) || 0));
+  const where = record.mic === "ok"
+    ? "Their microphone check passed, but they haven't pressed Join."
+    : record.mic === "quiet" || record.mic === "silent"
+      ? `Their microphone check failed (${record.mic}${record.mic_db !== null ? `, ${record.mic_db} dB` : ""}), so Join is still locked.`
+      : body?.mic_access === false
+        ? "Their browser hasn't given the studio the microphone, so they can't run the check."
+        : "They haven't run the microphone check yet, so Join is still locked.";
+  const signin = record.signin === "failed"
+    ? ` The studio sign-in also failed on their network (${esc(record.signin_error || "no detail")}).` : "";
+  const phone = app?.phone ? String(app.phone) : "";
+  let link = "";
+  try { link = await callGuestLink(env, iv.id); } catch { /* no ADMIN_TOKEN: no link */ }
+  try {
+    await email(env, operatorEmail(env),
+      `${show.shortLabel}: ${who} has the studio open but isn't in the interview`,
+      `<p>Hi Patrick,</p><p>${esc(who)} has the studio page open for their interview (${esc(when)}),
+       but ${late ? `${late} minutes after the start` : "after the start"} they still aren't in the room with me.
+       ${esc(where)}${signin}</p>
+       <p>The page is showing them the two steps and the "Have Mira call my phone" button.</p>
+       ${phone && link ? `<p>If you'd rather not wait, I can call them now on ${esc(phone)}:
+       <a href="${link}">switch ${esc(who)} to a phone call</a>.</p>`
+         : phone ? `<p>Their phone: ${esc(phone)}.</p>` : "<p>There's no phone number on file for them.</p>"}
+       <p>Device: ${esc(record.device || "unknown")}<br>Browser: ${esc(record.ua || "unknown")}<br>
+       Guest email: ${esc(app?.email ?? "unknown")}</p>
+       <p>— Mira</p>`);
+  } catch (err: any) {
+    console.error("stuck-guest email failed:", err?.message ?? err);
+  }
+  await slack(env, `:warning: ${show.shortLabel}: ${who} has the studio open ${late} min after the start but hasn't joined (mic ${record.mic}). Patrick emailed.`);
+}
+
 async function handleStudioCheck(req: Request, env: Env): Promise<Response> {
   const body = await req.json<any>().catch(() => null);
   const interviewId = String(body?.interview ?? "").trim();
@@ -2093,9 +2177,22 @@ async function handleStudioCheck(req: Request, env: Env): Promise<Response> {
   };
   const { iv, app, show } = await interviewGuest(env, interviewId);
   if (!iv) return json({ error: "not found" }, 404);
+  // Oct 1 2026 (Jonathan Bautista): the studio page was open, the slot had
+  // started, and he never got past the microphone check to Join. Nothing
+  // reached Mira, so nothing told anyone. The page now reports a guest who
+  // is still outside the room a few minutes after the start, and Patrick
+  // is emailed once, with a link that switches the interview to a phone call.
+  const stuck = body?.stuck === true && !test && record.role === "guest";
+  const alertedBefore: string | null = iv.setup_check?.stuck_alerted_at ?? null;
+  const stuckAlertedAt = stuck && !alertedBefore ? record.at : alertedBefore;
   const history = Array.isArray(iv.setup_check?.history) ? iv.setup_check.history.slice(-9) : [];
   await sb(env, "PATCH", `interviews?id=eq.${interviewId}`,
-    { setup_check: { ...record, history: [...history, record] } }).catch(() => null);
+    { setup_check: { ...record, ...(stuckAlertedAt ? { stuck_alerted_at: stuckAlertedAt } : {}),
+      history: [...history, { ...record, ...(stuck ? { stuck: true } : {}) }] } }).catch(() => null);
+  if (stuck) {
+    if (!alertedBefore) await alertStuckGuest(env, iv, app, show, record, body);
+    return json({ ok: true, stuck: true, alerted: !alertedBefore });
+  }
 
   const problems: string[] = [];
   if (mic === "silent") problems.push("the microphone sent no sound at all");
@@ -2233,7 +2330,10 @@ async function handleStudioPhone(req: Request, env: Env): Promise<Response> {
   } catch (err: any) {
     console.error("studio-phone guest email failed:", err?.message ?? err);
   }
-  await slack(env, `:telephone_receiver: ${show.shortLabel}: ${app.name ?? "guest"} pressed "Have Mira call my phone" — switched to PSTN (…${last4})${dispatched ? ", fire tick dispatched" : ", next cron tick dials"}.`);
+  const byWho = body?.by === "patrick"
+    ? `Patrick switched ${app.name ?? "the guest"} to a phone call`
+    : `${app.name ?? "guest"} pressed "Have Mira call my phone"`;
+  await slack(env, `:telephone_receiver: ${show.shortLabel}: ${byWho} — switched to PSTN (…${last4})${dispatched ? ", fire tick dispatched" : ", next cron tick dials"}.`);
   return json({ ok: true, phone_last4: last4, dispatched });
 }
 
@@ -2689,6 +2789,7 @@ export default {
       }
       if (req.method === "GET" && path === "/voices/admin/triage") return handleAdminTriage(req, env);
       if (req.method === "GET" && path === "/voices/admin/archive-link") return handleArchiveLink(env);
+      if ((req.method === "GET" || req.method === "POST") && path === "/voices/admin/call-guest") return handleCallGuest(req, env);
       const archive = path.match(/^\/voices\/admin\/archive(?:\/([0-9a-f]{40}))?$/);
       if (archive && req.method === "GET") return handleArchivePage(req, env, archive[1]);
       // The token rides in the path as well as the query string: mail
