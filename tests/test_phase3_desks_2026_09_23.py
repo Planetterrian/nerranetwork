@@ -94,7 +94,9 @@ class TestDeskConfig:
         assert c.llm.model == "grok-4.7" and c.llm.reasoning_effort == "low"
         assert c.absence_sentence_filter and c.fetch_full_text >= 12
         assert c.stale_article_days == 3 and c.min_articles_skip == 4
-        assert not c.youtube.enabled and not c.newsletter.enabled
+        # Oct 1 2026: the newsletter is ON (the show page offered the signup
+        # since launch; the Worker keeps the tag now). YouTube stays off.
+        assert not c.youtube.enabled and c.newsletter.enabled
         assert c.publishing.rss_link == f"https://nerranetwork.com/{slug.replace('_', '-')}.html"
 
     def test_no_keyword_filter(self, slug):

@@ -8241,9 +8241,11 @@ def _publish_youtube(
                                 variant=(_variant.variant if _ab_on else ""),
                                 placement=_funnel.PLACEMENT_COMMENT,
                             ) or (config.publishing.rss_link or "")
+                            from engine.cadence import episodes_phrase as _cad
                             _cmt = ("\u25b6 Full episode: " + _cmt_target
-                                    + "\n\U0001f514 Subscribe for daily "
-                                      "episodes") if _cmt_target else ""
+                                    + "\n\U0001f514 Subscribe for "
+                                    + _cad(getattr(config, "slug", ""))
+                                    ) if _cmt_target else ""
                             if _cmt and _publish_at is not None:
                                 # Comments can't be posted on a private
                                 # (scheduled) video \u2014 queue it; the sweep
@@ -8575,7 +8577,9 @@ def _build_cross_promo_reply(config, today, episode_num=None) -> str:
     )
 
     handle = (getattr(config.publishing, "x_handle", "") or "").strip()
-    follow_line = f"Follow {handle} for daily episodes." if handle else ""
+    from engine.cadence import episodes_phrase as _cadence_phrase
+    follow_line = (f"Follow {handle} for {_cadence_phrase(config.slug)}."
+                   if handle else "")
 
     # Odd days → website surface (gallery / blogs / trackers / …).
     # Even days → sibling show (legacy behaviour).

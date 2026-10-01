@@ -355,6 +355,66 @@ TOPIC_HUBS: Tuple[Dict[str, Any], ...] = (
         "alternative": {"label": "Vancouver Daily News", "href": "vancouver.html"},
     },
     {
+        # Oct 1 2026: prediction markets had no hub of their own — the show's
+        # ``economics`` tag matched nothing and it sat only inside markets.
+        # Below MIN_EPISODES_FOR_HUB at launch; turns itself on.
+        "id": "prediction-markets",
+        "title": "Prediction markets podcast — the venues, the rules and what a price means",
+        "heading": "Prediction markets",
+        "picker_topics": ("prediction-markets",),
+        "intro": (
+            "Prediction markets price questions: who wins, when a rate moves, "
+            "whether a bill passes. The daily show reads the venues the way a "
+            "reporter reads a court — Polymarket, Kalshi and the play-money "
+            "sites, with volume quoted in each venue's own unit, a number "
+            "called a price and never the odds, and a short lesson each day "
+            "on how the mechanism works, from the papers that studied it."
+        ),
+        "angle": (
+            "The show never tips a trade and never calls a market a bet. The "
+            "Board is a set of live questions with sport, parlays and "
+            "near-certain contracts excluded, and Friday scores the week's "
+            "questions against their latest readings."
+        ),
+        "meta_description": (
+            "Prediction markets podcast from Nerra Network: a daily read of "
+            "Polymarket, Kalshi and Manifold, the rules behind the prices, and "
+            "the research on how forecasting markets work."
+        ),
+        "keywords": "prediction markets podcast, polymarket, kalshi, forecasting, event contracts, manifold markets",
+        "alternative": {"label": "Prediction Markets Daily", "href": "prediction-markets.html"},
+    },
+    {
+        # Oct 1 2026: chips and data centres were split across the ai and
+        # engineering hubs. Below MIN_EPISODES_FOR_HUB at launch; turns
+        # itself on.
+        "id": "ai-infrastructure",
+        "title": "AI infrastructure podcast — chips, data centres, power and the supply chain",
+        "heading": "AI infrastructure",
+        "picker_topics": ("ai-infrastructure",),
+        "intro": (
+            "The physical side of AI: the accelerators and the foundries that "
+            "make them, the data-centre builds and the megawatts they need, "
+            "the grid connections, the cooling, the memory and the "
+            "interconnect. Every data-centre item names a build state and a "
+            "power figure, because a plan without a megawatt number is a "
+            "press release."
+        ),
+        "angle": (
+            "A daily show that follows the constraint — power, packaging, "
+            "water, permits — rather than the product launch, with the lead "
+            "sourced to the regulator, the utility or the company's own "
+            "filing before any analyst note."
+        ),
+        "meta_description": (
+            "AI infrastructure podcast from Nerra Network: GPUs and custom "
+            "silicon, data-centre builds with their megawatts, grid and "
+            "cooling constraints, and the supply chain behind them."
+        ),
+        "keywords": "ai chips podcast, data centre podcast, gpu supply chain, ai data centers power, semiconductor podcast",
+        "alternative": {"label": "AI Chips & Data Centres Daily", "href": "ai-chips.html"},
+    },
+    {
         "id": "sailing",
         "title": "Offshore sailing podcast — a Canadian Vendée Globe campaign",
         "heading": "Offshore sailing",

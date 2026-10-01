@@ -309,6 +309,42 @@ def _quoted_tag_cost(tags: List[str]) -> int:
     return sum(per) + (len(tags) - 1)
 
 
+
+#: Oct 1 2026: the one network-wide ``synthetic_disclosure`` says the show
+#: "is curated by Patrick" — false on every Mira show (the six desks,
+#: Vancouver, Collingwood, Nerra Daily), where the HOST is the AI. The RSS
+#: path already branches on ``host_kind``; the YouTube description does too.
+_AI_HOST_DISCLOSURE = (
+    "AI Disclosure: {host} is an AI host. This episode's narration is "
+    "AI-generated voice (xAI Grok TTS) and its editorial selection, "
+    "summaries and analysis are written from primary sources by the Nerra "
+    "Network, with Patrick Novak as editor. Learn more: "
+    "https://nerranetwork.com/ai-disclosure"
+)
+
+
+def video_disclosure_for(config) -> str:
+    """The AI disclosure line for a video description: the show's own
+    ``youtube.synthetic_disclosure`` when it names no human curator, or the
+    AI-host form when ``host_kind`` is ``ai`` and the configured text still
+    says "curated by Patrick"."""
+    text = (getattr(getattr(config, "youtube", None), "synthetic_disclosure", "") or "").strip()
+    publishing = getattr(config, "publishing", None)
+    host_kind = str(getattr(publishing, "host_kind", "") or getattr(config, "host_kind", "") or "").lower()
+    if host_kind == "ai" and "curated by patrick" in text.lower():
+        host = (getattr(getattr(config, "publishing", None), "host_name", "") or "Mira").strip() or "Mira"
+        return _AI_HOST_DISCLOSURE.format(host=host)
+    return text
+
+
+#: YouTube channel handles by dub channel; the subscribe-confirm link form.
+CHANNEL_HANDLES = {"en": "@NerraNetwork", "ru": "@NerraRU", "fr": "@NerraFR"}
+
+
+def channel_subscribe_url(channel: str = "en") -> str:
+    handle = CHANNEL_HANDLES.get((channel or "en").lower(), CHANNEL_HANDLES["en"])
+    return f"https://www.youtube.com/{handle}?sub_confirmation=1"
+
 def build_tags(
     extra: List[str],
     keywords: List[str],
@@ -495,6 +531,10 @@ def build_long_form_metadata(
     subscribe_line = (
         f"🎧 Subscribe to {show_label} on the Nerra Network: {utm_link}"
     )
+    # Oct 1 2026: the description's only "subscribe" pointed at the
+    # website; nothing asked for the channel subscribe YouTube ranks on.
+    # The ``?sub_confirmation=1`` link opens the confirm dialog directly.
+    subscribe_line += f"\n🔔 Subscribe on YouTube: {channel_subscribe_url(channel)}"
     # Show-page line at the top of the description. This USED to carry
     # the bare canonical URL (readability rationale in git history) with
     # only the subscribe line tagged — but the Aug 15 2026 funnel audit
@@ -620,7 +660,18 @@ def build_long_form_metadata(
                    if line.strip()]
         if cleaned:
             tail_pieces.append("Footage:\n" + "\n".join(cleaned))
-    disclosure = (config.youtube.synthetic_disclosure or "").strip()
+    # Sources (Oct 1 2026): the description cited nothing — the digest's
+    # links are stripped above for the body — so the one trust surface a
+    # YouTube viewer sees named no publisher. Same line the RSS notes carry.
+    try:
+        from engine.show_notes import sources_footer as _sources_footer
+        _src_line = _sources_footer(digest_text or "", language=(
+            getattr(config.youtube, "default_language", "en") or "en"))
+        if _src_line:
+            tail_pieces.append(_strip_markdown(_src_line))
+    except Exception:  # noqa: BLE001 — never block an upload on a footer
+        pass
+    disclosure = video_disclosure_for(config)
     if disclosure:
         tail_pieces.append(disclosure)
     pinned = build_pinned_comment_text(
@@ -771,7 +822,7 @@ def build_short_metadata(
     # Aug 15 2026 funnel audit found 0 attributed sessions network-wide —
     # a bare link here is a click the funnel can never see.
     pieces.append(f"🌐 Show page: {utm_link}")
-    disclosure = (config.youtube.synthetic_disclosure or "").strip()
+    disclosure = video_disclosure_for(config)
     if disclosure:
         pieces.append(disclosure)
 

@@ -214,11 +214,18 @@ def _append_history(previous: List[Any], today: str,
 def build_ratings(targets: List[Dict[str, str]],
                   previous: Optional[Dict[str, Any]],
                   *,
-                  fetch: Callable[[str], Optional[str]] = fetch_page,
+                  fetch: Optional[Callable[[str], Optional[str]]] = None,
                   sleep: Callable[[float], None] = time.sleep,
                   pause: float = PAUSE_SECONDS,
                   now: Optional[_dt.datetime] = None) -> Dict[str, Any]:
-    """Fetch every target and merge with the previous file's readings."""
+    """Fetch every target and merge with the previous file's readings.
+
+    ``fetch`` is resolved at CALL time (never as a default bound at import)
+    so a test that patches ``fetch_page`` on the module actually stops the
+    request — the first draft bound it as a default and the test suite made
+    a live request to podcasts.apple.com.
+    """
+    fetch = fetch or fetch_page
     now = now or _dt.datetime.now(_dt.timezone.utc)
     today = now.date().isoformat()
     fetched_at = now.isoformat()
