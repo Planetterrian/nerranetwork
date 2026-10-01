@@ -56,7 +56,17 @@ nightly regeneration picks it up.
    returns both (2) and (3) for the episode being published, and `""` on an
    ordinary day, so the description is byte-identical until a correction is
    filed.
-4. **Any trust surface** that wants the recent record:
+4. **The public claims ledger** (`engine/claims_ledger.py` →
+   `generate_html.generate_claims_pages`): `claims/<slug>.html` lists the
+   show's last 30 days episode by episode — every ledger entry with its
+   verification status, the sentences published-and-marked, the ones a
+   nightly re-check later verified, and every correction filed, dated —
+   and `claims.html` carries the process (one owner:
+   `engine.brand.CLAIMS_PROCESS_STEPS`) and the per-show totals. Both are
+   in `--static-pages` and `--all` and in the sitemap from the same list
+   the generator writes. A correction entry appears on the show's ledger
+   page on the next regeneration, under its episode.
+5. **Any trust surface** that wants the recent record:
    `engine.corrections.recent_corrections(show_dir, days=30)`.
 
 The reader-facing address for reporting an error is
@@ -85,4 +95,8 @@ aired and the correction entry tells the listener what was wrong.
 `tests/test_web_trust_2026_10_01.py` round-trips the YAML, pins the
 next-episode rule, renders the correction box and the show-notes lines, and
 checks that the policy pages describe the gate as it is configured in
-`shows/_defaults.yaml` (`source_integrity.enforce: true`, `on_failure: strip`).
+`shows/_defaults.yaml` (`source_integrity.enforce: true`, `on_failure: flag`
+since 2026-10-01 — a claim the gate cannot confirm is published and marked,
+never removed; `tests/test_claims_pages_2026_10_01.py` renders the ledger
+pages for real and fails the trust pages if they claim removal while the
+default is `flag`, or the reverse).

@@ -105,6 +105,28 @@
 </ol>
 {%- endmacro -%}
 
+{#- A claim's status badge (Oct 1 2026, the claims-and-corrections pass).
+
+    Reads the ``claims_status_labels`` Jinja global, which generate_html
+    registers from engine.brand.CLAIMS_STATUS_LABELS — the one owner of the
+    status vocabulary, its listener-facing labels and their meanings. The
+    badge carries the status as a data attribute and a ``.nn-claims-badge--<status>``
+    class; the colours are the ``--nn-claims-*`` tokens in styles/main.css.
+    Unknown status: rendered raw, styled as unverified, never dropped. The
+    one-line meaning rides in ``title`` so a reader can hover for it; the
+    ledger pages print it in full beside the claim. -#}
+{%- macro claims_badge(status, show_meaning=false) -%}
+{%- set _s = (status or 'verified') | lower -%}
+{%- set _entry = claims_status_labels.get(_s) -%}
+{%- set _label = _entry[0] if _entry else (_s | replace('_', ' ')) -%}
+{%- set _meaning = _entry[1] if _entry else '' -%}
+<span class="nn-claims-badge nn-claims-badge--{{ _s }}" data-status="{{ _s }}"{% if _meaning and not show_meaning %} title="{{ _meaning }}"{% endif %}>
+  {%- if _s == 'verified_later' %}<svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>{% elif _s in ('verified', 'verified_from_fetched') %}<svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>{% endif -%}
+  {{ _label }}
+</span>
+{%- if show_meaning and _meaning %} <span class="nn-claims-meaning">{{ _meaning }}</span>{% endif -%}
+{%- endmacro -%}
+
 {#- One show card, used by the homepage grid and by /explore.html.
 
     Extracted 2026-09-21 when /explore.html needed the same card: it carries the

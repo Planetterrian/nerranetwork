@@ -682,6 +682,11 @@
         }
         .blog-claims .claim-source a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
         .blog-claims .claim-source a:hover { text-decoration: underline; }
+        .blog-claims .claim-why { display: block; font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-top: 2px; }
+        .blog-claims .claims-flagged-count { font-weight: 400; color: var(--nn-text-muted); font-size: 0.9em; }
+        .blog-claims .claims-ledger-link { font-family: var(--font-ui); font-size: 0.85rem; margin: var(--sp-3) 0 0; }
+        .blog-claims .claims-ledger-link a, .blog-claims .claims-none a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claims-ledger-link a:hover, .blog-claims .claims-none a:hover { text-decoration: underline; }
         /* Correction box (engine.corrections): dated, at the top of the
            article, before a reader meets the sentence that was wrong. */
         .nn-correction {
@@ -1226,24 +1231,40 @@
                 state is the point. Interview posts carry their own
                 provenance and no ledger. -#}
             {% if claims_summary and claims_summary.present and not interview %}
+            {% from "_macros.html.j2" import claims_badge %}
+            {#- Oct 1 2026, flag mode: the ledger now holds EVERY entry with
+                its status, so each row carries a badge (the claims_badge
+                macro, colours from the --nn-claims-* tokens) and a marked
+                claim says in plain words why the check could not confirm
+                it. The heading still counts the verified ones. -#}
+            {% set _n_verified = verified_claims | selectattr('is_verified') | list | length %}
+            {% set _n_flagged = (verified_claims | length) - _n_verified %}
             <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
                 {% if verified_claims %}
                 <details>
                     <summary>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-                        {% if _is_ru %}Проверенные утверждения{% else %}Verified claims{% endif %} ({{ verified_claims | length }})
+                        {% if _is_ru %}Проверенные утверждения{% else %}Verified claims{% endif %} ({{ _n_verified }}){% if _n_flagged %} <span class="claims-flagged-count">· {{ _n_flagged }} {% if _is_ru %}опубликовано без подтверждения{% else %}published, not yet verified{% endif %}</span>{% endif %}
                     </summary>
-                    <p class="claims-note">{% if _is_ru %}Каждое утверждение ниже проверено перед публикацией: источник открыт, подтверждающая цитата в нём найдена.{% else %}Each claim below was checked before publication: its source was fetched and the supporting quote was found in it.{% endif %}{% if claims_summary.stripped %} {% if _is_ru %}Удалено непроверенных предложений: {{ claims_summary.stripped }}.{% else %}{{ claims_summary.stripped }} unverified sentence{{ 's' if claims_summary.stripped != 1 else '' }} {{ 'were' if claims_summary.stripped != 1 else 'was' }} removed before publication.{% endif %}{% endif %}</p>
+                    <p class="claims-note">{% if _is_ru %}Каждое утверждение ниже проверено машиной перед публикацией: источник открыт, подтверждающая цитата в нём найдена. Утверждение, которое проверка не смогла подтвердить, опубликовано с пометкой, а не удалено, и перепроверяется каждую ночь в течение недели.{% else %}Each claim below was checked by a machine before publication: its source was fetched and the supporting quote looked for in it. A claim the check could not confirm is published and marked, not removed, and re-checked nightly for a week.{% endif %}{% if claims_summary.stripped %} {% if _is_ru %}Удалено непроверенных предложений: {{ claims_summary.stripped }}.{% else %}{{ claims_summary.stripped }} unverified sentence{{ 's' if claims_summary.stripped != 1 else '' }} {{ 'were' if claims_summary.stripped != 1 else 'was' }} removed before publication.{% endif %}{% endif %}</p>
                     <ol>
                         {%- for c in verified_claims %}
-                        <li>{{ c.claim }}
+                        <li>{{ claims_badge(c.status) }} {{ c.claim }}
+                            {%- if c.source_url %}
                             <span class="claim-source"><a href="{{ c.source_url }}" target="_blank" rel="noopener"{% if c.source_title %} title="{{ c.source_title }}"{% endif %}>{{ c.source_domain }}</a></span>
+                            {%- endif %}
+                            {%- if not c.is_verified and c.status_meaning %}
+                            <span class="claim-why">{{ c.status_meaning }}</span>
+                            {%- elif c.status == 'verified_later' and c.verified_at %}
+                            <span class="claim-why">{% if _is_ru %}Подтверждено{% else %}Verified{% endif %} {{ c.verified_at }}{% if c.first_status_label %} ({% if _is_ru %}первоначально{% else %}first{% endif %}: {{ c.first_status_label | lower }}){% endif %}</span>
+                            {%- endif %}
                         </li>
                         {%- endfor %}
                     </ol>
+                    <p class="claims-ledger-link"><a href="{{ path_prefix }}{{ claims_page_url }}">{% if _is_ru %}Полный реестр этого подкаста{% else %}Full ledger for this show{% endif %} →</a></p>
                 </details>
                 {% else %}
-                <p class="claims-none">{% if _is_ru %}Для этого выпуска отдельные утверждения не проходили проверку по реестру; каждый материал выше ссылается на свой источник.{% else %}No individual claims were ledger-verified for this episode; every item above links its source.{% endif %}</p>
+                <p class="claims-none">{% if _is_ru %}Для этого выпуска отдельные утверждения не проходили проверку по реестру; каждый материал выше ссылается на свой источник.{% else %}No individual claims were ledger-verified for this episode; every item above links its source.{% endif %} <a href="{{ path_prefix }}{{ claims_page_url }}">{% if _is_ru %}Полный реестр этого подкаста{% else %}Full ledger for this show{% endif %} →</a></p>
                 {% endif %}
             </section>
             {% endif %}
