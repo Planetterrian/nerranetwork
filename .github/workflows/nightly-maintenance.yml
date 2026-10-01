@@ -103,6 +103,19 @@ jobs:
           python scripts/fetch_apple_stats.py --out api/apple_stats.json
           python scripts/fetch_apple_ratings.py --out api/apple_ratings.json
 
+      - name: Re-verify flagged claims (last 7 days)
+        # Flag mode (Oct 1 2026): an episode publishes with every ledger
+        # entry's status visible instead of losing the sentence or the
+        # day, and THIS step is the other half of that policy — it re-runs
+        # the same mechanical check (URL resolves, quote fuzzy-appears) on
+        # every unverified_* entry in the last week's digests/**/*_claims.json
+        # and marks the ones that now verify `verified_later`. Never
+        # downgrades a verified claim; never raises; per-host pacing. The
+        # sidecar glob MUST stay in the add-paths whitelist below or the
+        # rewrite is thrown away every night (youtube_channel_history
+        # landmine class).
+        run: python scripts/reverify_claims.py --apply --days 7 || true
+
       - name: Refresh show performance trackers from OP3 data
         # Closes the memory systems' performance-feedback loop (June
         # 2026 reviews): derives strong_topics_last_30d from the
@@ -419,6 +432,7 @@ jobs:
             digests/**/video_assets.json
             digests/**/channel_i18n.json
             digests/**/scheduled_comments.json
+            digests/**/*_claims.json
             api/dashboard.json
             api/audience_headline.json
             api/daily-show-health.json

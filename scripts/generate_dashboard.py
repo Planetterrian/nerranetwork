@@ -3345,6 +3345,10 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         # Oct 1 2026: Apple star ratings from the public show pages — the
         # readout for the on-air "rate us on Apple Podcasts" ask.
         "apple_ratings": build_apple_ratings_section(root),
+        # Oct 1 2026: claim-ledger health across every committed sidecar —
+        # flag mode publishes with the status visible, so this is where
+        # the verified share and the nightly re-verification are read.
+        "claims": build_claims_section(root),
         "efficiency": efficiency,
         "catalog": catalog_section,
         "gallery": gallery_section,
@@ -3574,6 +3578,165 @@ def build_apple_ratings_section(root: Path,
                      "null = the page carried no rating block (unmeasured); "
                      "0 = the page said zero ratings. Delta is ratings "
                      "gained vs the newest reading at least 7 days old."),
+        }
+    except Exception as exc:  # noqa: BLE001 — never break the dashboard
+        return {"configured": True, "error": str(exc)}
+
+
+_CLAIMS_SIDECAR_NAME_RE = re.compile(r"_Ep(\d+)_(\d{8})_claims\.json$")
+_CLAIM_REASONS = ("unreachable", "not_found", "quote_mismatch", "uncovered", "malformed")
+_CLAIM_STATUS_TO_REASON = {
+    "unverified_unreachable": "unreachable",
+    "unverified_not_found": "not_found",
+    "unverified_quote_mismatch": "quote_mismatch",
+    "unverified_uncovered": "uncovered",
+    "malformed": "malformed",
+}
+_VERIFIED_CLAIM_STATUSES = frozenset({"verified", "verified_from_fetched", "verified_later"})
+
+
+def _claims_reason_from_verdict(v: dict) -> str:
+    if v.get("unreachable"):
+        return "unreachable"
+    if not v.get("resolved"):
+        return "not_found"
+    return "quote_mismatch"
+
+
+def _claims_sidecar_counts(payload: dict) -> Dict[str, Any]:
+    """One sidecar → {total, verified, verified_later, reasons{...}, mode}.
+
+    A flag-mode sidecar (``gate.policy_version`` 2, every entry carrying
+    ``status``) is counted from its statuses. A legacy sidecar committed
+    only verified entries, so its failures are read from the gate record:
+    ``pre_strip`` on a strip-mode sidecar (what the gate saw BEFORE the
+    strip), else ``failed_verifications`` / ``uncovered_shapes`` /
+    ``shape_errors``.
+    """
+    gate = payload.get("gate") if isinstance(payload.get("gate"), dict) else {}
+    entries = [e for e in (payload.get("claims") or []) if isinstance(e, dict)]
+    reasons = {r: 0 for r in _CLAIM_REASONS}
+    statused = [e for e in entries if e.get("status")]
+    if statused:
+        verified = sum(1 for e in entries
+                       if not e.get("status") or e.get("status") in _VERIFIED_CLAIM_STATUSES)
+        verified_later = sum(1 for e in entries if e.get("status") == "verified_later")
+        for e in entries:
+            r = _CLAIM_STATUS_TO_REASON.get(str(e.get("status") or ""))
+            if r:
+                reasons[r] += 1
+        total = len(entries)
+    else:
+        verified = int(gate.get("claims_verified") or 0)
+        verified_later = 0
+        rec = gate.get("pre_strip") if isinstance(gate.get("pre_strip"), dict) else gate
+        for v in rec.get("failed_verifications") or []:
+            if isinstance(v, dict):
+                reasons[_claims_reason_from_verdict(v)] += 1
+        reasons["uncovered"] += len(rec.get("uncovered_shapes") or [])
+        reasons["malformed"] += len(rec.get("shape_errors") or [])
+        # A strip-mode sidecar's ``claims_total`` is the POST-strip ledger
+        # (the failed entries left it), so the assertions checked are the
+        # verified ones plus everything the gate saw fail before the strip.
+        total = verified + sum(reasons.values())
+    return {
+        "total": total,
+        "verified": verified,
+        "verified_later": verified_later,
+        "flagged": sum(reasons.values()),
+        "reasons": reasons,
+        "mode": str(gate.get("mode") or "") or ("strip" if gate.get("pre_strip") else "legacy"),
+    }
+
+
+def _claims_window_rollup(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Sum per-sidecar counts into one window; ``null`` with no sidecar."""
+    if not rows:
+        return {"sidecars": 0, "claims_total": None, "verified": None,
+                "verified_share": None, "flagged": None, "flagged_share": None,
+                "flagged_by_reason": {r: None for r in _CLAIM_REASONS},
+                "flagged_share_by_reason": {r: None for r in _CLAIM_REASONS},
+                "verified_later": None, "by_mode": {}}
+    total = sum(r["total"] for r in rows)
+    verified = sum(r["verified"] for r in rows)
+    flagged = sum(r["flagged"] for r in rows)
+    reasons = {k: sum(r["reasons"][k] for r in rows) for k in _CLAIM_REASONS}
+    by_mode: Dict[str, int] = {}
+    for r in rows:
+        by_mode[r["mode"]] = by_mode.get(r["mode"], 0) + 1
+    return {
+        "sidecars": len(rows),
+        "claims_total": total,
+        "verified": verified,
+        "verified_share": (round(verified / total, 3) if total else None),
+        "flagged": flagged,
+        "flagged_share": (round(flagged / total, 3) if total else None),
+        "flagged_by_reason": reasons,
+        "flagged_share_by_reason": {
+            k: (round(v / total, 3) if total else None) for k, v in reasons.items()},
+        "verified_later": sum(r["verified_later"] for r in rows),
+        "by_mode": by_mode,
+    }
+
+
+def build_claims_section(root: Path,
+                         today: Optional[_dt.date] = None) -> Dict[str, Any]:
+    """Claim-ledger health across every committed sidecar (Oct 1 2026).
+
+    Reads ``digests/**/*_claims.json`` — the source-integrity gate's
+    public record — dated from the FILENAME (``_EpNNN_YYYYMMDD``), never
+    the mtime. Two windows (7 / 30 days): claims total, verified share,
+    flagged share by reason, ``verified_later`` (the nightly
+    re-verification's recoveries) and per-show rows. Flag mode (the
+    network default since 2026-10-01) publishes with the status visible,
+    so this card is where "how much of what we said could we vouch for"
+    is read. Honesty: no sidecar in a window → ``null`` on every number,
+    never 0 (a sidecar with zero claims is a measured 0).
+    """
+    today = today or _dt.date.today()
+    try:
+        per_file: List[Dict[str, Any]] = []
+        for p in sorted(root.glob("digests/**/*_claims.json")):
+            m = _CLAIMS_SIDECAR_NAME_RE.search(p.name)
+            if not m:
+                continue
+            try:
+                d = _dt.datetime.strptime(m.group(2), "%Y%m%d").date()
+            except ValueError:
+                continue
+            if d > today or (today - d).days > 30:
+                continue
+            payload = _load_json(p)
+            if not isinstance(payload, dict):
+                continue
+            row = _claims_sidecar_counts(payload)
+            row["show_dir"] = p.parent.name
+            row["age_days"] = (today - d).days
+            per_file.append(row)
+        if not per_file and not any(root.glob("digests/**/*_claims.json")):
+            return {"configured": False}
+
+        def _window(days: int) -> Dict[str, Any]:
+            rows = [r for r in per_file if r["age_days"] < days]
+            out = _claims_window_rollup(rows)
+            per_show: Dict[str, Any] = {}
+            for show in sorted({r["show_dir"] for r in rows}):
+                per_show[show] = _claims_window_rollup(
+                    [r for r in rows if r["show_dir"] == show])
+            out["per_show"] = per_show
+            return out
+
+        return {
+            "configured": True,
+            "as_of": today.isoformat(),
+            "window_7d": _window(7),
+            "window_30d": _window(30),
+            "note": ("Every committed digests/**/*_claims.json, dated from "
+                     "its filename. claims_total counts ledger entries plus "
+                     "uncovered citation shapes; null = no sidecar in the "
+                     "window, 0 = sidecars with no claims. verified_later = "
+                     "flagged claims the nightly re-verification "
+                     "(scripts/reverify_claims.py) later verified."),
         }
     except Exception as exc:  # noqa: BLE001 — never break the dashboard
         return {"configured": True, "error": str(exc)}
