@@ -127,4 +127,76 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: '2026-10-01'
+    pr: null
+    doc: docs/reviews/unintended_consequences_review_2026_10_01.md
+    generated_by: grok-4.5
+    summary: Prior chapter/closing/gate fixes held, but chronic under-length remains (9/10 scripts below 1300) despite digest_expand, and the Lesson segment has converged on prompt-seeded stock principles (“Incentive structures always find their loopholes” / “Complex systems resist simple interventions”).
+    scored_prior_predictions:
+    - metric: fraction of last-10 episodes with Introduction-first + Closing-last chapter shape
+      verdict: hit
+      evidence: chapters_ep120–129 all Introduction at start, Closing at end, clean 4–6 chapter shapes
+    - metric: fraction of last-10 episodes shipping 'That wraps today's case' as the sign-off
+      verdict: hit
+      evidence: Still absent across ep119–128 transcripts; pool variants only
+    - metric: distinct closing variants across the last 10 episodes
+      verdict: hit
+      evidence: '≥3 variants live: ''That''s unintended consequences for today'' / ''And that''s where today''s story leaves us'' / ''We''ll leave it there for today…'''
+    - metric: median _tts.txt words, last 10 episodes (under-length; NOT fixed this pass)
+      verdict: hit
+      evidence: median ≈1053 words; 9/10 still below 1300 — digest ceiling still the open problem
+    - metric: consecutive same-category episodes in produced queue order
+      verdict: partial
+      evidence: ep119–129 domain-diverse (fisheries→rabbits→bags→timber→rice→Aral→uniforms→HFCs→nuclear→labor→peat); queue category-field runs not re-audited from YAML this pass
+    - metric: UC consecutive missed days from a single gate-blocked topic
+      verdict: hit
+      evidence: Continuous ep120–129 publish window; no repeat of the 2026-08-24/25 same-topic multi-day hole
+    - metric: 'enforce-mode gate blocks recovered by claim repair (metrics: source_integrity_repair_succeeded)'
+      verdict: miss
+      evidence: No source_integrity_repair_succeeded (or equivalent) signal in provided snapshot/health context
+    shipped: []
+    deferred:
+    - Missing-intro guard (June) — double-greeting risk; identity line looks healthier in ep119–128 but not formally guarded
+    - Re-clear Philippine land-reform topic (delete gate_blocks) once claim-repair has a scored track record (Aug 25)
+    - Cap 'One might ask/object' ≤1/ep and forbid absolute cost-effectiveness claims without units sanity (July 2 A/B, still shipping e.g. ep124)
+    - Data-side lesson-principle rotation memory from last N scripts if stock couplet survives prompt de-seed (prefer over a third prompt-only pass)
+    - Brief→script re-scene steer for Segments 4–5 without coverage%/overlap numeric gates
+    - 'Operator decision: accept ~8–10 min product (lower min_podcast_words + public expectations) vs keep 1300 spoken floor and only attack digest depth'
+    - Verify Ep126 spoken episode number in _tts.txt (Whisper '146' vs Ep126)
+    - YouTube long-form ~9% retention — separate growth pass (thumbnails/policy), not a UC prompt tweak
+    - Do not re-pin grok-4.6 on UC without fresh staged trial (Aug 27 withdrawal still binds)
+    predictions:
+    - metric: last-10 scripts containing the stock lesson couplet 'Incentive structures always find their loopholes' OR 'Complex systems resist simple interventions' (case-insensitive)
+      baseline: ≥3/10 in ep121/122/128 window (likely higher if full phrase scan)
+      expected: ≤1/10 within 3 weeks after Segment-6 de-seed ships (successor abstract couplet may appear — score that separately)
+      verdict: pending
+      evidence: null
+    - metric: median _tts.txt words, last 10 (after min_digest_words 1500 only — no podcast expand)
+      baseline: ≈1053; 9/10 below 1300
+      expected: median ≥1200 OR clear digest-word lift on briefs; if median still <1100, treat as operator-decision (accept shorter show) not another floor bump
+      verdict: pending
+      evidence: null
+    - metric: podcast prompt still stating 2200–2800 words / 15–18 minutes as the structural target
+      baseline: true (unintended_consequences_podcast.txt STRUCTURAL REQUIREMENTS)
+      expected: false after re-point to ~1400–1800 / 10–12 min; no rise in expansion-padding restatement class
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/unintended_consequences.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Align the enforceable digest expand gate with the episode prompt's 1500–2200 target. Sanctioned length lever only; podcast_expand stays false.
+    - file: shows/prompts/unintended_consequences_episode.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Episode brief examples seeded a Lesson tic heard on multiple recent eps (ep121/122/128). De-seed by shape + verbatim ban per meta-review; feeds spoken audio so A/B-listen.
+    - file: shows/prompts/unintended_consequences_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: June deferred lowering the fantasy 2200–2800/15–18m band until the digest lever landed; digest_expand is on and spoken runtime still plateaus ~7–10m. Re-point targets to stop ungrounded length pressure (not a podcast expand/grow lever).
+    - file: shows/prompts/unintended_consequences_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Matches de-seeded brief + shorter honest runtime; bans the observed Lesson tic at the script stage as belt-and-suspenders.
+    agent_cost_usd: 0.11
 do_not_retry: []
