@@ -91,6 +91,12 @@ _JOINED_RE = re.compile(rf"\b{_STEM}networks?\b", re.I)
 #     this from firing on ordinary prose.
 _TORN_RE = re.compile(rf"\b{_STEM}\b[\s\-]{{1,3}}ren(?=networks?\b)", re.I)
 
+# 2c. The Nerra Daily edition glued to the stem — Whisper wrote
+#     "NaraDaily stitches the whole network..." (First Principles Ep113,
+#     2026-09-27). The daily edition is the only product the brand is
+#     ever spoken flush against, so the suffix is pinned to it.
+_DAILY_RE = re.compile(rf"\b{_STEM}daily\b", re.I)
+
 # 3. Separated form: "NARA Network", "Naran Network", "nara-network".
 #    Only the stem is rewritten; the separator and the "network" token
 #    keep whatever casing Whisper emitted.
@@ -184,6 +190,9 @@ def correct_brand_text(text: str) -> str:
     text = _TORN_RE.sub(lambda m: _match_case("Nerra", m.group(0)), text)
     text = _JOINED_RE.sub(
         lambda m: _match_case("NerraNetwork", m.group(0)), text
+    )
+    text = _DAILY_RE.sub(
+        lambda m: _match_case("Nerra", m.group(0)[:-5]) + " Daily", text
     )
     text = _FILLER_RE.sub(lambda m: _match_case("Nerra", m.group(0)) + " ", text)
     text = _SEPARATED_RE.sub(lambda m: _match_case("Nerra", m.group(0)), text)

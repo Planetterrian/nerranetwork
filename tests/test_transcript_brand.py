@@ -39,6 +39,12 @@ class TestObservedMisspellings:
     @pytest.mark.parametrize(
         "raw,expected",
         [
+            # The daily edition glued to the stem (First Principles Ep113,
+            # 2026-09-27): the only product spoken flush against the brand.
+            (
+                "NaraDaily stitches the whole network into one morning listen",
+                "Nerra Daily stitches the whole network into one morning listen",
+            ),
             # Separated form — the dominant variant (~500 occurrences).
             (
                 "this show is part of the NARA Network, a family of daily podcasts",
