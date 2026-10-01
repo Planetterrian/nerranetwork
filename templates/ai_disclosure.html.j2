@@ -69,7 +69,7 @@
             <li><strong>Curates the sources.</strong> Every show pulls from a hand-picked list of outlets, feeds, and search queries. Sources that prove unreliable are removed.</li>
             <li><strong>Sets the editorial standards.</strong> No undisclosed AI, no paid placement, no filler, no invented facts. Those rules are enforced in code, and the code is public.</li>
             <li><strong>Listens and reviews.</strong> Patrick spot-listens to episodes, reads the automated quality reports, and A/B-listens before any change to how a voice sounds ships.</li>
-            <li><strong>Owns corrections.</strong> Reported errors are investigated by a person, and substantive corrections are noted in the next episode's show notes.</li>
+            <li><strong>Owns corrections.</strong> Reported errors are investigated by a person. A substantive correction is shown at the top of the episode's page, in that episode's show notes, and in the next episode's show notes; audio is never edited silently. Write to <a href="mailto:{{ contact_email | default('hello@nerranetwork.com') }}">{{ contact_email | default('hello@nerranetwork.com') }}</a>.</li>
         </ul>
         <p>
             What a human does <strong>not</strong> do is read and approve
@@ -81,11 +81,11 @@
         <h2>Safeguards against AI mistakes</h2>
         <p>Language models can state things confidently and wrongly. We build for that assumption rather than against it:</p>
         <ul>
-            <li><strong>Source-integrity gate.</strong> Each digest carries a claims ledger that ties every asserted fact to a source URL and a supporting quote. Before an episode is saved, the pipeline re-fetches each source and checks the quote is really there, and it flags citation-shaped sentences that have no ledger entry, the signature of a fabricated reference. On our narrative shows a failed claim blocks the episode.</li>
+            <li><strong>Source-integrity gate.</strong> Each digest carries a claims ledger that ties every asserted fact to a source URL and a supporting quote. Before an episode is saved, the pipeline re-fetches each source and checks the quote is really there, and it flags citation-shaped sentences that have no ledger entry, the signature of a fabricated reference. The gate is enforced on every show: a failed claim gets one repair pass in which the model re-sources only the failed claims and the whole gate runs again, and any sentence the gate still cannot vouch for is removed from the episode before publication. A source we cannot reach counts as a failure, not a pass; every sourced item must be covered by a verified claim; and a fact-checker's note left in the prose fails the gate by itself. On the narrative shows a failed episode is held back rather than edited. The verified ledger is published on every episode page as a "Verified claims" panel.</li>
             <li><strong>Grounding rules.</strong> Prompts forbid filling gaps from the model's training data; if the day's sources are thin, the run skips rather than pads.</li>
             <li><strong>Repetition and recurrence checks.</strong> Degenerate output triggers a retry; stories the show has already covered are flagged so they are told as updates, not re-told as news.</li>
             <li><strong>Spoken disclosure.</strong> Every episode ends with a spoken line stating that it was produced with AI.</li>
-            <li><strong>Real guests stay verbatim.</strong> On The Age of AI, guests are real people interviewed by Mira. Their words are never rewritten, and each guest approves their transcript before the episode publishes.</li>
+            <li><strong>Real guests stay verbatim.</strong> On The Age of AI, guests are real people interviewed by Mira. Their words are never rewritten. Every guest gets the transcript and a week to approve it, cut from it or refuse it; a cut is removed from the audio, not bleeped; after a week of silence the episode publishes, and a takedown is available afterwards.</li>
         </ul>
         <p>
             The full process, step by step, is on our

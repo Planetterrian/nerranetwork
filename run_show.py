@@ -4738,6 +4738,17 @@ def run(args: argparse.Namespace) -> None:
         if _src_line:
             episode_desc = episode_desc.rstrip() + "\n\n" + _src_line
             metrics.record("show_notes_sources", len(_src_line.split(" · ")))
+        # Corrections (Oct 1 2026, engine/corrections.py): the corrected
+        # episode's own note, and the "Correction to episode N" line the
+        # policy page promises on the NEXT episode. "" on an ordinary day.
+        try:
+            from engine.show_notes import append_show_notes_extras as _notes_extras
+            episode_desc = _notes_extras(
+                episode_desc, digests_dir, episode_num,
+                language=str(getattr(config.publishing, "rss_language", "en") or "en"),
+                episode_date=today.strftime("%Y-%m-%d"))
+        except Exception as _corr_exc:  # noqa: BLE001 — never block publish
+            logger.warning("Show-notes corrections failed (non-fatal): %s", _corr_exc)
         _rss_disclosure = _rss_disclosure_for(config, args.show)
         episode_desc = episode_desc.rstrip() + "\n\n" + _rss_disclosure
         # If the episode landed on YouTube, surface the watch link in

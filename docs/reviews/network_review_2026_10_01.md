@@ -186,8 +186,40 @@ episodes of one Omni desk and AI Chips.
 
 ## 5. Web trust surfaces
 
-(Filled from the web-trust pass of the same day — see the PR body for the
-one-line wiring notes if they landed after this doc.)
+What a reader of any news-show post now sees, rendered from committed data
+and never typed: a collapsed **Verified claims (N)** panel under Sources,
+each row the claim sentence linked to its source domain, from the
+episode's `*_claims.json`; when the ledger is empty, one honest line says
+so instead of hiding the state. A **provenance line** under the AI badge
+(`engine.brand.episode_provenance` — "Written from 14 sources · 6 claims
+checked against their sources · 1 unverified sentence removed before
+publication · voiced with Grok TTS"; AI-host shows say so), and a
+**Report an error** mailto beside it with the show and episode prefilled.
+
+**Corrections have a mechanism now**, not only a policy sentence:
+`digests/<show_dir>/corrections.yaml` (`engine/corrections.py`) renders a
+dated box at the top of the corrected post, a line in that episode's show
+notes, and — the promise the policy page had been making for months with
+nothing behind it — a "Correction to episode N" line in the NEXT episode's
+show notes (`engine.show_notes.append_show_notes_extras`, wired into
+run_show). Audio is never edited silently; re-synthesis is the repair tool
+(landmine #25). `docs/corrections.md` is the operator's how-to. No show has
+a corrections file yet.
+
+**The verification copy tells the truth about the gate.** The AI
+disclosure and editorial pages said a failed claim blocks the episode "on
+our narrative shows"; since 2026-09-12 the gate is enforced on every show,
+re-sources failed claims once with the claim text pinned, REMOVES
+still-unverified sentences before publication, counts an unreachable source
+as a failure, enforces an item-coverage floor and fails on reviewer notes —
+the narrative shows hold the episode back instead. Both pages say exactly
+that and no more; a guard reads `_defaults.yaml`'s `enforce` / `on_failure`
+and fails the templates if the wording drifts. The same page's Age of AI
+bullet had re-grown the stronger gate-2 claim the Sep 22 pass retired ("each
+guest approves their transcript before the episode publishes"); it states
+the seven-day auto-publish now. One listener-facing address,
+`engine.brand.CONTACT_EMAIL`, feeds the editorial, FAQ and contact pages and
+every blog post (the editorial page had carried a different one).
 
 ## 6. What the operator decides
 

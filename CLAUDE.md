@@ -387,6 +387,29 @@ ratings are read nightly from the public show pages
 (`scripts/fetch_apple_ratings.py` → `api/apple_ratings.json`, null never 0)
 so the asks are measurable; baseline 4 ratings across 15 shows.
 
+**Trust surfaces a reader can see.** Every news-show post renders a
+collapsed **Verified claims (N)** panel from its committed `*_claims.json`
+(one honest line when the ledger is empty — never hidden), a provenance
+line from `engine.brand.episode_provenance` ("Written from N sources · M
+claims checked against their sources · K unverified sentences removed
+before publication · voiced with Grok TTS"; AI-host shows say so) and a
+**Report an error** mailto. **Corrections have a mechanism**
+(`engine/corrections.py`, `digests/<show_dir>/corrections.yaml`,
+`docs/corrections.md`): a dated box on the corrected post, a line in its
+show notes, and the "Correction to episode N" line in the NEXT episode's
+show notes that the policy page had promised with nothing behind it
+(`engine.show_notes.append_show_notes_extras`, wired in run_show). Audio is
+never edited silently (landmine #25). **The verification copy on
+`ai_disclosure` / `editorial` tells the truth about the gate** (enforced on
+every show, one repair pass, unverified sentences removed, narrative shows
+hold the episode) and a guard reads `_defaults.yaml` so it cannot drift;
+the Age of AI bullet there had re-grown the stronger gate-2 claim the Sep
+22 pass retired — it states the seven-day auto-publish. **One
+listener-facing address**: `engine.brand.CONTACT_EMAIL` feeds the
+editorial, FAQ and contact pages (Jinja global `contact_email`) and every
+post; the RSS owner email in `_defaults.yaml` is a different thing. Guards:
+`tests/test_web_trust_2026_10_01.py`.
+
 ## Project Overview
 
 Automated daily podcast generation system running 31 shows via a unified
