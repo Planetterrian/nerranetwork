@@ -1,308 +1,436 @@
 {
-  "date": "2026-10-01",
-  "generated_at": "2026-10-01T21:12:53.085117+00:00",
+  "date": "2026-10-02",
+  "generated_at": "2026-10-02T20:53:51.360160+00:00",
   "summary": {
-    "episodes_reviewed": 20,
+    "episodes_reviewed": 18,
     "critical_issues": 17,
-    "warning_issues": 51,
-    "missed_episodes": 0,
+    "warning_issues": 34,
+    "missed_episodes": 2,
     "skipped_episodes": 1
   },
   "remediation": {
-    "auto_retry_shows": [],
-    "recommendation": "No automatic retries recommended."
+    "auto_retry_shows": [
+      "omni_view_north_america",
+      "tesla"
+    ],
+    "recommendation": "Run `gh workflow run run-show.yml -f show=<slug>` for the shows above if they are not intentionally skipped."
   },
   "missed_and_skipped": [
     {
-      "show": "unintended_consequences",
+      "show": "tesla",
+      "severity": "critical",
+      "title": "Missed episode: Tesla Shorts Time",
+      "detail": "Tesla Shorts Time was scheduled to produce an episode on 2026-10-02 (schedule: daily) but no output files were found in digests/tesla_shorts_time/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
+    },
+    {
+      "show": "fascinating_frontiers",
       "severity": "warning",
-      "title": "Skipped episode: Unintended Consequences (source_integrity_failed)",
-      "detail": "Unintended Consequences was scheduled on 2026-10-01 (schedule: daily) but the pipeline intentionally skipped this episode. Reason: Claim-ledger verification failed: ledger=yes claims=1 anchored=1 verified=0 failed_verifications=1 (unreachable_sources=0) uncovered_citation_shapes=1 reviewer_notes=0 \u2014 a citation-shaped assertion could not be traced to a real source. Fix the prompt/topic or rerun; nothing was published."
+      "title": "Skipped episode: Fascinating Frontiers (podcast_script_too_thin)",
+      "detail": "Fascinating Frontiers was scheduled on 2026-10-02 (schedule: daily) but the pipeline intentionally skipped this episode. Reason: Script only 905 words (soft floor 1020 = 60% of target). Episode would have been too thin/rushed to publish."
+    },
+    {
+      "show": "omni_view_north_america",
+      "severity": "critical",
+      "title": "Missed episode: Omni View North America",
+      "detail": "Omni View North America was scheduled to produce an episode on 2026-10-02 (schedule: daily) but no output files were found in digests/omni_view_north_america/ and no skip marker was present. The pipeline may have failed or the workflow did not trigger."
     }
   ],
   "episodes": [
     {
-      "show": "tesla",
-      "episode_num": 622,
-      "critical": 2,
-      "warnings": 2,
+      "show": "omni_view",
+      "episode_num": 193,
+      "critical": 1,
+      "warnings": 3,
       "issues": [
         {
           "severity": "warning",
-          "title": "AI review: Factual Errors",
-          "detail": "V2L is described both as requiring a dedicated adapter and as needing no extra hardware, and export ratings conflict (2.2 kW vs a 3.3 kW adapter)."
+          "title": "Possible story duplication (9 block pairs)",
+          "detail": "Found 9 pairs of non-adjacent paragraph blocks with high proper-noun overlap. The same story may be covered twice."
         },
         {
-          "severity": "critical",
-          "title": "AI review: Incoherent",
-          "detail": "A source attribution is blank (\u201c reported the patent suit\u2026\u201d), and \u201cAnother the teslamotors subreddit thread\u201d is garbled."
+          "severity": "warning",
+          "title": "High cross-episode repetition (20 stories)",
+          "detail": "The content tracker found 20 stories in this episode that were already covered in recent episodes. This indicates the show may be repeating content across days. Check that {recent_content_summary} is wired into the digest prompt (shows/prompts/{slug}_digest.txt) and that the content tracker JSON is being updated correctly.\n  Config: shows/omni_view.yaml\n  Prompt: shows/prompts/omni_view_digest.txt\n  Tracker: digests/omni_view/omni_view_content_tracker.json"
+        },
+        {
+          "severity": "warning",
+          "title": "AI review: Factual Errors",
+          "detail": "The closer tells listeners to compare CNBC and Reason on the Skydance lead, but Reason is only cited for the Anthropic story; \u201cRentrak data\u201d is also an obsolete source for a 2026 film slate."
         },
         {
           "severity": "critical",
           "title": "AI review: Repetitive",
-          "detail": "Norway share, France\u2019s 65,243 EV sales, the \u20ac99 FSD fee, and Model 3 screen/interior/V2L/Australia pricing are restated near-verbatim."
-        },
-        {
-          "severity": "warning",
-          "title": "AI quality score: 5/10",
-          "detail": "Grok rated this episode 5/10. The episode stays on Tesla news and closes properly, but recycled items, internal contradictions on vehicle-to-load, and a few broken sentences make it feel like a thin, poorly edited roundup."
-        }
-      ]
-    },
-    {
-      "show": "omni_view",
-      "episode_num": 192,
-      "critical": 1,
-      "warnings": 6,
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Podcast script below target (1303 words)",
-          "detail": "Script has 1303 words (target: 1400+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "info",
-          "title": "Slow news mode active (trigger: stale_repeats)",
-          "detail": "This episode was produced in slow news mode (trigger: stale_repeats). Verify it sounds natural and doesn't reveal the slow news status."
-        },
-        {
-          "severity": "warning",
-          "title": "Possible story duplication (6 block pairs)",
-          "detail": "Found 6 pairs of non-adjacent paragraph blocks with high proper-noun overlap. The same story may be covered twice."
-        },
-        {
-          "severity": "warning",
-          "title": "High cross-episode repetition (22 stories)",
-          "detail": "The content tracker found 22 stories in this episode that were already covered in recent episodes. This indicates the show may be repeating content across days. Check that {recent_content_summary} is wired into the digest prompt (shows/prompts/{slug}_digest.txt) and that the content tracker JSON is being updated correctly.\n  Config: shows/omni_view.yaml\n  Prompt: shows/prompts/omni_view_digest.txt\n  Tracker: digests/omni_view/omni_view_content_tracker.json"
-        },
-        {
-          "severity": "warning",
-          "title": "Chronic slow news mode (6 recent episodes)",
-          "detail": "This show has been in slow news mode for 6 of the last 6 episodes. This may indicate stale RSS sources, an overly aggressive content tracker, or insufficient source diversity. Consider:\n  - Running a feed audit: python scripts/audit_feeds.py\n  - Adding more RSS sources to shows/omni_view.yaml\n  - Expanding slow news segments: shows/segments/omni_view.json\n  - Checking content tracker cooldown settings"
-        },
-        {
-          "severity": "warning",
-          "title": "AI review: Factual Errors",
-          "detail": "The Flydubai cockpit-stabbing item is attributed to Israeli leaders (Netanyahu on an Iran link; Israel\u2019s defence minister calling it terror) with no stated Israeli connection; the flight is a UAE carrier diverted to Saudi Arabia."
-        },
-        {
-          "severity": "critical",
-          "title": "AI review: Incoherent",
-          "detail": "That same item reads as two incidents mashed together, so the officials, airline, and diversion do not form a coherent account."
-        },
-        {
-          "severity": "warning",
-          "title": "AI quality score: 5/10",
-          "detail": "Grok rated this episode 5/10. The episode is structured and listenable, but the Flydubai segment is a clear factual mash-up that a listener would notice. Other items are thin briefs without the same internal contradiction."
-        }
-      ]
-    },
-    {
-      "show": "fascinating_frontiers",
-      "episode_num": 210,
-      "critical": 0,
-      "warnings": 2,
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Podcast script below target (1315 words)",
-          "detail": "Script has 1315 words (target: 1700+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "warning",
-          "title": "AI review: Factual Errors",
-          "detail": "Rumen Radev is Bulgaria\u2019s president, not its prime minister."
+          "detail": "The Kenya ruling and Skydance branding/35-film points are restated at length in the \u201cprogress\u201d and explainer sections."
         },
         {
           "severity": "info",
           "title": "AI quality score: 6/10",
-          "detail": "The episode is a coherent space-news briefing with a clear sign-off, but it misstates Radev\u2019s office and several items are too thin to verify. Publishable with that factual caveat."
+          "detail": "A complete multi-story briefing with a clear source mix-up and noticeable recap repetition. Publishable, but the lead attribution error and recycled Kenya/Skydance copy keep it from being strong."
         }
       ]
     },
     {
       "show": "planetterrian",
-      "episode_num": 200,
+      "episode_num": 201,
       "critical": 1,
       "warnings": 3,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (997 words)",
-          "detail": "Script has 997 words (target: 1600+). Episode may feel shorter than usual."
+          "title": "Possible story duplication (2 block pairs)",
+          "detail": "Found 2 pairs of non-adjacent paragraph blocks with high proper-noun overlap. The same story may be covered twice."
         },
         {
           "severity": "warning",
           "title": "AI review: Factual Errors",
-          "detail": "Matthew T. Drake is tied to Hospital for Special Surgery rather than Mayo Clinic, and the bovine-serum claim reverses the actual logic of the stem-cell result."
+          "detail": "The lead story calls thundercloud electric fields \u201cone hundred million volts\u201d and compares those potentials to \u201cfields\u201d measured by aircraft, mixing voltage with electric-field units."
         },
         {
           "severity": "critical",
-          "title": "AI review: Incoherent",
-          "detail": "The serum sentence and the unnamed chaperone/epigenetics passage are garbled and do not state a clear finding."
+          "title": "AI review: Repetitive",
+          "detail": "Nearly every item is restated in near-verbatim paraphrase; the muon/thunderstorm story is told three times."
         },
         {
           "severity": "warning",
-          "title": "AI quality score: 5/10",
-          "detail": "Grok rated this episode 5/10. A structured science-health roundup that stays on topic and closes cleanly, but several items are too thin or logically muddled to trust. Affiliation and mechanism errors plus formulaic jumps keep it below publishable quality."
+          "title": "AI quality score: 4/10",
+          "detail": "Grok rated this episode 4/10. The roundup is readable science news, but systematic double- and triple-telling of the same studies would be obvious to a listener, and the lead item confuses electric potential with electric field."
         }
       ]
     },
     {
       "show": "models_agents",
-      "episode_num": 190,
-      "critical": 1,
-      "warnings": 3,
+      "episode_num": 191,
+      "critical": 2,
+      "warnings": 1,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1309 words)",
-          "detail": "Script has 1309 words (target: 1500+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "warning",
-          "title": "AI review: Factual Errors",
-          "detail": "Speculative decoding is misstated (a mismatch does not discard the whole block; it is a speed method, not a \u201cquality gain\u201d), and LoRA is rendered as \u201cLaura.\u201d"
+          "title": "Podcast script below target (1361 words)",
+          "detail": "Script has 1361 words (target: 1500+). Episode may feel shorter than usual."
         },
         {
           "severity": "critical",
           "title": "AI review: Incoherent",
-          "detail": "Garbled names (TomasuLLM, NinaXander, Laura/LoRA) and an unexplained ContextAdapt reference make parts hard to follow."
+          "detail": "Several lines are hard to parse as spoken copy (garbled opener, \u201cQwen three point six/eight twenty-seven B,\u201d GDPVal \u201cone thousand four hundred forty-five point seven,\u201d and an 8.61% result presented without enough context to follow)."
         },
         {
-          "severity": "warning",
-          "title": "AI quality score: 5/10",
-          "detail": "Grok rated this episode 5/10. Structurally complete AI-research roundup, but name corruption and a technically wrong speculative-decoding explainer undermine trust. Publishable only with those corrections."
+          "severity": "critical",
+          "title": "AI review: Repetitive",
+          "detail": "The Karpathy land-versus-water result and the \u201cno vision data, text alone\u201d thesis are restated three times, and the French token-premium item is covered twice."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 6/10",
+          "detail": "A dense, on-topic AI briefing with a proper close, but the lead finding is recycled and several metric-heavy sentences would confuse a listener. Publishable with those caveats, not a strong episode."
         }
       ]
     },
     {
       "show": "models_agents_beginners",
-      "episode_num": 183,
+      "episode_num": 184,
       "critical": 0,
-      "warnings": 4,
+      "warnings": 2,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1173 words)",
-          "detail": "Script has 1173 words (target: 1200+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "warning",
-          "title": "Excessive repetition: 'chat g p' (5x)",
-          "detail": "The phrase 'chat g p' appears 5 times, suggesting possible LLM hallucination or loop."
+          "title": "Podcast script below target (1170 words)",
+          "detail": "Script has 1170 words (target: 1200+). Episode may feel shorter than usual."
         },
         {
           "severity": "warning",
           "title": "AI review: Factual Errors",
-          "detail": "OpenAI \u201cDots\u201d at DevDay, Meta \u201cMuse,\u201d and a Trump \u201cAmerica.gov\u201d chatbot fed by 29,000 sites are presented as news but are not established products/announcements."
+          "detail": "\u201cGPT 6 Astra\u201d mixes OpenAI\u2019s GPT line with Google\u2019s Project Astra and is presented as a Live Science report that cracked a 217-year-old Napoleonic cipher; that model name and attribution do not hold up."
         },
         {
-          "severity": "warning",
-          "title": "AI quality score: 5/10",
-          "detail": "Grok rated this episode 5/10. Clear beginner explainer of agents versus chatbots, with a useful scam warning, but the episode leans on specific product and government claims that read as fabricated. Publishable structure, not reliable as a news briefing."
+          "severity": "info",
+          "title": "AI quality score: 6/10",
+          "detail": "A clear, beginner-friendly script on models, prompting, and tools, but one news segment looks fabricated and several claims are too specific to trust without sources. Publishable only with that segment corrected."
         }
       ]
     },
     {
       "show": "modern_investing",
-      "episode_num": 187,
+      "episode_num": 188,
       "critical": 1,
-      "warnings": 3,
+      "warnings": 2,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1544 words)",
-          "detail": "Script has 1544 words (target: 1800+). Episode may feel shorter than usual."
+          "title": "Podcast script below target (1343 words)",
+          "detail": "Script has 1343 words (target: 1800+). Episode may feel shorter than usual."
         },
         {
           "severity": "warning",
           "title": "AI review: Factual Errors",
-          "detail": "TFSA room is not tied to earned income (that is RRSP room) and does not stop at retirement; age 71 is an RRSP/RRIF deadline, not a TFSA rule."
+          "detail": "The MPT section claims combining equities, bonds, and alternatives cuts volatility without lowering expected returns, which is not generally true; the Onex PE screen (11.7x vs a 6.4x peer average) is also presented as a usable valuation rule without a coherent comparison."
         },
         {
           "severity": "critical",
-          "title": "AI review: Repetitive",
-          "detail": "The \u201c32.5% of stocks beating the index\u201d line is repeated near-verbatim, and the Baytex valuation-plus-volume setup is restated."
+          "title": "AI review: Incoherent",
+          "detail": "A long Onex private-asset realization discussion (realizations, fee earnings, governance) jumps without transition into today\u2019s pick, National Bank (NA.TO), whose thesis and invalidation rules do not match that setup."
         },
         {
-          "severity": "warning",
-          "title": "AI quality score: 5/10",
-          "detail": "Grok rated this episode 5/10. The episode is a coherent investing roundup with a normal close, but a core TFSA segment rests on RRSP rules and several points are repeated or lightly promotional. Publishable only with a correction to the retirement-account mechanics."
+          "severity": "info",
+          "title": "AI quality score: 6/10",
+          "detail": "The episode is structurally complete and the simulated-trade math checks out, but the middle is poorly assembled: an Onex monologue is spliced onto an unrelated bank pick, and the portfolio-theory explanation overstates what diversification does. Publishable only with those caveats."
         }
       ]
     },
     {
       "show": "spacex",
-      "episode_num": 117,
+      "episode_num": 118,
       "critical": 1,
-      "warnings": 3,
+      "warnings": 5,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1287 words)",
-          "detail": "Script has 1287 words (target: 1300+). Episode may feel shorter than usual."
+          "title": "Possible story duplication (4 block pairs)",
+          "detail": "Found 4 pairs of non-adjacent paragraph blocks with high proper-noun overlap. The same story may be covered twice."
         },
         {
           "severity": "warning",
           "title": "AI review: Factual Errors",
-          "detail": "The episode treats ticker SPCE (Virgin Galactic) as SpaceX, including a Needham price target and a quoted close of $150.86; SpaceX is not that listing."
+          "detail": "Starship\u2019s \u201cfirst orbital flight\u201d in Oct 2026 contradicts years of prior flights and the episode\u2019s own flight-rate talk; \u201cfirst NRO spy satellite mission\u201d is false (Falcon NRO launches date to 2020); xAI is also called \u201cSpaceXAI.\u201d"
         },
         {
           "severity": "critical",
           "title": "AI review: Repetitive",
-          "detail": "The $54B AI-compute run-rate claim and the orbital data-center power/heat/Starlink-radiator explanation are restated near-verbatim later in the episode; the closing price is also given twice."
+          "detail": "Google contact, the 420k-GPU ramp, Abu Dhabi\u2019s satellite, the 1.2 GW plant, and the Anthropic lease are restated near-verbatim later."
         },
         {
           "severity": "warning",
-          "title": "AI quality score: 5/10",
-          "detail": "Grok rated this episode 5/10. Listenable daily briefing with a clear structure, but a conspicuous SPCE/SpaceX stock mix-up and a long second-half rehash of the same orbital-compute story keep it below publishable-without-caveats quality."
+          "title": "AI review: Off Topic",
+          "detail": "A large share is xAI\u2019s Memphis ground cluster (GPU counts, leases, local emissions), not SpaceX."
+        },
+        {
+          "severity": "warning",
+          "title": "AI review: Tone Break",
+          "detail": "\u201cIdiot Index\u201d and \u201cmagic-wand baseline\u201d jar against the news-briefing voice."
+        },
+        {
+          "severity": "warning",
+          "title": "AI quality score: 4/10",
+          "detail": "Grok rated this episode 4/10. The episode is listenable but undermined by clear historical errors, a long off-topic xAI detour, and a second-half recap that repeats the same items. Publishable only after a factual and structural edit."
         }
       ]
     },
     {
       "show": "first_principles",
-      "episode_num": 117,
+      "episode_num": 118,
       "critical": 1,
-      "warnings": 4,
+      "warnings": 1,
       "issues": [
         {
-          "severity": "warning",
-          "title": "Podcast script below target (1349 words)",
-          "detail": "Script has 1349 words (target: 1400+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "warning",
-          "title": "Possible story duplication (10 block pairs)",
-          "detail": "Found 10 pairs of non-adjacent paragraph blocks with high proper-noun overlap. The same story may be covered twice."
-        },
-        {
-          "severity": "warning",
-          "title": "AI review: Factual Errors",
-          "detail": "Opening \u201cminutes per month\u201d contradicts later \u201cminute or two per day\u201d and \u201ctens of seconds per day\u201d; 32,768 Hz and \u201cseconds per year\u201d are overstated for the 1969 Seiko design (Astron was 8,192 Hz, about \u00b15 s/month)."
+          "severity": "info",
+          "title": "Significant story overlap with unintended_consequences",
+          "detail": "Found 3 overlapping stories with unintended_consequences. Example: 'segment 1 \u2014 the cold open...'"
         },
         {
           "severity": "critical",
           "title": "AI review: Repetitive",
-          "detail": "The same crystal/chip/stepper and Idiot Index argument is restated across most of the script with little new development."
+          "detail": "the diagnosis (licensing, packaging, slotting, seasonal inventory, Idiot Index) and the redesign prescription are restated nearly in full in the second half, so the same argument is delivered two or three times."
         },
         {
           "severity": "warning",
           "title": "AI quality score: 5/10",
-          "detail": "Grok rated this episode 5/10. The first-principles frame is clear and the episode is complete, but accuracy baselines contradict each other and the core claim is recycled too often to feel like a strong briefing."
+          "detail": "Grok rated this episode 5/10. A coherent first-principles take on why branded toys cost far more than their resin, but it is thin and heavily looped: the back half largely rewrites the front half without new evidence, cases, or numbers. Publishable only with a substantial cut."
+        }
+      ]
+    },
+    {
+      "show": "unintended_consequences",
+      "episode_num": 130,
+      "critical": 1,
+      "warnings": 1,
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Podcast script below target (910 words)",
+          "detail": "Script has 910 words (target: 1300+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "critical",
+          "title": "AI review: Incoherent",
+          "detail": "The phrase \"By the mid two thousands tens several of the same governments\" is garbled and does not parse as a date or sentence."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 7/10",
+          "detail": "A clear, well-structured account of Europe\u2019s diesel tax incentives and the NOx tradeoff, with sound historical claims. One badly garbled sentence is the only notable flaw a listener would catch."
         }
       ]
     },
     {
       "show": "ai_chips",
-      "episode_num": 10,
-      "critical": 1,
-      "warnings": 4,
+      "episode_num": 11,
+      "critical": 0,
+      "warnings": 2,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1160 words)",
-          "detail": "Script has 1160 words (target: 1300+). Episode may feel shorter than usual."
+          "title": "Podcast script below target (971 words)",
+          "detail": "Script has 971 words (target: 1300+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "warning",
+          "title": "AI review: Factual Errors",
+          "detail": "South Korea semiconductor exports of $60 billion in a single month (+262% YoY) is not credible against the country\u2019s export scale; a ~$60 million \u201cAI factory\u201d build cost is also implausibly low for the NVIDIA-scale systems described."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 6/10",
+          "detail": "A clear, well-structured daily briefing with sourced claims and a clean close, but at least one order-of-magnitude trade figure (and a suspiciously cheap AI-factory cost) would stand out to an informed listener. Publishable with that factual caveat."
+        }
+      ]
+    },
+    {
+      "show": "mag7",
+      "episode_num": 10,
+      "critical": 1,
+      "warnings": 0,
+      "issues": [
+        {
+          "severity": "critical",
+          "title": "AI review: Incoherent",
+          "detail": "the TrendForce passage includes a garbled line (\u201calready under construction on the road still left to twenty thirty\u201d) that does not parse, and \u201cscience president Peter Lee\u201d is an unclear title."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 7/10",
+          "detail": "Dense, sourced Mag 7 briefing with analysis that mostly holds together and a clean close. One muddy capacity-tracker sentence and a few awkward titles are the main caveats."
+        }
+      ]
+    },
+    {
+      "show": "vancouver",
+      "episode_num": 10,
+      "critical": 1,
+      "warnings": 3,
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Podcast script below target (865 words)",
+          "detail": "Script has 865 words (target: 1200+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "warning",
+          "title": "AI review: Factual Errors",
+          "detail": "The hockey recap mixes goalies and coaches (Lankinen, Merilainen, and Levi in one game; Mike Babcock quoted as if coaching Edmonton) and the point-record comparison is not credible."
+        },
+        {
+          "severity": "critical",
+          "title": "AI review: Incoherent",
+          "detail": "\u201cthe train operator is operating\u201d is garbled, and the defenceman-record line does not parse."
+        },
+        {
+          "severity": "warning",
+          "title": "AI quality score: 5/10",
+          "detail": "Grok rated this episode 5/10. Local news, traffic, and weather are mostly listenable, but a nonsense police line and a badly scrambled Canucks\u2013Oilers recap are errors a listener would notice. The gas-tax close is circular but not a verbatim repeat."
+        }
+      ]
+    },
+    {
+      "show": "collingwood",
+      "episode_num": 2,
+      "critical": 1,
+      "warnings": 2,
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Excessive repetition: 'simcoe dot com' (6x)",
+          "detail": "The phrase 'simcoe dot com' appears 6 times, suggesting possible LLM hallucination or loop."
+        },
+        {
+          "severity": "critical",
+          "title": "AI review: Repetitive",
+          "detail": "Nearly every item is restated two to four times in near-identical wording (fire evacuation, impaired charges, $2B plan, garage fire, awards, candidates, weather, Beachwood Road)."
+        },
+        {
+          "severity": "warning",
+          "title": "AI quality score: 4/10",
+          "detail": "Grok rated this episode 4/10. The episode has a complete local-news structure and no clear internal contradictions, but extreme near-verbatim restatement makes the coverage feel padded and thin. A listener would notice the repetition throughout."
+        }
+      ]
+    },
+    {
+      "show": "prediction_markets",
+      "episode_num": 10,
+      "critical": 0,
+      "warnings": 1,
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Podcast script below target (1049 words)",
+          "detail": "Script has 1049 words (target: 1100+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 7/10",
+          "detail": "A coherent, well-structured daily briefing that sources its claims, checks out internally (including the ARK share totals), and closes cleanly. Minor caveats are a dense academic explainer and a thin, odd Manifold item that feel like filler rather than errors."
+        }
+      ]
+    },
+    {
+      "show": "omni_view_europe",
+      "episode_num": 10,
+      "critical": 1,
+      "warnings": 2,
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Podcast script below target (1217 words)",
+          "detail": "Script has 1217 words (target: 1300+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "warning",
+          "title": "AI review: Factual Errors",
+          "detail": "The lead budget figures do not add up: a \u20ac54 billion plan is later described as \u20ac43 billion of measures made up of \u20ac25 billion in cuts, \u20ac18 billion in revenue, and \u20ac12 billion already set (\u20ac25+\u20ac18+\u20ac12=\u20ac55, and \u20ac25+\u20ac18=\u20ac43 only if the \u20ac12 billion is wrongly folded in)."
+        },
+        {
+          "severity": "critical",
+          "title": "AI review: Incoherent",
+          "detail": "That same budget sentence is internally garbled, and the Google DMA item begins with no source or news peg after the Russia story."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 6/10",
+          "detail": "A broad, mostly listenable Europe briefing with a normal sign-off, but the lead story\u2019s budget arithmetic is contradictory and the Google item is abruptly unsourced. Publishable only with that numerical caveat."
+        }
+      ]
+    },
+    {
+      "show": "omni_view_asia_pacific",
+      "episode_num": 10,
+      "critical": 1,
+      "warnings": 1,
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Podcast script below target (1201 words)",
+          "detail": "Script has 1201 words (target: 1300+). Episode may feel shorter than usual."
+        },
+        {
+          "severity": "critical",
+          "title": "AI review: Incoherent",
+          "detail": "the simultaneous-elections item opens with a garbled line (\u201cthe case on both sides of a deferred court visit\u2026\u201d) that does not clearly mean anything until later paragraphs."
+        },
+        {
+          "severity": "info",
+          "title": "AI quality score: 7/10",
+          "detail": "A sourced Asia-Pacific news roundup that holds together and signs off cleanly. The only real stumble is that opaque court-visit lead; the rest is dense but followable."
+        }
+      ]
+    },
+    {
+      "show": "omni_view_africa_mideast",
+      "episode_num": 10,
+      "critical": 2,
+      "warnings": 2,
+      "issues": [
+        {
+          "severity": "warning",
+          "title": "Podcast script below target (981 words)",
+          "detail": "Script has 981 words (target: 1300+). Episode may feel shorter than usual."
         },
         {
           "severity": "warning",
@@ -312,267 +440,53 @@
         {
           "severity": "critical",
           "title": "AI review: Incoherent",
-          "detail": "The humanoid section opens with a cryptic, unconnected line about a joint losing its pose \u201cin the log,\u201d then jumps into limb microcontrollers with no setup."
-        },
-        {
-          "severity": "warning",
-          "title": "AI review: Off Topic",
-          "detail": "A long stretch on humanoid joint logging, flash wear, and robot shipments is not about AI chips or data centres."
-        },
-        {
-          "severity": "warning",
-          "title": "AI review: Tone Break",
-          "detail": "That same passage shifts from news briefing into abrupt, imperative technical prose (\u201cTake it apart at the limb microcontroller\u201d)."
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 6/10",
-          "detail": "Grid, CoreWeave, data-centre design, and TSMC segments are usable daily-brief material, but the garbled humanoid-robot detour is a clear listenability problem. Publishable only with that section cut or rewritten."
-        }
-      ]
-    },
-    {
-      "show": "mag7",
-      "episode_num": 9,
-      "critical": 0,
-      "warnings": 2,
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Podcast script below target (877 words)",
-          "detail": "Script has 877 words (target: 1100+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "warning",
-          "title": "Possible story duplication (4 block pairs)",
-          "detail": "Found 4 pairs of non-adjacent paragraph blocks with high proper-noun overlap. The same story may be covered twice."
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 7/10",
-          "detail": "A coherent Mag 7 briefing that cites sources and closes cleanly, with three on-topic items (Exchange Web Services, a Google model rollout, and AWS silicon/data-centre news). The main caveat is choppy interleaving\u2014the mail cutoff and model note are left and returned to\u2014plus a thin AWS planning item and a sign-off that immediately restates the April 2027 date."
-        }
-      ]
-    },
-    {
-      "show": "peptides",
-      "episode_num": 3,
-      "critical": 0,
-      "warnings": 0,
-      "issues": [
-        {
-          "severity": "info",
-          "title": "AI quality score: 8/10",
-          "detail": "A clear, cautious episode that separates news briefs from a well-structured lesson on evidence rungs, with consistent hedging and a complete close. Minor caveats are thin sourcing on the news items and a few analogy digressions, not errors or structural problems."
-        }
-      ]
-    },
-    {
-      "show": "vancouver",
-      "episode_num": 9,
-      "critical": 2,
-      "warnings": 1,
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Podcast script below target (872 words)",
-          "detail": "Script has 872 words (target: 1200+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "critical",
-          "title": "AI review: Incoherent",
-          "detail": "The aquatic-centre segment is circular and garbled, restating the same 50-metre vs 25-metre point until the meaning is hard to follow."
+          "detail": "the closer does not parse cleanly (\u201cThe case on both sides of Thursday\u2019s expulsions is an accusation Cairo rejects\u201d; \u201cA sign of progress is absent from today\u2019s reporting\u201d)."
         },
         {
           "severity": "critical",
           "title": "AI review: Repetitive",
-          "detail": "That same pool debate is paraphrased several times in a row with no new information."
+          "detail": "the Ethiopia\u2013Egypt expulsion, denials, and Nile dispute are walked through again with almost no new facts."
         },
         {
           "severity": "info",
           "title": "AI quality score: 6/10",
-          "detail": "A usable local briefing with traffic, weather, and sourced news, but the aquatic-centre closer is repetitive and poorly written enough to drag the episode down."
-        }
-      ]
-    },
-    {
-      "show": "prediction_markets",
-      "episode_num": 9,
-      "critical": 1,
-      "warnings": 2,
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Podcast script below target (1059 words)",
-          "detail": "Script has 1059 words (target: 1100+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "critical",
-          "title": "AI review: Incoherent",
-          "detail": "\u201cKalshi's contract on which party wins the U.S.\u201d cuts off mid-sentence before the next market blurb."
-        },
-        {
-          "severity": "warning",
-          "title": "AI review: Incomplete",
-          "detail": "that board item never finishes, so a section is missing even though the close is intact."
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 6/10",
-          "detail": "A coherent regulatory and markets briefing with a proper close, but one garbled, unfinished Kalshi line is a clear script break a listener would notice. Otherwise the numbers and structure hold together."
-        }
-      ]
-    },
-    {
-      "show": "omni_view_europe",
-      "episode_num": 9,
-      "critical": 1,
-      "warnings": 2,
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Podcast script below target (1046 words)",
-          "detail": "Script has 1046 words (target: 1300+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "warning",
-          "title": "AI review: Factual Errors",
-          "detail": "The England film-grant item names the \u201cDepartment for Digital, Culture, Media and Sport,\u201d a title dropped in 2023 when digital policy moved elsewhere; the culture department is Culture, Media and Sport."
-        },
-        {
-          "severity": "critical",
-          "title": "AI review: Incoherent",
-          "detail": "\u201cOn the case on both sides of the diesel shortage\u201d does not parse, and \u201cthe Dutch national Dutch reporting calls Bolle Jos\u201d is missing words."
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 6/10",
-          "detail": "A usable Europe briefing with a normal close, but a garbled diesel lead-in, clumsy phrasing, and at least one outdated institutional name keep it below a clean publish."
-        }
-      ]
-    },
-    {
-      "show": "omni_view_asia_pacific",
-      "episode_num": 9,
-      "critical": 0,
-      "warnings": 1,
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Podcast script below target (1056 words)",
-          "detail": "Script has 1056 words (target: 1300+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 6/10",
-          "detail": "A complete, sourced Asia-Pacific briefing whose trade figures are internally consistent and whose political roles fit 2026. Several items are one-line dumps, and a few transitions (notably the cockpit lead and the India questionnaire opener) are clumsy enough to keep it from a stronger score."
-        }
-      ]
-    },
-    {
-      "show": "omni_view_africa_mideast",
-      "episode_num": 9,
-      "critical": 1,
-      "warnings": 1,
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Podcast script below target (1216 words)",
-          "detail": "Script has 1216 words (target: 1300+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "critical",
-          "title": "AI review: Incoherent",
-          "detail": "\u201cA sign of progress did not turn up in today\u2019s reporting. The day had none.\u201d reads like empty template text and does not connect to the story before it."
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 7/10",
-          "detail": "A sourced, on-brief Africa and Middle East roundup with a clear sign-off. The only clear defect is a garbled \u201csign of progress\u201d closer that a listener would notice as unfinished software copy."
+          "detail": "The bulletin is mostly followable and on brief, but the analytical close is garbled and largely repeats the Ethiopia item. Publishable only with that caveat."
         }
       ]
     },
     {
       "show": "omni_view_latam",
-      "episode_num": 9,
-      "critical": 1,
-      "warnings": 2,
-      "issues": [
-        {
-          "severity": "warning",
-          "title": "Podcast script below target (883 words)",
-          "detail": "Script has 883 words (target: 1300+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "warning",
-          "title": "AI review: Factual Errors",
-          "detail": "Brazil\u2019s ballot is misstated as \u201csix representatives, two of them senators,\u201d and the Argentina land-law segment contradicts itself: restoring article 154 is said to leave the foreign-buyer repeal in force, yet the Milei government is described as alarmed because that same ruling removed the limits."
-        },
-        {
-          "severity": "critical",
-          "title": "AI review: Incoherent",
-          "detail": "The Rural Lands Law passage cannot be followed: who won, whether the limits are on or off, and why the government reacted are internally inconsistent."
-        },
-        {
-          "severity": "info",
-          "title": "AI quality score: 6/10",
-          "detail": "A sourced regional roundup with a complete open and close, but the Argentina legal item is garbled and self-contradictory, and the Brazil voting lead is factually misstated. Publishable only with those caveats."
-        }
-      ]
-    },
-    {
-      "show": "omni_view_north_america",
-      "episode_num": 9,
-      "critical": 1,
+      "episode_num": 10,
+      "critical": 0,
       "warnings": 1,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (952 words)",
-          "detail": "Script has 952 words (target: 1300+). Episode may feel shorter than usual."
-        },
-        {
-          "severity": "critical",
-          "title": "AI review: Incoherent",
-          "detail": "\u201cOn the case on both sides\u201d is a garbled transition, and \u201cToday\u2019s articles carry no sign of progress to report\u201d is an orphan line that doesn\u2019t connect to any story."
+          "title": "Podcast script below target (1132 words)",
+          "detail": "Script has 1132 words (target: 1300+). Episode may feel shorter than usual."
         },
         {
           "severity": "info",
-          "title": "AI quality score: 6/10",
-          "detail": "A sourced North America news roundup that is mostly clear and listenable, but a broken transition into the Chicago chase story and a stray closer sentence keep it from feeling fully polished."
+          "title": "AI quality score: 7/10",
+          "detail": "A coherent regional briefing with sourced Haiti, Argentina, Brazil, Ecuador, and Cuba items and a complete close. Minor awkward phrasing (translated legal terms and the boat-seizure lead) keeps it short of a strong episode, but nothing a listener would hear as broken or repeated."
         }
       ]
     },
     {
       "show": "omni_view_world",
-      "episode_num": 9,
-      "critical": 1,
-      "warnings": 4,
+      "episode_num": 10,
+      "critical": 0,
+      "warnings": 1,
       "issues": [
         {
           "severity": "warning",
-          "title": "Podcast script below target (1046 words)",
-          "detail": "Script has 1046 words (target: 1400+). Episode may feel shorter than usual."
+          "title": "Podcast script below target (1091 words)",
+          "detail": "Script has 1091 words (target: 1400+). Episode may feel shorter than usual."
         },
         {
-          "severity": "critical",
-          "title": "AI review: Incoherent",
-          "detail": "Several lines are garbled or unclear, including \u201cdue to die over a murder,\u201d the review that \u201cframes the case on both sides,\u201d and the closer \u201cThere is not a sign of progress to mark, and the day had none.\u201d"
-        },
-        {
-          "severity": "warning",
-          "title": "AI review: Tone Break",
-          "detail": "The unattributed bleak closer breaks the straight news voice."
-        },
-        {
-          "severity": "warning",
-          "title": "AI review: Incomplete",
-          "detail": "The execution item is reopened and then abandoned into a broken ending thought before the sign-off."
-        },
-        {
-          "severity": "warning",
-          "title": "AI quality score: 5/10",
-          "detail": "Grok rated this episode 5/10. Most of the roundup is a usable, sourced news script, but a disjointed return to the Tennessee execution and a nonsensical closer are problems a listener would notice."
+          "severity": "info",
+          "title": "AI quality score: 7/10",
+          "detail": "A complete, listenable world-news briefing with sourced items and a proper close. The diesel-release figures are crowded and a few items are only a sentence long, but nothing is garbled, repeated verbatim, or clearly false against the 2026 frame."
         }
       ]
     }
