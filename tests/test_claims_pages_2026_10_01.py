@@ -32,6 +32,8 @@ from __future__ import annotations
 import json
 import re
 import shutil
+import subprocess
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -462,7 +464,10 @@ class TestSitemapAndContracts:
         assert "generate_claims_pages(dry_run=args.dry_run)" in all_branch
         assert all_branch.index("generate_claims_pages(") < all_branch.index("generate_all_show_pages(")
         show_branch = main.split("if args.show:")[1].split("return")[0]
-        assert "generate_claims_pages(dry_run=args.dry_run, slugs=[args.show])" in show_branch
+        # 2026-10-02: the per-show path writes its OWN page only — the
+        # network page in a per-show commit was the morning's rebase
+        # conflict (TestThePerShowPathNeverWritesTheNetworkPage).
+        assert "slugs=[args.show]" in show_branch and "network_page=False" in show_branch
         assert show_branch.index("generate_claims_pages(") < show_branch.index("generate_show_page(")
 
     def test_nav_and_footer_carry_the_link(self, tmp_path):
@@ -542,3 +547,100 @@ class TestReader:
         assert L.show_episode_config("mag7")["prefix"] == "MAG7_Daily"
         assert L.show_episode_config("nerra_daily") is None
         assert L.show_dir_for("mag7", digests_root="/x/digests") == Path("/x/digests/mag7")
+
+
+# ---------------------------------------------------------------------------
+# 2026-10-02 — a shared page in a per-show commit is a rebase conflict on
+# every concurrent run. On the ledger's first morning every show run
+# rewrote the network claims.html; the commit step could not three-way
+# merge generated HTML, and eleven episodes were diverted into recovery
+# branches (Tesla, SpaceX, Omni View, MIT, MAB, two desks) — Nerra Daily
+# built from four shows, and GitHub's late cron produced second copies.
+# ---------------------------------------------------------------------------
+
+
+class TestThePerShowPathNeverWritesTheNetworkPage:
+    def test_a_show_render_writes_only_its_own_ledger_page(self, tmp_path):
+        written = G.generate_claims_pages(slugs=["tesla"], network_page=False,
+                                          output_dir=tmp_path)
+        assert written == ["claims/tesla.html"]
+        assert not (tmp_path / "claims.html").exists()
+        assert (tmp_path / "claims" / "tesla.html").exists()
+
+    def test_the_network_only_render_writes_no_show_pages(self, tmp_path):
+        written = G.generate_claims_pages(slugs=[], network_page=True,
+                                          output_dir=tmp_path)
+        assert written == ["claims.html"]
+        assert (tmp_path / "claims.html").exists()
+        assert not (tmp_path / "claims").exists()
+
+    def test_the_real_show_dispatch_asks_for_no_network_page(self, monkeypatch):
+        """Run the real ``main()`` for ``--show tesla`` with the generators
+        replaced by recorders: the property is the KWARG the dispatch
+        passes, not how the source spells it."""
+        calls = []
+
+        def _rec(name):
+            def f(*a, **k):
+                calls.append((name, k))
+                return []
+            return f
+
+        for name in ("generate_blog_posts", "generate_show_page",
+                     "generate_summaries_page", "generate_narrative_page",
+                     "generate_ru_landing_page", "generate_blog_index",
+                     "generate_network_page", "generate_claims_pages",
+                     "generate_tesla_dashboard"):
+            monkeypatch.setattr(G, name, _rec(name))
+        monkeypatch.setattr(sys, "argv",
+                            ["generate_html.py", "--show", "tesla", "--blogs"])
+        G.main()
+        claims_calls = [k for n, k in calls if n == "generate_claims_pages"]
+        assert claims_calls, "the per-show path no longer refreshes its ledger page"
+        for k in claims_calls:
+            assert k.get("network_page") is False, k
+            assert k.get("slugs") == ["tesla"], k
+
+    def test_the_network_dispatch_refreshes_the_network_page(self, monkeypatch):
+        """The finalize job runs ``--network`` after every episode; its
+        commit loop keeps origin's copy on a conflict, so the shared page
+        lives there."""
+        calls = []
+
+        def _rec(name):
+            def f(*a, **k):
+                calls.append((name, k))
+                return []
+            return f
+
+        for name in ("generate_network_page", "generate_claims_pages",
+                     "generate_spacex_dashboard", "generate_tesla_dashboard",
+                     "generate_offshore_north_dashboard",
+                     "generate_offshore_north_glossary", "generate_data_hub_page",
+                     "generate_join_page", "generate_personal_interest_page",
+                     "generate_account_page", "generate_support_page",
+                     "generate_explore_page", "generate_mira_page",
+                     "generate_blog_index"):
+            if hasattr(G, name):
+                monkeypatch.setattr(G, name, _rec(name))
+        monkeypatch.setattr(sys, "argv", ["generate_html.py", "--network"])
+        G.main()
+        claims_calls = [k for n, k in calls if n == "generate_claims_pages"]
+        assert claims_calls and all(
+            k.get("network_page") is True and k.get("slugs") == [] for k in claims_calls
+        ), claims_calls
+
+    def test_the_push_script_treats_the_ledger_pages_as_regenerable(self):
+        """Belt behind the brace: if any path ever writes the shared page
+        again, the rebase picks a side instead of diverting the episode."""
+        src = (ROOT / "scripts" / "push_show_artifacts.sh").read_text(encoding="utf-8")
+        body = src[src.index("is_regenerable()"):src.index("regenerate_feeds()")]
+        assert "claims.html" in body and "claims/*.html" in body
+        # The function is shell: prove it answers 0 for both shapes and 1
+        # for an ordinary page.
+        probe = (
+            body + '\nfor f in claims.html claims/tesla.html index.html; do '
+            'if is_regenerable "$f"; then echo "$f yes"; else echo "$f no"; fi; done'
+        )
+        out = subprocess.run(["bash", "-c", probe], capture_output=True, text=True, check=True).stdout
+        assert "claims.html yes" in out and "claims/tesla.html yes" in out and "index.html no" in out

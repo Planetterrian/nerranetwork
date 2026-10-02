@@ -49,6 +49,14 @@ ATTEMPTS="${PUSH_ATTEMPTS:-4}"
 is_regenerable() {
   case "$1" in
     *.video.rss) return 0 ;;
+    # The claims ledger pages are rendered from committed *_claims.json
+    # sidecars and refreshed by --network / --static-pages; whichever side
+    # wins here is at most one episode stale. On 2026-10-02 claims.html was
+    # written by every show run and NOT on this list, so eleven episodes
+    # went to recovery branches on an unresolvable conflict in a page
+    # nobody needed resolved. The per-show path no longer writes it; this
+    # entry is the belt behind that brace.
+    claims.html|claims/*.html) return 0 ;;
     *) return 1 ;;
   esac
 }
