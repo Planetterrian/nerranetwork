@@ -247,3 +247,32 @@ Where each show is submitted (Apple, Spotify, Amazon, …) is tracked in
 `docs/podcast_directories.md`. Spotify show IDs, once assigned, are
 recorded as `spotify_show_id:` in each `shows/<slug>.yaml` — that key
 is what turns on the Spotify fetcher for a show.
+
+## Cost rollup — what is counted
+
+`api/dashboard.json` → `cost_rollup` (built by
+`scripts/generate_dashboard.py::aggregate_costs`) reads every
+`digests/<dir>/credit_usage_*.json` for the show directories plus the
+virtual cost slugs (`_VIRTUAL_COST_SLUGS`: `nerra_daily`, `_review`).
+Each 7d/30d window carries these buckets; a bucket's source is one key in
+the credit file. Added 2026-10-02 after the rollup was found to report
+~$192/30d with four real lines missing (multilingual ~$58/30d, motion
+clips ~$25/mo at full rate, two YouTube-stage LLM calls per video
+episode, the daily-audit reviewer). Rule: **a result key or a metric is
+not a cost until a credit file carries it and this table names it.**
+
+| Bucket | Credit-file source key | Written by | Notes |
+|--------|------------------------|------------|-------|
+| `grok` | `services.grok_api.total_cost_usd` | `engine.tracking.save_usage` (sum of every recorded LLM step) | Steps include `x_thread_generation`, `podcast_script_generation`, retries, and since 2026-10-02 `scene_briefs` and `youtube_titles` (`engine.tracking.record_llm_usage_from_meta`, tracker threaded through `run_show._publish_youtube`). |
+| `tts` | `services.tts_api.estimated_cost_usd` | `save_usage` from `record_tts_usage` characters × `TTS_PROVIDER_PRICING` | Grok TTS list price $15.00/1M chars — verified 2026-10-02 at https://docs.x.ai/docs/models (CLAUDE.md's "$4.20/M" is the promo-era figure). |
+| `images` | `services.image_api.estimated_cost_usd` | `record_image_usage` (Grok Imagine stills) | July 28 2026. |
+| `search` | `services.search_api.estimated_cost_usd` | `record_search_usage` (xAI x_search / web_search, per call) | July 29 / Aug 18 2026. |
+| `multilingual` | `services.multilingual.estimated_cost_usd` | `engine/multilingual.py` sidecar `credit_usage_<date>_ep<N>_multilingual.json` | The sidecar has NO file-level total, so before 2026-10-02 it summed as $0 and counted as an episode. Counts toward `multilingual` + `total` + `files`, never `episodes`. |
+| `motion` | `services.motion_api.estimated_cost_usd` | `record_motion_clip_usage` (hook-Short Grok Imagine video clip), wired in `run_show` after `_publish_youtube` from `hook_short_motion_cost_usd` | The per-episode METRIC `hook_short_motion_cost_usd` is unchanged; it is now also a cost line. A billed request that landed no clip still counts. |
+| `review` | the whole `total_estimated_cost_usd` of `digests/_review/credit_usage_<run day>_review.json` | `review_episodes.write_review_credit_file` (one file per run day; a second run the same day merges) | Each Grok call is one reviewed episode (`review.calls`). Counts toward `review` + `total` + `files`, never `episodes`. Whitelisted in `daily-audit.yml` add-paths. |
+| `total` | `total_estimated_cost_usd`, else the sum of the lines above | `save_usage` | `episodes` counts episode files only; `files` counts every credit file read. `projections.avg_cost_per_episode_usd` divides the window total by `episodes`, so dub tracks and the reviewer are spread across the episodes they serve. |
+
+Not counted (no credit file carries them): Cloudflare R2 storage/egress,
+GitHub Actions minutes, Buttondown, Voximplant (Age of AI), the Nerra
+Voices Whisper/editorial passes, and any Grok call that returns without
+a `usage` object.
