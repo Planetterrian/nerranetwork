@@ -4,7 +4,7 @@
  * surface without hitting the network.
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   handleDownload,
   handleLogin,
@@ -66,6 +66,12 @@ function makeRequest(method: string, url: string, init: RequestInit = {}): Reque
 
 
 beforeEach(() => {
+  vi.restoreAllMocks();
+});
+
+afterEach(() => {
+  // Restore console spies (and any other mocks) immediately after each
+  // test so a leftover spy cannot leak into a later file's suite.
   vi.restoreAllMocks();
 });
 
