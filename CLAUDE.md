@@ -4370,8 +4370,10 @@ decision); everything else has a live status card.
     wave) all use the operator's custom-trained voice `kdif6sqjcyiq`
     for a single consistent host identity. Russian shows use the
     custom Olya voice (`0b875ae2`). ElevenLabs is no longer used in
-    production. Network cost: ~36× cheaper per character on Grok
-    ($4.20/M vs $150/M for ElevenLabs Flash). Reuses `GROK_API_KEY` /
+    production. Network cost: ~10× cheaper per character on Grok
+    ($15/M per the xAI models page, read 2026-10-02 — an earlier version
+    of this line said $4.20/M, the promo-era figure; `engine/tracking.py`
+    was right all along — vs $150/M for ElevenLabs Flash). Reuses `GROK_API_KEY` /
     `XAI_API_KEY` — no new secret. See landmines #16 and #17.
 12. **Summaries JSONs moved** — all summaries live in per-show subdirectories
     (`digests/<show>/summaries_*.json`), not at the `digests/` top level.

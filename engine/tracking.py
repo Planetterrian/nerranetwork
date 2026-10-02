@@ -18,12 +18,14 @@ logger = logging.getLogger(__name__)
 
 # TTS pricing per 1000 characters, by provider.
 # - ElevenLabs Flash v2.5: $0.15/1K chars  (0.5 credits/char × $0.30/1K credits)
-# - Grok TTS (xAI /v1/tts): public list price as of July 2026 is
-#   $15.00 per 1M chars ($0.015/1K) — see docs.x.ai Voice pricing.
-#   Earlier network tracking used $4.20/M (April–June 2026 promo-era
-#   figure); dashboard costs for NEW episodes use the list rate so
-#   Mission Control isn't systematically understating TTS spend.
-#   Still ~10× cheaper than ElevenLabs Flash ($150/M).
+# - Grok TTS (xAI /v1/tts): public list price is $15.00 per 1M chars
+#   ($0.015/1K). Re-verified 2026-10-02 against the Voice Pricing table
+#   at https://docs.x.ai/docs/models ("Text to Speech — $15.00 / 1M
+#   chars"); first set from the same page in July 2026. CLAUDE.md's
+#   "$4.20/M" is the April–June 2026 promo-era figure and is STALE —
+#   the constant here is the list rate, so Mission Control does not
+#   understate TTS spend. Still ~10× cheaper than ElevenLabs Flash
+#   ($150/M).
 ELEVENLABS_COST_PER_1K_CHARS = 0.15
 GROK_TTS_COST_PER_1K_CHARS = 0.015
 
@@ -47,6 +49,12 @@ _STEP_LABELS = {
     "podcast_script_refusal_retry": "Podcast script refusal retry",
     "podcast_script_refusal_fallback_model": "Podcast script (fallback model)",
     "podcast_script_anti_repetition_retry": "Podcast anti-repetition retry",
+    # Oct 2 2026 cost-measurement pass: two YouTube-stage LLM calls that
+    # ran on every video episode and were recorded nowhere (their
+    # ``_call_grok`` meta was discarded), plus the daily-audit reviewer.
+    "scene_briefs": "Scene briefs (YouTube imagery)",
+    "youtube_titles": "YouTube title bundle",
+    "episode_review": "Episode review (daily audit)",
 }
 
 TTS_PROVIDER_PRICING = {
@@ -318,6 +326,38 @@ def record_llm_usage(
         )
 
 
+def record_llm_usage_from_meta(tracker: dict | None, step: str, meta: dict | None) -> bool:
+    """Record one ``engine.generator._call_grok`` call from its ``meta``.
+
+    Oct 2 2026: the scene-brief and YouTube-title calls received
+    ``(text, meta)`` and discarded ``meta`` — one LLM call each per video
+    episode, billed and recorded nowhere. This is the one place that
+    turns a ``_call_grok`` meta (``model`` + ``usage``) into a tracker
+    line, so a new best-effort call site needs one line, not a copy of
+    the usage-key dance. A ``None`` tracker or a meta without usage is a
+    no-op (returns False) — the call sites stay byte-identical when no
+    tracker is passed.
+    """
+    if tracker is None or not isinstance(meta, dict):
+        return False
+    usage = meta.get("usage") or {}
+    if not isinstance(usage, dict) or not usage:
+        return False
+    try:
+        record_llm_usage(
+            tracker,
+            step,
+            int(usage.get("prompt_tokens", 0) or 0),
+            int(usage.get("completion_tokens", 0) or 0),
+            model=str(meta.get("model") or ""),
+            cached_tokens=int(usage.get("cached_tokens", 0) or 0),
+        )
+    except Exception as exc:  # noqa: BLE001 — accounting never breaks a call
+        logger.warning("LLM usage accounting failed for %s (non-fatal): %s", step, exc)
+        return False
+    return True
+
+
 def record_tts_usage(
     tracker: dict, characters: int, provider: str = "elevenlabs"
 ) -> None:
@@ -361,6 +401,43 @@ def record_image_usage(
     images["provider"] = provider
     images["images_generated"] += int(images_generated or 0)
     images["estimated_cost_usd"] += float(cost_usd or 0.0)
+
+
+def record_motion_clip_usage(
+    tracker: dict,
+    clips: int,
+    cost_usd: float,
+    provider: str = "grok-imagine-video",
+    model: str = "",
+) -> None:
+    """Record Grok Imagine VIDEO clip generation (the hook-Short motion open).
+
+    Oct 2 2026: ``engine/hook_short_motion.py`` priced every clip and
+    ``engine/pipeline.record_youtube_outcomes`` wrote the figure as a
+    per-episode METRIC — but a metric is not a cost line. Nothing carried
+    it into the credit tracker, so ~$0.28/episode on the three opted-in
+    shows (~$25/mo at full rate) was absent from every credit file and
+    from the dashboard rollup. Same shape as :func:`record_image_usage`;
+    additive, so a retry that spends twice records both attempts. A
+    request that billed but landed no clip still counts (clips=0,
+    cost>0) — the spend is real even when the Short opened on stills.
+    """
+    motion = tracker["services"].setdefault(
+        "motion_api",
+        {
+            "provider": provider,
+            "model": "",
+            "clips_generated": 0,
+            "estimated_cost_usd": 0.0,
+        },
+    )
+    if model:
+        motion["model"] = model
+    motion["provider"] = provider
+    motion["clips_generated"] += int(clips or 0)
+    motion["estimated_cost_usd"] = round(
+        float(motion.get("estimated_cost_usd", 0.0) or 0.0) + float(cost_usd or 0.0), 6
+    )
 
 
 def record_search_usage(
@@ -421,8 +498,15 @@ def record_render_seconds(tracker: dict, seconds: float) -> None:
     )
 
 
-def save_usage(tracker: dict, output_dir: Path) -> Path | None:
+def save_usage(
+    tracker: dict, output_dir: Path, filename: str | None = None
+) -> Path | None:
     """Finalize cost calculations and write the tracker to a JSON file.
+
+    *filename* overrides the per-episode ``credit_usage_<date>_epNNN.json``
+    convention for trackers that are not episodes (the daily-audit
+    reviewer writes one dated ``credit_usage_<date>_review.json`` per run
+    day). The default is byte-identical to the legacy behaviour.
 
     Returns the path to the saved file, or ``None`` on error.
     """
@@ -475,14 +559,18 @@ def save_usage(tracker: dict, output_dir: Path) -> Path | None:
         image_cost = float(images.get("estimated_cost_usd", 0.0) or 0.0)
         search = tracker["services"].get("search_api") or {}
         search_cost = float(search.get("estimated_cost_usd", 0.0) or 0.0)
+        # Hook-Short motion clips (Oct 2 2026) — see record_motion_clip_usage.
+        motion = tracker["services"].get("motion_api") or {}
+        motion_cost = float(motion.get("estimated_cost_usd", 0.0) or 0.0)
 
         tracker["total_estimated_cost_usd"] = (
             grok["total_cost_usd"] + tts["estimated_cost_usd"]
-            + image_cost + search_cost
+            + image_cost + search_cost + motion_cost
         )
 
         # Write file
-        filename = f"credit_usage_{tracker['date']}_ep{tracker['episode_number']:03d}.json"
+        if not filename:
+            filename = f"credit_usage_{tracker['date']}_ep{tracker['episode_number']:03d}.json"
         filepath = output_dir / filename
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(tracker, f, indent=2)
@@ -516,6 +604,13 @@ def save_usage(tracker: dict, output_dir: Path) -> Path | None:
                 images.get("model") or images.get("provider", "grok-imagine"),
                 images.get("images_generated", 0) or 0,
                 image_cost,
+            )
+        if motion.get("clips_generated") or motion_cost:
+            logger.info(
+                "Motion clips (%s): %d clip(s) ($%.4f)",
+                motion.get("model") or motion.get("provider", "grok-imagine-video"),
+                motion.get("clips_generated", 0) or 0,
+                motion_cost,
             )
         if search.get("calls") or search_cost:
             logger.info(

@@ -4630,6 +4630,7 @@ def run(args: argparse.Namespace) -> None:
         chapters_path=chapters_path_for_yt,
         digests_dir=digests_dir,
         args=args,
+        tracker=tracker,
     )
     # Feed image spend back into the credit tracker. grok_imagine.py has
     # always computed this cost and logged it, but nothing carried it
@@ -4643,6 +4644,18 @@ def run(args: argparse.Namespace) -> None:
             record_image_usage(
                 tracker, _img_count, _img_cost,
                 model=str(getattr(config.youtube, "grok_image_model", "") or ""),
+            )
+        # Hook-Short motion clip spend (Oct 2 2026). pipeline.record_youtube_
+        # outcomes has recorded this as a METRIC since Sep 22; a metric is
+        # not a cost line, and no credit file carried it. A billed request
+        # that landed no clip (variant != motion_open) still cost money.
+        from engine.tracking import record_motion_clip_usage
+        _motion_cost = float(youtube_urls.get("hook_short_motion_cost_usd", 0.0) or 0.0)
+        if _motion_cost:
+            record_motion_clip_usage(
+                tracker,
+                1 if youtube_urls.get("hook_short_motion") == "motion_open" else 0,
+                _motion_cost,
             )
         # The July 28 cost pass shipped record_render_seconds with no
         # caller, so `render.video_seconds` was always 0.0 and the "video
@@ -6135,8 +6148,13 @@ def _publish_youtube(
     digests_dir: "Path",
     args,
     is_weekly_recap: bool = False,
+    tracker: "dict | None" = None,
 ) -> dict:
     """Render long-form + Shorts video assets and upload them to YouTube.
+
+    *tracker* (Oct 2 2026): the episode's credit tracker, threaded to the
+    two LLM calls this stage makes (scene briefs, YouTube title bundle) so
+    their spend reaches the credit file. ``None`` = unrecorded, as before.
 
     Returns a ``{"long_url": ..., "short_url": ...}`` dict with whichever
     URLs succeeded; missing keys mean that variant was disabled or
@@ -6370,6 +6388,7 @@ def _publish_youtube(
                 perf_dir=digests_dir,
                 short_window_texts=_window_texts,
                 channel=getattr(config.youtube, "channel", "en") or "en",
+                tracker=tracker,
             )
             yt_title_variants = list(_bundle.get("titles") or [])
             yt_punch_text = (
@@ -6654,6 +6673,7 @@ def _publish_youtube(
                 max_n=int(getattr(yt, "scenes_per_episode", 8) or 8),
                 enabled=bool(getattr(yt, "scene_briefs_enabled", True)),
                 style_feedback=_style_feedback,
+                tracker=tracker,
             )
             if _style_feedback:
                 result["scene_brief_style_feedback"] = True

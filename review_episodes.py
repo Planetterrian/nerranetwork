@@ -1015,7 +1015,7 @@ def check_transition_duplication(ep: EpisodeReview) -> None:
     if not text:
         return
 
-    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
     if len(lines) < 2:
         return
 
@@ -1373,9 +1373,9 @@ def check_content_freshness(episodes: List[EpisodeReview], target_date: datetime
                 metrics_dir = PROJECT_ROOT / output_dir
                 recent_slow = 0
                 for d in range(1, 6):
-                    prev_date = target_date - datetime.timedelta(days=d)
-                    # Find any metrics file for that date
-                    for mf in metrics_dir.glob(f"metrics_ep*.json"):
+                    # NOTE: the glob below is not filtered to this date
+                    # (pre-existing; the per-day loop re-reads every file).
+                    for mf in metrics_dir.glob("metrics_ep*.json"):
                         try:
                             m = json.loads(mf.read_text())
                             if m.get("counters", {}).get("slow_news_mode"):
@@ -1532,6 +1532,107 @@ def _load_reviewer_settings(show_slug: str) -> tuple[str, int, float]:
 #: default — see the 2026-08-21 note at the call site.
 _LOW_EFFORT_REVIEWER_PREFIXES = ("grok-4.6", "grok-4.7")
 
+#: Where the reviewer's spend is recorded. Oct 2 2026: the audit reviewed
+#: up to CATCH_UP_MAX_PER_RUN episodes a day on Grok and recorded the cost
+#: nowhere — the dashboard rollup derives its file list from the show
+#: directories, so a cost with no show had no home. ``digests/_review`` is
+#: a virtual cost slug (scripts/generate_dashboard.py _VIRTUAL_COST_SLUGS),
+#: whitelisted in daily-audit.yml's safe-commit add-paths.
+REVIEW_COST_DIR = PROJECT_ROOT / "digests" / "_review"
+
+#: One entry per Grok call made by this process: model + token counts.
+_REVIEW_USAGE: List[Dict] = []
+
+
+def _record_review_call(resp, model: str) -> None:
+    """Accumulate one reviewer response's usage for the run's credit file."""
+    usage = getattr(resp, "usage", None)
+    if usage is None:
+        return
+    details = getattr(usage, "prompt_tokens_details", None)
+    cached = int(getattr(details, "cached_tokens", 0) or 0) if details is not None else 0
+    if not cached:
+        cached = int(getattr(usage, "cached_tokens", 0) or 0)
+    _REVIEW_USAGE.append({
+        "model": str(model or ""),
+        "prompt_tokens": int(getattr(usage, "prompt_tokens", 0) or 0),
+        "completion_tokens": int(getattr(usage, "completion_tokens", 0) or 0),
+        "cached_tokens": cached,
+    })
+
+
+def write_review_credit_file(
+    target_date: datetime.date,
+    calls: Optional[List[Dict]] = None,
+    out_dir: Optional[Path] = None,
+    run_day: Optional[datetime.date] = None,
+) -> Optional[Path]:
+    """Write ONE ``credit_usage_<run day>_review.json`` for this run.
+
+    The file is keyed by the RUN day (the day the spend happened), not the
+    reviewed date. A second run on the same day (cron + a manual dispatch)
+    MERGES into the existing file — prior token totals are re-recorded,
+    this run's calls are added, ``review.runs`` increments — so the day's
+    spend is never overwritten and never duplicated. Each Grok call is
+    one reviewed episode; ``review.calls`` is the episode count, and the
+    dashboard counts the file toward ``review``/``total``, never
+    ``episodes``. No calls = no file.
+    """
+    calls = list(_REVIEW_USAGE if calls is None else calls)
+    if not calls:
+        return None
+    try:
+        from engine.tracking import create_tracker, record_llm_usage, save_usage
+    except Exception as exc:  # pragma: no cover — engine missing on an odd checkout
+        logger.warning("Could not import engine.tracking for review cost: %s", exc)
+        return None
+    out_dir = Path(out_dir) if out_dir else REVIEW_COST_DIR
+    day = run_day or datetime.date.today()
+    filename = f"credit_usage_{day.isoformat()}_review.json"
+    path = out_dir / filename
+
+    tracker = create_tracker("Episode Review", 0)
+    tracker["date"] = day.isoformat()
+    prior_runs = 0
+    prior_calls = 0
+    if path.exists():
+        try:
+            prior = json.loads(path.read_text(encoding="utf-8"))
+            prior_review = prior.get("review") or {}
+            prior_runs = int(prior_review.get("runs", 0) or 0)
+            prior_calls = int(prior_review.get("calls", 0) or 0)
+            step = ((prior.get("services") or {}).get("grok_api") or {}).get("episode_review") or {}
+            if step.get("prompt_tokens") or step.get("completion_tokens"):
+                record_llm_usage(
+                    tracker, "episode_review",
+                    int(step.get("prompt_tokens", 0) or 0),
+                    int(step.get("completion_tokens", 0) or 0),
+                    model=str(step.get("model") or ""),
+                    cached_tokens=int(step.get("cached_tokens", 0) or 0),
+                )
+        except Exception as exc:  # noqa: BLE001 — a corrupt file starts fresh
+            logger.warning("Ignoring unreadable %s: %s", path, exc)
+            prior_runs = prior_calls = 0
+    for call in calls:
+        record_llm_usage(
+            tracker, "episode_review",
+            int(call.get("prompt_tokens", 0) or 0),
+            int(call.get("completion_tokens", 0) or 0),
+            model=str(call.get("model") or ""),
+            cached_tokens=int(call.get("cached_tokens", 0) or 0),
+        )
+    tracker["review"] = {
+        "runs": prior_runs + 1,
+        "calls": prior_calls + len(calls),
+        "last_target_date": target_date.isoformat(),
+    }
+    try:
+        out_dir.mkdir(parents=True, exist_ok=True)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Could not create %s: %s", out_dir, exc)
+        return None
+    return save_usage(tracker, out_dir, filename=filename)
+
 
 def ai_review_episode(ep: EpisodeReview) -> None:
     """Use Grok to review episode quality. Requires GROK_API_KEY."""
@@ -1646,6 +1747,7 @@ def ai_review_episode(ep: EpisodeReview) -> None:
             max_tokens=reviewer_max_tokens,
             **extra,
         )
+        _record_review_call(resp, reviewer_model)
         review_text = resp.choices[0].message.content.strip()
     except Exception as exc:
         logger.warning("AI review failed for %s Ep%d: %s", ep.show_slug, ep.episode_num, exc)
@@ -1817,7 +1919,7 @@ def create_github_issue(
             body_lines.append(f"- **[{issue.show} Ep{issue.episode:03d}]** {issue.title}")
             body_lines.append(f"  {issue.detail}")
 
-    body_lines.append(f"\n---\n*Auto-generated by `review_episodes.py`*")
+    body_lines.append("\n---\n*Auto-generated by `review_episodes.py`*")
 
     body = "\n".join(body_lines)
 
@@ -1844,14 +1946,13 @@ def create_github_issue(
             pass  # Best-effort; issue creation will still work without labels
 
     # Create via gh CLI
-    label_args = " ".join(f'--label "{l}"' for l in labels)
     try:
         result = subprocess.run(
             [
                 "gh", "issue", "create",
                 "--title", title,
                 "--body", body,
-                *[arg for l in labels for arg in ("--label", l)],
+                *[arg for lab in labels for arg in ("--label", lab)],
             ],
             capture_output=True,
             text=True,
@@ -2424,6 +2525,15 @@ def run_review(
             )
     else:
         logger.info("Skipping AI review (no GROK_API_KEY)")
+
+    # The run's Grok spend, as one dated credit file the dashboard rollup
+    # reads (Oct 2 2026). Best-effort — never blocks the report.
+    try:
+        _credit_path = write_review_credit_file(target_date)
+        if _credit_path:
+            logger.info("Review cost recorded to %s", _credit_path)
+    except Exception as exc:  # pragma: no cover — defensive
+        logger.warning("Could not record review cost: %s", exc)
 
     # Report. Two buckets of "critical":
     #   - operational_critical: a show that was due but didn't ship (missed

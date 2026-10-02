@@ -1200,7 +1200,37 @@ def aggregate_metrics(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]
 #: cost rollup. Discovered 2026-08-25: the edition's spend (~$0.08/ep) was
 #: invisible because every cost loop derives its show list from the YAML
 #: glob — the "true total is what matters" lesson from the July 29 pass.
-_VIRTUAL_COST_SLUGS = ("nerra_daily",)
+#: ``_review`` (2026-10-02) holds the daily-audit reviewer's one credit file
+#: per run day (review_episodes.write_review_credit_file) — spend with no
+#: show, so it needed a home the rollup reads.
+_VIRTUAL_COST_SLUGS = ("nerra_daily", "_review")
+
+#: Cost buckets in every rollup window. ``grok``/``tts``/``images``/``search``
+#: are the per-episode service lines; ``multilingual`` is the dub-track
+#: sidecar (``credit_usage_*_multilingual.json``, which carries ONLY
+#: ``services.multilingual`` and no file-level total — summed as $0 and
+#: counted as an episode until 2026-10-02, ~$58/30d invisible); ``motion``
+#: is the hook-Short clip (``services.motion_api``); ``review`` is the
+#: daily-audit reviewer. ``episodes`` counts EPISODE files only;
+#: ``files`` counts every credit file read.
+_COST_KEYS = ("grok", "tts", "images", "search", "multilingual", "motion",
+              "review", "total")
+
+
+def _new_cost_bucket() -> Dict[str, Any]:
+    return {"grok": 0.0, "tts": 0.0, "images": 0.0, "search": 0.0,
+            "multilingual": 0.0, "motion": 0.0, "review": 0.0,
+            "total": 0.0, "episodes": 0, "files": 0}
+
+
+def _credit_file_kind(path: Path, slug: str) -> str:
+    """``episode`` | ``multilingual`` | ``review`` — what a credit file is."""
+    name = path.name
+    if slug == "_review" or name.endswith("_review.json"):
+        return "review"
+    if name.endswith("_multilingual.json"):
+        return "multilingual"
+    return "episode"
 
 
 def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -1209,10 +1239,8 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
     d30 = today - _dt.timedelta(days=30)
 
     per_show: Dict[str, Dict[str, Any]] = {}
-    network_7 = {"grok": 0.0, "tts": 0.0, "images": 0.0, "search": 0.0,
-                 "total": 0.0, "episodes": 0}
-    network_30 = {"grok": 0.0, "tts": 0.0, "images": 0.0, "search": 0.0,
-                  "total": 0.0, "episodes": 0}
+    network_7 = _new_cost_bucket()
+    network_30 = _new_cost_bucket()
 
     known = {s.get("slug") for s in shows}
     cost_shows = list(shows) + [
@@ -1222,10 +1250,8 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
         slug = s["slug"]
         ddir = _digests_dir_for(slug, root)
         files = sorted(ddir.glob("credit_usage_*.json")) if ddir.exists() else []
-        show_7 = {"grok": 0.0, "tts": 0.0, "images": 0.0, "search": 0.0,
-                  "total": 0.0, "episodes": 0}
-        show_30 = {"grok": 0.0, "tts": 0.0, "images": 0.0, "search": 0.0,
-                   "total": 0.0, "episodes": 0}
+        show_7 = _new_cost_bucket()
+        show_30 = _new_cost_bucket()
         daily_series: Dict[str, float] = {}
 
         for f in files:
@@ -1253,28 +1279,46 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
             search = float(
                 ((data.get("services") or {}).get("search_api") or {}).get("estimated_cost_usd") or 0.0
             )
-            total = float(data.get("total_estimated_cost_usd") or (grok + tts + images + search))
+            # Two more real lines (2026-10-02): the multilingual sidecar's
+            # only cost key, and the hook-Short motion clip.
+            multilingual = float(
+                ((data.get("services") or {}).get("multilingual") or {}).get("estimated_cost_usd") or 0.0
+            )
+            motion = float(
+                ((data.get("services") or {}).get("motion_api") or {}).get("estimated_cost_usd") or 0.0
+            )
+            kind = _credit_file_kind(f, slug)
+            components = grok + tts + images + search + multilingual + motion
+            total = float(data.get("total_estimated_cost_usd") or components)
+            # A reviewer file's spend is Grok tokens; it is reported under
+            # ``review`` so the per-show LLM line stays per-episode.
+            review = total if kind == "review" else 0.0
             daily_series[date_str] = round(daily_series.get(date_str, 0.0) + total, 4)
+
+            def _add(bucket: Dict[str, Any]) -> None:
+                bucket["grok"] += grok
+                bucket["tts"] += tts
+                bucket["images"] += images
+                bucket["search"] += search
+                bucket["multilingual"] += multilingual
+                bucket["motion"] += motion
+                bucket["review"] += review
+                bucket["total"] += total
+                bucket["files"] += 1
+                # A dub-track sidecar or a reviewer file is not an
+                # episode — credit files overstated episodes until now.
+                if kind == "episode":
+                    bucket["episodes"] += 1
 
             if when >= d30:
                 for bucket in (show_30, network_30):
-                    bucket["grok"] += grok
-                    bucket["tts"] += tts
-                    bucket["images"] += images
-                    bucket["search"] += search
-                    bucket["total"] += total
-                    bucket["episodes"] += 1
+                    _add(bucket)
             if when >= d7:
                 for bucket in (show_7, network_7):
-                    bucket["grok"] += grok
-                    bucket["tts"] += tts
-                    bucket["images"] += images
-                    bucket["search"] += search
-                    bucket["total"] += total
-                    bucket["episodes"] += 1
+                    _add(bucket)
 
         for bucket in (show_7, show_30):
-            for k in ("grok", "tts", "images", "search", "total"):
+            for k in _COST_KEYS:
                 bucket[k] = round(bucket[k], 4)
         # Last 30 daily series, oldest → newest, for sparkline rendering.
         daily_sorted = sorted(daily_series.items())[-30:]
@@ -1283,9 +1327,11 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
             "last_30_days": show_30,
             "daily_series": daily_sorted,
         }
+        if slug == "_review":
+            per_show[slug]["label"] = "review"
 
     for bucket in (network_7, network_30):
-        for k in ("grok", "tts", "images", "search", "total"):
+        for k in _COST_KEYS:
             bucket[k] = round(bucket[k], 4)
 
     # Projection = actual last-7d burn (honest "current weekly rate").
@@ -1311,10 +1357,15 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
             "projected_weekly_usd": projected_weekly,
             "projected_monthly_usd": projected_monthly,
             "episodes_7d": episodes_7,
+            "files_7d": int(network_7.get("files", 0) or 0),
             "note": (
-                "Weekly projection = actual last-7d Grok+TTS spend "
-                f"({episodes_7} credit_usage files). Monthly = last-30d total. "
-                "Not a calendar forecast — a trailing burn rate."
+                "Weekly projection = actual last-7d spend across every credit "
+                f"file ({network_7.get('files', 0)} files: Grok + TTS + images + "
+                "search + multilingual dub tracks + hook-Short motion clips + "
+                f"the daily-audit reviewer). avg is per EPISODE ({episodes_7} "
+                "episode files; dub sidecars and reviewer files are spend, not "
+                "episodes). Monthly = last-30d total. Not a calendar forecast — "
+                "a trailing burn rate."
             ),
         },
         "youtube_quota": {

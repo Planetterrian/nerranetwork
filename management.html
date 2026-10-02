@@ -2194,7 +2194,7 @@
 
   // Cost
   {
-    const card = sectionCard("Cost", "Grok + TTS, per published episode");
+    const card = sectionCard("Cost", "every credit file: Grok, TTS, images, search, dub tracks, motion clips, reviewer");
     const n7 = cost.network_last_7_days || {};
     card.appendChild(h("div", { class: "headline",
       html: money(n7.total) + "<small>7d</small>&nbsp;&nbsp;" +
@@ -2215,10 +2215,23 @@
         "<span class='swatch' style='background:var(--series-2)'></span>TTS " + money(n7.tts) }));
       card.appendChild(legend);
     }
+    // The lines the Grok/TTS split cannot show (2026-10-02 cost pass):
+    // images + search (Aug 18), and the three that never reached the
+    // rollup before — multilingual dub tracks, hook-Short motion clips,
+    // the daily-audit reviewer. Absent = "—", never $0.00: an old
+    // dashboard.json built before the pass has no key for them.
+    const moneyOrDash = (n) => (n === null || n === undefined || n === "") ? "—" : money(n);
+    card.appendChild(h("p", { class: "fine-list", html:
+      "7d · <span class='k'>Images</span> " + moneyOrDash(n7.images) +
+      " · <span class='k'>Search</span> " + moneyOrDash(n7.search) +
+      " · <span class='k'>Multilingual</span> " + moneyOrDash(n7.multilingual) +
+      " · <span class='k'>Motion clips</span> " + moneyOrDash(n7.motion) +
+      " · <span class='k'>Reviewer</span> " + moneyOrDash(n7.review) }));
     const proj = cost.projections || {};
     card.appendChild(h("p", { class: "fine-list", html:
-      "<span class='k'>" + fmt(n7.episodes) + "</span> credit files · 7d — avg <span class='k'>" +
-      money(proj.avg_cost_per_episode_usd) + "</span>/file · trailing burn <span class='k'>" +
+      "<span class='k'>" + fmt(n7.files != null ? n7.files : n7.episodes) + "</span> credit files · " +
+      "<span class='k'>" + fmt(n7.episodes) + "</span> episodes · 7d — avg <span class='k'>" +
+      money(proj.avg_cost_per_episode_usd) + "</span>/episode · trailing burn <span class='k'>" +
       money(proj.projected_weekly_usd) + "</span>/week" +
       (proj.projected_monthly_usd != null
         ? (" · <span class='k'>" + money(proj.projected_monthly_usd) + "</span>/30d")

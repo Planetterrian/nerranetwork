@@ -207,8 +207,13 @@ def generate_title_bundle(
     perf_dir: Optional[Path] = None,
     short_window_texts: Optional[List[str]] = None,
     channel: str = "en",
+    tracker: Optional[dict] = None,
 ) -> dict:
     """One Grok call → long-form titles + thumbnail punch + Short titles.
+
+    *tracker* (Oct 2 2026): the episode's credit tracker; when given, the
+    call is recorded as the ``youtube_titles`` step. ``None`` is
+    byte-identical to the pre-pass behaviour (the call ran unrecorded).
 
     July 18 2026: extends the optimized-titles call (same cost — still one
     call per episode) to also return a 2-4 word ALL-CAPS thumbnail "punch
@@ -249,6 +254,8 @@ def generate_title_bundle(
             temperature=0.8,
             max_tokens=500,
         )
+        from engine.tracking import record_llm_usage_from_meta
+        record_llm_usage_from_meta(tracker, "youtube_titles", _meta)
     except Exception as exc:  # noqa: BLE001 — never block an upload
         logger.warning("YouTube title bundle generation failed: %s", exc)
         return empty
