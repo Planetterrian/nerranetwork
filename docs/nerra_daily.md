@@ -208,3 +208,32 @@ file, voice) + a prompt translation — not a fork. The RU shows publish
 Mondays/even-days only, so an RU edition would likely splice the RU
 dub tracks of the English shows instead; decide when the EN edition
 has a few weeks of OP3 data.
+
+## Oct 2 2026 — every English show, and a gate that waits for the stragglers
+
+Operator direction after Ep043 shipped at 39 minutes with four segments
+(the morning flagship wave had been diverted into recovery branches by a
+`claims.html` rebase conflict, fixed the same day): **all new English
+shows are in the lineup.** `EDITIONS["en"].lineup` is now 26 shows — the
+operator's lead six unchanged, Top World and the five regional desks after
+Omni View, MAG 7 / AI Chips / Prediction Markets after Modern Investing,
+Vancouver / Collingwood / Longevity / Peptides after the narrative shows,
+the Monday weeklies and DP Pod's close last. `EditionSpec.weekday_only`
+names the non-Monday weeklies (Longevity Wednesday, Peptides Thursday,
+Collingwood Friday) so the expected roster is weekday-aware for every
+weekly; a weekday roster is 21–23 shows. Mira's handoff count triples —
+A/B-listen the first edition (landmine #17).
+
+The ready gate is a pure function, `engine.daily_edition.ready_decision`:
+build when every expected show has published or skipped; past the
+**13:00 UTC** force hour (was 12:00 — Vancouver's 12:16 slot is the last
+expected show) only once **80%** of the roster is accounted for; past the
+**16:00 UTC** hard deadline with whatever exists. On a morning like 10-02
+the edition would have waited and built at 83% a few hours later instead
+of shipping four shows at 12:11. The Worker dispatches at 13:07 and the
+GitHub sweeps run 13:23 / 14:23 / 16:23 / 17:23. The links call's
+`max_tokens` scales with the handoff count (a fixed 2,500 would have
+truncated the JSON at twenty-five handoffs and silently used the fallback
+links every day). Register: `nerra-daily-full-lineup-2026-10-02`; guards:
+`tests/test_nerra_daily_full_lineup_2026_10_02.py`.
+

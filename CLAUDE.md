@@ -1047,6 +1047,24 @@ today's work, not just explain yesterday's):
   edition to the 12:00 force hour (12:09 / 12:41 vs ~08:13 on complete
   days). Open operator item: UC's claims-gate retry lands after the
   edition, so a gate-blocked UC never makes that day's edition.
+  **Oct 2 2026 — every English show, and a gate that waits.** Ep043
+  shipped at 39 min with FOUR segments: the morning flagship wave had been
+  diverted into recovery branches (every show run rewrote the new
+  `claims.html`; the commit step cannot three-way merge generated HTML —
+  P0 fixed the same day: the per-show regen writes only its own
+  `claims/<slug>.html`, the network page belongs to `--network` /
+  `--static-pages`, and `push_show_artifacts.sh` lists both as
+  regenerable). Operator direction: the thirteen launch-cohort shows are
+  IN the lineup (26 shows; `weekday_only` for Longevity/Peptides/
+  Collingwood; a weekday roster is 21–23; Nerra Personal's vocabulary is
+  the roster again). The ready gate is `engine.daily_edition.ready_decision`
+  (pure, tested): force hour **13:00 UTC** (behind Vancouver's 12:16 slot;
+  Worker `EDITION_DISPATCH` 13:07, sweeps 13:23/14:23/16:23/17:23), build
+  past it only at **80%** of the roster, past **16:00** with whatever
+  exists. The links `max_tokens` scales with the handoff count. ⚠️ AUDIO:
+  Mira's handoffs triple — A/B-listen the first edition. Register
+  `nerra-daily-full-lineup-2026-10-02`; guards
+  `tests/test_nerra_daily_full_lineup_2026_10_02.py`.
   **Aug 25 2026 first quality pass** (review:
   [`docs/reviews/nerra_daily_review_2026_08_25.md`](docs/reviews/nerra_daily_review_2026_08_25.md);
   ledger `docs/reviews/ledger/nerra_daily.yaml`): audio core verified

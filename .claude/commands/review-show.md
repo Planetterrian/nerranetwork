@@ -224,6 +224,15 @@ have very different real-world hit rates. Apply these rules:
 - Never touch voice IDs / TTS provider settings in `shows/_defaults.yaml`.
 - Never post to X, send newsletters, upload to YouTube, or call paid APIs.
 - Never merge your own PR; never push to `main`.
+- Never make a per-show regeneration (`generate_html.py --show <slug>`,
+  a show's hook, anything a `Run Podcast Show` job commits) write a page
+  that EVERY show run rewrites. Two concurrent runs cannot three-way
+  merge generated HTML, the commit loop's retries all fail on that one
+  file, and the episode is diverted to a recovery branch — 2026-10-02:
+  `claims.html` cost eleven episodes their place on main, a four-show
+  Nerra Daily and duplicate YouTube uploads. Shared pages belong to
+  `--network` (finalize), `--static-pages` (nightly) or `--all`, and a
+  regenerable page goes on `is_regenerable` in `push_show_artifacts.sh`.
 
 ## Phase 4 — Deliverables
 

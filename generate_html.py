@@ -6045,15 +6045,29 @@ def claims_page_paths() -> list:
 
 
 def generate_claims_pages(*, dry_run=False, output_dir=None, digests_root=None,
-                          today=None, days=CLAIMS_PAGES_DAYS, slugs=None):
+                          today=None, days=CLAIMS_PAGES_DAYS, slugs=None,
+                          network_page=True):
     """Write ``claims.html`` and ``claims/<slug>.html`` for every YAML show.
 
     ``output_dir`` renders into a scratch tree (tests; ``None`` = the repo
     root), ``digests_root`` points the reader at a scratch ``digests/`` tree,
     ``today`` pins the window. ``slugs`` limits the per-show pages written
-    (the ``--show`` path regenerates only its own); the network page is
-    always rebuilt because its totals moved. Returns the site-relative paths
-    written.
+    (``[]`` = none); ``network_page`` says whether ``claims.html`` is
+    rebuilt. Returns the site-relative paths written.
+
+    **The per-show regeneration (``--show <slug>``) must write ONLY its own
+    ``claims/<slug>.html``** (2026-10-02). On its first morning this
+    function rebuilt the network page on every show run; two show runs
+    minutes apart both carried a different ``claims.html``, the commit
+    step's rebase could not three-way merge generated HTML, every retry
+    failed on that one file, and eleven episodes (Tesla, SpaceX, Omni
+    View, MIT, MAB, two desks) were diverted into recovery branches
+    instead of main — so Nerra Daily built from four shows and GitHub's
+    late cron produced second copies. A file every show run rewrites is a
+    file every show run conflicts on. The network page belongs to the
+    passes that are serialized or conflict-tolerant: ``--network`` (the
+    finalize job, whose commit loop keeps origin's copy on conflict),
+    ``--static-pages`` (nightly) and ``--all``.
     """
     from engine import claims_ledger as _ledger
 
@@ -6081,8 +6095,9 @@ def generate_claims_pages(*, dry_run=False, output_dir=None, digests_root=None,
     # Network page: one row per registered show, in display order.
     ordered = [s["slug"] for s in all_shows if s["slug"] in NETWORK_SHOWS]
     ordered += [s for s in NETWORK_SHOWS if s not in ordered]
-    net = _ledger.network_ledger(ordered, days=days, today=today,
-                                 digests_root=digests_root)
+    net = (_ledger.network_ledger(ordered, days=days, today=today,
+                                  digests_root=digests_root)
+           if network_page else {"shows": [], "totals": {}})
     rows = []
     for s in net["shows"]:
         meta = by_slug.get(s["slug"]) or {}
@@ -6098,7 +6113,7 @@ def generate_claims_pages(*, dry_run=False, output_dir=None, digests_root=None,
         "re-checked nightly, never removed), and every show's record for "
         f"the last {days} days — plus every correction filed."
     )
-    html = template.render(
+    html = "" if not network_page else template.render(
         mode="network",
         path_prefix="",
         page_title="Claims & corrections | Nerra Network",
@@ -6110,13 +6125,14 @@ def generate_claims_pages(*, dry_run=False, output_dir=None, digests_root=None,
         totals=net["totals"],
         **common,
     )
-    out = base / "claims.html"
-    if dry_run:
-        print(f"[dry-run] Would write {out}")
-    else:
-        base.mkdir(parents=True, exist_ok=True)
-        out.write_text(_strip_lone_surrogates(html), encoding="utf-8")
-    written.append("claims.html")
+    if network_page:
+        out = base / "claims.html"
+        if dry_run:
+            print(f"[dry-run] Would write {out}")
+        else:
+            base.mkdir(parents=True, exist_ok=True)
+            out.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+        written.append("claims.html")
 
     # One page per show with a YAML.
     out_dir = base / "claims"
@@ -6467,7 +6483,11 @@ def main():
             generate_blog_posts(args.show, dry_run=args.dry_run)
         # The show's claims ledger page + the network totals (Oct 1 2026):
         # a new episode adds a row, so the per-episode path refreshes it.
-        generate_claims_pages(dry_run=args.dry_run, slugs=[args.show])
+        # Own ledger page ONLY — never the network claims.html (see the
+        # function's docstring: a shared page in a per-show commit is a
+        # rebase conflict on every concurrent run).
+        generate_claims_pages(dry_run=args.dry_run, slugs=[args.show],
+                              network_page=False)
         # Always generate the show page and summaries page
         generate_show_page(args.show, dry_run=args.dry_run)
         generate_summaries_page(args.show, dry_run=args.dry_run)
@@ -6568,6 +6588,10 @@ def main():
         generate_all_summaries(dry_run=args.dry_run)
     if args.network:
         generate_network_page(dry_run=args.dry_run)
+        # The network claims ledger refreshes here — the finalize job runs
+        # --network after every episode and its commit loop keeps origin's
+        # copy on conflict — never from the per-show path.
+        generate_claims_pages(dry_run=args.dry_run, slugs=[], network_page=True)
         # The data dashboards are data-light (read same-origin caches at
         # runtime) so they're cheap to regenerate on every network rebuild.
         generate_spacex_dashboard(dry_run=args.dry_run)

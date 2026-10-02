@@ -82,7 +82,8 @@ def test_worker_slots_match_cron_map():
 
 def test_worker_trigger_covers_all_slots():
     toml = (_ROOT / "workers" / "scheduler" / "wrangler.toml").read_text(encoding="utf-8")
-    assert '"1,7,16,31,37,46 6-12 * * *"' in toml
+    # 6-13 since Oct 2 2026: the Nerra Daily dispatch moved to 13:07.
+    assert '"1,7,16,31,37,46 6-13 * * *"' in toml
 
 
 def test_gate_has_duplicate_guard():
@@ -192,12 +193,16 @@ def test_edition_dispatch_slot():
     lo, hi = hours.split("-")
     assert int(lo) <= hour <= int(hi)
     # The force hour precedes the dispatch, so the dispatched run builds.
-    build_src = (_ROOT / "scripts" / "build_daily_edition.py").read_text(
+    # The hour lives in engine/daily_edition.py since Oct 2 2026 (the
+    # build script re-exports it).
+    engine_src = (_ROOT / "engine" / "daily_edition.py").read_text(
         encoding="utf-8")
-    force = int(re.search(r"FORCE_BUILD_UTC_HOUR = (\d+)", build_src).group(1))
+    force = int(re.search(r"^FORCE_BUILD_UTC_HOUR = (\d+)", engine_src, re.M).group(1))
     assert force <= hour
-    # 6am Pacific is 13:00 UTC in summer; force + ~30 min build must beat it.
-    assert force <= 12, "force hour past 12 UTC cannot land by 6am PDT"
+    # Oct 2 2026: the last expected show (Vancouver) is dispatched at
+    # 12:16 UTC, so a 12:00 force hour fired while it was still rendering;
+    # 13:00 + ~25 min lands ~6:25am PDT / 5:25am PST.
+    assert force <= 13, "force hour past 13 UTC lands after breakfast on the coast"
     # The GitHub sweep fallback for the force hour exists.
     edition_wf = (_ROOT / ".github" / "workflows" / "nerra-daily.yml"
                   ).read_text(encoding="utf-8")
