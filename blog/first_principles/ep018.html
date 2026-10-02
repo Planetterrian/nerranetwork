@@ -776,6 +776,11 @@
         }
         .blog-claims .claim-source a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
         .blog-claims .claim-source a:hover { text-decoration: underline; }
+        .blog-claims .claim-why { display: block; font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-top: 2px; }
+        .blog-claims .claims-flagged-count { font-weight: 400; color: var(--nn-text-muted); font-size: 0.9em; }
+        .blog-claims .claims-ledger-link { font-family: var(--font-ui); font-size: 0.85rem; margin: var(--sp-3) 0 0; }
+        .blog-claims .claims-ledger-link a, .blog-claims .claims-none a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claims-ledger-link a:hover, .blog-claims .claims-none a:hover { text-decoration: underline; }
         /* Correction box (engine.corrections): dated, at the top of the
            article, before a reader meets the sentence that was wrong. */
         .nn-correction {
@@ -1524,6 +1529,7 @@
                         <a href="../../gallery.html">Image Gallery</a>
                         <a href="../../data.html">Data & Dashboards</a>
                         <a href="../../editorial.html">Editorial Process</a>
+                        <a href="../../claims.html">Claims &amp; corrections</a>
                         <a href="../../faq.html">FAQ</a>
                         <a href="../../press.html">Press Kit</a>
                         <a href="../../support.html">Support the Network</a>
@@ -1942,6 +1948,7 @@
             <a href="../../gallery.html" class="nn-mobile-show-link">Image Gallery</a>
             <a href="../../data.html" class="nn-mobile-show-link">Data & Dashboards</a>
             <a href="../../editorial.html" class="nn-mobile-show-link">Editorial Process</a>
+            <a href="../../claims.html" class="nn-mobile-show-link">Claims &amp; corrections</a>
             <a href="../../faq.html" class="nn-mobile-show-link">FAQ</a>
             <a href="../../support.html" class="nn-mobile-show-link">Support the Network</a>
         </div>
@@ -2044,6 +2051,8 @@
 
             <!-- Sources -->
             
+            
+            
             <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
                 
                 <details>
@@ -2051,30 +2060,38 @@
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
                         Verified claims (7)
                     </summary>
-                    <p class="claims-note">Each claim below was checked before publication: its source was fetched and the supporting quote was found in it.</p>
+                    <p class="claims-note">Each claim below was checked by a machine before publication: its source was fetched and the supporting quote looked for in it. A claim the check could not confirm is published and marked, not removed, and re-checked nightly for a week.</p>
                     <ol>
-                        <li>The Human Genome Project's U.S. contribution was originally projected at $3 billion and the project took about 13 years.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The Human Genome Project's U.S. contribution was originally projected at $3 billion and the project took about 13 years.
                             <span class="claim-source"><a href="https://www.genome.gov/about-genomics/fact-sheets/Sequencing-Human-Genome-cost" target="_blank" rel="noopener" title="The Cost of Sequencing a Human Genome - National Human Genome Research Institute">genome.gov</a></span>
                         </li>
-                        <li>Whole-genome sequencing has been commercially offered for around $600 - a few hundred dollars.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Whole-genome sequencing has been commercially offered for around $600 - a few hundred dollars.
                             <span class="claim-source"><a href="https://en.wikipedia.org/wiki/Whole_genome_sequencing" target="_blank" rel="noopener" title="Whole genome sequencing - Wikipedia">en.wikipedia.org</a></span>
                         </li>
-                        <li>Sanger sequencing was developed in 1977 and remained the most widely used sequencing method for roughly 40 years.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Sanger sequencing was developed in 1977 and remained the most widely used sequencing method for roughly 40 years.
                             <span class="claim-source"><a href="https://en.wikipedia.org/wiki/Sanger_sequencing" target="_blank" rel="noopener" title="Sanger sequencing - Wikipedia">en.wikipedia.org</a></span>
                         </li>
-                        <li>Illumina-style sequencing uses nucleotides with reversible fluorescent blockers so bases are added one at a time and imaged in place.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Illumina-style sequencing uses nucleotides with reversible fluorescent blockers so bases are added one at a time and imaged in place.
                             <span class="claim-source"><a href="https://en.wikipedia.org/wiki/Illumina_dye_sequencing" target="_blank" rel="noopener" title="Illumina dye sequencing - Wikipedia">en.wikipedia.org</a></span>
                         </li>
-                        <li>Massively parallel sequencing immobilizes millions of DNA fragments on a flow-cell surface, amplified into clusters by bridge amplification.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Massively parallel sequencing immobilizes millions of DNA fragments on a flow-cell surface, amplified into clusters by bridge amplification.
                             <span class="claim-source"><a href="https://en.wikipedia.org/wiki/Illumina_dye_sequencing" target="_blank" rel="noopener" title="Illumina dye sequencing - Wikipedia">en.wikipedia.org</a></span>
                         </li>
-                        <li>Ion semiconductor sequencing measures nucleotide incorporation directly with electronics, avoiding labeled nucleotides and optical measurement hardware.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Ion semiconductor sequencing measures nucleotide incorporation directly with electronics, avoiding labeled nucleotides and optical measurement hardware.
                             <span class="claim-source"><a href="https://en.wikipedia.org/wiki/Ion_semiconductor_sequencing" target="_blank" rel="noopener" title="Ion semiconductor sequencing - Wikipedia">en.wikipedia.org</a></span>
                         </li>
-                        <li>Around the mid-2000s, sequencing a human genome with then-available (Sanger-era) approaches was estimated to cost tens of millions of dollars (about $50 million for a second reference genome; ~$14 million by 2006).
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Around the mid-2000s, sequencing a human genome with then-available (Sanger-era) approaches was estimated to cost tens of millions of dollars (about $50 million for a second reference genome; ~$14 million by 2006).
                             <span class="claim-source"><a href="https://www.genome.gov/about-genomics/fact-sheets/Sequencing-Human-Genome-cost" target="_blank" rel="noopener" title="The Cost of Sequencing a Human Genome - National Human Genome Research Institute">genome.gov</a></span>
                         </li>
                     </ol>
+                    <p class="claims-ledger-link"><a href="../../claims/first_principles.html">Full ledger for this show →</a></p>
                 </details>
                 
             </section>
@@ -2537,6 +2554,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                     <a href="../../contact.html">Contact</a>
                     <a href="../../press.html">Press Kit</a>
                     <a href="../../editorial.html">Editorial Process</a>
+                    <a href="../../claims.html">Claims &amp; corrections</a>
                     <a href="../../ai-disclosure.html">AI Disclosure</a>
                     <a href="../../privacy-policy.html">Privacy Policy</a>
                     <a href="../../terms-of-service.html">Terms of Service</a>

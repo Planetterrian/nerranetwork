@@ -776,6 +776,11 @@
         }
         .blog-claims .claim-source a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
         .blog-claims .claim-source a:hover { text-decoration: underline; }
+        .blog-claims .claim-why { display: block; font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-top: 2px; }
+        .blog-claims .claims-flagged-count { font-weight: 400; color: var(--nn-text-muted); font-size: 0.9em; }
+        .blog-claims .claims-ledger-link { font-family: var(--font-ui); font-size: 0.85rem; margin: var(--sp-3) 0 0; }
+        .blog-claims .claims-ledger-link a, .blog-claims .claims-none a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claims-ledger-link a:hover, .blog-claims .claims-none a:hover { text-decoration: underline; }
         /* Correction box (engine.corrections): dated, at the top of the
            article, before a reader meets the sentence that was wrong. */
         .nn-correction {
@@ -1524,6 +1529,7 @@
                         <a href="../../gallery.html">Image Gallery</a>
                         <a href="../../data.html">Data & Dashboards</a>
                         <a href="../../editorial.html">Editorial Process</a>
+                        <a href="../../claims.html">Claims &amp; corrections</a>
                         <a href="../../faq.html">FAQ</a>
                         <a href="../../press.html">Press Kit</a>
                         <a href="../../support.html">Support the Network</a>
@@ -1942,6 +1948,7 @@
             <a href="../../gallery.html" class="nn-mobile-show-link">Image Gallery</a>
             <a href="../../data.html" class="nn-mobile-show-link">Data & Dashboards</a>
             <a href="../../editorial.html" class="nn-mobile-show-link">Editorial Process</a>
+            <a href="../../claims.html" class="nn-mobile-show-link">Claims &amp; corrections</a>
             <a href="../../faq.html" class="nn-mobile-show-link">FAQ</a>
             <a href="../../support.html" class="nn-mobile-show-link">Support the Network</a>
         </div>
@@ -2044,6 +2051,8 @@
 
             <!-- Sources -->
             
+            
+            
             <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
                 
                 <details>
@@ -2051,39 +2060,50 @@
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
                         Verified claims (10)
                     </summary>
-                    <p class="claims-note">Each claim below was checked before publication: its source was fetched and the supporting quote was found in it.</p>
+                    <p class="claims-note">Each claim below was checked by a machine before publication: its source was fetched and the supporting quote looked for in it. A claim the check could not confirm is published and marked, not removed, and re-checked nightly for a week.</p>
                     <ol>
-                        <li>The Ford Model T Runabout's price started at $825 and had been lowered to $260 by 1925.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The Ford Model T Runabout's price started at $825 and had been lowered to $260 by 1925.
                             <span class="claim-source"><a href="https://en.wikipedia.org/wiki/Ford_Model_T" target="_blank" rel="noopener" title="Ford Model T - Wikipedia">en.wikipedia.org</a></span>
                         </li>
-                        <li>Moving-line production cut Model T production time from about 12.5 hours to 93 minutes by 1914.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Moving-line production cut Model T production time from about 12.5 hours to 93 minutes by 1914.
                             <span class="claim-source"><a href="https://en.wikipedia.org/wiki/Ford_Model_T" target="_blank" rel="noopener" title="Ford Model T - Wikipedia">en.wikipedia.org</a></span>
                         </li>
-                        <li>Ford's 1914 five-dollar daily wage was aimed at reducing the heavy labor turnover that had some departments hiring 300 men a year to fill 100 slots.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Ford's 1914 five-dollar daily wage was aimed at reducing the heavy labor turnover that had some departments hiring 300 men a year to fill 100 slots.
                             <span class="claim-source"><a href="https://en.wikipedia.org/wiki/Henry_Ford" target="_blank" rel="noopener" title="Henry Ford - Wikipedia">en.wikipedia.org</a></span>
                         </li>
-                        <li>Ford vertically integrated, building or acquiring blast furnaces, a glass plant, coal mines, rubber plantations, and other upstream facilities to keep reducing Model T costs.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Ford vertically integrated, building or acquiring blast furnaces, a glass plant, coal mines, rubber plantations, and other upstream facilities to keep reducing Model T costs.
                             <span class="claim-source"><a href="https://en.wikipedia.org/wiki/Ford_Model_T" target="_blank" rel="noopener" title="Ford Model T - Wikipedia">en.wikipedia.org</a></span>
                         </li>
-                        <li>Model T production ran from October 1908 to August 1927 — about nineteen years on one basic design.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Model T production ran from October 1908 to August 1927 — about nineteen years on one basic design.
                             <span class="claim-source"><a href="https://en.wikipedia.org/wiki/Ford_Model_T" target="_blank" rel="noopener" title="Ford Model T - Wikipedia">en.wikipedia.org</a></span>
                         </li>
-                        <li>Between 1908 and 1927 Ford built over 15 million Model T cars and the price fell from $850 to as little as $260.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Between 1908 and 1927 Ford built over 15 million Model T cars and the price fell from $850 to as little as $260.
                             <span class="claim-source"><a href="https://www.thehenryford.org/collections-and-research/digital-collections/expert-sets/7139/" target="_blank" rel="noopener" title="Henry Ford: Assembly Line | Expert Set | The Henry Ford">thehenryford.org</a></span>
                         </li>
-                        <li>Ford's assembly-line experiments through 1913 and into 1914 cut the time to build a Model T from 12½ hours to 93 minutes.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Ford's assembly-line experiments through 1913 and into 1914 cut the time to build a Model T from 12½ hours to 93 minutes.
                             <span class="claim-source"><a href="https://www.thehenryford.org/explore/blog/fords-five-dollar-day/" target="_blank" rel="noopener" title="Ford's Five-Dollar Day | The Henry Ford">thehenryford.org</a></span>
                         </li>
-                        <li>On January 5, 1914 Ford Motor Company announced it would double its workers' wages to five dollars a day.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> On January 5, 1914 Ford Motor Company announced it would double its workers' wages to five dollars a day.
                             <span class="claim-source"><a href="https://www.thehenryford.org/explore/blog/fords-five-dollar-day/" target="_blank" rel="noopener" title="Ford's Five-Dollar Day | The Henry Ford">thehenryford.org</a></span>
                         </li>
-                        <li>Assembly-line monotony drove Ford's labor turnover to roughly 370 percent before the Five-Dollar Day (The Henry Ford's expert set gives 380 percent for late 1913).
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Assembly-line monotony drove Ford's labor turnover to roughly 370 percent before the Five-Dollar Day (The Henry Ford's expert set gives 380 percent for late 1913).
                             <span class="claim-source"><a href="https://www.thehenryford.org/explore/blog/fords-five-dollar-day/" target="_blank" rel="noopener" title="Ford's Five-Dollar Day | The Henry Ford">thehenryford.org</a></span>
                         </li>
-                        <li>Ford's River Rouge plant turned coal, iron ore, limestone, rubber, and sand into iron, steel, tires, glass, and finished automobiles — vertical integration from raw material to car.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Ford's River Rouge plant turned coal, iron ore, limestone, rubber, and sand into iron, steel, tires, glass, and finished automobiles — vertical integration from raw material to car.
                             <span class="claim-source"><a href="https://www.thehenryford.org/collections-and-research/digital-collections/expert-sets/7139/" target="_blank" rel="noopener" title="Henry Ford: Assembly Line | Expert Set | The Henry Ford">thehenryford.org</a></span>
                         </li>
                     </ol>
+                    <p class="claims-ledger-link"><a href="../../claims/first_principles.html">Full ledger for this show →</a></p>
                 </details>
                 
             </section>
@@ -2556,6 +2576,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                     <a href="../../contact.html">Contact</a>
                     <a href="../../press.html">Press Kit</a>
                     <a href="../../editorial.html">Editorial Process</a>
+                    <a href="../../claims.html">Claims &amp; corrections</a>
                     <a href="../../ai-disclosure.html">AI Disclosure</a>
                     <a href="../../privacy-policy.html">Privacy Policy</a>
                     <a href="../../terms-of-service.html">Terms of Service</a>

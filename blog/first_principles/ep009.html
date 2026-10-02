@@ -776,6 +776,11 @@
         }
         .blog-claims .claim-source a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
         .blog-claims .claim-source a:hover { text-decoration: underline; }
+        .blog-claims .claim-why { display: block; font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-top: 2px; }
+        .blog-claims .claims-flagged-count { font-weight: 400; color: var(--nn-text-muted); font-size: 0.9em; }
+        .blog-claims .claims-ledger-link { font-family: var(--font-ui); font-size: 0.85rem; margin: var(--sp-3) 0 0; }
+        .blog-claims .claims-ledger-link a, .blog-claims .claims-none a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claims-ledger-link a:hover, .blog-claims .claims-none a:hover { text-decoration: underline; }
         /* Correction box (engine.corrections): dated, at the top of the
            article, before a reader meets the sentence that was wrong. */
         .nn-correction {
@@ -1524,6 +1529,7 @@
                         <a href="../../gallery.html">Image Gallery</a>
                         <a href="../../data.html">Data & Dashboards</a>
                         <a href="../../editorial.html">Editorial Process</a>
+                        <a href="../../claims.html">Claims &amp; corrections</a>
                         <a href="../../faq.html">FAQ</a>
                         <a href="../../press.html">Press Kit</a>
                         <a href="../../support.html">Support the Network</a>
@@ -1942,6 +1948,7 @@
             <a href="../../gallery.html" class="nn-mobile-show-link">Image Gallery</a>
             <a href="../../data.html" class="nn-mobile-show-link">Data & Dashboards</a>
             <a href="../../editorial.html" class="nn-mobile-show-link">Editorial Process</a>
+            <a href="../../claims.html" class="nn-mobile-show-link">Claims &amp; corrections</a>
             <a href="../../faq.html" class="nn-mobile-show-link">FAQ</a>
             <a href="../../support.html" class="nn-mobile-show-link">Support the Network</a>
         </div>
@@ -2043,6 +2050,8 @@
 
             <!-- Sources -->
             
+            
+            
             <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
                 
                 <details>
@@ -2050,33 +2059,42 @@
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
                         Verified claims (8)
                     </summary>
-                    <p class="claims-note">Each claim below was checked before publication: its source was fetched and the supporting quote was found in it.</p>
+                    <p class="claims-note">Each claim below was checked by a machine before publication: its source was fetched and the supporting quote looked for in it. A claim the check could not confirm is published and marked, not removed, and re-checked nightly for a week.</p>
                     <ol>
-                        <li>All non-research clinical laboratory testing on humans in the US is regulated by CMS under the Clinical Laboratory Improvement Amendments (CLIA) program.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> All non-research clinical laboratory testing on humans in the US is regulated by CMS under the Clinical Laboratory Improvement Amendments (CLIA) program.
                             <span class="claim-source"><a href="https://www.cms.gov/medicare/quality/clinical-laboratory-improvement-amendments" target="_blank" rel="noopener" title="Clinical Laboratory Improvement Amendments (CLIA) | CMS">cms.gov</a></span>
                         </li>
-                        <li>Lab tests are reimbursed per billing code under Medicare's Clinical Laboratory Fee Schedule, which sets a single national rate per test code with no geographic adjustment.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Lab tests are reimbursed per billing code under Medicare's Clinical Laboratory Fee Schedule, which sets a single national rate per test code with no geographic adjustment.
                             <span class="claim-source"><a href="https://www.careroute.ai/costs/cpt/80053" target="_blank" rel="noopener" title="CPT 80053: Comprehensive Metabolic Panel Cost (2026 Medicare Rate vs Average Charge) | CareRoute">careroute.ai</a></span>
                         </li>
-                        <li>Providers bill far above the Medicare lab rate for the same panel: the average provider charge for a CMP is about $59.85 against a Medicare CLFS payment of $10.33 (a 5.8x markup), supporting the digest's point that hospital-bill figures are inflated list prices.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Providers bill far above the Medicare lab rate for the same panel: the average provider charge for a CMP is about $59.85 against a Medicare CLFS payment of $10.33 (a 5.8x markup), supporting the digest's point that hospital-bill figures are inflated list prices.
                             <span class="claim-source"><a href="https://www.careroute.ai/costs/cpt/80053" target="_blank" rel="noopener" title="CPT 80053: Comprehensive Metabolic Panel Cost (2026 Medicare Rate vs Average Charge) | CareRoute">careroute.ai</a></span>
                         </li>
-                        <li>Reagents for an entire 14-analyte comprehensive metabolic panel cost a lab only a few dollars (roughly $2-5), i.e. cents per individual assay -- a small fraction of what is billed.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Reagents for an entire 14-analyte comprehensive metabolic panel cost a lab only a few dollars (roughly $2-5), i.e. cents per individual assay -- a small fraction of what is billed.
                             <span class="claim-source"><a href="https://www.careroute.ai/costs/cpt/80053" target="_blank" rel="noopener" title="CPT 80053: Comprehensive Metabolic Panel Cost (2026 Medicare Rate vs Average Charge) | CareRoute">careroute.ai</a></span>
                         </li>
-                        <li>Medicare's Clinical Laboratory Fee Schedule pays for most clinical diagnostic laboratory tests at the weighted median of private-payor rates, updated about every three years under the Protecting Access to Medicare Act (PAMA).
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Medicare's Clinical Laboratory Fee Schedule pays for most clinical diagnostic laboratory tests at the weighted median of private-payor rates, updated about every three years under the Protecting Access to Medicare Act (PAMA).
                             <span class="claim-source"><a href="https://www.cms.gov/medicare/payment/fee-schedules/clinical-laboratory-fee-schedule-clfs" target="_blank" rel="noopener" title="Clinical Laboratory Fee Schedule | CMS">cms.gov</a></span>
                         </li>
-                        <li>CPT codes are the AMA's five-digit code set used across the United States to report procedures and tests to public and private payers, which is why labs price to the code.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> CPT codes are the AMA's five-digit code set used across the United States to report procedures and tests to public and private payers, which is why labs price to the code.
                             <span class="claim-source"><a href="https://www.ama-assn.org/practice-management/cpt/cpt-overview-and-code-approval" target="_blank" rel="noopener" title="CPT billing codes overview | American Medical Association">ama-assn.org</a></span>
                         </li>
-                        <li>Under CLIA, a test categorized as waived may be performed by laboratories holding only a Certificate of Waiver; the statute defines waived tests as simple procedures with an insignificant risk of an erroneous result.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Under CLIA, a test categorized as waived may be performed by laboratories holding only a Certificate of Waiver; the statute defines waived tests as simple procedures with an insignificant risk of an erroneous result.
                             <span class="claim-source"><a href="https://www.fda.gov/medical-devices/ivd-regulatory-assistance/clia-waiver-application" target="_blank" rel="noopener" title="CLIA Waiver by Application | FDA">fda.gov</a></span>
                         </li>
-                        <li>Under CLIA every laboratory test system is graded for complexity by scoring seven criteria, with CMS running the CLIA program; the resulting categories are waived, moderate, provider-performed microscopy and high complexity.
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Under CLIA every laboratory test system is graded for complexity by scoring seven criteria, with CMS running the CLIA program; the resulting categories are waived, moderate, provider-performed microscopy and high complexity.
                             <span class="claim-source"><a href="https://en.wikipedia.org/wiki/Clinical_Laboratory_Improvement_Amendments" target="_blank" rel="noopener" title="Clinical Laboratory Improvement Amendments - Wikipedia">en.wikipedia.org</a></span>
                         </li>
                     </ol>
+                    <p class="claims-ledger-link"><a href="../../claims/first_principles.html">Full ledger for this show →</a></p>
                 </details>
                 
             </section>
@@ -2459,6 +2477,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                     <a href="../../contact.html">Contact</a>
                     <a href="../../press.html">Press Kit</a>
                     <a href="../../editorial.html">Editorial Process</a>
+                    <a href="../../claims.html">Claims &amp; corrections</a>
                     <a href="../../ai-disclosure.html">AI Disclosure</a>
                     <a href="../../privacy-policy.html">Privacy Policy</a>
                     <a href="../../terms-of-service.html">Terms of Service</a>
