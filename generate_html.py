@@ -5630,7 +5630,7 @@ def generate_join_page(*, dry_run=False):
 def generate_personal_interest_page(*, dry_run=False):
     """Generate /personal-interest.html — Soft Personal email capture.
 
-    ENG-SPEC (Brand HoM, Sep 2026): optional tips/reminder signup via
+    ENG-SPEC (Brand HoM, Sep 2026): tips-only signup via
     Buttondown tag ``personal-interest`` — not a waitlist, not paid
     checkout, never auto-charges. Newsletter checkbox adds ``nerra-member``
     + ``SpaceX Daily``. Episode totals are never shown here.
@@ -5638,9 +5638,8 @@ def generate_personal_interest_page(*, dry_run=False):
     env = _get_jinja_env()
     ctx = _member_page_context(
         "Nerra Personal — when you’re ready | Nerra Network",
-        "Every Nerra show stays free. Leave your email for a quiet "
-        "nudge with Personal tips — or a reminder when you’re ready. "
-        "No ads. Curiosity only.",
+        "Every Nerra show stays free. Leave your email for occasional "
+        "Personal tips. No ads. Curiosity only.",
         "https://nerranetwork.com/personal-interest.html")
     # Soft page must never carry episode totals (frozen / no FOMO).
     ctx.pop("total_episodes", None)

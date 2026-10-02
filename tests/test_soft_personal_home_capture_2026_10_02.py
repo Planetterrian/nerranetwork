@@ -17,8 +17,15 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 SOFT_HERO_COPY = (
-    "Get a quiet nudge with Personal tips, or a reminder when you’re ready. "
+    "Get a quiet nudge with occasional Personal tips. "
     "No charge, no card. Shows stay free either way."
+)
+SOFT_PRIVACY_NOTE = (
+    "We’ll only email you about Nerra Personal. Unsubscribe anytime."
+)
+SOFT_META_DESCRIPTION = (
+    "Every Nerra show stays free. Leave your email for occasional "
+    "Personal tips. No ads. Curiosity only."
 )
 
 
@@ -62,9 +69,25 @@ class TestSoftPersonalHomeAndAgeOfAi:
         macros = _scrub_jinja_comments(_read("templates/_macros.html.j2"))
         hero = _hero_inner(macros)
         assert SOFT_HERO_COPY in hero
+        assert SOFT_PRIVACY_NOTE in hero
+        assert "privacy-policy.html" in hero
+        assert "reminder" not in hero.lower()
         assert "$4.99" not in hero
         assert "4.99" not in hero
         assert "/mo" not in hero
+        # Accessible Email label associated with the input.
+        assert 'for="spi-hero-email-' in hero
+        assert ">Email</label>" in hero or ">Email<" in hero
+
+    def test_interest_macro_tips_only_no_soft_label(self):
+        macros = _scrub_jinja_comments(_read("templates/_macros.html.j2"))
+        start = macros.index("macro soft_personal_interest")
+        body = macros[start:start + 2000]
+        assert "Get occasional Personal tips by email — no charge, no card" in body
+        assert "Save my email on the Personal page →" in body
+        assert "reminder" not in body.lower()
+        assert "Soft Personal" not in body
+        assert "Not ready to pay?" not in body
 
     def test_rendered_homepage_has_exactly_one_soft_hero(self, tmp_path, monkeypatch):
         import generate_html as G
@@ -83,6 +106,9 @@ class TestSoftPersonalHomeAndAgeOfAi:
         assert 'id="home-soft-personal"' in html
         hero = _hero_inner(html)
         assert SOFT_HERO_COPY in hero
+        assert SOFT_PRIVACY_NOTE in hero
+        assert "privacy-policy.html" in hero
+        assert "reminder" not in hero.lower()
         assert "$4.99" not in hero
         assert "/mo" not in hero
         assert "4.99" not in hero
@@ -108,6 +134,9 @@ class TestSoftPersonalHomeAndAgeOfAi:
         assert html.count('id="soft-personal-hero"') == 1
         hero = _hero_inner(html)
         assert SOFT_HERO_COPY in hero
+        assert SOFT_PRIVACY_NOTE in hero
+        assert "privacy-policy.html" in hero
+        assert "reminder" not in hero.lower()
         assert "$4.99" not in hero
         assert "/mo" not in hero
         parser = _FormCollector()
@@ -145,14 +174,16 @@ class TestPersonalInterestNoNumericShowCount:
         env = G._get_jinja_env()
         ctx = G._member_page_context(
             "Nerra Personal — when you’re ready | Nerra Network",
-            "Every Nerra show stays free. Leave your email for a quiet "
-            "nudge with Personal tips — or a reminder when you’re ready. "
-            "No ads. Curiosity only.",
+            SOFT_META_DESCRIPTION,
             "https://nerranetwork.com/personal-interest.html",
         )
         ctx.pop("total_episodes", None)
         html = env.get_template("personal_interest_page.html.j2").render(**ctx)
         assert "Every Nerra show stays free" in html
+        assert "Want occasional Personal tips by email?" in html
+        assert SOFT_PRIVACY_NOTE in html
+        assert "privacy-policy.html" in html
+        assert "reminder" not in html.lower()
         assert "All 18" not in html
         assert not re.search(
             r"\b(?:all\s+)?\d+\s+Nerra\s+shows?\b", html, flags=re.I
@@ -161,6 +192,14 @@ class TestPersonalInterestNoNumericShowCount:
         assert not re.search(
             r'content="[^"]*\b\d+\s+(?:Nerra\s+)?shows?\b', html, flags=re.I
         )
+
+    def test_meta_description_is_tips_only(self):
+        gen = _read("generate_html.py")
+        start = gen.index("def generate_personal_interest_page")
+        body = gen[start : start + 1200]
+        assert "Leave your email for occasional" in body
+        assert "Personal tips. No ads. Curiosity only." in body
+        assert "reminder" not in body.lower()
 
 
 class TestUtmSourceMappingUnchanged:

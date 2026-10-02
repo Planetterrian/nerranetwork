@@ -27,7 +27,7 @@ HERO_SLUGS = (
 )
 
 SOFT_HERO_COPY = (
-    "Get a quiet nudge with Personal tips, or a reminder when you’re ready. "
+    "Get a quiet nudge with occasional Personal tips. "
     "No charge, no card. Shows stay free either way."
 )
 
