@@ -26,6 +26,7 @@
  *   POST /voices/upload-done          studio: local recording manifest → R2 + run row
  *   POST /voices/studio-check         studio: pre-join mic check / day-before setup test / guest stuck outside
  *   GET|POST /voices/admin/call-guest admin: signed link → switch a stuck guest to a phone call
+ *   GET|POST /voices/join             Cal.com event location: email → the guest's own studio
  *   POST /voices/studio-silence       studio or scenario: guest unheard → email Patrick once
  *   POST /voices/studio-phone         studio: guest's "Have Mira call my phone" → PSTN now
  *   GET  /voices/host-link            admin: Patrick's co-host studio link
@@ -43,6 +44,9 @@ export interface Env {
   GITHUB_DISPATCH_TOKEN: string;
   ADMIN_TOKEN: string;
   RESEND_API_KEY: string;
+  // Oct 2 2026: lets the booking webhook replace Cal.com's own video room
+  // with the guest's studio link in the calendar invite.
+  CAL_API_KEY?: string;
   VOICES_FROM_EMAIL: string;
   CALCOM_BOOKING_URL: string;
   // Nerra Voices (Sept 2026): optional second Cal.com event. Falls back to
@@ -1060,6 +1064,12 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
   }
   const studio = studioUrl(show, interviewId, "guest");
   const setupTest = `${studio}&test=1`;
+  // Oct 1 2026 (Jonathan Bautista, Jason Fishman): the calendar invite's
+  // "Where" was a Cal Video room. Both guests clicked it at the start time,
+  // sat in an empty room that said "waiting for others to join", and wrote
+  // that nobody came; both interviews fell back to the phone. The invite now
+  // carries the guest's own studio link.
+  await setCalendarLocation(env, show, String(p.uid ?? p.bookingUid ?? ""), studio, apps[0].name);
   let manage = "";
   try {
     const tok = await sb(env, "GET", `interviews?id=eq.${interviewId}&select=manage_token`);
@@ -1673,6 +1683,88 @@ function studioStepsHtml(studio: string): string {
     "<li>Press <strong>Join your interview</strong>. You're in when you hear me say hello.</li></ol>" +
     "<p>If anything gets stuck, the studio's <strong>Have Mira call my phone</strong> button " +
     "gets us going by phone straight away, so we never lose the slot.</p>";
+}
+
+async function setCalendarLocation(env: Env, show: Show, uid: string, studio: string, who: string) {
+  if (!uid) return;
+  if (!env.CAL_API_KEY) {
+    await slack(env, `:warning: ${show.shortLabel}: ${who}'s calendar invite still points at Cal Video. Set the CAL_API_KEY Worker secret so bookings get the studio link.`);
+    return;
+  }
+  try {
+    const res = await fetch(`https://api.cal.com/v2/bookings/${encodeURIComponent(uid)}/location`, {
+      method: "PATCH",
+      headers: { "Authorization": `Bearer ${env.CAL_API_KEY}`, "cal-api-version": "2024-08-13",
+        "Content-Type": "application/json" },
+      body: JSON.stringify({ location: { type: "link", link: studio } }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  } catch (err: any) {
+    console.error("cal location update failed:", err?.message ?? err);
+    await slack(env, `:warning: ${show.shortLabel}: couldn't put the studio link in ${who}'s calendar invite (${err?.message ?? err}). Their invite shows the default location.`);
+  }
+}
+
+/** GET/POST /voices/join — the location on the Cal.com event types. A guest
+ *  who opens the meeting from a calendar lands here, types the address they
+ *  booked with, and goes straight to their studio when the interview is
+ *  close; otherwise Mira emails them their personal link. */
+async function handleJoin(req: Request, env: Env): Promise<Response> {
+  const url = new URL(req.url);
+  const page = (title: string, body: string) => new Response(
+    `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+     <title>${esc(title)} · Nerra Network</title>
+     <body style="font:17px/1.55 system-ui,sans-serif;max-width:520px;margin:3rem auto;padding:0 1rem;color:#1a202c">
+     <h1 style="font-size:1.35rem">${esc(title)}</h1>${body}
+     <p style="color:#4a5568;font-size:.9rem;margin-top:2rem">Trouble? Email <a href="mailto:mira@nerranetwork.com">mira@nerranetwork.com</a>.</p></body>`,
+    { headers: { "content-type": "text/html; charset=utf-8" } });
+  const iid = url.searchParams.get("interview") ?? "";
+  if (UUID_RE.test(iid)) {
+    const { iv, show } = await interviewGuest(env, iid);
+    if (iv) return Response.redirect(studioUrl(show, iid, "guest"), 302);
+  }
+  const form = (note = "") => page("Join your interview with Mira",
+    `${note}<p>Enter the email address you booked with and I'll take you to your studio.</p>
+     <form method="post"><input type="email" name="email" required autocomplete="email"
+       style="font:inherit;padding:.6rem;border:1px solid #cbd5e0;border-radius:8px;width:100%;box-sizing:border-box">
+     <button style="font:inherit;margin-top:.7rem;padding:.6rem 1.2rem;border-radius:8px;border:0;background:#0F766E;color:#fff">
+     Go to my studio</button></form>
+     <p style="color:#4a5568;font-size:.95rem">For the best sound, use a computer with headphones.</p>`);
+  if (req.method !== "POST") return form();
+  const fd = await req.formData().catch(() => null);
+  const addr = String(fd?.get("email") ?? "").trim().toLowerCase();
+  if (!addr.includes("@")) return form("<p style='color:#b45309'>That doesn't look like an email address.</p>");
+  const enc = encodeURIComponent(addr);
+  const apps: any[] = (await sb(env, "GET",
+    `guest_applications?or=(email.ilike.${enc},publicist_email.ilike.${enc})&select=id,name,email,show`)) ?? [];
+  const since = new Date(Date.now() - 2 * 3600 * 1000).toISOString();
+  let iv: any = null, app: any = null;
+  for (const a of apps) {
+    const rows = await sb(env, "GET",
+      `interviews?application_id=eq.${a.id}&status=in.(scheduled,briefed,in_progress)` +
+      `&scheduled_at=gte.${since}&order=scheduled_at.asc&limit=1&select=id,scheduled_at,show`);
+    if (rows?.[0] && (!iv || rows[0].scheduled_at < iv.scheduled_at)) { iv = rows[0]; app = a; }
+  }
+  if (!iv) {
+    return form(`<p style='color:#b45309'>I couldn't find an upcoming interview for ${esc(addr)}. ` +
+      `Try the address the calendar invite was sent to, or reply to any of my emails.</p>`);
+  }
+  const show = showFor(app, { show: iv.show });
+  const studio = studioUrl(show, iv.id, "guest");
+  const minsToStart = (Date.parse(iv.scheduled_at) - Date.now()) / 60000;
+  if (minsToStart <= 30) return Response.redirect(studio, 302);
+  // Not close to the start: the link goes to the guest's own inbox rather
+  // than to whoever typed their address.
+  try {
+    await email(env, String(app.email), `Your ${show.name} studio link`,
+      `<p>Hi ${esc(firstName(app.name))},</p><p>Here's your personal studio link for our interview on
+       <strong>${esc(pacificTime(iv.scheduled_at))}</strong>:
+       <a href="${studio}">join your interview here</a>. It opens ten minutes before we start.</p>
+       ${GUEST_AUDIO_HTML}${studioStepsHtml(studio)}${miraSignature(show)}`);
+  } catch (err: any) { console.error("join link email failed:", err?.message ?? err); }
+  return page("Check your email",
+    `<p>Your interview is on <strong>${esc(pacificTime(iv.scheduled_at))}</strong>. I've emailed your personal
+     studio link to the address on your booking. On the day, open it on your computer with headphones on.</p>`);
 }
 
 async function handleCallGuest(req: Request, env: Env): Promise<Response> {
@@ -2809,6 +2901,7 @@ export default {
       if (req.method === "GET" && path === "/voices/admin/triage") return handleAdminTriage(req, env);
       if (req.method === "GET" && path === "/voices/admin/archive-link") return handleArchiveLink(env);
       if ((req.method === "GET" || req.method === "POST") && path === "/voices/admin/call-guest") return handleCallGuest(req, env);
+      if ((req.method === "GET" || req.method === "POST") && path === "/voices/join") return handleJoin(req, env);
       const archive = path.match(/^\/voices\/admin\/archive(?:\/([0-9a-f]{40}))?$/);
       if (archive && req.method === "GET") return handleArchivePage(req, env, archive[1]);
       // The token rides in the path as well as the query string: mail
