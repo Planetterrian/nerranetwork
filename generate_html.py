@@ -1706,6 +1706,7 @@ SOFT_PERSONAL_HERO_SLUGS = frozenset({
     "tesla",
     "models_agents",
     "models_agents_beginners",
+    "age_of_ai",
 })
 
 
@@ -5637,7 +5638,7 @@ def generate_personal_interest_page(*, dry_run=False):
     env = _get_jinja_env()
     ctx = _member_page_context(
         "Nerra Personal — when you’re ready | Nerra Network",
-        "All 18 Nerra shows stay free. Leave your email for a quiet "
+        "Every Nerra show stays free. Leave your email for a quiet "
         "nudge with Personal tips — or a reminder when you’re ready. "
         "No ads. Curiosity only.",
         "https://nerranetwork.com/personal-interest.html")

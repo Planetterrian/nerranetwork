@@ -32,7 +32,7 @@ class TestSoftPersonalInterestPage:
     def test_copy_sot_header_body_confirmation(self):
         src = _read("templates/personal_interest_page.html.j2")
         assert "Your own morning show — when you’re ready" in src
-        assert "All 18 Nerra shows stay free. Personal is optional" in src
+        assert "Every Nerra show stays free. Personal is optional" in src
         assert "SpaceX Daily included" in src
         assert "Want a quiet nudge with Personal tips" in src
         assert "No ads. No outrage diet. Curiosity only." in src

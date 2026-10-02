@@ -1,5 +1,5 @@
 {% extends "base.html.j2" %}
-{% from "_macros.html.j2" import show_card, soft_personal_interest %}
+{% from "_macros.html.j2" import show_card, soft_personal_interest, soft_personal_hero_band %}
 
 {# May 2026 operator request: homepage nav previously read just
    ``Latest | Subscribe`` — inconsistent with the rest of the site
@@ -118,6 +118,12 @@
             </div>
         </div>
     </section>
+
+    {#- Soft Personal one-field capture on the homepage — same contract
+        as the YouTube-landing show pages. Server-rendered static HTML
+        (wrapper #home-soft-personal, inner #soft-personal-hero) so it
+        adds no CLS. Free interest only; paid path is /join.html. -#}
+    {{ soft_personal_hero_band(path_prefix, 'network', capture_source_site, wrapper_id='home-soft-personal') }}
 
     {# Decorative ticker, driven from the registry so it can never drift
        from the lineup (the hand-maintained list was stuck at 15 of 17
