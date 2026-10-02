@@ -173,3 +173,31 @@ class TestUtmSourceMappingUnchanged:
         # GA params set unchanged.
         for key in ("form_id", "page_path", "list", "source", "show"):
             assert f"{key}:" in js or f"{key} :" in js
+
+
+class TestSoftPersonalNoFrLocaleFlag:
+    """FR Soft-band exclusion: report, don't invent.
+
+    show_page gates Soft with ``not _is_ru`` where
+    ``_is_ru = (page_lang | default('en')) == 'ru'``. There is no
+    ``_is_fr`` / French ``page_lang`` in the template or in
+    ``engine.show_lang`` today (only en/ru). Do not invent one here.
+    """
+
+    def test_show_page_has_ru_gate_only_no_fr_flag(self):
+        src = _scrub_jinja_comments(_read("templates/show_page.html.j2"))
+        assert "soft_personal_hero and not _is_ru" in src
+        assert "_is_fr" not in src
+        assert "page_lang" in src
+
+    def test_age_of_ai_keeps_member_newsletter_forms(self, tmp_path):
+        """Soft hero replaced the top member form; inline + footer stay."""
+        import generate_html as G
+
+        written = G.generate_show_page("age_of_ai", output_dir=str(tmp_path))
+        html = Path(written).read_text(encoding="utf-8")
+        assert html.count('id="soft-personal-hero"') == 1
+        assert 'data-nn-subscribe="show-inline"' in html
+        assert 'data-list="member"' in html
+        assert 'data-nn-subscribe="footer"' in html
+        assert "Get The Age of AI in your inbox" in html

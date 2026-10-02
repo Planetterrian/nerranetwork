@@ -190,14 +190,13 @@ class TestSoftPersonalSurfaceCTAs:
         src = _read("templates/_macros.html.j2")
         assert "macro soft_personal_interest" in src
         assert "personal-interest.html" in src
-        assert "Not ready to pay?" in src
-        assert "Shows stay free either way" in src
+        assert "Get Personal tips or a reminder when you’re ready, no charge, no card." in src
+        assert "Not ready to pay?" not in src[src.index("macro soft_personal_interest"):
+                                               src.index("macro soft_personal_interest") + 1800]
         # Must not imply a charge from the soft path.
-        lower = src.lower()
-        for banned in ("$4.99", "stripe", "start checkout", "subscribe now"):
-            # The macro body itself (not the whole file) — soft_personal block.
-            start = src.index("macro soft_personal_interest")
-            body = src[start:start + 1800].lower()
+        start = src.index("macro soft_personal_interest")
+        body = src[start:start + 1800].lower()
+        for banned in ("$4.99", "stripe", "start checkout", "subscribe now", "4.99", "/mo"):
             assert banned not in body, banned
 
     def test_home_personal_promo_offers_soft_interest(self):
@@ -239,16 +238,21 @@ class TestSoftPersonalSurfaceCTAs:
         assert 'id="personal-promo"' in home
         promo = home.split('id="personal-promo"', 1)[1][:4000]
         assert "personal-interest.html" in promo
-        assert "Not ready to pay?" in promo
+        assert "Get Personal tips or a reminder when you’re ready, no charge, no card." in promo
+        assert "Not ready to pay?" not in promo
 
         spacex = _read("spacex.html")
         assert "personal-interest.html" in spacex
         assert 'id="soft-personal"' in spacex or 'id="soft-interest"' in spacex
+        # Soft hero band + soft_personal_interest CTA must share no-charge framing.
+        assert "Not ready to pay?" not in spacex
+        soft_hero = spacex[spacex.index('id="soft-personal-hero"'):
+                           spacex.index("</section>", spacex.index('id="soft-personal-hero"'))]
+        assert "No charge, no card" in soft_hero or "no charge, no card" in soft_hero
 
         blog = _read("blog/spacex/index.html")
         assert "personal-interest.html" in blog
-        assert "Shows stay free either way" in blog
-        # Soft copy must not imply payment.
+        # Soft copy must not imply payment (committed blog index; not regenerated here).
         soft = blog.lower()
-        assert "no charge" in soft or "not ready to pay" in soft
+        assert "no charge" in soft or "not ready to pay" in soft or "personal tips" in soft
         assert "waitlist" not in soft
