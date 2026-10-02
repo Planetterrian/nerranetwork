@@ -180,7 +180,7 @@
 </div>
 {%- endmacro -%}
 
-{#- Soft Personal interest CTA — tips / quiet reminder only. Never implies a
+{#- Soft Personal interest CTA — occasional tips by email. Never implies a
     charge. Links to /personal-interest.html (ENG-SPEC Soft Personal). Paid
     checkout stays on /join.html as a secondary path where the host page
     already offers it. One macro so home / SpaceX surfaces cannot drift.
@@ -191,15 +191,75 @@
 {%- macro soft_personal_interest(path_prefix='', compact=false) -%}
 {%- if compact -%}
 <a class="nn-soft-personal-link" href="{{ path_prefix }}personal-interest.html"
-   style="font-family:var(--font-ui);font-weight:600;color:var(--nn-cyan,#00D4FF);text-decoration:none;">Not ready to pay? Leave your email for tips →</a>
+   style="font-family:var(--font-ui);font-weight:600;color:var(--nn-cyan,#00D4FF);text-decoration:none;">Get occasional Personal tips by email — no charge, no card →</a>
 {%- else -%}
 <div class="nn-soft-personal" id="soft-interest"
      style="max-width:760px;margin:var(--sp-6) auto;padding:var(--sp-5) var(--sp-6);border:1px dashed var(--nn-border);border-radius:14px;background:rgba(0,212,255,0.04);text-align:center;">
     <p style="margin:0 0 var(--sp-3);color:var(--nn-text-muted);font-size:0.98rem;line-height:1.55;">
-        Not ready to pay? Leave your email for a quiet nudge with Personal tips —
-        or a reminder when you’re ready. Shows stay free either way.</p>
+        Get occasional Personal tips by email — no charge, no card.</p>
     <a href="{{ path_prefix }}personal-interest.html"
-       style="display:inline-block;font-family:var(--font-ui);font-weight:700;color:var(--nn-cyan,#00D4FF);text-decoration:none;">Save my email on the Soft Personal page →</a>
+       style="display:inline-block;font-family:var(--font-ui);font-weight:700;color:var(--nn-cyan,#00D4FF);text-decoration:none;">Save my email on the Personal page →</a>
 </div>
 {%- endif -%}
+{%- endmacro -%}
+
+{#- Soft Personal one-field hero band — free interest only (no price).
+    Posts via assets/js/footer-subscribe.js (data-nn-subscribe=soft-personal)
+    to api.nerranetwork.com/api/subscribe with list=personal-interest.
+    Each page renders exactly ONE #soft-personal-hero.
+    Arguments:
+      path_prefix       : relative path back to site root
+      show_slug         : data-show + form-id key (e.g. tesla, network)
+      capture_source    : default src-* tag (utm_source overrides in JS)
+      wrapper_id        : optional outer id (homepage uses home-soft-personal)
+-#}
+{%- macro soft_personal_hero_band(path_prefix='', show_slug='', capture_source='', wrapper_id=none) -%}
+{%- if wrapper_id -%}<div id="{{ wrapper_id }}">{%- endif -%}
+<section class="nn-soft-personal-hero" id="soft-personal-hero"
+         style="padding:var(--sp-4) var(--sp-6);background:var(--nn-card);border-bottom:1px solid var(--nn-border);">
+    <div class="container" style="max-width:760px;">
+        <p style="margin:0 0 var(--sp-3);font-family:var(--font-ui);font-size:0.95rem;line-height:1.55;color:var(--nn-text);text-align:center;">
+            Get a quiet nudge with occasional Personal tips. No charge, no card. Shows stay free either way.
+        </p>
+        <form method="post" action="#"
+              data-nn-subscribe="soft-personal"
+              data-list="personal-interest"
+              data-source="{{ capture_source }}"
+              data-show="{{ show_slug }}"
+              data-form-id="show-{{ show_slug }}-soft-personal"
+              data-label-loading="Saving…"
+              data-label-done="Saved ✓"
+              data-label-soft-done="You’re on the list. Shows stay free either way."
+              data-label-error="Couldn’t save that just now. Try again in a moment — or start Personal whenever you’re ready at nerranetwork.com/join."
+              data-label-idle="Save my email"
+              style="display:flex;gap:var(--sp-2);flex-wrap:wrap;justify-content:center;align-items:center;position:relative;">
+            <label for="spi-hero-email-{{ show_slug }}"
+                   style="font-family:var(--font-ui);font-size:0.85rem;font-weight:600;color:var(--nn-text-muted);margin:0;">Email</label>
+            <input type="email" id="spi-hero-email-{{ show_slug }}" name="email" required autocomplete="email"
+                   placeholder="your@email.com"
+                   aria-label="Email address"
+                   style="padding:8px 14px;border-radius:8px;border:1px solid var(--nn-border);background:var(--nn-bg);color:var(--nn-text);font-size:0.95rem;min-width:220px;">
+            {#- Honeypot — leave empty. Worker discards when company is set. -#}
+            <div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">
+                <label for="spi-hero-company-{{ show_slug }}">Company</label>
+                <input type="text" id="spi-hero-company-{{ show_slug }}" name="company" tabindex="-1" autocomplete="off">
+            </div>
+            <button type="submit"
+                    style="padding:8px 16px;border-radius:8px;background:var(--nn-gradient, var(--show-color));color:#fff;border:none;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:var(--font-ui);">
+                Save my email
+            </button>
+            <a href="{{ path_prefix }}join.html"
+               style="font-family:var(--font-ui);font-size:0.9rem;font-weight:600;color:var(--nn-cyan,#00D4FF);text-decoration:none;white-space:nowrap;">
+                Or start Personal now →
+            </a>
+        </form>
+        <p class="nn-subscribe-status" data-nn-subscribe-status role="status" aria-live="polite"
+           style="margin:var(--sp-2) 0 0;text-align:center;font-family:var(--font-ui);font-size:0.9rem;min-height:1.3em;"></p>
+        <p style="margin:var(--sp-2) 0 0;text-align:center;font-family:var(--font-ui);font-size:0.82rem;line-height:1.45;color:var(--nn-text-muted);">
+            We’ll only email you about Nerra Personal. Unsubscribe anytime.
+            <a href="{{ path_prefix }}privacy-policy.html" style="color:var(--nn-cyan,#00D4FF);text-decoration:none;font-weight:600;">Privacy policy</a>.
+        </p>
+    </div>
+</section>
+{%- if wrapper_id -%}</div>{%- endif -%}
 {%- endmacro -%}

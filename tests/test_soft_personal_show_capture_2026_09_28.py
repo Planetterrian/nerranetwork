@@ -23,6 +23,12 @@ HERO_SLUGS = (
     "tesla",
     "models_agents",
     "models_agents_beginners",
+    "age_of_ai",
+)
+
+SOFT_HERO_COPY = (
+    "Get a quiet nudge with occasional Personal tips. "
+    "No charge, no card. Shows stay free either way."
 )
 
 
@@ -141,20 +147,24 @@ class TestSoftPersonalHeroWiring:
         assert "SOFT_PERSONAL_HERO_SLUGS" in src
 
     def test_template_has_soft_personal_hero_form(self):
-        src = _scrub_jinja_comments(_read("templates/show_page.html.j2"))
-        assert "soft_personal_hero" in src
-        assert 'data-nn-subscribe="soft-personal"' in src
-        assert 'data-list="personal-interest"' in src
-        assert 'name="company"' in src  # honeypot
-        assert "Save my email" in src
-        assert "Or start Personal now" in src
+        # Markup lives in the shared macro; show_page calls it.
+        macros = _scrub_jinja_comments(_read("templates/_macros.html.j2"))
+        show = _scrub_jinja_comments(_read("templates/show_page.html.j2"))
+        assert "soft_personal_hero_band" in macros
+        assert "soft_personal_hero_band" in show
+        assert 'data-nn-subscribe="soft-personal"' in macros
+        assert 'data-list="personal-interest"' in macros
+        assert 'name="company"' in macros  # honeypot
+        assert "Save my email" in macros
+        assert "Or start Personal now" in macros
         # Soft hero is free interest only — no paid-price copy in the band.
-        hero_start = src.index('id="soft-personal-hero"')
-        hero_end = src.index("</section>", hero_start)
-        hero = src[hero_start:hero_end]
-        assert "Shows stay free either way." in hero
+        hero_start = macros.index('id="soft-personal-hero"')
+        hero_end = macros.index("</section>", hero_start)
+        hero = macros[hero_start:hero_end]
+        assert SOFT_HERO_COPY in hero
         assert "$4.99" not in hero
         assert "/mo" not in hero
+        assert "4.99" not in hero
 
     def test_show_page_has_no_buttondown_popup(self):
         src = _scrub_jinja_comments(_read("templates/show_page.html.j2"))
@@ -230,10 +240,12 @@ class TestRenderedSoftPersonalHero:
         hero_start = html.index('id="soft-personal-hero"')
         hero_end = html.index("</section>", hero_start)
         hero = html[hero_start:hero_end]
-        assert "Shows stay free either way." in hero
+        assert SOFT_HERO_COPY in hero
         assert "$4.99" not in hero
         assert "/mo" not in hero
+        assert "4.99" not in hero
         assert "$4.99/mo when you want it" not in hero
+        assert html.count('id="soft-personal-hero"') == 1
 
     def test_non_hero_show_keeps_newsletter_worker_form_not_soft(self, tmp_path):
         import generate_html as G

@@ -5,6 +5,7 @@ optional email capture for tips/reminder. Paid join stays on /join.html.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -32,11 +33,14 @@ class TestSoftPersonalInterestPage:
     def test_copy_sot_header_body_confirmation(self):
         src = _read("templates/personal_interest_page.html.j2")
         assert "Your own morning show — when you’re ready" in src
-        assert "All 18 Nerra shows stay free. Personal is optional" in src
+        assert "Every Nerra show stays free. Personal is optional" in src
         assert "SpaceX Daily included" in src
-        assert "Want a quiet nudge with Personal tips" in src
+        assert "Want occasional Personal tips by email?" in src
         assert "No ads. No outrage diet. Curiosity only." in src
         assert "You’re on the list. Shows stay free either way." in src
+        assert "We’ll only email you about Nerra Personal" in src
+        assert "privacy-policy.html" in src
+        assert "reminder" not in src.lower()
         assert "cancel anytime" in src.lower() or "cancel anytime" in src
 
     def test_fields_and_buttons(self):
@@ -157,7 +161,10 @@ class TestSoftPersonalInterestPage:
     def test_join_page_links_soft_capture(self):
         src = _read("templates/join_page.html.j2")
         assert "personal-interest.html" in src
-        assert "quiet nudge" in src.lower()
+        assert "Get occasional Personal tips by email — no charge, no card." in src
+        assert "Not ready yet? Get Personal tips by email — no charge, no card →" in src
+        assert "Not ready to pay?" not in src
+        assert "reminder" not in src.lower()
         # ENG-SPEC: interest block above Stripe plans (does not replace checkout)
         assert 'id="soft-interest"' in src
         assert 'id="plans"' in src
@@ -190,15 +197,30 @@ class TestSoftPersonalSurfaceCTAs:
         src = _read("templates/_macros.html.j2")
         assert "macro soft_personal_interest" in src
         assert "personal-interest.html" in src
-        assert "Not ready to pay?" in src
-        assert "Shows stay free either way" in src
+        assert "Get occasional Personal tips by email — no charge, no card" in src
+        assert "Save my email on the Personal page →" in src
+        start = src.index("macro soft_personal_interest")
+        end = src.index("{%- endmacro -%}", start) + len("{%- endmacro -%}")
+        body = src[start:end]
+        assert "Not ready to pay?" not in body
+        assert "reminder" not in body.lower()
+        assert "Soft Personal" not in body
         # Must not imply a charge from the soft path.
-        lower = src.lower()
-        for banned in ("$4.99", "stripe", "start checkout", "subscribe now"):
-            # The macro body itself (not the whole file) — soft_personal block.
-            start = src.index("macro soft_personal_interest")
-            body = src[start:start + 1800].lower()
-            assert banned not in body, banned
+        body_l = body.lower()
+        for banned in ("$4.99", "stripe", "start checkout", "subscribe now", "4.99", "/mo"):
+            assert banned not in body_l, banned
+
+        hero_start = src.index("macro soft_personal_hero_band")
+        hero_end = src.index("{%- endmacro -%}", hero_start) + len("{%- endmacro -%}")
+        hero = src[hero_start:hero_end]
+        assert "Get a quiet nudge with occasional Personal tips." in hero
+        assert "We’ll only email you about Nerra Personal" in hero
+        assert "privacy-policy.html" in hero
+        assert "reminder" not in hero.lower()
+        # User-visible Soft label must not appear (Jinja comments OK).
+        visible = re.sub(r"\{#.*?#\}", "", hero, flags=re.S)
+        assert "Soft Personal" not in visible
+        assert "Save my email on the Soft" not in visible
 
     def test_home_personal_promo_offers_soft_interest(self):
         src = _read("templates/network_page.html.j2")
@@ -211,7 +233,8 @@ class TestSoftPersonalSurfaceCTAs:
     def test_footer_no_longer_join_only(self):
         src = _read("templates/base.html.j2")
         assert "personal-interest.html" in src
-        assert "Soft Personal" in src
+        assert "Personal tips by email — no charge →" in src
+        assert "Soft Personal" not in src
         assert "no charge" in src.lower()
         assert "Or start Nerra Personal" in src
 
@@ -233,22 +256,53 @@ class TestSoftPersonalSurfaceCTAs:
         assert "soft_personal_cta" in blog
         assert "soft_personal_interest" in show
         assert "soft_personal_cta" in show
+        # Upsell Soft line sits above the paid price line.
+        assert "Not ready? Get free Personal tips by email — no charge, no card →" in show
+
+    def test_join_and_nerra_daily_drop_pay_framing(self):
+        join_tpl = _read("templates/join_page.html.j2")
+        assert "Get occasional Personal tips by email — no charge, no card." in join_tpl
+        assert "Save my email on the Personal page →" in join_tpl
+        assert "Not ready yet? Get Personal tips by email — no charge, no card →" in join_tpl
+        assert "Not ready to pay?" not in join_tpl
+        assert "Soft Personal" not in join_tpl
+
+        join = _read("join.html")
+        daily = _read("nerra-daily.html")
+        assert "Not ready to pay?" not in join
+        assert "Not ready to pay?" not in daily
+        assert "Soft Personal" not in join
+        assert "Soft Personal" not in daily
+        assert "Not ready yet? Get Personal tips by email — no charge, no card →" in join
+        assert "Not ready? Get free Personal tips by email — no charge, no card →" in daily
+        assert "Personal tips by email — no charge →" in join
+        assert "Personal tips by email — no charge →" in daily
 
     def test_rendered_home_and_spacex_surfaces(self):
         home = _read("index.html")
         assert 'id="personal-promo"' in home
         promo = home.split('id="personal-promo"', 1)[1][:4000]
         assert "personal-interest.html" in promo
-        assert "Not ready to pay?" in promo
+        assert "Get occasional Personal tips by email — no charge, no card" in promo
+        assert "Not ready to pay?" not in promo
+        assert "reminder" not in promo.lower()
+        assert "Soft Personal" not in promo
 
         spacex = _read("spacex.html")
         assert "personal-interest.html" in spacex
         assert 'id="soft-personal"' in spacex or 'id="soft-interest"' in spacex
+        # Soft hero band + soft_personal_interest CTA must share no-charge framing.
+        assert "Not ready to pay?" not in spacex
+        soft_hero = spacex[spacex.index('id="soft-personal-hero"'):
+                           spacex.index("</section>", spacex.index('id="soft-personal-hero"'))]
+        assert "No charge, no card" in soft_hero or "no charge, no card" in soft_hero
+        assert "privacy-policy.html" in soft_hero
+        assert "We’ll only email you about Nerra Personal" in soft_hero
+        assert "reminder" not in soft_hero.lower()
 
         blog = _read("blog/spacex/index.html")
         assert "personal-interest.html" in blog
-        assert "Shows stay free either way" in blog
-        # Soft copy must not imply payment.
+        # Soft copy must not imply payment (committed blog index; not regenerated here).
         soft = blog.lower()
-        assert "no charge" in soft or "not ready to pay" in soft
+        assert "no charge" in soft or "not ready to pay" in soft or "personal tips" in soft
         assert "waitlist" not in soft

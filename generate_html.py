@@ -1706,6 +1706,7 @@ SOFT_PERSONAL_HERO_SLUGS = frozenset({
     "tesla",
     "models_agents",
     "models_agents_beginners",
+    "age_of_ai",
 })
 
 
@@ -3304,7 +3305,7 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         # the nav pill labelled "Join". Registry-gated so it never becomes a
         # banner on every show.
         "personal_upsell": bool(cfg.get("personal_upsell")),
-        # Soft Personal interest (tips/reminder — never a charge). SpaceX
+        # Soft Personal interest (tips only — never a charge). SpaceX
         # Daily is the Soft Personal spoken surface; registry-gated so the
         # band does not become a network-wide banner.
         "soft_personal_cta": bool(cfg.get("soft_personal_cta")),
@@ -5629,7 +5630,7 @@ def generate_join_page(*, dry_run=False):
 def generate_personal_interest_page(*, dry_run=False):
     """Generate /personal-interest.html — Soft Personal email capture.
 
-    ENG-SPEC (Brand HoM, Sep 2026): optional tips/reminder signup via
+    ENG-SPEC (Brand HoM, Sep 2026): tips-only signup via
     Buttondown tag ``personal-interest`` — not a waitlist, not paid
     checkout, never auto-charges. Newsletter checkbox adds ``nerra-member``
     + ``SpaceX Daily``. Episode totals are never shown here.
@@ -5637,9 +5638,8 @@ def generate_personal_interest_page(*, dry_run=False):
     env = _get_jinja_env()
     ctx = _member_page_context(
         "Nerra Personal — when you’re ready | Nerra Network",
-        "All 18 Nerra shows stay free. Leave your email for a quiet "
-        "nudge with Personal tips — or a reminder when you’re ready. "
-        "No ads. Curiosity only.",
+        "Every Nerra show stays free. Leave your email for occasional "
+        "Personal tips. No ads. Curiosity only.",
         "https://nerranetwork.com/personal-interest.html")
     # Soft page must never carry episode totals (frozen / no FOMO).
     ctx.pop("total_episodes", None)
@@ -6522,8 +6522,8 @@ def main():
         # cheap; regenerating with the network keeps Stripe-link env
         # changes and lineup names current. account.html is deliberately
         # NOT in the sitemap (it's a console, not content).
-        # Soft Personal interest (Sep 2026) sits beside join — tips/
-        # reminder capture, not checkout.
+        # Soft Personal interest (Sep 2026) sits beside join — tips-only
+        # capture, not checkout.
         generate_join_page(dry_run=args.dry_run)
         generate_personal_interest_page(dry_run=args.dry_run)
         generate_support_page(dry_run=args.dry_run)
