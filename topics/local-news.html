@@ -3,27 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Every Nerra Network show grouped by subject: AI, space, markets, Tesla, science, health, climate, world news and more. Free, ad-free, with sources named.">
+    <meta name="description" content="Local news podcasts from Nerra Network: a daily morning brief for Metro Vancouver and a weekly round-up for Collingwood and the south Georgian Bay, read by an AI host with every source named.">
     
-    <meta name="keywords" content="podcast topics, AI podcast, space podcast, investing podcast, science podcast, news podcast, Nerra Network"><title>Browse podcasts by topic | Nerra Network</title>
+    <meta name="keywords" content="vancouver news podcast, local news podcast, collingwood news, georgian bay, metro vancouver"><title>Local news podcasts — Metro Vancouver and the south Georgian Bay | Nerra Network</title>
     <meta name="theme-color" content="#6B47FF">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Browse podcasts by topic | Nerra Network">
-    <meta property="og:description" content="Every Nerra Network show grouped by subject: AI, space, markets, Tesla, science, health, climate, world news and more. Free, ad-free, with sources named.">
+    <meta property="og:title" content="Local news podcasts — Metro Vancouver and the south Georgian Bay | Nerra Network">
+    <meta property="og:description" content="Local news podcasts from Nerra Network: a daily morning brief for Metro Vancouver and a weekly round-up for Collingwood and the south Georgian Bay, read by an AI host with every source named.">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://nerranetwork.com/assets/og-preview.png">
-    <meta property="og:url" content="https://nerranetwork.com/topics/index.html">
+    <meta property="og:url" content="https://nerranetwork.com/topics/local-news.html">
     <meta property="og:site_name" content="Nerra Network">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Browse podcasts by topic | Nerra Network">
-    <meta name="twitter:description" content="Every Nerra Network show grouped by subject: AI, space, markets, Tesla, science, health, climate, world news and more. Free, ad-free, with sources named.">
+    <meta name="twitter:title" content="Local news podcasts — Metro Vancouver and the south Georgian Bay | Nerra Network">
+    <meta name="twitter:description" content="Local news podcasts from Nerra Network: a daily morning brief for Metro Vancouver and a weekly round-up for Collingwood and the south Georgian Bay, read by an AI host with every source named.">
     <meta name="twitter:image" content="https://nerranetwork.com/assets/og-preview.png"><meta name="twitter:site" content="@nerranetwork">
     <meta name="twitter:creator" content="@nerranetwork">
 
-    <link rel="canonical" href="https://nerranetwork.com/topics/index.html">
+    <link rel="canonical" href="https://nerranetwork.com/topics/local-news.html">
 
     <!-- Google Fonts: DM Sans + Source Serif 4 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -58,34 +58,89 @@
 
     
     <style>
-        .topics-hero { padding: calc(var(--nav-height) + var(--sp-10)) var(--sp-6) var(--sp-6); max-width: 860px; margin: 0 auto; text-align: center; }
-        .topics-hero h1 {
-            font-family: var(--font-heading); font-size: clamp(1.9rem, 4vw, 2.6rem);
-            color: var(--nn-white); margin: 0 0 var(--sp-4); line-height: 1.15;
+        .hub-hero {
+            padding: calc(var(--nav-height) + var(--sp-10)) var(--sp-6) var(--sp-6);
+            max-width: 860px;
+            margin: 0 auto;
         }
-        .topics-hero p { font-family: var(--font-body); font-size: 1.05rem; line-height: 1.7; color: var(--nn-text); margin: 0 auto; max-width: 620px; }
-        .topics-grid {
-            max-width: 980px; margin: 0 auto; padding: var(--sp-6);
-            display: grid; gap: var(--sp-5); grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        .hub-hero .eyebrow {
+            font-family: var(--font-ui);
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            color: var(--nn-accent);
+            margin: 0 0 var(--sp-3);
         }
-        .topic-card {
-            border: 1px solid var(--nn-border); border-radius: var(--radius-lg, 12px);
+        .hub-hero h1 {
+            font-family: var(--font-heading);
+            font-size: clamp(1.9rem, 4vw, 2.6rem);
+            font-weight: 700;
+            color: var(--nn-white);
+            line-height: 1.15;
+            margin: 0 0 var(--sp-4);
+        }
+        .hub-hero p {
+            font-family: var(--font-body);
+            font-size: clamp(1rem, 1.7vw, 1.12rem);
+            line-height: 1.7;
+            color: var(--nn-text);
+            margin: 0 0 var(--sp-4);
+        }
+        .hub-hero p.angle {
+            border-left: 3px solid var(--nn-accent);
+            padding-left: var(--sp-4);
+            color: var(--nn-text-secondary);
+            font-size: 1rem;
+        }
+        .hub-section { max-width: 860px; margin: 0 auto; padding: var(--sp-6); }
+        .hub-section h2 {
+            font-family: var(--font-heading);
+            font-size: clamp(1.3rem, 2.4vw, 1.6rem);
+            color: var(--nn-white);
+            margin: 0 0 var(--sp-4);
+        }
+        .hub-shows { display: grid; gap: var(--sp-4); grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+        .hub-show {
+            border: 1px solid var(--nn-border);
+            border-radius: var(--radius-lg, 12px);
             background: var(--nn-surface-2, rgba(255,255,255,0.03));
-            padding: var(--sp-5); display: flex; flex-direction: column; gap: var(--sp-3);
+            padding: var(--sp-4);
+            display: flex; gap: var(--sp-3); align-items: flex-start;
         }
-        .topic-card h2 { font-family: var(--font-heading); font-size: 1.15rem; margin: 0; }
-        .topic-card h2 a { color: var(--nn-white); text-decoration: none; }
-        .topic-card h2 a:hover { color: var(--nn-accent); }
-        .topic-card p { font-family: var(--font-body); font-size: 0.93rem; line-height: 1.6; color: var(--nn-text); margin: 0; flex: 1; }
-        .topic-card .meta {
-            font-family: var(--font-ui); font-size: 0.74rem; letter-spacing: 0.04em;
+        .hub-show img { width: 56px; height: 56px; border-radius: 8px; flex: 0 0 auto; }
+        .hub-show-name { font-family: var(--font-heading); font-size: 1rem; margin: 0 0 2px; }
+        .hub-show-name a { color: var(--nn-white); text-decoration: none; }
+        .hub-show-name a:hover { color: var(--nn-accent); }
+        .hub-show-meta {
+            font-family: var(--font-ui); font-size: 0.74rem; letter-spacing: 0.03em;
             text-transform: uppercase; color: var(--nn-text-secondary);
         }
-        .topics-also { max-width: 860px; margin: 0 auto; padding: 0 var(--sp-6) var(--sp-10); }
-        .topics-also h2 { font-family: var(--font-heading); font-size: 1.2rem; color: var(--nn-white); margin: 0 0 var(--sp-3); }
-        .topics-also ul { margin: 0; padding-left: var(--sp-6); }
-        .topics-also li { font-family: var(--font-body); font-size: 0.97rem; line-height: 1.8; color: var(--nn-text); }
-        .topics-also a { color: var(--nn-accent); }
+        .hub-show-tag { font-family: var(--font-body); font-size: 0.9rem; line-height: 1.5; color: var(--nn-text); margin: 4px 0 0; }
+        .hub-eps { list-style: none; margin: 0; padding: 0; }
+        .hub-eps li { border-bottom: 1px solid var(--nn-border); padding: var(--sp-3) 0; }
+        .hub-eps li:last-child { border-bottom: none; }
+        .hub-eps a { color: var(--nn-white); text-decoration: none; font-family: var(--font-body); font-size: 1rem; line-height: 1.5; }
+        .hub-eps a:hover { color: var(--nn-accent); }
+        .hub-ep-meta {
+            display: block; margin-top: 3px;
+            font-family: var(--font-ui); font-size: 0.74rem;
+            color: var(--nn-text-secondary);
+        }
+        .hub-archive { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); }
+        .hub-archive a {
+            display: inline-flex; align-items: center; padding: 8px 16px;
+            border: 1px solid var(--nn-border); border-radius: 100px;
+            font-family: var(--font-ui); font-size: 0.85rem;
+            color: var(--nn-white); text-decoration: none;
+        }
+        .hub-archive a:hover { border-color: var(--nn-accent); color: var(--nn-accent); }
+        .hub-others { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+        .hub-others a {
+            font-family: var(--font-ui); font-size: 0.85rem; color: var(--nn-accent); text-decoration: none;
+            border: 1px solid var(--nn-border); border-radius: 100px; padding: 6px 14px;
+        }
+        .hub-others a:hover { border-color: var(--nn-accent); }
     </style>
 
 
@@ -973,113 +1028,154 @@
     <main id="main-content">
     
 <div class="page-main">
-    <section class="topics-hero">
-        <h1>Browse by topic</h1>
-        <p>
-            Every Nerra Network show is free and ad-free. These pages group them
-            by subject, with the shows that cover it and the most recent
-            episodes — each one a full article with its sources and a transcript.
-        </p>
+    <section class="hub-hero">
+        <p class="eyebrow">Topic</p>
+        <h1>Local news</h1>
+        <p>Short local briefs for two places: a weekday-and-weekend morning brief for Metro Vancouver, and a Friday round-up for Collingwood and the south Georgian Bay towns. What council and the province decided, the roads and the weather, sport and what is on.</p>
+        <p class="angle">Both are read by Mira, the network's AI host, who says so at the top of every episode; the road and weather sections come from public data feeds, and a contested local issue gets the strongest case on each side.</p>
     </section>
 
-    <div class="topics-grid">
-        
-        <article class="topic-card">
-            <span class="meta">399 episodes · 5 shows</span>
-            <h2><a href="../topics/ai.html">Artificial intelligence</a></h2>
-            <p>Artificial intelligence moves faster than any daily show can summarise, so the network covers it three ways instead of one: a daily brief on what shipped, the same material explained from scratch for someone who has never used an API, and an interview show where the host is itself an AI.</p>
-        </article>
-        
-        <article class="topic-card">
-            <span class="meta">297 episodes · 2 shows</span>
-            <h2><a href="../topics/space.html">Space</a></h2>
-            <p>Two shows split the sky between them. One follows SpaceX as an operating company — launch cadence, Starship test articles, Starlink economics, the filings — and the other covers the wider frontier: telescopes, missions, and the findings that arrive from further out.</p>
-        </article>
-        
-        <article class="topic-card">
-            <span class="meta">632 episodes · 6 shows</span>
-            <h2><a href="../topics/markets.html">Markets and investing</a></h2>
-            <p>Four shows reach the markets from different directions: a daily brief built around the Canadian investor as much as the American one, two companies covered as listed companies rather than as tickers, and financial literacy in Russian for people whose money moved countries with them.</p>
-        </article>
-        
-        <article class="topic-card">
-            <span class="meta">227 episodes · 1 show</span>
-            <h2><a href="../topics/tesla.html">Tesla</a></h2>
-            <p>A daily Tesla show that treats the company as an engineering and manufacturing story rather than a stock-price story: the software releases, the factory ramps, the hardware revisions, and what the filings say.</p>
-        </article>
-        
-        <article class="topic-card">
-            <span class="meta">417 episodes · 4 shows</span>
-            <h2><a href="../topics/science.html">Science</a></h2>
-            <p>The science coverage is built from primary research rather than press releases about research, which is why some days are thinner than others: a show here would rather skip a day than pad one.</p>
-        </article>
-        
-        <article class="topic-card">
-            <span class="meta">183 episodes · 3 shows</span>
-            <h2><a href="../topics/health-and-longevity.html">Health and longevity</a></h2>
-            <p>Longevity has more marketing than evidence, so this coverage stays on the research: what a study measured, in what population, and how far the result actually reaches.</p>
-        </article>
-        
-        <article class="topic-card">
-            <span class="meta">353 episodes · 3 shows</span>
-            <h2><a href="../topics/climate-and-energy.html">Climate and energy</a></h2>
-            <p>Two different jobs share this subject. One is regulatory: what Canadian environmental rules actually require, province by province, in a form you can forward to a team. The other is progress: the clean-energy build-out, reported with numbers instead of adjectives.</p>
-        </article>
-        
-        <article class="topic-card">
-            <span class="meta">250 episodes · 7 shows</span>
-            <h2><a href="../topics/world-news.html">World news</a></h2>
-            <p>The world-news show has one unusual rule: every competing position is presented in its strongest form, with its best supporting reason first. You should not be able to tell from the episode which side the show favours.</p>
-        </article>
-        
-        <article class="topic-card">
-            <span class="meta">248 episodes · 2 shows</span>
-            <h2><a href="../topics/history-and-consequences.html">History and consequences</a></h2>
-            <p>Two narrative shows work backwards from outcomes. One takes a decision that made sense at the time and follows what it actually caused; the other strips a problem to its physics and its costs to ask what it should cost instead.</p>
-        </article>
-        
-        <article class="topic-card">
-            <span class="meta">129 episodes · 2 shows</span>
-            <h2><a href="../topics/engineering.html">Engineering</a></h2>
-            <p>Engineering coverage across the network shares one habit: follow the constraint. What does the part cost, what does the process allow, and which of those two is actually the limit?</p>
-        </article>
-        
-        <article class="topic-card">
-            <span class="meta">12 episodes · 2 shows</span>
-            <h2><a href="../topics/local-news.html">Local news</a></h2>
-            <p>Short local briefs for two places: a weekday-and-weekend morning brief for Metro Vancouver, and a Friday round-up for Collingwood and the south Georgian Bay towns. What council and the province decided, the roads and the weather, sport and what is on.</p>
-        </article>
-        
-        <article class="topic-card">
-            <span class="meta">71 episodes · 1 show</span>
-            <h2><a href="../topics/language-learning.html">Language learning</a></h2>
-            <p>A bilingual Russian course built around vocabulary rather than news: a theme is chosen first, the words come from that theme, and nothing is re-taught before you have had a chance to forget it.</p>
-        </article>
-        
-        <article class="topic-card">
-            <span class="meta">58 episodes · 1 show</span>
-            <h2><a href="../topics/good-news.html">Good news</a></h2>
-            <p>A two-host daily show on things that are going right in science and technology, plus one action a listener can actually take — with the arithmetic shown rather than implied.</p>
-        </article>
-        
-    </div>
+    <section class="hub-section">
+        <h2>The 2 shows that cover it</h2>
+        <div class="hub-shows">
+            
+            <article class="hub-show">
+                <picture>
+                    <source type="image/webp" srcset="../assets/covers/vancouver-400.webp">
+                    <img src="../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="56" height="56" loading="lazy">
+                </picture>
+                <div>
+                    <p class="hub-show-name"><a href="../vancouver.html">Vancouver Daily News</a></p>
+                    <span class="hub-show-meta">Daily · ~8-9 min</span>
+                    <p class="hub-show-tag">The morning brief for Metro Vancouver.</p>
+                </div>
+            </article>
+            
+            <article class="hub-show">
+                <picture>
+                    <source type="image/webp" srcset="../assets/covers/collingwood-400.webp">
+                    <img src="../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="56" height="56" loading="lazy">
+                </picture>
+                <div>
+                    <p class="hub-show-name"><a href="../collingwood.html">Collingwood Weekly</a></p>
+                    <span class="hub-show-meta">Weekly (Friday) · ~9-10 min</span>
+                    <p class="hub-show-tag">The week around the south Georgian Bay.</p>
+                </div>
+            </article>
+            
+        </div>
+    </section>
 
-    
-    <section class="topics-also">
-        <h2>Also covered, with a page of its own</h2>
-        <ul>
+    <section class="hub-section">
+        <h2>Recent episodes</h2>
+        <p style="font-family:var(--font-body);color:var(--nn-text-secondary);margin:0 0 var(--sp-4);">
+            12 episodes in this subject so far. The newest
+            12 are below; every one is a full article with its
+            sources and a transcript.
+        </p>
+        <ul class="hub-eps">
             
-            <li><strong>Interviews</strong> — <a href="../mira.html">Meet Mira, the AI host</a></li>
+            <li>
+                <a href="..//blog/vancouver/ep010.html">A one-million-barrel-a-day oil pipeline to the B.C. coast is now a national-interest project.</a>
+                <span class="hub-ep-meta">Vancouver Daily News · 2026-10-02</span>
+            </li>
             
-            <li><strong>Prediction markets</strong> — <a href="../prediction-markets.html">Prediction Markets Daily</a></li>
+            <li>
+                <a href="..//blog/collingwood/ep002.html">Wasaga council approved 214 Beachwood Road homes after a flood-channel land promise.</a>
+                <span class="hub-ep-meta">Collingwood Weekly · 2026-10-02</span>
+            </li>
             
-            <li><strong>AI infrastructure</strong> — <a href="../ai-chips.html">AI Chips & Data Centres Daily</a></li>
+            <li>
+                <a href="..//blog/vancouver/ep009.html">Two pedestrians are dead after being struck near Tsawwassen Mills.</a>
+                <span class="hub-ep-meta">Vancouver Daily News · 2026-10-01</span>
+            </li>
             
-            <li><strong>Offshore sailing</strong> — <a href="../offshore-north-dashboard.html">Offshore North campaign dashboard</a></li>
+            <li>
+                <a href="..//blog/vancouver/ep008.html">A one-point-two-billion-dollar ocean fund arrives before Thursday's West Coast pipeline decision.</a>
+                <span class="hub-ep-meta">Vancouver Daily News · 2026-09-30</span>
+            </li>
+            
+            <li>
+                <a href="..//blog/vancouver/ep007.html">Kitimat's multibillion-dollar LNG expansion is going ahead, and it could double coastal exports.</a>
+                <span class="hub-ep-meta">Vancouver Daily News · 2026-09-29</span>
+            </li>
+            
+            <li>
+                <a href="..//blog/vancouver/ep006.html">Three thousand Ring doorbells are set for domestic abuse survivors across B.C.</a>
+                <span class="hub-ep-meta">Vancouver Daily News · 2026-09-28</span>
+            </li>
+            
+            <li>
+                <a href="..//blog/vancouver/ep005.html">One arrest follows Saturday's targeted shooting at Spanish Banks, with no victims reported.</a>
+                <span class="hub-ep-meta">Vancouver Daily News · 2026-09-27</span>
+            </li>
+            
+            <li>
+                <a href="..//blog/vancouver/ep004.html">Ninety-six thousand two hundred thirty-eight patients now wait for B.C. surgery.</a>
+                <span class="hub-ep-meta">Vancouver Daily News · 2026-09-26</span>
+            </li>
+            
+            <li>
+                <a href="..//blog/vancouver/ep003.html">Burnaby schools lost internal networks and phone lines in a cyber incident.</a>
+                <span class="hub-ep-meta">Vancouver Daily News · 2026-09-25</span>
+            </li>
+            
+            <li>
+                <a href="..//blog/vancouver/ep002.html">Two people died on Highway 1 in Burnaby, with one person arrested.</a>
+                <span class="hub-ep-meta">Vancouver Daily News · 2026-09-24</span>
+            </li>
+            
+            <li>
+                <a href="..//blog/collingwood/ep001.html">Police captured a bull moose in Collingwood and will move him north.</a>
+                <span class="hub-ep-meta">Collingwood Weekly · 2026-09-23</span>
+            </li>
+            
+            <li>
+                <a href="..//blog/vancouver/ep001.html">Premier David Eby has called a snap provincial election for October 24, citing an existential U.S. trade threat.</a>
+                <span class="hub-ep-meta">Vancouver Daily News · 2026-09-23</span>
+            </li>
             
         </ul>
+        <div class="hub-archive">
+            
+            <a href="../blog/vancouver/index.html">All Vancouver Daily News articles →</a>
+            
+            <a href="../blog/collingwood/index.html">All Collingwood Weekly articles →</a>
+            
+        </div>
     </section>
-    
+
+    <section class="hub-section">
+        <h2>Other topics</h2>
+        <div class="hub-others">
+            
+            <a href="../topics/ai.html">Artificial intelligence</a>
+            
+            <a href="../topics/space.html">Space</a>
+            
+            <a href="../topics/markets.html">Markets and investing</a>
+            
+            <a href="../topics/tesla.html">Tesla</a>
+            
+            <a href="../topics/science.html">Science</a>
+            
+            <a href="../topics/health-and-longevity.html">Health and longevity</a>
+            
+            <a href="../topics/climate-and-energy.html">Climate and energy</a>
+            
+            <a href="../topics/world-news.html">World news</a>
+            
+            <a href="../topics/history-and-consequences.html">History and consequences</a>
+            
+            <a href="../topics/engineering.html">Engineering</a>
+            
+            <a href="../topics/language-learning.html">Language learning</a>
+            
+            <a href="../topics/good-news.html">Good news</a>
+            
+            <a href="../topics/index.html">All topics</a>
+        </div>
+    </section>
 </div>
 
     </main>

@@ -135,32 +135,56 @@ class TestThinHubsAreSkipped:
                 )
 
 
-class TestRenderedPages:
-    def test_every_built_hub_exists_on_disk(self, all_shows, index):
-        for ctx in hubs.renderable_hubs(all_shows, index):
-            path = ROOT / hubs.hub_page_path(ctx["hub"]["id"])
-            assert path.exists(), f"{path} was not generated"
+@pytest.fixture(scope="module")
+def rendered(tmp_path_factory):
+    """The hub pages as the generator writes them TODAY, into a temp dir.
 
-    def test_the_index_page_covers_every_built_hub(self, all_shows, index):
-        html = (ROOT / hubs.HUB_DIR / "index.html").read_text(encoding="utf-8")
+    A guard that read the committed ``topics/`` went red the morning the
+    local-news hub crossed ``MIN_EPISODES_FOR_HUB`` (2026-10-02: Vancouver 10
+    + Collingwood 2) — the hub turned itself on exactly as designed, on a
+    data commit, hours before nightly would write its page. A guard that
+    reads today's committed data must tolerate today: render, then check.
+    """
+    import generate_html
+    out = tmp_path_factory.mktemp("hubs")
+    written = generate_html.generate_topic_hub_pages(output_dir=str(out))
+    return out, written
+
+
+class TestRenderedPages:
+    def test_every_built_hub_exists_on_disk(self, all_shows, index, rendered):
+        out, written = rendered
+        for ctx in hubs.renderable_hubs(all_shows, index):
+            rel = hubs.hub_page_path(ctx["hub"]["id"])
+            assert rel in written and (out / rel).exists(), f"{rel} was not generated"
+
+    def test_the_index_page_covers_every_built_hub(self, all_shows, index, rendered):
+        out, _ = rendered
+        html = (out / hubs.HUB_DIR / "index.html").read_text(encoding="utf-8")
         for ctx in hubs.renderable_hubs(all_shows, index):
             assert f'topics/{ctx["hub"]["id"]}.html' in html, ctx["hub"]["id"]
 
-    def test_hub_pages_have_no_broken_internal_links(self, all_shows, index):
+    def test_hub_pages_have_no_broken_internal_links(self, all_shows, index, rendered):
+        out, _ = rendered
         broken = []
         for ctx in hubs.renderable_hubs(all_shows, index):
             rel = hubs.hub_page_path(ctx["hub"]["id"])
-            html = (ROOT / rel).read_text(encoding="utf-8")
+            html = (out / rel).read_text(encoding="utf-8")
             for target in re.findall(r'href="([^"#?:]+?)"', html):
                 if target.startswith(("http", "mailto", "//", "#")):
                     continue
-                if not ((ROOT / hubs.HUB_DIR) / target).resolve().exists():
+                # Sibling hub pages live in the rendered dir; everything
+                # else (posts, show pages, chrome) is the committed site.
+                fresh = ((out / hubs.HUB_DIR) / target).resolve()
+                committed = ((ROOT / hubs.HUB_DIR) / target).resolve()
+                if not (fresh.exists() or committed.exists()):
                     broken.append(f"{rel} -> {target}")
         assert not broken, broken[:8]
 
-    def test_each_hub_page_carries_its_own_written_copy(self, all_shows, index):
+    def test_each_hub_page_carries_its_own_written_copy(self, all_shows, index, rendered):
+        out, _ = rendered
         for ctx in hubs.renderable_hubs(all_shows, index):
-            html = (ROOT / hubs.hub_page_path(ctx["hub"]["id"])).read_text(
+            html = (out / hubs.hub_page_path(ctx["hub"]["id"])).read_text(
                 encoding="utf-8")
             assert ctx["hub"]["intro"][:60] in html
             assert ctx["hub"]["angle"][:40] in html
