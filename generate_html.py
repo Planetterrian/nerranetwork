@@ -3305,7 +3305,7 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         # the nav pill labelled "Join". Registry-gated so it never becomes a
         # banner on every show.
         "personal_upsell": bool(cfg.get("personal_upsell")),
-        # Soft Personal interest (tips/reminder — never a charge). SpaceX
+        # Soft Personal interest (tips only — never a charge). SpaceX
         # Daily is the Soft Personal spoken surface; registry-gated so the
         # band does not become a network-wide banner.
         "soft_personal_cta": bool(cfg.get("soft_personal_cta")),
@@ -6522,8 +6522,8 @@ def main():
         # cheap; regenerating with the network keeps Stripe-link env
         # changes and lineup names current. account.html is deliberately
         # NOT in the sitemap (it's a console, not content).
-        # Soft Personal interest (Sep 2026) sits beside join — tips/
-        # reminder capture, not checkout.
+        # Soft Personal interest (Sep 2026) sits beside join — tips-only
+        # capture, not checkout.
         generate_join_page(dry_run=args.dry_run)
         generate_personal_interest_page(dry_run=args.dry_run)
         generate_support_page(dry_run=args.dry_run)
