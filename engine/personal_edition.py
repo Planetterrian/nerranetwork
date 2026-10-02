@@ -53,19 +53,14 @@ from engine.daily_edition import (
 
 logger = logging.getLogger(__name__)
 
-#: Shows a member may choose beyond the Nerra Daily roster (Sep 24 2026):
-#: the launch cohort — a member in Vancouver or Collingwood, or one who
-#: wants a regional desk, prediction markets or the semis tape, picks it
-#: here. They stay OUT of the Nerra Daily lineup on purpose (the edition is
-#: a fixed two-hour rundown); a personal edition is the member's own order.
-#: Segments are discovered by the same per-show machinery, on the same
-#: dated episode files, via :func:`personal_edition_spec`.
-PERSONAL_EXTRA_SHOW_SLUGS: Tuple[str, ...] = (
-    "vancouver", "collingwood", "prediction_markets", "mag7", "ai_chips",
-    "peptides", "longevity", "omni_view_world", "omni_view_north_america",
-    "omni_view_europe", "omni_view_asia_pacific", "omni_view_africa_mideast",
-    "omni_view_latam",
-)
+#: Shows a member may choose beyond the Nerra Daily roster. Empty since
+#: Oct 2 2026: the launch cohort joined the Nerra Daily lineup itself
+#: (operator: every English show in the edition), so the vocabulary IS
+#: the roster. The seam stays for the next show that is pickable but not
+#: in the edition. Segments are discovered by the same per-show
+#: machinery, on the same dated episode files, via
+#: :func:`personal_edition_spec`.
+PERSONAL_EXTRA_SHOW_SLUGS: Tuple[str, ...] = ()
 
 #: The only shows a personal lineup may contain — the EN edition roster plus
 #: the extra shows above. The Worker mirrors this exact set

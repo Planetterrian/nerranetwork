@@ -3253,3 +3253,36 @@ experiments:
       against memory, and "cannot verify" is a status, not a reason to
       drop the story.
 
+
+  - id: nerra-daily-full-lineup-2026-10-02
+    title: "Nerra Daily carries every English show; the ready gate holds for the stragglers"
+    area: product
+    shipped: 2026-10-02
+    readout: 2026-10-23
+    status: reading
+    baseline: >
+      13-show lineup, 12:00 UTC force hour. Ep043 (10-02) shipped at 39
+      min with 4 of 9 expected segments after the morning flagship wave
+      was diverted into recovery branches (claims.html rebase conflicts,
+      fixed the same day); Ep042 ran 76 min with 9 segments. The thirteen
+      launch-cohort shows were on no edition.
+    target: >
+      Over 21 days: median metrics_ep*.json segment_count >= 18 on
+      weekdays (26-show lineup, weekday roster 21-23); missing_expected
+      empty on >= 17 of 21 days; no edition under 10 segments; the force
+      build (13:00 UTC, 80% floor, 16:00 hard deadline) never ships a
+      roster share under 0.8 before 16:00.
+    criteria: >
+      Hit = all four. A median duration past 3 h 30 with first-week
+      downloads falling against the 09-17..10-01 baseline is the signal
+      to split the edition (a desks edition, a markets edition), never to
+      drop shows silently. Three days of missing_expected naming the same
+      show = that show's slot or runtime, not the gate.
+    notes: >
+      engine/daily_edition.py EDITIONS["en"].lineup (26), weekday_only for
+      the non-Monday weeklies, ready_decision() is the pure gate rule;
+      FORCE_BUILD_UTC_HOUR 13 (Vancouver's 12:16 slot is the last), the
+      Worker's EDITION_DISPATCH 13:07, GitHub sweeps 13:23/14:23/16:23/17:23;
+      the links call's max_tokens scales with the handoff count. Nerra
+      Personal's vocabulary is the roster again (PERSONAL_EXTRA_SHOW_SLUGS
+      empty). ⚠️ Mira's handoff count triples — A/B-listen the first edition.
