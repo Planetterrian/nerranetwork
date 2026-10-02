@@ -744,63 +744,6 @@
             margin: 0.35rem 0 0;
         }
         .nn-iv-provenance span { white-space: nowrap; }
-        /* Episode provenance (Oct 2026): the one line under the AI badge on
-           a news post, from engine.brand.episode_provenance_parts, plus the
-           "Report an error" link beside it. Same type as the interview
-           provenance so the two shows read as one network. */
-        .nn-ep-provenance { text-align: center; }
-        .nn-ep-provenance a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
-        .nn-ep-provenance a:hover { text-decoration: underline; }
-        /* Verified-claims panel: a collapsed list under Sources, one row per
-           claim with a link to the source it was checked against. Reuses
-           the transcript box's summary idiom (no marker, +/− at the end). */
-        .blog-claims { margin-top: var(--sp-6); }
-        .blog-claims details summary {
-            display: flex; align-items: center; gap: var(--sp-2);
-            cursor: pointer; padding: var(--sp-3) 0; list-style: none;
-            font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600;
-            color: var(--nn-white);
-        }
-        .blog-claims details summary::-webkit-details-marker { display: none; }
-        .blog-claims details summary::after {
-            content: '+'; margin-left: auto; font-size: 1.2rem; color: var(--nn-text-muted);
-        }
-        .blog-claims details[open] summary::after { content: '\2212'; }
-        .blog-claims .claims-note, .blog-claims .claims-none {
-            font-family: var(--font-ui); font-size: 0.85rem; color: var(--nn-text-muted);
-            line-height: 1.6; margin: 0 0 var(--sp-2);
-        }
-        .blog-claims ol { list-style: none; padding: 0; margin: var(--sp-2) 0 0; }
-        .blog-claims li {
-            padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-2);
-            background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 10px;
-            font-size: 0.95rem; line-height: 1.6;
-        }
-        .blog-claims .claim-source {
-            display: block; margin-top: 4px; font-family: var(--font-ui); font-size: 0.8rem;
-        }
-        .blog-claims .claim-source a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
-        .blog-claims .claim-source a:hover { text-decoration: underline; }
-        .blog-claims .claim-why { display: block; font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-top: 2px; }
-        .blog-claims .claims-flagged-count { font-weight: 400; color: var(--nn-text-muted); font-size: 0.9em; }
-        .blog-claims .claims-ledger-link { font-family: var(--font-ui); font-size: 0.85rem; margin: var(--sp-3) 0 0; }
-        .blog-claims .claims-ledger-link a, .blog-claims .claims-none a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
-        .blog-claims .claims-ledger-link a:hover, .blog-claims .claims-none a:hover { text-decoration: underline; }
-        /* Correction box (engine.corrections): dated, at the top of the
-           article, before a reader meets the sentence that was wrong. */
-        .nn-correction {
-            margin: 0 0 var(--sp-6); padding: var(--sp-4) var(--sp-5);
-            border: 1px solid var(--show-color); border-left-width: 4px; border-radius: 10px;
-            background: var(--nn-card); font-size: 0.95rem; line-height: 1.6;
-        }
-        .nn-correction .nn-correction-label {
-            font-family: var(--font-ui); font-size: 0.75rem; font-weight: 700;
-            letter-spacing: 0.08em; text-transform: uppercase;
-            color: var(--show-color-text, var(--show-color)); margin: 0 0 var(--sp-1);
-        }
-        .nn-correction p { margin: 0 0 var(--sp-2); }
-        .nn-correction p:last-child { margin-bottom: 0; }
-        .nn-correction .nn-correction-where { font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); }
         .nn-iv-blurb-label {
             font-family: var(--font-ui);
             font-size: 0.72rem;
@@ -1534,7 +1477,6 @@
                         <a href="../../gallery.html">Image Gallery</a>
                         <a href="../../data.html">Data & Dashboards</a>
                         <a href="../../editorial.html">Editorial Process</a>
-                        <a href="../../claims.html">Claims &amp; corrections</a>
                         <a href="../../faq.html">FAQ</a>
                         <a href="../../press.html">Press Kit</a>
                         <a href="../../support.html">Support the Network</a>
@@ -1953,7 +1895,6 @@
             <a href="../../gallery.html" class="nn-mobile-show-link">Image Gallery</a>
             <a href="../../data.html" class="nn-mobile-show-link">Data & Dashboards</a>
             <a href="../../editorial.html" class="nn-mobile-show-link">Editorial Process</a>
-            <a href="../../claims.html" class="nn-mobile-show-link">Claims &amp; corrections</a>
             <a href="../../faq.html" class="nn-mobile-show-link">FAQ</a>
             <a href="../../support.html" class="nn-mobile-show-link">Support the Network</a>
         </div>
@@ -2123,91 +2064,6 @@
                     </a>
                     
                 </div>
-            </section>
-            
-            
-            
-            <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
-                
-                <details>
-                    <summary>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-                        Verified claims (17)
-                    </summary>
-                    <p class="claims-note">Each claim below was checked by a machine before publication: its source was fetched and the supporting quote looked for in it. A claim the check could not confirm is published and marked, not removed, and re-checked nightly for a week. 1 unverified sentence was removed before publication.</p>
-                    <ol>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
-</span> Attorney General Todd Blanche said Thursday the Justice Department will immediately seek Supreme Court relief on third-country removals.
-                            <span class="claim-source"><a href="https://news.bloomberglaw.com/us-law-week/blanche-vows-supreme-court-review-in-third-country-removal-case" target="_blank" rel="noopener" title="Blanche Vows Supreme Court Review in Third-Country Removal Case">news.bloomberglaw.com</a></span>
-                        </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
-</span> The ruling requires meaningful notice and a chance to raise persecution claims before removal to an unconnected country.
-                            <span class="claim-source"><a href="https://news.bloomberglaw.com/us-law-week/blanche-vows-supreme-court-review-in-third-country-removal-case" target="_blank" rel="noopener" title="Blanche Vows Supreme Court Review in Third-Country Removal Case">news.bloomberglaw.com</a></span>
-                        </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
-</span> More than 25,000 people were sent to 29 third countries, according to Refugees International and Human Rights First.
-                            <span class="claim-source"><a href="https://news.bloomberglaw.com/us-law-week/blanche-vows-supreme-court-review-in-third-country-removal-case" target="_blank" rel="noopener" title="Blanche Vows Supreme Court Review in Third-Country Removal Case">news.bloomberglaw.com</a></span>
-                        </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
-</span> The Guardian, citing Third Country Deportation Watch, says many of those removals were to Mexico, and some people were sent to the Central African Republic and South Sudan.
-                            <span class="claim-source"><a href="https://www.theguardian.com/us-news/2026/sep/24/trump-supreme-court-third-country-deportation" target="_blank" rel="noopener">theguardian.com</a></span>
-                        </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
-</span> Lawyers said officials were preparing a Thursday flight from Louisiana to African countries.
-                            <span class="claim-source"><a href="https://news.bloomberglaw.com/us-law-week/blanche-vows-supreme-court-review-in-third-country-removal-case" target="_blank" rel="noopener" title="Blanche Vows Supreme Court Review in Third-Country Removal Case">news.bloomberglaw.com</a></span>
-                        </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
-</span> A Thursday report by the National Association of Women and the Law and University of Sherbrooke law professors analyzes eight child deaths in five Canadian cases and cites dismissed warnings.
-                            <span class="claim-source"><a href="https://www.theglobeandmail.com/canada/article-institutional-failures-warning-signs-deaths-of-eight-children-report/" target="_blank" rel="noopener" title="Institutional failures, dismissed warning signs factors in deaths of eight children, report says">theglobeandmail.com</a></span>
-                        </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
-</span> In a 2019 Granby case, a seven-year-old girl died after placement with her father; the report says her stepmother was found guilty of manslaughter and false imprisonment and her father pleaded guilty to false imprisonment.
-                            <span class="claim-source"><a href="https://www.theglobeandmail.com/canada/article-institutional-failures-warning-signs-deaths-of-eight-children-report/" target="_blank" rel="noopener" title="Institutional failures, dismissed warning signs factors in deaths of eight children, report says">theglobeandmail.com</a></span>
-                        </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
-</span> Liberal MP Lisa Hepfner’s private member’s bill would, with exceptions, bar courts from considering deliberate-manipulation alienation allegations.
-                            <span class="claim-source"><a href="https://www.theglobeandmail.com/canada/article-institutional-failures-warning-signs-deaths-of-eight-children-report/" target="_blank" rel="noopener" title="Institutional failures, dismissed warning signs factors in deaths of eight children, report says">theglobeandmail.com</a></span>
-                        </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
-</span> The Kentucky Supreme Court said Thursday an even split leaves its April 6 opinion voiding Judge Julie Muth Goodman’s impeachment in place.
-                            <span class="claim-source"><a href="https://www.wkyt.com/2026/09/24/kentucky-supreme-court-upholds-opinion-fayette-co-judges-impeachment/" target="_blank" rel="noopener" title="Kentucky Supreme Court upholds opinion on Fayette Co. judge’s impeachment">wkyt.com</a></span>
-                        </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
-</span> The Kentucky House passed an impeachment resolution against Judge Goodman on March 20, claiming she abused judicial discretion and authority.
-                            <span class="claim-source"><a href="https://www.wkyt.com/2026/09/24/kentucky-supreme-court-upholds-opinion-fayette-co-judges-impeachment/" target="_blank" rel="noopener" title="Kentucky Supreme Court upholds opinion on Fayette Co. judge’s impeachment">wkyt.com</a></span>
-                        </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
-</span> The court found the impeachment petition was not sworn or verified by affidavit and said the allegations were disagreements over rulings in six cases, not impeachable offenses.
-                            <span class="claim-source"><a href="https://www.wkyt.com/2026/09/24/kentucky-supreme-court-upholds-opinion-fayette-co-judges-impeachment/" target="_blank" rel="noopener" title="Kentucky Supreme Court upholds opinion on Fayette Co. judge’s impeachment">wkyt.com</a></span>
-                        </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
-</span> Mark Carney told the New York Times that a U.S. military move to incorporate Canada was a tail risk to prepare for, not the base case.
-                            <span class="claim-source"><a href="https://www.straitstimes.com/world/canadas-carney-considered-chance-trump-might-use-military-force-to-make-it-join-us-nyt" target="_blank" rel="noopener" title="Canada’s Carney considered chance Trump might use military force to make it join US: NYT">straitstimes.com</a></span>
-                        </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
-</span> Ottawa’s City Council decided a street should no longer be named for President Trump after he signed an order renaming Lake Ontario Lake America.
-                            <span class="claim-source"><a href="https://www.nytimes.com/2026/09/23/us/ottawa-canada-renaming-trump-avenue.html" target="_blank" rel="noopener" title="Canada’s Capital Bids Good Riddance to Trump Avenue as Tensions With U.S. Rise">nytimes.com</a></span>
-                        </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
-</span> Mexico called for reduced automotive tariffs to the United States.
-                            <span class="claim-source"><a href="https://mexico-now.com/mexico-calls-to-reduce-automotive-tariffs-to-usa/" target="_blank" rel="noopener" title="Mexico Calls to Reduce Automotive Tariffs to USA">mexico-now.com</a></span>
-                        </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
-</span> Healey pitched a $2.24 billion Massachusetts spending package for health care, SNAP, and affordability as federal cuts loom.
-                            <span class="claim-source"><a href="https://www.masslive.com/politics/2026/09/healey-pitches-224b-spending-package-to-shore-up-healthcare-snap-and-affordability.html" target="_blank" rel="noopener" title="Healey rolls out $2.24B spending plan as federal cuts loom over Massachusetts">masslive.com</a></span>
-                        </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
-</span> Xi Jinping arrived at the White House Thursday morning for talks expected to cover trade, AI, and Taiwan, and Trump said they have forged a truly great friendship.
-                            <span class="claim-source"><a href="https://www.theguardian.com/us-news/live/2026/sep/24/trump-xi-jinping-china-ai-trade-summit-latest-news-updates" target="_blank" rel="noopener" title="Xi says China and US must ensure AI ‘is always under human control’ as Trump touts ‘great friendship’ before White House talks – live">theguardian.com</a></span>
-                        </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
-</span> The New York Times describes Xi’s trip as his first White House visit in a decade.
-                            <span class="claim-source"><a href="https://www.nytimes.com/live/2026/09/24/us/trump-xi-summit-meeting-us-china/trump-xi-summit-china" target="_blank" rel="noopener" title="Here’s the latest.">nytimes.com</a></span>
-                        </li>
-                    </ol>
-                    <p class="claims-ledger-link"><a href="../../claims/omni_view_north_america.html">Full ledger for this show →</a></p>
-                </details>
-                
             </section>
             
 
@@ -2436,13 +2292,10 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v4h1"/></svg>
   Made with AI — transparently
 </a>
-            </div>
-            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 10 sources</span><span aria-hidden="true"> · </span><span>17 claims checked against their sources</span><span aria-hidden="true"> · </span><span>1 unverified sentence removed before publication</span><span aria-hidden="true"> · </span><span>hosted by an AI, voiced with Grok TTS</span><span aria-hidden="true"> · </span><a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20Omni%20View%20North%20America%20Ep2&body=Re%3A%20https%3A//nerranetwork.com/blog/omni_view_north_america/ep002.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
-            </p>
-            <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
+            </div><div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>👋 Did this episode land?</span>
-                <a href="mailto:hello@nerranetwork.com?subject=I%20liked%20Omni%20View%20North%20America%20Ep2&body=Re: https://nerranetwork.com/blog/omni_view_north_america/ep002.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
-                <a href="mailto:hello@nerranetwork.com?subject=Suggestion%20for%20Omni%20View%20North%20America&body=Re: https://nerranetwork.com/blog/omni_view_north_america/ep002.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
+                <a href="mailto:patrick@planetterrian.com?subject=I%20liked%20Omni%20View%20North%20America%20Ep2&body=Re: https://nerranetwork.com/blog/omni_view_north_america/ep002.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
+                <a href="mailto:patrick@planetterrian.com?subject=Suggestion%20for%20Omni%20View%20North%20America&body=Re: https://nerranetwork.com/blog/omni_view_north_america/ep002.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
             </div>
 
             <!-- Subscribe CTA (Worker-backed — no Buttondown popup / fake 500ms success) -->
@@ -2504,34 +2357,6 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
             </section>
             
             <!-- Cross-show Recommendations -->
-            
-            <section class="blog-related">
-                <h2>You Might Also Like</h2>
-                <div class="blog-related-grid">
-                    
-                    <a href="../../blog/omni_view_latam/ep008.html" class="blog-related-card" style="--card-show-color: #0B6FD6">
-                        
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #0B6FD6, white 35%)">Omni View Central & South America</span>
-                        <h3>At least one point one million reais in Brazil's campaigns paid candidates' own firms and kin.</h3>
-                        <p>At least one point one million reais in Brazil's campaigns paid candidates' own firms and kin.</p>
-                    </a>
-                    
-                    <a href="../../blog/first_principles/ep116.html" class="blog-related-card" style="--card-show-color: #0F766E">
-                        
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #0F766E, white 35%)">First Principles Daily</span>
-                        <h3>Board games sell for fifty dollars while their cardboard and plastic cost only a couple of dollars to make.</h3>
-                        <p>Board games sell for fifty dollars while their cardboard and plastic cost only a couple of dollars to make.</p>
-                    </a>
-                    
-                    <a href="../../blog/modern_investing/ep186.html" class="blog-related-card" style="--card-show-color: #047857">
-                        
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #047857, white 35%)">Modern Investing Techniques</span>
-                        <h3>Tullow Oil shares fell more than a third after losing a Ghana tax arbitration covering most of its production.</h3>
-                        <p>Tullow Oil shares fell more than a third after losing a Ghana tax arbitration covering most of its production.</p>
-                    </a>
-                    
-                </div>
-            </section>
             
         </article>
     </div>
@@ -2670,7 +2495,6 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
                     <a href="../../contact.html">Contact</a>
                     <a href="../../press.html">Press Kit</a>
                     <a href="../../editorial.html">Editorial Process</a>
-                    <a href="../../claims.html">Claims &amp; corrections</a>
                     <a href="../../ai-disclosure.html">AI Disclosure</a>
                     <a href="../../privacy-policy.html">Privacy Policy</a>
                     <a href="../../terms-of-service.html">Terms of Service</a>
