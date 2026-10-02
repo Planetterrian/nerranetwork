@@ -6941,7 +6941,20 @@ def _publish_youtube(
         max(4, min(_scene_cap, len(_scene_briefs) or _scene_cap))
         if _long_form_produced else 1
     )
-    _fresh_short_scene_count = int(getattr(yt, "short_scenes_per_episode", 5) or 5)
+    # Oct 2 2026: the 9:16 set follows its consumers — this channel's
+    # Shorts (the plan's count, 0 on a dead-Shorts probe day), a dub
+    # channel's Shorts, or the multi-platform cuts. None of them = 0
+    # scenes, not a fixed five that nothing renders.
+    from engine.youtube_policy import portrait_scene_count
+    _fresh_short_scene_count = portrait_scene_count(
+        yt, shorts_planned=_policy_shorts_count)
+    _portrait_consumers = _fresh_short_scene_count > 0
+    if not _portrait_consumers:
+        result["short_scenes_skipped_no_consumer"] = True
+        logger.info(
+            "%s: no Short planned today and no dub channel — skipping the "
+            "fresh 9:16 scene set.", config.slug,
+        )
 
     if video_provider != "grok" and not recap_pool_used:
         if image_provider == "grok":
@@ -6955,14 +6968,16 @@ def _publish_youtube(
                 aspect="16:9", label_suffix="",
                 count=_fresh_long_scene_count,
             )
-            short_scene_paths = _run_grok_path(
-                aspect="9:16", label_suffix="_short",
-                count=_fresh_short_scene_count)
+            if _portrait_consumers:
+                short_scene_paths = _run_grok_path(
+                    aspect="9:16", label_suffix="_short",
+                    count=_fresh_short_scene_count)
         elif image_provider == "hybrid":
             _run_pexels_path(into_long=True, into_short=False)
-            short_scene_paths = _run_grok_path(
-                aspect="9:16", label_suffix="_short",
-                count=_fresh_short_scene_count)
+            if _portrait_consumers:
+                short_scene_paths = _run_grok_path(
+                    aspect="9:16", label_suffix="_short",
+                    count=_fresh_short_scene_count)
         else:  # pexels (default)
             _run_pexels_path(into_long=True, into_short=True)
 
@@ -7001,7 +7016,8 @@ def _publish_youtube(
                     visual_fallback = "library"
                 elif image_provider in ("grok", "hybrid"):
                     visual_fallback = "cover"
-            if len(short_scene_paths) < 2:
+            # A deliberately empty 9:16 set is not a degraded one.
+            if len(short_scene_paths) < 2 and _portrait_consumers:
                 _fb_short = fallback_scene_pool(
                     config, show_slug=config.slug,
                     episode_id=f"ep{episode_num:03d}",

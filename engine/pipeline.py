@@ -312,6 +312,10 @@ def record_youtube_outcomes(
                            bool(youtube_urls["shorts_ab_windows_swapped"]))
         if "scene_fresh_count" in youtube_urls:
             metrics.record("scene_fresh_count", int(youtube_urls.get("scene_fresh_count", 0) or 0))
+        # Oct 2 2026 — the 9:16 set was skipped because nothing would
+        # render it (no Short planned, no dub channel, no multi-platform).
+        if youtube_urls.get("short_scenes_skipped_no_consumer"):
+            metrics.record("short_scenes_skipped_no_consumer", True)
         if "scene_library_count" in youtube_urls:
             metrics.record("scene_library_count", int(youtube_urls.get("scene_library_count", 0) or 0))
         if "broll_clips_used" in youtube_urls:
