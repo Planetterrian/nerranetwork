@@ -744,6 +744,63 @@
             margin: 0.35rem 0 0;
         }
         .nn-iv-provenance span { white-space: nowrap; }
+        /* Episode provenance (Oct 2026): the one line under the AI badge on
+           a news post, from engine.brand.episode_provenance_parts, plus the
+           "Report an error" link beside it. Same type as the interview
+           provenance so the two shows read as one network. */
+        .nn-ep-provenance { text-align: center; }
+        .nn-ep-provenance a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .nn-ep-provenance a:hover { text-decoration: underline; }
+        /* Verified-claims panel: a collapsed list under Sources, one row per
+           claim with a link to the source it was checked against. Reuses
+           the transcript box's summary idiom (no marker, +/− at the end). */
+        .blog-claims { margin-top: var(--sp-6); }
+        .blog-claims details summary {
+            display: flex; align-items: center; gap: var(--sp-2);
+            cursor: pointer; padding: var(--sp-3) 0; list-style: none;
+            font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600;
+            color: var(--nn-white);
+        }
+        .blog-claims details summary::-webkit-details-marker { display: none; }
+        .blog-claims details summary::after {
+            content: '+'; margin-left: auto; font-size: 1.2rem; color: var(--nn-text-muted);
+        }
+        .blog-claims details[open] summary::after { content: '\2212'; }
+        .blog-claims .claims-note, .blog-claims .claims-none {
+            font-family: var(--font-ui); font-size: 0.85rem; color: var(--nn-text-muted);
+            line-height: 1.6; margin: 0 0 var(--sp-2);
+        }
+        .blog-claims ol { list-style: none; padding: 0; margin: var(--sp-2) 0 0; }
+        .blog-claims li {
+            padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-2);
+            background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 10px;
+            font-size: 0.95rem; line-height: 1.6;
+        }
+        .blog-claims .claim-source {
+            display: block; margin-top: 4px; font-family: var(--font-ui); font-size: 0.8rem;
+        }
+        .blog-claims .claim-source a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claim-source a:hover { text-decoration: underline; }
+        .blog-claims .claim-why { display: block; font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-top: 2px; }
+        .blog-claims .claims-flagged-count { font-weight: 400; color: var(--nn-text-muted); font-size: 0.9em; }
+        .blog-claims .claims-ledger-link { font-family: var(--font-ui); font-size: 0.85rem; margin: var(--sp-3) 0 0; }
+        .blog-claims .claims-ledger-link a, .blog-claims .claims-none a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claims-ledger-link a:hover, .blog-claims .claims-none a:hover { text-decoration: underline; }
+        /* Correction box (engine.corrections): dated, at the top of the
+           article, before a reader meets the sentence that was wrong. */
+        .nn-correction {
+            margin: 0 0 var(--sp-6); padding: var(--sp-4) var(--sp-5);
+            border: 1px solid var(--show-color); border-left-width: 4px; border-radius: 10px;
+            background: var(--nn-card); font-size: 0.95rem; line-height: 1.6;
+        }
+        .nn-correction .nn-correction-label {
+            font-family: var(--font-ui); font-size: 0.75rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--show-color-text, var(--show-color)); margin: 0 0 var(--sp-1);
+        }
+        .nn-correction p { margin: 0 0 var(--sp-2); }
+        .nn-correction p:last-child { margin-bottom: 0; }
+        .nn-correction .nn-correction-where { font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); }
         .nn-iv-blurb-label {
             font-family: var(--font-ui);
             font-size: 0.72rem;
@@ -1477,6 +1534,7 @@
                         <a href="../../gallery.html">Image Gallery</a>
                         <a href="../../data.html">Data & Dashboards</a>
                         <a href="../../editorial.html">Editorial Process</a>
+                        <a href="../../claims.html">Claims &amp; corrections</a>
                         <a href="../../faq.html">FAQ</a>
                         <a href="../../press.html">Press Kit</a>
                         <a href="../../support.html">Support the Network</a>
@@ -1895,6 +1953,7 @@
             <a href="../../gallery.html" class="nn-mobile-show-link">Image Gallery</a>
             <a href="../../data.html" class="nn-mobile-show-link">Data & Dashboards</a>
             <a href="../../editorial.html" class="nn-mobile-show-link">Editorial Process</a>
+            <a href="../../claims.html" class="nn-mobile-show-link">Claims &amp; corrections</a>
             <a href="../../faq.html" class="nn-mobile-show-link">FAQ</a>
             <a href="../../support.html" class="nn-mobile-show-link">Support the Network</a>
         </div>
@@ -2064,6 +2123,87 @@
                     </a>
                     
                 </div>
+            </section>
+            
+            
+            
+            <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
+                
+                <details>
+                    <summary>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Verified claims (16)
+                    </summary>
+                    <p class="claims-note">Each claim below was checked by a machine before publication: its source was fetched and the supporting quote looked for in it. A claim the check could not confirm is published and marked, not removed, and re-checked nightly for a week.</p>
+                    <ol>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Japan's tighter permanent-residency rules take effect in phases from October 1 and require household income above the Japanese average, applied retroactively to applications since April, plus Japanese-language proficiency and a pension pot equivalent to 30 years of payouts.
+                            <span class="claim-source"><a href="https://www.aljazeera.com/economy/2026/9/25/japan-moves-to-tighten-rules-for-foreigners-throwing-futures-into-doubt" target="_blank" rel="noopener" title="Japan moves to tighten rules for foreigners, throwing futures into doubt">aljazeera.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Japan's Immigration Services Agency said foreigners need to live independently and have a stable life without the risk of becoming a burden.
+                            <span class="claim-source"><a href="https://www.aljazeera.com/economy/2026/9/25/japan-moves-to-tighten-rules-for-foreigners-throwing-futures-into-doubt" target="_blank" rel="noopener" title="Japan moves to tighten rules for foreigners, throwing futures into doubt">aljazeera.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Abdul, a Bangladeshi tech engineer in northern Tokyo for nearly eight years, is preparing residency and citizenship applications and looking for work outside Japan.
+                            <span class="claim-source"><a href="https://www.aljazeera.com/economy/2026/9/25/japan-moves-to-tighten-rules-for-foreigners-throwing-futures-into-doubt" target="_blank" rel="noopener" title="Japan moves to tighten rules for foreigners, throwing futures into doubt">aljazeera.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Sarah Nelkin, an American resident of 14 years, filed for permanent residency shortly before the announcement and says rejection would push her toward citizenship, which would require giving up US citizenship because Japan does not recognise dual nationality.
+                            <span class="claim-source"><a href="https://www.aljazeera.com/economy/2026/9/25/japan-moves-to-tighten-rules-for-foreigners-throwing-futures-into-doubt" target="_blank" rel="noopener" title="Japan moves to tighten rules for foreigners, throwing futures into doubt">aljazeera.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> A deep depression crossed the Andhra Pradesh coast near Kalingapatnam in Srikakulam on Thursday, and Odisha evacuated over 8,000 people from low-lying and landslide-prone areas.
+                            <span class="claim-source"><a href="https://www.thehindu.com/news/national/cyclone-arnab-heavy-rain-lashes-odisha-andhra-pradesh-red-alert-weather-live-updates-september-25-2026/article71506926.ece" target="_blank" rel="noopener">thehindu.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The IMD said coastal winds would gust up to 70 kmph and advised fishermen not to go to sea until Friday morning.
+                            <span class="claim-source"><a href="https://www.thehindu.com/news/national/cyclone-arnab-heavy-rain-lashes-odisha-andhra-pradesh-red-alert-weather-live-updates-september-25-2026/article71506926.ece" target="_blank" rel="noopener" title="Heavy rain lashes Odisha; over 8,000 people evacuated, ministers rush to affected districts">thehindu.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The Nagavali was expected to carry about 60,000 cusecs, with crop damage estimated at more than 10,000 acres in and around Rajam, and low-lying Vangara mandal was evacuated.
+                            <span class="claim-source"><a href="https://www.thehindu.com/news/national/cyclone-arnab-heavy-rain-lashes-odisha-andhra-pradesh-red-alert-weather-live-updates-september-25-2026/article71506926.ece" target="_blank" rel="noopener" title="Heavy rain lashes Odisha; over 8,000 people evacuated, ministers rush to affected districts">thehindu.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Nurse Felicity Melville told a coronial inquest she instantly saw Joe Massa was very unwell, recorded a respiratory rate of 57, and moved him toward resuscitation.
+                            <span class="claim-source"><a href="https://www.smh.com.au/national/nsw/a-strikingly-unusual-condition-but-this-nurse-knew-instantly-joe-massa-was-very-unwell-20260925-p610jz.html?ref=rss&utm_medium=rss&utm_source=rss_national" target="_blank" rel="noopener" title="A ‘strikingly unusual’ condition. But this nurse knew instantly Joe Massa was very unwell">smh.com.au</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Joe Massa died in September 2024, and his death galvanised New South Wales plans to end the Northern Beaches Hospital public-private partnership.
+                            <span class="claim-source"><a href="https://www.smh.com.au/national/nsw/a-strikingly-unusual-condition-but-this-nurse-knew-instantly-joe-massa-was-very-unwell-20260925-p610jz.html?ref=rss&utm_medium=rss&utm_source=rss_national" target="_blank" rel="noopener" title="A ‘strikingly unusual’ condition. But this nurse knew instantly Joe Massa was very unwell">smh.com.au</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> On Friday the Supreme Court sought Goa Police’s response on Tarun Tejpal’s appeal against a Bombay High Court conviction and 10-year sentence and issued notice on a Goa plea to enhance the sentence.
+                            <span class="claim-source"><a href="https://www.thehindu.com/news/national/supreme-court-seeks-goa-polices-response-on-tarun-tejpals-appeal-against-rape-case-conviction/article71507360.ece" target="_blank" rel="noopener" title="Supreme Court seeks Goa Police’s response on Tarun Tejpal’s appeal against rape case conviction">thehindu.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Tamil Nadu DGP Mahesh Kumar Aggarwal on Friday formed an all-woman SIT to investigate the POCSO case involving Gem Granites chairman R. Veeramani.
+                            <span class="claim-source"><a href="https://www.thehindu.com/news/national/tamil-nadu/gem-granites-veeramani-pocso-act-case-all-woman-sit-to-take-over-probe/article71507283.ece" target="_blank" rel="noopener" title="‘Gem Granites’ Veeramani POCSO Act case: All-woman SIT to take over probe">thehindu.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Three unions voted for work stoppages and bans after a Sydney Water payroll system has paid employees incorrectly or late since July.
+                            <span class="claim-source"><a href="https://www.abc.net.au/news/2026-09-25/sydney-water-faces-industrial-action/107194900" target="_blank" rel="noopener" title="Bungled Sydney Water payroll rollout leaves workers underpaid">abc.net.au</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Singapore Deputy Prime Minister Gan Kim Yong said Singapore and China should explore AI and green-economy cooperation, citing the 1994 Suzhou Industrial Park and 2008 Tianjin Eco-City.
+                            <span class="claim-source"><a href="https://www.scmp.com/week-asia/economics/article/3368773/suzhou-ai-singapore-china-eye-new-playbook-economic-ties?utm_source=rss_feed" target="_blank" rel="noopener" title="From Suzhou to AI: Singapore, China eye new playbook for economic ties">scmp.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Trump hosted Xi at a state dinner in the East Room that opened with Schramsberg Blanc de Noirs in honour of the 1972 Toast to Peace and referred to ping-pong diplomacy.
+                            <span class="claim-source"><a href="https://www.scmp.com/news/china/diplomacy/article/3368762/wine-ping-pong-trump-and-xis-state-dinner-heavy-historic-symbolism?utm_source=rss_feed" target="_blank" rel="noopener" title="From wine to ping-pong, Trump and Xi’s state dinner is heavy on historic symbolism">scmp.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> President Lee Jae Myung said on Thursday that Ukraine disclosed the transfer of two North Korean prisoners of war to South Korea in breach of a non-disclosure agreement, after President Zelenskyy told the UN General Assembly the soldiers had been sent.
+                            <span class="claim-source"><a href="https://en.yna.co.kr/view/AEN20260925000252315" target="_blank" rel="noopener" title="(2nd LD) Lee says Ukraine disclosed transfer of 2 N.K. soldiers in breach of non-disclosure agreement">en.yna.co.kr</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The Ukrainian presidential office said it disclosed only the transfer, not the long details, that keeping the entire transfer secret would have been strange, and that the transfer was done through direct dialogue with Seoul.
+                            <span class="claim-source"><a href="https://en.yna.co.kr/view/AEN20260925000252315" target="_blank" rel="noopener" title="(2nd LD) Lee says Ukraine disclosed transfer of 2 N.K. soldiers in breach of non-disclosure agreement">en.yna.co.kr</a></span>
+                        </li>
+                    </ol>
+                    <p class="claims-ledger-link"><a href="../../claims/omni_view_asia_pacific.html">Full ledger for this show →</a></p>
+                </details>
+                
             </section>
             
 
@@ -2258,10 +2398,13 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v4h1"/></svg>
   Made with AI — transparently
 </a>
-            </div><div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
+            </div>
+            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 9 sources</span><span aria-hidden="true"> · </span><span>16 claims checked against their sources</span><span aria-hidden="true"> · </span><span>hosted by an AI, voiced with Grok TTS</span><span aria-hidden="true"> · </span><a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20Omni%20View%20Asia%20Pacific%20Ep3&body=Re%3A%20https%3A//nerranetwork.com/blog/omni_view_asia_pacific/ep003.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
+            </p>
+            <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>👋 Did this episode land?</span>
-                <a href="mailto:patrick@planetterrian.com?subject=I%20liked%20Omni%20View%20Asia%20Pacific%20Ep3&body=Re: https://nerranetwork.com/blog/omni_view_asia_pacific/ep003.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
-                <a href="mailto:patrick@planetterrian.com?subject=Suggestion%20for%20Omni%20View%20Asia%20Pacific&body=Re: https://nerranetwork.com/blog/omni_view_asia_pacific/ep003.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
+                <a href="mailto:hello@nerranetwork.com?subject=I%20liked%20Omni%20View%20Asia%20Pacific%20Ep3&body=Re: https://nerranetwork.com/blog/omni_view_asia_pacific/ep003.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
+                <a href="mailto:hello@nerranetwork.com?subject=Suggestion%20for%20Omni%20View%20Asia%20Pacific&body=Re: https://nerranetwork.com/blog/omni_view_asia_pacific/ep003.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
             </div>
 
             <!-- Subscribe CTA (Worker-backed — no Buttondown popup / fake 500ms success) -->
@@ -2461,6 +2604,7 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
                     <a href="../../contact.html">Contact</a>
                     <a href="../../press.html">Press Kit</a>
                     <a href="../../editorial.html">Editorial Process</a>
+                    <a href="../../claims.html">Claims &amp; corrections</a>
                     <a href="../../ai-disclosure.html">AI Disclosure</a>
                     <a href="../../privacy-policy.html">Privacy Policy</a>
                     <a href="../../terms-of-service.html">Terms of Service</a>
