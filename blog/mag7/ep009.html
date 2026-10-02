@@ -744,6 +744,63 @@
             margin: 0.35rem 0 0;
         }
         .nn-iv-provenance span { white-space: nowrap; }
+        /* Episode provenance (Oct 2026): the one line under the AI badge on
+           a news post, from engine.brand.episode_provenance_parts, plus the
+           "Report an error" link beside it. Same type as the interview
+           provenance so the two shows read as one network. */
+        .nn-ep-provenance { text-align: center; }
+        .nn-ep-provenance a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .nn-ep-provenance a:hover { text-decoration: underline; }
+        /* Verified-claims panel: a collapsed list under Sources, one row per
+           claim with a link to the source it was checked against. Reuses
+           the transcript box's summary idiom (no marker, +/− at the end). */
+        .blog-claims { margin-top: var(--sp-6); }
+        .blog-claims details summary {
+            display: flex; align-items: center; gap: var(--sp-2);
+            cursor: pointer; padding: var(--sp-3) 0; list-style: none;
+            font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600;
+            color: var(--nn-white);
+        }
+        .blog-claims details summary::-webkit-details-marker { display: none; }
+        .blog-claims details summary::after {
+            content: '+'; margin-left: auto; font-size: 1.2rem; color: var(--nn-text-muted);
+        }
+        .blog-claims details[open] summary::after { content: '\2212'; }
+        .blog-claims .claims-note, .blog-claims .claims-none {
+            font-family: var(--font-ui); font-size: 0.85rem; color: var(--nn-text-muted);
+            line-height: 1.6; margin: 0 0 var(--sp-2);
+        }
+        .blog-claims ol { list-style: none; padding: 0; margin: var(--sp-2) 0 0; }
+        .blog-claims li {
+            padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-2);
+            background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 10px;
+            font-size: 0.95rem; line-height: 1.6;
+        }
+        .blog-claims .claim-source {
+            display: block; margin-top: 4px; font-family: var(--font-ui); font-size: 0.8rem;
+        }
+        .blog-claims .claim-source a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claim-source a:hover { text-decoration: underline; }
+        .blog-claims .claim-why { display: block; font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-top: 2px; }
+        .blog-claims .claims-flagged-count { font-weight: 400; color: var(--nn-text-muted); font-size: 0.9em; }
+        .blog-claims .claims-ledger-link { font-family: var(--font-ui); font-size: 0.85rem; margin: var(--sp-3) 0 0; }
+        .blog-claims .claims-ledger-link a, .blog-claims .claims-none a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claims-ledger-link a:hover, .blog-claims .claims-none a:hover { text-decoration: underline; }
+        /* Correction box (engine.corrections): dated, at the top of the
+           article, before a reader meets the sentence that was wrong. */
+        .nn-correction {
+            margin: 0 0 var(--sp-6); padding: var(--sp-4) var(--sp-5);
+            border: 1px solid var(--show-color); border-left-width: 4px; border-radius: 10px;
+            background: var(--nn-card); font-size: 0.95rem; line-height: 1.6;
+        }
+        .nn-correction .nn-correction-label {
+            font-family: var(--font-ui); font-size: 0.75rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--show-color-text, var(--show-color)); margin: 0 0 var(--sp-1);
+        }
+        .nn-correction p { margin: 0 0 var(--sp-2); }
+        .nn-correction p:last-child { margin-bottom: 0; }
+        .nn-correction .nn-correction-where { font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); }
         .nn-iv-blurb-label {
             font-family: var(--font-ui);
             font-size: 0.72rem;
@@ -1477,6 +1534,7 @@
                         <a href="../../gallery.html">Image Gallery</a>
                         <a href="../../data.html">Data & Dashboards</a>
                         <a href="../../editorial.html">Editorial Process</a>
+                        <a href="../../claims.html">Claims &amp; corrections</a>
                         <a href="../../faq.html">FAQ</a>
                         <a href="../../press.html">Press Kit</a>
                         <a href="../../support.html">Support the Network</a>
@@ -1895,6 +1953,7 @@
             <a href="../../gallery.html" class="nn-mobile-show-link">Image Gallery</a>
             <a href="../../data.html" class="nn-mobile-show-link">Data & Dashboards</a>
             <a href="../../editorial.html" class="nn-mobile-show-link">Editorial Process</a>
+            <a href="../../claims.html" class="nn-mobile-show-link">Claims &amp; corrections</a>
             <a href="../../faq.html" class="nn-mobile-show-link">FAQ</a>
             <a href="../../support.html" class="nn-mobile-show-link">Support the Network</a>
         </div>
@@ -2035,6 +2094,115 @@
                     </a>
                     
                 </div>
+            </section>
+            
+            
+            
+            <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
+                
+                <details>
+                    <summary>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Verified claims (23)
+                    </summary>
+                    <p class="claims-note">Each claim below was checked by a machine before publication: its source was fetched and the supporting quote looked for in it. A claim the check could not confirm is published and marked, not removed, and re-checked nightly for a week.</p>
+                    <ol>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Microsoft today began disabling Exchange Web Services by default in Exchange Online.
+                            <span class="claim-source"><a href="https://www.macrumors.com/2026/10/01/apple-mail-mac-stop-sync-microsoft-365/" target="_blank" rel="noopener" title="PSA: Apple Mail on Mac May Stop Syncing Microsoft 365 Accounts Today">macrumors.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Apple's Mail and Calendar apps on Mac still rely on EWS to sync Microsoft 365 work accounts.
+                            <span class="claim-source"><a href="https://www.macrumors.com/2026/10/01/apple-mail-mac-stop-sync-microsoft-365/" target="_blank" rel="noopener" title="PSA: Apple Mail on Mac May Stop Syncing Microsoft 365 Accounts Today">macrumors.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Microsoft stopped adding new features to EWS in 2018 and in 2023 announced it would start disabling the protocol in Exchange Online from October 2026.
+                            <span class="claim-source"><a href="https://www.macrumors.com/2026/10/01/apple-mail-mac-stop-sync-microsoft-365/" target="_blank" rel="noopener" title="PSA: Apple Mail on Mac May Stop Syncing Microsoft 365 Accounts Today">macrumors.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> A June Microsoft post described the EWS change as a phased rollout.
+                            <span class="claim-source"><a href="https://www.macrumors.com/2026/10/01/apple-mail-mac-stop-sync-microsoft-365/" target="_blank" rel="noopener" title="PSA: Apple Mail on Mac May Stop Syncing Microsoft 365 Accounts Today">macrumors.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Apple says it is working with Microsoft to move Mail, Calendar, Contacts, Notes and Reminders on Mac to Microsoft Graph in a future macOS 27 update.
+                            <span class="claim-source"><a href="https://www.macrumors.com/2026/10/01/apple-mail-mac-stop-sync-microsoft-365/" target="_blank" rel="noopener" title="PSA: Apple Mail on Mac May Stop Syncing Microsoft 365 Accounts Today">macrumors.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Organizations that chose to keep EWS running are not affected for now, and IT administrators can restore access.
+                            <span class="claim-source"><a href="https://www.macrumors.com/2026/10/01/apple-mail-mac-stop-sync-microsoft-365/" target="_blank" rel="noopener" title="PSA: Apple Mail on Mac May Stop Syncing Microsoft 365 Accounts Today">macrumors.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Microsoft plans to shut down EWS in Exchange Online permanently on April 1, 2027, with no extensions currently planned.
+                            <span class="claim-source"><a href="https://www.macrumors.com/2026/10/01/apple-mail-mac-stop-sync-microsoft-365/" target="_blank" rel="noopener" title="PSA: Apple Mail on Mac May Stop Syncing Microsoft 365 Accounts Today">macrumors.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> On-premises Exchange servers are not affected, and iPhone and iPad use Exchange ActiveSync rather than EWS.
+                            <span class="claim-source"><a href="https://www.macrumors.com/2026/10/01/apple-mail-mac-stop-sync-microsoft-365/" target="_blank" rel="noopener" title="PSA: Apple Mail on Mac May Stop Syncing Microsoft 365 Accounts Today">macrumors.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Affected organizations can move Mac users to a Graph-compatible client such as Outlook.
+                            <span class="claim-source"><a href="https://www.macrumors.com/2026/10/01/apple-mail-mac-stop-sync-microsoft-365/" target="_blank" rel="noopener" title="PSA: Apple Mail on Mac May Stop Syncing Microsoft 365 Accounts Today">macrumors.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Google launched Gemini 4 Argon, initially for trusted cybersecurity researchers, with paid API customers and Google AI Ultra subscribers expected next.
+                            <span class="claim-source"><a href="https://finance.yahoo.com/technology/ai/articles/alphabet-shares-rise-google-launches-102136709.html" target="_blank" rel="noopener" title="Alphabet Shares Rise After Google Launches Gemini 4 Argon AI Model">finance.yahoo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Google said Gemini 4 Argon scored 77.9% on DeepSWE v1.1 and described it as a record, while Jefferies said it trails on FrontierSWE v2.
+                            <span class="claim-source"><a href="https://finance.yahoo.com/technology/ai/articles/alphabet-shares-rise-google-launches-102136709.html" target="_blank" rel="noopener" title="Alphabet Shares Rise After Google Launches Gemini 4 Argon AI Model">finance.yahoo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Google said Argon can autonomously identify, verify and address software vulnerabilities, and is providing it without some standard safeguards to trusted defenders and internal teams.
+                            <span class="claim-source"><a href="https://finance.yahoo.com/technology/ai/articles/alphabet-shares-rise-google-launches-102136709.html" target="_blank" rel="noopener" title="Alphabet Shares Rise After Google Launches Gemini 4 Argon AI Model">finance.yahoo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Wiz is using Argon through its Scan for Good programme, and Argon's output limit rose to one million tokens from 64,000.
+                            <span class="claim-source"><a href="https://finance.yahoo.com/technology/ai/articles/alphabet-shares-rise-google-launches-102136709.html" target="_blank" rel="noopener" title="Alphabet Shares Rise After Google Launches Gemini 4 Argon AI Model">finance.yahoo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Google said it is already using Argon internally for software development and data-centre optimisation.
+                            <span class="claim-source"><a href="https://finance.yahoo.com/technology/ai/articles/alphabet-shares-rise-google-launches-102136709.html" target="_blank" rel="noopener" title="Alphabet Shares Rise After Google Launches Gemini 4 Argon AI Model">finance.yahoo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Jefferies said Argon launches at $2 per million input tokens and $10 per million output tokens, versus $10 and $50 for Claude Fable 5.1 and $4 and $20 for Claude Opus 5.5, with a 95% discount on cached input tokens.
+                            <span class="claim-source"><a href="https://finance.yahoo.com/technology/ai/articles/alphabet-shares-rise-google-launches-102136709.html" target="_blank" rel="noopener" title="Alphabet Shares Rise After Google Launches Gemini 4 Argon AI Model">finance.yahoo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Jefferies said Argon ranked first for coding on LLM Arena's Text Arena and eighth on Code Arena: Web Dev, 21 positions higher than Gemini 3.8 Flash.
+                            <span class="claim-source"><a href="https://finance.yahoo.com/technology/ai/articles/alphabet-shares-rise-google-launches-102136709.html" target="_blank" rel="noopener" title="Alphabet Shares Rise After Google Launches Gemini 4 Argon AI Model">finance.yahoo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Jefferies said Argon tied Grok 4.7 at 68% on CWE-bench v1, and cited a 0.7% prompt-injection success rate versus 1% for Claude Opus 5.5 and Fable 5.1.
+                            <span class="claim-source"><a href="https://finance.yahoo.com/technology/ai/articles/alphabet-shares-rise-google-launches-102136709.html" target="_blank" rel="noopener" title="Alphabet Shares Rise After Google Launches Gemini 4 Argon AI Model">finance.yahoo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Jefferies said Anthropic's competing models have an output limit of 128,000 tokens.
+                            <span class="claim-source"><a href="https://finance.yahoo.com/technology/ai/articles/alphabet-shares-rise-google-launches-102136709.html" target="_blank" rel="noopener" title="Alphabet Shares Rise After Google Launches Gemini 4 Argon AI Model">finance.yahoo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Google said Argon produced results on tests covering automation, long-form video and professional tasks in finance, legal services and tax.
+                            <span class="claim-source"><a href="https://finance.yahoo.com/technology/ai/articles/alphabet-shares-rise-google-launches-102136709.html" target="_blank" rel="noopener" title="Alphabet Shares Rise After Google Launches Gemini 4 Argon AI Model">finance.yahoo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> AWS was granted planning permission for a data centre in Iver, UK.
+                            <span class="claim-source"><a href="https://www.datacenterdynamics.com/en/news/aws-granted-planning-permission-for-data-center-in-iver-uk/" target="_blank" rel="noopener" title="AWS granted planning permission for data center in Iver, UK">datacenterdynamics.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Techerati reported the Iver approval came despite environmental concerns.
+                            <span class="claim-source"><a href="https://www.techerati.com/news-hub/aws-wins-approval-for-iver-data-centre-despite-environmental-concerns/" target="_blank" rel="noopener" title="AWS wins approval for Iver data centre despite environmental concerns">techerati.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> AWS signed a multi-year agreement with Synopsys worth over one billion dollars for custom chip design, including licensing and royalty components.
+                            <span class="claim-source"><a href="https://simplywall.st/stocks/us/retail/nasdaq-amzn/amazoncom/news/amazoncom-amzn-signs-1-billion-ai-chip-design-deal-as-aws-go" target="_blank" rel="noopener" title="Amazon.com (AMZN) Signs $1 Billion AI Chip Design Deal As AWS Goes Deeper In House">simplywall.st</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The Synopsys deal positions AWS as a leading customer for silicon IP tailored for AI data-centre workloads.
+                            <span class="claim-source"><a href="https://simplywall.st/stocks/us/retail/nasdaq-amzn/amazoncom/news/amazoncom-amzn-signs-1-billion-ai-chip-design-deal-as-aws-go" target="_blank" rel="noopener" title="Amazon.com (AMZN) Signs $1 Billion AI Chip Design Deal As AWS Goes Deeper In House">simplywall.st</a></span>
+                        </li>
+                    </ol>
+                    <p class="claims-ledger-link"><a href="../../claims/mag7.html">Full ledger for this show →</a></p>
+                </details>
+                
             </section>
             
 
@@ -2237,10 +2405,13 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v4h1"/></svg>
   Made with AI — transparently
 </a>
-            </div><div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
+            </div>
+            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 5 sources</span><span aria-hidden="true"> · </span><span>23 claims checked against their sources</span><span aria-hidden="true"> · </span><span>voiced with Grok TTS</span><span aria-hidden="true"> · </span><a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20MAG%207%20Daily%20Ep9&body=Re%3A%20https%3A//nerranetwork.com/blog/mag7/ep009.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
+            </p>
+            <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>👋 Did this episode land?</span>
-                <a href="mailto:patrick@planetterrian.com?subject=I%20liked%20MAG%207%20Daily%20Ep9&body=Re: https://nerranetwork.com/blog/mag7/ep009.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
-                <a href="mailto:patrick@planetterrian.com?subject=Suggestion%20for%20MAG%207%20Daily&body=Re: https://nerranetwork.com/blog/mag7/ep009.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
+                <a href="mailto:hello@nerranetwork.com?subject=I%20liked%20MAG%207%20Daily%20Ep9&body=Re: https://nerranetwork.com/blog/mag7/ep009.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
+                <a href="mailto:hello@nerranetwork.com?subject=Suggestion%20for%20MAG%207%20Daily&body=Re: https://nerranetwork.com/blog/mag7/ep009.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
             </div>
 
             <!-- Subscribe CTA (Worker-backed — no Buttondown popup / fake 500ms success) -->
@@ -2276,12 +2447,10 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 </a>
                 
                 
-                <div class="next nav-next-placeholder" style="text-align:right;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.92rem;">
-                    <span class="nav-label">Tomorrow →</span>
-                    <span class="nav-title">New episode tomorrow</span>
-                    <a href="#subscribe-cta" style="font-size:0.82rem;color:var(--show-color-text, var(--show-color));text-decoration:none;display:block;margin-top:4px;">Subscribe so you don't miss it &rarr;</a>
-                </div>
-                
+                <a href="ep010.html" rel="next" class="next">
+                    <span class="nav-label">Next &rarr;</span>
+                    <span class="nav-title">Episode 10</span>
+                </a>
                 
             </nav>
             
@@ -2444,6 +2613,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                     <a href="../../contact.html">Contact</a>
                     <a href="../../press.html">Press Kit</a>
                     <a href="../../editorial.html">Editorial Process</a>
+                    <a href="../../claims.html">Claims &amp; corrections</a>
                     <a href="../../ai-disclosure.html">AI Disclosure</a>
                     <a href="../../privacy-policy.html">Privacy Policy</a>
                     <a href="../../terms-of-service.html">Terms of Service</a>

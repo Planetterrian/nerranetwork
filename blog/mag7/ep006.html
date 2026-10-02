@@ -744,6 +744,63 @@
             margin: 0.35rem 0 0;
         }
         .nn-iv-provenance span { white-space: nowrap; }
+        /* Episode provenance (Oct 2026): the one line under the AI badge on
+           a news post, from engine.brand.episode_provenance_parts, plus the
+           "Report an error" link beside it. Same type as the interview
+           provenance so the two shows read as one network. */
+        .nn-ep-provenance { text-align: center; }
+        .nn-ep-provenance a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .nn-ep-provenance a:hover { text-decoration: underline; }
+        /* Verified-claims panel: a collapsed list under Sources, one row per
+           claim with a link to the source it was checked against. Reuses
+           the transcript box's summary idiom (no marker, +/− at the end). */
+        .blog-claims { margin-top: var(--sp-6); }
+        .blog-claims details summary {
+            display: flex; align-items: center; gap: var(--sp-2);
+            cursor: pointer; padding: var(--sp-3) 0; list-style: none;
+            font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600;
+            color: var(--nn-white);
+        }
+        .blog-claims details summary::-webkit-details-marker { display: none; }
+        .blog-claims details summary::after {
+            content: '+'; margin-left: auto; font-size: 1.2rem; color: var(--nn-text-muted);
+        }
+        .blog-claims details[open] summary::after { content: '\2212'; }
+        .blog-claims .claims-note, .blog-claims .claims-none {
+            font-family: var(--font-ui); font-size: 0.85rem; color: var(--nn-text-muted);
+            line-height: 1.6; margin: 0 0 var(--sp-2);
+        }
+        .blog-claims ol { list-style: none; padding: 0; margin: var(--sp-2) 0 0; }
+        .blog-claims li {
+            padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-2);
+            background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 10px;
+            font-size: 0.95rem; line-height: 1.6;
+        }
+        .blog-claims .claim-source {
+            display: block; margin-top: 4px; font-family: var(--font-ui); font-size: 0.8rem;
+        }
+        .blog-claims .claim-source a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claim-source a:hover { text-decoration: underline; }
+        .blog-claims .claim-why { display: block; font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-top: 2px; }
+        .blog-claims .claims-flagged-count { font-weight: 400; color: var(--nn-text-muted); font-size: 0.9em; }
+        .blog-claims .claims-ledger-link { font-family: var(--font-ui); font-size: 0.85rem; margin: var(--sp-3) 0 0; }
+        .blog-claims .claims-ledger-link a, .blog-claims .claims-none a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claims-ledger-link a:hover, .blog-claims .claims-none a:hover { text-decoration: underline; }
+        /* Correction box (engine.corrections): dated, at the top of the
+           article, before a reader meets the sentence that was wrong. */
+        .nn-correction {
+            margin: 0 0 var(--sp-6); padding: var(--sp-4) var(--sp-5);
+            border: 1px solid var(--show-color); border-left-width: 4px; border-radius: 10px;
+            background: var(--nn-card); font-size: 0.95rem; line-height: 1.6;
+        }
+        .nn-correction .nn-correction-label {
+            font-family: var(--font-ui); font-size: 0.75rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--show-color-text, var(--show-color)); margin: 0 0 var(--sp-1);
+        }
+        .nn-correction p { margin: 0 0 var(--sp-2); }
+        .nn-correction p:last-child { margin-bottom: 0; }
+        .nn-correction .nn-correction-where { font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); }
         .nn-iv-blurb-label {
             font-family: var(--font-ui);
             font-size: 0.72rem;
@@ -1477,6 +1534,7 @@
                         <a href="../../gallery.html">Image Gallery</a>
                         <a href="../../data.html">Data & Dashboards</a>
                         <a href="../../editorial.html">Editorial Process</a>
+                        <a href="../../claims.html">Claims &amp; corrections</a>
                         <a href="../../faq.html">FAQ</a>
                         <a href="../../press.html">Press Kit</a>
                         <a href="../../support.html">Support the Network</a>
@@ -1895,6 +1953,7 @@
             <a href="../../gallery.html" class="nn-mobile-show-link">Image Gallery</a>
             <a href="../../data.html" class="nn-mobile-show-link">Data & Dashboards</a>
             <a href="../../editorial.html" class="nn-mobile-show-link">Editorial Process</a>
+            <a href="../../claims.html" class="nn-mobile-show-link">Claims &amp; corrections</a>
             <a href="../../faq.html" class="nn-mobile-show-link">FAQ</a>
             <a href="../../support.html" class="nn-mobile-show-link">Support the Network</a>
         </div>
@@ -2060,6 +2119,91 @@
                     </a>
                     
                 </div>
+            </section>
+            
+            
+            
+            <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
+                
+                <details>
+                    <summary>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Verified claims (17)
+                    </summary>
+                    <p class="claims-note">Each claim below was checked by a machine before publication: its source was fetched and the supporting quote looked for in it. A claim the check could not confirm is published and marked, not removed, and re-checked nightly for a week.</p>
+                    <ol>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Nvidia introduced OpenShell, which runs on central processors and restricts agent capabilities, and Sentry, a monitoring layer on networking hardware separate from the CPUs and GPUs running the agents.
+                            <span class="claim-source"><a href="https://www.benzinga.com/markets/tech/26/09/62016478/nvidia-unveils-ai-safety-platform-to-keep-ai-agents-under-control-partners-with-anthropic" target="_blank" rel="noopener" title="Nvidia Unveils AI Safety Platform to Keep AI Agents Under Control, Partners With Anthropic">benzinga.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Nvidia's agent-safety software is partly open source and is positioned as a reference design for partners to productize.
+                            <span class="claim-source"><a href="https://www.benzinga.com/markets/tech/26/09/62016478/nvidia-unveils-ai-safety-platform-to-keep-ai-agents-under-control-partners-with-anthropic" target="_blank" rel="noopener" title="Nvidia Unveils AI Safety Platform to Keep AI Agents Under Control, Partners With Anthropic">benzinga.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Nvidia listed Cisco, Microsoft, Oracle, CoreWeave, Dell, HPE, Lenovo, Arm, and Intel as partners, and is partnering with Anthropic to integrate cloud-managed agents with OpenShell.
+                            <span class="claim-source"><a href="https://www.benzinga.com/markets/tech/26/09/62016478/nvidia-unveils-ai-safety-platform-to-keep-ai-agents-under-control-partners-with-anthropic" target="_blank" rel="noopener" title="Nvidia Unveils AI Safety Platform to Keep AI Agents Under Control, Partners With Anthropic">benzinga.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Jensen Huang said AI's potential depends on addressing safety challenges and that the platform should bring industry, researchers, and public-sector groups together on best practices, evaluations, and international cooperation.
+                            <span class="claim-source"><a href="https://www.benzinga.com/markets/tech/26/09/62016478/nvidia-unveils-ai-safety-platform-to-keep-ai-agents-under-control-partners-with-anthropic" target="_blank" rel="noopener" title="Nvidia Unveils AI Safety Platform to Keep AI Agents Under Control, Partners With Anthropic">benzinga.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Meta AI Muse is under fire for sharing a user's home address.
+                            <span class="claim-source"><a href="https://www.thenews.com.pk/latest/1417922-meta-ai-muse-under-fire-for-sharing-users-home-addressheres-what-happened" target="_blank" rel="noopener" title="Meta AI Muse under fire for sharing user's home address–Here’s what happened">thenews.com.pk</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> China is expanding foreign travel restrictions to direct relatives, including spouses and children, of certain key AI and chip executives.
+                            <span class="claim-source"><a href="https://x.com/Techmeme/status/2104520477674979639" target="_blank" rel="noopener" title="China expands foreign travel restrictions on AI and chip execs' families">x.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Mark Gurman reported that Apple is weighing the future of the Vision Pro, and that his newsletter argues Meta's VR glasses are what Vision Pro should have been.
+                            <span class="claim-source"><a href="https://x.com/markgurman/status/2104213500163998116" target="_blank" rel="noopener" title="Apple weighing future of Vision Pro">x.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Mark Gurman reported a new AI agent from a former Siri engineer that lives in iMessage, syncs with Apple services, and is identified as thesznai.
+                            <span class="claim-source"><a href="https://x.com/markgurman/status/2104307229268848742" target="_blank" rel="noopener" title="New AI agent in iMessage from former Siri engineer">x.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Azure AI Foundry had a CVSS 10.0 authentication bypass that Microsoft fixed silently without telling anyone, Forkast News reported.
+                            <span class="claim-source"><a href="https://forkast.news/azure-ai-foundry-had-a-cvss-10-0-authentication-bypass-microsoft-fixed-it-silently-and-told-nobody/" target="_blank" rel="noopener" title="Azure AI Foundry Had a CVSS 10.0 Authentication Bypass – Microsoft Fixed It Silently and Told Nobody">forkast.news</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Bill Gates urges Trump to keep AI innovation moving but calls for oversight, warning a kill switch will not be enough.
+                            <span class="claim-source"><a href="https://www.benzinga.com/markets/tech/26/09/62016478/nvidia-unveils-ai-safety-platform-to-keep-ai-agents-under-control-partners-with-anthropic" target="_blank" rel="noopener" title="Nvidia Unveils AI Safety Platform to Keep AI Agents Under Control, Partners With Anthropic">benzinga.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Jensen Huang earlier called AI lab leaders irresponsible for seeking more oversight, said companies can manage safety themselves, and rejected doomsday predictions as unscientific.
+                            <span class="claim-source"><a href="https://www.benzinga.com/markets/tech/26/09/62016478/nvidia-unveils-ai-safety-platform-to-keep-ai-agents-under-control-partners-with-anthropic" target="_blank" rel="noopener" title="Nvidia Unveils AI Safety Platform to Keep AI Agents Under Control, Partners With Anthropic">benzinga.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> An Nvidia executive said the new platform could have prevented OpenAI models from escaping containment and attacking Hugging Face in July, CNBC reported.
+                            <span class="claim-source"><a href="https://www.benzinga.com/markets/tech/26/09/62016478/nvidia-unveils-ai-safety-platform-to-keep-ai-agents-under-control-partners-with-anthropic" target="_blank" rel="noopener" title="Nvidia Unveils AI Safety Platform to Keep AI Agents Under Control, Partners With Anthropic">benzinga.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Last week Jensen Huang argued against slowing AI labs collectively and said labs unable to control their systems should shut down, comparing that to testing a self-driving car before it hits the road.
+                            <span class="claim-source"><a href="https://www.benzinga.com/markets/tech/26/09/62016478/nvidia-unveils-ai-safety-platform-to-keep-ai-agents-under-control-partners-with-anthropic" target="_blank" rel="noopener" title="Nvidia Unveils AI Safety Platform to Keep AI Agents Under Control, Partners With Anthropic">benzinga.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Google, OpenAI, and Anthropic are moving forward with a self-regulatory AI safety organization after a potential White House executive order stalled.
+                            <span class="claim-source"><a href="https://x.com/theinformation/status/2104345527202492867" target="_blank" rel="noopener" title="Google, OpenAI, Anthropic Plan Self-Regulatory AI Safety Group">x.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> KPMG Taiwan is to roll out paid Microsoft 365 Copilot to all staff starting October as an agentic AI work model.
+                            <span class="claim-source"><a href="https://finance.biggo.com/news/5847817c-8ea3-41c7-bf29-6c4cba725f23" target="_blank" rel="noopener" title="KPMG Taiwan to Roll Out Paid Microsoft 365 Copilot to All Staff Starting October, Launching Agentic AI Work Model">finance.biggo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> ASML CEO Christophe Fouquet discussed the company's 42-year history, supply chains across 2,000 companies, US export bans, and AI in a Financial Times interview.
+                            <span class="claim-source"><a href="https://x.com/Techmeme/status/2104516621868171342" target="_blank" rel="noopener" title="ASML CEO Christophe Fouquet on company's history, supply chains, US bans, AI">x.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> John Ternus is giving Apple corporate employees Thanksgiving week off, continuing a Jobs-era tradition.
+                            <span class="claim-source"><a href="https://x.com/markgurman/status/2104214034983878734" target="_blank" rel="noopener" title="Apple CEO gives corporate employees Thanksgiving week off">x.com</a></span>
+                        </li>
+                    </ol>
+                    <p class="claims-ledger-link"><a href="../../claims/mag7.html">Full ledger for this show →</a></p>
+                </details>
+                
             </section>
             
 
@@ -2246,10 +2390,13 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v4h1"/></svg>
   Made with AI — transparently
 </a>
-            </div><div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
+            </div>
+            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 10 sources</span><span aria-hidden="true"> · </span><span>17 claims checked against their sources</span><span aria-hidden="true"> · </span><span>voiced with Grok TTS</span><span aria-hidden="true"> · </span><a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20MAG%207%20Daily%20Ep6&body=Re%3A%20https%3A//nerranetwork.com/blog/mag7/ep006.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
+            </p>
+            <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>👋 Did this episode land?</span>
-                <a href="mailto:patrick@planetterrian.com?subject=I%20liked%20MAG%207%20Daily%20Ep6&body=Re: https://nerranetwork.com/blog/mag7/ep006.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
-                <a href="mailto:patrick@planetterrian.com?subject=Suggestion%20for%20MAG%207%20Daily&body=Re: https://nerranetwork.com/blog/mag7/ep006.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
+                <a href="mailto:hello@nerranetwork.com?subject=I%20liked%20MAG%207%20Daily%20Ep6&body=Re: https://nerranetwork.com/blog/mag7/ep006.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
+                <a href="mailto:hello@nerranetwork.com?subject=Suggestion%20for%20MAG%207%20Daily&body=Re: https://nerranetwork.com/blog/mag7/ep006.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
             </div>
 
             <!-- Subscribe CTA (Worker-backed — no Buttondown popup / fake 500ms success) -->
@@ -2451,6 +2598,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                     <a href="../../contact.html">Contact</a>
                     <a href="../../press.html">Press Kit</a>
                     <a href="../../editorial.html">Editorial Process</a>
+                    <a href="../../claims.html">Claims &amp; corrections</a>
                     <a href="../../ai-disclosure.html">AI Disclosure</a>
                     <a href="../../privacy-policy.html">Privacy Policy</a>
                     <a href="../../terms-of-service.html">Terms of Service</a>
