@@ -345,6 +345,11 @@ export async function handleSubscribe(
     body?.list, body?.source, body?.tags, {
       networkNewsletter: body?.newsletter === true,
     });
+  // Allow-listed source tag only (same rule as resolveSubscribeTags). Empty
+  // when the client omitted source or sent something outside SOURCE_TAGS —
+  // never invent one for the observability line.
+  const rawSource = typeof body?.source === "string" ? body.source.trim().toLowerCase() : "";
+  const source = SOURCE_TAGS.has(rawSource) ? rawSource : "";
   const result = await deps.buttondown.subscribe(
     env.BUTTONDOWN_API_KEY,
     email,
@@ -358,7 +363,16 @@ export async function handleSubscribe(
                  result.status, result.detail ?? "");
     return jsonResponse(request, 502, { ok: false, error: "subscribe failed" });
   }
-  console.log("subscribe: ok", list, tags.join(","));
+
+  // N-PR0: exactly one structured success line for Workers Observability
+  // dashboards (Soft Personal / funnel counts). No email, IP, UA, names,
+  // or any other PII — list + allow-listed source + ISO timestamp only.
+  console.log(JSON.stringify({
+    event: "subscribe_ok",
+    list,
+    source,
+    ts: new Date().toISOString(),
+  }));
 
   const token = await signJwt(
     {

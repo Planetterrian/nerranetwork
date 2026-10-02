@@ -339,6 +339,106 @@ describe("POST /api/subscribe", () => {
 });
 
 // ---------------------------------------------------------------------------
+// N-PR0: subscribe_ok structured observability log (no PII)
+// ---------------------------------------------------------------------------
+
+/** Lines whose JSON parses to event === "subscribe_ok". */
+function subscribeOkLines(spy: ReturnType<typeof vi.spyOn>): string[] {
+  return spy.mock.calls
+    .map((args) => (typeof args[0] === "string" ? args[0] : ""))
+    .filter((line) => {
+      try {
+        return (JSON.parse(line) as { event?: string }).event === "subscribe_ok";
+      } catch {
+        return false;
+      }
+    });
+}
+
+describe("POST /api/subscribe subscribe_ok log (N-PR0)", () => {
+  it("emits exactly one subscribe_ok JSON line with list + source and no email", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const email = "soft-success@example.com";
+    const deps = makeDeps();
+    const req = makeRequest("POST", "https://api.nerranetwork.com/api/subscribe", {
+      body: JSON.stringify({
+        email,
+        list: "personal-interest",
+        source: "src-nerranetwork",
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const resp = await handleSubscribe(req, makeEnv(), deps);
+    expect(resp.status).toBe(200);
+
+    const lines = subscribeOkLines(logSpy);
+    expect(lines).toHaveLength(1);
+    const payload = JSON.parse(lines[0]) as {
+      event: string;
+      list: string;
+      source: string;
+      ts: string;
+    };
+    expect(payload.event).toBe("subscribe_ok");
+    expect(payload.list).toBe("personal-interest");
+    expect(payload.source).toBe("src-nerranetwork");
+    expect(payload.ts).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    // No PII anywhere in the line (email, or fragments of it).
+    expect(lines[0].toLowerCase()).not.toContain(email.toLowerCase());
+    expect(lines[0]).not.toMatch(/@/);
+    expect(lines[0]).not.toContain("first_name");
+    expect(Object.keys(payload).sort()).toEqual(["event", "list", "source", "ts"]);
+  });
+
+  it("honeypot path: zero subscribe_ok lines, same discarded response", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const deps = makeDeps();
+    const req = makeRequest("POST", "https://api.nerranetwork.com/api/subscribe", {
+      body: JSON.stringify({
+        email: "bot@example.com",
+        list: "personal-interest",
+        source: "src-nerranetwork",
+        company: "Acme Spam Co",
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const resp = await handleSubscribe(req, makeEnv(), deps);
+    expect(resp.status).toBe(200);
+    const body = await resp.json() as { ok: boolean; discarded?: boolean };
+    expect(body).toEqual({ ok: true, discarded: true });
+    expect(deps.buttondown.subscribe).not.toHaveBeenCalled();
+    expect(subscribeOkLines(logSpy)).toHaveLength(0);
+  });
+
+  it("Buttondown failure: zero subscribe_ok lines", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const deps = makeDeps({
+      buttondown: {
+        subscribe: vi.fn(async () => ({
+          ok: false,
+          alreadySubscribed: false,
+          error: "BUTTONDOWN_HTTP_500",
+        })),
+        isSubscribed: vi.fn(),
+      },
+    });
+    const req = makeRequest("POST", "https://api.nerranetwork.com/api/subscribe", {
+      body: JSON.stringify({
+        email: "fail@example.com",
+        list: "member",
+        source: "src-youtube",
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const resp = await handleSubscribe(req, makeEnv(), deps);
+    expect(resp.status).toBe(502);
+    expect(subscribeOkLines(logSpy)).toHaveLength(0);
+    expect(warnSpy).toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // /api/login
 // ---------------------------------------------------------------------------
 
