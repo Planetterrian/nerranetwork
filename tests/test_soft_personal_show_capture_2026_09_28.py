@@ -147,8 +147,14 @@ class TestSoftPersonalHeroWiring:
         assert 'data-list="personal-interest"' in src
         assert 'name="company"' in src  # honeypot
         assert "Save my email" in src
-        assert "$4.99" in src
         assert "Or start Personal now" in src
+        # Soft hero is free interest only — no paid-price copy in the band.
+        hero_start = src.index('id="soft-personal-hero"')
+        hero_end = src.index("</section>", hero_start)
+        hero = src[hero_start:hero_end]
+        assert "Shows stay free either way." in hero
+        assert "$4.99" not in hero
+        assert "/mo" not in hero
 
     def test_show_page_has_no_buttondown_popup(self):
         src = _scrub_jinja_comments(_read("templates/show_page.html.j2"))
@@ -216,6 +222,18 @@ class TestRenderedSoftPersonalHero:
         assert "assets/js/footer-subscribe.js" in html
         assert "buttondown.com/api/emails/embed-subscribe" not in html
         assert 'target="popupwindow"' not in html
+
+    @pytest.mark.parametrize("slug", HERO_SLUGS)
+    def test_hero_band_has_no_paid_price_copy(self, slug, tmp_path):
+        """Soft Personal is free interest; paid path is /join.html only."""
+        html = _render_show(slug, tmp_path)
+        hero_start = html.index('id="soft-personal-hero"')
+        hero_end = html.index("</section>", hero_start)
+        hero = html[hero_start:hero_end]
+        assert "Shows stay free either way." in hero
+        assert "$4.99" not in hero
+        assert "/mo" not in hero
+        assert "$4.99/mo when you want it" not in hero
 
     def test_non_hero_show_keeps_newsletter_worker_form_not_soft(self, tmp_path):
         import generate_html as G
