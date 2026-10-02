@@ -29,6 +29,7 @@
  *   GET|POST /voices/join             Cal.com event location: email → the guest's own studio
  *   POST /voices/studio-silence       studio or scenario: guest unheard → email Patrick once
  *   POST /voices/studio-phone         studio: guest's "Have Mira call my phone" → PSTN now
+ *   POST /voices/studio-text          studio: text + email the studio link to open on a phone
  *   GET  /voices/host-link            admin: Patrick's co-host studio link
  *   GET  /voices/health               deploy verification
  *   scheduled (daily)                 gate-2 day-4 reminder + day-7 auto-approve
@@ -47,6 +48,11 @@ export interface Env {
   // Oct 2 2026: lets the booking webhook replace Cal.com's own video room
   // with the guest's studio link in the calendar invite.
   CAL_API_KEY?: string;
+  // Oct 2 2026: texting a guest their studio link so they can join from
+  // their phone's browser (wideband) instead of a phone line (narrowband).
+  VOXIMPLANT_ACCOUNT_ID?: string;
+  VOXIMPLANT_API_KEY?: string;
+  VOXIMPLANT_CALLER_ID?: string;
   VOICES_FROM_EMAIL: string;
   CALCOM_BOOKING_URL: string;
   // Nerra Voices (Sept 2026): optional second Cal.com event. Falls back to
@@ -1681,8 +1687,9 @@ function studioStepsHtml(studio: string): string {
     `<li>Open <a href="${esc(studio)}">your studio link</a> on your computer, up to ten minutes before we start.</li>` +
     "<li>Press <strong>Check my microphone</strong> and read the sentence out loud until it says <strong>Sounds good</strong>.</li>" +
     "<li>Press <strong>Join your interview</strong>. You're in when you hear me say hello.</li></ol>" +
-    "<p>If anything gets stuck, the studio's <strong>Have Mira call my phone</strong> button " +
-    "gets us going by phone straight away, so we never lose the slot.</p>";
+    "<p>If your computer gives you trouble, open the same link on your phone, earbuds in: it " +
+    "sounds far better than a phone call. A call from me, with the studio's <strong>Have Mira " +
+    "call my phone</strong> button, is the last resort, so we never lose the slot.</p>";
 }
 
 async function setCalendarLocation(env: Env, show: Show, uid: string, studio: string, who: string) {
@@ -1760,11 +1767,71 @@ async function handleJoin(req: Request, env: Env): Promise<Response> {
       `<p>Hi ${esc(firstName(app.name))},</p><p>Here's your personal studio link for our interview on
        <strong>${esc(pacificTime(iv.scheduled_at))}</strong>:
        <a href="${studio}">join your interview here</a>. It opens ten minutes before we start.</p>
-       ${GUEST_AUDIO_HTML}${studioStepsHtml(studio)}${miraSignature(show)}`);
+       ${GUEST_AUDIO_HTML}${studioStepsHtml(studio)}${miraSignature(show)}`, true);
   } catch (err: any) { console.error("join link email failed:", err?.message ?? err); }
   return page("Check your email",
     `<p>Your interview is on <strong>${esc(pacificTime(iv.scheduled_at))}</strong>. I've emailed your personal
      studio link to the address on your booking. On the day, open it on your computer with headphones on.</p>`);
+}
+
+async function interviewIsLive(env: Env): Promise<boolean> {
+  const lo = new Date(Date.now() - 60 * 60000).toISOString();
+  const hi = new Date(Date.now() + 15 * 60000).toISOString();
+  const rows = await sb(env, "GET",
+    `interviews?status=in.(scheduled,briefed,in_progress)&scheduled_at=gte.${lo}&scheduled_at=lte.${hi}&select=id&limit=1`);
+  return !!rows?.length;
+}
+
+async function sendSms(env: Env, to: string, text: string): Promise<boolean> {
+  if (!env.VOXIMPLANT_ACCOUNT_ID || !env.VOXIMPLANT_API_KEY || !env.VOXIMPLANT_CALLER_ID) return false;
+  const form = new URLSearchParams({
+    account_id: env.VOXIMPLANT_ACCOUNT_ID, api_key: env.VOXIMPLANT_API_KEY,
+    source: env.VOXIMPLANT_CALLER_ID.replace(/^\+/, ""), destination: to.replace(/^\+/, ""),
+    sms_body: text.slice(0, 640),
+  });
+  const res = await fetch("https://api.voximplant.com/platform_api/SendSmsMessage", { method: "POST", body: form });
+  const out = await res.json<any>().catch(() => ({}));
+  if (!res.ok || out?.error) {
+    console.error("SMS failed:", res.status, JSON.stringify(out?.error ?? out).slice(0, 200));
+    return false;
+  }
+  return true;
+}
+
+/** POST /voices/studio-text {interview, phone?} — Oct 2 2026. The better
+ *  fallback than a phone call: the guest's studio link by text (and email),
+ *  to open in their phone's browser. Browser audio is wideband; a phone line
+ *  stops at 3.4 kHz, which is why Jason Fishman's episode sounds thin. */
+async function handleStudioText(req: Request, env: Env): Promise<Response> {
+  const body = await req.json<any>().catch(() => null);
+  const interviewId = String(body?.interview ?? "").trim();
+  if (!UUID_RE.test(interviewId)) return json({ error: "interview required" }, 400);
+  const { iv, app, show } = await interviewGuest(env, interviewId);
+  if (!iv || !app) return json({ error: "not found" }, 404);
+  const given = phoneE164(body?.phone);
+  if (body?.phone && !given) return json({ error: "That number doesn't look right. Include the country code, e.g. +1 604 555 0123.", need_phone: true }, 400);
+  const phone = given ?? phoneE164(app.phone);
+  if (given && given !== phoneE164(app.phone)) {
+    await sb(env, "PATCH", `guest_applications?id=eq.${app.id}`, { phone: given });
+  }
+  const studio = studioUrl(show, interviewId, "guest");
+  let texted = false;
+  if (phone) {
+    try {
+      texted = await sendSms(env, phone,
+        `Mira here (${show.name}). Open this on your phone to join our interview, earbuds in if you have them: ${studio}`);
+    } catch (err: any) { console.error("studio-text SMS failed:", err?.message ?? err); }
+  }
+  try {
+    await email(env, app.email, `Your ${show.name} studio link, for your phone`,
+      `<p>Hi ${esc(firstName(app.name))},</p><p>Open this link on your phone and you'll be in the same
+       studio: <a href="${studio}"><strong>join your interview here</strong></a>. Earbuds or headphones
+       make it sound best. Then press <strong>Check my microphone</strong>, read the sentence until it says
+       <strong>Sounds good</strong>, and press <strong>Join your interview</strong>.</p>${miraSignature(show)}`, true);
+  } catch (err: any) { console.error("studio-text email failed:", err?.message ?? err); }
+  if (!texted && !phone) return json({ ok: true, texted: false, emailed: true, need_phone: !body?.phone });
+  await slack(env, `:iphone: ${show.shortLabel}: ${app.name ?? "guest"} asked for the studio link on their phone (${texted ? "texted" : "emailed; SMS unavailable"}).`);
+  return json({ ok: true, texted, emailed: true, phone_last4: phone ? phone.slice(-4) : null });
 }
 
 async function handleCallGuest(req: Request, env: Env): Promise<Response> {
@@ -2927,6 +2994,7 @@ export default {
       if (req.method === "POST" && path === "/voices/studio-check") return handleStudioCheck(req, env);
       if (req.method === "POST" && path === "/voices/studio-silence") return handleStudioSilence(req, env);
       if (req.method === "POST" && path === "/voices/studio-phone") return handleStudioPhone(req, env);
+      if (req.method === "POST" && path === "/voices/studio-text") return handleStudioText(req, env);
       if (req.method === "GET" && path === "/voices/health") return handleHealth(env);
       if (req.method === "POST" && path === "/voices/studio-auth") return handleStudioAuth(req, env);
       // Phase 2 co-host (Sept 2026)
@@ -2951,6 +3019,15 @@ export default {
         await dispatch(env, "fire-tick", { source: "voices-worker-cron" });
       } catch (err: any) {
         console.error("fire-tick dispatch failed:", err?.message ?? err);
+      }
+      // Oct 2 2026 (Jason Fishman): a guest who writes "I'm in, nobody's
+      // here" during their slot waited for the half-hourly inbox run. While
+      // an interview is live the inbox runs every five minutes instead, so
+      // Mira answers within minutes.
+      try {
+        if (await interviewIsLive(env)) await dispatch(env, "producer-tick", { source: "live-interview" });
+      } catch (err: any) {
+        console.error("live producer-tick failed:", err?.message ?? err);
       }
       return;
     }

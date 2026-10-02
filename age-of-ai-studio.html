@@ -84,6 +84,11 @@
   .phonebox input { font: inherit; padding: .55rem .6rem; border-radius: 8px; border: 1px solid var(--line); width: 100%; max-width: 260px; margin: .3rem .5rem .3rem 0; }
   .phone { background: #0f766e; color: #fff; }
   #phoneMsg, #phoneMsgCall, #phoneMsgTop, #phoneMsgErr { font-size: .92rem; margin: .4rem 0 0; }
+  /* Oct 2 2026: the phone's browser before a phone line. */
+  .mobilebox { margin: .5rem 0; }
+  .mobilebox .qr { background: #fff; padding: 8px; display: inline-block; border-radius: 8px; margin: .5rem 0; }
+  .mobilebox p { font-size: .92rem; margin: .3rem 0; }
+  button.lastresort { background: transparent; color: inherit; border: 1px solid currentColor; font-size: .9rem; opacity: .85; }
   /* Oct 1 2026: "you're not in the interview yet" until the guest is in. */
   #notIn { border: 2px solid var(--warn); border-radius: 10px; padding: .9rem 1rem; margin: .6rem 0 1rem; }
   #notIn.late { background: #fff4d6; color: #3b2a00; border-color: #d8b24c; }
@@ -120,7 +125,7 @@
         <li id="notInStep2">Press <b>Join your interview</b>. Mira starts as soon as you're in.</li>
       </ol>
       <div class="phonebox" id="phoneBoxTop">
-        <span style="font-size:.92rem">Rather do it by phone?</span>
+        <span style="font-size:.92rem">Computer giving you trouble?</span>
         <button class="phone" type="button" id="phoneBtnTop">Have Mira call my phone</button>
         <div class="hidden" id="phoneAskTop"><input type="tel" id="phoneInTop"
           placeholder="+1 604 555 0123" autocomplete="tel"><button class="phone" type="button"
@@ -158,7 +163,7 @@
         microphone and raise the Volume.</li>
         <li><b>AirPods or a Bluetooth headset?</b> Make sure they're connected to this computer,
         not your phone, and that any mute switch on the headset is off.</li>
-        <li><b>Still stuck?</b> Mira can call your phone instead, with nothing else to set up.
+        <li><b>Still stuck?</b> Join from your phone's browser instead (earbuds in), or, as a last resort, Mira can call you.
         <div class="phonebox" id="phoneBoxSetup">
           <button class="phone" type="button" id="phoneBtnSetup">Have Mira call my phone</button>
           <div class="hidden" id="phoneAskSetup"><input type="tel" id="phoneInSetup"
@@ -234,7 +239,7 @@
         <li>Pick a different microphone below. It switches straight away, no need to rejoin.</li>
       </ol>
       <div class="hidden" id="phoneOffer">
-        <p style="margin:.5rem 0 0">Still nothing? Mira can call your phone and carry on there.</p>
+        <p style="margin:.5rem 0 0">Still nothing? Carry on from your phone's browser (earbuds in), or, as a last resort, Mira can call you.</p>
         <div class="phonebox">
           <button class="phone" type="button" id="phoneBtnCall">Have Mira call my phone</button>
           <div class="hidden" id="phoneAskCall"><input type="tel" id="phoneInCall"
@@ -279,7 +284,7 @@
     persists, email <a href="mailto:mira@nerranetwork.com">mira@nerranetwork.com</a>
     and we'll sort it out.</p>
     <div class="phonebox hidden" id="phoneBoxErr">
-      <p style="margin:0">Or skip the browser: Mira can call your phone and do the interview there.</p>
+      <p style="margin:0">Or join from your phone's browser instead (earbuds in). As a last resort, Mira can call you.</p>
       <button class="phone" type="button" id="phoneBtnErr">Have Mira call my phone</button>
       <div class="hidden" id="phoneAskErr"><input type="tel" id="phoneInErr"
         placeholder="+1 604 555 0123" autocomplete="tel"><button class="phone" type="button"
@@ -899,6 +904,72 @@
     updateNotIn();   // the first report waits a tick, so the microphone answer is in
     notInTimer = setInterval(notInTick, 15000);
   }
+
+  // ---- 2g. Join from your phone's browser ---------------------------------
+  // Oct 2 2026 (Jason Fishman). The fallback was a phone call, and a phone
+  // line stops at 3.4 kHz: his episode sounds thin next to every studio
+  // interview. A phone's browser runs the same studio with wideband audio,
+  // so it comes first; the call stays, marked as the last resort.
+  var onMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+  function guestStudioUrl() {
+    return location.origin + location.pathname + "?interview=" + encodeURIComponent(interviewId)
+      + "&show=" + encodeURIComponent(showSlug) + "&role=guest";
+  }
+  function loadQr(cb) {
+    if (window.QRCode) return cb();
+    var sc = document.createElement("script");
+    sc.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
+    sc.onload = cb; sc.onerror = function () { cb(); };
+    document.head.appendChild(sc);
+  }
+  function mobileBox(where) {
+    var callBtn = document.getElementById("phoneBtn" + where);
+    if (!callBtn || onMobile || isHost) return;
+    callBtn.classList.add("lastresort");
+    callBtn.textContent = "Last resort: have Mira call my phone";
+    var box = document.createElement("div");
+    box.className = "mobilebox";
+    box.innerHTML = '<button class="primary" type="button">Join from my phone instead</button>'
+      + '<div class="hidden"><p>Scan this with your phone\'s camera, earbuds in, then check your microphone and join:</p>'
+      + '<div class="qr"></div><p><button class="ghost" type="button">Text me the link</button> '
+      + '<span class="mmsg"></span></p>'
+      + (where === "Call" ? '<p>Once you hear Mira on your phone, <button class="ghost" type="button">leave on this computer</button>.</p>' : '')
+      + '</div>';
+    callBtn.parentNode.insertBefore(box, callBtn);
+    var buttons = box.querySelectorAll("button");
+    var panel = box.querySelector("div");
+    buttons[0].addEventListener("click", function () {
+      panel.classList.remove("hidden"); buttons[0].classList.add("hidden");
+      loadQr(function () {
+        var q = box.querySelector(".qr");
+        if (window.QRCode) { q.innerHTML = ""; new window.QRCode(q, { text: guestStudioUrl(), width: 180, height: 180 }); }
+        else { q.textContent = guestStudioUrl(); }
+      });
+    });
+    buttons[1].addEventListener("click", function () {
+      var msg = box.querySelector(".mmsg");
+      msg.textContent = "Sending…";
+      fetch(API + "/studio-text", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ interview: interviewId }) })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          msg.textContent = res.texted ? "Sent to your phone ending in " + res.phone_last4 + ", and to your email."
+            : res.ok ? "Sent to your email. Open it on your phone." : (res.error || "That didn't go through; scan the code instead.");
+        }).catch(function () { msg.textContent = "That didn't go through; scan the code instead."; });
+    });
+    if (buttons[2]) buttons[2].addEventListener("click", function () {
+      phoneSwitched = true;
+      document.getElementById("doneHead").textContent = "Carrying on from your phone";
+      document.getElementById("donePhone").textContent = "You've left on this computer. Keep going on your phone; you can close this page.";
+      document.getElementById("donePhone").classList.remove("hidden");
+      document.getElementById("doneBody").classList.add("hidden");
+      stopCallMeter();
+      if (activeCall) { try { activeCall.hangup(); } catch (e) { /* ignore */ } }
+      if (localStream) { localStream.getTracks().forEach(function (t) { t.stop(); }); }
+      show("stateDone");
+    });
+  }
+  ["Top", "Setup", "Call", "Err"].forEach(mobileBox);
 
   // ---- 3. Join: SDK connect → one-time-key auth → call / auto-answer -------
   document.getElementById("joinBtn").addEventListener("click", function () {
