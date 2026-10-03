@@ -469,7 +469,90 @@ reviews:
         baseline: "n/a"
         expected: "never below the floor more often than before"
         verdict: pending
+  - date: '2026-10-01'
+    pr: null
+    doc: docs/reviews/tesla_review_2026_10_01.md
+    generated_by: grok-4.5
+    summary: Fetch-filter and chapter hygiene are holding (0 leakage, 10/10 clean chapters) and filler/coverage improved, but First-Principles/Top-12 section copying is still 8/10, digest-verbatim remains ~50%+ on most episodes, and 7/10 scripts sit under the 1400 floor despite digest-side levers and Sep-24 full-text fetch.
+    scored_prior_predictions:
+    - metric: excluded-class 13F/fund/aggregator items in last-10 tesla digests (incl. X-sourced)
+      verdict: hit
+      evidence: 'review_snapshot fetch-filter leakage: 0 hits across 12 exclude_title_patterns on last-10 digests'
+    - metric: closings saying "closed at" on an episode generated inside the regular session
+      verdict: partial
+      evidence: No broken closer-class phrase in last-10 tic scan; per-episode ET session audit not in snapshot
+    - metric: closer grammar defects ("one dollars"/"one cents"/comma-joined amount+percent) in last-10 _tts.txt
+      verdict: hit
+      evidence: No closer-grammar tic above threshold in last-10 cross-episode phrase list
+    - metric: script_digest_overlap_pct, median of last 10 _tts.txt
+      verdict: miss
+      evidence: digest-verbatim mostly 41–68% (median ~55%); only Ep615/618/619 under 25%
+    - metric: script_filler_pct, last 10
+      verdict: hit
+      evidence: All ten episodes at 0–5% filler in density table
+    - metric: copied sections (script_copied_sections) on Tesla First Principles, last 10
+      verdict: miss
+      evidence: FP and/or Top-12/X Takeover copied-sections on 8/10 (Ep613,614,616,617,618,620,621,622) — expected ≤2/10
+    - metric: script_entity_retention_pct, last 10
+      verdict: partial
+      evidence: names-kept ≥75% on ~5–6/10 (81,91,93,86,79); Ep619 at 56%, several mid-60s
+    - metric: script_words, last 10
+      verdict: hit
+      evidence: median ≈1291 words (≥1200); still 7/10 under the 1400 YAML floor
+    - metric: script_digest_coverage_pct, last 10
+      verdict: hit
+      evidence: 9/10 episodes ≥70% coverage (Ep619 at 66% the only miss)
+    - metric: closing text identical across episodes
+      verdict: partial
+      evidence: No multi-episode closer string above phrase threshold; 10/10 identity not confirmed
+    shipped: []
+    deferred:
+    - Digest-driven chapter titles + late chapter-anchoring walk-back in engine/chapters.py (network-scoped; chapters clean 10/10 this window but anchoring quality not re-measured)
+    - Narrative-tracker curated status lag — operator task via scripts/update_tesla_narrative.py (auto-freshness ≠ curated programs)
+    - 'Same-URL / cross-section double-tell: verify digest_cross_section_dupes_removed metrics next pass before more prompt pressure'
+    - Pure valuation domain excludes (Trefis / Motley Fool / Intellectia / MarketBeat alerts) — operator call
+    - Weekend closer "Friday's close" qualifier in hooks/tesla.py _price_sentence — small A/B never merged
+    - Historical double-publish forensics (June-23 Ep519+520; Aug-28 Ep586+587) — operator
+    - Further RSS minute-count copy edits — only after explicit length accept/lower decision
+    - Hard data-side paraphrase/copied-section reject beyond current rewrite gate — only if operator picks escalation (a)
+    - source_integrity_claims median and post-full-text digest word floor — re-score when metrics_ep / digest lengths are in the next snapshot
+    predictions:
+    - metric: spoken digest section labels in last-10 _tts.txt (Top 12 News Items|Tesla First Principles|Tesla X Takeover|Short Spot as their own line)
+      baseline: copied-sections flag on 8/10 episodes (section bodies/headers leaking into script)
+      expected: 0/10 episodes contain those literal section labels as spoken lines after the guard ships; copied-sections FP rate reported next pass without a % verbatim target
+      verdict: pending
+      evidence: null
+    - metric: podcast prompt length anchors (count of distinct minute/word targets in tesla_podcast.txt STRUCTURAL REQUIREMENTS)
+      baseline: 3 conflicting anchors (14–16 min, 10–13 min, 1600–1900 words) plus YAML 1400
+      expected: exactly 1 spoken length target in the podcast prompt, aligned to ~10 min and min_podcast_words 1400
+      verdict: pending
+      evidence: null
+    - metric: facts×2 count on episodes after story_clusters:true (median last 10)
+      baseline: Ep622 facts×2=5; window shows multiple eps at 4–5
+      expected: median facts×2 ≤2 on next 10; no single episode ≥5 without an operator-noted multi-catalyst day
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/tesla_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Prompt still states 14–16 min AND 10–13 min / 1600–1900w while YAML floor is 1400 and RSS already promises ~10 min (Aug 15). Conflicting anchors let the model satisfy the smallest subset; 7/10 Ep613–622 still miss 1400. Single anchor matching accepted reality — A/B-listen required.
+    - file: tests/test_tesla_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Copied-sections still 8/10 after two delivery passes; a deterministic spoken-label guard is highest-yield/no-A/B and matches playbook 'lint is true of the text that ships'. Avoids banned script-density predictions.
+    - file: docs/reviews/tesla_review_<YYYY_MM_DD>.md
+      kind: config
+      ab_listen_required: false
+      rationale: 'Playbook escalate-instead-of-re-filing: identical length and copied-section proposals have already missed; further filings pollute ledger rates.'
+    agent_cost_usd: 0.117
 do_not_retry:
   - idea: phonetic respellings or programmatic speech-tag injection
     evidence: 100% regression rate on custom voice kdif6sqjcyiq (May 2026,
       landmine 17); only revisit with 3-context A/B listen evidence.
+  - idea: Re-enable podcast_expand_below_target or any podcast-side word-floor expand/retry for Tesla length (network do_not_retry; ~10 misses vs 1 hit; ceiling is digest)
+    evidence: flagged 2026-10-01 (Grok review)
+  - idea: 'Predict or gate success on script_digest_overlap_pct / verbatim percentage thresholds (Sep meta-review: density moves with model, not prompt)'
+    evidence: flagged 2026-10-01 (Grok review)
+  - idea: Third prompt-only First Principles 'do not restate the body' de-seed without a data-side or gate change after two consecutive copied-sections misses
+    evidence: flagged 2026-10-01 (Grok review)
