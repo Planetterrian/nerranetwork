@@ -209,6 +209,19 @@ def _short_title(long_title: str, lang: DubLanguage, *,
     return f"{body}{_SHORTS_SUFFIX}".strip()
 
 
+def _second_short_title(long_title: str, lang: DubLanguage) -> str:
+    """Fallback title for a non-hook Short: headline + tail + #Shorts.
+
+    Oct 3 2026: the tail used to be appended after ``_short_title``'s
+    " #Shorts" (see ``engine.ru_dub._ru_second_short_title``).
+    """
+    body = _short_title(long_title, lang, body_limit=52)
+    tag = _SHORTS_SUFFIX.strip()
+    if body.endswith(tag):
+        body = body[: -len(tag)].rstrip()
+    return f"{body}{lang.second_short_tail}{_SHORTS_SUFFIX}".strip()
+
+
 def _policy_plan(config, lang: DubLanguage) -> Dict[str, object]:
     """Adaptive-publishing decision for this show on the language channel.
 
@@ -697,8 +710,7 @@ def publish_lang_dub(
                     if short_idx == 0 or not opening_text:
                         st = _short_title(title, lang)
                         if short_idx > 0:
-                            st = (_short_title(title, lang, body_limit=52)
-                                  + lang.second_short_tail)
+                            st = _second_short_title(title, lang)
                     else:
                         # Aug 2026: window openings are mid-sentence slices
                         # by construction — ask Grok for a complete headline
@@ -717,8 +729,7 @@ def publish_lang_dub(
                         if body:
                             st = f"{body}{_SHORTS_SUFFIX}".strip()
                         else:
-                            st = (_short_title(title, lang, body_limit=52)
-                                  + lang.second_short_tail)
+                            st = _second_short_title(title, lang)
 
                     _publish_at = (
                         _stagger_times[short_idx - 1]

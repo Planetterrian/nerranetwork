@@ -185,6 +185,42 @@ def _episode_headlines(cfg, episode: int, cache: Dict) -> List[str]:
     return out
 
 
+def _dub_proposal(rec: Dict, channel: str) -> Optional[Dict]:
+    """Retitle proposal for a RU/FR window Short whose title is a fragment.
+
+    The record's ``hook`` on a dub index is the episode's own title in that
+    language (complete by construction), so the replacement is the same
+    whole-episode headline plus the second-Short tail that
+    ``engine.ru_dub`` / ``engine.lang_dub`` now ship when a window yields no
+    complete headline. ``None`` = leave the video alone.
+    """
+    from engine.titles import is_fragment_title
+
+    if rec.get("kind") != "short" or rec.get("window") == "hook_open":
+        return None
+    title = str(rec.get("title") or "")
+    if not title.strip() or not rec.get("video_id"):
+        return None  # not an uploaded video with a title to repair
+    if not (is_fragment_title(title) or looks_like_fragment(title)):
+        return None
+    hook = str(rec.get("hook") or "").strip()
+    if not hook or is_fragment_title(hook):
+        return {**rec, "new_title": None,
+                "reason": "no complete episode title on the index row"}
+    if channel == "ru":
+        from engine.ru_dub import _ru_second_short_title
+        new_title = _ru_second_short_title(hook)
+    else:
+        from engine import lang_dub
+        lang = lang_dub.DUB_LANGUAGES.get(channel)
+        if lang is None:
+            return None
+        new_title = lang_dub._second_short_title(hook, lang)
+    if new_title.strip() == title.strip():
+        return None
+    return {**rec, "new_title": new_title.strip(), "reason": ""}
+
+
 def plan(show: Optional[str], include_all: bool,
          channel: str = "en") -> List[Dict]:
     """Return the list of proposed retitles, newest first."""
@@ -194,9 +230,19 @@ def plan(show: Optional[str], include_all: bool,
     headline_cache: Dict = {}
     used_per_episode: Dict = {}
     proposals: List[Dict] = []
+    channel = (channel or "en").strip().lower()
     for rec in _iter_records(show, channel):
         title = str(rec.get("title") or "")
         published = str(rec.get("published") or "")
+        if channel != "en":
+            # Oct 3 2026: the dub channels' window Shorts were titled from
+            # one Whisper segment until today, so their fragments are not
+            # bounded by the EN title-bundle date. The repair is the same
+            # fallback the live path now ships.
+            proposal = _dub_proposal(rec, channel)
+            if proposal is not None:
+                proposals.append(proposal)
+            continue
         if not include_all and published >= TITLE_FIX_DATE:
             continue
         if not looks_like_fragment(title):

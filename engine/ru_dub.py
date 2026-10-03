@@ -513,6 +513,24 @@ def _ru_short_title(long_title: str, *, body_limit: int = 70) -> str:
     return f"{body}{_SHORTS_SUFFIX}".strip()
 
 
+#: Appended to a non-hook Short's fallback title (whole-episode headline).
+RU_SECOND_SHORT_TAIL = " — ещё момент"
+
+
+def _ru_second_short_title(long_title: str) -> str:
+    """Fallback title for a non-hook RU Short: headline + tail + #Shorts.
+
+    Oct 3 2026: callers used to append the tail to ``_ru_short_title``'s
+    result, which already ends in " #Shorts" — «… #Shorts — ещё момент».
+    Harmless while the branch was rare; it becomes the common fallback once
+    fragment titles are refused, so the tag goes last here, once.
+    """
+    body = _ru_short_title(long_title, body_limit=58)
+    if body.endswith(_SHORTS_SUFFIX.strip()):
+        body = body[: -len(_SHORTS_SUFFIX.strip())].rstrip()
+    return f"{body}{RU_SECOND_SHORT_TAIL}{_SHORTS_SUFFIX}".strip()
+
+
 def publish_ru_dub(
     config, episode_num: int, *,
     build_short: bool = True,
@@ -954,8 +972,7 @@ def publish_ru_dub(
                     if short_idx == 0 or not opening_text:
                         short_title = _ru_short_title(ru_title)
                         if short_idx > 0:
-                            short_title = _ru_short_title(
-                                ru_title, body_limit=58) + " — ещё момент"
+                            short_title = _ru_second_short_title(ru_title)
                     else:
                         # Aug 2026: the 2nd/3rd Short's window opening is a
                         # mid-sentence slice by construction, so ask Grok
@@ -972,8 +989,7 @@ def publish_ru_dub(
                         if body:
                             short_title = f"{body}{_SHORTS_SUFFIX}".strip()
                         else:
-                            short_title = _ru_short_title(
-                                ru_title, body_limit=58) + " — ещё момент"
+                            short_title = _ru_second_short_title(ru_title)
 
                     _publish_at = (
                         _stagger_times[short_idx - 1]
