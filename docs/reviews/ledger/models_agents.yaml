@@ -858,6 +858,136 @@ reviews:
     ab_listen_required: false
     rationale: Every behavioral fix gets a drift-guard per playbook so a later edit cannot silently drop Sep-4 chapter wins or the new discipline.
   agent_cost_usd: 0.1677
+  - date: '2026-10-02'
+    pr: null
+    doc: docs/reviews/models_agents_review_2026_10_02.md
+    generated_by: grok-4.5
+    summary: UTH chapter coverage and entity-retention both regressed (ep185/189/190 missing Under the Hood; names-kept only ~3/10 ≥75%), 10/10 scripts remain under the 1500w floor so length stays an escalated operator A/B/C decision, and FR dubs intermittently speak the wrong episode number (ep186→196, ep191→181).
+    scored_prior_predictions:
+    - metric: '"Everyone talks/treats/thinks about" or "Most people assume" as UTH opener, last 10'
+      verdict: hit
+      evidence: 0/10 contrast-cliché UTH openers in ep186–191 EN; pop-the-hood/substance when UTH airs
+    - metric: episodes with Under the Hood chapter when deep-dive present, last 10
+      verdict: miss
+      evidence: ep185, ep189, ep190 chapters_ep*.json lack Under the Hood (~7/10); ep190 also skips spoken pop-the-hood
+    - metric: script_entity_retention_pct (names kept), last 10
+      verdict: miss
+      evidence: names-kept 53–82% with only 3/10 ≥75% (ep190=53%, ep191=54%)
+    - metric: headline-echo pairs + title-as-sentence + attribution-only sentences per episode, last 5
+      verdict: partial
+      evidence: attribution-only rare; copied section headers + ep189 72% digest-verbatim keep paste live
+    - metric: Under the Hood concrete numerals (hand-count), last 5
+      verdict: partial
+      evidence: ≥4 numerals when UTH airs (ep186/187/191); section absent on ep185/189/190
+    - metric: Under the Hood re-tells a Model Updates / Agent news item, last 5
+      verdict: partial
+      evidence: ep186/190 speculative-decoding deep-dives sit adjacent to same-family news items
+    - metric: model-number or dataset-name mangles per episode, last 5
+      verdict: hit
+      evidence: 0 Ep166-class Nutrition5k/RTX-5090 mangles in ep187–191 EN transcripts
+    - metric: script_digest_overlap_pct median last 10
+      verdict: miss
+      evidence: ep182–191 digest-verbatim median ~47% (spikes 65/60/72%); not ≤25%
+    - metric: 'successor item-opener tic: any single new throat-clear before first fact in ≥6/10 news items'
+      verdict: hit
+      evidence: no new non-brand opener ≥6/10; Before we go remains brand anchor
+    - metric: chapters with raw mid-sentence auto-titles or missing Teaser when Before-we-go present, last 10
+      verdict: miss
+      evidence: raw autos ep182/183/189; UTH missing ep185/189/190; Teaser usually present
+    - metric: '''advisory'' filler shape per episode (script_audit)'
+      verdict: hit
+      evidence: filler 0–3% on 9/10 last eps; ep191 8% only outlier
+    - metric: '"keep an eye on" as teaser opener (regression watch)'
+      verdict: hit
+      evidence: 0 keep-an-eye teaser openers in sampled ep186–191 teasers
+    - metric: chapters_ep*.json titles containing "](" or "http", or early Practical & Community
+      verdict: hit
+      evidence: 0 link titles and 0 early P&C mis-fires in ep182–191
+    - metric: spoken continuity callbacks of the shape "we covered <tracker display name> yesterday"
+      verdict: hit
+      evidence: 0 of that quotable shape in sampled EN transcripts
+    - metric: source_integrity_claims median (Sep-24 sourcing)
+      verdict: partial
+      evidence: no source_integrity field in snapshot; preferred_domains/fetch_full_text live but unscored
+    - metric: sources on x.com per episode (Sep-24 sourcing)
+      verdict: partial
+      evidence: 'x_posts_as_sources: secondary + x_only_lead lint live; per-ep x.com counts not in snapshot'
+    shipped: []
+    deferred:
+    - 'OPERATOR DECISION (length — escalated after July-19 + Aug-2 misses; today 10/10 under 1500w): (A) min_digest_words=1600, (B) UTH digest fact floor (proposed this pass), or (C) lower min_podcast_words to match ~1100–1400w natural length. Never re-enable podcast_expand_below_target; never silent-third-file 1600.'
+    - Digest-driven / position-aware mid-section chapter titles (network-wide; markers no longer enough — raw autos ep182/183/189, mega Model Updates chapter ep190)
+    - RSS title truncation ownership (hook under 120 vs 100-char title cap vs title-bundle optimized title)
+    - Same-day double publish Ep155+Ep156 prune (operator; renumbering unsafe)
+    - podcast:transcript from pre-pronunciation text or Whisper post-correct (network-wide LoRA/RAG/Quinn class)
+    - July-2 selection rebalance A/B (lab product/feature announcements outrank preprints; arXiv items ≤40%)
+    - 'Narrative tracker: advance last_mentioned only on headline mentions; seed-only last_major_update nulls (data-side)'
+    - 'MAB sibling: Big Story / Deep Dive / Cool Stuff / Quick Bits required-anchor treatment'
+    - Sunday weekly_summary_segment must synthesize, not splice dailies’ sentences
+    - Brand anchors pop the hood / Before we go / pinned closing — do_not_retry de-seed or multi-variant closing re-expand
+    - OP3 first-week ~19 dl/ep, −28.7% WoW, YT long retention 12.9% — watch one more cycle before product changes
+    predictions:
+    - metric: FR dub identity line episode number matches EN episode number, last 10 FR transcripts
+      baseline: 2 verified mismatches (ep186 FR=196, ep191 FR=181); 3 sampled matches (187/188/190)
+      expected: 10/10 match after identity-line fix; 0 off-by-N spoken numbers
+      verdict: pending
+      evidence: null
+    - metric: episodes with Under the Hood chapter when deep-dive body present, last 10
+      baseline: ~7/10 (missing ep185/189/190)
+      expected: ≥9/10 after pop-the-hood first-words enforcement
+      verdict: pending
+      evidence: null
+    - metric: '"Pop the hood" (or exact required anchor) as first sentence of deep-dive body, last 10'
+      baseline: ep190 missing anchor; most others present
+      expected: ≥9/10 post-merge
+      verdict: pending
+      evidence: null
+    - metric: script_entity_retention_pct (names kept) ≥75%, last 10
+      baseline: 3/10 ≥75% (ep190=53%, ep191=54%)
+      expected: ≥8/10 after entity-keep discipline merges
+      verdict: pending
+      evidence: null
+    - metric: digest-verbatim median last 10 + copied section-header count
+      baseline: median ~47% verbatim; section headers copied on most eps
+      expected: median ≤30% and ≤1 copied section header/ep on 8/10 after discipline tighten
+      verdict: pending
+      evidence: null
+    - metric: Under the Hood concrete numerals when UTH present, last 5
+      baseline: ≥4 when present; absent when section dropped
+      expected: ≥4 numerals in 5/5 UTH sections if digest fact floor ships
+      verdict: pending
+      evidence: null
+    - metric: 'successor UTH-opener tic: any single new non-pop-the-hood opener in ≥6/10 deep-dives'
+      baseline: n/a (watch)
+      expected: 0 phrases at ≥6/10; if one converges, ban by shape next pass
+      verdict: pending
+      evidence: null
+    - metric: episodes below min_podcast_words (1500), last 10
+      baseline: 10/10
+      expected: n/a-lever-not-shipped unless operator picks A/B/C; do not score a silent 1600 hope
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/models_agents_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: ep190 skipped pop-the-hood and lost the UTH chapter; ep185/189 also lack UTH rows. names-kept miss is live at 3/10 ≥75%. Shape + verbatim bans, no replacement menu (meta-rule). A/B-listen.
+    - file: shows/prompts/models_agents_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Sanctioned digest-substrate lever and operator option B while length A/B/C stays open. Addresses UTH retell partials and locks numeral floor when section airs. A/B-listen.
+    - file: shows/prompts/_shared/content_discipline.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Density audit still lists copied sections on most of ep182–191; ep189 hit 72% digest-verbatim. De-seed by shape + verbatim ban; successor-tic prediction recorded. Shared include — A/B-listen on M&A and other consumers.
+    - file: tests/test_models_agents_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Every behavioral fix gets a drift-guard; FR ep-number mismatches and UTH chapter drops are mechanical. Judge day-old episodes so today’s in-flight run cannot false-red the suite.
+    - file: engine/ (multilingual identity line / FR podcast script path)
+      kind: code
+      ab_listen_required: true
+      rationale: 'P0 listener-facing on FR feed: verified Ep186 FR=196 and Ep191 FR=181. Deterministic pin beats prompt hope. A/B-listen FR audio only.'
+    agent_cost_usd: 0.1759
 do_not_retry:
 - idea: De-seed or rotate the 'Before we go' Tomorrow Teaser opener — Sep-4 closed it as a brand chapter anchor (same class as Tesla/SpaceX); residual keep-an-eye is already cleared
   evidence: flagged 2026-09-08 (Grok review)
