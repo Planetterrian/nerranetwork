@@ -2421,22 +2421,28 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
             out[f"{ch}_{kind}_vpd_max"] = (round(max(vals), 2) if vals else None)
 
     # Fragment share of RU/FR window-Short titles (2nd/3rd Shorts) in the
-    # last 14 days. Heuristic mirror of the defect: a title whose first
-    # letter is lowercase started mid-sentence.
+    # last 14 days. Oct 3 2026: judged by engine.titles.is_fragment_title,
+    # the same check the dub paths now refuse a title on. The old mirror
+    # flagged only a lowercase first letter, so «2026 года» and «Как
+    # минимум до 2030 года» (digit / capital start) read as clean while 44
+    # of 349 RU window Shorts shipped as fragments; and it counted the hook
+    # Short in the denominator, which never takes a window title.
+    from engine.titles import is_fragment_title
     frag = total = 0
     for v in _iter_video_index_rows(root):
         if v.get("kind") != "short":
             continue
         if (v.get("channel") or "en") not in ("ru", "fr"):
             continue
+        if (v.get("window") or "") == "hook_open":
+            continue
         if str(v.get("published") or "")[:10] < win_lo:
             continue
         title = str(v.get("title") or "").strip()
-        m = re.search(r"[A-Za-zА-Яа-яЁё]", title)
-        if not m:
+        if not title:
             continue
         total += 1
-        if m.group(0).islower():
+        if is_fragment_title(title):
             frag += 1
     out["dub_fragment_title_share_14d"] = (
         round(frag / total, 2) if total else None)

@@ -3286,3 +3286,75 @@ experiments:
       the links call's max_tokens scales with the handoff count. Nerra
       Personal's vocabulary is the roster again (PERSONAL_EXTRA_SHOW_SLUGS
       empty). ⚠️ Mira's handoff count triples — A/B-listen the first edition.
+
+  - id: hook-leads-body-2026-10-03
+    title: "The body opens on the story the cold open sold"
+    area: retention
+    shipped: 2026-10-03
+    readout: 2026-10-24
+    status: reading
+    metric: long_form_median_avp_en_14d
+    baseline: 10.3
+    target: >
+      EN long-form average view duration at a matched age of ~7 days fell
+      on five shows for videos published 09-21..25 (Tesla 97 -> 62 s, FF
+      98 -> 49, M&A 82 -> 50, MAB 53 -> 40, MIT 59 -> 16; SpaceX held
+      102 -> 90). New per-episode metric script_hook_leads_body_pct (share
+      of the hook's salient words spoken in the first three body sentences)
+      reads the cause: since 09-22 the body did NOT open on the hook's
+      story on 82% of Tesla and 92% of MAB episodes (44% / 47% in August),
+      while SpaceX — the show whose retention held — fell to 25%. Target:
+      script_hook_leads_body_pct median >= 40 on the nine English news
+      shows and the 14-day median long-form AVP back to >= 12.
+    criteria: >
+      Hit = both. Metric up with AVP flat = the opening minute is not the
+      lever on its own (read the open hold at 5%). Metric flat = the
+      instruction is ignored and the fix moves to data (put the hook's
+      digest item first before the script stage).
+    notes: >
+      engine/intros.build_cold_open_spec gained one shape-only bullet (no
+      example sentence) in every English podcast prompt; read-only metric
+      in engine/script_audit.hook_leads_body. The Jul-30 "least expected
+      fact, even when it is not the biggest story" rule is unchanged — the
+      open still picks the fact, the body now follows it.
+      ⚠️ Prompt change — A/B-listen the first episode on Tesla and MAB.
+
+  - id: dub-titles-never-a-fragment-2026-10-03
+    title: "RU/FR window Shorts are never titled with a transcript slice"
+    area: quality
+    shipped: 2026-10-03
+    readout: 2026-10-17
+    status: reading
+    metric: dub_fragment_title_share_14d
+    baseline: 0.11
+    target: >
+      The Aug-7 fix took the share from 0.66 to 0.10 on a metric that only
+      saw lowercase starts; 44 of 349 RU window Shorts still shipped as
+      «2026 года», «туманности», «в 2026 года» (SpaceX Ep119, 10-03).
+      The metric now uses engine.titles.is_fragment_title and window Shorts
+      only (0.11 on 10-03). Target: 0.00 on Shorts published after merge.
+    notes: >
+      ScoredWindow.window_text gives the headline helper the window's
+      speech instead of one Whisper segment; a fragment result falls back
+      to the episode headline + the second-Short tail (the tag now goes
+      last — the old concatenation would have shipped «… #Shorts — ещё
+      момент»). Reach is NOT the expected effect: fragment-titled RU
+      Shorts earned a median 149 views vs 161 for clean ones. Existing
+      videos: scripts/retitle_youtube_videos.py --channel ru|fr (dry run
+      default; 68 RU + 2 FR proposals on 10-03; ~51 quota units each).
+
+  - id: promo-cadence-word-2026-10-03
+    title: "The sibling plug says weekly for a weekly show"
+    area: quality
+    shipped: 2026-10-03
+    readout: 2026-10-10
+    status: reading
+    target: >
+      ~49 airings since 09-20 called Offshore North, Env Intel, DP Pod,
+      Peptides or Collingwood Weekly "one of the Nerra Network's daily
+      briefings" / "another sharp daily briefing". Target: zero, with
+      every daily show's plug byte-identical.
+    notes: >
+      engine/network_promo.build_network_promo reads engine.cadence;
+      Nerra Daily's promo-cut anchors do not use the changed words.
+      ⚠️ Spoken text on weekly-show plugs only.

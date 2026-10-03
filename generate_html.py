@@ -5538,9 +5538,15 @@ def _network_cost_ledger() -> dict:
         total = float(rollup.get("total") or 0)
         if total <= 0:
             return fallback
-        tts = float(rollup.get("tts") or 0)
-        images = float(rollup.get("images") or 0)
-        models = float(rollup.get("grok") or 0) + float(rollup.get("search") or 0)
+        # Oct 3 2026: the rollup's total counts multilingual, motion and the
+        # reviewer since 10-02, and these three rows did not, so the
+        # hosting remainder absorbed ~$57 and the page claimed hosting was
+        # 30% of spend — the largest line. Every measured bucket now lands
+        # in the row its label names ("every language" is the dub tracks).
+        tts = float(rollup.get("tts") or 0) + float(rollup.get("multilingual") or 0)
+        images = float(rollup.get("images") or 0) + float(rollup.get("motion") or 0)
+        models = (float(rollup.get("grok") or 0) + float(rollup.get("search") or 0)
+                  + float(rollup.get("review") or 0))
     except Exception:
         return fallback
 

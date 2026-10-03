@@ -353,13 +353,23 @@ class TestCostLedgerIsRead:
         Imagery is, and had been for months."""
         rollup = json.loads((ROOT / "api" / "dashboard.json").read_text())
         row = rollup["cost_rollup"]["network_last_30_days"]
-        measured = {"tts": row["tts"], "images": row["images"],
-                    "models": row["grok"] + row["search"]}
+        # Since 10-02 the rollup counts multilingual / motion / review; each
+        # sits in the row its label names (voice is "every language").
+        measured = {"tts": row["tts"] + row.get("multilingual", 0),
+                    "images": row["images"] + row.get("motion", 0),
+                    "models": row["grok"] + row["search"] + row.get("review", 0)}
         biggest = max(measured, key=measured.get)
         ledger = gh._network_cost_ledger()
         top_label = max(ledger["cost_split"], key=lambda r: r[1])[0]
         expected = {"tts": "Voice", "images": "Artwork", "models": "Writing"}
         assert top_label.startswith(expected[biggest]), (top_label, biggest)
+
+    def test_hosting_stays_an_estimate_not_a_remainder(self):
+        """Hosting is the one line nobody measures; it may only carry the
+        estimate and rounding, never a whole unmapped cost bucket."""
+        ledger = gh._network_cost_ledger()
+        hosting = dict(ledger["cost_split"])["Hosting, storage & delivery"]
+        assert hosting <= int(round(gh._HOSTING_SHARE_ESTIMATE * 100)) + 2
 
     def test_missing_dashboard_falls_back_rather_than_failing(self, monkeypatch):
         monkeypatch.setattr(gh, "ROOT", ROOT / "does-not-exist")

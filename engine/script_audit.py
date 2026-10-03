@@ -225,6 +225,9 @@ class ScriptAudit:
     #: text, so it is read here, beside the other text instruments.
     commas_per_100w: Optional[float] = None
     digest_commas_per_100w: Optional[float] = None
+    #: Oct 3 2026 — share of the hook's salient words spoken in the first
+    #: ``HOOK_LEAD_SENTENCES`` body sentences (see ``hook_leads_body``).
+    hook_leads_body: Optional[float] = None
 
     @property
     def hook_orphaned(self) -> bool:
@@ -246,6 +249,8 @@ class ScriptAudit:
         if self.hook_coverage is not None:
             m["script_hook_coverage_pct"] = round(100.0 * self.hook_coverage, 1)
             m["script_hook_orphaned"] = self.hook_orphaned
+        if self.hook_leads_body is not None:
+            m["script_hook_leads_body_pct"] = round(100.0 * self.hook_leads_body, 1)
         if self.entity_retention is not None:
             m["script_entity_retention_pct"] = round(100.0 * self.entity_retention, 1)
         if self.digest_coverage is not None:
@@ -482,6 +487,53 @@ def hook_coverage(script_text: str, hook: str = "") -> Optional[float]:
     return len(hs & _salient(body_text)) / len(hs)
 
 
+#: How many body sentences after the identity line count as "the start".
+HOOK_LEAD_SENTENCES = 3
+
+
+def hook_leads_body(script_text: str, hook: str = "") -> Optional[float]:
+    """Share (0-1) of the cold open's salient words spoken in the first
+    ``HOOK_LEAD_SENTENCES`` body sentences — does the body start on the
+    story the open sold?
+
+    Oct 3 2026: Tesla Ep623's open was Q3 deliveries and its body opened on
+    Spain, India and an analyst, reaching deliveries ~90 s in; MAB Ep185
+    opened on Google's orbital prototype and then read Apple's disk-access
+    change. ``hook_coverage`` cannot see this — the story IS told, just not
+    first — and the first minute is where the EN long-form audience leaves
+    (average view duration 50-100 s). Read-only instrument, like the rest
+    of this module. ``None`` when there is nothing to judge.
+    """
+    sentences = _closing_cut(split_sentences(script_text))
+    if not sentences:
+        return None
+    opener = " ".join((hook or "").split())
+    idx = 0
+    if not opener:
+        for i, s in enumerate(sentences):
+            if not _is_identity_line(s):
+                opener, idx = s, i + 1
+                break
+    if not opener:
+        return None
+    hs = _salient(opener)
+    if len(hs) < HOOK_MIN_SALIENT_TOKENS:
+        return None
+    opener_low = opener.lower()
+    lead: List[str] = []
+    for s in sentences[idx:]:
+        if _is_identity_line(s):
+            continue
+        if calculate_similarity(opener_low, s.lower()) >= HOOK_RESTATE_THRESHOLD:
+            continue
+        lead.append(s)
+        if len(lead) >= HOOK_LEAD_SENTENCES:
+            break
+    if not lead:
+        return None
+    return len(hs & _salient(" ".join(lead))) / len(hs)
+
+
 # ---------------------------------------------------------------------------
 # Digest coverage (Sep 9 2026)
 # ---------------------------------------------------------------------------
@@ -677,6 +729,7 @@ def audit_script(
             for c in sections
         ],
         hook_coverage=hook_coverage(script_text, hook),
+        hook_leads_body=hook_leads_body(script_text, hook),
         entity_retention=entity_retention(script_text, digest_text) if digest_text else None,
         digest_coverage=digest_coverage(script_text, digest_text) if digest_text else None,
         commas_per_100w=commas_per_100_words(script_text),
