@@ -151,6 +151,47 @@ def _trim_opening_text(text: str, *, max_chars: int = 80) -> str:
     return cut + "…"
 
 
+#: Upper bound on ``ScoredWindow.window_text`` — about the first 30 s of
+#: speech, which is what a viewer of a 35 s Short actually hears.
+WINDOW_TEXT_MAX_CHARS = 400
+
+
+def _window_text(
+    segments: List[dict],
+    start_idx: int,
+    *,
+    window_duration: float,
+    max_chars: int = WINDOW_TEXT_MAX_CHARS,
+) -> str:
+    """The text spoken in the window that opens at ``segments[start_idx]``.
+
+    Joins the segments whose start falls inside ``window_duration`` seconds
+    of the opening segment (Whisper timestamps — the offset cancels out),
+    whitespace-collapsed and capped on a word boundary. Pure; never raises.
+    """
+    try:
+        t0 = float(segments[start_idx].get("start") or 0.0)
+    except (IndexError, TypeError, ValueError, AttributeError):
+        return ""
+    parts: List[str] = []
+    for seg in segments[start_idx:]:
+        try:
+            if float(seg.get("start") or 0.0) >= t0 + float(window_duration):
+                break
+        except (TypeError, ValueError, AttributeError):
+            break
+        txt = (seg.get("text") or "").strip()
+        if txt:
+            parts.append(txt)
+        if sum(len(x) + 1 for x in parts) >= max_chars:
+            break
+    joined = " ".join(" ".join(parts).split())
+    if len(joined) <= max_chars:
+        return joined
+    cut = joined[:max_chars].rsplit(" ", 1)[0]
+    return cut or joined[:max_chars]
+
+
 @dataclass(frozen=True)
 class ScoredWindow:
     """One candidate Shorts window with its engagement score."""
@@ -167,6 +208,14 @@ class ScoredWindow:
     # Surfaced in metrics as ``shorts_fill_modes`` so the dashboard can
     # track qualified-vs-filled rates per show.
     qualified: bool = True
+    # Oct 3 2026: the window's spoken text (its segments within
+    # ``window_duration``, capped) — the context a dub channel needs to
+    # title a non-hook Short. ``opening_text`` is ONE Whisper segment, and
+    # on the RU track that is often three words: 81 of 314 RU filled
+    # Shorts since Aug shipped titles like «в 2026 года», «2026 года»,
+    # «Как минимум до 2030 года» because the headline helper had nothing
+    # else to read (it refuses an excerpt under 15 chars).
+    window_text: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -376,6 +425,8 @@ def score_candidates(
             end_seconds=start_final + window_duration,
             score=score,
             opening_text=_trim_opening_text(text, max_chars=80),
+            window_text=_window_text(
+                segments, full_idx, window_duration=window_duration),
         ))
     out.sort(key=lambda w: w.score, reverse=True)
     return out
@@ -610,6 +661,7 @@ def hook_first_windows(
         score=float("inf"),
         opening_text=(hook_text or "").strip(),
         qualified=True,
+        window_text=(hook_text or "").strip(),
     )
     kept: List[ScoredWindow] = [hook_window]
     for w in windows:

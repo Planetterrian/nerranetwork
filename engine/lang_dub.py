@@ -54,6 +54,7 @@ from engine.ru_dub import (  # language-neutral helpers — single source
     _hashtags,
     _is_fresh_episode,
     _clause_trim,
+    _window_short_headline,
     gallery_images_for_episode,
 )
 
@@ -588,6 +589,11 @@ def publish_lang_dub(
                 ]
             else:
                 short_plan = [(base_offset, "", "legacy_fallback")]
+            # Each window's spoken text, aligned with short_plan (Oct 3 2026).
+            short_window_texts = [
+                (getattr(w, "window_text", "") or "").strip()
+                for w in (windows or [])[:len(short_plan)]
+            ] if windows else [""]
 
             end_card_png = None
             try:
@@ -699,23 +705,20 @@ def publish_lang_dub(
                         # from the excerpt first (never-invent, same-language
                         # validated); any failure keeps the legacy
                         # clause-trim. Title-only metadata.
+                        # Oct 3 2026: written from the window's speech,
+                        # and never a fragment — the episode headline with
+                        # the language's second-Short tail stands in.
                         _limit = min(70, _YT_TITLE_MAX - len(_SHORTS_SUFFIX))
-                        body = ""
-                        try:
-                            from engine.translate import (
-                                headline_from_excerpt,
-                            )
-                            body = headline_from_excerpt(
-                                opening_text, lang.code, max_chars=_limit)
-                        except Exception:  # noqa: BLE001
-                            body = ""
+                        _wtext = (short_window_texts[short_idx]
+                                  if short_idx < len(short_window_texts)
+                                  else "")
+                        body = _window_short_headline(
+                            _wtext, opening_text, lang.code, _limit)
                         if body:
-                            body = _clause_trim(body, _limit, lang.code)
+                            st = f"{body}{_SHORTS_SUFFIX}".strip()
                         else:
-                            body = _clause_trim(
-                                opening_text.rstrip("…").rstrip(),
-                                _limit, lang.code)
-                        st = f"{body}{_SHORTS_SUFFIX}".strip()
+                            st = (_short_title(title, lang, body_limit=52)
+                                  + lang.second_short_tail)
 
                     _publish_at = (
                         _stagger_times[short_idx - 1]
