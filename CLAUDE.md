@@ -1174,8 +1174,9 @@ today's work, not just explain yesterday's):
   is linked from the show page, the dashboard and every ON blog post
   (`engine.blog.SHOW_RESOURCES`). Dashboard v2 adds an "In the press" rail
   (the show's GN query resolved to publisher URLs), calendar state pills,
-  the Défi Azimut result and the Rhum entries' 48H form. The YB tracker
-  page exposes no JSON endpoint (probed 19 Sep); the embed stays.
+  the Défi Azimut result and the Rhum entries' 48H form. (The Sep 19
+  probe that found "no JSON endpoint" on the YB tracker read only the
+  HTML — see Oct 4 below.)
   **Round 2, same day:** countdowns and results are linked by key
   (`results_key` ↔ `key`) and a FINISHED race with no result entry gets
   "RESULT NOT YET ON RECORD" in the status block and "result pending" on
@@ -1187,6 +1188,27 @@ today's work, not just explain yesterday's):
   cdnjs + OSM tiles) plots only the dated PLACES a team post named — an
   entry without `lat`/`lon` gets no marker — and the show page carries a
   campaign strip from the same record.
+  **Oct 4 2026 — the position is the tracker's, and five operator rules**
+  (guards `tests/test_offshore_north_tracker_2026_10_04.py`). The YB
+  tracker page is a script app over a public API the page itself calls
+  (`app.yb.tl/APIX/Blog/GetEvents` / `GetPositions`, keyword `emira4`);
+  `engine/yb_tracker.py` reads it nightly (dashboard fetch) and FRESH in
+  the show hook, and the fix is also a hook ARTICLE so the claims gate can
+  verify the position sentence. Rules that bind: the base is **Gosport,
+  UK (Portsmouth Harbour)**, never Brittany/Lorient (a place is named only
+  inside `campaign.tracker.places`, else coordinates); a position always
+  carries its date and source; a fix older than **7 days** is "last seen
+  <date>", never the present tense (`yb_tracker.STALE_DAYS`); only the
+  tracker's dated outings are spoken — never "training solo in Europe";
+  the Route du Rhum is **"aiming to start"** until the official entry list
+  carries Scott (`rhum_entry` in the record — the Sep 19 "Entry CONFIRMED"
+  read the IMOCA class page, not the official list). **Instagram is read,
+  never copied** (`engine/instagram_source.py`, Meta Business Discovery):
+  captions + permalinks become dated source articles and a dashboard rail;
+  pictures reach a reader only as Instagram's own embed, loaded on a click
+  (the privacy policy says so); `media_url` is never requested. Secrets
+  `INSTAGRAM_GRAPH_TOKEN` / `INSTAGRAM_GRAPH_USER_ID` — deliberately not the
+  Shorts publisher's `IG_*` names; unset = a clean no-op.
 - **Vancouver Daily News / Collingwood Weekly** (Sep 2026, pre-launch) — the
   first run_show shows with an AI host: `host_kind: ai`, Mira on `ara`, NO
   speech wrap (Nerra Daily's Mira has none). Roads and weather arrive as

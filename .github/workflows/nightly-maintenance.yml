@@ -189,6 +189,12 @@ jobs:
         # position fix, and offshore headlines for offshore-north-dashboard.html
         # (Sep 2026). Keeps last-good cache on failure; refreshes daily even
         # though the show itself is weekly.
+        # Oct 2026: also the YB tracker fix (public API, no secret) and the
+        # read-only Instagram rail (engine/instagram_source.py; unset
+        # secrets = the rail stays empty and the page links the accounts).
+        env:
+          INSTAGRAM_GRAPH_TOKEN: ${{ secrets.INSTAGRAM_GRAPH_TOKEN }}
+          INSTAGRAM_GRAPH_USER_ID: ${{ secrets.INSTAGRAM_GRAPH_USER_ID }}
         run: python scripts/fetch_offshore_north_dashboard.py --out api/offshore_north_dashboard.json || true
 
       - name: Backfill Content Lake (before dashboard + search index)
