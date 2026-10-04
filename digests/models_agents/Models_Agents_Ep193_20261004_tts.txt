@@ -1,0 +1,133 @@
+DeepSeek releases official desktop apps for its open-source agent harness v0.2 with plugin management and scheduled tasks.
+
+This is Models and Agents, episode one hundred ninety-three.
+
+DeepSeek released official macOS and Windows desktop apps for its MIT-licensed agent harness version zero point two.
+
+The apps bundle the dsh command line tool.
+
+They support sign-in with a DeepSeek account or A P I key.
+
+Version zero point two adds a plugin manager page.
+
+It also includes a right-hand sidebar for file and code diff review.
+
+Document handling works with spreadsheets and PDFs.
+
+An Automation Task plugin handles recurring prompts.
+
+The harness runs on the Cordis paradigm.
+
+It supports third-party models through Open A I compatible endpoints.
+
+The repository has reached two hundred forty thousand GitHub stars.
+
+Users can install via deepseek dot com harness or npx at deepseek-A I slash dsh web.
+
+The v zero point two point one alpha one build adds an experimental Claude Code Mods compatibility layer.
+
+Four session modes are available including Standard, Creator, PTC, and Minimal.
+
+The desktop build eliminates the need for separate Node.js or pnpm installs.
+
+Looking back over the past week, Hugging Face advanced state verification for agents, NVIDIA rolled out silicon-level guardrails, and Apple tightened disk access rules for agent permissions.
+
+TypeSafe A I positions Jev as a smaller model that cannot hallucinate.
+
+The team ran sixteen thousand three hundred seventy-nine benchmark requests measuring latency and billing.
+
+It targets jobs where other models fall short.
+
+The model is built by the co-inventor of ChatGPT.
+
+Reviewers describe it as humbler yet genuinely useful for specific tasks.
+
+Altman stated he is very uncomfortable with people ascribing religious force or surrendering human judgment to A I models.
+
+He called it a real safety issue.
+
+The post received four point one million views.
+
+The statement was posted on October third, twenty twenty-six.
+
+Martian presented the framework as a route to lower inference costs on frontier models.
+
+The company positions the tool as a practical optimization layer for existing large language models.
+
+Microsoft ThinkingBox grades agents on terminal backend state and side effects instead of tool-call logs.
+
+It runs five hundred seven stateful business workflows twenty times each across various models.
+
+The benchmark is available through Hugging Face and OpenEnv.
+
+One retail workflow example showed an agent issuing nine valid calls yet leaving a ticket status as solved when the required state was on hold.
+
+The approach measures consistency across repeated runs rather than single successful traces.
+
+NVIDIA introduced safeguards designed to keep autonomous agents within defined bounds.
+
+The safeguards target agents that exceed intended operational limits during execution.
+
+Five consumer platforms compete with three distinct pricing models.
+
+The platforms target everyday users seeking autonomous task handling.
+
+Agents introduce new vectors for customer data exposure.
+
+The report highlights growing attack surfaces tied to agent autonomy.
+
+Simon Willison argues that pay-by-usage services must default to hard budget caps that return errors after a set monthly limit.
+
+He notes AWS launched spending limits in September and Google Cloud offers Spend Caps.
+
+The post recommends an opt-in checkbox for removing the cap.
+
+Coding agents lower the barrier to spinning up services that can incur unexpected charges.
+
+The feature prevents surprise bills from runaway agent activity.
+
+Simon Willison notes Dot appears limited to a single conversation while he prefers controlling context across multiple threads.
+
+The observation follows several days of testing the new interface.
+
+It points to AWS and Google Cloud features that pause projects once limits are reached.
+
+Hard limits return errors rather than warnings once the cap is hit.
+
+The author prefers errors over surprise multi-thousand-dollar bills.
+
+Install the DeepSeek Harness v zero point two desktop app on macOS or Windows to test the new plugin manager and scheduled automation tasks.
+
+Run ThinkingBox through Hugging Face on a sample retail workflow to see how state verification differs from tool-call logging.
+
+Set a monthly spend limit in AWS or Google Cloud before deploying any coding agent that calls paid A P I's.
+
+Further compatibility updates expected for DeepSeek Harness after the v zero point two point one alpha one build.
+
+Additional agent safety frameworks from NVIDIA anticipated in coming weeks.
+
+More consumer agent platforms likely to announce pricing adjustments.
+
+Pop the hood on state verification and the gap becomes clear right away.
+
+Agent benchmarks that score only tool-call syntax miss cases where the final database record is wrong.
+
+ThinkingBox instead replays each workflow twenty times and checks the terminal backend state against the required end state.
+
+The approach adds measurable overhead because every run must reach a stable database snapshot rather than stopping at the last function return.
+
+This verification layer catches side effects that surface only after the agent declares completion.
+
+Teams running long-horizon agents should adopt state checks on any workflow that mutates shared records.
+
+The cost is higher per evaluation run but eliminates silent failures that syntax-only graders accept.
+
+The benchmark isolates each workflow in separate M C P tool sessions to ensure clean state measurement.
+
+Before we go, watch for more details on how ThinkingBox scales to additional workflow types.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+Quick tip from the network: try Omni View Central and South America next — the day across Central and South America, from Mexico to the Southern Cone. Every Nerra Network show is free at nerranetwork dot com. And on the website: every episode's visuals live in our free image gallery at nerranetwork dot com gallery — royalty-free under Creative Commons, download with attribution.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
