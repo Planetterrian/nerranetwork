@@ -199,6 +199,8 @@ def _generate_links(
                 )
             links = parse_links_json(text, handoff_count)
             if links:
+                links = _enforce_handoff_variety(
+                    links, prompt, segments, handoff_count, tracker)
                 return links, "llm"
             _annotate("warning", "Nerra Daily link generation returned an "
                                  "unusable shape — using the deterministic fallback")
@@ -206,6 +208,41 @@ def _generate_links(
             _annotate("warning", f"Nerra Daily link generation failed ({exc}) "
                                  "— using the deterministic fallback")
     return fallback_links(spec, segments, target_date), "fallback"
+
+
+def _enforce_handoff_variety(links: dict, prompt: str, segments: List[Segment],
+                             handoff_count: int, tracker: Optional[dict]) -> dict:
+    """One corrective call when the draft opens too many handoffs with the
+    show name (``engine.daily_edition.handoff_revision_prompt``). Best-effort:
+    any failure keeps the first draft, whose count is still recorded."""
+    from engine.daily_edition import adopt_revised_handoffs, handoff_revision_prompt
+
+    revision = handoff_revision_prompt(prompt, links, segments)
+    if revision is None:
+        return adopt_revised_handoffs(links, None, segments)
+    revised = None
+    try:
+        from digests.xai_grok import grok_generate_text
+
+        text, meta = grok_generate_text(
+            prompt=revision, model=LINKS_MODEL, temperature=0.7,
+            max_tokens=max(2500, 900 + 140 * handoff_count),
+            timeout_seconds=600,
+        )
+        if tracker is not None:
+            usage = (meta or {}).get("usage")
+            from engine.tracking import record_llm_usage
+            record_llm_usage(
+                tracker, "edition_links_revision",
+                int(getattr(usage, "prompt_tokens", 0) or 0),
+                int(getattr(usage, "completion_tokens", 0) or 0),
+                model=str((meta or {}).get("model") or LINKS_MODEL),
+            )
+        revised = parse_links_json(text, handoff_count)
+    except Exception as exc:  # noqa: BLE001 — the first draft still ships
+        _annotate("warning", f"Nerra Daily handoff revision failed ({exc}) "
+                             "— keeping the first draft")
+    return adopt_revised_handoffs(links, revised, segments)
 
 
 def _generate_daily_find(

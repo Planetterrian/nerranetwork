@@ -2242,6 +2242,36 @@ headline + tail, tag last; **the sibling plug's cadence word comes from
 `engine.cadence`**. Open: the 08-18..21 RU blackout (all Shorts 1–8 views,
 no code change, self-recovered) — a Studio read, not a code fix.
 
+**Oct 4 2026 — the Sunday slate after the Oct 3 pass** (guards
+`tests/test_sunday_slate_2026_10_04.py`). Every Oct 3 target was clean on
+the 21 Oct 4 episodes (no "go deeper" frame on OV, no UN / NT$ garbles, no
+doubled "subreddit", no self-narration, no daily plug for a weekly show,
+spoken-text gate 21/21 pass). Three defects the slate exposed, all fixed:
+(1) **the weekly newsletter run had hit its 45-minute timeout on four
+Sundays running** — synthesis is 3-5 min a show on grok-4.6, the walk was
+alphabetical, so Planetterrian, SpaceX, Tesla and UC got no weekly after
+Sep 6, ten cohort shows spent ~4 min each writing a weekly their missing
+Buttondown tag then refused (a tag exists only once someone subscribes
+with it), and the cancelled job never committed the sent markers of the
+shows that DID go out (a re-run would have sent them twice). Now
+`run_weekly_newsletters.send_preflight` refuses before synthesis exactly
+what the send would refuse, `PRIORITY_SHOWS` go first, the run step has a
+75-minute cap under a 90-minute job and the commit step is `always()`;
+the six Oct 4 sends are recorded from the run log. (2) **The Sunday
+week-in-review instruction offered "just after the intro"** — the slot the
+cold-open rule forbids (13/19 scripts on Sep 27, 3/19 incl. Tesla on Oct
+4); it now goes before the close only (⚠️ AUDIO). (3) **Nerra Daily's
+handoffs broke the one-in-three show-name rule on every full edition**
+(18/18, 18/19): `handoff_revision_prompt` sends a non-compliant draft back
+once and `adopt_revised_handoffs` keeps the revision only when it leads
+with fewer names (metrics `handoffs_show_name_led_first_draft`,
+`handoffs_revised`; ⚠️ AUDIO). Open for the operator: MIT's four disclaimer
+sentences sit between the cold open and the first story every day
+(`script_hook_leads_body_pct` 0 on 11/11 episodes — compliance placement);
+`grok-47-staged-migration` is nine days past readout while the 4.7 cohort
+has run fallback-free since ~Sep 29 (11-22 claims, 2-17% digest-verbatim
+against 1-3 and 46-63% on the 4.3 flagships).
+
 ### Anthology books — ebook + audiobook from the narrative shows (Aug 2026)
 
 Product B6 (operator-directed): a SERIES machine, not one-off books.
