@@ -135,6 +135,9 @@
   .on-entries li.can::before { content:"🍁 "; }
   .on-entries .b { color:var(--on-muted); }
 
+  #onInstagramPanel [hidden] { display:none !important; }
+  .on-ig-embeds { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:14px; margin-top:.6rem; }
+  .on-ig-embeds .instagram-media { min-width:0 !important; width:100% !important; margin:0 !important; }
   .on-feed { list-style:none; padding:0; margin:0; }
   .on-feed li { padding:.55rem 0; border-top:1px solid rgba(91,192,235,.12); }
   .on-feed li:first-child { border-top:none; }
@@ -228,7 +231,7 @@
         {% endfor %}
       </ul>
       {% set pn = d.get('position_note') or {} %}{% if pn.get('text') %}<p class="on-muted" style="margin:.7rem 0 0;color:#c7d6e3;"><span class="tag">As of {{ pn.get('as_of', '') }}</span> {{ pn.text }} {% if pn.get('url') %}<a href="{{ pn.url }}" target="_blank" rel="noopener">source ↗</a>{% endif %}</p>{% endif %}
-      <p class="on-muted" style="margin:.8rem 0 0;">The newest dated post from the team's own channels that describes a movement, refreshed nightly and after each episode; the log above is operator-verified. Between fixes the boat is wherever the tracker says it is — not wherever this page guesses.</p>
+      <p class="on-muted" style="margin:.8rem 0 0;">The newest fix from the team's own YB tracker, read nightly and before each episode, with its date. A fix more than seven days old is shown as "last seen", never as where the boat is now. The log above is operator-verified; the page never guesses a position between fixes.</p>
       <a class="on-btn ghost" href="{{ camp.get('tracker_url', '#') }}" target="_blank" rel="noopener">Open the team's tracker ↗</a>
     </div>
     <div class="on-panel">
@@ -275,6 +278,19 @@
     <div class="on-panel">
       <h2>In the press <span class="sm">coverage of the campaign, newest first · publisher links</span></h2>
       <ul class="on-feed" id="onPress"><li class="on-muted">Loading…</li></ul>
+    </div>
+  </div>
+
+  <div class="on-grid one">
+    <div class="on-panel" id="onInstagramPanel">
+      <h2>On Instagram <span class="sm">the team, the class and the races — their posts, their pictures, linked</span></h2>
+      <ul class="on-feed" id="onInstagram"><li class="on-muted">Loading…</li></ul>
+      <div id="onInstagramEmbeds" class="on-ig-embeds" hidden></div>
+      <p class="on-muted" style="margin:.7rem 0 0;">
+        <button type="button" class="on-btn ghost" id="onInstagramLoad" hidden>Show the posts with their pictures</button>
+        <span id="onInstagramNote">Pictures load from Instagram only when you ask: the button fetches Instagram's own embed, which sets Instagram's cookies. Every post belongs to its account — follow
+        {% for l in (d.get('follow', []) | map(attribute='links') | sum(start=[])) if l.kind == 'instagram' %}<a href="{{ l.url }}" target="_blank" rel="noopener">{{ l.label | replace(' on Instagram', '') | replace('Instagram ', '') }}</a>{{ ', ' if not loop.last else '.' }}{% endfor %}</span>
+      </p>
     </div>
   </div>
 
@@ -343,7 +359,7 @@
       {% set rdr = d.get('rdr_imoca_entries', {}) %}
       <h2>Route du Rhum 2026 — IMOCA entries <span class="sm">{{ rdr.get('total_registered') or (rdr.get('entries', []) | length) }} registered · read {{ rdr.get('read_date', d.get('last_verified', '')) }}</span></h2>
       <ul class="on-entries">
-        {% for e in rdr.get('entries', []) %}<li class="{{ 'can' if e.get('canada') else '' }}">{{ e.skipper }} <span class="b">· {{ e.boat }}</span>{% if e.get('azimut_48h') and e.azimut_48h != '—' %} <span class="b" style="font-size:.74rem;">· 48H Azimut: {{ e.azimut_48h }}</span>{% endif %}</li>{% endfor %}
+        {% for e in rdr.get('entries', []) %}<li class="{{ 'can' if e.get('canada') else '' }}">{{ e.skipper }} <span class="b">· {{ e.boat }}</span>{% if e.get('official') is sameas false %} <span class="b" style="font-size:.74rem;color:#f5c26b;">· {{ e.get('status_note', 'not on the official list') }}</span>{% endif %}{% if e.get('azimut_48h') and e.azimut_48h != '—' %} <span class="b" style="font-size:.74rem;">· 48H Azimut: {{ e.azimut_48h }}</span>{% endif %}</li>{% endfor %}
       </ul>
       <p class="on-muted" style="margin:.7rem 0 0;">{{ rdr.get('note', '') }} <a href="{{ rdr.get('source_url', '#') }}" target="_blank" rel="noopener">Source ↗</a></p>
     </div>
@@ -515,10 +531,47 @@
         return '<li><div class="h"><a href="' + esc(h.url) + '" target="_blank" rel="noopener">' + esc(h.title) + '</a><span class="d">' + esc(h.date || '') + '</span></div><p class="x"><span class="c">' + esc(h.outlet || '') + '</span></p></li>';
       }).join('') : '<li class="on-muted">No press items fetched yet.</li>';
     }
-    // Newest dated fix from the live feed wins over the baked log when it is newer.
-    var pos = data.position, fixText = document.getElementById('onFixText'), fixMeta = document.getElementById('onFixMeta');
+    // Instagram: link cards first; Instagram's own embeds only on request.
+    var ig = document.getElementById('onInstagram'), igBtn = document.getElementById('onInstagramLoad'), igBox = document.getElementById('onInstagramEmbeds');
+    if (ig) {
+      var posts = data.instagram || [];
+      if (!posts.length) {
+        ig.innerHTML = '<li class="on-muted">Instagram posts are not being read right now — the accounts are linked below.</li>';
+      } else {
+        ig.innerHTML = posts.slice(0, 8).map(function(p){
+          var cap = String(p.caption || '').replace(/\s+/g, ' ').trim();
+          if (cap.length > 220) cap = cap.slice(0, 220).replace(/\s+\S*$/, '') + '…';
+          return '<li><div class="h"><a href="' + esc(p.permalink) + '" target="_blank" rel="noopener">@' + esc(p.account) + '</a><span class="d">' + esc(p.date || '') + '</span></div>' + (cap ? '<p class="x">' + esc(cap) + '</p>' : '') + '</li>';
+        }).join('');
+        if (igBtn && igBox) {
+          igBtn.hidden = false;
+          igBtn.addEventListener('click', function(){
+            igBox.innerHTML = posts.slice(0, 6).map(function(p){
+              return '<blockquote class="instagram-media" data-instgrm-permalink="' + esc(p.permalink) + '" data-instgrm-version="14"><a href="' + esc(p.permalink) + '" target="_blank" rel="noopener">View this post by @' + esc(p.account) + ' on Instagram</a></blockquote>';
+            }).join('');
+            igBox.hidden = false; igBtn.hidden = true;
+            var sc = document.createElement('script'); sc.async = true; sc.src = 'https://www.instagram.com/embed.js';
+            sc.onload = function(){ if (window.instgrm && window.instgrm.Embeds) window.instgrm.Embeds.process(); };
+            document.body.appendChild(sc);
+          });
+        }
+      }
+    }
+    // The team's YB tracker is the position source (Oct 4 2026); a fix more
+    // than seven days old is "last seen", never the present tense.
+    var tr = data.tracker, fixText = document.getElementById('onFixText'), fixMeta = document.getElementById('onFixMeta');
+    if (tr && tr.latest && tr.latest.date && fixText) {
+      var lt = tr.latest, where = lt.place ? 'alongside in ' + lt.place : 'at ' + (lt.coords || '');
+      var ageDays = Math.floor((Date.now() - Date.parse(lt.date + 'T00:00:00Z')) / 86400000);
+      var nice = new Date(lt.date + 'T12:00:00Z').toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric', timeZone:'UTC'});
+      fixText.textContent = ageDays <= 7 ? 'As of ' + nice + ', EMIRA IV is ' + where + '.' : 'Last seen ' + nice + ': ' + where + '.';
+      var outs = tr.outings || [];
+      if (fixMeta) fixMeta.innerHTML = '<span class="tag">Tracker</span>' + esc(lt.date) + ' · ' + (outs.length ? esc(outs.length + (outs.length === 1 ? ' outing' : ' outings') + ' in the last 30 days (' + outs.map(function(o){ return o.date; }).join(', ') + ')') : 'no outing in the last 30 days') + ' · <a href="' + esc(tr.url) + '" target="_blank" rel="noopener">YB tracker</a>';
+    }
+    // Without a tracker read, the newest dated post wins over the baked log when it is newer.
+    var pos = data.position;
     var bakedDate = '{{ (d.get('position_log', []) | last).date if d.get('position_log') else '' }}';
-    if (pos && pos.date && fixText && pos.date >= bakedDate) {
+    if (!(tr && tr.latest) && pos && pos.date && fixText && pos.date >= bakedDate) {
       fixText.textContent = pos.text || pos.title || '';
       if (fixMeta) fixMeta.innerHTML = '<span class="tag">Fix</span>' + esc(pos.date) + ' · ' + esc(pos.channel || '') + ' · <a href="' + esc(pos.url) + '" target="_blank" rel="noopener">source</a>';
     }

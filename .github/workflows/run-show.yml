@@ -602,6 +602,13 @@ jobs:
           # voice for the translated tracks. Unset (the default) → the show's
           # existing tts.voice_id (kdif6sqjcyiq) is reused across all languages.
           GROK_CLONED_VOICE_ID: ${{ secrets.GROK_CLONED_VOICE_ID }}
+          # Oct 2026: READ-ONLY Instagram Graph API (Business Discovery) for
+          # Offshore North's source articles (engine/instagram_source.py).
+          # Deliberately not IG_ACCESS_TOKEN / IG_USER_ID — those are the
+          # Shorts publisher's names, and a read token must never switch on
+          # posting. Unset = the Instagram source is skipped.
+          INSTAGRAM_GRAPH_TOKEN: ${{ secrets.INSTAGRAM_GRAPH_TOKEN }}
+          INSTAGRAM_GRAPH_USER_ID: ${{ secrets.INSTAGRAM_GRAPH_USER_ID }}
           X_CONSUMER_KEY: ${{ secrets.X_CONSUMER_KEY }}
           X_CONSUMER_SECRET: ${{ secrets.X_CONSUMER_SECRET }}
           X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
