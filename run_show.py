@@ -3401,6 +3401,9 @@ def run(args: argparse.Namespace) -> None:
                 or ("requested" if (template_vars or {}).get("_combined_podcast_prompt") else "off"),
             )
             template_vars.pop("_combined_podcast_prompt", None)
+            _script_stage_s = (template_vars or {}).pop("_script_stage_s", None)
+            if _script_stage_s is not None:
+                metrics.record_stage("generate_podcast_script", _script_stage_s)
 
             # Strip mode, script side: every script sentence that tells a
             # digest sentence the gate removed goes too (the digest and the
