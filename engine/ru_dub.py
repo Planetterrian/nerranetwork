@@ -499,16 +499,28 @@ def _window_short_headline(excerpt: str, opening_text: str, lang: str,
     return ""
 
 
-def _ru_short_title(long_title: str, *, body_limit: int = 70) -> str:
+def _ru_short_title(long_title: str, *, body_limit: int = 70,
+                    keep_whole_if_fits: bool = True) -> str:
     """A distinct, punchy Short title derived from the RU long title.
 
     Drops the "Эп. N:" episode prefix, word-boundary-trims the body to a short
     headline (never mid-word, no trailing "…"), and appends " #Shorts" — always
     within YouTube's 100-char cap. Distinct from the long title (at minimum by
-    the suffix; usually also by the dropped prefix + trim)."""
+    the suffix; usually also by the dropped prefix + trim).
+
+    Oct 4 2026: a headline that fits YouTube's cap WHOLE ships whole. The
+    70-char budget cut FF Ep212's hook Short to «…в бизнес совместного»
+    (the headline is 75 characters and ends «совместного доступа»), and a
+    clause trim cannot see that an adjective has lost its noun. The budget
+    still applies to a headline too long to fit, and to the fallback, which
+    needs room for its tail (``keep_whole_if_fits=False``).
+    """
     body = _EP_PREFIX_RE.sub("", (long_title or "").strip()).strip()
     body = body.rstrip("…").rstrip()
-    ceiling = min(body_limit, _YT_TITLE_MAX - len(_SHORTS_SUFFIX))
+    cap = _YT_TITLE_MAX - len(_SHORTS_SUFFIX)
+    if keep_whole_if_fits and len(body) <= cap:
+        return f"{body}{_SHORTS_SUFFIX}".strip()
+    ceiling = min(body_limit, cap)
     body = _clause_trim(body, ceiling, "ru")
     return f"{body}{_SHORTS_SUFFIX}".strip()
 
@@ -525,7 +537,8 @@ def _ru_second_short_title(long_title: str) -> str:
     Harmless while the branch was rare; it becomes the common fallback once
     fragment titles are refused, so the tag goes last here, once.
     """
-    body = _ru_short_title(long_title, body_limit=58)
+    body = _ru_short_title(long_title, body_limit=58,
+                           keep_whole_if_fits=False)
     if body.endswith(_SHORTS_SUFFIX.strip()):
         body = body[: -len(_SHORTS_SUFFIX.strip())].rstrip()
     return f"{body}{RU_SECOND_SHORT_TAIL}{_SHORTS_SUFFIX}".strip()

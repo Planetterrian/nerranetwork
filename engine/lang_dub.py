@@ -197,11 +197,18 @@ def _translate_title(en_title: str, lang: DubLanguage) -> str:
 
 
 def _short_title(long_title: str, lang: DubLanguage, *,
-                 body_limit: int = 70) -> str:
-    """Distinct, punchy Short title derived from the language long title."""
+                 body_limit: int = 70,
+                 keep_whole_if_fits: bool = True) -> str:
+    """Distinct, punchy Short title derived from the language long title.
+
+    A headline that fits YouTube's cap whole ships whole (Oct 4 2026; see
+    ``engine.ru_dub._ru_short_title``)."""
     body = lang.ep_prefix_re.sub("", (long_title or "").strip()).strip()
     body = body.rstrip("…").rstrip()
-    ceiling = min(body_limit, _YT_TITLE_MAX - len(_SHORTS_SUFFIX))
+    cap = _YT_TITLE_MAX - len(_SHORTS_SUFFIX)
+    if keep_whole_if_fits and len(body) <= cap:
+        return f"{body}{_SHORTS_SUFFIX}".strip()
+    ceiling = min(body_limit, cap)
     # Clause-aware, not just word-aware: 26% of published FR Short titles
     # ended on a dangling preposition or article because a French
     # translation of an English long title routinely overruns 70 chars.
@@ -215,7 +222,8 @@ def _second_short_title(long_title: str, lang: DubLanguage) -> str:
     Oct 3 2026: the tail used to be appended after ``_short_title``'s
     " #Shorts" (see ``engine.ru_dub._ru_second_short_title``).
     """
-    body = _short_title(long_title, lang, body_limit=52)
+    body = _short_title(long_title, lang, body_limit=52,
+                        keep_whole_if_fits=False)
     tag = _SHORTS_SUFFIX.strip()
     if body.endswith(tag):
         body = body[: -len(tag)].rstrip()

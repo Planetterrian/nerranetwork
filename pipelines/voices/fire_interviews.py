@@ -123,9 +123,9 @@ def host_mode_enabled(interview: dict, run: dict | None = None) -> bool:
 
 
 COHOST_INTRO_STEP = (
-    "3. {{cohost_name}}, your co-host, by name — a real person, the founder "
+    "   - {{cohost_name}}, your co-host, by name: a real person, the founder "
     "of the network, who will jump in with his own questions. If he is "
-    "already in the room, hand him a beat to say hello himself.\n"
+    "already in the room, hand him a beat to say hello himself;\n"
 )
 
 
@@ -650,8 +650,67 @@ def fire_due_interviews() -> int:
     return failures
 
 
+NO_SHOW_AFTER_MIN = 40
+
+
+def sweep_browser_no_shows() -> int:
+    """Oct 5 2026, Stan Lewis. A browser interview whose guest never opened
+    the studio left its run at awaiting_guest forever: nobody wrote to him,
+    nobody told Patrick, and the interview sat at "briefed". The phone path
+    has always had a no-show (the call goes unanswered); this is the same
+    thing for the studio, forty minutes after the start with no one in."""
+    cutoff = _iso(_now() - dt.timedelta(minutes=NO_SHOW_AFTER_MIN))
+    oldest = _iso(_now() - dt.timedelta(days=2))
+    due = sb_select("interviews",
+                    "status=in.(briefed,scheduled)&call_mode=eq.webrtc"
+                    f"&scheduled_at=lte.{cutoff}&scheduled_at=gte.{oldest}")
+    handled = 0
+    for interview in due:
+        try:
+            runs = sb_select("interview_runs",
+                             f"interview_id=eq.{interview['id']}&order=created_at.desc&limit=1")
+            run = runs[0] if runs else None
+            if not run or run.get("status") != "awaiting_guest":
+                continue
+            sb_update("interview_runs", f"id=eq.{run['id']}",
+                      {"status": "failed", "disconnect_reason": "no_show"})
+            app_rows = sb_select("guest_applications", f"id=eq.{interview['application_id']}")
+            app = app_rows[0] if app_rows else {}
+            show = show_for(interview, app)
+            no_shows = int(interview.get("no_show_count") or 0) + 1
+            status = "missed" if no_shows < 2 else "cancelled"
+            sb_update("interviews", f"id=eq.{interview['id']}",
+                      {"status": status, "no_show_count": no_shows})
+            if no_shows < 2 and app.get("email"):
+                booking = (os.environ.get("CALCOM_BOOKING_URL_NERRA_VOICES", "")
+                           if show.slug == "nerra_voices" else "") \
+                    or os.environ.get("CALCOM_BOOKING_URL", "")
+                html = render_email("voices_interview_reminder.j2", show=show,
+                                    guest_name=first_name(app), missed=True,
+                                    booking_url=booking)
+                send_email(app["email"],
+                           f"Sorry we missed each other: pick a new time for {show.name}",
+                           html, cc_operator=True)
+                notify_operator(show.slack(
+                    f"{app.get('name') or 'guest'} didn't come into the studio "
+                    f"(no-show #{no_shows}); Mira sent the reschedule email"))
+            else:
+                if app.get("id"):
+                    sb_update("guest_applications", f"id=eq.{app['id']}", {"status": "lapsed"})
+                notify_operator(show.slack(
+                    f"{app.get('name') or 'guest'} second no-show; application lapsed"))
+            handled += 1
+        except Exception:  # noqa: BLE001 — one guest never stops the sweep
+            logger.exception("no-show sweep failed for %s", interview.get("id"))
+    return handled
+
+
 def main() -> int:
     send_reminders()
+    try:
+        sweep_browser_no_shows()
+    except Exception:  # noqa: BLE001 — firing matters more
+        logger.exception("no-show sweep failed")
     return 1 if fire_due_interviews() else 0
 
 
