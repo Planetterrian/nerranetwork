@@ -2268,9 +2268,19 @@ with fewer names (metrics `handoffs_show_name_led_first_draft`,
 `handoffs_revised`; ⚠️ AUDIO). Open for the operator: MIT's four disclaimer
 sentences sit between the cold open and the first story every day
 (`script_hook_leads_body_pct` 0 on 11/11 episodes — compliance placement);
-`grok-47-staged-migration` is nine days past readout while the 4.7 cohort
-has run fallback-free since ~Sep 29 (11-22 claims, 2-17% digest-verbatim
-against 1-3 and 46-63% on the 4.3 flagships).
+`grok-47-staged-migration` is read again (`model_trial_report --since
+2026-09-27 --timeout-seconds 600`): the 4.7 cohort writes better (11-22
+claims, 2-17% digest-verbatim against 1-3 and 46-63% on the 4.3 flagships)
+and fell back on 2 of 48 episodes (pre-flight pings, last Sep 30), but its
+streamed DIGEST stage FAILS the latency gate — p95 433-814 s against the
+600 s request timeout, time-to-first-token ~180-280 s. A flagship digest on
+4.7 is therefore NOT the next step; a script-stage pin on one flagship is
+(omni_view's 4.7 script reads 17.6% verbatim / 85% coverage), operator's
+call, ⚠️ AUDIO. **The script call had never been timed** — the trial report
+listed `generate_podcast_script` as an LLM stage that nothing recorded (the
+Sep 30 "script stage p95 67.6 s" was omni_view's 4.3 DIGEST row); it is
+recorded from the next run (`PipelineMetrics.record_stage`), so a
+script-stage pin can be gated before it widens.
 
 ### Anthology books — ebook + audiobook from the narrative shows (Aug 2026)
 

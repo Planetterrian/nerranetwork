@@ -196,3 +196,30 @@ class TestNerraDailyHandoffs:
                                   links={"handoffs": [], "_name_led_first_draft": 18,
                                          "_handoffs_revised": True})
         assert m["handoffs_show_name_led_first_draft"] == 18 and m["handoffs_revised"] is True
+
+
+class TestScriptStageIsTimed:
+    """The model-trial report gates ``generate_podcast_script`` but nothing
+    recorded it, so a script-stage pin could never be latency-gated."""
+
+    def test_record_stage_lands_in_stages_and_wall(self):
+        from engine.metrics import PipelineMetrics
+
+        m = PipelineMetrics(show_slug="omni_view", episode_num=1)
+        m.record_stage("generate_podcast_script", 61.234)
+        d = m.to_dict()
+        assert {"name": "generate_podcast_script", "duration_s": 61.23} .items() <= next(
+            s for s in d["stages"] if s["name"] == "generate_podcast_script").items()
+        assert m.wall_duration() == 61.23
+
+    def test_the_two_pass_call_is_timed_and_the_combined_path_is_not(self):
+        src = (ROOT / "engine/pipeline.py").read_text()
+        block = src[src.index("_script_stage_s = None"):src.index('template_vars["_script_stage_s"]')]
+        assert "generate_podcast_script(" in block and "time.monotonic()" in block
+        run = (ROOT / "run_show.py").read_text()
+        assert 'metrics.record_stage("generate_podcast_script", _script_stage_s)' in run
+
+    def test_the_report_gates_the_stage_it_now_receives(self):
+        from scripts import model_trial_report as mtr
+
+        assert mtr._is_llm_stage("generate_podcast_script")

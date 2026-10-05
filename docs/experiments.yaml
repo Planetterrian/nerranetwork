@@ -738,6 +738,23 @@ experiments:
     shipped: 2026-09-21
     readout: 2026-09-25
     status: reading
+    update_2026_10_04: >
+      Read 2026-10-04 (model_trial_report --since 2026-09-27 --timeout-seconds
+      600, cohort shows). GATE: FAIL on the DIGEST stage, unchanged in kind
+      from 09-30 although every cohort call now streams: generate_digest p95
+      ai_chips 747 s, prediction_markets 814 s, omni_view_europe 564 s,
+      omni_view_world 554 s, mag7 525 s, vancouver 433 s against a 600 s
+      request timeout; streamed time-to-first-token p50 182-277 s. Pinned-model
+      fallbacks 2/48 episodes (ai_chips 09-28, mag7 09-30, both pre-flight
+      pings). CORRECTION to 09-30: "omni_view script stage p95 67.6 s" was
+      the 4.3 generate_digest row; the script call was never timed, so no
+      script-stage pin has ever been latency-gated. It is recorded as the
+      generate_podcast_script stage from 2026-10-05 (two-pass runs only; a
+      combined run makes no script call). Verdict:
+      do NOT pin any flagship DIGEST to 4.7 — it would add minutes per run
+      inside the 3,000 s budget with no timeout headroom. The next widening is
+      a SCRIPT-stage pin (llm.podcast_model) on one chained flagship, which
+      forces that show to two-pass generation; operator's call, A/B-listen.
     update_2026_09_30: >
       Read 2026-09-30. omni_view script stage: GATE PASS (model_trial_report 
       --since 09-22 --timeout 600: p95 67.6 s, +11%), 9/9 episodes on 4.7, 
