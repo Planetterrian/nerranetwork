@@ -28,11 +28,12 @@ Everything sent comes from Mira (pipelines/producer/mira_mail.py).
 
 from __future__ import annotations
 
+import html as _html
 import json
 import logging
 import os
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 from urllib.parse import quote
 
@@ -139,8 +140,12 @@ def facts_for(guest: Dict[str, Any]) -> Dict[str, Any]:
     ivs = guest.get("interviews") or []
     show = get_show((ivs[0].get("show") if ivs else None) or app.get("show") or "age_of_ai")
     now = datetime.now(timezone.utc)
-    upcoming = next((iv for iv in reversed(ivs) if iv.get("status") in UPCOMING
-                     and (_parse(iv.get("scheduled_at")) or now) > now), None)
+    # Oct 2 2026: an interview that started a few minutes ago is still the
+    # one to help with (Jason Fishman wrote eight minutes in and the facts
+    # said he had nothing booked).
+    soon_past = now - timedelta(minutes=LIVE_BEHIND_MIN)
+    upcoming = next((iv for iv in reversed(ivs) if iv.get("status") in UPCOMING + ("in_progress",)
+                     and (_parse(iv.get("scheduled_at")) or now) > soon_past), None)
     latest = ivs[0] if ivs else None
     lines: List[str] = []
     links: List[str] = [show.page_url, show.base_url]
@@ -152,8 +157,10 @@ def facts_for(guest: Dict[str, Any]) -> Dict[str, Any]:
         if (upcoming.get("call_mode") or "webrtc") == "webrtc":
             lines.append(f"- Their personal studio link (it opens ten minutes before the start): {studio}")
             lines.append(f"- The 30-second microphone and headphones test, any time before: {studio}&test=1")
-            lines.append("- Join from a computer with headphones or earbuds. If the browser gives "
-                         "trouble on the day, the studio has a button to have you call their phone.")
+            lines.append("- Join from a computer with headphones or earbuds. If the computer gives "
+                         "trouble, they can open the same link in their phone's browser with earbuds "
+                         "in (far better sound than a call); a call from you, via the studio's "
+                         "'Have Mira call my phone' button, is the last resort.")
             links += [studio, f"{studio}&test=1"]
         else:
             lines.append("- You will call their phone at that time.")
@@ -400,6 +407,57 @@ def tell_patrick(*, guest_name: str, show_name: str, inbound: Dict[str, Any],
         logger.warning("hold email to Patrick failed: %s", exc)
 
 
+# Oct 2 2026. Jonathan Bautista ("im in the room but no one is joining?")
+# and Jason Fishman ("Says waiting for others to join. I am in") wrote during
+# their slots. Both were held for Patrick, and Jason's reached him thirteen
+# minutes later. A guest who can't get in during their slot is answered at
+# once, from facts, without waiting on a model: the studio link, the steps,
+# the phone's browser, and the call as the last resort.
+LIVE_BEHIND_MIN = 60
+LIVE_AHEAD_MIN = 20
+_LIVE_TROUBLE = re.compile(
+    r"(waiting for (others|someone|you|the host|mira)|no ?one (is )?(here|joining|joined|there|in)"
+    r"|nobody|can'?t (join|get in|connect|hear|find)|cannot (join|connect|get in)|unable to (join|connect)"
+    r"|(isn'?t|is not|not|doesn'?t) work|\bi'?m in\b|\bi am in\b|\bin the room\b|where are you"
+    r"|are you (there|coming)|still waiting|i'?m here|i am here|i'?m (ready|waiting)|i am (ready|waiting))",
+    re.I)
+_QUOTE_START = re.compile(r"^(on .+wrote:|-{2,}\s*original message|from:\s|>)", re.I | re.M)
+
+
+def live_interview(guest: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    now = datetime.now(timezone.utc)
+    for iv in (guest or {}).get("interviews") or []:
+        at = _parse(iv.get("scheduled_at"))
+        if (iv.get("status") in UPCOMING + ("in_progress",) and at
+                and now - timedelta(minutes=LIVE_BEHIND_MIN) <= at <= now + timedelta(minutes=LIVE_AHEAD_MIN)):
+            return iv
+    return None
+
+
+def own_words(body: str) -> str:
+    """The guest's message without the quoted email underneath it."""
+    m = _QUOTE_START.search(body or "")
+    return (body[:m.start()] if m else (body or ""))[:800]
+
+
+def live_trouble_reply(app: Dict[str, Any], iv: Dict[str, Any], show: Any) -> str:
+    studio = f"{show.studio_url(iv['id'])}&role=guest"
+    if (iv.get("call_mode") or "webrtc") != "webrtc":
+        return (f"Hi {first_name(app.get('name'))},\n\nThank you, I'm calling your phone for our "
+                f"interview, so please keep it nearby. If you'd rather join from your computer, "
+                f"here's your studio link: {studio}\n\nI'm here and ready.")
+    return (
+        f"Hi {first_name(app.get('name'))},\n\nI'm here and ready, and I'm sorry for the trouble. "
+        "If you're in a video room from a calendar invite, that isn't my studio, so we can't meet "
+        f"there. Here's your personal studio link:\n{studio}\n\n"
+        "1. Open it on your computer, headphones on.\n"
+        "2. Press Check my microphone and read the sentence out loud until it says Sounds good.\n"
+        "3. Press Join your interview. You're in when you hear me say hello.\n\n"
+        "If your computer gives you trouble, open the same link in your phone's browser with "
+        "earbuds in. It sounds far better than a phone call. As a last resort, the studio's "
+        "Have Mira call my phone button has me calling you straight away.")
+
+
 def handle_guest_reply(*, thread: Dict[str, Any], inbound: Dict[str, Any],
                        guest: Optional[Dict[str, Any]], gmail: Any, policy: Any,
                        dry_run: bool) -> Dict[str, Any]:
@@ -431,6 +489,29 @@ def handle_guest_reply(*, thread: Dict[str, Any], inbound: Dict[str, Any],
     facts = facts_for(guest)
     show = facts["show"]
     line.update(guest_name=app.get("name"), application_id=app.get("id"), show=show.slug)
+
+    live = live_interview(guest)
+    if (live and policy.mode == "auto"
+            and _LIVE_TROUBLE.search(own_words(inbound.get("body") or ""))
+            and mira_replies_in(thread, gmail.user) < MAX_MIRA_REPLIES_PER_THREAD + 2):
+        body = finish(live_trouble_reply(app, live, show), show.slug)
+        gmail.send_reply(body_text=body, thread_id=thread["id"],
+                         to=inbound.get("from") or inbound.get("from_email", ""),
+                         subject=thread.get("subject") or inbound.get("subject", ""),
+                         in_reply_to=inbound.get("message_id", ""),
+                         references=inbound.get("references", ""))
+        gmail.add_label(thread["id"], policy.processed_label)
+        line.update(action="send", intent="live_join_help", reason="guest can't get in during their slot")
+        try:
+            send_email(OPERATOR_EMAIL, f"{app.get('name') or 'A guest'} couldn't get into the studio",
+                       f"<p>Hi Patrick,</p><p>{_html.escape(app.get('name') or 'A guest')} wrote during their interview "
+                       f"slot that they couldn't get in, so I answered straight away with their studio "
+                       f"link and the steps. I'll keep an eye out; if they still aren't in a few minutes "
+                       f"after the start, you'll get the usual email with a one-click phone switch.</p>"
+                       f"<p>What they wrote: <em>{_html.escape(own_words(inbound.get('body') or '')[:400])}</em></p><p>Mira</p>")
+        except Exception as exc:  # noqa: BLE001 — the guest has their answer
+            logger.warning("live-help note to Patrick failed: %s", exc)
+        return line
     p = plan(thread, guest, facts, gmail.user)
     line.update(intent=p["intent"], confidence=p["confidence"], summary=p["summary"])
 

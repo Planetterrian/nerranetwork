@@ -43,9 +43,9 @@ import datetime as _dt
 import json
 import logging
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Mapping
 
 logger = logging.getLogger(__name__)
 
@@ -141,6 +141,11 @@ class EditionSpec:
     #: Below this many available segments the build refuses to publish —
     #: a two-show "network edition" misrepresents the product.
     min_segments: int = 4
+    #: Lineup members on a single weekday OTHER than Monday (Oct 2 2026,
+    #: when every English show joined the lineup): slug -> weekday (0 =
+    #: Monday … 6 = Sunday). Like ``monday_only`` this shapes only the
+    #: EXPECTED roster; a late episode found on another day still splices.
+    weekday_only: Mapping[str, int] = field(default_factory=dict)
 
 
 EDITIONS: Dict[str, EditionSpec] = {
@@ -152,21 +157,41 @@ EDITIONS: Dict[str, EditionSpec] = {
         language="en",
         voice_id=MIRA_VOICE_ID,
         lineup=(
+            # The operator's lead six (2026-08-21), unchanged.
             "spacex",
             "tesla",
             "fascinating_frontiers",
             "models_agents",
             "planetterrian",
             "omni_view",
+            # Oct 2 2026 (operator: "all new English shows are added"):
+            # the world desks follow Omni View, ranked first, then by
+            # region; the money desks follow Modern Investing; the local
+            # and health weeklies sit after the narrative shows; the
+            # Monday weeklies and DP Pod's good-news close stay last.
+            "omni_view_world",
+            "omni_view_north_america",
+            "omni_view_europe",
+            "omni_view_asia_pacific",
+            "omni_view_africa_mideast",
+            "omni_view_latam",
             "modern_investing",
+            "mag7",
+            "ai_chips",
+            "prediction_markets",
             "unintended_consequences",
             "first_principles",
             "models_agents_beginners",
+            "vancouver",
+            "collingwood",
+            "longevity",
+            "peptides",
             "env_intel",
             "offshore_north",
             "dp_pod",
         ),
         monday_only=frozenset({"env_intel", "offshore_north", "dp_pod"}),
+        weekday_only={"longevity": 2, "peptides": 3, "collingwood": 4},
         feed_file="nerra_daily_podcast.rss",
         guid_prefix="nerra-daily",
         episode_prefix="Nerra_Daily",
@@ -405,11 +430,71 @@ def discover_segments(
 
 def expected_slugs(spec: EditionSpec, target_date: _dt.date) -> List[str]:
     """The roster the ready gate waits for on *target_date* (Monday adds
-    the weeklies; every other lineup show is daily)."""
-    is_monday = target_date.weekday() == 0
-    return [
-        s for s in spec.lineup if is_monday or s not in spec.monday_only
-    ]
+    the Monday weeklies, the other weeklies land on their own weekday;
+    every other lineup show is daily)."""
+    weekday = target_date.weekday()
+    out: List[str] = []
+    for slug in spec.lineup:
+        if slug in spec.monday_only and weekday != 0:
+            continue
+        only = spec.weekday_only.get(slug)
+        if only is not None and only != weekday:
+            continue
+        out.append(slug)
+    return out
+
+
+#: Ready-gate constants (Oct 2 2026). The force hour sits behind the LAST
+#: expected slot in run-show.yml's CRON_MAP (Vancouver, 12:16 UTC, ~25 min
+#: of pipeline) — before this it was 12:00, so the force build fired while
+#: the last show was still rendering. Past the force hour the gate builds
+#: only when at least ``FORCE_BUILD_MIN_SHARE`` of the day's expected
+#: shows have landed or skipped; below that it keeps waiting until the
+#: hard deadline, then builds with whatever exists. On 2026-10-02 the
+#: morning flagship wave was diverted into recovery branches and the
+#: 12:00 force build shipped a FOUR-show edition (39 min) while twenty
+#: shows published later in the day; under this rule the edition would
+#: have waited and built at 83% a few hours later instead.
+FORCE_BUILD_UTC_HOUR = 13
+FORCE_BUILD_MIN_SHARE = 0.8
+HARD_DEADLINE_UTC_HOUR = 16
+
+
+def ready_decision(
+    *,
+    now_utc: _dt.datetime,
+    target_date: _dt.date,
+    expected: int,
+    landed: int,
+    skipped: int,
+    min_segments: int,
+    force_hour: int = FORCE_BUILD_UTC_HOUR,
+    min_share: float = FORCE_BUILD_MIN_SHARE,
+    hard_deadline_hour: int = HARD_DEADLINE_UTC_HOUR,
+) -> Tuple[str, str]:
+    """``("build", why)`` or ``("wait", why)`` for the ``--when-ready`` gate.
+
+    *expected* is the day's roster size, *landed* how many of it have an
+    episode, *skipped* how many carry a committed skip marker (they are
+    accounted for, not waited on). Pure so the rule is testable.
+    """
+    accounted = landed + skipped
+    if expected and accounted >= expected:
+        return "build", "every expected show has published or skipped"
+    if target_date < now_utc.date():
+        return "build", "the edition date has passed"
+    share = (accounted / expected) if expected else 0.0
+    if now_utc.hour >= hard_deadline_hour:
+        return "build", f"hard deadline {hard_deadline_hour:02d}:00 UTC passed ({accounted}/{expected})"
+    if now_utc.hour >= force_hour:
+        if landed < min_segments:
+            return "wait", f"only {landed} segment(s) so far (floor {min_segments})"
+        if share >= min_share:
+            return "build", f"force hour passed with {accounted}/{expected} accounted ({share:.0%})"
+        return "wait", (f"force hour passed but only {accounted}/{expected} accounted "
+                        f"({share:.0%} < {min_share:.0%}) — holding for the stragglers "
+                        f"until {hard_deadline_hour:02d}:00 UTC")
+    return "wait", f"{accounted}/{expected} expected shows accounted for"
 
 
 # ---------------------------------------------------------------------------
@@ -1224,6 +1309,70 @@ def handoffs_show_name_led(links: dict, segments: List[Segment]) -> int:
     return count
 
 
+#: The links prompt's own rule: at most one handoff in three may open with
+#: the show's name (``nerra_daily_links.txt``).
+HANDOFF_NAME_LED_SHARE = 1 / 3
+
+
+def handoff_name_led_cap(handoff_count: int) -> int:
+    return max(1, int(handoff_count * HANDOFF_NAME_LED_SHARE))
+
+
+def handoff_revision_prompt(prompt: str, links: dict,
+                            segments: List[Segment]) -> Optional[str]:
+    """A one-shot correction when the draft breaks the name-led rule.
+
+    Oct 4 2026: the rule ("at most ONE handoff in three may begin with the
+    show's name") has been in the links prompt since the Sep 3 review and
+    the model ignored it on every full edition — 18 of 18 handoffs on Oct
+    3, 18 of 19 on Oct 4, the "<Show> turns to / follows with …" skeleton
+    nineteen times in two hours of audio. An instruction the model breaks
+    is enforced in code (the DP Pod Network-pick precedent): the draft is
+    sent back once with the count and the rule. ``None`` = the draft
+    already complies.
+    """
+    handoffs = links.get("handoffs") or []
+    led = handoffs_show_name_led(links, segments)
+    cap = handoff_name_led_cap(len(handoffs))
+    if not handoffs or led <= cap:
+        return None
+    import json as _json
+
+    draft = _json.dumps(links, ensure_ascii=False, indent=2)
+    return (
+        f"{prompt}\n\n"
+        "REVISION REQUIRED. Your draft (below) opened "
+        f"{led} of {len(handoffs)} handoffs with the name of the show it "
+        f"introduces. The rule is at most {cap}. Return the same JSON object "
+        "with intro, title and signoff UNCHANGED and the same number of "
+        f"handoffs ({len(handoffs)}), in the same order, each keeping its "
+        "facts. Rewrite the handoffs so that no more than "
+        f"{cap} begin with a show name: open on the detail, the stake or the "
+        "question, and let the show name arrive mid-sentence or at the end. "
+        "No two handoffs may share an opening phrase.\n\nDRAFT:\n" + draft
+    )
+
+
+def adopt_revised_handoffs(first: dict, revised: Optional[dict],
+                           segments: List[Segment]) -> dict:
+    """Take the revision's handoffs only when they are the same count and
+    lead with FEWER show names; everything else stays the first draft's.
+    Records the first draft's count as ``_name_led_first_draft`` (read by
+    :func:`build_edition_metrics`, never rendered)."""
+    out = dict(first)
+    out["_name_led_first_draft"] = handoffs_show_name_led(first, segments)
+    out["_handoffs_revised"] = False
+    if not revised:
+        return out
+    new = revised.get("handoffs") or []
+    if len(new) != len(first.get("handoffs") or []):
+        return out
+    if handoffs_show_name_led(revised, segments) < out["_name_led_first_draft"]:
+        out["handoffs"] = list(new)
+        out["_handoffs_revised"] = True
+    return out
+
+
 def build_edition_metrics(
     episode_num: int,
     target_date: _dt.date,
@@ -1280,6 +1429,10 @@ def build_edition_metrics(
         # memory targets, counted at build time so they are scorable.
         "intro_words": len(((links or {}).get("intro") or "").split()),
         "handoffs_show_name_led": handoffs_show_name_led(links or {}, segments),
+        # Oct 4 2026: the first draft's count, and whether the one-shot
+        # revision replaced the handoffs (adopt_revised_handoffs).
+        "handoffs_show_name_led_first_draft": (links or {}).get("_name_led_first_draft"),
+        "handoffs_revised": bool((links or {}).get("_handoffs_revised")),
         "handoff_count": len((links or {}).get("handoffs") or []),
         "edition_title_source": "llm" if (links or {}).get("title") else "lead_hook",
     }

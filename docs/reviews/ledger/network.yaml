@@ -835,6 +835,41 @@ reviews:
       evidence: null
     agent_cost_usd: null
 
+  - date: 2026-10-01
+    pr: null
+    doc: docs/reviews/network_review_2026_10_01.md
+    summary: "Operator (same day, policy): a transparent claims-and-corrections process for every show, so the gate stops removing timely news. Measured cost of strip/block since 09-17: 68 sentences stripped across 261 episodes, every audited one a TRUE sentence behind an unreachable or paraphrased source (omni_view 12, planetterrian 10, europe 7, spacex 5); UC skipped 11 of 28 days on its own gate; the model's training data lags the 24-hour cycle, so a sourced story newer than the model must never be dropped for failing memory. Policy now: PUBLISH and MARK (on_failure: flag on every show incl. UC/FPD; nothing removed but reviewer notes; every claim carries a status in the sidecar), RE-VERIFY nightly for seven days (verified_later), and SHOW it (claims.html + claims/<slug>.html, badges on every post's claims panel, process copy owned by engine.brand)."
+    shipped:
+      - "engine/claims.py + run_show: on_failure: flag — per-claim status (verified / verified_from_fetched / verified_later / unverified_unreachable / unverified_not_found / unverified_quote_mismatch / unverified_uncovered / malformed), gate.flagged_sentences, policy_version 2; metrics source_integrity_flagged_*; strip and block remain selectable"
+      - "shows/_defaults.yaml on_failure: flag; unintended_consequences + first_principles: flag (11 skips in 28 days)"
+      - "scripts/reverify_claims.py nightly (--days 7, --apply) + nightly add-paths for digests/**/*_claims.json; Mission Control claims card"
+      - "engine/claims_ledger.py + generate_claims_pages: claims.html (network) and claims/<slug>.html per show, in --static-pages and the sitemap; status badges on the blog claims panel; links from show pages, nav More, footer; ai_disclosure / editorial / FAQ describe publish-and-mark; engine.brand.CLAIMS_PROCESS_STEPS + CLAIMS_STATUS_LABELS own the copy"
+    deferred:
+      - "a second egress for the nightly re-verification (publishers that 403 GitHub runners stay unreachable from the same runners)"
+      - "a spoken on-air line for a flagged lead (audio — operator A/B decision; the web and the notes carry the status today)"
+    predictions:
+    - metric: "source_integrity_stripped_sentences + claims-gate skip markers, all shows"
+      baseline: "68 sentences / 12 skips in the 14 days to 10-01"
+      expected: "0 and 0 for the 21 days after merge"
+      verdict: pending
+      evidence: null
+    - metric: "share of unverified_unreachable claims reaching verified_later within 7 nights (claims sidecars)"
+      baseline: "unmeasured"
+      expected: ">= 40% by the 10-22 readout"
+      verdict: pending
+      evidence: null
+    - metric: "network verified share, 30 days (claims.html)"
+      baseline: "unmeasured as a share; 205 claims on 10-01 with 4 pre-strip failures"
+      expected: ">= 85%"
+      verdict: pending
+      evidence: null
+    - metric: "UC episodes published per 21 days"
+      baseline: "17 of 28 days (09-03..10-01)"
+      expected: ">= 19 of 21"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
 do_not_retry:
   - idea: podcast-side length levers (word floors, expand-retries, prompt
       pressure on the podcast stage) for ANY show

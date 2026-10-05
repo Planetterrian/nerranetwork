@@ -147,6 +147,18 @@ _SELF_NARRATION = [
                r"(?:does not |doesn't )?allow)\b", re.IGNORECASE),
     re.compile(r"\b(?:by|of|for) this (?:brief|desk)\b|\bthis (?:brief|desk) (?:makes|has)\b",
                re.IGNORECASE),
+    # Oct 3 2026 review of the launch cohort (~21 such sentences in 52
+    # episodes): the item / note / material / pile as a DOCUMENT that holds
+    # or lacks a fact — "…are in the item.", "No price … is in the
+    # material.", "Nothing in the supplied note names a vote", "…in today's
+    # pile." A copula or "nothing" must govern the phrase, so physics prose
+    # ("defects in the material") never matches.
+    re.compile(r"^(?=.*\b(?:no|not|nothing|none|neither)\b)"
+               r".*\b(?:is|are|was|were|appears?)\s+(?:\w+\s+){0,3}?"
+               r"(?:in|from) (?:the|today's|this) (?:item|note|material|pile)"
+               r"(?=\s*[.,;:!?]|\s*$)", re.IGNORECASE),
+    re.compile(r"\bsupplied (?:note|notes|material|item|items|text)\b"
+               r"|\btoday's pile\b", re.IGNORECASE),
     re.compile(r"\ball I (?:will|can) say\b|\binventing details\b|\bpadding\b"
                r"|\bword (?:count|target)\b", re.IGNORECASE),
 ]

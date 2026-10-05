@@ -1,0 +1,137 @@
+LLMs map land versus water from pure text latitude-longitude pairs with no images at all.
+
+This is Models and Agents, episode 191.
+
+Andrej Karpathy showed that large language models can correctly classify land versus water when given only latitude and longitude as text.
+
+The evaluation queried models sixteen thousand two hundred times across a grid and rendered the answers as an image that closely matches real geography.
+
+The result demonstrates that factual spatial knowledge emerges from compressing internet text alone.
+
+No vision training or image data was involved in the models tested.
+
+Builders can reproduce the test with any frontier model by feeding coordinate strings and plotting outputs.
+
+The finding reinforces that scale on text continues to unlock structured world knowledge without multimodal input.
+
+In model updates, Karpathy ran the same land-or-water query across multiple models including all Claude variants.
+
+Results were aggregated into a single image that reveals accurate coastline and continent boundaries.
+
+The experiment used sixteen thousand two hundred coordinate pairs and required no images or maps during training or inference.
+
+GraphForge builds tasks from real files and an evidence graph so both the task and its verification rubrics are grounded in the same documents.
+
+Fine-tuning Qwen three point six twenty-seven B on two thousand one hundred sixty-nine trajectories raised GDPVal to one thousand four hundred forty-five point seven under OpenHands.
+
+It also improved Workspace-Bench-Lite and SpreadsheetBench II scores.
+
+The data and models are released publicly.
+
+Settle trains the end-of-reasoning token on answer stability observed in completed traces.
+
+On MATH five hundred with Qwen three four B it cut token count by forty percent while accuracy dropped only half a percentage point.
+
+The method requires only ordinary decoding at inference time.
+
+The authors of the CoT alignment paper introduce CoT-Interpretability Alignment as a metric comparing chain-of-thought traces to internal reasoning detected by interpretability tools.
+
+Baseline alignment across three tasks and three models ranged from forty-four point eight to seventy-five point nine percent.
+
+Post-training with both accuracy and faithfulness rewards improved parametric faithfulness while preserving task performance.
+
+French requires thirty-one to fifty-eight percent more tokens than English across seven twenty twenty-six tokenizers.
+
+Regional languages of France pay roughly one point six to three point three times the English token count.
+
+A byte-level BPE prototype called Baracoda FR version one point two reduces the French premium by eleven point five percent relative to Tekken while using three point seven percent fewer tokens on English.
+
+Seed choice moved fairness metrics more than audio compression on most demographic axes when fine-tuning speech LLMs on four hundred sixty hours of LibriSpeech.
+
+Eighty-five point three percent of the variation in Fair-Speech ethnicity normalized gap was attributed to seed rather than compression.
+
+Scaling the adaptation set to nine hundred sixty hours reduced but did not eliminate the effect.
+
+In agent and tool developments, AutoSynthData turns a target model's failures and a stronger teacher's successes into new training tasks that exercise the same capability in varied situations.
+
+Tasks are generated inside EnterpriseOps Gym and validated for feasibility against the environment specification.
+
+The curriculum shifts automatically toward remaining weaknesses as the model improves.
+
+RSIGame runs local explore-diagnose-improve loops alongside a global loop that preserves the best checkpoint and detects saturation.
+
+Across one hundred forty GameCraft-Bench tasks it raised quality on two engines and five generators.
+
+Experience internalization let Qwen three point eight twenty-seven B exceed GPT five point five one-shot scores while using eleven times fewer generation tokens.
+
+The EVICALC system reads PDFs, selects passages, asks a language model to write arithmetic expressions, and evaluates them locally.
+
+It achieved eight point six one percent joint accuracy on the official test set of one thousand seven hundred thirty tasks.
+
+A public-validation run reached ninety-two point seventeen percent answer accuracy with perfect evidence F1.
+
+Criteria extraction was compared with chain-of-thought prompting on two Reddit corpora using PHQ nine and BDI two questionnaires.
+
+For frontier models the extraction approach showed no significant gain once decision thresholds were fixed a priori from the questionnaire criteria.
+
+The nine billion parameter model labeled most posts severe regardless of prompting style on one corpus.
+
+In practical and community, Karpathy recommends asking models to explain concepts in ASD-STE one hundred controlled language for cleaner output.
+
+He suggests requesting HTML for interactive web pages and custom three b one b style explainer videos that use ElevenLabs narration.
+
+The approach treats large custom software artifacts as cheap and discardable once intelligence and code become abundant.
+
+Karpathy stressed that all observed capabilities arise from reading large amounts of text and predicting the next token.
+
+Image-like arrangements appear only in the two-dimensional layout of text responses.
+
+The point underscores that spatial and factual knowledge can emerge without any visual training data.
+
+Bitdefender released a beta of AI Guardian that runs on Mac agents.
+
+The tool focuses on detecting and containing rogue agent behavior at the endpoint level.
+
+DigiCert announced new certificate and identity controls intended to give organizations visibility and revocation options when autonomous agents act outside intended boundaries.
+
+Pop the hood on tokenization tradeoffs in multilingual settings.
+
+Byte-pair encoding builds a vocabulary by repeatedly merging the most frequent adjacent symbol pairs until a target size is reached.
+
+The resulting token boundaries reflect training-data statistics rather than linguistic structure, so languages with different orthographies or morphologies pay different token counts for the same meaning.
+
+Adding French data to a tokenizer training run reduces the French premium within the first few thousand merges but increases the English token count as vocabulary slots are reallocated.
+
+The effect plateaus after roughly fifty thousand merges while the English cost keeps rising, creating a direct capacity trade-off.
+
+At inference time the higher token count directly raises both latency and cost because billing and context windows are measured in tokens.
+
+When a workload is known to be French-heavy, training a dedicated tokenizer or fine-tuning an existing one on French text yields the largest reduction.
+
+Otherwise the marginal gain rarely justifies the English penalty.
+
+Teams should measure the actual token ratio on their target corpus before committing to a multilingual tokenizer change.
+
+Try asking any frontier model to rewrite an explanation in ASD-STE one hundred controlled language and compare readability with the default output.
+
+Reproduce Karpathy's land-or-water coordinate test on your preferred model and plot the results to see geographic knowledge emerge from text alone.
+
+Fine-tune a small open-weight model on the released GraphForge trajectories to test agent performance on real-file workspaces.
+
+Generate a custom three b one b style explainer video prompt for a topic you are teaching and test it with an ElevenLabs API key.
+
+Additional results from the ongoing OpenAI review of agent incidents are expected in the coming weeks.
+
+More labs are scheduled to release tokenizer variants optimized for specific languages later this quarter.
+
+New agent safety tooling from endpoint vendors is slated for wider beta access next month.
+
+Before we go, watch for further details on how seed variability affects fairness metrics in speech model adaptation as more labs release multi-seed evaluations.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — Omni View Asia Pacific, the day across Asia and the Pacific, told from the region's side. Find every show, free, at nerranetwork.com.
+
+Our interviews are hosted by Mira, the network's AI documentarian, and the guest decides whether the conversation is published at all — how that works is at nerranetwork.com/mira.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

@@ -1121,6 +1121,61 @@
     audGrid.appendChild(card);
   }
 
+  // Claim ledger — every committed digests/**/*_claims.json (Oct 1 2026).
+  // Flag mode publishes with the status visible; this card is where the
+  // verified share, the flagged reasons and the nightly re-verification's
+  // recoveries are read. null = no sidecar in the window ("—"); 0 = a
+  // measured zero. Shares are of claims_total (entries + uncovered shapes).
+  {
+    const cl = data.claims || {};
+    const card = sectionCard("Claim ledger", "verified share · flagged by reason · re-verified later");
+    const pctOrDash = (v) => (v === null || v === undefined) ? "—" : Math.round(v * 100) + "%";
+    if (!cl.configured) {
+      card.appendChild(h("p", { class: "fine-list",
+        text: "No claims sidecar committed yet — the source-integrity gate writes one beside every digest." }));
+    } else if (cl.error) {
+      card.appendChild(h("p", { class: "fine-list", text: "Claim ledger error: " + cl.error }));
+    } else {
+      const w7 = cl.window_7d || {};
+      const w30 = cl.window_30d || {};
+      card.appendChild(h("div", { class: "headline",
+        html: pctOrDash(w7.verified_share) + "<small>verified · 7d</small>" +
+              "&nbsp;&nbsp;" + fmtOrDash(w7.claims_total) + "<small>claims · 7d</small>" +
+              "&nbsp;&nbsp;" + fmtOrDash(w7.flagged) + "<small>flagged · 7d</small>" +
+              "&nbsp;&nbsp;" + fmtOrDash(w7.verified_later) + "<small>verified later</small>" }));
+      const reasons = w7.flagged_by_reason || {};
+      const reasonText = ["unreachable", "not_found", "quote_mismatch", "uncovered", "malformed"]
+        .map((r) => r.replace("_", " ") + " " + fmtOrDash(reasons[r])).join(" · ");
+      card.appendChild(h("p", { class: "fine-list", text:
+        "7d flagged by reason: " + reasonText + " · " + fmtOrDash(w7.sidecars) + " sidecars" }));
+      card.appendChild(h("p", { class: "fine-list", text:
+        "30d: " + pctOrDash(w30.verified_share) + " verified of " + fmtOrDash(w30.claims_total) +
+        " claims · " + fmtOrDash(w30.flagged) + " flagged · " + fmtOrDash(w30.verified_later) +
+        " verified later · " + fmtOrDash(w30.sidecars) + " sidecars" +
+        (w30.by_mode && Object.keys(w30.by_mode).length
+          ? " · modes " + Object.keys(w30.by_mode).sort().map((m) => m + " " + w30.by_mode[m]).join(", ")
+          : "") }));
+      const per = w30.per_show || {};
+      const slugs = Object.keys(per).sort((a, b) => (per[b].claims_total || 0) - (per[a].claims_total || 0));
+      const maxC = Math.max.apply(null, slugs.map((s) => per[s].claims_total || 0).concat([1]));
+      slugs.forEach((slug) => {
+        const v = per[slug] || {};
+        const rs = v.flagged_by_reason || {};
+        const txt = pctOrDash(v.verified_share) + " verified · " + fmtOrDash(v.claims_total) + " claims" +
+          (v.flagged ? " · " + fmtOrDash(v.flagged) + " flagged" : "") +
+          (v.verified_later ? " · +" + fmtOrDash(v.verified_later) + " later" : "");
+        card.appendChild(barRow(slug, v.claims_total || 0, maxC, txt,
+          { color: "var(--series-2)",
+            title: slug + " (30d, " + fmtOrDash(v.sidecars) + " sidecars): flagged — unreachable " +
+                   fmtOrDash(rs.unreachable) + ", not found " + fmtOrDash(rs.not_found) +
+                   ", quote mismatch " + fmtOrDash(rs.quote_mismatch) + ", uncovered " +
+                   fmtOrDash(rs.uncovered) + ", malformed " + fmtOrDash(rs.malformed) }));
+      });
+      if (cl.as_of) card.appendChild(h("p", { class: "fine-list", text: "as of " + cl.as_of + " · dated from each sidecar's filename" }));
+    }
+    audGrid.appendChild(card);
+  }
+
   // Unit economics — cost vs each platform (never summed). Marked
   // data-econ: hidden from sponsors (spend is internal), shown to
   // investors (unit economics ARE the pitch).
@@ -2139,7 +2194,7 @@
 
   // Cost
   {
-    const card = sectionCard("Cost", "Grok + TTS, per published episode");
+    const card = sectionCard("Cost", "every credit file: Grok, TTS, images, search, dub tracks, motion clips, reviewer");
     const n7 = cost.network_last_7_days || {};
     card.appendChild(h("div", { class: "headline",
       html: money(n7.total) + "<small>7d</small>&nbsp;&nbsp;" +
@@ -2160,10 +2215,23 @@
         "<span class='swatch' style='background:var(--series-2)'></span>TTS " + money(n7.tts) }));
       card.appendChild(legend);
     }
+    // The lines the Grok/TTS split cannot show (2026-10-02 cost pass):
+    // images + search (Aug 18), and the three that never reached the
+    // rollup before — multilingual dub tracks, hook-Short motion clips,
+    // the daily-audit reviewer. Absent = "—", never $0.00: an old
+    // dashboard.json built before the pass has no key for them.
+    const moneyOrDash = (n) => (n === null || n === undefined || n === "") ? "—" : money(n);
+    card.appendChild(h("p", { class: "fine-list", html:
+      "7d · <span class='k'>Images</span> " + moneyOrDash(n7.images) +
+      " · <span class='k'>Search</span> " + moneyOrDash(n7.search) +
+      " · <span class='k'>Multilingual</span> " + moneyOrDash(n7.multilingual) +
+      " · <span class='k'>Motion clips</span> " + moneyOrDash(n7.motion) +
+      " · <span class='k'>Reviewer</span> " + moneyOrDash(n7.review) }));
     const proj = cost.projections || {};
     card.appendChild(h("p", { class: "fine-list", html:
-      "<span class='k'>" + fmt(n7.episodes) + "</span> credit files · 7d — avg <span class='k'>" +
-      money(proj.avg_cost_per_episode_usd) + "</span>/file · trailing burn <span class='k'>" +
+      "<span class='k'>" + fmt(n7.files != null ? n7.files : n7.episodes) + "</span> credit files · " +
+      "<span class='k'>" + fmt(n7.episodes) + "</span> episodes · 7d — avg <span class='k'>" +
+      money(proj.avg_cost_per_episode_usd) + "</span>/episode · trailing burn <span class='k'>" +
       money(proj.projected_weekly_usd) + "</span>/week" +
       (proj.projected_monthly_usd != null
         ? (" · <span class='k'>" + money(proj.projected_monthly_usd) + "</span>/30d")

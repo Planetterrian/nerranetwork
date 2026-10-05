@@ -97,7 +97,9 @@ def _host(url: str) -> str:
         return ""
 
 
-def _entered_word(flag: Any) -> str:
+def _entered_word(flag: Any, text: str = "") -> str:
+    if text:
+        return text
     if flag is True:
         return "EMIRA IV ENTERED"
     if flag is False:
@@ -105,10 +107,14 @@ def _entered_word(flag: Any) -> str:
     return "EMIRA IV entry unconfirmed"
 
 
-def _latest_fix(curated: Dict[str, Any], live: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+def _latest_fix(curated: Dict[str, Any], live: Optional[Dict[str, Any]],
+                today: Optional[_dt.date] = None) -> Optional[Dict[str, Any]]:
     """The newest dated fix: the operator-verified log, or the live rail's
-    derived fix when it is newer (the same rule the page applies)."""
-    log = [p for p in (curated.get("position_log") or []) if _parse_date(p.get("date"))]
+    derived fix when it is newer (the same rule the page applies). A fix
+    dated after ``today`` is not yet a fix — the block is computed for a
+    clock, and a record can be newer than the clock it is read at."""
+    log = [p for p in (curated.get("position_log") or []) if _parse_date(p.get("date"))
+           and (today is None or _parse_date(p.get("date")) <= today)]
     best = max(log, key=lambda p: p["date"]) if log else None
     live_pos = (live or {}).get("position") if isinstance(live, dict) else None
     if isinstance(live_pos, dict) and _parse_date(live_pos.get("date")):
@@ -122,8 +128,44 @@ def _latest_fix(curated: Dict[str, Any], live: Optional[Dict[str, Any]]) -> Opti
     return best
 
 
+def _tracker_lines(tracker: Dict[str, Any], today: _dt.date) -> List[str]:
+    """The YB tracker fix, worded by the operator's rule (Oct 4 2026)."""
+    from engine.yb_tracker import STALE_DAYS, position_sentence
+
+    latest = tracker.get("latest") or {}
+    fd = _parse_date(latest.get("date"))
+    if fd is None:
+        return []
+    age = (today - fd).days
+    sentence = position_sentence(tracker, today)
+    tense = ("present tense is allowed, WITH this date and the source" if age <= STALE_DAYS
+             else f"it is more than {STALE_DAYS} days old, so say \"last seen {_fmt(fd)}\" — "
+                  "never the present tense")
+    lines = [
+        f"LAST KNOWN POSITION — YB TRACKER, newest fix {latest.get('date')} "
+        f"({_days_word(age)} ago): {sentence} Source: {tracker.get('url', '')}. "
+        f"Every position sentence carries its date and its source; {tense}. "
+        f"This outranks any blog post about where the boat was going."
+    ]
+    outs = tracker.get("outings") or []
+    since = (f"since it arrived on {tracker['arrived']}" if tracker.get("arrived")
+             else f"in the tracker's window from {tracker.get('window_start', '')}")
+    if outs:
+        trips = "; ".join(f"{o['date']} (out to {o['max_km']:.0f} km)" for o in outs)
+        lines.append(
+            f"OUTINGS ON THE TRACKER {since}: {len(outs)} — {trips}. That is ALL the sailing "
+            f"the tracker shows: never describe the boat or the skipper as training regularly, "
+            f"or as \"training solo in Europe\", beyond these dated outings."
+        )
+    else:
+        lines.append(f"OUTINGS ON THE TRACKER {since}: none. The boat has not left the berth on "
+                     f"the tracker; never describe it as training or sailing this week.")
+    return lines
+
+
 def build_campaign_status(curated: Dict[str, Any], *, live: Optional[Dict[str, Any]] = None,
-                          now: Optional[_dt.datetime] = None) -> str:
+                          now: Optional[_dt.datetime] = None,
+                          tracker: Optional[Dict[str, Any]] = None) -> str:
     """Render the CAMPAIGN STATUS block from the record. Empty record → ''."""
     if not curated:
         return ""
@@ -140,7 +182,11 @@ def build_campaign_status(curated: Dict[str, Any], *, live: Optional[Dict[str, A
     )
 
     # --- Last known position -------------------------------------------
-    fix = _latest_fix(curated, live)
+    if tracker is None and isinstance(live, dict):
+        tracker = live.get("tracker") if isinstance(live.get("tracker"), dict) else None
+    tracker_lines = _tracker_lines(tracker, today) if tracker else []
+    lines.extend(tracker_lines)
+    fix = None if tracker_lines else _latest_fix(curated, live, today)
     if fix:
         fd = _parse_date(fix.get("date"))
         age = (today - fd).days if fd else None
@@ -181,7 +227,8 @@ def build_campaign_status(curated: Dict[str, Any], *, live: Optional[Dict[str, A
         else:
             ref = end.date() if end else when.date()
             detail = f"ended {_days_word((today - ref).days)} ago"
-        entered = f" {_entered_word(c.get('emira_entered'))}." if "emira_entered" in c else ""
+        entered = (f" {_entered_word(c.get('emira_entered'), c.get('emira_entry_text', ''))}."
+                   if "emira_entered" in c else "")
         pending = ""
         if state == "FINISHED" and c.get("results_key") and c["results_key"] not in on_record:
             pending = (" RESULT NOT YET ON RECORD — do not state a winner or a placing unless a this-week"
@@ -202,15 +249,22 @@ def build_campaign_status(curated: Dict[str, Any], *, live: Optional[Dict[str, A
             lines.append(f"- {r.get('event', '')} [{r.get('dates', '')}]: {rows}. Source: {r.get('url', '')}")
 
     # --- Route du Rhum entry ---------------------------------------------
+    entry = curated.get("rhum_entry") or {}
+    if isinstance(entry, dict) and entry.get("text"):
+        # Oct 4 2026 (operator): the entry status is its own dated record.
+        # "Aiming to start" until the skipper is on the OFFICIAL list.
+        lines.append(f"ROUTE DU RHUM ENTRY STATUS (as of {entry.get('as_of', verified)}): "
+                     f"{entry['text']}")
     rdr = curated.get("rdr_imoca_entries") or {}
     if rdr:
         entries = rdr.get("entries") or []
-        canada = [e for e in entries if e.get("canada")]
+        official = [e for e in entries if e.get("canada") and e.get("official", True)]
         total = rdr.get("total_registered") or len(entries)
         lines.append(
             f"ROUTE DU RHUM 2026 — IMOCA ENTRY: {total} registered on the class page "
             f"(read {rdr.get('read_date', verified)}); "
-            + ("Scott Shawyer IS on the list" if canada else "Scott Shawyer is NOT on the list read")
+            + ("Scott Shawyer IS on the list" if official
+               else "Scott Shawyer is NOT on the official entry list")
             + f". Source: {rdr.get('source_url', '')}"
         )
 
@@ -235,12 +289,17 @@ def _load(path: Path) -> Optional[Dict[str, Any]]:
         return None
 
 
-def campaign_status_from_files(*, now: Optional[_dt.datetime] = None) -> str:
-    """The block from the committed record + the live rail; '' on any failure."""
+def campaign_status_from_files(*, now: Optional[_dt.datetime] = None,
+                               tracker: Optional[Dict[str, Any]] = None) -> str:
+    """The block from the committed record + the live rail; '' on any failure.
+
+    ``tracker`` is a fresh YB summary fetched by the caller at episode
+    time; without it the live rail's last tracker read is used.
+    """
     try:
         curated = _load(CURATED_PATH) or {}
         live = _load(LIVE_PATH)
-        return build_campaign_status(curated, live=live, now=now)
+        return build_campaign_status(curated, live=live, now=now, tracker=tracker)
     except Exception as exc:  # noqa: BLE001 — never block an episode
         logger.warning("Offshore North campaign status unavailable (non-fatal): %s", exc)
         return ""

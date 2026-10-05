@@ -738,6 +738,23 @@ experiments:
     shipped: 2026-09-21
     readout: 2026-09-25
     status: reading
+    update_2026_10_04: >
+      Read 2026-10-04 (model_trial_report --since 2026-09-27 --timeout-seconds
+      600, cohort shows). GATE: FAIL on the DIGEST stage, unchanged in kind
+      from 09-30 although every cohort call now streams: generate_digest p95
+      ai_chips 747 s, prediction_markets 814 s, omni_view_europe 564 s,
+      omni_view_world 554 s, mag7 525 s, vancouver 433 s against a 600 s
+      request timeout; streamed time-to-first-token p50 182-277 s. Pinned-model
+      fallbacks 2/48 episodes (ai_chips 09-28, mag7 09-30, both pre-flight
+      pings). CORRECTION to 09-30: "omni_view script stage p95 67.6 s" was
+      the 4.3 generate_digest row; the script call was never timed, so no
+      script-stage pin has ever been latency-gated. It is recorded as the
+      generate_podcast_script stage from 2026-10-05 (two-pass runs only; a
+      combined run makes no script call). Verdict:
+      do NOT pin any flagship DIGEST to 4.7 — it would add minutes per run
+      inside the 3,000 s budget with no timeout headroom. The next widening is
+      a SCRIPT-stage pin (llm.podcast_model) on one chained flagship, which
+      forces that show to two-pass generation; operator's call, A/B-listen.
     update_2026_09_30: >
       Read 2026-09-30. omni_view script stage: GATE PASS (model_trial_report 
       --since 09-22 --timeout 600: p95 67.6 s, +11%), 9/9 episodes on 4.7, 
@@ -3220,3 +3237,168 @@ experiments:
       Requires the operator to `wrangler deploy` workers/gallery (the tag
       allow-list) — until then the forms still subscribe the address to
       the member list and drop the show tag.
+  - id: claims-flag-policy-2026-10-01
+    title: "Publish and mark: on_failure flag on every show, nightly re-verification, public claims ledger"
+    area: trust
+    shipped: 2026-10-01
+    readout: 2026-10-22
+    status: reading
+    baseline: "09-17..10-01: 68 sentences stripped across 261 episodes (omni_view 12, planetterrian 10, europe 7, spacex 5 — every audited strip a TRUE sentence behind an unreachable or paraphrased source); UC skipped 11 of 28 days and FPD 1 on the claims gate; 4 of 15 flagship episodes recorded 0 claims"
+    target: >
+      source_integrity_stripped_sentences == 0 and claims-gate skips == 0 on
+      every show for 21 days; >= 40% of claims first marked
+      unverified_unreachable reach verified_later within 7 nights; the
+      network claims page shows a verified share >= 85% over 30 days; UC
+      publishes >= 19 of 21 days.
+    criteria: >
+      Hit = all four. A verified_later rate under 20% = the unreachable
+      class is mostly runner-blocked publishers, so the nightly needs a
+      second egress or the fetch-cache corpus; a verified share under 75%
+      = the ledger is thin (the empty-ledger class), not the policy.
+      Any flagged claim later shown FALSE by a reader report = file the
+      correction (the mechanism exists) and read the reason mix before
+      changing the policy; one false flagged claim is not a reason to
+      return to stripping true ones.
+    notes: >
+      engine/claims.py on_failure: flag — nothing removed but reviewer
+      notes; every entry carries a status in the sidecar;
+      scripts/reverify_claims.py re-checks unverified claims nightly for
+      seven days; claims.html + claims/<slug>.html render the record;
+      engine.brand.CLAIMS_PROCESS_STEPS is the one owner of the process
+      copy. The model's training data lags the 24-hour cycle: a story
+      newer than the model is verified against its fetched source, never
+      against memory, and "cannot verify" is a status, not a reason to
+      drop the story.
+
+
+  - id: nerra-daily-full-lineup-2026-10-02
+    title: "Nerra Daily carries every English show; the ready gate holds for the stragglers"
+    area: product
+    shipped: 2026-10-02
+    readout: 2026-10-23
+    status: reading
+    baseline: >
+      13-show lineup, 12:00 UTC force hour. Ep043 (10-02) shipped at 39
+      min with 4 of 9 expected segments after the morning flagship wave
+      was diverted into recovery branches (claims.html rebase conflicts,
+      fixed the same day); Ep042 ran 76 min with 9 segments. The thirteen
+      launch-cohort shows were on no edition.
+    target: >
+      Over 21 days: median metrics_ep*.json segment_count >= 18 on
+      weekdays (26-show lineup, weekday roster 21-23); missing_expected
+      empty on >= 17 of 21 days; no edition under 10 segments; the force
+      build (13:00 UTC, 80% floor, 16:00 hard deadline) never ships a
+      roster share under 0.8 before 16:00.
+    criteria: >
+      Hit = all four. A median duration past 3 h 30 with first-week
+      downloads falling against the 09-17..10-01 baseline is the signal
+      to split the edition (a desks edition, a markets edition), never to
+      drop shows silently. Three days of missing_expected naming the same
+      show = that show's slot or runtime, not the gate.
+    notes: >
+      engine/daily_edition.py EDITIONS["en"].lineup (26), weekday_only for
+      the non-Monday weeklies, ready_decision() is the pure gate rule;
+      FORCE_BUILD_UTC_HOUR 13 (Vancouver's 12:16 slot is the last), the
+      Worker's EDITION_DISPATCH 13:07, GitHub sweeps 13:23/14:23/16:23/17:23;
+      the links call's max_tokens scales with the handoff count. Nerra
+      Personal's vocabulary is the roster again (PERSONAL_EXTRA_SHOW_SLUGS
+      empty). ⚠️ Mira's handoff count triples — A/B-listen the first edition.
+
+  - id: hook-leads-body-2026-10-03
+    title: "The body opens on the story the cold open sold"
+    area: retention
+    shipped: 2026-10-03
+    readout: 2026-10-24
+    status: reading
+    metric: long_form_median_avp_en_14d
+    baseline: 10.3
+    target: >
+      EN long-form average view duration at a matched age of ~7 days fell
+      on five shows for videos published 09-21..25 (Tesla 97 -> 62 s, FF
+      98 -> 49, M&A 82 -> 50, MAB 53 -> 40, MIT 59 -> 16; SpaceX held
+      102 -> 90). New per-episode metric script_hook_leads_body_pct (share
+      of the hook's salient words spoken in the first three body sentences)
+      reads the cause: since 09-22 the body did NOT open on the hook's
+      story on 82% of Tesla and 92% of MAB episodes (44% / 47% in August),
+      while SpaceX — the show whose retention held — fell to 25%. Target:
+      script_hook_leads_body_pct median >= 40 on the nine English news
+      shows and the 14-day median long-form AVP back to >= 12.
+    criteria: >
+      Hit = both. Metric up with AVP flat = the opening minute is not the
+      lever on its own (read the open hold at 5%). Metric flat = the
+      instruction is ignored and the fix moves to data (put the hook's
+      digest item first before the script stage).
+    notes: >
+      engine/intros.build_cold_open_spec gained one shape-only bullet (no
+      example sentence) in every English podcast prompt; read-only metric
+      in engine/script_audit.hook_leads_body. The Jul-30 "least expected
+      fact, even when it is not the biggest story" rule is unchanged — the
+      open still picks the fact, the body now follows it.
+      ⚠️ Prompt change — A/B-listen the first episode on Tesla and MAB.
+
+  - id: dub-titles-never-a-fragment-2026-10-03
+    title: "RU/FR window Shorts are never titled with a transcript slice"
+    area: quality
+    shipped: 2026-10-03
+    readout: 2026-10-17
+    status: reading
+    metric: dub_fragment_title_share_14d
+    baseline: 0.11
+    target: >
+      The Aug-7 fix took the share from 0.66 to 0.10 on a metric that only
+      saw lowercase starts; 44 of 349 RU window Shorts still shipped as
+      «2026 года», «туманности», «в 2026 года» (SpaceX Ep119, 10-03).
+      The metric now uses engine.titles.is_fragment_title and window Shorts
+      only (0.11 on 10-03). Target: 0.00 on Shorts published after merge.
+    notes: >
+      ScoredWindow.window_text gives the headline helper the window's
+      speech instead of one Whisper segment; a fragment result falls back
+      to the episode headline + the second-Short tail (the tag now goes
+      last — the old concatenation would have shipped «… #Shorts — ещё
+      момент»). Reach is NOT the expected effect: fragment-titled RU
+      Shorts earned a median 149 views vs 161 for clean ones. Existing
+      videos: scripts/retitle_youtube_videos.py --channel ru|fr (dry run
+      default; 68 RU + 2 FR proposals on 10-03; ~51 quota units each).
+
+  - id: promo-cadence-word-2026-10-03
+    title: "The sibling plug says weekly for a weekly show"
+    area: quality
+    shipped: 2026-10-03
+    readout: 2026-10-10
+    status: reading
+    target: >
+      ~49 airings since 09-20 called Offshore North, Env Intel, DP Pod,
+      Peptides or Collingwood Weekly "one of the Nerra Network's daily
+      briefings" / "another sharp daily briefing". Target: zero, with
+      every daily show's plug byte-identical.
+    notes: >
+      engine/network_promo.build_network_promo reads engine.cadence;
+      Nerra Daily's promo-cut anchors do not use the changed words.
+      ⚠️ Spoken text on weekly-show plugs only.
+  - id: claims-coverage-grounded-2026-10-05
+    title: "Item coverage floor reads each item's own Source and runs on flagged gates"
+    area: trust
+    shipped: 2026-10-05
+    readout: 2026-10-19
+    status: reading
+    baseline: "Item coverage on the last 4 episodes of each established news show: Tesla 25-67%, SpaceX 0-43%, FF 7-33%, M&A 0-46%, Omni View 0%, MIT 0-20%, MAB 0-100%; the floor added 1 verified claim in 24 episodes. The repair call answered [] on Tesla Ep624 and SpaceX Ep120 (2026-10-04 logs): it asked for a page from memory. 4 of those 24 (and 3 of Planetterrian's last 4) were still failing after the first repair and got no floor at all."
+    target: >
+      source_integrity_item_coverage_pct median >= 50 on Tesla, SpaceX,
+      M&A, Omni View and MIT over 14 days; coverage_repair_added > 0 on
+      >= 60% of the episodes where the floor ran; the network claims page's
+      verified share does not fall.
+    criteria: >
+      Hit = all three. coverage_repair_grounded high but _added near 0 =
+      the model will not quote (read the "item coverage floor" log line's
+      offered / rejected counts before touching the prompt); grounded low =
+      the run's fetched copy is thin on those shows (fetch_full_text), not
+      the floor. A verified-share drop means added entries are failing on
+      re-verification and the floor is not only adding.
+    notes: >
+      Replay without the model on six Oct 3-4 flagship digests: 29 of 43
+      uncovered sourced items got a passage from their own Source URL by
+      HTTP alone (the runner also holds the fetched copy). The mechanical
+      check is unchanged; entries are added only when each verifies, and
+      the result is kept only when the gate verifies more and gets no
+      worse. Metadata only: the ledger and the claims panels change, no
+      prose and no audio.

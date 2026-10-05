@@ -208,9 +208,10 @@ def studio_steps_html(studio_link: str, *, phone_fallback: bool = True):
            "<li>Press <strong>Join your interview</strong>. You're in when you hear me "
            "say hello.</li></ol>")
     if phone_fallback:
-        out += ("<p>If anything gets stuck, the studio's <strong>Have Mira call my "
-                "phone</strong> button gets us going by phone straight away, so we never "
-                "lose the slot.</p>")
+        out += ("<p>If your computer gives you trouble, open the same link on your phone, "
+                "earbuds in: it sounds far better than a phone call. A call from me, with the "
+                "studio's <strong>Have Mira call my phone</strong> button, is the last resort, "
+                "so we never lose the slot.</p>")
     return Markup(out)
 
 

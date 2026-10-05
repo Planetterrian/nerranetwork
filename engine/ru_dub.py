@@ -467,18 +467,81 @@ def _policy_plan(config) -> Dict[str, object]:
         return legacy
 
 
-def _ru_short_title(long_title: str, *, body_limit: int = 70) -> str:
+def _window_short_headline(excerpt: str, opening_text: str, lang: str,
+                           limit: int) -> str:
+    """A complete headline for a non-hook dub Short, or ``""``.
+
+    Oct 3 2026: the excerpt handed to ``headline_from_excerpt`` was the
+    window's FIRST Whisper segment — often three words on the RU track — so
+    the helper refused it (under 15 chars) or had no story to name, and the
+    raw slice shipped: 81 of 314 RU filled Shorts since August were titled
+    like «в 2026 года» or «Как минимум до 2030 года». Now the helper reads
+    the window's spoken text (``ScoredWindow.window_text``), and a result
+    that still reads as a fragment (``engine.titles.is_fragment_title``) is
+    refused, as is the raw clause-trim of a fragment. ``""`` tells the
+    caller to use its whole-episode headline fallback — never a slice.
+    """
+    from engine.titles import is_fragment_title
+    body = ""
+    source = (excerpt or "").strip() or (opening_text or "").strip()
+    try:
+        from engine.translate import headline_from_excerpt
+        body = headline_from_excerpt(source, lang, max_chars=limit)
+    except Exception:  # noqa: BLE001 — title-only metadata, best-effort
+        body = ""
+    if body:
+        body = _clause_trim(body, limit, lang)
+    if body and not is_fragment_title(body):
+        return body
+    raw = _clause_trim((opening_text or "").rstrip("…").rstrip(), limit, lang)
+    if raw and not is_fragment_title(raw):
+        return raw
+    return ""
+
+
+def _ru_short_title(long_title: str, *, body_limit: int = 70,
+                    keep_whole_if_fits: bool = True) -> str:
     """A distinct, punchy Short title derived from the RU long title.
 
     Drops the "Эп. N:" episode prefix, word-boundary-trims the body to a short
     headline (never mid-word, no trailing "…"), and appends " #Shorts" — always
     within YouTube's 100-char cap. Distinct from the long title (at minimum by
-    the suffix; usually also by the dropped prefix + trim)."""
+    the suffix; usually also by the dropped prefix + trim).
+
+    Oct 4 2026: a headline that fits YouTube's cap WHOLE ships whole. The
+    70-char budget cut FF Ep212's hook Short to «…в бизнес совместного»
+    (the headline is 75 characters and ends «совместного доступа»), and a
+    clause trim cannot see that an adjective has lost its noun. The budget
+    still applies to a headline too long to fit, and to the fallback, which
+    needs room for its tail (``keep_whole_if_fits=False``).
+    """
     body = _EP_PREFIX_RE.sub("", (long_title or "").strip()).strip()
     body = body.rstrip("…").rstrip()
-    ceiling = min(body_limit, _YT_TITLE_MAX - len(_SHORTS_SUFFIX))
+    cap = _YT_TITLE_MAX - len(_SHORTS_SUFFIX)
+    if keep_whole_if_fits and len(body) <= cap:
+        return f"{body}{_SHORTS_SUFFIX}".strip()
+    ceiling = min(body_limit, cap)
     body = _clause_trim(body, ceiling, "ru")
     return f"{body}{_SHORTS_SUFFIX}".strip()
+
+
+#: Appended to a non-hook Short's fallback title (whole-episode headline).
+RU_SECOND_SHORT_TAIL = " — ещё момент"
+
+
+def _ru_second_short_title(long_title: str) -> str:
+    """Fallback title for a non-hook RU Short: headline + tail + #Shorts.
+
+    Oct 3 2026: callers used to append the tail to ``_ru_short_title``'s
+    result, which already ends in " #Shorts" — «… #Shorts — ещё момент».
+    Harmless while the branch was rare; it becomes the common fallback once
+    fragment titles are refused, so the tag goes last here, once.
+    """
+    body = _ru_short_title(long_title, body_limit=58,
+                           keep_whole_if_fits=False)
+    if body.endswith(_SHORTS_SUFFIX.strip()):
+        body = body[: -len(_SHORTS_SUFFIX.strip())].rstrip()
+    return f"{body}{RU_SECOND_SHORT_TAIL}{_SHORTS_SUFFIX}".strip()
 
 
 def publish_ru_dub(
@@ -815,6 +878,12 @@ def publish_ru_dub(
                 ]
             else:
                 short_plan = [(base_offset, "", "legacy_fallback")]
+            # Each window's spoken text, aligned with short_plan — the
+            # context its title is written from (Oct 3 2026).
+            short_window_texts = [
+                (getattr(w, "window_text", "") or "").strip()
+                for w in (windows or [])[:len(short_plan)]
+            ] if windows else [""]
 
             # End-card CTA (Russian) — shared across Shorts; reuse the RU
             # long-form thumbnail.
@@ -916,32 +985,24 @@ def publish_ru_dub(
                     if short_idx == 0 or not opening_text:
                         short_title = _ru_short_title(ru_title)
                         if short_idx > 0:
-                            short_title = _ru_short_title(
-                                ru_title, body_limit=58) + " — ещё момент"
+                            short_title = _ru_second_short_title(ru_title)
                     else:
                         # Aug 2026: the 2nd/3rd Short's window opening is a
-                        # mid-sentence slice by construction, so first ask
-                        # Grok for a complete headline from that excerpt
-                        # (engine.translate.headline_from_excerpt — grounded
-                        # in the excerpt only, never-invent). Any failure
-                        # falls back to the legacy clause-trim so a Short
-                        # never ships untitled. Title-only metadata.
+                        # mid-sentence slice by construction, so ask Grok
+                        # for a complete headline from the window's speech
+                        # (never-invent). Oct 3 2026: a fragment is never
+                        # shipped — the whole-episode headline with the
+                        # "another moment" tail stands in instead.
                         _limit = min(70, _YT_TITLE_MAX - len(_SHORTS_SUFFIX))
-                        body = ""
-                        try:
-                            from engine.translate import headline_from_excerpt
-                            body = headline_from_excerpt(
-                                opening_text, "ru", max_chars=_limit)
-                        except Exception:  # noqa: BLE001
-                            body = ""
+                        _wtext = (short_window_texts[short_idx]
+                                  if short_idx < len(short_window_texts)
+                                  else "")
+                        body = _window_short_headline(
+                            _wtext, opening_text, "ru", _limit)
                         if body:
-                            body = _clause_trim(body, _limit, "ru")
+                            short_title = f"{body}{_SHORTS_SUFFIX}".strip()
                         else:
-                            # Legacy clause-aware trim of the raw excerpt.
-                            body = _clause_trim(
-                                opening_text.rstrip("…").rstrip(),
-                                _limit, "ru")
-                        short_title = f"{body}{_SHORTS_SUFFIX}".strip()
+                            short_title = _ru_second_short_title(ru_title)
 
                     _publish_at = (
                         _stagger_times[short_idx - 1]

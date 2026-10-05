@@ -150,6 +150,12 @@ def build_weekly_summary_segment(
     if not highlights:
         return None
 
+    # Oct 4 2026: the instruction used to offer "a brief beat just after the
+    # intro" as one of two spots. That contradicts the cold-open rule (the
+    # body opens on the story the open sold — engine.intros, Oct 3), and the
+    # model took the early spot on 13 of 19 Sunday scripts on Sep 27 and on
+    # 3 of 19 (Tesla, AI Chips, MAG 7) on Oct 4: the listener who clicked
+    # for the hook heard last week first. One spot now, before the close.
     parts: list[str] = [
         "━━━━━━━━━━━━━━━━━━━━",
         "## WEEKLY SUMMARY SEGMENT (host instructions — do not read this heading aloud)",
@@ -157,8 +163,10 @@ def build_weekly_summary_segment(
             "Today is Sunday. This is a NORMAL daily episode built on today's "
             "news above — that stays the main focus. In ADDITION, the episode "
             "MUST include ONE short 'week in review' segment (about 45-90 "
-            "seconds, 3-5 sentences) at a natural spot: a brief beat just "
-            "after the intro, or right before the close. This segment is "
+            "seconds, 3-5 sentences) placed AFTER today's stories, right "
+            "before the closing — never between the cold open and the first "
+            "story: the body opens on the story the cold open just sold. "
+            "This segment is "
             "REQUIRED on Sundays — a script without it is incomplete and "
             "fails the episode spec; do not skip it even on a busy news day. "
             "Signpost it plainly: the segment's first sentence must make "

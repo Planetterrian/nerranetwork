@@ -581,6 +581,10 @@ class ChaptersConfig:
     known_sections_only: bool = False
 
 
+#: The closed vocabulary ``SourceIntegrityConfig.on_failure`` accepts.
+SOURCE_INTEGRITY_FAILURE_MODES = ("block", "strip", "flag")
+
+
 @dataclass
 class SourceIntegrityConfig:
     """Claim-ledger + verification gate (Aug 2026, engine/claims.py).
@@ -607,11 +611,38 @@ class SourceIntegrityConfig:
     #             and, in step, from the script; re-run the mechanical gate
     #             on what is left; block only if it still fails. Nothing
     #             unverified is published and a news day is not lost.
-    # Never a warning: an enforce-mode failure always changes what ships.
+    #   "flag"  — (Oct 1 2026, the network default) PUBLISH with the status
+    #             visible and VERIFY AGAIN afterwards: nothing is removed
+    #             from the digest or the script; every ledger entry in the
+    #             committed sidecar carries a ``status`` (verified /
+    #             unverified_unreachable / unverified_not_found /
+    #             unverified_quote_mismatch / unverified_uncovered /
+    #             malformed), the unverified sentences are listed for the
+    #             surfaces, and scripts/reverify_claims.py re-checks the
+    #             unverified entries nightly for a week (verified_later).
+    #             Reviewer-note parentheticals are still removed — they
+    #             are the model's notes, never news. Chosen because strip
+    #             removed TRUE sentences (SpaceX Ep104, MIT Ep187,
+    #             Prediction Markets 10-01) and block cost UC 11 of 28 days:
+    #             the model's training data lags the 24-hour cycle, so
+    #             "cannot verify against memory" must never drop a sourced,
+    #             timely story.
+    # Never a warning: an enforce-mode failure always changes what ships
+    # (block / strip) or what the record SAYS about it (flag).
     on_failure: str = "block"
     # Skip the HTTP source checks (span-anchoring + lint still run). For
     # offline/test runs; production leaves this on.
     verify_sources: bool = True
+
+    def __post_init__(self) -> None:
+        mode = str(self.on_failure or "").strip().lower()
+        if mode not in SOURCE_INTEGRITY_FAILURE_MODES:
+            raise ValueError(
+                f"source_integrity.on_failure must be one of "
+                f"{SOURCE_INTEGRITY_FAILURE_MODES}, got {self.on_failure!r}"
+            )
+        self.on_failure = mode
+
 
 
 @dataclass

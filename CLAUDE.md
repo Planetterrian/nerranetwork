@@ -55,8 +55,12 @@ and the Shorts motion A/B: [`docs/funnel.md`](docs/funnel.md).
 
 **A claim's provenance is DATA, not formatting — `engine/claims.py` owns
 it.** Never add a new stripper for source/citation text without checking
-the ledger path first, and never soften the gate's failure policy to a
-warning where `source_integrity.enforce` is true.
+the ledger path first. **Since Oct 1 2026 the gate's enforcement is the
+STATUS and the public record, not removal**: `on_failure: flag` on every
+show publishes the sentence and marks its claim (see "Oct 1 2026 — publish
+and mark" below); `strip` and `block` remain selectable per show but are
+no longer the network policy. Never turn a flagged claim's status into a
+silent pass, and never render a surface that hides the flag.
 
 Same shape as the two rules above, discovered Aug 2026: three functions
 in `run_show.py` stripped every attribution the model produced (each for
@@ -152,6 +156,46 @@ so an unsourced sentence still blocks), and UC's episode prompt no longer
 seeds the literal "A 1962 Nature paper warned…" example — the exact
 fabricated citation this section opens with. Guards:
 `TestClaimRepairUncoveredShapes`.
+
+**Oct 1 2026 — publish and mark, never strip (operator-directed).** In the
+14 days to 10-01 strip mode removed 68 sentences across 261 episodes and
+every audited one was TRUE (a 403 journal, an X post the fetch stage held,
+a paraphrase, MIT's NASDAQ close); UC skipped 11 of 28 days on its own
+gate; four of fifteen flagship episodes had zero claims. The model's
+training data lags the 24-hour cycle, so a sourced story newer than the
+model must never be dropped for failing memory. Now `on_failure: flag`
+(network default, UC and FPD too): after the one repair pass nothing is
+removed but reviewer notes; every ledger entry commits with a `status`
+(`verified` / `verified_from_fetched` / `verified_later` /
+`unverified_unreachable` / `unverified_not_found` /
+`unverified_quote_mismatch` / `unverified_uncovered` / `malformed`),
+`gate.flagged_sentences` names the sentences, `gate.policy_version` is 2;
+metrics `source_integrity_flagged_*`. `scripts/reverify_claims.py` re-checks
+unverified claims nightly for seven days (`verified_later`, `verified_at`,
+`first_status`; the sidecar glob is in nightly's add-paths). The record is
+public — `claims.html` and `claims/<slug>.html` (`engine/claims_ledger.py`,
+`generate_claims_pages`, in `--static-pages` and the sitemap), status
+badges on every post's claims panel, links from show pages, nav and
+footer; `engine.brand.CLAIMS_PROCESS_STEPS` / `CLAIMS_STATUS_LABELS` own
+the process copy and the AI-disclosure / editorial / FAQ pages describe
+this policy and no stronger one. Register `claims-flag-policy-2026-10-01`;
+guards `tests/test_claims_flag_mode_2026_10_01.py`,
+`tests/test_claims_pages_2026_10_01.py`.
+
+**Oct 5 2026 — the coverage floor reads the item's OWN source.** It had
+added one verified claim in 24 flagship episodes: it asked the model to
+name a fetchable page for each uncovered item from memory, and a truthful
+model answered `[]` (Tesla Ep624, SpaceX Ep120) while every item already
+cited its Source and the run held the fetched copy. Now
+`attempt_item_coverage_repair` pins each item's Source URL and hands over
+the passage of it that discusses the sentence (fetched copy first, then
+the page); the model only judges support and copies the quote, and the
+mechanical check is unchanged. Entries are added only when each verifies
+on its own, the result is kept only when the gate verifies more and gets
+no worse, and the floor now runs on a FAILING gate in flag mode too (it
+never touches the failing entries). One `item coverage floor:` log line
+gives the counts. Register `claims-coverage-grounded-2026-10-05`; guards
+`tests/test_claims_coverage_grounded_2026_10_05.py`.
 
 **Sep 18 2026 — the quote was the problem, not the source.** SpaceX
 Ep104 lost five TRUE sentences to strip mode (Shotwell telling Boeing
@@ -1018,6 +1062,24 @@ today's work, not just explain yesterday's):
   edition to the 12:00 force hour (12:09 / 12:41 vs ~08:13 on complete
   days). Open operator item: UC's claims-gate retry lands after the
   edition, so a gate-blocked UC never makes that day's edition.
+  **Oct 2 2026 — every English show, and a gate that waits.** Ep043
+  shipped at 39 min with FOUR segments: the morning flagship wave had been
+  diverted into recovery branches (every show run rewrote the new
+  `claims.html`; the commit step cannot three-way merge generated HTML —
+  P0 fixed the same day: the per-show regen writes only its own
+  `claims/<slug>.html`, the network page belongs to `--network` /
+  `--static-pages`, and `push_show_artifacts.sh` lists both as
+  regenerable). Operator direction: the thirteen launch-cohort shows are
+  IN the lineup (26 shows; `weekday_only` for Longevity/Peptides/
+  Collingwood; a weekday roster is 21–23; Nerra Personal's vocabulary is
+  the roster again). The ready gate is `engine.daily_edition.ready_decision`
+  (pure, tested): force hour **13:00 UTC** (behind Vancouver's 12:16 slot;
+  Worker `EDITION_DISPATCH` 13:07, sweeps 13:23/14:23/16:23/17:23), build
+  past it only at **80%** of the roster, past **16:00** with whatever
+  exists. The links `max_tokens` scales with the handoff count. ⚠️ AUDIO:
+  Mira's handoffs triple — A/B-listen the first edition. Register
+  `nerra-daily-full-lineup-2026-10-02`; guards
+  `tests/test_nerra_daily_full_lineup_2026_10_02.py`.
   **Aug 25 2026 first quality pass** (review:
   [`docs/reviews/nerra_daily_review_2026_08_25.md`](docs/reviews/nerra_daily_review_2026_08_25.md);
   ledger `docs/reviews/ledger/nerra_daily.yaml`): audio core verified
@@ -1127,8 +1189,9 @@ today's work, not just explain yesterday's):
   is linked from the show page, the dashboard and every ON blog post
   (`engine.blog.SHOW_RESOURCES`). Dashboard v2 adds an "In the press" rail
   (the show's GN query resolved to publisher URLs), calendar state pills,
-  the Défi Azimut result and the Rhum entries' 48H form. The YB tracker
-  page exposes no JSON endpoint (probed 19 Sep); the embed stays.
+  the Défi Azimut result and the Rhum entries' 48H form. (The Sep 19
+  probe that found "no JSON endpoint" on the YB tracker read only the
+  HTML — see Oct 4 below.)
   **Round 2, same day:** countdowns and results are linked by key
   (`results_key` ↔ `key`) and a FINISHED race with no result entry gets
   "RESULT NOT YET ON RECORD" in the status block and "result pending" on
@@ -1140,6 +1203,27 @@ today's work, not just explain yesterday's):
   cdnjs + OSM tiles) plots only the dated PLACES a team post named — an
   entry without `lat`/`lon` gets no marker — and the show page carries a
   campaign strip from the same record.
+  **Oct 4 2026 — the position is the tracker's, and five operator rules**
+  (guards `tests/test_offshore_north_tracker_2026_10_04.py`). The YB
+  tracker page is a script app over a public API the page itself calls
+  (`app.yb.tl/APIX/Blog/GetEvents` / `GetPositions`, keyword `emira4`);
+  `engine/yb_tracker.py` reads it nightly (dashboard fetch) and FRESH in
+  the show hook, and the fix is also a hook ARTICLE so the claims gate can
+  verify the position sentence. Rules that bind: the base is **Gosport,
+  UK (Portsmouth Harbour)**, never Brittany/Lorient (a place is named only
+  inside `campaign.tracker.places`, else coordinates); a position always
+  carries its date and source; a fix older than **7 days** is "last seen
+  <date>", never the present tense (`yb_tracker.STALE_DAYS`); only the
+  tracker's dated outings are spoken — never "training solo in Europe";
+  the Route du Rhum is **"aiming to start"** until the official entry list
+  carries Scott (`rhum_entry` in the record — the Sep 19 "Entry CONFIRMED"
+  read the IMOCA class page, not the official list). **Instagram is read,
+  never copied** (`engine/instagram_source.py`, Meta Business Discovery):
+  captions + permalinks become dated source articles and a dashboard rail;
+  pictures reach a reader only as Instagram's own embed, loaded on a click
+  (the privacy policy says so); `media_url` is never requested. Secrets
+  `INSTAGRAM_GRAPH_TOKEN` / `INSTAGRAM_GRAPH_USER_ID` — deliberately not the
+  Shorts publisher's `IG_*` names; unset = a clean no-op.
 - **Vancouver Daily News / Collingwood Weekly** (Sep 2026, pre-launch) — the
   first run_show shows with an AI host: `host_kind: ai`, Mira on `ara`, NO
   speech wrap (Nerra Daily's Mira has none). Roads and weather arrive as
@@ -2153,6 +2237,65 @@ DOES hold tags now (the Sep 9 note above is stale). Eight entries past
 readout closed; four registered (`en-one-short-2026-09-22`,
 `dead-shorts-weekly-probe-2026-09-22`, `dub-spoken-text-gate-shadow-2026-09-22`,
 `traffic-mix-instrument-2026-09-22`).
+
+**Oct 3 2026 — the August peak was @NerraRU, and what fell was reach per
+video** (review: [`docs/reviews/youtube_and_shows_review_2026_10_03.md`](docs/reviews/youtube_and_shows_review_2026_10_03.md);
+guards `tests/test_show_review_2026_10_03.py`,
+`tests/test_dub_short_titles_2026_10_03.py`). Network views ~44k/week
+(08-03, 08-10) → ~20k (09-14, 09-21); RU Shorts were ~75% of them and
+their median fell 260–400 → ~50 with uploads, retention and the country mix
+unchanged; EN is at its early-August level. Our own volume cuts priced at
+~6% of the loss. Rules that bind: **rebuild a daily series from the
+snapshot history** (`git log -- api/youtube_stats.json`; a blobless clone
+reads it — the CI checkout is depth-1) before calling a trend; **the body
+opens on the story the cold open sold** (`build_cold_open_spec` bullet;
+`script_hook_leads_body_pct` reads it — Tesla 82% / MAB 92% off since 09-22
+while SpaceX, which held its long-form retention, was 25%); **a dub
+window-Short title is written from `ScoredWindow.window_text` and never
+ships `engine.titles.is_fragment_title`** — the fallback is the episode
+headline + tail, tag last; **the sibling plug's cadence word comes from
+`engine.cadence`**. Open: the 08-18..21 RU blackout (all Shorts 1–8 views,
+no code change, self-recovered) — a Studio read, not a code fix.
+
+**Oct 4 2026 — the Sunday slate after the Oct 3 pass** (guards
+`tests/test_sunday_slate_2026_10_04.py`). Every Oct 3 target was clean on
+the 21 Oct 4 episodes (no "go deeper" frame on OV, no UN / NT$ garbles, no
+doubled "subreddit", no self-narration, no daily plug for a weekly show,
+spoken-text gate 21/21 pass). Three defects the slate exposed, all fixed:
+(1) **the weekly newsletter run had hit its 45-minute timeout on four
+Sundays running** — synthesis is 3-5 min a show on grok-4.6, the walk was
+alphabetical, so Planetterrian, SpaceX, Tesla and UC got no weekly after
+Sep 6, ten cohort shows spent ~4 min each writing a weekly their missing
+Buttondown tag then refused (a tag exists only once someone subscribes
+with it), and the cancelled job never committed the sent markers of the
+shows that DID go out (a re-run would have sent them twice). Now
+`run_weekly_newsletters.send_preflight` refuses before synthesis exactly
+what the send would refuse, `PRIORITY_SHOWS` go first, the run step has a
+75-minute cap under a 90-minute job and the commit step is `always()`;
+the six Oct 4 sends are recorded from the run log, and the default week is the most recent SUNDAY (`default_week_ending`) — with `date.today()` a catch-up dispatch after midnight UTC keyed its markers on Monday and would have re-sent all six. (2) **The Sunday
+week-in-review instruction offered "just after the intro"** — the slot the
+cold-open rule forbids (13/19 scripts on Sep 27, 3/19 incl. Tesla on Oct
+4); it now goes before the close only (⚠️ AUDIO). (3) **Nerra Daily's
+handoffs broke the one-in-three show-name rule on every full edition**
+(18/18, 18/19): `handoff_revision_prompt` sends a non-compliant draft back
+once and `adopt_revised_handoffs` keeps the revision only when it leads
+with fewer names (metrics `handoffs_show_name_led_first_draft`,
+`handoffs_revised`; ⚠️ AUDIO). Open for the operator: MIT's four disclaimer
+sentences sit between the cold open and the first story every day
+(`script_hook_leads_body_pct` 0 on 11/11 episodes — compliance placement);
+`grok-47-staged-migration` is read again (`model_trial_report --since
+2026-09-27 --timeout-seconds 600`): the 4.7 cohort writes better (11-22
+claims, 2-17% digest-verbatim against 1-3 and 46-63% on the 4.3 flagships)
+and fell back on 2 of 48 episodes (pre-flight pings, last Sep 30), but its
+streamed DIGEST stage FAILS the latency gate — p95 433-814 s against the
+600 s request timeout, time-to-first-token ~180-280 s. A flagship digest on
+4.7 is therefore NOT the next step; a script-stage pin on one flagship is
+(omni_view's 4.7 script reads 17.6% verbatim / 85% coverage), operator's
+call, ⚠️ AUDIO. **The script call had never been timed** — the trial report
+listed `generate_podcast_script` as an LLM stage that nothing recorded (the
+Sep 30 "script stage p95 67.6 s" was omni_view's 4.3 DIGEST row); it is
+recorded from the next run (`PipelineMetrics.record_stage`), so a
+script-stage pin can be gated before it widens.
 
 ### Anthology books — ebook + audiobook from the narrative shows (Aug 2026)
 
@@ -4323,8 +4466,10 @@ decision); everything else has a live status card.
     wave) all use the operator's custom-trained voice `kdif6sqjcyiq`
     for a single consistent host identity. Russian shows use the
     custom Olya voice (`0b875ae2`). ElevenLabs is no longer used in
-    production. Network cost: ~36× cheaper per character on Grok
-    ($4.20/M vs $150/M for ElevenLabs Flash). Reuses `GROK_API_KEY` /
+    production. Network cost: ~10× cheaper per character on Grok
+    ($15/M per the xAI models page, read 2026-10-02 — an earlier version
+    of this line said $4.20/M, the promo-era figure; `engine/tracking.py`
+    was right all along — vs $150/M for ElevenLabs Flash). Reuses `GROK_API_KEY` /
     `XAI_API_KEY` — no new secret. See landmines #16 and #17.
 12. **Summaries JSONs moved** — all summaries live in per-show subdirectories
     (`digests/<show>/summaries_*.json`), not at the `digests/` top level.

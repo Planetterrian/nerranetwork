@@ -298,7 +298,9 @@ class TestPhase1ShowWiring:
         c = _cfg(slug)
         assert c.publishing.host_kind == "human" and c.publishing.host_name == "Patrick"
         assert c.max_weekly_cost_usd > 0, "breaker must be TOP-level to take effect"
-        assert c.youtube.enabled is False and c.newsletter.enabled is False
+        # Oct 1 2026: the newsletter is ON for the launch cohort (the show
+        # page offered the signup since launch; the Worker keeps the tag now).
+        assert c.youtube.enabled is False and c.newsletter.enabled is True
         assert c.publishing.x_enabled is False
 
     def test_prompts_exist_and_share_content_discipline(self, slug):

@@ -22,6 +22,14 @@ What it collects, all best-effort:
 * ``position`` — the newest dated campaign post that reads like a
   position fix (departure, arrival, transit, "heading to …"), so the
   "last known position" card always carries a date and a source.
+* ``tracker`` — the newest fix from the team's YB tracker
+  (``engine.yb_tracker``, Oct 4 2026): position, the place it sits in when
+  the record names one, and the outings in the tracker's 30-day window.
+  This is the position the show and the page lead with.
+* ``instagram`` — recent public posts from the accounts the record's
+  ``follow`` list marks ``instagram`` (``engine.instagram_source``):
+  caption, permalink and date only — the page embeds them, never copies
+  their pictures. Empty without the Graph API secrets.
 
 Reliability contract (mirrors ``fetch_spacex_launches.py``): a failed or
 empty fetch NEVER overwrites a previous-good cache; the page renders an
@@ -102,6 +110,7 @@ _IMOCA_BOAT_URL = "https://www.imoca.org/en/boats/{slug}"
 MAX_HIGHLIGHTS = 5
 
 MAX_POSTS_PER_FEED = 4
+MAX_INSTAGRAM = 12
 MAX_HEADLINES = 14
 EXCERPT_CHARS = 420
 
@@ -368,8 +377,37 @@ def derive_position(posts: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     return None
 
 
+_CURATED = _ROOT / "site" / "data" / "offshore_north_dashboard.json"
+
+
+def _curated() -> Dict[str, Any]:
+    try:
+        return json.loads(_CURATED.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def collect_tracker(curated: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """The YB tracker summary for the boat, or ``None`` on any failure."""
+    cfg = (curated.get("campaign") or {}).get("tracker") or {}
+    keyword = cfg.get("keyword")
+    if not keyword:
+        return None
+    from engine.yb_tracker import fetch_summary
+
+    return fetch_summary(keyword, places=cfg.get("places") or [])
+
+
+def collect_instagram(curated: Dict[str, Any], *, now: _dt.datetime) -> List[Dict[str, Any]]:
+    from engine.instagram_source import fetch_recent, handles_from_follow
+
+    handles = handles_from_follow(curated.get("follow"))
+    return fetch_recent(handles, since_days=30, now=now)[:MAX_INSTAGRAM]
+
+
 def build(*, now: Optional[_dt.datetime] = None, previous: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     now = now or _dt.datetime.now(_dt.timezone.utc)
+    curated = _curated()
     posts = collect_campaign_posts(_campaign_feeds())
     headlines = collect_headlines()
     press = collect_press()
@@ -383,7 +421,17 @@ def build(*, now: Optional[_dt.datetime] = None, previous: Optional[Dict[str, An
         "headlines": headlines,
         "press": press,
         "fleet": fleet,
+        "tracker": _safe(collect_tracker, curated),
+        "instagram": _safe(collect_instagram, curated, now=now) or [],
     }
+
+
+def _safe(fn, *args, **kwargs):
+    try:
+        return fn(*args, **kwargs)
+    except Exception as exc:  # noqa: BLE001 — one rail never sinks the file
+        logger.warning("%s failed: %s", fn.__name__, exc)
+        return None
 
 
 def _load_previous(path: Path) -> Optional[Dict[str, Any]]:
@@ -412,12 +460,20 @@ def main(argv: Optional[List[str]] = None) -> int:
         data["campaign_posts_stale"] = True
     if previous and not data.get("press"):
         data["press"] = previous.get("press", [])
+    if previous and not data.get("tracker") and previous.get("tracker"):
+        # Keep the last good fix; its own date says how old it is.
+        data["tracker"] = previous["tracker"]
+        data["tracker_stale"] = True
+    if previous and not data.get("instagram") and previous.get("instagram"):
+        data["instagram"] = previous["instagram"]
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     logger.info(
-        "Wrote %s: %d campaign posts, %d headlines, position=%s",
+        "Wrote %s: %d campaign posts, %d headlines, position=%s, tracker=%s, instagram=%d",
         out, len(data["campaign_posts"]), len(data["headlines"]),
         (data.get("position") or {}).get("date"),
+        ((data.get("tracker") or {}).get("latest") or {}).get("date"),
+        len(data.get("instagram") or []),
     )
     return 0
 

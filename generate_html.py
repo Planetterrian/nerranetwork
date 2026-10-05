@@ -1706,6 +1706,7 @@ SOFT_PERSONAL_HERO_SLUGS = frozenset({
     "tesla",
     "models_agents",
     "models_agents_beginners",
+    "age_of_ai",
 })
 
 
@@ -2263,6 +2264,18 @@ def _get_jinja_env():
     from engine.brand import MIRA_INTERVIEW_STEPS as _steps, MIRA_INTERVIEW_STEPS_COMPACT as _compact
     env.globals["mira_steps"] = list(_steps)
     env.globals["mira_steps_compact"] = [_steps[i] for i in _compact]
+    # The claims-and-corrections process (Oct 1 2026): the steps the ledger
+    # pages print and the status vocabulary every badge renders from. One
+    # owner (engine.brand), registered the way mira_steps is, so a template
+    # cannot type its own step title or invent a status colour.
+    from engine.brand import (
+        CLAIMS_RECHECK_DAYS as _claims_recheck_days,
+        CLAIMS_STATUS_LABELS as _claims_status_labels,
+        claims_process_steps as _claims_process_steps,
+    )
+    env.globals["claims_process"] = _claims_process_steps()
+    env.globals["claims_status_labels"] = dict(_claims_status_labels)
+    env.globals["claims_recheck_days"] = _claims_recheck_days
     env.globals["mira"] = {
         "host_name": MIRA_HOST_NAME,
         "summary": MIRA_SHORT_DESCRIPTION,
@@ -3248,9 +3261,15 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
     # headline facts from the verified record (see generate_offshore_north_dashboard).
     campaign_strip = _offshore_north_campaign_strip() if slug == "offshore_north" else None
 
+    # The show's public claims ledger (Oct 1 2026): every YAML show has one
+    # (generate_claims_pages runs before the show pages in --all, and the
+    # list is deterministic, so this is a registry check, not a file check).
+    claims_page_url = f"claims/{slug}.html" if slug in claims_page_slugs() else ""
+
     context = {
         **cfg,
         "narrative_page_url": narrative_page_url,
+        "claims_page_url": claims_page_url,
         "campaign_strip": campaign_strip,
         "path_prefix": prefix,
         "show_name": cfg["name"],
@@ -3286,7 +3305,7 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         # the nav pill labelled "Join". Registry-gated so it never becomes a
         # banner on every show.
         "personal_upsell": bool(cfg.get("personal_upsell")),
-        # Soft Personal interest (tips/reminder — never a charge). SpaceX
+        # Soft Personal interest (tips only — never a charge). SpaceX
         # Daily is the Soft Personal spoken surface; registry-gated so the
         # band does not become a network-wide banner.
         "soft_personal_cta": bool(cfg.get("soft_personal_cta")),
@@ -4809,6 +4828,14 @@ def generate_sitemap(*, dry_run=False, out=None):
         if (ROOT / legal).exists():
             urls.append((f"{base}/{legal}", "0.4", _file_lastmod(ROOT / legal)))
 
+    # Claims & corrections ledger (Oct 1 2026): listed from the SAME list
+    # generate_claims_pages writes (claims_page_paths), never a glob, and
+    # only when the file is on disk — a page that was not built is never
+    # advertised.
+    for _rel in claims_page_paths():
+        if (ROOT / _rel).exists():
+            urls.append((f"{base}/{_rel}", "0.5", _file_lastmod(ROOT / _rel)))
+
     # Special pages. 404.html is deliberately NOT listed — error pages
     # don't belong in sitemaps (Search Console flags them).
     # mira.html is the Mira hub; the two *-apply.html pages are the
@@ -5511,9 +5538,15 @@ def _network_cost_ledger() -> dict:
         total = float(rollup.get("total") or 0)
         if total <= 0:
             return fallback
-        tts = float(rollup.get("tts") or 0)
-        images = float(rollup.get("images") or 0)
-        models = float(rollup.get("grok") or 0) + float(rollup.get("search") or 0)
+        # Oct 3 2026: the rollup's total counts multilingual, motion and the
+        # reviewer since 10-02, and these three rows did not, so the
+        # hosting remainder absorbed ~$57 and the page claimed hosting was
+        # 30% of spend — the largest line. Every measured bucket now lands
+        # in the row its label names ("every language" is the dub tracks).
+        tts = float(rollup.get("tts") or 0) + float(rollup.get("multilingual") or 0)
+        images = float(rollup.get("images") or 0) + float(rollup.get("motion") or 0)
+        models = (float(rollup.get("grok") or 0) + float(rollup.get("search") or 0)
+                  + float(rollup.get("review") or 0))
     except Exception:
         return fallback
 
@@ -5603,7 +5636,7 @@ def generate_join_page(*, dry_run=False):
 def generate_personal_interest_page(*, dry_run=False):
     """Generate /personal-interest.html — Soft Personal email capture.
 
-    ENG-SPEC (Brand HoM, Sep 2026): optional tips/reminder signup via
+    ENG-SPEC (Brand HoM, Sep 2026): tips-only signup via
     Buttondown tag ``personal-interest`` — not a waitlist, not paid
     checkout, never auto-charges. Newsletter checkbox adds ``nerra-member``
     + ``SpaceX Daily``. Episode totals are never shown here.
@@ -5611,9 +5644,8 @@ def generate_personal_interest_page(*, dry_run=False):
     env = _get_jinja_env()
     ctx = _member_page_context(
         "Nerra Personal — when you’re ready | Nerra Network",
-        "All 18 Nerra shows stay free. Leave your email for a quiet "
-        "nudge with Personal tips — or a reminder when you’re ready. "
-        "No ads. Curiosity only.",
+        "Every Nerra show stays free. Leave your email for occasional "
+        "Personal tips. No ads. Curiosity only.",
         "https://nerranetwork.com/personal-interest.html")
     # Soft page must never carry episode totals (frozen / no FOMO).
     ctx.pop("total_episodes", None)
@@ -5977,8 +6009,174 @@ def generate_static_pages(*, dry_run=False):
     generate_explore_page(dry_run=dry_run)
     generate_topic_hub_pages(dry_run=dry_run)
     generate_personal_interest_page(dry_run=dry_run)
+    generate_claims_pages(dry_run=dry_run)
     generate_redirect_stubs(dry_run=dry_run)
     generate_llms_txt(dry_run=dry_run)
+
+
+# ---------------------------------------------------------------------------
+# Claims & corrections ledger pages (Oct 1 2026)
+# ---------------------------------------------------------------------------
+#
+# Operator-directed: a public, transparent claims-and-corrections process for
+# every show. The source-integrity gate's failure policy moved from strip to
+# FLAG the same day — a claim the check cannot confirm is published and
+# marked, re-checked nightly, never removed — and the record that makes that
+# honest is these pages: /claims.html (the process, owned by engine.brand,
+# plus every show's totals) and /claims/<slug>.html (one page per show with
+# a YAML: every claim's status for the last 30 days, episode by episode, and
+# every correction filed). Readers are engine/claims_ledger.py; nothing on
+# the page is typed.
+#
+# Sep 3 contract: both are in generate_static_pages() and --all, and the
+# sitemap lists them from claims_page_paths() — the SAME list this generator
+# writes — never a glob, so a page that was not built is never advertised.
+
+#: Window every ledger page reports over.
+CLAIMS_PAGES_DAYS = 30
+
+
+def claims_page_slugs() -> list:
+    """Every registered show that has a ``shows/<slug>.yaml`` — the shows a
+    ``claims/<slug>.html`` is written for, in registry order. Registry-only
+    shows (Nerra Daily) appear on the network page as "not applicable" and
+    get no page of their own."""
+    return [slug for slug in NETWORK_SHOWS if (SHOWS_DIR / f"{slug}.yaml").is_file()]
+
+
+def claims_page_paths() -> list:
+    """The site-relative paths generate_claims_pages writes, network page
+    first. The sitemap reads this list."""
+    return ["claims.html"] + [f"claims/{slug}.html" for slug in claims_page_slugs()]
+
+
+def generate_claims_pages(*, dry_run=False, output_dir=None, digests_root=None,
+                          today=None, days=CLAIMS_PAGES_DAYS, slugs=None,
+                          network_page=True):
+    """Write ``claims.html`` and ``claims/<slug>.html`` for every YAML show.
+
+    ``output_dir`` renders into a scratch tree (tests; ``None`` = the repo
+    root), ``digests_root`` points the reader at a scratch ``digests/`` tree,
+    ``today`` pins the window. ``slugs`` limits the per-show pages written
+    (``[]`` = none); ``network_page`` says whether ``claims.html`` is
+    rebuilt. Returns the site-relative paths written.
+
+    **The per-show regeneration (``--show <slug>``) must write ONLY its own
+    ``claims/<slug>.html``** (2026-10-02). On its first morning this
+    function rebuilt the network page on every show run; two show runs
+    minutes apart both carried a different ``claims.html``, the commit
+    step's rebase could not three-way merge generated HTML, every retry
+    failed on that one file, and eleven episodes (Tesla, SpaceX, Omni
+    View, MIT, MAB, two desks) were diverted into recovery branches
+    instead of main — so Nerra Daily built from four shows and GitHub's
+    late cron produced second copies. A file every show run rewrites is a
+    file every show run conflicts on. The network page belongs to the
+    passes that are serialized or conflict-tolerant: ``--network`` (the
+    finalize job, whose commit loop keeps origin's copy on conflict),
+    ``--static-pages`` (nightly) and ``--all``.
+    """
+    from engine import claims_ledger as _ledger
+
+    env = _get_jinja_env()
+    template = env.get_template("claims_page.html.j2")
+    base = Path(output_dir) if output_dir else ROOT
+    all_shows = _build_all_shows_list()
+    by_slug = {s["slug"]: s for s in all_shows}
+    page_slugs = claims_page_slugs()
+    wanted = [s for s in page_slugs if (slugs is None or s in set(slugs))]
+    written = []
+
+    def _blog_url(slug, episode):
+        return _blog_url_for_episode(slug, episode_num=episode)
+
+    common = {
+        "theme_color": "#6B47FF",
+        "og_image": "",
+        "show_color": "",
+        "show_color_dark": "",
+        "all_shows": all_shows,
+        "updated_label": LEGAL_PAGES_UPDATED_LABEL,
+    }
+
+    # Network page: one row per registered show, in display order.
+    ordered = [s["slug"] for s in all_shows if s["slug"] in NETWORK_SHOWS]
+    ordered += [s for s in NETWORK_SHOWS if s not in ordered]
+    net = (_ledger.network_ledger(ordered, days=days, today=today,
+                                  digests_root=digests_root)
+           if network_page else {"shows": [], "totals": {}})
+    rows = []
+    for s in net["shows"]:
+        meta = by_slug.get(s["slug"]) or {}
+        rows.append({
+            **s,
+            "name": meta.get("name") or NETWORK_SHOWS.get(s["slug"], {}).get("name", s["slug"]),
+            "show_page": meta.get("show_page", ""),
+            "claims_page": f"claims/{s['slug']}.html" if s["slug"] in page_slugs else "",
+        })
+    description = (
+        "How every Nerra Network claim is checked against its source, what "
+        "happens when the check cannot confirm one (published and marked, "
+        "re-checked nightly, never removed), and every show's record for "
+        f"the last {days} days — plus every correction filed."
+    )
+    html = "" if not network_page else template.render(
+        mode="network",
+        path_prefix="",
+        page_title="Claims & corrections | Nerra Network",
+        page_description=description,
+        meta_description=description,
+        meta_keywords="fact checking, claims ledger, corrections, AI podcast transparency, Nerra Network",
+        canonical_url="https://nerranetwork.com/claims.html",
+        shows=rows,
+        totals=net["totals"],
+        **common,
+    )
+    if network_page:
+        out = base / "claims.html"
+        if dry_run:
+            print(f"[dry-run] Would write {out}")
+        else:
+            base.mkdir(parents=True, exist_ok=True)
+            out.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+        written.append("claims.html")
+
+    # One page per show with a YAML.
+    out_dir = base / "claims"
+    for slug in wanted:
+        cfg = NETWORK_SHOWS[slug]
+        ledger = _ledger.show_ledger(slug, days=days, today=today,
+                                     digests_root=digests_root, blog_url_for=_blog_url)
+        desc = (
+            f"Every factual claim {cfg['name']} made in the last {days} days with its "
+            "verification status — verified against its source, published and "
+            "marked, or verified later — and every correction filed."
+        )
+        html = template.render(
+            mode="show",
+            path_prefix="../",
+            page_title=f"{cfg['name']}: claims & corrections | Nerra Network",
+            page_description=desc,
+            meta_description=desc,
+            meta_keywords=f"{cfg['name']} fact check, claims ledger, corrections, Nerra Network",
+            canonical_url=f"https://nerranetwork.com/claims/{slug}.html",
+            show_name=cfg["name"],
+            show_slug=slug,
+            show_page=cfg["show_page"],
+            ledger=ledger,
+            totals=ledger["totals"],
+            **common,
+        )
+        path = out_dir / f"{slug}.html"
+        if dry_run:
+            print(f"[dry-run] Would write {path}")
+        else:
+            out_dir.mkdir(parents=True, exist_ok=True)
+            path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+        written.append(f"claims/{slug}.html")
+
+    if not dry_run:
+        print(f"Wrote {len(written)} claims page(s) to {base}")
+    return written
 
 
 def generate_contact_page(*, dry_run=False):
@@ -6213,7 +6411,7 @@ def main():
         help=(
             "Generate every cheap static page (start-here, about, FAQ, how to "
             "listen, press, contact, editorial, legal, gallery, books, mira, "
-            "404)"
+            "claims ledger, 404)"
         ),
     )
     parser.add_argument(
@@ -6289,6 +6487,13 @@ def main():
         # HTML itself before calling here.
         if args.blogs:
             generate_blog_posts(args.show, dry_run=args.dry_run)
+        # The show's claims ledger page + the network totals (Oct 1 2026):
+        # a new episode adds a row, so the per-episode path refreshes it.
+        # Own ledger page ONLY — never the network claims.html (see the
+        # function's docstring: a shared page in a per-show commit is a
+        # rebase conflict on every concurrent run).
+        generate_claims_pages(dry_run=args.dry_run, slugs=[args.show],
+                              network_page=False)
         # Always generate the show page and summaries page
         generate_show_page(args.show, dry_run=args.dry_run)
         generate_summaries_page(args.show, dry_run=args.dry_run)
@@ -6322,6 +6527,8 @@ def main():
         return
 
     if args.all:
+        # The ledger pages first: every show page links claims/<slug>.html.
+        generate_claims_pages(dry_run=args.dry_run)
         generate_all_show_pages(dry_run=args.dry_run)
         generate_all_summaries(dry_run=args.dry_run)
         generate_network_page(dry_run=args.dry_run)
@@ -6341,8 +6548,8 @@ def main():
         # cheap; regenerating with the network keeps Stripe-link env
         # changes and lineup names current. account.html is deliberately
         # NOT in the sitemap (it's a console, not content).
-        # Soft Personal interest (Sep 2026) sits beside join — tips/
-        # reminder capture, not checkout.
+        # Soft Personal interest (Sep 2026) sits beside join — tips-only
+        # capture, not checkout.
         generate_join_page(dry_run=args.dry_run)
         generate_personal_interest_page(dry_run=args.dry_run)
         generate_support_page(dry_run=args.dry_run)
@@ -6387,6 +6594,10 @@ def main():
         generate_all_summaries(dry_run=args.dry_run)
     if args.network:
         generate_network_page(dry_run=args.dry_run)
+        # The network claims ledger refreshes here — the finalize job runs
+        # --network after every episode and its commit loop keeps origin's
+        # copy on conflict — never from the per-show path.
+        generate_claims_pages(dry_run=args.dry_run, slugs=[], network_page=True)
         # The data dashboards are data-light (read same-origin caches at
         # runtime) so they're cheap to regenerate on every network rebuild.
         generate_spacex_dashboard(dry_run=args.dry_run)

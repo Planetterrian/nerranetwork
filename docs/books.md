@@ -118,7 +118,11 @@ Rules that bind:
 ## Building volumes
 
 - **One volume:** Actions → **Build Book** → volume id
-  (e.g. `unintended_consequences_vol2`).
+  (e.g. `first_principles_volume2`). Series volumes from Volume 2 on are
+  `<series>_volume<N>` wherever the retired 20-chapter books already hold
+  `<series>_vol<N>` (both series, vol2–vol4) — a volume id is the R2
+  keyspace, catalog key and EPUB identity, so a retired id is never
+  reused (`engine.book_compiler._free_volume_id`, Oct 4 2026).
 - **Planner dry run:** `python scripts/build_book.py --plan-series
   unintended_consequences --plan-series first_principles --plan-preview`
   prints, per series, the next volume number, the first uncollected
