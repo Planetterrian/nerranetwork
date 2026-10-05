@@ -3375,3 +3375,30 @@ experiments:
       engine/network_promo.build_network_promo reads engine.cadence;
       Nerra Daily's promo-cut anchors do not use the changed words.
       ⚠️ Spoken text on weekly-show plugs only.
+  - id: claims-coverage-grounded-2026-10-05
+    title: "Item coverage floor reads each item's own Source and runs on flagged gates"
+    area: trust
+    shipped: 2026-10-05
+    readout: 2026-10-19
+    status: reading
+    baseline: "Item coverage on the last 4 episodes of each established news show: Tesla 25-67%, SpaceX 0-43%, FF 7-33%, M&A 0-46%, Omni View 0%, MIT 0-20%, MAB 0-100%; the floor added 1 verified claim in 24 episodes. The repair call answered [] on Tesla Ep624 and SpaceX Ep120 (2026-10-04 logs): it asked for a page from memory. 4 of those 24 (and 3 of Planetterrian's last 4) were still failing after the first repair and got no floor at all."
+    target: >
+      source_integrity_item_coverage_pct median >= 50 on Tesla, SpaceX,
+      M&A, Omni View and MIT over 14 days; coverage_repair_added > 0 on
+      >= 60% of the episodes where the floor ran; the network claims page's
+      verified share does not fall.
+    criteria: >
+      Hit = all three. coverage_repair_grounded high but _added near 0 =
+      the model will not quote (read the "item coverage floor" log line's
+      offered / rejected counts before touching the prompt); grounded low =
+      the run's fetched copy is thin on those shows (fetch_full_text), not
+      the floor. A verified-share drop means added entries are failing on
+      re-verification and the floor is not only adding.
+    notes: >
+      Replay without the model on six Oct 3-4 flagship digests: 29 of 43
+      uncovered sourced items got a passage from their own Source URL by
+      HTTP alone (the runner also holds the fetched copy). The mechanical
+      check is unchanged; entries are added only when each verifies, and
+      the result is kept only when the gate verifies more and gets no
+      worse. Metadata only: the ledger and the claims panels change, no
+      prose and no audio.
