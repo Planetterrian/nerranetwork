@@ -870,6 +870,39 @@ reviews:
       evidence: null
     agent_cost_usd: null
 
+  - date: 2026-10-05
+    pr: null
+    doc: docs/reviews/network_review_2026_10_05.md
+    summary: "Operator: review the last 24 hours of episodes and workflows. 25/25 scheduled episodes published, spoken-text gate 25/25 (FP after one re-synthesis on a 415-word foreign passage), Nerra Daily Ep046 complete at 23 shows. The coverage floor shipped 10-04 added verified claims on 7 of 12 shows. Defects: Omni View's grok-4.7 script arm fell back to 4.3 on all 14 episodes since 09-22 while llm_script_model recorded the config (two register readings were wrong); Offshore North aired IMOCA's 10 February Charal article as 2 October news (no meta date, 2/10/26 read day-first by search, a 200k-char probe limit); five surfaces still said Mira phones guests and Ep046 aired it; FP's newsletter refused 8/8 by its own brand_color_dark; MIT HPS.A open 40 days on a 1-session horizon and BMWYY unpriceable; Env Intel's low-content format failed its own validator and narrated empty sections."
+    shipped:
+      - "shows/omni_view.yaml back on grok-4.6 (script stage); llm_script_model records the SERVED model, llm_script_model_fallback the reason"
+      - "engine/article_text.py: 1.5M-char date search, labelled visible-date fallback (never Updated, never a future date), imoca.org month-first header date; the probe passes the URL"
+      - "phone claim removed from nerra_daily_links.txt, daily_edition reflection, registry about_host, both Age of AI system prompts; guard sweeps prompts/registry/edition code/templates"
+      - "finansy_prosto brand_color_dark #9D174D; guard: every eyebrow colour >= 4.5:1 on the card"
+      - "MIT: dotted share classes map to Yahoo form; bar window covers the pick; an entry bar > 7 days after the pick is never priced; an equity pick never priced in 14 days voids"
+      - "Env Intel: low-content Deep Dive counts as the lead; prompt leaves empty sections out and keeps the Compliance Brief; absence filter on Env Intel and Offshore North"
+      - "Nerra Daily logs a rejected or missing edition title"
+    deferred:
+      - "operator: X 402 Payment Required on the @planetterrian app; create the ten cohort Buttondown tags; run the weekly newsletter catch-up; PERSONAL_BATCH_DISPATCH_TOKEN"
+      - "Tesla sources most items to Reddit threads (coverage floor verified 1 of 10) — a sourcing review, not a code fix"
+    predictions:
+    - metric: "omni_view script_digest_overlap_pct median (7 episodes) with llm_script_model_fallback absent"
+      baseline: "~59% on the 4.3 fallback (Ep183-196)"
+      expected: "<= 20% at coverage >= 75%"
+      verdict: pending
+      evidence: null
+    - metric: "articles_date_probe_dated / articles_date_probed, network, 7 days"
+      baseline: "~40% on 2026-10-05; replay of cited pages 102/150 -> 127/150"
+      expected: ">= 55%"
+      verdict: pending
+      evidence: null
+    - metric: "finansy_prosto newsletter_sent"
+      baseline: "False on Ep079-086"
+      expected: "True on the next two Mondays"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
 do_not_retry:
   - idea: podcast-side length levers (word floors, expand-retries, prompt
       pressure on the podcast stage) for ANY show
