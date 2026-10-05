@@ -738,6 +738,22 @@ experiments:
     shipped: 2026-09-21
     readout: 2026-09-25
     status: reading
+    update_2026_10_05: >
+      CORRECTION — the omni_view SCRIPT arm never ran. The credit files
+      (services.grok_api.podcast_script_generation.model) show grok-4.3
+      served the script on all 14 episodes from 2026-09-22 (Ep183-196):
+      every grok-4.7 call failed (APITimeoutError; the first timed one,
+      Ep196, took 621.5 s — the show's request does not stream) and the
+      override fell back to the digest model. metrics llm_script_model
+      recorded the CONFIGURED model, so "9/9 episodes on 4.7" (09-30) and
+      "omni_view's 4.7 script reads 17.6% verbatim" (10-04, which was the
+      4.6 Ep174) were both wrong. What the record does show: on grok-4.6
+      (09-10..21) the script copied a median 8-17% of the digest's 8-word
+      phrases at 76-85% coverage; on the 4.3 fallback ~59% at ~90%.
+      Restored omni_view to grok-4.6 (2026-10-05); llm_script_model now
+      records the SERVED model and llm_script_model_fallback the reason.
+      No grok-4.7 script-stage reading exists; a re-trial needs llm.stream
+      on the show and a fresh staged start. The reviewer arm is unaffected.
     update_2026_10_04: >
       Read 2026-10-04 (model_trial_report --since 2026-09-27 --timeout-seconds
       600, cohort shows). GATE: FAIL on the DIGEST stage, unchanged in kind
@@ -3402,3 +3418,45 @@ experiments:
       the result is kept only when the gate verifies more and gets no
       worse. Metadata only: the ledger and the claims panels change, no
       prose and no audio.
+  - id: slate-review-2026-10-05
+    title: "Monday slate review: served-model metric, page dates, FP newsletter, MIT unpriced picks, Env Intel thin days, Mira phone claim"
+    area: quality
+    shipped: 2026-10-05
+    readout: 2026-10-19
+    status: reading
+    baseline: >
+      2026-10-05 slate: 25/25 scheduled episodes published, spoken-text gate
+      25/25 pass (FP after one re-synthesis: a 415-word foreign passage on
+      attempt 1). omni_view's grok-4.7 script override fell back to 4.3 on
+      14/14 episodes since 09-22, 621 s lost per run. The page-date probe
+      dated 102 of 150 fetchable cited pages; IMOCA's undated-meta Charal
+      article (2/10/26, US order) aired on Offshore North as 2 October news.
+      Финансы Просто's newsletter was refused by the contrast check on 8/8
+      episodes (brand_color_dark #DB2777, 4.39:1 on the card). MIT HPS.A open
+      since 08-26 (one-session flash) and BMWYY since 09-30, no price ever.
+      Env Intel Ep071 failed "Lead Story missing" on its own low-content
+      format and narrated three empty sections (~200 words). Nerra Daily
+      Ep046's sign-off aired "When I phone people for The Age of AI".
+    target: >
+      Over 14 days: omni_view llm_script_model_fallback absent and median
+      script_digest_overlap_pct <= 20 with coverage >= 75; the date probe
+      dates >= 55% of the pages it opens network-wide
+      (articles_date_probe_dated / articles_date_probed); finansy_prosto
+      newsletter_sent true on its next two Mondays; HPS.A closed on real
+      bars and BMWYY voided by 10-14 (no MIT trade open > 14 days without
+      bars); env_intel digest_structural_regen false on thin days and
+      script_absence_sentences_removed reported; no surface says Mira
+      phones guests.
+    criteria: >
+      Hit = all. omni_view overlap back above 40 on 4.6 = the Sep 10-21
+      reading was a different digest regime, not the model; read
+      coverage before reacting. A date probe still under 45% = list the
+      undated domains from that week's logs before adding a header rule
+      (a host is added only with proof of its numeric date order).
+    notes: >
+      Read a model arm from the credit file's per-call model, never the
+      config. Phone sweep covers prompts, registry, edition code and
+      templates (tests/test_slate_review_2026_10_05.py). ⚠️ AUDIO:
+      omni_view script model, Env Intel prompt + absence filter, Offshore
+      North absence filter, Nerra Daily Mira self-description —
+      A/B-listen the next episode of each.
