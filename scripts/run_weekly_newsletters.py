@@ -5,7 +5,7 @@ import argparse
 import logging
 import os
 import sys
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -119,16 +119,31 @@ def record_sent(marker: Path, *, email_id: str, subject: str) -> None:
         logger.warning("  could not write sent marker %s: %s", marker, exc)
 
 
+def default_week_ending(today: date) -> date:
+    """The Sunday that closes the newsletter week: today on a Sunday, the
+    Sunday just gone on any other day.
+
+    The weekly is a Sunday send and its sent marker is keyed on this date.
+    Until Oct 5 2026 the default was ``date.today()``, so a catch-up
+    dispatch made after midnight UTC on Sunday (the Oct 4 run had timed out
+    at 17:55 UTC) looked for ``*_weekly_2026-10-05`` markers, found none,
+    and would have sent the six weeklies that already went out a second
+    time."""
+    return today - timedelta(days=(today.weekday() + 1) % 7)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate weekly newsletters")
     parser.add_argument("--show", type=str, help="Specific show slug (default: all)")
-    parser.add_argument("--date", type=str, help="Week ending date YYYY-MM-DD (default: today)")
+    parser.add_argument("--date", type=str,
+                        help="Week ending date YYYY-MM-DD (default: the most recent Sunday)")
     parser.add_argument("--dry-run", action="store_true", help="Generate but don't send")
     parser.add_argument("--output-dir", type=str, default="outputs/newsletters",
                         help="Save generated newsletters to this directory")
     args = parser.parse_args()
 
-    week_ending = date.fromisoformat(args.date) if args.date else date.today()
+    week_ending = (date.fromisoformat(args.date) if args.date
+                   else default_week_ending(date.today()))
     shows = [args.show] if args.show else ordered_shows(SHOWS)
 
     # Show content lake stats
