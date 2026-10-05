@@ -41,7 +41,7 @@ def test_scenario_opens_the_round_at_once():
 
 
 def test_worker_books_it_as_its_own_row():
-    assert "const closing = /closing/i.test(eventSlug);" in WORKER
+    assert "const closing = /closing/i.test(eventSlug) ||" in WORKER
     assert 'session_kind: "closing", continues_interview_id: continues' in WORKER
     assert "Thank you for coming back to finish our" in WORKER
 

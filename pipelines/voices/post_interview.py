@@ -1270,6 +1270,20 @@ def main() -> int:
             sb_update("interviews", f"id=eq.{interview['id']}",
                       {"topical_show_fits": package["topical_show_fits"]})
 
+    # Oct 5 2026 (Piper Martz): a closing session is not an episode of its
+    # own. The cut step splices it onto the edit of the interview it finishes
+    # and that episode goes to Patrick; this package is never reviewed or
+    # published by itself, so nobody is asked to approve a ten-minute piece.
+    if (interview.get("session_kind") or "interview") == "closing":
+        sb_update("editorial_packages", f"id=eq.{pkg['id']}", {
+            "status": "archived",
+            "patrick_notes": "Closing session: spliced onto the end of the episode it "
+                             "finishes. Never published on its own."})
+        sb_update("interviews", f"id=eq.{interview['id']}", {"status": "archived"})
+        logger.info("closing session processed; the cut step splices it into %s",
+                    interview.get("continues_interview_id"))
+        return 0
+
     flag_note = f" ⚠️ {', '.join(flags)}" if flags else ""
     # Sept 10 2026: this link used to go out without a token, so it 401'd
     # until Patrick pasted the admin token by hand — and it went to Slack

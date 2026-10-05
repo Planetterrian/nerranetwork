@@ -605,7 +605,8 @@ def _cut_spans(spec: dict) -> List[Tuple[float, float, str]]:
             gap_from, gap_to = float(a["end"]), float(b["start"])
         except (TypeError, ValueError):
             continue
-        if (a.get("from") == b.get("from") and 0 < gap_to - gap_from <= EDIT_GAP_MAX_SEC
+        if (a.get("from") == b.get("from") and a.get("run_id") == b.get("run_id")
+                and 0 < gap_to - gap_from <= EDIT_GAP_MAX_SEC
                 and gap_from >= EDIT_WARMUP_SEC):
             spans.append((gap_from, gap_to, "cut"))
     for piece in pieces:

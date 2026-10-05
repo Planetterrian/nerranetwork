@@ -915,16 +915,10 @@ async function handleCalComCancelled(env: Env, p: any): Promise<Response> {
   const startTime = p.startTime ?? p.start_time ?? null;
   const emails = bookingEmails(p);
   if (!startTime || !emails.length) return json({ error: "email + startTime required" }, 400);
-  const at = new Date(startTime);
-  if (isNaN(at.getTime())) return json({ error: "bad startTime" }, 400);
-  const rows = await sb(env, "GET",
-    `interviews?scheduled_at=eq.${encodeURIComponent(at.toISOString())}` +
-    `&status=in.(scheduled,briefed)&select=id,application_id,show,scheduled_at,guest_timezone`) ?? [];
-  for (const iv of rows) {
+  const iv = await interviewForBooking(env, String(p.uid ?? ""), String(startTime), emails);
+  if (iv) {
     const app = (await sb(env, "GET",
-      `guest_applications?id=eq.${iv.application_id}&select=id,name,email,publicist_email,show`))?.[0];
-    const theirs = [app?.email, app?.publicist_email].map((e) => String(e ?? "").toLowerCase());
-    if (!app || !emails.some((e) => theirs.includes(e))) continue;
+      `guest_applications?id=eq.${iv.application_id}&select=id,name,email,publicist_email,show`))?.[0] ?? {};
     const show = isShow(iv.show) ? showFor(iv) : showFor(app);
     const reason = String(p.cancellationReason ?? p.cancellation_reason ?? "").slice(0, 500);
     await sb(env, "PATCH", `interviews?id=eq.${iv.id}`, {
@@ -950,11 +944,83 @@ async function handleCalComCancelled(env: Env, p: any): Promise<Response> {
   return json({ ok: true, cancelled: null });
 }
 
+/** The interview a Cal.com booking belongs to, found from the booking itself
+ *  (its uid, or its start time and the guest's address) rather than by
+ *  matching an application, which a guest with two rows of the same name
+ *  defeats: the Oct 5 2026 test of a reschedule created a second interview
+ *  and a second application instead of moving the first. */
+async function interviewForBooking(env: Env, uid: string, startTime: string,
+                                   emails: string[]): Promise<any | null> {
+  const live = "status=in.(scheduled,briefed)";
+  const sel = "select=id,application_id,show,scheduled_at,guest_timezone,manage_token,session_kind";
+  if (uid) {
+    const byUid = await sb(env, "GET",
+      `interviews?cal_booking_uid=eq.${encodeURIComponent(uid)}&${live}&${sel}&limit=1`);
+    if (byUid?.length) return byUid[0];
+  }
+  const at = new Date(startTime || "");
+  if (!startTime || isNaN(at.getTime()) || !emails.length) return null;
+  const rows = await sb(env, "GET",
+    `interviews?scheduled_at=eq.${encodeURIComponent(at.toISOString())}&${live}&${sel}`) ?? [];
+  for (const iv of rows) {
+    const app = (await sb(env, "GET",
+      `guest_applications?id=eq.${iv.application_id}&select=email,publicist_email`))?.[0];
+    const theirs = [app?.email, app?.publicist_email].map((e) => String(e ?? "").toLowerCase());
+    if (emails.some((e) => theirs.includes(e))) return iv;
+  }
+  return null;
+}
+
+/** BOOKING_RESCHEDULED: move the guest's interview to the new time and tell
+ *  them, in one email, where it now is and how to join. */
+async function handleCalComRescheduled(env: Env, p: any): Promise<Response | null> {
+  const emails = bookingEmails(p);
+  const startTime = p.startTime ?? p.start_time ?? null;
+  if (!startTime) return null;
+  const iv = await interviewForBooking(env,
+    String(p.rescheduleUid ?? p.fromReschedule ?? ""),
+    String(p.rescheduleStartTime ?? p.rescheduledFrom ?? ""), emails);
+  if (!iv) return null;                       // the booking path will find or make one
+  const app = (await sb(env, "GET",
+    `guest_applications?id=eq.${iv.application_id}&select=id,name,email,show`))?.[0] ?? {};
+  const show = isShow(iv.show) ? showFor(iv) : showFor(app);
+  await sb(env, "PATCH", `interviews?id=eq.${iv.id}`, {
+    scheduled_at: startTime, status: "scheduled", reminder_sent_at: null,
+    guest_timezone: attendeeTimeZone(p) ?? iv.guest_timezone ?? null,
+    cal_booking_uid: String(p.uid ?? "") || null,
+    studio_kick_at: null, studio_alert_at: null,
+  });
+  const studio = studioUrl(show, iv.id, "guest");
+  await setCalendarLocation(env, show, String(p.uid ?? ""), studio, app.name ?? "guest");
+  const when = pacificTime(startTime, attendeeTimeZone(p) ?? iv.guest_timezone);
+  const manage = iv.manage_token
+    ? `https://api.nerranetwork.com/voices/manage/${encodeURIComponent(iv.manage_token)}` : "";
+  if (app.email) {
+    await email(env, app.email, `Moved: our ${show.name} interview is now ${pacificTime(startTime, null, true)}`,
+      `<p>Hi ${esc(firstName(app.name))},</p>
+       <p>No problem at all. We're now on for <strong>${esc(when)}</strong>. Your studio link
+       stays the same.</p>
+       ${studioStepsHtml(studio)}
+       ${manage ? `<p>If you need to move it again, <a href="${esc(manage)}">use this link</a>.</p>` : ""}
+       ${miraSignature(show)}`, true);
+  }
+  await email(env, operatorEmail(env), `${show.shortLabel}: ${app.name ?? "a guest"} rescheduled in Cal.com`,
+    `<p>${esc(app.name ?? "A guest")} moved their interview from ${esc(pacificTime(iv.scheduled_at))}
+     to ${esc(pacificTime(startTime))}. The interview row moved with it; nothing to do.</p>`);
+  try { await dispatch(env, "fire-tick", { source: "reschedule", interview_id: iv.id }); }
+  catch (err: any) { console.error("reschedule fire-tick failed:", err?.message ?? err); }
+  return json({ ok: true, show: show.slug, interview_id: iv.id, moved: true });
+}
+
 async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
   const hook = await req.json<any>().catch(() => null);
   const p = hook?.payload ?? hook ?? {};
   const trigger = String(hook?.triggerEvent ?? hook?.trigger_event ?? "").toUpperCase();
   if (trigger === "BOOKING_CANCELLED") return handleCalComCancelled(env, p);
+  if (trigger === "BOOKING_RESCHEDULED") {
+    const moved = await handleCalComRescheduled(env, p);
+    if (moved) return moved;
+  }
   // BOOKING_RESCHEDULED carries the new start time and falls through: the
   // guest's scheduled interview is found and moved, exactly as for a rebook.
   const emails = bookingEmails(p);
@@ -965,7 +1031,10 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
   // Which show was booked: Cal.com sends the event type in a few shapes
   // depending on webhook version. Env mapping wins; else the "voices"
   // heuristic (see showFromCalCom).
-  const eventSlug = String(p.eventType?.slug ?? p.eventTypeSlug ?? p.event_type_slug ?? "");
+  // Oct 5 2026 (Piper Martz): this webhook version names the event type in
+  // "type", which was never read, so her closing-session booking arrived
+  // with no slug and was set up as a new 45-minute interview.
+  const eventSlug = String(p.eventType?.slug ?? p.eventTypeSlug ?? p.event_type_slug ?? p.type ?? "");
   const eventTypeId = String(p.eventTypeId ?? p.eventType?.id ?? p.event_type_id ?? "");
   const bookedShow = showFromCalCom(env, eventSlug, eventTypeId);
 
@@ -1104,7 +1173,8 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
   // session that records only the closing round of an interview the old
   // time cap cut off. It is always its own row, pointing at the interview
   // it finishes.
-  const closing = /closing/i.test(eventSlug);
+  const closing = /closing/i.test(eventSlug) ||
+    /finishing our conversation/i.test(String(p.title ?? p.eventTitle ?? p.eventType?.title ?? ""));
   let continues: string | null = null;
   if (closing) {
     const prev = await sb(env, "GET",
@@ -1122,11 +1192,13 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
     interviewId = existing[0].id;
     await sb(env, "PATCH", `interviews?id=eq.${interviewId}`,
       { scheduled_at: startTime, status: "scheduled", reminder_sent_at: null, show: show.slug,
+        cal_booking_uid: String(p.uid ?? "") || null,
         guest_timezone: attendeeTimeZone(p),
         duration_min: closing ? 15 : plannedMinutes, host_mode: false });
   } else {
     const created = await sb(env, "POST", "interviews",
       { application_id: apps[0].id, scheduled_at: startTime, status: "scheduled", show: show.slug,
+        cal_booking_uid: String(p.uid ?? "") || null,
         guest_timezone: attendeeTimeZone(p),
         duration_min: closing ? 15 : plannedMinutes, host_mode: false,
         ...(closing ? { session_kind: "closing", continues_interview_id: continues } : {}) },

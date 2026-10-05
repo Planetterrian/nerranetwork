@@ -176,3 +176,70 @@ class TestNothingDependsOnGitHubOnTheDay:
 
     def test_a_dead_interview_never_opens(self):
         assert "const dead = DEAD_INTERVIEW_STATUSES.has(String(iv.status));" in WORKER
+
+
+class TestAClosingSessionFinishesTheEpisode:
+    """Oct 5 2026 (Piper Martz). Her closing session is booked for Friday; it
+    must land on the end of her first episode, not become a ten-minute
+    episode of its own that she is asked to approve."""
+
+    def test_the_cut_step_splices_instead_of_cutting(self, monkeypatch, tmp_path):
+        import json
+        import auto_edit as ae
+        monkeypatch.setattr(ae, "EDL_DIR", tmp_path / "edl")
+        monkeypatch.setattr(ae, "NARRATION_DIR", tmp_path / "narr")
+        parent_edl = {"run_id": "r1", "interview_id": "iv1", "show": "age_of_ai", "note": "n",
+                      "cuts": [{"from": "narration:intro"}, {"gap": 0.7},
+                               {"from": "mix:clean", "start": 20.0, "end": 2987.2, "exact_end": True},
+                               {"gap": 1.4}, {"from": "narration:outro"}]}
+        writes = []
+        monkeypatch.setattr(ae, "sb_select", lambda t, q="": (
+            [{"id": "e1", "slug": "piper_x", "edl": parent_edl, "narration": {"segments": []}}]
+            if t == "episode_edits" else
+            [{"id": "p1", "transcript_cleaned": "[00:10] Mira: Welcome."}] if t == "editorial_packages" else []))
+        monkeypatch.setattr(ae, "sb_update", lambda t, q, patch: writes.append((t, patch)))
+        monkeypatch.setattr(ae, "_leg_offset", lambda run: 0.0)
+        ctx = {"run": {"id": "r2", "duration_sec": 700, "created_at": "2026-10-09T18:00:00Z"},
+               "interview": {"id": "iv2", "session_kind": "closing", "continues_interview_id": "iv1"},
+               "app": {}, "package": {"transcript_raw": "\n".join([
+                   "[00:05] Mira: Welcome back, Piper. How are you?",
+                   "[00:09] Piper: Good, thanks.",
+                   "[00:40] Mira: We're back in the quick lightning round. You were telling me about a book.",
+                   "[00:48] Piper: The Art of Gathering.",
+                   "[09:50] Mira: That's the end of the recording."])}}
+        out = ae.splice_closing(ctx)
+        assert out == {"slug": "piper_x", "spliced": True}
+        cuts = json.loads((tmp_path / "edl" / "piper_x.json").read_text())["cuts"]
+        piece = [c for c in cuts if c.get("run_id") == "r2"][0]
+        assert piece["start"] == 39.6                          # the welcome back stays out
+        assert cuts[-1] == {"from": "narration:outro"}         # Mira's close still ends it
+        assert cuts.index(piece) < len(cuts) - 1
+        assert "exact_end" not in cuts[2]                       # the first session no longer ends it
+        ae.splice_closing(ctx)                                  # twice is the same as once
+        again = json.loads((tmp_path / "edl" / "piper_x.json").read_text())["cuts"]
+        assert again == cuts
+        assert any(t == "editorial_packages" and "[Closing session]" in p["transcript_cleaned"]
+                   for t, p in writes)
+
+    def test_assembly_takes_a_piece_from_another_run(self):
+        assert 'if cut.get("run_id") and str(cut["run_id"]) != str(run.get("id")):' in ASSEMBLE
+        assert "_clean_sources(src_run, show)" in ASSEMBLE
+
+    def test_no_package_of_its_own_reaches_anyone(self):
+        i = POST.index('if (interview.get("session_kind") or "interview") == "closing":')
+        block = POST[i:i + 900]
+        assert '"status": "archived"' in block and "return 0" in block
+        assert i < POST.index("is ready for your review")
+
+    def test_the_booking_is_recognised(self):
+        assert "p.event_type_slug ?? p.type ??" in WORKER
+        assert "finishing our conversation" in WORKER
+
+
+class TestARescheduleMovesTheInterview:
+    def test_found_from_the_booking_not_the_application(self):
+        assert "async function interviewForBooking(" in WORKER
+        assert "cal_booking_uid=eq.${encodeURIComponent(uid)}" in WORKER
+        assert 'if (trigger === "BOOKING_RESCHEDULED") {' in WORKER
+        assert "Moved: our ${show.name} interview is now" in WORKER
+        assert WORKER.count('cal_booking_uid: String(p.uid ?? "") || null,') >= 3

@@ -414,8 +414,111 @@ def _clean_bed(run: dict) -> tuple[bool, str]:
     return True, "Cut from the processed tracks: one voice each, no echo."
 
 
+# Oct 5 2026 (Piper Martz). Where a closing session's own recording begins:
+# the welcome back and the "how are you" stay out, so a listener hears the
+# first conversation run straight on into the round it never finished.
+CLOSING_STARTS = re.compile(
+    r"(lightning round|quick-?fire|book you'?d recommend|book you would recommend"
+    r"|where we left off|pick (it|that|things) (up|back up)|picking up where)", re.I)
+CLOSING_MARK = "[Closing session]"
+
+
+def splice_closing(ctx: dict) -> dict:
+    """A closing session is not an episode. Its closing round goes onto the
+    end of the edit of the interview it finishes, before Mira's produced
+    close, and that episode is the one narrated, assembled and sent to
+    Patrick. Idempotent: running it twice replaces the earlier splice."""
+    run, interview = ctx["run"], ctx["interview"]
+    parent_id = interview.get("continues_interview_id")
+    if not parent_id:
+        raise SystemExit("closing session with no interview to finish "
+                         "(interviews.continues_interview_id is empty)")
+    edits = sb_select("episode_edits",
+                      f"interview_id=eq.{parent_id}&order=created_at.desc&limit=1")
+    if not edits:
+        raise SystemExit(f"no edit of interview {parent_id} to finish")
+    parent = edits[0]
+    slug = parent["slug"]
+    on_disk = EDL_DIR / f"{slug}.json"
+    edl = (json.loads(on_disk.read_text(encoding="utf-8")) if on_disk.exists()
+           else dict(parent.get("edl") or {}))
+    narration = parent.get("narration") or {}
+
+    offset = _leg_offset(run)
+    rows = []
+    for line in transcript_of(ctx).splitlines():
+        m = _LINE.match(line.strip())
+        if not m:
+            continue
+        h_or_m, mm, ss, who, text = m.groups()
+        t = (int(h_or_m) * 3600 + int(mm) * 60 + int(ss)) if ss else (int(h_or_m) * 60 + int(mm))
+        rows.append((float(t), who.strip(), text))
+    mira = [(t, text) for t, who, text in rows if who.lower() == "mira"]
+    begin = next((t for t, text in mira if CLOSING_STARTS.search(text)), None)
+    if begin is None:
+        # She opened the round in words this does not know: keep everything
+        # after her welcome back rather than lose any of it.
+        begin = mira[1][0] if len(mira) > 1 else (mira[0][0] if mira else 0.0)
+    try:
+        room_end = float(run.get("duration_sec") or 0.0) or None
+    except (TypeError, ValueError):
+        room_end = None
+    last = rows[-1][0] + 8.0 if rows else (room_end or begin + 600.0)
+    end = min(last, room_end) if room_end else last
+    piece = {"from": "mix:clean", "run_id": run["id"],
+             "start": round(max(0.0, begin - offset - 0.4), 1),
+             "end": round(max(0.0, end - offset), 1),
+             "note": (f"{CLOSING_MARK} recorded {str(run.get('created_at') or '')[:10]}: the "
+                      "rest of the closing round and the guest's last word, after the "
+                      "room's old time cap cut the first session off.")}
+
+    # An earlier splice (its piece and its gap) comes out first; then the new
+    # one goes in before the produced close, keeping the breath before it.
+    cuts = [c for c in (edl.get("cuts") or [])
+            if not (isinstance(c, dict) and (c.get("run_id") or c.get("closing")))]
+    at = max((i for i, c in enumerate(cuts)
+              if isinstance(c, dict) and str(c.get("from", "")).startswith("narration:")),
+             default=len(cuts))
+    if at > 0 and isinstance(cuts[at - 1], dict) and "gap" in cuts[at - 1]:
+        at -= 1
+    cuts[at:at] = [{"gap": 0.9, "closing": True}, piece]
+    # The first session's last piece no longer ends the episode.
+    for c in cuts:
+        if isinstance(c, dict) and c.get("from") == "mix:clean" and not c.get("run_id"):
+            c.pop("exact_end", None)
+    edl["cuts"] = cuts
+    edl["note"] = ((edl.get("note") or "").split(" " + CLOSING_MARK)[0] + " " + CLOSING_MARK +
+                   " The closing session is spliced on before Mira's close.")
+
+    EDL_DIR.mkdir(parents=True, exist_ok=True)
+    on_disk.write_text(json.dumps(edl, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    if narration:
+        NARRATION_DIR.mkdir(parents=True, exist_ok=True)
+        (NARRATION_DIR / f"{slug}.json").write_text(
+            json.dumps(narration, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    sb_update("episode_edits", f"id=eq.{parent['id']}",
+              {"edl": edl, "rationale": edl["note"]})
+
+    # The guest approves a transcript as well as the audio: theirs gets the
+    # closing session too, once.
+    pkgs = sb_select("editorial_packages",
+                     f"interview_id=eq.{parent_id}&status=neq.killed"
+                     "&select=id,transcript_cleaned&order=created_at.desc&limit=1")
+    closing_text = ((ctx.get("package") or {}).get("transcript_cleaned")
+                    or transcript_of(ctx) or "").strip()
+    if pkgs and closing_text:
+        base = (pkgs[0].get("transcript_cleaned") or "").split("\n\n" + CLOSING_MARK)[0]
+        sb_update("editorial_packages", f"id=eq.{pkgs[0]['id']}",
+                  {"transcript_cleaned": f"{base}\n\n{CLOSING_MARK}\n{closing_text}"})
+    logger.info("closing session spliced into %s at %.0fs-%.0fs of its own tape",
+                slug, piece["start"], piece["end"])
+    return {"slug": slug, "spliced": True}
+
+
 def build(run_id: str) -> dict:
     ctx = _context(run_id)
+    if (ctx["interview"].get("session_kind") or "interview") == "closing":
+        return splice_closing(ctx)
     run, interview, app = ctx["run"], ctx["interview"], ctx["app"]
     decided = plan(ctx)
 

@@ -635,6 +635,7 @@ def assemble(slug: str) -> dict:
         work = Path(tmp)
         pieces: List[Path] = []
         conversation = ("run:", "track:", "mix:")
+        other_runs: Dict[str, dict] = {}
         last_conversation = max(
             (i for i, c in enumerate(cuts)
              if str(c.get("from", "")).startswith(conversation)
@@ -646,12 +647,23 @@ def assemble(slug: str) -> dict:
                 pieces.append(_silence(float(cut["gap"]), out))
                 continue
             ref = str(cut["from"])
+            # Oct 5 2026: a piece can come from another recording of the same
+            # conversation (a closing session spliced onto the first one).
+            src_run = run
+            if cut.get("run_id") and str(cut["run_id"]) != str(run.get("id")):
+                key = f"run:{cut['run_id']}"
+                if key not in other_runs:
+                    rows = sb_select("interview_runs", f"id=eq.{cut['run_id']}")
+                    if not rows:
+                        raise SystemExit(f"no interview_runs row {cut['run_id']}")
+                    other_runs[key] = rows[0]
+                src_run = other_runs[key]
             # The last stretch of conversation decides where the episode ends,
             # so its end is measured from the audio rather than trusted from
             # the transcript. Earlier cuts are seams in the middle, where a
             # tenth of a second either way is nobody's business.
             if ref == "mix:clean":
-                tracks = _clean_sources(run, show)
+                tracks = _clean_sources(src_run, show)
                 if not tracks:
                     raise SystemExit(
                         "mix:clean needs the processed per-speaker tracks and "
@@ -660,7 +672,7 @@ def assemble(slug: str) -> dict:
                 srcs = [(role, _fetch(url, work / f"src_{abs(hash(url))}.bin",
                                       cache))
                         for role, url in tracks]
-                sides = ((run.get("grok_session_log") or {}).get("tracks")
+                sides = ((src_run.get("grok_session_log") or {}).get("tracks")
                          or {}).get("processed_channels") or {}
                 for role, path in srcs:
                     side = str(sides.get(role) or "")
@@ -672,9 +684,9 @@ def assemble(slug: str) -> dict:
                 logger.info("cut %d: %s (%s) -> %.1fs", i, ref,
                             ", ".join(r for r, _ in srcs), _duration(out))
                 continue
-            url = _resolve(ref, run, show, spec.get("narration", ""))
+            url = _resolve(ref, src_run, show, spec.get("narration", ""))
             if ref.startswith("track:") and not cut.get("channel"):
-                side = str((((run.get("grok_session_log") or {}).get("tracks")
+                side = str((((src_run.get("grok_session_log") or {}).get("tracks")
                              or {}).get("processed_channels") or {})
                            .get(ref.split(":", 1)[1]) or "")
                 if side in CHANNEL_FILTERS:
