@@ -229,6 +229,125 @@ reviews:
       ab_listen_required: false
       rationale: Prompt-only teardown uniqueness missed twice (Ep1 CoWoS, Ep2 lasers). Garble/lint class is highest-yield per meta-review; keep show opt-in like absence_sentence_filter.
     agent_cost_usd: 0.0974
+  - date: '2026-10-04'
+    pr: null
+    doc: docs/reviews/ai_chips_review_2026_10_04.md
+    generated_by: grok-4.5
+    summary: Ep4–13 still ship ~9/10 scripts under 1300 words because digests remain the ceiling; consumer handset silicon and Teardown-as-news-rerun still leak, while 'the trade-off flips' calcified into a 7/10 closing tic and Ep9 dropped its Teardown chapter entirely.
+    scored_prior_predictions:
+    - metric: podcast_script_word_count median Ep4–10
+      verdict: miss
+      evidence: Ep4–13 median ~1047 words; 9/10 under 1300 (only ep9 at 1333).
+    - metric: digest_word_count median Ep4–10
+      verdict: miss
+      evidence: Scripts still capped well under target with digest_expand already on — substrate did not reach ≥1250 effective.
+    - metric: Teardown subject overlap with same-ep news items (manual or lint)
+      verdict: miss
+      evidence: Ep7 MX-1/CXL is both news and Teardown; Ep9 chapters omit Teardown entirely.
+    - metric: scripts containing consumer handset/smartphone Silicon items (Vivo/iPhone/OriginOS/Snapdragon flagship phone SKUs)
+      verdict: miss
+      evidence: Ep6 body+Horizon cover Snapdragon 8 Elite Gen 6 flagship phone chips.
+    - metric: scripts missing required chapter phrases 'take it apart' OR 'on the horizon'
+      verdict: partial
+      evidence: Horizon present Ep4–8,10–13; Ep9 has no Teardown chapter (anchor likely missing).
+    - metric: Teardown first sentence matching shape 'Take it apart and the…'
+      verdict: hit
+      evidence: Opens varied across Ep4–13 (floor plate, aisle, coolant, LIM, 3D V-cache, wafer chain).
+    - metric: Data Centres & Power with >=1 site item when fetch had a site-class article
+      verdict: partial
+      evidence: Ep4 Applied Digital 210 MW Brookwood site; improved vs Ep3 zero-site, not proven ≥5/7.
+    - metric: dc_items_unlabelled after retry
+      verdict: hit
+      evidence: No recurrence of Ep3-style false-positive unlabelled storms after site-only + two-site floor.
+    - metric: x.com Sources per episode
+      verdict: partial
+      evidence: Ep3–9 median window not fully re-counted from digests in this bundle.
+    - metric: commas per 100 words in the digest on a grok-4.7 episode
+      verdict: hit
+      evidence: Most Ep4–13 scripts 4.7–6.6 commas/100w; ep7 1.7 is fallback outlier.
+    - metric: absence sentences per episode (digest + script, before the filter; metric digest_absence_sentences_removed + script_absence_sentences_removed)
+      verdict: hit
+      evidence: Ep4–13 transcripts ship no not-disclosed/no-figures absence lines.
+    - metric: first chapter startTime (s) on episodes 2-8
+      verdict: hit
+      evidence: chapters_ep004–013 all startTime 3.0.
+    shipped: []
+    deferred:
+    - Prune x_accounts handles that log No recent posts once live per-account fetch counts exist.
+    - Network-wide absence-sentence filter (precision not proven on other shows).
+    - YouTube / X distribution enable (launch policy — operator date).
+    - Dedicated audio theme (still assets/music/ModelsAgents.mp3 per plan §5c).
+    - Re-grade full RSS list with check_feeds.py ai_chips on a runner.
+    - preferred_domains tightening if x.com Sources median stays >1 after window closes.
+    - Any podcast-side length lever (min_podcast_words raise, podcast_expand_below_target, write-longer prompt pressure) — do_not_retry.
+    - Re-proposing dc_items_unlabelled as the fix for zero DC sites — do_not_retry; mix/selection is separate.
+    - Operator decision on digest format arithmetic if Ep14–20 digest median still <1250 after substance floors — escalate, do not third-file the same mix prompt.
+    - Data-side Teardown-close / frame memory if 'trade-off flips' successor still converges after one prompt de-seed (second miss → memory, not third prompt filing).
+    predictions:
+    - metric: scripts/digests containing consumer handset or flagship-phone Silicon items (Snapdragon mobile / iPhone / Vivo / OriginOS class)
+      baseline: 1/10 in Ep4–13 window (Ep6); 2/13 since launch counting Ep2
+      expected: 0/7 on Ep14–20 after exclude_title_patterns + digest reject bullet
+      verdict: pending
+      evidence: null
+    - metric: episodes whose chapters JSON lacks a 'The Teardown' chapter OR whose script lacks phrase 'take it apart'
+      baseline: 1/10 (Ep9 missing Teardown chapter)
+      expected: 0/7 on Ep14–20 after phrase drift-guard
+      verdict: pending
+      evidence: null
+    - metric: Teardown subject entity overlap with same-episode Silicon/DC/Supply item headings
+      baseline: ≥1/10 (Ep7 MX-1); launch 2/3 before Ep4
+      expected: 0/7 on Ep14–20 after teardown-overlap digest lint
+      verdict: pending
+      evidence: null
+    - metric: scripts whose Teardown close uses the predicate family 'trade-off flips' / 'tradeoff flips'
+      baseline: 7/10 (snapshot repeated phrases)
+      expected: '≤1/7 on Ep14–20 after shape de-seed + verbatim ban (successor tic: watch next elected closer)'
+      verdict: pending
+      evidence: null
+    - metric: podcast_script_word_count median Ep14–20
+      baseline: median ~1047 (Ep4–13); 9/10 under 1300
+      expected: ≥1100 only if digest_word_count median ≥1250 (digest-side only; else n/a-lever and escalate format floors — never podcast expand)
+      verdict: pending
+      evidence: null
+    - metric: digest_word_count median Ep14–20
+      baseline: effective ceiling keeping 9/10 scripts under 1300
+      expected: ≥1250 on ≥5/7 after section substance floors; if not, operator decision on format arithmetic
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/ai_chips.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Ep6 still admitted Qualcomm flagship phone chips; Ep2 was Vivo/iPhone. Fetch-side drop is highest-yield; prior 09-24 proposal was not applied.
+    - file: shows/prompts/ai_chips_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Selection-layer mirror of new exclude patterns so the LLM does not re-admit handset copy that slips past RSS titles (Ep2, Ep6).
+    - file: shows/prompts/ai_chips_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Third documented same-ep teardown overlap (Ep7). Name failure shape without seeding a specimen topic; pair with lint below.
+    - file: shows/prompts/ai_chips_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'De-seed by shape: prompt''s own ''close on when the tradeoff flips'' became the 7/10 tic. Verbatim ban + shape description; no new example sentence. Also hard-keeps the chapter anchor after Ep9 dropped Teardown.'
+    - file: shows/prompts/ai_chips_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Keep hard phrase contract (Ep2 miss fixed in later eps); block Ep6-style phone SKU on Horizon.
+    - file: shows/ai_chips.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Prompt-only teardown uniqueness missed Ep1, Ep2, Ep7. Opt-in lint (entity/title overlap vs Silicon/DC/Supply headings) forces one-shot retry; garble/lint class is highest-yield. Requires matching implementation in engine/digest_lint.py.
+    - file: engine/digest_lint.py
+      kind: code
+      ab_listen_required: false
+      rationale: Mechanical enforcement after three prompt-only misses; keep show opt-in.
+    - file: tests/test_ai_chips_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Every behavioral fix needs a drift-guard; show still lacks a quality-pass module covering Ep6 handset, Ep9 missing Teardown, and trade-off-flips tic.
+    agent_cost_usd: 0.1259
 do_not_retry:
   - idea: Podcast-side script length levers for ai_chips (word floors, expand-retries, prompt pressure to hit min_podcast_words) — median 953 on 1300 with digest ~1034 is the digest ceiling; network meta-review length category misses generalize FF/FPD do_not_retry here.
     evidence: flagged 2026-09-24 (Grok review)
