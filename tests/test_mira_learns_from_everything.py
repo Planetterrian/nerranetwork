@@ -241,5 +241,5 @@ class TestARescheduleMovesTheInterview:
         assert "async function interviewForBooking(" in WORKER
         assert "cal_booking_uid=eq.${encodeURIComponent(uid)}" in WORKER
         assert 'if (trigger === "BOOKING_RESCHEDULED") {' in WORKER
-        assert "Moved: our ${show.name} interview is now" in WORKER
+        assert "Moved: our interview on ${show.name} is now" in WORKER
         assert WORKER.count('cal_booking_uid: String(p.uid ?? "") || null,') >= 3

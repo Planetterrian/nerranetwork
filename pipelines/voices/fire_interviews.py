@@ -419,7 +419,7 @@ def reminder_email(interview: dict, app: dict, show, manage: str,
                 "The studio is open and I'm ready when you are. We start in about "
                 "ten minutes.")
     else:
-        subject = f"Our {show.name} interview is in about two hours"
+        subject = f"Our interview on {show.name} is in about two hours"
         lead = (f"We're on for {_h.escape(when)}, about two hours from now."
                 if when else "We're on in about two hours.")
     parts = [f"<p>Hi {first},</p>", f"<p>{lead}</p>"]

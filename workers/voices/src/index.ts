@@ -930,7 +930,7 @@ async function handleCalComCancelled(env: Env, p: any): Promise<Response> {
       { status: "cancelled", disconnect_reason: "guest cancelled in Cal.com" });
     const booking = bookingUrl(env, show);
     try {
-      await email(env, app.email, `No problem: our ${show.name} interview is cancelled`,
+      await email(env, app.email, `No problem: our interview on ${show.name} is cancelled`,
         `<p>Hi ${esc(firstName(app.name))},</p>
          <p>No problem at all. Your slot is released and nobody is waiting for you.</p>
          ${booking ? `<p>Whenever you'd like to pick it up again, <a href="${esc(booking)}">book a new time here</a>.</p>` : ""}
@@ -996,7 +996,7 @@ async function handleCalComRescheduled(env: Env, p: any): Promise<Response | nul
   const manage = iv.manage_token
     ? `https://api.nerranetwork.com/voices/manage/${encodeURIComponent(iv.manage_token)}` : "";
   if (app.email) {
-    await email(env, app.email, `Moved: our ${show.name} interview is now ${pacificTime(startTime, null, true)}`,
+    await email(env, app.email, `Moved: our interview on ${show.name} is now ${pacificTime(startTime, null, true)}`,
       `<p>Hi ${esc(firstName(app.name))},</p>
        <p>No problem at all. We're now on for <strong>${esc(when)}</strong>. Your studio link
        stays the same.</p>
@@ -1988,7 +1988,7 @@ async function reminderFallback(env: Env): Promise<number> {
       const manage = iv.manage_token
         ? `https://api.nerranetwork.com/voices/manage/${encodeURIComponent(iv.manage_token)}` : "";
       const phoneMode = (iv.call_mode || "webrtc") !== "webrtc";
-      await email(env, app.email, `Our ${show.name} interview is coming up`,
+      await email(env, app.email, `Our interview on ${show.name} is coming up`,
         `<p>Hi ${esc(firstName(app.name))},</p>
          <p>We're on for <strong>${esc(when)}</strong>, a little over an hour from now.</p>
          ${phoneMode
