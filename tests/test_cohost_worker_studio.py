@@ -329,7 +329,7 @@ def test_studio_signs_in_at_unlock_and_retries_the_key():
     assert "async function studioLogin()" in html and "async function requestKey(" in html
     assert 'step("connect", "Reconnecting to Voximplant…"' in html
     assert 'id="studioStatus"' in html
-    assert "the studio opens 10 minutes before your slot" in html
+    assert "the studio opens 15 minutes before your slot" in html
 
 
 def test_session_logs_workflow():

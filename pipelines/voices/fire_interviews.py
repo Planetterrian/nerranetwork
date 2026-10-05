@@ -45,6 +45,12 @@ FIRE_GRACE_BEHIND_MIN = 30   # cron drift tolerance — never leave a guest
                              # room: a no-answer run resets the interview to
                              # briefed and later ticks in this window re-fire.
 REMINDER_AHEAD = (dt.timedelta(minutes=105), dt.timedelta(minutes=135))
+# Oct 5 2026 (Jon Cheney): a GitHub Actions outage meant no runner picked up
+# the five-minute fire job for over an hour, so his studio never unlocked and
+# the page told him he was early until he gave up. A browser interview's run
+# is now prepared up to a day ahead, as `staged`, and the Worker opens it
+# itself the moment the guest arrives: on the day, nothing waits on GitHub.
+STAGE_AHEAD = dt.timedelta(hours=24)
 
 # Phase 2 co-host (Sept 2026, docs/cohost_phase2_contract.md): Patrick is in
 # the room on every interview unless the interview row says host_mode=false.
@@ -534,7 +540,8 @@ def send_reminders() -> None:
 
 def fire_due_interviews() -> int:
     lo = _now() - dt.timedelta(minutes=FIRE_GRACE_BEHIND_MIN)
-    hi = _now() + dt.timedelta(minutes=max(FIRE_WINDOW_AHEAD_MIN, STUDIO_UNLOCK_AHEAD_MIN))
+    unlock_hi = _now() + dt.timedelta(minutes=max(FIRE_WINDOW_AHEAD_MIN, STUDIO_UNLOCK_AHEAD_MIN))
+    hi = _now() + STAGE_AHEAD
     phone_hi = _now() + dt.timedelta(minutes=FIRE_WINDOW_AHEAD_MIN)
     # status=in.(briefed,scheduled): short-notice bookings (inside the daily
     # prep cron's 12-36h lookahead) arrive still `scheduled` with no brief —
@@ -547,10 +554,17 @@ def fire_due_interviews() -> int:
     )
     failures = 0
     for interview in due:
+        when = _parse(interview["scheduled_at"])
+        # A browser interview without a co-host is staged ahead and opened by
+        # the Worker when the guest arrives. Everything else keeps its window.
+        studio = ((interview.get("call_mode") or "webrtc") == "webrtc"
+                  and not host_mode_enabled(interview))
+        in_window = not when or when <= unlock_hi
+        if not studio and not in_window:
+            continue
         # Phone interviews keep the tight window: dialling a guest's phone
         # ten minutes early is not "unlocking a studio".
         if (interview.get("call_mode") or "webrtc") != "webrtc":
-            when = _parse(interview["scheduled_at"])
             if when and when > phone_hi:
                 continue
         # Idempotency: a delayed/parallel tick must not double-call.
@@ -563,6 +577,8 @@ def fire_due_interviews() -> int:
                      f"&status=not.in.(failed,cancelled)"):
             logger.info("Interview %s already has an active run — skipping",
                         interview["id"])
+            if studio and in_window and not interview.get("reminder_sent_at"):
+                start_time_email(interview)
             continue
         show = show_for(interview)
         try:
@@ -603,7 +619,7 @@ def fire_due_interviews() -> int:
             # second time, ten minutes before the start. Only a guest who never
             # got the two-hour reminder (a short-notice booking) hears from Mira
             # here, and what they hear is true: we start in a few minutes.
-            if not interview.get("reminder_sent_at"):
+            if in_window and not interview.get("reminder_sent_at"):
                 try:
                     send_guest_reminder(interview, app, show, manage, soon=True)
                     sb_update("interviews", f"id=eq.{interview['id']}",
@@ -649,12 +665,18 @@ def fire_due_interviews() -> int:
                 "host_mode": host_mode,
                 "host_user": os.environ.get("VOX_HOST_USER", "").strip() or "host",
                 **room_clips(show),
-                **({"status": "awaiting_guest"} if call_mode == "webrtc" else {}),
+                **({"status": "staged"} if studio
+                   else {"status": "awaiting_guest"} if call_mode == "webrtc" else {}),
             })
             if host_mode:
                 notify_host(interview, app, show,
                             when=("in 10 min" if call_mode == "webrtc" else "in 2 min"))
 
+            if studio:
+                logger.info("Interview %s (run %s, %s) staged; the studio opens "
+                            "when the guest arrives: %s", interview["id"], run["id"],
+                            show.slug, show.studio_url(interview["id"]))
+                continue
             if call_mode == "webrtc":
                 # WebRTC (default): no outbound dial. The run row is the
                 # studio's green light — the guest's browser polls
@@ -682,6 +704,12 @@ def fire_due_interviews() -> int:
             logger.info("Fired interview %s (run %s) for %s",
                         interview["id"], run["id"], app["name"])
         except Exception as exc:  # noqa: BLE001
+            if not in_window:
+                # Staging hours ahead: the next tick tries again. Only a
+                # failure at the start time is the operator's problem.
+                logger.exception("Staging failed for interview %s (will retry)",
+                                 interview["id"])
+                continue
             failures += 1
             logger.exception("Firing failed for interview %s", interview["id"])
             sb_update("interviews", f"id=eq.{interview['id']}",
@@ -691,6 +719,19 @@ def fire_due_interviews() -> int:
                 critical=True,
             )
     return failures
+
+
+def start_time_email(interview: dict) -> None:
+    """The "we start in a few minutes" email for a guest who never had the
+    two-hour reminder (a short-notice booking), sent once, at the start."""
+    try:
+        app = sb_select("guest_applications", f"id=eq.{interview['application_id']}")[0]
+        show = show_for(interview, app)
+        send_guest_reminder(interview, app, show, manage_url(interview), soon=True)
+        sb_update("interviews", f"id=eq.{interview['id']}",
+                  {"reminder_sent_at": _iso(_now())})
+    except Exception:  # noqa: BLE001 — never blocks anything
+        logger.exception("Start-time email failed for %s (non-fatal)", interview["id"])
 
 
 NO_SHOW_AFTER_MIN = 40
@@ -713,7 +754,7 @@ def sweep_browser_no_shows() -> int:
             runs = sb_select("interview_runs",
                              f"interview_id=eq.{interview['id']}&order=created_at.desc&limit=1")
             run = runs[0] if runs else None
-            if not run or run.get("status") != "awaiting_guest":
+            if not run or run.get("status") not in ("awaiting_guest", "staged"):
                 continue
             sb_update("interview_runs", f"id=eq.{run['id']}",
                       {"status": "failed", "disconnect_reason": "no_show"})

@@ -420,7 +420,16 @@
           return;
         }
         var when = s.scheduled_at ? new Date(s.scheduled_at) : null;
-        document.getElementById("checkMsg").textContent = "You're early — the studio opens 10 minutes before your slot.";
+        // Oct 5 2026 (Jon Cheney): at the start time this said "you're
+        // early" for ten minutes. A guest who is on time is never told that.
+        if (s.opening || (when && Date.now() >= when.getTime() - 15 * 60 * 1000)) {
+          document.getElementById("checkMsg").textContent = "Mira is getting the studio ready for you.";
+          document.getElementById("checkDetail").textContent =
+            "This usually takes less than a minute. Keep this page open; it will open by itself.";
+          setTimeout(checkState, 10000);
+          return;
+        }
+        document.getElementById("checkMsg").textContent = "You're early — the studio opens 15 minutes before your slot.";
         document.getElementById("checkDetail").textContent = when
           ? ("Your interview is scheduled for " + when.toLocaleString() + ". Keep this page open; it will unlock automatically.")
           : "Keep this page open; it will unlock automatically.";

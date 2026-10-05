@@ -1099,6 +1099,10 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
   const when = bookedWhen(startTime, p);
   // Sept 28 2026: written by Mira, in the first person, like everything else
   // a guest receives. It used to speak about "Mira, our AI host".
+  // Oct 5 2026: prepare the studio now rather than on a later tick, so a
+  // short-notice booking has its room ready long before the start.
+  try { await dispatch(env, "fire-tick", { source: "booking", interview_id: interviewId }); }
+  catch (err: any) { console.error("booking fire-tick dispatch failed:", err?.message ?? err); }
   if (closing) {
     await email(env, emailAddr, `Thank you for coming back to finish our ${show.name} conversation`,
       `<p>Hi ${esc(firstName(apps[0].name))},</p>
@@ -2550,7 +2554,7 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
   const role: StudioRole = url.searchParams.get("role") === "host" ? "host" : "guest";
   if (!UUID_RE.test(interviewId)) return json({ error: "interview required" }, 400);
   const ivs = await sb(env, "GET",
-    `interviews?id=eq.${interviewId}&select=id,status,scheduled_at,call_mode,show,application_id,host_mode`);
+    `interviews?id=eq.${interviewId}&select=id,status,scheduled_at,call_mode,show,application_id,host_mode,studio_kick_at,studio_alert_at`);
   const iv = ivs?.[0];
   if (!iv) return json({ error: "not found" }, 404);
   // Pre-migration interviews carry no show; fall back to the application's.
@@ -2567,7 +2571,26 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
     `interview_runs?interview_id=eq.${interviewId}&order=created_at.desc&limit=1` +
     `&select=id,status,host_mode,guest_joined_at,host_joined_at,host_left_at`);
   const latest = latestRows?.[0] ?? null;
+  // Oct 5 2026 (Jon Cheney): the studio opens when the guest arrives. The
+  // run is prepared ahead as `staged`; the first person to open the page
+  // inside the window turns it into the live room, here, with no GitHub job
+  // in between. Conditional on status=staged so two tabs cannot race.
+  const openNow = studioOpenable(iv);
+  if (latest && latest.status === "staged" && openNow) {
+    const opened = await sb(env, "PATCH",
+      `interview_runs?id=eq.${latest.id}&status=eq.staged`, { status: "awaiting_guest" },
+      "return=representation");
+    if (opened?.length) latest.status = "awaiting_guest";
+    else {
+      const again = await sb(env, "GET", `interview_runs?id=eq.${latest.id}&select=status`);
+      if (again?.[0]?.status) latest.status = again[0].status;
+    }
+  }
   const run = latest && JOINABLE_RUN_STATUSES.has(String(latest.status)) ? latest : null;
+  // Nothing prepared and the guest is here: ask for the run now, and tell
+  // Patrick once, so nobody waits in an empty room without him knowing.
+  const waitingForRun = !run && openNow && !(latest && latest.status === "staged");
+  if (waitingForRun) await rescueStudio(env, iv, show, role);
   const hostMode = latest ? latest.host_mode !== false : iv.host_mode !== false;
   return json({
     ready: Boolean(run),
@@ -2585,7 +2608,45 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
     host_mode: hostMode,
     guest_joined: Boolean(latest?.guest_joined_at),
     host_joined: Boolean(latest?.host_joined_at) && !latest?.host_left_at,
+    // The studio would be open by now; it is being prepared. The page says
+    // so instead of "you're early".
+    opening: waitingForRun,
   });
+}
+
+// The studio may open from 15 minutes before the start until three hours
+// after it, while the interview is still on.
+const STUDIO_OPENS_BEFORE_MS = 15 * 60 * 1000;
+const STUDIO_OPEN_UNTIL_MS = 3 * 60 * 60 * 1000;
+function studioOpenable(iv: any): boolean {
+  if (!["briefed", "scheduled", "in_progress"].includes(String(iv?.status))) return false;
+  const at = iv?.scheduled_at ? Date.parse(iv.scheduled_at) : NaN;
+  if (!Number.isFinite(at)) return false;
+  const now = Date.now();
+  return now >= at - STUDIO_OPENS_BEFORE_MS && now <= at + STUDIO_OPEN_UNTIL_MS;
+}
+
+async function rescueStudio(env: Env, iv: any, show: any, role: string) {
+  const now = Date.now();
+  const kicked = iv.studio_kick_at ? Date.parse(iv.studio_kick_at) : 0;
+  if (now - kicked > 3 * 60 * 1000) {
+    await sb(env, "PATCH", `interviews?id=eq.${iv.id}`, { studio_kick_at: new Date(now).toISOString() });
+    try { await dispatch(env, "fire-tick", { source: "studio-rescue", interview_id: iv.id }); }
+    catch (err: any) { console.error("studio rescue dispatch failed:", err?.message ?? err); }
+  }
+  if (!iv.studio_alert_at) {
+    await sb(env, "PATCH", `interviews?id=eq.${iv.id}`, { studio_alert_at: new Date(now).toISOString() });
+    try {
+      const apps = iv.application_id
+        ? await sb(env, "GET", `guest_applications?id=eq.${iv.application_id}&select=name`) : [];
+      const who = apps?.[0]?.name ?? "A guest";
+      await email(env, operatorEmail(env), `${show.shortLabel}: ${who} is in the studio and it has not opened`,
+        `<p>${esc(who)} opened the studio (${esc(role)}) for the interview at ${esc(pacificTime(iv.scheduled_at))}
+         and there is no prepared run to open. I have asked GitHub to prepare it; if it does not open
+         within a few minutes, GitHub Actions is probably down.</p>
+         <p>Interview ${esc(iv.id)}</p>`);
+    } catch (err: any) { console.error("studio rescue alert failed:", err?.message ?? err); }
+  }
 }
 
 const JOINABLE_RUN_STATUSES = new Set(["awaiting_guest", "pending", "in_progress"]);
