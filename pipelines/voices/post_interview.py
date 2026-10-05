@@ -59,7 +59,8 @@ from audio.mix_tracks import (  # noqa: E402
 from learning import (  # noqa: E402
     adopt_lessons, guest_feedback, host_formulas, lessons_for_prompt, measure,
     measure_silence,
-    parse_transcript, retire_lessons, save_grade, save_host_phrases,
+    parse_transcript, recent_editor_cuts, recent_guest_experience,
+    retire_lessons, save_grade, save_host_phrases,
     save_metrics, save_proposed_lessons, session_events_summary,
 )
 from validators.schema_validators import validate_pass_output  # noqa: E402
@@ -1227,6 +1228,10 @@ def main() -> int:
                 channels=channels,
                 session_events=session_events_summary(run),
                 active_lessons=lessons_for_prompt(show.slug),
+                editor_cuts=recent_editor_cuts()
+                or "(nothing cut by hand yet)",
+                guest_experience=recent_guest_experience()
+                or "(no guest has written about it yet)",
                 guest_feedback=guest_feedback(cleaned, _guest_label(app))
                 or "(she was not asked, or the answer is not in the tape)",
                 metrics=json.dumps(

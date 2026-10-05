@@ -2079,7 +2079,8 @@ class TestTheLoopClosesItself:
 
     def test_a_dozen_instructions_stay_a_dozen(self):
         body = _pyfn("adopt_lessons", self.LEARNING)
-        assert "MAX_ACTIVE_LESSONS - (len(current) + len(adopted))" in body
+        # Oct 5 2026: a cap per scope (the network's craft, the show's own).
+        assert "lesson_cap(scope) - (len(current) + len(mine))" in body
         assert "made room for a newer lesson" in body
         assert "RETIRE the instructions that have done their job" in self.RETRO
 

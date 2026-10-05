@@ -904,9 +904,59 @@ function bookingNotes(p: any): string {
   return String(n ?? "").trim();
 }
 
+/** Oct 5 2026 (Jon Cheney). The webhook only ever heard BOOKING_CREATED, so
+ *  a guest who used Cal.com's own Reschedule or Cancel link (the one in their
+ *  calendar invite) moved nothing here: Jon rescheduled from Sept 22 and the
+ *  room opened for the old slot. A cancellation in Cal.com now cancels the
+ *  interview; a reschedule runs through the booking path below, which moves
+ *  the guest's existing interview to the new time. */
+async function handleCalComCancelled(env: Env, p: any): Promise<Response> {
+  if (p.rescheduled === true || p.fromReschedule) return json({ ok: true, ignored: "part of a reschedule" });
+  const startTime = p.startTime ?? p.start_time ?? null;
+  const emails = bookingEmails(p);
+  if (!startTime || !emails.length) return json({ error: "email + startTime required" }, 400);
+  const at = new Date(startTime);
+  if (isNaN(at.getTime())) return json({ error: "bad startTime" }, 400);
+  const rows = await sb(env, "GET",
+    `interviews?scheduled_at=eq.${encodeURIComponent(at.toISOString())}` +
+    `&status=in.(scheduled,briefed)&select=id,application_id,show,scheduled_at,guest_timezone`) ?? [];
+  for (const iv of rows) {
+    const app = (await sb(env, "GET",
+      `guest_applications?id=eq.${iv.application_id}&select=id,name,email,publicist_email,show`))?.[0];
+    const theirs = [app?.email, app?.publicist_email].map((e) => String(e ?? "").toLowerCase());
+    if (!app || !emails.some((e) => theirs.includes(e))) continue;
+    const show = isShow(iv.show) ? showFor(iv) : showFor(app);
+    const reason = String(p.cancellationReason ?? p.cancellation_reason ?? "").slice(0, 500);
+    await sb(env, "PATCH", `interviews?id=eq.${iv.id}`, {
+      status: "cancelled", cancelled_at: new Date().toISOString(),
+      cancel_reason: `cancelled in Cal.com${reason ? `: ${reason}` : ""}`,
+    });
+    await sb(env, "PATCH",
+      `interview_runs?interview_id=eq.${iv.id}&status=in.(staged,awaiting_guest,pending)`,
+      { status: "cancelled", disconnect_reason: "guest cancelled in Cal.com" });
+    const booking = bookingUrl(env, show);
+    try {
+      await email(env, app.email, `No problem: our ${show.name} interview is cancelled`,
+        `<p>Hi ${esc(firstName(app.name))},</p>
+         <p>No problem at all. Your slot is released and nobody is waiting for you.</p>
+         ${booking ? `<p>Whenever you'd like to pick it up again, <a href="${esc(booking)}">book a new time here</a>.</p>` : ""}
+         ${miraSignature(show)}`, true);
+    } catch (err: any) { console.error("cancel ack failed:", err?.message ?? err); }
+    await email(env, operatorEmail(env), `${show.shortLabel}: ${app.name ?? "a guest"} cancelled in Cal.com`,
+      `<p>${esc(app.name ?? "A guest")} cancelled the interview at ${esc(pacificTime(iv.scheduled_at))} from Cal.com.</p>` +
+      (reason ? `<p>They said: ${esc(reason)}</p>` : "<p>No reason given.</p>"));
+    return json({ ok: true, cancelled: iv.id });
+  }
+  return json({ ok: true, cancelled: null });
+}
+
 async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
   const hook = await req.json<any>().catch(() => null);
   const p = hook?.payload ?? hook ?? {};
+  const trigger = String(hook?.triggerEvent ?? hook?.trigger_event ?? "").toUpperCase();
+  if (trigger === "BOOKING_CANCELLED") return handleCalComCancelled(env, p);
+  // BOOKING_RESCHEDULED carries the new start time and falls through: the
+  // guest's scheduled interview is found and moved, exactly as for a rebook.
   const emails = bookingEmails(p);
   const emailAddr = emails[0] ?? "";
   const startTime = p.startTime ?? p.start_time ?? null;
@@ -1357,7 +1407,8 @@ async function handleManagePage(env: Env, token: string): Promise<Response> {
   const when = interview.scheduled_at
     ? pacificTime(interview.scheduled_at, interview.guest_timezone)
     : "your scheduled time";
-  const booking = env.CALCOM_BOOKING_URL || "";
+  // Oct 5 2026: a Nerra Voices guest was offered the Age of AI booking page.
+  const booking = bookingUrl(env, show) || "";
   if (interview.status === "cancelled" || interview.cancelled_at) {
     return html(page("Already cancelled",
       `<p>Thanks — your ${esc(show.shortLabel)} interview is cancelled and nobody is waiting for you.</p>` +
@@ -1389,7 +1440,7 @@ async function handleManageSubmit(req: Request, env: Env, token: string): Promis
     `guest_applications?id=eq.${interview.application_id}&limit=1`);
   const app = apps?.[0] ?? {};
   const show = showFor(interview, app);
-  const booking = env.CALCOM_BOOKING_URL || "";
+  const booking = bookingUrl(env, show) || "";
   const now = new Date().toISOString();
 
   if (action === "cancel") {
@@ -1445,6 +1496,15 @@ async function handleGuestReviewPage(env: Env, token: string): Promise<Response>
   const run = (await sb(env, "GET",
     `interview_runs?id=eq.${pkg.interview_run_id}&select=recording_mixed_url,grok_session_log`))?.[0] ?? {};
   const listenUrl = reviewAudioUrl(run);
+  // Oct 5 2026: the only outside opinion on how Mira interviews was the
+  // question she asks at the end of the hour, live, which a guest who was
+  // cut off or hung up never heard. Asked again here, after they have heard
+  // themselves, with the one question her grading pass wanted to put to
+  // this guest; the answer goes into every later grading pass.
+  const grade = (await sb(env, "GET",
+    `episode_grades?interview_id=eq.${pkg.interview_id}&select=ask_the_guest&limit=1`))?.[0];
+  const askGuest = String(grade?.ask_the_guest ?? "").trim() ||
+    "How was it, being interviewed by an AI? Is there one thing I could do better next time?";
   return html(`<!doctype html><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
@@ -1465,6 +1525,9 @@ ${listenUrl
 <pre>${esc((pkg.transcript_cleaned || "").trim() || (pkg.transcript_raw || "").trim())}</pre>
 <h3>Request removals (optional)</h3>
 <textarea id="redactions" placeholder="Quote any passage you'd like removed, one per line, with a word on why if you like."></textarea>
+<h3>One question from Mira (optional)</h3>
+<p>${esc(askGuest)}</p>
+<textarea id="experience" placeholder="Anything at all, including what irritated you. I read every answer, and it changes how I interview the next guest."></textarea>
 <p>
 <span id="actions">
 <button id="approveBtn" onclick="submitReview(true)">Approve for publication</button>
@@ -1506,6 +1569,7 @@ async function submitReview(approve){
       body: JSON.stringify({approve, redactions: document.getElementById('redactions').value,
         followup: picked ? picked.value : 'none',
         followup_note: document.getElementById('followupNote').value,
+        experience: document.getElementById('experience').value,
         materials: document.getElementById('materials').value})});
     ok = resp.ok;
   } catch (e) { ok = false; }
@@ -1547,6 +1611,19 @@ async function handleGuestReviewSubmit(req: Request, env: Env, token: string): P
     await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`,
       { guest_materials: materials });
     await slack(env, `${show.shortLabel}: ${app?.name ?? "guest"} sent materials for the episode post (${materials.length} chars).`);
+  }
+
+  const experience = String(body?.experience ?? "").slice(0, 3000).trim();
+  if (experience) {
+    await sb(env, "PATCH", `editorial_packages?id=eq.${pkg.id}`,
+      { guest_experience: experience, guest_experience_at: now });
+    try {
+      await email(env, operatorEmail(env),
+        `${show.shortLabel}: ${app?.name ?? "a guest"} on being interviewed by Mira`,
+        `<p>${esc(app?.name ?? "A guest")} answered Mira's question on the review page:</p>
+         <blockquote style="border-left:3px solid #ccc;margin:0;padding-left:1em">${esc(experience)}</blockquote>
+         <p>It goes into Mira's next grading pass on every show.</p>`);
+    } catch (err: any) { console.error("experience email failed:", err?.message ?? err); }
   }
 
   const followup = String(body?.followup ?? "none");
@@ -1807,6 +1884,66 @@ async function handleJoin(req: Request, env: Env): Promise<Response> {
      studio link to the address on your booking. On the day, open it on your computer with headphones on.</p>`);
 }
 
+/** Oct 5 2026 (Jon Cheney). The two-hour reminder is sent by the GitHub fire
+ *  job, and during the Actions outage that day nothing was sent at all. If
+ *  an interview is inside the last hour and a half with no reminder on
+ *  record, GitHub has missed it, and the Worker sends it instead: the email,
+ *  and the text when Voximplant is configured here. Claimed with a
+ *  conditional write, so the two can never both send. A booking made in the
+ *  last three hours already has a fresh confirmation and is left alone. */
+async function reminderFallback(env: Env): Promise<number> {
+  const now = Date.now();
+  const lo = new Date(now + 60 * 60000).toISOString();
+  const hi = new Date(now + 100 * 60000).toISOString();
+  const bookedBefore = new Date(now - 3 * 60 * 60000).toISOString();
+  const due = await sb(env, "GET",
+    `interviews?status=in.(briefed,scheduled)&reminder_sent_at=is.null` +
+    `&scheduled_at=gte.${lo}&scheduled_at=lte.${hi}&created_at=lte.${bookedBefore}` +
+    `&select=id,application_id,scheduled_at,show,guest_timezone,manage_token,call_mode&limit=10`) ?? [];
+  let sent = 0;
+  for (const iv of due) {
+    try {
+      const claimed = await sb(env, "PATCH",
+        `interviews?id=eq.${iv.id}&reminder_sent_at=is.null`,
+        { reminder_sent_at: new Date().toISOString() }, "return=representation");
+      if (!claimed?.length) continue;
+      const app = (await sb(env, "GET",
+        `guest_applications?id=eq.${iv.application_id}&select=name,email,phone,show`))?.[0];
+      if (!app?.email) continue;
+      const show = isShow(iv.show) ? showFor(iv) : showFor(app);
+      const studio = studioUrl(show, iv.id);
+      const when = pacificTime(iv.scheduled_at, iv.guest_timezone);
+      const manage = iv.manage_token
+        ? `https://api.nerranetwork.com/voices/manage/${encodeURIComponent(iv.manage_token)}` : "";
+      const phoneMode = (iv.call_mode || "webrtc") !== "webrtc";
+      await email(env, app.email, `Our ${show.name} interview is coming up`,
+        `<p>Hi ${esc(firstName(app.name))},</p>
+         <p>We're on for <strong>${esc(when)}</strong>, a little over an hour from now.</p>
+         ${phoneMode
+           ? "<p>I'll call the number you gave us. Find a quiet spot and answer when it rings.</p>"
+           : GUEST_AUDIO_HTML + studioStepsHtml(studio)}
+         ${manage ? `<p>If today doesn't work after all, <a href="${esc(manage)}">move or cancel it here</a>.</p>` : ""}
+         ${miraSignature(show)}`, true);
+      const phone = phoneE164(app.phone);
+      if (phone && !phoneMode) {
+        await sendSms(env, phone,
+          `Mira here, from ${show.name}. We're on in about an hour. From a computer with ` +
+          `headphones: open ${studio}, press Check my microphone, then Join.` +
+          (manage ? ` Can't make it? ${manage}` : "") + " — Mira").catch(() => false);
+      }
+      await email(env, operatorEmail(env),
+        `${show.shortLabel}: the reminder for ${app.name ?? "a guest"} came from the Worker`,
+        `<p>GitHub never sent the two-hour reminder for the interview at ${esc(when)}, so the
+         Worker sent it (email${phone && !phoneMode ? " and text" : ""}). If this keeps happening,
+         GitHub Actions is having a bad day.</p>`);
+      sent++;
+    } catch (err: any) {
+      console.error("reminder fallback failed for", iv.id, err?.message ?? err);
+    }
+  }
+  return sent;
+}
+
 async function interviewIsLive(env: Env): Promise<boolean> {
   const lo = new Date(Date.now() - 60 * 60000).toISOString();
   const hi = new Date(Date.now() + 15 * 60000).toISOString();
@@ -1970,7 +2107,7 @@ async function handleAdminReview(req: Request, env: Env, id: string): Promise<Re
   const proposed = (await sb(env, "GET",
     `show_lessons?interview_id=eq.${pkg.interview_id}&status=eq.proposed&order=created_at.asc`)) ?? [];
   const activeLessons = (await sb(env, "GET",
-    `show_lessons?show=eq.${show.slug}&status=eq.active&order=decided_at.desc&limit=12`)) ?? [];
+    `show_lessons?show=in.(${show.slug},network)&status=eq.active&order=decided_at.desc&limit=30`)) ?? [];
   const metrics = (await sb(env, "GET",
     `episode_metrics?interview_id=eq.${pkg.interview_id}`))?.[0] ?? null;
   const metricLine = metrics
@@ -2586,7 +2723,10 @@ async function handleStudioState(req: Request, env: Env): Promise<Response> {
       if (again?.[0]?.status) latest.status = again[0].status;
     }
   }
-  const run = latest && JOINABLE_RUN_STATUSES.has(String(latest.status)) ? latest : null;
+  // Oct 5 2026: Elliot Justin's cancelled interview still had a run sitting
+  // at awaiting_guest, so his old link would have opened a live room.
+  const dead = DEAD_INTERVIEW_STATUSES.has(String(iv.status));
+  const run = !dead && latest && JOINABLE_RUN_STATUSES.has(String(latest.status)) ? latest : null;
   // Nothing prepared and the guest is here: ask for the run now, and tell
   // Patrick once, so nobody waits in an empty room without him knowing.
   const waitingForRun = !run && openNow && !(latest && latest.status === "staged");
@@ -2650,6 +2790,7 @@ async function rescueStudio(env: Env, iv: any, show: any, role: string) {
 }
 
 const JOINABLE_RUN_STATUSES = new Set(["awaiting_guest", "pending", "in_progress"]);
+const DEAD_INTERVIEW_STATUSES = new Set(["cancelled", "missed", "no_show", "killed", "archived", "failed"]);
 
 // POST /voices/studio-auth {key, role?} — Voximplant one-time-key
 // handshake: hash = MD5(key + "|" + MD5(user + ":voximplant.com:" + password)).
@@ -3110,6 +3251,8 @@ export default {
       } catch (err: any) {
         console.error("fire-tick dispatch failed:", err?.message ?? err);
       }
+      try { await reminderFallback(env); }
+      catch (err: any) { console.error("reminder fallback failed:", err?.message ?? err); }
       // Oct 2 2026 (Jason Fishman): a guest who writes "I'm in, nobody's
       // here" during their slot waited for the half-hourly inbox run. While
       // an interview is live the inbox runs every five minutes instead, so

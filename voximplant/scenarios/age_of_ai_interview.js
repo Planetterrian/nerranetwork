@@ -789,6 +789,8 @@ function remember(who, text) {
     catch (err) { Logger.write("[aoa " + runId + "] last-word check failed: " + err.message); }
     try { catchEarlySignOff(text); }
     catch (err) { Logger.write("[aoa " + runId + "] sign-off check failed: " + err.message); }
+    try { catchEarlyClosingRound(text); }
+    catch (err) { Logger.write("[aoa " + runId + "] closing-round check failed: " + err.message); }
   } else {
     lastWordAnswered = true;
   }
@@ -1615,6 +1617,47 @@ function catchClosingWithoutTheAnswer(text) {
     Logger.write("[aoa " + runId + "] closing rescue failed: " + err.message);
   }
   return true;
+}
+
+// The closing round itself, recognised from Mira's own words: the lightning
+// round, or either show's closing question.
+const CLOSING_ROUND_RE = /(lightning round|quick-?fire round|one bet you'?re making|bet you'?re making for the next|cannot prove yet|wish more people understood)/i;
+let earlyClosings = 0;
+
+// Oct 5 2026. The time notes tell her when the closing round may begin, and
+// she began it anyway: Thor Hesselberg's 45-minute interview got the show's
+// question at 24 minutes and the lightning round at 25, and ended at 30;
+// Jason Fishman's ended at 21. A sign-off is caught (below); the round that
+// leads to it was not. Now it is, the moment she starts it, while the guest
+// is still answering: she hears the question out, then goes back into the
+// conversation and resumes the round when a time note says she may.
+function catchEarlyClosingRound(text) {
+  if (roomEnded || !grokAgent || closingPermitted || isClosingSession()) return;
+  if (!CLOSING_ROUND_RE.test(text || "")) return;
+  const elapsed = elapsedMin();
+  const opensAt = closingOpensAtMin();
+  if (elapsed >= opensAt - 1) return;          // close enough to the window
+  earlyClosings += 1;
+  if (earlyClosings > 2) return;               // never nag
+  trace("time", "closing round started early at " + elapsed + " min of " +
+        plannedMin() + " (opens at " + opensAt + ") — asking her to hold it");
+  try {
+    grokAgent.conversationItemCreate({
+      item: { type: "message", role: "system", content: [{ type: "input_text", text:
+        "[TIME CHECK — system note, do not read aloud] You have just started the" +
+        " closing round at minute " + elapsed + " of a " + plannedMin() + "-minute" +
+        " interview. That is too early: it opens at about minute " + opensAt + "." +
+        " Let the guest answer what you just asked, listen properly, and react to it." +
+        " Then do NOT go on with the closing round. Say lightly, in one sentence, that" +
+        " before the rest of it you would like to stay with something they said, and" +
+        " ask one question one level down from the most interesting thing they have" +
+        " told you so far, inside the subject they came for. Keep the conversation" +
+        " going until a time note says the closing round may begin; then carry on" +
+        " with whatever of it is left, never repeating a question already answered." }] },
+    });
+  } catch (err) {
+    Logger.write("[aoa " + runId + "] early closing-round note failed: " + err.message);
+  }
 }
 
 /**

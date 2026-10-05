@@ -732,6 +732,22 @@ def assemble(slug: str) -> dict:
             logger.warning("no editorial package for %s — transcript not written",
                            _interview_id(spec, run))
 
+    # Oct 5 2026: what the edit took out of Mira's own voice is the plainest
+    # verdict on it, and the grading pass runs before anyone edits. Tell the
+    # learning loop. transcript_raw, not cleaned: it is never replaced by the
+    # transcript of an edit, so it stays on the room clock the EDL uses.
+    try:
+        from learning import record_editor_cuts
+        iid = _interview_id(spec, run)
+        raws = sb_select("editorial_packages",
+                         f"interview_id=eq.{iid}&status=neq.killed"
+                         "&select=transcript_raw&order=created_at.desc&limit=1")
+        cut = record_editor_cuts(show.slug, iid, spec,
+                                 (raws[0].get("transcript_raw") if raws else "") or "")
+        logger.info("the edit cut %d new line(s) of Mira's; the loop has them", cut)
+    except Exception:  # noqa: BLE001 — the episode is the point
+        logger.exception("could not report the edit's cuts (non-fatal)")
+
     # Both review pages prefer this over the raw mix, so Patrick and the guest
     # hear the edit rather than the unedited room.
     log = dict(run.get("grok_session_log") or {})

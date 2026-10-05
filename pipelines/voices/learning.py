@@ -38,6 +38,14 @@ def _now() -> str:
 
 LESSON_CATEGORIES = {"pacing", "questions", "interruption", "listening", "tone"}
 MAX_ACTIVE_LESSONS = 12          # Mira's prompt is not a filing cabinet
+# Oct 5 2026: craft is craft. A lesson about listening learned on The Age of
+# AI was never carried into Nerra Voices, which kept relearning it (the
+# "vague answer, ask for an example" lesson was adopted on both shows
+# separately) while grading lower. Lessons are now either the whole
+# network's or one show's own; Mira carries both.
+NETWORK = "network"
+MAX_NETWORK_LESSONS = 14         # interviewing craft, every show
+MAX_SHOW_LESSONS = 8             # this show's own format and subject
 MAX_RETIRED_PHRASES = 20         # the same, for her verbal tics
 PHRASE_MAX_WORDS = 12            # an acknowledgment, not a sentence of substance
 DEAD_AIR_SEC = 4.0
@@ -206,6 +214,15 @@ def count_interruptions(rows: List[Tuple[float, str, str]], host_label: str,
     return hits
 
 
+# Words she is REQUIRED to say. Oct 5 2026: "That's the end of the recording"
+# starts with "That's", so it was collected as a reflex and put on the list of
+# phrases she must never say again, beside the instruction to say exactly it.
+# The room also listens for those words to know the close was real.
+REQUIRED_WORDS = re.compile(
+    r"(?i)(end of the recording|hang up|i'?m mira|welcome to (the age of ai|nerra voices)"
+    r"|take your time|no rush)")
+
+
 def host_formulas(rows: List[Tuple[float, str, str]], host_label: str) -> List[str]:
     """The host's short acknowledgment lines — the reflexes, not the questions.
 
@@ -228,7 +245,8 @@ def host_formulas(rows: List[Tuple[float, str, str]], host_label: str) -> List[s
     # Keep the ones that read as formulas rather than as content.
     formulaic = [p for p in out
                  if re.match(r"(?i)^(that'?s|what a|i love|good|nice|fair|"
-                             r"understood|got it|makes sense|interesting)\b", p)]
+                             r"understood|got it|makes sense|interesting)\b", p)
+                 and not REQUIRED_WORDS.search(p)]
     seen: dict = {}
     for phrase in formulaic:
         seen[phrase.lower()] = phrase
@@ -238,6 +256,8 @@ def host_formulas(rows: List[Tuple[float, str, str]], host_label: str) -> List[s
 def save_host_phrases(show_slug: str, interview_id: str, phrases: List[str]) -> int:
     saved = 0
     for phrase in phrases[:MAX_RETIRED_PHRASES]:
+        if REQUIRED_WORDS.search(phrase or ""):
+            continue
         try:
             sb_insert("host_phrases", {"show": show_slug, "interview_id": interview_id,
                                        "phrase": phrase[:200]})
@@ -261,6 +281,8 @@ def variety_block(show_slug: str) -> str:
     phrases = []
     for row in rows or []:
         phrase = (row.get("phrase") or "").strip()
+        if REQUIRED_WORDS.search(phrase):
+            continue                    # never forbid what she must say
         if phrase and phrase.lower() not in {p.lower() for p in phrases}:
             phrases.append(phrase)
     if not phrases:
@@ -501,13 +523,15 @@ def adopt_lessons(show_slug: str, interview_id: str,
     """Put a grading pass's lessons straight into Mira's standing
     instructions, and return the ones that took.
 
-    Skips anything she already carries in other words, and once the show is
-    at :data:`MAX_ACTIVE_LESSONS` retires its oldest decision to make room,
-    so the newest instruction is never the one silently left out of the
-    prompt.
+    Each lesson is the whole network's (``"scope": "all_shows"``, the
+    default: listening, questions, pacing and tone are the same craft on
+    every show) or this show's own (its closing question, its premise).
+    Skips anything she already carries in other words, on either scope, and
+    once a scope is at its cap retires its oldest decision to make room, so
+    the newest instruction is never the one silently left out of the prompt.
     """
-    current = active_lessons(show_slug)
-    existing = [str(r.get("lesson") or "") for r in current]
+    by_scope = {NETWORK: active_lessons(NETWORK), show_slug: active_lessons(show_slug)}
+    existing = [str(r.get("lesson") or "") for rows in by_scope.values() for r in rows]
     adopted: List[dict] = []
     for item in lessons or []:
         if not isinstance(item, dict):
@@ -521,18 +545,22 @@ def adopt_lessons(show_slug: str, interview_id: str,
         category = str(item.get("category") or "other").strip().lower()
         if category not in LESSON_CATEGORIES:
             category = "other"
-        room = MAX_ACTIVE_LESSONS - (len(current) + len(adopted))
+        scope = (show_slug if str(item.get("scope") or "").strip().lower()
+                 in ("this_show", "show", show_slug) else NETWORK)
+        current = by_scope[scope]
+        mine = [r for r in adopted if r.get("show") == scope]
+        room = lesson_cap(scope) - (len(current) + len(mine))
         if room <= 0:
-            oldest = sorted(current + adopted,
+            oldest = sorted(current + mine,
                             key=lambda r: str(r.get("decided_at") or ""))[:1]
             if oldest:
                 retire_lessons([str(oldest[0].get("id"))],
                                "made room for a newer lesson")
-                current = [r for r in current
-                           if str(r.get("id")) != str(oldest[0].get("id"))]
+                by_scope[scope] = [r for r in current
+                                   if str(r.get("id")) != str(oldest[0].get("id"))]
         try:
             row = sb_insert("show_lessons", {
-                "show": show_slug,
+                "show": scope,
                 "interview_id": interview_id,
                 "category": category,
                 "lesson": lesson[:400],
@@ -542,11 +570,132 @@ def adopt_lessons(show_slug: str, interview_id: str,
                 "decided_by": "mira",
                 "decision_note": f"adopted automatically ({item.get('confidence') or 'medium'} confidence)",
             })
-            adopted.append(row)
+            adopted.append(row if isinstance(row, dict) and row.get("show") else {**(row or {}), "show": scope})
             existing.append(lesson)
         except Exception:  # noqa: BLE001
             logger.exception("adopting lesson failed (non-fatal): %s", lesson)
     return adopted
+
+
+# ---------------------------------------------------------------------------
+# What the edit took out (Oct 5 2026)
+# ---------------------------------------------------------------------------
+# Thor Hesselberg's episode went out with five surgical cuts of Mira's own
+# voice — a question begun three times, a stray "Fair enough", a question
+# asked twice, "What's coming?", "Sorry, go on" — and the grading pass, which
+# runs on the raw tape before anyone edits it, saw none of them. An editor
+# removing a line is the plainest verdict there is on it, so the edit now
+# reports back: short lines join her retired phrases, and every cut line is
+# shown to the next grading passes on every show.
+EDIT_GAP_MAX_SEC = 30.0          # longer removals are editorial, not stumbles
+EDIT_WARMUP_SEC = 120.0          # the sound check and hello are trimmed for pace
+CUT_PHRASE_MAX_WORDS = 5         # "What's coming?" — a reflex, even as a question
+
+
+def _cut_spans(spec: dict) -> List[Tuple[float, float, str]]:
+    """Room-clock spans the edit removed between consecutive pieces of the
+    same mix ("cut"), and spans where Mira was muted because she was talking
+    over the guest ("talkover")."""
+    spans: List[Tuple[float, float, str]] = []
+    pieces = [c for c in (spec.get("cuts") or [])
+              if isinstance(c, dict) and str(c.get("from") or "").startswith("mix:")
+              and c.get("start") is not None and c.get("end") is not None]
+    for a, b in zip(pieces, pieces[1:]):
+        try:
+            gap_from, gap_to = float(a["end"]), float(b["start"])
+        except (TypeError, ValueError):
+            continue
+        if (a.get("from") == b.get("from") and 0 < gap_to - gap_from <= EDIT_GAP_MAX_SEC
+                and gap_from >= EDIT_WARMUP_SEC):
+            spans.append((gap_from, gap_to, "cut"))
+    for piece in pieces:
+        for m in piece.get("mute") or []:
+            if isinstance(m, dict) and str(m.get("role") or "").lower() == "mira":
+                try:
+                    spans.append((float(m["from"]), float(m["to"]), "talkover"))
+                except (KeyError, TypeError, ValueError):
+                    continue
+    return spans
+
+
+def editor_cut_lines(spec: dict, transcript: str,
+                     host_label: str = "Mira") -> List[Tuple[float, str, str]]:
+    """Mira's transcript lines that fall inside what the edit removed, with
+    the kind of removal."""
+    spans = _cut_spans(spec)
+    if not spans or not transcript:
+        return []
+    out: List[Tuple[float, str, str]] = []
+    for t, speaker, text in parse_transcript(transcript):
+        if speaker.lower() != host_label.lower() or not text.strip():
+            continue
+        # Stamps are whole seconds, floored: the line began somewhere in
+        # [t, t+1). It was removed if that second sits inside the span; the
+        # line the edit resumes on starts at the span's end and is kept.
+        for lo, hi, kind in spans:
+            if lo - 1.0 <= t and t + 1.0 < hi + 0.05:
+                out.append((t, text.strip(), kind))
+                break
+    return out
+
+
+def record_editor_cuts(show_slug: str, interview_id: str, spec: dict,
+                       transcript: str) -> int:
+    """Store what the edit cut from Mira; short reflexes become retired
+    phrases. Never raises; a re-assembled edit adds only what is new."""
+    try:
+        lines = editor_cut_lines(spec, transcript)
+        if not lines:
+            return 0
+        known = {str(r.get("line") or "").strip().lower() for r in
+                 (sb_select("editor_cuts", f"interview_id=eq.{interview_id}&select=line") or [])}
+        saved = 0
+        phrases = []
+        for t, line, kind in lines:
+            stored = line if kind == "cut" else f"(spoken over the guest) {line}"
+            if stored.lower() in known:
+                continue
+            sb_insert("editor_cuts", {"interview_id": interview_id, "show": show_slug,
+                                      "line": stored[:400], "at_sec": t})
+            known.add(stored.lower())
+            saved += 1
+            # Only a line cut for itself is a phrase to retire. A line muted
+            # because it overlapped the guest ("Take your time") was the
+            # right words at the wrong moment.
+            if (kind == "cut" and len(line.split()) <= CUT_PHRASE_MAX_WORDS
+                    and line[:1].isupper()):     # not the tail of a sentence
+                phrases.append(line.rstrip(".!").strip())
+        if phrases:
+            save_host_phrases(show_slug, interview_id, phrases)
+        return saved
+    except Exception:  # noqa: BLE001 — the episode is the point
+        logger.exception("recording the editor's cuts failed (non-fatal)")
+        return 0
+
+
+def recent_editor_cuts(limit: int = 15) -> str:
+    """The lines editors cut from Mira lately, on every show, for the grader."""
+    try:
+        rows = sb_select("editor_cuts",
+                         f"order=created_at.desc&limit={limit}&select=show,line") or []
+    except Exception:  # noqa: BLE001
+        logger.exception("editor cuts unavailable (non-fatal)")
+        return ""
+    return "\n".join(f'- ({r.get("show")}) "{r.get("line")}"' for r in rows if r.get("line"))
+
+
+def recent_guest_experience(limit: int = 5) -> str:
+    """What guests wrote about being interviewed by Mira, after listening
+    back to their episode (the review page asks)."""
+    try:
+        rows = sb_select("editorial_packages",
+                         "guest_experience=not.is.null&order=guest_experience_at.desc"
+                         f"&limit={limit}&select=guest_experience,interview_id") or []
+    except Exception:  # noqa: BLE001
+        logger.exception("guest experience unavailable (non-fatal)")
+        return ""
+    return "\n".join(f'- "{str(r.get("guest_experience")).strip()[:600]}"'
+                     for r in rows if str(r.get("guest_experience") or "").strip())
 
 
 def save_grade(show_slug: str, interview_id: str, graded: Dict[str, Any],
@@ -596,21 +745,43 @@ def grade_trend(show_slug: str, limit: int = 6) -> List[dict]:
         return []
 
 
+def standing_lessons(show_slug: str) -> List[dict]:
+    """Everything Mira carries into an interview on this show: the network's
+    craft lessons, then the show's own, without the same sentence twice."""
+    rows: List[dict] = []
+    seen = set()
+    for scope in (NETWORK, show_slug):
+        for row in active_lessons(scope):
+            key = str(row.get("lesson") or "").strip().lower()
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            rows.append(row)
+    return rows
+
+
 def lessons_for_prompt(show_slug: str) -> str:
-    """The active instructions with their ids, for the grading prompt."""
-    rows = active_lessons(show_slug)
+    """The active instructions with their ids and scope, for the grading
+    prompt."""
+    rows = standing_lessons(show_slug)
     if not rows:
         return "(none yet — this is the first graded interview on this show)"
     return "\n".join(
-        f"- [{r.get('id')}] ({r.get('category') or 'other'}) {r.get('lesson')}"
+        f"- [{r.get('id')}] ({'all shows' if r.get('show') == NETWORK else 'this show'}, "
+        f"{r.get('category') or 'other'}) {r.get('lesson')}"
         for r in rows)
 
 
+def lesson_cap(scope: str) -> int:
+    return MAX_NETWORK_LESSONS if scope == NETWORK else MAX_SHOW_LESSONS
+
+
 def active_lessons(show_slug: str) -> List[dict]:
+    """One scope's active lessons: a show's own, or ``NETWORK``'s."""
     try:
         rows = sb_select("show_lessons",
                          f"show=eq.{show_slug}&status=eq.active"
-                         f"&order=decided_at.desc&limit={MAX_ACTIVE_LESSONS}")
+                         f"&order=decided_at.desc&limit={lesson_cap(show_slug)}")
         return rows or []
     except Exception:  # noqa: BLE001 — never block an interview on this
         logger.exception("active lessons unavailable (non-fatal)")
@@ -620,7 +791,7 @@ def active_lessons(show_slug: str) -> List[dict]:
 def lessons_block(show_slug: str) -> str:
     """The block appended to Mira's system prompt. Empty when nothing has
     been promoted, so a fresh show reads exactly as it did before."""
-    rows = active_lessons(show_slug)
+    rows = standing_lessons(show_slug)
     if not rows:
         return ""
     lines = "\n".join(f"- {r['lesson']}" for r in rows if r.get("lesson"))
@@ -646,11 +817,11 @@ def improvement_summary(show_slug: str, interview_id: str) -> str:
     try:
         adopted = sb_select(
             "show_lessons",
-            f"show=eq.{show_slug}&interview_id=eq.{interview_id}"
+            f"show=in.({show_slug},{NETWORK})&interview_id=eq.{interview_id}"
             f"&status=eq.active&order=created_at.desc&limit=8") or []
         proposed = sb_select(
             "show_lessons",
-            f"show=eq.{show_slug}&interview_id=eq.{interview_id}"
+            f"show=in.({show_slug},{NETWORK})&interview_id=eq.{interview_id}"
             f"&status=eq.proposed&order=created_at.desc&limit=8") or []
         metrics = sb_select("episode_metrics",
                             f"interview_id=eq.{interview_id}&limit=1") or []
@@ -712,7 +883,9 @@ def improvement_summary(show_slug: str, interview_id: str) -> str:
             lesson = (row.get("lesson") or "").strip()
             why = (row.get("evidence") or "").strip()
             mark = "" if row.get("status") == "active" else " <i>(awaiting you)</i>"
-            parts.append(f"<li>{lesson}{mark}"
+            scope = (" <i>(every show)</i>" if row.get("show") == NETWORK
+                     and row.get("status") == "active" else "")
+            parts.append(f"<li>{lesson}{mark}{scope}"
                          + (f"<br><span style='color:#777;font-size:90%'>{why}</span>"
                             if why else "")
                          + "</li>")

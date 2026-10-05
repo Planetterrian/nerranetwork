@@ -12,8 +12,21 @@ What happened in the room, from the session log:
 {{session_events}}
 
 The instructions she was already carrying, with their ids. These were adopted
-from earlier episodes:
+from earlier episodes, some for every show on the network and some for this
+show only:
 {{active_lessons}}
+
+What editors have had to cut out of her recent episodes, on any show, by hand,
+before a listener heard them. False starts, fillers, an apology spoken over a
+guest. Each one is a moment that was bad enough to remove. If this tape shows
+the same kind of moment, and it keeps appearing, that is a fault worth a
+standing lesson even when the transcript makes it look small:
+{{editor_cuts}}
+
+What recent guests wrote about being interviewed by her, after listening back
+to their own episode. They had time to think, and they are the only outside
+opinion on the whole network:
+{{guest_experience}}
 
 What the guest said when asked what they would change about how she did this,
 if they were asked (this is the most valuable line in the file — a guest who
@@ -128,7 +141,8 @@ Return ONE JSON object and nothing else — no prose, no code fences:
       "category": "pacing | questions | interruption | listening | tone",
       "lesson": "one sentence, addressed to Mira as a standing instruction",
       "evidence": "the timestamp and a short quote showing where this went wrong",
-      "confidence": "high | medium"
+      "confidence": "high | medium",
+      "scope": "all_shows | this_show"
     }
   ],
   "retire": [{"id": "an id from the instructions above", "why": "one line"}],
@@ -152,6 +166,12 @@ worth more than inventing a fault. Each one must:
   instead, and use "confidence": "high" only for genuinely new ground;
 - mark "high" only where the tape shows the fault plainly and you are sure
   the correction is right. Anything you are inferring is "medium".
+
+SCOPE. Mira hosts more than one show, and interviewing craft is the same on
+all of them: listening, one question at a time, not talking over a guest, how
+to close. Mark a lesson "all_shows" unless it is about THIS show's own format
+or subject (its premise, its closing question), in which case "this_show". A
+lesson marked all_shows reaches every show from her next interview on.
 
 RETIRE the instructions that have done their job or are now crowding out
 better ones: a lesson she has clearly internalised over several episodes, a
