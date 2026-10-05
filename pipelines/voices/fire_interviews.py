@@ -301,6 +301,44 @@ def _iso(t: dt.datetime) -> str:
     return t.isoformat().replace("+00:00", "Z")
 
 
+def compile_closing_prompt(interview: dict, app: dict) -> str:
+    """Oct 5 2026 (Piper Martz). A short session that records only the
+    closing round of an interview the old time cap cut off; it is spliced
+    onto the end of the first recording."""
+    show = show_for(interview, app)
+    return load_prompt(
+        "mira_closing_session.txt", show=show,
+        show_name=show.name, guest_name=app["name"],
+        guest_address_rule=address_rule(app),
+        closing_question=show.closing_question,
+        where_we_left_off=where_we_left_off(interview),
+    )
+
+
+def where_we_left_off(interview: dict) -> str:
+    """The last few minutes of the interview this session finishes, from its
+    transcript, so Mira picks up exactly where the room cut off."""
+    if interview.get("episode_thesis"):
+        return str(interview["episode_thesis"])
+    prev = interview.get("continues_interview_id")
+    if prev:
+        try:
+            rows = sb_select("editorial_packages",
+                             f"interview_id=eq.{prev}&order=created_at.desc&limit=1"
+                             "&select=transcript_cleaned")
+            tail = (rows[0].get("transcript_cleaned") or "")[-1800:] if rows else ""
+            if tail:
+                return ("The last few minutes of the first recording, where the room "
+                        "cut off:\n" + tail)
+        except Exception:  # noqa: BLE001 — the session still runs
+            logger.exception("could not read the earlier transcript for %s", prev)
+    return "The closing round had just begun when the first recording stopped."
+
+
+def is_closing_session(interview: dict) -> bool:
+    return (interview.get("session_kind") or "interview") == "closing"
+
+
 def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
     """Mira's system prompt for this interview, branded for its show.
 
@@ -533,7 +571,9 @@ def fire_due_interviews() -> int:
             show = show_for(interview, app)
             brief_rows = sb_select("interview_briefs",
                                    f"interview_id=eq.{interview['id']}")
-            if not brief_rows:
+            if is_closing_session(interview):
+                brief = {}
+            elif not brief_rows:
                 # Short-notice booking: the daily prep cron never saw this
                 # interview. Generate the brief inline (same code path as
                 # the T-1d workflow) so Mira still calls; the guest gets
@@ -591,7 +631,10 @@ def fire_due_interviews() -> int:
             host_mode = host_mode_enabled(interview)
             run = sb_insert("interview_runs", {
                 "interview_id": interview["id"],
-                "mira_system_prompt": compile_mira_prompt(interview, app, brief),
+                "mira_system_prompt": (compile_closing_prompt(interview, app)
+                                       if is_closing_session(interview)
+                                       else compile_mira_prompt(interview, app, brief)),
+                "session_kind": interview.get("session_kind") or "interview",
                 # The length the guest asked for, in the room as well as in
                 # the prompt: the scenario's time checks and hard cap read it.
                 "planned_minutes": planned_minutes(interview, app),
