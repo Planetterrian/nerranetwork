@@ -120,3 +120,8 @@ ep182/183/189 ellipsis titles; ep190 single mega “Model Updates” chapter. Du
 ## What would ship vs recommend
 
 This agent cannot edit the tree. **Proposals only** (below in machine list): FR episode-number identity fix path; podcast pop-the-hood first-words + entity-keep; digest UTH fact/distinct-subject floor (option B); content_discipline header-echo tighten; drift-guard tests. **Not proposed:** min_digest_words=1600 silent bump; podcast expand; Before we go / closing pool changes.
+
+## Correction (2026-10-05, operator-directed follow-up)
+
+- **P0 "French dub speaks the wrong episode number" is not a defect.** The French TTS text says the right number on all 15 of Ep180–194 (`Models_Agents_Ep186_20260927.fr.txt`: "épisode cent quatre-vingt-six"); "196" and "181" are Whisper mishearing French compound numbers. Recorded in `do_not_retry`.
+- **Under the Hood chapter (P1.2) fixed data-side, not in the prompt.** All four misses since Ep170 (Ep178/185/189/190) were on the combined-generation path. The marker now carries `digest_section: Under the Hood`, so when the anchor phrase is skipped the chapter starts where the digest section's content begins (`engine.chapters._digest_section_anchor`); replayed on 195 episodes, only the six that had lost the chapter change.

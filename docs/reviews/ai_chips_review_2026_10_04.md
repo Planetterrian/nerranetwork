@@ -82,3 +82,8 @@ Density table flags ep7 as paste-heavy low-comma — same shape as early grok-4.
 - Any podcast-side length lever (do_not_retry).
 - Re-filing dc_items_unlabelled as the fix for zero sites (do_not_retry).
 - Operator decision on digest format arithmetic if Ep14–20 digest median still <1250 after floors — escalate, do not third-file the same mix prompt.
+
+## Correction (2026-10-05, operator-directed follow-up)
+
+- **P0.2 cause:** Ep9's script said "Take the flexible queue apart" (and Ep14 "Take the six-U G P U server apart"); the marker accepted only it/this/that. It now matches any "take … apart" within one sentence (once per episode across Ep1–14) and falls back to the digest's Teardown section. Ep9's line "The teardown this week is titled…" also read the heading aloud; the prompt now forbids that.
+- Shipped: handset/phone-SoC launch title excludes plus a SELECTION reject (a phone chip's foundry or process story still passes), and the "close on when the tradeoff flips" seed replaced by a shape description. ⚠️ A/B-listen.
