@@ -13,6 +13,14 @@ fetch_full_text: 10
 # deal aired on this network as today's news, every one behind an
 # undated URL. A/B-listen the first post-merge episode (digest input).
 stale_article_days: 3
+# Oct 5 2026: on a thin day the script spent ~200 words narrating empty
+# sections ("The science and technical section contains no new studies…",
+# "The selection criteria screened out any items…"). The absence filter
+# (engine/absence_sentences.py, on the 13 launch-cohort shows since Sep 23)
+# removes the "nothing appeared" sentences from digest and script; the
+# digest prompt now leaves an empty section out. A/B-listen the next
+# thin-day episode (landmine #17).
+absence_sentence_filter: true
 x_posts_as_sources: secondary
 digest_lints:
 - x_only_lead

@@ -235,7 +235,16 @@ llm:
   # untouched. Revert = restore grok-4.6 on this line.
   # AUDIO: this changes shipped prose. A/B-listen the first episode
   # (landmine #17).
-  podcast_model: grok-4.7
+  # 2026-10-05: RESTORED to grok-4.6. The 4.7 arm never ran: the credit
+  # files show grok-4.3 served the script on all 14 episodes since 09-22
+  # (Ep183-196) — every 4.7 call timed out (621 s on Ep196, the first
+  # timed one; this show's request does not stream) and the override fell
+  # back, while the metrics file recorded the CONFIGURED model as
+  # llm_script_model. On 4.6 (Sep 10-21) the script copied 8-17% of the
+  # digest's 8-word phrases at 76-85% coverage; on the 4.3 fallback it
+  # copied ~59%. A 4.7 script arm needs llm.stream first (the cohort's
+  # rule-7 path) and a fresh staged trial. A/B-listen the first episode.
+  podcast_model: grok-4.6
   digest_temperature: 0.5
   podcast_temperature: 0.7
   # Raised 10000 -> 13000 (July 28 2026). 21 of 117 recorded runs (17%)

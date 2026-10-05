@@ -2289,13 +2289,38 @@ claims, 2-17% digest-verbatim against 1-3 and 46-63% on the 4.3 flagships)
 and fell back on 2 of 48 episodes (pre-flight pings, last Sep 30), but its
 streamed DIGEST stage FAILS the latency gate — p95 433-814 s against the
 600 s request timeout, time-to-first-token ~180-280 s. A flagship digest on
-4.7 is therefore NOT the next step; a script-stage pin on one flagship is
-(omni_view's 4.7 script reads 17.6% verbatim / 85% coverage), operator's
-call, ⚠️ AUDIO. **The script call had never been timed** — the trial report
+4.7 is therefore NOT the next step. **Oct 5 correction: omni_view's 4.7
+script arm never ran** — grok-4.3 served all 14 of its scripts from 09-22
+(the 4.7 call timed out, 621 s non-streaming, and fell back) while
+`llm_script_model` recorded the configured model; it is back on grok-4.6
+(8-17% verbatim at 76-85% coverage on 09-10..21), and the metric now
+records the SERVED model plus `llm_script_model_fallback`. Read a model
+arm from the credit files' per-call `model`, never from config. **The script call had never been timed** — the trial report
 listed `generate_podcast_script` as an LLM stage that nothing recorded (the
 Sep 30 "script stage p95 67.6 s" was omni_view's 4.3 DIGEST row); it is
 recorded from the next run (`PipelineMetrics.record_stage`), so a
 script-stage pin can be gated before it widens.
+
+**Oct 5 2026 — the Monday slate** (review:
+[`docs/reviews/network_review_2026_10_05.md`](docs/reviews/network_review_2026_10_05.md);
+register `slate-review-2026-10-05`; guards
+`tests/test_slate_review_2026_10_05.py`). 25/25 published, spoken-text gate
+25/25 (FP after one re-synthesis). What binds: **a model arm is read from
+the credit file's per-call `model`**, and `llm_script_model` now records
+the served model (`llm_script_model_fallback` the reason) — Omni View's 4.7
+arm never ran and it is back on grok-4.6; **page dates**: the search reads
+1.5M characters, a LABELLED visible date is the fallback, and a numeric
+header date is read only for a host listed with proof of its order
+(`engine.article_text._NUMERIC_HEADER_DATES`, imoca.org month-first — the
+Charal refit aired on Offshore North as 2 October news from a 10 February
+page); **no surface says Mira phones guests** (prompts, registry, edition
+code, templates swept); a show's `brand_color_dark` must clear 4.5:1 on the
+newsletter card (Финансы Просто's had blocked eight sends); MIT maps dotted
+share classes to Yahoo's form and voids an open pick with no bars after
+`UNPRICED_VOID_DAYS` (14); Env Intel's low-content Deep Dive counts as its
+lead and the absence filter is on for Env Intel and Offshore North.
+⚠️ AUDIO: Omni View's script model, Env Intel's prompt, both absence
+filters, Mira's self-description.
 
 ### Anthology books — ebook + audiobook from the narrative shows (Aug 2026)
 
