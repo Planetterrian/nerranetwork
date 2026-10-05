@@ -2922,7 +2922,12 @@ def run(args: argparse.Namespace) -> None:
                 # entries (a repaired ledger the full gate rejects is
                 # discarded) — the grok-4.3 arm had been shipping
                 # "claims=0, passed" on every new show.
-                if _si_gate.passed:
+                # Oct 5 2026: it also runs on a FAILING gate in flag mode,
+                # which publishes either way — the floor never touches the
+                # failing entries and keeps its result only when the gate
+                # verifies more and gets no worse. Gated on passing alone,
+                # it skipped every flagship episode with one flagged claim.
+                if _si_gate.passed or (_si_enforce and _si_on_failure == "flag"):
                     try:
                         _si_gate, _si_claims, _cov = _si_mod.attempt_item_coverage_repair(
                             x_thread, _si_gate, _si_claims or [], _repair_llm,

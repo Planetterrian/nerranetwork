@@ -2073,6 +2073,84 @@ def item_source_coverage(text: str, verified_claims: List[dict]) -> Tuple[int, i
     return len(pairs), covered, uncovered
 
 
+def _uncovered_items_with_source(
+        text: str, verified_claims: List[dict]) -> List[Tuple[str, str, str]]:
+    """``(first_sentence, item_title, item_source_url)`` for every sourced
+    item no verified entry covers — the item's OWN Source URL, never a
+    page the model would have to recall."""
+    out: List[Tuple[str, str, str]] = []
+    for first, block in _digest_items_with_source(text):
+        if any(_sentence_covered(block, c) for c in verified_claims):
+            continue
+        lines = block.splitlines()
+        title = re.sub(r"[*#]+", "", lines[0]).strip() if lines else ""
+        out.append((first, title, _block_source_url(lines, 0, len(lines))))
+    return out
+
+
+def _source_passage(url: str, claim_text: str,
+                    fetch: Callable[[str], Tuple[int, str]],
+                    local_texts: Dict[str, str]) -> str:
+    """The passage of *url* that discusses *claim_text*: the copy the run
+    already fetched first (no HTTP), then the page itself. '' when
+    neither discusses it — the model is then never asked about it."""
+    if not url:
+        return ""
+    excerpt = source_excerpt_for_claim(
+        claim_text, local_texts.get(normalize_source_url(url)) or "")
+    if excerpt:
+        return excerpt
+    try:
+        status, body = fetch(url)
+    except Exception:  # noqa: BLE001 — an unreadable page is no passage
+        return ""
+    if status is None or not 200 <= status < 300:
+        return ""
+    return source_excerpt_for_claim(claim_text, _html_to_text(body or ""))
+
+
+def build_item_coverage_prompt(episode_text: str, grounded: List[dict],
+                               ungrounded: List[dict]) -> str:
+    """Prompt for the coverage floor (Oct 5 2026). *grounded* items carry
+    the item's own Source URL and the passage of it the run fetched; the
+    model only judges support and copies the quote. *ungrounded* items
+    (no readable passage) keep the earlier find-a-page request."""
+    sections = []
+    if grounded:
+        lines = [
+            f"- id: {g['id']}\n  sentence: {g['sentence']}\n"
+            f"  source_url: {g['url']}\n  fetched_passage: {g['passage']}"
+            for g in grounded
+        ]
+        sections.append(
+            "Each sentence below comes from a news item in an episode, and "
+            "source_url is the source that item already cites. "
+            "fetched_passage is text we fetched from that source. For EACH "
+            "sentence: if the passage states the specific fact the sentence "
+            "asserts, return an entry with claim = that fact in one plain "
+            "sentence and supporting_quote = 5-25 words copied VERBATIM "
+            "(exact characters) from fetched_passage that state it. The "
+            "source_url is fixed; do not change it. If the passage does not "
+            "state the fact, omit the sentence: it is published as before, "
+            "and a quote that says something different is worse than none."
+            "\n\nSentences with their sources:\n" + "\n".join(lines))
+    if ungrounded:
+        lines = [f"- id: {u['id']}\n  sentence: {u['sentence']}"
+                 for u in ungrounded]
+        sections.append(
+            "These sentences have no readable source passage. For EACH, only "
+            "if you know a real, publicly fetchable page that directly "
+            "supports the fact, give source_url and a supporting_quote of "
+            "5-25 words copied VERBATIM from it; otherwise omit it. Never "
+            "invent a source.\n\nSentences:\n" + "\n".join(lines))
+    return (
+        "\n\n".join(sections) + "\n\n"
+        "Episode text (for context):\n---\n" + episode_text[:6000] + "\n---\n\n"
+        "Reply with ONLY a JSON array of objects with keys: id, claim, "
+        "source_url, supporting_quote. An empty array is a valid answer."
+    )
+
+
 def attempt_item_coverage_repair(
     episode_text: str,
     gate: GateResult,
@@ -2084,36 +2162,107 @@ def attempt_item_coverage_repair(
     """Spend one repair pass on sourced items no verified entry covers.
 
     Returns ``(gate, claims, info)``; ``info`` carries the coverage numbers
-    for the metrics. The repaired ledger is kept only when the FULL gate
-    passes on it (``attempt_claim_repair`` re-runs it) — the floor adds
-    provenance, it never changes a verdict downward."""
-    total, covered, uncovered = item_source_coverage(episode_text, gate.verified_claims)
+    for the metrics.
+
+    Oct 5 2026: the pass had added one claim across 24 flagship episodes.
+    It asked the model to name "a real, publicly fetchable page" for each
+    item from memory, and a truthful model answered ``[]`` (Tesla Ep624,
+    SpaceX Ep120) — while every one of those items already cited its own
+    Source, and the run already held the fetched copy of most of them.
+    Now each item is GROUNDED: its own Source URL is pinned and the
+    passage of that source discussing the sentence is handed over, so the
+    model only judges support and copies a verbatim quote. The mechanical
+    check is unchanged (anchoring, the 0.9 quote match against the same
+    copy the gate reads, ``_quote_consistent_with_claim``).
+
+    Only entries that verify on their own are added — one bad answer no
+    longer discards the others — and the result is kept only when the
+    gate verifies MORE claims and gets no worse (a passing gate still
+    passes; no new failed verification). That rule also lets the floor
+    run on a gate that is failing for an unrelated claim (flag mode
+    publishes either way): it never touches the failing entries."""
+    fetch = fetch or default_fetch
+    local_texts = local_texts or {}
+    total, covered, _ = item_source_coverage(episode_text, gate.verified_claims)
     pct = round(100.0 * covered / total, 1) if total else None
     info = {"items_with_source": total, "items_covered": covered,
             "item_coverage_pct": pct, "coverage_repair_attempted": False}
-    if not total or pct is None or pct >= ITEM_COVERAGE_MIN_PCT or not uncovered:
+    if not total or pct is None or pct >= ITEM_COVERAGE_MIN_PCT:
         return gate, claims, info
-    info["coverage_repair_attempted"] = True
-    synthetic = GateResult(
-        passed=False,
-        ledger_present=gate.ledger_present,
-        claims_total=gate.claims_total,
-        claims_anchored=gate.claims_anchored,
-        claims_verified=gate.claims_verified,
-        failed_verifications=[],
-        uncovered_shapes=[{"sentence": sent, "match": "item-coverage"}
-                          for sent in uncovered[:REPAIR_MAX_CLAIMS]],
-        verified_claims=list(gate.verified_claims),
-    )
+    targets = _uncovered_items_with_source(episode_text, gate.verified_claims)
+    if not targets:
+        return gate, claims, info
+    existing_ids = {str(c.get("id", "")) for c in claims}
+    grounded: List[dict] = []
+    ungrounded: List[dict] = []
+    n = 0
+    for sentence, title, url in targets:
+        if len(grounded) + len(ungrounded) >= REPAIR_MAX_CLAIMS:
+            break
+        n += 1
+        cid = f"cov{n}"
+        while cid in existing_ids:
+            n += 1
+            cid = f"cov{n}"
+        passage = _source_passage(url, f"{title} {sentence}", fetch, local_texts)
+        item = {"id": cid, "sentence": sentence, "url": url, "passage": passage}
+        (grounded if passage else ungrounded).append(item)
+    info.update({"coverage_repair_attempted": True,
+                 "coverage_repair_targets": len(grounded) + len(ungrounded),
+                 "coverage_repair_grounded": len(grounded),
+                 "coverage_repair_added": 0})
     try:
-        new_gate, new_claims = attempt_claim_repair(
-            episode_text, synthetic, claims, generate,
-            fetch=fetch, local_texts=local_texts)
-    except Exception:  # noqa: BLE001 — the floor can only help
+        raw = generate(build_item_coverage_prompt(episode_text, grounded, ungrounded))
+        replies = parse_repair_response(raw)
+    except Exception as exc:  # noqa: BLE001 — the floor can only help
+        logger.warning("item coverage floor: repair call failed: %s", exc)
         return gate, claims, info
-    if new_gate is synthetic or not new_gate.passed:
+    by_id = {it["id"]: it for it in grounded + ungrounded}
+    candidates: List[dict] = []
+    inconsistent = 0
+    for r in replies:
+        item = by_id.pop(str(r.get("id", "")), None)
+        if item is None:
+            continue
+        quote = str(r.get("supporting_quote") or "").strip()
+        url = item["url"] if item["passage"] else str(r.get("source_url") or "").strip()
+        if not quote or not url:
+            continue
+        if not _quote_consistent_with_claim(quote, item["sentence"]):
+            inconsistent += 1
+            continue
+        candidates.append({
+            "id": item["id"],
+            "claim": str(r.get("claim") or "").strip() or item["sentence"],
+            "episode_span": item["sentence"],
+            "source_url": url,
+            "supporting_quote": quote,
+            "confidence": "medium",
+        })
+    info["coverage_repair_offered"] = len(candidates)
+    kept: List[dict] = []
+    if candidates:
+        valid, _errs = validate_ledger_shape(candidates)
+        anchored, _dropped = anchor_claims(valid, episode_text)
+        if anchored:
+            results = verify_claim_sources(anchored, fetch=fetch,
+                                           local_texts=local_texts)
+            ok = {v["id"] for v in results if v.get("passed")}
+            kept = [c for c in anchored if c.get("id") in ok]
+    logger.info(
+        "item coverage floor: %d/%d sourced item(s) covered; asked about %d "
+        "(%d with the item's own fetched passage), %d entr(ies) offered, "
+        "%d rejected as unrelated, %d verified",
+        covered, total, info["coverage_repair_targets"], len(grounded),
+        len(candidates), inconsistent, len(kept))
+    if not kept:
         return gate, claims, info
-    if new_gate.claims_verified <= gate.claims_verified:
+    new_claims = list(claims) + kept
+    new_gate = run_source_integrity_gate(episode_text, new_claims, fetch=fetch,
+                                         local_texts=local_texts)
+    if (new_gate.claims_verified <= gate.claims_verified
+            or (gate.passed and not new_gate.passed)
+            or len(new_gate.failed_verifications) > len(gate.failed_verifications)):
         return gate, claims, info
     t2, c2, _ = item_source_coverage(episode_text, new_gate.verified_claims)
     info.update({"items_covered": c2,
