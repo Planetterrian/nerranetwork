@@ -595,6 +595,9 @@ let openingFired = false;   // Mira opens exactly once
 let cohostWaitTimer = null; // holding the open for a co-host who is coming
 let cohostWaitExpired = false;
 let anyoneHeard = false;    // first InputAudioBufferSpeechStarted
+let inboundSpeaking = false; // someone in the room is talking right now (Oct 5 2026)
+let inboundSpokeAt = 0;
+let openingDeferrals = 0;
 let roomEnded = false;
 let endReason = "normal";
 
@@ -652,8 +655,23 @@ async function openRoom() {
   startMixRecorder();
   armNoShowTimer();
   hardCapTimer = setTimeout(function () {
-    Logger.write("[aoa " + runId + "] hard cap reached, ending room");
-    endRoom("hard_cap");
+    // Oct 5 2026, Piper Martz: the cap ended the room in the middle of her
+    // lightning-round answer, with no thank-you. At the cap Mira is told to
+    // close now, and the room ends ninety seconds later, or sooner when she
+    // has said the recording is over.
+    Logger.write("[aoa " + runId + "] hard cap reached, closing");
+    trace("time", "hard cap reached; asking for an immediate close");
+    try {
+      grokAgent.conversationItemCreate({
+        item: { type: "message", role: "system", content: [{ type: "input_text", text:
+          "[TIME CHECK — system note, do not read aloud] Time is completely up. Let the" +
+          " current sentence finish, then skip any remaining questions: thank them" +
+          " warmly for something particular, tell them that's the end of the recording" +
+          " and they can hang up now. One short turn." }] },
+      });
+      if (!miraSpeaking && !inboundSpeaking) { miraSpeaking = true; grokAgent.responseCreate({}); }
+    } catch (err) { /* the end below still happens */ }
+    hardCapTimer = setTimeout(function () { endRoom("hard_cap"); }, 90 * 1000);
   }, hardCapMs());
   startAgent();   // async; legs are admitted meanwhile
   return true;
@@ -886,7 +904,13 @@ async function createAgent(note) {
   // appeared to ask the same question two and three times in a row — it was
   // one question, replayed from a turn nobody had cancelled. Silence her
   // locally AND tell the server to stop, so the turn is actually abandoned.
+  if (Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStopped) {
+    agent.addEventListener(Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStopped, function () {
+      inboundSpeaking = false;
+    });
+  }
   agent.addEventListener(Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStarted, function () {
+    inboundSpeaking = true; inboundSpokeAt = Date.now();
     speechEvents++;
     if (!anyoneHeard) trace("grok", "first inbound speech heard (via room mix)");
     else if (speechEvents <= 6) trace("grok", "speech heard #" + speechEvents + " (via room mix)");
@@ -1073,6 +1097,16 @@ function maybeOpen() {
 
 function openWhenReady(reason) {
   if (openingFired || !sessionReady || !grokAgent) return;
+  // Oct 5 2026, Piper Martz: she said "Hi Mira, thanks for having me" and
+  // the opening began on top of her. While the guest is talking, wait for
+  // them to finish (up to ten seconds), then answer what they said.
+  if (humansIn("guest") > 0 && openingDeferrals < 14
+      && (inboundSpeaking || Date.now() - inboundSpokeAt < 900)) {
+    openingDeferrals++;
+    if (openingDeferrals === 1) trace("opening", "guest is speaking; waiting for them to finish");
+    setTimeout(function () { openWhenReady(reason); }, 700);
+    return;
+  }
   openingFired = true;
   if (openingTimer) { clearTimeout(openingTimer); openingTimer = null; }
   if (cohostWaitTimer) { clearTimeout(cohostWaitTimer); cohostWaitTimer = null; }
@@ -1103,6 +1137,22 @@ function openWhenReady(reason) {
             "once, lightly, that your co-host could not join today, and then " +
             "carry the conversation yourself. If he arrives later a note will " +
             "tell you." }] },
+      });
+    }
+    if (humansIn("guest") > 0) {
+      // Oct 5 2026 (Patrick): the opening was a recited paragraph and then a
+      // question she answered herself. It is now a greeting first, and the
+      // explanation of how the hour works comes on her next turn.
+      grokAgent.conversationItemCreate({
+        item: { type: "message", role: "system",
+          content: [{ type: "input_text", text:
+            "[OPENING — system note, do not read aloud] The guest is here" +
+            (anyoneHeard ? " and has already spoken: answer what they said first." : ".") +
+            " This turn is beat 1 of HOW TO OPEN only: a warm, unhurried hello by name," +
+            " glad they came, and ONE easy human question (how they are today, or" +
+            " where they are joining from). Then stop and listen. Do not answer your" +
+            " own question. How the hour works comes on your next turn, after they" +
+            " have answered and you have reacted to it." }] },
       });
     }
     miraSpeaking = true;
@@ -1375,6 +1425,10 @@ function elapsedMin() {
 }
 
 let closingPermitted = false;   // has a note told her she may close?
+let closingRequired = false;    // has a note told her she must begin it?
+// show question + 5 lightning + 2 about the interview + last word: about nine
+// minutes, never more than the closing window itself.
+function closingRoundMin() { return Math.min(9, closingWindowMin()); }
 let earlySignOffs = 0;          // how often she tried to end before that
 
 function startTimeChecks() {
@@ -1411,7 +1465,7 @@ function startTimeChecks() {
           " next question down from it. If the last few minutes have been on" +
           " a tangent, bring it back now, out loud (Chad Law, Sept 24 2026)." +
           " One question per turn, and let the answer finish.";
-      } else if (remainMin > 3) {
+      } else if (remainMin > closingRoundMin()) {
         if (!closingPermitted) {
           closingPermitted = true;
           trace("time", "closing round permitted at " + elapsed + " min");
@@ -1424,11 +1478,18 @@ function startTimeChecks() {
           " then their last word. There is no hurry, but every guest gets" +
           " all of it.";
       } else if (remainMin > 0) {
+        // Oct 5 2026, Piper Martz: the round takes about eight minutes and
+        // used to be required only in the last three, five minutes before
+        // the hard cap. She began it at 49:50 and the room ended at 50:00,
+        // mid-answer, with no thank-you.
         closingPermitted = true;
-        note += " Begin the closing round now if you have not: the five" +
-          " lightning-round questions and the two about the interview" +
-          " itself, one at a time, with short reactions, then their last" +
-          " word, then your closing thanks.";
+        if (!closingRequired) { closingRequired = true; trace("time", "closing round required at " + elapsed + " min"); }
+        note += " Begin the closing round at the very next pause, once the" +
+          " current answer has finished: the show's question, the five" +
+          " lightning-round questions and the two about the interview itself," +
+          " one at a time, with short reactions, then their last word, then" +
+          " your closing thanks. It takes about " + closingRoundMin() +
+          " minutes, which is all the time that is left.";
       } else {
         closingPermitted = true;
         note += " Time is up. If you have not yet asked how the interview was" +
@@ -1443,6 +1504,25 @@ function startTimeChecks() {
       Logger.write("[aoa " + runId + "] time-check inject failed: " + err.message);
     }
   }, TIME_CHECK_EVERY_MS);
+  // One more note exactly when the closing round must begin, which a
+  // five-minute tick can otherwise miss by up to five minutes.
+  const mustCloseInMs = Math.max(0, (plannedMin() - closingRoundMin()) * 60000
+    - (Date.now() - (firstJoinAt || Date.now())));
+  setTimeout(function () {
+    if (roomEnded || !grokAgent || closingRequired) return;
+    closingRequired = true; closingPermitted = true;
+    trace("time", "closing round required (scheduled note)");
+    try {
+      grokAgent.conversationItemCreate({
+        item: { type: "message", role: "system", content: [{ type: "input_text", text:
+          "[TIME CHECK — system note, do not read aloud] About " + closingRoundMin() +
+          " minutes remain. Begin the closing round at the very next pause, once the" +
+          " current answer has finished: the show's question, the five lightning-round" +
+          " questions and the two about the interview itself, then their last word," +
+          " then your closing thanks." }] },
+      });
+    } catch (err) { /* the five-minute notes still run */ }
+  }, mustCloseInMs);
 }
 
 // The words Mira is told to say when the interview really is over. Hearing
