@@ -68,7 +68,11 @@ const LEG_EVENT_URL = API_BASE + "/leg-event";     // per-leg joined/left (+ rec
 const NARRATION_TAKE_URL = API_BASE + "/narration-take"; // Mira reading a scripted pickup
 const GROK_DROP_GUARD_MS = 1500;                   // spec §7: teardown-race guard
 const DEFAULT_PLANNED_MIN = 45;    // when the guest gave no preference
-const HARD_CAP_SLACK_MIN = 5;      // how long past the planned end the room may run
+// Oct 5 2026 (Patrick): "Time shouldn't ever run out for an interview."
+// The planned length paces Mira; it never ends the room. The only cap left
+// is a safety net for a room nobody closed (three hours past the plan), and
+// even that asks Mira to close rather than cutting anyone off.
+const SAFETY_CAP_AFTER_PLAN_MIN = 180;
 const TIME_CHECK_EVERY_MS = 5 * 60 * 1000;
 const ROOM_PREFIX = "room-";       // callConference id = ROOM_PREFIX + run id (rule ^room-.*)
 // Voximplant ends a session that has had no call for 60 s (session
@@ -561,7 +565,7 @@ function plannedMin() {
 }
 
 function hardCapMs() {
-  return (plannedMin() + HARD_CAP_SLACK_MIN) * 60 * 1000;
+  return (plannedMin() + SAFETY_CAP_AFTER_PLAN_MIN) * 60 * 1000;
 }
 let grokAgent = null;
 let legs = [];              // [{ id, role, call, joinedAt }]
@@ -664,14 +668,14 @@ async function openRoom() {
     try {
       grokAgent.conversationItemCreate({
         item: { type: "message", role: "system", content: [{ type: "input_text", text:
-          "[TIME CHECK — system note, do not read aloud] Time is completely up. Let the" +
-          " current sentence finish, then skip any remaining questions: thank them" +
-          " warmly for something particular, tell them that's the end of the recording" +
-          " and they can hang up now. One short turn." }] },
+          "[TIME CHECK — system note, do not read aloud] The room has now run three" +
+          " hours past the plan and has to close. Let the current answer finish" +
+          " completely, then thank them warmly for something particular, tell them" +
+          " that's the end of the recording and they can hang up now. One short turn." }] },
       });
       if (!miraSpeaking && !inboundSpeaking) { miraSpeaking = true; grokAgent.responseCreate({}); }
     } catch (err) { /* the end below still happens */ }
-    hardCapTimer = setTimeout(function () { endRoom("hard_cap"); }, 90 * 1000);
+    hardCapTimer = setTimeout(function () { endRoom("hard_cap"); }, 5 * 60 * 1000);
   }, hardCapMs());
   startAgent();   // async; legs are admitted meanwhile
   return true;
@@ -1484,18 +1488,22 @@ function startTimeChecks() {
         // mid-answer, with no thank-you.
         closingPermitted = true;
         if (!closingRequired) { closingRequired = true; trace("time", "closing round required at " + elapsed + " min"); }
-        note += " Begin the closing round at the very next pause, once the" +
-          " current answer has finished: the show's question, the five" +
-          " lightning-round questions and the two about the interview itself," +
-          " one at a time, with short reactions, then their last word, then" +
-          " your closing thanks. It takes about " + closingRoundMin() +
-          " minutes, which is all the time that is left.";
+        note += " Begin the closing round when the current thread reaches a" +
+          " natural end: the show's question, the five lightning-round" +
+          " questions and the two about the interview itself, one at a time," +
+          " then their last word, then your closing thanks. It takes about " +
+          closingRoundMin() + " minutes. There is no cut-off: if the guest is" +
+          " in the middle of something or wants to keep going, follow them" +
+          " and start the round afterwards. Never hurry a guest.";
       } else {
         closingPermitted = true;
-        note += " Time is up. If you have not yet asked how the interview was" +
-          " for them and for one suggestion to improve it, ask those two" +
-          " now; then give them the last word and deliver your closing" +
-          " thanks.";
+        note += " The planned time has passed. That is fine: there is no" +
+          " cut-off, and the guest may go on as long as they like. Do not" +
+          " mention time and do not hurry them. If they are in the middle of" +
+          " something, or clearly want to keep talking, follow them. When" +
+          " the conversation reaches a natural end, finish the closing round" +
+          " in full (whatever of it is left), give them the last word, and" +
+          " then your closing thanks.";
       }
       grokAgent.conversationItemCreate({
         item: { type: "message", role: "system", content: [{ type: "input_text", text: note }] },

@@ -61,8 +61,25 @@ class TestItFinishesOnTime:
     def test_the_cap_closes_instead_of_cutting(self):
         cap = SCENARIO[SCENARIO.index("hardCapTimer = setTimeout(function () {"):]
         cap = cap[:cap.index("}, hardCapMs());")]
-        assert "Time is completely up" in cap
-        assert 'setTimeout(function () { endRoom("hard_cap"); }, 90 * 1000)' in cap
+        assert "three" in cap and "hours past the plan" in cap
+        assert 'setTimeout(function () { endRoom("hard_cap"); }, 5 * 60 * 1000)' in cap
+
+
+class TestTimeNeverRunsOut:
+    """Oct 5 2026 (Patrick): "Time shouldn't ever run out for an interview."""
+
+    def test_no_cut_off_at_the_planned_time(self):
+        assert "SAFETY_CAP_AFTER_PLAN_MIN = 180" in SCENARIO
+        assert "HARD_CAP_SLACK_MIN" not in SCENARIO
+        assert "the guest may go on as long as they like" in SCENARIO
+        assert "Time is up." not in SCENARIO
+        assert "which is all the time that is left" not in SCENARIO
+
+    def test_prompt_says_no_cap(self):
+        flat = _flat(PROMPT)
+        assert "There is no time cap" in flat
+        assert "an interview never ends because the clock ran out" in flat
+        assert "Hard time cap" not in flat
 
 
 class TestStudioNoShows:
