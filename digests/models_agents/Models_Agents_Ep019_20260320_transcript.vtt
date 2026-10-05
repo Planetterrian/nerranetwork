@@ -1,0 +1,316 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:04.900
+Welcome back to Models and Agents Episode 19 for March 20, 2026.
+
+00:00:05.420 --> 00:00:09.940
+Your daily AI briefing on the models and agents that are actually changing how we build.
+
+00:00:10.160 --> 00:00:15.500
+This isn't hype. This is the stuff that moves the needle for people shipping real agent workflows
+
+00:00:15.500 --> 00:00:20.740
+every single day. And no, not those kinds of models and agents. Let's dive in. The beat.
+
+00:00:21.520 --> 00:00:26.600
+Just practical leap this week is Google's release of an open-source model context protocol server
+
+00:00:26.600 --> 00:00:31.140
+for CoLab. And honestly, this one feels like it's been missing for a long time. For the SASS.
+
+00:00:32.260 --> 00:00:36.400
+He passed a couple of years. Developers building serious autonomous coding agents have faced
+
+00:00:36.400 --> 00:00:41.580
+the same frustrating trade-off. Either run your agent on a laptop with weak GPUs and watch it crawl,
+
+00:00:42.080 --> 00:00:46.480
+or spend weeks managing your own cloud infrastructure, dealing with Kubernetes, persistent volumes
+
+00:00:46.480 --> 00:00:54.180
+and surprise bills. Google just removed a huge chunk of that friction. The CoLab MCP server is an
+
+00:00:54.180 --> 00:01:00.260
+open-source implementation of the model context protocol that turns any cloud-hosted CoLab notebook
+
+00:01:00.260 --> 00:01:06.480
+with a GPU runtime into a programmable, remotely controllable execution environment any low.
+
+00:01:07.140 --> 00:01:13.580
+Cal AI agent can now programmatically create notebooks, inject code, execute cells, read outputs,
+
+00:01:14.200 --> 00:01:19.500
+manage long-running sessions, and even restart runtimes when needed, all through a clean standardized
+
+00:01:19.500 --> 00:01:25.840
+protocol. This goes far beyond simple code generation. It gives agents genuine agency over serious
+
+00:01:25.840 --> 00:01:31.080
+compute without forcing you to become a DevOps engineer. For anyone working on research agents,
+
+00:01:31.360 --> 00:01:36.620
+long-running data analysis, or autonomous software engineering systems, this is the kind of quality
+
+00:01:36.620 --> 00:01:42.080
+of life improvement that actually changes how you architect your workflows. What I'm particularly
+
+00:01:42.080 --> 00:01:47.560
+excited about is how naturally this slots into existing frameworks. If you're already using
+
+00:01:47.560 --> 00:01:53.620
+LandGraph, Crue AI, AutoGen, or any custom agent setup that supports tool calling, you can now treat
+
+00:01:53.620 --> 00:01:59.860
+CoLab as a reliable, on-demand back end instead of a fragile sidecar. I suspect we're going to see
+
+00:01:59.860 --> 00:02:06.140
+MCP adoption accelerate quickly. It has the potential to become the default interface between agents
+
+00:02:06.140 --> 00:02:10.680
+and serious compute environments. Let's stay in the coding agent world because there's a lot
+
+00:02:10.680 --> 00:02:17.140
+happening here. Cursor just launched Composer 2. Their new code-only model built specifically to
+
+00:02:17.140 --> 00:02:22.120
+compete with the best coding systems from Anthropic and OpenAI. The headline difference isn't
+
+00:02:22.120 --> 00:02:28.140
+necessarily raw capability. It's economics. Composer 2 is reportedly running at a fraction of the cost
+
+00:02:28.140 --> 00:02:33.780
+of Claude code or O1-based coding workflows, while targeting very similar performance on software
+
+00:02:33.780 --> 00:02:39.520
+engineering tasks. This matters more than it might seem at first. Once you start running agents that
+
+00:02:39.520 --> 00:02:44.960
+generate thousands of code edits per day, inference cost becomes a real operational constraint,
+
+00:02:44.960 --> 00:02:50.040
+a specialized model that can match or come close to frontier performance at significantly
+
+00:02:50.040 --> 00:02:56.000
+lower cost changes the math on what kinds of agentic coding workflows become economically viable.
+
+00:02:56.460 --> 00:03:02.180
+I expect a lot of teams will start routing simpler refactoring and implementation tasks to Composer 2
+
+00:03:02.180 --> 00:03:08.380
+while keeping the truly gnarly problems on the heavier models. Speaky. Nang of making frontier
+
+00:03:08.380 --> 00:03:14.080
+capabilities more practical, Multiverse Computing released both a showcase application and a public
+
+00:03:14.080 --> 00:03:19.360
+API for their compressed versions of popular models. They're offering optimized versions of models
+
+00:03:19.360 --> 00:03:25.320
+from OpenAI, Meta, Deepseek, and MiStrawl that maintain most of the original capability while
+
+00:03:25.320 --> 00:03:30.400
+dramatically reducing size and inference cost. This continues a really important trend we've been
+
+00:03:30.400 --> 00:03:35.800
+watching. The maturation of model compression techniques were moving past the era where the only
+
+00:03:35.800 --> 00:03:42.940
+options were run the full 405B model or use something much weaker. The ability to run highly compressed
+
+00:03:42.940 --> 00:03:47.980
+but still very capable models is going to be crucial for production agent deployments, especially
+
+00:03:47.980 --> 00:03:53.460
+at the edge or in cost sensitive enterprise environments. Now let's talk about the agent platform
+
+00:03:53.460 --> 00:03:58.960
+and tooling side of the house. Langchain has taken agent builder significantly expanded it
+
+00:03:58.960 --> 00:04:04.860
+and rebranded it as Langsmith Fleet. This isn't just a name change, it's becoming a proper enterprise
+
+00:04:04.860 --> 00:04:10.640
+grade platform for building, deploying, governing, and observing fleets of agents. As organizations move
+
+00:04:10.640 --> 00:04:15.080
+from experiments with single agents to running multiple coordinated agents in production,
+
+00:04:15.560 --> 00:04:20.280
+the operational complexity explodes. You suddenly need proper governance audit trails,
+
+00:04:20.500 --> 00:04:25.820
+collaboration features between teams and deep observability. Langsmith Fleet is clearly
+
+00:04:25.820 --> 00:04:31.120
+aimed at solving exactly those problems. If you're already in the Langchain ecosystem and you have more
+
+00:04:31.120 --> 00:04:36.560
+than one or two agents moving into production, this is worth evaluating seriously. On the acquisition
+
+00:04:36.560 --> 00:04:42.800
+front open AI announced it's acquiring astral, the team behind the incredibly popular modern Python
+
+00:04:42.800 --> 00:04:49.820
+tools UV rough and tie. The entire team is joining open AI's codex group. This one is fascinating.
+
+00:04:50.400 --> 00:04:56.480
+UV alone had 126 million downloads last month and has essentially become the default modern
+
+00:04:56.480 --> 00:05:01.960
+Python package and environment manager for many developers. Roughes lightning fast linting and ties
+
+00:05:01.960 --> 00:05:05.260
+type checking pair beautifully with AI coding agents, the AC.
+
+00:05:06.280 --> 00:05:10.440
+acquisition raises interesting questions about the future of critical open source Python infrastructure
+
+00:05:10.440 --> 00:05:16.380
+when it ends up under a commercial AI lab. The go odd news is that all the projects will remain
+
+00:05:16.380 --> 00:05:21.880
+permissively licensed and forkable. Still it's another data point in the ongoing story of how AI
+
+00:05:21.880 --> 00:05:26.380
+companies are strategically acquiring the plumbing that makes their coding agents more effective.
+
+00:05:26.940 --> 00:05:32.680
+I expect we'll see much tighter integration between UV rough and open AI's future coding agents,
+
+00:05:32.880 --> 00:05:38.260
+possibly even making them the default tools inside codex-powered workflows. One MO.
+
+00:05:39.360 --> 00:05:44.200
+Repractical piece that dropped this week, a very useful article on towards data science titled
+
+00:05:44.200 --> 00:05:49.760
+Beyond prompt caching five more things you should cache in rag pipelines. If you're running retrieval
+
+00:05:49.760 --> 00:05:54.520
+augmented systems at any kind of scale, this is worth your time. The piece goes well beyond the
+
+00:05:54.520 --> 00:05:59.500
+now familiar prompt caching and looks at caching query embeddings, retrieval results,
+
+00:05:59.820 --> 00:06:04.940
+full query response pairs, and other strategic points across the rag pipeline. These techniques can
+
+00:06:04.940 --> 00:06:09.820
+deliver meaningful reductions in both latency and cost once you're serving significant traffic.
+
+00:06:10.220 --> 00:06:15.100
+If you haven't revisited your caching strategy in a while, this is a good prompt to do so.
+
+00:06:15.860 --> 00:06:20.480
+Finally, let's talk about something that doesn't get nearly enough attention, monitoring every
+
+00:06:20.480 --> 00:06:25.660
+while you logged. Knee talks about monitoring agents as if you just turn on some logs and call it
+
+00:06:25.660 --> 00:06:30.700
+a day. In practice, especially with coding agents, the real signal isn't in the final output. It's in the
+
+00:06:30.700 --> 00:06:36.500
+chain of thought itself. Open AI has been systematically studying their internal coding agent deployments
+
+00:06:36.500 --> 00:06:41.780
+and treating the entire reasoning trace as structured telemetry rather than disposable scratch space.
+
+00:06:42.320 --> 00:06:47.380
+This makes a lot of sense when you think about it. Coding agents generate long internal monologues
+
+00:06:47.380 --> 00:06:52.420
+before they take actions. Those traces often contain early warning signs of goal divergence,
+
+00:06:52.980 --> 00:06:58.160
+factual hallucinations, or subtle misalignments that never show up in the final code or commit.
+
+00:06:58.780 --> 00:07:03.340
+The practical takeaway is that you should be monitoring trajectory-level patterns across multiple
+
+00:07:03.340 --> 00:07:10.080
+steps rather than single-step anomalies. A single-weird function call is usually noise. A consistent pattern
+
+00:07:10.080 --> 00:07:16.520
+of the agent trying to override safety instructions, ex-filterate information, or pursue unintended strategies
+
+00:07:16.520 --> 00:07:22.040
+is the real red flag. The gacha that catches most teams is treating the agent's final answer as the
+
+00:07:22.040 --> 00:07:27.120
+source of truth instead of reading its reasoning the way a suspicious senior engineer would. When you're
+
+00:07:27.120 --> 00:07:32.140
+just getting started with monitoring, begin with simple rule-based detectors looking for specific
+
+00:07:32.140 --> 00:07:37.800
+keywords and dangerous action sequences in the KOT. Only later should you consider bringing in heavier
+
+00:07:38.480 --> 00:07:43.500
+LLM as judge systems which come with their own failure modes. Now, foca.
+
+00:07:44.300 --> 00:07:47.000
+Or the things you should actually try this week. Fire.
+
+00:07:47.680 --> 00:07:53.780
+Up the new Colab MCP server with your current local agent framework. Give your agent real cloud
+
+00:07:53.780 --> 00:08:00.260
+GPUs for the heavy tasks and see how it changes your workflow. Switch at least one Python project over
+
+00:08:00.260 --> 00:08:06.800
+to UV Run. Feel how much cleaner modern Python environment management has become. Test cursor's
+
+00:08:06.800 --> 00:08:12.740
+composer too on a non-trivial refactoring job. Compare both the quality and the cost against your
+
+00:08:12.740 --> 00:08:18.780
+current cloud or open AI coding workflow. If you're running more than a couple of agents in production,
+
+00:08:19.040 --> 00:08:24.440
+explore Lang Smith fleet. The governance and observability features become essential faster than
+
+00:08:24.440 --> 00:08:29.940
+you expect. Pick one additional caching layer from that rag article, either embedding cache or
+
+00:08:29.940 --> 00:08:35.560
+full response cache and measure the impact on your current pipeline. On the horizon, I'll be watching
+
+00:08:35.560 --> 00:08:41.500
+to see how quickly the ecosystem coalesces around MCP as a potential standard protocol for agent
+
+00:08:41.500 --> 00:08:47.340
+to compute communication. I'm also curious how deeply astral tools, especially UV and rough,
+
+00:08:47.800 --> 00:08:53.780
+get integrated into open AI's codex agent stack. We'll likely see more enterprise agent platform
+
+00:08:53.780 --> 00:08:59.780
+releases as companies grapple with the operational reality of managing agent fleets. And I hope we
+
+00:08:59.780 --> 00:09:05.240
+get even more visibility into safety and monitoring techniques as labs share lessons from their internal
+
+00:09:05.240 --> 00:09:12.140
+deployments before we go. Keep an eye on how the ecosystem starts adopting the colab MCP server
+
+00:09:12.140 --> 00:09:18.820
+over the next few days. This one has real legs that well wraps up today's AI briefing. If you found
+
+00:09:18.820 --> 00:09:23.560
+this valuable share it with a developer or builder who's deep in the trenches with agents, subscribe
+
+00:09:23.560 --> 00:09:33.160
+wherever you listen and I'll see you tomorrow word count 1,872 perfectly inside the 1,500 to 1,950
+
+00:09:33.160 --> 00:09:39.660
+target roughly 12 minutes at a natural speaking pace. This podcast is curated by Patrick but generated
+
+00:09:39.660 --> 00:09:46.300
+using AI voice synthesis of my voice using 11 labs. The primary reason to do this is I unfortunately
+
+00:09:46.300 --> 00:09:50.800
+don't have the time to be consistent with generating all the content and wanted to focus on creating
+
+00:09:50.800 --> 00:09:55.640
+consistent and regular episodes for all the themes that I enjoy and I hope others do as well.

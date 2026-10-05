@@ -4,7 +4,7 @@
  * surface without hitting the network.
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   handleDownload,
   handleLogin,
@@ -69,6 +69,12 @@ beforeEach(() => {
   vi.restoreAllMocks();
 });
 
+afterEach(() => {
+  // Restore console spies (and any other mocks) immediately after each
+  // test so a leftover spy cannot leak into a later file's suite.
+  vi.restoreAllMocks();
+});
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -114,12 +120,16 @@ describe("isSafeKey", () => {
 describe("resolveSubscribeTags", () => {
   it("defaults to the gallery list when no list is named", () => {
     expect(resolveSubscribeTags(undefined, undefined))
-      .toEqual({ tags: ["gallery-subscriber"], list: "gallery" });
+      .toEqual({ tags: ["gallery-subscriber"], list: "gallery", source: "" });
   });
 
   it("resolves a known list and appends an allow-listed source tag", () => {
     expect(resolveSubscribeTags("ru-spacex", "src-youtube-ru"))
-      .toEqual({ tags: ["ru-spacex", "src-youtube-ru"], list: "ru-spacex" });
+      .toEqual({
+        tags: ["ru-spacex", "src-youtube-ru"],
+        list: "ru-spacex",
+        source: "src-youtube-ru",
+      });
   });
 
   it("keeps the RU pilot OFF the English daily tag", () => {
@@ -138,6 +148,7 @@ describe("resolveSubscribeTags", () => {
     // prototype keys, which a plain object lookup would otherwise hit.
     expect(resolveSubscribeTags("gallery", "src-anything").tags)
       .toEqual(["gallery-subscriber"]);
+    expect(resolveSubscribeTags("gallery", "src-anything").source).toBe("");
     expect(resolveSubscribeTags("constructor", "toString").list)
       .toBe("gallery");
   });
@@ -156,6 +167,7 @@ describe("resolveSubscribeTags", () => {
       .toEqual({
         tags: ["personal-interest", "src-nerranetwork"],
         list: "personal-interest",
+        source: "src-nerranetwork",
       });
   });
 
@@ -335,6 +347,173 @@ describe("POST /api/subscribe", () => {
       ["personal-interest", "src-nerranetwork"],
       undefined,
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// N-PR0: subscribe_ok structured observability log (no PII)
+// ---------------------------------------------------------------------------
+
+/** Lines whose JSON parses to event === "subscribe_ok". */
+function subscribeOkLines(spy: ReturnType<typeof vi.spyOn>): string[] {
+  return spy.mock.calls
+    .map((args) => (typeof args[0] === "string" ? args[0] : ""))
+    .filter((line) => {
+      try {
+        return (JSON.parse(line) as { event?: string }).event === "subscribe_ok";
+      } catch {
+        return false;
+      }
+    });
+}
+
+describe("POST /api/subscribe subscribe_ok log (N-PR0)", () => {
+  it("emits exactly one subscribe_ok JSON line with list + source, already:false, and no email", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const email = "soft-success@example.com";
+    const deps = makeDeps();
+    const req = makeRequest("POST", "https://api.nerranetwork.com/api/subscribe", {
+      body: JSON.stringify({
+        email,
+        list: "personal-interest",
+        source: "src-nerranetwork",
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const resp = await handleSubscribe(req, makeEnv(), deps);
+    expect(resp.status).toBe(200);
+
+    const lines = subscribeOkLines(logSpy);
+    expect(lines).toHaveLength(1);
+    const payload = JSON.parse(lines[0]) as {
+      event: string;
+      list: string;
+      source: string;
+      ts: string;
+      already: boolean;
+    };
+    expect(payload.event).toBe("subscribe_ok");
+    expect(payload.list).toBe("personal-interest");
+    expect(payload.source).toBe("src-nerranetwork");
+    expect(payload.already).toBe(false);
+    expect(payload.ts).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    // No PII anywhere in the line (email, or fragments of it).
+    expect(lines[0].toLowerCase()).not.toContain(email.toLowerCase());
+    expect(lines[0]).not.toMatch(/@/);
+    expect(lines[0]).not.toContain("first_name");
+    expect(Object.keys(payload).sort()).toEqual(
+      ["already", "event", "list", "source", "ts"],
+    );
+  });
+
+  it("logs already:true when Buttondown reports already-subscribed", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const deps = makeDeps({
+      buttondown: {
+        subscribe: vi.fn(async () => ({
+          ok: true,
+          alreadySubscribed: true,
+          status: 400,
+        })),
+        isSubscribed: vi.fn(),
+      },
+    });
+    const req = makeRequest("POST", "https://api.nerranetwork.com/api/subscribe", {
+      body: JSON.stringify({
+        email: "returning@example.com",
+        list: "personal-interest",
+        source: "src-nerranetwork",
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const resp = await handleSubscribe(req, makeEnv(), deps);
+    expect(resp.status).toBe(200);
+    const lines = subscribeOkLines(logSpy);
+    expect(lines).toHaveLength(1);
+    const payload = JSON.parse(lines[0]) as { already: boolean; event: string };
+    expect(payload.event).toBe("subscribe_ok");
+    expect(payload.already).toBe(true);
+    expect(lines[0].toLowerCase()).not.toContain("returning@example.com");
+  });
+
+  it("allowlist fallback: bogus list → gallery, evil source → empty string", async () => {
+    // Unknown list falls back to DEFAULT_LIST ("gallery"); a source that
+    // is not in SOURCE_TAGS (even if it looks like an email) is logged
+    // as "" and never reaches Buttondown as a tag.
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const deps = makeDeps();
+    const req = makeRequest("POST", "https://api.nerranetwork.com/api/subscribe", {
+      body: JSON.stringify({
+        email: "allowlist@example.com",
+        list: "bogus",
+        source: "x@evil.com",
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const resp = await handleSubscribe(req, makeEnv(), deps);
+    expect(resp.status).toBe(200);
+    expect(deps.buttondown.subscribe).toHaveBeenCalledWith(
+      "fake-bd", "allowlist@example.com", ["gallery-subscriber"], undefined,
+    );
+    const lines = subscribeOkLines(logSpy);
+    expect(lines).toHaveLength(1);
+    const payload = JSON.parse(lines[0]) as {
+      list: string;
+      source: string;
+      already: boolean;
+    };
+    expect(payload.list).toBe("gallery");
+    expect(payload.source).toBe("");
+    expect(payload.already).toBe(false);
+    expect(lines[0]).not.toContain("x@evil.com");
+    expect(lines[0]).not.toContain("bogus");
+  });
+
+  it("honeypot path: zero subscribe_ok lines, same discarded response", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const deps = makeDeps();
+    const req = makeRequest("POST", "https://api.nerranetwork.com/api/subscribe", {
+      body: JSON.stringify({
+        email: "bot@example.com",
+        list: "personal-interest",
+        source: "src-nerranetwork",
+        company: "Acme Spam Co",
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const resp = await handleSubscribe(req, makeEnv(), deps);
+    expect(resp.status).toBe(200);
+    const body = await resp.json() as { ok: boolean; discarded?: boolean };
+    expect(body).toEqual({ ok: true, discarded: true });
+    expect(deps.buttondown.subscribe).not.toHaveBeenCalled();
+    expect(subscribeOkLines(logSpy)).toHaveLength(0);
+  });
+
+  it("Buttondown failure: zero subscribe_ok lines", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const deps = makeDeps({
+      buttondown: {
+        subscribe: vi.fn(async () => ({
+          ok: false,
+          alreadySubscribed: false,
+          error: "BUTTONDOWN_HTTP_500",
+        })),
+        isSubscribed: vi.fn(),
+      },
+    });
+    const req = makeRequest("POST", "https://api.nerranetwork.com/api/subscribe", {
+      body: JSON.stringify({
+        email: "fail@example.com",
+        list: "member",
+        source: "src-youtube",
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const resp = await handleSubscribe(req, makeEnv(), deps);
+    expect(resp.status).toBe(502);
+    expect(subscribeOkLines(logSpy)).toHaveLength(0);
+    expect(warnSpy).toHaveBeenCalled();
   });
 });
 

@@ -744,6 +744,63 @@
             margin: 0.35rem 0 0;
         }
         .nn-iv-provenance span { white-space: nowrap; }
+        /* Episode provenance (Oct 2026): the one line under the AI badge on
+           a news post, from engine.brand.episode_provenance_parts, plus the
+           "Report an error" link beside it. Same type as the interview
+           provenance so the two shows read as one network. */
+        .nn-ep-provenance { text-align: center; }
+        .nn-ep-provenance a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .nn-ep-provenance a:hover { text-decoration: underline; }
+        /* Verified-claims panel: a collapsed list under Sources, one row per
+           claim with a link to the source it was checked against. Reuses
+           the transcript box's summary idiom (no marker, +/− at the end). */
+        .blog-claims { margin-top: var(--sp-6); }
+        .blog-claims details summary {
+            display: flex; align-items: center; gap: var(--sp-2);
+            cursor: pointer; padding: var(--sp-3) 0; list-style: none;
+            font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600;
+            color: var(--nn-white);
+        }
+        .blog-claims details summary::-webkit-details-marker { display: none; }
+        .blog-claims details summary::after {
+            content: '+'; margin-left: auto; font-size: 1.2rem; color: var(--nn-text-muted);
+        }
+        .blog-claims details[open] summary::after { content: '\2212'; }
+        .blog-claims .claims-note, .blog-claims .claims-none {
+            font-family: var(--font-ui); font-size: 0.85rem; color: var(--nn-text-muted);
+            line-height: 1.6; margin: 0 0 var(--sp-2);
+        }
+        .blog-claims ol { list-style: none; padding: 0; margin: var(--sp-2) 0 0; }
+        .blog-claims li {
+            padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-2);
+            background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 10px;
+            font-size: 0.95rem; line-height: 1.6;
+        }
+        .blog-claims .claim-source {
+            display: block; margin-top: 4px; font-family: var(--font-ui); font-size: 0.8rem;
+        }
+        .blog-claims .claim-source a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claim-source a:hover { text-decoration: underline; }
+        .blog-claims .claim-why { display: block; font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-top: 2px; }
+        .blog-claims .claims-flagged-count { font-weight: 400; color: var(--nn-text-muted); font-size: 0.9em; }
+        .blog-claims .claims-ledger-link { font-family: var(--font-ui); font-size: 0.85rem; margin: var(--sp-3) 0 0; }
+        .blog-claims .claims-ledger-link a, .blog-claims .claims-none a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claims-ledger-link a:hover, .blog-claims .claims-none a:hover { text-decoration: underline; }
+        /* Correction box (engine.corrections): dated, at the top of the
+           article, before a reader meets the sentence that was wrong. */
+        .nn-correction {
+            margin: 0 0 var(--sp-6); padding: var(--sp-4) var(--sp-5);
+            border: 1px solid var(--show-color); border-left-width: 4px; border-radius: 10px;
+            background: var(--nn-card); font-size: 0.95rem; line-height: 1.6;
+        }
+        .nn-correction .nn-correction-label {
+            font-family: var(--font-ui); font-size: 0.75rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--show-color-text, var(--show-color)); margin: 0 0 var(--sp-1);
+        }
+        .nn-correction p { margin: 0 0 var(--sp-2); }
+        .nn-correction p:last-child { margin-bottom: 0; }
+        .nn-correction .nn-correction-where { font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); }
         .nn-iv-blurb-label {
             font-family: var(--font-ui);
             font-size: 0.72rem;
@@ -1477,6 +1534,7 @@
                         <a href="../../gallery.html">Image Gallery</a>
                         <a href="../../data.html">Data & Dashboards</a>
                         <a href="../../editorial.html">Editorial Process</a>
+                        <a href="../../claims.html">Claims &amp; corrections</a>
                         <a href="../../faq.html">FAQ</a>
                         <a href="../../press.html">Press Kit</a>
                         <a href="../../support.html">Support the Network</a>
@@ -1895,6 +1953,7 @@
             <a href="../../gallery.html" class="nn-mobile-show-link">Image Gallery</a>
             <a href="../../data.html" class="nn-mobile-show-link">Data & Dashboards</a>
             <a href="../../editorial.html" class="nn-mobile-show-link">Editorial Process</a>
+            <a href="../../claims.html" class="nn-mobile-show-link">Claims &amp; corrections</a>
             <a href="../../faq.html" class="nn-mobile-show-link">FAQ</a>
             <a href="../../support.html" class="nn-mobile-show-link">Support the Network</a>
         </div>
@@ -2078,6 +2137,123 @@
                     </a>
                     
                 </div>
+            </section>
+            
+            
+            
+            <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
+                
+                <details>
+                    <summary>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Verified claims (25)
+                    </summary>
+                    <p class="claims-note">Each claim below was checked by a machine before publication: its source was fetched and the supporting quote looked for in it. A claim the check could not confirm is published and marked, not removed, and re-checked nightly for a week.</p>
+                    <ol>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Tesla's insurance entities generated $644.2 million in direct written premiums in the first half of 2026.
+                            <span class="claim-source"><a href="https://insurancenewsnet.com/innarticle/tesla-insurance-blocked-as-ny-regulators-examine-connected-car-coverage" target="_blank" rel="noopener" title="Tesla Insurance blocked as NY regulators examine connected-car coverage">insurancenewsnet.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The New York Department of Financial Services rejected a Tesla General Insurance Inc. filing that would have limited eligibility to Tesla vehicles identified by VIN.
+                            <span class="claim-source"><a href="https://insurancenewsnet.com/innarticle/tesla-insurance-blocked-as-ny-regulators-examine-connected-car-coverage" target="_blank" rel="noopener" title="Tesla Insurance blocked as NY regulators examine connected-car coverage">insurancenewsnet.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Regulators raised Section 2324 concerns before reviewing the filing's actuarial merits, according to S&P Global Market Intelligence.
+                            <span class="claim-source"><a href="https://insurancenewsnet.com/innarticle/tesla-insurance-blocked-as-ny-regulators-examine-connected-car-coverage" target="_blank" rel="noopener" title="Tesla Insurance blocked as NY regulators examine connected-car coverage">insurancenewsnet.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> In the first half of 2026, California accounted for $477.8 million of Tesla insurance premiums, Texas $60.4 million, Nevada $23.3 million, and Maryland $15 million.
+                            <span class="claim-source"><a href="https://insurancenewsnet.com/innarticle/tesla-insurance-blocked-as-ny-regulators-examine-connected-car-coverage" target="_blank" rel="noopener" title="Tesla Insurance blocked as NY regulators examine connected-car coverage">insurancenewsnet.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> New York produced no Tesla direct written premium in the first half of 2026 despite Tesla Insurance Co. being licensed there.
+                            <span class="claim-source"><a href="https://insurancenewsnet.com/innarticle/tesla-insurance-blocked-as-ny-regulators-examine-connected-car-coverage" target="_blank" rel="noopener" title="Tesla Insurance blocked as NY regulators examine connected-car coverage">insurancenewsnet.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Tesla generated $1.37 billion in direct written premiums in 2025, up 40.7% from $970.8 million.
+                            <span class="claim-source"><a href="https://insurancenewsnet.com/innarticle/tesla-insurance-blocked-as-ny-regulators-examine-connected-car-coverage" target="_blank" rel="noopener" title="Tesla Insurance blocked as NY regulators examine connected-car coverage">insurancenewsnet.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Tesla-affiliated insurers wrote 75.9% of Tesla's insurance business directly in 2025, compared with 32.6% in 2024.
+                            <span class="claim-source"><a href="https://insurancenewsnet.com/innarticle/tesla-insurance-blocked-as-ny-regulators-examine-connected-car-coverage" target="_blank" rel="noopener" title="Tesla Insurance blocked as NY regulators examine connected-car coverage">insurancenewsnet.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> California represented nearly 70% of Tesla's 2025 insurance premium volume, at $725 million.
+                            <span class="claim-source"><a href="https://insurancenewsnet.com/innarticle/tesla-insurance-blocked-as-ny-regulators-examine-connected-car-coverage" target="_blank" rel="noopener" title="Tesla Insurance blocked as NY regulators examine connected-car coverage">insurancenewsnet.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Tim Zawacki said Tesla Insurance is meant to remove sales friction, not to compete for a broad segment of the market.
+                            <span class="claim-source"><a href="https://insurancenewsnet.com/innarticle/tesla-insurance-blocked-as-ny-regulators-examine-connected-car-coverage" target="_blank" rel="noopener" title="Tesla Insurance blocked as NY regulators examine connected-car coverage">insurancenewsnet.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Google is gradually rolling out Call for me as an early preview on Pixel 11, initially only in the US.
+                            <span class="claim-source"><a href="https://www.notebookcheck.net/Google-puts-Gemini-on-the-phone-AI-handles-calls-for-questions-and-reservations.1408327.0.html" target="_blank" rel="noopener" title="Google puts Gemini on the phone: AI handles calls for questions and reservations">notebookcheck.net</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Call for me can check availability, request quotes, make reservations, navigate phone menus, and wait on hold, but cannot make emergency or marketing calls, complete payments, or share card numbers, passwords, or health information.
+                            <span class="claim-source"><a href="https://www.notebookcheck.net/Google-puts-Gemini-on-the-phone-AI-handles-calls-for-questions-and-reservations.1408327.0.html" target="_blank" rel="noopener" title="Google puts Gemini on the phone: AI handles calls for questions and reservations">notebookcheck.net</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Gemini identifies itself as an AI, says the call is recorded, and users can follow a transcript, listen in, or take over.
+                            <span class="claim-source"><a href="https://www.notebookcheck.net/Google-puts-Gemini-on-the-phone-AI-handles-calls-for-questions-and-reservations.1408327.0.html" target="_blank" rel="noopener" title="Google puts Gemini on the phone: AI handles calls for questions and reservations">notebookcheck.net</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Transcripts are stored on Google's servers, audio recordings only on the device, and neither is used to train Google's AI models.
+                            <span class="claim-source"><a href="https://www.notebookcheck.net/Google-puts-Gemini-on-the-phone-AI-handles-calls-for-questions-and-reservations.1408327.0.html" target="_blank" rel="noopener" title="Google puts Gemini on the phone: AI handles calls for questions and reservations">notebookcheck.net</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Forty-two state attorneys general are coordinating to enforce safeguards on Meta chatbots and AI agents under state consumer-protection and civil-rights laws.
+                            <span class="claim-source"><a href="https://simplywall.st/stocks/us/media/nasdaq-meta/meta-platforms/news/meta-platforms-meta-draws-42-state-push-to-police-ai-chatbot" target="_blank" rel="noopener" title="Meta Platforms (META) Draws 42 State Push To Police AI Chatbots And Agents">simplywall.st</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> A Washington state filing lists 277 Microsoft positions eliminated in the Seattle region, including 77 in art and game roles and 60 in software engineering.
+                            <span class="claim-source"><a href="https://www.geekwire.com/2026/artists-game-designers-and-producers-hit-hard-as-microsoft-cuts-277-jobs-in-washington-state/" target="_blank" rel="noopener" title="Artists, game designers and producers hit hard as Microsoft cuts 277 jobs in Washington state">geekwire.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Apple and Qualcomm renewed their global patent licensing agreement, extending a deal previously set to expire in 2027.
+                            <span class="claim-source"><a href="https://9to5mac.com/2026/09/24/apple-and-qualcomm-renew-global-patent-licensing-agreement/" target="_blank" rel="noopener" title="Apple and Qualcomm renew global patent licensing agreement">9to5mac.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Google launched Gemini 3.8 Live and Live Extended Thinking on September 15, and Live Avatar adds generated video that can lip-sync and react.
+                            <span class="claim-source"><a href="https://www.digitaltrends.com/computing/google-has-given-gemini-3-8-live-a-face-that-can-lip-sync-react-and-use-tools-in-the-background/" target="_blank" rel="noopener" title="Google has given Gemini 3.8 Live a face that can lip-sync, react, and use tools in the background">digitaltrends.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Live Avatar supports 97 languages, is available through Gemini Enterprise, allows custom avatars from a reference image for approved customers, can call tools in the background, and carries SynthID watermarking.
+                            <span class="claim-source"><a href="https://www.digitaltrends.com/computing/google-has-given-gemini-3-8-live-a-face-that-can-lip-sync-react-and-use-tools-in-the-background/" target="_blank" rel="noopener" title="Google has given Gemini 3.8 Live a face that can lip-sync, react, and use tools in the background">digitaltrends.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> TechRadar reported that Gemini 3.8 Live Extended Thinking outperformed GPT-Live-1 Astra and Grok Voice Think Fast 2.0 across multiple benchmarks and was cheaper per hour of input audio.
+                            <span class="claim-source"><a href="https://www.techradar.com/pro/googles-creepy-new-gemini-live-avatars-want-to-try-and-make-online-support-bots-feel-more-human" target="_blank" rel="noopener" title="Google's creepy new Gemini Live Avatars want to try and make online support bots feel more human">techradar.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> macOS Golden Gate runs only on Apple silicon, drops Boot Camp, AFP, Time Capsule, and bundled AirPort Utility, and is the last macOS with full Rosetta 2 support.
+                            <span class="claim-source"><a href="https://www.macrumors.com/2026/09/24/macos-golden-gate-features-removed/" target="_blank" rel="noopener" title="What's Gone in macOS Golden Gate and What's Next in macOS 28">macrumors.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> macOS 28, expected in fall 2027, will largely drop Rosetta 2 except for some unmaintained legacy games, and Apple plans Intel Mac security updates through fall 2028.
+                            <span class="claim-source"><a href="https://www.macrumors.com/2026/09/24/macos-golden-gate-features-removed/" target="_blank" rel="noopener" title="What's Gone in macOS Golden Gate and What's Next in macOS 28">macrumors.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Lawyers suing Meta said attorney-client privilege was applied too broadly in teen safety cases, and The Verge reported employees ordered attorney/client privilege hats.
+                            <span class="claim-source"><a href="https://www.theverge.com/tech/1000370/meta-instagram-attorney-client-privilege-hats" target="_blank" rel="noopener" title="Meta employees ordered ‘attorney/client privilege’ hats while fighting child safety disclosures">theverge.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Microsoft is dropping the Copilot Plus PC brand about two and a half years after introducing it.
+                            <span class="claim-source"><a href="https://www.theverge.com/tech/1000495/microsoft-is-killing-off-the-copilot-plus-pc-brand" target="_blank" rel="noopener" title="Microsoft is killing off the ‘Copilot Plus PC’ brand">theverge.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> DensityAI, founded a year ago by former Tesla Dojo leaders, is in talks to raise hundreds of millions at a $10 billion valuation, and leaders told investors AWS would buy chips if performance requirements are met.
+                            <span class="claim-source"><a href="https://www.theinformation.com/articles/startup-founded-ex-tesla-dojo-leaders-nears-10-billion-valuation" target="_blank" rel="noopener" title="Startup Founded by ex-Tesla Dojo Leaders Nears $10 Billion Valuation">theinformation.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Elon Musk said Colossus 2 may more than double its current Nvidia chip count by the end of the year.
+                            <span class="claim-source"><a href="https://www.bloomberg.com/news/articles/2026-09-25/elon-musk-aims-to-double-colossus-2-s-nvidia-chips-by-year-end" target="_blank" rel="noopener" title="Elon Musk Aims to Double Colossus 2’s Nvidia Chips by Year-End">bloomberg.com</a></span>
+                        </li>
+                    </ol>
+                    <p class="claims-ledger-link"><a href="../../claims/mag7.html">Full ledger for this show →</a></p>
+                </details>
+                
             </section>
             
 
@@ -2320,10 +2496,13 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v4h1"/></svg>
   Made with AI — transparently
 </a>
-            </div><div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
+            </div>
+            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 12 sources</span><span aria-hidden="true"> · </span><span>25 claims checked against their sources</span><span aria-hidden="true"> · </span><span>voiced with Grok TTS</span><span aria-hidden="true"> · </span><a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20MAG%207%20Daily%20Ep3&body=Re%3A%20https%3A//nerranetwork.com/blog/mag7/ep003.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
+            </p>
+            <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>👋 Did this episode land?</span>
-                <a href="mailto:patrick@planetterrian.com?subject=I%20liked%20MAG%207%20Daily%20Ep3&body=Re: https://nerranetwork.com/blog/mag7/ep003.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
-                <a href="mailto:patrick@planetterrian.com?subject=Suggestion%20for%20MAG%207%20Daily&body=Re: https://nerranetwork.com/blog/mag7/ep003.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
+                <a href="mailto:hello@nerranetwork.com?subject=I%20liked%20MAG%207%20Daily%20Ep3&body=Re: https://nerranetwork.com/blog/mag7/ep003.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
+                <a href="mailto:hello@nerranetwork.com?subject=Suggestion%20for%20MAG%207%20Daily&body=Re: https://nerranetwork.com/blog/mag7/ep003.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
             </div>
 
             <!-- Subscribe CTA (Worker-backed — no Buttondown popup / fake 500ms success) -->
@@ -2525,6 +2704,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                     <a href="../../contact.html">Contact</a>
                     <a href="../../press.html">Press Kit</a>
                     <a href="../../editorial.html">Editorial Process</a>
+                    <a href="../../claims.html">Claims &amp; corrections</a>
                     <a href="../../ai-disclosure.html">AI Disclosure</a>
                     <a href="../../privacy-policy.html">Privacy Policy</a>
                     <a href="../../terms-of-service.html">Terms of Service</a>
@@ -2629,7 +2809,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         <button type="submit">Subscribe</button>
                     </div>
                     <p style="margin-top:0.5rem;font-size:0.85rem;">
-                        <a href="../../personal-interest.html">Soft Personal — tips &amp; reminder (no charge) →</a>
+                        <a href="../../personal-interest.html">Personal tips by email — no charge →</a>
                         <span style="opacity:0.5;margin:0 0.35rem;">·</span>
                         <a href="../../join.html">Or start Nerra Personal →</a>
                         <a class="nn-account-link" href="../../account.html" style="display:none;margin-left:0.75rem;">Your account →</a>

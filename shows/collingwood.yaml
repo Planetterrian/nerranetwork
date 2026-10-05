@@ -19,6 +19,7 @@ slug: collingwood
 weekly_summary_segment: false   # a weekly show IS the week in review
 memory_enabled: true
 story_recurrence: true
+story_clusters: true
 description: The week in Collingwood and the south Georgian Bay towns —
   council and county, the roads and the weekend ahead, local sport, and one
   local issue argued fairly both ways. Every Friday, hosted by Mira, the Nerra
@@ -198,7 +199,11 @@ llm:
   # the skip floor is 60% of this.
   # 1000 matches length_target_words: a small-town week does not carry the
   # 1,100 a daily does (Ep1: 631 words against a 660 floor, Sep 23 2026).
-  min_podcast_words: 1000
+  # Oct 3 2026: Ep002 stretched one-to-two-sentence items to 1,175 words by
+  # telling ~a quarter of its sentences twice in a row (the damage, the six
+  # candidates, the weather, Beachwood Road). The ask moves to the bottom of
+  # the new-show band (900-1,300, tests/test_new_shows_phase2); floor 540.
+  min_podcast_words: 900
   podcast_expand_below_target: false
   min_digest_words: 1000
   digest_expand_below_target: true
@@ -282,7 +287,7 @@ slow_news:
   cooldown_days: 84
 
 newsletter:
-  enabled: false
+  enabled: true  # Oct 1 2026: the show page already offered this signup; the Worker now keeps the tag
   platform: buttondown
   api_key_env: BUTTONDOWN_API_KEY
   status: about_to_send
@@ -291,7 +296,7 @@ newsletter:
   emoji: ⛰️
   newsletter_start_date: '2026-10-16'
   requires_financial_disclaimer: false
-  length_target_words: 1000
+  length_target_words: 900
 
 content_tracking:
   section_patterns: {}

@@ -124,8 +124,13 @@ def generate_scene_briefs(
     model: str = "grok-4.3",
     enabled: bool = True,
     style_feedback: Optional[dict] = None,
+    tracker: Optional[dict] = None,
 ) -> List[str]:
     """One concrete visual scene brief per story, in story order.
+
+    *tracker* (Oct 2 2026): the episode's credit tracker; when given, the
+    one Grok call is recorded as the ``scene_briefs`` step. ``None`` is
+    byte-identical to the pre-pass behaviour (the call ran unrecorded).
 
     Falls back to :func:`deterministic_briefs` on any failure, refusal,
     malformed output, or when *enabled* is False. Returns at most
@@ -173,6 +178,9 @@ def generate_scene_briefs(
             prompt, model=model, temperature=0.6,
             max_tokens=120 * len(stories) + 200,
         )
+        # Record BEFORE parsing: a response the parser rejects was billed.
+        from engine.tracking import record_llm_usage_from_meta
+        record_llm_usage_from_meta(tracker, "scene_briefs", _meta)
         data = _parse_json_array(text)
         if not data:
             raise ValueError("no JSON array in scene-brief response")

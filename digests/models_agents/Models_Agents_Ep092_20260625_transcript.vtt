@@ -1,0 +1,310 @@
+WEBVTT
+
+00:00:00.980 --> 00:00:07.760
+What's up? Welcome to Models and Agents, episode 92 for June 25th, 2026. Your daily
+
+00:00:07.760 --> 00:00:12.420
+AI briefing. Lots of news to walk through. Let's start with what actually matters.
+
+00:00:13.180 --> 00:00:20.500
+GPT 5.5 Instant now handles intent and constraints more reliably while rolling out to all users
+
+00:00:20.500 --> 00:00:27.740
+this week. Open AI released an updated GPT 5.5 Instant that improves intent understanding,
+
+00:00:27.740 --> 00:00:35.100
+complex constraint handling, and recommendation quality. Open AI also announced its first custom AI
+
+00:00:35.100 --> 00:00:43.480
+chip, jalapeno, built with Broadcom for chat GPT and agent workloads. Several new archive papers
+
+00:00:43.480 --> 00:00:49.860
+introduce agent evaluation frameworks and test time adaptation techniques that address real deployment
+
+00:00:49.860 --> 00:00:57.900
+gaps. The updated GPT 5.5 Instant better interprets user intent and adapts responses accordingly
+
+00:00:57.900 --> 00:01:05.060
+while handling complex constraints more reliably. It also produces more useful and cohesive shopping
+
+00:01:05.060 --> 00:01:12.220
+and local recommendations. The change targets open AI's most used model and is rolling out today
+
+00:01:12.220 --> 00:01:18.800
+to paid users and tomorrow to free users. Builders working on recommendation or multi-constraint chat
+
+00:01:18.800 --> 00:01:25.620
+flows should rerun recent prompt sets to measure reduction in clarification turns. Watch how the
+
+00:01:25.620 --> 00:01:32.220
+update interacts with agent work flows that chain multiple tool calls. This development builds on the
+
+00:01:32.220 --> 00:01:39.340
+frontier model's coverage from episode 90 where closed models traded capability leads and it moves
+
+00:01:39.340 --> 00:01:45.740
+the open question of capability gains versus cost trajectory by tightening intent handling on the
+
+00:01:45.740 --> 00:01:53.000
+model developers already used most. Open AI designed and produced its first purpose built AI chip
+
+00:01:53.000 --> 00:02:01.020
+in partnership with Broadcom for LLM workloads powering chat GPT codex the API and future agent
+
+00:02:01.020 --> 00:02:09.020
+products. The move expands open AI stack from models to silicon to support larger scale. No performance
+
+00:02:09.020 --> 00:02:14.960
+numbers or availability details were released. Infrastructure teams should monitor future announcements
+
+00:02:14.960 --> 00:02:21.860
+on token cost impact once the chip enters production serving. This ties into the AI compute
+
+00:02:21.860 --> 00:02:28.300
+an inference thread from episode 91 where custom silicon was tracked as a lever on the inference cost
+
+00:02:28.300 --> 00:02:35.360
+curve. A key shoff Yael Lita is an 8 billion parameter mass diffusion language model trained
+
+00:02:35.360 --> 00:02:41.980
+from scratch with fully bi-directional attention on 12 trillion tokens and a 25 billion token
+
+00:02:41.980 --> 00:02:52.640
+instruction corpus. It improves BBH by 21.6 points, act challenge by 14.9 points, math by 14.5 points,
+
+00:02:53.120 --> 00:03:00.680
+and human avail by 16.5 points over the prior LLADA version. The model remains competitive with
+
+00:03:00.680 --> 00:03:08.280
+Gwen 2.57 billion despite its non-autoraggressive training. Teams exploring diffusion based language
+
+00:03:08.280 --> 00:03:13.060
+models should test the released weights for tasks where bi-directional context helps.
+
+00:03:13.780 --> 00:03:20.380
+This update narrows the open weight models gap discussed in episode 90 by showing non-autoraggressive
+
+00:03:20.380 --> 00:03:29.020
+approaches closing in on standard autoregressive baselines. A new data set of 32,534 double mark
+
+00:03:29.020 --> 00:03:39.560
+GCESE mock exam responses across 328 questions shows top LLMs agree with examiner consensus more
+
+00:03:39.560 --> 00:03:45.440
+closely than examiners agree with each other. Agreement holds on subjective English essays and
+
+00:03:45.440 --> 00:03:51.240
+messy handwritten math scripts. Model size shows little discrimination in agreement quality.
+
+00:03:51.960 --> 00:03:57.560
+Education and assessment teams can now evaluate automated marking pipelines against this frozen,
+
+00:03:57.560 --> 00:04:04.520
+real student distribution. Agent Odyssey procedurally generates open-ended text games with rich
+
+00:04:04.520 --> 00:04:11.100
+entities and long horizon tasks to evaluate test time continual learning. The framework measures
+
+00:04:11.100 --> 00:04:17.600
+game progress plus world knowledge acquisition, episodic memory, exploration, action diversity,
+
+00:04:17.940 --> 00:04:24.120
+and model cost. Even top agents remain far below human performance. Those stronger base models
+
+00:04:24.120 --> 00:04:30.420
+improve results and short-term memory helps multiple paradigms. Agent developers should run their
+
+00:04:30.420 --> 00:04:36.880
+systems on the generated games to quantify meaningful horizon length. This continues the agents and
+
+00:04:36.880 --> 00:04:44.600
+tool use arc from episode 91, where reliability of long horizon agents was flagged as the key open
+
+00:04:44.600 --> 00:04:54.100
+question. Bi-PACE replaces observation hash grouping with cosine distance clustering in the
+
+00:04:54.100 --> 00:05:02.300
+action-conditioned peer baselines for advantage estimation. On Alfworld with Quinn 2.57 billion,
+
+00:05:02.840 --> 00:05:14.100
+it raises success from 90.8 to 97.1. On the 1.5 billion variant, it reaches 93.5 versus 86.7 for
+
+00:05:14.100 --> 00:05:23.080
+the prior gig PO method. Overhead is 11.3% of a single training step. Agent teams using stepwise group
+
+00:05:23.080 --> 00:05:28.640
+based RL should test the open implementation when credit assignment currently produces singleton
+
+00:05:28.640 --> 00:05:36.040
+groups. Hybrid IR combines graph-based retrieval for structured knowledge with dense retrieval for
+
+00:05:36.040 --> 00:05:43.320
+fine-grained semantics and adds an iterative retrieve reason loop. The dual path design first
+
+00:05:43.320 --> 00:05:49.280
+pulls structured associations via graphs and then refines with dense vectors for local semantics.
+
+00:05:50.000 --> 00:05:55.720
+An iterative loop alternates retrieval and reasoning steps to recover details lost and single
+
+00:05:55.720 --> 00:06:02.000
+path methods. It targets complex medical QA where single path retrieval loses either global
+
+00:06:02.000 --> 00:06:09.820
+associations or local detail. Experiments on three standard medical QA benchmarks show effectiveness.
+
+00:06:10.680 --> 00:06:16.100
+Medical rag teams should compare it against their current single path setup on multi-hop clinical
+
+00:06:16.100 --> 00:06:23.960
+questions. The author built a frozen 240-task EVAL set sampled from real production traffic and
+
+00:06:23.960 --> 00:06:30.740
+roots every candidate model through the same prompt sequence via GPT Proto. Results show the leader
+
+00:06:30.740 --> 00:06:36.880
+board winner often differs from the model that wins on the user's distribution. Gaps between first
+
+00:06:36.880 --> 00:06:42.540
+and second place shrinked dramatically on the private set. One model that looks strong on public
+
+00:06:42.540 --> 00:06:47.220
+benchmarks had a long tail failure mode that would have caused production incidents.
+
+00:06:47.860 --> 00:06:52.700
+Another candidate reversed its ranking entirely once the traffic distribution was applied.
+
+00:06:53.320 --> 00:06:58.780
+Teams should replicate the approach of freezing and versioning their own usage distribution before
+
+00:06:58.780 --> 00:07:05.520
+trusting vendor reported gains. A test-time adaptation method using semi-supervised learning on
+
+00:07:05.520 --> 00:07:12.420
+unlabeled inference time samples maintains robustness when supervised detectors encounter adversarial
+
+00:07:12.420 --> 00:07:20.580
+humanization, new LLMs or temporal drift. The method clusters recent inference examples and generates
+
+00:07:20.580 --> 00:07:28.460
+high confidence pseudo labels inside each cluster. The commercial pangram detector drops to 24.1%
+
+00:07:28.460 --> 00:07:36.820
+on adversarial AI text, while the TTA approach reaches 90.5%. Code is released at the link to
+
+00:07:38.000 --> 00:07:43.740
+The adaptation adds one forward pass per batch and runs on a sliding window of recent samples.
+
+00:07:44.460 --> 00:07:49.780
+Detection teams facing distribution shift should evaluate the semi-supervised adaptation
+
+00:07:49.780 --> 00:07:56.080
+pipeline on their own traffic. Policy align synthesizes policy violating instructions from a
+
+00:07:56.080 --> 00:08:03.960
+natural language safety policy and performs on policy self-distillation. An optional policy-isensitive
+
+00:08:03.960 --> 00:08:10.580
+filtering step selects high impact examples for the distillation stage. It improves safety across
+
+00:08:10.580 --> 00:08:15.700
+multiple models while keeping over refusal low and preserving general capabilities.
+
+00:08:16.480 --> 00:08:22.620
+The method also generalizes to medical, legal and financial policies without requiring new preference
+
+00:08:22.620 --> 00:08:28.860
+data sets. Safety teams that receive new policies faster than they can collect preference data should
+
+00:08:28.860 --> 00:08:35.400
+test the released code. Okay, let's pop the hood on test time adaptation under distribution shift.
+
+00:08:36.040 --> 00:08:42.000
+Everyone talks about test time adaptation as a simple, just keep learning switch. In practice,
+
+00:08:42.320 --> 00:08:47.620
+it is a semi-supervised loop that treats incoming unlabeled samples as a mini-training set,
+
+00:08:48.000 --> 00:08:54.980
+whose homogeneity supplies the supervision signal. The method first clusters recent inference examples,
+
+00:08:54.980 --> 00:09:01.520
+then uses high confidence pseudo labels within each cluster to update a lightweight adapter while
+
+00:09:01.520 --> 00:09:08.200
+freezing the base detector. This adds roughly one forward pass per batch but avoids any labeled data
+
+00:09:08.200 --> 00:09:14.480
+collection after deployment. The approach shines when the shift is gradual and the model family stays
+
+00:09:14.480 --> 00:09:21.040
+constant. It degrades when entirely new model families appear because the homogeneity assumption breaks.
+
+00:09:21.920 --> 00:09:27.700
+When facing repeated adversarial humanization or daily drift and user writing style,
+
+00:09:28.160 --> 00:09:34.140
+run the adaptation step on a sliding window of the last few hundred samples rather than the full history.
+
+00:09:34.840 --> 00:09:37.960
+So when should you actually reach for this versus the alternative?
+
+00:09:38.900 --> 00:09:44.200
+Use it for gradual drift within a fixed model family and skip it when new model families arrive.
+
+00:09:44.840 --> 00:09:51.640
+Test the new GPT 5.5 instant on any multi-constraint prompts that previously required clarification
+
+00:09:51.640 --> 00:09:58.920
+turns to measure the intent handling improvement. Run your agent on the agent-auticy game generator to
+
+00:09:58.920 --> 00:10:05.840
+quantify how far its meaningful horizon extends before performance collapses. Apply the frozen 240
+
+00:10:05.840 --> 00:10:11.520
+task production eVAL method from the Reddit post to the next model you are considering instead of
+
+00:10:11.520 --> 00:10:17.460
+relying on vendor benchmarks. Try the released bypass code on your current group-based RL
+
+00:10:17.460 --> 00:10:24.200
+agent setup if single-ton groups are limiting credit assignment. OpenAI's jalapeno chip is expected
+
+00:10:24.200 --> 00:10:30.040
+to enter production serving for chat GPT and agent workloads in the coming months. More teams will
+
+00:10:30.040 --> 00:10:36.100
+release custom eVAL sets sampled from their own traffic distributions following the pattern described
+
+00:10:36.100 --> 00:10:42.560
+in the Reddit discussion. Additional papers on test time adaptation for detection and agent memory
+
+00:10:42.560 --> 00:10:49.080
+are likely as distribution shift robustness becomes a standard requirement. Tomorrow keep an eye
+
+00:10:49.080 --> 00:10:56.060
+on follow-up details around the jalapeno chip rollout timeline and any new test time adaptation code
+
+00:10:56.060 --> 00:11:02.240
+drops. That's models and agents for today. If you found this useful, share it with someone who's
+
+00:11:02.240 --> 00:11:07.220
+trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+
+00:11:07.800 --> 00:11:13.280
+The AI world moves fast. We'll help you keep up. See you tomorrow and before you go,
+
+00:11:13.620 --> 00:11:19.480
+this show is part of the Nerra network, a family of daily podcasts on tech, science, and markets.
+
+00:11:19.900 --> 00:11:24.980
+Each want a short, sharp briefing you can finish on the commute. If today earned its place in your
+
+00:11:24.980 --> 00:11:31.480
+feed, here's your next listen. Modern investing techniques, modern strategies for Canadian and US
+
+00:11:31.480 --> 00:11:39.680
+investors. Find every show free at NerraNetwork.com. This episode used AI voice synthesis of my voice,
+
+00:11:40.000 --> 00:11:42.640
+editorial selection, and analysis are my own.

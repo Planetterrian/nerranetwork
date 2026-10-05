@@ -1200,7 +1200,37 @@ def aggregate_metrics(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]
 #: cost rollup. Discovered 2026-08-25: the edition's spend (~$0.08/ep) was
 #: invisible because every cost loop derives its show list from the YAML
 #: glob — the "true total is what matters" lesson from the July 29 pass.
-_VIRTUAL_COST_SLUGS = ("nerra_daily",)
+#: ``_review`` (2026-10-02) holds the daily-audit reviewer's one credit file
+#: per run day (review_episodes.write_review_credit_file) — spend with no
+#: show, so it needed a home the rollup reads.
+_VIRTUAL_COST_SLUGS = ("nerra_daily", "_review")
+
+#: Cost buckets in every rollup window. ``grok``/``tts``/``images``/``search``
+#: are the per-episode service lines; ``multilingual`` is the dub-track
+#: sidecar (``credit_usage_*_multilingual.json``, which carries ONLY
+#: ``services.multilingual`` and no file-level total — summed as $0 and
+#: counted as an episode until 2026-10-02, ~$58/30d invisible); ``motion``
+#: is the hook-Short clip (``services.motion_api``); ``review`` is the
+#: daily-audit reviewer. ``episodes`` counts EPISODE files only;
+#: ``files`` counts every credit file read.
+_COST_KEYS = ("grok", "tts", "images", "search", "multilingual", "motion",
+              "review", "total")
+
+
+def _new_cost_bucket() -> Dict[str, Any]:
+    return {"grok": 0.0, "tts": 0.0, "images": 0.0, "search": 0.0,
+            "multilingual": 0.0, "motion": 0.0, "review": 0.0,
+            "total": 0.0, "episodes": 0, "files": 0}
+
+
+def _credit_file_kind(path: Path, slug: str) -> str:
+    """``episode`` | ``multilingual`` | ``review`` — what a credit file is."""
+    name = path.name
+    if slug == "_review" or name.endswith("_review.json"):
+        return "review"
+    if name.endswith("_multilingual.json"):
+        return "multilingual"
+    return "episode"
 
 
 def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -1209,10 +1239,8 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
     d30 = today - _dt.timedelta(days=30)
 
     per_show: Dict[str, Dict[str, Any]] = {}
-    network_7 = {"grok": 0.0, "tts": 0.0, "images": 0.0, "search": 0.0,
-                 "total": 0.0, "episodes": 0}
-    network_30 = {"grok": 0.0, "tts": 0.0, "images": 0.0, "search": 0.0,
-                  "total": 0.0, "episodes": 0}
+    network_7 = _new_cost_bucket()
+    network_30 = _new_cost_bucket()
 
     known = {s.get("slug") for s in shows}
     cost_shows = list(shows) + [
@@ -1222,10 +1250,8 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
         slug = s["slug"]
         ddir = _digests_dir_for(slug, root)
         files = sorted(ddir.glob("credit_usage_*.json")) if ddir.exists() else []
-        show_7 = {"grok": 0.0, "tts": 0.0, "images": 0.0, "search": 0.0,
-                  "total": 0.0, "episodes": 0}
-        show_30 = {"grok": 0.0, "tts": 0.0, "images": 0.0, "search": 0.0,
-                   "total": 0.0, "episodes": 0}
+        show_7 = _new_cost_bucket()
+        show_30 = _new_cost_bucket()
         daily_series: Dict[str, float] = {}
 
         for f in files:
@@ -1253,28 +1279,46 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
             search = float(
                 ((data.get("services") or {}).get("search_api") or {}).get("estimated_cost_usd") or 0.0
             )
-            total = float(data.get("total_estimated_cost_usd") or (grok + tts + images + search))
+            # Two more real lines (2026-10-02): the multilingual sidecar's
+            # only cost key, and the hook-Short motion clip.
+            multilingual = float(
+                ((data.get("services") or {}).get("multilingual") or {}).get("estimated_cost_usd") or 0.0
+            )
+            motion = float(
+                ((data.get("services") or {}).get("motion_api") or {}).get("estimated_cost_usd") or 0.0
+            )
+            kind = _credit_file_kind(f, slug)
+            components = grok + tts + images + search + multilingual + motion
+            total = float(data.get("total_estimated_cost_usd") or components)
+            # A reviewer file's spend is Grok tokens; it is reported under
+            # ``review`` so the per-show LLM line stays per-episode.
+            review = total if kind == "review" else 0.0
             daily_series[date_str] = round(daily_series.get(date_str, 0.0) + total, 4)
+
+            def _add(bucket: Dict[str, Any]) -> None:
+                bucket["grok"] += grok
+                bucket["tts"] += tts
+                bucket["images"] += images
+                bucket["search"] += search
+                bucket["multilingual"] += multilingual
+                bucket["motion"] += motion
+                bucket["review"] += review
+                bucket["total"] += total
+                bucket["files"] += 1
+                # A dub-track sidecar or a reviewer file is not an
+                # episode — credit files overstated episodes until now.
+                if kind == "episode":
+                    bucket["episodes"] += 1
 
             if when >= d30:
                 for bucket in (show_30, network_30):
-                    bucket["grok"] += grok
-                    bucket["tts"] += tts
-                    bucket["images"] += images
-                    bucket["search"] += search
-                    bucket["total"] += total
-                    bucket["episodes"] += 1
+                    _add(bucket)
             if when >= d7:
                 for bucket in (show_7, network_7):
-                    bucket["grok"] += grok
-                    bucket["tts"] += tts
-                    bucket["images"] += images
-                    bucket["search"] += search
-                    bucket["total"] += total
-                    bucket["episodes"] += 1
+                    _add(bucket)
 
         for bucket in (show_7, show_30):
-            for k in ("grok", "tts", "images", "search", "total"):
+            for k in _COST_KEYS:
                 bucket[k] = round(bucket[k], 4)
         # Last 30 daily series, oldest → newest, for sparkline rendering.
         daily_sorted = sorted(daily_series.items())[-30:]
@@ -1283,9 +1327,11 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
             "last_30_days": show_30,
             "daily_series": daily_sorted,
         }
+        if slug == "_review":
+            per_show[slug]["label"] = "review"
 
     for bucket in (network_7, network_30):
-        for k in ("grok", "tts", "images", "search", "total"):
+        for k in _COST_KEYS:
             bucket[k] = round(bucket[k], 4)
 
     # Projection = actual last-7d burn (honest "current weekly rate").
@@ -1311,10 +1357,15 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
             "projected_weekly_usd": projected_weekly,
             "projected_monthly_usd": projected_monthly,
             "episodes_7d": episodes_7,
+            "files_7d": int(network_7.get("files", 0) or 0),
             "note": (
-                "Weekly projection = actual last-7d Grok+TTS spend "
-                f"({episodes_7} credit_usage files). Monthly = last-30d total. "
-                "Not a calendar forecast — a trailing burn rate."
+                "Weekly projection = actual last-7d spend across every credit "
+                f"file ({network_7.get('files', 0)} files: Grok + TTS + images + "
+                "search + multilingual dub tracks + hook-Short motion clips + "
+                f"the daily-audit reviewer). avg is per EPISODE ({episodes_7} "
+                "episode files; dub sidecars and reviewer files are spend, not "
+                "episodes). Monthly = last-30d total. Not a calendar forecast — "
+                "a trailing burn rate."
             ),
         },
         "youtube_quota": {
@@ -2370,22 +2421,28 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
             out[f"{ch}_{kind}_vpd_max"] = (round(max(vals), 2) if vals else None)
 
     # Fragment share of RU/FR window-Short titles (2nd/3rd Shorts) in the
-    # last 14 days. Heuristic mirror of the defect: a title whose first
-    # letter is lowercase started mid-sentence.
+    # last 14 days. Oct 3 2026: judged by engine.titles.is_fragment_title,
+    # the same check the dub paths now refuse a title on. The old mirror
+    # flagged only a lowercase first letter, so «2026 года» and «Как
+    # минимум до 2030 года» (digit / capital start) read as clean while 44
+    # of 349 RU window Shorts shipped as fragments; and it counted the hook
+    # Short in the denominator, which never takes a window title.
+    from engine.titles import is_fragment_title
     frag = total = 0
     for v in _iter_video_index_rows(root):
         if v.get("kind") != "short":
             continue
         if (v.get("channel") or "en") not in ("ru", "fr"):
             continue
+        if (v.get("window") or "") == "hook_open":
+            continue
         if str(v.get("published") or "")[:10] < win_lo:
             continue
         title = str(v.get("title") or "").strip()
-        m = re.search(r"[A-Za-zА-Яа-яЁё]", title)
-        if not m:
+        if not title:
             continue
         total += 1
-        if m.group(0).islower():
+        if is_fragment_title(title):
             frag += 1
     out["dub_fragment_title_share_14d"] = (
         round(frag / total, 2) if total else None)
@@ -3342,6 +3399,13 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         # snapshot section, the daily summary line. Built by
         # scripts/build_audience_headline.py from the same stats files.
         "audience_headline": audience_headline,
+        # Oct 1 2026: Apple star ratings from the public show pages — the
+        # readout for the on-air "rate us on Apple Podcasts" ask.
+        "apple_ratings": build_apple_ratings_section(root),
+        # Oct 1 2026: claim-ledger health across every committed sidecar —
+        # flag mode publishes with the status visible, so this is where
+        # the verified share and the nightly re-verification are read.
+        "claims": build_claims_section(root),
         "efficiency": efficiency,
         "catalog": catalog_section,
         "gallery": gallery_section,
@@ -3449,6 +3513,292 @@ def _merge_op3_history(
         return empty
 
 
+#: A 7-day ratings delta reads the history entry at least this many days
+#: before the latest reading (the closest such entry).
+APPLE_RATINGS_DELTA_DAYS = 7
+
+
+def _apple_count_delta(history: List[Any], latest_date: Optional[_dt.date],
+                       latest_count: Optional[int]) -> Optional[int]:
+    """Ratings gained since the newest history entry ≥ 7 days old.
+
+    Null (never 0) when the history does not reach back a week or when
+    either end is unmeasured — a delta needs two real readings.
+    """
+    if latest_date is None or latest_count is None:
+        return None
+    cutoff = latest_date - _dt.timedelta(days=APPLE_RATINGS_DELTA_DAYS)
+    baseline: Optional[int] = None
+    baseline_date: Optional[_dt.date] = None
+    for h in history or []:
+        if not isinstance(h, dict):
+            continue
+        try:
+            d = _dt.date.fromisoformat(str(h.get("date"))[:10])
+        except (TypeError, ValueError):
+            continue
+        if d <= cutoff and h.get("rating_count") is not None:
+            if baseline_date is None or d > baseline_date:
+                baseline_date, baseline = d, int(h["rating_count"])
+    if baseline is None:
+        return None
+    return int(latest_count) - baseline
+
+
+def build_apple_ratings_section(root: Path,
+                                today: Optional[_dt.date] = None) -> Dict[str, Any]:
+    """Apple Podcasts star ratings per show (Oct 1 2026).
+
+    Reads ``api/apple_ratings.json`` (``scripts/fetch_apple_ratings.py``,
+    public show pages, no secret). The on-air "rate us on Apple Podcasts"
+    ask had no readout at all before this; the 7-day ratings delta is the
+    number that ask is scored against. Honesty: a show whose page carried
+    no rating block is ``null``; a page that said zero ratings is a
+    measured 0; a show kept from a failed fetch is flagged
+    ``not_refreshed_this_run``. The network average is ratings-weighted
+    over rated shows only.
+    """
+    path = root / "api" / "apple_ratings.json"
+    data = _load_json(path)
+    if not isinstance(data, dict) or not isinstance(data.get("shows"), dict):
+        return {"configured": False}
+    try:
+        now = _dt.datetime.now(_dt.timezone.utc)
+        fetched = _parse_iso(data.get("fetched_at") or "")
+        if fetched is not None and fetched.tzinfo is None:
+            fetched = fetched.replace(tzinfo=_dt.timezone.utc)
+        age_hours = (round((now - fetched).total_seconds() / 3600.0, 1)
+                     if fetched is not None else None)
+
+        per_show: Dict[str, Any] = {}
+        total_count = 0
+        weighted = 0.0
+        rated = 0
+        delta_total = 0
+        delta_measured = 0
+        unmeasured: List[str] = []
+        for slug, s in sorted(data["shows"].items()):
+            if not isinstance(s, dict):
+                continue
+            count = s.get("rating_count")
+            value = s.get("rating_value")
+            latest_date = None
+            for h in reversed(s.get("history") or []):
+                if isinstance(h, dict) and h.get("date"):
+                    try:
+                        latest_date = _dt.date.fromisoformat(str(h["date"])[:10])
+                    except ValueError:
+                        latest_date = None
+                    break
+            delta = _apple_count_delta(s.get("history") or [], latest_date,
+                                       int(count) if count is not None else None)
+            row = {
+                "apple_url": s.get("apple_url"),
+                "rating": value,
+                "count": count,
+                "review_count": s.get("review_count"),
+                "count_delta_7d": delta,
+                "source": s.get("source"),
+                "fetched_at": s.get("fetched_at"),
+                "not_refreshed_this_run": bool(s.get("not_refreshed_this_run")),
+                "measured": count is not None,
+            }
+            per_show[slug] = row
+            if count is None:
+                unmeasured.append(slug)
+                continue
+            total_count += int(count)
+            if value is not None and int(count) > 0:
+                weighted += float(value) * int(count)
+                rated += 1
+            if delta is not None:
+                delta_total += delta
+                delta_measured += 1
+        measured = [s for s, r in per_show.items() if r["measured"]]
+        return {
+            "configured": True,
+            "fetched_at": data.get("fetched_at"),
+            "age_hours": age_hours,
+            "per_show": per_show,
+            "network": {
+                "shows_with_url": len(per_show),
+                "shows_measured": len(measured),
+                "shows_rated": rated,
+                "shows_unmeasured": unmeasured,
+                "rating_count_total": total_count if measured else None,
+                "weighted_rating": (round(weighted / total_count, 2)
+                                    if rated and total_count else None),
+                "count_delta_7d_total": (delta_total if delta_measured else None),
+                "count_delta_7d_shows": delta_measured,
+            },
+            "note": ("Public podcasts.apple.com show pages, read nightly. "
+                     "null = the page carried no rating block (unmeasured); "
+                     "0 = the page said zero ratings. Delta is ratings "
+                     "gained vs the newest reading at least 7 days old."),
+        }
+    except Exception as exc:  # noqa: BLE001 — never break the dashboard
+        return {"configured": True, "error": str(exc)}
+
+
+_CLAIMS_SIDECAR_NAME_RE = re.compile(r"_Ep(\d+)_(\d{8})_claims\.json$")
+_CLAIM_REASONS = ("unreachable", "not_found", "quote_mismatch", "uncovered", "malformed")
+_CLAIM_STATUS_TO_REASON = {
+    "unverified_unreachable": "unreachable",
+    "unverified_not_found": "not_found",
+    "unverified_quote_mismatch": "quote_mismatch",
+    "unverified_uncovered": "uncovered",
+    "malformed": "malformed",
+}
+_VERIFIED_CLAIM_STATUSES = frozenset({"verified", "verified_from_fetched", "verified_later"})
+
+
+def _claims_reason_from_verdict(v: dict) -> str:
+    if v.get("unreachable"):
+        return "unreachable"
+    if not v.get("resolved"):
+        return "not_found"
+    return "quote_mismatch"
+
+
+def _claims_sidecar_counts(payload: dict) -> Dict[str, Any]:
+    """One sidecar → {total, verified, verified_later, reasons{...}, mode}.
+
+    A flag-mode sidecar (``gate.policy_version`` 2, every entry carrying
+    ``status``) is counted from its statuses. A legacy sidecar committed
+    only verified entries, so its failures are read from the gate record:
+    ``pre_strip`` on a strip-mode sidecar (what the gate saw BEFORE the
+    strip), else ``failed_verifications`` / ``uncovered_shapes`` /
+    ``shape_errors``.
+    """
+    gate = payload.get("gate") if isinstance(payload.get("gate"), dict) else {}
+    entries = [e for e in (payload.get("claims") or []) if isinstance(e, dict)]
+    reasons = {r: 0 for r in _CLAIM_REASONS}
+    statused = [e for e in entries if e.get("status")]
+    if statused:
+        verified = sum(1 for e in entries
+                       if not e.get("status") or e.get("status") in _VERIFIED_CLAIM_STATUSES)
+        verified_later = sum(1 for e in entries if e.get("status") == "verified_later")
+        for e in entries:
+            r = _CLAIM_STATUS_TO_REASON.get(str(e.get("status") or ""))
+            if r:
+                reasons[r] += 1
+        total = len(entries)
+    else:
+        verified = int(gate.get("claims_verified") or 0)
+        verified_later = 0
+        rec = gate.get("pre_strip") if isinstance(gate.get("pre_strip"), dict) else gate
+        for v in rec.get("failed_verifications") or []:
+            if isinstance(v, dict):
+                reasons[_claims_reason_from_verdict(v)] += 1
+        reasons["uncovered"] += len(rec.get("uncovered_shapes") or [])
+        reasons["malformed"] += len(rec.get("shape_errors") or [])
+        # A strip-mode sidecar's ``claims_total`` is the POST-strip ledger
+        # (the failed entries left it), so the assertions checked are the
+        # verified ones plus everything the gate saw fail before the strip.
+        total = verified + sum(reasons.values())
+    return {
+        "total": total,
+        "verified": verified,
+        "verified_later": verified_later,
+        "flagged": sum(reasons.values()),
+        "reasons": reasons,
+        "mode": str(gate.get("mode") or "") or ("strip" if gate.get("pre_strip") else "legacy"),
+    }
+
+
+def _claims_window_rollup(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Sum per-sidecar counts into one window; ``null`` with no sidecar."""
+    if not rows:
+        return {"sidecars": 0, "claims_total": None, "verified": None,
+                "verified_share": None, "flagged": None, "flagged_share": None,
+                "flagged_by_reason": {r: None for r in _CLAIM_REASONS},
+                "flagged_share_by_reason": {r: None for r in _CLAIM_REASONS},
+                "verified_later": None, "by_mode": {}}
+    total = sum(r["total"] for r in rows)
+    verified = sum(r["verified"] for r in rows)
+    flagged = sum(r["flagged"] for r in rows)
+    reasons = {k: sum(r["reasons"][k] for r in rows) for k in _CLAIM_REASONS}
+    by_mode: Dict[str, int] = {}
+    for r in rows:
+        by_mode[r["mode"]] = by_mode.get(r["mode"], 0) + 1
+    return {
+        "sidecars": len(rows),
+        "claims_total": total,
+        "verified": verified,
+        "verified_share": (round(verified / total, 3) if total else None),
+        "flagged": flagged,
+        "flagged_share": (round(flagged / total, 3) if total else None),
+        "flagged_by_reason": reasons,
+        "flagged_share_by_reason": {
+            k: (round(v / total, 3) if total else None) for k, v in reasons.items()},
+        "verified_later": sum(r["verified_later"] for r in rows),
+        "by_mode": by_mode,
+    }
+
+
+def build_claims_section(root: Path,
+                         today: Optional[_dt.date] = None) -> Dict[str, Any]:
+    """Claim-ledger health across every committed sidecar (Oct 1 2026).
+
+    Reads ``digests/**/*_claims.json`` — the source-integrity gate's
+    public record — dated from the FILENAME (``_EpNNN_YYYYMMDD``), never
+    the mtime. Two windows (7 / 30 days): claims total, verified share,
+    flagged share by reason, ``verified_later`` (the nightly
+    re-verification's recoveries) and per-show rows. Flag mode (the
+    network default since 2026-10-01) publishes with the status visible,
+    so this card is where "how much of what we said could we vouch for"
+    is read. Honesty: no sidecar in a window → ``null`` on every number,
+    never 0 (a sidecar with zero claims is a measured 0).
+    """
+    today = today or _dt.date.today()
+    try:
+        per_file: List[Dict[str, Any]] = []
+        for p in sorted(root.glob("digests/**/*_claims.json")):
+            m = _CLAIMS_SIDECAR_NAME_RE.search(p.name)
+            if not m:
+                continue
+            try:
+                d = _dt.datetime.strptime(m.group(2), "%Y%m%d").date()
+            except ValueError:
+                continue
+            if d > today or (today - d).days > 30:
+                continue
+            payload = _load_json(p)
+            if not isinstance(payload, dict):
+                continue
+            row = _claims_sidecar_counts(payload)
+            row["show_dir"] = p.parent.name
+            row["age_days"] = (today - d).days
+            per_file.append(row)
+        if not per_file and not any(root.glob("digests/**/*_claims.json")):
+            return {"configured": False}
+
+        def _window(days: int) -> Dict[str, Any]:
+            rows = [r for r in per_file if r["age_days"] < days]
+            out = _claims_window_rollup(rows)
+            per_show: Dict[str, Any] = {}
+            for show in sorted({r["show_dir"] for r in rows}):
+                per_show[show] = _claims_window_rollup(
+                    [r for r in rows if r["show_dir"] == show])
+            out["per_show"] = per_show
+            return out
+
+        return {
+            "configured": True,
+            "as_of": today.isoformat(),
+            "window_7d": _window(7),
+            "window_30d": _window(30),
+            "note": ("Every committed digests/**/*_claims.json, dated from "
+                     "its filename. claims_total counts ledger entries plus "
+                     "uncovered citation shapes; null = no sidecar in the "
+                     "window, 0 = sidecars with no claims. verified_later = "
+                     "flagged claims the nightly re-verification "
+                     "(scripts/reverify_claims.py) later verified."),
+        }
+    except Exception as exc:  # noqa: BLE001 — never break the dashboard
+        return {"configured": True, "error": str(exc)}
+
+
 def build_audience_headline_section(root: Path) -> Dict[str, Any]:
     """The audience headline (Sep 12 2026): computed fresh from the stats
     files by ``scripts.build_audience_headline`` so the dashboard never
@@ -3490,7 +3840,23 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
     if op3_path.exists():
         try:
             data = json.loads(op3_path.read_text(encoding="utf-8"))
-            shows = data.get("shows") or {}
+            all_shows = data.get("shows") or {}
+            # Oct 1 2026: a feed OP3 has not indexed arrives as an explicit
+            # ``resolved: false`` marker (fetch_op3_stats). It carries no
+            # downloads, and the ``or 0`` below would have minted a
+            # zero-download show out of it — the fabricated-zero class.
+            # It leaves per_show (so the history ledger, the benchmark
+            # placement and the unit-economics join never see it) and is
+            # NAMED in ``unindexed`` for the page to say "not indexed".
+            unindexed = sorted(
+                slug for slug, s in all_shows.items()
+                if isinstance(s, dict) and s.get("resolved") is False)
+            not_refreshed = sorted(
+                slug for slug, s in all_shows.items()
+                if isinstance(s, dict) and s.get("resolved") is not False
+                and s.get("not_refreshed_this_run"))
+            shows = {slug: s for slug, s in all_shows.items()
+                     if isinstance(s, dict) and s.get("resolved") is not False}
             per_show = {
                 slug: {
                     "downloads_7d": s.get("downloads_7d") or 0,
@@ -3555,6 +3921,11 @@ def build_audience_section(root: Path) -> Dict[str, Any]:
                 "network_weekly_history": history["network_series"],
                 "per_show": per_show,
                 "top_episodes_7d": top_episodes,
+                # Feeds OP3 answered 404 for: prefixed, recording, not yet
+                # indexed. The page renders these as "not indexed" — never
+                # "—" (that is a show with no feed) and never 0.
+                "unindexed": unindexed,
+                "not_refreshed": not_refreshed,
             }
         except Exception as exc:  # noqa: BLE001 — never break the dashboard
             section["op3"] = {"configured": True, "error": str(exc)}

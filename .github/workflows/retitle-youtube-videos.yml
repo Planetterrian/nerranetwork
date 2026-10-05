@@ -22,12 +22,13 @@ name: Retitle YouTube Videos
 # DRY RUN IS THE DEFAULT. Dispatch once to read the proposals in the job
 # summary, then dispatch again with apply=true.
 #
-# Note on channels: fragment detection is English-language. Selecting
-# ru/fr reads that channel's own index and uses that channel's token
-# (a video can only be updated by the channel that owns it), but the
-# French mid-clause truncation is a different defect — the FR Short
-# title is cut from the FR long title rather than written as a title —
-# and is not what this repairs.
+# Note on channels: ru/fr read that channel's own index and use that
+# channel's token (a video can only be updated by the channel that owns
+# it). Since Oct 4 2026 the dub channels are REPORT-ONLY: the dry run
+# lists their fragment titles and apply changes none of them, because a
+# dub Short's own words are not recorded on its index row and a title
+# written from anything else read worse than the fragment (68 RU
+# proposals, run 37142855470). Fix a single bad dub title in Studio.
 
 on:
   workflow_dispatch:

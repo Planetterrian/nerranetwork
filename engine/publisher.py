@@ -15,6 +15,7 @@ import json
 import os
 import logging
 import re
+import uuid
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
 from pathlib import Path
@@ -322,6 +323,7 @@ def update_rss_feed(
     format_duration_func=None,
     chapters_url: Optional[str] = None,
     transcript_url: Optional[str] = None,
+    transcript_vtt_url: Optional[str] = None,
     funding_url: str = "",
     funding_label: str = "Support the show — free newsletter",
     person_name: str = "",
@@ -376,12 +378,20 @@ def update_rss_feed(
 
     # --- Parse existing episodes -------------------------------------------
     existing_episodes = []
+    # The channel's <podcast:guid> is the show's identity across every
+    # app and index (Oct 1 2026). feedgen rewrites the channel on every
+    # rebuild, so it is carried over from the feed on disk here — never
+    # re-derived while one exists, even if the feed URL later moves.
+    existing_podcast_guid = ""
     if rss_path.exists():
         try:
             tree = ET.parse(str(rss_path))
             root = tree.getroot()
             channel = root.find("channel")
             if channel is not None:
+                existing_podcast_guid = (
+                    channel.findtext("{https://podcastindex.org/namespace/1.0}guid") or ""
+                ).strip()
                 for item in channel.findall("item"):
                     ep_data: dict = {}
                     for elem in item:
@@ -437,13 +447,29 @@ def update_rss_feed(
                             # the very latest after this regression.
                             url = elem.get("url", "")
                             if url:
-                                ep_data["podcast_transcript_url"] = url
-                                ep_data["podcast_transcript_type"] = elem.get(
-                                    "type", "application/json"
-                                )
+                                entry = {
+                                    "url": url,
+                                    "type": elem.get("type", "application/json"),
+                                }
                                 lang = elem.get("language", "")
                                 if lang:
-                                    ep_data["podcast_transcript_language"] = lang
+                                    entry["language"] = lang
+                                # Oct 1 2026: an item carries TWO transcript
+                                # tags now (text/vtt for Apple + the JSON
+                                # every in-repo reader uses). Keep them all;
+                                # the single-url keys below stay for the
+                                # readers that predate the list and point at
+                                # the JSON whenever one is present.
+                                ep_data.setdefault("podcast_transcripts", []).append(entry)
+                                if (
+                                    "podcast_transcript_url" not in ep_data
+                                    or url.endswith(".json")
+                                ):
+                                    ep_data["podcast_transcript_url"] = url
+                                    ep_data["podcast_transcript_type"] = entry["type"]
+                                    ep_data.pop("podcast_transcript_language", None)
+                                    if lang:
+                                        ep_data["podcast_transcript_language"] = lang
                     if ep_data.get("guid"):
                         existing_episodes.append(ep_data)
         except Exception as exc:
@@ -601,7 +627,10 @@ def update_rss_feed(
 
         # Add <podcast:transcript> for Podcasting 2.0 support
         if transcript_url:
-            _inject_transcript_tag(Path(tmp_path), new_guid, transcript_url)
+            _inject_transcript_tag(
+                Path(tmp_path), new_guid, transcript_url,
+                transcript_vtt_url=transcript_vtt_url,
+            )
 
         # Re-inject Podcasting 2.0 chapters/transcript tags for every
         # episode the operator already published. ``feedgen`` doesn't
@@ -633,6 +662,8 @@ def update_rss_feed(
             person_name=person_name,
             person_url=person_url,
             person_img=person_img,
+            feed_url=rss_self_url,
+            podcast_guid=existing_podcast_guid,
         )
 
         os.replace(tmp_path, str(rss_path))
@@ -652,6 +683,7 @@ def update_rss_feed(
         new_guid,
         chapters_url=chapters_url,
         transcript_url=transcript_url,
+        transcript_vtt_url=transcript_vtt_url,
         expect_locked=True,
         expect_funding=bool(funding_url),
         expect_person=bool(person_name),
@@ -668,6 +700,7 @@ def _validate_injected_tags(
     chapters_url: str,
     transcript_url: str,
     expect_locked: bool,
+    transcript_vtt_url: Optional[str] = None,
     expect_funding: bool = False,
     expect_person: bool = False,
 ) -> None:
@@ -721,10 +754,19 @@ def _validate_injected_tags(
                     "injection — chapter markers will not appear in players.",
                     new_guid,
                 )
-            if transcript_url and target_item.find(f"{{{PODCAST_NS}}}transcript") is None:
+            transcript_els = target_item.findall(f"{{{PODCAST_NS}}}transcript")
+            if transcript_url and not transcript_els:
                 logger.error(
                     "RSS validation: <podcast:transcript> missing for %s after "
                     "injection — transcript links will not appear in players.",
+                    new_guid,
+                )
+            if transcript_vtt_url and not any(
+                el.get("type") == VTT_TRANSCRIPT_TYPE for el in transcript_els
+            ):
+                logger.error(
+                    "RSS validation: text/vtt <podcast:transcript> missing for "
+                    "%s after injection — Apple Podcasts reads only SRT/VTT.",
                     new_guid,
                 )
     except Exception as exc:
@@ -822,8 +864,11 @@ def _inject_channel_funding_person_tags(
     person_name: str = "",
     person_url: str = "",
     person_img: str = "",
+    feed_url: str = "",
+    podcast_guid: str = "",
 ) -> None:
-    """Add channel-level ``<podcast:funding>`` + ``<podcast:person>`` tags.
+    """Add channel-level ``<podcast:funding>`` + ``<podcast:person>`` tags,
+    and the channel identity tags every feed must carry.
 
     Podcasting 2.0 surfaces these in supporting apps (Podcast Addict,
     Fountain, Podverse, …): funding renders as a support/subscribe button,
@@ -831,12 +876,22 @@ def _inject_channel_funding_person_tags(
     ``podcast:`` tags, feedgen can't emit them, so this post-processes the
     XML on every rebuild (the feed is fully rewritten each episode).
 
-    Idempotent — skips tags that already exist. Empty args are a no-op so
-    legacy callers are byte-for-byte unaffected.
-    """
-    if not funding_url and not person_name:
-        return
+    Oct 1 2026 — three identity tags are applied on EVERY call, whatever
+    the funding/person args (empty args skip only those two):
 
+    * ``<itunes:type>episodic</itunes:type>`` when absent;
+    * ``<podcast:guid>`` when absent — the Podcasting 2.0 UUIDv5 of the
+      feed URL (``podcast_guid_for_feed_url``), read from *feed_url* or,
+      failing that, the channel's ``atom:link rel="self"``. An existing
+      guid is NEVER rewritten: it is the show's identity across every
+      app and index — *podcast_guid* is the one the feed on disk carried
+      before feedgen rewrote the channel, and wins over derivation;
+    * ``<itunes:author>`` rendered as ``"<author> · Nerra Network"``
+      unless it already names the network (``brand_author``) — the
+      registry brand was invisible on 16 feeds.
+
+    Idempotent — skips tags that already exist.
+    """
     PODCAST_NS = "https://podcastindex.org/namespace/1.0"
 
     try:
@@ -875,12 +930,198 @@ def _inject_channel_funding_person_tags(
             person_el.text = person_name
             changed = True
 
+        if _apply_channel_identity_tags(
+            channel, feed_url=feed_url, podcast_guid=podcast_guid,
+        ):
+            changed = True
+
         if changed:
             tree.write(str(rss_path), xml_declaration=True, encoding="UTF-8")
-            logger.info("Injected <podcast:funding>/<podcast:person> tags")
+            logger.info("Injected channel funding/person/identity tags")
 
     except Exception as exc:
         logger.error("Failed to inject funding/person tags: %s", exc)
+
+
+# ---------------------------------------------------------------------------
+# Channel identity (Oct 1 2026)
+# ---------------------------------------------------------------------------
+
+NETWORK_BRAND = "Nerra Network"
+
+#: Podcasting 2.0 ``<podcast:guid>`` namespace — fixed by the spec, never
+#: ours to change: every index derives the same UUID from the feed URL.
+PODCAST_GUID_NAMESPACE = uuid.UUID("ead4c236-bf58-58c6-a2c6-a6b28d128cb6")
+
+VTT_TRANSCRIPT_TYPE = "text/vtt"
+ATOM_NS = "http://www.w3.org/2005/Atom"
+
+
+def podcast_guid_for_feed_url(feed_url: str) -> str:
+    """UUIDv5 of the feed URL per the Podcasting 2.0 ``<podcast:guid>``
+    spec: scheme stripped, no trailing slash, under the fixed namespace."""
+    name = re.sub(r"^[a-z][a-z0-9+.-]*://", "", feed_url.strip(), flags=re.I)
+    name = name.rstrip("/")
+    return str(uuid.uuid5(PODCAST_GUID_NAMESPACE, name))
+
+
+def brand_author(author: str) -> str:
+    """``"<author> · Nerra Network"`` unless the author already names the
+    network (case-insensitive); an empty author is the brand alone."""
+    author = (author or "").strip()
+    if not author:
+        return NETWORK_BRAND
+    if NETWORK_BRAND.lower() in author.lower():
+        return author
+    return f"{author} · {NETWORK_BRAND}"
+
+
+def _feed_self_url(channel: ET.Element) -> str:
+    for link in channel.findall(f"{{{ATOM_NS}}}link"):
+        if link.get("rel") == "self" and link.get("href"):
+            return link.get("href", "").strip()
+    return ""
+
+
+def _insert_before_items(channel: ET.Element, el: ET.Element) -> None:
+    """Keep channel metadata together: new channel tags go before the
+    first ``<item>`` rather than after the last one."""
+    children = list(channel)
+    for idx, child in enumerate(children):
+        if child.tag == "item":
+            # Inherit the indentation tail of the element before it so the
+            # tag lands on its own line instead of glued to ``<item>``.
+            el.tail = children[idx - 1].tail if idx else child.tail
+            channel.insert(idx, el)
+            return
+    channel.append(el)
+
+
+def _apply_channel_identity_tags(
+    channel: ET.Element, *, feed_url: str = "", podcast_guid: str = "",
+) -> bool:
+    """Apply the three identity tags to a parsed ``<channel>``.
+
+    Returns True when anything changed. See
+    ``_inject_channel_funding_person_tags`` for the contract.
+    """
+    PODCAST_NS = "https://podcastindex.org/namespace/1.0"
+    changed = False
+
+    if channel.find(f"{{{ITUNES_NS}}}type") is None:
+        type_el = ET.Element(f"{{{ITUNES_NS}}}type")
+        type_el.text = "episodic"
+        _insert_before_items(channel, type_el)
+        changed = True
+
+    if channel.find(f"{{{PODCAST_NS}}}guid") is None:
+        guid_text = (podcast_guid or "").strip()
+        url = (feed_url or "").strip() or _feed_self_url(channel)
+        if not guid_text and url:
+            guid_text = podcast_guid_for_feed_url(url)
+        if guid_text:
+            guid_el = ET.Element(f"{{{PODCAST_NS}}}guid")
+            guid_el.text = guid_text
+            _insert_before_items(channel, guid_el)
+            changed = True
+        else:
+            logger.warning(
+                "<podcast:guid> not written: no feed URL and no "
+                "atom:link rel=self in the channel"
+            )
+
+    author_el = channel.find(f"{{{ITUNES_NS}}}author")
+    if author_el is not None:
+        branded = brand_author(author_el.text or "")
+        if branded != (author_el.text or ""):
+            author_el.text = branded
+            changed = True
+
+    return changed
+
+
+def inject_vtt_transcript_tags(rss_path: Path, vtt_url_for) -> int:
+    """Add a ``text/vtt`` ``<podcast:transcript>`` beside every existing
+    JSON transcript tag that *vtt_url_for(json_url)* can resolve.
+
+    *vtt_url_for* returns the VTT URL for a JSON transcript URL, or
+    ``None`` when no VTT exists (the item is then left alone). The VTT
+    tag is inserted immediately BEFORE the JSON tag, the order the live
+    publish path emits; an item that already carries a ``text/vtt`` tag
+    is skipped. Returns the number of items changed; the file is
+    rewritten only when that number is positive. The rest of the feed is
+    preserved — this is the same ElementTree pass every other
+    ``podcast:`` injector uses.
+    """
+    PODCAST_NS = "https://podcastindex.org/namespace/1.0"
+    ET.register_namespace("podcast", PODCAST_NS)
+    ET.register_namespace("itunes", ITUNES_NS)
+    ET.register_namespace("atom", ATOM_NS)
+
+    tree = ET.parse(str(rss_path))
+    root = tree.getroot()
+    for attr in list(root.attrib):
+        if attr == "xmlns:podcast" or (
+            attr.startswith("xmlns:") and root.attrib[attr] == PODCAST_NS
+        ):
+            del root.attrib[attr]
+    channel = root.find("channel")
+    if channel is None:
+        return 0
+
+    changed = 0
+    for item in channel.findall("item"):
+        transcripts = item.findall(f"{{{PODCAST_NS}}}transcript")
+        if not transcripts or any(
+            el.get("type") == VTT_TRANSCRIPT_TYPE for el in transcripts
+        ):
+            continue
+        json_el = next(
+            (el for el in transcripts
+             if (el.get("url") or "").endswith(".json")),
+            None,
+        )
+        if json_el is None:
+            continue
+        vtt_url = vtt_url_for(json_el.get("url", ""))
+        if not vtt_url:
+            continue
+        vtt_el = ET.Element(f"{{{PODCAST_NS}}}transcript")
+        vtt_el.set("url", vtt_url)
+        vtt_el.set("type", VTT_TRANSCRIPT_TYPE)
+        lang = json_el.get("language")
+        if lang:
+            vtt_el.set("language", lang)
+        item.insert(list(item).index(json_el), vtt_el)
+        changed += 1
+
+    if changed:
+        tree.write(str(rss_path), xml_declaration=True, encoding="UTF-8")
+    return changed
+
+
+def inject_channel_identity_tags(rss_path: Path, *, feed_url: str = "") -> bool:
+    """Apply the identity tags to a feed on disk (the backfill entry
+    point; the live path reaches the same code through
+    ``_inject_channel_funding_person_tags``). Returns True if written."""
+    PODCAST_NS = "https://podcastindex.org/namespace/1.0"
+    ET.register_namespace("podcast", PODCAST_NS)
+    ET.register_namespace("itunes", ITUNES_NS)
+    ET.register_namespace("atom", ATOM_NS)
+    tree = ET.parse(str(rss_path))
+    root = tree.getroot()
+    for attr in list(root.attrib):
+        if attr == "xmlns:podcast" or (
+            attr.startswith("xmlns:") and root.attrib[attr] == PODCAST_NS
+        ):
+            del root.attrib[attr]
+    channel = root.find("channel")
+    if channel is None:
+        return False
+    if not _apply_channel_identity_tags(channel, feed_url=feed_url):
+        return False
+    tree.write(str(rss_path), xml_declaration=True, encoding="UTF-8")
+    return True
 
 
 def _inject_chapters_tag(rss_path: Path, guid: str, chapters_url: str) -> None:
@@ -929,8 +1170,20 @@ def _inject_chapters_tag(rss_path: Path, guid: str, chapters_url: str) -> None:
         logger.error("Failed to inject <podcast:chapters> tag: %s", exc)
 
 
-def _inject_transcript_tag(rss_path: Path, guid: str, transcript_url: str) -> None:
-    """Add a Podcasting 2.0 ``<podcast:transcript>`` tag to an RSS episode."""
+def _inject_transcript_tag(
+    rss_path: Path,
+    guid: str,
+    transcript_url: str,
+    *,
+    transcript_vtt_url: Optional[str] = None,
+) -> None:
+    """Add Podcasting 2.0 ``<podcast:transcript>`` tag(s) to an RSS episode.
+
+    With *transcript_vtt_url* the item gets TWO tags: ``text/vtt`` first
+    (what Apple Podcasts and the 2.0 apps render), then the existing
+    JSON/plain tag unchanged, so nothing that reads the JSON tag breaks.
+    ``None`` = the single tag exactly as before (byte-identical).
+    """
     PODCAST_NS = "https://podcastindex.org/namespace/1.0"
 
     try:
@@ -954,6 +1207,10 @@ def _inject_transcript_tag(rss_path: Path, guid: str, transcript_url: str) -> No
         for item in channel.findall("item"):
             guid_el = item.find("guid")
             if guid_el is not None and guid_el.text and guid_el.text.strip() == guid:
+                if transcript_vtt_url:
+                    vtt_el = ET.SubElement(item, f"{{{PODCAST_NS}}}transcript")
+                    vtt_el.set("url", transcript_vtt_url)
+                    vtt_el.set("type", VTT_TRANSCRIPT_TYPE)
                 transcript_el = ET.SubElement(item, f"{{{PODCAST_NS}}}transcript")
                 transcript_el.set("url", transcript_url)
                 if transcript_url.endswith(".json"):
@@ -1046,15 +1303,21 @@ def _reinject_preserved_podcast_tags(
 
             transcript_url = ep_data.get("podcast_transcript_url")
             if transcript_url and item.find(f"{{{PODCAST_NS}}}transcript") is None:
-                el = ET.SubElement(item, f"{{{PODCAST_NS}}}transcript")
-                el.set("url", transcript_url)
-                el.set(
-                    "type",
-                    ep_data.get("podcast_transcript_type", "application/json"),
-                )
-                lang = ep_data.get("podcast_transcript_language")
-                if lang:
-                    el.set("language", lang)
+                # Every tag the item carried (text/vtt + JSON since Oct
+                # 2026), in the order it carried them; the single-url
+                # keys are the pre-list fallback.
+                entries = ep_data.get("podcast_transcripts") or [{
+                    "url": transcript_url,
+                    "type": ep_data.get("podcast_transcript_type", "application/json"),
+                    "language": ep_data.get("podcast_transcript_language", ""),
+                }]
+                for entry in entries:
+                    el = ET.SubElement(item, f"{{{PODCAST_NS}}}transcript")
+                    el.set("url", entry["url"])
+                    el.set("type", entry.get("type") or "application/json")
+                    lang = entry.get("language")
+                    if lang:
+                        el.set("language", lang)
 
             injected += 1
 

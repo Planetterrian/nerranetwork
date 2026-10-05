@@ -1,0 +1,337 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.980
+Sparse Neuron sets in FrozenBirt enable efficient ai text detection across generators with 86-94% retained accuracy. This is Models &amp; Agents Episode 187. Researchers mapped under 1% of Neurons in a FrozenBirt-based Uncased model that drive ai text detection on the RAID benchmark. The selected Neurons retain most accuracy when used alone. They flip predictions in order of magnitude more often than random sets.
+
+00:00:29.980 --> 00:00:31.720
+under bidirectional patching.
+
+00:00:32.280 --> 00:00:36.360
+A separate production study at Spotify shows a synthetic data pipeline
+
+00:00:36.360 --> 00:00:42.080
+plus self-improvement loop raised conversational recommendation quality by 8%.
+
+00:00:42.080 --> 00:00:46.300
+It delivered 14% more user listening in live AB tests.
+
+00:00:46.920 --> 00:00:54.100
+The study applied L1 to L2 sparse probing to all 9,216 CLS hidden state dimensions
+
+00:00:54.100 --> 00:01:01.740
+across 12 layers of a frozen B.E.R.T. dash-based, dash-uncased encoder on the R.A.I.D. benchmark.
+
+00:01:02.320 --> 00:01:09.680
+It recovered a stable set of under 1% of neurons per generator that remained consistent across folds and seeds.
+
+00:01:10.380 --> 00:01:14.780
+A probe restricted to that set retained most of the full feature detection accuracy.
+
+00:01:15.440 --> 00:01:22.140
+By directional activation patching, flipped predictions in order of magnitude more often than size-matched random sets.
+
+00:01:22.140 --> 00:01:26.420
+mean ablating the same neurons left accuracy largely intact.
+
+00:01:27.100 --> 00:01:32.880
+Instruction-tune generators concentrated 30-36% of stable neurons in the final layer,
+
+00:01:33.220 --> 00:01:36.380
+while base generators stayed below 14%.
+
+00:01:36.380 --> 00:01:44.920
+Leave one family out evaluation showed the neurons retained 86-94% of full-feature ceiling on unseen generator families.
+
+00:01:45.420 --> 00:01:50.300
+The architecture replaces attention with a stack of autoencoder-based mixing modules
+
+00:01:50.300 --> 00:01:55.340
+operating over local neighborhoods, the full sequence and across attention heads.
+
+00:01:55.840 --> 00:02:02.200
+Each module compresses and reconstructs its input through a low-rank bottleneck whose width is a hyperparameter.
+
+00:02:02.880 --> 00:02:08.660
+An iterative refinement procedure in masked positions first pulls an embedding toward a weighted average of neighbors,
+
+00:02:09.120 --> 00:02:11.640
+then projects the result back to the learned manifold.
+
+00:02:12.180 --> 00:02:16.500
+When pre-trained on C4 and compared with parameter-matched BERT baselines,
+
+00:02:16.500 --> 00:02:21.980
+fans, the model reached a significant portion of attention performance at roughly 1.9 times
+
+00:02:21.980 --> 00:02:23.420
+fewer FLOPs.
+
+00:02:23.740 --> 00:02:29.860
+A frequency-aware training schedule that oversamples rare tokens allowed the model to equal parameter
+
+00:02:29.860 --> 00:02:34.120
+matched BERT and tiny BERT baselines on the rarest token frequency bucket.
+
+00:02:34.640 --> 00:02:41.720
+The survey organizes 211 studies published from 2018 to early 2026 by evidence source and
+
+00:02:41.720 --> 00:02:42.440
+fusion level.
+
+00:02:42.440 --> 00:02:48.980
+It covers review text, sentiment, rating behavior, temporal metadata, user product graphs,
+
+00:02:49.380 --> 00:02:53.740
+multimodal content, external knowledge, and LLM generated signals.
+
+00:02:54.400 --> 00:02:59.600
+Performance trends are reported on Amazon, Yelp, and OpSPAM benchmark families, while
+
+00:02:59.600 --> 00:03:04.620
+noting limitations from differing label construction, data splits, and evaluation protocols.
+
+00:03:05.160 --> 00:03:10.840
+Slide Lab is a training-free multi-agent framework that plans a presentation narrative, then
+
+00:03:10.840 --> 00:03:15.460
+One builds and iteratively refines a shared slide deck using agents for content planning,
+
+00:03:15.960 --> 00:03:19.580
+visual generation, layout refinement, and grounding verification.
+
+00:03:20.260 --> 00:03:24.800
+In a blind human preference study, it was preferred over both open source and commercial
+
+00:03:24.800 --> 00:03:30.860
+systems on 77% of papers, while using roughly four times fewer inference tokens than the
+
+00:03:30.860 --> 00:03:32.480
+strongest open source baseline.
+
+00:03:33.200 --> 00:03:39.220
+CardiGraph is a federated MCP proxy that reduces agent visible tool discovery from O of
+
+00:03:39.220 --> 00:03:42.820
+and catalog traversal to O of K progressive disclosure.
+
+00:03:43.080 --> 00:03:49.720
+It combines operator attested L25519 signed capability cards, a three-layer,
+
+00:03:49.840 --> 00:03:54.260
+confuseable cluster analysis called RIFT, and two-stage retrieval that ranks
+
+00:03:54.260 --> 00:03:55.540
+servers before tools.
+
+00:03:56.040 --> 00:04:02.220
+On a 22 server, 374 tool deployment, it exposes three proxy tools instead of
+
+00:04:02.220 --> 00:04:03.880
+374 definitions.
+
+00:04:03.880 --> 00:04:13.280
+A 49-queery benchmark yields R at 5 of 0.816 versus 0.592 for a jack-yard keyword baseline.
+
+00:04:13.600 --> 00:04:20.920
+A measured top 5 discovery exchange uses 475 tokens rather than 42,450.
+
+00:04:21.880 --> 00:04:28.600
+Rift identifies 49 confusible clusters including four high-risk clusters in bootstrap generated cards.
+
+00:04:28.600 --> 00:04:36.740
+Gateway measurements add 5 milliseconds mean latency, or 0.8% relative to direct STDIO
+
+00:04:36.740 --> 00:04:37.680
+MCP calls.
+
+00:04:38.320 --> 00:04:43.880
+High-comer maintains validity of team and individual memories, then retrieves only currently valid
+
+00:04:43.880 --> 00:04:48.200
+memories rather than ranking a flat pool by semantic relevance or recency.
+
+00:04:48.800 --> 00:04:54.460
+It consists of a hierarchical memory conflict updater, a validity-aware memory retriever,
+
+00:04:54.800 --> 00:04:56.760
+and a memory-grounded answer generator.
+
+00:04:56.760 --> 00:05:02.340
+Two new data sets were constructed for memory-grounded question answering in collaborative settings.
+
+00:05:02.820 --> 00:05:08.760
+Experiments show high-comer consistently outperformed strong baselines by reducing outdated retrieval,
+
+00:05:09.240 --> 00:05:13.260
+preserving current team consensus and improving downstream QA quality.
+
+00:05:13.980 --> 00:05:20.520
+Signed Trace integrates LLM-based dictionary enrichment, action extraction, dictionary-style rewriting,
+
+00:05:20.520 --> 00:05:27.820
+7 channel retrieval and candidate re-ranking over 6,699 Chinese Sign Language Dictionary
+
+00:05:27.820 --> 00:05:33.760
+entries. On a dictionary-derived benchmark of 500 movement description queries, it achieves
+
+00:05:33.760 --> 00:05:42.940
+94.0% hit at 1, 97.4% hit at 9, and mean reciprocal rank of 0.9540.
+
+00:05:42.940 --> 00:05:55.040
+Re-ranking raises hit at 1, from 71.8% to 94.0%, median query processing time is 13.37 seconds with six concurrent queries.
+
+00:05:55.640 --> 00:06:06.180
+The benchmark supplies 45,064 labeled entries for evaluating LLM performance in systematic review screening across 32 curated secondary studies.
+
+00:06:06.180 --> 00:06:11.880
+and evaluation framework accounts for class imbalance between excluded and included articles.
+
+00:06:12.640 --> 00:06:20.080
+PromptSR supports prompt experimentation, experiment management, and result analysis for LLM-based screening.
+
+00:06:20.660 --> 00:06:25.920
+In QuestoScore, measures voice agent reliability as the percentage of calls in a fixed,
+
+00:06:26.140 --> 00:06:31.240
+versioned evaluation population that achieved the colors goal without functional failure.
+
+00:06:31.240 --> 00:06:37.020
+It defines explicit failure events and severity levels, measures timing failures directly
+
+00:06:37.020 --> 00:06:42.860
+from audio, and evaluates semantic failures with scenario predicates, tool traces, and
+
+00:06:42.860 --> 00:06:44.540
+a pinned, open model judge.
+
+00:06:45.060 --> 00:06:52.440
+Version 0.1 evaluates 30 scenarios, three acoustic conditions, four speaker groups, and 306
+
+00:06:52.440 --> 00:06:55.120
+calls per agent across 13 configurations.
+
+00:06:55.120 --> 00:07:01.240
+The synthetic data pipeline and self-improvement loop described earlier have been productionized
+
+00:07:01.240 --> 00:07:06.500
+at Spotify and significantly accelerated iteration cycles for the launch of a conversational
+
+00:07:06.500 --> 00:07:07.720
+recommendation agent.
+
+00:07:08.340 --> 00:07:13.500
+Try applying the sparse probing protocol from the BERT detection paper to your own frozen
+
+00:07:13.500 --> 00:07:19.840
+encoder on a small labeled set to test whether a 1% neuron subset retains detection accuracy.
+
+00:07:19.840 --> 00:07:25.660
+run the cartograph federated proxy against an MCP server catalog to measure
+
+00:07:25.660 --> 00:07:30.960
+token savings versus full catalog traversal on your own toolset. Test sign
+
+00:07:30.960 --> 00:07:35.160
+trace on movement descriptions from your local sign language learners to see
+
+00:07:35.160 --> 00:07:38.800
+whether the seven channel retrieval plus re-ranking reaches the reported
+
+00:07:38.800 --> 00:07:44.620
+94% hit at one. Additional leave one family out results on the raid benchmark
+
+00:07:44.620 --> 00:07:49.420
+are expected in follow-up work from the same lab. Production metrics from wider
+
+00:07:49.420 --> 00:07:54.980
+deployment of the Spotify conversational agent will be reported in an upcoming industry case study.
+
+00:07:55.540 --> 00:07:59.840
+Expanded user trials for sign trace are planned with independent movement descriptions
+
+00:07:59.840 --> 00:08:05.740
+collected from learners. Pop the hood on low-ranked bottleneck autoencoders and you see they replace
+
+00:08:05.740 --> 00:08:11.360
+attention's dynamic weighting with a stack of fixed width modules that compress then reconstruct
+
+00:08:11.360 --> 00:08:17.860
+token representations. Each module operates on local neighborhoods, the full sequence, or across
+
+00:08:17.860 --> 00:08:22.320
+heads, with bottleneck width treated as a hyperparameter rather than learned.
+
+00:08:22.960 --> 00:08:27.920
+The iterative refinement step first averages and embedding with its neighbors, then projects
+
+00:08:27.920 --> 00:08:31.460
+the result back onto the manifold learned by the autoencoder.
+
+00:08:32.160 --> 00:08:37.280
+On C4 pre-training, this approach reaches a substantial fraction of attention performance
+
+00:08:37.280 --> 00:08:42.840
+while using roughly 1.9 times fewer flops than parameter matched burnt baselines.
+
+00:08:42.840 --> 00:08:48.520
+lines. The frequency-aware masking schedule that over samples rare tokens allows the model
+
+00:08:48.520 --> 00:08:53.880
+to match Bert and Tiny Bert on the lowest frequency bucket. When the bottleneck is too
+
+00:08:53.880 --> 00:08:59.580
+narrow, reconstruction error rises sharply and downstream accuracy collapses. When it is
+
+00:08:59.580 --> 00:09:05.040
+too wide, the flops advantage disappears. Teams should therefore sweep bottleneck width
+
+00:09:05.040 --> 00:09:10.360
+on a small validation slice before scaling, and retain the frequency-aware schedule whenever
+
+00:09:10.360 --> 00:09:15.800
+rare token performance matters. Before we go, watch for expanded user trials of
+
+00:09:15.800 --> 00:09:19.520
+sign trace that will test the system on movement descriptions written
+
+00:09:19.520 --> 00:09:24.480
+independently by learners rather than drawn from the dictionary. That's models
+
+00:09:24.480 --> 00:09:28.640
+and agents for today. If you found this useful, share it with someone who's
+
+00:09:28.640 --> 00:09:32.260
+trying to keep up with all these changes and subscribe so you don't miss
+
+00:09:32.260 --> 00:09:37.500
+tomorrow's update. The AI world moves fast. We'll help you keep up. See you
+
+00:09:37.500 --> 00:09:43.160
+tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network, links
+
+00:09:43.160 --> 00:09:48.440
+in the show notes. And before you go, this show is part of the Nerra network, a family
+
+00:09:48.440 --> 00:09:54.300
+of daily podcasts on tech, science, and markets. Each one a short, sharp briefing you can finish
+
+00:09:54.300 --> 00:09:59.580
+on the commute. If today earned its place in your feed, here's your next lesson, Vancouver
+
+00:09:59.580 --> 00:10:05.260
+Daily News, what changed in Metro Vancouver today with the roads and the weather? Find
+
+00:10:05.260 --> 00:10:08.560
+And every show, free at nerranetwork.com.
+
+00:10:08.960 --> 00:10:13.020
+The age of AI puts real builders on the phone with an AI host.
+
+00:10:13.540 --> 00:10:17.000
+Apply at nerranetwork.com, age of AI apply.
+
+00:10:17.700 --> 00:10:20.900
+This episode used AI voice synthesis of my voice.
+
+00:10:21.460 --> 00:10:23.900
+Editorial selection and analysis are my own.

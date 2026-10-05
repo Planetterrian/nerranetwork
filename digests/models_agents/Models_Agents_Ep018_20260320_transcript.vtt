@@ -1,0 +1,337 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.460
+Welcome back to Models &amp; Agents Episode 18 for March 20th, 2026. Your daily AI briefing on the
+
+00:00:06.460 --> 00:00:11.300
+models and agents that are actually changing how we build intelligent systems. And no, not those
+
+00:00:11.300 --> 00:00:15.600
+kinds of models and agents. Let's get into it. Let's start with what I think is the most immediately
+
+00:00:15.600 --> 00:00:22.420
+useful release this week. Lama Index has dropped LightParse, a spatial PDF parser specifically built for
+
+00:00:22.420 --> 00:00:27.620
+a Genetic Rag workflows. If you're building agents that need to read contracts, research papers,
+
+00:00:27.620 --> 00:00:32.320
+financial reports, earnings, transcripts, or technical manuals, this one is going to save you a
+
+00:00:32.320 --> 00:00:37.940
+surprising amount of pain. Here's the deeper context. Even though frontier models have gotten
+
+00:00:37.940 --> 00:00:43.420
+dramatically cheaper and faster, the data ingestion layer has remained one of the biggest bottlenecks
+
+00:00:43.420 --> 00:00:49.700
+and sources of error in production agent systems. Most existing PDF parsers flatten documents into
+
+00:00:49.700 --> 00:00:54.820
+linear text streams, completely destroying layout information, table structures, reading order,
+
+00:00:54.820 --> 00:01:00.840
+and spatial relationships. That loss of structure forces the LLM to guess what belongs with what,
+
+00:01:01.160 --> 00:01:06.100
+which leads to brittle reasoning downstream. LightParse takes a different approach. It's designed
+
+00:01:06.100 --> 00:01:10.960
+from the ground up to preserve spatial and hierarchical relationships in complex documents.
+
+00:01:11.480 --> 00:01:16.880
+Instead of treating a PDF as a wall of text, it gives your agents a much richer layout-aware
+
+00:01:16.880 --> 00:01:23.080
+representation. The library ships both as an easy-to-use CLI that you can start playing with today,
+
+00:01:23.080 --> 00:01:28.620
+and as a TypeScript native library that drops cleanly into existing LLM index agent flows.
+
+00:01:29.200 --> 00:01:34.960
+My take? This is the kind of focused, high-leverage infrastructure work the ecosystem desperately needs.
+
+00:01:35.500 --> 00:01:40.140
+I expect we'll see rapid community extensions, things like better table understanding,
+
+00:01:40.400 --> 00:01:45.500
+figure caption linking, and even native support for scanned documents. If you're doing any serious
+
+00:01:45.500 --> 00:01:51.260
+document-heavy agent work, go try the CLI on your worst PDFs this week. You'll probably see an
+
+00:01:51.260 --> 00:01:56.300
+immediate jump in reasoning quality. Now while we're on the topic of improving rag reliability,
+
+00:01:56.620 --> 00:02:00.700
+several strong research papers dropped this week that tackled different failure modes in
+
+00:02:00.700 --> 00:02:06.560
+agentic and retrieval systems. One particularly interesting paper evaluated five different LLMs
+
+00:02:06.560 --> 00:02:11.620
+against human performance using the strange story's paradigm. A well-established test from
+
+00:02:11.620 --> 00:02:17.440
+developmental psychology designed to measure theory of mind. Earlier and smaller models were heavily
+
+00:02:17.440 --> 00:02:21.820
+thrown off by the number of inferential steps required and were extremely vulnerable to
+
+00:02:21.820 --> 00:02:28.540
+distracting or misleading information in the prompt. In contrast, GPT-40 showed high accuracy and
+
+00:02:28.540 --> 00:02:34.400
+remarkable robustness. It performed comparably to human controls even on the most difficult conditions.
+
+00:02:34.800 --> 00:02:39.400
+This isn't just another benchmark. It's one of the cleaner demonstrations we've seen that scale
+
+00:02:39.400 --> 00:02:45.060
+actually produces qualitatively different cognitive capabilities, not just incremental improvements.
+
+00:02:45.060 --> 00:02:50.640
+The gap between smaller models and frontier models on this task is larger than most people in the
+
+00:02:50.640 --> 00:02:56.040
+industry expect, worth testing yourself if you're evaluating models for tasks that require social
+
+00:02:56.040 --> 00:03:01.980
+reasoning or nuanced understanding of intent. Another notable paper introduced Powerflow,
+
+00:03:02.240 --> 00:03:07.580
+which reframes unsupervised fine-tuning as a distribution matching problem using G-flow nets.
+
+00:03:08.320 --> 00:03:12.820
+The researchers developed a length-aware trajectory balance objective that lets you explicitly
+
+00:03:12.820 --> 00:03:17.280
+control the shape of the output distribution, want stronger, more rigorous reasoning,
+
+00:03:17.780 --> 00:03:23.640
+increase alpha above one, want more creative exploratory outputs, dial alpha below one.
+
+00:03:24.080 --> 00:03:29.220
+What's impressive is that Powerflow consistently outperforms existing RLIF style methods
+
+00:03:29.220 --> 00:03:35.160
+and in some cases even beats supervised GRPO. This feels like a meaningful step toward more
+
+00:03:35.160 --> 00:03:39.680
+controllable post-training techniques that don't require massive preference data sets.
+
+00:03:39.680 --> 00:03:45.420
+On the trustworthiness and safety side, researchers released Construct, a new method for scoring the
+
+00:03:45.420 --> 00:03:51.500
+trustworthiness of LLM structured outputs, down to the individual field level. The really nice part,
+
+00:03:51.920 --> 00:03:57.240
+it works without needing access to log probs, without any training data, and without custom model
+
+00:03:57.240 --> 00:04:03.120
+deployment. It handles complex nested JSON schemas gracefully and outperformed other scoring
+
+00:04:03.120 --> 00:04:08.320
+approaches on a new public benchmark that includes both Gemini 3 and GPT-5.
+
+00:04:09.100 --> 00:04:14.900
+Let's move over to agent and tool use developments. One of the more elegant papers this week is
+
+00:04:14.900 --> 00:04:20.540
+Dinerag. It offers a smart, lightweight way to bridge static retrieval and dynamic knowledge.
+
+00:04:20.920 --> 00:04:26.840
+The system uses an LLM re-ranker and a sufficiency classifier to decide whether the retrieved
+
+00:04:26.840 --> 00:04:32.500
+documents are good enough. If they're not, it intelligently calls external APIs using Gorilla V2
+
+00:04:32.500 --> 00:04:37.200
+for tool invocation. The results on the crag benchmark for dynamic questions are strong, and it
+
+00:04:37.200 --> 00:04:42.520
+also meaningfully reduces hallucinations. If you're building agents that need to stay current on
+
+00:04:42.520 --> 00:04:48.760
+fast-changing information, pricing, inventory, regulations, news, the Dinerag pattern is worth
+
+00:04:48.760 --> 00:04:54.760
+experimenting with. Google also made a quietly significant move this week by expanding its universal
+
+00:04:54.760 --> 00:05:01.480
+commerce protocol, UCP. They've now added shopping cart functionality, richer catalog capabilities,
+
+00:05:01.480 --> 00:05:07.720
+and identity plus loyalty features. This gives AI shopping agents persistent state across sessions
+
+00:05:07.720 --> 00:05:13.260
+and much more powerful commerce primitives to work with. This matters. Most current shopping agents
+
+00:05:13.260 --> 00:05:18.560
+are still quite brittle because they lack proper state management and standardized ways to interact
+
+00:05:18.560 --> 00:05:25.000
+with retail systems. Google's expansion of UCP feels like a meaningful step toward truly autonomous
+
+00:05:25.000 --> 00:05:30.600
+retail agents that can actually complete complex purchases end to end. We'll see how quickly
+
+00:05:30.600 --> 00:05:36.360
+other major retailers adopt or respond to this protocol. On the practical rag engineering side,
+
+00:05:36.540 --> 00:05:41.480
+two techniques stood out. The first is a new framework for controllable evidence selection using
+
+00:05:41.480 --> 00:05:46.400
+deterministic utility gating. Instead of letting the model decide what evidence to use during
+
+00:05:46.400 --> 00:05:52.560
+generation, this approach uses two estimators, meaning utility estimation and diversity utility
+
+00:05:52.560 --> 00:05:58.620
+estimation, to make evidence selection deterministic and auditable before answer generation even begins.
+
+00:05:58.620 --> 00:06:04.160
+It only accepts sentences that explicitly satisfy required facts or conditions. The transparency
+
+00:06:04.160 --> 00:06:09.500
+win here is huge. If you care about building rag systems that auditors or regulators can actually
+
+00:06:09.500 --> 00:06:15.480
+trust, this direction is very promising. The second is UCP OF, uncertainty calibrated prompt
+
+00:06:15.480 --> 00:06:21.540
+optimization. It combines a log scale focal uncertainty metric with first token uncertainty estimation.
+
+00:06:22.040 --> 00:06:27.280
+The practical results are excellent, roughly 6% higher accuracy over few shot baselines,
+
+00:06:27.280 --> 00:06:32.800
+while beating full rag systems and cutting retrieval calls by over 50%. That's the kind of
+
+00:06:32.800 --> 00:06:38.240
+efficiency gain that actually moves the needle in production. Finally, for those working on clinical
+
+00:06:38.240 --> 00:06:44.160
+or mental health applications, therapy gym introduces a serious evaluation framework for therapy chat
+
+00:06:44.160 --> 00:06:49.940
+bots. It measures adherence to proper CBT techniques using the cognitive therapy rating scale while
+
+00:06:49.940 --> 00:06:56.160
+also assessing safety risks. Models trained with CTRS and safety rewards jumped dramatically from
+
+00:06:56.160 --> 00:07:04.240
+0.1 to 0.60 on expert ratings. The benchmark also includes therapy judge bench for better calibration
+
+00:07:04.240 --> 00:07:09.760
+against human clinicians. This is the kind of domain-specific evaluation work we need a lot more of.
+
+00:07:10.020 --> 00:07:15.260
+Before we finish, I want to spend a few minutes on something that rarely gets discussed openly,
+
+00:07:15.260 --> 00:07:20.500
+but quietly kills most agentech rag projects. Everyone talks about agentech rag like the main
+
+00:07:20.500 --> 00:07:26.140
+challenge is just making the LLM smarter. In practice, the real killers are silent failure modes that
+
+00:07:26.140 --> 00:07:31.760
+don't cause obvious crashes, but destroy both performance and cost efficiency. The three big ones are
+
+00:07:31.760 --> 00:07:37.360
+retrieval thrash, tool storms, and context bloat. Once you give an agent a loop and multiple tools,
+
+00:07:37.540 --> 00:07:41.420
+its behavior stops being a single forward pass and becomes an actual search process.
+
+00:07:42.140 --> 00:07:47.260
+Retrieval. Thrash happens when the agent keeps pulling overlapping or low-value document chunks
+
+00:07:47.260 --> 00:07:53.180
+because its stopping criteria are too weak. Tools storms occur when the agent starts calling 15-plus
+
+00:07:53.180 --> 00:07:59.440
+tools in a row without making meaningful progress, often because each tool call slightly shifts the
+
+00:07:59.440 --> 00:08:11.300
+context and resets its sense of direction. Context bloat is the inevitable result. Your prompt
+
+00:08:11.300 --> 00:08:15.000
+storms are insidious because they're invisible and simple end-to-end accuracy metrics.
+
+00:08:15.420 --> 00:08:20.460
+You can have an 85% success rate while burning seven times more inference budget than necessary.
+
+00:08:21.080 --> 00:08:25.720
+The engineering reality is that you need explicit monitoring for these three failure signatures from day
+
+00:08:25.720 --> 00:08:30.860
+one, repeated retrieval of similar documents, tool call chains longer than six or seven steps,
+
+00:08:31.280 --> 00:08:36.760
+and dangerous context growth rate. The biggest gotcha IC is teams treating these as model problems
+
+00:08:36.760 --> 00:08:41.920
+instead of system problems. Better models help at the margin, but the real wins come from adding
+
+00:08:41.920 --> 00:08:48.620
+early detection, hard-step budgets, utility-based retrieval gating, and explicit anti-thrash mechanisms
+
+00:08:48.620 --> 00:08:52.960
+in the agent loop. When you're building a genetic rag, instrument these three metrics first,
+
+00:08:53.100 --> 00:08:58.060
+everything else is secondary. Here are the things you should actually try this week. Run.
+
+00:08:58.820 --> 00:09:03.620
+Light parse on your worst, most layout heavy PDFs, especially contracts or research papers.
+
+00:09:03.620 --> 00:09:07.040
+You'll likely see an immediate improvement in agent reasoning quality.
+
+00:09:07.280 --> 00:09:13.140
+If you work with time sensitive or rapidly changing information, prototype a dinarag style pattern.
+
+00:09:13.780 --> 00:09:19.580
+Add a simple first token uncertainty check about 50 lines of code to your rag pipeline inspired by
+
+00:09:19.580 --> 00:09:26.600
+UCP OF. Many teams are cutting retrieval costs in half with this. Run your structured output pipeline
+
+00:09:26.600 --> 00:09:31.560
+through a construct style trustworthiness score to see where human review effort is best spent.
+
+00:09:32.280 --> 00:09:38.660
+Test GP-T40 versus smaller models on theory of mind tasks using the strange stories data set.
+
+00:09:39.240 --> 00:09:44.380
+The gap is bigger than most builders realize. On the horizon, I expect to see more production-focused
+
+00:09:44.380 --> 00:09:49.680
+agent monitoring tools emerge as research on retrieval thrash and tool storms gets turned into
+
+00:09:49.680 --> 00:09:55.440
+actual open source libraries. We'll also see continued rapid iteration on document intelligence and
+
+00:09:55.440 --> 00:10:00.480
+PDF parsing following light parse plus growing adoption of uncertainty aware and deterministic rag
+
+00:10:00.480 --> 00:10:05.900
+techniques that simultaneously reduce cost and increase reliability. That wraps up today's briefing.
+
+00:10:06.040 --> 00:10:10.180
+If you found this useful, share it with a developer or builder who's deep in the trenches with you.
+
+00:10:10.600 --> 00:10:15.600
+Subscribe wherever you listen and I'll see you tomorrow. This podcast is curated by Patrick but
+
+00:10:15.600 --> 00:10:21.680
+generated using AI voice synthesis of my voice using 11 labs. The primary reason to do this is I
+
+00:10:21.680 --> 00:10:26.240
+unfortunately don't have the time to be consistent with generating all the content and wanted to focus
+
+00:10:26.240 --> 00:10:30.880
+on creating consistent and regular episodes for all the themes that I enjoy and I hope others do

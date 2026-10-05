@@ -448,14 +448,32 @@ class TestSeriesInheritance:
 
 
 class TestVolumePlanner:
-    def test_planner_is_currently_drained(self):
-        """Volume 1 of each series is cut; the tails (UC from ep 81,
-        FPD from ep 61) are below volume_chapters (60) and must wait —
-        see TestWO12SeriesVolumes in test_book_release_pass for the
-        preview of what the planner cuts next."""
-        from engine.book_compiler import plan_next_volumes
+    def test_planner_never_collides_with_a_committed_volume(self):
+        """Whatever the committed data makes ready, the planner cuts full
+        blocks and writes to a file that does not exist. This used to
+        assert the planner was DRAINED — true until First Principles
+        reached episode 120 (Oct 4 2026) and the guard went red on data
+        alone, which is how it found that Volume 2's default id was the
+        retired 20-chapter vol2 (``_free_volume_id``). A guard that reads
+        committed data must tolerate the data moving on."""
+        from engine.book_compiler import (load_series, plan_next_volumes,
+                                          plan_preview)
         for slug in ("unintended_consequences", "first_principles"):
-            assert plan_next_volumes(slug, write=False) == []
+            planned = plan_next_volumes(slug, write=False)
+            size = load_series(slug)["volume_chapters"]
+            preview = plan_preview(slug)
+            assert len(planned) == len(preview["pending_episodes"]) // size
+            for path in planned:
+                assert not path.exists(), path
+
+    def test_a_retired_id_is_never_reused(self):
+        from engine import book_compiler as bc
+        assert (bc.VOLUMES_DIR / "first_principles_vol2.yaml").exists()
+        assert bc._free_volume_id("first_principles", 2) == \
+            "first_principles_volume2"
+        # A number no book holds keeps the conventional id.
+        assert bc._free_volume_id("first_principles", 9) == \
+            "first_principles_vol9"
 
     def test_committed_volumes_are_contiguous_and_disjoint(self):
         """The LIVE volumes of a series (retired superseded books skipped

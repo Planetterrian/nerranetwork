@@ -744,6 +744,63 @@
             margin: 0.35rem 0 0;
         }
         .nn-iv-provenance span { white-space: nowrap; }
+        /* Episode provenance (Oct 2026): the one line under the AI badge on
+           a news post, from engine.brand.episode_provenance_parts, plus the
+           "Report an error" link beside it. Same type as the interview
+           provenance so the two shows read as one network. */
+        .nn-ep-provenance { text-align: center; }
+        .nn-ep-provenance a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .nn-ep-provenance a:hover { text-decoration: underline; }
+        /* Verified-claims panel: a collapsed list under Sources, one row per
+           claim with a link to the source it was checked against. Reuses
+           the transcript box's summary idiom (no marker, +/− at the end). */
+        .blog-claims { margin-top: var(--sp-6); }
+        .blog-claims details summary {
+            display: flex; align-items: center; gap: var(--sp-2);
+            cursor: pointer; padding: var(--sp-3) 0; list-style: none;
+            font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600;
+            color: var(--nn-white);
+        }
+        .blog-claims details summary::-webkit-details-marker { display: none; }
+        .blog-claims details summary::after {
+            content: '+'; margin-left: auto; font-size: 1.2rem; color: var(--nn-text-muted);
+        }
+        .blog-claims details[open] summary::after { content: '\2212'; }
+        .blog-claims .claims-note, .blog-claims .claims-none {
+            font-family: var(--font-ui); font-size: 0.85rem; color: var(--nn-text-muted);
+            line-height: 1.6; margin: 0 0 var(--sp-2);
+        }
+        .blog-claims ol { list-style: none; padding: 0; margin: var(--sp-2) 0 0; }
+        .blog-claims li {
+            padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-2);
+            background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 10px;
+            font-size: 0.95rem; line-height: 1.6;
+        }
+        .blog-claims .claim-source {
+            display: block; margin-top: 4px; font-family: var(--font-ui); font-size: 0.8rem;
+        }
+        .blog-claims .claim-source a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claim-source a:hover { text-decoration: underline; }
+        .blog-claims .claim-why { display: block; font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-top: 2px; }
+        .blog-claims .claims-flagged-count { font-weight: 400; color: var(--nn-text-muted); font-size: 0.9em; }
+        .blog-claims .claims-ledger-link { font-family: var(--font-ui); font-size: 0.85rem; margin: var(--sp-3) 0 0; }
+        .blog-claims .claims-ledger-link a, .blog-claims .claims-none a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claims-ledger-link a:hover, .blog-claims .claims-none a:hover { text-decoration: underline; }
+        /* Correction box (engine.corrections): dated, at the top of the
+           article, before a reader meets the sentence that was wrong. */
+        .nn-correction {
+            margin: 0 0 var(--sp-6); padding: var(--sp-4) var(--sp-5);
+            border: 1px solid var(--show-color); border-left-width: 4px; border-radius: 10px;
+            background: var(--nn-card); font-size: 0.95rem; line-height: 1.6;
+        }
+        .nn-correction .nn-correction-label {
+            font-family: var(--font-ui); font-size: 0.75rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--show-color-text, var(--show-color)); margin: 0 0 var(--sp-1);
+        }
+        .nn-correction p { margin: 0 0 var(--sp-2); }
+        .nn-correction p:last-child { margin-bottom: 0; }
+        .nn-correction .nn-correction-where { font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); }
         .nn-iv-blurb-label {
             font-family: var(--font-ui);
             font-size: 0.72rem;
@@ -1477,6 +1534,7 @@
                         <a href="../../gallery.html">Image Gallery</a>
                         <a href="../../data.html">Data & Dashboards</a>
                         <a href="../../editorial.html">Editorial Process</a>
+                        <a href="../../claims.html">Claims &amp; corrections</a>
                         <a href="../../faq.html">FAQ</a>
                         <a href="../../press.html">Press Kit</a>
                         <a href="../../support.html">Support the Network</a>
@@ -1895,6 +1953,7 @@
             <a href="../../gallery.html" class="nn-mobile-show-link">Image Gallery</a>
             <a href="../../data.html" class="nn-mobile-show-link">Data & Dashboards</a>
             <a href="../../editorial.html" class="nn-mobile-show-link">Editorial Process</a>
+            <a href="../../claims.html" class="nn-mobile-show-link">Claims &amp; corrections</a>
             <a href="../../faq.html" class="nn-mobile-show-link">FAQ</a>
             <a href="../../support.html" class="nn-mobile-show-link">Support the Network</a>
         </div>
@@ -2063,6 +2122,115 @@
                     </a>
                     
                 </div>
+            </section>
+            
+            
+            
+            <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
+                
+                <details>
+                    <summary>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Verified claims (23)
+                    </summary>
+                    <p class="claims-note">Each claim below was checked by a machine before publication: its source was fetched and the supporting quote looked for in it. A claim the check could not confirm is published and marked, not removed, and re-checked nightly for a week.</p>
+                    <ol>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Applied Digital has announced a $3.2 billion, 210-megawatt AI data center called Delta Forge 2 near Brookwood in Tuscaloosa County, Alabama.
+                            <span class="claim-source"><a href="https://www.datacenterdynamics.com/en/news/applied-digital-reveals-32bn-delta-forge-2-ai-data-center-will-be-built-in-alabama/" target="_blank" rel="noopener" title="Applied Digital reveals $3.2bn Delta Forge 2 AI data center will be built in Alabama">datacenterdynamics.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The Brookwood campus is on 1,300 acres, spans 1.2 million square feet at full build-out, and is expected to begin operations in 2028.
+                            <span class="claim-source"><a href="https://www.datacenterdynamics.com/en/news/applied-digital-reveals-32bn-delta-forge-2-ai-data-center-will-be-built-in-alabama/" target="_blank" rel="noopener" title="Applied Digital reveals $3.2bn Delta Forge 2 AI data center will be built in Alabama">datacenterdynamics.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Delta Forge 2 is expected to support up to 1,000 construction jobs and 100 permanent roles.
+                            <span class="claim-source"><a href="https://www.datacenterdynamics.com/en/news/applied-digital-reveals-32bn-delta-forge-2-ai-data-center-will-be-built-in-alabama/" target="_blank" rel="noopener" title="Applied Digital reveals $3.2bn Delta Forge 2 AI data center will be built in Alabama">datacenterdynamics.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> In June Applied Digital said it had secured a customer for a 210-megawatt data center and did not then announce the location.
+                            <span class="claim-source"><a href="https://www.datacenterdynamics.com/en/news/applied-digital-reveals-32bn-delta-forge-2-ai-data-center-will-be-built-in-alabama/" target="_blank" rel="noopener" title="Applied Digital reveals $3.2bn Delta Forge 2 AI data center will be built in Alabama">datacenterdynamics.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Applied Digital describes the Delta Forge 2 customer as an investment-grade hyperscaler.
+                            <span class="claim-source"><a href="https://www.datacenterdynamics.com/en/news/applied-digital-reveals-32bn-delta-forge-2-ai-data-center-will-be-built-in-alabama/" target="_blank" rel="noopener" title="Applied Digital reveals $3.2bn Delta Forge 2 AI data center will be built in Alabama">datacenterdynamics.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Applied Digital is committing $270 million in community benefits over 20 years and estimates $131 million in tax revenue.
+                            <span class="claim-source"><a href="https://www.datacenterdynamics.com/en/news/applied-digital-reveals-32bn-delta-forge-2-ai-data-center-will-be-built-in-alabama/" target="_blank" rel="noopener" title="Applied Digital reveals $3.2bn Delta Forge 2 AI data center will be built in Alabama">datacenterdynamics.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Applied Digital’s contracted portfolio spans five AI Factory campuses, 1.4 gigawatts of critical IT load, and about 2.15 gigawatts of grid-connected utility power.
+                            <span class="claim-source"><a href="https://www.datacenterdynamics.com/en/news/applied-digital-reveals-32bn-delta-forge-2-ai-data-center-will-be-built-in-alabama/" target="_blank" rel="noopener" title="Applied Digital reveals $3.2bn Delta Forge 2 AI data center will be built in Alabama">datacenterdynamics.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Jeremy Werner of Micron says agentic AI runs on two compute stacks, with the GPU reasoning and planning and the CPU orchestrating actions.
+                            <span class="claim-source"><a href="https://x.com/MicronTech/status/2103279887410921630" target="_blank" rel="noopener" title="Micron SVP explains agentic AI needs two compute stacks and more memory">x.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Werner says KV cache keeps AI context available and that growing context and agentic workloads drive memory needs beyond reasoning alone.
+                            <span class="claim-source"><a href="https://x.com/MicronTech/status/2103279887410921630" target="_blank" rel="noopener" title="Micron SVP explains agentic AI needs two compute stacks and more memory">x.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> ServeTheHome reviewed the ASRock Rack SORANOD8-2L2T motherboard for the AMD EPYC 8005 Sorano series and said it provides lots of connectivity.
+                            <span class="claim-source"><a href="https://www.servethehome.com/asrock-rack-soranod8-2l2t-review-a-new-amd-epyc-8005-sorano-motherboard/" target="_blank" rel="noopener" title="ASRock Rack SORANOD8-2L2T Review A New AMD EPYC 8005 Sorano Motherboard">servethehome.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Fraunhofer IAF developed a monolithic microwave integrated circuit described as a broadband distributed amplifier for modern data centers, measurement systems and sensors.
+                            <span class="claim-source"><a href="https://www.semiconductor-digest.com/broadband-distributed-amplifier-for-data-centers-measurement-systems-and-sensors/?utm_source=rss&utm_medium=rss&utm_campaign=broadband-distributed-amplifier-for-data-centers-measurement-systems-and-sensors" target="_blank" rel="noopener" title="Broadband Distributed Amplifier for Data Centers, Measurement Systems and Sensors">semiconductor-digest.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Vertiv has agreed to acquire Ireland-based King Environmental Services, which provides fluid management, commissioning and load-testing for high-density liquid-cooled data centers, to expand thermal services into EMEA.
+                            <span class="claim-source"><a href="https://www.datacenterdynamics.com/en/news/vertiv-to-acquire-data-center-fluid-management-firm-king-environmental-services/" target="_blank" rel="noopener" title="Vertiv to acquire data center fluid management firm King Environmental Services">datacenterdynamics.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Vertiv bought PurgeRite last year for more than $1 billion and already offers fluid management in North America.
+                            <span class="claim-source"><a href="https://www.datacenterdynamics.com/en/news/vertiv-to-acquire-data-center-fluid-management-firm-king-environmental-services/" target="_blank" rel="noopener" title="Vertiv to acquire data center fluid management firm King Environmental Services">datacenterdynamics.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Gio Albertazzi said cooling and power performance will depend as much on field execution as on engineering and system design as computing density increases.
+                            <span class="claim-source"><a href="https://www.datacenterdynamics.com/en/news/vertiv-to-acquire-data-center-fluid-management-firm-king-environmental-services/" target="_blank" rel="noopener" title="Vertiv to acquire data center fluid management firm King Environmental Services">datacenterdynamics.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> KES was founded in 2002, is headquartered near Dublin, serves EMEA, and its website features projects for Microsoft and Equinix.
+                            <span class="claim-source"><a href="https://www.datacenterdynamics.com/en/news/vertiv-to-acquire-data-center-fluid-management-firm-king-environmental-services/" target="_blank" rel="noopener" title="Vertiv to acquire data center fluid management firm King Environmental Services">datacenterdynamics.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The Vertiv acquisition of KES is expected to close before the end of the year.
+                            <span class="claim-source"><a href="https://www.datacenterdynamics.com/en/news/vertiv-to-acquire-data-center-fluid-management-firm-king-environmental-services/" target="_blank" rel="noopener" title="Vertiv to acquire data center fluid management firm King Environmental Services">datacenterdynamics.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Data Center Knowledge reports that infrasound from data centers is increasingly scrutinized by communities and that proactive mitigation and transparent communication are essential for operators.
+                            <span class="claim-source"><a href="https://www.datacenterknowledge.com/data-center-construction/low-frequency-noise-and-data-centers-what-to-know" target="_blank" rel="noopener" title="Low-Frequency Noise and Data Centers: What to Know">datacenterknowledge.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> ACCM’s Wisconsin facility is set to bring laminate capacity of 20 million square feet per year online in January 2027 and build-up and prepreg capacity of 87 million square feet per year online in November 2026.
+                            <span class="claim-source"><a href="https://www.semiconductor-digest.com/accm-expands-us-manufacturing-capacity-across-four-advanced-materials-segments-for-ai-infrastructure/?utm_source=rss&utm_medium=rss&utm_campaign=accm-expands-us-manufacturing-capacity-across-four-advanced-materials-segments-for-ai-infrastructure" target="_blank" rel="noopener" title="ACCM Expands US Manufacturing Capacity Across Four Advanced Materials Segments for AI Infrastructure">semiconductor-digest.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Semiconductor Engineering’s week in review says chip supply chains are tightening for equipment and critical materials, TSMC partners are accelerating, and China is doubling down on AI compute and memory.
+                            <span class="claim-source"><a href="https://semiengineering.com/chip-industry-week-in-review-157/" target="_blank" rel="noopener" title="Chip Industry Week In Review">semiengineering.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Dylan Patel wrote that a fully populated GB300 NVL72 weighs roughly 1,580 kilograms and that recent purchase orders put it at $5 million per rack.
+                            <span class="claim-source"><a href="https://x.com/dylan522p/status/2103225106512363902" target="_blank" rel="noopener" title="Fentanyl Grade Compute: GB300 Rack Value Comparison">x.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Patel wrote that the GB200 NVL72 was $4 million and that Vera Rubin NVL72 is quoted at up to $8.8 million at essentially the same rack mass.
+                            <span class="claim-source"><a href="https://x.com/dylan522p/status/2103225106512363902" target="_blank" rel="noopener" title="Fentanyl Grade Compute: GB300 Rack Value Comparison">x.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Patel wrote that HBM, CoWoS and power are supply-limited and that rack weight is constrained by datacenter floor loading.
+                            <span class="claim-source"><a href="https://x.com/dylan522p/status/2103225106512363902" target="_blank" rel="noopener" title="Fentanyl Grade Compute: GB300 Rack Value Comparison">x.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Polaris Forge 3 will offer 300 megawatts of critical IT load on 600 acres in an unnamed northern state to the same hyperscaler as Delta Forge 1, with initial operations anticipated in August 2027.
+                            <span class="claim-source"><a href="https://www.datacenterdynamics.com/en/news/applied-digital-reveals-32bn-delta-forge-2-ai-data-center-will-be-built-in-alabama/" target="_blank" rel="noopener" title="Applied Digital reveals $3.2bn Delta Forge 2 AI data center will be built in Alabama">datacenterdynamics.com</a></span>
+                        </li>
+                    </ol>
+                    <p class="claims-ledger-link"><a href="../../claims/ai_chips.html">Full ledger for this show →</a></p>
+                </details>
+                
             </section>
             
 
@@ -2301,10 +2469,13 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v4h1"/></svg>
   Made with AI — transparently
 </a>
-            </div><div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
+            </div>
+            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 9 sources</span><span aria-hidden="true"> · </span><span>23 claims checked against their sources</span><span aria-hidden="true"> · </span><span>voiced with Grok TTS</span><span aria-hidden="true"> · </span><a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20AI%20Chips%20%26%20Data%20Centres%20Daily%20Ep4&body=Re%3A%20https%3A//nerranetwork.com/blog/ai_chips/ep004.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
+            </p>
+            <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>👋 Did this episode land?</span>
-                <a href="mailto:patrick@planetterrian.com?subject=I%20liked%20AI%20Chips%20%26%20Data%20Centres%20Daily%20Ep4&body=Re: https://nerranetwork.com/blog/ai_chips/ep004.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
-                <a href="mailto:patrick@planetterrian.com?subject=Suggestion%20for%20AI%20Chips%20%26%20Data%20Centres%20Daily&body=Re: https://nerranetwork.com/blog/ai_chips/ep004.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
+                <a href="mailto:hello@nerranetwork.com?subject=I%20liked%20AI%20Chips%20%26%20Data%20Centres%20Daily%20Ep4&body=Re: https://nerranetwork.com/blog/ai_chips/ep004.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
+                <a href="mailto:hello@nerranetwork.com?subject=Suggestion%20for%20AI%20Chips%20%26%20Data%20Centres%20Daily&body=Re: https://nerranetwork.com/blog/ai_chips/ep004.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
             </div>
 
             <!-- Subscribe CTA (Worker-backed — no Buttondown popup / fake 500ms success) -->
@@ -2362,6 +2533,8 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                     <a href="../../topics/ai.html" style="display:inline-flex;align-items:center;padding:.5rem .9rem;border-radius:10px;border:1px solid color-mix(in srgb, var(--show-color), transparent 60%);color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;font-size:.9rem;">Artificial intelligence</a>
                     
                     <a href="../../topics/engineering.html" style="display:inline-flex;align-items:center;padding:.5rem .9rem;border-radius:10px;border:1px solid color-mix(in srgb, var(--show-color), transparent 60%);color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;font-size:.9rem;">Engineering</a>
+                    
+                    <a href="../../topics/ai-infrastructure.html" style="display:inline-flex;align-items:center;padding:.5rem .9rem;border-radius:10px;border:1px solid color-mix(in srgb, var(--show-color), transparent 60%);color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;font-size:.9rem;">AI infrastructure</a>
                     
                     <a href="../../topics/index.html" style="display:inline-flex;align-items:center;padding:.5rem .9rem;border-radius:10px;border:1px solid var(--nn-border);color:var(--nn-text-muted);text-decoration:none;font-size:.9rem;">All topics</a>
                 </div>
@@ -2506,6 +2679,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                     <a href="../../contact.html">Contact</a>
                     <a href="../../press.html">Press Kit</a>
                     <a href="../../editorial.html">Editorial Process</a>
+                    <a href="../../claims.html">Claims &amp; corrections</a>
                     <a href="../../ai-disclosure.html">AI Disclosure</a>
                     <a href="../../privacy-policy.html">Privacy Policy</a>
                     <a href="../../terms-of-service.html">Terms of Service</a>
@@ -2610,7 +2784,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         <button type="submit">Subscribe</button>
                     </div>
                     <p style="margin-top:0.5rem;font-size:0.85rem;">
-                        <a href="../../personal-interest.html">Soft Personal — tips &amp; reminder (no charge) →</a>
+                        <a href="../../personal-interest.html">Personal tips by email — no charge →</a>
                         <span style="opacity:0.5;margin:0 0.35rem;">·</span>
                         <a href="../../join.html">Or start Nerra Personal →</a>
                         <a class="nn-account-link" href="../../account.html" style="display:none;margin-left:0.75rem;">Your account →</a>

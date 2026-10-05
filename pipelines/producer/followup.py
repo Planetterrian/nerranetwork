@@ -247,12 +247,10 @@ def upcoming_interview(app: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     return rows[0] if rows else None
 
 
-def _when(iso: str) -> str:
-    try:
-        dt = datetime.fromisoformat(str(iso).replace("Z", "+00:00"))
-    except (TypeError, ValueError):
-        return ""
-    return f"{dt:%A}, {dt:%B} {dt.day}"
+def _when(iso: Optional[str]) -> str:
+    """The day in Pacific Time (a 6 pm Pacific slot is tomorrow in UTC)."""
+    from pipelines.voices.common import pacific_time
+    return pacific_time(iso, date_only=True) if iso else ""
 
 
 def booked_reply(app: Dict[str, Any], interview: Dict[str, Any], to_name: str) -> str:

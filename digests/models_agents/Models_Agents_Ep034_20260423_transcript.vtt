@@ -1,0 +1,352 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.900
+Hey, welcome to Models and Agents Episode 34 for April 23, 2026, your daily AI briefing.
+
+00:00:06.220 --> 00:00:09.620
+Let's see what happened in the AI world today. And trust me, it's been busy.
+
+00:00:10.260 --> 00:00:14.660
+The standout story today is the dramatic inference acceleration developers are seeing with the new
+
+00:00:14.660 --> 00:00:20.920
+Quinn 3.6 to 27B model when using N-gram-based speculative decoding in Lama.cpp.
+
+00:00:21.520 --> 00:00:28.440
+Community members report generation speeds climbing from 13 tokens per second to over 136 tokens per
+
+00:00:28.440 --> 00:00:34.640
+second within the same session on dual GPU consumer rigs. At the same time, the model shows strong coding
+
+00:00:34.640 --> 00:00:40.160
+judgment, bug fixing from screenshots, and aesthetic code output that rivals much larger models.
+
+00:00:41.000 --> 00:00:46.460
+Several RxEV papers also dropped exploring hallucination neurons, stereotype localization,
+
+00:00:46.660 --> 00:00:51.700
+memory architectures for agents and KV cache optimizations. Pay attention to the rapid
+
+00:00:51.700 --> 00:00:56.880
+maturation of local inference tooling. This week's practical gains feel more impactful than many
+
+00:00:56.880 --> 00:01:02.140
+benchmark headlines. What you need to know is that local models just got a whole lot more usable
+
+00:01:02.140 --> 00:01:06.940
+for real coding work and agent memory research is finally moving beyond stateless resets.
+
+00:01:07.800 --> 00:01:13.820
+The top story today comes from Google Cloud AI Research and UIUC. They introduced Reasoning Bank,
+
+00:01:14.000 --> 00:01:18.820
+a memory framework that lets LLM agents distill generalizable reasoning strategies from both their
+
+00:01:18.820 --> 00:01:23.760
+successes and failures. The system combines experience distillation with test time scaling.
+
+00:01:24.400 --> 00:01:28.440
+This allows agents to incrementally improve their reasoning policies rather than treating
+
+00:01:28.440 --> 00:01:33.780
+each interaction as stateless. Unlike traditional replay buffers that simply store trajectories,
+
+00:01:34.360 --> 00:01:39.300
+Reasoning Bank extracts reusable strategies. It creates a form of procedural memory that transfers
+
+00:01:39.300 --> 00:01:45.420
+across tasks. Early results suggest agents genuinely get better over time instead of plateauing,
+
+00:01:45.480 --> 00:01:51.100
+which has been a persistent weakness in production agent deployments. Developers building autonomous
+
+00:01:51.100 --> 00:01:56.300
+workflows should watch this closely. Persistent reasoning improvement is one of the missing
+
+00:01:56.300 --> 00:02:02.280
+pieces for agents handling core business operations. The work directly addresses the trust question.
+
+00:02:02.440 --> 00:02:08.100
+Many enterprises are asking before they let agents touch real processes. Expect follow-up releases
+
+00:02:08.100 --> 00:02:12.500
+and open source implementations as the team refines the approach. Now on the model side,
+
+00:02:12.500 --> 00:02:20.480
+Quin 3.6 to 27b is turning heads in the local LLM community. Developers switching from Open AI APIs
+
+00:02:20.480 --> 00:02:28.340
+to Quin 3.6 to 27b in Open Code for Svelte 5 development report near perfect results on first try.
+
+00:02:28.780 --> 00:02:34.700
+Even when the paid APIs were failing, this 27 billion parameter model delivered production grade code
+
+00:02:34.700 --> 00:02:40.340
+quality. Many users say it exceeds expectations for its size, particularly in frontend frameworks.
+
+00:02:40.340 --> 00:02:44.420
+This continues Alibaba's strong momentum in open coding models.
+
+00:02:44.680 --> 00:02:50.400
+It suggests the next 12 months of local coding agents will be highly competitive. The real fireworks
+
+00:02:50.400 --> 00:02:57.760
+though came when one developer paired Quin 3.6 to 27b with speculative decoding in la-maw.cpp.
+
+00:02:58.280 --> 00:03:05.920
+Using the same Quin 3.6 to 27b-q80 model, token generation climbed from 13.6 tokens per second to
+
+00:03:05.920 --> 00:03:13.120
+136.75 tokens per second. All it took was adding the in-gram mod speculative decoding flag with
+
+00:03:13.120 --> 00:03:18.340
+appropriate settings in la-maw server. The model successfully debugged browser console errors from
+
+00:03:18.340 --> 00:03:24.300
+screenshots. It produced high quality aesthetic code throughout the entire session. With 40 gigabytes
+
+00:03:24.300 --> 00:03:31.520
+of VRAM and 128 gigabytes of RAM, this setup makes 27 billion parameter class models feel remarkably
+
+00:03:31.520 --> 00:03:36.780
+responsive for iterative coding workflows. That is the kind of leap that changes how you actually use
+
+00:03:36.780 --> 00:03:42.700
+these models day-to-day. On the research front, a new RXC paper asks whether hallucination neurons
+
+00:03:42.700 --> 00:03:48.800
+generalize. The study looked across six domains and five open-weight models ranging from three to
+
+00:03:48.800 --> 00:03:54.680
+eight billion parameters. It found that hallucination neurons identified in one domain transfer poorly
+
+00:03:54.680 --> 00:04:01.500
+to others. The area under the receiver operating characteristic curve drops from 0.783 within
+
+00:04:01.500 --> 00:04:08.520
+domain to 0.563 cross domain. This indicates hallucination mechanisms are largely domain specific
+
+00:04:08.520 --> 00:04:13.800
+rather than a universal sparse signature. The finding has immediate implications for anyone building
+
+00:04:13.800 --> 00:04:19.460
+neuron level detectors. They must be calibrated per domain rather than trained once and applied broadly.
+
+00:04:20.220 --> 00:04:24.780
+Another paper explores whether we can locate and prevent stereotypes in large language models.
+
+00:04:24.780 --> 00:04:32.180
+Researchers mapped stereotype-related activations in both GPT-2 small and llama-3.2. They
+
+00:04:32.180 --> 00:04:36.800
+identified individual contrastive neurons and attention heads responsible for biased outputs.
+
+00:04:37.540 --> 00:04:41.440
+The work provides initial bias fingerprints that could enable targeted mitigation.
+
+00:04:42.220 --> 00:04:46.220
+While still early stage, it moves the field from behavioral observation toward
+
+00:04:46.220 --> 00:04:50.740
+mechanistic understanding of where stereotypes actually live inside transformer weights.
+
+00:04:51.300 --> 00:04:54.760
+Shifting to agent and tool developments, Liza released Cognis,
+
+00:04:54.980 --> 00:05:01.020
+an open-source context-aware memory architecture for conversational AI agents. It uses dual-store
+
+00:05:01.020 --> 00:05:07.040
+retrieval combining BM-25 with matrioshka embeddings fused by reciprocal rank fusion.
+
+00:05:07.600 --> 00:05:13.060
+The system adds context-aware ingestion that checks existing memories before writing new ones,
+
+00:05:13.320 --> 00:05:20.100
+plus temporal boosting and a BGE-2 re-ranker. Cognis achieved state-of-the-art results on the locomo
+
+00:05:20.100 --> 00:05:25.180
+and long mammal benchmarks. It has already deployed in production, which gives developers a practical
+
+00:05:25.180 --> 00:05:29.320
+path to persistent personalized conversational agents without starting from scratch.
+
+00:05:30.140 --> 00:05:35.800
+Another interesting framework is O-Think-S-R-R1, which tackles noisy retrieval and high latency
+
+00:05:35.800 --> 00:05:41.040
+in multi-hop retrieval augmented generation. It introduces an iterative search, refine,
+
+00:05:41.320 --> 00:05:47.800
+and reason loop trained with GRPO-Y-R reinforcement learning. The refined stage distills documents
+
+00:05:47.800 --> 00:05:53.700
+into concise facts before reasoning begins. A reward model penalizes excessive retrievals to keep
+
+00:05:53.700 --> 00:05:59.220
+things efficient. The approach outperforms strong baselines on four multi-hop question answering
+
+00:05:59.220 --> 00:06:04.500
+benchmarks while using fewer steps and tokens. It looks like a promising base for information-seeking
+
+00:06:04.500 --> 00:06:10.540
+agents. In the practical and community space, a team benchmarked 18 different large-language models
+
+00:06:10.540 --> 00:06:18.460
+on optical character recognition and document extraction. They ran 7,560 identical calls across 42
+
+00:06:18.460 --> 00:06:24.580
+standard documents. The surprising result is that smaller, older, cheaper models frequently match
+
+00:06:24.580 --> 00:06:31.020
+or beat flagship models on accuracy while costing far less. The team opened source the full data set
+
+00:06:31.020 --> 00:06:36.220
+framework leaderboard and a free tool for testing your own documents. If your workflows default to
+
+00:06:36.220 --> 00:06:41.560
+the newest model for OCR tasks, this benchmark is worth auditing against. There is also a new
+
+00:06:41.560 --> 00:06:47.840
+caggle competition called 2B or not 2B. It tasks participants with deciding when to run a small
+
+00:06:47.840 --> 00:06:53.500
+2 billion parameter model versus skipping inference entirely on MML-U-style questions.
+
+00:06:54.160 --> 00:06:59.080
+The goal is optimizing a cost-based metric that penalizes both unnecessary compute and
+
+00:06:59.080 --> 00:07:05.040
+missed correct answers. The setup is deliberately simple to encourage creative classifiers or routing
+
+00:07:05.040 --> 00:07:10.140
+rules. It is a practical first step toward intelligent routing systems that could dramatically
+
+00:07:10.140 --> 00:07:17.300
+cut token costs in production. Okay, let us pop the hood on this temporal tiered KV cache design that
+
+00:07:17.300 --> 00:07:22.720
+has been generating discussion. Everyone talks about the KV cache as if it is just a big lookup table
+
+00:07:22.720 --> 00:07:28.300
+you grow linearly with context. In practice, this new approach shows it can be re-architected like a
+
+00:07:28.300 --> 00:07:34.580
+human memory system with fast recent memory and slower archival layers. The core insight is that
+
+00:07:34.580 --> 00:07:40.360
+not all tokens are equally important. Recent tokens need low latency, high precision access,
+
+00:07:41.080 --> 00:07:46.800
+older ones can tolerate lower precision and higher access cost. The temporal tiered KV cache
+
+00:07:46.800 --> 00:07:52.700
+therefore partitions the cache into temporal tiers. Recent blocks stay in fast high bandwidth memory
+
+00:07:52.700 --> 00:07:58.680
+at full precision. Older blocks migrate to dynamic random access memory at reduced precision.
+
+00:07:58.680 --> 00:08:03.880
+This mirrors how we keep immediate context, crystal clear and distant context fuzzier.
+
+00:08:04.540 --> 00:08:09.560
+Blockwise streaming attention overlaps communication and computation when pulling from slow tiers
+
+00:08:09.560 --> 00:08:16.320
+that hides much of the latency penalty. The paper reports a 5.9 four times reduction in cross-tier
+
+00:08:16.320 --> 00:08:24.900
+traffic on 128,000 context tasks. That translates to up to 76% lower latency and two times higher throughput
+
+00:08:24.900 --> 00:08:30.200
+versus strong baselines. The quality gain comes with real engineering trade-offs. You need careful
+
+00:08:30.200 --> 00:08:35.140
+tier sizing, precision scheduling logic and migration policies that do not thrash.
+
+00:08:35.640 --> 00:08:40.800
+Get the layout wrong and you lose the latency wins. So when should you actually reach for this versus
+
+00:08:40.800 --> 00:08:47.740
+uniform KV cache? If you are regularly running 32,000 plus context workloads on hardware with
+
+00:08:47.740 --> 00:08:53.540
+heterogeneous memory, whether high bandwidth memory plus dynamic random access memory or even CPU
+
+00:08:53.540 --> 00:08:58.840
+offload, this tiering approach is becoming essential. The gotcha that bites most teams is assuming
+
+00:08:58.840 --> 00:09:04.020
+uniform importance across the entire context window. Temporal locality is stronger than most
+
+00:09:04.020 --> 00:09:12.400
+attention visualization suggests. If you have not tried Quinn 3.6 to 27bq80.gguf with the N gram
+
+00:09:12.400 --> 00:09:18.680
+speculative decoding flags in llama.cpp this week is the perfect time. Watch the speed climb
+
+00:09:18.680 --> 00:09:24.580
+dramatically as the draft model warms up during your next coding session. Test the arbitrary QOCR
+
+00:09:24.580 --> 00:09:29.880
+mini bench on your own document set before defaulting to the latest flagship model. You may cut cost by
+
+00:09:29.880 --> 00:09:35.520
+5 to 10 times with zero accuracy loss. Experiment with Cogniz memory components if you are building
+
+00:09:35.520 --> 00:09:40.920
+conversational agents. Swap in the dual store retriever and context aware ingestion to get persistent
+
+00:09:40.920 --> 00:09:47.060
+personalization without heavy infrastructure. Enter the 2b or not 2b cagle competition even if you
+
+00:09:47.060 --> 00:09:53.020
+only submit a simple classifier. The routing mindset it forces is directly transferable to
+
+00:09:53.020 --> 00:09:57.920
+production cost optimization. Read the reasoning bank paper and consider how you might log agent
+
+00:09:57.920 --> 00:10:03.240
+successes and failures in your own workflows. This distillation approach could be the next big unlock
+
+00:10:03.240 --> 00:10:09.940
+for reliable agents. On the horizon more domain specific fine tunes of Quinn 3.6 are expected in
+
+00:10:09.940 --> 00:10:14.980
+the coming weeks as the community digests its coding and multimodal strengths. Follow-up releases on
+
+00:10:15.100 --> 00:10:19.820
+reasoning bank are likely as Google Cloud AI research turns the memory framework into a reusable
+
+00:10:19.820 --> 00:10:24.980
+library. Continued progress on neuron level interpretability should bring papers that move from
+
+00:10:24.980 --> 00:10:30.920
+locating stereotypes and hallucinations toward actual editing techniques. Keep an eye on consumer
+
+00:10:30.920 --> 00:10:35.460
+inference hardware announcements as the growing frustration around local performance could finally
+
+00:10:35.460 --> 00:10:41.360
+push vendors to ship dedicated edge chips this year. Before we go, tomorrow keep an eye on whether any
+
+00:10:41.360 --> 00:10:46.800
+early open source implementations of reasoning bank appear. That is models and agents for today if
+
+00:10:46.800 --> 00:10:50.900
+you found this useful, share it with someone who is trying to keep up with all these changes and
+
+00:10:50.900 --> 00:10:56.880
+subscribe so you do not miss tomorrow's update. The AI world moves fast we will help you keep up.
+
+00:10:57.520 --> 00:11:03.680
+See you tomorrow. This podcast is curated by Patrick but generated using AI voice synthesis of my
+
+00:11:03.680 --> 00:11:09.360
+voice using 11 labs. The primary reason to do this is I unfortunately don't have the time to be
+
+00:11:09.360 --> 00:11:14.060
+consistent with generating all the content and wanted to focus on creating consistent and regular
+
+00:11:14.060 --> 00:11:17.520
+episodes for all the themes that I enjoy and I hope others do as well.

@@ -1,0 +1,238 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.300
+Welcome back to Models and Agents, episode 58 on May 24th, 2026.
+
+00:00:06.240 --> 00:00:08.780
+Let's see what shipped, lots of news to walk through.
+
+00:00:09.340 --> 00:00:10.920
+Let's start with what actually matters.
+
+00:00:11.580 --> 00:00:21.340
+Looking back at six episodes from 2026-05-18 to 2026-05-24,
+
+00:00:22.060 --> 00:00:25.480
+the stories that mattered what we learned and what to watch next.
+
+00:00:26.280 --> 00:00:31.060
+In video, pushed a full four-bit pre-training stack called NVFP4
+
+00:00:31.060 --> 00:00:35.080
+through validation on a 12-billion-parameter Mamba transformer.
+
+00:00:35.780 --> 00:00:40.320
+The run covered 10 trillion tokens and stayed within 0.04 points
+
+00:00:40.320 --> 00:00:43.600
+of the FP8 baseline on MMLU Pro.
+
+00:00:44.140 --> 00:00:47.140
+The stack mixes selective BF16 layers,
+
+00:00:47.780 --> 00:00:51.800
+16 by 16 random Hadamard transforms on gradients,
+
+00:00:52.400 --> 00:00:55.300
+two-dimensional weight scaling and stochastic rounding.
+
+00:00:55.900 --> 00:00:59.340
+That combination matters because it shows four-bit methods
+
+00:00:59.340 --> 00:01:04.400
+can now support full-scale pre-training rather than just inference or fine-tuning.
+
+00:01:05.400 --> 00:01:07.400
+And ThropicBot Stainless API,
+
+00:01:08.000 --> 00:01:11.980
+the service that built every one of its SDKs and MCP servers
+
+00:01:11.980 --> 00:01:13.800
+since the API first launched.
+
+00:01:14.340 --> 00:01:18.840
+The acquisition brings SDK and model context protocol tooling in-house
+
+00:01:18.840 --> 00:01:23.840
+after Stainless API had served multiple labs as an independent platform.
+
+00:01:24.640 --> 00:01:26.360
+Owning the integration layer directly
+
+00:01:26.360 --> 00:01:30.360
+should tighten the feedback loop between model updates and the developer tools
+
+00:01:30.360 --> 00:01:31.300
+that depend on them.
+
+00:01:32.040 --> 00:01:36.020
+Google ship Gemini 3.5 Flash at I-O-2026
+
+00:01:36.020 --> 00:01:41.120
+with claims it beats the prior 3.1 Pro on coding and agentic tasks.
+
+00:01:41.600 --> 00:01:45.540
+The model runs four times faster than competing frontier systems
+
+00:01:45.540 --> 00:01:49.320
+and reaches 800 tokens per second inside anti-gravity
+
+00:01:49.320 --> 00:01:51.280
+at roughly half the prior cost.
+
+00:01:51.940 --> 00:01:54.940
+That speed target lines up with a growing need for agents
+
+00:01:54.940 --> 00:01:58.220
+that can sustain long sessions without constant restarts.
+
+00:01:59.020 --> 00:02:03.360
+Alibaba previewed 23.5 live translate flash
+
+00:02:03.360 --> 00:02:08.720
+for low-latency multimodal translation across 60 languages at the same time.
+
+00:02:09.520 --> 00:02:12.980
+The model focuses on real-time multimodal handoff
+
+00:02:12.980 --> 00:02:17.520
+which could matter most for agent workflows that already mix vision and text.
+
+00:02:18.200 --> 00:02:21.700
+OpenAI reported that a general-purpose reasoning model
+
+00:02:21.700 --> 00:02:25.820
+found a new family of constructions for the planar unit distance problem
+
+00:02:26.500 --> 00:02:29.200
+first posed by Paul Erdosh in 1946.
+
+00:02:30.020 --> 00:02:34.540
+The solution outperformed the square grid patterns previously assumed to be optimal
+
+00:02:34.540 --> 00:02:38.100
+and came from a model without math-specific fine-tuning.
+
+00:02:38.840 --> 00:02:42.400
+The result hints that broad reasoning models are starting to surface
+
+00:02:42.400 --> 00:02:45.920
+novel structures even in long-standing math problems.
+
+00:02:46.840 --> 00:02:52.220
+OpenAI also rolled out codex updates that include secure computer use on locked
+
+00:02:52.220 --> 00:02:57.780
+max, goal mode for multi-hour autonomous runs, and advanced annotation tools.
+
+00:02:58.580 --> 00:03:01.640
+Codex now pulls live screen content through app shots
+
+00:03:01.640 --> 00:03:05.080
+and accepts direct visual edits on web pages during feedback.
+
+00:03:05.920 --> 00:03:11.500
+These changes shift codex from short-term assistance towards sustained multi-surface operation.
+
+00:03:12.140 --> 00:03:18.340
+Microsoft released FARA 1.5, a family of browser agents that outperformed both OpenAI
+
+00:03:18.340 --> 00:03:21.480
+operator and Gemini 2.5 on web tasks.
+
+00:03:22.120 --> 00:03:27.340
+The game show browser automation is becoming a competitive benchmark rather than a niche experiment.
+
+00:03:28.180 --> 00:03:31.620
+And Thropic ran project Glasswing with clawed models
+
+00:03:31.620 --> 00:03:34.980
+and surfaced more than 10,000 high-severity vulnerabilities.
+
+00:03:35.860 --> 00:03:40.220
+The volume suggests systematic red teaming is now generating enough data
+
+00:03:40.220 --> 00:03:42.300
+to influence model hardening cycles.
+
+00:03:43.240 --> 00:03:48.380
+Several open-source projects dropped focused on faster inference and smaller memory footprints
+
+00:03:48.380 --> 00:03:52.800
+for consumer hardware. These releases add immediate options for teams
+
+00:03:52.800 --> 00:03:56.140
+that need to run models locally without waiting for cloud updates.
+
+00:03:56.920 --> 00:04:00.220
+The week's clearest pattern sits in how pre-training efficiency,
+
+00:04:00.740 --> 00:04:04.740
+SDK control, and longer-running agent modes are landing together.
+
+00:04:05.380 --> 00:04:10.860
+And Vidya's four-bit stack shows extended training runs can stay close to FP8 accuracy
+
+00:04:10.860 --> 00:04:17.540
+on constrained hardware. And Thropic's move to own stainless API gives it direct ownership of
+
+00:04:17.540 --> 00:04:24.120
+the integration layer many agent frameworks already depend on. Gemini 3.5 Flash and the new
+
+00:04:24.120 --> 00:04:30.820
+twin translation model both target high-volume agent and real-time workflows with measurable speed gains.
+
+00:04:30.820 --> 00:04:37.060
+OpenAI's math result and the codex goal mode updates point to the same underlying shift
+
+00:04:37.060 --> 00:04:41.840
+towards sustained, multi-step reasoning without constant human steering.
+
+00:04:42.820 --> 00:04:49.580
+Microsoft Farrah 1.5 and the open-source inference releases add pressure on both closed and consumer
+
+00:04:49.580 --> 00:04:55.660
+side tooling. Next week we'll likely show how these four-bit methods scale past the 12-billion
+
+00:04:55.660 --> 00:05:00.580
+proof of concept and whether the new codex modes hold up on production code bases.
+
+00:05:00.820 --> 00:05:05.580
+Keep an eye on how the stainless API integration changes release cadence for
+
+00:05:05.580 --> 00:05:14.200
+cloud SDKs and MCP servers. If you train long horizon models, test the NVFP4 stack on a smaller run
+
+00:05:14.200 --> 00:05:21.440
+first to see where the selective BF16 layers need to sit. Builders working on agent pipelines should
+
+00:05:21.440 --> 00:05:26.920
+try Gemini 3.5 Flash inside anti-gravity this week for the reported speed gains.
+
+00:05:27.800 --> 00:05:34.140
+For translation heavy workflows, the twin 3.5 live translate Flash preview is worth a direct
+
+00:05:34.140 --> 00:05:41.300
+comparison against current multimodal options. Codex goal mode and app shots are live across the app,
+
+00:05:41.640 --> 00:05:48.620
+IDE extension and CLI, so set a multi-hour objective and watch how context carries across those
+
+00:05:48.620 --> 00:05:55.220
+surfaces. Teams evaluating browser automation can benchmark Farrah 1.5 against operator and
+
+00:05:55.220 --> 00:06:01.880
+Gemini 2.5 on their own web task suites. Open source inference projects focused on consumer
+
+00:06:01.880 --> 00:06:07.820
+hardware are worth pulling in if you need smaller footprints without losing too much speed. Tomorrow
+
+00:06:07.820 --> 00:06:13.620
+we will have more on how the new codex annotation tools change feedback loops in actual development
+
+00:06:13.620 --> 00:06:20.860
+cycles. This episode used AI voice synthesis of my voice. Editorial selection and analysis are my
+
+00:06:20.860 --> 00:06:21.140
+own.

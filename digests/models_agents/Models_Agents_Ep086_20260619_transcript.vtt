@@ -1,0 +1,325 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:07.380
+Glad you're here. Welcome to Models &amp; Agents Episode 86 for June 19, 2026. Your daily AI briefing,
+
+00:00:07.780 --> 00:00:11.920
+your daily briefing on the AI models and agents that are changing everything.
+
+00:00:12.740 --> 00:00:16.600
+And no, not those kinds of models and agents. Let's get into it.
+
+00:00:17.240 --> 00:00:22.300
+Custom CUDA kernels now keep vector search inside the GPU for agentic reg,
+
+00:00:23.020 --> 00:00:29.820
+cutting PCIe round trips that silently throttle long horizon agents. Open AI reports
+
+00:00:29.820 --> 00:00:36.080
+GPT 5.5 instant now matches its frontier models on health queries for free users.
+
+00:00:36.720 --> 00:00:43.620
+A new GPU resident top-k kernel delivers deterministic microsecond tail latencies for retrieval.
+
+00:00:44.440 --> 00:00:49.680
+Research papers introduce selective multi-turn distillation, cash-aware rag ordering,
+
+00:00:49.680 --> 00:00:54.780
+atomic fact memory for agents, and head-level attention hybridization.
+
+00:00:55.460 --> 00:00:59.920
+Builders should test the kernel and memory systems this week on retrieval heavy workflows.
+
+00:01:00.800 --> 00:01:07.480
+The top story centers on a developer who built an open-source CUDA kernel that performs top-k
+
+00:01:07.480 --> 00:01:14.920
+vector search entirely on GPU. This eliminates the PCIe transfer latency that previously forced
+
+00:01:14.920 --> 00:01:19.220
+retrieval results to bounce off the CPU during agentic rag inference.
+
+00:01:19.620 --> 00:01:25.800
+The approach replaces standard CPU mediated vector search with a device resident kernel.
+
+00:01:26.360 --> 00:01:32.720
+It produces deterministic microsecond scale tail latencies instead of variable round trip costs.
+
+00:01:33.440 --> 00:01:40.080
+This directly addresses the silent bottleneck in long horizon agents where retrieval happens repeatedly
+
+00:01:40.080 --> 00:01:46.520
+inside tool loops. The change preserves answer quality while making tail latency predictable.
+
+00:01:47.320 --> 00:01:52.800
+That matters for production agent deployments that must meet strict response time SLAs.
+
+00:01:53.460 --> 00:01:57.880
+Teams building retrieval augmented agents should benchmark the kernel against their
+
+00:01:57.880 --> 00:02:03.880
+current retrieval step this week. This fits the ongoing arc in AI compute and inference,
+
+00:02:03.880 --> 00:02:10.180
+where inference economics keep tightening around predictable latency rather than average case
+
+00:02:10.180 --> 00:02:18.120
+throughput. Turning to model updates, open AI announced that GPT 5.5 instant now matches its
+
+00:02:18.120 --> 00:02:23.560
+frontier thinking models on health-related questions. The model improves that recognizing when
+
+00:02:23.560 --> 00:02:29.060
+urgent care is needed, asking for relevant context explaining uncertainty and simplifying
+
+00:02:29.060 --> 00:02:35.640
+complex information. More than 230 million people weekly ask chat GPT health questions,
+
+00:02:36.220 --> 00:02:43.040
+so the gains reach free tier users immediately. Physician led evaluation drove the improvements.
+
+00:02:43.800 --> 00:02:51.180
+Builders working on consumer health tools should test GPT 5.5 instant against paid frontier models for
+
+00:02:51.180 --> 00:02:59.300
+cost-sensitive deployments. Next, a Hubert is a 125 million parameter Roborata based model trained
+
+00:02:59.300 --> 00:03:07.420
+from scratch on a curated 45 GB Persian brand Dakota. It leads on extractive QA for PQADD with
+
+00:03:07.420 --> 00:03:19.580
+an F1 of 88.3542 and Parcy NLU RC with an F1 of 49.0987. It remains competitive on NER and topic
+
+00:03:19.580 --> 00:03:26.660
+classification. A vector database semantic deduplication step balanced domain coverage during pre-training.
+
+00:03:27.120 --> 00:03:33.920
+Persian NLP team should try it for QA and retrieval tasks, where prior models underperformed.
+
+00:03:34.660 --> 00:03:42.840
+Terra Mars fine tunes Gemma 3-1B with QLORA on Mars specific QA and information extraction data.
+
+00:03:43.300 --> 00:03:49.060
+It then converts scientific literature into structured JSON. The pipeline targets atmosphere,
+
+00:03:49.060 --> 00:03:54.020
+hydrology, and surface chemistry questions relevant to habitability modeling.
+
+00:03:55.060 --> 00:04:00.780
+Output quality still requires further accuracy gains before downstream digital twin use.
+
+00:04:01.580 --> 00:04:07.180
+Researchers working on scientific literature extraction should examine the multi-stage chunking
+
+00:04:07.180 --> 00:04:14.080
+and retrieval framework. Moving to agent and tool developments, Sage OPD adds selective teacher
+
+00:04:14.080 --> 00:04:20.560
+intervention. Sad, oftenance-weighted token distillation and loss normalization to on-policy
+
+00:04:20.560 --> 00:04:28.720
+distillation for multi-turn agents. On Alfworld, it delivers up to 13.3% relative improvement in unseen
+
+00:04:28.720 --> 00:04:36.220
+success rate over standard OPD. The method skips turns when environment feedback indicates no
+
+00:04:36.220 --> 00:04:41.900
+intervention is needed and reduces influence of uncertain teacher signals on corrupted histories.
+
+00:04:42.700 --> 00:04:47.980
+Agent developers facing compounding errors in long trajectories should test the turn-level
+
+00:04:47.980 --> 00:04:53.660
+selection logic. This continues the agents and tool use thread from recent episodes,
+
+00:04:54.020 --> 00:04:59.080
+where reliability of long horizon trajectories remains the central open question.
+
+00:04:59.840 --> 00:05:06.160
+Adam Memm extracts high value atomic facts from long interactions via a fact executor.
+
+00:05:06.160 --> 00:05:12.140
+It then organizes them into hierarchical event structures and temporal user profiles.
+
+00:05:12.760 --> 00:05:17.380
+Retrieval uses an associative memory graph to connect fragmented episodes.
+
+00:05:18.200 --> 00:05:23.960
+On the locomole benchmark, it reaches state-of-the-art results from multi-session reasoning tasks.
+
+00:05:24.860 --> 00:05:29.360
+Teams building personalized agents should evaluate the fact extraction step
+
+00:05:29.360 --> 00:05:35.600
+against Corsair memory representations. Cache weaver maintains a prefix tree of recently served
+
+00:05:35.600 --> 00:05:42.320
+evidence sequences. It greedily reorders retrieved documents to maximize prefix cache hits
+
+00:05:42.320 --> 00:05:53.320
+in VLLM. It reduces median TTFT by 20-33% relative to retrieval order caching across three VLLM
+
+00:05:53.320 --> 00:06:00.900
+configurations without changing answer quality. The greedy policy recovers 97.5% of an
+
+00:06:00.900 --> 00:06:07.460
+Oracle orderings gains. Rag teams hitting prefix cache misses on overlapping evidence should
+
+00:06:07.460 --> 00:06:13.660
+integrate the lightweight scheduling layer. A study on streaming tool intense stabilization measures
+
+00:06:13.660 --> 00:06:19.560
+when speculative tool queries in streaming Rag converge to the correct result before the user
+
+00:06:19.560 --> 00:06:26.440
+finishes typing. At realistic settings of 600 millisecond tool latency and three words per second
+
+00:06:26.440 --> 00:06:34.700
+input, 73.9% of Craig questions admit substantial latency hiding. Query type analysis shows early
+
+00:06:34.700 --> 00:06:40.780
+stabilization is predictable enough to justify learned triggers. Developers shipping low latency
+
+00:06:40.780 --> 00:06:45.680
+retrieval agents should examine the stabilization distribution on their own query logs.
+
+00:06:46.320 --> 00:06:52.600
+In practical and community, stage uses spreadsheet grounded LLM synthesis to create paired
+
+00:06:52.600 --> 00:06:58.760
+reports and JSON schemas. It validates every ground truth value against the source spreadsheet.
+
+00:06:59.400 --> 00:07:09.660
+On the 851 example, stage hyphen U value set it lifts quen34b exact match from 31.37%
+
+00:07:09.660 --> 00:07:17.460
+to 74.27%. The pipeline removes the usual hallucination risk in synthetic structured data
+
+00:07:17.460 --> 00:07:23.620
+creation. Teams extracting from financial or clinical documents should compare stage generated
+
+00:07:23.620 --> 00:07:30.860
+training data against purely synthetic baselines. Gems applies norm preserving superposition and real
+
+00:07:30.860 --> 00:07:37.580
+time orthogonalization so multiple non orthogonal directions can be injected into the residual
+
+00:07:37.580 --> 00:07:47.080
+stream without collapse. On GSM 8K, it preserves 98% accuracy while adding three concurrent non-mathematical
+
+00:07:47.080 --> 00:07:55.520
+directions. Un constrained addition drops to 4%. The method works across 3b to 31b models with no
+
+00:07:55.520 --> 00:08:02.240
+retraining. Alignment and control researchers should test the orthogonalization step on refusal
+
+00:08:02.240 --> 00:08:08.740
+and style vectors. Hydrahead fuses full and linear attention at head granularity rather than
+
+00:08:08.740 --> 00:08:16.080
+layer granularity. It preserves full attention only on retrieval critical heads. After a three-stage
+
+00:08:16.080 --> 00:08:23.180
+transfer pipeline, it matches a 3 to 1 layer wise hybrid's long context performance at a 7 to 1
+
+00:08:23.180 --> 00:08:32.260
+L A to F A ratio while training on only 15 B tokens. The approach yields more than 69% improvement
+
+00:08:32.260 --> 00:08:40.200
+over baseline at 512 K context. Long context model builders should study the interpretability driven
+
+00:08:40.200 --> 00:08:45.680
+head selection method. Okay, let's pop the hood on head level attention hybridization.
+
+00:08:46.220 --> 00:08:52.180
+Everyone talks about hybrid attention as a simple layer wise swap between full and linear attention.
+
+00:08:52.820 --> 00:08:58.460
+In practice, the decision is finer green because heads inside the same layer already specialize.
+
+00:08:59.240 --> 00:09:05.760
+Some focus on retrieval while others handle local patterns. Hydrahead therefore keeps full attention
+
+00:09:05.760 --> 00:09:12.280
+only on the retrieval critical heads identified through interpretability analysis. It routes the
+
+00:09:12.280 --> 00:09:18.800
+rest through linear attention. Orthogonalization prevents the distributional shift that would otherwise
+
+00:09:18.800 --> 00:09:25.520
+accumulate when mixing the two output distributions. The resulting model reaches 69% gains
+
+00:09:25.520 --> 00:09:33.460
+at 512 K context after training on just 15 B tokens. This shows that head level selection
+
+00:09:33.460 --> 00:09:40.020
+recovers most of the quality of denser hybrids at far lower cost. When your workload is retrieval
+
+00:09:40.020 --> 00:09:47.280
+heavy and context exceeds 128 K, start with head level hybridization rather than uniform layer
+
+00:09:47.280 --> 00:09:53.460
+replacement. The main gacha is that head selection must be redone when the base model or domain
+
+00:09:53.460 --> 00:10:00.360
+changes. This development moves the open weight models arc forward by narrowing the gap with closed
+
+00:10:00.360 --> 00:10:06.780
+frontier systems on long context retrieval without proportional increases in training tokens.
+
+00:10:07.500 --> 00:10:14.320
+Thanks to try this week include testing the open sourced GPU resident top K kernel on your current
+
+00:10:14.320 --> 00:10:19.840
+rag agent loop to measure tail latency reduction on repeated retrieval steps.
+
+00:10:20.600 --> 00:10:27.260
+Run Adam Mems fact executor on a multi session conversation data set and compare fact density
+
+00:10:27.260 --> 00:10:33.680
+against summary based memory baselines. Apply cache weaver's prefix tree reordering to an
+
+00:10:33.680 --> 00:10:41.080
+existing VLLM deployment handling overlapping evidence sets and record TTFT changes.
+
+00:10:41.640 --> 00:10:47.520
+Evaluate state generated JSON training data on your own extraction task before investing in
+
+00:10:47.520 --> 00:10:53.840
+manual annotation. Experiment with gems or thogonalization when steering multiple style or
+
+00:10:53.840 --> 00:11:00.780
+safety vectors simultaneously in a 7B to 13B model. On the horizon watch for production
+
+00:11:00.780 --> 00:11:06.520
+deployments of head level hybrid models once the 15B token training recipe is reproduced at
+
+00:11:06.520 --> 00:11:13.480
+larger scale. Expect more agent memory systems built around atomic facts as local mole results
+
+00:11:13.480 --> 00:11:19.820
+propagate. Monitor open source releases of selective multi turn distillation code following the
+
+00:11:19.820 --> 00:11:26.240
+sage op dash optick scale dash. Before we go keep an eye on whether streaming tool stabilization
+
+00:11:26.240 --> 00:11:32.460
+triggers appear in major agent frameworks within the next quarter. That wraps up today's AI
+
+00:11:32.460 --> 00:11:38.340
+briefing share this with a developer or builder who wants to stay current. Subscribe wherever you
+
+00:11:38.340 --> 00:11:44.420
+listen see you tomorrow and before you go this show is part of the Nerra network a family of daily
+
+00:11:44.420 --> 00:11:50.700
+podcasts covering tech science markets and more. If you enjoyed today's episode give Tesla
+
+00:11:50.700 --> 00:11:56.940
+shorts time a listen your daily deep dive into everything Tesla you can explore the whole lineup
+
+00:11:56.940 --> 00:12:04.940
+at narennetwork.com this episode used AI voice synthesis of my voice editorial selection and
+
+00:12:04.940 --> 00:12:06.300
+analysis are my own.

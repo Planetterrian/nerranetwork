@@ -744,6 +744,63 @@
             margin: 0.35rem 0 0;
         }
         .nn-iv-provenance span { white-space: nowrap; }
+        /* Episode provenance (Oct 2026): the one line under the AI badge on
+           a news post, from engine.brand.episode_provenance_parts, plus the
+           "Report an error" link beside it. Same type as the interview
+           provenance so the two shows read as one network. */
+        .nn-ep-provenance { text-align: center; }
+        .nn-ep-provenance a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .nn-ep-provenance a:hover { text-decoration: underline; }
+        /* Verified-claims panel: a collapsed list under Sources, one row per
+           claim with a link to the source it was checked against. Reuses
+           the transcript box's summary idiom (no marker, +/− at the end). */
+        .blog-claims { margin-top: var(--sp-6); }
+        .blog-claims details summary {
+            display: flex; align-items: center; gap: var(--sp-2);
+            cursor: pointer; padding: var(--sp-3) 0; list-style: none;
+            font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600;
+            color: var(--nn-white);
+        }
+        .blog-claims details summary::-webkit-details-marker { display: none; }
+        .blog-claims details summary::after {
+            content: '+'; margin-left: auto; font-size: 1.2rem; color: var(--nn-text-muted);
+        }
+        .blog-claims details[open] summary::after { content: '\2212'; }
+        .blog-claims .claims-note, .blog-claims .claims-none {
+            font-family: var(--font-ui); font-size: 0.85rem; color: var(--nn-text-muted);
+            line-height: 1.6; margin: 0 0 var(--sp-2);
+        }
+        .blog-claims ol { list-style: none; padding: 0; margin: var(--sp-2) 0 0; }
+        .blog-claims li {
+            padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-2);
+            background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 10px;
+            font-size: 0.95rem; line-height: 1.6;
+        }
+        .blog-claims .claim-source {
+            display: block; margin-top: 4px; font-family: var(--font-ui); font-size: 0.8rem;
+        }
+        .blog-claims .claim-source a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claim-source a:hover { text-decoration: underline; }
+        .blog-claims .claim-why { display: block; font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-top: 2px; }
+        .blog-claims .claims-flagged-count { font-weight: 400; color: var(--nn-text-muted); font-size: 0.9em; }
+        .blog-claims .claims-ledger-link { font-family: var(--font-ui); font-size: 0.85rem; margin: var(--sp-3) 0 0; }
+        .blog-claims .claims-ledger-link a, .blog-claims .claims-none a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claims-ledger-link a:hover, .blog-claims .claims-none a:hover { text-decoration: underline; }
+        /* Correction box (engine.corrections): dated, at the top of the
+           article, before a reader meets the sentence that was wrong. */
+        .nn-correction {
+            margin: 0 0 var(--sp-6); padding: var(--sp-4) var(--sp-5);
+            border: 1px solid var(--show-color); border-left-width: 4px; border-radius: 10px;
+            background: var(--nn-card); font-size: 0.95rem; line-height: 1.6;
+        }
+        .nn-correction .nn-correction-label {
+            font-family: var(--font-ui); font-size: 0.75rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--show-color-text, var(--show-color)); margin: 0 0 var(--sp-1);
+        }
+        .nn-correction p { margin: 0 0 var(--sp-2); }
+        .nn-correction p:last-child { margin-bottom: 0; }
+        .nn-correction .nn-correction-where { font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); }
         .nn-iv-blurb-label {
             font-family: var(--font-ui);
             font-size: 0.72rem;
@@ -1477,6 +1534,7 @@
                         <a href="../../gallery.html">Image Gallery</a>
                         <a href="../../data.html">Data & Dashboards</a>
                         <a href="../../editorial.html">Editorial Process</a>
+                        <a href="../../claims.html">Claims &amp; corrections</a>
                         <a href="../../faq.html">FAQ</a>
                         <a href="../../press.html">Press Kit</a>
                         <a href="../../support.html">Support the Network</a>
@@ -1895,6 +1953,7 @@
             <a href="../../gallery.html" class="nn-mobile-show-link">Image Gallery</a>
             <a href="../../data.html" class="nn-mobile-show-link">Data & Dashboards</a>
             <a href="../../editorial.html" class="nn-mobile-show-link">Editorial Process</a>
+            <a href="../../claims.html" class="nn-mobile-show-link">Claims &amp; corrections</a>
             <a href="../../faq.html" class="nn-mobile-show-link">FAQ</a>
             <a href="../../support.html" class="nn-mobile-show-link">Support the Network</a>
         </div>
@@ -2075,6 +2134,87 @@
                     </a>
                     
                 </div>
+            </section>
+            
+            
+            
+            <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
+                
+                <details>
+                    <summary>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Verified claims (16)
+                    </summary>
+                    <p class="claims-note">Each claim below was checked by a machine before publication: its source was fetched and the supporting quote looked for in it. A claim the check could not confirm is published and marked, not removed, and re-checked nightly for a week.</p>
+                    <ol>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> President Prabowo Subianto has moved to replace national police chief Listyo Sigit Prabowo with National Narcotics Agency head Suyudi Ario Seto.
+                            <span class="claim-source"><a href="https://www.channelnewsasia.com/asia/indonesia-new-police-chief-suyudi-ario-seto-6423421" target="_blank" rel="noopener" title="President Prabowo replaces Indonesia police chief Listyo Sigit with narcotics agency head">channelnewsasia.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The presidential letter proposing the police-chief change was dated September 30.
+                            <span class="claim-source"><a href="https://www.channelnewsasia.com/asia/indonesia-new-police-chief-suyudi-ario-seto-6423421" target="_blank" rel="noopener" title="President Prabowo replaces Indonesia police chief Listyo Sigit with narcotics agency head">channelnewsasia.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> House Speaker Puan Maharani said Suyudi would be formally appointed on Thursday afternoon.
+                            <span class="claim-source"><a href="https://www.channelnewsasia.com/asia/indonesia-new-police-chief-suyudi-ario-seto-6423421" target="_blank" rel="noopener" title="President Prabowo replaces Indonesia police chief Listyo Sigit with narcotics agency head">channelnewsasia.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> All factions in Commission III agreed by consensus to the police-chief replacement process.
+                            <span class="claim-source"><a href="https://www.channelnewsasia.com/asia/indonesia-new-police-chief-suyudi-ario-seto-6423421" target="_blank" rel="noopener" title="President Prabowo replaces Indonesia police chief Listyo Sigit with narcotics agency head">channelnewsasia.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Listyo has been national police chief for over five years and is the second-longest serving holder of the post.
+                            <span class="claim-source"><a href="https://www.channelnewsasia.com/asia/indonesia-new-police-chief-suyudi-ario-seto-6423421" target="_blank" rel="noopener" title="President Prabowo replaces Indonesia police chief Listyo Sigit with narcotics agency head">channelnewsasia.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Narendra Modi spoke on Thursday with Captain Smit Machchhar's wife and parents.
+                            <span class="claim-source"><a href="https://www.newindianexpress.com/india/2026/Oct/01/pm-modi-speaks-to-captain-smit-machchhars-family-hails-injured-pilot-as-hero" target="_blank" rel="noopener" title="PM Modi speaks to Captain Smit Machchhar's family, hails injured pilot as 'hero'">newindianexpress.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Flight FZ1073 descended more than 17,000 feet from 34,000 feet and diverted to Tabuk with 174 passengers, including 27 children.
+                            <span class="claim-source"><a href="https://www.newindianexpress.com/india/2026/Oct/01/pm-modi-speaks-to-captain-smit-machchhars-family-hails-injured-pilot-as-hero" target="_blank" rel="noopener" title="PM Modi speaks to Captain Smit Machchhar's family, hails injured pilot as 'hero'">newindianexpress.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> President Lee Jae Myung will request a National Assembly confirmation hearing for SCIA nominee Kim Ji-yong.
+                            <span class="claim-source"><a href="https://en.yna.co.kr/view/AEN20261001007700315" target="_blank" rel="noopener" title="President to request confirmation hearing for embattled nominee for chief of investigation bureau">en.yna.co.kr</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The Philippine Coast Guard deployed a 97-metre ship and an aircraft against a Chinese vessel in waters near Taiwan.
+                            <span class="claim-source"><a href="https://www.straitstimes.com/asia/philippines-sends-largest-ship-aircraft-to-drive-away-chinese-vessel-in-waters-near-taiwan" target="_blank" rel="noopener" title="Philippines sends largest ship, aircraft to drive away Chinese vessel in waters near Taiwan">straitstimes.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> An Alice Springs bus service to remote Indigenous communities is reducing routes after a funding cut.
+                            <span class="claim-source"><a href="https://www.abc.net.au/news/2026-10-01/nt-cuts-to-essential-bus-service-in-alice-springs/107211124" target="_blank" rel="noopener" title="NT remote Indigenous bus service reduces routes after funding cut">abc.net.au</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The Malaysian Medical Association raised concern about high doctor no-show rates in Sabah and Sarawak and urged a percentage-based allowance and incentives.
+                            <span class="claim-source"><a href="https://www.scmp.com/news/asia/southeast-asia/article/3369426/malaysian-medical-body-raises-alarm-over-high-doctor-no-show-rate-sabah-sarawak?utm_source=rss_feed" target="_blank" rel="noopener" title="Malaysian medical body raises alarm over high doctor ‘no-show’ rate in Sabah, Sarawak">scmp.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> South Korea's labour ministry said it found 473 legal violations at Hanwha Aerospace's Daejeon plant.
+                            <span class="claim-source"><a href="https://en.yna.co.kr/view/AEN20261001007100315" target="_blank" rel="noopener" title="473 legal violations found at Hanwha Aerospace's Daejeon plant">en.yna.co.kr</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The United States and China extended a trade truce until January 10 and agreed to cut tariffs on up to 30 billion dollars of goods each way.
+                            <span class="claim-source"><a href="https://dominotheory.com/who-is-winning-the-u-s-china-trade-war/" target="_blank" rel="noopener" title="Who Is Winning the U.S.-China Trade War?">dominotheory.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Since 2018 the U.S. goods deficit with China fell 52 percent to 202.1 billion dollars, while the deficit with Vietnam rose 351 percent to 178.2 billion dollars.
+                            <span class="claim-source"><a href="https://dominotheory.com/who-is-winning-the-u-s-china-trade-war/" target="_blank" rel="noopener" title="Who Is Winning the U.S.-China Trade War?">dominotheory.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> India's Home Ministry constituted the High-Level Committee on Demographic Changes on May 26 under retired Supreme Court judge Prakash Prabhakar Naolekar.
+                            <span class="claim-source"><a href="https://www.thehindu.com/news/national/conundrum-over-panels-questionnaire-seeking-extensive-data-on-demographic-changes-explained/article71523595.ece" target="_blank" rel="noopener" title="Conundrum over demography panel’s questionnaire seeking extensive data | Explained">thehindu.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Kim Jong-ho won men's individual compound archery gold, beating Chang Cheng-Wei 149-145.
+                            <span class="claim-source"><a href="https://en.yna.co.kr/view/AEN20261001008100315" target="_blank" rel="noopener" title="(Asiad) Kim Jong-ho wins men's individual gold in compound archery">en.yna.co.kr</a></span>
+                        </li>
+                    </ol>
+                    <p class="claims-ledger-link"><a href="../../claims/omni_view_asia_pacific.html">Full ledger for this show →</a></p>
+                </details>
+                
             </section>
             
 
@@ -2281,10 +2421,13 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v4h1"/></svg>
   Made with AI — transparently
 </a>
-            </div><div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
+            </div>
+            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 10 sources</span><span aria-hidden="true"> · </span><span>16 claims checked against their sources</span><span aria-hidden="true"> · </span><span>hosted by an AI, voiced with Grok TTS</span><span aria-hidden="true"> · </span><a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20Omni%20View%20Asia%20Pacific%20Ep9&body=Re%3A%20https%3A//nerranetwork.com/blog/omni_view_asia_pacific/ep009.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
+            </p>
+            <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>👋 Did this episode land?</span>
-                <a href="mailto:patrick@planetterrian.com?subject=I%20liked%20Omni%20View%20Asia%20Pacific%20Ep9&body=Re: https://nerranetwork.com/blog/omni_view_asia_pacific/ep009.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
-                <a href="mailto:patrick@planetterrian.com?subject=Suggestion%20for%20Omni%20View%20Asia%20Pacific&body=Re: https://nerranetwork.com/blog/omni_view_asia_pacific/ep009.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
+                <a href="mailto:hello@nerranetwork.com?subject=I%20liked%20Omni%20View%20Asia%20Pacific%20Ep9&body=Re: https://nerranetwork.com/blog/omni_view_asia_pacific/ep009.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
+                <a href="mailto:hello@nerranetwork.com?subject=Suggestion%20for%20Omni%20View%20Asia%20Pacific&body=Re: https://nerranetwork.com/blog/omni_view_asia_pacific/ep009.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
             </div>
 
             <!-- Subscribe CTA (Worker-backed — no Buttondown popup / fake 500ms success) -->
@@ -2320,12 +2463,10 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
                 </a>
                 
                 
-                <div class="next nav-next-placeholder" style="text-align:right;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.92rem;">
-                    <span class="nav-label">Tomorrow →</span>
-                    <span class="nav-title">New episode tomorrow</span>
-                    <a href="#subscribe-cta" style="font-size:0.82rem;color:var(--show-color-text, var(--show-color));text-decoration:none;display:block;margin-top:4px;">Subscribe so you don't miss it &rarr;</a>
-                </div>
-                
+                <a href="ep010.html" rel="next" class="next">
+                    <span class="nav-label">Next &rarr;</span>
+                    <span class="nav-title">Episode 10</span>
+                </a>
                 
             </nav>
             
@@ -2486,6 +2627,7 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
                     <a href="../../contact.html">Contact</a>
                     <a href="../../press.html">Press Kit</a>
                     <a href="../../editorial.html">Editorial Process</a>
+                    <a href="../../claims.html">Claims &amp; corrections</a>
                     <a href="../../ai-disclosure.html">AI Disclosure</a>
                     <a href="../../privacy-policy.html">Privacy Policy</a>
                     <a href="../../terms-of-service.html">Terms of Service</a>
@@ -2590,7 +2732,7 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
                         <button type="submit">Subscribe</button>
                     </div>
                     <p style="margin-top:0.5rem;font-size:0.85rem;">
-                        <a href="../../personal-interest.html">Soft Personal — tips &amp; reminder (no charge) →</a>
+                        <a href="../../personal-interest.html">Personal tips by email — no charge →</a>
                         <span style="opacity:0.5;margin:0 0.35rem;">·</span>
                         <a href="../../join.html">Or start Nerra Personal →</a>
                         <a class="nn-account-link" href="../../account.html" style="display:none;margin-left:0.75rem;">Your account →</a>

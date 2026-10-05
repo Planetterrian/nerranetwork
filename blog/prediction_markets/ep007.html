@@ -744,6 +744,63 @@
             margin: 0.35rem 0 0;
         }
         .nn-iv-provenance span { white-space: nowrap; }
+        /* Episode provenance (Oct 2026): the one line under the AI badge on
+           a news post, from engine.brand.episode_provenance_parts, plus the
+           "Report an error" link beside it. Same type as the interview
+           provenance so the two shows read as one network. */
+        .nn-ep-provenance { text-align: center; }
+        .nn-ep-provenance a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .nn-ep-provenance a:hover { text-decoration: underline; }
+        /* Verified-claims panel: a collapsed list under Sources, one row per
+           claim with a link to the source it was checked against. Reuses
+           the transcript box's summary idiom (no marker, +/− at the end). */
+        .blog-claims { margin-top: var(--sp-6); }
+        .blog-claims details summary {
+            display: flex; align-items: center; gap: var(--sp-2);
+            cursor: pointer; padding: var(--sp-3) 0; list-style: none;
+            font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600;
+            color: var(--nn-white);
+        }
+        .blog-claims details summary::-webkit-details-marker { display: none; }
+        .blog-claims details summary::after {
+            content: '+'; margin-left: auto; font-size: 1.2rem; color: var(--nn-text-muted);
+        }
+        .blog-claims details[open] summary::after { content: '\2212'; }
+        .blog-claims .claims-note, .blog-claims .claims-none {
+            font-family: var(--font-ui); font-size: 0.85rem; color: var(--nn-text-muted);
+            line-height: 1.6; margin: 0 0 var(--sp-2);
+        }
+        .blog-claims ol { list-style: none; padding: 0; margin: var(--sp-2) 0 0; }
+        .blog-claims li {
+            padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-2);
+            background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 10px;
+            font-size: 0.95rem; line-height: 1.6;
+        }
+        .blog-claims .claim-source {
+            display: block; margin-top: 4px; font-family: var(--font-ui); font-size: 0.8rem;
+        }
+        .blog-claims .claim-source a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claim-source a:hover { text-decoration: underline; }
+        .blog-claims .claim-why { display: block; font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-top: 2px; }
+        .blog-claims .claims-flagged-count { font-weight: 400; color: var(--nn-text-muted); font-size: 0.9em; }
+        .blog-claims .claims-ledger-link { font-family: var(--font-ui); font-size: 0.85rem; margin: var(--sp-3) 0 0; }
+        .blog-claims .claims-ledger-link a, .blog-claims .claims-none a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claims-ledger-link a:hover, .blog-claims .claims-none a:hover { text-decoration: underline; }
+        /* Correction box (engine.corrections): dated, at the top of the
+           article, before a reader meets the sentence that was wrong. */
+        .nn-correction {
+            margin: 0 0 var(--sp-6); padding: var(--sp-4) var(--sp-5);
+            border: 1px solid var(--show-color); border-left-width: 4px; border-radius: 10px;
+            background: var(--nn-card); font-size: 0.95rem; line-height: 1.6;
+        }
+        .nn-correction .nn-correction-label {
+            font-family: var(--font-ui); font-size: 0.75rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--show-color-text, var(--show-color)); margin: 0 0 var(--sp-1);
+        }
+        .nn-correction p { margin: 0 0 var(--sp-2); }
+        .nn-correction p:last-child { margin-bottom: 0; }
+        .nn-correction .nn-correction-where { font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); }
         .nn-iv-blurb-label {
             font-family: var(--font-ui);
             font-size: 0.72rem;
@@ -1477,6 +1534,7 @@
                         <a href="../../gallery.html">Image Gallery</a>
                         <a href="../../data.html">Data & Dashboards</a>
                         <a href="../../editorial.html">Editorial Process</a>
+                        <a href="../../claims.html">Claims &amp; corrections</a>
                         <a href="../../faq.html">FAQ</a>
                         <a href="../../press.html">Press Kit</a>
                         <a href="../../support.html">Support the Network</a>
@@ -1895,6 +1953,7 @@
             <a href="../../gallery.html" class="nn-mobile-show-link">Image Gallery</a>
             <a href="../../data.html" class="nn-mobile-show-link">Data & Dashboards</a>
             <a href="../../editorial.html" class="nn-mobile-show-link">Editorial Process</a>
+            <a href="../../claims.html" class="nn-mobile-show-link">Claims &amp; corrections</a>
             <a href="../../faq.html" class="nn-mobile-show-link">FAQ</a>
             <a href="../../support.html" class="nn-mobile-show-link">Support the Network</a>
         </div>
@@ -2049,6 +2108,87 @@
                     </a>
                     
                 </div>
+            </section>
+            
+            
+            
+            <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
+                
+                <details>
+                    <summary>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Verified claims (16)
+                    </summary>
+                    <p class="claims-note">Each claim below was checked by a machine before publication: its source was fetched and the supporting quote looked for in it. A claim the check could not confirm is published and marked, not removed, and re-checked nightly for a week.</p>
+                    <ol>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The Block reports that Coinbase received DCO approval from the CFTC, completing its derivatives infrastructure so it can list, broker, and clear fully collateralized products in-house.
+                            <span class="claim-source"><a href="https://www.theblock.co/news/business/2026-09-28-coinbase-dco-approval-417105" target="_blank" rel="noopener" title="Coinbase receives DCO approval from CFTC, completing full derivatives stack">theblock.co</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> G2E 2026 opened its exhibition floor Tuesday in Las Vegas with more than 25,000 professionals and more than 400 exhibitors, running through October 1 at The Venetian Expo.
+                            <span class="claim-source"><a href="https://www.yogonet.com/international/news/2026/09/29/126611-g2e-2026-opens-in-las-vegas-with-prediction-markets-ai-and-new-gaming-technology-in-focus" target="_blank" rel="noopener" title="G2E 2026 opens in Las Vegas with prediction markets, AI and new gaming technology in focus">yogonet.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> G2E is presented by the American Gaming Association and organized by RX, with attendees expected from more than 120 countries, regions and territories.
+                            <span class="claim-source"><a href="https://www.yogonet.com/international/news/2026/09/29/126611-g2e-2026-opens-in-las-vegas-with-prediction-markets-ai-and-new-gaming-technology-in-focus" target="_blank" rel="noopener" title="G2E 2026 opens in Las Vegas with prediction markets, AI and new gaming technology in focus">yogonet.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Kalshi is not exhibiting at G2E 2026.
+                            <span class="claim-source"><a href="https://www.yogonet.com/international/news/2026/09/29/126611-g2e-2026-opens-in-las-vegas-with-prediction-markets-ai-and-new-gaming-technology-in-focus" target="_blank" rel="noopener" title="G2E 2026 opens in Las Vegas with prediction markets, AI and new gaming technology in focus">yogonet.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> A G2E main-stage session titled The Power of Unity: Confronting the Prediction Markets Challenge includes Gwen Mills, Rodney Butler, Steven Horsford, and Bill Miller.
+                            <span class="claim-source"><a href="https://www.yogonet.com/international/news/2026/09/29/126611-g2e-2026-opens-in-las-vegas-with-prediction-markets-ai-and-new-gaming-technology-in-focus" target="_blank" rel="noopener" title="G2E 2026 opens in Las Vegas with prediction markets, AI and new gaming technology in focus">yogonet.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Nevada regulators have argued that prediction-market operators are offering sports betting without complying with the state's gaming framework.
+                            <span class="claim-source"><a href="https://www.yogonet.com/international/news/2026/09/29/126611-g2e-2026-opens-in-las-vegas-with-prediction-markets-ai-and-new-gaming-technology-in-focus" target="_blank" rel="noopener" title="G2E 2026 opens in Las Vegas with prediction markets, AI and new gaming technology in focus">yogonet.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Bernstein analyst Gautam Chhugani's team estimates prediction-market volume could top $10 trillion by 2035 and forecasts $410 billion this year.
+                            <span class="claim-source"><a href="https://finance.yahoo.com/markets/crypto/articles/bernstein-forecasts-annual-prediction-market-103000967.html" target="_blank" rel="noopener" title="Bernstein Forecasts Annual Prediction Market Volume Will Top $10 Trillion by 2035">finance.yahoo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Bernstein forecasts cryptocurrencies, stocks and commodities rising from 12 percent of prediction-market volume in 2025 to nearly half by 2035.
+                            <span class="claim-source"><a href="https://finance.yahoo.com/markets/crypto/articles/bernstein-forecasts-annual-prediction-market-103000967.html" target="_blank" rel="noopener" title="Bernstein Forecasts Annual Prediction Market Volume Will Top $10 Trillion by 2035">finance.yahoo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Crypto bets on Kalshi rose from less than 5 percent of total volume in January to roughly 20 percent by August, and crypto was 21 percent of Polymarket volume while sports betting rose and politics betting declined.
+                            <span class="claim-source"><a href="https://finance.yahoo.com/markets/crypto/articles/bernstein-forecasts-annual-prediction-market-103000967.html" target="_blank" rel="noopener" title="Bernstein Forecasts Annual Prediction Market Volume Will Top $10 Trillion by 2035">finance.yahoo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Gautam Chhugani wrote that Bernstein expects KPI markets allowing users to trade a single corporate metric rather than the stock price.
+                            <span class="claim-source"><a href="https://finance.yahoo.com/markets/crypto/articles/bernstein-forecasts-annual-prediction-market-103000967.html" target="_blank" rel="noopener" title="Bernstein Forecasts Annual Prediction Market Volume Will Top $10 Trillion by 2035">finance.yahoo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> On Polymarket, read at 2026-09-29 11:20 UTC, Magdalena Andersson was at a 75.5 percent implied probability to be the next prime minister of Sweden, with 24-hour volume of $460,000.
+                            <span class="claim-source"><a href="https://polymarket.com/event/next-prime-minister-of-sweden" target="_blank" rel="noopener" title="Polymarket: Next Prime Minister of Sweden">polymarket.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> On Polymarket, read at 2026-09-29 11:20 UTC, Flávio Bolsonaro was at a 58.1 percent implied probability in the Brazil presidential election market, with 24-hour volume of $738,000.
+                            <span class="claim-source"><a href="https://polymarket.com/event/brazil-presidential-election" target="_blank" rel="noopener" title="Polymarket: Brazil Presidential Election">polymarket.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> On Polymarket, read at 2026-09-29 11:20 UTC, Marine Le Pen was at a 39.5 percent implied probability in the next French presidential election market, with 24-hour volume of $720,000.
+                            <span class="claim-source"><a href="https://polymarket.com/event/next-french-presidential-election" target="_blank" rel="noopener" title="Polymarket: Next French Presidential Election">polymarket.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> On Manifold, read at 2026-09-29 11:20 UTC, a play-money market on whether another millennium prize problem will be solved in 2026 showed a 50.1 percent implied probability on Yes, with 24-hour volume of 10,000 mana.
+                            <span class="claim-source"><a href="https://manifold.markets/HumanClanker/will-another-millennium-prize-probl" target="_blank" rel="noopener" title="Manifold: Will ANOTHER millennium prize problem be solved in 2026?">manifold.markets</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> An ACM Computing Surveys paper classifies blockchain oracle implementations into voting-based strategies that rely mainly on participants' stakes and reputation-based strategies that use reputation, performance metrics, and authenticity-proof mechanisms.
+                            <span class="claim-source"><a href="https://doi.org/10.1145/3567582" target="_blank" rel="noopener" title="Connect API with Blockchain: A Survey on Blockchain Oracle Implementation">doi.org</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> An arXiv paper finds that adjusting prediction-market prices by an implied settlement-discount curve reduces the near-certainty horizon gradient by roughly 48 to 88 percent.
+                            <span class="claim-source"><a href="https://arxiv.org/abs/2605.31431v1" target="_blank" rel="noopener" title="When Certainty Is Not Worth It: Capital Lock-Up and Settlement Discounting in Prediction Markets">arxiv.org</a></span>
+                        </li>
+                    </ol>
+                    <p class="claims-ledger-link"><a href="../../claims/prediction_markets.html">Full ledger for this show →</a></p>
+                </details>
+                
             </section>
             
 
@@ -2263,10 +2403,13 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v4h1"/></svg>
   Made with AI — transparently
 </a>
-            </div><div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
+            </div>
+            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 9 sources</span><span aria-hidden="true"> · </span><span>16 claims checked against their sources</span><span aria-hidden="true"> · </span><span>voiced with Grok TTS</span><span aria-hidden="true"> · </span><a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20Prediction%20Markets%20Daily%20Ep7&body=Re%3A%20https%3A//nerranetwork.com/blog/prediction_markets/ep007.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
+            </p>
+            <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>👋 Did this episode land?</span>
-                <a href="mailto:patrick@planetterrian.com?subject=I%20liked%20Prediction%20Markets%20Daily%20Ep7&body=Re: https://nerranetwork.com/blog/prediction_markets/ep007.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
-                <a href="mailto:patrick@planetterrian.com?subject=Suggestion%20for%20Prediction%20Markets%20Daily&body=Re: https://nerranetwork.com/blog/prediction_markets/ep007.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
+                <a href="mailto:hello@nerranetwork.com?subject=I%20liked%20Prediction%20Markets%20Daily%20Ep7&body=Re: https://nerranetwork.com/blog/prediction_markets/ep007.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
+                <a href="mailto:hello@nerranetwork.com?subject=Suggestion%20for%20Prediction%20Markets%20Daily&body=Re: https://nerranetwork.com/blog/prediction_markets/ep007.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
             </div>
 
             <!-- Subscribe CTA (Worker-backed — no Buttondown popup / fake 500ms success) -->
@@ -2322,6 +2465,8 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 <div style="display:flex;flex-wrap:wrap;gap:.6rem;">
                     
                     <a href="../../topics/markets.html" style="display:inline-flex;align-items:center;padding:.5rem .9rem;border-radius:10px;border:1px solid color-mix(in srgb, var(--show-color), transparent 60%);color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;font-size:.9rem;">Markets and investing</a>
+                    
+                    <a href="../../topics/prediction-markets.html" style="display:inline-flex;align-items:center;padding:.5rem .9rem;border-radius:10px;border:1px solid color-mix(in srgb, var(--show-color), transparent 60%);color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;font-size:.9rem;">Prediction markets</a>
                     
                     <a href="../../topics/index.html" style="display:inline-flex;align-items:center;padding:.5rem .9rem;border-radius:10px;border:1px solid var(--nn-border);color:var(--nn-text-muted);text-decoration:none;font-size:.9rem;">All topics</a>
                 </div>
@@ -2466,6 +2611,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                     <a href="../../contact.html">Contact</a>
                     <a href="../../press.html">Press Kit</a>
                     <a href="../../editorial.html">Editorial Process</a>
+                    <a href="../../claims.html">Claims &amp; corrections</a>
                     <a href="../../ai-disclosure.html">AI Disclosure</a>
                     <a href="../../privacy-policy.html">Privacy Policy</a>
                     <a href="../../terms-of-service.html">Terms of Service</a>
@@ -2570,7 +2716,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         <button type="submit">Subscribe</button>
                     </div>
                     <p style="margin-top:0.5rem;font-size:0.85rem;">
-                        <a href="../../personal-interest.html">Soft Personal — tips &amp; reminder (no charge) →</a>
+                        <a href="../../personal-interest.html">Personal tips by email — no charge →</a>
                         <span style="opacity:0.5;margin:0 0.35rem;">·</span>
                         <a href="../../join.html">Or start Nerra Personal →</a>
                         <a class="nn-account-link" href="../../account.html" style="display:none;margin-left:0.75rem;">Your account →</a>

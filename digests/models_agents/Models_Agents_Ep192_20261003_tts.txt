@@ -1,0 +1,187 @@
+Apple is requiring more explicit user action before A I agents can access full disk data on Macs, raising the bar for agent permissions.
+
+This is Models and Agents, episode one hundred ninety-two.
+
+Apple is tightening privacy controls on Mac computers as increasingly capable artificial intelligence agents gain access to sensitive user data.
+
+The company announced on Friday that it will introduce additional safeguards around its Full Disk Access feature.
+
+The change requires more explicit user action before an app can obtain broad access to files, messages, mail and other data.
+
+Apple said that Full Disk Access is a powerful macOS capability that largely bypasses the operating system’s normal privacy protections.
+
+The feature exists in part because certain applications, particularly backup services, need broad access to a Mac’s data to function properly.
+
+However, Apple said some developers are using the capability in ways that could expose users to privacy risks.
+
+As A I agents become increasingly capable and autonomous, the risks associated with this level of access will grow substantially.
+
+Apple directly tied the planned changes to the rapid development of autonomous A I agents.
+
+The company said an application with this level of access can potentially reach virtually everything stored on a Mac, including files, mail, messages and browsing history.
+
+Going forward, Apple said it will introduce additional controls so users who want to grant an application Full Disk Access must take a more explicit action to do so.
+
+Apple shares ended with gains of about two percent in Friday’s regular trade, while Meta shares gained zero point three percent.
+
+In model updates, Qwen Flash Next now uses less VRAM thanks to a new pull request.
+
+The qwen4exp change halves the indexer score memory for the model.
+
+The update targets memory usage during inference for the Qwen family.
+
+Unitree Robotics released UnifoLM-WLA-1.0, their new general-purpose humanoid foundation model.
+
+It carries six billion parameters trained on approximately two thousand five hundred hours of real robot data.
+
+One model handles sixty four tasks consisting of ten whole-body and fifty four tabletop actions.
+
+It supports parallel grippers and two different dexterous hands.
+
+The model shows strong spatial reasoning that beats many open-source models on embodied benchmarks.
+
+Architecture starts with UnifoLM-ER-1 embodied reasoner based on Qwen3-VL.
+
+It adds future dynamic region prediction via optical flow plus VQ-VAE.
+
+Actions are discretized with residual VQ for end-effector, hand and lower body.
+
+An MMDiT action expert is added on top for continuous control.
+
+Demos show the Unitree G1 making the bed, loading the washing machine, folding clothes and sorting objects.
+
+An agentic model from Microsoft called FrogNano targets the G P U poor.
+
+FrogNano is derived from Qwen/Qwen3.5-4B.
+
+It inherits the dense thirty two layer hybrid Gated DeltaNet and gated-attention architecture.
+
+The model is further trained using reinforcement learning on approximately one thousand five hundred synthetic SWE task environments generated and calibrated against the evolving policy using TaskPilot.
+
+Training uses the five-tool Leaf harness and executable test-based rewards over complete multi-turn coding trajectories.
+
+The additional post-training targets long-horizon repository navigation, debugging, code editing, test execution and patch generation.
+
+Performance is sensitive to the Leaf harness and test quality.
+
+Training data are Python-heavy and primarily English.
+
+Generated patches may be incorrect or insecure despite passing available tests.
+
+Benchmarking used a llama.cpp based expert streaming setup for Qwen3.8-Flash-Next 177B in UD-IQ3_XXS on Windows.
+
+The benchmark reached eleven point five tokens per second, up from roughly seven tokens per second on the inherited setup.
+
+Normal conversations reached fourteen to fifteen tokens per second.
+
+A long coding prompt generated four thousand eight hundred ninety two tokens at ten point fifteen tokens per second and produced a working single-file Snake game.
+
+Hardware consisted of RTX fifty seventy twelve GB, thirty two GB DDR4-2400, Ryzen five 5600GT on PCIe Gen3 under Windows.
+
+Main gains came from fixing Windows I O queue-depth issues, using one file handle per worker, and building a page-locked hot-expert tier.
+
+In agent and tool developments, mlsubgen generates subtitles in forty five languages entirely on your own machine.
+
+It detects the language of every stretch of speech rather than per file so mixed-language material works.
+
+It runs two speech recognisers on everything and has a local L L M reconcile them.
+
+It prefers existing human work to machine inference, embedded subtitle tracks are used before the audio is, including OCR of bitmap PGS tracks on Blu-ray remuxes, and it only listens when there is nothing to read.
+
+Every feature has a measured accuracy in the README.
+
+It runs on a twenty four GB RTX A5000 with profiles for sixteen, twelve and eight GB cards.
+
+It wants sixteen to thirty two GB of system RAM depending on the profile and is storage-hungry with thirty to sixty five GB of models.
+
+It is slow when it has to listen, roughly real time per target language on the test card.
+
+MegaCapybara is a purpose-built engine for RTX fifty ninety focused on Qwen3.8 twenty seven B.
+
+It beats Ninfer by roughly twice in decode speed for both single and multi tasks.
+
+It reaches up to six hundred fifty tokens per second in small bursts and two thousand six hundred tokens per second if stars align with twelve slots server pure coding answer.
+
+Custom kernels switch dynamically for short versus long context.
+
+It includes Dflash2 and confidence scheduling from Dspark plus draft trees.
+
+Weights come with attached metadata that runs benchmark and compares at every setting to original BF16 weights.
+
+The engine shows lost KL and top-one percent when switching KV to four bit or extending with YARN.
+
+It supports up to one million context and twelve slots for agents.
+
+Proper cache management keeps prefill almost unused after initial job start.
+
+Unified context swaps tasks to RAM instantly in zero point zero three seconds when context runs out.
+
+In practical and community news, Grayscale reports that the A I focused crypto sector gained fifty four percent in September.
+
+The sector remains the smallest of six crypto categories at roughly fifteen billion dollars.
+
+Grayscale sees potential for blockchain networks to support A I agents through payments, identity, private computing and verifiable data.
+
+NEAR rose one hundred eighty three percent, Bittensor gained thirty seven percent, World advanced forty seven percent and Venice climbed seventy percent.
+
+The report argues public blockchains can complement centralized A I systems by supplying infrastructure that conventional platforms may struggle to provide independently.
+
+Unlike traditional applications that generally perform a defined set of functions, A I agents can interpret instructions, make decisions and take multiple actions on a user's behalf.
+
+The company is committed to ensuring users clearly understand these risks before granting such access.
+
+IQ3_XXS weights are just under eighty GB.
+
+Slow DDR4 plus seven thousand nine hundred XTX stabilizes around forty five to seventy tokens per second, sometimes higher while coding depending on mtp.
+
+Similar results appear for users with twelve GB and sixteen GB cards.
+
+Significantly faster numbers appear for owners of DDR5.
+
+Llama CPP with tuning maxed out around twenty two point five tokens per second on the same rig.
+
+Quality seems reliably superior though Q two weights are not recommended.
+
+Pop the hood on sparse memory access in agentic systems and the gap between how people imagine memory working in large models and how it actually scales shows up in the difference between fixed expert counts and truly dynamic indexing.
+
+In practice each token only needs to touch a small number of memory cells even as the total memory grows without bound.
+
+The model learns to index individual cells so that access cost stays constant rather than linear.
+
+This design separates the intelligence module, which stays fixed in size, from the memory store that can keep growing.
+
+When memory holds both facts and procedures new capabilities appear without any weight updates.
+
+The practical rule is to use this approach when your workload involves long-horizon tasks that benefit from accumulating skills over time rather than static knowledge retrieval.
+
+The intelligence module performs computation while memory holds knowledge, procedures and working state.
+
+Every token reads from and writes to an unbounded memory yet touches only a small number of cells at a time.
+
+Sparse architectures that fix the fraction of capacity used at each step cannot match this flexibility.
+
+The approach trades increased indexing complexity for unbounded growth without rising access cost.
+
+Try mlsubgen for generating multilingual subtitles on local hardware if you work with mixed-language video content.
+
+Check out the qwen4exp pull request if you are running Qwen Flash Next models and want to reduce VRAM usage.
+
+Experiment with Unitree's UnifoLM-WLA-1.0 if you are exploring embodied A I on humanoid robots.
+
+Test MegaCapybara on an RTX fifty ninety if you need high-speed multi-agent serving for Qwen3.8 twenty seven B.
+
+More updates to Mac privacy controls for A I agents are expected in coming weeks.
+
+Further developments in open-weight humanoid foundation models from robotics labs are in the pipeline.
+
+Additional agentic models from Microsoft and other labs are also expected soon.
+
+Before we go, watch for continued inference engine optimizations targeting high-context multi-agent workloads.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+One more thing — if you liked today's episode, our sister show Omni View Africa and Middle East is worth a spot in your feed: the day across Africa and the Middle East, with every claim attributed. It's one of the Nerra Network's daily briefings, all free at nerranetwork dot com.
+
+And if you would rather browse by subject than by show, every subject the network covers has its own page at nerranetwork dot com topics.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

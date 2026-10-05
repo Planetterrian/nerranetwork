@@ -24,8 +24,6 @@
     <meta name="twitter:creator" content="@nerranetwork">
 
     <link rel="canonical" href="https://nerranetwork.com/blog/collingwood/ep001.html">
-    
-    
 
     <!-- Google Fonts: DM Sans + Source Serif 4 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -746,6 +744,63 @@
             margin: 0.35rem 0 0;
         }
         .nn-iv-provenance span { white-space: nowrap; }
+        /* Episode provenance (Oct 2026): the one line under the AI badge on
+           a news post, from engine.brand.episode_provenance_parts, plus the
+           "Report an error" link beside it. Same type as the interview
+           provenance so the two shows read as one network. */
+        .nn-ep-provenance { text-align: center; }
+        .nn-ep-provenance a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .nn-ep-provenance a:hover { text-decoration: underline; }
+        /* Verified-claims panel: a collapsed list under Sources, one row per
+           claim with a link to the source it was checked against. Reuses
+           the transcript box's summary idiom (no marker, +/− at the end). */
+        .blog-claims { margin-top: var(--sp-6); }
+        .blog-claims details summary {
+            display: flex; align-items: center; gap: var(--sp-2);
+            cursor: pointer; padding: var(--sp-3) 0; list-style: none;
+            font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600;
+            color: var(--nn-white);
+        }
+        .blog-claims details summary::-webkit-details-marker { display: none; }
+        .blog-claims details summary::after {
+            content: '+'; margin-left: auto; font-size: 1.2rem; color: var(--nn-text-muted);
+        }
+        .blog-claims details[open] summary::after { content: '\2212'; }
+        .blog-claims .claims-note, .blog-claims .claims-none {
+            font-family: var(--font-ui); font-size: 0.85rem; color: var(--nn-text-muted);
+            line-height: 1.6; margin: 0 0 var(--sp-2);
+        }
+        .blog-claims ol { list-style: none; padding: 0; margin: var(--sp-2) 0 0; }
+        .blog-claims li {
+            padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-2);
+            background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 10px;
+            font-size: 0.95rem; line-height: 1.6;
+        }
+        .blog-claims .claim-source {
+            display: block; margin-top: 4px; font-family: var(--font-ui); font-size: 0.8rem;
+        }
+        .blog-claims .claim-source a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claim-source a:hover { text-decoration: underline; }
+        .blog-claims .claim-why { display: block; font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-top: 2px; }
+        .blog-claims .claims-flagged-count { font-weight: 400; color: var(--nn-text-muted); font-size: 0.9em; }
+        .blog-claims .claims-ledger-link { font-family: var(--font-ui); font-size: 0.85rem; margin: var(--sp-3) 0 0; }
+        .blog-claims .claims-ledger-link a, .blog-claims .claims-none a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claims-ledger-link a:hover, .blog-claims .claims-none a:hover { text-decoration: underline; }
+        /* Correction box (engine.corrections): dated, at the top of the
+           article, before a reader meets the sentence that was wrong. */
+        .nn-correction {
+            margin: 0 0 var(--sp-6); padding: var(--sp-4) var(--sp-5);
+            border: 1px solid var(--show-color); border-left-width: 4px; border-radius: 10px;
+            background: var(--nn-card); font-size: 0.95rem; line-height: 1.6;
+        }
+        .nn-correction .nn-correction-label {
+            font-family: var(--font-ui); font-size: 0.75rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--show-color-text, var(--show-color)); margin: 0 0 var(--sp-1);
+        }
+        .nn-correction p { margin: 0 0 var(--sp-2); }
+        .nn-correction p:last-child { margin-bottom: 0; }
+        .nn-correction .nn-correction-where { font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); }
         .nn-iv-blurb-label {
             font-family: var(--font-ui);
             font-size: 0.72rem;
@@ -1051,7 +1106,7 @@
     <!-- Navigation -->
     <nav class="nn-nav" aria-label="Main navigation">
         <div class="nn-nav-inner">
-            <a href="../../index.html" class="nn-nav-logo">
+            <a href="/" class="nn-nav-logo">
                 <img src="../../assets/nerra-logo-icon.svg" alt="Nerra Network" width="36" height="36">
                 <span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span>
             </a>
@@ -1115,6 +1170,39 @@
                         <a href="../../nerra-voices.html" role="menuitem">
                             <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
                             Nerra Voices
+                        </a>
+                        
+                        
+                        <span class="nn-nav-group-label">World desks</span>
+                        
+                        <a href="../../omni-view-world.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Top World News
+                        </a>
+                        
+                        <a href="../../omni-view-north-america.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View North America
+                        </a>
+                        
+                        <a href="../../omni-view-europe.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Europe
+                        </a>
+                        
+                        <a href="../../omni-view-asia-pacific.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Asia Pacific
+                        </a>
+                        
+                        <a href="../../omni-view-africa-mideast.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Africa & Middle East
+                        </a>
+                        
+                        <a href="../../omni-view-latam.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Central & South America
                         </a>
                         
                         
@@ -1273,6 +1361,39 @@
                         </a>
                         
                         
+                        <span class="nn-nav-group-label">World desks</span>
+                        
+                        <a href="../../blog/omni_view_world/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Top World News Blog
+                        </a>
+                        
+                        <a href="../../blog/omni_view_north_america/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View North America Blog
+                        </a>
+                        
+                        <a href="../../blog/omni_view_europe/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Europe Blog
+                        </a>
+                        
+                        <a href="../../blog/omni_view_asia_pacific/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Asia Pacific Blog
+                        </a>
+                        
+                        <a href="../../blog/omni_view_africa_mideast/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Africa & Middle East Blog
+                        </a>
+                        
+                        <a href="../../blog/omni_view_latam/index.html">
+                            <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Central & South America Blog
+                        </a>
+                        
+                        
                         <span class="nn-nav-group-label">Local news</span>
                         
                         <a href="../../blog/vancouver/index.html">
@@ -1413,6 +1534,7 @@
                         <a href="../../gallery.html">Image Gallery</a>
                         <a href="../../data.html">Data & Dashboards</a>
                         <a href="../../editorial.html">Editorial Process</a>
+                        <a href="../../claims.html">Claims &amp; corrections</a>
                         <a href="../../faq.html">FAQ</a>
                         <a href="../../press.html">Press Kit</a>
                         <a href="../../support.html">Support the Network</a>
@@ -1466,6 +1588,41 @@
             <a href="../../nerra-voices.html" class="nn-mobile-show-link">
                 <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Voices
+            </a>
+            
+        </div>
+        
+        <div class="nn-mobile-shows">
+            <div class="nn-mobile-shows-title">World desks</div>
+            
+            <a href="../../omni-view-world.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
+                Omni View Top World News
+            </a>
+            
+            <a href="../../omni-view-north-america.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
+                Omni View North America
+            </a>
+            
+            <a href="../../omni-view-europe.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
+                Omni View Europe
+            </a>
+            
+            <a href="../../omni-view-asia-pacific.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
+                Omni View Asia Pacific
+            </a>
+            
+            <a href="../../omni-view-africa-mideast.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
+                Omni View Africa & Middle East
+            </a>
+            
+            <a href="../../omni-view-latam.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
+                Omni View Central & South America
             </a>
             
         </div>
@@ -1629,6 +1786,39 @@
             </a>
             
             
+            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">World desks</div>
+            
+            <a href="../../blog/omni_view_world/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
+                Omni View Top World News Blog
+            </a>
+            
+            <a href="../../blog/omni_view_north_america/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
+                Omni View North America Blog
+            </a>
+            
+            <a href="../../blog/omni_view_europe/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
+                Omni View Europe Blog
+            </a>
+            
+            <a href="../../blog/omni_view_asia_pacific/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
+                Omni View Asia Pacific Blog
+            </a>
+            
+            <a href="../../blog/omni_view_africa_mideast/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
+                Omni View Africa & Middle East Blog
+            </a>
+            
+            <a href="../../blog/omni_view_latam/index.html" class="nn-mobile-show-link">
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
+                Omni View Central & South America Blog
+            </a>
+            
+            
             <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Local news</div>
             
             <a href="../../blog/vancouver/index.html" class="nn-mobile-show-link">
@@ -1763,6 +1953,7 @@
             <a href="../../gallery.html" class="nn-mobile-show-link">Image Gallery</a>
             <a href="../../data.html" class="nn-mobile-show-link">Data & Dashboards</a>
             <a href="../../editorial.html" class="nn-mobile-show-link">Editorial Process</a>
+            <a href="../../claims.html" class="nn-mobile-show-link">Claims &amp; corrections</a>
             <a href="../../faq.html" class="nn-mobile-show-link">FAQ</a>
             <a href="../../support.html" class="nn-mobile-show-link">Support the Network</a>
         </div>
@@ -1774,7 +1965,7 @@
     <!-- Breadcrumb -->
     <nav aria-label="Breadcrumb" style="max-width:900px;margin:calc(72px + var(--sp-4)) auto 0;padding:0 var(--sp-6);font-family:var(--font-ui);font-size:0.82rem;">
         <ol style="list-style:none;display:flex;flex-wrap:wrap;gap:var(--sp-1);padding:0;margin:0;color:var(--nn-text-muted);">
-            <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
+            <li><a href="/" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../collingwood.html" style="color:var(--nn-text-muted);text-decoration:none;">Collingwood Weekly</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/collingwood/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
             <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 1</li>
@@ -1907,6 +2098,75 @@
                     </a>
                     
                 </div>
+            </section>
+            
+            
+            
+            <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
+                
+                <details>
+                    <summary>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Verified claims (13)
+                    </summary>
+                    <p class="claims-note">Each claim below was checked by a machine before publication: its source was fetched and the supporting quote looked for in it. A claim the check could not confirm is published and marked, not removed, and re-checked nightly for a week.</p>
+                    <ol>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> After about three days of moose sightings reported to Collingwood and The Blue Mountains OPP, a young bull was located Tuesday morning in Harbourview Park and tranquilized by Bear Wise staff in the Arboretum at about noon.
+                            <span class="claim-source"><a href="https://www.barrietoday.com/local-news/bull-moose-tranquilized-in-collingwood-taken-away-in-trailer-12808515" target="_blank" rel="noopener" title="Bull moose tranquilized in Collingwood, taken away in trailer">barrietoday.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The moose ran into the water by the bridge at Harbourview Park east of the Awen Gathering Circle and collapsed from the tranquilizer.
+                            <span class="claim-source"><a href="https://www.barrietoday.com/local-news/bull-moose-tranquilized-in-collingwood-taken-away-in-trailer-12808515" target="_blank" rel="noopener" title="Bull moose tranquilized in Collingwood, taken away in trailer">barrietoday.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Collingwood firefighters and OPP, including Insp. Loris Licharson, helped load the moose onto a plastic sled and winch it from the water into a trailer.
+                            <span class="claim-source"><a href="https://www.barrietoday.com/local-news/bull-moose-tranquilized-in-collingwood-taken-away-in-trailer-12808515" target="_blank" rel="noopener" title="Bull moose tranquilized in Collingwood, taken away in trailer">barrietoday.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Ontario Provincial Police named the moose Elliot.
+                            <span class="claim-source"><a href="https://barrie360.com/elliot-moose-captured-collingwood/" target="_blank" rel="noopener" title="Elliot the moose captured after days on the loose in Collingwood">barrie360.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Bear Wise staff from Midhurst will take the moose to a location farther north.
+                            <span class="claim-source"><a href="https://www.barrietoday.com/local-news/bull-moose-tranquilized-in-collingwood-taken-away-in-trailer-12808515" target="_blank" rel="noopener" title="Bull moose tranquilized in Collingwood, taken away in trailer">barrietoday.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> David Hawke confirmed the animal was a bull moose and said it had been spotted in Thornbury the day before.
+                            <span class="claim-source"><a href="https://www.barrietoday.com/local-news/bull-moose-tranquilized-in-collingwood-taken-away-in-trailer-12808515" target="_blank" rel="noopener" title="Bull moose tranquilized in Collingwood, taken away in trailer">barrietoday.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Simcoe County will conduct a controlled burn on approximately 5 hectares at 793455 County Road 124 in Clearview, possibly in late September or early October, expected to finish in one day.
+                            <span class="claim-source"><a href="https://simcoe.ca/featured-news/county-of-simcoe-to-conduct-controlled-burn-in-clearview-2/" target="_blank" rel="noopener" title="County of Simcoe to conduct controlled burn in Clearview">simcoe.ca</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The controlled burn was delayed from spring 2026 because of weather and is meant to clear ice-storm debris so the forest can be replanted.
+                            <span class="claim-source"><a href="https://simcoe.ca/featured-news/county-of-simcoe-to-conduct-controlled-burn-in-clearview-2/" target="_blank" rel="noopener" title="County of Simcoe to conduct controlled burn in Clearview">simcoe.ca</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Lands and Forests Consulting will conduct the burn; smoke should disperse northeast, east or southeast, and the county does not anticipate road closures.
+                            <span class="claim-source"><a href="https://simcoe.ca/featured-news/county-of-simcoe-to-conduct-controlled-burn-in-clearview-2/" target="_blank" rel="noopener" title="County of Simcoe to conduct controlled burn in Clearview">simcoe.ca</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> A 32-year-old Collingwood man was arrested on September 20 and charged in connection with an armed robbery of a Circle K.
+                            <span class="claim-source"><a href="https://www.collingwoodtoday.ca/police-beat/collingwood-man-arrested-for-armed-robbery-of-a-circle-k-12807033" target="_blank" rel="noopener" title="Collingwood man arrested for armed robbery of a Circle K">collingwoodtoday.ca</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Nominations for the 14th Annual Newcomer Recognition Awards close Friday, September 25, 2026.
+                            <span class="claim-source"><a href="https://simcoe.ca/advisory/nomination-deadline-extended-for-14th-annual-newcomer-recognition-awards/" target="_blank" rel="noopener" title="Nomination deadline extended for 14th Annual Newcomer Recognition Awards">simcoe.ca</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Nightly construction closes all lanes of Highway 26 both ways in Clearview between Locke Avenue and Mosley Street/Simcoe Road 92.
+                            <span class="claim-source"><a href="https://511on.ca/" target="_blank" rel="noopener" title="Ontario 511: 4 road events around Collingwood and south Georgian Bay">511on.ca</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> No weather watches or warnings are in effect for Collingwood; Wednesday's high is 17 and Thursday's high is 19.
+                            <span class="claim-source"><a href="https://weather.gc.ca/rss/weather/44.5_-80.217_e.xml" target="_blank" rel="noopener" title="Environment Canada forecast for Collingwood">weather.gc.ca</a></span>
+                        </li>
+                    </ol>
+                    <p class="claims-ledger-link"><a href="../../claims/collingwood.html">Full ledger for this show →</a></p>
+                </details>
+                
             </section>
             
 
@@ -2099,23 +2359,32 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v4h1"/></svg>
   Made with AI — transparently
 </a>
-            </div><div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
+            </div>
+            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 7 sources</span><span aria-hidden="true"> · </span><span>13 claims checked against their sources</span><span aria-hidden="true"> · </span><span>hosted by an AI, voiced with Grok TTS</span><span aria-hidden="true"> · </span><a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20Collingwood%20Weekly%20Ep1&body=Re%3A%20https%3A//nerranetwork.com/blog/collingwood/ep001.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
+            </p>
+            <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>👋 Did this episode land?</span>
-                <a href="mailto:patrick@planetterrian.com?subject=I%20liked%20Collingwood%20Weekly%20Ep1&body=Re: https://nerranetwork.com/blog/collingwood/ep001.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
-                <a href="mailto:patrick@planetterrian.com?subject=Suggestion%20for%20Collingwood%20Weekly&body=Re: https://nerranetwork.com/blog/collingwood/ep001.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
+                <a href="mailto:hello@nerranetwork.com?subject=I%20liked%20Collingwood%20Weekly%20Ep1&body=Re: https://nerranetwork.com/blog/collingwood/ep001.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
+                <a href="mailto:hello@nerranetwork.com?subject=Suggestion%20for%20Collingwood%20Weekly&body=Re: https://nerranetwork.com/blog/collingwood/ep001.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
             </div>
 
-            <!-- Subscribe CTA -->
+            <!-- Subscribe CTA (Worker-backed — no Buttondown popup / fake 500ms success) -->
             
             <div id="subscribe-cta" class="show-subscribe-inline" style="margin-top:var(--sp-6);margin-bottom:var(--sp-6);">
                 <h3>Enjoy this episode? Get Collingwood Weekly in your inbox</h3>
                 <p>New episode alerts — no spam, unsubscribe anytime.</p>
-                <form action="https://buttondown.com/api/emails/embed-subscribe/patricknovak1" method="post" target="popupwindow"
-                      onsubmit="var btn=this.querySelector('button[type=submit]');btn.disabled=true;btn.textContent='Subscribing…';setTimeout(function(){btn.textContent='Check your email ✓';btn.disabled=false;},500);">
+                <form method="post" action="#"
+                      data-nn-subscribe="blog-cta"
+                      data-list="member"
+                      data-source="src-nerranetwork"
+                      data-form-id="blog-collingwood-newsletter"
+                      data-label-loading="Subscribing…"
+                      data-label-done="Check your email ✓"
+                      data-label-idle="Subscribe"
+                      data-label-error="Something went wrong — try again">
                     <input type="hidden" name="tag" value="Collingwood Weekly">
-                    <input type="hidden" value="1" name="embed">
                     <div class="nn-subscribe-row">
-                        <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
+                        <input type="email" name="email" placeholder="your@email.com" required autocomplete="email" aria-label="Email address">
                         <button type="submit">Subscribe</button>
                     </div>
                 </form>
@@ -2123,6 +2392,18 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
             
 
             <!-- Episode Navigation -->
+            
+            <nav class="blog-ep-nav">
+                
+                <div></div>
+                
+                
+                <a href="ep002.html" rel="next" class="next">
+                    <span class="nav-label">Next &rarr;</span>
+                    <span class="nav-title">Episode 2</span>
+                </a>
+                
+            </nav>
             
 
             
@@ -2158,6 +2439,23 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
                         <li><a href="../../age-of-ai.html">The Age of AI</a></li>
                         
                         <li><a href="../../nerra-voices.html">Nerra Voices</a></li>
+                        
+                    </ul>
+                    
+                    <ul class="nn-footer-showlist">
+                        <li class="nn-footer-grouplabel">World desks</li>
+                        
+                        <li><a href="../../omni-view-world.html">Omni View Top World News</a></li>
+                        
+                        <li><a href="../../omni-view-north-america.html">Omni View North America</a></li>
+                        
+                        <li><a href="../../omni-view-europe.html">Omni View Europe</a></li>
+                        
+                        <li><a href="../../omni-view-asia-pacific.html">Omni View Asia Pacific</a></li>
+                        
+                        <li><a href="../../omni-view-africa-mideast.html">Omni View Africa & Middle East</a></li>
+                        
+                        <li><a href="../../omni-view-latam.html">Omni View Central & South America</a></li>
                         
                     </ul>
                     
@@ -2254,6 +2552,7 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
                     <a href="../../contact.html">Contact</a>
                     <a href="../../press.html">Press Kit</a>
                     <a href="../../editorial.html">Editorial Process</a>
+                    <a href="../../claims.html">Claims &amp; corrections</a>
                     <a href="../../ai-disclosure.html">AI Disclosure</a>
                     <a href="../../privacy-policy.html">Privacy Policy</a>
                     <a href="../../terms-of-service.html">Terms of Service</a>
@@ -2278,9 +2577,15 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
                  2026): every newsletter signup now creates a Nerra
                  account (same identity as the gallery gate), so the
                  member surface and the list grow together. -->
-            <div class="nn-footer-subscribe">
-                <form class="nn-subscribe-form"
-                      onsubmit="var f=this,btn=f.querySelector('button[type=submit]');btn.disabled=true;btn.textContent="Subscribing…";var tags=Array.prototype.map.call(f.querySelectorAll('input[name=tag]:checked'),function(c){return c.value;});fetch('https://api.nerranetwork.com/api/subscribe',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:f.email.value,list:'member',tags:tags,source:"src-nerranetwork"})}).then(function(r){btn.textContent=r.ok?"Check your email ✓":"Subscribe";if(r.ok){var a=f.querySelector('.nn-account-link');if(a)a.style.display='inline';}}).catch(function(){btn.textContent="Subscribe";}).then(function(){btn.disabled=false;});return false;">
+            <div class="nn-footer-subscribe"><form class="nn-subscribe-form"
+                      method="post"
+                      action="#"
+                      data-nn-subscribe="footer"
+                      data-source="src-nerranetwork"
+                      data-label-loading="Subscribing…"
+                      data-label-done="Check your email ✓"
+                      data-label-idle="Subscribe"
+                      data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
                     <p>Pick the shows you want in your inbox:</p>
                     <div class="nn-subscribe-tags">
@@ -2297,6 +2602,18 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
                         <label><input type="checkbox" name="tag" value="Longevity Weekly"> Longevity Weekly</label>
                         
                         <label><input type="checkbox" name="tag" value="Omni View"> Omni View</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Omni View Top World News"> Omni View Top World News</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Omni View North America"> Omni View North America</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Omni View Europe"> Omni View Europe</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Omni View Asia Pacific"> Omni View Asia Pacific</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Omni View Africa & Middle East"> Omni View Africa & Middle East</label>
+                        
+                        <label><input type="checkbox" name="tag" value="Omni View Central & South America"> Omni View Central & South America</label>
                         
                         <label><input type="checkbox" name="tag" value="Vancouver Daily News"> Vancouver Daily News</label>
                         
@@ -2350,7 +2667,7 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
             </div>
             <div class="nn-footer-bottom">
                 <span>© 2026 Nerra Network. All shows independently produced.</span>
-                <a href="../../index.html">nerranetwork.com</a>
+                <a href="/">nerranetwork.com</a>
             </div>
             <div class="nn-footer-legal">
                 <p class="ai-notice">Nerra Network uses AI tools in content production. <a href="../../ai-disclosure.html">Learn more</a></p>
@@ -2543,6 +2860,7 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
     <script src="../../assets/js/language-control.js" defer></script>
+    <script src="../../assets/js/footer-subscribe.js" defer></script>
     <script>
     // Member-aware nav (Aug 30 2026): the "Join" pill becomes "My Nerra"
     // when the api.nerranetwork.com session cookie answers. Fail-silent —

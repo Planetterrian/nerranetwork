@@ -247,9 +247,15 @@ NETWORK_SURFACES: list[dict[str, str]] = [
     },
     {
         "id": "age_of_ai",
+        # Oct 1 2026: this line still said "on the phone" — the studio room
+        # has been the default since 2026-09-09 and the phone is the
+        # fallback; no surface may describe the show as a phone-call show
+        # (CLAUDE.md). The spoken line carries the narrow basis the claim
+        # actually rests on.
         "spoken": (
-            "The Age of AI puts real builders on the phone with an AI host "
-            "— apply at nerranetwork.com/age-of-ai-apply."
+            "The Age of AI: an AI host interviews real builders in a live "
+            "studio, and every guest decides whether their conversation is "
+            "published — apply at nerranetwork.com/age-of-ai-apply."
         ),
         "x_line": (
             "More from the Nerra Network: apply to be a guest on The Age of AI"
@@ -468,6 +474,20 @@ def build_network_promo(
         return ""
     name = ENGLISH_SHOWS[featured]["spoken_name"]
     tagline = ENGLISH_SHOWS[featured]["tagline"]
+    # Oct 3 2026: frames 2 and 4 called the FEATURED show a "daily briefing"
+    # whatever its cadence — ~49 airings since 09-20 plugged Offshore North,
+    # Env Intel, DP Pod, Peptides or Collingwood Weekly as daily. The word
+    # now comes from the registry schedule (engine.cadence, the owner of
+    # every cadence word); a daily show's plug is byte-identical, and an
+    # unreadable registry keeps the legacy word rather than changing every
+    # outro at once.
+    try:
+        from engine.cadence import cadence_adjective, schedule_for_slug
+        _sched = schedule_for_slug(featured)
+        _cad = cadence_adjective(_sched) if _sched else "daily"
+    except Exception:  # noqa: BLE001 — a promo never fails an episode
+        _cad = "daily"
+    cad_word = f"{_cad} " if _cad in ("daily", "weekly") else ""
     # July 16 2026 — outro-fatigue fix: the single ~40-word promo frame was
     # verbatim in 146 of 176 in-window episodes, so a multi-show listener
     # heard the identical minute several times a day (only the sibling name
@@ -487,7 +507,7 @@ def build_network_promo(
         (
             f"One more thing — if you liked today's episode, our sister "
             f"show {name} is worth a spot in your feed: {tagline}. "
-            "It's one of the Nerra Network's daily briefings, all free at "
+            f"It's one of the Nerra Network's {cad_word}briefings, all free at "
             "nerranetwork.com."
         ),
         (
@@ -496,7 +516,7 @@ def build_network_promo(
         ),
         (
             f"This show comes to you from the Nerra Network. If you want "
-            f"another sharp daily briefing, {name} has you covered — "
+            f"another sharp {cad_word}briefing, {name} has you covered — "
             f"{tagline}. All our shows are free at nerranetwork.com."
         ),
     )

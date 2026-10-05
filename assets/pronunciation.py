@@ -38,7 +38,18 @@ def strip_emojis(text: str) -> str:
         "\U0001F680-\U0001F6FF"  # transport & map
         "\U0001F1E0-\U0001F1FF"  # flags
         "\U00002702-\U000027B0"  # dingbats
-        "\U000024C2-\U0001F251"  # enclosed chars
+        # Enclosed characters. Until Oct 1 2026 this one range read
+        # U+24C2..U+1F251 — which spans Hangul, every CJK block, kana and
+        # Yi — so any non-Latin publisher name was silently deleted from
+        # the spoken text: Tesla Ep622 aired "  reported the patent suit
+        # exposure…" for 디지털투데이. The four real enclosed blocks only:
+        "\U00002460-\U000024FF"  # enclosed alphanumerics
+        "\U00003200-\U000032FF"  # enclosed CJK letters and months
+        "\U0001F100-\U0001F1FF"  # enclosed alphanumeric supplement
+        "\U0001F200-\U0001F251"  # enclosed ideographic supplement
+        "\U000025A0-\U000025FF"  # geometric shapes (▲ ▼ ■ — the old range covered them)
+        "\U00002B00-\U00002BFF"  # misc symbols and arrows (⬆ ⭐)
+        "\U00002190-\U000021FF"  # arrows (→ ↑)
         "\U0001F900-\U0001F9FF"  # supplemental symbols
         "\U0001FA00-\U0001FA6F"  # chess symbols
         "\U0001FA70-\U0001FAFF"  # symbols extended-A
@@ -661,7 +672,38 @@ def replace_canadian_currency(text: str) -> str:
         text,
         flags=re.IGNORECASE,
     )
+
+    # Oct 3 2026: the other "<code>$" dollars had the same stranded prefix —
+    # AI Chips Ep009 aired "NTsix hundred million dollars" for NT$600
+    # million, and S$ / HK$ reproduce it. Same shape as the US$ handler: the
+    # amount stays digits (the downstream number handlers speak it) and the
+    # currency is named after it. Runs after US$, and the lookbehind keeps
+    # the "S$" of an unconverted "US$" from matching.
+    def _named(name: str):
+        def _sub(m: re.Match) -> str:
+            return f"{m.group(1)}{m.group(2) or ''} {name}"
+        return _sub
+
+    for prefix, name in _OTHER_DOLLARS:
+        text = re.sub(
+            rf"(?<![A-Za-z]){prefix}\$(\d{{1,3}}(?:,\d{{3}})*(?:\.\d+)?|\d+(?:\.\d+)?)"
+            r"(\s*(?:trillion|billion|million|thousand))?",
+            _named(name),
+            text,
+        )
     return text
+
+
+#: "<code>$" prefixes spoken as a named currency (case-sensitive codes).
+_OTHER_DOLLARS = (
+    ("NT", "New Taiwan dollars"),
+    ("HK", "Hong Kong dollars"),
+    ("SG", "Singapore dollars"),
+    ("S", "Singapore dollars"),
+    ("NZ", "New Zealand dollars"),
+    ("AU", "Australian dollars"),
+    ("A", "Australian dollars"),
+)
 
 
 def replace_signed_currency(text: str) -> str:
@@ -758,6 +800,8 @@ def replace_versus(text: str) -> str:
 
 
 _SUBREDDIT_RE = re.compile(r"(?<![\w/])r/([A-Za-z0-9_]{2,40})\b")
+_SUBREDDIT_DETERMINERS = ("the", "a", "an", "another", "one", "this", "that", "every",
+                          "each", "some", "any", "its", "his", "her", "their", "our", "my")
 
 
 def replace_subreddit_paths(text: str) -> str:
@@ -771,8 +815,16 @@ def replace_subreddit_paths(text: str) -> str:
     def _sub(m: re.Match) -> str:
         # "the r/SpaceXLounge area" must not become "the the SpaceXLounge
         # subreddit area" (SpaceX Ep093, 2026-09-07).
-        preceded = text[max(0, m.start() - 4):m.start()].lower().endswith("the ")
-        return f"{'' if preceded else 'the '}{m.group(1)} subreddit"
+        # …and "Another r/teslamotors thread" must not become "Another the
+        # teslamotors subreddit thread" (Tesla Ep622, 2026-10-01): any
+        # determiner already in place means no article is added.
+        before = text[max(0, m.start() - 12):m.start()].lower().rstrip()
+        preceded = before.endswith(_SUBREDDIT_DETERMINERS)
+        # …and "the r/longevity subreddit" must not become "the longevity
+        # subreddit subreddit" (Planetterrian Ep202, 2026-10-03).
+        followed = text[m.end():m.end() + 12].lower().lstrip().startswith("subreddit")
+        return (f"{'' if preceded else 'the '}{m.group(1)}"
+                f"{'' if followed else ' subreddit'}")
 
     return _SUBREDDIT_RE.sub(_sub, text)
 
@@ -1510,6 +1562,11 @@ def replace_number_ranges(text: str) -> str:
     def _num_range(m: re.Match) -> str:
         low_str, high_str = m.group(1), m.group(2)
         try:
+            # A zero-padded right side is a part or catalogue code, never a
+            # range: AI Chips Ep012 aired "one hundred to six hundred
+            # fifty-two" for 100-000000652 (Oct 3 2026).
+            if len(high_str) > 1 and high_str.startswith("0") and "." not in high_str:
+                return m.group(0)
             low_val = float(low_str) if "." in low_str else int(low_str)
             high_val = float(high_str) if "." in high_str else int(high_str)
             # Only convert ranges where high > low (not subtraction)
@@ -1603,6 +1660,10 @@ def apply_pronunciation_fixes(
     _CASE_SENSITIVE_ACRONYMS = {
         "WHO", "US", "LED", "DOT", "DOE", "COO", "SEC",
         "ICE", "DART", "PSYCHE",
+        # Oct 3 2026: "Kim Jong-Un" aired as "Kim Jong-U N" on the Asia
+        # Pacific, Europe and Top World desks, and "un-American" read
+        # "U N American" — the United Nations is always written "UN".
+        "UN",
     }
     for acronym, spelled in acronyms.items():
         if acronym in _CASE_SENSITIVE_ACRONYMS:

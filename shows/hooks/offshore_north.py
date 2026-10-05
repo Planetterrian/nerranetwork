@@ -21,10 +21,15 @@ def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
     # Route du Rhum entry, the countdown). Both prompts reference
     # {campaign_status}; run_show / engine.pipeline default it to "" so
     # a failure here degrades to the pre-Sep-19 prompt, never a KeyError.
+    # Oct 4 2026: the position comes from the team's YB tracker, read FRESH
+    # at episode time (the committed rail can be a day old), and the fix is
+    # also handed over as a source article so the claims gate can verify
+    # the position sentence against the copy this run holds.
+    tracker = _fresh_tracker()
     try:
         from engine.offshore_north_status import campaign_status_from_files
 
-        ctx["campaign_status"] = campaign_status_from_files()
+        ctx["campaign_status"] = campaign_status_from_files(tracker=tracker)
     except Exception as exc:  # noqa: BLE001
         import logging
 
@@ -32,7 +37,78 @@ def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
             "Offshore North campaign status skipped (non-fatal): %s", exc
         )
         ctx["campaign_status"] = ""
+    articles = _source_articles(tracker)
+    if articles:
+        ctx["articles"] = articles
     return ctx
+
+
+#: How far back each kind of Instagram account is read for an episode: the
+#: campaign posts rarely, so it gets the same 30 days as its feeds
+#: (``window_hours: 720``); the class and race accounts post daily, so a
+#: weekly show reads one week of them.
+_IG_CAMPAIGN_DAYS = 30
+_IG_OTHER_DAYS = 8
+_IG_MAX_ARTICLES = 8
+
+
+def _curated() -> dict:
+    import json
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parent.parent.parent / "site" / "data" / "offshore_north_dashboard.json"
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def _fresh_tracker():
+    try:
+        from engine.yb_tracker import fetch_summary
+
+        cfg = (_curated().get("campaign") or {}).get("tracker") or {}
+        if not cfg.get("keyword"):
+            return None
+        return fetch_summary(cfg["keyword"], places=cfg.get("places") or [])
+    except Exception as exc:  # noqa: BLE001
+        import logging
+
+        logging.getLogger(__name__).warning("Offshore North tracker read failed (non-fatal): %s", exc)
+        return None
+
+
+def _source_articles(tracker) -> list:
+    """The tracker fix + recent Instagram captions as hook articles."""
+    import datetime as _dt
+    import logging
+
+    log = logging.getLogger(__name__)
+    out: list = []
+    today = _dt.datetime.now(_dt.timezone.utc).date()
+    try:
+        from engine.yb_tracker import tracker_article
+
+        art = tracker_article(tracker, today) if tracker else None
+        if art:
+            out.append(art)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Offshore North tracker article skipped: %s", exc)
+    try:
+        from engine.instagram_source import fetch_recent, handles_from_follow, post_articles
+
+        curated = _curated()
+        handles = handles_from_follow(curated.get("follow"))
+        campaign = {h.lower() for h in ((curated.get("campaign") or {}).get("instagram_handles") or [])}
+        posts = fetch_recent([h for h in handles if h.lower() in campaign],
+                             since_days=_IG_CAMPAIGN_DAYS)
+        posts += fetch_recent([h for h in handles if h.lower() not in campaign],
+                              since_days=_IG_OTHER_DAYS)
+        posts.sort(key=lambda p: p["timestamp"], reverse=True)
+        out.extend(post_articles(posts)[:_IG_MAX_ARTICLES])
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Offshore North Instagram source skipped: %s", exc)
+    return out
 
 
 def post_generate(config, *, digest_text="", episode_num=None) -> None:

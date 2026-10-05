@@ -645,6 +645,63 @@
             margin: 0.35rem 0 0;
         }
         .nn-iv-provenance span { white-space: nowrap; }
+        /* Episode provenance (Oct 2026): the one line under the AI badge on
+           a news post, from engine.brand.episode_provenance_parts, plus the
+           "Report an error" link beside it. Same type as the interview
+           provenance so the two shows read as one network. */
+        .nn-ep-provenance { text-align: center; }
+        .nn-ep-provenance a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .nn-ep-provenance a:hover { text-decoration: underline; }
+        /* Verified-claims panel: a collapsed list under Sources, one row per
+           claim with a link to the source it was checked against. Reuses
+           the transcript box's summary idiom (no marker, +/− at the end). */
+        .blog-claims { margin-top: var(--sp-6); }
+        .blog-claims details summary {
+            display: flex; align-items: center; gap: var(--sp-2);
+            cursor: pointer; padding: var(--sp-3) 0; list-style: none;
+            font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600;
+            color: var(--nn-white);
+        }
+        .blog-claims details summary::-webkit-details-marker { display: none; }
+        .blog-claims details summary::after {
+            content: '+'; margin-left: auto; font-size: 1.2rem; color: var(--nn-text-muted);
+        }
+        .blog-claims details[open] summary::after { content: '\2212'; }
+        .blog-claims .claims-note, .blog-claims .claims-none {
+            font-family: var(--font-ui); font-size: 0.85rem; color: var(--nn-text-muted);
+            line-height: 1.6; margin: 0 0 var(--sp-2);
+        }
+        .blog-claims ol { list-style: none; padding: 0; margin: var(--sp-2) 0 0; }
+        .blog-claims li {
+            padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-2);
+            background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 10px;
+            font-size: 0.95rem; line-height: 1.6;
+        }
+        .blog-claims .claim-source {
+            display: block; margin-top: 4px; font-family: var(--font-ui); font-size: 0.8rem;
+        }
+        .blog-claims .claim-source a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claim-source a:hover { text-decoration: underline; }
+        .blog-claims .claim-why { display: block; font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-top: 2px; }
+        .blog-claims .claims-flagged-count { font-weight: 400; color: var(--nn-text-muted); font-size: 0.9em; }
+        .blog-claims .claims-ledger-link { font-family: var(--font-ui); font-size: 0.85rem; margin: var(--sp-3) 0 0; }
+        .blog-claims .claims-ledger-link a, .blog-claims .claims-none a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claims-ledger-link a:hover, .blog-claims .claims-none a:hover { text-decoration: underline; }
+        /* Correction box (engine.corrections): dated, at the top of the
+           article, before a reader meets the sentence that was wrong. */
+        .nn-correction {
+            margin: 0 0 var(--sp-6); padding: var(--sp-4) var(--sp-5);
+            border: 1px solid var(--show-color); border-left-width: 4px; border-radius: 10px;
+            background: var(--nn-card); font-size: 0.95rem; line-height: 1.6;
+        }
+        .nn-correction .nn-correction-label {
+            font-family: var(--font-ui); font-size: 0.75rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--show-color-text, var(--show-color)); margin: 0 0 var(--sp-1);
+        }
+        .nn-correction p { margin: 0 0 var(--sp-2); }
+        .nn-correction p:last-child { margin-bottom: 0; }
+        .nn-correction .nn-correction-where { font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); }
         .nn-iv-blurb-label {
             font-family: var(--font-ui);
             font-size: 0.72rem;
@@ -1123,6 +1180,20 @@
                translated bodies (reused from the episode's translated audio
                script) are hidden until the language switcher selects them.
                Sources + transcript below stay shared. #}
+            {#- Corrections (Oct 1 2026, engine.corrections): a dated box at
+                the top of the affected post, where the policy pages promise
+                one. ``where`` says whether the audio carried the error; the
+                audio itself is never silently edited (docs/corrections.md). -#}
+            {% if corrections %}
+            <aside class="nn-correction" role="note" aria-label="Correction">
+                <p class="nn-correction-label">{% if _is_ru %}Исправление{% else %}Correction{% endif %}</p>
+                {% for c in corrections %}
+                <p><strong>{{ c.date }}</strong> — {{ c.text }}
+                    <span class="nn-correction-where">({% if c.where == 'audio' %}{% if _is_ru %}ошибка прозвучала в аудио{% else %}the spoken episode carried this error{% endif %}{% elif c.where == 'both' %}{% if _is_ru %}ошибка была в тексте и в аудио{% else %}the article and the spoken episode both carried this error{% endif %}{% else %}{% if _is_ru %}ошибка была в тексте; аудио не затронуто{% else %}the article carried this error; the audio did not{% endif %}{% endif %})</span>
+                </p>
+                {% endfor %}
+            </aside>
+            {% endif %}
             <div class="blog-body-lang" data-lang="en">
             {{ blog_body }}
             </div>
@@ -1149,6 +1220,52 @@
                     </a>
                     {% endfor %}
                 </div>
+            </section>
+            {% endif %}
+
+            {#- Verified claims (Oct 1 2026). The source-integrity gate's
+                committed ledger, rendered: every entry it kept is a claim
+                whose supporting quote was found in the source it names. A
+                ledger with zero claims is said in words — never hidden —
+                because an empty panel and no panel look the same, and the
+                state is the point. Interview posts carry their own
+                provenance and no ledger. -#}
+            {% if claims_summary and claims_summary.present and not interview %}
+            {% from "_macros.html.j2" import claims_badge %}
+            {#- Oct 1 2026, flag mode: the ledger now holds EVERY entry with
+                its status, so each row carries a badge (the claims_badge
+                macro, colours from the --nn-claims-* tokens) and a marked
+                claim says in plain words why the check could not confirm
+                it. The heading still counts the verified ones. -#}
+            {% set _n_verified = verified_claims | selectattr('is_verified') | list | length %}
+            {% set _n_flagged = (verified_claims | length) - _n_verified %}
+            <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
+                {% if verified_claims %}
+                <details>
+                    <summary>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        {% if _is_ru %}Проверенные утверждения{% else %}Verified claims{% endif %} ({{ _n_verified }}){% if _n_flagged %} <span class="claims-flagged-count">· {{ _n_flagged }} {% if _is_ru %}опубликовано без подтверждения{% else %}published, not yet verified{% endif %}</span>{% endif %}
+                    </summary>
+                    <p class="claims-note">{% if _is_ru %}Каждое утверждение ниже проверено машиной перед публикацией: источник открыт, подтверждающая цитата в нём найдена. Утверждение, которое проверка не смогла подтвердить, опубликовано с пометкой, а не удалено, и перепроверяется каждую ночь в течение недели.{% else %}Each claim below was checked by a machine before publication: its source was fetched and the supporting quote looked for in it. A claim the check could not confirm is published and marked, not removed, and re-checked nightly for a week.{% endif %}{% if claims_summary.stripped %} {% if _is_ru %}Удалено непроверенных предложений: {{ claims_summary.stripped }}.{% else %}{{ claims_summary.stripped }} unverified sentence{{ 's' if claims_summary.stripped != 1 else '' }} {{ 'were' if claims_summary.stripped != 1 else 'was' }} removed before publication.{% endif %}{% endif %}</p>
+                    <ol>
+                        {%- for c in verified_claims %}
+                        <li>{{ claims_badge(c.status) }} {{ c.claim }}
+                            {%- if c.source_url %}
+                            <span class="claim-source"><a href="{{ c.source_url }}" target="_blank" rel="noopener"{% if c.source_title %} title="{{ c.source_title }}"{% endif %}>{{ c.source_domain }}</a></span>
+                            {%- endif %}
+                            {%- if not c.is_verified and c.status_meaning %}
+                            <span class="claim-why">{{ c.status_meaning }}</span>
+                            {%- elif c.status == 'verified_later' and c.verified_at %}
+                            <span class="claim-why">{% if _is_ru %}Подтверждено{% else %}Verified{% endif %} {{ c.verified_at }}{% if c.first_status_label %} ({% if _is_ru %}первоначально{% else %}first{% endif %}: {{ c.first_status_label | lower }}){% endif %}</span>
+                            {%- endif %}
+                        </li>
+                        {%- endfor %}
+                    </ol>
+                    <p class="claims-ledger-link"><a href="{{ path_prefix }}{{ claims_page_url }}">{% if _is_ru %}Полный реестр этого подкаста{% else %}Full ledger for this show{% endif %} →</a></p>
+                </details>
+                {% else %}
+                <p class="claims-none">{% if _is_ru %}Для этого выпуска отдельные утверждения не проходили проверку по реестру; каждый материал выше ссылается на свой источник.{% else %}No individual claims were ledger-verified for this episode; every item above links its source.{% endif %} <a href="{{ path_prefix }}{{ claims_page_url }}">{% if _is_ru %}Полный реестр этого подкаста{% else %}Full ledger for this show{% endif %} →</a></p>
+                {% endif %}
             </section>
             {% endif %}
 
@@ -1274,6 +1391,17 @@
             <div style="display:flex;justify-content:center;margin:var(--sp-4) 0;">
                 {{ ai_badge(path_prefix=path_prefix, is_ru=_is_ru) }}
             </div>
+            {#- Episode provenance (Oct 1 2026): this episode's own numbers
+                from engine.brand.episode_provenance_parts — sources, claims
+                checked, sentences removed, who voices it — and the one
+                address (engine.brand.CONTACT_EMAIL) to report an error to.
+                Interview posts carry interview_provenance in the hero. -#}
+            {% if episode_provenance and not interview %}
+            <p class="nn-iv-provenance nn-ep-provenance">
+                {%- for part in episode_provenance %}{% if not loop.first %}<span aria-hidden="true"> · </span>{% endif %}<span>{{ part }}</span>{% endfor -%}
+                <span aria-hidden="true"> · </span><a href="{{ report_error_mailto }}">{% if _is_ru %}Сообщить об ошибке{% else %}Report an error{% endif %}</a>
+            </p>
+            {% endif %}
 
             {#- Per-episode feedback surface (Phase 4 of May 2026 audit).
                 The strategic review found NO per-episode listener-voice
@@ -1283,8 +1411,8 @@
                 what episodes resonate. -#}
             <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>{{ '👋 ' if not _is_ru else '👋 ' }}{% if _is_ru %}Понравился выпуск?{% else %}Did this episode land?{% endif %}</span>
-                <a href="mailto:patrick@planetterrian.com?subject={{ ('I liked ' ~ show_name ~ ' Ep' ~ episode_num) | urlencode }}&body={{ ('Re: ' ~ canonical_url ~ '%0A%0A') }}" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">{% if _is_ru %}👍 Отзыв{% else %}👍 Tell Patrick{% endif %}</a>
-                <a href="mailto:patrick@planetterrian.com?subject={{ ('Suggestion for ' ~ show_name) | urlencode }}&body={{ ('Re: ' ~ canonical_url ~ '%0A%0A') }}" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">{% if _is_ru %}💡 Идея{% elif interview %}💡 Suggest a guest{% else %}💡 Suggest a story{% endif %}</a>
+                <a href="mailto:{{ contact_email }}?subject={{ ('I liked ' ~ show_name ~ ' Ep' ~ episode_num) | urlencode }}&body={{ ('Re: ' ~ canonical_url ~ '%0A%0A') }}" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">{% if _is_ru %}👍 Отзыв{% else %}👍 Tell Patrick{% endif %}</a>
+                <a href="mailto:{{ contact_email }}?subject={{ ('Suggestion for ' ~ show_name) | urlencode }}&body={{ ('Re: ' ~ canonical_url ~ '%0A%0A') }}" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">{% if _is_ru %}💡 Идея{% elif interview %}💡 Suggest a guest{% else %}💡 Suggest a story{% endif %}</a>
             </div>
 
             {#- Per-show rating/review ask (engine.episode_ask). SpaceX Ask B

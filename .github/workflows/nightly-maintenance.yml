@@ -79,6 +79,10 @@ jobs:
         #     fallback while the Reporter history is still short. Its
         #     cookies expire in about a day.
         # Both are clean no-ops when their secrets are unset.
+        #   * fetch_apple_ratings.py — star ratings from the PUBLIC
+        #     podcasts.apple.com show pages (Oct 2026). Needs no secret;
+        #     it is the only readout of the on-air "rate us" ask. Its
+        #     output must stay in the add-paths whitelist below.
         env:
           OP3_API_TOKEN: ${{ secrets.OP3_API_TOKEN }}
           BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
@@ -97,6 +101,20 @@ jobs:
           python scripts/fetch_spotify_stats.py --out api/spotify_stats.json
           python scripts/fetch_apple_reporter.py
           python scripts/fetch_apple_stats.py --out api/apple_stats.json
+          python scripts/fetch_apple_ratings.py --out api/apple_ratings.json
+
+      - name: Re-verify flagged claims (last 7 days)
+        # Flag mode (Oct 1 2026): an episode publishes with every ledger
+        # entry's status visible instead of losing the sentence or the
+        # day, and THIS step is the other half of that policy — it re-runs
+        # the same mechanical check (URL resolves, quote fuzzy-appears) on
+        # every unverified_* entry in the last week's digests/**/*_claims.json
+        # and marks the ones that now verify `verified_later`. Never
+        # downgrades a verified claim; never raises; per-host pacing. The
+        # sidecar glob MUST stay in the commit whitelist below or the
+        # rewrite is thrown away every night (youtube_channel_history
+        # landmine class).
+        run: python scripts/reverify_claims.py --apply --days 7 || true
 
       - name: Refresh show performance trackers from OP3 data
         # Closes the memory systems' performance-feedback loop (June
@@ -171,6 +189,12 @@ jobs:
         # position fix, and offshore headlines for offshore-north-dashboard.html
         # (Sep 2026). Keeps last-good cache on failure; refreshes daily even
         # though the show itself is weekly.
+        # Oct 2026: also the YB tracker fix (public API, no secret) and the
+        # read-only Instagram rail (engine/instagram_source.py; unset
+        # secrets = the rail stays empty and the page links the accounts).
+        env:
+          INSTAGRAM_GRAPH_TOKEN: ${{ secrets.INSTAGRAM_GRAPH_TOKEN }}
+          INSTAGRAM_GRAPH_USER_ID: ${{ secrets.INSTAGRAM_GRAPH_USER_ID }}
         run: python scripts/fetch_offshore_north_dashboard.py --out api/offshore_north_dashboard.json || true
 
       - name: Backfill Content Lake (before dashboard + search index)
@@ -414,6 +438,7 @@ jobs:
             digests/**/video_assets.json
             digests/**/channel_i18n.json
             digests/**/scheduled_comments.json
+            digests/**/*_claims.json
             api/dashboard.json
             api/audience_headline.json
             api/daily-show-health.json
@@ -436,6 +461,7 @@ jobs:
             api/apple_stats.json
             api/apple_reporter.json
             api/apple_reporter_daily.json
+            api/apple_ratings.json
             digests/**/*_performance_tracker.json
             api/spacex_launches.json
             api/tesla_dashboard.json
@@ -456,6 +482,8 @@ jobs:
             editorial.html
             mira.html
             topics/*.html
+            claims.html
+            claims/*.html
             gallery.html
             404.html
             llms.txt

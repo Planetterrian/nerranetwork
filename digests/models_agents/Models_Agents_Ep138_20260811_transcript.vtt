@@ -1,0 +1,163 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.980
+OpenAI is shipping purpose-trained frontier models to defenders first, giving authorized teams GPT 5.6 cyber for vulnerability research before attackers can weaponize similar capabilities. This is Models &amp; Agents Episode 138. OpenAI expanded its daybreak program with two new access tiers called daybreak blue for broad defensive work and daybreak red for advanced authorized testing. Both tiers send
+
+00:00:29.980 --> 00:00:59.940
+enter on GPT 5.6 variants that have already surfaced real zero days in Chrome's V8 engine. Builders working in security tooling or red team automation should watch how the safeguards and access controls evolve this week. OpenAI announced the expansion of its daybreak cyber security initiative alongside GPT 5.6 cyber, a purpose-trained model for authorized vulnerability research, exploit validation and secure
+
+00:00:59.940 --> 00:01:24.360
+security testing. Daybreak Blue offers frontier models including GPT 5.6 sole with safeguards tuned for vulnerability discovery, secure code review, malware analysis, incident response, and patch validation. Daybreak Red adds the specialized GPT 5.6 cyber variant aimed at experienced defenders handling complex challenges.
+
+00:01:24.360 --> 00:01:39.540
+The company states the models have uncovered previously unknown vulnerabilities in open source projects such as Chrome's V8 engine. Sam Ultman separately encouraged users to consider the models for defending their own systems.
+
+00:01:40.180 --> 00:01:48.060
+This development builds directly on yesterday's frontier model coverage by shifting emphasis from general capability to defensive deployment.
+
+00:01:48.060 --> 00:02:08.800
+What to watch is how access controls and red teaming requirements tighten as more teams request the specialized weights. Meta released Muse Glimmer 30B, its first Apache 2.0 licensed open weight model. Earlier Lama releases used a non-OSI license that restricted commercial use.
+
+00:02:08.800 --> 00:02:22.540
+The 30B checkpoint reportedly fits on a single RTX 3090. Simon Willison published initial notes on the models licensing shift and practical implications for open weight users.
+
+00:02:22.540 --> 00:02:41.600
+Layton Space Coverage highlighted the release as a small win for American open models. Web AI released Twire LM, a pair of formal logic models at 1.7B and 3B parameters designed for English to first order logic translation and premise conclusion checking.
+
+00:02:41.600 --> 00:03:00.920
+The 3B variant runs on CPU or 4GB VRAM while the 1.7B download is 1.06GB. Both carry a non-commercial license. The model card notes that headline benchmark scores come from an unreleased checkpoint rather than the published weights.
+
+00:03:00.920 --> 00:03:14.920
+An unreleased research version of Claude raised the verified lower bound on the fraction of Raymond Zeta 0's satisfying the hypothesis from 40 to 1.6% to 67.2%.
+
+00:03:15.560 --> 00:03:25.940
+The model did not solve the full Raymond hypothesis. The result demonstrates incremental progress on a long-standing number theory problem through targeted prompting.
+
+00:03:25.940 --> 00:03:36.080
+A new diffusion language model called Steerling 8B was trained with interpretability constraints built into the objective rather than applied post hoc.
+
+00:03:36.900 --> 00:03:45.940
+The model attributes generated tokens to input tokens, human understandable concepts and training data, enabling closed loop steering without retraining.
+
+00:03:46.320 --> 00:04:04.240
+It remains competitive with open models trained on 2 to 16 times more compute. Doc Atlas treats long document understanding as a mutable state information seeking process with an external harness that exposes search, reading, note taking and review tools.
+
+00:04:04.240 --> 00:04:22.240
+The system maintains a hierarchical tree and note store while updating both as the agent records evidence. With GPT 5.4, it reaches 71.4% on MML long bench dashed doc above the human expert baseline of 65.8%.
+
+00:04:23.240 --> 00:04:35.340
+The Q1 3.5 to 4B VLM trained end to end inside the harness scores 63.7% versus a 54.4% direct input baseline.
+
+00:04:35.980 --> 00:04:45.380
+Search G1 supplies representation based intrinsic rewards that estimate whether retrieval is necessary and whether the final answer is evident sensitive.
+
+00:04:45.380 --> 00:04:53.080
+The method periodically refits readouts on the latest policy trajectories, so rewards co-evolve with the model.
+
+00:04:53.740 --> 00:05:05.060
+Experiments across search-based QA benchmarks show shorter response trajectories at competitive accuracy without requiring process annotations or LLM judges during training.
+
+00:05:05.060 --> 00:05:15.360
+A complete programmable pipeline for Mini Max H3 multimodal video and audio generation is demonstrated using comfy UI as a headless back end.
+
+00:05:15.980 --> 00:05:23.500
+The guide covers hardware profiling, model weight downloading, dynamic graph construction and joint video audio decoding.
+
+00:05:24.100 --> 00:05:32.280
+Developers already running comfy UI workflows can integrate the pipeline for automated multimodal inference without custom server code.
+
+00:05:32.280 --> 00:05:42.820
+A new evaluation suite pairs the UniHall fine grain data set with self-adaptive multimodal fuzzing that evolves inputs to expose hallucination boundaries.
+
+00:05:43.540 --> 00:05:53.140
+State of the art MLLM's show significant degradation under fuzzing compared with static benchmarks, revealing a helpfulness hallucination trade-off.
+
+00:05:53.140 --> 00:06:11.880
+The full framework, code and benchmark are released on GitHub. Survey review supplies 675 annotated survey papers and 1,630 review reports converted into four-dimensional scores for readability, criticalness, comprehensiveness and structure.
+
+00:06:11.880 --> 00:06:23.360
+Alora tuned Q3-32B baseline called survey align reduces average MSE from 2.28 to 1.38 against human reviewers.
+
+00:06:23.900 --> 00:06:41.860
+The data set and evaluation protocol are public with standardized train test splits. POVISE LE provides 1,117 images and 2,366 manually annotated VQA pairs focused on culturally grounded Polish VQA.
+
+00:06:42.980 --> 00:06:51.000
+The data set targets failures in region-specific symbolic content and pragmatic cues that English-centric training misses.
+
+00:06:51.720 --> 00:07:00.960
+Test Muse Glimmer 30B locally if you need an Apache 2.0 model that fits on 1.3090 for open-weight experimentation.
+
+00:07:01.640 --> 00:07:10.100
+Run the doc Atlas harness on MM long bench hyphen doc documents to see whether mutable state improves your current agent's evidence tracking.
+
+00:07:10.100 --> 00:07:18.860
+Add the SAMF fuzzing suite to your multimodal evaluation pipeline to surface hallucination modes that static benchmarks miss.
+
+00:07:19.640 --> 00:07:27.600
+Compare survey align against your current LLM as judge setup on the released survey review data set for better human alignment.
+
+00:07:28.180 --> 00:07:37.320
+Try the 12LM3B checkpoint on CPU hardware for English to logic translation tasks where formal verification is required.
+
+00:07:37.320 --> 00:07:44.580
+More teams are expected to request daybreak red access as real-world vulnerability results accumulate.
+
+00:07:45.360 --> 00:07:51.860
+Additional open-weight formal logic models may appear following the twice LM non-commercial release pattern.
+
+00:07:52.440 --> 00:08:01.080
+Culturally specific VQA benchmarks like POVISE LE are likely to expand to other languages with similar annotation depth.
+
+00:08:01.080 --> 00:08:05.900
+Okay, let's pop the hood on mutable state document harnesses.
+
+00:08:06.240 --> 00:08:11.100
+Everyone treats long document agents as simple retrieval plus generation pipelines.
+
+00:08:11.860 --> 00:08:23.940
+In practice, doc Atlas shows the engineering reality is a live external environment that decides that each step what to search, read, store, review or surface under a fixed context budget.
+
+00:08:24.680 --> 00:08:28.640
+The harness maintains a hierarchical tree plus a separate note store.
+
+00:08:28.640 --> 00:08:33.260
+Both structures are mutated by the agent rather than rebuilt from scratch.
+
+00:08:33.680 --> 00:08:42.240
+This design lets the same tooling support both inference time use with large VLMs and end-to-end RL for compact agents.
+
+00:08:42.940 --> 00:08:55.280
+The performance jump from 54.4% to 63.7% on a 4B model comes from selective evidence access and active working memory rather than larger context windows.
+
+00:08:56.280 --> 00:09:04.460
+The approach also combines self-improving retrieval with review tools so the agent can revisit earlier decisions without exceeding token limits.
+
+00:09:05.240 --> 00:09:17.540
+When the document spans dozens of pages with tables, figures, and cross references, the mutable harness avoids the common failure mode of static indexes that lock in an initial evidence set.
+
+00:09:17.540 --> 00:09:26.020
+The practical decision is straightforward. Adopt the mutable harness when your workload involves repeated evidence gathering across many pages.
+
+00:09:26.680 --> 00:09:34.160
+Stay with static rag when the document fits comfortably in one forward pass and latency matters more than iterative refinement.
+
+00:09:34.840 --> 00:09:45.660
+Before we go, teams evaluating open-weight options will want to see whether Muse glimmers Apache 2.0 license triggers follow-on releases from other labs this month.
+
+00:09:46.200 --> 00:09:56.380
+That's models and agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+
+00:09:56.980 --> 00:10:07.420
+The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network, links in the show notes.
+
+00:10:07.420 --> 00:10:18.520
+And before you go, this show is part of the Nerra Network, a family of daily podcasts on tech, science, and markets, each one a short sharp briefing you can finish on the commute.
+
+00:10:19.120 --> 00:10:30.080
+If today earned its place in your feed, here's your next listen. SpaceX Daily, the daily companion for following SpaceX as a public company from Starship to the Stockticker.
+
+00:10:30.080 --> 00:10:45.800
+Find every show free at Nerra Network dot com. Following the long arcs, story trackers on Nerra Network dot com follow major programs across episodes, Tesla, SpaceX, AI, Space Science, and more.
+
+00:10:46.460 --> 00:10:52.800
+This episode used AI voice synthesis of my voice, editorial selection, and analysis are my own.

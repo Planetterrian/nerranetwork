@@ -1,0 +1,310 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.040
+Hey, welcome to Models &amp; Agents episode 91 on June 24th, 2026. Let's see what shipped,
+
+00:00:06.380 --> 00:00:09.540
+plenty of model releases and agent benchmarks moving today.
+
+00:00:10.200 --> 00:00:14.040
+Claude now joins teams as a persistent org-wide Slack entity.
+
+00:00:14.740 --> 00:00:19.580
+The third major shift in LLM interaction after websites and desktop apps.
+
+00:00:20.320 --> 00:00:26.760
+Deflash delivers up to 15 times throughput on Navidia Blackwell by drafting whole token blocks in
+
+00:00:26.760 --> 00:00:30.720
+parallel instead of auto-regressive token by token generation.
+
+00:00:31.460 --> 00:00:37.820
+Quen released two new agent world MoE models trained to simulate tool, terminal, and GUI
+
+00:00:37.820 --> 00:00:44.820
+environments rather than chat directly. OpenAI opened applications for DevDay 2026 in San Francisco
+
+00:00:44.820 --> 00:00:51.840
+on September 29, with the keynote live streamed. The top story today centers on a new inference technique
+
+00:00:51.840 --> 00:00:56.580
+from UC San Diego that changes how speculative decoding works at scale.
+
+00:00:57.160 --> 00:01:02.620
+Deflash replaces standard speculative decoding with a lightweight block diffusion model that drafts
+
+00:01:02.620 --> 00:01:10.600
+entire token blocks in one forward pass. It conditions on target model hidden features via KV injection
+
+00:01:10.600 --> 00:01:18.920
+and ships with 20 checkpoints plus support for SG Lang, VLLM, and tensor RT-LLM.
+
+00:01:18.920 --> 00:01:27.220
+The approach reports up to 6.08 times lossless speed up on Quen3, 8B, and NVIDIA measured
+
+00:01:27.220 --> 00:01:31.940
+peaks of 15 times throughput on Blackwell hardware at fixed interactivity.
+
+00:01:32.540 --> 00:01:37.180
+Builders working on high throughput inference pipelines can now test the integration without
+
+00:01:37.180 --> 00:01:43.340
+custom drafting logic. This update moves forward the ongoing conversation around AI, compute,
+
+00:01:43.340 --> 00:01:48.960
+and inference economics that we tracked yesterday by showing measurable gains on existing serving
+
+00:01:48.960 --> 00:01:55.720
+frameworks rather than new hardware requirements. Watch for community benchmarks on other model families
+
+00:01:55.720 --> 00:02:00.920
+and whether the block diffusion drafting generalizes beyond the reported setups.
+
+00:02:01.460 --> 00:02:09.900
+Quen released the agent world 35BA3B model, a 35 billion parameter mixture of experts with only
+
+00:02:09.900 --> 00:02:16.120
+about 3 billion active parameters per token. The model was trained to predict environment responses
+
+00:02:16.120 --> 00:02:24.640
+after agent actions across MCP, Terminal, SWE, Android, Web, and OS GUI domains.
+
+00:02:25.400 --> 00:02:30.840
+It functions as a language world model for simulating the observation side of agent loops
+
+00:02:30.840 --> 00:02:36.860
+rather than a chat model. The release includes a hugging face checkpoint and is positioned for
+
+00:02:36.860 --> 00:02:43.260
+offline evaluation, synthetic trajectory generation, and sandbox testing. Builders can use it to
+
+00:02:43.260 --> 00:02:48.680
+generate training data or validate tool use workflows without repeatedly calling real environments.
+
+00:02:49.380 --> 00:02:55.120
+This release continues the open-weight models track we discussed yesterday by narrowing the gap
+
+00:02:55.120 --> 00:02:59.060
+and specialized agent simulation rather than general chat performance.
+
+00:02:59.700 --> 00:03:08.520
+Baidu open sourced unlimited OCR, a 3.3 billion multilingual model under MIT license that performs one
+
+00:03:08.520 --> 00:03:16.340
+shot full document parsing on single images, multi-page documents, and PDFs. It supports 32K output length
+
+00:03:16.340 --> 00:03:22.000
+and offers base and Gundam image modes for different layouts, with inference available via
+
+00:03:22.000 --> 00:03:29.420
+transformers or SG-lang, with open AI compatible streaming. The model targets deeper document
+
+00:03:29.420 --> 00:03:36.900
+understanding beyond cropped region OCR. Teams handling long PDFs or mixed language archives should
+
+00:03:36.900 --> 00:03:44.820
+tested this week against current pipelines. Quinn also released the larger agent world 397 BA-17
+
+00:03:44.820 --> 00:03:51.760
+B sibling model on hugging face and the Quinn blog. It maintains the same environment simulation training
+
+00:03:51.760 --> 00:03:57.600
+objective across agent interaction domains. Early discussion centers on its potential for higher
+
+00:03:57.600 --> 00:04:03.660
+fidelity trajectory synthesis at scale. No detailed benchmarks were released with the announcement.
+
+00:04:04.520 --> 00:04:11.980
+Expo SQL adds clause level rewards derived from execution results and error messages to reinforcement
+
+00:04:11.980 --> 00:04:19.460
+learning for text to SQL, replacing uniform query level rewards. It shows consistent gains over
+
+00:04:19.460 --> 00:04:26.040
+supervised fine tuning, prompting, and prior RL baselines on standard benchmarks. Code is available
+
+00:04:26.040 --> 00:04:34.100
+at the linked GitHub repository. Andre Carpathy described Claude Tag as the third major LLM UI-UX
+
+00:04:34.100 --> 00:04:40.680
+paradigm. A self-contained persistent asynchronous entity with org-wide tools, memory, and context
+
+00:04:40.680 --> 00:04:47.740
+that integrates directly into Slack. Once engineering work for security, compute, and integrations is
+
+00:04:47.740 --> 00:04:53.840
+complete, teams can interact with it conversationally across workloads. The approach moves beyond
+
+00:04:53.840 --> 00:05:00.800
+website or desktop app models toward inline team participation. This development advances the agents
+
+00:05:00.800 --> 00:05:06.800
+and tool use arc we covered yesterday by moving from experimental prototypes toward production team
+
+00:05:06.800 --> 00:05:13.420
+integration patterns. Carpathy also highlighted an enterprise grade coding system that writes the
+
+00:05:13.420 --> 00:05:21.060
+majority of code in team settings, deeply integrated and multiplayer inside Slack. It differs from simple
+
+00:05:21.060 --> 00:05:27.980
+RGAS over Slack or OpenClaw style tools by functioning as a shared workspace where participants act
+
+00:05:27.980 --> 00:05:34.820
+more like managers. The product has moved past hackathon stage through internal iteration and now
+
+00:05:34.820 --> 00:05:42.200
+supports real deployments. Circle published a USDC specification for a machine payments protocol aimed
+
+00:05:42.200 --> 00:05:48.800
+at AI agent transactions. The spec targets automated machine to machine payments without human
+
+00:05:48.800 --> 00:05:56.080
+intermediaries. Early details focus on protocol design rather than live implementations. Applications
+
+00:05:56.080 --> 00:06:03.140
+are now open for the September 29 open AI Dev Day event in San Francisco. With the opening keynote
+
+00:06:03.140 --> 00:06:09.860
+available via live stream for remote attendees, the deadline is July 10. Developers planning to attend
+
+00:06:09.860 --> 00:06:19.340
+or watch should apply soon. Community member on our slash local LLMA is testing a Psi E 5.0 16 times
+
+00:06:19.340 --> 00:06:26.480
+slot split into two slash eight configuration via riser cable. The setup aims to accommodate both an
+
+00:06:26.480 --> 00:06:37.440
+RTX 5070 Ti and an RTX 4070 within a single system. Daytime use focuses on agent workloads while evenings
+
+00:06:37.440 --> 00:06:43.740
+shift to gaming activities. Token generation speeds stay acceptable when operating at 16,000
+
+00:06:43.740 --> 00:06:51.640
+context length. Performance degrades noticeably when scaling context to 128,000 tokens under the split
+
+00:06:51.640 --> 00:06:57.660
+configuration. The discussion centers on potential effects to the primary GPU from the bandwidth
+
+00:06:57.660 --> 00:07:03.940
+division. This hardware experiment reflects practical considerations for multi GPU agent and
+
+00:07:03.940 --> 00:07:11.480
+inference setups. The Mod-G-G-C-N paper from Ericsive introduces a modularity aware graph neural
+
+00:07:11.480 --> 00:07:18.360
+network designed specifically for text classification tasks. It incorporates a modularity based auxiliary
+
+00:07:18.360 --> 00:07:24.400
+loss function that encourages the formation of class coherent document communities within the
+
+00:07:24.400 --> 00:07:31.220
+graph structure. The method decouples the original text G-C-N graph construction to achieve training
+
+00:07:31.220 --> 00:07:37.460
+speed ups ranging from two to ten times. Performance improvements are particularly noted on data sets
+
+00:07:37.460 --> 00:07:43.780
+exhibiting low homophiliy characteristics. This auxiliary loss helps the model better capture community
+
+00:07:43.780 --> 00:07:50.060
+structures aligned with classification labels. Researchers can access the full details in the R-Craft
+
+00:07:50.060 --> 00:07:55.980
+Preprint for implementation specifics. The approach target scenarios where standard graph neural
+
+00:07:55.980 --> 00:08:02.060
+networks struggle with disconnected class representations. Okay, let's pop the hood on clause
+
+00:08:02.060 --> 00:08:08.360
+level rewards in reinforcement learning for text to SQL. Everyone talks about reinforcement learning
+
+00:08:08.360 --> 00:08:15.960
+for text to SQL as simply add execution feedback and improve. In practice, the reward design itself
+
+00:08:15.960 --> 00:08:21.480
+determines whether the model learns to fix individual clauses or just guesses whole queries.
+
+00:08:22.040 --> 00:08:29.920
+Standard methods assign a single scalar reward to the entire generated SQL. So a query with one wrong
+
+00:08:29.920 --> 00:08:36.720
+wear clause and correct select join still receives the same penalty as a completely broken query.
+
+00:08:37.420 --> 00:08:46.240
+Expo underscore aql instead parses execution errors and runs incremental clause execution to tag exactly
+
+00:08:46.240 --> 00:08:51.980
+which clauses failed. This produces per clause learning signals that let the policy gradient update
+
+00:08:51.980 --> 00:08:58.640
+only the faulty parts while reinforcing correct ones. The engineering cost is extra execution traces
+
+00:08:58.640 --> 00:09:05.540
+per training example, but the paper shows this finer granularity outperforms both SFT and prior
+
+00:09:05.540 --> 00:09:12.080
+RRL baselines on standard benchmarks. The approach works best when execution feedback is cheap and
+
+00:09:12.140 --> 00:09:18.740
+deterministic. In domains where queries are expensive or non deterministic, the clause level signal
+
+00:09:18.740 --> 00:09:24.960
+becomes noisy. Teams should prefer it when they already have reliable database sandboxes and want to
+
+00:09:24.960 --> 00:09:33.960
+squeeze more signal from each failed generation. Test D-flash integration in VLLM or tensor RT-LLM
+
+00:09:33.960 --> 00:09:40.860
+on a blackwell instance if you run high volume inference and want to measure the reported 6 to 15 times
+
+00:09:40.860 --> 00:09:48.960
+throughput gains. Download the Quinn-Obench Quasiska even world 35ba3b checkpoint and use it to
+
+00:09:48.960 --> 00:09:54.240
+generate synthetic trajectories for your own agent training loop instead of calling live tools every
+
+00:09:54.240 --> 00:10:01.980
+time. Apply for OpenAI DevDay 2026 before the July 10 deadline if you want to attend or watch the
+
+00:10:01.980 --> 00:10:09.980
+keynote on new developer tooling. Try Unlimited-OCR on a multi-page mixed language PDF to compare full
+
+00:10:09.980 --> 00:10:16.080
+document parsing speed and accuracy against your current pipeline. Keep an eye on the OpenAI DevDay
+
+00:10:16.080 --> 00:10:23.140
+2026 keynote on September 29 with remote live stream option. Continued releases from the Quinn
+
+00:10:23.140 --> 00:10:29.280
+agent world family are expected as more environment simulation checkpoints appear. Further community
+
+00:10:29.280 --> 00:10:35.280
+testing of D-flash across additional model families and serving frameworks is also on the way.
+
+00:10:35.280 --> 00:10:41.220
+Tomorrow keep an eye on additional Quinn agent world checkpoints and early community numbers for
+
+00:10:41.220 --> 00:10:47.320
+D-flash on non-blackwell hardware. That's models and agents for today. If you found this useful,
+
+00:10:47.780 --> 00:10:52.620
+share it with someone who's trying to keep up with all these changes and subscribe so you don't miss
+
+00:10:52.620 --> 00:10:59.260
+tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow and before you go,
+
+00:10:59.260 --> 00:11:06.120
+this show is part of the near network, a family of daily podcasts covering tech, science,
+
+00:11:06.320 --> 00:11:11.640
+markets, and more. If you enjoyed today's episode, give models and agents for beginners a listen.
+
+00:11:12.320 --> 00:11:17.920
+Artificial intelligence explains simply for beginners and curious teens. You can explore the
+
+00:11:17.920 --> 00:11:24.480
+whole lineup at nerranetwork.com. This episode used AI voice synthesis of my voice,
+
+00:11:24.480 --> 00:11:27.220
+editorial selection, and analysis are my own.

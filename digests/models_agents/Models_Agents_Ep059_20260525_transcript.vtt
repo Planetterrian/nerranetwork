@@ -1,0 +1,571 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:02.960
+Pull up a chair, this is Models in Agents, Episode 59,
+
+00:00:03.360 --> 00:00:05.140
+from May 25th, 2026.
+
+00:00:05.840 --> 00:00:07.100
+Your daily AI briefing.
+
+00:00:07.880 --> 00:00:09.400
+Monday in the AI world,
+
+00:00:09.400 --> 00:00:11.420
+which means a weekend's worth of announcements
+
+00:00:11.420 --> 00:00:12.360
+to catch up on.
+
+00:00:12.840 --> 00:00:13.220
+Let's go.
+
+00:00:13.900 --> 00:00:16.480
+Data sets new slash key jump menu
+
+00:00:16.480 --> 00:00:18.280
+now launches agent conversations
+
+00:00:18.280 --> 00:00:20.100
+directly from your databases.
+
+00:00:20.840 --> 00:00:24.400
+Simon Willisons shipped data set 1.0 alpha 30
+
+00:00:24.400 --> 00:00:26.820
+with a keyboard driven jump to menu
+
+00:00:26.820 --> 00:00:28.160
+that plugins can extend.
+
+00:00:28.960 --> 00:00:31.840
+The data set agent plugin adds a conversation starter
+
+00:00:31.840 --> 00:00:33.580
+form directly into that menu.
+
+00:00:34.720 --> 00:00:38.300
+New Extract 3, a new 4 billion parameter vision language
+
+00:00:38.300 --> 00:00:41.360
+model arrived on hugging phase for structured extraction
+
+00:00:41.360 --> 00:00:43.560
+and markdown conversion from documents.
+
+00:00:44.240 --> 00:00:48.580
+A custom inference engine now runs mini CPM V4.6
+
+00:00:48.580 --> 00:00:55.580
+on the Ascend 310B NPU inside the $149 orange pi AI
+
+00:00:55.580 --> 00:00:56.480
+Pro board.
+
+00:00:56.980 --> 00:00:59.920
+These small targeted releases lower the friction
+
+00:00:59.920 --> 00:01:02.560
+for mixing data exploration with agent workflows
+
+00:01:02.560 --> 00:01:03.260
+this week.
+
+00:01:04.020 --> 00:01:06.560
+The top story this week is the data set release
+
+00:01:06.560 --> 00:01:09.840
+that turns a data exploration tool into a lightweight
+
+00:01:09.840 --> 00:01:11.560
+launch pad for agent sessions.
+
+00:01:12.240 --> 00:01:16.020
+Data set 1.0 alpha 30 introduces a jump to menu
+
+00:01:16.020 --> 00:01:18.380
+triggered by the slash keyboard shortcut.
+
+00:01:19.240 --> 00:01:22.740
+Users can type to reach databases, tables, or canned queries
+
+00:01:22.740 --> 00:01:24.180
+without leaving the interface.
+
+00:01:25.060 --> 00:01:27.760
+The release includes plugin hooks so extensions can
+
+00:01:27.760 --> 00:01:31.220
+inject additional content into the menu and its empty state.
+
+00:01:31.740 --> 00:01:35.360
+The data set Iphone agent plugin uses this hook to surface
+
+00:01:35.360 --> 00:01:37.960
+a form that starts a new agent conversation.
+
+00:01:38.540 --> 00:01:42.640
+A live demo is available at agent.dataset.io
+
+00:01:42.640 --> 00:01:44.140
+after GitHub's sign-in.
+
+00:01:44.900 --> 00:01:47.920
+More implementation details appear on the data set blog.
+
+00:01:48.440 --> 00:01:52.500
+Teams already running data set can upgrade to 1.0 alpha 30
+
+00:01:53.060 --> 00:01:54.540
+and test the plugin immediately.
+
+00:01:55.260 --> 00:01:56.640
+Now for the model updates.
+
+00:01:57.120 --> 00:02:00.460
+New Extract 3 is a 4 billion parameter vision language
+
+00:02:00.460 --> 00:02:02.160
+model released on hugging face.
+
+00:02:02.780 --> 00:02:05.180
+It handles both structured JSON extraction
+
+00:02:05.180 --> 00:02:08.140
+from text or images and high quality image
+
+00:02:08.140 --> 00:02:09.380
+to mark down conversion.
+
+00:02:10.120 --> 00:02:13.020
+The model accepts text, images, or mixed inputs
+
+00:02:13.020 --> 00:02:15.200
+and supports multilingual documents
+
+00:02:15.200 --> 00:02:18.260
+plus separate reasoning and non-reasoning modes.
+
+00:02:20.180 --> 00:02:25.920
+GGUF, NVFP4, MLX, and VLLM quantized versions
+
+00:02:25.920 --> 00:02:27.300
+are already available.
+
+00:02:28.160 --> 00:02:32.160
+Builders working on document pipelines, OCR or RAG
+
+00:02:32.160 --> 00:02:35.300
+preprocessing should test it on receipts, invoices,
+
+00:02:35.560 --> 00:02:36.540
+and tables this week.
+
+00:02:37.320 --> 00:02:43.200
+Next, twin 3.6, 27B, and 35BBF, 16 models
+
+00:02:43.200 --> 00:02:47.440
+were benchmarked on a two times RTX Pro 6,000 setup.
+
+00:02:48.000 --> 00:02:50.620
+Using the latest stable VLLM backend.
+
+00:02:51.440 --> 00:02:56.240
+At 64 concurrency, the 27B model reached 1,600 tokens
+
+00:02:56.240 --> 00:02:58.700
+per second generation without MTP
+
+00:02:59.600 --> 00:03:03.860
+and 1,800 tokens per second with MTP2 enabled.
+
+00:03:04.440 --> 00:03:08.540
+The 35B model hit 2,700 tokens per second
+
+00:03:08.540 --> 00:03:13.240
+at 64 concurrency and 3,500 tokens per second
+
+00:03:13.240 --> 00:03:15.100
+at 128 concurrency.
+
+00:03:16.020 --> 00:03:19.540
+It also delivered 30,000 tokens per second prompt processing.
+
+00:03:20.120 --> 00:03:22.360
+These numbers come from a personal project
+
+00:03:22.360 --> 00:03:24.480
+and give concrete throughput expectations
+
+00:03:24.480 --> 00:03:28.320
+for mid-sized twin variants on dual professional GPUs.
+
+00:03:28.960 --> 00:03:31.860
+A custom C++ inference engine was written
+
+00:03:31.860 --> 00:03:36.200
+from scratch to run many CPM V4.6 natively
+
+00:03:36.200 --> 00:03:43.880
+on the Ascend 310 BNPU inside the $149 orange Pi AI Pro board.
+
+00:03:44.560 --> 00:03:47.240
+The engine bypasses Torch underscore NPU
+
+00:03:47.240 --> 00:03:48.900
+entirely on the hot path.
+
+00:03:49.340 --> 00:03:53.000
+It uses custom Ascend C kernels for cube mat mall,
+
+00:03:53.380 --> 00:03:55.580
+L meters underscore head chunking
+
+00:03:55.580 --> 00:04:00.680
+and vectorize causal cun 1D to reach 5.90 tokens
+
+00:04:00.680 --> 00:04:05.180
+per second FP16 after incremental optimizations.
+
+00:04:05.660 --> 00:04:08.620
+Python is used only for cold path tokenization
+
+00:04:08.620 --> 00:04:10.140
+and image preprocessing.
+
+00:04:10.820 --> 00:04:14.700
+Anyone targeting edge VLM deployment on this hardware now
+
+00:04:15.220 --> 00:04:18.480
+has an open source starting point at the link to GitHub repo.
+
+00:04:19.320 --> 00:04:22.880
+Mining lamp AI released citer, a small SDK
+
+00:04:22.880 --> 00:04:26.560
+that adds W888 activation quantization
+
+00:04:27.180 --> 00:04:29.240
+on top of MLX for Apple Silicon.
+
+00:04:30.340 --> 00:04:33.320
+On an M5 Pro, the change reduced pre-fill time
+
+00:04:33.320 --> 00:04:39.540
+for a 4B VLM from 2.839 seconds to 2.519 seconds
+
+00:04:39.540 --> 00:04:42.660
+at 4,516 token context.
+
+00:04:43.240 --> 00:04:45.520
+Decode speed state essentially flat.
+
+00:04:45.960 --> 00:04:50.540
+Per channel INT8, tensor ops, require M5 or newer
+
+00:04:50.540 --> 00:04:53.180
+while M4 falls back to the regular path.
+
+00:04:53.940 --> 00:04:58.960
+The repo includes accuracy numbers on WCA text 2 for twin 38B
+
+00:04:58.960 --> 00:05:03.280
+and LAMA 38B showing modest perplexity impact.
+
+00:05:04.040 --> 00:05:06.200
+Now turning to agent and tool developments.
+
+00:05:07.160 --> 00:05:10.500
+A developer released AI sandbox hyphen manager,
+
+00:05:11.080 --> 00:05:13.840
+an LXC-based VM template system
+
+00:05:13.840 --> 00:05:16.160
+that gives agents full pseudo access.
+
+00:05:16.900 --> 00:05:19.300
+GPU pass through and browser automation
+
+00:05:19.300 --> 00:05:21.220
+while isolating them from the host.
+
+00:05:22.080 --> 00:05:24.600
+The setup supports multiple concurrent sessions,
+
+00:05:24.920 --> 00:05:29.580
+persistent.env files and hooks to block dangerous Git operations.
+
+00:05:30.340 --> 00:05:33.780
+It was built and tested on DGX Spark hardware
+
+00:05:34.380 --> 00:05:37.660
+where standard Docker GPU pass through is difficult.
+
+00:05:38.300 --> 00:05:42.280
+The repo includes CUA for computer use support on Linux.
+
+00:05:42.980 --> 00:05:45.660
+A new repo called MCP from scratch
+
+00:05:45.660 --> 00:05:48.940
+walks through building a model context protocol server
+
+00:05:48.940 --> 00:05:51.620
+and client in plain node.js.
+
+00:05:52.320 --> 00:05:57.520
+It then adds local GGUF inference via node, LAMA, CPP
+
+00:05:58.180 --> 00:06:01.300
+and a custom plan act observe agent loop.
+
+00:06:01.980 --> 00:06:04.700
+The later modules demonstrate MCP sampling
+
+00:06:04.700 --> 00:06:06.680
+and tool use with a local model
+
+00:06:06.680 --> 00:06:09.080
+plus an optional lane chain path.
+
+00:06:09.720 --> 00:06:11.780
+The project is intentionally minimal
+
+00:06:11.780 --> 00:06:14.180
+and aimed at developers who want to understand
+
+00:06:14.180 --> 00:06:17.660
+the protocol mechanics rather than use a high level SDK.
+
+00:06:18.680 --> 00:06:20.760
+In the practical and community section,
+
+00:06:21.000 --> 00:06:26.040
+a pull request to GGML hyphen org slash LAMA.CPP
+
+00:06:26.040 --> 00:06:27.840
+improves checkpoint creation.
+
+00:06:28.800 --> 00:06:31.140
+Agentic coding sessions no longer force
+
+00:06:31.140 --> 00:06:33.680
+full prompt reprocessing after context
+
+00:06:33.680 --> 00:06:35.680
+rewriting tools modify history.
+
+00:06:36.100 --> 00:06:38.320
+The change targets the common pattern
+
+00:06:38.320 --> 00:06:41.580
+where an agent produces 20k plus tokens of code
+
+00:06:42.240 --> 00:06:44.180
+and the next short user message triggers
+
+00:06:44.180 --> 00:06:47.640
+expensive reprocessing of 70k token contexts.
+
+00:06:48.700 --> 00:06:51.420
+Early users report noticeably more responsive
+
+00:06:51.420 --> 00:06:54.300
+agentic coding loops after adopting the patch.
+
+00:06:55.180 --> 00:06:58.160
+Okay, let's pop the hood on activation quantization.
+
+00:06:58.840 --> 00:07:01.640
+Everyone talks about activation quantization
+
+00:07:01.640 --> 00:07:04.860
+as if it is a simple turn on INT8 switch
+
+00:07:05.420 --> 00:07:07.120
+that always delivers free speed.
+
+00:07:07.720 --> 00:07:10.000
+In practice, it requires custom kernels
+
+00:07:10.000 --> 00:07:12.000
+that only compile on newer silicon
+
+00:07:12.660 --> 00:07:15.620
+and trades small accuracy losses for pre-fill gains
+
+00:07:15.620 --> 00:07:17.860
+that appear mainly at longer contexts.
+
+00:07:18.840 --> 00:07:21.740
+The citer implementation registers metal primitives
+
+00:07:21.740 --> 00:07:27.060
+so the per channel W888 path runs 1.84 times faster
+
+00:07:27.060 --> 00:07:31.800
+than W8A16 at M equals 4,096.
+
+00:07:32.360 --> 00:07:34.320
+Yet decode speed barely moves
+
+00:07:34.320 --> 00:07:36.660
+because memory bandwidth remains the limiter.
+
+00:07:37.300 --> 00:07:41.240
+On M4 hardware, the same code silently falls back,
+
+00:07:41.380 --> 00:07:43.060
+showing that the technique is gated
+
+00:07:43.060 --> 00:07:47.260
+by hardware tensor op support rather than software availability.
+
+00:07:48.080 --> 00:07:51.300
+Perplexity impact stays under 0.2 points
+
+00:07:51.300 --> 00:07:54.360
+on 8B models when using per channel scaling.
+
+00:07:54.800 --> 00:07:57.180
+Per group scaling tightens the bound further
+
+00:07:57.180 --> 00:08:00.040
+when precision matters more than the 300 millisecond
+
+00:08:00.040 --> 00:08:00.920
+pre-fill saving.
+
+00:08:01.620 --> 00:08:04.160
+The gacha that bites most teams is assuming
+
+00:08:04.160 --> 00:08:06.400
+the speed up will appear on every workload.
+
+00:08:07.040 --> 00:08:09.920
+Short context chat sees almost none of the benefit
+
+00:08:09.920 --> 00:08:13.780
+while long document R-A-G pre-processing sees the full win.
+
+00:08:14.520 --> 00:08:16.860
+Use it when your pipeline is pre-fill heavy
+
+00:08:16.860 --> 00:08:18.880
+and you control the deployment hardware.
+
+00:08:19.440 --> 00:08:22.180
+Otherwise, stick with weight only quantization
+
+00:08:22.180 --> 00:08:24.380
+until the next silicon generation lands.
+
+00:08:25.140 --> 00:08:27.020
+Here are the things to try this week.
+
+00:08:27.620 --> 00:08:29.540
+Install the data set agent plugin
+
+00:08:29.540 --> 00:08:32.380
+on data set 1.0 alpha 30
+
+00:08:32.980 --> 00:08:34.700
+and test the slash jump menu
+
+00:08:34.700 --> 00:08:37.740
+to launch agent conversations directly from your tables.
+
+00:08:38.660 --> 00:08:41.100
+Pull new extract three from hugging face
+
+00:08:41.100 --> 00:08:43.500
+and run it on a batch of scanned invoices
+
+00:08:43.500 --> 00:08:45.800
+to compare its structured JSON output
+
+00:08:45.800 --> 00:08:48.880
+against your current OCR plus prompt pipeline.
+
+00:08:49.740 --> 00:08:52.280
+Clone the AI sandbox dash manager repo.
+
+00:08:52.640 --> 00:08:55.400
+If you need a persistent GPU enabled sandbox
+
+00:08:55.400 --> 00:08:58.640
+for computer use agents that survives host reboots.
+
+00:08:59.420 --> 00:09:02.760
+Try citer on an M5 Mac with any MLX model
+
+00:09:02.760 --> 00:09:04.580
+to measure pre-fill improvement
+
+00:09:04.580 --> 00:09:06.440
+on your longest context workloads
+
+00:09:07.040 --> 00:09:08.860
+before deciding on wider adoption.
+
+00:09:09.720 --> 00:09:12.380
+On the horizon, more plugin authors are expected
+
+00:09:12.380 --> 00:09:14.440
+to extend the data set jump menu
+
+00:09:15.080 --> 00:09:16.280
+now that the hook is public.
+
+00:09:17.020 --> 00:09:19.520
+Additional quantized versions and fine tunes
+
+00:09:19.520 --> 00:09:22.200
+of new extract three are likely to appear
+
+00:09:22.200 --> 00:09:23.900
+on hugging face within days.
+
+00:09:24.960 --> 00:09:29.060
+The llama.cpp checkpoint PR is under active review
+
+00:09:29.060 --> 00:09:31.380
+and may land in the next stable release.
+
+00:09:32.200 --> 00:09:35.240
+Edge VLM experiments on ascend hardware
+
+00:09:35.240 --> 00:09:38.240
+will probably produce more custom kernel repos
+
+00:09:38.240 --> 00:09:40.880
+following the mini CPMV example.
+
+00:09:41.840 --> 00:09:46.360
+Tomorrow keep an eye on the llama.cpp checkpoint PR status
+
+00:09:46.360 --> 00:09:49.580
+and any new data set plugins that extend the jump menu.
+
+00:09:50.160 --> 00:09:52.120
+That wraps up today's AI briefing.
+
+00:09:52.640 --> 00:09:54.400
+Share this with a developer or builder
+
+00:09:54.400 --> 00:09:55.540
+who wants to stay current.
+
+00:09:56.100 --> 00:09:57.420
+Subscribe wherever you listen.
+
+00:09:57.920 --> 00:09:58.420
+See you tomorrow.
+
+00:09:59.420 --> 00:10:02.620
+This episode used AI voice synthesis of my voice.
+
+00:10:03.160 --> 00:10:05.520
+Editorial selection and analysis are my own.

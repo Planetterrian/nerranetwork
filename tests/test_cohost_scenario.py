@@ -224,7 +224,7 @@ class TestRoom:
         # is not held to forty-five and one who asked for ninety is not cut
         # off at fifty.
         assert "function hardCapMs()" in js
-        assert "(plannedMin() + HARD_CAP_SLACK_MIN) * 60 * 1000" in js
+        assert "(plannedMin() + SAFETY_CAP_AFTER_PLAN_MIN) * 60 * 1000" in js
         assert "DEFAULT_PLANNED_MIN = 45" in js
         assert "TIME_CHECK_EVERY_MS = 5 * 60 * 1000" in js
         assert "webhookFired" in js

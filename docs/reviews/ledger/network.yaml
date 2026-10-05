@@ -782,6 +782,94 @@ reviews:
       evidence: null
     agent_cost_usd: null
 
+  - date: 2026-10-01
+    pr: null
+    doc: docs/reviews/network_review_2026_10_01.md
+    summary: "Operator: review the Sep 30 improvements on the first post-merge slate, decide what else the delivery needs, align the site to the 13 launch-cohort shows on every surface, and build for trust and retention (subscribe/review on the platforms). Readout of 10-01 (20 episodes, all post-merge): transcripts back 20/20 (0/19 on 09-30); undated_in_prompt 0 on 18 of 19 news shows; stale gate fired 6x; second tellings stripped 5 across 5 combined episodes; claims 164 -> 205; main red only on the Ep617 replay. Three defects the day exposed: frame memory rendered EMPTY on all 17 shows (read config.output_dir, which only the test double had); Top World Ep009 shipped 8/10 items with no Source while the lint metric read 0 (the absence filter dropped the joined Ranks+Source line; lint ran before the filter); Tesla Ep622 told the Model 3 refresh 5x because the digest carried it as 8 items from 8 outlets (the overlap dedupe is blind to a story told once per outlet). Site: the generated surfaces carried the cohort; the Worker's newsletter-tag Set did not, OP3 omitted unindexed shows silently, 13 shows had never been submitted to any directory (tracker said 100%). Trust: 17 closings asked for nothing, no closing said 'follow', the feed transcript tag pointed at a Whisper dump no app reads, no newsletter asked for a rating, YouTube descriptions cited nothing, the promo rotation still called the Age of AI a phone call."
+    shipped:
+      - "engine/frame_memory.py reads config.episode.output_dir; the guard loads a real ShowConfig"
+      - "engine/absence_sentences.py: a line carrying a URL or a Source tail is never dropped whole, Ranks: is structure; run_show re-reads items_without_source on the shipped text (items_without_source_shipped)"
+      - "engine/story_clusters.py: same-story clustering on the fetched list (salient tokens, furniture filtered on the tracker's 45-day window), later members carry an inline one-item note; opt-in story_clusters: true on 22 news shows; metrics story_clusters_found/annotated/retold_in_digest"
+      - "assets/pronunciation.py: the emoji strip's 'enclosed chars' range spanned Hangul and all CJK (non-Latin outlet names vanished from the spoken text); 'Another r/x' no longer gains an article; engine/article_text.speakable_source_name lists a non-Latin outlet by its domain stem"
+      - "engine/intros.py: follow-or-rate ask on closings that carry none, alternate days, two shapes, Russian on finansy_prosto (A/B)"
+      - "engine/network_promo.py: Age of AI surface line carries the narrow basis, no 'phone'; guard sweeps every surface"
+      - "engine/newsletter_template.py: rating line linking the show's own Apple/Spotify pages; AI-host share_text bug fixed; newsletter ON for the 13 cohort shows; Worker SHOW_NEWSLETTER_TAGS +15 with a drift guard"
+      - "engine/episode_ask.py: network-default rating ask in show notes from each show's next episode; engine/cadence.py owns 'daily/weekly episodes' on the Shorts comment and X follow line"
+      - "engine/video_metadata.py: channel subscribe link, Sources line, AI-host disclosure branch"
+      - "engine/transcripts.py + publisher: WebVTT transcript per episode, text/vtt tag first (JSON kept), itunes:type, podcast:guid (UUIDv5), branded itunes:author; 1,972 VTTs + 30 feeds backfilled"
+      - "scripts/fetch_apple_ratings.py + dashboard tile; fetch_op3_stats writes resolved:false for an unindexed feed and every consumer tolerates it (Mission Control says 'not indexed')"
+      - "docs/podcast_directories.md: 13 cohort rows (all --), submission order (Podcast Index first — it is what turns OP3 on)"
+      - "two topic hubs (prediction-markets, ai-infrastructure) with registry tags"
+    deferred:
+      - "operator: submit the 13 cohort feeds (Podcast Index, Apple, Spotify) and record apple_url / spotify_show_id; wrangler deploy workers/gallery"
+      - "operator: UC skipped 10-01 again on its claims gate (11 skips since 09-03) — on_failure strip or a narrative-show claims appendix"
+      - "SpaceX Ep117 recorded 0 claims with coverage repair attempted and 6 sourced items — the repair returned nothing; read the next three sidecars before changing the pass"
+      - "script-level fact re-tells inside one episode (deep dive restating the news block): a data-side stripper was prototyped and rejected — it also hit the hook-then-body restatement; the digest-side cluster is the lever, read it first"
+      - "Offshore North cover art 1200x1200 (Apple minimum 1400); first-principles-daily 1400"
+      - "a per-show 'most played' rail and a weekly network digest email: the data exists, no surface yet"
+    predictions:
+    - metric: "story_clusters_retold_in_digest on tesla/spacex/models_agents (metrics_ep*.json)"
+      baseline: "unmeasured; Ep622 would read >= 2 (Model 3 pairs surfaced as separate items)"
+      expected: "0 on >= 12 of the first 14 post-merge episodes per show"
+      verdict: pending
+      evidence: null
+    - metric: "banned-frame sentences per script on the 17 frame_memory shows (rerun build_recent_frames_block for the episode and count openers in its _tts.txt)"
+      baseline: "6 across 17 scripts on 10-01 with the block empty (OV 1, MAB 3, PM 2)"
+      expected: "<= 2 across the 17 scripts on each of the first 7 days the block renders"
+      verdict: pending
+      evidence: null
+    - metric: "items_without_source_shipped vs items_without_source (metrics_ep*.json) on the lint opt-in shows"
+      baseline: "Top World Ep009: lint 0, file 8"
+      expected: "equal on every episode for 14 days; any difference names a filter that removed a citation"
+      verdict: pending
+      evidence: null
+    - metric: "Apple rating_count_total (api/apple_ratings.json)"
+      baseline: "4 across 15 shows on 2026-10-01 (age_of_ai 1, MAB 1, spacex 2)"
+      expected: ">= 14 by 2026-11-01, >= 3 shows with a first rating"
+      verdict: pending
+      evidence: null
+    - metric: "shows_unindexed (api/audience_headline.json)"
+      baseline: "13 (every cohort show) once the next nightly runs"
+      expected: "0 within 14 days of the operator's Podcast Index submissions; the number is the submission backlog, never a listener count"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
+  - date: 2026-10-01
+    pr: null
+    doc: docs/reviews/network_review_2026_10_01.md
+    summary: "Operator (same day, policy): a transparent claims-and-corrections process for every show, so the gate stops removing timely news. Measured cost of strip/block since 09-17: 68 sentences stripped across 261 episodes, every audited one a TRUE sentence behind an unreachable or paraphrased source (omni_view 12, planetterrian 10, europe 7, spacex 5); UC skipped 11 of 28 days on its own gate; the model's training data lags the 24-hour cycle, so a sourced story newer than the model must never be dropped for failing memory. Policy now: PUBLISH and MARK (on_failure: flag on every show incl. UC/FPD; nothing removed but reviewer notes; every claim carries a status in the sidecar), RE-VERIFY nightly for seven days (verified_later), and SHOW it (claims.html + claims/<slug>.html, badges on every post's claims panel, process copy owned by engine.brand)."
+    shipped:
+      - "engine/claims.py + run_show: on_failure: flag — per-claim status (verified / verified_from_fetched / verified_later / unverified_unreachable / unverified_not_found / unverified_quote_mismatch / unverified_uncovered / malformed), gate.flagged_sentences, policy_version 2; metrics source_integrity_flagged_*; strip and block remain selectable"
+      - "shows/_defaults.yaml on_failure: flag; unintended_consequences + first_principles: flag (11 skips in 28 days)"
+      - "scripts/reverify_claims.py nightly (--days 7, --apply) + nightly add-paths for digests/**/*_claims.json; Mission Control claims card"
+      - "engine/claims_ledger.py + generate_claims_pages: claims.html (network) and claims/<slug>.html per show, in --static-pages and the sitemap; status badges on the blog claims panel; links from show pages, nav More, footer; ai_disclosure / editorial / FAQ describe publish-and-mark; engine.brand.CLAIMS_PROCESS_STEPS + CLAIMS_STATUS_LABELS own the copy"
+    deferred:
+      - "a second egress for the nightly re-verification (publishers that 403 GitHub runners stay unreachable from the same runners)"
+      - "a spoken on-air line for a flagged lead (audio — operator A/B decision; the web and the notes carry the status today)"
+    predictions:
+    - metric: "source_integrity_stripped_sentences + claims-gate skip markers, all shows"
+      baseline: "68 sentences / 12 skips in the 14 days to 10-01"
+      expected: "0 and 0 for the 21 days after merge"
+      verdict: pending
+      evidence: null
+    - metric: "share of unverified_unreachable claims reaching verified_later within 7 nights (claims sidecars)"
+      baseline: "unmeasured"
+      expected: ">= 40% by the 10-22 readout"
+      verdict: pending
+      evidence: null
+    - metric: "network verified share, 30 days (claims.html)"
+      baseline: "unmeasured as a share; 205 claims on 10-01 with 4 pre-strip failures"
+      expected: ">= 85%"
+      verdict: pending
+      evidence: null
+    - metric: "UC episodes published per 21 days"
+      baseline: "17 of 28 days (09-03..10-01)"
+      expected: ">= 19 of 21"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
 do_not_retry:
   - idea: podcast-side length levers (word floors, expand-retries, prompt
       pressure on the podcast stage) for ANY show

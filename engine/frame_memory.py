@@ -163,6 +163,14 @@ def _exempt_patterns_for(config: Any) -> List[str]:
     return out
 
 
+def _config_output_dir(config: Any) -> str:
+    """The show's episode directory, from a real ``ShowConfig`` (``episode.output_dir``)
+    or a flat ``output_dir`` on a test double; ``""`` when neither exists."""
+    episode = getattr(config, "episode", None)
+    nested = getattr(episode, "output_dir", "") if episode is not None else ""
+    return str(nested or getattr(config, "output_dir", "") or "")
+
+
 def build_recent_frames_block(
     config: Any,
     *,
@@ -175,7 +183,11 @@ def build_recent_frames_block(
     Best-effort: any failure returns ``""`` (the prompt is then what it
     was before this module existed)."""
     try:
-        out_dir = Path(output_dir or getattr(config, "output_dir", "") or "")
+        # The real ShowConfig keeps the directory on ``config.episode``;
+        # the flat attribute is only what a bare test double has. Sep 30
+        # 2026 shipped reading the flat one, so the block rendered "" on
+        # every opted-in show for a day (caught by the post-merge readout).
+        out_dir = Path(output_dir or _config_output_dir(config) or "")
         if not out_dir or not out_dir.exists():
             return ""
         paths = script_paths(out_dir, window=window, exclude_contains=exclude_contains)

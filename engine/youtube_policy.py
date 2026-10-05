@@ -50,6 +50,31 @@ DEFAULT_POLICY_PATH = PROJECT_ROOT / "api" / "youtube_policy.json"
 # policy's business; this only says no configuration may exceed it.
 MAX_SHORTS_PER_EPISODE = 4  # Sep 2026: 4-Short band at 60 vpd (see update_youtube_policy)
 
+
+def portrait_scene_count(yt_config, *, shorts_planned: int, default: int = 5) -> int:
+    """How many fresh 9:16 Grok Imagine scenes an episode should generate.
+
+    Oct 2 2026 (cost pass): the count was a fixed ``short_scenes_per_episode``
+    (5) on every YouTube-enabled run, including the dead-Shorts probe-tier
+    days on which the policy ships ZERO Shorts — six shows were paying for
+    five portrait images a day that nothing rendered. A 9:16 scene has
+    exactly three consumers: this channel's Shorts, a dub channel's Shorts
+    (``ru_dub_enabled`` / ``dub_languages`` reuse the episode's gallery
+    scenes, so a dubbed show keeps generating them even on an EN probe day)
+    and the multi-platform cuts. With none of them in play the answer is 0.
+    The YAML value is never raised here.
+    """
+    yaml_count = int(getattr(yt_config, "short_scenes_per_episode", default) or default)
+    if int(shorts_planned or 0) > 0:
+        return yaml_count
+    if bool(getattr(yt_config, "ru_dub_enabled", False)):
+        return yaml_count
+    if list(getattr(yt_config, "dub_languages", None) or []):
+        return yaml_count
+    if bool(getattr(yt_config, "multi_platform_enabled", False)):
+        return yaml_count
+    return 0
+
 # Sep 22 2026 (operator-directed): the EN channel ships ONE Short per
 # episode — the hook Short. The second EN Short (the `qualified` window)
 # earned a median 6 views and 0 subscribers across 59 uploads in 28 days

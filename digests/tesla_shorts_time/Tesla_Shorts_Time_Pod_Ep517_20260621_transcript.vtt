@@ -1,0 +1,277 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.580
+Hey, welcome to Tesla Short's Time, Daily Episode 517. Patrick here in Vancouver,
+
+00:00:05.740 --> 00:00:11.500
+it's June 21st, 2026. Here's your Tesla news rundown. The week's biggest developments
+
+00:00:11.500 --> 00:00:15.780
+pulled together, what actually moved, why it matters, and what to watch next.
+
+00:00:16.580 --> 00:00:22.260
+Danish regulators approved Tesla's supervised, full-self-driving package for public roads this week.
+
+00:00:22.860 --> 00:00:28.240
+The clearance came after local testing and adds another European Union market for the feature.
+
+00:00:28.240 --> 00:00:33.940
+At the same time, legal action in Europe over marketing claims versus delivered performance
+
+00:00:33.940 --> 00:00:39.200
+is moving forward. The case centers on statements about full-self-driving capabilities
+
+00:00:39.200 --> 00:00:42.620
+compared with what the system actually provides in those markets.
+
+00:00:43.340 --> 00:00:50.040
+Fresh reports also showed supervised FSD avoiding animals on roads and completing door-to-door
+
+00:00:50.040 --> 00:00:57.420
+trips without driver intervention in tested scenarios. Remember, the show last covered FSD unsupervised
+
+00:00:57.420 --> 00:01:04.400
+on Episode 516, and this approval moves the supervised expansion forward while the regulatory
+
+00:01:04.400 --> 00:01:11.260
+path for unsupervised operation stays the main open question. Attentive listeners will watch whether
+
+00:01:11.260 --> 00:01:17.480
+other Nordic countries follow Denmark's lead in the coming weeks. Upcoming FSD releases will add
+
+00:01:17.480 --> 00:01:23.580
+GROC voice control and stored parking preferences. The system will recall prior parking locations and
+
+00:01:23.820 --> 00:01:30.080
+without new driver input. These features aim to reduce repeated manual steps in familiar settings.
+
+00:01:30.640 --> 00:01:34.620
+Development ties into broader software updates for the supervised stack.
+
+00:01:35.380 --> 00:01:43.320
+Owners can expect the changes in a future software branch. FSD V14.3.4 specifically avoided a
+
+00:01:43.320 --> 00:01:49.260
+squirrel in one documented clip. Separate reports showed the system preventing side swipes in a
+
+00:01:49.260 --> 00:01:56.540
+dangerous situation. FSD supervised enables door-to-door autonomous driving in additional tested cases.
+
+00:01:57.320 --> 00:02:01.920
+Tesla FSD saves animal lives appeared in multiple fresh clips this week.
+
+00:02:02.540 --> 00:02:10.860
+On the product side, the lowest priced cyber truck trim at $59,990 began reaching early owners
+
+00:02:10.860 --> 00:02:17.400
+this week. The variant trims range and features compared with higher trims but expands the line-up for
+
+00:02:17.400 --> 00:02:24.540
+more buyers. Tesla is also validating a longer wheelbase Model Y for potential US production
+
+00:02:25.080 --> 00:02:31.960
+while cyber truck volume grows. A slightly stretched Model Y variant was photographed on roads in San
+
+00:02:31.960 --> 00:02:40.080
+Jose. The Model Y L is currently built only at gigafactory Shanghai and the sighting points to early US
+
+00:02:40.080 --> 00:02:46.900
+validation work. Elon Musk had indicated a possible year end US arrival, though he called the timing
+
+00:02:46.900 --> 00:02:54.200
+uncertain. This connects to the ongoing next-gen vehicle program last reviewed on Episode 515,
+
+00:02:54.740 --> 00:03:00.800
+where cost reduction targets remain the central open question. Hardware updates like the Model Y,
+
+00:03:01.240 --> 00:03:07.920
+L sit alongside deeper software and training infrastructure work inside Tesla. Tesla filed new
+
+00:03:07.920 --> 00:03:14.120
+patents aimed at improving dojo training efficiency on imperfect ethernet networks. One patent uses
+
+00:03:14.120 --> 00:03:20.420
+on chip cache and linked lists to retransmit only missing segments instead of restarting entire
+
+00:03:20.420 --> 00:03:27.320
+streams. The second patent moves flow control and acknowledgments into a custom Mac block for faster
+
+00:03:27.320 --> 00:03:33.100
+hardware managed links. These changes target higher training throughput for both full self-driving
+
+00:03:33.100 --> 00:03:41.380
+and optimist development. Remember the show last covered HW1 and Dojo on Episode 513 and these
+
+00:03:41.380 --> 00:03:46.560
+filings address the production timeline and scaling questions still open for the next generation
+
+00:03:46.560 --> 00:03:56.500
+hardware. Tesla's W02024-039800 patent describes a micro architecture that stores recent packets
+
+00:03:56.500 --> 00:04:04.900
+in on chip cache or SRAM as small as 256 kilobytes and uses linked lists to track transmission order.
+
+00:04:05.480 --> 00:04:11.280
+When an acknowledgement fails or a timer expires, hardware pointers identify only the missing
+
+00:04:11.280 --> 00:04:17.640
+segment for replay instead of restarting the stream. Four pipeline stages handle stream selection,
+
+00:04:17.940 --> 00:04:23.820
+link identification, replay or retire decisions, and pointer updates without software intervention.
+
+00:04:24.480 --> 00:04:30.320
+A hardware link timer working with FIFO memory checks multiple links in round robin fashion and
+
+00:04:30.320 --> 00:04:36.920
+adapts its tick period as the number of active links changes. This approach keeps dojo training throughput
+
+00:04:36.920 --> 00:04:48.000
+high, even on a controlled but imperfect ethernet fabric. Tesla's W02024-039794 patent moves transport
+
+00:04:48.000 --> 00:04:55.140
+layer functions including flow control, acknowledgments, and replay into a TTP Mac block that operates
+
+00:04:55.140 --> 00:05:03.660
+across OSI layers two to four. Frames carry a specific ether type such as 0x9AC6. So standard
+
+00:05:03.660 --> 00:05:10.300
+ethernet switches can forward them while TTP endpoints manage state in hardware. Link state
+
+00:05:10.300 --> 00:05:16.780
+machines transition through closed, open-send, open-received, open-close-send, and closed-received
+
+00:05:16.780 --> 00:05:23.680
+without TCP style time-weight periods. Bounded packet transmission plus local storage supports
+
+00:05:23.680 --> 00:05:32.540
+the design. Tesla's suspension patent builds on 1,998 Lincoln Mark 8 tech. Tesla's new design pairs
+
+00:05:32.540 --> 00:05:39.100
+low-rate parallel air springs with series dampers for most ride duties. The active actuator only
+
+00:05:39.100 --> 00:05:45.020
+corrects when needed, cutting energy use compared with fully active systems. The approach draws from
+
+00:05:45.020 --> 00:05:52.600
+the 1,998 Lincoln Mark 8's air suspension but adds passive dominant tuning. This could help preserve
+
+00:05:52.600 --> 00:05:58.800
+range on vehicles that already carry heavy battery packs. Starlink ran advertisements during the UFC
+
+00:05:58.800 --> 00:06:06.060
+Freedom 250 broadcast on Paramount Plus. The placement reached a large live sports audience and
+
+00:06:06.060 --> 00:06:13.100
+overlaps with Tesla's brand exposure through shared SpaceX channels. Wedbush analyst Dan Ives released
+
+00:06:13.100 --> 00:06:20.200
+a note calling SpaceX's IPO pricing a Goldilocks outcome that avoided draining capital from the broader
+
+00:06:20.200 --> 00:06:27.320
+tech trade. Ives pointed to continued AI infrastructure spending and named Palantir, Snowflake,
+
+00:06:27.320 --> 00:06:34.040
+and Datadog as beneficiaries. President Trump confirmed Starlink will equip the next Air Force one.
+
+00:06:34.800 --> 00:06:41.420
+The boring company commissioned its second proof-frock machine, proof-frock MB2 for the music city loop
+
+00:06:41.420 --> 00:06:47.840
+in Nashville. The addition doubles tunneling capacity for the project. Work continues on the
+
+00:06:47.840 --> 00:06:54.040
+initial airport area segment. South Korea let an EV purchase tax incentive expire,
+
+00:06:54.040 --> 00:07:00.320
+raising prices for most models. Tesla vehicles retain favorable treatment under existing
+
+00:07:00.320 --> 00:07:06.740
+rules, creating a relative price advantage. Local analysts expect the shift to steer some buyers
+
+00:07:06.740 --> 00:07:13.360
+toward Tesla in the second half of the year. Tesla and Ford engineers disassembled Chinese market
+
+00:07:13.360 --> 00:07:18.540
+EVs to study battery integration and assembly methods that lower production expenses.
+
+00:07:19.260 --> 00:07:23.340
+The findings are feeding into both companies' own cost reduction programs.
+
+00:07:23.740 --> 00:07:29.820
+This competitive analysis work echoes Tesla's ongoing efforts at home to match or beat overseas
+
+00:07:29.820 --> 00:07:36.400
+manufacturing approaches. Chinese firm Hina battery has developed sodium ion cells whose energy
+
+00:07:36.400 --> 00:07:42.960
+density is nearing levels seen in current Tesla packs. The chemistry offers potential cost and supply
+
+00:07:42.960 --> 00:07:49.060
+chain advantages over lithium-based systems. No deployment timeline with Tesla has been disclosed.
+
+00:07:49.720 --> 00:07:55.820
+Tesla locks down amazing abundance, trademarks spanning robotics, AI chips and robotaxi.
+
+00:07:56.360 --> 00:08:00.760
+The trademark filing covers multiple future product categories in one action.
+
+00:08:01.420 --> 00:08:06.740
+Now one thing worth watching is the advancing legal case in Europe over full self-driving
+
+00:08:06.740 --> 00:08:12.180
+marketing claims. The action focuses on the gap between advertised performance and what
+
+00:08:12.180 --> 00:08:18.660
+supervised systems currently deliver in those markets. While regulatory approvals like Denmark's
+
+00:08:18.660 --> 00:08:24.860
+expand supervised access, the case highlights the risk that overstated claims could slow broader
+
+00:08:24.860 --> 00:08:31.300
+acceptance. Tesla's position rests on continued data collection and software iteration to close that
+
+00:08:31.300 --> 00:08:38.500
+gap over time. The patents on Dojo hardware replay and TTPOE links break down a core training
+
+00:08:38.500 --> 00:08:44.620
+bottleneck. Standard ethernet can drop packets forcing full restarts that waste compute cycles.
+
+00:08:45.240 --> 00:08:50.560
+By handling retransmission and flow control and hardware with small caches and custom state
+
+00:08:50.560 --> 00:08:56.960
+machines, the designs keep pipelines moving without software overhead. This matters because Dojo
+
+00:08:56.960 --> 00:09:01.800
+throughput directly affects how quickly new full self-driving and optimist models improve.
+
+00:09:02.460 --> 00:09:07.700
+The open question remains how soon these gains translate into measurable training speed increases
+
+00:09:07.700 --> 00:09:14.080
+at scale. Before we go, keep an eye on whether additional European regulators followed Denmark's
+
+00:09:14.080 --> 00:09:21.240
+supervised FSD approval in the next few weeks. That's your Tesla news for today. TSLA closed
+
+00:09:21.240 --> 00:09:32.300
+at $400.49 up $4.11.1. If you found this useful, a rating or review on Apple podcasts or Spotify
+
+00:09:32.300 --> 00:09:39.300
+really helps new listeners find the show. You can also find us on X at Tesla Shorts Time. I'm Patrick
+
+00:09:39.300 --> 00:09:44.840
+in Vancouver. Thanks for listening and I'll see you tomorrow. And before you go, this show is part
+
+00:09:44.840 --> 00:09:49.660
+of the Narrow Network, a family of daily podcasts covering tech, science, markets, and more.
+
+00:09:50.280 --> 00:09:55.900
+If you enjoyed today's episode, give modern investing techniques a listen. Modern strategies for
+
+00:09:55.960 --> 00:10:02.840
+Canadian and US investors. You can explore the whole lineup at nerandnetwork.com. This episode
+
+00:10:02.840 --> 00:10:08.320
+used AI voice synthesis of my voice. Editorial selection and analysis are my own.

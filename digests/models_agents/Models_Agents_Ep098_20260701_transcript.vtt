@@ -1,0 +1,286 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.420
+Hey, everyone. Welcome to Models and Agents Episode 98 for July 1, 2020.
+
+00:00:05.940 --> 00:00:08.220
+6. Your Daily AI Briefing.
+
+00:00:08.400 --> 00:00:12.440
+Their signal and noise in AI every day. Let's get to the signal.
+
+00:00:13.080 --> 00:00:17.140
+Export Controls lifted on Clawed Fable 5 and Mythos 5,
+
+00:00:17.700 --> 00:00:23.040
+letting Anthropic restore global access tomorrow with tighter cybersecurity classifiers.
+
+00:00:23.660 --> 00:00:29.080
+Anthropic is redeploying Clawed Fable 5 globally after U.S. government talks,
+
+00:00:29.080 --> 00:00:35.460
+routing some coding tasks back to Opus 4.8 while new classifiers block more misuse.
+
+00:00:36.120 --> 00:00:41.540
+Open AI introduced Gene Bench underscore Pro, a benchmark focused on agents
+
+00:00:41.540 --> 00:00:45.900
+navigating messy biological data and making real research judgments.
+
+00:00:46.980 --> 00:00:53.040
+Simon Willison added video recording to Shot Scraper so builders can generate demos from YAML
+
+00:00:53.040 --> 00:00:58.600
+storyboards. Anthropic announced that the Department of Commerce has lifted export controls
+
+00:00:58.600 --> 00:01:04.540
+on Clawed Fable 5 and Mythos 5 with access restoration beginning tomorrow.
+
+00:01:05.020 --> 00:01:10.560
+The company is also redeploying Fable 5 with updated classifiers that target additional
+
+00:01:10.560 --> 00:01:14.360
+cybersecurity tasks after discussions with the U.S. government.
+
+00:01:15.140 --> 00:01:21.340
+Routine coding and debugging will temporarily fall back to Opus 4.8 while the new safeguards
+
+00:01:21.340 --> 00:01:27.740
+are refined. Anthropic has started drafting a consensus framework on jailbreak severity with
+
+00:01:27.740 --> 00:01:34.320
+Amazon, Microsoft, Google, and other partners. Builders working with frontier models should watch
+
+00:01:34.320 --> 00:01:39.000
+how the new classifiers affect legitimate agent workflows over the coming weeks.
+
+00:01:39.700 --> 00:01:45.000
+This development follows the safety and policy conversations from earlier this week by showing
+
+00:01:45.000 --> 00:01:50.980
+how export controls are being adjusted through direct government talks. It also ties into the
+
+00:01:50.980 --> 00:01:57.380
+ongoing frontier model cadence we tracked yesterday where capability access and safeguards continue
+
+00:01:57.380 --> 00:02:04.880
+to shift in tandem. The new Clawed Sonnet 5 tokenizer increases costs roughly 1.4 times for English
+
+00:02:04.880 --> 00:02:11.800
+text and 1.33 times for Spanish while leaving simplified Mandarin pricing essentially unchanged.
+
+00:02:12.600 --> 00:02:17.700
+Simon Willison notes the shift in a post that also links to his full write-up on the model.
+
+00:02:18.440 --> 00:02:23.760
+Builders running high-volume English or Spanish workloads will see the impact immediately in their
+
+00:02:23.760 --> 00:02:30.260
+token budgets. The change highlights how tokenizer design now directly affects operating costs for
+
+00:02:30.260 --> 00:02:37.320
+production deployments. Open AI released GeneBench Pro, a research-level benchmark that tests how well
+
+00:02:37.320 --> 00:02:44.060
+agents handle messy biological data. Select analysis paths and make the judgment calls required an
+
+00:02:44.060 --> 00:02:51.380
+actual computational biology work. The benchmark moves beyond clean academic tasks to reflect the noisy,
+
+00:02:51.380 --> 00:02:57.720
+iterative nature of real lab pipelines. Teams building scientific agents now have a concrete
+
+00:02:57.720 --> 00:03:03.800
+way to measure progress on this harder class of problems. Watch for early results as groups begin
+
+00:03:03.800 --> 00:03:10.440
+reporting scores on the new suite. A new analysis from business standard examines why different benchmarks
+
+00:03:10.440 --> 00:03:18.220
+continue to rank Fugu, GLM 5.2, and Mithos in varying orders depending on the evaluation suite.
+
+00:03:18.860 --> 00:03:24.080
+The piece underscores that no single leaderboard yet captures the full picture of model strengths
+
+00:03:24.080 --> 00:03:30.360
+across domains. It shows that the three models shift positions when the underlying tests change
+
+00:03:30.360 --> 00:03:36.480
+from one suite to another. Practitioners comparing these models for specific workloads should run
+
+00:03:36.480 --> 00:03:43.220
+targeted tests rather than relying on headline rankings. The analysis makes clear that domain coverage
+
+00:03:43.220 --> 00:03:51.400
+differs enough across suites to produce inconsistent orderings. Builders evaluating Fugu, GLM 5.2,
+
+00:03:51.660 --> 00:03:56.760
+or Mithos, therefore, need workloads specific checks before committing to any one model.
+
+00:03:57.440 --> 00:04:03.320
+Simon Willison extended his shot scraper browser automation tool with video recording driven by
+
+00:04:03.320 --> 00:04:10.460
+YAML storyboards. Users or coding agents can now generate demo videos of web application features by
+
+00:04:10.460 --> 00:04:17.260
+defining a sequence of steps in a simple config file. The update pairs naturally with tools like Codex
+
+00:04:17.260 --> 00:04:25.440
+Desktop and GPT 5.5 for storyboard creation. Teams documenting new interfaces or building agent-driven
+
+00:04:25.440 --> 00:04:30.440
+demos gain a lightweight way to produce consistent recordings without manual screen capture.
+
+00:04:31.240 --> 00:04:36.640
+A new mild-aware layer called Sentinel Gateway enforces strict separation between trusted
+
+00:04:36.640 --> 00:04:43.840
+instruction channels and untrusted data channels in LLM agents. Every tool call now requires a
+
+00:04:43.840 --> 00:04:50.960
+signed, scoped runtime authorization token, decoupling observation from execution. The implementation
+
+00:04:50.960 --> 00:04:58.120
+includes fast API middleware, token-based gating, audit logging, and support for multi-agent patterns
+
+00:04:58.120 --> 00:05:04.620
+with either local or post-gress persistence. The approach targets structural causes of injection
+
+00:05:04.620 --> 00:05:11.700
+rather than relying solely on input filtering or model alignment. The article outlines how IT leaders
+
+00:05:11.700 --> 00:05:18.360
+should govern headless AI agents before they create uncontrolled enterprise risk. It focuses on
+
+00:05:18.360 --> 00:05:24.500
+visibility, policy enforcement, and oversight mechanisms needed as autonomous agents proliferate
+
+00:05:24.500 --> 00:05:30.720
+inside organizations. Teams running production agents should review the recommended controls against
+
+00:05:30.720 --> 00:05:36.900
+their current deployment patterns. Carapathy highlighted the low-voltage, high-current cluster-scale
+
+00:05:36.900 --> 00:05:44.980
+memory techniques used to maximize tokens per watt in frontier LLM inference. The discussion contrasts
+
+00:05:44.980 --> 00:05:50.780
+this regime with traditional power transmission engineering and underscores the specialized hardware
+
+00:05:50.780 --> 00:05:57.620
+work required for interactive serving. Builders optimizing inference costs should track similar systems
+
+00:05:57.620 --> 00:06:04.320
+level innovations as they become public. The recap from the AI engineer world's fair covers discussions
+
+00:06:04.320 --> 00:06:09.620
+on agent loops, software factories, and the role of open models in production workflows.
+
+00:06:10.420 --> 00:06:15.680
+Attendees explored how forward-deployed engineers and structured agent patterns are changing
+
+00:06:15.680 --> 00:06:21.980
+development practices. Teams experimenting with long-running agents will find the reported patterns
+
+00:06:21.980 --> 00:06:28.120
+relevant for their own architectures. A new system uses a semantic model query intermediate
+
+00:06:28.120 --> 00:06:34.620
+representation, so agents reason over curated semantics instead of raw enterprise schemas.
+
+00:06:35.300 --> 00:06:42.620
+A deterministic compiler then emits dialect-specific SQL for skew-light, big query, or snowflake.
+
+00:06:43.220 --> 00:06:51.340
+The approach achieved 94.15% execution accuracy on the Spider-2 snow benchmark using Gemini 3 pro.
+
+00:06:51.980 --> 00:06:57.180
+Developers facing complex enterprise schemas can examine the released code for the constrained
+
+00:06:57.180 --> 00:07:04.960
+think-act loop and semantic model query design. Okay, let's pop the hood on resolution adaptive KV
+
+00:07:04.960 --> 00:07:11.540
+cache approaches. Everyone talks about KV cache compression as if it is a simple eviction problem.
+
+00:07:12.140 --> 00:07:20.320
+In practice, CKV treats context as entropy-guided semantic spans stored across a GPU CPU hierarchy
+
+00:07:20.960 --> 00:07:26.980
+instead of discarding tokens outright. Each span keeps a lightweight summary vector on GPU
+
+00:07:26.980 --> 00:07:34.700
+for fast routing while a low-rank SVD basis lives on CPU for on-demand reconstruction of individual
+
+00:07:34.700 --> 00:07:41.300
+tokens. A trained zoom-in step selectively materializes only the spans relevant to the current
+
+00:07:41.300 --> 00:07:48.320
+query, avoiding full cache reloads. This design trades a small amount of added latency for the
+
+00:07:48.320 --> 00:07:57.040
+ability to handle 128,000 contexts with 53% less GPU memory than full caching. The quality gain
+
+00:07:57.040 --> 00:08:02.680
+comes from preserving information that pure eviction methods lose permanently once a token is dropped.
+
+00:08:03.340 --> 00:08:09.080
+Teams running long-context agents should test resolution adaptive approaches when memory pressure
+
+00:08:09.080 --> 00:08:16.000
+is the binding constraint rather than raw throughput. Testshot scrapers new YAML-driven video mode
+
+00:08:16.000 --> 00:08:21.480
+on a web app you are documenting to see how quickly you can produce consistent feature demos.
+
+00:08:22.260 --> 00:08:27.820
+Review the Sentinel Gateway repo if you are building tool-using agents and want to add signed
+
+00:08:27.820 --> 00:08:35.280
+authorization tokens between instruction and data channels. Run genebench-pro tasks against
+
+00:08:35.280 --> 00:08:42.200
+your current biology or data analysis agents to establish a baseline before the benchmark sees wider
+
+00:08:42.200 --> 00:08:49.080
+adoption. Compare Claude Sonnet 5 tokenizer costs on your English heavy workloads against your
+
+00:08:49.080 --> 00:08:55.540
+existing setup to decide whether prompt compression or model switching is warranted. Japan's planned
+
+00:08:55.540 --> 00:09:01.460
+sovereign AI model and 10 million robot initiative will likely surface more details on training
+
+00:09:01.460 --> 00:09:08.080
+scale and robotics integration in the coming months. Further refinements to Fable 5 classifiers are
+
+00:09:08.080 --> 00:09:14.600
+expected as anthropic works to reduce false positives on legitimate coding requests. Tomorrow,
+
+00:09:15.060 --> 00:09:20.780
+keep an eye on early gene bench Converse Pro scores as more teams publish their first results on
+
+00:09:20.780 --> 00:09:26.980
+the new benchmark. That wraps up today's AI briefing. Share this with a developer or builder who
+
+00:09:26.980 --> 00:09:32.500
+wants to stay current. Subscribe wherever you listen, see you tomorrow, and if you'd rather watch
+
+00:09:32.500 --> 00:09:38.280
+than listen, find us on YouTube at Narra Network links in the show notes. And before you go,
+
+00:09:38.620 --> 00:09:44.880
+this show is part of the Narra Network, a family of daily podcasts on tech, science, and markets.
+
+00:09:45.300 --> 00:09:51.520
+Each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed,
+
+00:09:51.860 --> 00:09:57.860
+here's your next listen. Planetarian daily daily breakthroughs in science, health, and longevity.
+
+00:09:58.500 --> 00:10:05.840
+Find every show free at Narra Network.com. This episode used AI voice synthesis of my voice,
+
+00:10:06.140 --> 00:10:08.740
+editorial selection, and analysis are my own.

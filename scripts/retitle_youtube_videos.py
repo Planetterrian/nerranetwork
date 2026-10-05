@@ -185,6 +185,44 @@ def _episode_headlines(cfg, episode: int, cache: Dict) -> List[str]:
     return out
 
 
+def _dub_proposal(rec: Dict, channel: str) -> Optional[Dict]:
+    """Report a RU/FR window Short whose title is a fragment. Never retitles.
+
+    Oct 4 2026 (operator dry run, Actions run 37142855470): the first
+    version proposed the episode's own headline plus the second-Short tail
+    for every one of the 68 RU fragments. It read badly at scale — every
+    title ending «— ещё момент», sibling Shorts of one episode sharing one
+    title, a 58-character trim leaving «…приводит к бесплатной» — and none
+    of it came from the Short's own words, which is the only honest source
+    for a Short's title.
+
+    Those words cannot be recovered from the record. A dub index row keeps
+    no window offset, and the fragment title is a Whisper segment spelled
+    with digits while the committed ``.<lang>.txt`` script spells numbers
+    out, so it cannot be located reliably: a sentence-locating repair was
+    prototyped against all 68 and found 26, about half of them a transition
+    («Переходим к…») or the wrong sentence. A Short's views arrive on its
+    first day, so a retitle months later buys little reach for that risk.
+
+    So the dub path lists the fragments and proposes nothing (``new_title``
+    None, with the reason); ``--apply`` changes no dub video. New uploads
+    are titled from the window's own speech (``ScoredWindow.window_text``,
+    Oct 3 2026). A single bad title is fixed by hand in Studio.
+    """
+    from engine.titles import is_fragment_title
+
+    if rec.get("kind") != "short" or rec.get("window") == "hook_open":
+        return None
+    title = str(rec.get("title") or "")
+    if not title.strip() or not rec.get("video_id"):
+        return None  # not an uploaded video with a title to repair
+    if not (is_fragment_title(title) or looks_like_fragment(title)):
+        return None
+    return {**rec, "new_title": None,
+            "reason": ("dub fragment: the Short's own words are not on "
+                       "the index row - fix by hand in Studio if it matters")}
+
+
 def plan(show: Optional[str], include_all: bool,
          channel: str = "en") -> List[Dict]:
     """Return the list of proposed retitles, newest first."""
@@ -194,9 +232,19 @@ def plan(show: Optional[str], include_all: bool,
     headline_cache: Dict = {}
     used_per_episode: Dict = {}
     proposals: List[Dict] = []
+    channel = (channel or "en").strip().lower()
     for rec in _iter_records(show, channel):
         title = str(rec.get("title") or "")
         published = str(rec.get("published") or "")
+        if channel != "en":
+            # Oct 3 2026: the dub channels' window Shorts were titled from
+            # one Whisper segment until that day, so their fragments are not
+            # bounded by the EN title-bundle date. Oct 4: reported, never
+            # retitled (see _dub_proposal).
+            proposal = _dub_proposal(rec, channel)
+            if proposal is not None:
+                proposals.append(proposal)
+            continue
         if not include_all and published >= TITLE_FIX_DATE:
             continue
         if not looks_like_fragment(title):

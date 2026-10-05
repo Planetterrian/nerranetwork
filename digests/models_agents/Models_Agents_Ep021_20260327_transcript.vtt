@@ -1,0 +1,415 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:07.300
+Hey, welcome to Models in Agents episode 21 for March 27th, 2026 your DE Bombert
+
+00:00:07.300 --> 00:00:13.400
+– AleE AI briefing on the models and agents that are actually changing how we build
+
+00:00:13.400 --> 00:00:16.920
+Intelligent Systems. And no, Not those kinds of models and agents.
+
+00:00:17.220 --> 00:00:21.660
+Let's get into it today's r x iv droppin c as out cel is especially spicy because it pulls
+
+00:00:21.660 --> 00:00:26.460
+back the curtain on several evaluation practices we've been taking for granted three major themes
+
+00:00:26.460 --> 00:00:31.560
+jumped out, serious contamination in depression detection benchmarks, nuanced failures in
+
+00:00:31.560 --> 00:00:37.260
+model pruning depending on task type, and surprisingly large gains from fine-tuning even modest-sized
+
+00:00:37.260 --> 00:00:39.520
+models on domain-specific medical data.
+
+00:00:40.560 --> 00:00:43.520
+The recurring insight across the batch is uncomfortable but important.
+
+00:00:44.160 --> 00:00:49.360
+Many of our current evaluation setups are heavily contaminated by data set artifacts, prompt
+
+00:00:49.360 --> 00:00:53.640
+regularities, and evaluation shortcuts that don't survive real-world scrutiny.
+
+00:00:53.640 --> 00:00:59.120
+This isn't just academic nitpicking. It has direct consequences for anyone shipping clinical AI,
+
+00:00:59.400 --> 00:01:03.960
+production ML systems, or safety critical agents. Let's start with the top story.
+
+00:01:04.860 --> 00:01:08.020
+Well, which should make every team working on conversational medical AI pause?
+
+00:01:08.540 --> 00:01:12.380
+A careful analysis of three widely used public depression detection data sets,
+
+00:01:12.700 --> 00:01:17.420
+androids, deic-was, and edic revealed the same systematic and alarming bias.
+
+00:01:18.020 --> 00:01:21.580
+Researchers discovered that models were achieving impressive looking performance,
+
+00:01:21.580 --> 00:01:25.920
+not by detecting genuine linguistic markers of depression in participant speech,
+
+00:01:26.240 --> 00:01:30.940
+but by exploiting the highly consistent interviewer prompts and fixed-question ordering that
+
+00:01:30.940 --> 00:01:36.520
+characterize these semi-structured clinical interviews. When the team trained models on the full
+
+00:01:36.520 --> 00:01:42.040
+conversations, performance looked excellent. But when they restricted the models to only participant
+
+00:01:42.040 --> 00:01:47.140
+utterances, stripping away everything the interviewer said, the decision evidence suddenly
+
+00:01:47.140 --> 00:01:52.720
+became much more distributed across the entire conversation. In other words, the models had been lazy.
+
+00:01:53.140 --> 00:01:57.860
+They learned to listen to the interviewer's predictable behavior rather than the patient's actual
+
+00:01:57.860 --> 00:02:03.480
+mental state. This bias isn't limited to one data set or one architecture. It appears anywhere you
+
+00:02:03.480 --> 00:02:08.820
+have semi-structured clinical interviews with consistent prompting. The paper makes a strong case that
+
+00:02:08.820 --> 00:02:14.600
+we need new analysis techniques that localize where decision evidence is coming from, both in time and by
+
+00:02:14.600 --> 00:02:20.040
+speaker. If you're building any kind of clinical or mental health AI right now, you should immediately
+
+00:02:20.040 --> 00:02:25.760
+audit your models. Are they actually listening to patients? Or are they gaming the interviewers script?
+
+00:02:26.640 --> 00:02:31.360
+This finding feels especially timely because mental health AI has been one of the most hyped
+
+00:02:31.360 --> 00:02:36.860
+application areas. Papers like this are a necessary corrective. They remind us that impressive
+
+00:02:36.860 --> 00:02:42.100
+benchmark numbers can sometimes reflect artifacts of how the data was collected rather than genuine
+
+00:02:42.100 --> 00:02:48.680
+clinical signal. This theme of contaminated evaluation is driven home even more explicitly in
+
+00:02:48.680 --> 00:02:54.600
+the paper titled When Consistency Becomes Bias. The authors demonstrate that models can reach
+
+00:02:54.600 --> 00:02:59.560
+strong depression detection performance while essentially ignoring participant language entirely.
+
+00:02:59.940 --> 00:03:04.660
+They simply latch on to the fixed interviewer prompts that appear in nearly identical form across
+
+00:03:04.660 --> 00:03:10.000
+the data set. Only when the analysis is restricted to participant utterances do the real linguistic
+
+00:03:10.000 --> 00:03:15.380
+signals of depression begin to surface. The implications here go far beyond depression detection.
+
+00:03:15.900 --> 00:03:22.520
+Anytime you're building medical conversation. I on AI diagnostic agents or even legal educational
+
+00:03:22.520 --> 00:03:27.060
+dialogue systems that rely on semi-structured interviews, you need to be asking these same
+
+00:03:27.060 --> 00:03:32.880
+questions about speaker specific evidence localization. This paper should become required reading for
+
+00:03:32.880 --> 00:03:38.400
+any team claiming clinical grade performance from conversational models. Shifting gears to model
+
+00:03:38.400 --> 00:03:44.960
+efficiency, the paper demystifying when pruning works via representation hierarchies delivers one
+
+00:03:44.960 --> 00:03:49.620
+of the clearest explanations I've seen for why pruning behaves so differently across tasks.
+
+00:03:50.180 --> 00:03:55.060
+The core insight is that neural networks maintain three distinct representation spaces,
+
+00:03:55.520 --> 00:04:00.880
+embeddings, logits, and probabilities, and these spaces respond very differently to pruning.
+
+00:04:01.560 --> 00:04:06.900
+Embedding spaces and logit spaces turn out to be surprisingly robust to aggressive weight removal.
+
+00:04:06.900 --> 00:04:12.380
+The problems only really begin when you apply the nonlinear transformation from logits into
+
+00:04:12.380 --> 00:04:19.280
+probabilities. That nonlinear softmax step amplifies even tiny deviations and those amplified
+
+00:04:19.280 --> 00:04:23.820
+errors then compound across every single autoregressive step during generation.
+
+00:04:24.520 --> 00:04:30.220
+This explains why retrieval classification and multiple choice tasks often survive aggressive pruning
+
+00:04:30.220 --> 00:04:36.540
+while open-ended generation quality collapses. The authors even release their analysis code which
+
+00:04:36.540 --> 00:04:42.180
+is genuinely useful. If you're maintaining production models and looking to reduce serving costs,
+
+00:04:42.460 --> 00:04:48.400
+this paper gives you a proper mental model instead of the usual just prune low magnitude weights and
+
+00:04:48.400 --> 00:04:54.360
+prey approach that's been circulating for years. On the medical AI side, two papers particularly stood
+
+00:04:54.360 --> 00:05:01.540
+out for showing what's possible with focused fine-tuning. In one, researchers took a 1.2B open-weight model
+
+00:05:01.540 --> 00:05:08.140
+and fine-tuned it on just over 8,500 human-rated titles and abstracts for systematic review screening.
+
+00:05:08.460 --> 00:05:13.820
+The results were striking, an 80.79% improvement in weighted F1 over the base model.
+
+00:05:14.080 --> 00:05:21.020
+On the full 8,277 study dataset, it reached 86.4% agreement with human screeners,
+
+00:05:21.340 --> 00:05:26.540
+with a 91.18% true positive rate and perfect consistency across inference runs.
+
+00:05:26.540 --> 00:05:31.700
+This is a powerful reminder that for many high stakes but relatively narrow medical tasks,
+
+00:05:31.960 --> 00:05:37.120
+you don't necessarily need frontier scale models. A well-targeted 1-2B model on high-quality
+
+00:05:37.120 --> 00:05:44.120
+domain data can deliver outsized returns. Similarly, another team fine-tuned Alama 3.1-8B on a
+
+00:05:44.120 --> 00:05:49.320
+relatively small finished clinical conversation corpus for medical transcription. Despite finished
+
+00:05:49.320 --> 00:05:54.060
+being a low resource language and the dataset being modest in size, they achieved a strong
+
+00:05:54.060 --> 00:06:02.040
+BERT score F1 of 0.8230. The N-gram overlap was relatively low, but semantic similarity was excellent.
+
+00:06:02.480 --> 00:06:07.440
+This work makes a compelling case for building privacy preserving domain-specific models,
+
+00:06:07.880 --> 00:06:10.960
+even for languages that typically get ignored by the major labs.
+
+00:06:11.820 --> 00:06:16.400
+Moving over to the agent and tool use side, there's a genuinely practical new system called
+
+00:06:16.400 --> 00:06:22.120
+model feature agent or MOFA. Instead of treating feature selection as a pure statistical problem,
+
+00:06:22.120 --> 00:06:27.960
+MOFA uses an LLM's semantic understanding and quantitative feature information inside
+
+00:06:27.960 --> 00:06:33.280
+structured prompts to perform sequential reasoning-based feature selection under real operational
+
+00:06:33.280 --> 00:06:38.520
+constraints. In a true interest prediction task, it delivered accuracy gains while simultaneously
+
+00:06:38.520 --> 00:06:44.300
+reducing feature complexity. It also surfaced high-order interactions that improved online engagement
+
+00:06:44.300 --> 00:06:50.380
+metrics. For notification prediction, it selected compact feature subsets that boosted both accuracy
+
+00:06:50.380 --> 00:06:56.380
+and inference speed. What I like about this work is that it shows LLM reasoning can add real value
+
+00:06:56.380 --> 00:07:01.700
+in production ML systems, where labeled data is scarce and you have strict latency and infrastructure
+
+00:07:01.700 --> 00:07:06.920
+constraints. This feels like the kind of agent pattern that will quietly make its way into many
+
+00:07:06.920 --> 00:07:13.240
+industrial ML pipelines over the next year. Another notable tool-oriented paper explores using
+
+00:07:13.240 --> 00:07:19.580
+lightweight LLMs as prompt attack detectors using an LLM as a judge approach. Models as small as
+
+00:07:19.700 --> 00:07:25.940
+Gemini 2.0 Flashlight 001 proved surprisingly effective as low latency security judges when given
+
+00:07:25.940 --> 00:07:30.940
+structured reasoning chains that include intent decomposition, safety signal verification,
+
+00:07:31.600 --> 00:07:37.320
+harm assessment, and self-reflection. This system is already deployed in production as a centralized
+
+00:07:37.320 --> 00:07:43.120
+guardrail for public service chatbots in Singapore. Interestingly, a mixture of models variant only
+
+00:07:43.120 --> 00:07:48.320
+gave modest gains over the single model version, suggesting that careful prompting and reasoning
+
+00:07:48.320 --> 00:07:54.200
+structure matter more than raw model scale for this particular safety task. In the practical and
+
+00:07:54.200 --> 00:08:00.280
+community section, one paper offers a very clear. Ian controlled study on synthetic rewriting as a
+
+00:08:00.280 --> 00:08:05.500
+quality multiplier for continued pre-training, this time in Portuguese. The results were scale
+
+00:08:05.500 --> 00:08:11.720
+dependent but clear. Rewriting high-quality data delivered a solid 3.4 NPM boost at 7B scale,
+
+00:08:11.720 --> 00:08:19.200
+while rewriting low-quality data only managed 0.5 at the smaller 1.1B scale, unmodified low-quality
+
+00:08:19.200 --> 00:08:24.480
+data performed comparably to rewritten high-quality data. The takeaway seems to be that synthetic
+
+00:08:24.480 --> 00:08:30.140
+rewriting works best as a multiplier on already good data rather than as a magical way to rescue
+
+00:08:30.140 --> 00:08:35.240
+poor data sets. This has important implications for anyone doing continued pre-training and non-English
+
+00:08:35.240 --> 00:08:40.820
+languages. Finally, two papers dive into how models express and evaluate their own confidence.
+
+00:08:40.820 --> 00:08:45.960
+One mechanistic interpretability paper shows that calibration and verbalized confidence are
+
+00:08:45.960 --> 00:08:51.600
+encoded linearly but in surprisingly orthogonal directions within the model. When you prompt models
+
+00:08:51.600 --> 00:08:56.820
+to reason step by step while also verbalizing confidence, you actually create a reasoning contamination
+
+00:08:56.820 --> 00:09:03.680
+effect that worsens miscalibration. The authors propose a two-stage adaptive steering pipeline that
+
+00:09:03.680 --> 00:09:08.720
+substantially improves the alignment between a model's internal confidence and what it says out loud.
+
+00:09:08.720 --> 00:09:13.200
+A separate paper introduces a type 2 signal detection theory framework to measure
+
+00:09:13.200 --> 00:09:19.360
+metacognitive efficiency using metadee and M-ratio. They show that metacognitive efficiency varies
+
+00:09:19.360 --> 00:09:24.380
+dramatically across models even when raw accuracy looks similar and that efficiency is highly
+
+00:09:24.380 --> 00:09:30.540
+domain specific. Temperature mostly shifts decision criterion rather than sensitivity. Perhaps
+
+00:09:30.540 --> 00:09:36.380
+most interestingly, auroc2 and M-ratio produce completely inverted model rankings, demonstrating
+
+00:09:36.380 --> 00:09:41.480
+their measuring fundamentally different things. Let's pop the hood for a moment on that pruning paper
+
+00:09:41.480 --> 00:09:47.860
+because the representation hierarchy's insight is genuinely useful for practitioners. Everyone talks
+
+00:09:47.860 --> 00:09:52.940
+about pruning like it's a simple switch you flip. In reality, it's a story about three different
+
+00:09:52.940 --> 00:09:58.740
+representation spaces reacting differently to the same perturbation. Embeddings and logits are
+
+00:09:58.740 --> 00:10:05.320
+remarkably robust. The danger zone is the non-linear jump into probability space where small errors get
+
+00:10:05.320 --> 00:10:10.480
+amplified and then accumulate across every token in generation. This gives you a clear decision
+
+00:10:10.480 --> 00:10:15.620
+framework. You can be quite aggressive pruning for embedding heavy workloads or single-step classification
+
+00:10:15.620 --> 00:10:20.940
+tasks. You should be much more cautious with long-form generation where those compounding probability
+
+00:10:20.940 --> 00:10:26.500
+errors matter most. The gotcha that keeps biting teams is assuming uniform robustness across the
+
+00:10:26.500 --> 00:10:31.200
+entire computational graph. Always measure perturbation effects separately in embedding,
+
+00:10:31.200 --> 00:10:36.260
+logit, and probability spaces for your specific workload. All right, here's what you should actually
+
+00:10:36.260 --> 00:10:43.760
+try this week. First, take a small open wee. Ite model between 1.2B and 8B and fine-tune it on your
+
+00:10:43.760 --> 00:10:48.620
+own domain screening or transcription data. The returns can be dramatic even with relatively modest
+
+00:10:48.620 --> 00:10:54.800
+data sets. Second, audit any clinical or semi-structured interview models you run. Check whether they're
+
+00:10:54.800 --> 00:10:59.960
+exploiting consistent interviewer prompts rather than learning from participant language. Third,
+
+00:10:59.960 --> 00:11:06.280
+when considering pruning, run the representation space analysis. Measure stability separately in embedding,
+
+00:11:06.520 --> 00:11:14.160
+logit, and probability spaces for your actual tasks. Fourth, experiment with MoEFOS-style LLM
+
+00:11:14.160 --> 00:11:19.840
+reasoning for feature selection in your industrial ML pipelines, especially where you face both constraints
+
+00:11:19.840 --> 00:11:25.100
+and limited labels. And finally, start evaluating your model's metacognitive efficiency using
+
+00:11:25.100 --> 00:11:30.480
+M-ratio in addition to standard calibration metrics. You might discover that your well-calibrated
+
+00:11:30.480 --> 00:11:36.140
+model still doesn't know what it doesn't know. On the horizon, expect more sophisticated speaker aware
+
+00:11:36.140 --> 00:11:43.860
+and time-localized evaluation methods. ODS in clinical conversational AI, continued exploration of
+
+00:11:43.860 --> 00:11:48.580
+synthetic data quality multipliers across languages, deeper mechanistic work on verbalized
+
+00:11:48.580 --> 00:11:53.560
+confidence and reasoning contamination, and broader adoption of type 2 signal detection frameworks
+
+00:11:53.560 --> 00:11:58.760
+for measuring true metacognition. Before we go, keep an eye out tomorrow for more papers exploring
+
+00:11:58.760 --> 00:12:04.700
+speaker aware evaluation in CLI. Nicole Conversations, that's models and agents for today. If you found
+
+00:12:04.700 --> 00:12:10.200
+this useful, share it with someone who's trying to key. Eap up with this whirlwind and subscribe so you
+
+00:12:10.200 --> 00:12:14.680
+don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow.
+
+00:12:15.240 --> 00:12:20.340
+This version sits comfortably in the 10 to 13 minute range while adding meaningful depth, context,
+
+00:12:20.340 --> 00:12:26.580
+and depractical perspective to each story without introducing any new ones. This podcast is curated
+
+00:12:26.580 --> 00:12:32.620
+by Patrick, but generated using AI voice synthesis of my voice using 11 labs. The primary reason to do
+
+00:12:32.620 --> 00:12:37.540
+this is I unfortunately don't have the time to be consistent with generating all the content and
+
+00:12:37.540 --> 00:12:42.240
+wanted to focus on creating consistent and regular episodes for all the themes that I enjoy,
+
+00:12:42.240 --> 00:12:43.640
+and I hope others do as well.

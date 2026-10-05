@@ -1,0 +1,307 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.140
+Good to have you on Models and Agents Episode 93 for June 26th, 2026.
+
+00:00:06.980 --> 00:00:14.560
+Another day, another round of AI developments. Let's break it down. Open AI's internal rollout
+
+00:00:14.560 --> 00:00:21.340
+shows agents handling complex cross-functional work at scale. Giving builders an early view of
+
+00:00:21.340 --> 00:00:28.280
+what production agent systems will soon need to match. Open AI reports Codex Agents are already
+
+00:00:28.280 --> 00:00:35.280
+doing longer running cross-team tasks across every department. Yes, we hack launched autonomous
+
+00:00:35.280 --> 00:00:42.080
+agents for on-demand penetration testing. Nemotron 2-tower decouples auto-regressive
+
+00:00:42.080 --> 00:00:48.860
+context from diffusion denoising for 2.4 two times throughput at near-parad quality.
+
+00:00:49.680 --> 00:00:55.060
+Developers should watch how these internal patterns translate to external tooling and open-weight
+
+00:00:55.060 --> 00:01:01.820
+alternatives this week. Open AI stated that agents powered by Codex are now transforming work
+
+00:01:01.820 --> 00:01:08.360
+across every department, handling tasks that are more complex, longer running and increasingly
+
+00:01:08.360 --> 00:01:14.680
+cross-functional. The company positions this internal usage as an early signal of how
+
+00:01:14.680 --> 00:01:21.380
+agentic tools will reshape workflows once they reach broader availability. No specific benchmarks
+
+00:01:21.380 --> 00:01:27.740
+or model versions were shared, but the emphasis on cross-functional scope suggests agents are moving
+
+00:01:27.740 --> 00:01:35.840
+beyond single-user chat interfaces into multi-step, multi-stakeholder processes. Builders should note
+
+00:01:35.840 --> 00:01:41.380
+the implied requirements around reliability, state management, and tool interoperability
+
+00:01:41.380 --> 00:01:48.180
+that such deployments demand. Watch for any follow-on details on the underlying agent framework or
+
+00:01:48.180 --> 00:01:55.920
+evaluation methods open AI is using internally. This development continues the arc on agent reliability
+
+00:01:55.920 --> 00:02:02.620
+and long horizon workflows that we have tracked since yesterday, sharpening focus on exactly how
+
+00:02:02.620 --> 00:02:10.500
+state and tool handoffs scale beyond single-user setups. Nvidia introduced Nemotron 2-tower,
+
+00:02:10.500 --> 00:02:19.680
+a block-wise auto-regressive diffusion model built on Nemotron 3 Nano 30B times A3B that splits
+
+00:02:19.680 --> 00:02:26.280
+context representation into a frozen auto-regressive tower and a trainable bi-directional diffusion
+
+00:02:26.280 --> 00:02:34.000
+denoiser. The model retains 98.7% of the baseline auto-regressive quality after training on
+
+00:02:34.000 --> 00:02:41.280
+approximately 2.1 trillion tokens while delivering 2.42 times higher wall-clock generation throughput.
+
+00:02:41.980 --> 00:02:50.820
+It supports both dense 2.5 billion and mixture of experts 25 billion A2.8B scales
+
+00:02:51.520 --> 00:02:58.420
+with gains persisting after 80 billion token long-contacts mid-training. Builders working on high
+
+00:02:58.420 --> 00:03:03.680
+throughput inference should test the released weights for long context generation workloads.
+
+00:03:04.100 --> 00:03:10.400
+This release moves the open-weight inference cost curve forward on the same day we noted continued
+
+00:03:10.400 --> 00:03:17.820
+frontier model pressure. Dynamic DLLM adds dynamic cache updating and adaptive parallel
+
+00:03:17.820 --> 00:03:30.660
+decoding to diffusion LLMs such as LLADA.8B.instruct and Dream.v0.7.instruct. The approach
+
+00:03:30.660 --> 00:03:36.780
+adaptively allocates cache update budgets per layer and calibrates decoding thresholds,
+
+00:03:36.780 --> 00:03:42.760
+achieving more than three times average inference speed up across MMLU,
+
+00:03:44.200 --> 00:03:51.500
+GSME1000, and HumanEVAL while preserving benchmark performance. It requires no retraining
+
+00:03:51.500 --> 00:03:58.280
+and works as a plug-and-play module. Teams running diffusion-based generation should evaluate it
+
+00:03:58.280 --> 00:04:06.320
+against static caching baselines for latency-sensitive applications. Solar introduces an auxiliary supervised
+
+00:04:06.320 --> 00:04:14.100
+fine-tuning objective that aligns soft token representations across languages using English as a pivot.
+
+00:04:14.700 --> 00:04:22.120
+On four multilingual reasoning benchmarks, it improves accuracy by up to 17.7 points over the base
+
+00:04:22.120 --> 00:04:29.920
+model and 3.8 points over standard supervised fine-tuning with the largest gains on low resource
+
+00:04:29.920 --> 00:04:36.280
+languages. The method reduces language cluster separability in final layer embeddings.
+
+00:04:36.940 --> 00:04:42.380
+Developers building cross-lingual reasoning systems should experiment with the alignment loss on
+
+00:04:42.380 --> 00:04:49.780
+their own multilingual fine-tunes. No two-guess provides a contamination-aware multi-zone benchmark
+
+00:04:50.320 --> 00:04:58.200
+with 1,200 items across five domains, explicit upstension labels, and dual parsers for measuring
+
+00:04:58.200 --> 00:05:07.940
+answerability versus guessing in LLMs. Evaluations of Flan T5, Quen 2.5 Instruct, and Lama 3 Instruct
+
+00:05:07.940 --> 00:05:14.340
+show that stronger instruction-tuned models still struggle with selective abstention and calibration.
+
+00:05:15.040 --> 00:05:21.920
+The data set and parsers are publicly released. Researchers auditing model reliability should
+
+00:05:21.920 --> 00:05:29.620
+incorporate the benchmark into their evaluation suites. Yes, we hack deployed autonomous AI agents
+
+00:05:29.620 --> 00:05:35.920
+for on-demand penetration testing, allowing users to request security assessments without scheduling
+
+00:05:35.920 --> 00:05:42.480
+human testers. The system targets the growing need for continuous scalable security validation
+
+00:05:42.480 --> 00:05:48.860
+in agentic environments. No specific performance numbers or integration details were released.
+
+00:05:49.580 --> 00:05:55.140
+Security teams evaluating automated testing platforms should request early access to compare
+
+00:05:55.140 --> 00:06:02.340
+coverage against traditional manual pen tests. Cisco announced the acquisition of wide field security
+
+00:06:02.340 --> 00:06:09.460
+to address security gaps in agentic AI systems. The move targets risks arising from autonomous
+
+00:06:09.460 --> 00:06:16.380
+agents that interact with enterprise environments and external tools. No technical specifications or
+
+00:06:16.380 --> 00:06:22.380
+integration timelines were disclosed. Organizations deploying agents in production should monitor
+
+00:06:22.380 --> 00:06:27.940
+Cisco's forthcoming agent security offerings for policy and monitoring capabilities.
+
+00:06:28.920 --> 00:06:35.700
+MEMS Strata maintains a bi-temporal ledger that retires stale facts using deterministic subject
+
+00:06:35.700 --> 00:06:43.920
+relation object supersession rules when contradictions appear. Across six benchmarks with a 7B model,
+
+00:06:43.920 --> 00:06:53.540
+it matches standard retrieval augmented generation on static knowledge while reaching 0.95 to 1.00 accuracy
+
+00:06:53.540 --> 00:07:01.560
+on evolving knowledge where retrieval augmented generation drops to 0.20 to 0.47.
+
+00:07:02.420 --> 00:07:08.580
+It eliminates the 15 to 40% stale fact error rate seen in retrieval augmented
+
+00:07:08.580 --> 00:07:17.240
+generation at roughly 2.1 seconds retrieval latency. Agent developers handling time sensitive data should
+
+00:07:17.240 --> 00:07:24.200
+integrate the supersession mechanism to avoid serving outdated information. A developer using open
+
+00:07:24.200 --> 00:07:31.620
+router APIs is seeking affordable, controllable open source LLM deployment options that support fine
+
+00:07:31.620 --> 00:07:38.460
+tuning without CUDA or Transformers complexity. The post highlights ownership of the full stack
+
+00:07:38.460 --> 00:07:45.580
+and use case specific adaptation as primary motivations. Community responses are likely to surface
+
+00:07:45.580 --> 00:07:52.420
+manage platforms or simplified inference servers. Builders facing similar constraints should review
+
+00:07:52.420 --> 00:07:59.440
+the thread for current recommendations on private deployment paths. Context forge recycles task relevant
+
+00:07:59.440 --> 00:08:05.960
+information across multi-turn conversations using structured query generation, external memory
+
+00:08:05.960 --> 00:08:13.080
+retrieval and controlled synthesis. On a 15 turn healthcare benchmark, it improves consistency and
+
+00:08:13.080 --> 00:08:18.760
+reduces token consumption compared with a baseline agent while maintaining response accuracy.
+
+00:08:19.720 --> 00:08:26.680
+Code and evaluation artifacts are available on GitHub. Teams building long horizon agents should
+
+00:08:26.680 --> 00:08:33.560
+test the recycling approach to lower context window pressure. Okay, let's pop the hood on delta rule
+
+00:08:33.560 --> 00:08:40.900
+memory updates. Everyone talks about delta rule linear attention as a simple correct before you write
+
+00:08:40.900 --> 00:08:47.880
+trick. In practice, it still ties the correction to the current right address, so stale value sitting
+
+00:08:47.880 --> 00:08:54.520
+at other addresses stay untouched until passive decay eventually removes them. The engineering fix
+
+00:08:54.520 --> 00:09:00.720
+is to add an independent erase step that first suppresses outdated memory along a learn direction,
+
+00:09:01.320 --> 00:09:07.760
+then performs the usual delta correction at the active right location. This adds a second learned
+
+00:09:07.760 --> 00:09:14.360
+vector per update but keeps the core delta math intact, preserving the quality of the corrective
+
+00:09:14.360 --> 00:09:22.800
+right while giving the model an explicit cleanup path. In 2.5 billion and 25 billion scale pre-training
+
+00:09:22.800 --> 00:09:29.260
+runs, the extra path helps most when decay is weak, cutting stale factor tension without
+
+00:09:29.260 --> 00:09:36.740
+increasing overall memory bandwidth. The practical takeaway is to adopt the decoupled erase when your
+
+00:09:36.740 --> 00:09:43.840
+workload contains frequent value changes. If facts are mostly static, the added vector offers little return
+
+00:09:44.400 --> 00:09:51.880
+and the simpler single address delta rule remains preferable. Test Nemotron 2-tower waits on long
+
+00:09:51.880 --> 00:10:00.080
+context generation tasks to measure the 2.42 times throughput gain against your current auto-regressive
+
+00:10:00.080 --> 00:10:07.020
+baseline. Integrate MEMS stratastyle super-session rules into any retrieval augmented generation
+
+00:10:07.020 --> 00:10:15.500
+pipeline handling time-sensitive facts to eliminate stale value errors. Run context forge on a 10-15
+
+00:10:15.500 --> 00:10:22.420
+turn internal workflow to quantify token savings versus full context replay. Compare dynamic
+
+00:10:22.420 --> 00:10:29.880
+die systemic DLLM against static caching on your diffusion LLM workloads for latency-sensitive
+
+00:10:29.880 --> 00:10:36.240
+applications. Review the node-to-guest data set and parsers to add answerability and
+
+00:10:36.240 --> 00:10:43.260
+abstention metrics to your model evaluation harness. Further details are expected on open AI's
+
+00:10:43.260 --> 00:10:50.200
+internal agent tooling and evaluation methods. Additional open-weight diffusion LLM releases
+
+00:10:50.200 --> 00:10:57.120
+are following the Nemotron 2-tower pattern. Security tooling updates are coming from Cisco following
+
+00:10:57.120 --> 00:11:03.980
+the wide field acquisition. Expanded multilingual reasoning benchmarks are incorporating soft token
+
+00:11:03.980 --> 00:11:10.760
+alignment techniques. Tomorrow, keep an eye on any follow-up from open AI on the agent framework
+
+00:11:10.760 --> 00:11:17.640
+details that surfaced in today's internal rollout. That's models and agents for today. If you found
+
+00:11:17.640 --> 00:11:23.340
+this useful, share it with someone who's trying to keep up with all these changes, and subscribe so
+
+00:11:23.340 --> 00:11:29.700
+you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow.
+
+00:11:30.400 --> 00:11:36.680
+And if you'd rather watch than listen, find us on YouTube at Nerra Network, links in the show notes.
+
+00:11:37.320 --> 00:11:43.780
+And before you go, this show is part of the Nerra Network, a family of daily podcasts on tech,
+
+00:11:44.160 --> 00:11:49.260
+science, and markets. Each one a short, sharp briefing you can finish on the commute.
+
+00:11:50.040 --> 00:11:55.080
+If today earned its place in your feed, here's your next lesson. Unintended consequences,
+
+00:11:55.640 --> 00:12:02.460
+true stories of good intentions that backfired. Find every show free at NerraNetwork.com.
+
+00:12:02.460 --> 00:12:10.000
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

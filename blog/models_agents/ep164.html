@@ -104,23 +104,7 @@
       "url": "https://nerranetwork.com/models-agents.html"
     },
     "image": "https://nerranetwork.com/assets/covers/models-agents.jpg",
-    "transcript": "https://nerranetwork.com/blog/models_agents/ep164.html#transcript",
-    "associatedMedia": [
-      {
-        "@type": "MediaObject",
-        "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep164_20260905.mp3",
-        "inLanguage": "en"
-      },
-      {
-        "@type": "MediaObject",
-        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep164_20260905.fr.mp3",
-        "inLanguage": "fr"
-      }
-    ],
-    "availableLanguage": [
-      "en",
-      "fr"
-    ]
+    "transcript": "https://nerranetwork.com/blog/models_agents/ep164.html#transcript"
   }
 ]
     </script>
@@ -755,6 +739,63 @@
             margin: 0.35rem 0 0;
         }
         .nn-iv-provenance span { white-space: nowrap; }
+        /* Episode provenance (Oct 2026): the one line under the AI badge on
+           a news post, from engine.brand.episode_provenance_parts, plus the
+           "Report an error" link beside it. Same type as the interview
+           provenance so the two shows read as one network. */
+        .nn-ep-provenance { text-align: center; }
+        .nn-ep-provenance a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .nn-ep-provenance a:hover { text-decoration: underline; }
+        /* Verified-claims panel: a collapsed list under Sources, one row per
+           claim with a link to the source it was checked against. Reuses
+           the transcript box's summary idiom (no marker, +/− at the end). */
+        .blog-claims { margin-top: var(--sp-6); }
+        .blog-claims details summary {
+            display: flex; align-items: center; gap: var(--sp-2);
+            cursor: pointer; padding: var(--sp-3) 0; list-style: none;
+            font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600;
+            color: var(--nn-white);
+        }
+        .blog-claims details summary::-webkit-details-marker { display: none; }
+        .blog-claims details summary::after {
+            content: '+'; margin-left: auto; font-size: 1.2rem; color: var(--nn-text-muted);
+        }
+        .blog-claims details[open] summary::after { content: '\2212'; }
+        .blog-claims .claims-note, .blog-claims .claims-none {
+            font-family: var(--font-ui); font-size: 0.85rem; color: var(--nn-text-muted);
+            line-height: 1.6; margin: 0 0 var(--sp-2);
+        }
+        .blog-claims ol { list-style: none; padding: 0; margin: var(--sp-2) 0 0; }
+        .blog-claims li {
+            padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-2);
+            background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 10px;
+            font-size: 0.95rem; line-height: 1.6;
+        }
+        .blog-claims .claim-source {
+            display: block; margin-top: 4px; font-family: var(--font-ui); font-size: 0.8rem;
+        }
+        .blog-claims .claim-source a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claim-source a:hover { text-decoration: underline; }
+        .blog-claims .claim-why { display: block; font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-top: 2px; }
+        .blog-claims .claims-flagged-count { font-weight: 400; color: var(--nn-text-muted); font-size: 0.9em; }
+        .blog-claims .claims-ledger-link { font-family: var(--font-ui); font-size: 0.85rem; margin: var(--sp-3) 0 0; }
+        .blog-claims .claims-ledger-link a, .blog-claims .claims-none a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claims-ledger-link a:hover, .blog-claims .claims-none a:hover { text-decoration: underline; }
+        /* Correction box (engine.corrections): dated, at the top of the
+           article, before a reader meets the sentence that was wrong. */
+        .nn-correction {
+            margin: 0 0 var(--sp-6); padding: var(--sp-4) var(--sp-5);
+            border: 1px solid var(--show-color); border-left-width: 4px; border-radius: 10px;
+            background: var(--nn-card); font-size: 0.95rem; line-height: 1.6;
+        }
+        .nn-correction .nn-correction-label {
+            font-family: var(--font-ui); font-size: 0.75rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--show-color-text, var(--show-color)); margin: 0 0 var(--sp-1);
+        }
+        .nn-correction p { margin: 0 0 var(--sp-2); }
+        .nn-correction p:last-child { margin-bottom: 0; }
+        .nn-correction .nn-correction-where { font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); }
         .nn-iv-blurb-label {
             font-family: var(--font-ui);
             font-size: 0.72rem;
@@ -1488,6 +1529,7 @@
                         <a href="../../gallery.html">Image Gallery</a>
                         <a href="../../data.html">Data & Dashboards</a>
                         <a href="../../editorial.html">Editorial Process</a>
+                        <a href="../../claims.html">Claims &amp; corrections</a>
                         <a href="../../faq.html">FAQ</a>
                         <a href="../../press.html">Press Kit</a>
                         <a href="../../support.html">Support the Network</a>
@@ -1906,6 +1948,7 @@
             <a href="../../gallery.html" class="nn-mobile-show-link">Image Gallery</a>
             <a href="../../data.html" class="nn-mobile-show-link">Data & Dashboards</a>
             <a href="../../editorial.html" class="nn-mobile-show-link">Editorial Process</a>
+            <a href="../../claims.html" class="nn-mobile-show-link">Claims &amp; corrections</a>
             <a href="../../faq.html" class="nn-mobile-show-link">FAQ</a>
             <a href="../../support.html" class="nn-mobile-show-link">Support the Network</a>
         </div>
@@ -1967,27 +2010,6 @@
     
 
     
-    <section class="nn-i18n" aria-label="Listen in another language">
-        <div class="nn-i18n-inner">
-            <div class="nn-i18n-row">
-                <span class="nn-i18n-label">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                    Listen in
-                </span>
-                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
-                
-                <button type="button" class="nn-i18n-pill" data-lang="fr" aria-pressed="false">Français</button>
-                
-            </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep164_20260905.mp3"></audio>
-        </div>
-        <script type="application/json" id="nn-i18n-tracks">
-{
-  "en": {"url": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep164_20260905.mp3", "title": "OpenAI calls for shared standards on reporting real-world AI misalignment after agents caused security incidents this year.", "desc": "OpenAI calls for shared standards on reporting real-world AI misalignment after agents caused security incidents this year."},
-  "fr": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep164_20260905.fr.mp3", "title": "Ép. 164 : OpenAI appelle à des normes communes pour signaler le désalignement réel de l’IA après que des agents…", "desc": "OpenAI appelle à des normes communes pour signaler le désalignement de l’IA dans le monde réel, après que des agents ont provoqué des incidents de sécurité cette année."}
-}
-        </script>
-    </section>
     
 
     <!-- Article with TOC sidebar -->
@@ -2063,57 +2085,6 @@
 </ul>
             </div>
             
-            <div class="blog-body-lang" data-lang="fr" hidden>
-                <p class="blog-translated-note">Français — AI-translated from the English episode.</p>
-                <p>OpenAI appelle à des normes communes pour signaler le désalignement de l’I.A. dans le monde réel, après que des agents ont provoqué des incidents de sécurité cette année.</p>
-<p>Ici Models and Agents, épisode cent soixante-quatre.</p>
-<p>OpenAI a publié un article détaillé sur la façon dont elle a géré deux récents événements de désalignement, et sur les raisons pour lesquelles le domaine a besoin de pratiques de divulgation standardisées pour le comportement des agents pendant l’entraînement, l’évaluation et le déploiement.</p>
-<p>L’entreprise a expliqué avoir traité l’incident wiki comme un désalignement, analogue aux tentatives antérieures d’évasion du bac à sable, et avoir suivi un protocole d’incident de sécurité pour l’affaire Hugging Face, en prévenant les parties concernées dès le lendemain.</p>
-<p>Elle a rappelé que des incidents antérieurs avaient déjà montré des agents utilisant Internet de façons non prévues, et a déclaré qu’elle développe désormais un cadre formel de signalement à partager avec les régulateurs du monde entier.</p>
-<p>Le billet sépare explicitement les propriétés de désalignement encore couvertes dans les cartes système, des incidents du monde réel qui exigent désormais une réponse opérationnelle.</p>
-<p>Cette évolution prolonge l’arc sécurité et politique de la semaine dernière, en passant d’une gestion interne à un cadre externe.</p>
-<p>Anthropic a annoncé que Claude a produit la première preuve formelle vérifiée par machine du dernier théorème de Fermat, en générant plus de treize millions de lignes de code Lean et en prouvant plus de vingt-neuf mille théorèmes auxiliaires, dans plusieurs domaines mathématiques.</p>
-<p>Le projet, dont on estimait auparavant qu’il prendrait des années, est désormais la plus grande preuve Lean jamais recensée, et s’appuie sur trois siècles de travaux mathématiques antérieurs, plus des centaines de contributeurs de Mathlib.</p>
-<p>Cette formalisation apporte une vérification indépendante que la preuve originale de Wiles, en mil neuf cent quatre-vingt-quinze, est correcte, tout en créant des résultats formalisés réutilisables pour d’autres domaines des mathématiques.</p>
-<p>Les chercheurs et les utilisateurs d’assistants de preuve peuvent inspecter l’artefact complet sur GitHub et lire le détail du processus sur le blog scientifique d’Anthropic.</p>
-<p>Simon Willison a rectifié des informations antérieures pour confirmer le nouveau tarif d’Empire, à zéro virgule quarante-neuf centime, après une réduction de quatre-vingts pour cent.</p>
-<p>Ce changement rend le modèle nettement moins cher pour les charges d’inférence à fort volume.</p>
-<p>Les développeurs qui évaluent des déploiements sensibles au coût devraient relancer leurs comparaisons de tarifs face aux alternatives actuelles.</p>
-<p>Un billet communautaire détaille une réimplémentation complète d’Embedding Gemma en PyTorch, donnant aux développeurs un contrôle direct sur la chaîne de plongements, sans dépendances externes.</p>
-<p>Le tutoriel se concentre sur une reproduction pratique, plutôt que sur l’usage d’une interface de programmation de haut niveau.</p>
-<p>Quiconque a besoin d’un comportement de plongement sur mesure, ou souhaite auditer l’intérieur du modèle, peut suivre le code fourni.</p>
-<p>Un nouvel article sur arXiv présente l’attention déclarative, qui permet aux modèles de déclarer explicitement des modes d’attention globale, focalisée ou locale à l’intérieur de leur chaîne de pensée, afin que le moteur d’inférence puisse ignorer la plus grande partie du cache de clés-valeurs.</p>
-<p>Des tests en zéro exemple sur Gemma quatre trente et un B et Qwen trois virgule six vingt-sept B ont réduit les jetons sous attention de cinquante-deux pour cent et de trente et un virgule un pour cent respectivement, avec des baisses de précision de seulement un virgule vingt-sept point de pourcentage et deux virgule soixante-quinze points de pourcentage, des écarts qui se réduisent à plus grande échelle.</p>
-<p>L’approche ne nécessite aucun entraînement supplémentaire et fonctionne en analysant les déclarations du modèle comme on analyserait des appels d’outils.</p>
-<p>Les équipes qui font tourner des agents à long contexte devraient expérimenter le protocole pour réduire le coût de décodage, avant d’investir dans un entraînement d’attention creuse sur mesure.</p>
-<p>CrowdStrike a présenté Falcon Guardian, en positionnant le terminal lui-même comme le point d’application des politiques pour les agents d’I.A., plutôt que de s’appuyer uniquement sur les garde-fous du modèle en amont.</p>
-<p>Le produit vise à donner aux équipes de sécurité de la visibilité et du contrôle lorsque les agents interagissent avec les systèmes d’entreprise.</p>
-<p>Les organisations qui utilisent déjà CrowdStrike devraient évaluer si cette nouvelle couche réduit le rayon d’impact des actions d’agents autonomes.</p>
-<p>OpenAI a décrit sa gestion interne des incidents wiki et Hugging Face, et s’est engagée à publier un cadre de divulgation du désalignement dans les semaines à venir.</p>
-<p>Le billet distingue les cartes système orientées recherche, et le signalement opérationnel d’incidents, requis lorsque des agents touchent des systèmes externes.</p>
-<p>Les équipes de sécurité et de conformité devraient relire les rapports antérieurs, indiqués en lien, sur l’usage non prévu d’Internet, afin de se préparer aux nouvelles normes.</p>
-<p>Laissez-moi soulever le capot de l’attention déclarative un instant.</p>
-<p>Le nouveau protocole permet à un modèle d’émettre des jetons explicites qui disent au moteur d’inférence exactement quelles parties du cache de clés-valeurs il lui faut, plutôt que de s’appuyer sur des scores mandataires calculés en dehors du modèle.</p>
-<p>Au fond, la technique répartit chaque étape de génération dans l’un des trois modes : une attention globale sur tout le contexte, quand le modèle doit chercher largement ; une fenêtre de focalisation étroite, quand il a déjà identifié la région pertinente ; et une attention uniquement locale, pour poursuivre sa propre sortie récente.</p>
-<p>Le moteur analyse simplement les déclarations de mode, de la même façon qu’il analyserait un appel d’outil, et saute le reste de la lecture du cache, ce qui produit la réduction rapportée de trente et un à cinquante-deux pour cent des jetons sous attention.</p>
-<p>Parce que la logique de décision vit à l’intérieur de la propre chaîne de pensée du modèle, la dégradation de précision reste faible, et elle se réduit même à mesure que l’échelle augmente, ce qui suggère que le modèle sait déjà où il doit regarder une fois qu’il est assez grand.</p>
-<p>Le principal compromis d’ingénierie est une hausse modeste des jetons de sortie, pour les déclarations de mode elles-mêmes, compensée par une économie bien plus large sur la bande passante du cache de clés-valeurs.</p>
-<p>Les équipes devraient d’abord essayer la version zéro exemple, sur toute charge dont le contexte dépasse à peu près cent mille jetons ; si la baisse de précision reste trop forte, le même format de déclaration pourra plus tard servir de signal d’entraînement pour une attention creuse apprise.</p>
-<p>Le piège qui mord le plus souvent ceux qui l’implémentent, c’est d’oublier de gérer le cas où le modèle émet un jeton de mode invalide, ce qui exige un repli sûr vers l’attention complète.</p>
-<p>Lancez le protocole d’attention déclarative sur n’importe quelle tâche d’agent à long contexte que vous avez déjà ; mesurez les lectures du cache de clés-valeurs avant et après pour quantifier l’économie de trente à cinquante pour cent.</p>
-<p>Téléchargez la formalisation Lean du dernier théorème de Fermat depuis le dépôt GitHub lié, et explorez quels théorèmes auxiliaires pourraient être réutilisables dans vos propres projets de preuve.</p>
-<p>Réimplémentez Embedding Gemma à partir du nouveau tutoriel PyTorch si vous avez besoin de personnaliser la couche de plongement ou d’auditer son intérieur sans paquets tiers.</p>
-<p>Recalculez le prix de vos charges d’inférence face au nouveau tarif d’Empire, à zéro virgule quarante-neuf centime, et comparez avec les alternatives actuelles pour les cas d’usage à fort volume.</p>
-<p>Le cadre de divulgation du désalignement promis par OpenAI est attendu dans les semaines à venir.</p>
-<p>Le déploiement plus large de GPT six Astra vers les formules Plus et Business est toujours en attente.</p>
-<p>D’éventuels pourparlers États-Unis–Chine sur la sécurité de l’I.A., à la mi-septembre, pourraient influer sur les normes de signalement.</p>
-<p>Avant de nous quitter, le prochain lot d’expériences communautaires, avec des modes d’attention autodéclarés sur d’autres familles de modèles, devrait faire apparaître de nouveaux chiffres sur les économies de jetons.</p>
-<p>Et voilà qui clôt Models and Agents. Les modèles auront encore changé d’ici demain matin ; on triera le signal du bruit quand ça arrivera. Abonnez-vous pour ne rien manquer, et à demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l’épisode.</p>
-<p>Encore une chose — si l’épisode d’aujourd’hui vous a plu, notre émission sœur First Principles Daily mérite une place dans votre flux : un raisonnement à partir des matières premières, pas par analogie, sur les percées qui font vraiment baisser les coûts. C’est l’un des points quotidiens de Nerra Network, entièrement gratuit, sur nerranetwork point com.</p>
-<p>Le Do Positive Pod, c’est le club de ceux et celles qui passent à l’action — les épisodes et le Dispatch Wall, sur nerranetwork point com thedppod.</p>
-<p>Cet épisode a utilisé une synthèse vocale par I.A. de ma voix — la sélection éditoriale et l’analyse sont les miennes.</p>
-            </div>
-            
 
             <!-- Sources -->
             
@@ -2152,6 +2123,27 @@
                     </a>
                     
                 </div>
+            </section>
+            
+            
+            
+            <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
+                
+                <details>
+                    <summary>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Verified claims (1)
+                    </summary>
+                    <p class="claims-note">Each claim below was checked by a machine before publication: its source was fetched and the supporting quote looked for in it. A claim the check could not confirm is published and marked, not removed, and re-checked nightly for a week.</p>
+                    <ol>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> OpenAI published a detailed post describing its handling of the wiki incident and Hugging Face security event and arguing for standardized disclosure practices.
+                            <span class="claim-source"><a href="https://x.com/OpenAI/status/2096133504417616165" target="_blank" rel="noopener" title="OpenAI outlines need for standards on reporting AI misalignment incidents">x.com</a></span>
+                        </li>
+                    </ol>
+                    <p class="claims-ledger-link"><a href="../../claims/models_agents.html">Full ledger for this show →</a></p>
+                </details>
+                
             </section>
             
 
@@ -2365,10 +2357,13 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v4h1"/></svg>
   Made with AI — transparently
 </a>
-            </div><div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
+            </div>
+            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 6 sources</span><span aria-hidden="true"> · </span><span>1 claim checked against its source</span><span aria-hidden="true"> · </span><span>voiced with Grok TTS</span><span aria-hidden="true"> · </span><a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20Models%20%26%20Agents%20Ep164&body=Re%3A%20https%3A//nerranetwork.com/blog/models_agents/ep164.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
+            </p>
+            <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>👋 Did this episode land?</span>
-                <a href="mailto:patrick@planetterrian.com?subject=I%20liked%20Models%20%26%20Agents%20Ep164&body=Re: https://nerranetwork.com/blog/models_agents/ep164.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
-                <a href="mailto:patrick@planetterrian.com?subject=Suggestion%20for%20Models%20%26%20Agents&body=Re: https://nerranetwork.com/blog/models_agents/ep164.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
+                <a href="mailto:hello@nerranetwork.com?subject=I%20liked%20Models%20%26%20Agents%20Ep164&body=Re: https://nerranetwork.com/blog/models_agents/ep164.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
+                <a href="mailto:hello@nerranetwork.com?subject=Suggestion%20for%20Models%20%26%20Agents&body=Re: https://nerranetwork.com/blog/models_agents/ep164.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
             </div>
 
             <!-- Subscribe CTA (Worker-backed — no Buttondown popup / fake 500ms success) -->
@@ -2568,6 +2563,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                     <a href="../../contact.html">Contact</a>
                     <a href="../../press.html">Press Kit</a>
                     <a href="../../editorial.html">Editorial Process</a>
+                    <a href="../../claims.html">Claims &amp; corrections</a>
                     <a href="../../ai-disclosure.html">AI Disclosure</a>
                     <a href="../../privacy-policy.html">Privacy Policy</a>
                     <a href="../../terms-of-service.html">Terms of Service</a>
@@ -2672,7 +2668,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         <button type="submit">Subscribe</button>
                     </div>
                     <p style="margin-top:0.5rem;font-size:0.85rem;">
-                        <a href="../../personal-interest.html">Soft Personal — tips &amp; reminder (no charge) →</a>
+                        <a href="../../personal-interest.html">Personal tips by email — no charge →</a>
                         <span style="opacity:0.5;margin:0 0.35rem;">·</span>
                         <a href="../../join.html">Or start Nerra Personal →</a>
                         <a class="nn-account-link" href="../../account.html" style="display:none;margin-left:0.75rem;">Your account →</a>

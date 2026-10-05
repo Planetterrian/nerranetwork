@@ -744,6 +744,63 @@
             margin: 0.35rem 0 0;
         }
         .nn-iv-provenance span { white-space: nowrap; }
+        /* Episode provenance (Oct 2026): the one line under the AI badge on
+           a news post, from engine.brand.episode_provenance_parts, plus the
+           "Report an error" link beside it. Same type as the interview
+           provenance so the two shows read as one network. */
+        .nn-ep-provenance { text-align: center; }
+        .nn-ep-provenance a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .nn-ep-provenance a:hover { text-decoration: underline; }
+        /* Verified-claims panel: a collapsed list under Sources, one row per
+           claim with a link to the source it was checked against. Reuses
+           the transcript box's summary idiom (no marker, +/− at the end). */
+        .blog-claims { margin-top: var(--sp-6); }
+        .blog-claims details summary {
+            display: flex; align-items: center; gap: var(--sp-2);
+            cursor: pointer; padding: var(--sp-3) 0; list-style: none;
+            font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600;
+            color: var(--nn-white);
+        }
+        .blog-claims details summary::-webkit-details-marker { display: none; }
+        .blog-claims details summary::after {
+            content: '+'; margin-left: auto; font-size: 1.2rem; color: var(--nn-text-muted);
+        }
+        .blog-claims details[open] summary::after { content: '\2212'; }
+        .blog-claims .claims-note, .blog-claims .claims-none {
+            font-family: var(--font-ui); font-size: 0.85rem; color: var(--nn-text-muted);
+            line-height: 1.6; margin: 0 0 var(--sp-2);
+        }
+        .blog-claims ol { list-style: none; padding: 0; margin: var(--sp-2) 0 0; }
+        .blog-claims li {
+            padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-2);
+            background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 10px;
+            font-size: 0.95rem; line-height: 1.6;
+        }
+        .blog-claims .claim-source {
+            display: block; margin-top: 4px; font-family: var(--font-ui); font-size: 0.8rem;
+        }
+        .blog-claims .claim-source a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claim-source a:hover { text-decoration: underline; }
+        .blog-claims .claim-why { display: block; font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-top: 2px; }
+        .blog-claims .claims-flagged-count { font-weight: 400; color: var(--nn-text-muted); font-size: 0.9em; }
+        .blog-claims .claims-ledger-link { font-family: var(--font-ui); font-size: 0.85rem; margin: var(--sp-3) 0 0; }
+        .blog-claims .claims-ledger-link a, .blog-claims .claims-none a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claims-ledger-link a:hover, .blog-claims .claims-none a:hover { text-decoration: underline; }
+        /* Correction box (engine.corrections): dated, at the top of the
+           article, before a reader meets the sentence that was wrong. */
+        .nn-correction {
+            margin: 0 0 var(--sp-6); padding: var(--sp-4) var(--sp-5);
+            border: 1px solid var(--show-color); border-left-width: 4px; border-radius: 10px;
+            background: var(--nn-card); font-size: 0.95rem; line-height: 1.6;
+        }
+        .nn-correction .nn-correction-label {
+            font-family: var(--font-ui); font-size: 0.75rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--show-color-text, var(--show-color)); margin: 0 0 var(--sp-1);
+        }
+        .nn-correction p { margin: 0 0 var(--sp-2); }
+        .nn-correction p:last-child { margin-bottom: 0; }
+        .nn-correction .nn-correction-where { font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); }
         .nn-iv-blurb-label {
             font-family: var(--font-ui);
             font-size: 0.72rem;
@@ -1477,6 +1534,7 @@
                         <a href="../../gallery.html">Image Gallery</a>
                         <a href="../../data.html">Data & Dashboards</a>
                         <a href="../../editorial.html">Editorial Process</a>
+                        <a href="../../claims.html">Claims &amp; corrections</a>
                         <a href="../../faq.html">FAQ</a>
                         <a href="../../press.html">Press Kit</a>
                         <a href="../../support.html">Support the Network</a>
@@ -1895,6 +1953,7 @@
             <a href="../../gallery.html" class="nn-mobile-show-link">Image Gallery</a>
             <a href="../../data.html" class="nn-mobile-show-link">Data & Dashboards</a>
             <a href="../../editorial.html" class="nn-mobile-show-link">Editorial Process</a>
+            <a href="../../claims.html" class="nn-mobile-show-link">Claims &amp; corrections</a>
             <a href="../../faq.html" class="nn-mobile-show-link">FAQ</a>
             <a href="../../support.html" class="nn-mobile-show-link">Support the Network</a>
         </div>
@@ -2057,6 +2116,71 @@
                     </a>
                     
                 </div>
+            </section>
+            
+            
+            
+            <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
+                
+                <details>
+                    <summary>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Verified claims (12)
+                    </summary>
+                    <p class="claims-note">Each claim below was checked by a machine before publication: its source was fetched and the supporting quote looked for in it. A claim the check could not confirm is published and marked, not removed, and re-checked nightly for a week.</p>
+                    <ol>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> In Signal65 RAG testing hosted via TensorWave, AMD Instinct MI355X delivered about 42 percent lower p99 latency and roughly twice the concurrent-user headroom before breaching the evaluated SLA.
+                            <span class="claim-source"><a href="https://x.com/AMD/status/2105019808509054986" target="_blank" rel="noopener" title="AMD Instinct MI355X Shows ~42% Lower p99 Latency in RAG Testing">x.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The Signal65 evaluation AMD linked compares Instinct MI355X with NVIDIA's B200.
+                            <span class="claim-source"><a href="https://x.com/AMD/status/2105019808509054986" target="_blank" rel="noopener" title="AMD Instinct MI355X Shows ~42% Lower p99 Latency in RAG Testing">x.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> E-Series GPU IP is described as combining graphics, compute, and AI on one architecture and one software stack, with up to 32 TOPS Int8 per core at 1 GHz, and as able to run graphics and AI concurrently.
+                            <span class="claim-source"><a href="https://semiengineering.com/e-series-gpu-ip-the-first-step-towards-converged-acceleration/" target="_blank" rel="noopener" title="E-Series GPU IP: The First Step Towards Converged Acceleration">semiengineering.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> TechPowerUp reports Intel Core Ultra 400-series Nova Lake CPUs are nearing launch after passing USB and PCIe compliance testing.
+                            <span class="claim-source"><a href="https://www.techpowerup.com/353240/intel-nova-lake-launch-nears-as-platform-passes-usb4-and-pcie-5-0-compliance-testing" target="_blank" rel="noopener" title="Intel "Nova Lake" Launch Nears as Platform Passes USB4 and PCIe 5.0 Compliance Testing">techpowerup.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> USB-IF certified Nova Lake-H device IDs D331 and D333 for USB4, and lists ID 6E6E for the Nova Lake PCH-S chipset as compliant with USB 3.2 Gen 2.
+                            <span class="claim-source"><a href="https://www.techpowerup.com/353240/intel-nova-lake-launch-nears-as-platform-passes-usb4-and-pcie-5-0-compliance-testing" target="_blank" rel="noopener" title="Intel "Nova Lake" Launch Nears as Platform Passes USB4 and PCIe 5.0 Compliance Testing">techpowerup.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> PCI-SIG lists Intel 900-series chipset IDs 6E38-6E3F, 6E30-6E35, and 6E40-6E47, added in April, and August entries D461, D465, and D467-D46A certified a PCIe 5.0 x16 root complex that TechPowerUp says are likely Nova Lake-S or a mobile variant.
+                            <span class="claim-source"><a href="https://www.techpowerup.com/353240/intel-nova-lake-launch-nears-as-platform-passes-usb4-and-pcie-5-0-compliance-testing" target="_blank" rel="noopener" title="Intel "Nova Lake" Launch Nears as Platform Passes USB4 and PCIe 5.0 Compliance Testing">techpowerup.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> UCIe standardizes die-to-die communication within a package and allows PCIe traffic to cross chiplet boundaries.
+                            <span class="claim-source"><a href="https://semiengineering.com/pcie-8-0-over-ucie-3-0-bringing-a-proven-rrotocol-into-the-chiplet-era/" target="_blank" rel="noopener" title="PCIe 8.0 Over UCIe 3.0: Bringing A Proven Protocol Into The Chiplet Era">semiengineering.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Digital Realty plans a first turnkey cable landing station at a Los Angeles data center to bring subsea capacity into an established data center and interconnection environment.
+                            <span class="claim-source"><a href="https://www.datacenterknowledge.com/cables/digital-realty-plans-cable-landing-station-at-los-angeles-data-center" target="_blank" rel="noopener" title="Digital Realty Plans Cable Landing Station at Los Angeles Data Center">datacenterknowledge.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> MagPro launched the AeroLev 1850, described as eliminating evaporative cooling water and thereby removing an operational constraint for data centers in arid and water-stressed regions.
+                            <span class="claim-source"><a href="https://www.datacenterdynamics.com/en/product-news/magpro-launches-aerolev-1850-to-advance-water-smart-cooling-for-ai-data-centers/" target="_blank" rel="noopener" title="MagPro launches AeroLev 1850 to advance water-smart cooling for AI data centers">datacenterdynamics.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Da-Li Development is spending nearly NT$600 million on Phoenix office property to tap TSMC supply chain opportunities.
+                            <span class="claim-source"><a href="https://finance.biggo.com/news/ba6ece1d-0ef1-49b8-827e-6a2913ce4727" target="_blank" rel="noopener" title="Da-Li Development spends nearly NT$600 million on Phoenix office property to tap TSMC supply chain opportunities">finance.biggo.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Chosun Ilbo reports that HBM will consume 30 percent of global DRAM wafer capacity next year.
+                            <span class="claim-source"><a href="https://www.chosun.com/english/industry-en/2026/09/30/RXC7ZU3LPNGOLD4BW33NQHCB3I/" target="_blank" rel="noopener" title="HBM to Consume 30% of Global DRAM Wafer Capacity Next Year">chosun.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Carbon-aware computing schedules flexible tasks such as backups, batch analytics, AI model training, report generation, and non-urgent patching when grid carbon intensity is lower or on-site renewable or stored energy is available, within SLA, latency, data-residency, and change-control constraints, to reduce Scope 2 emissions.
+                            <span class="claim-source"><a href="https://www.datacenterknowledge.com/sustainability/how-carbon-aware-scheduling-can-cut-data-center-emissions" target="_blank" rel="noopener" title="How Carbon-Aware Scheduling Can Cut Data Center Emissions">datacenterknowledge.com</a></span>
+                        </li>
+                    </ol>
+                    <p class="claims-ledger-link"><a href="../../claims/ai_chips.html">Full ledger for this show →</a></p>
+                </details>
+                
             </section>
             
 
@@ -2241,10 +2365,13 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v4h1"/></svg>
   Made with AI — transparently
 </a>
-            </div><div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
+            </div>
+            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 9 sources</span><span aria-hidden="true"> · </span><span>12 claims checked against their sources</span><span aria-hidden="true"> · </span><span>voiced with Grok TTS</span><span aria-hidden="true"> · </span><a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20AI%20Chips%20%26%20Data%20Centres%20Daily%20Ep9&body=Re%3A%20https%3A//nerranetwork.com/blog/ai_chips/ep009.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
+            </p>
+            <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>👋 Did this episode land?</span>
-                <a href="mailto:patrick@planetterrian.com?subject=I%20liked%20AI%20Chips%20%26%20Data%20Centres%20Daily%20Ep9&body=Re: https://nerranetwork.com/blog/ai_chips/ep009.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
-                <a href="mailto:patrick@planetterrian.com?subject=Suggestion%20for%20AI%20Chips%20%26%20Data%20Centres%20Daily&body=Re: https://nerranetwork.com/blog/ai_chips/ep009.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
+                <a href="mailto:hello@nerranetwork.com?subject=I%20liked%20AI%20Chips%20%26%20Data%20Centres%20Daily%20Ep9&body=Re: https://nerranetwork.com/blog/ai_chips/ep009.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
+                <a href="mailto:hello@nerranetwork.com?subject=Suggestion%20for%20AI%20Chips%20%26%20Data%20Centres%20Daily&body=Re: https://nerranetwork.com/blog/ai_chips/ep009.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
             </div>
 
             <!-- Subscribe CTA (Worker-backed — no Buttondown popup / fake 500ms success) -->
@@ -2302,6 +2429,8 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                     <a href="../../topics/ai.html" style="display:inline-flex;align-items:center;padding:.5rem .9rem;border-radius:10px;border:1px solid color-mix(in srgb, var(--show-color), transparent 60%);color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;font-size:.9rem;">Artificial intelligence</a>
                     
                     <a href="../../topics/engineering.html" style="display:inline-flex;align-items:center;padding:.5rem .9rem;border-radius:10px;border:1px solid color-mix(in srgb, var(--show-color), transparent 60%);color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;font-size:.9rem;">Engineering</a>
+                    
+                    <a href="../../topics/ai-infrastructure.html" style="display:inline-flex;align-items:center;padding:.5rem .9rem;border-radius:10px;border:1px solid color-mix(in srgb, var(--show-color), transparent 60%);color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;font-size:.9rem;">AI infrastructure</a>
                     
                     <a href="../../topics/index.html" style="display:inline-flex;align-items:center;padding:.5rem .9rem;border-radius:10px;border:1px solid var(--nn-border);color:var(--nn-text-muted);text-decoration:none;font-size:.9rem;">All topics</a>
                 </div>
@@ -2446,6 +2575,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                     <a href="../../contact.html">Contact</a>
                     <a href="../../press.html">Press Kit</a>
                     <a href="../../editorial.html">Editorial Process</a>
+                    <a href="../../claims.html">Claims &amp; corrections</a>
                     <a href="../../ai-disclosure.html">AI Disclosure</a>
                     <a href="../../privacy-policy.html">Privacy Policy</a>
                     <a href="../../terms-of-service.html">Terms of Service</a>
@@ -2550,7 +2680,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         <button type="submit">Subscribe</button>
                     </div>
                     <p style="margin-top:0.5rem;font-size:0.85rem;">
-                        <a href="../../personal-interest.html">Soft Personal — tips &amp; reminder (no charge) →</a>
+                        <a href="../../personal-interest.html">Personal tips by email — no charge →</a>
                         <span style="opacity:0.5;margin:0 0.35rem;">·</span>
                         <a href="../../join.html">Or start Nerra Personal →</a>
                         <a class="nn-account-link" href="../../account.html" style="display:none;margin-left:0.75rem;">Your account →</a>

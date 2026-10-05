@@ -238,28 +238,34 @@ class TestConfigRollout:
     """Sep 12 2026: ENFORCED network-wide in STRIP mode (the sentence
     leaves, never the day); the narrative shows keep BLOCK (a blocked
     episode there costs a rerun, never a queue slot). Shadow mode — the
-    Aug 2026 default — is gone: every show's gate changes what ships."""
+    Aug 2026 default — is gone: every show's gate changes what ships.
 
-    def test_network_default_is_enforced_strip(self):
+    Re-pinned 2026-10-01 (operator-directed): the network default and the
+    narrative shows are FLAG — nothing is removed, every claim carries a
+    status, the episode publishes and is re-verified nightly. Strip
+    removed TRUE sentences and block cost UC 11 of 28 days."""
+
+    def test_network_default_is_enforced_flag(self):
         for slug in ("tesla", "dp_pod", "omni_view", "spacex", "models_agents"):
             cfg = load_config(ROOT / "shows" / f"{slug}.yaml")
             si = cfg.source_integrity
             assert si.enabled, f"{slug}: ledger must be on network-wide"
             assert si.enforce, f"{slug}: the gate must be enforced on every show"
-            assert si.on_failure == "strip", (
-                f"{slug}: a news show strips the unverified sentence; "
-                "blocking would lose the day for a malformed ledger entry"
+            assert si.on_failure == "flag", (
+                f"{slug}: a news show publishes with the status visible; "
+                "strip removed true sentences and block would lose the day"
             )
 
-    def test_narrative_shows_are_enforced_and_block(self):
+    def test_narrative_shows_are_enforced_and_flag(self):
         for slug in ("unintended_consequences", "first_principles"):
             cfg = load_config(ROOT / "shows" / f"{slug}.yaml")
             si = cfg.source_integrity
             assert si.enabled and si.enforce, (
                 f"{slug}: the narrative shows are where fabricated "
-                "provenance was demonstrated — the gate stays blocking"
+                "provenance was demonstrated — the gate stays enforced"
             )
-            assert si.on_failure == "block", slug
+            # 2026-10-01: UC skipped 11 of its last 28 days on block.
+            assert si.on_failure == "flag", slug
 
     def test_dataclass_default_is_block(self):
         from engine.config import SourceIntegrityConfig

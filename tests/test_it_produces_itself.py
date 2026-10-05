@@ -2220,7 +2220,11 @@ class TestTheStudioChecksForHeadphonesRatherThanAskingNicely:
     def test_the_emails_say_what_goes_wrong_not_just_what_to_do(self):
         # "Headphones help a lot" is advice nobody acted on.
         assert "headphones help a lot" not in self.FIRE
-        assert "my questions end up in your recording" in self.FIRE
+        # Oct 1 2026: the reminder's audio paragraph moved to common.py,
+        # shared with the brief and the booking email.
+        common = (ROOT / "pipelines" / "voices" / "common.py").read_text(encoding="utf-8")
+        assert "GUEST_AUDIO_HTML" in self.FIRE
+        assert "my questions end up in your recording" in common
         assert "as if you had said" in self.BOOKING
         assert "wearing headphones or" in self.BOOKING
 
