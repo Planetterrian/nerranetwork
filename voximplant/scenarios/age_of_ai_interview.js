@@ -1152,6 +1152,11 @@ function openWhenReady(reason) {
           content: [{ type: "input_text", text:
             "[OPENING — system note, do not read aloud] The guest is here" +
             (anyoneHeard ? " and has already spoken: answer what they said first." : ".") +
+            (isClosingSession()
+              ? " This is the closing session: welcome them back warmly by name and thank them" +
+                " for coming back, then ask how they are and listen. The lightning round comes" +
+                " after that. "
+              : "") +
             " This turn is beat 1 of HOW TO OPEN only: a warm, unhurried hello by name," +
             " glad they came, and ONE easy human question (how they are today, or" +
             " where they are joining from). Then stop and listen. Do not answer your" +
@@ -1421,7 +1426,14 @@ function closingWindowMin() {
 }
 
 function closingOpensAtMin() {
+  // Oct 5 2026 (Piper Martz): a closing session exists only to record the
+  // closing round, so it may begin straight after the welcome back.
+  if (isClosingSession()) return 0;
   return Math.max(1, plannedMin() - closingWindowMin());
+}
+
+function isClosingSession() {
+  return !!(config && config.session_kind === "closing");
 }
 
 function elapsedMin() {
