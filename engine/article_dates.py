@@ -162,7 +162,7 @@ def probe_page_dates(
             return None
         if status != 200 or not html:
             return None
-        return extract_published_date(html)
+        return extract_published_date(html, art.get("url", ""))
 
     with ThreadPoolExecutor(max_workers=max(1, min(workers, len(todo)))) as pool:
         futures = {pool.submit(_one, a): a for a in todo}

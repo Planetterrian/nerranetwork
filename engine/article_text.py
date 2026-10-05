@@ -186,22 +186,96 @@ def _parse_iso_date(value: str):
     return parsed.astimezone(_dt.timezone.utc)
 
 
-def extract_published_date(html: str):
+#: How much of a page the date search reads. Was 200k characters until
+#: Oct 5 2026: O Globo and Polymarket pages run 1.1-1.4 MB and carry their
+#: <time datetime> / JSON-LD datePublished past 290k, so both read undated.
+DATE_SEARCH_CHARS = 1_500_000
+
+_MONTHS = {m: i for i, m in enumerate(
+    ("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct",
+     "nov", "dec"), 1)}
+_MONTH_NAME = (r"(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|"
+               r"July?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|"
+               r"Dec(?:ember)?)\.?")
+#: A visible date the page LABELS as its publish date — never a bare date,
+#: which is as likely to be a sidebar card as the article (imoca.org prints
+#: four other stories' dates on the same page). arXiv: "Submitted on 1 Oct
+#: 2026"; ScienceDaily: "Date: October 4, 2026". "Updated" is not a label:
+#: an update date is not when the story was new.
+_LABELLED_DMY_RE = re.compile(
+    r"\b(?:Submitted on|Published(?: on)?|Posted(?: on)?|Date)\s*:?\s*"
+    r"(?:<[^>]{0,80}>\s*){0,3}(\d{1,2})\s+" + _MONTH_NAME + r",?\s+(\d{4})\b")
+_LABELLED_MDY_RE = re.compile(
+    r"\b(?:Submitted on|Published(?: on)?|Posted(?: on)?|Date)\s*:?\s*"
+    r"(?:<[^>]{0,80}>\s*){0,3}" + _MONTH_NAME + r"\s+(\d{1,2}),?\s+(\d{4})\b")
+#: Publishers whose article header prints a NUMERIC date in a known order.
+#: Oct 5 2026: imoca.org prints "2/10/26" under the headline — US
+#: month/day/year, which the same page's own cards prove (9.21.26, 10.1.26)
+#: — and xAI's search read it as 2 October, so Offshore North Ep008 aired a
+#: February refit story ("cut in half... relaunched in June") as this
+#: week's news. A host is added here only with that kind of proof.
+_NUMERIC_HEADER_DATES = (
+    ("imoca.org",
+     re.compile(r'class="Article-title"[^<]*</h1>\s*<div class="Subtitle[^"]*">\s*'
+                r"(\d{1,2})/(\d{1,2})/(\d{2,4})\b"),
+     "mdy"),
+)
+
+
+def _aware(year: int, month: int, day: int):
+    """A visible date as aware UTC, or ``None`` when it is not a real day
+    or lies in the future (an event date printed on the page is not when
+    the story was published)."""
+    import datetime as _dt
+    try:
+        d = _dt.datetime(year, month, day, tzinfo=_dt.timezone.utc)
+    except ValueError:
+        return None
+    if d > _dt.datetime.now(_dt.timezone.utc) + _dt.timedelta(days=1):
+        return None
+    return d
+
+
+def _visible_date(head: str, url: str = ""):
+    host = urlsplit(url).netloc.lower() if url else ""
+    for domain, pattern, order in _NUMERIC_HEADER_DATES:
+        if host == domain or host.endswith("." + domain):
+            m = pattern.search(head)
+            if m:
+                a, b, y = (int(x) for x in m.groups())
+                y = y + 2000 if y < 100 else y
+                month, day = (a, b) if order == "mdy" else (b, a)
+                return _aware(y, month, day)
+    m = _LABELLED_DMY_RE.search(head)
+    if m:
+        day, mon, year = m.groups()
+        return _aware(int(year), _MONTHS[mon[:3].lower()], int(day))
+    m = _LABELLED_MDY_RE.search(head)
+    if m:
+        mon, day, year = m.groups()
+        return _aware(int(year), _MONTHS[mon[:3].lower()], int(day))
+    return None
+
+
+def extract_published_date(html: str, url: str = ""):
     """The page's own publish date as an aware UTC datetime, or ``None``.
 
     Read during the full-text fetch so a story an aggregator re-surfaced
     under a fresh index date carries its REAL date (Sep 18 2026 review,
-    fix 8: Ep005 reported the 1 September race start on 14 September)."""
+    fix 8: Ep005 reported the 1 September race start on 14 September).
+    Structured fields win (meta, JSON-LD, ``<time>``); a LABELLED visible
+    date, or a known publisher's header date (*url* selects it), is the
+    fallback (Oct 5 2026)."""
     if not html:
         return None
-    head = html[:200_000]
+    head = html[:DATE_SEARCH_CHARS]
     for pattern in (_META_DATE_RE, _META_DATE_RE_REV, _JSONLD_DATE_RE, _TIME_TAG_RE):
         m = pattern.search(head)
         if m:
             parsed = _parse_iso_date(m.group(1))
             if parsed is not None:
                 return parsed
-    return None
+    return _visible_date(head, url)
 
 
 def fetch_article(
@@ -225,7 +299,7 @@ def fetch_article(
     if status != 200 or not html:
         logger.info("Full-text fetch skipped for %s (status %s)", url[:100], status)
         return "", None
-    return clip_text(extract_article_text(html), max_chars), extract_published_date(html)
+    return clip_text(extract_article_text(html), max_chars), extract_published_date(html, url)
 
 
 def fetch_article_text(
