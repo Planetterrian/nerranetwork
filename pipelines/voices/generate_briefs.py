@@ -177,6 +177,11 @@ def main() -> int:
 
     failures = 0
     for interview in due:
+        if (interview.get("session_kind") or "interview") == "closing":
+            # Oct 5 2026: a closing session has no brief to send; the guest
+            # already knows the subject. Marked briefed so the reminders run.
+            sb_update("interviews", f"id=eq.{interview['id']}", {"status": "briefed"})
+            continue
         existing = sb_select("interview_briefs",
                              f"interview_id=eq.{interview['id']}")
         if existing:

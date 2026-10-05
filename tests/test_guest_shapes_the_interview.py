@@ -129,7 +129,7 @@ class TestTheFormAsksForTheShape:
 
     def test_booking_writes_the_length_onto_the_interview(self):
         assert "const plannedMinutes = clampMinutes(apps[0].desired_minutes) ?? 45;" in WORKER
-        assert WORKER.count("duration_min: plannedMinutes") == 2, \
+        assert WORKER.count("duration_min: closing ? 15 : plannedMinutes") == 2, \
             "both the new interview and the rebooked one"
 
 

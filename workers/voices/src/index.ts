@@ -1050,20 +1050,36 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
   // no preference.
   const plannedMinutes = clampMinutes(apps[0].desired_minutes) ?? 45;
 
-  const existing = await sb(env, "GET",
-    `interviews?application_id=eq.${apps[0].id}&status=in.(scheduled,briefed)&limit=1`);
+  // Oct 5 2026 (Piper Martz): the "closing session" event type books a short
+  // session that records only the closing round of an interview the old
+  // time cap cut off. It is always its own row, pointing at the interview
+  // it finishes.
+  const closing = /closing/i.test(eventSlug);
+  let continues: string | null = null;
+  if (closing) {
+    const prev = await sb(env, "GET",
+      `interviews?application_id=eq.${apps[0].id}&session_kind=eq.interview` +
+      `&status=not.in.(scheduled,briefed,cancelled,missed)&order=scheduled_at.desc&limit=1&select=id`);
+    continues = prev?.[0]?.id ?? null;
+  }
+  const existing = closing
+    ? await sb(env, "GET",
+        `interviews?application_id=eq.${apps[0].id}&session_kind=eq.closing&status=in.(scheduled,briefed)&limit=1`)
+    : await sb(env, "GET",
+        `interviews?application_id=eq.${apps[0].id}&session_kind=eq.interview&status=in.(scheduled,briefed)&limit=1`);
   let interviewId: string;
   if (existing?.length) {
     interviewId = existing[0].id;
     await sb(env, "PATCH", `interviews?id=eq.${interviewId}`,
       { scheduled_at: startTime, status: "scheduled", reminder_sent_at: null, show: show.slug,
         guest_timezone: attendeeTimeZone(p),
-        duration_min: plannedMinutes, host_mode: false });
+        duration_min: closing ? 15 : plannedMinutes, host_mode: false });
   } else {
     const created = await sb(env, "POST", "interviews",
       { application_id: apps[0].id, scheduled_at: startTime, status: "scheduled", show: show.slug,
         guest_timezone: attendeeTimeZone(p),
-        duration_min: plannedMinutes, host_mode: false },
+        duration_min: closing ? 15 : plannedMinutes, host_mode: false,
+        ...(closing ? { session_kind: "closing", continues_interview_id: continues } : {}) },
       "return=representation");
     interviewId = created?.[0]?.id ?? "";
   }
@@ -1083,6 +1099,20 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
   const when = bookedWhen(startTime, p);
   // Sept 28 2026: written by Mira, in the first person, like everything else
   // a guest receives. It used to speak about "Mira, our AI host".
+  if (closing) {
+    await email(env, emailAddr, `Thank you for coming back to finish our ${show.name} conversation`,
+      `<p>Hi ${esc(firstName(apps[0].name))},</p>
+       <p>Thank you so much for making the time. We're on${when ? ` for <strong>${esc(when)}</strong>` : ""}.
+       It will only take a few minutes: we'll pick up the quick lightning round where we left off, a couple
+       of closing questions, and your last word, and it all goes onto the end of the conversation we already
+       recorded. There's no time limit this time.</p>
+       ${GUEST_AUDIO_HTML}
+       ${studioStepsHtml(studio)}
+       <p>${manage ? `If you need to move it, <a href="${esc(manage)}">use this link</a>.` : "If you need to move it, use the reschedule link in your calendar confirmation."}</p>
+       ${miraSignature(show)}`, true);
+    await slack(env, `${show.shortLabel}: ${apps[0].name} booked a closing session ${pacificTime(startTime)}`);
+    return json({ ok: true, show: show.slug, interview_id: interviewId, closing: true });
+  }
   await email(env, emailAddr, `You're booked on ${show.name}`,
     `<p>Hi ${esc(firstName(apps[0].name))},</p>
      <p>Thank you for booking. We're on${when ? ` for <strong>${esc(when)}</strong>` : ""}.
