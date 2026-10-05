@@ -38,7 +38,7 @@ Russian-native shows (@NerraRU):
 | Финансы Просто | `https://nerranetwork.com/finansy_prosto_podcast.rss` |
 | Привет, Русский! | `https://nerranetwork.com/privet_russian_podcast.rss` |
 
-September 2026 launch cohort (not yet submitted — see the tracker note):
+September 2026 launch cohort (Apple, Spotify and Amazon submitted 2026-10-03; Podcast Index still to do — see the tracker note):
 
 | Show | RSS Feed URL |
 |------|-------------|
@@ -168,19 +168,21 @@ RSS URL. Being in Apple Podcasts is sufficient for Overcast discoverability.
 | Привет, Русский! | LIVE | LIVE | -- | -- | LIVE (2026-07-27) | -- | -- |
 | FR dub feeds (4) | LIVE (2026-07-23) | LIVE | n/a (playlists) | -- | LIVE (2026-07-27) | -- | -- |
 | RU dub feeds (4) | LIVE (2026-07-23) | LIVE (all 4 as of 2026-08-16) | n/a (playlists) | -- | LIVE (2026-07-27) | -- | -- |
-| AI Chips & Data Centres Daily | -- | -- | -- | -- | -- | -- | -- |
-| MAG 7 Daily | -- | -- | -- | -- | -- | -- | -- |
-| Peptides Weekly | -- | -- | -- | -- | -- | -- | -- |
-| Longevity Weekly | -- | -- | -- | -- | -- | -- | -- |
-| Vancouver Daily News | -- | -- | -- | -- | -- | -- | -- |
-| Collingwood Weekly | -- | -- | -- | -- | -- | -- | -- |
-| Prediction Markets Daily | -- | -- | -- | -- | -- | -- | -- |
-| Omni View Top World News | -- | -- | -- | -- | -- | -- | -- |
-| Omni View North America | -- | -- | -- | -- | -- | -- | -- |
-| Omni View Europe | -- | -- | -- | -- | -- | -- | -- |
-| Omni View Asia Pacific | -- | -- | -- | -- | -- | -- | -- |
-| Omni View Africa & Middle East | -- | -- | -- | -- | -- | -- | -- |
-| Omni View Central & South America | -- | -- | -- | -- | -- | -- | -- |
+| AI Chips & Data Centres Daily | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
+| MAG 7 Daily | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
+| Peptides Weekly | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
+| Longevity Weekly | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
+| Vancouver Daily News | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
+| Collingwood Weekly | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
+| Prediction Markets Daily | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
+| Omni View Top World News | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
+| Omni View North America | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
+| Omni View Europe | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
+| Omni View Asia Pacific | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
+| Omni View Africa & Middle East | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
+| Omni View Central & South America | PENDING (2026-10-03) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
+| Offshore North | -- (draft: artwork was 1200 px) | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
+| Nerra Daily | LIVE | PENDING (2026-10-03) | -- | PENDING (2026-10-03, confirm email) | -- | -- | -- |
 
 Apple 2026-07-23 publish pass: the last 7 drafts (The DP Pod, Age of AI,
 Le Temps des Shorts Tesla, SpaceX Quotidien, Frontières Fascinantes,
@@ -268,6 +270,40 @@ Collingwood Weekly's first scheduled episode is 2026-10-02; Apple's
 three-episode guideline means it and the two health weeklies (2 episodes
 each on 10-01) may be rejected until mid-October — submit the daily shows
 now and the weeklies when they reach three episodes.
+
+
+Directory pass, 2026-10-03 (operator, through each dashboard; nothing
+committed that day):
+- **Apple:** the 13 cohort shows were added by feed, content rights set
+  to "no third-party content", Update Frequency set (Weekly for Peptides,
+  Longevity, Collingwood, Offshore North; Daily otherwise) and published;
+  all 13 read "Available" (in Apple review). When each is approved,
+  record its public URL as `apple_url` in `shows/network_meta.yaml` (the
+  show-page chip, the rating asks and `scripts/fetch_apple_ratings.py`
+  read it) and flip the row to LIVE. AI Chips is Apple ID 6818850243.
+- **Apple, Offshore North:** saved as a draft; Publish refused the
+  1200 px artwork. `assets/covers/offshore-north.jpg` is 3000x3000 RGB
+  since 2026-10-04 (a Lanczos upscale of the same artwork — no vector
+  source survives). Next: Refresh Feed in Connect, then Publish.
+- **Apple, "Models & Agents for Beginners — Video Edition":** shows
+  Removed (Issue Found). Its feed is structurally identical to the four
+  video feeds that are fine and every enclosure answered 200 with the
+  declared length on 2026-10-04, so the reason is Apple's, stated in
+  Connect (the status link) and in the email to the feed owner.
+- **Spotify:** 15 submitted (the 13, Nerra Daily and Offshore North —
+  neither of the last two had ever been on Spotify). Record each
+  `spotify_show_id` in `shows/<slug>.yaml` once live.
+- **Amazon:** claim emails sent for the 13, Offshore North, Nerra Daily
+  and the RU feeds of SpaceX, Models & Agents and First Principles; each
+  needs Confirm Ownership clicked within 24 h. Tesla, Fascinating
+  Frontiers and Planetterrian answered "already claimed by its owner" —
+  they are on Amazon under a different Amazon account; find which before
+  expecting Amazon analytics for them.
+- **Podcast Index:** a `hub/pubnotify` ping does not ADD a feed (it only
+  refreshes one already indexed); the 13 are not in the index yet. Use the
+  public form (podcastindex.org/add, hCaptcha). Apple-approved shows are
+  often picked up by the index within days, so check `api/op3_stats.json`
+  for `resolved: true` first.
 
 
 ## Post-Submission Checklist

@@ -47,7 +47,12 @@ jobs:
   generate:
     runs-on: ubuntu-latest
     # Grok synthesis + Buttondown sends can hang; cap below the 6h default.
-    timeout-minutes: 45
+    # Oct 4 2026: 45 minutes was hit on four Sundays running (Sep 13 - Oct 4)
+    # — each weekly takes 3-5 minutes of synthesis — and the commit step
+    # never ran, so the sent markers of the shows that DID go out were lost
+    # (a re-run would have sent them twice). The run step now has its own
+    # cap below this one, and the commit step runs whatever happened.
+    timeout-minutes: 90
 
     steps:
       - name: Checkout
@@ -82,6 +87,9 @@ jobs:
         run: python scripts/backfill_content_lake.py
 
       - name: Run weekly newsletters
+        # Below the job cap, so a slow Sunday fails THIS step and the
+        # always() commit below still records every weekly that was sent.
+        timeout-minutes: 75
         env:
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
           BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
@@ -112,6 +120,10 @@ jobs:
         run: python scripts/run_cross_network_briefing.py
 
       - uses: ./.github/actions/safe-commit-push
+        # always(): the sent markers are the double-send guard. A run that
+        # timed out or crashed after sending some shows must still commit
+        # them, or the next dispatch re-sends those shows.
+        if: always()
         with:
           # Block scalar, one path per line: the composite feeds this to
           # `git add --pathspec-from-file`, so a space-separated single

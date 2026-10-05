@@ -2922,7 +2922,12 @@ def run(args: argparse.Namespace) -> None:
                 # entries (a repaired ledger the full gate rejects is
                 # discarded) — the grok-4.3 arm had been shipping
                 # "claims=0, passed" on every new show.
-                if _si_gate.passed:
+                # Oct 5 2026: it also runs on a FAILING gate in flag mode,
+                # which publishes either way — the floor never touches the
+                # failing entries and keeps its result only when the gate
+                # verifies more and gets no worse. Gated on passing alone,
+                # it skipped every flagship episode with one flagged claim.
+                if _si_gate.passed or (_si_enforce and _si_on_failure == "flag"):
                     try:
                         _si_gate, _si_claims, _cov = _si_mod.attempt_item_coverage_repair(
                             x_thread, _si_gate, _si_claims or [], _repair_llm,
@@ -3401,6 +3406,9 @@ def run(args: argparse.Namespace) -> None:
                 or ("requested" if (template_vars or {}).get("_combined_podcast_prompt") else "off"),
             )
             template_vars.pop("_combined_podcast_prompt", None)
+            _script_stage_s = (template_vars or {}).pop("_script_stage_s", None)
+            if _script_stage_s is not None:
+                metrics.record_stage("generate_podcast_script", _script_stage_s)
 
             # Strip mode, script side: every script sentence that tells a
             # digest sentence the gate removed goes too (the digest and the

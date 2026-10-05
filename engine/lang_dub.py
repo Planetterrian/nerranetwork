@@ -54,6 +54,7 @@ from engine.ru_dub import (  # language-neutral helpers — single source
     _hashtags,
     _is_fresh_episode,
     _clause_trim,
+    _window_short_headline,
     gallery_images_for_episode,
 )
 
@@ -196,16 +197,37 @@ def _translate_title(en_title: str, lang: DubLanguage) -> str:
 
 
 def _short_title(long_title: str, lang: DubLanguage, *,
-                 body_limit: int = 70) -> str:
-    """Distinct, punchy Short title derived from the language long title."""
+                 body_limit: int = 70,
+                 keep_whole_if_fits: bool = True) -> str:
+    """Distinct, punchy Short title derived from the language long title.
+
+    A headline that fits YouTube's cap whole ships whole (Oct 4 2026; see
+    ``engine.ru_dub._ru_short_title``)."""
     body = lang.ep_prefix_re.sub("", (long_title or "").strip()).strip()
     body = body.rstrip("…").rstrip()
-    ceiling = min(body_limit, _YT_TITLE_MAX - len(_SHORTS_SUFFIX))
+    cap = _YT_TITLE_MAX - len(_SHORTS_SUFFIX)
+    if keep_whole_if_fits and len(body) <= cap:
+        return f"{body}{_SHORTS_SUFFIX}".strip()
+    ceiling = min(body_limit, cap)
     # Clause-aware, not just word-aware: 26% of published FR Short titles
     # ended on a dangling preposition or article because a French
     # translation of an English long title routinely overruns 70 chars.
     body = _clause_trim(body, ceiling, lang.code)
     return f"{body}{_SHORTS_SUFFIX}".strip()
+
+
+def _second_short_title(long_title: str, lang: DubLanguage) -> str:
+    """Fallback title for a non-hook Short: headline + tail + #Shorts.
+
+    Oct 3 2026: the tail used to be appended after ``_short_title``'s
+    " #Shorts" (see ``engine.ru_dub._ru_second_short_title``).
+    """
+    body = _short_title(long_title, lang, body_limit=52,
+                        keep_whole_if_fits=False)
+    tag = _SHORTS_SUFFIX.strip()
+    if body.endswith(tag):
+        body = body[: -len(tag)].rstrip()
+    return f"{body}{lang.second_short_tail}{_SHORTS_SUFFIX}".strip()
 
 
 def _policy_plan(config, lang: DubLanguage) -> Dict[str, object]:
@@ -588,6 +610,11 @@ def publish_lang_dub(
                 ]
             else:
                 short_plan = [(base_offset, "", "legacy_fallback")]
+            # Each window's spoken text, aligned with short_plan (Oct 3 2026).
+            short_window_texts = [
+                (getattr(w, "window_text", "") or "").strip()
+                for w in (windows or [])[:len(short_plan)]
+            ] if windows else [""]
 
             end_card_png = None
             try:
@@ -691,31 +718,26 @@ def publish_lang_dub(
                     if short_idx == 0 or not opening_text:
                         st = _short_title(title, lang)
                         if short_idx > 0:
-                            st = (_short_title(title, lang, body_limit=52)
-                                  + lang.second_short_tail)
+                            st = _second_short_title(title, lang)
                     else:
                         # Aug 2026: window openings are mid-sentence slices
                         # by construction — ask Grok for a complete headline
                         # from the excerpt first (never-invent, same-language
                         # validated); any failure keeps the legacy
                         # clause-trim. Title-only metadata.
+                        # Oct 3 2026: written from the window's speech,
+                        # and never a fragment — the episode headline with
+                        # the language's second-Short tail stands in.
                         _limit = min(70, _YT_TITLE_MAX - len(_SHORTS_SUFFIX))
-                        body = ""
-                        try:
-                            from engine.translate import (
-                                headline_from_excerpt,
-                            )
-                            body = headline_from_excerpt(
-                                opening_text, lang.code, max_chars=_limit)
-                        except Exception:  # noqa: BLE001
-                            body = ""
+                        _wtext = (short_window_texts[short_idx]
+                                  if short_idx < len(short_window_texts)
+                                  else "")
+                        body = _window_short_headline(
+                            _wtext, opening_text, lang.code, _limit)
                         if body:
-                            body = _clause_trim(body, _limit, lang.code)
+                            st = f"{body}{_SHORTS_SUFFIX}".strip()
                         else:
-                            body = _clause_trim(
-                                opening_text.rstrip("…").rstrip(),
-                                _limit, lang.code)
-                        st = f"{body}{_SHORTS_SUFFIX}".strip()
+                            st = _second_short_title(title, lang)
 
                     _publish_at = (
                         _stagger_times[short_idx - 1]

@@ -1,0 +1,119 @@
+Apple is requiring more explicit user action before AI agents can access full disk data on Macs, raising the bar for agent permissions. This is Models & Agents, episode 192. Apple is tightening privacy controls on Mac computers as increasingly capable artificial intelligence agents gain access to sensitive user data. The company announced on Friday that it will introduce additional safeguards around its full disk access feature. The change requires more
+explicit user action before an app can obtain broad access to files, messages, mail, and
+other data.
+Apple said that full-disc access is a powerful Mac OS capability that largely bypasses
+the operating system's normal privacy protections.
+The feature exists in part because certain applications, particularly backup services, need
+broad access to a Mac's data to function properly.
+However, Apple said some developers are using the capability in ways that could expose users
+to privacy risks.
+As AI agents become increasingly capable and autonomous, the risks associated with this
+level of access will grow substantially.
+Apple directly tied the planned changes to the rapid development of autonomous AI agents.
+The company said an application with this level of access can potentially reach virtually
+everything stored on a Mac, including files, mail, messages, and browsing history.
+Going forward, Apple said it will introduce additional controls so users who want to grant
+an application full disk access must take a more explicit action to do so.
+Apple shares ended with gains of about 2% in Friday's regular trade, while Meta shares gained 0.3%.
+In Model Updates, Quen Flash Next now uses Les V-RAM thanks to a new pull request.
+The Quen 4 EXP change halves the index or score memory for the model.
+The update targets memory usage during inference for the Quen family.
+Unitry Robotics released Unifold LM-WLA-1.0, their new general-purpose humanoid foundation model.
+It carries 6 billion parameters trained on approximately 2,500 hours of real robot data.
+One model handles 64 tasks consisting of 10 whole body and 54 tabletop actions.
+It supports parallel grippers and two different dextrous hands.
+The model shows strong spatial reasoning that beats many open source models on embodied benchmarks.
+Architecture starts with Unitry G1 making the bed, loading the washing machine, folding
+clothing clothes and sorting objects.
+An agentic model from Microsoft called Frog Nano targets the GPU poor.
+Frog Nano is derived from Quinn-Slasch Quinn 3.5-4B.
+It inherits the dense 32-layer hybrid gated delta net and gated attention architecture.
+The model is further trained using reinforcement learning on approximately 1,500 synthetic
+SWE task environments generated and calibrated against the evolving policy using task pilot.
+Training uses the five-tool leaf harness and executable test-based rewards over complete
+multi-turned coding trajectories. The additional post-training targets long horizon repository navigation,
+debugging, code editing, test execution, and patch generation. Performance is sensitive to the
+leaf harness and test quality. Training data are Python heavy and primarily English. Generated
+patches may be incorrect or insecure despite passing available tests. Benchmarking used
+Alama.cpp-based expert streaming setup for Quinn3.8-flash-next177b in UDIQ3 underscore XXS on Windows.
+The benchmark reached 11.5 tokens per second, up from roughly 7 tokens per second on the inherited setup.
+Normal conversations reached 14 to 15 tokens per second.
+A long coding prompt generated 4,892 tokens at 10.15 tokens per second and produced a working single file snake game.
+Hardware consisted of RTX 5070 12GB, 32GB DDR4-2400, Ryzen 5 5600 GT, on PCIe Gen 3 under Windows.
+Main gains came from fixing Windows I.O.Q depth issues, using one file handle per worker,
+and building a page-locked hot expert tier. In agent and tool developments,
+ML subgen generates subtitles in 45 languages entirely on your own machine.
+It detects the language of every stretch of speech rather than per file, so mixed language
+material works.
+It runs two speech recognizers on everything and has a local LLM reconcile them.
+It prefers existing human work to machine inference.
+Embedded subtitle tracks are used before the audio is, including OCR of bitmap PGS tracks
+on Blu-ray remixes, and it only listens when there is nothing to read. Every feature has a
+measured accuracy in the readme. It runs on a 24 GB RTX A5000 with profiles for 16, 12 and 8
+GB cards. It wants 16 to 32 GB of system RAM depending on the profile and is storage hungry with
+30 to 65 GB of models. It is slow when it has to listen, roughly real-time per target language on the
+test card. Megacapibara is a purpose built engine for RTX 5090, focused on Quinn 3.827b.
+It beats ninfer by roughly twice in decodespeed for both single and multi-tasks. It reaches
+up to 650 tokens per second in small bursts, and 2,600 tokens per second if stars align,
+with 12 slot server pure coding answer. Custom kernels switch dynamically for short versus
+long context. It includes D-flash 2 and confidence scheduling from D-Spark plus draft trees.
+Wates come with attached metadata that runs benchmark and compares at every setting
+to original BF-16 weights. The engine shows lost KL and top 1% when switching KV to 4-bit
+or extending with yarn. It supports up to 1 million context and 12 slots for agents.
+options. Proper cash management keeps pre-fill almost unused after initial job start. Unified
+context swaps tasks to RAM instantly in 0.03 seconds when context runs out. In practical
+and community news, Grayscale reports that the AI-focused crypto sector gained 54 percent
+in September. The sector remains the smallest of six crypto categories at roughly $15 billion.
+dollars. Gray scale sees potential for blockchain networks to support AI agents
+through payments, identity, private computing, and verifiable data. Near rose
+183%, BitTensor gained 37%, world-advanced 47% and Venice climbed 70%. The
+report argues public blockchains can complement centralized AI systems by
+supplying infrastructure that conventional platforms may struggle to provide
+independently. Unlike traditional applications that generally perform a defined
+set of functions, AI agents can interpret instructions, make decisions, and take
+multiple actions on a user's behalf. The company is committed to ensuring users
+clearly understand these risks before granting such access. IQ3 underscore xxs weights
+are just under 80 GB. Slow DDR4 plus 7,900 XTX stabilizes around 45 to 70 tokens per second,
+sometimes higher while coding depending on MTP. Similar results appear for users with 12
+GB and 16 GB cards. Significantly faster numbers appear for owners of DDR5. Lama's CPP with tuning
+meaning maxed out around 22.5 tokens per second on the same rig.
+Quality seems reliably superior, though Q2 weights are not recommended.
+Pop the hood on sparse memory access in agentic systems, and the gap between half a people
+imagine memory working in large models and how it actually scales shows up in the difference
+between fixed expert counts and truly dynamic indexing.
+In practice, each token only needs to touch a small number of memory cells, even as the
+total memory grows without bound.
+The model learns to index individual cells so that access costs stays constant rather
+than linear.
+This design separates the intelligence module, which stays fixed in size, from the memory
+store that can keep growing.
+When memory holds both facts and procedures, new capabilities appear without any weight updates.
+rates. The practical rule is to use this approach when your workload involves long horizon
+tasks that benefit from accumulating skills over time rather than static knowledge retrieval.
+The intelligence module performs computation while memory holds knowledge, procedures,
+and working state. Every token reads from and writes to an unbounded memory, yet touches
+only a small number of cells at a time. Sparse architectures that fix the fraction of
+capacity used at each step cannot match this flexibility.
+The approach trades increased indexing complexity for unbounded growth without rising access
+cost.
+Try ML subgen for generating multilingual subtitles on local hardware if you work with
+mixed language video content.
+Check out the QN4EXP pull request if you are running QN flash next models and want to reduce
+VRAM usage.
+experiment with the Unitry's Unifo LM-WLA-1.0 if you are exploring embodied AI on humanoid robots.
+Test Megacapibara on an RTX 5090 if you need high-speed multi-agent serving for Quinn 3.827b.
+More updates to MAC privacy controls for AI agents are expected in coming weeks. Further developments in
+open-weight humanoid foundation models from robotics labs are in the pipeline. Additional
+agentic models from Microsoft and other labs are also expected soon. Before we go, watch
+for continued inference engine optimizations targeting high-context multi-agent workloads.
+That's models and agents for today. If you found this useful, share it with someone who's
+trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update.
+The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch
+than listen, find us on YouTube at Narrow Network, links in the show notes. One more thing. If you like
+today's episode, our sister show OmniView Africa and Middle East is worth a spot in your feed.
+The day across Africa and the Middle East with every claim attributed. It's one of the Narrow
+Network's daily briefings, all free at narennetwork.com.
+And if you would rather browse by subject than by show, every subject the network covers
+has its own page at narennetwork.com slash topics.
+This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.
