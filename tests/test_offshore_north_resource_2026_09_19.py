@@ -62,22 +62,29 @@ class TestCampaignStatusBlock:
         assert race_state(when, end, dt.datetime(2026, 12, 5, tzinfo=dt.timezone.utc)) == "FINISHED"
         assert race_state(None, None, self.NOW) == "DATE UNKNOWN"
 
+    # Oct 4 2026: the log gained the YB tracker's Gosport fixes; at the
+    # 21 Sep clock the newest fix ON OR BEFORE that day is the 17 Sep
+    # training run (the 4 Oct fix is in the clock's future and is skipped).
     def test_block_from_the_committed_record(self):
         """The Ep005 error class, by construction: on 21 Sep the block says
         the Défi Azimut is FINISHED and EMIRA IV did not sail it, the Route
-        du Rhum is NOT STARTED with the campaign ENTERED, the newest fix is
-        dated and aged, and the countdown is arithmetic."""
+        du Rhum is NOT STARTED with the skipper AIMING TO START (Oct 4 2026:
+        not on the official list), the newest fix is dated and aged, and the
+        countdown is arithmetic."""
         from engine.offshore_north_status import build_campaign_status
 
         out = build_campaign_status(_curated(), now=self.NOW)
-        assert "LAST KNOWN POSITION / MOVEMENT: 2026-09-02 (19 days ago)" in out
-        assert "heading back to Europe" in out
+        assert "LAST KNOWN POSITION / MOVEMENT: 2026-09-17 (4 days ago)" in out
+        assert "Training run in the English Channel" in out
+        pos_line = next(l for l in out.splitlines() if l.startswith("LAST KNOWN POSITION"))
+        assert "2026-10-04" not in pos_line  # the clock's future fix is skipped
         assert "Défi Azimut-Lorient Agglomération (15 September 2026): FINISHED" in out
         assert "EMIRA IV not entered / did not sail" in out
-        assert "Route du Rhum – Destination Guadeloupe start (1 November 2026): NOT STARTED — 41 days to go. EMIRA IV ENTERED." in out
+        assert "Route du Rhum – Destination Guadeloupe start (1 November 2026): NOT STARTED — 41 days to go. Scott Shawyer is aiming to start — not on the official entry list as of 4 October 2026." in out
+        assert "EMIRA IV ENTERED" not in out
         assert "783 days to the Vendée Globe start (12 November 2028)" in out
         assert "RESULTS ON RECORD" in out and "Sam Goodchild" in out and "United by the Ocean" in out
-        assert "22 registered" in out and "Scott Shawyer IS on the list" in out
+        assert "22 registered" in out and "Scott Shawyer is NOT on the official entry list" in out and "AIMING TO START" in out
         assert "unconfirmed" in out  # only inside the "never 'unconfirmed'" instruction
         assert "position unconfirmed" not in out.lower()
 
@@ -86,7 +93,7 @@ class TestCampaignStatusBlock:
 
         older = {"position": {"date": "2026-08-01", "text": "old", "url": "u", "channel": "c"}}
         newer = {"position": {"date": "2026-09-20", "text": "Arrived in Lorient", "url": "u2", "channel": "Scott's Notes"}}
-        assert "2026-09-02 (19 days ago)" in build_campaign_status(_curated(), live=older, now=self.NOW)
+        assert "2026-09-17 (4 days ago)" in build_campaign_status(_curated(), live=older, now=self.NOW)
         out = build_campaign_status(_curated(), live=newer, now=self.NOW)
         assert "2026-09-20 (1 day ago) — Arrived in Lorient — Scott's Notes" in out
 
@@ -98,7 +105,7 @@ class TestCampaignStatusBlock:
 
     def test_wired_into_hook_prompts_and_defaults(self):
         hook = _read("shows/hooks/offshore_north.py")
-        assert 'ctx["campaign_status"] = campaign_status_from_files()' in hook
+        assert 'ctx["campaign_status"] = campaign_status_from_files(tracker=tracker)' in hook
         assert "{campaign_status}" in _read("shows/prompts/offshore_north_digest.txt")
         assert "{campaign_status}" in _read("shows/prompts/offshore_north_podcast.txt")
         assert 'template_vars.setdefault("campaign_status", "")' in _read("run_show.py")
@@ -120,12 +127,19 @@ class TestCampaignStatusBlock:
 # The verified record (19 Sep 2026 refresh)
 # ---------------------------------------------------------------------------
 
+def d_last_fix_date() -> str:
+    return max(p["date"] for p in _curated()["position_log"])
+
+
 class TestCuratedRecord:
     def test_defi_azimut_absence_is_a_note_not_a_position(self):
         d = _curated()
         azimut = next(c for c in d["countdowns"] if c["id"] == "defi_azimut")
         assert azimut["emira_entered"] is False and azimut.get("source")
-        assert d["position_log"][-1]["date"] == "2026-09-02"  # no invented fix
+        # no invented fix: every logged position carries a source URL, and
+        # the Azimut absence never became one
+        assert all(p.get("url") for p in d["position_log"])
+        assert not any("Azimut" in p["text"] for p in d["position_log"])
         assert "not among the 14 IMOCA" in d["position_note"]["text"]
 
     def test_results_and_form(self):
@@ -288,7 +302,8 @@ class TestRound2FleetAndRecord:
             if "lat" in p:
                 assert p.get("place") and "lon" in p, p["date"]
         # the 2 Sep "leaving Canada" post names no place -> no marker
-        assert "lat" not in d["position_log"][-1]
+        sep2 = next(p for p in d["position_log"] if p["date"] == "2026-09-02")
+        assert "lat" not in sep2
         ports = {p["id"] for p in d["map"]["ports"]}
         for c in d["map"]["courses"]:
             assert c["from"] in ports and c["to"] in ports
@@ -339,7 +354,7 @@ class TestRound2FleetAndRecord:
         import generate_html as gh
 
         strip = gh._offshore_north_campaign_strip()
-        assert strip and strip["label"].startswith("Route du Rhum") and strip["fix_date"] == "2026-09-02"
+        assert strip and strip["label"].startswith("Route du Rhum") and strip["fix_date"] == d_last_fix_date()
         assert "campaign_strip" in _read("templates/show_page.html.j2")
         assert "onStripDays" in _read("offshore-north.html")
 

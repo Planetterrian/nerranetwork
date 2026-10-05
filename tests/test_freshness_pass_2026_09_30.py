@@ -169,11 +169,16 @@ class TestArticleDates:
 # engine/fetcher.py — web search and X posts
 # ---------------------------------------------------------------------------
 
-_WEB_TEXT = """ARTICLE_TITLE: Fresh story
+# The fresh story is dated TODAY, never a literal: the fetch keeps results
+# inside its 72-hour window of the real clock, so a fixed 2026-09-30 date
+# turned this test red on 2026-10-05 with no code change (Oct 5 2026).
+_FRESH_DATE = dt.date.today().isoformat()
+
+_WEB_TEXT = f"""ARTICLE_TITLE: Fresh story
 ARTICLE_URL: https://pub.example/news/fresh-story
 ARTICLE_DESCRIPTION: Something happened today.
 ARTICLE_SOURCE: Pub
-ARTICLE_DATE: 2026-09-30
+ARTICLE_DATE: {_FRESH_DATE}
 
 ARTICLE_TITLE: Old story the model dated
 ARTICLE_URL: https://pub.example/news/old-story
@@ -203,7 +208,7 @@ class TestWebSearchDates:
         by_title = {a["title"]: a for a in arts}
         assert set(by_title) == {"Fresh story", "Undated story"}
         assert by_title["Fresh story"]["date_source"] == "model"
-        assert by_title["Fresh story"]["published_date"].startswith("2026-09-30")
+        assert by_title["Fresh story"]["published_date"].startswith(_FRESH_DATE)
         assert by_title["Undated story"]["published_date"] == ""
         assert by_title["Undated story"]["date_source"] == "unknown"
         # Neither the model-dated January story nor the /2021/05/09/ path

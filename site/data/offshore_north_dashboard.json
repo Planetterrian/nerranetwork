@@ -1,6 +1,6 @@
 {
-  "_about": "Curated, operator-maintained data for offshore-north-dashboard.html (the companion page to the Offshore North podcast). Everything here is dated and sourced; the live pieces (latest campaign posts, latest headlines) come from api/offshore_north_dashboard.json, refreshed by scripts/fetch_offshore_north_dashboard.py. Update this file after a milestone, a result, or a position fix — never invent a fix. Verified 2026-09-19 against the URLs in each entry.",
-  "last_verified": "2026-09-19",
+  "_about": "Curated, operator-maintained data for offshore-north-dashboard.html (the companion page to the Offshore North podcast). Everything here is dated and sourced; the live pieces (latest campaign posts, latest headlines) come from api/offshore_north_dashboard.json, refreshed by scripts/fetch_offshore_north_dashboard.py. Update this file after a milestone, a result, or a position fix — never invent a fix. Verified 2026-10-04 (position fixes from the team's YB tracker; Route du Rhum entry status from the operator's check of the official list) and 2026-09-19 against the URLs in each entry.",
+  "last_verified": "2026-10-04",
   "campaign": {
     "team": "Canada Ocean Racing",
     "skipper": "Scott Shawyer",
@@ -51,7 +51,24 @@
         }
       ],
       "spec_source": "https://www.imoca.org/en/boats/emira-iv"
-    }
+    },
+    "tracker": {
+      "keyword": "emira4",
+      "page": "https://my.yb.tl/emira4",
+      "places": [
+        {
+          "name": "Gosport, UK (Portsmouth Harbour)",
+          "lat": 50.796,
+          "lon": -1.116,
+          "radius_km": 2
+        }
+      ],
+      "_note": "Read by engine/yb_tracker.py through the public API the tracker page itself calls. A fix is given a place name only inside one of these places; anywhere else it is spoken as coordinates."
+    },
+    "base": "Gosport, UK (Portsmouth Harbour) — on the YB tracker since 4 September 2026",
+    "instagram_handles": [
+      "Canada_Ocean_Racing"
+    ]
   },
   "position_log": [
     {
@@ -82,6 +99,30 @@
       "date": "2026-09-02",
       "text": "\"Emira IV now leaving Canada and heading back to Europe\" — Scott's Notes, Thank you, Canada.",
       "url": "https://www.canadaoceanracing.com/thank-you-canada-what-scott-shawyer-has-learned-after-a-summer-of-intense-training-on-an-imoca-60/"
+    },
+    {
+      "date": "2026-09-04",
+      "text": "Arrived in Gosport, UK (Portsmouth Harbour) — the YB tracker's first fix at the berth, 21:00 UTC.",
+      "url": "https://my.yb.tl/emira4",
+      "lat": 50.796,
+      "lon": -1.116,
+      "place": "Gosport, UK (Portsmouth Harbour)"
+    },
+    {
+      "date": "2026-09-17",
+      "text": "Training run in the English Channel: left Gosport 15:00 UTC, out to about 76 km (50.23°N, 1.71°W, south of the Isle of Wight), back alongside by 00:10 UTC on 18 September. The only outing on the tracker since arrival.",
+      "url": "https://my.yb.tl/emira4",
+      "lat": 50.228,
+      "lon": -1.709,
+      "place": "English Channel, south of the Isle of Wight"
+    },
+    {
+      "date": "2026-10-04",
+      "text": "Alongside in Gosport, UK (Portsmouth Harbour), per the YB tracker.",
+      "url": "https://my.yb.tl/emira4",
+      "lat": 50.796,
+      "lon": -1.116,
+      "place": "Gosport, UK (Portsmouth Harbour)"
     }
   ],
   "countdowns": [
@@ -107,13 +148,14 @@
     {
       "id": "rdr_start",
       "label": "Route du Rhum – Destination Guadeloupe start",
-      "sub": "Saint-Malo → Pointe-à-Pitre · 118 solo skippers in six classes · Scott Shawyer's first solo transatlantic on a foiling IMOCA",
+      "sub": "Saint-Malo → Pointe-à-Pitre · 118 solo skippers in six classes · Scott Shawyer is aiming to start (not on the official entry list as of 4 October)",
       "when": "2026-11-01T13:02:00+01:00",
       "url": "https://www.routedurhum.com/en",
       "primary": true,
-      "emira_entered": true,
+      "emira_entered": null,
       "end": "2026-11-30T23:59:00-04:00",
-      "results_key": "route_du_rhum_2026"
+      "results_key": "route_du_rhum_2026",
+      "emira_entry_text": "Scott Shawyer is aiming to start — not on the official entry list as of 4 October 2026"
     },
     {
       "id": "vg_start",
@@ -186,7 +228,7 @@
     },
     {
       "date": "2026-11-01",
-      "label": "Route du Rhum – Destination Guadeloupe start, 13:02 — EMIRA IV entered",
+      "label": "Route du Rhum – Destination Guadeloupe start, 13:02 — Scott Shawyer aiming to start (not on the official list yet)",
       "status": "upcoming",
       "emira": true,
       "url": "https://www.routedurhum.com/en",
@@ -336,7 +378,7 @@
   ],
   "rdr_imoca_entries": {
     "source_url": "https://www.imoca.org/en/route-du-rhum-destination-guadeloupe",
-    "note": "IMOCA class entry page, read 2026-09-19: 22 registered of the 26 selected (21 named here; late confirmations pending). Entry names are the sponsor names the boats race under. \"48H Azimut\" is each skipper's result in the solo 48H Azimut of 17–19 September 2026, the last solo IMOCA race before the Rhum.",
+    "note": "IMOCA class entry page, read 2026-09-19: 22 registered of the 26 selected (21 named here; late confirmations pending). Entry names are the sponsor names the boats race under. \"48H Azimut\" is each skipper's result in the solo 48H Azimut of 17–19 September 2026, the last solo IMOCA race before the Rhum. 4 Oct 2026: Scott Shawyer is not on the official entry list; his row is kept here marked \"aiming to start\" until it is.",
     "entries": [
       {
         "skipper": "Sam Goodchild",
@@ -390,7 +432,9 @@
         "boat": "Canada Ocean Racing – Be Water Positive (EMIRA IV)",
         "canada": true,
         "azimut_48h": "did not sail",
-        "imoca_slug": "emira-iv"
+        "imoca_slug": "emira-iv",
+        "official": false,
+        "status_note": "aiming to start — not on the official entry list as of 4 Oct 2026"
       },
       {
         "skipper": "Jérémie Beyou",
@@ -708,9 +752,9 @@
     }
   ],
   "position_note": {
-    "as_of": "2026-09-19",
-    "text": "No dated fix from the team's channels since the 2 September post. One verified absence: EMIRA IV was not among the 14 IMOCA that sailed the 48H Azimut in Lorient on 17–19 September.",
-    "url": "https://www.yacht.de/en/regatta/defi-azimut-the-start-of-the-48-hour-chase/"
+    "as_of": "2026-10-04",
+    "text": "EMIRA IV is based in Gosport, UK (Portsmouth Harbour), not in Brittany or Lorient. The YB tracker shows one outing since the boat arrived on 4 September: a training run in the Channel on 17 September. EMIRA IV was not among the 14 IMOCA that sailed the 48H Azimut in Lorient on 17–19 September.",
+    "url": "https://my.yb.tl/emira4"
   },
   "map": {
     "note": "Marker positions are the PLACES named in dated team posts (harbour and canal coordinates), never a live fix — the team's own tracker is the live source. Course lines are indicative great-circle sketches between start and finish ports, not routing.",
@@ -867,5 +911,11 @@
       "line": "Won the 2024–25 Vendée Globe in a record 64 days 19 hours while being treated for cancer. He died on 11 June 2026, aged 42; the 2028 race is discussed in his shadow.",
       "url": "https://www.canadaoceanracing.com/fair-winds-charlie-dalin/"
     }
-  ]
+  ],
+  "rhum_entry": {
+    "status": "aiming_to_start",
+    "as_of": "2026-10-04",
+    "text": "Scott Shawyer is AIMING TO START the Route du Rhum on 1 November 2026. He is NOT on the official entry list yet, so never say he is racing, entered or on the start list; say he is \"aiming to start\" until the official list carries his name.",
+    "source": "Operator check of the official entry list, 4 October 2026"
+  }
 }

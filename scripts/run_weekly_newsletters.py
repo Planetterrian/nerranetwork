@@ -5,7 +5,7 @@ import argparse
 import logging
 import os
 import sys
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -37,6 +37,66 @@ def _discover_shows() -> list:
 
 SHOWS = _discover_shows()
 
+#: The shows a weekly reaches first (Oct 4 2026). Synthesis takes 3-5
+#: minutes a show on grok-4.6, so an alphabetical walk reached Omni View
+#: Central & South America at the 45-minute timeout on four Sundays running
+#: (Sep 13 - Oct 4) and Planetterrian, SpaceX, Tesla and Unintended
+#: Consequences got no weekly after Sep 6. The flagships go first, so a slow
+#: Sunday can only ever cost the shows with the fewest readers; everything
+#: else follows in discovery order.
+PRIORITY_SHOWS = (
+    "tesla", "spacex", "models_agents", "fascinating_frontiers", "omni_view",
+    "planetterrian", "modern_investing", "models_agents_beginners",
+    "unintended_consequences", "first_principles",
+)
+
+
+def ordered_shows(shows: list) -> list:
+    """``shows`` with :data:`PRIORITY_SHOWS` first (in that order), the rest
+    after in their original order. Never adds or drops a show."""
+    first = [s for s in PRIORITY_SHOWS if s in shows]
+    return first + [s for s in shows if s not in first]
+
+
+def send_preflight(show_slug: str) -> str:
+    """Why a REAL weekly send for this show cannot happen, or ``""``.
+
+    Run BEFORE synthesis, because synthesis is the slow part: on Oct 4 ten
+    launch-cohort shows each spent ~4 minutes writing a weekly that was then
+    refused because their Buttondown tag does not exist yet (a tag exists
+    only once someone has subscribed with it) — about 40 of the run's 45
+    minutes. The checks mirror the send path's own refusals, so a skip here
+    is exactly a send that would have been refused, minus the Grok call.
+    A failed tag fetch is NOT a reason to skip (the send path decides).
+    """
+    try:
+        from engine.config import load_config
+
+        cfg = load_config(f"shows/{show_slug}.yaml")
+    except Exception as exc:  # noqa: BLE001 — let the main path report it
+        logger.debug("preflight: no config for %s (%s)", show_slug, exc)
+        return ""
+    nl = getattr(cfg, "newsletter", None)
+    if not nl or not getattr(nl, "enabled", False):
+        return "newsletter not enabled"
+    key_env = getattr(nl, "api_key_env", "") or ""
+    api_key = os.environ.get(key_env) if key_env else None
+    if not api_key:
+        return f"no API key ({key_env or 'unset'})"
+    tag = (getattr(nl, "tag", "") or "").strip()
+    if not tag:
+        return ""
+    try:
+        from engine.newsletter import _ALL_TAG_NAMES, _resolve_tag_ids
+
+        resolved = _resolve_tag_ids([tag], api_key)
+        if not resolved and _ALL_TAG_NAMES:
+            return (f"Buttondown has no tag {tag!r} yet (no subscriber has "
+                    f"chosen this show)")
+    except Exception as exc:  # noqa: BLE001 — never skip on a lookup error
+        logger.debug("preflight tag lookup failed for %s: %s", show_slug, exc)
+    return ""
+
 
 def sent_marker_path(output_dir: Path, show_slug: str, week_ending: date) -> Path:
     """Per-show, per-week 'already sent' marker (see the guard in main)."""
@@ -59,17 +119,32 @@ def record_sent(marker: Path, *, email_id: str, subject: str) -> None:
         logger.warning("  could not write sent marker %s: %s", marker, exc)
 
 
+def default_week_ending(today: date) -> date:
+    """The Sunday that closes the newsletter week: today on a Sunday, the
+    Sunday just gone on any other day.
+
+    The weekly is a Sunday send and its sent marker is keyed on this date.
+    Until Oct 5 2026 the default was ``date.today()``, so a catch-up
+    dispatch made after midnight UTC on Sunday (the Oct 4 run had timed out
+    at 17:55 UTC) looked for ``*_weekly_2026-10-05`` markers, found none,
+    and would have sent the six weeklies that already went out a second
+    time."""
+    return today - timedelta(days=(today.weekday() + 1) % 7)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate weekly newsletters")
     parser.add_argument("--show", type=str, help="Specific show slug (default: all)")
-    parser.add_argument("--date", type=str, help="Week ending date YYYY-MM-DD (default: today)")
+    parser.add_argument("--date", type=str,
+                        help="Week ending date YYYY-MM-DD (default: the most recent Sunday)")
     parser.add_argument("--dry-run", action="store_true", help="Generate but don't send")
     parser.add_argument("--output-dir", type=str, default="outputs/newsletters",
                         help="Save generated newsletters to this directory")
     args = parser.parse_args()
 
-    week_ending = date.fromisoformat(args.date) if args.date else date.today()
-    shows = [args.show] if args.show else SHOWS
+    week_ending = (date.fromisoformat(args.date) if args.date
+                   else default_week_ending(date.today()))
+    shows = [args.show] if args.show else ordered_shows(SHOWS)
 
     # Show content lake stats
     stats = get_lake_stats()
@@ -103,6 +178,14 @@ def main():
                         sent_marker.name)
             results[show_slug] = "already sent this week"
             continue
+
+        if not args.dry_run:
+            why_not = send_preflight(show_slug)
+            if why_not:
+                logger.info("  Not synthesized — the send could not happen: %s",
+                            why_not)
+                results[show_slug] = f"skipped ({why_not})"
+                continue
 
         # One show's failure must never sink the whole weekly run: on
         # 2026-08-30 first_principles' template carried a placeholder the

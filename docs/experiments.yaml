@@ -738,6 +738,23 @@ experiments:
     shipped: 2026-09-21
     readout: 2026-09-25
     status: reading
+    update_2026_10_04: >
+      Read 2026-10-04 (model_trial_report --since 2026-09-27 --timeout-seconds
+      600, cohort shows). GATE: FAIL on the DIGEST stage, unchanged in kind
+      from 09-30 although every cohort call now streams: generate_digest p95
+      ai_chips 747 s, prediction_markets 814 s, omni_view_europe 564 s,
+      omni_view_world 554 s, mag7 525 s, vancouver 433 s against a 600 s
+      request timeout; streamed time-to-first-token p50 182-277 s. Pinned-model
+      fallbacks 2/48 episodes (ai_chips 09-28, mag7 09-30, both pre-flight
+      pings). CORRECTION to 09-30: "omni_view script stage p95 67.6 s" was
+      the 4.3 generate_digest row; the script call was never timed, so no
+      script-stage pin has ever been latency-gated. It is recorded as the
+      generate_podcast_script stage from 2026-10-05 (two-pass runs only; a
+      combined run makes no script call). Verdict:
+      do NOT pin any flagship DIGEST to 4.7 — it would add minutes per run
+      inside the 3,000 s budget with no timeout headroom. The next widening is
+      a SCRIPT-stage pin (llm.podcast_model) on one chained flagship, which
+      forces that show to two-pass generation; operator's call, A/B-listen.
     update_2026_09_30: >
       Read 2026-09-30. omni_view script stage: GATE PASS (model_trial_report 
       --since 09-22 --timeout 600: p95 67.6 s, +11%), 9/9 episodes on 4.7, 
@@ -3358,3 +3375,30 @@ experiments:
       engine/network_promo.build_network_promo reads engine.cadence;
       Nerra Daily's promo-cut anchors do not use the changed words.
       ⚠️ Spoken text on weekly-show plugs only.
+  - id: claims-coverage-grounded-2026-10-05
+    title: "Item coverage floor reads each item's own Source and runs on flagged gates"
+    area: trust
+    shipped: 2026-10-05
+    readout: 2026-10-19
+    status: reading
+    baseline: "Item coverage on the last 4 episodes of each established news show: Tesla 25-67%, SpaceX 0-43%, FF 7-33%, M&A 0-46%, Omni View 0%, MIT 0-20%, MAB 0-100%; the floor added 1 verified claim in 24 episodes. The repair call answered [] on Tesla Ep624 and SpaceX Ep120 (2026-10-04 logs): it asked for a page from memory. 4 of those 24 (and 3 of Planetterrian's last 4) were still failing after the first repair and got no floor at all."
+    target: >
+      source_integrity_item_coverage_pct median >= 50 on Tesla, SpaceX,
+      M&A, Omni View and MIT over 14 days; coverage_repair_added > 0 on
+      >= 60% of the episodes where the floor ran; the network claims page's
+      verified share does not fall.
+    criteria: >
+      Hit = all three. coverage_repair_grounded high but _added near 0 =
+      the model will not quote (read the "item coverage floor" log line's
+      offered / rejected counts before touching the prompt); grounded low =
+      the run's fetched copy is thin on those shows (fetch_full_text), not
+      the floor. A verified-share drop means added entries are failing on
+      re-verification and the floor is not only adding.
+    notes: >
+      Replay without the model on six Oct 3-4 flagship digests: 29 of 43
+      uncovered sourced items got a passage from their own Source URL by
+      HTTP alone (the runner also holds the fetched copy). The mechanical
+      check is unchanged; entries are added only when each verifies, and
+      the result is kept only when the gate verifies more and gets no
+      worse. Metadata only: the ledger and the claims panels change, no
+      prose and no audio.

@@ -430,9 +430,8 @@ async function interviewWithApp(env: Env, interviewId: string):
 // ---------------------------------------------------------------------------
 
 /** Interview length the guest asked for, in minutes, or null. Bounded by what
- *  the room can actually do: the Grok session relay hands over every 30
- *  minutes and the scenario's hard cap is 50, so anything longer than 90 is a
- *  typo rather than a request. */
+ *  is sensible to plan: anything longer than 90 is a typo rather than a
+ *  request. It paces Mira; since Oct 5 2026 it never ends the room. */
 function clampMinutes(value: unknown): number | null {
   const n = Math.round(Number(value));
   if (!Number.isFinite(n) || n <= 0) return null;

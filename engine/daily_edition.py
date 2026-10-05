@@ -1309,6 +1309,70 @@ def handoffs_show_name_led(links: dict, segments: List[Segment]) -> int:
     return count
 
 
+#: The links prompt's own rule: at most one handoff in three may open with
+#: the show's name (``nerra_daily_links.txt``).
+HANDOFF_NAME_LED_SHARE = 1 / 3
+
+
+def handoff_name_led_cap(handoff_count: int) -> int:
+    return max(1, int(handoff_count * HANDOFF_NAME_LED_SHARE))
+
+
+def handoff_revision_prompt(prompt: str, links: dict,
+                            segments: List[Segment]) -> Optional[str]:
+    """A one-shot correction when the draft breaks the name-led rule.
+
+    Oct 4 2026: the rule ("at most ONE handoff in three may begin with the
+    show's name") has been in the links prompt since the Sep 3 review and
+    the model ignored it on every full edition — 18 of 18 handoffs on Oct
+    3, 18 of 19 on Oct 4, the "<Show> turns to / follows with …" skeleton
+    nineteen times in two hours of audio. An instruction the model breaks
+    is enforced in code (the DP Pod Network-pick precedent): the draft is
+    sent back once with the count and the rule. ``None`` = the draft
+    already complies.
+    """
+    handoffs = links.get("handoffs") or []
+    led = handoffs_show_name_led(links, segments)
+    cap = handoff_name_led_cap(len(handoffs))
+    if not handoffs or led <= cap:
+        return None
+    import json as _json
+
+    draft = _json.dumps(links, ensure_ascii=False, indent=2)
+    return (
+        f"{prompt}\n\n"
+        "REVISION REQUIRED. Your draft (below) opened "
+        f"{led} of {len(handoffs)} handoffs with the name of the show it "
+        f"introduces. The rule is at most {cap}. Return the same JSON object "
+        "with intro, title and signoff UNCHANGED and the same number of "
+        f"handoffs ({len(handoffs)}), in the same order, each keeping its "
+        "facts. Rewrite the handoffs so that no more than "
+        f"{cap} begin with a show name: open on the detail, the stake or the "
+        "question, and let the show name arrive mid-sentence or at the end. "
+        "No two handoffs may share an opening phrase.\n\nDRAFT:\n" + draft
+    )
+
+
+def adopt_revised_handoffs(first: dict, revised: Optional[dict],
+                           segments: List[Segment]) -> dict:
+    """Take the revision's handoffs only when they are the same count and
+    lead with FEWER show names; everything else stays the first draft's.
+    Records the first draft's count as ``_name_led_first_draft`` (read by
+    :func:`build_edition_metrics`, never rendered)."""
+    out = dict(first)
+    out["_name_led_first_draft"] = handoffs_show_name_led(first, segments)
+    out["_handoffs_revised"] = False
+    if not revised:
+        return out
+    new = revised.get("handoffs") or []
+    if len(new) != len(first.get("handoffs") or []):
+        return out
+    if handoffs_show_name_led(revised, segments) < out["_name_led_first_draft"]:
+        out["handoffs"] = list(new)
+        out["_handoffs_revised"] = True
+    return out
+
+
 def build_edition_metrics(
     episode_num: int,
     target_date: _dt.date,
@@ -1365,6 +1429,10 @@ def build_edition_metrics(
         # memory targets, counted at build time so they are scorable.
         "intro_words": len(((links or {}).get("intro") or "").split()),
         "handoffs_show_name_led": handoffs_show_name_led(links or {}, segments),
+        # Oct 4 2026: the first draft's count, and whether the one-shot
+        # revision replaced the handoffs (adopt_revised_handoffs).
+        "handoffs_show_name_led_first_draft": (links or {}).get("_name_led_first_draft"),
+        "handoffs_revised": bool((links or {}).get("_handoffs_revised")),
         "handoff_count": len((links or {}).get("handoffs") or []),
         "edition_title_source": "llm" if (links or {}).get("title") else "lead_hook",
     }

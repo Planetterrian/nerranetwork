@@ -1,0 +1,127 @@
+Les tests d’agents en boucle fermée montrent que donner le bon coup au Xiangqi ne réussit que dans treize virgule neuf pour cent des essais, dès qu’un moteur défenseur réplique.
+
+Ici Models and Agents, épisode cent quatre-vingt-quatorze.
+
+XiangqiBench teste si des agents fondés sur des modèles de langage peuvent réellement mater un moteur défenseur, sur cent dix-neuf finales tactiques.
+
+Les chercheurs ont enregistré huit mille cinq cent soixante-huit trajectoires multi-tours, issues de douze modèles de pointe.
+
+Les modèles ont joué le premier coup de référence enregistré dans vingt-six virgule un pour cent des essais avec visibilité, et pourtant seulement treize virgule neuf pour cent de ces essais se sont terminés par une victoire.
+
+Le modèle en tête a atteint trente-huit virgule sept pour cent de pass à trois, mais seulement cinq virgule neuf pour cent de pass au cube, en gagnant les trois essais sur seulement sept des quarante-six positions qu’il a jamais résolues.
+
+Trente-deux virgule trois pour cent des appels de simulation acceptés se sont arrêtés sur un coup illégal, et dans quarante-neuf virgule trois pour cent des cas comparables, le défenseur réel a répondu autrement que la ligne simulée par l’agent.
+
+HakemBench version un point zéro fournit deux mille trois cent quarante-six éléments et quatre mille deux cent soixante-quinze questions à choix, oui-non et score, réparties sur sept volets.
+
+Un unique banc d’évaluation note la qualité de décision via le F1 macro, la calibration via le score de Brier normalisé, et l’automatisation sélective via l’aire normalisée sous la courbe généralisée risque-couverture, puis combine les trois par moyenne géométrique, avec deux mille intervalles de bootstrap.
+
+Sur un classement de seize lignes, le leader atteint un composite de zéro virgule huit cent quatre-vingt-huit, tandis que le modèle du laboratoire soumissionnaire se classe septième à zéro virgule six cent soixante sur tous les volets, et sixième à zéro virgule six cent soixante-dix-huit quand on se limite aux quatre volets non contaminés.
+
+SymCE fournit quatre mille sept cent sept fausses conjectures d’algèbre de premier cycle et d’analyse réelle, chacune appariée à un vérificateur Python exécutable qui sert aussi de fonction de récompense.
+
+Entraîner Qwen trois quatre B avec un affinage supervisé sur les contre-exemples seuls fait s’effondrer la reconnaissance des vrais théorèmes de zéro virgule vingt-sept à zéro virgule zéro zéro, tandis que GRPO, avec une récompense clairsemée portant uniquement sur le résultat, la fait remonter à zéro virgule soixante-six.
+
+L’effondrement se reproduit sur Gemma trois quatre B, et le modèle quatre B qui en résulte surpasse tous les spécialistes maths à poids ouverts évalués en sept B, tout en restant compétitif face à six API commerciales de pointe, sur GSM huit K, MATH cinq cents et MMLU College Math.
+
+FinDialogLens combine des classifieurs compacts affinés, qui détectent les déclencheurs de RFQ et les métadonnées de prix ou de transaction, avec un module RFQ-Level et un Trade Engine.
+
+GPT-4o atteint quatre-vingt-douze virgule un pour cent de précision sur le prix final et quatre-vingt-quatorze virgule trois pour cent sur l’issue de la transaction.
+
+Un routeur sensible à la difficulté répartit les requêtes entre un moteur à règles et le LLM Trade Engine, en réduisant les appels au grand modèle de langage de quatre-vingt-cinq pour cent sur le prix final, tout en récupérant la moitié de l’écart de précision et en économisant plus de trois cents dollars par jour, à l’échelle de soixante-dix mille RFQ quotidiennes.
+
+Des modèles ouverts affinés, aussi petits que trois B paramètres, atteignent des performances comparables avec un volume modeste de données du domaine.
+
+SBERT deux S un convertit des encodeurs Sentence-Transformers en modèles de décision bi-encodeur, à tête croisée, et résiduels fusionnés à l’a priori.
+
+L’entraînement à la recherche améliore l’appariement sans exemple des options porteuses de contenu et, après affinage, aide nettement la tête résiduelle fusionnée à l’a priori dans dix comparaisons sur quinze, sur cinq paires et trois tailles de jeu d’entraînement.
+
+L’architecture à tête croisée surpasse la tête résiduelle fusionnée à l’a priori sous chaque objectif d’entraînement, et un audit humain de cent soixante-dix-sept décisions de vérificateur trouve quatre-vingt-dix-sept virgule sept pour cent de précision.
+
+Sigma est le premier modèle de langage à diffusion continue à grande échelle, en trois B huit B, bâti sur des trajectoires latentes de faible dimension, pilotables, en équations différentielles ordinaires et stochastiques.
+
+Après préentraînement, il égale les baselines de diffusion masquée discrète et autorégressives sur GSM huit K, Minerva, HumanEval et MBPP.
+
+Après affinage supervisé, il reste compétitif sur MATH cinq cents et AIME.
+
+Le guidage sans classifieur et la température de score se révèlent essentiels pour un raisonnement et du code de haute fidélité, tandis que le pilotage dans l’espace des plongements gouverne le compromis qualité-diversité.
+
+Calibrated User Embeddings encodent des sessions observées et échantillonnent des représentations continues qui se décodent en commandes de persona, sans aucune étape d’entraînement.
+
+Sur tau squared Bench, les simulateurs commettent moins d’erreurs attribuées au simulateur et reproduisent plus fidèlement les modes de défaillance des agents face à de vrais utilisateurs, les taux de succès agrégés et les issues pour des paires tâche-utilisateur précises.
+
+Après un calage surtout sur des interactions de support client, les mêmes simulateurs se généralisent à la création de documents, au tutorat en maths et à la conversation informelle, d’un grand modèle de langage simulateur à l’autre.
+
+APDMem représente l’historique de conversation en quatre couches de plus en plus détaillées : des résumés thématiques, des faits clés personnalisés, des notes de preuve au niveau du tour, et les messages bruts.
+
+Un contrôleur applique la divulgation progressive, si bien que les requêtes simples s’arrêtent tôt, tandis que les requêtes complexes temporelles ou à sauts multiples déclenchent une inspection plus profonde.
+
+Sur LongMemEval, l’architecture obtient de solides performances tout en n’accédant qu’à huit pour cent du total des conversations.
+
+EpiWorld ancre un acteur de politique fondé sur un grand modèle de langage dans un modèle-monde épidémiologique appris, conditionné par l’action, et une bibliothèque de compétences à étages, faite de protocoles de santé publique.
+
+Le modèle-monde obtient le meilleur Peak-MAE hors distribution parmi les baselines de prévision.
+
+Le cadre en boucle fermée réduit les hospitalisations cumulées jusqu’à cinquante-neuf pour cent sur les jeux Covid dix-neuf et grippe, et d’environ seize pour cent en moyenne sur six dorsales de grands modèles de langage.
+
+PlanPool externalise le plan de clarification sous la forme d’un vivier de questions modifiable, où chaque question prévue doit être explicitement posée ou abandonnée avant soumission.
+
+Sur trois bancs d’essai dérivés de BIRD Interact et de Spider, l’approche améliore la couverture de l’ambiguïté et réduit les échecs silencieux par rapport aux alternatives sans contrainte et fondées sur des consignes, tout en maintenant une précision d’exécution compétitive.
+
+TPBench évalue trois cibles d’information, à budgets nominaux de rétention partagés : l’objectif initial de l’utilisateur, la valeur actuelle d’un créneau révisé, et les deux à la fois dans des dialogues contenant une mise à jour de créneau annotée tardivement.
+
+Sur la sonde conjointe, à une fraction retenue de zéro virgule trente, chaque méthode compressée testée reste sous le contexte intégral avec le lecteur Llama principal.
+
+Supprimer le tour qui porte la mise à jour fait chuter nettement la précision sur la valeur actuelle, tandis que supprimer un tour hors sujet apparié la laisse inchangée.
+
+ConvoDrift contient quinze mille sept cent vingt-sept structures conversationnelles multi-tours partagées, avec six paires consigne-réponse par conversation, annotées pour la dérive de style et la direction de style.
+
+Sur sept critères de Likert annotés par trois annotateurs humains, l’alpha de Krippendorff moyen atteint zéro virgule quatre-vingt-huit.
+
+Les événements de dérive induisent des changements lexicaux tout en préservant la similarité sémantique.
+
+Les modèles de Rasch à facettes multiples décomposent les scores en qualité latente du résumé, sévérité du juge, sévérité de la dimension et seuils de l’échelle de notation.
+
+Sur dix-sept juges à poids ouverts, de grands modèles de langage, évalués sur SummEval, un alignement modéré sur la qualité latente du résumé n’implique pas un alignement sur la difficulté résiduelle.
+
+Les juges humains et les juges fondés sur de grands modèles de langage divergent sur les unités dimension-résumé qui restent difficiles, et le décalage dépend fortement de la dimension.
+
+Les modèles de langage visuels génèrent des modificateurs de questions qui ajoutent des informations non essentielles, ambiguës ou fausses.
+
+En présence de telles violations, ChatGPT, Claude, Gemini et Llava voient tous leurs performances diminuer.
+
+L’effort cognitif humain, mesuré par le temps passé sur la tâche, est plus faible pour résoudre les violations induites par les modèles de langage visuels, et pourtant ces modèles eux-mêmes sont moins précis dans ces cas-là.
+
+Essayez de lancer le REPL interactif de XiangqiBench contre n’importe quel modèle de pointe auquel vous avez accès par API, et mesurez votre propre écart de conversion entre la précision du premier coup et le taux de victoire final.
+
+Téléchargez le corpus SymCE et les vérificateurs depuis le dépôt GitHub lié, pour tester un entraînement GRPO sur un modèle de classe quatre B, pour la génération de contre-exemples.
+
+Appliquez le schéma de routeur sensible à la difficulté de FinDialogLens à toute tâche de dialogue multi-parties où le volume d’appels au grand modèle de langage est le principal poste de coût.
+
+Caler Calibrated User Embeddings sur vos propres journaux de support client, et évaluer si les simulateurs obtenus reproduisent vos modes de défaillance d’agents observés, sur des tâches façon tau squared Bench.
+
+Attendez-vous à d’autres bancs d’essai d’agents exécutables, qui notent des issues en boucle fermée plutôt que la simple exactitude d’une réponse statique.
+
+Surveillez les environnements d’apprentissage par renforcement pilotés par vérificateur, publiés en même temps que des corpus de maths et de code.
+
+Cherchez des systèmes de routage hybrides, qui combinent des moteurs à règles et des composantes de grands modèles de langage, à voir apparaître dans les outils de production de la finance et du support client.
+
+Ouvrez le capot de la divulgation progressive hiérarchique, et l’écart entre la recherche à plat et l’accès mémoire adaptatif apparaît le plus clairement quand la complexité des requêtes varie à l’intérieur d’une même longue conversation.
+
+Un contrôleur qui lit d’abord les résumés thématiques et ne creuse les preuves au niveau du tour que si besoin crée un compromis coût-fidélité automatique.
+
+Les requêtes simples s’arrêtent après la première couche, tandis que les requêtes temporelles ou à sauts multiples s’étendent jusqu’aux messages bruts, ce qui ramène le total de jetons examinés à environ huit pour cent sur LongMemEval.
+
+Le coût d’ingénierie, c’est une étape de synthèse supplémentaire, qui consolide les preuves récupérées et signale les contradictions avant la génération finale.
+
+Quand le contrôleur se trompe sur la difficulté de la requête, le système soit gaspille des jetons sur des détails inutiles, soit renvoie un contexte incomplet.
+
+La règle de décision pratique, c’est d’adopter la divulgation progressive dès que la longueur moyenne des conversations dépasse quelques milliers de jetons, et que les types de requêtes mêlent recherche factuelle et raisonnement à sauts multiples.
+
+Avant de nous quitter, d’autres bancs d’essai d’agents exécutables, qui notent des issues en boucle fermée, sont attendus dans les semaines qui viennent.
+
+Voilà pour Models and Agents aujourd’hui. Si ça vous a été utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain. Le monde de l’IA va vite. On vous aide à suivre. À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube, à Nerra Network — le lien est dans les notes de l’émission. Cette émission vous est proposée par le Nerra Network.
+
+Si vous voulez un autre briefing quotidien bien tranché, Omni View Top World News s’en charge — les dix sujets qui comptent le plus dans le monde aujourd’hui, classés. Toutes nos émissions sont gratuites sur nerranetwork point com. Vous préférez lire ? Le compte rendu complet du jour, les sources et la transcription sont sur le blog de l’épisode, à nerranetwork point com — le même briefing, en format lisible.
+
+Cet épisode a utilisé une synthèse vocale par intelligence artificielle de ma voix — la sélection éditoriale et l’analyse sont les miennes.

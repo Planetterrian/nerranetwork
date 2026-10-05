@@ -97,6 +97,13 @@ class PipelineMetrics:
         """Record an arbitrary counter or metadata value."""
         self.counters[key] = value
 
+    def record_stage(self, name: str, duration_s: float, success: bool = True) -> None:
+        """Append a stage timed elsewhere (a call made inside a helper that
+        has no ``metrics`` reference). It lands in ``stages`` like any other,
+        so ``scripts/model_trial_report.py`` gates it."""
+        self.stages.append(StageMetric(name=name, duration_s=round(float(duration_s), 2),
+                                       success=bool(success)))
+
     def total_duration(self) -> float:
         """Sum of all stage durations."""
         return round(sum(s.duration_s for s in self.stages), 2)

@@ -239,5 +239,5 @@ class TestTheRoomKeepsThePromise:
 
     def test_the_room_still_has_a_hard_cap(self):
         assert "hardCapMs()" in SCENARIO
-        assert "HARD_CAP_SLACK_MIN = 5" in SCENARIO
+        assert "SAFETY_CAP_AFTER_PLAN_MIN = 180" in SCENARIO
         assert 'endRoom("hard_cap")' in SCENARIO
