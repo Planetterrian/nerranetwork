@@ -185,6 +185,13 @@ def main() -> int:
         existing = sb_select("interview_briefs",
                              f"interview_id=eq.{interview['id']}")
         if existing:
+            # Oct 5 2026 (Jon Cheney): a guest who rebooked onto the same row
+            # keeps the brief from the first slot, but the booking resets the
+            # row to `scheduled`, and the T-2h reminder only looks at
+            # `briefed` rows. He got no reminder. The brief stands; the
+            # status has to say so.
+            if interview.get("status") == "scheduled":
+                sb_update("interviews", f"id=eq.{interview['id']}", {"status": "briefed"})
             logger.info("Interview %s already briefed — skipping", interview["id"])
             continue
         show = show_for(interview)
