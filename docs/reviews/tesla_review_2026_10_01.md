@@ -100,3 +100,8 @@ Ep617 hook cov 38%, Ep619 50% — cold open sold a story the body under-delivere
 - Script-density % as a success metric or gate threshold — Sep meta-review 0-hit class.
 - Re-filing “keep an eye on” / “should clarify” teaser de-seeds — prior window partial/cleared; no recurrence above threshold now.
 - Re-litigating SpaceX/Colossus material on Tesla beat ownership — operator-confirmed.
+
+## Correction (2026-10-05, operator-directed follow-up)
+
+- Escalation option (a) relies on "the existing rewrite path" / `script_rewrite_gate_attempts`. That gate was removed network-wide on 2026-09-12 and must not return (CLAUDE.md, simplification pass). Recorded in `do_not_retry`.
+- Shipped from this review: the conflicting "14–16 minute" opener in `tesla_podcast.txt` is gone; the prompt now carries one length target (10–13 minutes, 1,600–1,900 words). ⚠️ A/B-listen.

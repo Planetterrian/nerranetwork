@@ -893,6 +893,7 @@ def run_generation_phase(
             config.chapters.section_markers,
             show_name=config.name,
             story_headlines=_chapter_headlines,
+            digest_text=x_thread or "",
         )
 
     return x_thread, podcast_script, episode_chapters, effective_hook

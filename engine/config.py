@@ -567,6 +567,14 @@ class SectionMarker:
     # shorts time") re-matched the case-insensitive Introduction marker on
     # every episode, titling the closing "Introduction" in podcast apps.
     where: str = ""
+    # Optional digest heading prefix (Oct 5 2026). When the spoken anchor
+    # does not match — the model wrote the section but skipped the phrase
+    # (Models & Agents Ep178/185/189/190 had no "pop the hood", all on the
+    # combined-generation path; AI Chips Ep9 said "take the flexible queue
+    # apart") — the chapter starts where the digest section's own content
+    # begins in the script (``engine.chapters._digest_section_anchor``).
+    # Empty = the marker is regex-only, exactly as before.
+    digest_section: str = ""
 
 
 @dataclass
@@ -1397,6 +1405,7 @@ def _build_section_markers(raw: list) -> List[SectionMarker]:
                 pattern=item.get("pattern", ""),
                 title=item.get("title", ""),
                 where=item.get("where", ""),
+                digest_section=item.get("digest_section", "") or "",
             ))
     return markers
 

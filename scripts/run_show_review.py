@@ -331,6 +331,19 @@ def _indent(text: str, spaces: int) -> str:
     return "".join((pad + ln if ln.strip() else ln) + "\n" for ln in text.splitlines())
 
 
+def _list_indent(text: str, key: str, default: int = 2) -> int:
+    """Indentation of the first list item under top-level *key* in *text*.
+
+    Falls back to the ``reviews:`` list's indentation (one ledger style per
+    file), then to *default*, when *key* has no items yet."""
+    m = re.search(rf"(?m)^{re.escape(key)}:[ \t]*\n((?:[ \t]*#.*\n|[ \t]*\n)*)( *)- ", text)
+    if m:
+        return len(m.group(2))
+    if key != "reviews":
+        return _list_indent(text, "reviews", default)
+    return default
+
+
 def update_ledger(slug: str, result: dict, doc: Path, cost: float,
                   today: datetime.date) -> Path:
     """Append a new review entry by TEXT-SPLICE — never reserialize the
@@ -383,8 +396,13 @@ def update_ledger(slug: str, result: dict, doc: Path, cost: float,
         return path
 
     text = path.read_text(encoding="utf-8")
-    entry_block = _indent(_yaml_block([entry]), 2)          # nest under reviews:
-    dnr_block = _indent(_yaml_block(dnr_items), 2) if dnr_items else ""
+    # Match the file's OWN list indentation. Ledgers exist in both styles
+    # (``reviews:\n- date:`` and ``reviews:\n  - date:``); always nesting
+    # by two spaces made the 2026-10-02 models_agents and 2026-10-03
+    # planetterrian entries unparseable once merged (Oct 5 2026).
+    entry_block = _indent(_yaml_block([entry]), _list_indent(text, "reviews"))
+    dnr_block = (_indent(_yaml_block(dnr_items), _list_indent(text, "do_not_retry"))
+                 if dnr_items else "")
 
     m = re.search(r"(?m)^do_not_retry:.*$", text)
     if m:

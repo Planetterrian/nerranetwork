@@ -614,126 +614,130 @@ reviews:
     ab_listen_required: false
     rationale: ep176 Parkes telescope/pulsar glitch leaked despite telescope pattern — likely mid-title or alternate wording path; add pulsar class (no life-science reading) and keep telescope. Code path audit still recommended if leakage repeats. No A/B (fetch only).
   agent_cost_usd: 0.1486
-  - date: '2026-10-03'
-    pr: null
-    doc: docs/reviews/planetterrian_review_2026_10_03.md
-    generated_by: grok-4.5
-    summary: 9/10 scripts still under the 1600-word floor, ep201 is pure astronomy with telescope-filter leakage and Dive body-swallow, keep-an-eye-on remains 10/10, and longevity brand scope still ships general-science firehose—escalate length again and propose only fetch tighten + residual ban/MEMORY fixes.
-    scored_prior_predictions:
-    - metric: fetch-filter leakage matches in last 10 digests
-      verdict: miss
-      evidence: 3 telescope hits on ep201 (GRAPES-3 muon telescope) vs expected 0 after tighten
-    - metric: life-science / longevity / clinical-health items in Top 15 per digest (manual count, last 10)
-      verdict: miss
-      evidence: scope floor never shipped; ep193-202 still mix paleontology, quakes, spaceflight, muon telescopes, quantum, policy with longevity
-    - metric: episodes under 1600-word floor, last 10
-      verdict: hit
-      evidence: 9/10 under (only ep201=1910 clears) — matches expected still 8+/10 with digest ceiling unchanged
-    - metric: transcripts with 'The practical takeaway is' OR sole teaser lead-in 'keep an eye on' OR stock 'Right now, as you', last 10
-      verdict: miss
-      evidence: keep an eye on 10/10; practical takeaway on ep198; Right now frames multi-ep through ep202
-    - metric: transcripts with verbatim 'shifting to a very different area of research' OR 'on a different note' handoff, last 10
-      verdict: miss
-      evidence: on a different note + now-shifting/shifting focus multi-ep (192,193,195,197,200,202)
-    - metric: script_hook_orphaned rate, last 10
-      verdict: partial
-      evidence: no ep175-class 10% orphan in ep193-202; hook cov still 40-54% on ep194/195/199
-    - metric: episodes with Science Deep Dive spanning >50% runtime or missing Introduction/Teaser, last 10
-      verdict: miss
-      evidence: ep201 Dive 112.6-809.8s (~78%); ep194 Intro-to-Dive swallow; ep200 no Dive chapter
-    - metric: script_digest_overlap_pct median + Dive listed in copied_sections, last 10
-      verdict: miss
-      evidence: verbatim 45-74%; Dive/Top15 under copied_sections on 10/10 ep193-202
-    - metric: median _tts.txt words, last 10 eps
-      verdict: miss
-      evidence: median ~1260 on ep193-202; 9/10 below 1600 floor
-    - metric: source_integrity_claims median
-      verdict: partial
-      evidence: fetch_full_text 12 + preferred_domains live; ep201 still astronomy-led — claims not re-scored in snapshot
-    - metric: episodes with items_without_source > half of items after the retry
-      verdict: partial
-      evidence: lint shipped Sep-24; snapshot does not flag empty Sources this window — monitor next 10
-    - metric: show_notes_sources on the feed item
-      verdict: partial
-      evidence: not re-verified against RSS in this snapshot; carry expected >=5 on 10/10
-    shipped: []
-    deferred:
-    - 'OPERATOR DECISION on chronic under-length after repeated misses with digest_expand + fetch_full_text already on: (a) deeper journal full-text / per-item sentence floors, (b) higher min_digest_words 1400→1700 + per-item floors only, (c) lower min_podcast_words to honest ceiling, (d) accept short days — do NOT re-propose podcast_expand_below_target or podcast word-pressure'
-    - Engine-level split so content after Science Deep Dive re-enters story auto-segments (body-swallow ep194/201; missing Dive ep200) — shared chapter architecture, not PT prompt padding
-    - Garbage mid-body LLM auto-segment titles — shared Tesla/M&A-deferred class
-    - 'Network pronunciation of Nerra / Planetterrian (Whisper: Narra/Narrow/Planetarian) — no phonetic respelling (landmine #17)'
-    - Optional min_digest_words 1400→1700 only if operator explicitly picks length option (b); no conditional length hit prediction
-    - Confirm hook_coverage / copied_sections gates fail closed on PT (10/10 Dive copy this window) rather than rewrite-and-accept weak scripts
-    - items_without_source + show_notes_sources monitor post Sep-24 lint until next feed re-check scores hit/miss cleanly
-    predictions:
-    - metric: fetch-filter leakage matches in last 10 digests (telescope|muon telescope|cosmic ray detector|GRAPES|black hole|solar wind classes)
-      baseline: 3 (ep201)
-      expected: 0 after YAML tighten + path audit; else residual >=1 if only patterns untouched
-      verdict: pending
-      evidence: null
-    - metric: life-science / longevity / clinical-health items in Top 15 per digest (manual count, last 10)
-      baseline: often well under 8/15 (ep193-202 firehose mix; ep201 astronomy-led)
-      expected: '>=8/15 core life-science on >=8/10 only if digest scope floor merges; else n/a-lever-not-shipped'
-      verdict: pending
-      evidence: null
-    - metric: episodes under 1600-word floor, last 10
-      baseline: 9/10
-      expected: still 8+/10 unless operator ships higher min_digest_words or deeper full-text floors (no podcast lever)
-      verdict: pending
-      evidence: null
-    - metric: transcripts with sole teaser lead-in 'keep an eye on' OR 'The practical takeaway is' OR stock 'Right now, as you', last 10
-      baseline: keep an eye on 10/10; practical takeaway ep198; Right now multi-ep
-      expected: '<=2/10 each if verbatim ban + teaser/dive MEMORY ships; successor-tic watch: ''Before we wrap'' / ''Worth watching next'' / ''One detail worth remembering'' / ''As you hear this'''
-      verdict: pending
-      evidence: null
-    - metric: transcripts with 'on a different note' OR 'now shifting to' / 'shifting focus' handoff, last 10
-      baseline: multi-ep through ep202
-      expected: '<=2/10 combined if handoff ban + MEMORY ships; successor watch: ''Turning to'' / ''From X we turn to Y'''
-      verdict: pending
-      evidence: null
-    - metric: episodes with Science Deep Dive spanning >50% runtime or missing Dive/Introduction, last 10
-      baseline: ep201 catastrophic; ep194 swallow; ep200 missing Dive
-      expected: monitor only unless engine split ships; pattern/gate tweaks <= partial
-      verdict: pending
-      evidence: null
-    - metric: script_digest_overlap_pct median + Dive listed in copied_sections, last 10
-      baseline: verbatim median >>35%; Dive/Top15 copied 10/10
-      expected: median <=35% and Dive copied <=3/10 if copied_sections gate fails closed + zero-overlap holds
-      verdict: pending
-      evidence: null
-    - metric: pure-astronomy or space-physics cold opens / leads per 10 episodes
-      baseline: 1 (ep201 GRAPES-3)
-      expected: 0 post filter+scope if both ship; else monitor
-      verdict: pending
-      evidence: null
-    proposed_changes_in_pr:
-    - file: shows/planetterrian.yaml
-      kind: config
-      ab_listen_required: false
-      rationale: 'P0: ep201 shipped GRAPES-3 muon telescope / thunderstorm electric-field lead despite existing \btelescope\b — three snapshot leakage hits. Add muon-telescope / cosmic-ray / GRAPES / pulsar classes (no life-science reading). Fetch-only; no A/B. If leakage repeats after YAML, audit fetcher path (Aug-31 class).'
-    - file: shows/prompts/planetterrian_digest.txt
-      kind: prompt
-      ab_listen_required: true
-      rationale: July-2 through Sep-11 scope proposals never applied; ep193-202 still read as general-science radio while YAML description promises longevity/health. ep201 astronomy lead is the failure mode. Digest-only lever; A/B changes spoken mix.
-    - file: shows/prompts/planetterrian_digest.txt
-      kind: prompt
-      ab_listen_required: true
-      rationale: Digest framework still seeds the exact spoken tics (Right now / memorable detail / practical takeaway) that survive into podcast audio on ep193-202. De-seed by shape + ban; meta-review successor-tic rule.
-    - file: shows/prompts/planetterrian_podcast.txt
-      kind: prompt
-      ab_listen_required: true
-      rationale: 'ep192-202 still speak on-a-different-note / now-shifting multi-ep; prompt still seeds those EXAMPLE strings. Meta-review: ban + shape + MEMORY, no new example menu. Successor-tic watch logged.'
-    - file: shows/prompts/planetterrian_podcast.txt
-      kind: prompt
-      ab_listen_required: true
-      rationale: Snapshot 10/10 keep an eye on — prompt-seeded convergence third generation. Chapter YAML already accepts alternate anchors; rotation stays parseable. Data-side MEMORY preferred over prompt-only after repeated misses.
-    - file: shows/prompts/planetterrian_podcast.txt
-      kind: prompt
-      ab_listen_required: true
-      rationale: copied_sections flags Dive/Top15 on 10/10; practical takeaway ep198; Right now multi-ep. Reinforce Sep-5/6 gates with explicit podcast-side bans + zero-overlap.
-    - file: shows/planetterrian.yaml
-      kind: config
-      ab_listen_required: true
-      rationale: 'Belt-and-braces for paraphrase myth openers that skip the Dive chapter; does NOT fix body-swallow (engine split still deferred). A/B-listen: changes player chapter boundaries.'
-    agent_cost_usd: 0.1593
-do_not_retry: []
+- date: '2026-10-03'
+  pr: null
+  doc: docs/reviews/planetterrian_review_2026_10_03.md
+  generated_by: grok-4.5
+  summary: 9/10 scripts still under the 1600-word floor, ep201 is pure astronomy with telescope-filter leakage and Dive body-swallow, keep-an-eye-on remains 10/10, and longevity brand scope still ships general-science firehose—escalate length again and propose only fetch tighten + residual ban/MEMORY fixes.
+  scored_prior_predictions:
+  - metric: fetch-filter leakage matches in last 10 digests
+    verdict: miss
+    evidence: 3 telescope hits on ep201 (GRAPES-3 muon telescope) vs expected 0 after tighten
+  - metric: life-science / longevity / clinical-health items in Top 15 per digest (manual count, last 10)
+    verdict: miss
+    evidence: scope floor never shipped; ep193-202 still mix paleontology, quakes, spaceflight, muon telescopes, quantum, policy with longevity
+  - metric: episodes under 1600-word floor, last 10
+    verdict: hit
+    evidence: 9/10 under (only ep201=1910 clears) — matches expected still 8+/10 with digest ceiling unchanged
+  - metric: transcripts with 'The practical takeaway is' OR sole teaser lead-in 'keep an eye on' OR stock 'Right now, as you', last 10
+    verdict: miss
+    evidence: keep an eye on 10/10; practical takeaway on ep198; Right now frames multi-ep through ep202
+  - metric: transcripts with verbatim 'shifting to a very different area of research' OR 'on a different note' handoff, last 10
+    verdict: miss
+    evidence: on a different note + now-shifting/shifting focus multi-ep (192,193,195,197,200,202)
+  - metric: script_hook_orphaned rate, last 10
+    verdict: partial
+    evidence: no ep175-class 10% orphan in ep193-202; hook cov still 40-54% on ep194/195/199
+  - metric: episodes with Science Deep Dive spanning >50% runtime or missing Introduction/Teaser, last 10
+    verdict: miss
+    evidence: ep201 Dive 112.6-809.8s (~78%); ep194 Intro-to-Dive swallow; ep200 no Dive chapter
+  - metric: script_digest_overlap_pct median + Dive listed in copied_sections, last 10
+    verdict: miss
+    evidence: verbatim 45-74%; Dive/Top15 under copied_sections on 10/10 ep193-202
+  - metric: median _tts.txt words, last 10 eps
+    verdict: miss
+    evidence: median ~1260 on ep193-202; 9/10 below 1600 floor
+  - metric: source_integrity_claims median
+    verdict: partial
+    evidence: fetch_full_text 12 + preferred_domains live; ep201 still astronomy-led — claims not re-scored in snapshot
+  - metric: episodes with items_without_source > half of items after the retry
+    verdict: partial
+    evidence: lint shipped Sep-24; snapshot does not flag empty Sources this window — monitor next 10
+  - metric: show_notes_sources on the feed item
+    verdict: partial
+    evidence: not re-verified against RSS in this snapshot; carry expected >=5 on 10/10
+  shipped: []
+  deferred:
+  - 'OPERATOR DECISION on chronic under-length after repeated misses with digest_expand + fetch_full_text already on: (a) deeper journal full-text / per-item sentence floors, (b) higher min_digest_words 1400→1700 + per-item floors only, (c) lower min_podcast_words to honest ceiling, (d) accept short days — do NOT re-propose podcast_expand_below_target or podcast word-pressure'
+  - Engine-level split so content after Science Deep Dive re-enters story auto-segments (body-swallow ep194/201; missing Dive ep200) — shared chapter architecture, not PT prompt padding
+  - Garbage mid-body LLM auto-segment titles — shared Tesla/M&A-deferred class
+  - 'Network pronunciation of Nerra / Planetterrian (Whisper: Narra/Narrow/Planetarian) — no phonetic respelling (landmine #17)'
+  - Optional min_digest_words 1400→1700 only if operator explicitly picks length option (b); no conditional length hit prediction
+  - Confirm hook_coverage / copied_sections gates fail closed on PT (10/10 Dive copy this window) rather than rewrite-and-accept weak scripts
+  - items_without_source + show_notes_sources monitor post Sep-24 lint until next feed re-check scores hit/miss cleanly
+  predictions:
+  - metric: fetch-filter leakage matches in last 10 digests (telescope|muon telescope|cosmic ray detector|GRAPES|black hole|solar wind classes)
+    baseline: 3 (ep201)
+    expected: 0 after YAML tighten + path audit; else residual >=1 if only patterns untouched
+    verdict: pending
+    evidence: null
+  - metric: life-science / longevity / clinical-health items in Top 15 per digest (manual count, last 10)
+    baseline: often well under 8/15 (ep193-202 firehose mix; ep201 astronomy-led)
+    expected: '>=8/15 core life-science on >=8/10 only if digest scope floor merges; else n/a-lever-not-shipped'
+    verdict: pending
+    evidence: null
+  - metric: episodes under 1600-word floor, last 10
+    baseline: 9/10
+    expected: still 8+/10 unless operator ships higher min_digest_words or deeper full-text floors (no podcast lever)
+    verdict: pending
+    evidence: null
+  - metric: transcripts with sole teaser lead-in 'keep an eye on' OR 'The practical takeaway is' OR stock 'Right now, as you', last 10
+    baseline: keep an eye on 10/10; practical takeaway ep198; Right now multi-ep
+    expected: '<=2/10 each if verbatim ban + teaser/dive MEMORY ships; successor-tic watch: ''Before we wrap'' / ''Worth watching next'' / ''One detail worth remembering'' / ''As you hear this'''
+    verdict: pending
+    evidence: null
+  - metric: transcripts with 'on a different note' OR 'now shifting to' / 'shifting focus' handoff, last 10
+    baseline: multi-ep through ep202
+    expected: '<=2/10 combined if handoff ban + MEMORY ships; successor watch: ''Turning to'' / ''From X we turn to Y'''
+    verdict: pending
+    evidence: null
+  - metric: episodes with Science Deep Dive spanning >50% runtime or missing Dive/Introduction, last 10
+    baseline: ep201 catastrophic; ep194 swallow; ep200 missing Dive
+    expected: monitor only unless engine split ships; pattern/gate tweaks <= partial
+    verdict: pending
+    evidence: null
+  - metric: script_digest_overlap_pct median + Dive listed in copied_sections, last 10
+    baseline: verbatim median >>35%; Dive/Top15 copied 10/10
+    expected: median <=35% and Dive copied <=3/10 if copied_sections gate fails closed + zero-overlap holds
+    verdict: pending
+    evidence: null
+  - metric: pure-astronomy or space-physics cold opens / leads per 10 episodes
+    baseline: 1 (ep201 GRAPES-3)
+    expected: 0 post filter+scope if both ship; else monitor
+    verdict: pending
+    evidence: null
+  proposed_changes_in_pr:
+  - file: shows/planetterrian.yaml
+    kind: config
+    ab_listen_required: false
+    rationale: 'P0: ep201 shipped GRAPES-3 muon telescope / thunderstorm electric-field lead despite existing \btelescope\b — three snapshot leakage hits. Add muon-telescope / cosmic-ray / GRAPES / pulsar classes (no life-science reading). Fetch-only; no A/B. If leakage repeats after YAML, audit fetcher path (Aug-31 class).'
+  - file: shows/prompts/planetterrian_digest.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: July-2 through Sep-11 scope proposals never applied; ep193-202 still read as general-science radio while YAML description promises longevity/health. ep201 astronomy lead is the failure mode. Digest-only lever; A/B changes spoken mix.
+  - file: shows/prompts/planetterrian_digest.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: Digest framework still seeds the exact spoken tics (Right now / memorable detail / practical takeaway) that survive into podcast audio on ep193-202. De-seed by shape + ban; meta-review successor-tic rule.
+  - file: shows/prompts/planetterrian_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: 'ep192-202 still speak on-a-different-note / now-shifting multi-ep; prompt still seeds those EXAMPLE strings. Meta-review: ban + shape + MEMORY, no new example menu. Successor-tic watch logged.'
+  - file: shows/prompts/planetterrian_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: Snapshot 10/10 keep an eye on — prompt-seeded convergence third generation. Chapter YAML already accepts alternate anchors; rotation stays parseable. Data-side MEMORY preferred over prompt-only after repeated misses.
+  - file: shows/prompts/planetterrian_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: copied_sections flags Dive/Top15 on 10/10; practical takeaway ep198; Right now multi-ep. Reinforce Sep-5/6 gates with explicit podcast-side bans + zero-overlap.
+  - file: shows/planetterrian.yaml
+    kind: config
+    ab_listen_required: true
+    rationale: 'Belt-and-braces for paraphrase myth openers that skip the Dive chapter; does NOT fix body-swallow (engine split still deferred). A/B-listen: changes player chapter boundaries.'
+  agent_cost_usd: 0.1593
+do_not_retry:
+- idea: Propose, revive or rely on a script rewrite/retry gate (copied sections, hook coverage, 'fail closed rather than rewrite-and-accept'). The gate was REMOVED network-wide on 2026-09-12 (fired 30/35, accepted 11; a two-pass script could be written or complete, never both) and CLAUDE.md forbids re-adding a script retry of any shape
+  evidence: corrected 2026-10-05 (operator-directed follow-up; the 2026-10-01 and 2026-10-03 Grok reviews assumed the gate still existed)
+- idea: Score a body-text 'telescope' hit as fetch-filter leakage. exclude_title_patterns match TITLES by design
+  evidence: corrected 2026-10-05 — Ep201's story was titled 'Cosmic ray muons expose thunderstorm electric fields'; 'telescope' is only in its body, which the snapshot counter reads. Whether atmospheric physics belongs on the show is an editorial scope question, not a filter bug.

@@ -103,3 +103,8 @@ High-yield category network-wide, but many strings may be ASR: “Narra/Narrow N
 ## Guardrails honored
 
 No R2/RSS URL changes, no TTS voice/tag/phonetic injection, no `min_articles_skip` default touch, no podcast_expand re-enable, no main push/merge, no paid publish APIs. Prompt/audio-affecting items flagged A/B (landmine #17).
+
+## Correction (2026-10-05, operator-directed follow-up)
+
+- The Ep126 "episode 146" watch item is Whisper: `Unintended_Consequences_Ep126_20260926_tts.txt` says "episode one hundred twenty-six".
+- Shipped (⚠️ A/B-listen): the Lesson segment's quoted principles ("incentive structures always find their loopholes", "complex systems resist simple interventions") are replaced by a shape rule — each principle names this case's own mechanism, no abstract subject, no "always". The podcast-length re-point (P1.3) and `min_digest_words` (P1.1) stay with the operator.

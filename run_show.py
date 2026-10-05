@@ -3870,6 +3870,7 @@ def run(args: argparse.Namespace) -> None:
                 config.chapters.section_markers,
                 show_name=config.name,
                 story_headlines=_chapter_headlines,
+            digest_text=x_thread or "",
                 known_sections_only=getattr(
                     config.chapters, "known_sections_only", False),
             ) if config.chapters.enabled and config.chapters.section_markers else []

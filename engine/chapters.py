@@ -60,6 +60,107 @@ _MD_LINK_RE = re.compile(r"\[([^\]]*)\]\((?:[^)\s]*)\)")
 _HANDLE_TAIL_RE = re.compile(r"\s*[:\-—]\s*@\w+\s*$")
 
 
+# Words that carry no signal when locating a digest section's content in
+# the script (``_digest_section_anchor``). Four letters or more only.
+_ANCHOR_STOPWORDS = frozenset(
+    "that this with from have will been were their they which about into "
+    "than then also more most when what where while there these those over "
+    "under such only just very each other some your because being would "
+    "could should after before between through against during without "
+    "within across among".split()
+)
+# A script line belongs to the section when it carries this many of the
+# section's DISCRIMINATIVE words (in the section, in no other section).
+_ANCHOR_LINE_MIN = 4
+# ...and the run it opens must reach this many on at least one line, so a
+# stray two-word echo of the section in a news item never anchors it.
+_ANCHOR_RUN_PEAK_MIN = 8
+
+
+def _anchor_tokens(text: str) -> set:
+    return {
+        w for w in re.findall(r"[a-z][a-z0-9\-]{3,}", (text or "").lower())
+        if w not in _ANCHOR_STOPWORDS
+    }
+
+
+def _digest_sections(digest_text: str) -> dict:
+    """``{heading: body}`` for every ``##``-``####`` heading, Source lines dropped."""
+    out: dict = {}
+    current = None
+    buf: list = []
+    for line in (digest_text or "").splitlines():
+        m = re.match(r"^#{2,4}\s+(.*\S)", line)
+        if m:
+            if current is not None:
+                out[current] = "\n".join(buf)
+            current, buf = m.group(1).strip(), []
+        elif current is not None:
+            if re.match(r"^\s*sources?\s*:", line, re.IGNORECASE):
+                continue
+            buf.append(line)
+    if current is not None:
+        out[current] = "\n".join(buf)
+    return out
+
+
+def _digest_section_anchor(
+    lines: List[str], digest_text: str, heading_prefix: str,
+    lo_word: int, hi_word: int,
+) -> Optional[tuple]:
+    """Where the digest section headed *heading_prefix* starts in the script.
+
+    Oct 5 2026. A section's chapter keys on a spoken phrase; when the model
+    writes the section but skips the phrase, the chapter vanished and its
+    content was filed under the previous chapter (Models & Agents
+    Ep178/185/189/190 shipped no Under the Hood chapter — every miss on the
+    combined-generation path; AI Chips Ep9 said "take the flexible queue
+    apart" and lost The Teardown). The section's content is still in the
+    script, so the chapter starts at the first line of the first run of
+    lines carrying the section's own words — words that appear in that
+    digest section and in no other one, so a news item that shares the
+    deep dive's subject cannot anchor it. Returns ``(word_idx, char_offset)``
+    or ``None``; nothing is ever guessed below the thresholds.
+    """
+    if not digest_text or not heading_prefix:
+        return None
+    sections = _digest_sections(digest_text)
+    prefix = heading_prefix.strip().lower()
+    target = next((h for h in sections if h.lower().startswith(prefix)), None)
+    if target is None:
+        return None
+    own = _anchor_tokens(sections[target] + " " + target.split(":", 1)[-1])
+    others: set = set()
+    for heading, body in sections.items():
+        if heading != target:
+            others |= _anchor_tokens(heading + " " + body)
+    disc = own - others
+    if len(disc) < _ANCHOR_RUN_PEAK_MIN:
+        return None
+
+    scored: list = []  # (word_idx, char_offset, score) for content lines
+    word_idx = 0
+    char_offset = 0
+    for line in lines:
+        n = len(line.split())
+        if n and lo_word <= word_idx < hi_word:
+            scored.append((word_idx, char_offset,
+                           len(_anchor_tokens(line) & disc)))
+        word_idx += n
+        char_offset += len(line)
+
+    for i, (w, c, score) in enumerate(scored):
+        if score < _ANCHOR_LINE_MIN:
+            continue
+        run = scored[i:i + 4]
+        if sum(1 for r in run[1:] if r[2] >= _ANCHOR_LINE_MIN) < 2:
+            continue
+        if max(r[2] for r in run) < _ANCHOR_RUN_PEAK_MIN:
+            continue
+        return (w, c)
+    return None
+
+
 def _strip_title_label(title: str) -> str:
     title = _MD_LINK_RE.sub(lambda m: m.group(1), title or "")
     title = _HANDLE_TAIL_RE.sub("", title)
@@ -333,6 +434,7 @@ def parse_chapters(
     estimated_words_per_minute: float = 165.0,
     story_headlines: Optional[List[str]] = None,
     known_sections_only: bool = False,
+    digest_text: str = "",
 ) -> List[Chapter]:
     """Parse a podcast script to identify section boundaries.
 
@@ -346,6 +448,10 @@ def parse_chapters(
         ``title`` keys) from the show's YAML config.
     show_name:
         Show name for logging context.
+    digest_text:
+        The episode digest. Used only by markers that set
+        ``digest_section``: when such a marker's phrase is not spoken, the
+        chapter starts where that digest section's content begins.
 
     Returns
     -------
@@ -436,6 +542,32 @@ def parse_chapters(
 
         word_idx += line_word_count
         char_offset += len(line)
+
+    # Digest-section fallback (Oct 5 2026): a marker that names its digest
+    # heading still gets its chapter when the phrase was skipped. Body only
+    # — never inside the opening window, never in the closing window.
+    if digest_text:
+        for marker in section_markers:
+            heading = (marker.digest_section if hasattr(marker, "digest_section")
+                       else (marker.get("digest_section", "")
+                             if isinstance(marker, dict) else ""))
+            title = (marker.title if hasattr(marker, "title")
+                     else marker.get("title", "") if isinstance(marker, dict)
+                     else "")
+            if not heading or not title or title in matched_titles:
+                continue
+            found = _digest_section_anchor(
+                lines, digest_text, heading,
+                start_window_end + 1, end_window_start)
+            if found is None or any(w == found[0] for w, _c, _t in matches):
+                continue
+            matches.append((found[0], found[1], title))
+            matched_titles.add(title)
+            logger.info(
+                "Chapter '%s' anchored on its digest section (spoken "
+                "marker absent) at word %d for %s",
+                title, found[0], show_name or "show")
+        matches.sort(key=lambda m: m[0])
 
     if not matches:
         logger.info("No chapter markers matched in podcast script for %s", show_name)

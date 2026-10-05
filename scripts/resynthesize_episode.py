@@ -299,17 +299,19 @@ def rebuild_chapters(config, art: EpisodeArtifacts, script: str,
     from engine.chapters import calculate_timestamps, parse_chapters
 
     headlines: List[str] = []
+    digest_text = ""
     if art.digest_path.exists():
         try:
             from engine.grok_imagine import extract_story_headlines
-            headlines = extract_story_headlines(
-                art.digest_path.read_text(encoding="utf-8"), max_count=12)
+            digest_text = art.digest_path.read_text(encoding="utf-8")
+            headlines = extract_story_headlines(digest_text, max_count=12)
         except Exception as exc:  # noqa: BLE001 — headlines are best-effort
             logger.warning("Story-headline extraction failed: %s", exc)
 
     chapters = parse_chapters(
         script, config.chapters.section_markers,
         show_name=config.name, story_headlines=headlines,
+        digest_text=digest_text,
         known_sections_only=getattr(config.chapters, "known_sections_only", False),
     )
     if not chapters or audio_duration <= 0:

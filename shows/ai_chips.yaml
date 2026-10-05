@@ -76,6 +76,14 @@ exclude_title_patterns:
 - '\b(best deals?|black friday|prime day|coupon|promo code|price drop|lowest price|% off)\b'
 - '\b(game|gaming) (review|benchmark)s?\b'
 - '\bhow to\b'
+# Oct 5 2026 (review 2026-10-04): phone system-on-chip LAUNCHES are not
+# this show's beat — Ep6 led a block with the Snapdragon 8 Elite Gen 6
+# phone chips, Ep2 carried a vivo / Dimensity 9600 handset item. A phone
+# chip's FOUNDRY or process story still passes (Ep3 "Qualcomm sticks with
+# TSMC for both 2nm Snapdragon flagships" matches none of these).
+- '\b(smartphones?|handsets?|flagship phones?)\b'
+- '\bsnapdragon \d+(\s+\w+)?\s+(elite|gen)\b'
+- '\bdimensity \d{4}\b'
 
 keywords:
 - gpu
@@ -291,8 +299,14 @@ chapters:
   - pattern: This is AI Chips and Data Centres|first episode of|AI Chips and Data Centres, episode
     title: Introduction
     where: start
-  - pattern: take (it|this|that) apart
+  # Oct 5 2026: any "take <the thing> apart" inside one sentence — Ep9
+  # ("Take the flexible queue apart") and Ep14 ("Take the six-U G P U
+  # server apart") lost the chapter to the old it/this/that-only form; the
+  # wider form matches exactly once per episode across Ep1-14. The digest
+  # heading is the fallback when the phrase is skipped altogether.
+  - pattern: '\btake\b[^.!?\n]{0,40}?\bapart\b'
     title: The Teardown
+    digest_section: The Teardown
   - pattern: on the horizon
     title: On the Horizon
     where: body

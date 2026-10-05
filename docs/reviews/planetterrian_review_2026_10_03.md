@@ -84,3 +84,9 @@ Sep-5/6 delivery + Sep-24 sourcing + items_without_source lint shipped. Live ep1
 - Optional min_digest_words 1400→1700 only if operator explicitly picks length option (b); no conditional length hit prediction.
 - Confirm hook_coverage / copied_sections gates fail closed on PT rather than rewrite-and-accept weak scripts (10/10 Dive copy this window).
 - items_without_source / show_notes_sources monitor post Sep-24 lint (partial until feed re-check).
+
+## Correction (2026-10-05, operator-directed follow-up)
+
+- **Ep201 is not fetch-filter leakage.** The story's title ("Cosmic ray muons expose thunderstorm electric fields") contains no excluded word; "telescope" is only in its body, which the snapshot counter reads. `exclude_title_patterns` matched titles as designed. Scope (atmospheric physics on this show) is an editorial question.
+- "Gates should fail closed rather than rewrite-and-accept": the script rewrite gate was removed on 2026-09-12 and must not return. Both recorded in `do_not_retry`.
+- Shipped from this review (⚠️ A/B-listen): the deep-dive framework's quotable specimens (myth openers, "Right now, as you listen", the two "memorable number" examples, the "practical takeaway" label), the podcast's offered pivots ("Now, shifting to…", "On a different note…", "Next up…") and the teaser's "Keep an eye on…" / "Next time, we'll be watching for…" lead-ins are replaced by shape descriptions. The "Before we go" teaser anchor stays.
