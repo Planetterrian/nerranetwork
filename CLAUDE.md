@@ -2257,7 +2257,7 @@ shows that DID go out (a re-run would have sent them twice). Now
 `run_weekly_newsletters.send_preflight` refuses before synthesis exactly
 what the send would refuse, `PRIORITY_SHOWS` go first, the run step has a
 75-minute cap under a 90-minute job and the commit step is `always()`;
-the six Oct 4 sends are recorded from the run log. (2) **The Sunday
+the six Oct 4 sends are recorded from the run log, and the default week is the most recent SUNDAY (`default_week_ending`) — with `date.today()` a catch-up dispatch after midnight UTC keyed its markers on Monday and would have re-sent all six. (2) **The Sunday
 week-in-review instruction offered "just after the intro"** — the slot the
 cold-open rule forbids (13/19 scripts on Sep 27, 3/19 incl. Tesla on Oct
 4); it now goes before the close only (⚠️ AUDIO). (3) **Nerra Daily's

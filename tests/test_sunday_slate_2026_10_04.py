@@ -223,3 +223,38 @@ class TestScriptStageIsTimed:
         from scripts import model_trial_report as mtr
 
         assert mtr._is_llm_stage("generate_podcast_script")
+
+
+class TestCatchUpRunKeepsTheSundayWeek:
+    """A catch-up dispatch on Monday must read Sunday's sent markers, or it
+    re-sends every weekly that already went out."""
+
+    def test_default_week_ending_is_the_sunday_just_gone(self):
+        import datetime as dt
+
+        sunday = dt.date(2026, 10, 4)
+        for offset in range(7):
+            assert rwn.default_week_ending(sunday + dt.timedelta(days=offset)) == sunday
+        assert rwn.default_week_ending(dt.date(2026, 10, 3)) == dt.date(2026, 9, 27)
+
+    def test_a_monday_run_skips_a_show_sent_on_sunday(self, monkeypatch, tmp_path):
+        import datetime as dt
+
+        rwn.sent_marker_path(tmp_path, "tesla", dt.date(2026, 10, 4)).write_text("{}")
+
+        class Monday(dt.date):
+            @classmethod
+            def today(cls):
+                return cls(2026, 10, 5)
+
+        monkeypatch.setattr(rwn, "date", Monday)
+        monkeypatch.setattr(rwn, "get_lake_stats",
+                            lambda: {"total_episodes": 0, "total_words": 0})
+
+        def _boom(**kw):
+            raise AssertionError("re-synthesized a weekly already sent on Sunday")
+
+        monkeypatch.setattr(rwn, "synthesize_weekly_newsletter", _boom)
+        monkeypatch.setattr(rwn, "send_preflight", lambda slug: "")
+        monkeypatch.setattr(sys, "argv", ["x", "--show", "tesla", "--output-dir", str(tmp_path)])
+        rwn.main()
