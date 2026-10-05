@@ -3525,10 +3525,19 @@ def run(args: argparse.Namespace) -> None:
             # arguing from memory (the grok-4.6 staged trial made episodes
             # split-model, which the credit file's single label can't show).
             metrics.record("llm_digest_model", config.llm.model)
+            # The model that SERVED the script call, not the configured one
+            # (Oct 5 2026): a script-stage override that falls back records
+            # the fallback here, so an A/B arm that never ran cannot read as
+            # one that did. Combined generation makes no script call — the
+            # configured model wrote it in the digest call.
             metrics.record(
                 "llm_script_model",
-                getattr(config.llm, "podcast_model", "") or config.llm.model,
+                getattr(config.llm, "_script_model_served", "")
+                or getattr(config.llm, "podcast_model", "") or config.llm.model,
             )
+            _script_fb = getattr(config.llm, "_script_model_fallback", "")
+            if _script_fb:
+                metrics.record("llm_script_model_fallback", _script_fb)
 
             # 8c. Pre-TTS duration estimate — skip obviously doomed episodes before
             #     burning TTS credits.  ~150 words/minute for podcast speech.

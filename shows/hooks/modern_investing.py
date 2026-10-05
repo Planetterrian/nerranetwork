@@ -1064,6 +1064,12 @@ def _save_tracker(tracker: dict, tracker_path: Path) -> None:
 # Trade evaluation — uses yfinance for real market data
 # ---------------------------------------------------------------------------
 
+#: Yahoo exchange suffixes — a dotted symbol ending in one of these names a
+#: listing, not a share class.
+_YAHOO_EXCHANGE_SUFFIXES = frozenset({"TO", "V", "NE", "CN", "L", "DE", "PA",
+                                      "AS", "SW", "HK", "T", "AX"})
+
+
 def _yf_symbol_candidates(symbol: str, market: str = "") -> list[str]:
     """Yahoo Finance symbols to try, exchange-suffixed first for Canadian picks.
 
@@ -1077,11 +1083,25 @@ def _yf_symbol_candidates(symbol: str, market: str = "") -> list[str]:
     sym = (symbol or "").upper().strip()
     if not sym:
         return []
+    m = (market or "").upper().replace("_", "-").strip()
+    # A TSX share class written with a dot (HPS.A, BAM.A, RCI.B) is not an
+    # exchange suffix: Yahoo lists it as HPS-A.TO. Oct 5 2026: Ep150's
+    # HPS.A pick went to Yahoo verbatim, 404'd daily and sat "open" for
+    # forty days on a one-session flash horizon.
+    cls = re.fullmatch(r"([A-Z]{1,6})\.([A-Z]{1,2})", sym)
+    if (cls and m in ("TSX", "TSX-V", "TSXV")
+            and cls.group(2) not in _YAHOO_EXCHANGE_SUFFIXES):
+        base, share_class = cls.groups()
+        if m == "TSX":
+            return [f"{base}-{share_class}.TO", sym]
+        return [f"{base}-{share_class}.V", f"{base}-{share_class}.TO", sym]
+    if cls and cls.group(2) not in _YAHOO_EXCHANGE_SUFFIXES and m not in ("CRYPTO",):
+        # US class shares too: Yahoo writes BRK-B, the digest BRK.B.
+        return [f"{cls.group(1)}-{cls.group(2)}", sym]
     # Already exchange-suffixed or crypto-quoted (CNR.TO, BTC-USD): the
     # digest named the exact listing — use it verbatim, never re-suffix.
     if "." in sym or sym.endswith("-USD"):
         return [sym]
-    m = (market or "").upper().replace("_", "-").strip()
     if m in ("TSX-V", "TSXV"):
         return [f"{sym}.V", f"{sym}.TO", sym]
     if m == "TSX":
@@ -1164,6 +1184,26 @@ def _fetch_history_bars(
         if attempt < attempts - 1:
             _time.sleep(2 ** (attempt + 1))
     return None
+
+
+def _period_covering(pick_date) -> str:
+    """A yfinance period that reaches back past *pick_date*.
+
+    Oct 5 2026: the fixed 15-day window could not see the pick-date bar of
+    a trade evaluated late — HPS.A (picked 08-26, unpriceable until its
+    share-class symbol was fixed) fetched bars from 09-15 only, and the
+    "first bar on/after the pick" rule would have priced a one-session
+    flash trade twenty days late."""
+    if pick_date is None:
+        return "15d"
+    age = (datetime.date.today() - pick_date).days
+    if age <= 10:
+        return "15d"
+    if age <= 25:
+        return "1mo"
+    if age <= 80:
+        return "3mo"
+    return "6mo"
 
 
 def _fetch_bars_for_trade(trade: dict, *, period: str = "15d") -> list | None:
@@ -1757,6 +1797,17 @@ def _stop_already_breached(trade: dict, bars, pick_date) -> bool:
     return False
 
 
+#: A pick's entry bar must print within this many calendar days of the pick
+#: (a long weekend plus a holiday); anything later means the fetched window
+#: missed the pick and the trade must not be priced from it.
+MAX_ENTRY_BAR_LAG_DAYS = 7
+
+#: Calendar days an open pick may go without a single price bar before it
+#: is voided as a data failure. Two weeks covers a holiday week plus the
+#: weekly horizon; a real listing always prints inside it.
+UNPRICED_VOID_DAYS = 14
+
+
 def _evaluate_open_trade(tracker: dict, tracker_path: Path) -> None:
     """Evaluate open trades using the hybrid model.
 
@@ -1789,7 +1840,7 @@ def _evaluate_open_trade(tracker: dict, tracker_path: Path) -> None:
         # weekday gets the same holding period, so alpha is attributable
         # to the pick instead of to the calendar.
         pick_date = _trade_pick_date(trade)
-        bars = _fetch_bars_for_trade(trade)
+        bars = _fetch_bars_for_trade(trade, period=_period_covering(pick_date))
         sessions = _sessions_since_pick(bars, pick_date)
 
         option = trade.get("option")
@@ -1820,6 +1871,29 @@ def _evaluate_open_trade(tracker: dict, tracker_path: Path) -> None:
 
         # Nothing has printed since the pick (weekend/holiday pick) — hold,
         # unless it has been stale long enough that the pick is dead.
+        # Oct 5 2026: that second half was never written, so a symbol no
+        # source can price (HPS.A from 08-26, BMWYY from 09-30) held
+        # "open" forever, outside every record. A pick with NO bars at all
+        # this long after its date is a data failure — void it with the
+        # same reason the closed-trade migration uses.
+        # Only a pick that has NEVER been priced: an option is held to its
+        # 21-45-day expiry, and a trade with a reference or snapshot price
+        # was real — a one-day data outage must never void either.
+        never_priced = not (trade.get("pick_reference_price")
+                            or trade.get("current_price")
+                            or trade.get("entry_price"))
+        if (not should_close and not bars and pick_date and not option
+                and never_priced
+                and (today - pick_date).days > UNPRICED_VOID_DAYS):
+            logger.warning(
+                "Voiding open trade %s (Ep%s): no market data in %d days "
+                "since the pick — data failure, not a market outcome",
+                symbol, trade.get("episode_num"), (today - pick_date).days)
+            trade["status"] = "voided"
+            trade["void_reason"] = "market_data_unavailable"
+            trade["lesson"] = (
+                "Trade voided — market data was unavailable for evaluation.")
+            continue
         if should_close:
             _close_trade(trade, tracker, bars=bars)
         else:
@@ -1900,7 +1974,7 @@ def _close_trade(trade: dict, tracker: dict, *, bars=None) -> None:
     pick_date = _trade_pick_date(trade)
 
     if bars is None:
-        bars = _fetch_bars_for_trade(trade)
+        bars = _fetch_bars_for_trade(trade, period=_period_covering(pick_date))
 
     entry_bar = exit_bar = None
     if bars:
@@ -1910,6 +1984,24 @@ def _close_trade(trade: dict, tracker: dict, *, bars=None) -> None:
         else:
             # Weekly hold: first bar on/after the pick date → latest bar.
             entry_bar, exit_bar = _pick_weekly_bars(bars, pick_date)
+        if (entry_bar is not None and pick_date
+                and (entry_bar[0] - pick_date).days > MAX_ENTRY_BAR_LAG_DAYS):
+            # The window does not reach the pick: the first bar it holds
+            # is weeks later, and pricing it would book a different trade.
+            logger.warning(
+                "%s: first available bar %s is %d days after the %s pick — "
+                "the fetched window does not cover the pick; not pricing",
+                symbol, entry_bar[0], (entry_bar[0] - pick_date).days, pick_date)
+            # The window now reaches the pick (_period_covering), so a gap
+            # this wide past the stale limit means the listing did not trade
+            # after the pick — the same verdict as the no-bar case below.
+            if (datetime.date.today() - pick_date).days > 10:
+                trade["status"] = "voided"
+                trade["void_reason"] = "no_trading_data_after_pick"
+                trade["pnl_pct"] = None
+                trade["pnl_dollars"] = None
+                trade["lesson"] = "Trade voided — no trading data after the pick date."
+            return
         if entry_bar is None:
             # Data came back but no bar on/after the pick date exists yet
             # (e.g. a weekend pick evaluated before the next session).

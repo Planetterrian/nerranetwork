@@ -1236,7 +1236,7 @@ NETWORK_SHOWS = {
         "podcast_image": "assets/covers/finansy-prosto.jpg",
         "x_account": None,
         "brand_color": "#BE185D",
-        "brand_color_dark": "#DB2777",
+        "brand_color_dark": "#9D174D",
         "tagline": "Finances Made Simple.",
         "hero_tagline": "Финансы — просто и понятно.",
         "schedule": "Weekly — Mondays",

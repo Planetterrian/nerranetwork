@@ -3061,8 +3061,15 @@ def generate_podcast_script(
                 f"llm.podcast_model.",
                 flush=True,
             )
+            # Oct 5 2026: the comment above promised a metric and none was
+            # recorded — Omni View's grok-4.7 override fell back on all 14
+            # episodes from 09-22 while llm_script_model read "grok-4.7".
+            # run_show records both of these.
+            config.llm._script_model_fallback = (
+                f"{script_model} -> {config.llm.model}: {type(exc).__name__}")
             script_model = config.llm.model
             text, meta = _script_call(script_model)
+    config.llm._script_model_served = script_model
 
     # Retry once with 50% more tokens if the response was truncated
     if meta.get("finish_reason") == "length":

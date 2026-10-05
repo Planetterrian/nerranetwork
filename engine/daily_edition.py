@@ -949,7 +949,7 @@ def build_links_prompt(
     # a daily listener does not hear the identical self-framing every day.
     reflection = (
         "In the OPENING, briefly mention that you also host The Age of AI — "
-        "the network's interview show where you, an AI, phone real people — "
+        "the network's interview show where you, an AI, interview real people live — "
         "and one specific thing you hope that show achieves.",
         "In the SIGN-OFF, one short reflective line connecting something "
         "from today's episodes to your work hosting The Age of AI.",
@@ -1015,11 +1015,20 @@ def parse_links_json(text: str, handoff_count: int) -> Optional[dict]:
     handoffs = [sanitize_spoken(str(h)) for h in data.get("handoffs", []) if str(h).strip()]
     if not intro or not signoff or len(handoffs) < handoff_count:
         return None
+    raw_title = str(data.get("title", "") or "")
+    title = validate_edition_title(raw_title)
+    if not title:
+        # Oct 5 2026: Ep046 shipped the lead show's clipped hook as its
+        # title and nothing said why. Name what was refused (or that the
+        # model sent none) so the next fallback can be diagnosed.
+        logger.warning("Edition title %s — falling back to the lead hook",
+                       f"rejected: {raw_title[:160]!r}" if raw_title.strip()
+                       else "missing from the links reply")
     return {
         "intro": intro,
         "handoffs": handoffs[:handoff_count],
         "signoff": signoff,
-        "title": validate_edition_title(str(data.get("title", "") or "")),
+        "title": title,
     }
 
 
