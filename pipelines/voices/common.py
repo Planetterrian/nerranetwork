@@ -594,8 +594,24 @@ def load_prompt(template: str, show: ShowRef = None, **subs: Any) -> str:
     merged: Dict[str, Any] = dict(show_prompt_subs(s))
     merged.update(subs)
     for key, value in merged.items():
-        text = text.replace("{{" + key + "}}", str(value))
+        # Oct 5 2026: a guest with no title on file was introduced to Mira as
+        # "Scott Pulcini, None". A missing value is an empty one.
+        text = text.replace("{{" + key + "}}", "" if value is None else str(value))
     return text
+
+
+def guest_details(app: Dict[str, Any]) -> str:
+    """", title at organization" after a guest's name, leaving out whatever
+    is not on file ("" when nothing is)."""
+    title = str(app.get("title") or "").strip()
+    org = str(app.get("organization") or "").strip()
+    title = "" if title.lower() == "none" else title
+    org = "" if org.lower() == "none" else org
+    if title and org:
+        return f", {title} at {org}"
+    if title:
+        return f", {title}"
+    return f" ({org})" if org else ""
 
 
 # ---------------------------------------------------------------------------

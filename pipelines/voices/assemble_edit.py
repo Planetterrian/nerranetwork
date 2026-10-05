@@ -744,6 +744,15 @@ def assemble(slug: str) -> dict:
             logger.warning("no editorial package for %s — transcript not written",
                            _interview_id(spec, run))
 
+    # Both review pages prefer this over the raw mix, so Patrick and the guest
+    # hear the edit rather than the unedited room.
+    log = dict(run.get("grok_session_log") or {})
+    tracks = dict(log.get("tracks") or {})
+    tracks["preview"] = url
+    tracks["edit"] = {"slug": slug, "url": url, "duration_sec": round(seconds, 1)}
+    log["tracks"] = tracks
+    sb_update("interview_runs", f"id=eq.{run_id}", {"grok_session_log": log})
+    logger.info("episode %s (%.0f min) -> %s", slug, seconds / 60, url)
     # Oct 5 2026: what the edit took out of Mira's own voice is the plainest
     # verdict on it, and the grading pass runs before anyone edits. Tell the
     # learning loop. transcript_raw, not cleaned: it is never replaced by the
@@ -760,15 +769,6 @@ def assemble(slug: str) -> dict:
     except Exception:  # noqa: BLE001 — the episode is the point
         logger.exception("could not report the edit's cuts (non-fatal)")
 
-    # Both review pages prefer this over the raw mix, so Patrick and the guest
-    # hear the edit rather than the unedited room.
-    log = dict(run.get("grok_session_log") or {})
-    tracks = dict(log.get("tracks") or {})
-    tracks["preview"] = url
-    tracks["edit"] = {"slug": slug, "url": url, "duration_sec": round(seconds, 1)}
-    log["tracks"] = tracks
-    sb_update("interview_runs", f"id=eq.{run_id}", {"grok_session_log": log})
-    logger.info("episode %s (%.0f min) -> %s", slug, seconds / 60, url)
     try:
         _tell_patrick(spec, show, slug, url, seconds, run)
     except Exception:  # noqa: BLE001

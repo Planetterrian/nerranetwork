@@ -86,10 +86,11 @@ class TestPostsRenderBeforeThePage:
                 return []
             return f
 
-        for name in ("generate_blog_posts", "generate_show_page",
-                     "generate_summaries_page", "generate_narrative_page",
-                     "generate_ru_landing_page", "generate_blog_index",
-                     "generate_network_page"):
+        # Every generator, not a list of them: Oct 5 2026, the claims-page
+        # generator was missing from the list, so this test rewrote
+        # claims/age_of_ai.html in the working tree on every run and the next
+        # "git pull --rebase" refused to start.
+        for name in [n for n in dir(G) if n.startswith("generate_") and callable(getattr(G, n))]:
             monkeypatch.setattr(G, name, _rec(name))
         monkeypatch.setattr(sys, "argv",
                             ["generate_html.py", "--show", "age_of_ai", "--blogs"])

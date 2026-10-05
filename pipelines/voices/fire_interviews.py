@@ -27,7 +27,7 @@ from common import (  # noqa: E402
     mira_signature_html, guest_notes_block, guest_agenda_block, pacific_time,
     notify_operator, GUEST_AUDIO_HTML, studio_steps_html,
     operator_phone, render_email, sb_insert, sb_select, sb_update, send_email,
-    show_for, to_e164,
+    show_for, to_e164, guest_details,
 )
 from learning import lessons_block, variety_block  # noqa: E402
 from address import address_rule, first_name, spoken as spoken_address  # noqa: E402
@@ -367,7 +367,8 @@ def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
         guest_name=app["name"],
         guest_address=spoken_address(app),
         guest_address_rule=address_rule(app),
-        guest_title=app.get("title", ""),
+        guest_title=app.get("title") or "",
+        guest_details=guest_details(app),
         guest_organization=app.get("organization", ""),
         episode_thesis=interview.get("episode_thesis")
         or brief.get("episode_thesis_draft", ""),
