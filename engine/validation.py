@@ -553,8 +553,13 @@ def ei_validation_config() -> ValidationConfig:
         sections=[
             SectionRule(
                 name="Lead Story",
+                # Oct 5 2026: the prompt's LOW-CONTENT DAY format leads with
+                # "### Deep Dive: <topic>" and has no Lead Story heading, so
+                # every thin day (Ep070, Ep071) failed this rule and spent
+                # the one-shot structural regeneration on a digest that was
+                # the format the prompt asked for. The Deep Dive is the lead.
                 pattern=(
-                    r"(?:### Lead Story|## Lead Story)"
+                    r"(?:### Lead Story|## Lead Story|### Deep Dive:[^\n]*)"
                     r"(.*?)"
                     r"(?=━━|### Regulatory|## Regulatory|$)"
                 ),
