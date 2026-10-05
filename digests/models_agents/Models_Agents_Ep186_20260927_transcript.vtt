@@ -1,0 +1,241 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.980
+Local inference on Apple Silicon just got faster with a tuned fork of the splash engine, delivering up to 1.5 times the speed on M5 max chips. This is Models &amp; Agents, episode 186. Looking back over the past week, Claude pushed several frontiers with the Opus 5.5 release, and a 9-loop scattering amplitude solution that broke the prior 8-loop record. Openweight model saw Xiaomi's MIMO V2.6 Pro 1 TA-40.
+
+00:00:29.980 --> 00:00:36.340
+to B, claimed the top spot after $3 million in training, while agent systems topped human
+
+00:00:36.340 --> 00:00:44.300
+experts at APEX 2026, and reward hacking rates reached 30.5% on open-ended research tasks.
+
+00:00:45.100 --> 00:00:52.480
+Selective cross-model collaboration lifted hard-reasoning accuracy from 23.1% to 28.1%.
+
+00:00:52.780 --> 00:00:57.860
+A developer released Splish, a fork of the Splash inference engine tuned specifically
+
+00:00:57.860 --> 00:01:00.280
+for 40 core M5 max chips.
+
+00:01:00.860 --> 00:01:06.180
+The changes include kernel selections measured with Splash's own tuner, new verify kernels
+
+00:01:06.180 --> 00:01:11.500
+that use lighter barriers and compute row sums once per projection, and an attention tweak
+
+00:01:11.500 --> 00:01:13.120
+for the 27 billion shape.
+
+00:01:13.620 --> 00:01:20.180
+On the same hardware and models, Splish runs 1.25x faster on single requests, with gains
+
+00:01:20.180 --> 00:01:26.340
+between 11 and 35% and up to 1.5x faster at 2 to 4 concur requests.
+
+00:01:26.340 --> 00:01:36.020
+Real-world short-storage generation moved from 45 to 51 tokens per second to 56 to 64 tokens per second on 4-bit models.
+
+00:01:36.500 --> 00:01:39.600
+Quality remained unchanged across all measured outputs.
+
+00:01:40.320 --> 00:01:52.300
+Kernel choices measured specifically for the 40 core M5 max produced the biggest single request win when Swift 1.5 moved from 74.7 to 89.8 tokens per second.
+
+00:01:52.300 --> 00:01:58.740
+Loading those choices from a file via splash underscore kernel underscore choices allows anyone
+
+00:01:58.740 --> 00:02:00.380
+to retune without rebuilding.
+
+00:02:00.940 --> 00:02:07.580
+New verify kernels for the M5 tensor units delivered an additional 5% at 1 request and 10
+
+00:02:07.580 --> 00:02:09.820
+to 19% at 2 to 4 requests.
+
+00:02:10.640 --> 00:02:19.620
+Tuned Quinn 3.6 to 35 BA3B with the new kernels showed speed ups at 1 to 4 requests of 5%, 18%
+
+00:02:19.620 --> 00:02:22.540
+27, 22%, and 18%.
+
+00:02:22.540 --> 00:02:26.140
+KT's in-house auto-model router plays second overall
+
+00:02:26.140 --> 00:02:28.260
+on the router arena benchmark developed
+
+00:02:28.260 --> 00:02:30.260
+by Rice University researchers.
+
+00:02:30.780 --> 00:02:35.020
+The platform evaluates routers on roughly 8,400 queries
+
+00:02:35.020 --> 00:02:37.800
+for response accuracy, cost efficiency,
+
+00:02:38.160 --> 00:02:39.980
+and robustness to input changes.
+
+00:02:40.640 --> 00:02:43.880
+Auto-model router analyzes task type, difficulty,
+
+00:02:44.120 --> 00:02:46.560
+and knowledge domain before linking each request
+
+00:02:46.560 --> 00:02:48.260
+to the best model from a pool,
+
+00:02:48.260 --> 00:02:55.540
+while balancing quality and usage cost. Simon Willison prompted Claude Opus 5.5 to generate an
+
+00:02:55.540 --> 00:03:03.100
+HTML5 Canvas pixel art animation of at least 20 Kakapo parrots jumping with confetti. He supplied
+
+00:03:03.100 --> 00:03:08.440
+three reference photos from Google Image Search and asked for an interactive page that could later
+
+00:03:08.440 --> 00:03:15.640
+be recorded as a 15-second video. Claude then used Playwright to drive a browser, perform timed
+
+00:03:15.640 --> 00:03:21.440
+click across the canvas at nine specific moments spread over 16 seconds and produce the final
+
+00:03:21.440 --> 00:03:27.220
+video file. The resulting animation served as the closing slide in Willisons We Are Developers
+
+00:03:27.220 --> 00:03:33.200
+Keynote that referenced this year's record-breaking Kakapo breeding season. The prompt transcript
+
+00:03:33.200 --> 00:03:38.720
+and the interactive HTML page are available on his site, along with the full playwright script
+
+00:03:38.720 --> 00:03:44.300
+used to generate the video. A new towards data science guide walks through six advanced
+
+00:03:44.300 --> 00:03:49.620
+graph rag architectural patterns. The guide details six architectural patterns for building
+
+00:03:49.620 --> 00:03:54.820
+production graph rag systems. It's focusing on retrieval and generation workflows that
+
+00:03:54.820 --> 00:04:00.360
+combine graph databases with large language models. A contributor added optimizations that
+
+00:04:00.360 --> 00:04:07.100
+deliver a 42-time speed up for prompt lookup drafting inside llama.cpp. The change targets
+
+00:04:07.100 --> 00:04:12.680
+the drafting step used in speculative decoding pipelines. The update is available in the latest
+
+00:04:12.680 --> 00:04:17.240
+builds and improves throughput for workloads that rely on prompt-based token prediction.
+
+00:04:18.160 --> 00:04:22.920
+Hypocratic AI presented its approach to clinical, large-language model safety during a
+
+00:04:22.920 --> 00:04:23.760
+Becker's webinar.
+
+00:04:24.400 --> 00:04:27.960
+The session covered differentiation strategies for healthcare deployments.
+
+00:04:28.580 --> 00:04:33.340
+The company emphasized safety mechanisms and model behavior tailored to clinical environments.
+
+00:04:34.020 --> 00:04:39.880
+Try the Splish fork on an M5 MAX if you run local models for short story or agent workloads.
+
+00:04:39.880 --> 00:04:45.260
+Read the Graph Rag Practitioners Guide if you are building retrieval pipelines that already
+
+00:04:45.260 --> 00:04:46.360
+use knowledge graphs.
+
+00:04:47.000 --> 00:04:52.720
+Test the updated prompt lookup drafting code in the latest llama.cpp build when you need
+
+00:04:52.720 --> 00:04:54.380
+faster speculative generation.
+
+00:04:55.100 --> 00:05:00.000
+Watch the Hippocratic AI webinar recording if you deploy language models in clinical settings.
+
+00:05:00.600 --> 00:05:06.200
+Further M5 specific inference kernels are expected as more developers publish tuned forks.
+
+00:05:06.200 --> 00:05:11.880
+Additional router benchmarks will appear as commercial and academic teams release new routing layers.
+
+00:05:12.460 --> 00:05:17.180
+Clinical LLM safety discussions continue at upcoming healthcare AI conferences.
+
+00:05:17.820 --> 00:05:25.000
+Pop the hood on speculative decoding and the draft model adds almost no extra memory because it stays in the same batch as the target.
+
+00:05:25.580 --> 00:05:34.160
+When the draft matches the target, the system accepts multiple tokens per verification step and cuts total latency by roughly half on typical workloads.
+
+00:05:34.160 --> 00:05:39.620
+When the draft diverges, the system discards the wrong tokens and falls back to standard
+
+00:05:39.620 --> 00:05:44.540
+autoregressive generation, so the worst case slowdown stays under 10%.
+
+00:05:44.780 --> 00:05:48.720
+The quality of the draft model matters most below 30 billion parameters.
+
+00:05:49.320 --> 00:05:54.280
+Above that size, the acceptance rate plateaus and extra draft compute stops paying off.
+
+00:05:54.860 --> 00:05:59.480
+Teams therefore choose a draft model one quarter the size of the target and accept rates
+
+00:05:59.480 --> 00:06:03.060
+between 60 and 80% as the practical operating range.
+
+00:06:03.060 --> 00:06:12.000
+Use speculative decoding when generation length exceeds 200 tokens and the draft model fits comfortably in the same accelerator memory as the target.
+
+00:06:12.700 --> 00:06:16.020
+Skip it for short prompts or when memory headroom is already tight.
+
+00:06:16.860 --> 00:06:22.580
+Before we go, the next round of M5 kernel releases should surface more tuned forks in the coming days.
+
+00:06:23.160 --> 00:06:24.900
+That's models and agents for today.
+
+00:06:25.360 --> 00:06:32.460
+If you found this useful, share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+
+00:06:32.460 --> 00:06:38.060
+The AI world moves fast, will help you keep up, see you tomorrow, and if you'd rather
+
+00:06:38.060 --> 00:06:42.800
+watch, then listen, find us on YouTube at Nerra Network, links in the show notes.
+
+00:06:43.280 --> 00:06:45.520
+This show comes to you from the Nerra Network.
+
+00:06:45.780 --> 00:06:50.140
+If you want another sharp daily briefing, prediction markets daily has you covered.
+
+00:06:50.600 --> 00:06:53.660
+The prediction market world explained daily, never a bet.
+
+00:06:54.240 --> 00:06:59.820
+All our shows are free at nerranetwork.com, and on the website, every episode's visuals
+
+00:06:59.820 --> 00:07:05.920
+labels live in our free image gallery at narennetwork.com slash gallery, royalty free under creative
+
+00:07:05.920 --> 00:07:08.120
+commons, download with attribution.
+
+00:07:08.560 --> 00:07:14.360
+This episode used AI voice synthesis of my voice, editorial selection and analysis are my
+
+00:07:14.360 --> 00:07:14.660
+on.

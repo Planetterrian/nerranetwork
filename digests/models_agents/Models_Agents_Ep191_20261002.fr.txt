@@ -1,0 +1,137 @@
+Les grands modèles de langage cartographient la terre et l’eau à partir de simples paires de latitude et de longitude en texte, sans aucune image.
+
+C’est Models and Agents, épisode cent quatre-vingt-onze.
+
+Andrej Karpathy a montré que les grands modèles de langage classent correctement la terre et l’eau quand on leur donne uniquement la latitude et la longitude sous forme de texte.
+
+L’évaluation a interrogé les modèles seize mille deux cents fois sur une grille, puis a rendu les réponses sous forme d’image, une image qui colle de très près à la géographie réelle.
+
+Le résultat montre qu’une connaissance spatiale factuelle émerge de la seule compression du texte d’internet.
+
+Aucun entraînement visuel, aucune donnée d’image n’est entré dans les modèles testés.
+
+Les développeurs peuvent reproduire le test avec n’importe quel modèle de pointe, en lui donnant des chaînes de coordonnées et en traçant les sorties.
+
+Cette découverte confirme que l’échelle sur le texte continue de débloquer une connaissance structurée du monde, sans aucune entrée multimodale.
+
+Dans les mises à jour de modèles, Karpathy a lancé la même requête terre ou eau sur plusieurs modèles, y compris toutes les variantes de Claude.
+
+Les résultats ont été agrégés en une seule image, qui révèle des côtes et des contours de continents fidèles.
+
+L’expérience a utilisé seize mille deux cents paires de coordonnées, et n’a demandé ni images ni cartes, ni à l’entraînement ni à l’inférence.
+
+GraphForge construit des tâches à partir de vrais fichiers et d’un graphe de preuves, pour que la tâche et ses grilles de vérification s’ancrent dans les mêmes documents.
+
+En ajustant finement Qwen trois virgule six vingt-sept B sur deux mille cent soixante-neuf trajectoires, le GDPVal est monté à mille quatre cent quarante-cinq virgule sept sous OpenHands.
+
+Ça a aussi amélioré les scores sur Workspace-Bench-Lite et SpreadsheetBench II.
+
+Les données et les modèles sont mis en accès public.
+
+Settle entraîne le jeton de fin de raisonnement sur la stabilité des réponses observée dans les traces déjà terminées.
+
+Sur MATH cinq cents, avec Qwen trois quatre B, ça a réduit le nombre de jetons de quarante pour cent, tandis que la précision n’a chuté que d’un demi-point de pourcentage.
+
+La méthode n’exige qu’un décodage ordinaire au moment de l’inférence.
+
+Les auteurs de l’article sur l’alignement de la chaîne de pensée introduisent le CoT-Interpretability Alignment, une métrique qui compare les traces de chaîne de pensée au raisonnement interne détecté par les outils d’interprétabilité.
+
+L’alignement de référence, sur trois tâches et trois modèles, allait de quarante-quatre virgule huit à soixante-quinze virgule neuf pour cent.
+
+Un réentraînement avec des récompenses à la fois de précision et de fidélité a amélioré la fidélité paramétrique, tout en préservant la performance sur la tâche.
+
+Le français exige de trente et un à cinquante-huit pour cent de jetons de plus que l’anglais, sur sept tokeniseurs de deux mille vingt-six.
+
+Les langues régionales de France paient à peu près de un virgule six à trois virgule trois fois le compte de jetons de l’anglais.
+
+Un prototype d’encodage par paires d’octets au niveau de l’octet, appelé Baracoda FR version un virgule deux, réduit le surcoût français de onze virgule cinq pour cent par rapport à Tekken, tout en utilisant trois virgule sept pour cent de jetons en moins sur l’anglais.
+
+Le choix de la graine a fait bouger les métriques d’équité plus que la compression audio, sur la plupart des axes démographiques, lors de l’ajustement fin de grands modèles de langage vocaux sur quatre cent soixante heures de LibriSpeech.
+
+Quatre-vingt-cinq virgule trois pour cent de la variation de l’écart d’ethnicité normalisé Fair-Speech a été attribué à la graine, plutôt qu’à la compression.
+
+Porter le jeu d’adaptation à neuf cent soixante heures a réduit l’effet, sans le faire disparaître.
+
+Du côté des agents et des outils, AutoSynthData transforme les échecs d’un modèle cible et les réussites d’un enseignant plus fort en de nouvelles tâches d’entraînement, qui travaillent la même capacité dans des situations variées.
+
+Les tâches sont générées dans EnterpriseOps Gym et validées pour leur faisabilité face à la spécification de l’environnement.
+
+Le programme bascule tout seul vers les faiblesses qui restent, à mesure que le modèle progresse.
+
+RSIGame fait tourner des boucles locales explorer, diagnostiquer, améliorer, à côté d’une boucle globale qui conserve le meilleur point de contrôle et détecte la saturation.
+
+Sur cent quarante tâches de GameCraft-Bench, ça a relevé la qualité sur deux moteurs et cinq générateurs.
+
+L’internalisation d’expérience a permis à Qwen trois virgule huit vingt-sept B de dépasser les scores en un seul essai de GPT cinq virgule cinq, tout en utilisant onze fois moins de jetons de génération.
+
+Le système EVICALC lit des PDF, sélectionne des passages, demande à un modèle de langage d’écrire des expressions arithmétiques, et les évalue en local.
+
+Il a atteint huit virgule soixante et un pour cent de précision conjointe sur le jeu de test officiel de mille sept cent trente tâches.
+
+Un passage de validation publique a atteint quatre-vingt-douze virgule dix-sept pour cent de précision de réponse, avec un F1 de preuves parfait.
+
+L’extraction de critères a été comparée au guidage par chaîne de pensée, sur deux corpus Reddit, avec les questionnaires PHQ neuf et BDI deux.
+
+Pour les modèles de pointe, l’approche par extraction n’a montré aucun gain significatif une fois les seuils de décision fixés a priori à partir des critères des questionnaires.
+
+Le modèle à neuf milliards de paramètres a classé la plupart des publications comme sévères, quel que soit le style de guidage, sur l’un des corpus.
+
+Côté pratique et communauté, Karpathy recommande de demander aux modèles d’expliquer les concepts en langue contrôlée ASD-STE cent, pour une sortie plus nette.
+
+Il suggère de demander du HTML pour des pages web interactives, et des vidéos explicatives personnalisées façon trois-b-un-b, avec une narration ElevenLabs.
+
+L’approche traite les gros artefacts logiciels sur mesure comme bon marché et jetables, une fois que l’intelligence et le code deviennent abondants.
+
+Karpathy a insisté sur le fait que toutes les capacités observées naissent de la lecture de grandes quantités de texte et de la prédiction du jeton suivant.
+
+Les dispositions qui font penser à des images n’apparaissent que dans la mise en page en deux dimensions des réponses textuelles.
+
+Le propos souligne que la connaissance spatiale et factuelle peut émerger sans aucune donnée d’entraînement visuel.
+
+Bitdefender a publié une bêta de AI Guardian qui tourne sur des agents Mac.
+
+L’outil se concentre sur la détection et le confinement du comportement d’agents voyous, au niveau du poste.
+
+DigiCert a annoncé de nouveaux contrôles de certificats et d’identité, pensés pour donner aux organisations de la visibilité et des options de révocation quand des agents autonomes agissent hors des limites prévues.
+
+Ouvrons le capot des compromis de tokénisation en contexte multilingue.
+
+L’encodage par paires d’octets construit un vocabulaire en fusionnant, encore et encore, les paires de symboles adjacents les plus fréquentes, jusqu’à atteindre une taille cible.
+
+Les frontières de jetons qui en sortent reflètent les statistiques des données d’entraînement, pas la structure linguistique, donc les langues aux orthographes ou aux morphologies différentes paient des comptes de jetons différents pour le même sens.
+
+Ajouter des données françaises à un entraînement de tokeniseur réduit le surcoût français dès les premiers milliers de fusions, mais ça augmente le compte de jetons anglais, parce que des emplacements du vocabulaire sont réalloués.
+
+L’effet plafonne après environ cinquante mille fusions, tandis que le coût anglais continue de monter, ce qui crée un compromis direct de capacité.
+
+Au moment de l’inférence, le compte de jetons plus élevé fait monter directement la latence et le coût, parce que la facturation et les fenêtres de contexte se mesurent en jetons.
+
+Quand une charge de travail est connue pour être à dominante française, entraîner un tokeniseur dédié, ou affiner un tokeniseur existant sur du texte français, donne la plus forte réduction.
+
+Sinon, le gain marginal justifie rarement la pénalité sur l’anglais.
+
+Les équipes devraient mesurer le vrai ratio de jetons sur leur corpus cible avant de s’engager dans un changement de tokeniseur multilingue.
+
+Essayez de demander à n’importe quel modèle de pointe de réécrire une explication en langue contrôlée ASD-STE cent, et comparez la lisibilité avec la sortie par défaut.
+
+Reproduisez le test de coordonnées terre ou eau de Karpathy sur votre modèle préféré, et tracez les résultats pour voir la connaissance géographique émerger du seul texte.
+
+Affinez un petit modèle à poids ouverts sur les trajectoires GraphForge publiées, pour tester la performance d’agent sur des espaces de travail à fichiers réels.
+
+Générez une consigne de vidéo explicative façon trois-b-un-b sur mesure, pour un sujet que vous enseignez, et testez-la avec une clé A-P-I ElevenLabs.
+
+Des résultats supplémentaires de la revue en cours d’OpenAI sur les incidents d’agents sont attendus dans les semaines qui viennent.
+
+D’autres labos doivent publier des variantes de tokeniseurs optimisées pour des langues précises plus tard dans le trimestre.
+
+De nouveaux outils de sécurité des agents, chez les fournisseurs de sécurité des postes, sont prévus en accès bêta plus large le mois prochain.
+
+Avant de partir, surveillez les prochains détails sur la façon dont la variabilité de la graine affecte les métriques d’équité dans l’adaptation des modèles vocaux, à mesure que davantage de labos publient des évaluations à plusieurs graines.
+
+Voilà pour Models and Agents aujourd’hui. Si ça vous a été utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain. Le monde de l’IA avance vite. On vous aide à tenir le rythme. À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l’émission.
+
+Et avant de partir : cette émission fait partie du Nerra Network — une famille de podcasts quotidiens sur la techno, la science et les marchés, chacun un point court, tranchant, que vous pouvez finir dans les transports. Si aujourd’hui a mérité sa place dans votre flux, voici votre prochaine écoute — Omni View Asia Pacific, la journée à travers l’Asie et le Pacifique, racontée du côté de la région. Retrouvez toutes les émissions, gratuitement, sur nerranetwork point com.
+
+Nos interviews sont animées par Mira, la documentariste IA du réseau, et c’est l’invité qui décide si la conversation est publiée, ou pas du tout — le fonctionnement est sur nerranetwork point com mira.
+
+Cet épisode a utilisé une synthèse vocale IA de ma voix — la sélection éditoriale et l’analyse sont les miennes.

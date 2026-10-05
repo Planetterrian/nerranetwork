@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import logging
 import re
+from urllib.parse import urlsplit
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
@@ -416,3 +417,36 @@ def drop_stale_articles(
         else:
             kept.append(art)
     return kept, dropped
+
+
+_LATIN_LETTER_RE = re.compile(r"[A-Za-z]")
+
+
+def speakable_source_name(source_name: str, url: str = "") -> str:
+    """A publisher name the host can say.
+
+    Oct 1 2026, Tesla Ep622: the prompt listed 디지털투데이 as an item's
+    outlet, the model wrote the name into the script, and the spoken
+    copy aired "  reported the patent suit exposure…" (the TTS cleanup
+    had deleted it — a separate fix). An outlet name with no Latin letter
+    is replaced by the URL's registrable name (``digitaltoday.co.kr`` →
+    "Digitaltoday") so the digest and the script both carry something
+    a listener can hear and a reader can search. A name with any Latin
+    letter is returned untouched.
+    """
+    name = (source_name or "").strip()
+    if not name or _LATIN_LETTER_RE.search(name):
+        return name or "Unknown"
+    try:
+        host = urlsplit(url or "").hostname or ""
+    except ValueError:
+        host = ""
+    host = host.lower()
+    if host.startswith("www."):
+        host = host[4:]
+    labels = [p for p in host.split(".") if p]
+    # Drop public-suffix-shaped tails (co.kr, com.au, co.uk, …) and the TLD.
+    while len(labels) > 1 and (len(labels[-1]) <= 3 or labels[-1] in {"com", "net", "org", "info"}):
+        labels.pop()
+    stem = labels[-1] if labels else ""
+    return stem.capitalize() if stem else name

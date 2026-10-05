@@ -383,7 +383,8 @@ describe("membership plumbing", () => {
   });
 
   it("show vocabulary matches the EN edition lineup size", () => {
-    expect(PERSONAL_SHOWS).toHaveLength(13);
+    // 13 established + 13 Sep-24 launch cohort (PERSONAL_EXTRA_SHOW_SLUGS).
+    expect(PERSONAL_SHOWS).toHaveLength(26);
   });
 });
 

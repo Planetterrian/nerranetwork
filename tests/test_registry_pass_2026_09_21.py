@@ -75,6 +75,17 @@ class TestTopicHubsDidNotSilentlyShrink:
         # and Longevity did exactly that).
         launched_later = set(LAUNCHED_AFTER_SNAPSHOT)
         pinned = {hub: members - launched_later for hub, members in got.items()}
+        # A hub made ONLY of later-launched shows (local-news crossed the
+        # 12-episode floor on 2026-10-02 with Vancouver 10 + Collingwood 2)
+        # turns itself on the day the archive is deep enough — by design,
+        # and on a data commit this guard cannot foresee. It is not in the
+        # snapshot, so it is checked for shape below, never pinned here.
+        new_hubs = {hub for hub, members in pinned.items()
+                    if not members and hub not in EXPECTED_HUB_SHOWS}
+        for hub in new_hubs:
+            assert got[hub] and got[hub] <= launched_later, (
+                f"{hub} is live with members outside the launch set: {got[hub]}")
+            del pinned[hub]
         assert pinned == EXPECTED_HUB_SHOWS
         has_feed = {s["slug"]: s.get("has_feed", True) for s in shows}
         tags = {s["slug"]: {str(x).lower() for x in ((s.get("picker_tags") or {}).get("topics") or [])}

@@ -27,6 +27,8 @@ its rules.
 
 from __future__ import annotations
 
+import re
+
 __all__ = [
     "YOUTUBE_TITLE_MAX",
     "PODCAST_EPISODE_TITLE_MAX",
@@ -139,6 +141,36 @@ def clip_words(text: str, limit: int, *, ellipsis: str = ELLIPSIS) -> str:
     # is genuinely nowhere to break, so the hard cut stands. That is the
     # only path that can split a word.
     return cut.rstrip(_TRAILING) + ellipsis
+
+
+#: A Short title shorter than this many words is a fragment, not a headline.
+FRAGMENT_TITLE_MIN_WORDS = 4
+#: ...or shorter than this many characters (the #Shorts tag excluded).
+FRAGMENT_TITLE_MIN_CHARS = 25
+
+_HASHTAG_TAIL_RE = re.compile(r"(?:\s*#\w+)+\s*$")
+
+
+def is_fragment_title(text: str) -> bool:
+    """True when *text* reads as a transcript slice rather than a headline.
+
+    Oct 3 2026: the dub channels titled their non-hook Shorts from a single
+    Whisper segment, and 81 of 314 RU filled Shorts since August shipped as
+    «в 2026 года», «2026 года», «Подсказки в 60-70% случаев». A headline
+    starts with a capital (or a digit) and carries at least
+    ``FRAGMENT_TITLE_MIN_WORDS`` words and ``FRAGMENT_TITLE_MIN_CHARS``
+    characters. Language-agnostic on purpose (Latin and Cyrillic both have
+    case); a script without case only meets the length tests. This judges
+    shape, never length limits — clipping stays with ``clip_words``.
+    """
+    body = _HASHTAG_TAIL_RE.sub("", (text or "")).strip().strip("…").strip()
+    if not body:
+        return True
+    if body[0].isalpha() and body[0].islower():
+        return True
+    if len(body.split()) < FRAGMENT_TITLE_MIN_WORDS:
+        return True
+    return len(body) < FRAGMENT_TITLE_MIN_CHARS
 
 
 def fits(text: str, limit: int) -> bool:

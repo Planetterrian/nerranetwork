@@ -1,0 +1,223 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.500
+What's up? Welcome to Models &amp; Agents, episode 61. It's May 27th, 2026. Lots of news to walk through. Let's start with what actually matters.
+
+00:00:10.500 --> 00:00:17.360
+And Thropic just published concrete sandboxing patterns that let agents scale capabilities without expanding their blast radius.
+
+00:00:18.220 --> 00:00:27.680
+The briefing today centers on new sandboxing techniques for agents, fixes to speculative decoding, and several fresh agent frameworks plus evaluation tools.
+
+00:00:27.680 --> 00:00:32.920
+Three model updates focus on inference, stability, and post-training methods.
+
+00:00:33.500 --> 00:00:39.640
+Agent tooling includes a Rust coding agent and a prompt optimizer that uses sandboxed execution.
+
+00:00:40.380 --> 00:00:44.960
+One community project improves how multi-turn conversations turn into benchmarks.
+
+00:00:45.760 --> 00:00:50.640
+And Thropic released a new engineering blog post on sandboxing for AI agents.
+
+00:00:51.300 --> 00:00:55.460
+The post stresses that permissions must evolve alongside agent capabilities.
+
+00:00:56.440 --> 00:01:00.700
+Sandboxing limits the scope of potentially destructive actions in their products.
+
+00:01:01.280 --> 00:01:07.160
+The guidance favors starting with narrow permissions and expanding them only after demonstrated reliability.
+
+00:01:08.000 --> 00:01:13.280
+Builders can apply the patterns when granting file system, network, or code execution access.
+
+00:01:13.920 --> 00:01:22.480
+The approach avoids reliance on static rules as agents gain autonomy. Similar sandbox designs are likely to appear from other labs soon.
+
+00:01:23.480 --> 00:01:30.900
+Now let's move to the model updates. The Eagle team, VLLM, and Torch spec released Eagle 3.1.
+
+00:01:31.620 --> 00:01:38.080
+The update targets attention drift that caused inconsistent draft token acceptance rights during speculative decoding.
+
+00:01:38.880 --> 00:01:44.440
+Teams running high throughput inference pipelines can integrate the algorithm to reduce variance and latency.
+
+00:01:44.440 --> 00:01:49.320
+The release prioritizes production robustness over raw speed gains.
+
+00:01:49.940 --> 00:01:54.880
+Builders should test the updated path if they see fluctuating acceptance rates on long contexts.
+
+00:01:55.500 --> 00:01:59.900
+Researchers introduced self-verified distillation as a post-training method.
+
+00:02:00.500 --> 00:02:05.760
+Models generate self-verify and train on their own solutions using only unlabeled prompts.
+
+00:02:06.540 --> 00:02:11.120
+Three-stage filtering covers cycle consistency, factuality, and correctness.
+
+00:02:12.040 --> 00:02:21.400
+QW3-4B showed gains of 16.7 points on math benchmarks, 11.1 on science, and 8.3 on coding.
+
+00:02:22.100 --> 00:02:25.900
+The method requires only a single inference call at test time.
+
+00:02:26.580 --> 00:02:31.920
+Teams fine-tuning smaller models should experiment with the pipeline when labeled data is scarce.
+
+00:02:32.860 --> 00:02:36.880
+Microspec introduces a training-free method for speculative decoding.
+
+00:02:37.320 --> 00:02:41.140
+It builds compact, context-sensitive vocabularies on the fly.
+
+00:02:42.100 --> 00:02:48.260
+Average vocabulary size drops by more than 40 times while maintaining coverage through temporal locality.
+
+00:02:48.780 --> 00:02:58.600
+The system achieves 51.6% lower draft latency and 1.12 to 1.32 times end to end speed up over Eagle 2.
+
+00:02:59.600 --> 00:03:04.620
+Inference team should evaluate it when vocabulary projection is the current bottleneck.
+
+00:03:04.920 --> 00:03:06.720
+Now for agent and tool developments.
+
+00:03:07.580 --> 00:03:12.220
+VT Code is a new open-source Rust-T UI coding agent.
+
+00:03:12.520 --> 00:03:20.200
+It uses AST level chunking and explicit token budget tracking to avoid dumping entire directories into prompts.
+
+00:03:20.200 --> 00:03:29.360
+The agent supports macOS seatbelt, linux landlock, and secomp sandboxing, plus tree-sitter validation on every generated command.
+
+00:03:30.040 --> 00:03:37.580
+It works with any open AI compatible provider and includes a config example for routing through endpoints like deep-seek V4 Flash.
+
+00:03:38.360 --> 00:03:43.420
+Developers tired of token waste in agent coding sessions should try the MIT licensed repo.
+
+00:03:44.420 --> 00:03:48.880
+Hive Mind is a desktop app that combines three AI-assisted development modes.
+
+00:03:49.240 --> 00:03:58.880
+The modes cover focused task planning, concurrent multi-model review called Hive Mind, and fully autonomous multi-feature execution called Swarms.
+
+00:03:59.520 --> 00:04:05.540
+It supports providers including Anthropic, OpenAI, Alama, DeepSeek, and NVIDIA NIM.
+
+00:04:06.120 --> 00:04:10.840
+The project is seeking testers before a full public release and is available on GitHub.
+
+00:04:11.840 --> 00:04:16.060
+Users can export and reuse swarm plans across different model compositions.
+
+00:04:16.840 --> 00:04:20.880
+Spear turns automatic prompt engineering into an agentic process.
+
+00:04:21.640 --> 00:04:25.600
+The system is called sandboxed prompt engineer with active rollback.
+
+00:04:26.200 --> 00:04:30.500
+It includes four tools with a Python sandbox for structural error analysis.
+
+00:04:31.380 --> 00:04:39.400
+Spear outperformed prior methods on 13 industrial LLMs as judge tasks and seven BBH tasks.
+
+00:04:39.400 --> 00:04:44.720
+The Python tool provided the largest single contribution on complex judge tasks.
+
+00:04:45.340 --> 00:04:48.520
+Auto rollback prevents metric regression during optimization.
+
+00:04:49.400 --> 00:04:53.820
+Prompt engineers working on evaluation pipelines should test the agentic approach.
+
+00:04:54.540 --> 00:05:04.260
+In the practical and community section, Comptu Bench automatically converts real multi-turn user assistant dialogues into structured requirement checklists.
+
+00:05:05.260 --> 00:05:13.580
+Applied to programming tasks, it produces benchmarks with near perfect experiment correlation to human authored sets like big code bench.
+
+00:05:14.440 --> 00:05:21.940
+The LLM as judge component reach substantial agreement with human ground truth at Kappa of 0.705.
+
+00:05:22.680 --> 00:05:28.140
+The framework reduces the cost of maintaining high quality evaluation sets as models evolve.
+
+00:05:29.140 --> 00:05:33.500
+Evaluation team should examine the pipeline for their own domain specific benchmarks.
+
+00:05:33.960 --> 00:05:37.180
+Okay, let's pop the hood on speculative decoding stability.
+
+00:05:37.880 --> 00:05:41.340
+Everyone talks about speculative decoding as a simple speed trick.
+
+00:05:41.920 --> 00:05:48.380
+In practice, it balances draft model quality, acceptance criteria, and attention stability across layers.
+
+00:05:49.140 --> 00:05:55.820
+The mechanism lets a smaller draft model propose multiple tokens that the target model verifies in parallel.
+
+00:05:56.820 --> 00:06:03.680
+Attention drift occurs when the draft models hidden states diverge from what the target would have produced at the same positions.
+
+00:06:04.280 --> 00:06:13.440
+Divergence grows with sequence length because each accepted token shifts the key value cache the target model sees on the next verification step.
+
+00:06:14.420 --> 00:06:22.700
+Eagle 3.1 and similar fixes add lightweight correction terms or re-normalization steps to keep the draft distribution aligned.
+
+00:06:22.700 --> 00:06:27.820
+These corrections cost a small amount of extra compute per verification round.
+
+00:06:28.440 --> 00:06:37.160
+The corrections buyback 10-20% acceptance rate on long contexts while adding roughly 5-8% overhead to the verification pass.
+
+00:06:37.820 --> 00:06:44.080
+Use the stabilized version for any production workload where tail latency matters more than average throughput.
+
+00:06:44.680 --> 00:06:49.000
+Skip it for short, bursty requests where drift never has time to accumulate.
+
+00:06:50.000 --> 00:07:00.400
+Things to try this week include testing Eagle 3.1 in your VLLM setup if speculative decoding acceptance rates have been drifting on contexts over 8,000 tokens.
+
+00:07:01.260 --> 00:07:08.200
+Clone VT code and run it against a local deep seek endpoint to measure token savings on a real refactor task.
+
+00:07:08.780 --> 00:07:18.740
+Apply self-verified distillation to a 4 billion or 8 billion quen3 model on your domain specific unlabeled prompts before the next fine tuning cycle.
+
+00:07:19.740 --> 00:07:29.080
+Experiment with Spears Python sandbox tool on an existing LLM as judge task to see how structural error analysis changes prompt quality.
+
+00:07:29.800 --> 00:07:38.060
+On the horizon more labs are expected to release detailed sandboxing and permission frameworks as agent deployments move into production environments.
+
+00:07:38.940 --> 00:07:45.960
+Additional papers on agent credit assignment and retrieval aware training are likely following the rice PO and Spear releases.
+
+00:07:45.960 --> 00:07:54.960
+Open source coding agents with stronger AST aware context management will continue appearing on GitHub as teams share their internal tools.
+
+00:07:55.580 --> 00:08:01.420
+Tomorrow keep an eye on further details from labs expanding sandbox designs for production agents.
+
+00:08:02.060 --> 00:08:03.900
+That's models and agents for today.
+
+00:08:04.400 --> 00:08:11.420
+If you found this useful share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+
+00:08:11.420 --> 00:08:15.860
+The AI world moves fast will help you keep up. See you tomorrow.
+
+00:08:16.440 --> 00:08:22.120
+This episode used AI voice synthesis of my voice editorial selection and analysis are my own.

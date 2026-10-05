@@ -287,11 +287,14 @@ class TestEditorialRules:
         assert re.search(r"\*\*Last verified:\*\* \d{1,2} [A-Z][a-z]+ 20\d\d", f)
         assert "CAN 80" in f
         assert "heading back to Europe" in f
-        assert "Entry CONFIRMED" in f
+        # Oct 4 2026 (operator): not on the official entry list — the guard
+        # used to pin "Entry CONFIRMED", the claim that turned out wrong.
+        assert "AIMING TO START" in f and "Entry CONFIRMED" not in f
         assert "118 skippers" in f
         guide = _read("shows/prompts/offshore_north_field_guide.txt")
         assert "118 solo skippers" in guide
-        assert "Scott Shawyer is entered" in guide
+        assert "Scott Shawyer is aiming to start" in guide
+        assert "Scott Shawyer is entered" not in guide
         assert "Won by United by the Ocean" in guide
         assert "Ambrogio Beccaria" in guide
 

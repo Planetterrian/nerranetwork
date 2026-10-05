@@ -1,0 +1,298 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.160
+Glad you're here. Welcome to Models and Agents Episode 96 for June 29th, 2026.
+
+00:00:05.780 --> 00:00:10.420
+Your daily AI briefing. Monday in the AI world, which means a weekend's worth of
+
+00:00:10.420 --> 00:00:17.000
+announcements to catch up on, let's go. Open AI's $20 billion Cerribris chip purchase has
+
+00:00:17.000 --> 00:00:22.040
+effectively removed high throughput ASIC inference capacity from the market for everyone else.
+
+00:00:22.780 --> 00:00:28.780
+Cerribris near-term inference supply is now pre-allocated to a single hyperscaler. That pushes
+
+00:00:28.780 --> 00:00:34.560
+smaller teams off the wait list indefinitely. New agent memory runtimes and research agents
+
+00:00:34.560 --> 00:00:40.180
+launch today show continued movement on the tooling side. Watch out teams adapt their inference
+
+00:00:40.180 --> 00:00:47.600
+strategies as custom silicon access titans. Cerribris struck a roughly $20 billion deal to supply
+
+00:00:47.600 --> 00:00:54.600
+open AI with large volumes of its inference-focused ASICs. The agreement has pre-allocated the majority
+
+00:00:54.600 --> 00:01:00.620
+of Cerribris near-term capacity. This leaves the public API wait list effectively closed for
+
+00:01:00.620 --> 00:01:06.760
+non-hyperscale customers. A small startup building a real-time coding agent reports needing sustained
+
+00:01:06.760 --> 00:01:13.780
+1-2000 tokens per second throughput. The team now sees no realistic path to access. The development
+
+00:01:13.780 --> 00:01:19.200
+highlights how concentrated demand for specialized inference hardware can sideline smaller production
+
+00:01:19.200 --> 00:01:26.300
+workloads that do not require training scale clusters. Teams relying on Cerribris class latency should
+
+00:01:26.300 --> 00:01:32.220
+evaluate alternative providers or on-prem options immediately. This moves the inference supply
+
+00:01:32.220 --> 00:01:37.740
+constraints question-forward because smaller production workloads now face longer lead times
+
+00:01:37.740 --> 00:01:44.880
+than frontier training runs. Yuvian LLM is a new model family trained with adversarially
+
+00:01:44.880 --> 00:01:51.520
+aware data construction. It uses knowledge-enhanced pre-training and policy-grounded safety post-training
+
+00:01:51.520 --> 00:01:56.940
+that includes risk-aware supervised fine-tuning plus reinforcement learning for tool use.
+
+00:01:57.580 --> 00:02:02.900
+The 8 billion parameter variant reportedly outperforms several larger baselines including
+
+00:02:02.900 --> 00:02:12.480
+GPT 5.4 and Q1-3 max on multiple safety benchmarks. It ships with the Yuvian LLM risk-evail suite
+
+00:02:12.480 --> 00:02:18.700
+spanning 93 benchmarks focused on adversarial robustness and real-world safety scenarios.
+
+00:02:19.420 --> 00:02:25.260
+Builders working on agentic systems that must resist jail breaks should test the 8 billion checkpoint
+
+00:02:25.840 --> 00:02:31.660
+this week against the current safety stack. The context-ready transformer adds a lightweight
+
+00:02:31.660 --> 00:02:37.760
+correction network that pre-contextualizes each token before it enters the main D-layer
+
+00:02:37.760 --> 00:02:43.900
+transformer block. The change turns the architecture into a recurrent model at inference time.
+
+00:02:44.640 --> 00:02:51.400
+AD equals 5 configuration beats a standard 12-layer transformer while running 1.7 times faster
+
+00:02:51.920 --> 00:02:58.800
+on an A100. A single layer version with K equals 10 unrolling matches a 6-layer baseline
+
+00:02:58.800 --> 00:03:06.540
+at 2.6 times speedup. The approach works by caching a summary of prior context and combining it with the
+
+00:03:06.540 --> 00:03:12.260
+current token embedding via a zero initialized correction FFN during fine-tuning.
+
+00:03:12.980 --> 00:03:18.280
+Teams running long context inference on limited hardware should experiment with converting existing
+
+00:03:18.280 --> 00:03:26.320
+checkpoints using the described adaptation path. NMTP introduces a training-free scheduler that switches
+
+00:03:26.320 --> 00:03:32.560
+between different tree-based attention topologies for multi-token prediction. The switch is based on a
+
+00:03:32.560 --> 00:03:39.940
+running estimate of local generation entropy. It delivers a 1.15 times average speedup over Hydra
+
+00:03:39.940 --> 00:03:49.600
+and up to 1.36 times over Medusa across Humaneable, Shared GPT, GSM 8K, and LitBench while preserving
+
+00:03:49.600 --> 00:03:56.600
+output quality. The method avoids the fixed speculation depth of prior MTP approaches by matching
+
+00:03:56.600 --> 00:04:03.060
+draft length to context predictability. Developers using speculative decoding today can drop the
+
+00:04:03.060 --> 00:04:09.600
+scheduler into existing Hydra or Medusa setups with minimal changes. Core Weave released ARIA,
+
+00:04:09.940 --> 00:04:15.600
+an agent designed for autonomous research and collaborative intelligence. The system can iterate
+
+00:04:15.600 --> 00:04:22.280
+on research tasks without constant human direction. It emphasizes multi-agent coordination and is
+
+00:04:22.280 --> 00:04:28.340
+positioned for workloads that benefit from sustained self-directed exploration. Early users can
+
+00:04:28.340 --> 00:04:34.420
+access it through Core Weaves platform. Organizations running large-scale research experiments should
+
+00:04:34.420 --> 00:04:40.340
+evaluate whether ARIA reduces the need for manual orchestration compared with current land graph
+
+00:04:40.340 --> 00:04:48.360
+or crew AI setups. EverOS stores agent memory as plain markdown files indexed by SQLite and
+
+00:04:48.380 --> 00:04:56.800
+LandsDB. It combines BM25 with vector retrieval plus multimodal ingestion and self-evolving skills
+
+00:04:56.800 --> 00:05:04.100
+under an Apache 2.0 license. The runtime is local first and includes a runnable code walkthrough
+
+00:05:04.100 --> 00:05:10.560
+plus interactive demo. It targets developers who want transparent editable memory without vendor
+
+00:05:10.560 --> 00:05:16.960
+lock-in. Teams building agents that must retain long-term context should test the hybrid retrieval
+
+00:05:16.960 --> 00:05:23.700
+against their current vector-only setup. Microsoft's agent framework tutorial continues with guidance
+
+00:05:23.700 --> 00:05:29.560
+on safely connecting agents to personal data sources after establishing basic tool use and planning
+
+00:05:29.560 --> 00:05:36.740
+in part 1. The harness adds controls that prevent unrestricted data access while still allowing the
+
+00:05:36.740 --> 00:05:43.040
+agent to reason over user information. Developers already using the framework can follow the incremental
+
+00:05:43.040 --> 00:05:50.140
+rollout to production grade data handling. TKAN added agentic AI capabilities to its introspect lab
+
+00:05:50.140 --> 00:05:56.420
+analytics platform. The integration enables more autonomous data analysis workflows in laboratory
+
+00:05:56.420 --> 00:06:02.920
+settings. It focuses on turning raw experimental data into actionable insights with reduced manual
+
+00:06:02.920 --> 00:06:08.760
+intervention. Labs already running TKAN hardware should check whether the new agent layer changes
+
+00:06:08.760 --> 00:06:15.580
+their current analysis pipelines. Rhyglyce replaces standard document retrieval with question-to-question
+
+00:06:15.580 --> 00:06:23.760
+matching. And LLM generates 3-5 variants per answer at ingestion. Each variant gets its own embedding
+
+00:06:23.760 --> 00:06:33.240
+and query time scores are aggregated by answer ID using dual thresholds of 0.70 aggregated and 0.82
+
+00:06:33.240 --> 00:06:38.840
+single hit fallback. The GitHub repo provides the implementation under an open license.
+
+00:06:39.520 --> 00:06:46.360
+It targets closed domain FAQ systems where the answer space is finite and eliminates the generation step
+
+00:06:46.360 --> 00:06:52.360
+entirely. Teams maintaining internal knowledge bases should compare precision against their current
+
+00:06:52.360 --> 00:06:59.960
+rag pipeline on a held out set of questions. Superseed introduces an RL environment that rewards agents for
+
+00:06:59.960 --> 00:07:06.320
+using the current value of a fact and penalizes stale information. The environment directly targets
+
+00:07:06.320 --> 00:07:15.100
+the memory update gap observed on long mem eval. Fintuning Quinn 2.53b with GRPO on this environment
+
+00:07:15.100 --> 00:07:23.920
+raised held out super session accuracy from 9.0% to 16.7%. The benchmark and training stack are
+
+00:07:23.920 --> 00:07:30.480
+released publicly. Agent developers dealing with multi-session conversations where facts change should
+
+00:07:30.480 --> 00:07:38.040
+add the supersede verifier to their evaluation harness. Okay, let's pop the hood on the NTP approach
+
+00:07:38.040 --> 00:07:43.640
+for a moment. Everyone talks about multi-token prediction as a simple way to speed up generation.
+
+00:07:44.220 --> 00:07:50.980
+In practice, NTP shows it is a dynamic scheduling problem where speculation depth must track local
+
+00:07:50.980 --> 00:07:56.940
+entropy. Low entropy regions support deeper drafts with high acceptance rates. High entropy
+
+00:07:56.940 --> 00:08:03.280
+regions require shallower trees to avoid wasted verification compute. The scheduler maintains a
+
+00:08:03.280 --> 00:08:08.860
+running entropy estimate and switches among a small set of pre-computed Pareto optimal trees.
+
+00:08:09.600 --> 00:08:16.020
+It adds negligible overhead while lifting average accepted tokens per step. On the tested benchmarks,
+
+00:08:16.020 --> 00:08:24.100
+the approach yields 1.15 to 1.36 times speed ups without quality loss because it avoids the fixed depth
+
+00:08:24.100 --> 00:08:30.920
+penalty that hurts earlier static MTP methods. The key engineering decision is keeping the tree library
+
+00:08:30.920 --> 00:08:38.240
+small and task specific rather than attempting online tree search. Use entropy guided scheduling when
+
+00:08:38.240 --> 00:08:45.140
+your workload contains mixed predictability, such as code mixed with open text or structured JSO with
+
+00:08:45.140 --> 00:08:51.120
+occasional freeform fields. Fall back to standard speculative decoding only if your generation
+
+00:08:51.120 --> 00:08:58.080
+distribution is uniformly high entropy. Test the ever OS mark-down memory runtime on a local agent
+
+00:08:58.080 --> 00:09:05.080
+that needs editable long-term context without vendor databases. Run the UVON 8 billion checkpoint
+
+00:09:05.080 --> 00:09:10.520
+on safety critical agent tasks to measure jailbreak resistance versus your current model.
+
+00:09:11.160 --> 00:09:17.460
+Add the ragless QQ retrieval pattern to any closed domain FAQ system and compare precision
+
+00:09:17.460 --> 00:09:24.520
+against your existing chunk-based rag. Experiment with NTP scheduling on top of an existing
+
+00:09:24.520 --> 00:09:31.340
+Hydra or Medusa speculative decoder for mixed entropy workloads. More open-weight models are
+
+00:09:31.340 --> 00:09:37.220
+expected to adopt vocabulary aligned sparse autoencoder techniques for interpretable features.
+
+00:09:38.020 --> 00:09:43.540
+Additional agent memory frameworks will likely appear as team seek alternatives to vector-only
+
+00:09:43.540 --> 00:09:50.100
+stores. Further papers on memory update training signals are anticipated following the supersede release.
+
+00:09:50.800 --> 00:09:57.060
+Continued focus on entropy-aware inference schedulers as teams optimize for variable generation
+
+00:09:57.060 --> 00:10:03.480
+difficulty. Tomorrow keep an eye on any follow-up announcements around cerebrus capacity allocation
+
+00:10:03.480 --> 00:10:09.620
+and how other inference providers respond. That's models and agents for today. If you found this
+
+00:10:09.620 --> 00:10:14.300
+useful share it with someone who's trying to keep up with all these changes and subscribe so you
+
+00:10:14.300 --> 00:10:20.200
+don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow.
+
+00:10:20.760 --> 00:10:26.280
+And if you'd rather watch than listen, find us on YouTube at Narrow Network, links in the show notes.
+
+00:10:26.920 --> 00:10:32.500
+And before you go, this show is part of the Narrow Network, a family of daily podcasts on tech,
+
+00:10:32.500 --> 00:10:37.420
+science and markets. Each one, a short, sharp briefing you can finish on the commute.
+
+00:10:38.180 --> 00:10:43.620
+If today earned its place in your feed, here's your next listen. OmniView, a balanced daily world
+
+00:10:43.620 --> 00:10:50.180
+news briefing that takes every side seriously. Find every show free at NarrowNetwork.com.
+
+00:10:50.480 --> 00:10:56.820
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

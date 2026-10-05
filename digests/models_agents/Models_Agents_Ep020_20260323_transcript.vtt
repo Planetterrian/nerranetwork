@@ -1,0 +1,343 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.720
+Hey, welcome to Models and Agents Episode 20. It's March 23, 2026, New Week, and AI.
+
+00:00:06.320 --> 00:00:09.900
+And if last week was anything to go by, buckle up. Let's get into it. Fair,
+
+00:00:10.140 --> 00:00:15.740
+zero-determinant strategies break in the periodic prisoner's dilemma, unlike the classic repeated version.
+
+00:00:16.220 --> 00:00:21.220
+That's the headline that caught my attention today. A new theoretical paper shows that some of our
+
+00:00:21.220 --> 00:00:26.020
+favorite intuitions from repeated games don't survive when you add stochastic state transitions.
+
+00:00:26.820 --> 00:00:31.340
+What you need to know, today's arcsive drop reveals that core assumptions from repeated
+
+00:00:31.340 --> 00:00:36.520
+games don't cleanly transfer to stochastic environments. Fair, zero-determinant strategies,
+
+00:00:36.520 --> 00:00:42.620
+and even tit for tat lose their guarantees in the periodic prisoner's dilemma. Several strong multi-agent
+
+00:00:42.620 --> 00:00:47.720
+and long-context reasoning papers also landed. Alongside new work showing that automated prompt
+
+00:00:47.720 --> 00:00:53.440
+optimization can dramatically weaken LLM safety guardrails. Pay attention to the gap between theoretical
+
+00:00:53.440 --> 00:00:58.040
+elegance and repeated games and the messier reality of stateful multi-agent systems.
+
+00:00:58.800 --> 00:01:03.800
+Let's start with the top story. A new theoretical paper proves that fair, zero-determinant strategies
+
+00:01:03.800 --> 00:01:09.120
+do not necessarily exist in the periodic prisoner's dilemma game. This is a simple stochastic game
+
+00:01:09.120 --> 00:01:15.040
+extension of the classic repeated setting. In repeated games, fair ZD strategies can unilaterally
+
+00:01:15.040 --> 00:01:20.500
+equalize payoffs between the focal player and opponents. And tit for tat is always a fair ZD
+
+00:01:20.500 --> 00:01:25.600
+strategy. Both properties fail to hold reliably once environmental state transitions are introduced.
+
+00:01:26.040 --> 00:01:31.260
+The authors derive the more complicated existence conditions for ZD strategies in stochastic games.
+
+00:01:31.580 --> 00:01:35.280
+They demonstrate the difference through rigorous analysis of the periodic variant.
+
+00:01:35.860 --> 00:01:40.420
+This matters because many multi-agent systems and reinforcement learning environments are
+
+00:01:40.420 --> 00:01:45.560
+better modeled as stochastic games. Practitioners relying on repeated game intuitions for
+
+00:01:45.560 --> 00:01:51.240
+cooperation mechanisms may encounter unexpected breakdowns. The work highlights why theoretical
+
+00:01:51.240 --> 00:01:56.920
+guarantees often weaken when moving from clean, repeated interactions to state dependent ones.
+
+00:01:57.380 --> 00:02:02.120
+If you're designing multi-agent reinforcement learning systems, this paper will make you rethink
+
+00:02:02.120 --> 00:02:07.740
+where repeated game cooperation mechanisms actually apply. Now let's look at some model updates.
+
+00:02:08.140 --> 00:02:14.120
+First up is some sobering safety research. Researchers repurposed black box prompt optimization techniques
+
+00:02:14.120 --> 00:02:19.720
+using DSPI. They iteratively refined harmful prompts from harmful QA and jailbreak bench.
+
+00:02:20.220 --> 00:02:26.100
+They optimized against a continuous danger score from GPT 5.1. Results show substantial degradation
+
+00:02:26.100 --> 00:02:33.780
+of safety. Quinn 38B's average danger score jumped from 0.09 to 0.79 post-optimization.
+
+00:02:34.220 --> 00:02:39.520
+The effects were especially pronounced on open source smaller models. This demonstrates that static
+
+00:02:39.520 --> 00:02:44.100
+safety benchmarks significantly underestimate real-world risk from adaptive adversaries.
+
+00:02:44.500 --> 00:02:49.180
+The paper frames this as constructive red teaming research that reveals limitations of fixed
+
+00:02:49.180 --> 00:02:54.580
+test sets. Next we have a comprehensive study of LLM-based argument classification.
+
+00:02:55.140 --> 00:03:03.260
+The study evaluates GPT 5.2, Lama 4, Deepseek, and others on args.me and UKP data sets.
+
+00:03:03.260 --> 00:03:09.920
+They tested chain of thought, prompt refraising, voting, and certainty-based methods. GPT 5.2
+
+00:03:09.920 --> 00:03:18.840
+achieved the highest accuracy, 91.9% on args.me and 78.0% on UKP. Advanced prompting added
+
+00:03:18.840 --> 00:03:23.880
+between two and eight percentage points. The qualitative analysis reveals shared failure modes.
+
+00:03:24.340 --> 00:03:29.820
+These include prompt instability, difficulty with implicit criticism and complex argument structures.
+
+00:03:29.820 --> 00:03:35.080
+The work provides both strong quantitative benchmarks and actionable error analysis for
+
+00:03:35.080 --> 00:03:40.840
+argument-mining tasks. Then there's GeoChallenge, a new benchmark for geometric reasoning with diagrams.
+
+00:03:41.500 --> 00:03:47.900
+It introduces 90,000 automatically generated geometry-proof problems. These require multi-step reasoning
+
+00:03:47.900 --> 00:03:53.520
+over aligned text and diagrams. Each problem comes with complexity ratings and formal annotations.
+
+00:03:53.520 --> 00:04:01.480
+The best model GPT 5 nano reaches 75.89 exact match. Humans score 94.74 on the same task.
+
+00:04:01.980 --> 00:04:07.960
+Analysis identifies three recurring LLM failure patterns, exact match failures in multiple choice,
+
+00:04:08.200 --> 00:04:11.180
+weak visual reliance, and non-convergent overextended reasoning.
+
+00:04:11.620 --> 00:04:17.120
+Moving on to agent and tool developments, there's a fascinating hierarchical multi-agent architecture
+
+00:04:17.120 --> 00:04:22.240
+for onboard Earth observation. It coordinates vision language models, remote sensing tools,
+
+00:04:22.240 --> 00:04:27.020
+and role-specialized agents. The system operates under strict compute and bandwidth limits.
+
+00:04:27.420 --> 00:04:32.000
+An early warning agent generates fast hypotheses and selectively activates domain experts.
+
+00:04:32.600 --> 00:04:37.600
+A decision agent then consolidates evidence. The system was tested on an actual orbital edge
+
+00:04:37.600 --> 00:04:43.340
+computing platform for wildfire and flood scenarios. It significantly reduced computational overhead
+
+00:04:43.340 --> 00:04:49.260
+while preserving decision quality. This points toward practical autonomous EO constellations.
+
+00:04:49.260 --> 00:04:53.800
+Another strong paper formalizes the multi-robot context, uncertain, stochastic,
+
+00:04:53.860 --> 00:04:58.760
+shortest path problem. They call it MR-CUS-P, the author's introduced a two-stage solution,
+
+00:04:59.240 --> 00:05:04.800
+first simop for coordinated context inference at landmarks, then LCBS, which stands for
+
+00:05:04.800 --> 00:05:11.600
+lexicographic conflict-based search for collision-free planning. It was evaluated in simulation and on five
+
+00:05:11.600 --> 00:05:16.180
+physical mobile robots in the South domain. The work directly tackles the real-world issue of robots
+
+00:05:16.180 --> 00:05:21.500
+needing to jointly gather information to infer operational context. Finally, in this section,
+
+00:05:21.640 --> 00:05:26.600
+there's A4VL, a multi-agent perception action alliance for efficient long video reasoning.
+
+00:05:26.860 --> 00:05:32.360
+It implements a multi-round perception action loop with multiple VLM agents. These agents perform
+
+00:05:32.360 --> 00:05:38.180
+query-specific frame sampling and clue-based video block alignment. They do collaborative cross-review
+
+00:05:38.180 --> 00:05:45.880
+scoring and iterative pruning until consensus. A4VL outperforms 18 VLMs and 11 long video methods on
+
+00:05:45.880 --> 00:05:51.520
+five video QA benchmarks. It also delivers significantly lower inference latency. The code is
+
+00:05:51.520 --> 00:05:56.560
+available, which is great news for anyone working with long video. Let's talk about some practical
+
+00:05:56.560 --> 00:06:01.300
+and community work. There's a controlled study on spelling correction and healthcare query
+
+00:06:01.300 --> 00:06:07.300
+answer systems. It looked at real consumer medical queries where 61.5% contained spelling errors.
+
+00:06:07.860 --> 00:06:14.200
+Query side correction using edit distance or context-aware methods improves BM25 and TFIDF retrieval.
+
+00:06:14.200 --> 00:06:21.180
+The gains were plus 9.2% in MRR and plus 8.3% in NDCG at 10 on MedQuad.
+
+00:06:21.800 --> 00:06:26.960
+Correcting only the corpus yields almost no gain. The paper includes a detailed error census and
+
+00:06:26.960 --> 00:06:33.420
+practical recommendations for healthcare QA pipelines. Another practical piece focuses on legal LLMs.
+
+00:06:33.900 --> 00:06:39.300
+It targets two failure modes in legal rag. Retrieval errors from lexical redundancy and decoding
+
+00:06:39.300 --> 00:06:45.100
+hallucinations when context is insufficient. The approach uses metadata enriched hybrid rag plus
+
+00:06:45.100 --> 00:06:50.620
+direct preference optimization. This trains safe refusal behavior in the models. The combination
+
+00:06:50.620 --> 00:06:56.860
+improves grounding and reliability for small, locally deployed legal models. This is especially useful
+
+00:06:56.860 --> 00:07:01.660
+where privacy constraints prohibit large cloud models. Okay, let's pop the hood on this belief
+
+00:07:01.660 --> 00:07:07.200
+revision work. Everyone talks about chain of thought, self-reflection, and multi-agent debate as if
+
+00:07:07.200 --> 00:07:12.520
+models are performing clean Bayesian updates. In practice, these iterative reasoning loops follow a
+
+00:07:12.520 --> 00:07:17.920
+surprisingly consistent multiplicative scaling law. It's governed by a belief revision exponent they
+
+00:07:17.920 --> 00:07:24.020
+call alpha. This alpha blends prior beliefs with new verification evidence. The core insight is
+
+00:07:24.020 --> 00:07:29.060
+that instruction-tuned models don't treat each revision step as fully independent. Instead,
+
+00:07:29.060 --> 00:07:34.560
+they apply a stable scaling factor when updating probabilities over candidate answers. Theory shows
+
+00:07:34.560 --> 00:07:39.300
+that alpha less than one is required for asymptotic stability under repeated revision.
+
+00:07:39.860 --> 00:07:46.160
+Values at or above one risk divergence or oscillation. Empirical measurements across GPQA diamond
+
+00:07:46.160 --> 00:07:53.540
+theorem QA, MMLU Pro, ARC challenge, and multiple model families show interesting patterns. These
+
+00:07:53.540 --> 00:08:01.920
+include GPT 5.2, Claude Sonnet 4, and Lama 3.3 to 70B. Models operate slightly above the stability
+
+00:08:01.920 --> 00:08:07.580
+boundary and single steps. But the exponent naturally decreases over successive revisions.
+
+00:08:08.080 --> 00:08:13.620
+This produces the contract of dynamics needed for long-run stability. This explains why reflection
+
+00:08:13.620 --> 00:08:18.640
+sometimes helps and sometimes causes models to chase their own tail. The architecture-specific
+
+00:08:18.640 --> 00:08:24.540
+trust ratios also vary. Some models overweight priors while others favor new evidence to aggressively.
+
+00:08:25.060 --> 00:08:29.940
+The gacha that bites most teams is treating every co-t or debate step as equally valuable.
+
+00:08:29.940 --> 00:08:35.100
+Without monitoring how the revision exponent drifts, when building agentic workflows with repeated
+
+00:08:35.100 --> 00:08:40.880
+self-correction, instrument the alpha exponent on a validation set. If it stays consistently above
+
+00:08:40.880 --> 00:08:46.580
+one across multiple steps, you are likely in an unstable regime. That regime benefits from stronger
+
+00:08:46.580 --> 00:08:51.880
+anchoring mechanisms or fewer revision rounds. So when should you actually reach for heavy iterative
+
+00:08:51.880 --> 00:08:56.580
+reasoning versus simpler approaches? This paper gives you the diagnostic tool to decide.
+
+00:08:57.540 --> 00:09:01.860
+Now, things to try this week. Test your current safety pipelines against adaptive prompt
+
+00:09:01.860 --> 00:09:07.520
+optimization using DSPY on a small held-out harmful set. You'll likely discover your static benchmarks
+
+00:09:07.520 --> 00:09:12.640
+are overly optimistic. Try A4VL on your long video understanding tasks if you're working with
+
+00:09:12.640 --> 00:09:18.500
+our scale content. The multi-agent perception action loop delivers both higher quality and lower
+
+00:09:18.500 --> 00:09:24.140
+latency than single model baselines. Experiment with query-side spelling correction in any domain
+
+00:09:24.140 --> 00:09:29.540
+specific retrieval system, especially health care or legal. The retrieval gains are immediate and
+
+00:09:29.540 --> 00:09:35.420
+substantial. Explore the periodic prisoner's dilemma paper if you're designing multi-agent reinforcement
+
+00:09:35.420 --> 00:09:40.500
+learning systems. It will make you rethink where repeated game cooperation mechanisms actually apply.
+
+00:09:41.460 --> 00:09:46.600
+On the horizon, expect more theoretical work-mapping ZD strategy existence conditions across
+
+00:09:46.600 --> 00:09:52.440
+broader classes of stochastic games. Look for expanded red-teaming methodologies that incorporate
+
+00:09:52.440 --> 00:09:58.880
+continuous optimization rather than fixed prompt sets. Several long video and multimodal agent frameworks
+
+00:09:58.880 --> 00:10:03.780
+are likely to adopt structured perception action loops similar to A4VL in the coming months.
+
+00:10:04.340 --> 00:10:09.840
+Watch for domain-specific full-stack LLM workflows appearing in other scientific fields that require
+
+00:10:09.840 --> 00:10:15.900
+strict physical or logical consistency. Before we go, tomorrow keep an eye on follow-up work extending
+
+00:10:15.900 --> 00:10:21.700
+these stochastic game results to more complex agent training regimes. That wraps up today's AI
+
+00:10:21.700 --> 00:10:26.820
+briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you
+
+00:10:26.820 --> 00:10:33.280
+listen. See you tomorrow. This podcast is curated by Patrick but generated using AI voice synthesis of
+
+00:10:33.280 --> 00:10:39.260
+my voice using 11 labs. The primary reason to do this is I unfortunately don't have the time to be
+
+00:10:39.260 --> 00:10:44.000
+consistent with generating all the content and wanted to focus on creating consistent and regular
+
+00:10:44.000 --> 00:10:47.580
+episodes for all the themes that I enjoy and I hope others do as well.

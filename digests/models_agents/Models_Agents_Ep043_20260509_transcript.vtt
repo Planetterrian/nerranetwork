@@ -1,0 +1,250 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.660
+Hey, welcome to Models and Agents, episode 43 for May 9, 2026.
+
+00:00:06.540 --> 00:00:12.620
+Your daily AI briefing. Lots of news to walk through. Let's start with what actually matters.
+
+00:00:13.300 --> 00:00:21.200
+DeepSeek V4's full paper reveals FP4 quantization aware training running directly in late-stage
+
+00:00:21.200 --> 00:00:27.900
+MOE optimization with minimal quality loss. The complete technical paper from DeepSeek adds
+
+00:00:27.900 --> 00:00:35.520
+important details that were only previewed in April. It covers FP4 quantization aware training,
+
+00:00:36.120 --> 00:00:40.860
+anticipatory routing for stability, and generative reward modeling.
+
+00:00:43.740 --> 00:00:49.540
+And Thropic shared alignment methods that cut a gender misalignment by more than three times.
+
+00:00:50.200 --> 00:00:56.520
+OpenAI published updates on automated systems to prevent chain of thought grading during reinforcement
+
+00:00:56.520 --> 00:01:02.960
+learning. Calibre launched as a new embedded vector database aimed at agent memory workloads.
+
+00:01:04.040 --> 00:01:10.400
+These threads point to real engineering progress on efficiency and reliability rather than just
+
+00:01:10.400 --> 00:01:17.600
+bigger models. DeepSeek released the full V4 paper this week with expanded sections on its
+
+00:01:17.600 --> 00:01:25.700
+trillion parameter mixture of experts architecture. The key technique applies FP4 quantization
+
+00:01:25.700 --> 00:01:32.180
+aware training directly to expert weights during late-stage training. This targets the main
+
+00:01:32.180 --> 00:01:40.600
+consumer of GPU memory while keeping the query key path in the CSA indexer on FP4 activations.
+
+00:01:40.900 --> 00:01:47.640
+The result is a two-time speed-up on the query key selector at 99.7% recall.
+
+00:01:48.440 --> 00:01:54.440
+Two stability mechanisms help avoid loss spikes, anticipatory routing that desynchronizes
+
+00:01:54.440 --> 00:02:03.220
+model and router updates, plus, swed-loop clamping. Human evaluations show the V4 pro variant achieving a
+
+00:02:03.220 --> 00:02:12.400
+62.7% wind rate over Gemini 3.1 pro on Chinese writing tasks. 52% of users rated it ready
+
+00:02:12.400 --> 00:02:21.300
+as their default coding model. Efficiency tables indicate V4 pro uses 27% of baseline floating point
+
+00:02:21.300 --> 00:02:30.300
+operations and 10% of baseline key value cache compared with V3.2. Developers building multi-agent systems
+
+00:02:30.300 --> 00:02:36.580
+or long context inference should look at these FP4 details for possible cost changes.
+
+00:02:37.380 --> 00:02:47.420
+On the model side, a new uncensored fine tune of 23.635, BA3B preserves all 19 native
+
+00:02:47.420 --> 00:02:57.500
+multi-token prediction tensors. It reaches a callback leap blurred divergence of 0.0015 with only 10 out
+
+00:02:57.500 --> 00:03:07.220
+of 100 refusals. The release includes safe tensors, GGUF, NVFP, 4 experts only, and GPTQ
+
+00:03:07.220 --> 00:03:14.280
+int 4 variants. Benchmarks confirm the full multi-token prediction structure remains intact,
+
+00:03:14.800 --> 00:03:19.540
+giving an open option for less restricted reasoning without losing capabilities.
+
+00:03:20.500 --> 00:03:26.360
+Anthropic reported that high-quality constitutional documents paired with aligned fictional stories
+
+00:03:26.360 --> 00:03:33.400
+reduced agentic misalignment by more than three times. The gains held even when the added material
+
+00:03:33.400 --> 00:03:40.640
+was unrelated to the evaluation scenario. Simple training, data diversification by adding unrelated
+
+00:03:40.640 --> 00:03:48.080
+tools and prompts to a harmlessness data set also lowered blackmail rates. These interventions stack
+
+00:03:48.080 --> 00:03:55.240
+with standard harmlessness training and need no changes to core evaluation setups. Calibi is a single
+
+00:03:55.240 --> 00:04:02.600
+PIP install embedded vector store built for AI agent and retrieval augmented generation workloads.
+
+00:04:03.000 --> 00:04:13.000
+It supports HNSW, disk ANN and IVF plus PQ indexes with native text plus vector unification and
+
+00:04:13.000 --> 00:04:20.780
+disk persistence. The library outperforms PG vector by four times on equivalent hardware and handles
+
+00:04:20.780 --> 00:04:26.800
+data sets larger than RAM without the restart failures common to pure in-memory libraries like
+
+00:04:26.800 --> 00:04:34.160
+FASCIS. Multi-index isolation and tag-based filtering make it suitable for managing agent memory
+
+00:04:34.160 --> 00:04:41.000
+across sessions. GitHub's spec kit offers an open-source workflow for spectraven development
+
+00:04:41.000 --> 00:04:47.660
+with AI coding agents. It moves teams away from iterative vibe coding towards structured
+
+00:04:47.660 --> 00:04:55.280
+specifications that agents execute against. The toolkit has accumulated 93,000 stars and pairs
+
+00:04:55.280 --> 00:05:04.540
+with frameworks like AWS, Kiro and GSD to reduce regressions in production code. Developers can adopt
+
+00:05:04.540 --> 00:05:08.940
+the repository immediately for more reliable agent generated outputs.
+
+00:05:12.140 --> 00:05:17.180
+One community thread explores local large language models for German practice focused on
+
+00:05:17.180 --> 00:05:23.280
+conversational correction rather than translation. The discussion covers system prompt setups that
+
+00:05:23.280 --> 00:05:30.460
+provide real-time feedback without external APIs and ways to avoid context bloat from tool use.
+
+00:05:33.300 --> 00:05:38.660
+Builders working on language learning agents can review the thread for prompt patterns and context
+
+00:05:38.660 --> 00:05:45.420
+management tips. A separate roundup evaluates nine artificial intelligence tools for spectraven
+
+00:05:45.420 --> 00:05:54.060
+development in 2026. It includes Kiro's ears structured IDE and lean frameworks like GSD that
+
+00:05:54.060 --> 00:06:01.360
+reach 61,000 stars in under five months. The guide contrasts iterative prompting with structured
+
+00:06:01.360 --> 00:06:09.320
+spec workflows that produce code surviving review more reliably. Teams shipping production agent code
+
+00:06:09.320 --> 00:06:15.380
+should test at least one of the highlighted open source options this week. If you have not tried
+
+00:06:15.380 --> 00:06:22.860
+Callaby yet, install it via PIP this week and test its disk and index with tag filtering on a sample
+
+00:06:22.860 --> 00:06:30.200
+agent memory data set. You will see four times throughput gains over PD vector without managing a full
+
+00:06:30.300 --> 00:06:37.920
+postgres instance. Download one of the twin 3.635 billion artificial intelligence 3 billion
+
+00:06:37.920 --> 00:06:46.820
+unsensor GGUF or NEV FP4 variants and run a quick multi token prediction preservation benchmark.
+
+00:06:47.320 --> 00:06:54.840
+This lets you evaluate refusal rates on your preferred tasks. Clone the GitHub spec kit repository
+
+00:06:54.840 --> 00:07:01.500
+and convert one of your current agent prompts into a structured spec. Compare the output consistency
+
+00:07:01.500 --> 00:07:08.880
+against your existing iterative workflow. Experiment with anthropic style constitutional documents
+
+00:07:08.880 --> 00:07:15.180
+plus fictional aligned stories in your next harmlessness fine tune. Measure the misalignment
+
+00:07:15.180 --> 00:07:22.940
+reduction on agentic evaluations. Keep an eye on further FP4 quantization aware training experiments
+
+00:07:22.940 --> 00:07:30.480
+from other mixture of experts labs following deep seeks stability mechanisms. Expect more embedded vector
+
+00:07:30.480 --> 00:07:37.960
+libraries to adopt unified text plus vector storage as agent memory demands grow beyond simple
+
+00:07:37.960 --> 00:07:44.980
+retrieval augmented generation. Spectraven agent frameworks will likely see additional IDE
+
+00:07:44.980 --> 00:07:50.180
+integrations as teams move away from pure vibe coding approaches fast.
+
+00:07:52.120 --> 00:07:58.660
+Open source uncensored multi token prediction models may prompt new safety evaluation benchmarks
+
+00:07:58.660 --> 00:08:04.900
+focused on preserved reasoning traces. Okay, let's pop the hood on the Calibre database approach.
+
+00:08:05.860 --> 00:08:11.200
+Everyone talks about vector databases as simple store embeddings and retrieve systems.
+
+00:08:11.840 --> 00:08:18.580
+In practice unifying raw text and dense vectors inside a single embedded engine requires careful
+
+00:08:18.580 --> 00:08:25.020
+buffer pool design and index co-location that most standalone vector libraries avoid.
+
+00:08:27.520 --> 00:08:33.940
+The core insight is that agent memory rarely needs pure vector search. Developers constantly cross
+
+00:08:33.940 --> 00:08:42.080
+reference semantic matches with metadata tags time stamps or raw context snippets. Calibre's approach
+
+00:08:42.080 --> 00:08:49.300
+keeps both in the same page organized buffer pool so a single query can filter on tags while performing
+
+00:08:49.300 --> 00:08:55.740
+approximate nearest neighbor search without round tripping between a vector index and a separate key
+
+00:08:55.740 --> 00:09:03.420
+value store. This eliminates the serialization overhead and consistency problems that appear when
+
+00:09:03.420 --> 00:09:10.560
+agents maintain separate vector and relational components. The tradeoff is that the unified store adds
+
+00:09:10.560 --> 00:09:18.620
+modest memory overhead per index compared with a pure FAS S in memory graph. Yet it removes the
+
+00:09:18.620 --> 00:09:25.240
+restart and rebuild penalty that kills long running agent sessions. When your workload involves
+
+00:09:25.240 --> 00:09:31.580
+millions of vectors that must survive process restarts and support dynamic tag filtering,
+
+00:09:32.140 --> 00:09:39.640
+the unified design wins. If you only need one off high recall batches inside a single python script with
+
+00:09:39.640 --> 00:09:46.340
+ramp to spare, a lightweight in memory library remains simpler. Tomorrow keep an eye on additional
+
+00:09:46.340 --> 00:09:54.340
+FP4 quantization aware training results from other mixture of experts teams. That wraps up today's AI
+
+00:09:54.340 --> 00:10:01.300
+briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you
+
+00:10:01.300 --> 00:10:09.240
+listen. See you tomorrow. This episode used AI voice synthesis of my voice. Editorial selection and
+
+00:10:09.240 --> 00:10:10.640
+analysis are my own.

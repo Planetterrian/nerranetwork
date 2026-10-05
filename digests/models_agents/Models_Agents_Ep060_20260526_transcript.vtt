@@ -1,0 +1,271 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.780
+Pull up a chair. This is Models and Agents, Episode 60 on May 26th, 2026.
+
+00:00:06.780 --> 00:00:11.140
+Let's see what shipped. Let's see what happened in the AI world today, and trust me,
+
+00:00:11.460 --> 00:00:15.960
+it's been busy. Local builders can now treat markdown skill files as
+
+00:00:15.960 --> 00:00:20.880
+optimizable parameters with automated validation gates instead of manual tweaking.
+
+00:00:21.540 --> 00:00:26.040
+A new paper formalizes skill opt as a method that uses frontier models to
+
+00:00:26.040 --> 00:00:32.300
+propose bounded edits to those markdown skills. Only edits that improve a held out validation set
+
+00:00:32.300 --> 00:00:38.960
+are accepted. The best skills converge after 1-4 accepted edits and an edit budget of 4-8
+
+00:00:38.960 --> 00:00:45.820
+works best while removing the cap collapses performance. A skill optimized on Codex transferred
+
+00:00:45.820 --> 00:00:54.280
+directly to Cloud Code and gained 59.7 on spreadsheet bench. GPT 4.1 nano with an optimized skill
+
+00:00:54.280 --> 00:01:00.140
+roughly matched frontier performance on procedural tasks. The approach needs an auto-grader
+
+00:01:00.140 --> 00:01:04.740
+with clear correct answers, which limits it to code and spreadsheets for now.
+
+00:01:05.800 --> 00:01:09.480
+Watch for follow-up work that relaxes the auto-grader requirement.
+
+00:01:10.460 --> 00:01:17.560
+The 35-billion-parameter TWEN variant now ships in an uncensored heretic configuration that
+
+00:01:17.560 --> 00:01:27.780
+preserves all 785 MTPs. The 35-billion and 27-billion versions show KL divergences of 0.0487
+
+00:01:27.780 --> 00:01:38.580
+and 0.0308 with accuracy losses of only 0.40% and 0.35%. The release includes safe tensors,
+
+00:01:38.580 --> 00:01:48.460
+GGUF, NVFP4, and GPTQ in 4 formats. The author notes the 35-billion model targets general
+
+00:01:48.460 --> 00:01:56.280
+purpose use while the 36-billion version focuses on agentic and coding tasks. Builders wanting an
+
+00:01:56.280 --> 00:02:03.360
+uncensored general purpose model with preserved thinking tokens should test the Q4 or Q6 GGUF
+
+00:02:03.360 --> 00:02:10.560
+experience. Ron's speech turns a pre-trained LLM into a speech LM through speech module alignment,
+
+00:02:11.300 --> 00:02:16.220
+end-to-end pre-training with knowledge distillation, and multitask preference optimization.
+
+00:02:16.960 --> 00:02:23.900
+Training used 1.38 million hours of English and Korean data. The model tops 8 similarly sized
+
+00:02:23.900 --> 00:02:30.540
+audio foundation models across 42 English and Korean speech and text benchmarks while keeping strong
+
+00:02:30.540 --> 00:02:37.800
+text QA performance. Ron's speech chat adds full duplex conversation after continual training on
+
+00:02:37.800 --> 00:02:45.060
+119,000 hours of dialogue data. Teams needing bilingual speech understanding and generation should
+
+00:02:45.060 --> 00:02:52.660
+evaluate the open-sourced checkpoints. A new pull request adds support for TALKY 1930-13B
+
+00:02:52.660 --> 00:03:00.360
+hyphen IT inside the server backend. The 13-billion instruction-tune model was trained only on
+
+00:03:00.360 --> 00:03:07.980
+pre-1931 English text and further aligned with online DPO. It enables historical roleplay
+
+00:03:07.980 --> 00:03:13.600
+without modern knowledge contamination. Reference code and the hugging-face repo appear in the pull
+
+00:03:13.600 --> 00:03:19.160
+request. Developers building vintage language or time period simulation agents now have
+
+00:03:19.160 --> 00:03:25.660
+already to run 13-billion option. Shard delivers a drop-in hugging-face cache that reduces lab
+
+00:03:25.660 --> 00:03:34.180
+math 3.18 billion KV memory by roughly 10 times at 8,000 context and 11 times at 32,000 context.
+
+00:03:34.800 --> 00:03:42.080
+It applies PCA plus int4 quantization to K after undoing rope and Hadamard rotation plus vector
+
+00:03:42.080 --> 00:03:48.420
+quantization to V. Attention runs directly on the compressed keys with no measurable degradation
+
+00:03:48.420 --> 00:03:57.020
+on Neahyath or Longbench. The repository sits at Krish 1905 slash Shard. Teams running long
+
+00:03:57.020 --> 00:04:02.900
+context local inference should benchmark Shard against their current KV setup. A detailed thread
+
+00:04:02.900 --> 00:04:08.820
+examines how local users test prompt injection and jailbreak resistance before wiring models to
+
+00:04:08.820 --> 00:04:15.780
+tools, files, drag, shell commands, or browser automation. Most current setups focus on quantization,
+
+00:04:15.780 --> 00:04:21.260
+context length, and tokens per second while giving less attention to isolating tool access or
+
+00:04:21.260 --> 00:04:27.740
+logging calls. Builders moving local models into agentic workflows should adopt the read-only
+
+00:04:27.740 --> 00:04:33.700
+default and tool-call logging patterns raised in the thread. Gartner warns that applying uniform
+
+00:04:33.700 --> 00:04:40.780
+governance across all enterprise AI agents is a death sentence. The report recommends differentiated
+
+00:04:40.780 --> 00:04:47.280
+policies based on agent autonomy and risk. One size fits all controls will slow adoption without
+
+00:04:47.280 --> 00:04:53.900
+improving safety. Enterprise teams evaluating agent platforms should review the governance segmentation
+
+00:04:53.900 --> 00:05:00.160
+guidance before standardizing policies. An article outlines the primary production failure modes
+
+00:05:00.160 --> 00:05:06.900
+for agents and the first fixes teams should apply. It focuses on concrete engineering gaps rather
+
+00:05:06.900 --> 00:05:13.020
+than high-level strategy. Developers shipping agents should read the prioritized fix list before
+
+00:05:13.020 --> 00:05:20.760
+their next deployment review. A user measured real-world ASR performance on an Intel Arrow Lake NPU versus
+
+00:05:20.760 --> 00:05:29.820
+CPU. The NPU delivered 2.8 to 6.1 times speed-ups and 10 to 21 times lower energy for 10 to 60 second
+
+00:05:29.820 --> 00:05:40.020
+audio clips. The setup also frees VRAM on a 7,900 XTX and beats a previous 3060 EGPU for short
+
+00:05:40.020 --> 00:05:48.060
+smart home voice commands. The Wyoming parakeet on Intel NPU repository is linked. Home assistant
+
+00:05:48.060 --> 00:05:55.780
+or local voice developers should test the NPU path for always on ASR workloads. A post explains
+
+00:05:55.780 --> 00:06:02.580
+how context is divided across parallel slots and asks about consequences of exceeding model max
+
+00:06:02.580 --> 00:06:09.820
+context or running two agents in parallel when VRAM allows. Practical questions cover performance,
+
+00:06:10.240 --> 00:06:17.340
+energy, and slot allocation. Anyone moving from LM studio to the server back end for multi-agent setups
+
+00:06:17.340 --> 00:06:22.880
+should review the flag interaction details. A step-by-step guide walks through loading the
+
+00:06:22.880 --> 00:06:30.820
+Turing Enterprises slash open-MM-RL dataset, building a reward function that checks exact matches
+
+00:06:30.820 --> 00:06:38.820
+and exporting for GRPO. It covers schema inspection, domain analysis, and vision language prompting.
+
+00:06:39.280 --> 00:06:45.160
+Developers starting multimodal reasoning projects with verifiable rewards can follow the pipeline
+
+00:06:45.160 --> 00:06:52.000
+directly. A detailed post lists nine concrete changes that eliminated crashes and delivered 49
+
+00:06:52.000 --> 00:07:00.660
+to 65 tokens per second generation on a 14-inch M2 max. The changes include a 60Hz refresh rate,
+
+00:07:01.260 --> 00:07:08.640
+GGUF over MLX, wired memory limit, preserve thinking flag, open code instead of cloud code,
+
+00:07:08.640 --> 00:07:17.640
+and Q8KV cache minimum. The author shares exact fan curves and IO GPU wired limit meter settings.
+
+00:07:18.520 --> 00:07:24.420
+Mac users struggling with long agentic sessions should apply the refresh rate and memory limit steps
+
+00:07:24.420 --> 00:07:31.680
+first. Okay, let's pop the hood on the NPU results. Everyone treats NPUs as marketing gimmicks for
+
+00:07:31.680 --> 00:07:37.760
+LLMs. Yet the real engineering story is about power state transitions rather than raw tops.
+
+00:07:38.460 --> 00:07:45.300
+An NPU can exit deep sleep and begin useful work in a few milliseconds while a discrete GPU must
+
+00:07:45.300 --> 00:07:51.720
+ramp clocks, allocate buffers, and warm PCIe links. This difference only matters for short,
+
+00:07:51.940 --> 00:07:58.340
+bursty workloads. Once the task exceeds a few seconds, the GPUs higher sustained throughput wins.
+
+00:07:58.980 --> 00:08:06.780
+In the measured ASR case, the NPU delivered 4.8 times lower latency and 10.7 times less energy
+
+00:08:06.780 --> 00:08:13.780
+on 10 second clips precisely because it avoided the GPU's ramp up tax. The practical decision rule
+
+00:08:13.780 --> 00:08:19.840
+is simple. If average inference length is under roughly three seconds and you already have an NPU
+
+00:08:19.840 --> 00:08:26.800
+in the SOC, root the work there. Anything longer or batch oriented still belongs on the GPU.
+
+00:08:26.800 --> 00:08:32.600
+The gotcha most teams miss is that the NPU's advantage disappears the moment you add a second
+
+00:08:32.600 --> 00:08:39.700
+concurrent stream because its limited 13 tops cannot hide behind parallelism the way a larger GPU can.
+
+00:08:40.460 --> 00:08:45.920
+Test the skill opt edit and validate loop on a code or spreadsheet agent you already maintain.
+
+00:08:46.380 --> 00:08:52.980
+The 1-4 edit convergence pattern is worth reproducing. Run the 35 billion parameter
+
+00:08:52.980 --> 00:09:00.680
+uncensored heretic GGUF on your preferred back end and compare tool call stability with and without
+
+00:09:00.680 --> 00:09:06.160
+preserve thinking enabled. Measure your current server setup with the parallel and context flags
+
+00:09:06.160 --> 00:09:11.600
+against the slot division behavior described in the thread before scaling to multiple agents.
+
+00:09:12.200 --> 00:09:19.580
+Try the Wyoming Parakeet on Intel-NPU setup on any arrow lake machine you have for short voice
+
+00:09:19.580 --> 00:09:26.900
+commands. The energy numbers are worth verifying locally. Apply the 60 hertz refresh rate and wired memory
+
+00:09:26.900 --> 00:09:32.980
+limit changes on any MacBook running long context sessions and remeasure prompt processing time.
+
+00:09:33.840 --> 00:09:41.220
+More consumer hardware diffusion LLM training runs are expected following the open DLLM and D3 LLM
+
+00:09:41.220 --> 00:09:47.560
+code drops. Additional server backend pull requests for historical and vintage models will likely land
+
+00:09:47.560 --> 00:09:55.260
+as the talky-1930 effort gains visibility. Follow up work on validation gated skill optimization
+
+00:09:55.260 --> 00:10:02.200
+is anticipated. Once more teams reproduce the auto greater requirement. Tomorrow keep an eye on
+
+00:10:02.200 --> 00:10:09.160
+expanded NPU integration examples for non-ASR workloads as the Intel arrow lake results circulate.
+
+00:10:09.540 --> 00:10:14.520
+That wraps up today's AI briefing. Share this with a developer or builder who wants to stay
+
+00:10:14.520 --> 00:10:20.780
+current. Subscribe wherever you listen. See you tomorrow. This episode used AI voice synthesis of
+
+00:10:20.780 --> 00:10:24.180
+my voice. Editorial selection and analysis are my own.

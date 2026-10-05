@@ -1,0 +1,322 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:04.140
+It's a new day on Tesla Short's Time, episode 539.
+
+00:00:04.640 --> 00:00:08.520
+It's July 12, 2026, and I'm Patrick in Vancouver.
+
+00:00:09.280 --> 00:00:11.120
+Here's your Tesla news rundown.
+
+00:00:11.720 --> 00:00:17.040
+Tesla's new patent lets GPUs pull only the exact frames needed for training,
+
+00:00:17.600 --> 00:00:20.420
+cutting wasted decode time at petabyte scale.
+
+00:00:21.020 --> 00:00:24.980
+Tesla added a dedicated cleaning robot to the official scope of work
+
+00:00:24.980 --> 00:00:27.380
+for its RoboTaxi hub in Austin.
+
+00:00:28.100 --> 00:00:33.240
+The inclusion signals that interior and exterior maintenance will be handled on-site
+
+00:00:33.240 --> 00:00:35.440
+rather than through external services.
+
+00:00:36.020 --> 00:00:40.360
+This step fits into the broader preparation for unsupervised operations
+
+00:00:40.360 --> 00:00:43.560
+by keeping the vehicle fleet in continuous rotation.
+
+00:00:44.240 --> 00:00:48.820
+Listeners tracking the RoboTaxi program will want to watch how the cleaning system
+
+00:00:48.820 --> 00:00:52.360
+integrates with the hub's layout and daily throughput targets.
+
+00:00:53.000 --> 00:00:58.420
+The move keeps maintenance inside the operation so vehicles spend less time out of service.
+
+00:00:59.040 --> 00:01:04.060
+That operational choice connects directly to the data efficiency work that will power those
+
+00:01:04.060 --> 00:01:10.020
+same vehicles. The filing describes a method that reads frame headers and timestamps without
+
+00:01:10.020 --> 00:01:15.300
+full decoding, then isolates only the reference chain needed for requested moments.
+
+00:01:16.140 --> 00:01:21.400
+Multiple hardware decoders on the GPU can handle separate camera streams or training
+
+00:01:21.400 --> 00:01:27.040
+batches in parallel. Intermediate frames are discarded once their features are extracted,
+
+00:01:27.740 --> 00:01:30.460
+leaving only the target images in local memory.
+
+00:01:31.240 --> 00:01:37.140
+The approach directly targets the data efficiency bottleneck in scaling both FSD and
+
+00:01:37.140 --> 00:01:42.560
+Optimus training. Training data for vision models has long been treated as a continuous
+
+00:01:42.560 --> 00:01:46.180
+stream that must be fully unpacked before any learning occurs.
+
+00:01:47.060 --> 00:01:52.180
+Tesla's recent patent instead treats the compressed bit stream as an indexed map,
+
+00:01:52.600 --> 00:01:58.400
+letting the GPU locate and decode only the frames a given training step actually requests.
+
+00:01:59.080 --> 00:02:05.740
+The result is a measurable drop in decode cycles per useful image, which matters once fleet video
+
+00:02:05.740 --> 00:02:12.560
+reaches petabyte volumes. Lower per step cost directly improves the economics of running larger models
+
+00:02:12.560 --> 00:02:17.560
+or more frequent updates without proportional increases in silicon or power.
+
+00:02:18.180 --> 00:02:23.580
+The same logic applies to Optimus training, where multiple camera angles and repeated task
+
+00:02:23.580 --> 00:02:29.920
+demonstrations generate similar volumes of redundant footage. By discarding intermediate reference
+
+00:02:29.920 --> 00:02:35.460
+frames once their features are extracted, the system keeps only the target images resident
+
+00:02:35.460 --> 00:02:41.140
+in GPU memory. That discipline compounds across thousands of parallel sessions.
+
+00:02:41.740 --> 00:02:47.380
+Over time, the efficiency gains shifts the constraint from how much video can we afford to decode,
+
+00:02:47.620 --> 00:02:50.980
+to how quickly can we label and curate the frames that matter.
+
+00:02:51.740 --> 00:02:56.940
+The next generation inference silicon reached tape out at Samsung's Taylor facility.
+
+00:02:57.500 --> 00:03:04.160
+The two nanometers node is intended to deliver higher performance per watt than the current HW4 package.
+
+00:03:05.040 --> 00:03:09.840
+Vehicle integration and dojo cluster compatibility remain the next milestones.
+
+00:03:10.640 --> 00:03:15.440
+Production volumes will determine how quickly the new silicon reaches customer fleets.
+
+00:03:16.120 --> 00:03:20.020
+Silicon progress pairs with ongoing robot development updates.
+
+00:03:20.800 --> 00:03:26.480
+The update highlights specific hardware and software milestones cited by Ashok Ellis-Wami.
+
+00:03:27.260 --> 00:03:32.820
+Progress on joint torque, sensor fusion, and end-to-end control loops is presented as the
+
+00:03:32.820 --> 00:03:39.440
+basis for near-term internal deployment. The details remain focused on factory tasks rather than
+
+00:03:39.440 --> 00:03:46.180
+external sales. Next updates are expected to include cycle time benchmarks from the Giga-Texas pilot
+
+00:03:46.180 --> 00:03:53.300
+cells. Internal robot progress contrasts with broader market realities for humanoids. Tesla
+
+00:03:53.300 --> 00:03:59.520
+posted its highest quarterly deliveries to date, yet the stock fell on the news. The gap between
+
+00:03:59.520 --> 00:04:05.640
+volume growth and share reaction points to investor focus on margins and future program timelines,
+
+00:04:05.960 --> 00:04:12.320
+rather than units alone. Analysts will likely press for more detail on average selling prices and
+
+00:04:12.320 --> 00:04:18.400
+energy storage contribution during the upcoming call. The delivery figure itself does not resolve
+
+00:04:18.400 --> 00:04:25.080
+questions about the next phase of vehicle and robot programs. Volume news gives way to real-world
+
+00:04:25.080 --> 00:04:32.400
+supervised FSD use cases. The driver had reduced her outings because of fatigue before trying FSD
+
+00:04:32.400 --> 00:04:38.780
+supervised. With the system active, she now handles appointments, errands, and longer family visits
+
+00:04:38.780 --> 00:04:45.440
+without assistance. The example shows how the current supervised version already changes daily mobility
+
+00:04:45.440 --> 00:04:52.360
+for some users. Continued regulatory progress on unsupervised operation would extend that benefit
+
+00:04:52.360 --> 00:04:58.600
+to more drivers. Positive supervised use cases sit alongside ongoing monitoring questions.
+
+00:04:59.220 --> 00:05:04.500
+Video evidence shows the driver reclined at highway speed while two children rode in the back.
+
+00:05:05.300 --> 00:05:11.060
+The clip raises direct questions about the limits of current driver monitoring alerts under supervised
+
+00:05:11.060 --> 00:05:18.180
+FSD. Tesla has not issued a statement on the footage. Regulators and safety advocates will likely
+
+00:05:18.180 --> 00:05:23.300
+cite the incident when reviewing monitoring requirements for future unsupervised approvals.
+
+00:05:24.000 --> 00:05:30.160
+An owner posted the exact split of supervised versus manual miles they find most comfortable on
+
+00:05:30.160 --> 00:05:36.140
+daily routes. The preference reflects a balance between system capability and personal oversight.
+
+00:05:36.900 --> 00:05:43.200
+Other drivers are comparing their own ratios in replies. The discussion shows how users calibrate trust
+
+00:05:43.200 --> 00:05:51.460
+as versions iterate. Tesla's official account posted a short clip labeled simply FSD supervised is magic.
+
+00:05:52.140 --> 00:05:58.340
+The video captures a smooth sequence of maneuvers without driver input. Viewers are debating which
+
+00:05:58.340 --> 00:06:03.640
+specific behaviors stand out most. The post continues the pattern of highlighting incremental
+
+00:06:03.640 --> 00:06:11.160
+improvements in the current supervised stack. The extended wheelbase model YL will not reach US
+
+00:06:11.160 --> 00:06:17.980
+customers before summer ends. Production timing remains tied to factory retooling at the relevant site.
+
+00:06:18.460 --> 00:06:24.920
+Early allocations are expected to favor other markets first. Buyers tracking the variant will watch
+
+00:06:24.920 --> 00:06:31.320
+for updated order windows later this year. The ranking draws on direct experience across the full
+
+00:06:31.320 --> 00:06:38.480
+current and past lineup from supercarblondie.com. It places vehicles by a combination of dynamics,
+
+00:06:38.480 --> 00:06:45.140
+practicality, and technology integration rather than price alone. The exercise highlights how
+
+00:06:45.140 --> 00:06:51.780
+later models have closed gaps that existed in early versions. Owners comparing trims can use the order
+
+00:06:51.780 --> 00:06:59.900
+as one data point alongside their own priorities. The July 12, 2026 piece covers every Tesla model ever
+
+00:06:59.900 --> 00:07:06.160
+created. It offers a personal perspective on the evolution of the lineup. Readers can see where
+
+00:07:06.160 --> 00:07:12.840
+each model stands in the reviewer's assessment. The comparison tests the MG model against the model Y
+
+00:07:12.840 --> 00:07:20.380
+on range interior space and charging speed from the driven IO. It examines whether the newcomer matches
+
+00:07:20.380 --> 00:07:27.240
+Tesla's software and update cadence. The review also notes differences in build approach and supplier
+
+00:07:27.240 --> 00:07:33.120
+base. Market watchers will track how many buyers cross shop the two vehicles in coming quarters.
+
+00:07:33.920 --> 00:07:42.620
+The video asks if the MGS 6 is a genuine model Y rival. Testing occurred on July 12, 2026. It
+
+00:07:42.620 --> 00:07:49.060
+provides data points for potential customers evaluating options. Registration data shows Tesla
+
+00:07:49.060 --> 00:07:54.640
+ownership clusters in areas not traditionally associated with premium vehicles according to
+
+00:07:54.800 --> 00:08:02.320
+com.au. The pattern suggests adoption is spreading beyond coastal cities into regional centers.
+
+00:08:03.100 --> 00:08:07.520
+Local infrastructure and electricity pricing appear to influence the distribution.
+
+00:08:08.380 --> 00:08:13.040
+Continued mapping of these pockets will help forecast service and charging demand.
+
+00:08:13.800 --> 00:08:20.340
+The surprising locations of Tesla buyers in this Aussie state were detailed on July 12, 2026.
+
+00:08:21.140 --> 00:08:26.440
+Data comes from registration records in the state. The findings challenge assumptions about where
+
+00:08:26.440 --> 00:08:33.620
+premium EVs sell best. A software feature surfaced in recent testing that allows remote adjustment of
+
+00:08:33.620 --> 00:08:40.720
+cabin vents from not a Tesla app. The capability is tied to the purpose built cyber cab interior layout.
+
+00:08:41.260 --> 00:08:45.560
+It removes the need for physical controls inside the passenger compartment.
+
+00:08:46.200 --> 00:08:52.400
+Riders will see whether the same interface appears in other upcoming models. Tesla cyber cab will
+
+00:08:52.400 --> 00:08:59.660
+let you change air vent direction from the app as reported July 11, 2026. The feature was spotted
+
+00:08:59.660 --> 00:09:04.340
+during testing phases. It highlights app integration for the new vehicle design.
+
+00:09:05.180 --> 00:09:13.740
+Tesla releases impact report for 2025 on July 12, 2026. The annual report tallies cumulative CO2
+
+00:09:13.740 --> 00:09:19.880
+avoidance and battery recycling volumes through last year. It frames progress against the company's
+
+00:09:19.880 --> 00:09:25.500
+abundance goals without new forward targets. Energy storage and vehicle efficiency metrics
+
+00:09:25.500 --> 00:09:32.220
+receive separate sections. The document serves as a baseline for comparing 2026 results when they
+
+00:09:32.220 --> 00:09:40.220
+appear. The report notes 37 million tons of CO2 avoided and 1,400 tons of batteries recycled.
+
+00:09:41.020 --> 00:09:46.800
+Metrics cover both environmental impact and operational achievements. Tomorrow we'll be watching
+
+00:09:46.800 --> 00:09:52.860
+for any fresh details on how the Austin Hub cleaning robot ties into daily vehicle throughput numbers.
+
+00:09:53.640 --> 00:10:04.700
+And that's a wrap on today's Tesla news. TSLA closed at $407.76 up $1.21 0.3%.
+
+00:10:05.340 --> 00:10:11.160
+If you enjoyed this episode, please leave a rating or review. It genuinely helps other Tesla fans
+
+00:10:11.160 --> 00:10:17.600
+find us. I'm Patrick in Vancouver. See you tomorrow. And before you go, this show is part of the
+
+00:10:17.600 --> 00:10:24.400
+Nerra network, a family of daily podcasts on tech, science and markets. Each one a short, sharp
+
+00:10:24.400 --> 00:10:30.340
+briefing you can finish on the commute. If today earned its place in your feed, here's your next
+
+00:10:30.340 --> 00:10:37.340
+lesson. Models and agents, your daily briefing on AI models and agents. Find every show free
+
+00:10:37.340 --> 00:10:44.640
+at nerranetwork.com. Prefer reading? Today's full write-up, sources and transcript are on the episode
+
+00:10:44.640 --> 00:10:52.720
+blog at nerranetwork.com, same briefing, readable format. This episode used AI voice synthesis of my
+
+00:10:52.720 --> 00:10:56.040
+voice. Editorial selection and analysis are my own.

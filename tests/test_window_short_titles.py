@@ -63,19 +63,22 @@ class TestHeadlineFromExcerpt:
 
 
 class TestDubWiring:
-    """Both dub paths try the headline first and KEEP the clause-trim
-    fallback — a Short must never ship untitled because Grok hiccuped."""
+    """Both dub paths try the headline first and keep a fallback — a Short
+    must never ship untitled because Grok hiccuped. Since 2026-10-03 the
+    fallback is the whole-episode headline with the second-Short tail, never
+    the raw window slice (that slice was «в 2026 года»); the behaviour is
+    pinned in tests/test_dub_short_titles_2026_10_03.py."""
 
     def test_ru_dub_uses_headline_with_fallback(self):
         src = (PROJECT_ROOT / "engine" / "ru_dub.py").read_text()
         assert "headline_from_excerpt" in src
-        # The legacy fallback trim of the raw excerpt must survive.
-        assert 'opening_text.rstrip("…").rstrip()' in src
+        assert "_window_short_headline(" in src
+        assert '" — ещё момент"' in src
 
     def test_lang_dub_uses_headline_with_fallback(self):
         src = (PROJECT_ROOT / "engine" / "lang_dub.py").read_text()
-        assert "headline_from_excerpt" in src
-        assert 'opening_text.rstrip("…").rstrip()' in src
+        assert "_window_short_headline(" in src
+        assert "lang.second_short_tail" in src
 
 
 class TestPreStagedSpecials:

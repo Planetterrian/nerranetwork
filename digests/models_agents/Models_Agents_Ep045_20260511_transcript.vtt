@@ -1,0 +1,223 @@
+WEBVTT
+
+00:00:00.980 --> 00:00:06.480
+Hey, welcome to Models and Agents, episode 45, on May 11, 2026.
+
+00:00:07.100 --> 00:00:12.400
+Let's see what shipped Monday in the AI world, which means a weekend's worth of announcements
+
+00:00:12.400 --> 00:00:13.400
+to catch up on.
+
+00:00:14.020 --> 00:00:14.660
+Let's go.
+
+00:00:15.540 --> 00:00:22.240
+Sakana AI and Nvidia just showed how extreme sparsity in feed-forward layers can deliver real
+
+00:00:22.240 --> 00:00:25.040
+GPU speed-ups without retraining.
+
+00:00:25.620 --> 00:00:27.780
+This is not another theoretical paper.
+
+00:00:27.780 --> 00:00:34.380
+The team turned over 99% sparsity into measurable gains on actual Nvidia hardware.
+
+00:00:36.640 --> 00:00:43.160
+What you need to know is that they combine simple L1 regularization with new custom CUDA
+
+00:00:43.160 --> 00:00:43.800
+kernels.
+
+00:00:45.060 --> 00:00:53.400
+The result is 20.5% faster inference and 21.9% faster training with almost no drop in quality.
+
+00:00:54.300 --> 00:01:00.600
+Local developers will want to watch the latest XLAMA V3 updates while anyone building
+
+00:01:00.600 --> 00:01:04.640
+agents should look at the new persistent memory options now available.
+
+00:01:05.040 --> 00:01:11.140
+In the top story this week, Sakana AI and Nvidia introduced a method called 12.
+
+00:01:11.520 --> 00:01:19.840
+It applies L1 regularization to push feed-forward layers in large language models past 99% sparsity.
+
+00:01:20.800 --> 00:01:27.380
+They then convert that sparsity into real throughput using new sparse data formats and fused
+
+00:01:27.380 --> 00:01:36.200
+CUDA kernels. The measured gains sit at 20.5% for inference and 21.9% for training.
+
+00:01:37.100 --> 00:01:40.540
+Downstream task performance stays essentially unchanged.
+
+00:01:41.180 --> 00:01:44.100
+Most sparsity research never leaves a lab.
+
+00:01:44.100 --> 00:01:50.180
+12 actually ships usable speed-ups that teams can test on current Nvidia cards today.
+
+00:01:50.820 --> 00:01:55.980
+If you run large models on that hardware, it is worth checking whether your workloads can
+
+00:01:55.980 --> 00:01:58.680
+adopt the kernels without accuracy trade-offs.
+
+00:01:59.440 --> 00:02:02.400
+Open source releases of the kernels are expected soon.
+
+00:02:03.140 --> 00:02:12.620
+On the model side, twin 3.635 BA3B is showing strong results on niche code understanding tasks.
+
+00:02:13.580 --> 00:02:19.600
+Community tests show it can now take full academic papers plus code and map the implementation
+
+00:02:19.600 --> 00:02:26.400
+back to the research accurately. It outperforms earlier small models like DevStrawl
+
+00:02:26.400 --> 00:02:33.200
+small 2 on these specialized workloads. The model handles long contexts through gated
+
+00:02:33.200 --> 00:02:39.060
+delta net and hybrid attention mechanisms that smaller models lack just months ago.
+
+00:02:39.620 --> 00:02:45.380
+Developers working with technical or academic code bases should compare it directly against
+
+00:02:45.380 --> 00:02:51.780
+Gemma 426 BA4B and Nematron 3Nano for the same jobs.
+
+00:02:52.680 --> 00:02:59.700
+XLama V3 added deflash support along with further quantization improvements in its latest release.
+
+00:03:00.280 --> 00:03:07.540
+Fast. The updates deliver up to three times speed-ups on coding workloads and 2.5 times on
+
+00:03:07.540 --> 00:03:14.040
+agentic tasks compared with the previous baseline. New support is included for Gemma 4 and
+
+00:03:14.040 --> 00:03:25.540
+twin 3.5 models. Quantization efficiency improved across 3,090 through 6,000 Pro GPUs with some setups
+
+00:03:25.540 --> 00:03:32.100
+now exceeding 70% memory savings. Local runners should grab the latest dev branch to get the
+
+00:03:32.420 --> 00:03:39.840
+caching and deflash fixes. Moving to agent tools, memory now provides persistent memory infrastructure
+
+00:03:39.840 --> 00:03:48.040
+for multi-user LLM applications. An open tutorial shows how to wrap both synchronous and asynchronous
+
+00:03:48.040 --> 00:03:54.820
+open AI clients. So every model call routes automatically through an agent native memory layer.
+
+00:03:55.440 --> 00:04:01.380
+It supports multi-session and multi-user scenarios without forcing manual context management.
+
+00:04:02.420 --> 00:04:08.720
+Builders of long-running agents can follow the colab example and add memory without touching
+
+00:04:08.720 --> 00:04:16.620
+their existing client code. Cloud code can now orchestrate local LLMs as sub-agents through a new pattern.
+
+00:04:17.300 --> 00:04:25.760
+It uses pi.dev RPC mode to let claw delegate tasks to a local model and then review the output inside
+
+00:04:25.760 --> 00:04:32.480
+the same pull request workflow. The setup keeps the local model inside the agent loop while preserving
+
+00:04:32.480 --> 00:04:39.160
+clawed's orchestration strengths. Developers hitting usage limits should test whether routing review
+
+00:04:39.160 --> 00:04:44.200
+or generation steps to a local back end cuts costs without losing quality.
+
+00:04:45.100 --> 00:04:52.020
+On the practical side, a new hands-on series shows how to build small heterogeneous AI clusters from
+
+00:04:52.020 --> 00:04:58.420
+everyday hardware. The posts walk through networking, mac minis, jets and devices,
+
+00:04:58.940 --> 00:05:04.620
+raspberry pies, and old laptops into working clusters for distributed inference and training.
+
+00:05:05.540 --> 00:05:11.780
+Early installments focus on cabling, networking, and basic cluster setup before moving to actual
+
+00:05:11.780 --> 00:05:19.280
+model runs. Anyone with spare consumer hardware can follow along to test whether mixed device clusters
+
+00:05:19.280 --> 00:05:27.120
+make sense for their workloads. Fast. Okay, let's pop the hood on persistent memory layers for agents.
+
+00:05:27.860 --> 00:05:34.140
+Everyone talks about giving agents memory as if it is just stuffing conversation history into a vector
+
+00:05:34.140 --> 00:05:41.100
+store. In practice, it requires careful separation between short-term working memory, long-term
+
+00:05:41.100 --> 00:05:48.000
+episodic memory, and user-specific facts. Without that separation, the model starts hallucinating
+
+00:05:48.000 --> 00:05:55.040
+stale context. The core move is inserting a thin middleware layer that intercepts every model call.
+
+00:05:55.660 --> 00:06:02.320
+It retrieves relevant memories by session and user ID. Then injects them into the prompt.
+
+00:06:03.040 --> 00:06:10.040
+This adds only a small constant overhead per request. It removes the need to resend entire histories,
+
+00:06:10.280 --> 00:06:17.520
+which matters one session span days or multiple users. The common mistake is treating memory as one
+
+00:06:17.520 --> 00:06:23.580
+undifferentiated store. Without explicit scoping, you quickly pollute the context with irrelevant
+
+00:06:23.580 --> 00:06:31.100
+past interactions. Start with a simple key value layer, scoped by user and session. Add retrieval
+
+00:06:31.100 --> 00:06:46.940
+only when context length or task complexity justifies the extra latency. If you have not tried
+
+00:06:46.940 --> 00:06:52.900
+paper pairs, see whether the long context improvements actually translate to your domain.
+
+00:06:53.780 --> 00:07:00.760
+Pull the latest X-Lama V3 dev build and benchmark deflash on your coding or agent workloads
+
+00:07:00.760 --> 00:07:07.800
+against your current inference setup. Follow the memory colab tutorial to add persistent memory
+
+00:07:07.800 --> 00:07:15.600
+to an existing open AI-based agent without rewriting client code. Start the Mac Mini's cluster series if
+
+00:07:15.600 --> 00:07:21.900
+you have spare consumer hardware and want to experiment with hetrogenuous distributed inference.
+
+00:07:24.240 --> 00:07:29.980
+On the horizon, more open releases of the Sparse Coodaw kernels from the 12 work are expected
+
+00:07:29.980 --> 00:07:37.500
+in the coming weeks. Additional quantization and caching updates for X-Lama V3 are already landing
+
+00:07:37.500 --> 00:07:46.340
+on the dev branch. Community experiments with local subagents behind cloud code are likely to produce
+
+00:07:46.340 --> 00:07:55.880
+reusable MCP servers soon. Before we go, keep an eye on those first open source Sparse kernel releases
+
+00:07:55.880 --> 00:08:03.140
+from the Twittell team. That's models and agents for today. If you found this useful, share it with
+
+00:08:03.140 --> 00:08:08.540
+someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's
+
+00:08:08.540 --> 00:08:15.340
+update. The AI world moves fast. We'll help you keep up. See you tomorrow. This episode used AI
+
+00:08:15.340 --> 00:08:21.240
+voice synthesis of my voice. Editorial selection and analysis are my own.

@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "gate": {
+    "passed": false,
+    "ledger_present": true,
+    "claims_total": 3,
+    "claims_anchored": 2,
+    "claims_verified": 1,
+    "shape_errors": [],
+    "dropped_claims": [
+      {
+        "id": "2",
+        "claim": "UK is preparing to impose tariffs on Chinese electric vehicle imports.",
+        "reason": "episode_span not found in final episode text"
+      }
+    ],
+    "failed_verifications": [
+      {
+        "id": "1",
+        "url": "https://finance.yahoo.com/quote/%5EIXIC/",
+        "resolved": true,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": false,
+        "reason": "supporting_quote not found in source",
+        "via": "http"
+      }
+    ],
+    "uncovered_shapes": [],
+    "reviewer_notes": [],
+    "verified_from_fetched": 1,
+    "stripped_sentences": [],
+    "stripped_notes": [],
+    "removed_items": 0,
+    "covered_by_item_source": 0,
+    "repair_recovered": 0,
+    "pre_strip": null,
+    "policy_version": 2,
+    "mode": "flag",
+    "flagged_sentences": [
+      "The NASDAQ Composite sits at twenty seven thousand one hundred ninety one with a year to date gain of seventeen point zero two percent."
+    ],
+    "flagged_count": 1,
+    "verified_count": 1
+  },
+  "claims": [
+    {
+      "id": "1",
+      "claim": "The NASDAQ Composite closed at 27191 with a year to date gain of 17.02 percent.",
+      "source_url": "https://finance.yahoo.com/quote/%5EIXIC/",
+      "source_title": "Yahoo Finance NASDAQ Composite data",
+      "supporting_quote": "NASDAQ Composite closed at 27191 up 1.2 percent with YTD +17.02 percent.",
+      "confidence": "high",
+      "status": "unverified_quote_mismatch",
+      "status_reason": "supporting_quote not found in source"
+    },
+    {
+      "id": "cov3",
+      "claim": "RBC research shows nearly one in three parents with adult children aged eighteen to forty report their kids are not yet financially independent.",
+      "episode_span": "RBC research shows nearly one in three parents with adult children aged eighteen to forty report their kids are not yet financially independent.",
+      "source_url": "https://unusualwhales.com/news/canadian-parents-helping-adult-children-rbc",
+      "supporting_quote": "nearly one in three (32%) Canadian parents with adult children aged 18-40 say their children are not yet financially independent",
+      "confidence": "medium",
+      "status": "verified_from_fetched"
+    }
+  ]
+}

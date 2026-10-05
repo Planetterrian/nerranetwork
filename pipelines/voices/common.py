@@ -169,6 +169,52 @@ def mira_signature_html(show: "ShowRef" = None) -> str:
             '</span></p>')
 
 
+# Oct 1 2026 (Patrick, after Jonathan Bautista's interview fell back to a
+# phone call and dropped): every guest email that leads up to an interview
+# says the same two things in the same words. Why the computer studio with
+# headphones and a good microphone is worth it, and exactly how to get in.
+# The Worker's booking email carries a copy (GUEST_AUDIO_HTML in
+# workers/voices/src/index.ts); keep the two in step.
+GUEST_AUDIO_HTML = (
+    '<p style="background:#f0fdfa;border-left:4px solid #0f766e;padding:.7em 1em">'
+    "<strong>For the best sound:</strong> please join from a computer, wearing "
+    "headphones or earbuds, ideally with a good microphone. Phone audio is compressed "
+    "and sounds noticeably thinner, while a computer with headphones and a good "
+    "microphone sounds clear and full, and listeners tell us those are the interviews "
+    "they enjoy most. AirPods or a headset connected to your computer work well, and a "
+    "USB microphone is even better. Headphones also stop your microphone picking up my "
+    "voice from your speakers; without them my questions end up in your recording as if "
+    "you had said them.</p>"
+)
+
+
+def guest_audio_html():
+    """The audio paragraph, safe to drop into a Jinja template."""
+    from markupsafe import Markup
+    return Markup(GUEST_AUDIO_HTML)
+
+
+def studio_steps_html(studio_link: str, *, phone_fallback: bool = True):
+    """The three steps into the studio, numbered, with the phone as the
+    fallback rather than the plan. Safe to drop into a Jinja template."""
+    import html as _h
+    from markupsafe import Markup
+    link = _h.escape(studio_link or "", quote=True)
+    out = ("<p><strong>On the day, three steps and we're on:</strong></p><ol>"
+           f'<li>Open <a href="{link}">your studio link</a> on your computer, up to ten '
+           "minutes before we start.</li>"
+           "<li>Press <strong>Check my microphone</strong> and read the sentence out loud "
+           "until it says <strong>Sounds good</strong>.</li>"
+           "<li>Press <strong>Join your interview</strong>. You're in when you hear me "
+           "say hello.</li></ol>")
+    if phone_fallback:
+        out += ("<p>If your computer gives you trouble, open the same link on your phone, "
+                "earbuds in: it sounds far better than a phone call. A call from me, with the "
+                "studio's <strong>Have Mira call my phone</strong> button, is the last resort, "
+                "so we never lose the slot.</p>")
+    return Markup(out)
+
+
 OPERATOR_EMAIL = os.environ.get("OPERATOR_EMAIL") or "patricknovak1@gmail.com"
 # Sept 21 2026: Mira runs the correspondence end to end and Patrick reads it
 # at both addresses — the Gmail he lives in and the Planetterrian one that is
@@ -328,6 +374,43 @@ def send_email(to: str, subject: str, html_body: str,
         )
     resp.raise_for_status()
     logger.info("Email sent to %s: %s", to, subject)
+
+
+# Sept 30 2026: every time Patrick or a guest reads is Pacific, the network's
+# zone (Vancouver), with the guest's own clock alongside when we know it.
+# Mirrors pacificTime() in workers/voices/src/index.ts.
+PACIFIC_TZ = "America/Vancouver"
+
+
+def pacific_time(iso: Any, guest_tz: Optional[str] = None, *,
+                 date_only: bool = False) -> str:
+    """"Monday, October 5 at 1:45 PM Pacific Time", plus "(4:45 PM EDT where
+    you are)" when the guest's zone is known and differs. "" if unparseable."""
+    import datetime as _dt
+    from zoneinfo import ZoneInfo
+    try:
+        t = _dt.datetime.fromisoformat(str(iso).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return ""
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=_dt.timezone.utc)
+    p = t.astimezone(ZoneInfo(PACIFIC_TZ))
+    day = f"{p:%A}, {p:%B} {p.day}"
+    if date_only:
+        return day
+
+    def clock(x):
+        return f"{x.hour % 12 or 12}:{x:%M} {'AM' if x.hour < 12 else 'PM'}"
+    out = f"{day} at {clock(p)} Pacific Time"
+    if guest_tz:
+        try:
+            g = t.astimezone(ZoneInfo(str(guest_tz)))
+            if g.utcoffset() != p.utcoffset():
+                other_day = "" if g.date() == p.date() else f"{g:%A} "
+                out += f" ({other_day}{clock(g)} {g.tzname()} where you are)"
+        except Exception:  # noqa: BLE001 — an unknown zone never breaks a mail
+            pass
+    return out
 
 
 def guest_agenda_block(app: Optional[Dict[str, Any]]) -> str:

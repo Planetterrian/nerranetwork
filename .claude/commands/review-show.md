@@ -197,7 +197,19 @@ have very different real-world hit rates. Apply these rules:
   (`test_prompt_fidelity.py`, `test_episode_validity.py`, `test_generator.py`)
   and fix what you broke. Report honest results in the PR body.
 
-### Hard guardrails — never do these
+#- **A wiring guard renders through the real config object.** A test that
+  builds a stand-in with the attribute the code happens to read proves the
+  stand-in, not the wiring (Oct 1 2026: frame memory passed its guard and
+  rendered empty on 17 shows). Load the show's YAML with `load_config` and
+  point its real fields at fixtures.
+- **A lint is true of the text that ships.** When a filter runs after a
+  lint, record a second read after the last filter; two numbers that can
+  disagree beat one that cannot be wrong (Top World Ep009: lint 0, file 8).
+- **A story told once per outlet is not a duplicate.** Vocabulary overlap
+  cannot see eight angles on one story; cluster upstream and annotate the
+  prompt, never drop an angle, and score `story_clusters_retold_in_digest`.
+
+## Hard guardrails — never do these
 
 - Never change R2 bucket paths or RSS `<enclosure>` URLs (breaks subscribers).
 - Never move/rename the legacy flat files in `digests/` (landmine #3), never
@@ -212,6 +224,15 @@ have very different real-world hit rates. Apply these rules:
 - Never touch voice IDs / TTS provider settings in `shows/_defaults.yaml`.
 - Never post to X, send newsletters, upload to YouTube, or call paid APIs.
 - Never merge your own PR; never push to `main`.
+- Never make a per-show regeneration (`generate_html.py --show <slug>`,
+  a show's hook, anything a `Run Podcast Show` job commits) write a page
+  that EVERY show run rewrites. Two concurrent runs cannot three-way
+  merge generated HTML, the commit loop's retries all fail on that one
+  file, and the episode is diverted to a recovery branch — 2026-10-02:
+  `claims.html` cost eleven episodes their place on main, a four-show
+  Nerra Daily and duplicate YouTube uploads. Shared pages belong to
+  `--network` (finalize), `--static-pages` (nightly) or `--all`, and a
+  regenerable page goes on `is_regenerable` in `push_show_artifacts.sh`.
 
 ## Phase 4 — Deliverables
 

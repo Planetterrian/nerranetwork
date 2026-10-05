@@ -22,8 +22,9 @@ from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import Optional
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
+from engine.corrections import corrections_for
 from engine.episode_ask import episode_ask_for
 from engine.interviews import (
     guest_name_for, interview_body_markdown, interview_context,
@@ -422,6 +423,138 @@ def _show_host_name(show_slug: str) -> str:
     except Exception:  # noqa: BLE001 — a byline must never break a build
         pass
     return "Patrick"
+
+
+def _show_host_kind(show_slug: str) -> str:
+    """``publishing.host_kind`` from the show's YAML — ``"human"`` or
+    ``"ai"`` (Mira). The same field run_show reads to pick the spoken
+    disclosure, so the provenance line and the audio cannot disagree about
+    who hosts. Falls back to ``"human"`` when the YAML is unreadable."""
+    try:
+        import yaml
+        path = Path(__file__).resolve().parent.parent / "shows" / f"{show_slug}.yaml"
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        kind = ((data.get("publishing") or {}).get("host_kind") or "").strip().lower()
+        if kind:
+            return kind
+    except Exception:  # noqa: BLE001 — a provenance line must never break a build
+        pass
+    return "human"
+
+
+def _claims_sidecar_for(md_path) -> Optional[Path]:
+    """The committed claims ledger beside a digest, or ``None``.
+
+    The stem rule is ``engine.claims.claims_sidecar_path``; it is imported
+    lazily so a blog build does not pay for the gate's dependencies.
+    """
+    if not md_path:
+        return None
+    try:
+        from engine.claims import claims_sidecar_path
+        return claims_sidecar_path(Path(md_path))
+    except Exception:  # noqa: BLE001
+        return Path(md_path).with_name(Path(md_path).stem + "_claims.json")
+
+
+def load_verified_claims(md_path) -> tuple[list[dict], dict]:
+    """``(claims, claims_summary)`` from the digest's claims sidecar.
+
+    Two sidecar generations (``engine.claims_ledger`` has the full reading):
+    a pre-Oct-2026 sidecar commits only the entries that verified, so every
+    entry reads as ``verified``; a ``policy_version: 2`` sidecar (``on_failure:
+    flag``) commits EVERY entry with a ``status`` — the unverified ones were
+    published and marked, never removed — and the panel renders each one
+    with its badge. Each claim carries ``status`` / ``status_label`` /
+    ``status_meaning`` / ``is_verified``, plus ``verified_at`` and
+    ``first_status`` when a nightly re-check upgraded it. ``claims_summary``
+    is read from ``gate``: ``total``, ``verified``, ``flagged`` (published
+    and marked), ``verified_later``, ``stripped`` (sentences a strip-era
+    gate removed) and ``present`` (the sidecar exists) — so a post can tell
+    "no ledger" from "ledger with zero claims" and say which. An absent or
+    unreadable sidecar is ``([], {present: False, ...zeros})``; it never
+    raises.
+    """
+    summary = {"present": False, "total": 0, "verified": 0, "stripped": 0,
+               "flagged": 0, "verified_later": 0}
+    path = _claims_sidecar_for(md_path)
+    if path is None or not path.is_file():
+        return [], summary
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001 — a bad sidecar never breaks a build
+        logger.warning("claims sidecar unreadable: %s (%s)", path, exc)
+        return [], summary
+    if not isinstance(data, dict):
+        return [], summary
+    gate = data.get("gate") if isinstance(data.get("gate"), dict) else {}
+    entries = data.get("claims") if isinstance(data.get("claims"), list) else []
+    # Legacy = no entry carries a status: only verified entries were
+    # committed, so absence means verified (engine.claims.is_verified_status).
+    legacy = not any(isinstance(e, dict) and e.get("status") for e in entries)
+    from engine.brand import (
+        CLAIMS_VERIFIED_STATUSES as _verified_statuses,
+        claims_status_label as _status_label, claims_status_meaning as _status_meaning,
+    )
+    claims: list[dict] = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        claim = " ".join(str(entry.get("claim") or "").split())
+        url = str(entry.get("source_url") or "").strip()
+        if not url.startswith(("http://", "https://")):
+            url = ""
+        status = "verified" if legacy else (
+            str(entry.get("status") or "").strip().lower() or "malformed")
+        # A legacy entry without a URL carries nothing a reader can check;
+        # a flag-era entry without one is an uncovered sentence, and the
+        # point of the panel is to show it marked.
+        if not claim or (legacy and not url):
+            continue
+        first_status = str(entry.get("first_status") or "").strip().lower()
+        claims.append({
+            "claim": claim,
+            "status": status,
+            "status_label": _status_label(status),
+            "status_meaning": _status_meaning(status),
+            "is_verified": status in _verified_statuses,
+            "reason": " ".join(str(entry.get("reason") or "").split()),
+            "verified_at": str(entry.get("verified_at") or "").strip()[:10],
+            "first_status": first_status,
+            "first_status_label": _status_label(first_status) if first_status else "",
+            "source_url": url,
+            "source_domain": _domain_from_url(url) if url else "",
+            "source_title": " ".join(str(entry.get("source_title") or "").split()),
+        })
+
+    def _int(key: str, fallback: int) -> int:
+        try:
+            return int(gate.get(key, fallback))
+        except (TypeError, ValueError):
+            return fallback
+
+    stripped = gate.get("stripped_sentences")
+    n_verified = sum(1 for c in claims if c["is_verified"])
+    n_flagged = sum(1 for c in claims if not c["is_verified"])
+    summary = {
+        "present": True,
+        "total": _int("claims_total", len(claims)),
+        "verified": (_int("claims_verified", n_verified) if legacy
+                     else _int("verified_count", n_verified)),
+        "flagged": 0 if legacy else _int("flagged_count", n_flagged),
+        "verified_later": sum(1 for c in claims if c["status"] == "verified_later"),
+        "stripped": len(stripped) if isinstance(stripped, list) else 0,
+    }
+    return claims, summary
+
+
+def report_error_mailto(show_name: str, episode_num: int, page_url: str) -> str:
+    """The "Report an error" link on a post: the ONE contact address from
+    ``engine.brand``, subject prefilled with show + episode, body with the
+    page URL so the report lands with its context attached."""
+    subject = quote(f"Error report: {show_name} Ep{episode_num}")
+    body = quote(f"Re: {page_url}\n\nWhat was wrong, and where (timestamp or sentence):\n")
+    return f"mailto:{_brand.CONTACT_EMAIL}?subject={subject}&body={body}"
 
 
 _EPISODE_TITLE_PREFIX_RE = re.compile(r"^\s*(?:Ep|Episode)\s*\d+\s*[:\u2014\u2013-]\s*", re.I)
@@ -1404,6 +1537,42 @@ def generate_blog_post_html(
     # already on disk at build time, so this costs nothing to generate.
     chapters = _load_chapters(metadata.get("_md_path"), ep_num)
 
+    # Verified claims + provenance (Oct 1 2026). The source-integrity gate has
+    # committed a ``<stem>_claims.json`` beside every digest since Aug 2026
+    # and no reader surface rendered it: the AI badge said "transparently"
+    # and the page offered nothing to check. The panel lists each verified
+    # claim with its source; the provenance line states the episode's own
+    # numbers (sources, claims checked, sentences removed) from the same
+    # files, never typed. Both are read-only on the sidecar.
+    verified_claims, claims_summary = load_verified_claims(metadata.get("_md_path"))
+    _host_kind = _show_host_kind(show_slug)
+    # "Written from N sources" counts every distinct URL the episode cites:
+    # the Sources cards plus the ledger's source URLs (a verified claim's
+    # source is a source the episode was written from, whether or not the
+    # digest also carried it as a Source: line).
+    _source_urls_cited = {c["url"] for c in source_domains} | {
+        c["source_url"] for c in verified_claims}
+    episode_provenance = _brand.episode_provenance_parts(
+        len(_source_urls_cited), claims_summary["verified"],
+        claims_summary["stripped"], _host_kind,
+        flagged=claims_summary.get("flagged", 0),
+    )
+    # The show's page on the public claims ledger (Oct 1 2026). Every show
+    # with a YAML gets one from generate_claims_pages; a registry-only show
+    # (Nerra Daily) links the network page instead. Internal link: no UTM.
+    _shows_dir = Path(__file__).resolve().parent.parent / "shows"
+    claims_page_url = (
+        f"claims/{show_slug}.html" if (_shows_dir / f"{show_slug}.yaml").is_file()
+        else "claims.html"
+    )
+    # Corrections filed against this episode (engine.corrections) render as
+    # a dated box at the top of the article. Empty on the ordinary day.
+    _md_path_for_corrections = metadata.get("_md_path")
+    corrections = (
+        corrections_for(Path(_md_path_for_corrections).parent, ep_num)
+        if _md_path_for_corrections else []
+    )
+
     # Interview shows (Sep 21 2026). The Age of AI and Nerra Voices commit a
     # digest with a named guest, a one-line identifier and their own links,
     # and none of it reached this page: the guest's name first appeared as an
@@ -1521,6 +1690,20 @@ def generate_blog_post_html(
         "toc": toc,
         "source_domains": source_domains,
         "source_urls": metadata.get("source_urls", []),
+        # The verified-claims panel + the one-line provenance (Oct 1 2026).
+        # ``claims_summary.present`` tells the template whether a ledger
+        # exists at all; ``total`` 0 renders the honest one-liner.
+        "verified_claims": verified_claims,
+        "claims_summary": claims_summary,
+        "claims_page_url": claims_page_url,
+        "episode_provenance": episode_provenance,
+        "host_kind": _host_kind,
+        # The one listener-facing address (engine.brand.CONTACT_EMAIL) and
+        # the prefilled "Report an error" link built from it.
+        "contact_email": _brand.CONTACT_EMAIL,
+        "report_error_mailto": report_error_mailto(
+            show_config["name"], ep_num, blog_url),
+        "corrections": corrections,
         "chapters": chapters,
         "jsonld": jsonld,
         "prev_post": prev_post,

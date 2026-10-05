@@ -164,10 +164,19 @@ class TestEveryEpisodeCardOffersItsArticle:
             assert "episode-card-article" in html, slug
 
     def test_the_rss_fallback_cards_get_it_too(self, pages):
-        """Otherwise the link vanishes exactly when the JSON path failed."""
-        assert "epNumberFromTitle" in _template()
+        """Otherwise the link vanishes exactly when the JSON path failed.
+
+        2026-10-01: the Sep 30 crawler audit folded the anchor into ONE
+        helper (``articleLinkHtml``, built by concatenation so a crawler
+        does not read a JS placeholder as an href), so the class literal
+        now appears once; the guard counts the helper's CALL SITES — the
+        JSON-built card and the RSS fallback card must both call it."""
+        tpl = _template()
+        assert "epNumberFromTitle" in tpl
         for html in pages.values():
-            assert html.count("episode-card-article") >= 2
+            assert "episode-card-article" in html
+            assert html.count("articleLinkHtml(postUrlFor(") >= 2
+            assert "articleLinkHtml(postUrlFor(epNumberFromTitle(" in html
 
     def test_the_map_covers_the_archive_the_page_shows(self, pages):
         """The grid shows twelve cards past the latest; a map shorter than

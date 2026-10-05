@@ -1,0 +1,220 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:07.540
+Hey everyone, welcome to Models and Agents, episode 49, it's May 15th, 2026. Lots of news to walk
+
+00:00:07.540 --> 00:00:13.700
+through. Let's start with what actually matters. Codex just landed on your phone. Open AI's
+
+00:00:13.700 --> 00:00:21.160
+coding agent now runs natively on iOS and Android with Windows Sync coming soon. Open AI rolled out a
+
+00:00:21.160 --> 00:00:27.360
+preview of Codex inside the chat GPT mobile apps today. That gives developers full agent workflows
+
+00:00:27.360 --> 00:00:33.260
+they can trigger from anywhere andthropic released a new paper on US-China AI leadership
+
+00:00:33.260 --> 00:00:38.880
+plus a $200 million Gates Foundation partnership focused on global health and education.
+
+00:00:39.320 --> 00:00:45.860
+At the same time, local builders are pushing deep seek V4 Pro and multi-agent setups to higher
+
+00:00:45.860 --> 00:00:52.220
+performance on everyday hardware. The Codex rollout moves the agent off the desktop and into a pocket
+
+00:00:52.220 --> 00:00:58.600
+sized coding partner. The mobile preview supports complete agent workflows right in the chat GPT
+
+00:00:58.600 --> 00:01:05.320
+apps. Phone to Windows desktop connection arrives in the next update. Developers can now start complex
+
+00:01:05.320 --> 00:01:11.540
+refactors or debugging sessions while commuting or traveling. Expanded Windows integration and
+
+00:01:11.540 --> 00:01:18.300
+potential API access for custom mobile tools are both on the near term roadmap. Supertone shipped the
+
+00:01:18.540 --> 00:01:25.180
+third generation of its on-device TTS engine. Supertonic version 3 adds support for 31 languages
+
+00:01:25.180 --> 00:01:30.620
+plus expression tags. It cuts reading failures while keeping the same inference contract for
+
+00:01:30.620 --> 00:01:36.060
+existing integrations. Language coverage jumps six times compared with the prior release.
+
+00:01:36.840 --> 00:01:42.320
+Builders working on multilingual voice agents get a drop-in local upgrade with no added latency.
+
+00:01:42.880 --> 00:01:49.260
+Vectra yx nano is a new 42 million parameter Spanish cybersecurity model trained from scratch.
+
+00:01:49.620 --> 00:01:56.200
+It includes native mcp tool calling and was trained on a 170 million token Spanish corpus.
+
+00:01:56.580 --> 00:02:03.120
+The model ships as an 81 megabyte GGUF file that runs sub-second on commodity hardware.
+
+00:02:03.820 --> 00:02:10.400
+Early adopters now have the first Spanish native cybersecurity LLM with end-to-end tool use.
+
+00:02:11.120 --> 00:02:18.360
+Physics R1 is a new visual physics reasoning model cold started from quen 3 VL 8B thinking.
+
+00:02:18.800 --> 00:02:25.480
+It was trained on audited Olympiad data and raises performance by 18.3 percentage points on held
+
+00:02:25.480 --> 00:02:32.600
+out Olympiad problems. The model also improves physics reasoning benchmarks by 15.7 percentage points
+
+00:02:32.600 --> 00:02:39.140
+over the base 8 billion parameter version. The release includes cleaned corpora and a reproducible
+
+00:02:39.140 --> 00:02:46.660
+GSPO plus DAPO training recipe. WSPN launched a stablecoin payment skill built specifically for
+
+00:02:46.660 --> 00:02:52.600
+the AI agent economy. The agent can execute payments autonomously while keeping compliance hooks
+
+00:02:52.600 --> 00:02:59.040
+in place. Developers building agentic commerce flows can drop this in as a ready-made payment primitive.
+
+00:02:59.920 --> 00:03:05.280
+MediaTek is positioning its density chips as the hardware base for smartphone AI agents.
+
+00:03:06.000 --> 00:03:11.060
+The platform emphasizes on-device agent inference with optimized NPU support.
+
+00:03:11.680 --> 00:03:16.840
+Mobile developers should test current agent workloads on-demensity devices to measure power draw
+
+00:03:16.840 --> 00:03:23.100
+and latency. Amazon deployed an AI agent that can shop end-to-end on behalf of users.
+
+00:03:24.100 --> 00:03:29.180
+The agent is backed by Amazon's growing satellite constellation for global connectivity.
+
+00:03:29.980 --> 00:03:34.920
+Retail and logistics teams are watching how this shifts agent to commerce integration patterns.
+
+00:03:35.280 --> 00:03:43.760
+A builder on R-slash local LLMA demonstrated 4 parallel twin 3.6 35 billion sub-agents.
+
+00:03:44.180 --> 00:03:49.600
+The setup is orchestrated by deepseek and runs on dual RTX 3,090 cards.
+
+00:03:50.180 --> 00:03:55.660
+Local reviewers plus a cloud final pass keep total API spend under $20 per month.
+
+00:03:56.500 --> 00:04:02.560
+The full opencode.json config is shared publicly for anyone who wants to replicate the pattern.
+
+00:04:03.280 --> 00:04:09.620
+Another user reached 45 plus tokens per second prompt processing on deepseek V4 Pro.
+
+00:04:10.360 --> 00:04:15.520
+The setup uses K-transformers on Epic plus RTX Pro 6,000 hardware.
+
+00:04:16.260 --> 00:04:22.400
+Context scaling to 32,000 tokens stayed stable at roughly 100 watts of GPU draw.
+
+00:04:22.840 --> 00:04:27.860
+The configuration runs the original model files with no conversion step required.
+
+00:04:28.500 --> 00:04:34.660
+Community discussion is growing around 48 gigabyte 4,090-class cards sourced from China.
+
+00:04:35.460 --> 00:04:39.920
+Builders are collecting benchmarks, BIOS quirks, and long-term stability data.
+
+00:04:40.520 --> 00:04:44.800
+Anyone considering these cards should join the shared research effort before buying.
+
+00:04:45.520 --> 00:04:48.220
+Okay, let's pop the hood on speculative decoding.
+
+00:04:48.840 --> 00:04:51.940
+Everyone treats it as a simple speed boost you just enable.
+
+00:04:52.460 --> 00:04:56.180
+In practice, it depends on a fragile agreement between the draft or model
+
+00:04:56.180 --> 00:05:00.720
+and the target model distributions. When that agreement slips even slightly,
+
+00:05:01.220 --> 00:05:06.800
+the average accepted length tau collapses and the promised two-time speed-up vanishes.
+
+00:05:07.500 --> 00:05:13.760
+Mistletoe style attacks exploit exactly this gap. They nudge the drafter with null space projected
+
+00:05:13.760 --> 00:05:17.800
+gradients that preserve output semantics while tanking acceptance rates.
+
+00:05:18.660 --> 00:05:23.840
+The engineering trade-off is clear. You gain throughput only while the drafter stays close
+
+00:05:23.840 --> 00:05:29.120
+to the target. Any defense that hardens acceptance also adds verification latency.
+
+00:05:29.960 --> 00:05:36.740
+Most teams hit the wall once context scales past 8,000 tokens. Drift between drafter and target
+
+00:05:36.740 --> 00:05:42.880
+grows fastest in that regime. The practical rule is to keep your drafter within one training epoch
+
+00:05:42.880 --> 00:05:49.880
+of the target. Monitor tau in production once it drops below 1.8, fall back to standard decoding
+
+00:05:49.880 --> 00:05:56.340
+instead of forcing the speculative path. Install the codex preview on iOS or Android and test a
+
+00:05:56.340 --> 00:06:03.380
+multi-file refactor task while away from your desk. Run the new Supertonic version 3 TTS locally
+
+00:06:03.380 --> 00:06:08.860
+on a multilingual voice agent project to compare reading stability against your current engine.
+
+00:06:09.600 --> 00:06:15.320
+Replicate the four sub-agent twin setup using the shared opencode .json if you have dual
+
+00:06:15.320 --> 00:06:24.940
+3,090-class GPUs. Download the Vectora YX Nano-GGUF and test its MCP tool calling on a Spanish
+
+00:06:24.940 --> 00:06:31.560
+cybersecurity workflow. Benchmark your current agent stack against the Marktech post SWE bench
+
+00:06:31.560 --> 00:06:39.800
+and terminal bench numbers for cloud code and GPT 5.5. OpenAI is expected to expand codex windows
+
+00:06:39.800 --> 00:06:44.020
+phone sync and expose more mobile agent APIs in the coming weeks.
+
+00:06:44.880 --> 00:06:51.020
+Anthropics US China paper will likely spark follow-on policy discussions at upcoming AI governance
+
+00:06:51.020 --> 00:06:58.320
+events. More local builders are preparing 64,000 plus context tests for MTP models following the
+
+00:06:58.320 --> 00:07:04.640
+recent deep seek V4 Pro results. Hardware vendors are watching media text-demensity agent push for
+
+00:07:04.640 --> 00:07:11.500
+clues on next-generation mobile NPUs. Tomorrow keep an eye on the first real-world benchmarks from the
+
+00:07:11.500 --> 00:07:18.740
+four sub-agent twin setups now running on dual 3,090 cards. That's models and agents for today.
+
+00:07:19.240 --> 00:07:23.720
+If you found this useful, share it with someone who's trying to keep up with all these changes and
+
+00:07:23.720 --> 00:07:29.780
+subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up.
+
+00:07:29.780 --> 00:07:36.300
+See you tomorrow. This episode used AI voice synthesis of my voice, editorial selection and
+
+00:07:36.300 --> 00:07:37.700
+analysis are my own.

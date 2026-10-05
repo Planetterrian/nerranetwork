@@ -23,7 +23,9 @@ const WORKFLOW = "run-show.yml";
 // already covers), so a straggler day still assembles by ~12:40 UTC =
 // 5:40am PDT / 4:40am PST. Deliberately an OBJECT, not a SLOTS row —
 // tests/test_scheduling_punctuality.py parses SLOTS rows as shows.
-const EDITION_DISPATCH = { hour: 12, minute: 7, workflow: "nerra-daily.yml" };
+// Oct 2 2026: 13:07 — Vancouver (12:16 UTC) is the last expected show;
+// the force hour in engine/daily_edition.py moved 12 -> 13 with it.
+const EDITION_DISPATCH = { hour: 13, minute: 7, workflow: "nerra-daily.yml" };
 
 // [utcHour, utcMinute, show, dayFilter]
 const SLOTS: Array<[number, number, string, string | null]> = [

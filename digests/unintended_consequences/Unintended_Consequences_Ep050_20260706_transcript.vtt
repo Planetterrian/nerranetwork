@@ -1,0 +1,295 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.560
+Today, we're back with unintended consequences, Episode 50.
+
+00:00:03.960 --> 00:00:09.720
+It's July 6th, 2026, Monday, a fresh case to chew on as the week begins.
+
+00:00:10.540 --> 00:00:17.640
+In the spring of 2003, a mid-level NIST engineer named William Burr finished a 57-page
+
+00:00:17.640 --> 00:00:21.000
+document that would shape logins for the next 14 years.
+
+00:00:21.720 --> 00:00:27.040
+That document laid out a precise set of requirements for what counted as an acceptable password
+
+00:00:27.040 --> 00:00:28.420
+on federal systems.
+
+00:00:28.420 --> 00:00:34.280
+It called for passwords that mixed uppercase letters, lowercase letters, numbers, and at
+
+00:00:34.280 --> 00:00:40.680
+least one special character, while also requiring every account to be changed on a fixed 90-day
+
+00:00:40.680 --> 00:00:41.120
+cycle.
+
+00:00:41.780 --> 00:00:45.180
+The arithmetic behind the rule was straightforward on paper.
+
+00:00:45.820 --> 00:00:50.820
+Each added character class was meant to multiply the number of possible combinations and
+
+00:00:50.820 --> 00:00:52.280
+attacker would have to test.
+
+00:00:52.860 --> 00:00:58.100
+Pushing the total search space well beyond what brute force tools could cover in a reasonable
+
+00:00:58.100 --> 00:00:58.520
+time.
+
+00:00:59.280 --> 00:01:05.260
+The guideline told every federal agency and soon after most corporations to require passwords
+
+00:01:05.260 --> 00:01:11.660
+with uppercase letters, lowercase letters, numbers, and at least one special character, plus
+
+00:01:11.660 --> 00:01:13.660
+a forced change every 90 days.
+
+00:01:14.560 --> 00:01:20.460
+The stated goal was simple, raise the theoretical entropy of each credential so that brute force
+
+00:01:20.460 --> 00:01:22.280
+attacks would become impractical.
+
+00:01:23.200 --> 00:01:28.280
+Instead, the rule set produced a generation of passwords that looked random on paper but
+
+00:01:28.280 --> 00:01:33.160
+followed a handful of human shortcuts that attackers quickly catalogued and automated.
+
+00:01:33.900 --> 00:01:38.860
+What the drafters had not fully modeled was how people would actually behave once they had
+
+00:01:38.860 --> 00:01:41.860
+to satisfy four separate constraints every quarter.
+
+00:01:42.620 --> 00:01:47.840
+William Burr and his colleagues at the National Institute of Standards and Technology were
+
+00:01:47.840 --> 00:01:52.800
+responding to the visible failures of the late 1990s and early 2000s.
+
+00:01:53.380 --> 00:01:58.220
+Corporate networks were being compromised through weak or reused passwords, and incident
+
+00:01:58.220 --> 00:02:03.180
+reports from banks and government contractors showed that attackers often succeeded with
+
+00:02:03.180 --> 00:02:05.700
+simple dictionary words or slight variations.
+
+00:02:06.620 --> 00:02:12.000
+At the time, the dominant threat model treated the attacker as a machine performing exhaustive
+
+00:02:12.000 --> 00:02:12.280
+search.
+
+00:02:13.280 --> 00:02:17.460
+Increasing length and character variety was the mathematically obvious countermeasure.
+
+00:02:17.980 --> 00:02:23.540
+The team drew on established information theory concepts and on earlier military password
+
+00:02:23.540 --> 00:02:26.500
+practices that already mixed character classes.
+
+00:02:27.120 --> 00:02:31.040
+No one on the drafting committee claimed the rules would be pleasant for users.
+
+00:02:31.420 --> 00:02:36.800
+They assumed that disciplined personnel could be trained to comply and that the added entropy
+
+00:02:36.800 --> 00:02:38.140
+would outweigh the friction.
+
+00:02:39.140 --> 00:02:47.100
+NISD Special Publication 863 released in 2003 embedded the requirements for federal systems
+
+00:02:47.100 --> 00:02:51.420
+and was rapidly adopted by Microsoft Active Directory defaults.
+
+00:02:51.600 --> 00:02:55.280
+Corporate policies and university IT departments worldwide.
+
+00:02:56.080 --> 00:03:01.040
+Vendors marketed compliance as a selling point and auditors began checking for the presence
+
+00:03:01.040 --> 00:03:04.680
+of complexity flags and 90-day exploration settings.
+
+00:03:04.680 --> 00:03:07.000
+Early metrics looked favorable.
+
+00:03:07.440 --> 00:03:13.160
+Password cracking contests run on internal red team exercises showed longer times to success
+
+00:03:13.160 --> 00:03:14.960
+when the new rules were enforced.
+
+00:03:15.700 --> 00:03:21.600
+A few skeptics inside large banks and at USENIX conferences noted that users were writing passwords
+
+00:03:21.600 --> 00:03:24.320
+on sticky notes or storing them in spreadsheets.
+
+00:03:24.880 --> 00:03:30.040
+Those observations remained anecdotal and were dismissed as training problems rather than
+
+00:03:30.040 --> 00:03:30.780
+design flaws.
+
+00:03:31.780 --> 00:03:36.620
+Once the rules spread, users faced a memory problem that the threat model had not addressed.
+
+00:03:37.360 --> 00:03:42.480
+Faced with creating a new 12-character string every quarter that satisfied four character
+
+00:03:42.480 --> 00:03:46.820
+class rules, most people converged on a small set of strategies.
+
+00:03:47.580 --> 00:03:52.860
+The most common pattern was to take a familiar base word, capitalize the first letter, append
+
+00:03:52.860 --> 00:03:57.200
+a number, and tack on an exclamation point or other symbol at the end.
+
+00:03:58.200 --> 00:04:04.500
+Lists recovered from the 2009 ROCU breach and later dumps showed password one exclamation
+
+00:04:04.500 --> 00:04:08.280
+point and closed variants appearing hundreds of thousands of times.
+
+00:04:08.820 --> 00:04:13.920
+Because the same transformation was applied across multiple accounts, a single compromised
+
+00:04:13.920 --> 00:04:18.480
+password often unlocked email, banking, and corporate VPNs.
+
+00:04:19.040 --> 00:04:25.420
+Attack tools incorporated these observed regularities into rule-based guessing engines, so the theoretical
+
+00:04:25.420 --> 00:04:27.940
+entropy advantage disappeared in practice.
+
+00:04:28.720 --> 00:04:33.960
+Helpdesk tickets for forgotten passwords rose sharply, prompting many organizations to
+
+00:04:33.960 --> 00:04:38.700
+relax, reset procedures, or to allow password reuse within a short window.
+
+00:04:39.540 --> 00:04:42.240
+The 90-day rotation rule added another loop.
+
+00:04:43.060 --> 00:04:48.340
+Users who could not remember 12 new strings per year simply incremented the number at the
+
+00:04:48.340 --> 00:04:51.360
+end or cycled between two passwords they could retain.
+
+00:04:52.360 --> 00:04:57.920
+Over time, the visible security ritual created a false sense of protection while actual credential
+
+00:04:57.920 --> 00:05:01.220
+databases grew more predictable to automated attackers.
+
+00:05:01.920 --> 00:05:08.680
+By 2016, internal NIST reviews and independent studies had accumulated enough breach telemetry
+
+00:05:08.680 --> 00:05:13.900
+to show that forced complexity and rotation were not delivering measurable reductions in
+
+00:05:13.900 --> 00:05:14.840
+account takeovers.
+
+00:05:15.640 --> 00:05:24.800
+In 2017, NIST released SP 863-3, which removed mandatory character class rules and eliminated
+
+00:05:24.800 --> 00:05:27.380
+forced periodic changes for most accounts.
+
+00:05:28.280 --> 00:05:32.720
+The new guidance instead recommended long pass phrases that users could remember.
+
+00:05:33.440 --> 00:05:38.360
+William Burr, by then retired, told the Wall Street Journal that he regretted the earlier
+
+00:05:38.360 --> 00:05:42.500
+advice and wished the document had placed greater weight on human behavior.
+
+00:05:43.220 --> 00:05:46.240
+Some organizations adopted the new guidance quickly.
+
+00:05:46.700 --> 00:05:51.040
+Others retained the old policies because auditors still scored them as stronger.
+
+00:05:51.720 --> 00:05:54.660
+The reversal itself produced a secondary effect.
+
+00:05:55.180 --> 00:06:00.800
+Many employees who had spent years memorizing complex strings now had to be retrained to
+
+00:06:00.800 --> 00:06:01.720
+stop using them.
+
+00:06:02.560 --> 00:06:07.500
+When a rule optimizes a single measurable proxy, such as entropy per character,
+
+00:06:07.500 --> 00:06:12.280
+it can degrade the larger system once humans adapt inside the constraint.
+
+00:06:13.120 --> 00:06:18.060
+Security policies that treat users as reliable executors of complex procedures
+
+00:06:18.620 --> 00:06:23.900
+tend to generate workarounds that attackers can observe and codify faster than the procedures
+
+00:06:23.900 --> 00:06:29.860
+can be updated. The durable safeguard is therefore to design the rule set around the behavior
+
+00:06:29.860 --> 00:06:34.600
+that will actually occur rather than the behavior that compliance language assumes.
+
+00:06:35.320 --> 00:06:41.240
+The same pattern appears today in multi-factor authentication fatigue prompts and in lengthy cookie
+
+00:06:41.240 --> 00:06:47.440
+consent flows. Each added step changes what people do, not merely what they are told to do.
+
+00:06:48.040 --> 00:06:52.200
+When you next face a new verification screen that assumes perfect compliance,
+
+00:06:52.720 --> 00:06:56.780
+what adaptation might already be forming on the other side of that prompt.
+
+00:06:57.440 --> 00:07:02.520
+And that's where today's story leaves us. If it changed how you see one everyday decision,
+
+00:07:02.520 --> 00:07:08.220
+that's the whole point. Pass it along to someone who'd appreciate it and we'll be back tomorrow with
+
+00:07:08.220 --> 00:07:14.600
+another case. And if you'd rather watch then listen, find us on YouTube at Narra Network, links in
+
+00:07:14.600 --> 00:07:21.060
+the show notes. And before you go, this show is part of the Narra Network, a family of daily podcasts
+
+00:07:21.060 --> 00:07:27.040
+on tech, science, and markets. Each one a short, sharp briefing you can finish on the commute.
+
+00:07:27.680 --> 00:07:31.260
+If today earned its place in your feed, here's your next lesson,
+
+00:07:31.780 --> 00:07:38.000
+fascinating frontiers, the most fascinating news from space and science. Find every show free
+
+00:07:38.000 --> 00:07:45.820
+at NarraNetwork.com. This episode used AI voice synthesis of my voice. Editorial selection and
+
+00:07:45.820 --> 00:07:47.080
+analysis are my own.

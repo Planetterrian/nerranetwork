@@ -24,9 +24,12 @@
  *   POST /voices/leg-event            scenario: per-leg joined/left (Phase 2)
  *   POST /voices/upload-chunk         studio: local MediaRecorder chunk → R2 (Phase 2)
  *   POST /voices/upload-done          studio: local recording manifest → R2 + run row
- *   POST /voices/studio-check         studio: pre-join mic check / day-before setup test
+ *   POST /voices/studio-check         studio: pre-join mic check / day-before setup test / guest stuck outside
+ *   GET|POST /voices/admin/call-guest admin: signed link → switch a stuck guest to a phone call
+ *   GET|POST /voices/join             Cal.com event location: email → the guest's own studio
  *   POST /voices/studio-silence       studio or scenario: guest unheard → email Patrick once
  *   POST /voices/studio-phone         studio: guest's "Have Mira call my phone" → PSTN now
+ *   POST /voices/studio-text          studio: text + email the studio link to open on a phone
  *   GET  /voices/host-link            admin: Patrick's co-host studio link
  *   GET  /voices/health               deploy verification
  *   scheduled (daily)                 gate-2 day-4 reminder + day-7 auto-approve
@@ -42,6 +45,14 @@ export interface Env {
   GITHUB_DISPATCH_TOKEN: string;
   ADMIN_TOKEN: string;
   RESEND_API_KEY: string;
+  // Oct 2 2026: lets the booking webhook replace Cal.com's own video room
+  // with the guest's studio link in the calendar invite.
+  CAL_API_KEY?: string;
+  // Oct 2 2026: texting a guest their studio link so they can join from
+  // their phone's browser (wideband) instead of a phone line (narrowband).
+  VOXIMPLANT_ACCOUNT_ID?: string;
+  VOXIMPLANT_API_KEY?: string;
+  VOXIMPLANT_CALLER_ID?: string;
   VOICES_FROM_EMAIL: string;
   CALCOM_BOOKING_URL: string;
   // Nerra Voices (Sept 2026): optional second Cal.com event. Falls back to
@@ -419,9 +430,8 @@ async function interviewWithApp(env: Env, interviewId: string):
 // ---------------------------------------------------------------------------
 
 /** Interview length the guest asked for, in minutes, or null. Bounded by what
- *  the room can actually do: the Grok session relay hands over every 30
- *  minutes and the scenario's hard cap is 50, so anything longer than 90 is a
- *  typo rather than a request. */
+ *  is sensible to plan: anything longer than 90 is a typo rather than a
+ *  request. It paces Mira; since Oct 5 2026 it never ends the room. */
 function clampMinutes(value: unknown): number | null {
   const n = Math.round(Number(value));
   if (!Number.isFinite(n) || n <= 0) return null;
@@ -829,19 +839,42 @@ function bookingPhone(p: any): string {
   return "";
 }
 
-/** The booked time as the guest will read it, in the zone they booked in.
- *  Sept 24 2026: the booking email said "You're booked" and never said
- *  when; the only record of the time was Cal.com's own email. */
-function bookedWhen(startTime: string, p: any): string {
-  const tz = String(p.attendees?.[0]?.timeZone ?? p.organizer?.timeZone ?? "America/Vancouver");
-  const d = new Date(startTime);
-  if (isNaN(d.getTime())) return "";
-  try {
-    return d.toLocaleString("en-US", { timeZone: tz, weekday: "long", month: "long",
-      day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
-  } catch {
-    return d.toUTCString();
+// Sept 30 2026: every time a person reads is Pacific, the network's zone
+// (Vancouver), with the guest's own clock alongside when we know it. Mirrors
+// pacific_time in pipelines/voices/common.py.
+const PACIFIC_TZ = "America/Vancouver";
+
+function pacificTime(iso: unknown, guestTz?: string | null, dateOnly = false): string {
+  const d = new Date(String(iso ?? ""));
+  if (!iso || isNaN(d.getTime())) return "";
+  const day = (tz: string) => d.toLocaleDateString("en-US",
+    { timeZone: tz, weekday: "long", month: "long", day: "numeric" });
+  const clock = (tz: string) => d.toLocaleTimeString("en-US",
+    { timeZone: tz, hour: "numeric", minute: "2-digit" });
+  const pDay = day(PACIFIC_TZ);
+  if (dateOnly) return pDay;
+  let out = `${pDay} at ${clock(PACIFIC_TZ)} Pacific Time`;
+  if (guestTz) {
+    try {
+      const gClock = clock(guestTz);
+      if (gClock !== clock(PACIFIC_TZ) || day(guestTz) !== pDay) {
+        const zone = d.toLocaleTimeString("en-US", { timeZone: guestTz, timeZoneName: "short" })
+          .split(" ").pop();
+        const gDay = day(guestTz) !== pDay ? `${d.toLocaleDateString("en-US", { timeZone: guestTz, weekday: "long" })} ` : "";
+        out += ` (${gDay}${gClock} ${zone} where you are)`;
+      }
+    } catch { /* an unknown zone never breaks a mail */ }
   }
+  return out;
+}
+
+/** The booked time as the guest reads it: Pacific, and their own clock. */
+function attendeeTimeZone(p: any): string | null {
+  const tz = p?.attendees?.[0]?.timeZone ?? null;
+  return tz ? String(tz) : null;
+}
+function bookedWhen(startTime: string, p: any): string {
+  return pacificTime(startTime, attendeeTimeZone(p));
 }
 
 /** Several approved rows share the address a booking came from: a publicist
@@ -982,7 +1015,7 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
         `Patrick was told; kill the interview from the triage page if this is not a guest we invited.`,
     }, "return=representation");
     apps = stub?.length ? stub : [];
-    await slack(env, `:rotating_light: Cal.com booking for ${who} at ${startTime} matched NO application. ` +
+    await slack(env, `:rotating_light: Cal.com booking for ${who} at ${pacificTime(startTime)} matched NO application. ` +
       (apps.length
         ? "A placeholder application and the interview were created so Mira still calls; check the triage page."
         : "And the placeholder could not be created — nobody is calling them."));
@@ -990,7 +1023,7 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
       await email(env, operatorEmail(env),
         `A booked ${bookedShow.shortLabel} interview matched no application`,
         `<p>Hi Patrick,</p><p><strong>${esc(who)}</strong> booked a time at
-         <strong>${esc(String(startTime))}</strong> and it matched no application
+         <strong>${esc(pacificTime(startTime) || String(startTime))}</strong> and it matched no application
          by address, name or phone.</p>
          ${apps.length
            ? `<p>So that nobody is left waiting for a call, I created an application
@@ -1024,16 +1057,24 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
     interviewId = existing[0].id;
     await sb(env, "PATCH", `interviews?id=eq.${interviewId}`,
       { scheduled_at: startTime, status: "scheduled", reminder_sent_at: null, show: show.slug,
+        guest_timezone: attendeeTimeZone(p),
         duration_min: plannedMinutes, host_mode: false });
   } else {
     const created = await sb(env, "POST", "interviews",
       { application_id: apps[0].id, scheduled_at: startTime, status: "scheduled", show: show.slug,
+        guest_timezone: attendeeTimeZone(p),
         duration_min: plannedMinutes, host_mode: false },
       "return=representation");
     interviewId = created?.[0]?.id ?? "";
   }
   const studio = studioUrl(show, interviewId, "guest");
   const setupTest = `${studio}&test=1`;
+  // Oct 1 2026 (Jonathan Bautista, Jason Fishman): the calendar invite's
+  // "Where" was a Cal Video room. Both guests clicked it at the start time,
+  // sat in an empty room that said "waiting for others to join", and wrote
+  // that nobody came; both interviews fell back to the phone. The invite now
+  // carries the guest's own studio link.
+  await setCalendarLocation(env, show, String(p.uid ?? p.bookingUid ?? ""), studio, apps[0].name);
   let manage = "";
   try {
     const tok = await sb(env, "GET", `interviews?id=eq.${interviewId}&select=manage_token`);
@@ -1048,13 +1089,10 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
      I'm Mira, the AI host of ${esc(show.name)}, and it will be just the two of us.</p>
      <p><a href="${studio}"><strong>This is your personal studio link</strong></a>. Bookmark
      it: the studio opens ten minutes before we start, and there is nothing to install.</p>
-     <p>What makes the biggest difference to how you sound: a computer in a quiet room, and
-     <strong>headphones or earbuds</strong>. Without them your microphone picks up my voice
-     from your speakers, and my questions end up in your recording as if you had said them.
-     The studio checks your microphone and headphones before you join, and you can run the
-     same <a href="${setupTest}">30-second setup test</a> any time before the day. Camera
-     is optional. If the browser gives you trouble on the day, the studio has a button to
-     have me call your phone instead.</p>
+     ${GUEST_AUDIO_HTML}
+     <p>You can run the <a href="${setupTest}">30-second setup test</a> any time before
+     the day. It confirms I'll hear you clearly. Camera is optional.</p>
+     ${studioStepsHtml(studio)}
      <p>We have about ${plannedMinutes} minutes${apps[0].desired_minutes ? ", which is what you asked for" : ""}. I pace the
      conversation to that and start wrapping up near the end rather than cutting you off.</p>
      <p>About a day before, I'll send a short brief with the themes I'd like to explore.
@@ -1063,7 +1101,7 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
      <p>The conversation is recorded, and nothing publishes until you have heard the edit
      and approved it.${manage ? ` If you need to move or cancel, <a href="${esc(manage)}">use this link</a>; one tap, no explanation needed.` : " If you need to move the time, use the reschedule link in your calendar confirmation."}</p>
      ${miraSignature(show)}`, true);
-  await slack(env, `${show.shortLabel}: ${apps[0].name} booked ${startTime}`);
+  await slack(env, `${show.shortLabel}: ${apps[0].name} booked ${pacificTime(startTime)}`);
   return json({ ok: true, show: show.slug, interview_id: interviewId });
 }
 
@@ -1283,7 +1321,7 @@ async function handleManagePage(env: Env, token: string): Promise<Response> {
   const app = apps?.[0] ?? {};
   const show = showFor(interview, app);
   const when = interview.scheduled_at
-    ? new Date(interview.scheduled_at).toUTCString().replace("GMT", "UTC")
+    ? pacificTime(interview.scheduled_at, interview.guest_timezone)
     : "your scheduled time";
   const booking = env.CALCOM_BOOKING_URL || "";
   if (interview.status === "cancelled" || interview.cancelled_at) {
@@ -1328,7 +1366,7 @@ async function handleManageSubmit(req: Request, env: Env, token: string): Promis
     await email(env, operatorEmail(env),
       `${show.shortLabel}: ${app.name ?? "a guest"} cancelled`,
       `<p>${esc(app.name ?? "A guest")} cancelled their interview` +
-      `${interview.scheduled_at ? ` (was ${esc(new Date(interview.scheduled_at).toUTCString())})` : ""}.</p>` +
+      `${interview.scheduled_at ? ` (was ${esc(pacificTime(interview.scheduled_at))})` : ""}.</p>` +
       (note ? `<p>They said: ${esc(note)}</p>` : "<p>No reason given.</p>"));
     return html(page("Cancelled", `
       <p>Done — nobody is waiting for you, and Mira will not call.</p>
@@ -1604,14 +1642,227 @@ async function reassign(id){
 // guest review page and its submit refuse an archived package. The archive
 // page lists them, token-gated, with their audio and transcript.
 
-async function archiveToken(env: Env): Promise<string> {
+async function adminSig(env: Env, message: string): Promise<string> {
   const token = (env.ADMIN_TOKEN || "").trim();
   if (!token) throw new Error("ADMIN_TOKEN required");
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey(
     "raw", enc.encode(token), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  const sig = await crypto.subtle.sign("HMAC", key, enc.encode("nerra-archive"));
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(message));
   return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 40);
+}
+
+async function archiveToken(env: Env): Promise<string> {
+  return adminSig(env, "nerra-archive");
+}
+
+/** Oct 1 2026: the "call their phone" link in Patrick's stuck-guest email.
+ *  GET shows a confirm button (mail scanners prefetch links, and this one
+ *  dials); POST checks the signature and switches the interview to a phone
+ *  call through the same path as the guest's own button. */
+async function callGuestSig(env: Env, interviewId: string): Promise<string> {
+  return adminSig(env, `call-guest:${interviewId}`);
+}
+
+async function callGuestLink(env: Env, interviewId: string): Promise<string> {
+  return `https://api.nerranetwork.com/voices/admin/call-guest?interview=${interviewId}&sig=${await callGuestSig(env, interviewId)}`;
+}
+
+// Oct 1 2026: the same audio paragraph and steps as pipelines/voices/common.py
+// (GUEST_AUDIO_HTML, studio_steps_html); keep the two in step.
+const GUEST_AUDIO_HTML =
+  '<p style="background:#f0fdfa;border-left:4px solid #0f766e;padding:.7em 1em">' +
+  "<strong>For the best sound:</strong> please join from a computer, wearing " +
+  "headphones or earbuds, ideally with a good microphone. Phone audio is compressed " +
+  "and sounds noticeably thinner, while a computer with headphones and a good " +
+  "microphone sounds clear and full, and listeners tell us those are the interviews " +
+  "they enjoy most. AirPods or a headset connected to your computer work well, and a " +
+  "USB microphone is even better. Headphones also stop your microphone picking up my " +
+  "voice from your speakers; without them my questions end up in your recording as if " +
+  "you had said them.</p>";
+
+function studioStepsHtml(studio: string): string {
+  return "<p><strong>On the day, three steps and we're on:</strong></p><ol>" +
+    `<li>Open <a href="${esc(studio)}">your studio link</a> on your computer, up to ten minutes before we start.</li>` +
+    "<li>Press <strong>Check my microphone</strong> and read the sentence out loud until it says <strong>Sounds good</strong>.</li>" +
+    "<li>Press <strong>Join your interview</strong>. You're in when you hear me say hello.</li></ol>" +
+    "<p>If your computer gives you trouble, open the same link on your phone, earbuds in: it " +
+    "sounds far better than a phone call. A call from me, with the studio's <strong>Have Mira " +
+    "call my phone</strong> button, is the last resort, so we never lose the slot.</p>";
+}
+
+async function setCalendarLocation(env: Env, show: Show, uid: string, studio: string, who: string) {
+  if (!uid) return;
+  if (!env.CAL_API_KEY) {
+    await slack(env, `:warning: ${show.shortLabel}: ${who}'s calendar invite still points at Cal Video. Set the CAL_API_KEY Worker secret so bookings get the studio link.`);
+    return;
+  }
+  try {
+    const res = await fetch(`https://api.cal.com/v2/bookings/${encodeURIComponent(uid)}/location`, {
+      method: "PATCH",
+      headers: { "Authorization": `Bearer ${env.CAL_API_KEY}`, "cal-api-version": "2024-08-13",
+        "Content-Type": "application/json" },
+      body: JSON.stringify({ location: { type: "link", link: studio } }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  } catch (err: any) {
+    console.error("cal location update failed:", err?.message ?? err);
+    await slack(env, `:warning: ${show.shortLabel}: couldn't put the studio link in ${who}'s calendar invite (${err?.message ?? err}). Their invite shows the default location.`);
+  }
+}
+
+/** GET/POST /voices/join — the location on the Cal.com event types. A guest
+ *  who opens the meeting from a calendar lands here, types the address they
+ *  booked with, and goes straight to their studio when the interview is
+ *  close; otherwise Mira emails them their personal link. */
+async function handleJoin(req: Request, env: Env): Promise<Response> {
+  const url = new URL(req.url);
+  const page = (title: string, body: string) => new Response(
+    `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+     <title>${esc(title)} · Nerra Network</title>
+     <body style="font:17px/1.55 system-ui,sans-serif;max-width:520px;margin:3rem auto;padding:0 1rem;color:#1a202c">
+     <h1 style="font-size:1.35rem">${esc(title)}</h1>${body}
+     <p style="color:#4a5568;font-size:.9rem;margin-top:2rem">Trouble? Email <a href="mailto:mira@nerranetwork.com">mira@nerranetwork.com</a>.</p></body>`,
+    { headers: { "content-type": "text/html; charset=utf-8" } });
+  const iid = url.searchParams.get("interview") ?? "";
+  if (UUID_RE.test(iid)) {
+    const { iv, show } = await interviewGuest(env, iid);
+    if (iv) return Response.redirect(studioUrl(show, iid, "guest"), 302);
+  }
+  const form = (note = "") => page("Join your interview with Mira",
+    `${note}<p>Enter the email address you booked with and I'll take you to your studio.</p>
+     <form method="post"><input type="email" name="email" required autocomplete="email"
+       style="font:inherit;padding:.6rem;border:1px solid #cbd5e0;border-radius:8px;width:100%;box-sizing:border-box">
+     <button style="font:inherit;margin-top:.7rem;padding:.6rem 1.2rem;border-radius:8px;border:0;background:#0F766E;color:#fff">
+     Go to my studio</button></form>
+     <p style="color:#4a5568;font-size:.95rem">For the best sound, use a computer with headphones.</p>`);
+  if (req.method !== "POST") return form();
+  const fd = await req.formData().catch(() => null);
+  const addr = String(fd?.get("email") ?? "").trim().toLowerCase();
+  if (!addr.includes("@")) return form("<p style='color:#b45309'>That doesn't look like an email address.</p>");
+  const enc = encodeURIComponent(addr);
+  const apps: any[] = (await sb(env, "GET",
+    `guest_applications?or=(email.ilike.${enc},publicist_email.ilike.${enc})&select=id,name,email,show`)) ?? [];
+  const since = new Date(Date.now() - 2 * 3600 * 1000).toISOString();
+  let iv: any = null, app: any = null;
+  for (const a of apps) {
+    const rows = await sb(env, "GET",
+      `interviews?application_id=eq.${a.id}&status=in.(scheduled,briefed,in_progress)` +
+      `&scheduled_at=gte.${since}&order=scheduled_at.asc&limit=1&select=id,scheduled_at,show`);
+    if (rows?.[0] && (!iv || rows[0].scheduled_at < iv.scheduled_at)) { iv = rows[0]; app = a; }
+  }
+  if (!iv) {
+    return form(`<p style='color:#b45309'>I couldn't find an upcoming interview for ${esc(addr)}. ` +
+      `Try the address the calendar invite was sent to, or reply to any of my emails.</p>`);
+  }
+  const show = showFor(app, { show: iv.show });
+  const studio = studioUrl(show, iv.id, "guest");
+  const minsToStart = (Date.parse(iv.scheduled_at) - Date.now()) / 60000;
+  if (minsToStart <= 30) return Response.redirect(studio, 302);
+  // Not close to the start: the link goes to the guest's own inbox rather
+  // than to whoever typed their address.
+  try {
+    await email(env, String(app.email), `Your ${show.name} studio link`,
+      `<p>Hi ${esc(firstName(app.name))},</p><p>Here's your personal studio link for our interview on
+       <strong>${esc(pacificTime(iv.scheduled_at))}</strong>:
+       <a href="${studio}">join your interview here</a>. It opens ten minutes before we start.</p>
+       ${GUEST_AUDIO_HTML}${studioStepsHtml(studio)}${miraSignature(show)}`, true);
+  } catch (err: any) { console.error("join link email failed:", err?.message ?? err); }
+  return page("Check your email",
+    `<p>Your interview is on <strong>${esc(pacificTime(iv.scheduled_at))}</strong>. I've emailed your personal
+     studio link to the address on your booking. On the day, open it on your computer with headphones on.</p>`);
+}
+
+async function interviewIsLive(env: Env): Promise<boolean> {
+  const lo = new Date(Date.now() - 60 * 60000).toISOString();
+  const hi = new Date(Date.now() + 15 * 60000).toISOString();
+  const rows = await sb(env, "GET",
+    `interviews?status=in.(scheduled,briefed,in_progress)&scheduled_at=gte.${lo}&scheduled_at=lte.${hi}&select=id&limit=1`);
+  return !!rows?.length;
+}
+
+async function sendSms(env: Env, to: string, text: string): Promise<boolean> {
+  if (!env.VOXIMPLANT_ACCOUNT_ID || !env.VOXIMPLANT_API_KEY || !env.VOXIMPLANT_CALLER_ID) return false;
+  const form = new URLSearchParams({
+    account_id: env.VOXIMPLANT_ACCOUNT_ID, api_key: env.VOXIMPLANT_API_KEY,
+    source: env.VOXIMPLANT_CALLER_ID.replace(/^\+/, ""), destination: to.replace(/^\+/, ""),
+    sms_body: text.slice(0, 640),
+  });
+  const res = await fetch("https://api.voximplant.com/platform_api/SendSmsMessage", { method: "POST", body: form });
+  const out = await res.json<any>().catch(() => ({}));
+  if (!res.ok || out?.error) {
+    console.error("SMS failed:", res.status, JSON.stringify(out?.error ?? out).slice(0, 200));
+    return false;
+  }
+  return true;
+}
+
+/** POST /voices/studio-text {interview, phone?} — Oct 2 2026. The better
+ *  fallback than a phone call: the guest's studio link by text (and email),
+ *  to open in their phone's browser. Browser audio is wideband; a phone line
+ *  stops at 3.4 kHz, which is why Jason Fishman's episode sounds thin. */
+async function handleStudioText(req: Request, env: Env): Promise<Response> {
+  const body = await req.json<any>().catch(() => null);
+  const interviewId = String(body?.interview ?? "").trim();
+  if (!UUID_RE.test(interviewId)) return json({ error: "interview required" }, 400);
+  const { iv, app, show } = await interviewGuest(env, interviewId);
+  if (!iv || !app) return json({ error: "not found" }, 404);
+  const given = phoneE164(body?.phone);
+  if (body?.phone && !given) return json({ error: "That number doesn't look right. Include the country code, e.g. +1 604 555 0123.", need_phone: true }, 400);
+  const phone = given ?? phoneE164(app.phone);
+  if (given && given !== phoneE164(app.phone)) {
+    await sb(env, "PATCH", `guest_applications?id=eq.${app.id}`, { phone: given });
+  }
+  const studio = studioUrl(show, interviewId, "guest");
+  let texted = false;
+  if (phone) {
+    try {
+      texted = await sendSms(env, phone,
+        `Mira here (${show.name}). Open this on your phone to join our interview, earbuds in if you have them: ${studio}`);
+    } catch (err: any) { console.error("studio-text SMS failed:", err?.message ?? err); }
+  }
+  try {
+    await email(env, app.email, `Your ${show.name} studio link, for your phone`,
+      `<p>Hi ${esc(firstName(app.name))},</p><p>Open this link on your phone and you'll be in the same
+       studio: <a href="${studio}"><strong>join your interview here</strong></a>. Earbuds or headphones
+       make it sound best. Then press <strong>Check my microphone</strong>, read the sentence until it says
+       <strong>Sounds good</strong>, and press <strong>Join your interview</strong>.</p>${miraSignature(show)}`, true);
+  } catch (err: any) { console.error("studio-text email failed:", err?.message ?? err); }
+  if (!texted && !phone) return json({ ok: true, texted: false, emailed: true, need_phone: !body?.phone });
+  await slack(env, `:iphone: ${show.shortLabel}: ${app.name ?? "guest"} asked for the studio link on their phone (${texted ? "texted" : "emailed; SMS unavailable"}).`);
+  return json({ ok: true, texted, emailed: true, phone_last4: phone ? phone.slice(-4) : null });
+}
+
+async function handleCallGuest(req: Request, env: Env): Promise<Response> {
+  const url = new URL(req.url);
+  const interviewId = url.searchParams.get("interview") ?? "";
+  const sig = url.searchParams.get("sig") ?? "";
+  const page = (title: string, body: string) => new Response(
+    `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+     <title>${esc(title)}</title><body style="font:16px/1.5 system-ui,sans-serif;max-width:520px;margin:3rem auto;padding:0 1rem">
+     <h1 style="font-size:1.3rem">${esc(title)}</h1>${body}</body>`,
+    { headers: { "content-type": "text/html; charset=utf-8" } });
+  if (!UUID_RE.test(interviewId) || sig !== await callGuestSig(env, interviewId)) {
+    return page("Link not valid", "<p>This link is incomplete or has been changed.</p>");
+  }
+  const { iv, app } = await interviewGuest(env, interviewId);
+  if (!iv || !app) return page("Interview not found", "<p>No interview matches this link.</p>");
+  const who = esc(String(app.name ?? "the guest"));
+  if (req.method !== "POST") {
+    return page(`Call ${who}'s phone?`,
+      `<p>Mira will call ${who} on ${esc(String(app.phone ?? "the number on file"))} within a minute or two
+       and do the interview by phone. Their browser session, if any, is closed.</p>
+       <form method="post"><button style="font:inherit;padding:.6rem 1.2rem;border-radius:8px;border:0;background:#0F766E;color:#fff">
+       Call ${who} now</button></form>`);
+  }
+  const res = await handleStudioPhone(new Request(req.url, {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ interview: interviewId, by: "patrick" }),
+  }), env);
+  const out = await res.json<any>().catch(() => ({}));
+  if (out.ok) return page("Calling now", `<p>Mira is calling ${who} on the number ending in ${esc(String(out.phone_last4))}. ${who} has been emailed to expect the call.</p>`);
+  if (out.need_phone) return page("No phone number on file", `<p>There's no usable number for ${who}. Reply to them and ask for one.</p>`);
+  return page("Couldn't switch to phone", `<p>${esc(String(out.error ?? "Unknown error"))}</p>`);
 }
 
 async function archivePackage(env: Env, packageId: string, reason: string): Promise<Response> {
@@ -1643,7 +1894,7 @@ async function handleArchivePage(req: Request, env: Env, pathToken?: string): Pr
       `interview_runs?id=eq.${pkg.interview_run_id}&select=grok_session_log,duration_sec`) : [];
     const tracks = runs?.[0]?.grok_session_log?.tracks ?? {};
     const audio = tracks?.edit?.url || tracks?.preview || runs?.[0]?.grok_session_log?.voximplant_mix_record_url || "";
-    const when = interview?.scheduled_at ? new Date(interview.scheduled_at).toUTCString().slice(0, 16) : "";
+    const when = interview?.scheduled_at ? pacificTime(interview.scheduled_at, null, true) : "";
     const transcript = String(pkg.transcript_cleaned || pkg.transcript_raw || "").trim();
     items.push(`<section style="border-top:1px solid #e2e8f0;padding:1rem 0">
       <h2 style="margin:.2rem 0">${esc(app?.name ?? "Unknown guest")}</h2>
@@ -2046,6 +2297,41 @@ const ECHO_VERDICTS = new Set(["clean", "borderline", "speakers", "unknown", "no
  *  either before a live join or from the day-before setup test (test=true).
  *  Stored on interviews.setup_check. A failed day-before test emails
  *  Patrick, because that is the one moment there is still time to fix it. */
+async function alertStuckGuest(env: Env, iv: any, app: any, show: any, record: any, body: any) {
+  const who = app?.name ? String(app.name) : "A guest";
+  const when = iv.scheduled_at ? pacificTime(iv.scheduled_at) : "an unscheduled slot";
+  const late = Math.max(0, Math.round(Number(body?.minutes_late) || 0));
+  const where = record.mic === "ok"
+    ? "Their microphone check passed, but they haven't pressed Join."
+    : record.mic === "quiet" || record.mic === "silent"
+      ? `Their microphone check failed (${record.mic}${record.mic_db !== null ? `, ${record.mic_db} dB` : ""}), so Join is still locked.`
+      : body?.mic_access === false
+        ? "Their browser hasn't given the studio the microphone, so they can't run the check."
+        : "They haven't run the microphone check yet, so Join is still locked.";
+  const signin = record.signin === "failed"
+    ? ` The studio sign-in also failed on their network (${esc(record.signin_error || "no detail")}).` : "";
+  const phone = app?.phone ? String(app.phone) : "";
+  let link = "";
+  try { link = await callGuestLink(env, iv.id); } catch { /* no ADMIN_TOKEN: no link */ }
+  try {
+    await email(env, operatorEmail(env),
+      `${show.shortLabel}: ${who} has the studio open but isn't in the interview`,
+      `<p>Hi Patrick,</p><p>${esc(who)} has the studio page open for their interview (${esc(when)}),
+       but ${late ? `${late} minutes after the start` : "after the start"} they still aren't in the room with me.
+       ${esc(where)}${signin}</p>
+       <p>The page is showing them the two steps and the "Have Mira call my phone" button.</p>
+       ${phone && link ? `<p>If you'd rather not wait, I can call them now on ${esc(phone)}:
+       <a href="${link}">switch ${esc(who)} to a phone call</a>.</p>`
+         : phone ? `<p>Their phone: ${esc(phone)}.</p>` : "<p>There's no phone number on file for them.</p>"}
+       <p>Device: ${esc(record.device || "unknown")}<br>Browser: ${esc(record.ua || "unknown")}<br>
+       Guest email: ${esc(app?.email ?? "unknown")}</p>
+       <p>— Mira</p>`);
+  } catch (err: any) {
+    console.error("stuck-guest email failed:", err?.message ?? err);
+  }
+  await slack(env, `:warning: ${show.shortLabel}: ${who} has the studio open ${late} min after the start but hasn't joined (mic ${record.mic}). Patrick emailed.`);
+}
+
 async function handleStudioCheck(req: Request, env: Env): Promise<Response> {
   const body = await req.json<any>().catch(() => null);
   const interviewId = String(body?.interview ?? "").trim();
@@ -2068,9 +2354,22 @@ async function handleStudioCheck(req: Request, env: Env): Promise<Response> {
   };
   const { iv, app, show } = await interviewGuest(env, interviewId);
   if (!iv) return json({ error: "not found" }, 404);
+  // Oct 1 2026 (Jonathan Bautista): the studio page was open, the slot had
+  // started, and he never got past the microphone check to Join. Nothing
+  // reached Mira, so nothing told anyone. The page now reports a guest who
+  // is still outside the room a few minutes after the start, and Patrick
+  // is emailed once, with a link that switches the interview to a phone call.
+  const stuck = body?.stuck === true && !test && record.role === "guest";
+  const alertedBefore: string | null = iv.setup_check?.stuck_alerted_at ?? null;
+  const stuckAlertedAt = stuck && !alertedBefore ? record.at : alertedBefore;
   const history = Array.isArray(iv.setup_check?.history) ? iv.setup_check.history.slice(-9) : [];
   await sb(env, "PATCH", `interviews?id=eq.${interviewId}`,
-    { setup_check: { ...record, history: [...history, record] } }).catch(() => null);
+    { setup_check: { ...record, ...(stuckAlertedAt ? { stuck_alerted_at: stuckAlertedAt } : {}),
+      history: [...history, { ...record, ...(stuck ? { stuck: true } : {}) }] } }).catch(() => null);
+  if (stuck) {
+    if (!alertedBefore) await alertStuckGuest(env, iv, app, show, record, body);
+    return json({ ok: true, stuck: true, alerted: !alertedBefore });
+  }
 
   const problems: string[] = [];
   if (mic === "silent") problems.push("the microphone sent no sound at all");
@@ -2080,7 +2379,7 @@ async function handleStudioCheck(req: Request, env: Env): Promise<Response> {
   if (echo === "borderline") problems.push("the microphone faintly hears the speakers");
   if (signin === "failed") problems.push(`the studio sign-in failed (${esc(record.signin_error || "no detail")}); a VPN or firewall is the usual cause`);
   const who = app?.name ? String(app.name) : "A guest";
-  const when = iv.scheduled_at ? new Date(iv.scheduled_at).toUTCString() : "an unscheduled slot";
+  const when = iv.scheduled_at ? pacificTime(iv.scheduled_at) : "an unscheduled slot";
 
   if (problems.length && (test || mic === "skipped")) {
     try {
@@ -2208,7 +2507,10 @@ async function handleStudioPhone(req: Request, env: Env): Promise<Response> {
   } catch (err: any) {
     console.error("studio-phone guest email failed:", err?.message ?? err);
   }
-  await slack(env, `:telephone_receiver: ${show.shortLabel}: ${app.name ?? "guest"} pressed "Have Mira call my phone" — switched to PSTN (…${last4})${dispatched ? ", fire tick dispatched" : ", next cron tick dials"}.`);
+  const byWho = body?.by === "patrick"
+    ? `Patrick switched ${app.name ?? "the guest"} to a phone call`
+    : `${app.name ?? "guest"} pressed "Have Mira call my phone"`;
+  await slack(env, `:telephone_receiver: ${show.shortLabel}: ${byWho} — switched to PSTN (…${last4})${dispatched ? ", fire tick dispatched" : ", next cron tick dials"}.`);
   return json({ ok: true, phone_last4: last4, dispatched });
 }
 
@@ -2664,6 +2966,8 @@ export default {
       }
       if (req.method === "GET" && path === "/voices/admin/triage") return handleAdminTriage(req, env);
       if (req.method === "GET" && path === "/voices/admin/archive-link") return handleArchiveLink(env);
+      if ((req.method === "GET" || req.method === "POST") && path === "/voices/admin/call-guest") return handleCallGuest(req, env);
+      if ((req.method === "GET" || req.method === "POST") && path === "/voices/join") return handleJoin(req, env);
       const archive = path.match(/^\/voices\/admin\/archive(?:\/([0-9a-f]{40}))?$/);
       if (archive && req.method === "GET") return handleArchivePage(req, env, archive[1]);
       // The token rides in the path as well as the query string: mail
@@ -2689,6 +2993,7 @@ export default {
       if (req.method === "POST" && path === "/voices/studio-check") return handleStudioCheck(req, env);
       if (req.method === "POST" && path === "/voices/studio-silence") return handleStudioSilence(req, env);
       if (req.method === "POST" && path === "/voices/studio-phone") return handleStudioPhone(req, env);
+      if (req.method === "POST" && path === "/voices/studio-text") return handleStudioText(req, env);
       if (req.method === "GET" && path === "/voices/health") return handleHealth(env);
       if (req.method === "POST" && path === "/voices/studio-auth") return handleStudioAuth(req, env);
       // Phase 2 co-host (Sept 2026)
@@ -2713,6 +3018,15 @@ export default {
         await dispatch(env, "fire-tick", { source: "voices-worker-cron" });
       } catch (err: any) {
         console.error("fire-tick dispatch failed:", err?.message ?? err);
+      }
+      // Oct 2 2026 (Jason Fishman): a guest who writes "I'm in, nobody's
+      // here" during their slot waited for the half-hourly inbox run. While
+      // an interview is live the inbox runs every five minutes instead, so
+      // Mira answers within minutes.
+      try {
+        if (await interviewIsLive(env)) await dispatch(env, "producer-tick", { source: "live-interview" });
+      } catch (err: any) {
+        console.error("live producer-tick failed:", err?.message ?? err);
       }
       return;
     }

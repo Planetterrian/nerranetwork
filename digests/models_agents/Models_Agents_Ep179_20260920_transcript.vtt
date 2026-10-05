@@ -1,0 +1,268 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:27.040
+Local neural programs compiled from English descriptions now run entirely on CPU without external APIs. This is Models &amp; Agents, Episode 179. Program as weights lets users describe a text function in English and compile it into a reusable neural program. The system relies on a fine-tuned Q3-4B to generate a LLHF adapter for a frozen Q3-0.6B interpreter.
+
+00:00:27.040 --> 00:00:32.600
+On Fuzzy Bench, the approach hits 73.4% exact match accuracy.
+
+00:00:33.260 --> 00:00:37.980
+Compolation stays separate from inference, so the task definition remains fixed while
+
+00:00:37.980 --> 00:00:38.820
+inputs vary.
+
+00:00:39.480 --> 00:00:42.640
+The project releases code and model weights as open source.
+
+00:00:43.260 --> 00:00:48.960
+A higher accuracy path called compile by training runs 100 steps of adapter fine-tuning
+
+00:00:48.960 --> 00:00:53.900
+and reaches 83.6% semantic accuracy on Fuzzy Bench hard.
+
+00:00:53.900 --> 00:01:00.120
+The interpreter stays frozen in every case, so only the generated adapter changes per task.
+
+00:01:00.880 --> 00:01:06.460
+Looking back over the past week, several threads stood out across frontier releases and agent reliability.
+
+00:01:07.300 --> 00:01:13.260
+Discussions around open AI and GPT centered on concrete risks and new legal workflow tools,
+
+00:01:13.520 --> 00:01:17.840
+while clawed and llama families saw continued open weight and evaluation moves.
+
+00:01:17.840 --> 00:01:22.400
+agent incidents and large-scale funding commitments also surfaced as
+
+00:01:22.400 --> 00:01:28.200
+recurring points of attention. China AI startup Naive AI bets on mid and post
+
+00:01:28.200 --> 00:01:33.780
+training to compete in LLM's according to DOT. Naive AI directs its effort at
+
+00:01:33.780 --> 00:01:37.780
+the mid and post training stages to build competitive large language models.
+
+00:01:38.320 --> 00:01:42.280
+The startup focuses on those phases to close the gap with larger players.
+
+00:01:42.980 --> 00:01:47.320
+Specialized training techniques form the core of its strategy. Further results
+
+00:01:47.320 --> 00:01:51.240
+from naive AI on mid-training approaches are expected in coming weeks.
+
+00:01:51.860 --> 00:01:56.800
+The company positions itself through targeted work in those later training periods rather than
+
+00:01:56.800 --> 00:02:04.560
+pre-training scale alone. Anonymizing prompts cuts open AI's GPT-40 mini retrieval score by 60%
+
+00:02:04.560 --> 00:02:12.240
+according to PPC land. Anonymizing prompts reduces the retrieval performance of GPT-40 mini by 60%.
+
+00:02:12.240 --> 00:02:17.100
+This change shows the direct impact of privacy techniques on model capabilities.
+
+00:02:17.560 --> 00:02:20.320
+The drop occurs specifically in retrieval tasks.
+
+00:02:20.900 --> 00:02:25.660
+Experimenting with anonymized prompts helps measure those privacy trade-offs during testing.
+
+00:02:26.340 --> 00:02:31.240
+The effect appears consistent when prompts are stripped of identifying details before submission.
+
+00:02:32.360 --> 00:02:38.380
+Raindrop raises series A funding for AI agent or liability platform, according to Pulse2.com.
+
+00:02:38.380 --> 00:02:44.900
+Reindrop raised Series A funding led by CRV. Total funding now reaches $50 million.
+
+00:02:45.580 --> 00:02:50.040
+The platform focuses on improving reliability for AI agents in production.
+
+00:02:50.820 --> 00:02:55.200
+Potential updates to agent reliability tools from Reindrop may appear soon.
+
+00:02:56.020 --> 00:02:59.980
+The round targets production stage reliability challenges for deployed agents.
+
+00:03:00.600 --> 00:03:04.460
+CRV led the Series A that brought the cumulative capital to that level.
+
+00:03:04.460 --> 00:03:13.120
+Tranged tiny LLM years ago, now runs good local LLMs on 8GB RAM according to Simon Willisyn on X.
+
+00:03:13.720 --> 00:03:20.540
+Simon Willisyn notes that he trained a tiny LLM years ago. He now runs good local LLMs on roughly
+
+00:03:20.540 --> 00:03:27.540
+8GB of RAM. The observation highlights progress in local inference efficiency. Developers tracking
+
+00:03:27.540 --> 00:03:33.500
+open source local tools can draw from his experience. The shift from early tiny models to current
+
+00:03:33.500 --> 00:03:40.800
+capable ones on modest hardware shows rapid practical gains, data set auth github 1.0 according
+
+00:03:40.800 --> 00:03:47.660
+to Simon Willison. The data set auth github plugin reached version 1.0. The release followed
+
+00:03:47.660 --> 00:03:53.100
+fixes for cookie exploration issues. Those fixes support longer authenticated sessions.
+
+00:03:53.620 --> 00:03:59.460
+The update improves session handling for users of the plugin. Version 1.0 marks the resolution
+
+00:03:59.460 --> 00:04:05.540
+of prior expiration limitations, experimenting with hyper surface constrained dynamic weight updating
+
+00:04:05.540 --> 00:04:11.000
+according to the machine learning subreddit. A researcher shared results from a side project using
+
+00:04:11.000 --> 00:04:16.760
+hyper surfaces to generate weight deltas. The deltas applied to a single decoder block iterated
+
+00:04:16.760 --> 00:04:23.880
+multiple times. The approach reduces parameter count to about 16% of a standard 24-layer transformer.
+
+00:04:23.880 --> 00:04:26.600
+It maintains competitive loss throughout.
+
+00:04:26.900 --> 00:04:32.640
+The model uses a triangular wave function set and a context vector from gated linear attention
+
+00:04:32.640 --> 00:04:34.240
+to modulate weight updates.
+
+00:04:34.940 --> 00:04:40.100
+Check out the hyper-surface weight update experiment when exploring parameter-efficient training methods.
+
+00:04:40.980 --> 00:04:44.720
+Let me pop the hood on token routing inside mixture of experts' layers,
+
+00:04:45.120 --> 00:04:49.480
+where the router itself adds a small feed-forward pass before the main computation.
+
+00:04:49.480 --> 00:04:55.740
+Routing decisions can be cashed across similar tokens to cut compute, yet accuracy falls
+
+00:04:55.740 --> 00:04:58.300
+once the cash window passes a few hundred tokens.
+
+00:04:58.980 --> 00:05:04.380
+Quality gains from extra experts level off once the router underutilizes added capacity,
+
+00:05:04.820 --> 00:05:08.740
+typically near 64 experts for models under 30 billion parameters.
+
+00:05:09.420 --> 00:05:15.200
+An auxiliary load balancing loss makes expert distribution more uniform but can raise primary
+
+00:05:15.200 --> 00:05:17.180
+task loss by up to 2%.
+
+00:05:17.180 --> 00:05:22.720
+The router is a lightweight two-layer network whose output directly decides which expert
+
+00:05:22.720 --> 00:05:24.060
+weights load into memory.
+
+00:05:24.780 --> 00:05:30.160
+Caching router output for tokens within a small cosine distance of prior tokens, trims
+
+00:05:30.160 --> 00:05:35.740
+router flops by roughly 30% on repetitive text, though the same cache degrades quickly
+
+00:05:35.740 --> 00:05:37.640
+on code or multilingual inputs.
+
+00:05:38.440 --> 00:05:43.180
+Load balancing losses are scaled by a small coefficient, and raising that coefficient
+
+00:05:43.180 --> 00:05:46.940
+past 0.01 often triggers the 2% regression.
+
+00:05:47.580 --> 00:05:50.240
+In production, the router decision occurs once
+
+00:05:50.240 --> 00:05:51.980
+per token at the start of the layer
+
+00:05:51.980 --> 00:05:54.480
+and stays reused for the rest of the block,
+
+00:05:54.940 --> 00:05:57.440
+keeping added latency to a few microseconds.
+
+00:05:57.980 --> 00:06:01.520
+Try program as weights for defining reusable local functions
+
+00:06:01.520 --> 00:06:03.800
+from English descriptions on your own machine.
+
+00:06:04.580 --> 00:06:07.920
+Experiment with anonymized prompts when testing retrieval tasks
+
+00:06:07.920 --> 00:06:11.520
+with GPT-40 mini to measure privacy trade-offs.
+
+00:06:11.520 --> 00:06:16.400
+new local inference optimizations from the open source community are also on
+
+00:06:16.400 --> 00:06:21.060
+the way. Before we go, the next wave of open-weight model releases will likely
+
+00:06:21.060 --> 00:06:26.860
+test how far specialized post-training can push smaller bases. That's models and
+
+00:06:26.860 --> 00:06:31.220
+agents for today. If you found this useful, share it with someone who's trying to
+
+00:06:31.220 --> 00:06:35.500
+keep up with all these changes and subscribe so you don't miss tomorrow's update.
+
+00:06:36.100 --> 00:06:41.220
+The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd
+
+00:06:41.220 --> 00:06:46.200
+You rather watch than listen, find us on YouTube at Narra Network, links in the show notes.
+
+00:06:46.780 --> 00:06:51.640
+And before you go, this show is part of the Narra Network, a family of daily podcasts
+
+00:06:51.640 --> 00:06:53.800
+on tech, science, and markets.
+
+00:06:54.360 --> 00:06:57.600
+Each want a short, sharp briefing you can finish on the commute.
+
+00:06:58.220 --> 00:07:01.520
+If today earned its place in your feed, here's your next listen.
+
+00:07:01.940 --> 00:07:02.920
+Tesla shorts time.
+
+00:07:03.420 --> 00:07:05.560
+Your daily deep dive into everything Tesla.
+
+00:07:06.240 --> 00:07:09.740
+Find every show free at NarraNetwork.com.
+
+00:07:09.740 --> 00:07:13.240
+And if you would rather hear only your shows in your order,
+
+00:07:13.740 --> 00:07:16.300
+Narra Personal builds you a private daily edition.
+
+00:07:16.740 --> 00:07:20.000
+The details are at narennetwork.com slash join.
+
+00:07:20.700 --> 00:07:23.980
+This episode used AI voice synthesis of my voice.
+
+00:07:24.320 --> 00:07:26.780
+Editorial selection and analysis are my own.

@@ -1,0 +1,742 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:02.780
+Hey, everyone, welcome to Models and Agents episode 27.
+
+00:00:02.980 --> 00:00:04.540
+It's April 7th, 2026.
+
+00:00:04.860 --> 00:00:07.540
+You're daily briefing on the AI models and agents
+
+00:00:07.540 --> 00:00:08.780
+that are changing everything.
+
+00:00:09.340 --> 00:00:11.720
+And no, not those kinds of models and agents.
+
+00:00:12.060 --> 00:00:12.780
+Let's get into it.
+
+00:00:12.920 --> 00:00:16.400
+Gemma 4 delivers massive gains across European languages
+
+00:00:16.400 --> 00:00:20.340
+while a 25.6 million rust model achieves
+
+00:00:20.340 --> 00:00:23.320
+50 times faster inference via hybrid attention.
+
+00:00:23.880 --> 00:00:26.500
+This week, the AI world is showing us
+
+00:00:26.500 --> 00:00:28.420
+three different ways to get better results.
+
+00:00:29.300 --> 00:00:32.200
+Pure scaling is still powerful, but clever architecture
+
+00:00:32.200 --> 00:00:34.700
+can deliver ridiculous speedups at the edge.
+
+00:00:35.360 --> 00:00:37.200
+And agentic workflows are collapsing
+
+00:00:37.200 --> 00:00:40.740
+entire traditional pipelines into simple tool using loops.
+
+00:00:40.900 --> 00:00:43.560
+There is real measurable progress on all three fronts,
+
+00:00:43.680 --> 00:00:46.020
+which makes this an especially fun week to dig in.
+
+00:00:46.800 --> 00:00:48.860
+The top story comes from an independent researcher
+
+00:00:48.860 --> 00:00:53.120
+who built a brand new 25.6 million parameter language model
+
+00:00:53.120 --> 00:00:55.040
+trained entirely on rust code.
+
+00:00:55.340 --> 00:00:57.360
+What makes it interesting is not just the size,
+
+00:00:57.360 --> 00:00:58.740
+but how it was built from scratch
+
+00:00:58.740 --> 00:01:00.740
+to test a very specific idea.
+
+00:01:01.380 --> 00:01:03.300
+The author forked PyTorch and Triton
+
+00:01:03.300 --> 00:01:05.520
+to implement a hybrid attention mechanism.
+
+00:01:05.640 --> 00:01:07.320
+It combines local window detention
+
+00:01:07.320 --> 00:01:10.540
+with a GRU-like recurrent state mixed together
+
+00:01:10.540 --> 00:01:11.460
+by a learned gate.
+
+00:01:12.040 --> 00:01:13.920
+They also replaced standard attention
+
+00:01:13.920 --> 00:01:16.000
+with a linear quadratic linear pattern.
+
+00:01:16.320 --> 00:01:18.060
+The results on inference speed are dramatic.
+
+00:01:18.340 --> 00:01:24.440
+On an RTX 4060T, the model jumped from 5.6 tokens
+
+00:01:24.440 --> 00:01:27.280
+per second to 286 tokens per second.
+
+00:01:27.420 --> 00:01:28.800
+That is a 50 times speedup.
+
+00:01:29.180 --> 00:01:31.620
+It achieves this by keeping only a recent window
+
+00:01:31.620 --> 00:01:33.900
+in the KV cache while the recurrent state
+
+00:01:33.900 --> 00:01:36.180
+lives in tiny, fixed size registers.
+
+00:01:36.920 --> 00:01:39.200
+Expanding the training data from 31 megabytes
+
+00:01:39.200 --> 00:01:42.420
+to 173 megabytes of rust crates delivered
+
+00:01:42.420 --> 00:01:44.700
+much larger reductions in validation loss
+
+00:01:44.700 --> 00:01:46.320
+than the architectural tricks alone.
+
+00:01:47.080 --> 00:01:49.160
+Final perplexity landed at 2.15.
+
+00:01:49.720 --> 00:01:51.540
+The model generates plausible syntax,
+
+00:01:51.540 --> 00:01:53.900
+but still shows weak semantic consistency
+
+00:01:53.900 --> 00:01:55.180
+and some repetition.
+
+00:01:55.740 --> 00:01:58.280
+The clearest takeaway is that at these tiny scales,
+
+00:01:58.500 --> 00:02:00.960
+high-quality data usually beats clever architecture.
+
+00:02:01.580 --> 00:02:03.140
+Yet the hybrid mechanism itself
+
+00:02:03.140 --> 00:02:05.020
+is a compelling inference optimization
+
+00:02:05.020 --> 00:02:07.380
+worth testing on your own edge workloads.
+
+00:02:08.060 --> 00:02:09.520
+Now let's talk about Gemma 4.
+
+00:02:10.220 --> 00:02:13.100
+Google's latest model, especially the 31 billion parameter
+
+00:02:13.100 --> 00:02:15.540
+version, has climbed into the top three or better
+
+00:02:15.540 --> 00:02:18.260
+on nearly every major European language leaderboard
+
+00:02:18.260 --> 00:02:19.360
+according to Euro-Eval.
+
+00:02:19.880 --> 00:02:22.040
+It ranks third on Dutch, second on Danish,
+
+00:02:22.380 --> 00:02:24.840
+third on English, first on Finnish, second on French,
+
+00:02:25.320 --> 00:02:28.000
+fifth on German, second on Italian, and third on Swedish.
+
+00:02:28.560 --> 00:02:30.720
+These are huge gains for a model of its size,
+
+00:02:30.920 --> 00:02:32.400
+often beating much larger models.
+
+00:02:33.220 --> 00:02:35.960
+Community members are now wondering whether real-world usage
+
+00:02:35.960 --> 00:02:38.000
+matches the impressive benchmark numbers,
+
+00:02:38.220 --> 00:02:40.460
+especially for non-English coding, legal,
+
+00:02:40.640 --> 00:02:41.400
+or creative tasks.
+
+00:02:41.720 --> 00:02:44.060
+Early feedback suggests the multilingual improvements
+
+00:02:44.060 --> 00:02:46.080
+are noticeable even in the smaller variants.
+
+00:02:46.420 --> 00:02:48.900
+That makes Gemma 4 an attractive drop-in replacement
+
+00:02:48.900 --> 00:02:51.520
+for Claude or GPT-40 class models
+
+00:02:51.520 --> 00:02:54.060
+when token cost or latency matters to you.
+
+00:02:54.560 --> 00:02:57.200
+One developer is already prototyping a clever setup
+
+00:02:57.200 --> 00:03:00.940
+using Gemma 4 as a local preprocessor for Claude code.
+
+00:03:01.240 --> 00:03:03.500
+They built a bun-based proxy that sits
+
+00:03:03.500 --> 00:03:05.040
+in front of the Claude API.
+
+00:03:05.880 --> 00:03:10.160
+Gemma 4E2B running through lama.cpp translates
+
+00:03:10.160 --> 00:03:13.020
+Korean to English, prunes irrelevant context,
+
+00:03:13.300 --> 00:03:15.340
+and optionally performs initial reasoning
+
+00:03:15.340 --> 00:03:16.660
+before the expensive call.
+
+00:03:16.660 --> 00:03:20.300
+The proxy caches results in SQLite using WAL mode.
+
+00:03:20.760 --> 00:03:23.060
+Intel Mac users are particularly interested
+
+00:03:23.060 --> 00:03:26.560
+in real tokens per second numbers for lama.cpp
+
+00:03:26.560 --> 00:03:28.260
+on non-Apple Silicon hardware.
+
+00:03:28.720 --> 00:03:30.620
+The open question is whether pre-supplying
+
+00:03:30.620 --> 00:03:33.780
+that reasoning actually reduces the paid model's token usage
+
+00:03:33.780 --> 00:03:36.220
+or whether Claude simply re-does the work internally.
+
+00:03:36.880 --> 00:03:38.960
+On the agent side, there is growing excitement
+
+00:03:38.960 --> 00:03:41.880
+around using coding agents as general purpose agents.
+
+00:03:42.160 --> 00:03:45.300
+One Reddit user shared how they took a pie coding agent SDK
+
+00:03:45.300 --> 00:03:47.080
+with red, right, and bash tools
+
+00:03:47.080 --> 00:03:49.460
+and used it to handle document knowledge bases.
+
+00:03:49.800 --> 00:03:51.480
+They performed structured extraction
+
+00:03:51.480 --> 00:03:55.160
+from over 100 PDFs and ran database benchmarking
+
+00:03:55.160 --> 00:03:57.000
+all without any vector database.
+
+00:03:57.520 --> 00:03:59.760
+Traditional pipelines collapse into agent loops.
+
+00:04:00.320 --> 00:04:02.700
+Retrieval augmented generation becomes red index,
+
+00:04:02.960 --> 00:04:04.400
+choose files, open them.
+
+00:04:04.800 --> 00:04:08.300
+ETL becomes write script, run it, inspect output,
+
+00:04:08.680 --> 00:04:09.860
+retry if needed.
+
+00:04:10.440 --> 00:04:13.520
+The pattern has already scaled to roughly 600 documents.
+
+00:04:14.200 --> 00:04:16.280
+The main uncertainties are what breaks first
+
+00:04:16.280 --> 00:04:19.460
+at larger scale, cost, latency, reliability,
+
+00:04:19.600 --> 00:04:20.480
+or context management.
+
+00:04:21.400 --> 00:04:22.840
+The author open sourced the code
+
+00:04:22.840 --> 00:04:24.640
+so others can inspect and build on it.
+
+00:04:25.040 --> 00:04:27.440
+Another fascinating project is VisionClaw.
+
+00:04:28.320 --> 00:04:30.140
+It turns Metareban smart glasses
+
+00:04:30.140 --> 00:04:32.420
+into an always on egocentric agent.
+
+00:04:32.900 --> 00:04:35.140
+The system continuously perceives the world
+
+00:04:35.140 --> 00:04:37.820
+and lets users initiate speech-driven tasks.
+
+00:04:38.180 --> 00:04:40.180
+You can add objects to an Amazon cart,
+
+00:04:40.640 --> 00:04:43.180
+generate notes from documents, create calendar events
+
+00:04:43.180 --> 00:04:46.120
+from posters or control IoT devices.
+
+00:04:46.520 --> 00:04:49.040
+A controlled lab study with 12 participants
+
+00:04:49.040 --> 00:04:51.440
+in a longitudinal deployment with five users
+
+00:04:51.440 --> 00:04:53.060
+showed faster task completion
+
+00:04:53.060 --> 00:04:54.960
+and reduced interaction overhead.
+
+00:04:55.500 --> 00:04:57.760
+The comparison was against both non-agentic
+
+00:04:57.760 --> 00:04:59.280
+and non-always on baselines.
+
+00:04:59.920 --> 00:05:03.040
+Interaction patterns shifted toward opportunistic initiation
+
+00:05:03.040 --> 00:05:05.460
+and delegation rather than manual control.
+
+00:05:06.000 --> 00:05:08.640
+We are also seeing more specialized agent work,
+
+00:05:09.040 --> 00:05:11.120
+a hackathon project created VUHA,
+
+00:05:11.120 --> 00:05:16.180
+an AI site reliability engineering agent built on GLM 5.1.
+
+00:05:16.500 --> 00:05:18.980
+It functions as a triple cloud recovery orchestrator
+
+00:05:18.980 --> 00:05:21.780
+covering AWS, Azure, and GCP.
+
+00:05:22.340 --> 00:05:25.220
+The agent uses a fast API control plane
+
+00:05:25.220 --> 00:05:27.540
+and an evolutionary SU light memory
+
+00:05:27.540 --> 00:05:30.120
+that learns from every human approved failover.
+
+00:05:30.540 --> 00:05:33.900
+It gathers context, proposes fixes in JSON format,
+
+00:05:34.080 --> 00:05:36.120
+and only acts after human approval.
+
+00:05:36.560 --> 00:05:38.780
+A reflection phase writes incident learnings
+
+00:05:38.780 --> 00:05:41.220
+back into memory so future diagnoses improve.
+
+00:05:41.740 --> 00:05:44.620
+There is even a live demo where you can hard kill nodes
+
+00:05:44.620 --> 00:05:46.980
+and watch the system react in real time.
+
+00:05:47.540 --> 00:05:49.220
+On the practical and community side,
+
+00:05:49.220 --> 00:05:52.020
+there is new guidance about using minimal container images
+
+00:05:52.020 --> 00:05:54.340
+to fortify AI agent security.
+
+00:05:54.960 --> 00:05:56.840
+Drastically shrinking container images
+
+00:05:56.840 --> 00:05:59.420
+reduces the attack surface for deployed agents.
+
+00:05:59.880 --> 00:06:03.420
+You get fewer dependencies, smaller software bill of materials
+
+00:06:03.420 --> 00:06:04.900
+and faster cold starts.
+
+00:06:05.340 --> 00:06:07.520
+These are practical wins for both security
+
+00:06:07.520 --> 00:06:10.480
+and operational efficiency when running autonomous agents
+
+00:06:10.480 --> 00:06:11.060
+at scale.
+
+00:06:11.440 --> 00:06:13.600
+On a more serious note, security researchers
+
+00:06:13.600 --> 00:06:17.040
+identified critical remote code execution vulnerabilities
+
+00:06:17.040 --> 00:06:19.300
+in publicly deployed flow eyes instances.
+
+00:06:19.640 --> 00:06:22.980
+The issue carries a CVSS score of 10.0
+
+00:06:22.980 --> 00:06:25.520
+and is under active exploitation in the wild.
+
+00:06:25.980 --> 00:06:29.160
+More than 12,000 instances are currently exposed.
+
+00:06:29.800 --> 00:06:33.120
+Teams running flow eyes or similar low code agent builders
+
+00:06:33.680 --> 00:06:36.540
+should immediately isolate internet facing instances,
+
+00:06:36.540 --> 00:06:40.380
+apply available patches and follow responsible disclosure
+
+00:06:40.380 --> 00:06:40.940
+practices.
+
+00:06:41.420 --> 00:06:44.600
+This incident underscores the operational security
+
+00:06:44.600 --> 00:06:48.020
+debt that comes with rapidly shipping agent tooling.
+
+00:06:49.020 --> 00:06:52.060
+OK, let's pop the hood on this hybrid attention approach
+
+00:06:52.060 --> 00:06:54.760
+because it is more subtle than most people realize.
+
+00:06:55.460 --> 00:06:57.120
+Everyone talks about hybrid attention
+
+00:06:57.120 --> 00:06:59.980
+as if it is a simple performance dial you turn on.
+
+00:07:00.400 --> 00:07:02.780
+In practice, it is a carefully engineered compromise
+
+00:07:02.780 --> 00:07:06.920
+between local syntax, long range state, and memory bandwidth.
+
+00:07:07.520 --> 00:07:10.620
+The core insight is to split attention into three stages,
+
+00:07:11.200 --> 00:07:13.980
+a linear projection, a narrow quadratic window
+
+00:07:13.980 --> 00:07:16.360
+that still captures short-range dependencies
+
+00:07:16.980 --> 00:07:18.360
+and another linear stage.
+
+00:07:18.560 --> 00:07:22.160
+At the same time, they inject a GRU-style recurrent state
+
+00:07:22.160 --> 00:07:23.340
+that compresses history.
+
+00:07:24.060 --> 00:07:26.700
+A learned gate then blends the local and recurrent path
+
+00:07:26.700 --> 00:07:29.420
+so the model can decide token by token
+
+00:07:29.420 --> 00:07:32.300
+whether syntax or distant context matters more.
+
+00:07:32.800 --> 00:07:35.720
+By keeping only the recent window in the KV cache
+
+00:07:35.720 --> 00:07:38.920
+while the recurrent state lives in tiny fixed size registers,
+
+00:07:39.380 --> 00:07:41.180
+they get the 50 times speed up.
+
+00:07:41.500 --> 00:07:44.360
+The quadratic middle layer never sees the full context.
+
+00:07:44.660 --> 00:07:46.680
+The quality cost trade-off is revealing.
+
+00:07:47.220 --> 00:07:51.180
+Perplexity barely moves yet semantic coherence still lags
+
+00:07:51.180 --> 00:07:53.400
+because the recurrent compression is lossy.
+
+00:07:53.880 --> 00:07:55.920
+Above roughly 30 million parameters,
+
+00:07:56.160 --> 00:07:58.060
+the architectural gains shrinks rapidly
+
+00:07:58.060 --> 00:08:00.180
+and data scale reasserts dominance.
+
+00:08:00.880 --> 00:08:03.380
+The gacha that bites most teams is assuming
+
+00:08:03.380 --> 00:08:06.200
+the hybrid mechanism will magically fix repetition.
+
+00:08:06.860 --> 00:08:08.360
+It reduces latency dramatically
+
+00:08:08.360 --> 00:08:11.080
+but does not replace the need for high quality,
+
+00:08:11.300 --> 00:08:13.920
+diverse training data, and proper temperature scheduling.
+
+00:08:14.280 --> 00:08:16.060
+So when should you actually reach for this
+
+00:08:16.060 --> 00:08:17.260
+versus the alternative?
+
+00:08:17.840 --> 00:08:20.040
+Use hybrid attention when you are latency bound
+
+00:08:20.040 --> 00:08:22.860
+on edge hardware and your context is mostly local
+
+00:08:22.860 --> 00:08:24.900
+such as code, chat, or control loops.
+
+00:08:24.900 --> 00:08:27.700
+For deep reasoning or long document synthesis,
+
+00:08:28.120 --> 00:08:29.940
+classic transformer with efficient attention
+
+00:08:29.940 --> 00:08:33.880
+like flash attention to or MLA remains the safer default.
+
+00:08:34.380 --> 00:08:37.500
+If you have not tried the open sourced coding agent SDK
+
+00:08:37.500 --> 00:08:41.680
+from the local LLAMA post, this week is a great time.
+
+00:08:42.120 --> 00:08:46.340
+Replace one manual ETL or retrieval augmented generation pipeline
+
+00:08:46.340 --> 00:08:48.040
+with a red-right bash agent loop
+
+00:08:48.040 --> 00:08:50.860
+and see how far you get before context or cost becomes
+
+00:08:50.860 --> 00:08:51.680
+the bottleneck.
+
+00:08:51.680 --> 00:08:55.460
+Download Gemma 4, either the 9 billion or 31 billion version
+
+00:08:55.460 --> 00:08:56.600
+via hugging face.
+
+00:08:57.080 --> 00:08:59.140
+Run it on the European languages you actually use
+
+00:08:59.140 --> 00:09:01.320
+in Compare Korean or French token efficiency
+
+00:09:01.320 --> 00:09:05.760
+versus Claude 3.5 or 4 to quantify potential API savings.
+
+00:09:06.260 --> 00:09:10.140
+Test the hybrid attention 25.6 million parameter rust model
+
+00:09:10.140 --> 00:09:13.080
+or replicate the linear quadratic linear pattern
+
+00:09:13.080 --> 00:09:18.240
+in your own small decoder on a local 406 OTI or laptop GPU.
+
+00:09:19.300 --> 00:09:21.640
+Measure real-world tokens per second
+
+00:09:21.640 --> 00:09:24.440
+versus a standard transformer of similar size.
+
+00:09:24.800 --> 00:09:28.280
+Deploy a vision-cloth style egocentric prompting setup
+
+00:09:28.280 --> 00:09:31.840
+on your own Rayban glasses or any always on camera feed.
+
+00:09:32.020 --> 00:09:34.640
+Try opportunistic commands like add this to cart
+
+00:09:34.640 --> 00:09:36.720
+or summarize this poster and notice
+
+00:09:36.720 --> 00:09:38.960
+how delegation changes your interaction habits.
+
+00:09:39.500 --> 00:09:42.040
+And if you run flow-ice or any low-code agent builder,
+
+00:09:42.300 --> 00:09:44.400
+audit your internet-exposed instances today
+
+00:09:44.400 --> 00:09:46.820
+and consider moving to minimal container images
+
+00:09:46.820 --> 00:09:48.240
+or air-gapped setups.
+
+00:09:49.040 --> 00:09:52.240
+Security debt compounds fast once agents can call tools.
+
+00:09:52.800 --> 00:09:55.500
+On the horizon, keep an eye on continued community exploration
+
+00:09:55.500 --> 00:09:59.740
+of memory topologies in lifelong LLM multi-agent systems.
+
+00:10:00.400 --> 00:10:03.020
+More agentic federated learning papers and prototypes
+
+00:10:03.020 --> 00:10:05.920
+are likely following the agentic FL paradigm shift.
+
+00:10:06.520 --> 00:10:08.960
+A 2A agentization benchmarks and tooling
+
+00:10:08.960 --> 00:10:11.860
+should see rapid iteration now that the formal framework
+
+00:10:11.860 --> 00:10:14.640
+is public and watch for production deployments
+
+00:10:14.640 --> 00:10:16.300
+of cognitive fabric nodes middleware,
+
+00:10:16.620 --> 00:10:18.800
+which are already showing more than 10% gains
+
+00:10:18.800 --> 00:10:20.800
+on hotpot QA and Musikui.
+
+00:10:21.260 --> 00:10:24.540
+Before we go, tomorrow we will likely have more details
+
+00:10:24.540 --> 00:10:27.320
+on the growing momentum behind agentic memory systems
+
+00:10:27.320 --> 00:10:29.260
+and how they are starting to move from research
+
+00:10:29.260 --> 00:10:30.980
+into early production experiments.
+
+00:10:31.180 --> 00:10:32.660
+That's models and agents for today.
+
+00:10:33.200 --> 00:10:35.340
+If you found this useful, share it with someone
+
+00:10:35.340 --> 00:10:37.140
+who's trying to keep up with all these changes
+
+00:10:37.140 --> 00:10:39.580
+and subscribe so you don't miss tomorrow's update.
+
+00:10:40.200 --> 00:10:43.340
+The AI world moves fast will help you keep up.
+
+00:10:43.340 --> 00:10:43.980
+See you tomorrow.
+
+00:10:45.120 --> 00:10:47.080
+This podcast is curated by Patrick,
+
+00:10:47.260 --> 00:10:50.380
+but generated using AI voice synthesis of my voice
+
+00:10:50.380 --> 00:10:51.440
+using 11 labs.
+
+00:10:51.940 --> 00:10:54.380
+The primary reason to do this is I unfortunately don't have
+
+00:10:54.380 --> 00:10:56.760
+the time to be consistent with generating all the content
+
+00:10:56.760 --> 00:10:58.740
+and wanted to focus on creating consistent
+
+00:10:58.740 --> 00:11:01.040
+and regular episodes for all the themes that I enjoy
+
+00:11:01.040 --> 00:11:02.280
+and I hope others do as well.

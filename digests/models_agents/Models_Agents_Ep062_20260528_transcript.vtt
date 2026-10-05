@@ -1,0 +1,304 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.320
+What's up, welcome to Models and Agents, episode 62 for May 28th, 2026.
+
+00:00:06.240 --> 00:00:07.600
+The AI world never sleeps.
+
+00:00:08.100 --> 00:00:09.320
+Here's what you need to know today.
+
+00:00:10.280 --> 00:00:14.840
+Core Weave's new platform lets agents improve themselves between training and inference
+
+00:00:14.840 --> 00:00:17.160
+runs without manual retraining cycles.
+
+00:00:18.000 --> 00:00:23.320
+Core Weave launched a unified agentic platform that closes the training to inference gap for
+
+00:00:23.320 --> 00:00:25.280
+continuous autonomous improvement.
+
+00:00:26.280 --> 00:00:32.020
+Perplexity open sourced a unigram talkenizer that cuts re-rank or latency five times versus
+
+00:00:32.020 --> 00:00:32.880
+hugging face.
+
+00:00:33.440 --> 00:00:42.760
+Multiple teams showed practical QWN 3.6 to 35 BA3 bin inference on single consumer GPUs
+
+00:00:42.760 --> 00:00:44.780
+with strong context handling.
+
+00:00:45.460 --> 00:00:49.920
+Builders should watch how these infrastructure and tooling shifts affect agent deployment
+
+00:00:49.920 --> 00:00:51.100
+costs this week.
+
+00:00:52.100 --> 00:00:57.820
+Core Weave launched a unified agentic AI platform that enables continuous autonomous
+
+00:00:57.820 --> 00:01:01.260
+agent improvement by closing the training to inference gap.
+
+00:01:02.380 --> 00:01:06.800
+The system supports self-improvement loops where agents can iterate on their own outputs
+
+00:01:06.800 --> 00:01:09.380
+without requiring full retraining cycles.
+
+00:01:10.020 --> 00:01:15.180
+It targets production workloads where agents need to adapt in real time rather than waiting
+
+00:01:15.180 --> 00:01:16.980
+for scheduled fine-tuning runs.
+
+00:01:17.700 --> 00:01:22.740
+Teams building long-running autonomous systems can now test tighter feedback loops between
+
+00:01:22.740 --> 00:01:24.900
+inference results and model updates.
+
+00:01:25.380 --> 00:01:30.800
+Watch for how other inference providers respond with similar continuous improvement tooling.
+
+00:01:31.680 --> 00:01:38.320
+Ourplexity released a written unigram talkenizer that delivers five times lower P50 latency
+
+00:01:38.320 --> 00:01:40.560
+than the hugging face tokenizer's crate.
+
+00:01:41.220 --> 00:01:44.840
+It cuts production CPU utilization five to six times.
+
+00:01:45.480 --> 00:01:50.520
+The tokenizer targets re-ranker workloads where tokenization overhead previously dominated
+
+00:01:50.520 --> 00:01:56.860
+latency. It maintains compatibility with existing pipelines while reducing the CPU footprint for
+
+00:01:56.860 --> 00:02:03.120
+high throughput search and retrieval tasks. Builders running re-ranking stages at scale should
+
+00:02:03.120 --> 00:02:11.400
+benchmark this drop-in replacement this week. A user demonstrated QWN 3.6 to 35B, A3B,
+
+00:02:11.400 --> 00:02:20.220
+APX, MTP, iCompact, running a 37 tokens per second generation with 72,000 context on a single
+
+00:02:20.220 --> 00:02:29.260
+RTX 362GB card. The setup uses spirit viewons, CUDA, fork, and muddler's Apex quantization.
+
+00:02:29.820 --> 00:02:35.820
+It offloads a 17.3GB model while keeping PPL at 3.25.
+
+00:02:36.460 --> 00:02:42.380
+The configuration achieves 100% needle and haystack retrieval up to 200,000 tokens.
+
+00:02:43.300 --> 00:02:47.220
+MTP heads hurt performance on this hardware and should be left disabled.
+
+00:02:48.080 --> 00:02:54.580
+Crasse's version 1.0 added full rust execution, four bit and six bit KV cache,
+
+00:02:54.920 --> 00:03:01.140
+and sensitivity aware HQQ attention that mixes four, six, and eight bit precision per layer.
+
+00:03:02.020 --> 00:03:10.980
+On an RTX 370 mobile 8GB card, it reaches 222 prompt tokens per second and 12.48 tokens per
+
+00:03:10.980 --> 00:03:21.060
+second generation for QWN 3.6 to 35B, A3BQ4. The runtime now supports ampere cards and reduces system
+
+00:03:21.060 --> 00:03:27.740
+RAM requirements to roughly one times model size plus overhead. Users running models that exceed
+
+00:03:27.740 --> 00:03:35.560
+VRAM should evaluate the new KV cache options. A diffusion-inspired framework for calibrated LLM
+
+00:03:35.560 --> 00:03:42.160
+as a judge evaluation was released, focused on safety critical autonomous vehicle video assessment.
+
+00:03:42.800 --> 00:03:48.760
+It applies iterative denoising to stress test judge pipelines and produce more reliable structured
+
+00:03:48.760 --> 00:03:55.340
+scores. The approach target domains where single pass LLM judgments are currently too noisy for
+
+00:03:55.500 --> 00:04:01.740
+production use. Teams building evaluation harnesses for multimodal agents can experiment with the
+
+00:04:01.740 --> 00:04:08.060
+denoising loop. Snowflake acquired Natamato expand governance capabilities for AI agents,
+
+00:04:08.520 --> 00:04:15.320
+focusing on MCP-based controls. The move adds agent-specific policy and oversight tooling to
+
+00:04:15.320 --> 00:04:21.360
+snowflakes existing data platform. Enterprise teams already using Snowflake for data workloads
+
+00:04:21.360 --> 00:04:25.480
+gain a path to unified agent governance without additional vendors.
+
+00:04:26.360 --> 00:04:33.480
+Jordi AI closed a $30 million series A to build security and control layers for enterprise AI agents.
+
+00:04:34.000 --> 00:04:39.100
+The funding targets the growing demand for guardrails around autonomous agent deployments.
+
+00:04:39.880 --> 00:04:45.660
+Companies evaluating agent platforms Snow have another funded option focused on runtime safety
+
+00:04:45.660 --> 00:04:52.980
+rather than core orchestration. Microsoft introduced new cloud PC offerings that place AI agents under
+
+00:04:52.980 --> 00:04:59.660
+enterprise policy and access controls. The update integrates agent execution into existing
+
+00:04:59.660 --> 00:05:05.660
+Windows endpoint management surfaces. Organizations already managing devices through Microsoft
+
+00:05:05.660 --> 00:05:12.240
+Intune can extend the same controls to agent workloads. Salesforce reported that its AI
+
+00:05:12.240 --> 00:05:16.600
+agents now handle more support volume than human teams in certain workflows.
+
+00:05:17.300 --> 00:05:21.960
+The agents operate inside existing service cloud routing and escalation paths.
+
+00:05:22.660 --> 00:05:27.520
+Companies using Salesforce support tooling can evaluate agent first configurations without
+
+00:05:27.520 --> 00:05:35.000
+changing their CRM back end. Zair replaced a standard ROFT network with its ZCube flattened
+
+00:05:35.000 --> 00:05:43.820
+parted topology on 1000 GPU GLM 5.1 inference cluster. The change cuts switch and optical module cost
+
+00:05:43.820 --> 00:05:53.120
+33%. It raised throughput 15% and reduced P99 first token latency 40.6% while keeping the same
+
+00:05:53.120 --> 00:06:00.500
+GPUs and model. The design specifically addresses asymmetric KV cache traffic created by pre-fill
+
+00:06:00.500 --> 00:06:07.600
+decode disaggregation. Teams running large scale disaggregated inference should examine the topology
+
+00:06:07.600 --> 00:06:14.460
+details. A complete colab notebook demonstrates building semantic hybrid, sparse, and quantized
+
+00:06:14.460 --> 00:06:21.980
+vector search inside PostgreSQL with the PG vector extension. The guide covers extension compilation,
+
+00:06:22.540 --> 00:06:29.580
+PCI cop integration, sentence transformers and vettings, and index configuration. Developers wanting to
+
+00:06:29.580 --> 00:06:35.460
+avoid separate vector databases can run the notebook to test production grade search inside an
+
+00:06:35.460 --> 00:06:42.700
+existing PostgreSQL instance. Tuan released Q-Judger, a 27 billion vision language model fine-tuned
+
+00:06:42.700 --> 00:06:49.300
+to score text-to-image outputs across five top-level quality dimensions, with structured JSON output
+
+00:06:49.300 --> 00:06:55.880
+and chain-of-thought reasoning. The model supports fine-grained evaluation of realism, composition,
+
+00:06:56.440 --> 00:07:02.820
+anatomy, and safety attributes. Anyone building automated image generation pipelines now has an open
+
+00:07:02.820 --> 00:07:09.720
+judge model to integrate. A user shared a working stack using VLLM behind a law-moss swap and
+
+00:07:09.720 --> 00:07:17.420
+LibreChat for multi-user access with API keys and HTTPS termination via Apache. The setup targets
+
+00:07:17.420 --> 00:07:22.720
+fewer than 10 concurrent users and highlights current concurrency limits in law-moss swap.
+
+00:07:23.520 --> 00:07:28.580
+Teams needing simple self-hosted multi-tenant inference can adapt the described proxy
+
+00:07:28.580 --> 00:07:34.220
+and key management pattern. Okay, let's pop the hood on the network side of pre-fill decode
+
+00:07:34.220 --> 00:07:40.560
+disaggregation. Everyone treats pre-fill decode disaggregation as a simple split that just needs more
+
+00:07:40.560 --> 00:07:47.900
+GPUs. In practice, the KV cache handoff between pre-fill and decode nodes creates highly directional
+
+00:07:47.900 --> 00:07:54.480
+bursty traffic that standard fat tree or rail optimized apologies were never designed to carry.
+
+00:07:55.240 --> 00:08:01.320
+The pre-fill side generates large, contiguous KV blocks that must cross the network in a short window.
+
+00:08:02.060 --> 00:08:06.480
+Decode nodes request smaller, latency-sensitive slices on different schedules.
+
+00:08:07.160 --> 00:08:13.160
+This mismatch produces leaf switch hotspots and PFC backpressure even when aggregate bandwidth
+
+00:08:13.160 --> 00:08:20.220
+looks sufficient. Zai's flattened bipartite design removes the spine layer entirely, so every
+
+00:08:20.220 --> 00:08:26.000
+leaf pair has a direct path. It eliminates the static rail mapping that forces traffic through
+
+00:08:26.000 --> 00:08:33.960
+congested spines. The 33% hardware cost reduction and 40% tail latency improvement come directly from
+
+00:08:33.960 --> 00:08:40.220
+removing those forced hops rather than adding more bandwidth. When your decode cluster is larger than
+
+00:08:40.220 --> 00:08:46.820
+your pre-fill cluster or when context lengths vary widely, the topology choice matters more than raw
+
+00:08:46.820 --> 00:08:54.160
+switch speed. The practical test is whether your first token P99 stays flat as you scale the decode pool.
+
+00:08:54.780 --> 00:09:00.740
+If it climbs, the network mapping is the next place to look. Run the perplexity unigram tokenizer
+
+00:09:00.740 --> 00:09:05.880
+in a ranker pipeline to measure the reported five times latency drop on your workload.
+
+00:09:06.600 --> 00:09:16.980
+Test spirit boons fork plus muddler's apex quant on QWN3.6-35BE3B if you need 70,000 plus
+
+00:09:16.980 --> 00:09:24.640
+context on a 12-gigabyte card. Evaluate crosses on an Amperel laptop GPU for models that previously
+
+00:09:24.640 --> 00:09:31.560
+required two cards. Add PG-Vector Hybrid Search to an existing Postgres application before reaching
+
+00:09:31.560 --> 00:09:36.960
+for a dedicated vector store. More inference providers are expected to announce continuous
+
+00:09:36.960 --> 00:09:43.820
+improvement loops similar to Core Weaves platform. Additional open tokenizers targeting re-ranker
+
+00:09:43.820 --> 00:09:49.840
+and long context workloads are likely following perplexity's release. Watch for further single
+
+00:09:49.840 --> 00:09:57.860
+GPU quantization results on the QWN3.6 family as the new forks mature. Tomorrow keep an eye on additional
+
+00:09:57.860 --> 00:10:05.200
+single GPU quantization results for the QWN3.6 family. That wraps up today's AI briefing.
+
+00:10:05.740 --> 00:10:10.400
+Share this with a developer or builder who wants to stay current. Subscribe wherever you listen.
+
+00:10:10.780 --> 00:10:15.060
+See you tomorrow. This episode used AI voices synthesis of my voice.
+
+00:10:15.060 --> 00:10:18.460
+Editorial selection and analysis are my own.

@@ -91,6 +91,12 @@ _JOINED_RE = re.compile(rf"\b{_STEM}networks?\b", re.I)
 #     this from firing on ordinary prose.
 _TORN_RE = re.compile(rf"\b{_STEM}\b[\s\-]{{1,3}}ren(?=networks?\b)", re.I)
 
+# 2c. The Nerra Daily edition glued to the stem — Whisper wrote
+#     "NaraDaily stitches the whole network..." (First Principles Ep113,
+#     2026-09-27). The daily edition is the only product the brand is
+#     ever spoken flush against, so the suffix is pinned to it.
+_DAILY_RE = re.compile(rf"\b{_STEM}daily\b", re.I)
+
 # 3. Separated form: "NARA Network", "Naran Network", "nara-network".
 #    Only the stem is rewritten; the separator and the "network" token
 #    keep whatever casing Whisper emitted.
@@ -184,6 +190,9 @@ def correct_brand_text(text: str) -> str:
     text = _TORN_RE.sub(lambda m: _match_case("Nerra", m.group(0)), text)
     text = _JOINED_RE.sub(
         lambda m: _match_case("NerraNetwork", m.group(0)), text
+    )
+    text = _DAILY_RE.sub(
+        lambda m: _match_case("Nerra", m.group(0)[:-5]) + " Daily", text
     )
     text = _FILLER_RE.sub(lambda m: _match_case("Nerra", m.group(0)) + " ", text)
     text = _SEPARATED_RE.sub(lambda m: _match_case("Nerra", m.group(0)), text)
@@ -401,6 +410,70 @@ def build_initial_prompt(vocabulary: Optional[Iterable[str]] = None) -> str:
     return ", ".join(kept + brand) + "."
 
 
+# ---------------------------------------------------------------------------
+# WebVTT rendering (Oct 1 2026)
+# ---------------------------------------------------------------------------
+
+# A cue whose end does not come after its start is invalid WebVTT; Whisper
+# can emit a zero-length segment on a single short word. Hold it open for
+# this long rather than drop a spoken word from the transcript.
+_MIN_CUE_SECONDS = 0.1
+
+
+def _vtt_timestamp(seconds: float) -> str:
+    """``HH:MM:SS.mmm`` for WebVTT (hours always present, never negative)."""
+    total_ms = int(round(max(float(seconds), 0.0) * 1000))
+    hours, rem = divmod(total_ms, 3_600_000)
+    minutes, rem = divmod(rem, 60_000)
+    secs, ms = divmod(rem, 1000)
+    return f"{hours:02d}:{minutes:02d}:{secs:02d}.{ms:03d}"
+
+
+def _vtt_cue_text(text: str) -> str:
+    """One line of cue text that can never terminate or corrupt the cue.
+
+    WebVTT reserves ``&``, ``<`` and ``>`` in cue payloads and forbids
+    the ``-->`` arrow anywhere in the text; a blank line would end the
+    cue early. Escaping ``>`` is what guarantees the arrow can never
+    appear verbatim.
+    """
+    flat = " ".join((text or "").split())
+    return (
+        flat.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
+
+
+def segments_to_vtt(segments: Sequence[dict]) -> str:
+    """Render Whisper-style ``[{start, end, text}]`` segments as WebVTT.
+
+    Pure: one cue per segment in the order given, text stripped, a
+    segment with no text skipped, timings on the JSON's own timebase.
+    The result always ends with a newline; a transcript with no usable
+    segment is a valid header-only file.
+    """
+    lines = ["WEBVTT", ""]
+    for seg in segments:
+        text = _vtt_cue_text(str(seg.get("text") or ""))
+        if not text:
+            continue
+        try:
+            start = float(seg.get("start") or 0.0)
+            end = float(seg.get("end") or 0.0)
+        except (TypeError, ValueError):
+            continue
+        start = max(start, 0.0)
+        if end < start + _MIN_CUE_SECONDS:
+            end = start + _MIN_CUE_SECONDS
+        lines.append(f"{_vtt_timestamp(start)} --> {_vtt_timestamp(end)}")
+        lines.append(text)
+        lines.append("")
+    # ``lines`` always ends on the blank line that closes the last cue (or
+    # the header), so the join itself supplies the trailing newline.
+    return "\n".join(lines)
+
+
 @dataclass(frozen=True)
 class TranscriptResult:
     """Output of a successful ``generate_transcript()`` call.
@@ -414,6 +487,11 @@ class TranscriptResult:
     txt_path: Path
     json_path: Path
     text: str
+    # Oct 1 2026: the WebVTT rendering of the same segments. Apple
+    # Podcasts ingests only SRT/VTT, so the JSON tag alone meant no
+    # in-app transcript on any show. ``None`` only for callers that
+    # build the result by hand without a VTT.
+    vtt_path: Optional[Path] = None
 
 
 def generate_transcript(
@@ -575,12 +653,21 @@ def generate_transcript(
         txt_path = output_dir / f"{episode_prefix}_transcript.txt"
         txt_path.write_text(plain_text, encoding="utf-8")
 
+        # WebVTT from the SAME segments and the same timebase as the JSON
+        # (the committed chapters already key on these timings — never
+        # shift them). This is the file Apple Podcasts and the
+        # Podcasting 2.0 apps actually read; the JSON dump is kept for
+        # every in-repo consumer (captions, Shorts windows, promo cuts).
+        vtt_path = output_dir / f"{episode_prefix}_transcript.vtt"
+        vtt_path.write_text(segments_to_vtt(transcript_segments), encoding="utf-8")
+
         logger.info(
             "Transcript generated: %s (%d segments, %s detected)",
             txt_path.name, len(transcript_segments), info.language,
         )
         return TranscriptResult(
             txt_path=txt_path, json_path=json_path, text=plain_text,
+            vtt_path=vtt_path,
         )
 
     except Exception as exc:

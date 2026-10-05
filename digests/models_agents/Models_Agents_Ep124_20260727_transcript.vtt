@@ -1,0 +1,223 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:05.860
+Welcome back to Models and Agents, Episode 124 for July 27, 2026.
+
+00:00:06.800 --> 00:00:12.240
+Your daily AI briefing, new week in AI, and if last week was anything to go by,
+
+00:00:12.560 --> 00:00:17.880
+buckle up. Let's get into it. Autonomous support agents just prove they can handle real volume.
+
+00:00:18.780 --> 00:00:23.360
+G2A's Dave closed 14,400 tickets without human help.
+
+00:00:24.000 --> 00:00:31.140
+G2A deployed an autonomous AI agent named Dave that resolved 14,400 seller support tickets
+
+00:00:31.140 --> 00:00:36.900
+over 63 days. Meta confirmed it will release a new open source model.
+
+00:00:37.240 --> 00:00:43.960
+Quen3.627b showed stronger speculative decoding gains on heavier quantization levels.
+
+00:00:44.800 --> 00:00:49.240
+Builders should watch how these agent and inference improvements translate to production
+
+00:00:49.240 --> 00:00:56.820
+workloads this week. G2A.com deployed its autonomous AI agent Dave to handle seller support
+
+00:00:56.820 --> 00:01:04.500
+tickets. The agent resolved 14,400 tickets across 63 days, with no reported human intervention
+
+00:01:04.500 --> 00:01:10.600
+in the loop. This demonstrates concrete throughput for a narrow but high-volume customer support
+
+00:01:10.600 --> 00:01:16.420
+workflow. The result gives teams a data point on what fully autonomous ticket resolution looks
+
+00:01:16.420 --> 00:01:22.200
+like in practice today. Companies running similar high-ticket volume operations should test
+
+00:01:22.200 --> 00:01:27.960
+comparable agent setups against their own support logs this week. Watch for follow-up metrics
+
+00:01:27.960 --> 00:01:36.400
+on resolution quality and escalation rates. Quen3.627b showed the largest speculative decoding speed-ups
+
+00:01:36.400 --> 00:01:44.540
+on Q8 weights, with gains decreasing through Q6 and Q4. 10 of 10 tested speculative configurations
+
+00:01:44.540 --> 00:01:51.400
+ranked Q8 highest by multiplier. Acceptance rates stayed consistent across matched quant depths
+
+00:01:51.400 --> 00:01:57.600
+while base steps speed dropped with higher weight bite counts. D-flash delivered the highest absolute
+
+00:01:57.600 --> 00:02:06.520
+tokens per second overall. MTP ranked second across most setups. The NVFP4 SG-Lang pair proved
+
+00:02:06.520 --> 00:02:13.300
+fastest overall among quant and engine combinations. Weaver appeared as an outlier because it is fork
+
+00:02:13.300 --> 00:02:21.940
+only with per target heads, limiting it to specific model and quant pairings. Lama.cpp's MTP path
+
+00:02:21.940 --> 00:02:30.580
+on UDQ4 ran pathologically slow, producing lower absolute tokens per second than the Q6 MTP3
+
+00:02:30.580 --> 00:02:37.900
+variant at identical acceptance rates. Builders running local inference on 27b class models should
+
+00:02:37.900 --> 00:02:43.620
+benchmark D-flash or MTP on their target quant this week to capture the reported gains.
+
+00:02:44.440 --> 00:02:50.920
+The tests used short outputs, greedy decoding and batch size one, so the multipliers represent
+
+00:02:50.920 --> 00:02:56.800
+an upper bound rather than a general concurrency result. The announcement came via a screenshot
+
+00:02:56.800 --> 00:03:03.620
+of a post by Alexander Wang. No architecture details, parameter count or release timeline were
+
+00:03:03.620 --> 00:03:09.460
+provided in the post. Community discussion centers on how the new model will compare to existing
+
+00:03:09.460 --> 00:03:15.280
+open weight families. Developers tracking open releases should monitor meta's official channels
+
+00:03:15.280 --> 00:03:22.020
+for the first weight drop. Siemens introduced a characterization AI agent that automates design
+
+00:03:22.020 --> 00:03:28.480
+iteration loops. The agent targets electronics design workflows where repeated characterization steps
+
+00:03:28.480 --> 00:03:35.380
+are common. No specific performance numbers or integration details were released. Hardware and
+
+00:03:35.380 --> 00:03:42.300
+EDA teams should watch for the first public demos or API access. Islands launched as a shared
+
+00:03:42.300 --> 00:03:49.180
+economic network where autonomous AI agents and humans can work, trade and co-evolve. The platform
+
+00:03:49.180 --> 00:03:54.960
+positions itself as infrastructure for agent to agent and human to agent economic interactions.
+
+00:03:55.680 --> 00:04:02.860
+No technical architecture, APIs or early access details were disclosed. Teams exploring multi-agent
+
+00:04:02.860 --> 00:04:08.880
+marketplaces should track the project's first public documentation. Simon Willison posted that
+
+00:04:08.880 --> 00:04:15.080
+image segmentation capabilities similar to those demonstrated in Gemini 2.5 would be useful.
+
+00:04:15.840 --> 00:04:22.060
+The tweet links to his earlier write-up on Gemini image segmentation. No new implementation was
+
+00:04:22.060 --> 00:04:27.560
+shared. Developers working on multi-modal tooling should review the linked post for context on
+
+00:04:27.560 --> 00:04:33.740
+current segmentation behavior. Sam Altman shared a detailed prompt that used full chat history
+
+00:04:33.740 --> 00:04:40.140
+to generate three trip options. Build a coordination site, reach group consensus and draft reservation
+
+00:04:40.140 --> 00:04:47.240
+emails. The system completed the end-to-end task from a mobile prompt. The example illustrates current
+
+00:04:47.240 --> 00:04:53.160
+multi-step agent planning reach. Builders should test similar long horizon prompts against their
+
+00:04:53.160 --> 00:04:59.240
+own coordination workflows. Okay, let's pop the hood on parameter efficient fine-tuning for
+
+00:04:59.240 --> 00:05:06.200
+mixture of experts models. Everyone talks about uniform adapters as the obvious default. Yet Moe
+
+00:05:06.200 --> 00:05:11.560
+squared Laura couples the pre-trained router directly to task specific Laura routing through a
+
+00:05:11.880 --> 00:05:17.680
+mobile channel routing condition projection module. The router activations already computed by
+
+00:05:17.680 --> 00:05:23.900
+the base model are reused to decide which Laura experts activate, avoiding a second full routing
+
+00:05:23.900 --> 00:05:30.420
+pass. A single global Laura expert pool is shared across all layers, allowing emergent,
+
+00:05:30.600 --> 00:05:36.680
+layer-wise affinities while keeping total added parameters low. This design reduces the risk of
+
+00:05:36.880 --> 00:05:43.080
+overriding base expert specialization compared with static adapter placement. The approach delivered
+
+00:05:43.080 --> 00:05:48.900
+state-of-the-art downstream accuracy on multiple Moe backbones while preserving more general
+
+00:05:48.900 --> 00:05:57.280
+capabilities than prior Moe PEFT methods. Teams fine-tuning Moe models should test Moe squared Laura
+
+00:05:57.280 --> 00:06:03.760
+first when router reuse is feasible. The main gotcha is ensuring the base router remains frozen
+
+00:06:03.760 --> 00:06:11.360
+during adaptation, so routing priors are not disturbed. Test D-flash or MTP speculative decoding on
+
+00:06:11.360 --> 00:06:17.760
+Quinn 3.627b at Q8 weights to measure the reported speed-ups on your hardware.
+
+00:06:18.580 --> 00:06:24.680
+Review Simon Willisons Gemini image segmentation write-up if you need multimodal region extraction
+
+00:06:24.680 --> 00:06:31.560
+in current workflows. Run Sam Altman's group trip prompt style against your own multi-step
+
+00:06:31.560 --> 00:06:37.840
+planning tasks to see where current agents succeed or break. Monitor Meta's channels for the
+
+00:06:37.840 --> 00:06:43.820
+promised open-source model weights and compare early releases against Quinn and Lama families on
+
+00:06:43.820 --> 00:06:50.500
+your target tasks. Simon's characterization agent expected to reach public demos or early access.
+
+00:06:51.400 --> 00:06:57.640
+Island's platform documentation and APIs anticipated for agent-to-agent trading experiments.
+
+00:06:58.440 --> 00:07:04.560
+Further Meta open-source model details likely within the next release cycle. Tomorrow keep an
+
+00:07:04.560 --> 00:07:10.540
+eye on the first public documentation from islands on its agent marketplace setup. That's models
+
+00:07:10.540 --> 00:07:15.880
+and agents for today. If you found this useful share it with someone who's trying to keep up with
+
+00:07:15.880 --> 00:07:21.920
+all these changes and subscribe so you don't miss tomorrow's update. The AI world moves fast.
+
+00:07:21.920 --> 00:07:26.260
+We'll help you keep up. See you tomorrow and if you'd rather watch than listen,
+
+00:07:26.880 --> 00:07:33.120
+find us on YouTube at Narra Network. Links in the show notes. One more thing. If you like today's
+
+00:07:33.120 --> 00:07:39.020
+episode, our sister show Fascinating Frontiers is worth a spot in your feed. The most fascinating
+
+00:07:39.020 --> 00:07:45.060
+news from space and science. It's one of the Narra Network's daily briefings all free at Narra
+
+00:07:45.060 --> 00:07:50.820
+Network dot com. The do positive pod is the club for people who do something about it.
+
+00:07:50.820 --> 00:07:56.640
+Episodes and the dispatch wall at Narra Network dot com slash the dp pod.
+
+00:07:56.800 --> 00:08:03.520
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

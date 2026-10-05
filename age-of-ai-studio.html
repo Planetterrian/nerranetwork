@@ -83,7 +83,19 @@
   .phonebox { margin-top: .6rem; }
   .phonebox input { font: inherit; padding: .55rem .6rem; border-radius: 8px; border: 1px solid var(--line); width: 100%; max-width: 260px; margin: .3rem .5rem .3rem 0; }
   .phone { background: #0f766e; color: #fff; }
-  #phoneMsg, #phoneMsgCall { font-size: .92rem; margin: .4rem 0 0; }
+  #phoneMsg, #phoneMsgCall, #phoneMsgTop, #phoneMsgErr { font-size: .92rem; margin: .4rem 0 0; }
+  /* Oct 2 2026: the phone's browser before a phone line. */
+  .mobilebox { margin: .5rem 0; }
+  .mobilebox .qr { background: #fff; padding: 8px; display: inline-block; border-radius: 8px; margin: .5rem 0; }
+  .mobilebox p { font-size: .92rem; margin: .3rem 0; }
+  button.lastresort { background: transparent; color: inherit; border: 1px solid currentColor; font-size: .9rem; opacity: .85; }
+  /* Oct 1 2026: "you're not in the interview yet" until the guest is in. */
+  #notIn { border: 2px solid var(--warn); border-radius: 10px; padding: .9rem 1rem; margin: .6rem 0 1rem; }
+  #notIn.late { background: #fff4d6; color: #3b2a00; border-color: #d8b24c; }
+  #notIn.late #notInHead { color: #3b2a00; }
+  #notInHead { font-weight: 700; margin: 0 0 .4rem; color: var(--warn); }
+  #notIn ol { margin: .3rem 0 .5rem; padding-left: 1.3rem; }
+  #notIn li.done { text-decoration: line-through; opacity: .7; }
 </style>
 </head>
 <body>
@@ -100,6 +112,27 @@
   <!-- State: setup -->
   <div id="stateSetup" class="card hidden">
     <p class="status ok" id="setupMsg">Your interview is ready — let's get you sounding great.</p>
+    <!-- Oct 1 2026 (Jonathan Bautista): he had this page open at his start
+         time, never got past the microphone check, and wrote "I'm in the
+         room but no one is joining". Until the guest is actually in, the
+         page says plainly that they are not, what the two steps are, and
+         offers the phone from the start. -->
+    <div class="guest-only" id="notIn" role="status">
+      <p id="notInHead">You're not in the interview yet.</p>
+      <p style="margin:0">Two steps and you're in with Mira:</p>
+      <ol>
+        <li id="notInStep1">Press <b>Check my microphone</b> below and read the sentence until it says "Sounds good".</li>
+        <li id="notInStep2">Press <b>Join your interview</b>. Mira starts as soon as you're in.</li>
+      </ol>
+      <div class="phonebox" id="phoneBoxTop">
+        <span style="font-size:.92rem">Computer giving you trouble?</span>
+        <button class="phone" type="button" id="phoneBtnTop">Have Mira call my phone</button>
+        <div class="hidden" id="phoneAskTop"><input type="tel" id="phoneInTop"
+          placeholder="+1 604 555 0123" autocomplete="tel"><button class="phone" type="button"
+          id="phoneGoTop">Call me</button></div>
+        <p id="phoneMsgTop"></p>
+      </div>
+    </div>
     <p class="tips" id="studioStatus" style="color:var(--muted)">Signing in to the studio…</p>
     <p class="hostnote host-only hidden">Pick your microphone and press
     <b>Join the room</b>. You can join before or after the guest; Mira hears
@@ -130,7 +163,7 @@
         microphone and raise the Volume.</li>
         <li><b>AirPods or a Bluetooth headset?</b> Make sure they're connected to this computer,
         not your phone, and that any mute switch on the headset is off.</li>
-        <li><b>Still stuck?</b> Mira can call your phone instead, with nothing else to set up.
+        <li><b>Still stuck?</b> Join from your phone's browser instead (earbuds in), or, as a last resort, Mira can call you.
         <div class="phonebox" id="phoneBoxSetup">
           <button class="phone" type="button" id="phoneBtnSetup">Have Mira call my phone</button>
           <div class="hidden" id="phoneAskSetup"><input type="tel" id="phoneInSetup"
@@ -206,7 +239,7 @@
         <li>Pick a different microphone below. It switches straight away, no need to rejoin.</li>
       </ol>
       <div class="hidden" id="phoneOffer">
-        <p style="margin:.5rem 0 0">Still nothing? Mira can call your phone and carry on there.</p>
+        <p style="margin:.5rem 0 0">Still nothing? Carry on from your phone's browser (earbuds in), or, as a last resort, Mira can call you.</p>
         <div class="phonebox">
           <button class="phone" type="button" id="phoneBtnCall">Have Mira call my phone</button>
           <div class="hidden" id="phoneAskCall"><input type="tel" id="phoneInCall"
@@ -250,6 +283,14 @@
     <p class="tips" style="color:var(--muted)">Try reloading the page. If it
     persists, email <a href="mailto:mira@nerranetwork.com">mira@nerranetwork.com</a>
     and we'll sort it out.</p>
+    <div class="phonebox hidden" id="phoneBoxErr">
+      <p style="margin:0">Or join from your phone's browser instead (earbuds in). As a last resort, Mira can call you.</p>
+      <button class="phone" type="button" id="phoneBtnErr">Have Mira call my phone</button>
+      <div class="hidden" id="phoneAskErr"><input type="tel" id="phoneInErr"
+        placeholder="+1 604 555 0123" autocomplete="tel"><button class="phone" type="button"
+        id="phoneGoErr">Call me</button></div>
+      <p id="phoneMsgErr"></p>
+    </div>
   </div>
 
   <div class="footer" id="footerLine">Real people · AI host · Nerra Network</div>
@@ -373,6 +414,7 @@
         var id = s.ready && s.run_id ? s.run_id : null;
         if (id) {
           runId = id;
+          if (s.scheduled_at) scheduledAt = Date.parse(s.scheduled_at);
           startSetup();
           pollPresence();
           return;
@@ -412,6 +454,7 @@
   function startSetup() {
     show("stateSetup");
     updateJoinGate();
+    startNotIn();
     var want = isHost ? { audio: true } : { audio: true, video: true };
     navigator.mediaDevices.getUserMedia(want)
       .catch(function () {
@@ -422,7 +465,7 @@
         return navigator.mediaDevices.getUserMedia({ audio: true });
       })
       .then(function (stream) {
-        localStream = stream;
+        localStream = stream; micAccess = true;
         wirePreview(); listDevices(); meterMic();
         // Sign in to Voximplant NOW, while the guest is still checking
         // their mic, so a sign-in fault shows minutes before the slot
@@ -430,7 +473,10 @@
         preLogin();
       })
       .catch(function () {
-        fail("We need microphone access for the interview — allow it in your browser and reload.");
+        micAccess = false;
+        fail("Your browser hasn't let the studio use your microphone, so you can't join yet. "
+          + "Click the lock icon in the address bar, allow the microphone, and reload this page.");
+        if (!isHost && !testMode) document.getElementById("phoneBoxErr").classList.remove("hidden");
       });
   }
   // Sept 9 2026: a username with stray whitespace makes Voximplant's
@@ -698,6 +744,7 @@
     // A way through for the guest whose microphone is fine but whose voice
     // the check misjudges. Offered only after two honest attempts.
     document.getElementById("joinAnyway").classList.toggle("hidden", micFails < 2);
+    updateNotIn();
   }
   document.getElementById("joinAnyway").addEventListener("click", function () {
     joinOverride = true; micVerdict = micVerdict === "unknown" ? "skipped" : micVerdict;
@@ -708,14 +755,16 @@
     var sel = document.getElementById("micSel");
     return sel && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].textContent : "";
   }
-  function reportCheck(forceMic) {
+  function reportCheck(forceMic, extra) {
     try {
-      fetch(API + "/studio-check", {
-        method: "POST", headers: { "Content-Type": "application/json" }, keepalive: true,
-        body: JSON.stringify({ interview: interviewId, role: role, test: testMode,
+      var payload = { interview: interviewId, role: role, test: testMode,
           mic: forceMic || micVerdict, mic_db: micDb, echo: echoVerdict,
           signin: signinState, signin_error: signinError,
-          device: deviceLabel(), ua: navigator.userAgent }),
+          device: deviceLabel(), ua: navigator.userAgent };
+      if (extra) Object.keys(extra).forEach(function (k) { payload[k] = extra[k]; });
+      fetch(API + "/studio-check", {
+        method: "POST", headers: { "Content-Type": "application/json" }, keepalive: true,
+        body: JSON.stringify(payload),
       }).catch(function () { /* advisory only */ });
     } catch (e) { /* advisory only */ }
   }
@@ -725,7 +774,7 @@
     var when = s.scheduled_at ? new Date(s.scheduled_at) : null;
     document.getElementById("setupMsg").textContent = "Setup test: about 30 seconds. Nothing is recorded.";
     document.getElementById("checkDetail").textContent = "";
-    document.querySelectorAll("#stateSetup .row, #joinGate, #consentNote")
+    document.querySelectorAll("#stateSetup .row, #joinGate, #consentNote, #notIn")
       .forEach(function (el) { el.classList.add("hidden"); });
     // No phone switch from a test: that button dials now.
     document.getElementById("phoneBoxSetup").innerHTML =
@@ -771,7 +820,7 @@
   // dispatches the dial at once; with no usable number on file it asks.
   var phoneSwitched = false;
   function requestPhone(where) {
-    var msg = document.getElementById(where === "Call" ? "phoneMsgCall" : "phoneMsg");
+    var msg = document.getElementById(where === "Setup" ? "phoneMsg" : "phoneMsg" + where);
     var input = document.getElementById("phoneIn" + where);
     var ask = document.getElementById("phoneAsk" + where);
     var body = { interview: interviewId, run_id: runId };
@@ -804,12 +853,123 @@
       msg.textContent = "That didn't go through. Reply to your booking email and we'll call you.";
     });
   }
-  ["Setup", "Call"].forEach(function (w) {
+  ["Setup", "Call", "Top", "Err"].forEach(function (w) {
     var b = document.getElementById("phoneBtn" + w);
     if (b) b.addEventListener("click", function () { requestPhone(w); });
     var g = document.getElementById("phoneGo" + w);
     if (g) g.addEventListener("click", function () { requestPhone(w); });
   });
+
+  // ---- 2f. "You're not in the interview yet" -----------------------------
+  // Oct 1 2026, Jonathan Bautista. The page was open at his start time, Join
+  // was still locked behind the microphone check, and to him it looked like
+  // a waiting room where nobody came. Nothing had reached Mira, so nobody on
+  // our side knew either. Until the guest is in: the banner above says so in
+  // plain words, counts the minutes once the slot has started, and offers
+  // the phone. Three minutes after the start the page tells the Worker once,
+  // and Patrick gets an email with a one-click switch to a phone call.
+  var STUCK_AFTER_MS = 3 * 60 * 1000;
+  var scheduledAt = null, micAccess = null, stuckReported = false, notInTimer = null, everConnected = false;
+  function minutesLate() {
+    return scheduledAt ? Math.floor((Date.now() - scheduledAt) / 60000) : 0;
+  }
+  function updateNotIn() {
+    if (isHost || testMode) return;
+    var box = document.getElementById("notIn");
+    var late = minutesLate();
+    box.classList.toggle("late", late >= 1);
+    document.getElementById("notInHead").textContent = late >= 1
+      ? "Your interview started " + late + (late === 1 ? " minute" : " minutes")
+        + " ago. Mira is waiting, but you're not in the interview yet."
+      : "You're not in the interview yet.";
+    var s1 = document.getElementById("notInStep1");
+    var passed = micOk || joinOverride;
+    s1.classList.toggle("done", passed);
+    if (micOk) s1.textContent = "Microphone check passed.";
+    else if (joinOverride) s1.textContent = "Microphone check skipped.";
+  }
+  function stopNotIn() {
+    if (notInTimer) { clearInterval(notInTimer); notInTimer = null; }
+  }
+  function notInTick() {
+    if (everConnected || activeCall || phoneSwitched) { stopNotIn(); return; }
+    updateNotIn();
+    if (!stuckReported && scheduledAt && Date.now() - scheduledAt >= STUCK_AFTER_MS) {
+      stuckReported = true;
+      reportCheck(undefined, { stuck: true, minutes_late: minutesLate(), mic_access: micAccess });
+    }
+  }
+  function startNotIn() {
+    if (isHost || testMode || notInTimer) return;
+    updateNotIn();   // the first report waits a tick, so the microphone answer is in
+    notInTimer = setInterval(notInTick, 15000);
+  }
+
+  // ---- 2g. Join from your phone's browser ---------------------------------
+  // Oct 2 2026 (Jason Fishman). The fallback was a phone call, and a phone
+  // line stops at 3.4 kHz: his episode sounds thin next to every studio
+  // interview. A phone's browser runs the same studio with wideband audio,
+  // so it comes first; the call stays, marked as the last resort.
+  var onMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "");
+  function guestStudioUrl() {
+    return location.origin + location.pathname + "?interview=" + encodeURIComponent(interviewId)
+      + "&show=" + encodeURIComponent(showSlug) + "&role=guest";
+  }
+  function loadQr(cb) {
+    if (window.QRCode) return cb();
+    var sc = document.createElement("script");
+    sc.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
+    sc.onload = cb; sc.onerror = function () { cb(); };
+    document.head.appendChild(sc);
+  }
+  function mobileBox(where) {
+    var callBtn = document.getElementById("phoneBtn" + where);
+    if (!callBtn || onMobile || isHost) return;
+    callBtn.classList.add("lastresort");
+    callBtn.textContent = "Last resort: have Mira call my phone";
+    var box = document.createElement("div");
+    box.className = "mobilebox";
+    box.innerHTML = '<button class="primary" type="button">Join from my phone instead</button>'
+      + '<div class="hidden"><p>Scan this with your phone\'s camera, earbuds in, then check your microphone and join:</p>'
+      + '<div class="qr"></div><p><button class="ghost" type="button">Text me the link</button> '
+      + '<span class="mmsg"></span></p>'
+      + (where === "Call" ? '<p>Once you hear Mira on your phone, <button class="ghost" type="button">leave on this computer</button>.</p>' : '')
+      + '</div>';
+    callBtn.parentNode.insertBefore(box, callBtn);
+    var buttons = box.querySelectorAll("button");
+    var panel = box.querySelector("div");
+    buttons[0].addEventListener("click", function () {
+      panel.classList.remove("hidden"); buttons[0].classList.add("hidden");
+      loadQr(function () {
+        var q = box.querySelector(".qr");
+        if (window.QRCode) { q.innerHTML = ""; new window.QRCode(q, { text: guestStudioUrl(), width: 180, height: 180 }); }
+        else { q.textContent = guestStudioUrl(); }
+      });
+    });
+    buttons[1].addEventListener("click", function () {
+      var msg = box.querySelector(".mmsg");
+      msg.textContent = "Sending…";
+      fetch(API + "/studio-text", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ interview: interviewId }) })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          msg.textContent = res.texted ? "Sent to your phone ending in " + res.phone_last4 + ", and to your email."
+            : res.ok ? "Sent to your email. Open it on your phone." : (res.error || "That didn't go through; scan the code instead.");
+        }).catch(function () { msg.textContent = "That didn't go through; scan the code instead."; });
+    });
+    if (buttons[2]) buttons[2].addEventListener("click", function () {
+      phoneSwitched = true;
+      document.getElementById("doneHead").textContent = "Carrying on from your phone";
+      document.getElementById("donePhone").textContent = "You've left on this computer. Keep going on your phone; you can close this page.";
+      document.getElementById("donePhone").classList.remove("hidden");
+      document.getElementById("doneBody").classList.add("hidden");
+      stopCallMeter();
+      if (activeCall) { try { activeCall.hangup(); } catch (e) { /* ignore */ } }
+      if (localStream) { localStream.getTracks().forEach(function (t) { t.stop(); }); }
+      show("stateDone");
+    });
+  }
+  ["Top", "Setup", "Call", "Err"].forEach(mobileBox);
 
   // ---- 3. Join: SDK connect → one-time-key auth → call / auto-answer -------
   document.getElementById("joinBtn").addEventListener("click", function () {
@@ -1009,6 +1169,7 @@
   }
 
   function onCallConnected() {
+    everConnected = true; stopNotIn();
     show("stateCall");
     muted = false; document.getElementById("muteBtn").textContent = "Mute";
     callStart = Date.now();

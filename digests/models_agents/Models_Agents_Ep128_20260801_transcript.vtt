@@ -1,0 +1,187 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:28.220
+Deepseek DV4-0731 deliver strong, agentic, and coding performance at roughly one-fifth the price of comparable frontier models. This is Models &amp; Agents, episode 128. Simon Willison reports that the 304 billion parameter Deepseek V4-0731 model, 167 gigabytes on hugging face, ranks ahead of Minimax M3 on artificial analysis charts.
+
+00:00:28.220 --> 00:00:49.140
+It charges 14 cents per million input tokens, and 27 cents per million output tokens. Minimax released its H3 OmniModel model that ingests text, images, video, and audio in one context, and outputs 2K video clips with native stereo audio for durations of 4-15 seconds.
+
+00:00:49.140 --> 00:01:04.540
+Stateless MCP 2.0 and Dataflow harness both lower the barrier for reliable agent tooling by replacing session state and freeform scripts with auditable single request calls and persistent directed aciclic graphs.
+
+00:01:05.360 --> 00:01:16.160
+Minimax released Minimax H3, a general purpose multimodal generation model that treats text, images, video, and audio as a single unified context.
+
+00:01:16.160 --> 00:01:26.440
+The model returns video with native stereo sound at 2K resolution for integer durations between 4-15 seconds without separate audio tracks.
+
+00:01:27.140 --> 00:01:33.500
+It is positioned as a native OmniModel system rather than a text to video model with bolted on components.
+
+00:01:34.240 --> 00:01:42.580
+Builders working on short form video with synchronized sound can now generate clips directly from mixed inputs instead of stitching separate pipelines.
+
+00:01:42.580 --> 00:01:48.260
+Watch for follow-on releases that extend duration or add longer context windows.
+
+00:01:48.880 --> 00:02:00.500
+The 304 billion parameter deep-seek V4 Flash 0731 ships with unchanged architecture but improved post-training that boosts agentic and coding performance.
+
+00:02:00.500 --> 00:02:14.880
+It ranks ahead of the 428 billion parameter Minimax M3 on artificial analysis Pareto charts while costing 14 cents per million input tokens and 27 cents per million output tokens.
+
+00:02:15.760 --> 00:02:29.700
+Simon Willison notes strong results on the intelligence index versus cost chart and shows that raising reasoning effort via open router markedly improves output quality on tasks such as drawing a pelican riding a bicycle.
+
+00:02:29.700 --> 00:02:39.900
+The release appeared on hugging face on July 31st, 2026 and the official deep-seek API moved into public beta the same day.
+
+00:02:40.700 --> 00:02:52.320
+Default runs cost 4400s of ascent and high reasoning runs cost 2200s of ascent per the link gist with the first request in a session benefiting from prompt caching.
+
+00:02:52.320 --> 00:02:59.120
+The model is available through open router and the official deep-seek API now in public beta.
+
+00:02:59.440 --> 00:03:15.240
+The 2026 0728 model context protocol revision replaces the two request initialize plus call flow with a single stateless pod that includes mcp protocol version and mcp method headers.
+
+00:03:15.240 --> 00:03:25.300
+Simon Willison built mcp explorer data set mcp and the LLM mcp client plugin in one week to explore the simpler spec.
+
+00:03:25.920 --> 00:03:32.680
+The change removes server side session storage and makes mcp tools easier to audit than full shell access.
+
+00:03:32.680 --> 00:03:44.320
+Peaking University researchers released an open source framework that guides LLM agents to build persistent editable DAG workflows instead of disposable Python scripts.
+
+00:03:45.000 --> 00:03:58.820
+On a 12 task benchmark it reached 93.3% end-to-end pass rate while cutting API cost 72.5% and latency 49.9% versus vanilla clawed code.
+
+00:03:58.820 --> 00:04:05.980
+The system uses typed mutations against a live operator registry and data flow skills for domain rules.
+
+00:04:06.800 --> 00:04:17.740
+The new data set agent 0.4 alpha 0 release adds a weight context dot browser task so agent tools can run JavaScript directly in the user's browser.
+
+00:04:18.500 --> 00:04:25.860
+The capability lets data set agent plugins expose custom browser side actions without additional server round trips.
+
+00:04:25.860 --> 00:04:36.380
+The change is documented in pull request number 33 and targets use cases where client side rendering or DOM inspection is required inside an agent workflow.
+
+00:04:37.060 --> 00:04:46.560
+The new SME VELs tool runs small yaml defined eVEL suites across models, prompts and harnesses, then grades results with custom checkers.
+
+00:04:46.560 --> 00:04:56.400
+Commands include UVX SME VELs run UVX SME VELs grade and UVX SME VEL serve for a local results browser.
+
+00:04:56.700 --> 00:05:02.800
+It supports any model reachable by the LLM library and separates execution from grading.
+
+00:05:03.480 --> 00:05:09.080
+Ground cover raised $100 million and now has more than 250 paying customers.
+
+00:05:09.080 --> 00:05:19.180
+It uses EBPF collection inside customer clouds so telemetry never leaves the user's AWS, Azure or GCP account.
+
+00:05:20.100 --> 00:05:26.720
+Pricing is based on monitored hosts rather than data volume which suits high telemetry AI agent workloads.
+
+00:05:27.580 --> 00:05:37.640
+A new airgive paper shows standard metrics reward repetitive normal templates and penalize clinically meaningful rare terms in chest X-ray report generation.
+
+00:05:37.640 --> 00:05:46.340
+The authors introduce a framework that measures term erasure and biased hallucination in VELM radiology reports.
+
+00:05:46.880 --> 00:05:55.800
+The paper is titled measuring what VLMs don't say and is available at R-OxI of 260301625.
+
+00:05:56.800 --> 00:06:00.800
+Everyone talks about MCP as a simple plug-in a tool layer.
+
+00:06:01.260 --> 00:06:12.360
+In practice, the original stateful design forced every client to open a session, store a MCP session ID and route every subsequent call to the same backend instance.
+
+00:06:13.200 --> 00:06:25.140
+The 2026-0728 revision collapses that into one HTTP request carrying protocol version and method headers, eliminating server side session tables entirely.
+
+00:06:25.140 --> 00:06:34.600
+The engineering payoff is horizontal scaling without sticky sessions and simpler client code that no longer needs to manage or retry session IDs.
+
+00:06:35.340 --> 00:06:41.660
+The trade-off is that servers lose any opportunity to keep per client mutable state across calls.
+
+00:06:42.220 --> 00:06:48.940
+So tool authors must design purely functional operations or push state into the client supplied meta object.
+
+00:06:48.940 --> 00:06:59.140
+Teams that previously wrapped MCP behind a stateful proxy can now drop the proxy and expose tools directly behind ordinary load balancers.
+
+00:06:59.660 --> 00:07:06.540
+The practical decision rule is that if your tool needs only the argument supplied in the current call, switch to stateless.
+
+00:07:07.260 --> 00:07:13.800
+If it must remember prior interactions, keep that memory in the client or in an external store the tool can reach.
+
+00:07:14.800 --> 00:07:23.720
+This stateless revision advances the standardization of agent and tool protocols that we discussed yesterday by removing the need for session affinity.
+
+00:07:24.340 --> 00:07:31.120
+Run UVX MCP Explorer list then inspect and call tools to see stateless MCP in action.
+
+00:07:31.740 --> 00:07:42.160
+Test deep-seek V4 Flash 0731 at high reasoning effort via open router on a coding or agent task and compare cost against your current model.
+
+00:07:42.160 --> 00:07:55.240
+Install the alpha LLM MCP client plugin and wire it to data set dot Simon Willison dot net slash dash MCP to let an LLM run skew L against a live data set.
+
+00:07:55.740 --> 00:08:04.580
+Clone data flow harness and run one of the 12 benchmark tasks to see how typed DAG mutations differ from freeform script generation.
+
+00:08:05.580 --> 00:08:13.940
+Build a small SME veils suite for a task you care about such as SVG generation or HIKU writing and grade runs across two models.
+
+00:08:14.420 --> 00:08:22.700
+More open-weight releases from Chinese labs are expected to target the price and performance band currently occupied by deep-seek V4 Flash.
+
+00:08:23.560 --> 00:08:29.960
+Additional MCP server implementations and client libraries will appear as the stateless spec stabilizes.
+
+00:08:30.960 --> 00:08:38.620
+Further agent telemetry platforms will adopt host-based or BYOC pricing to handle rising AI workload data volumes.
+
+00:08:39.360 --> 00:08:46.840
+Before we go, the next open-weight checkpoints from Chinese labs are already in testing for that same price and performance band.
+
+00:08:47.480 --> 00:08:49.540
+That wraps up today's AI briefing.
+
+00:08:50.020 --> 00:08:53.200
+Share this with a developer or builder who wants to stay current.
+
+00:08:54.200 --> 00:09:01.240
+Subscribe wherever you listen, see you tomorrow, and if you'd rather watch than listen, find us on YouTube at Nerra Network.
+
+00:09:01.620 --> 00:09:02.800
+Links in the show notes.
+
+00:09:03.520 --> 00:09:07.320
+Quick tip from the network, try unintended consequences next.
+
+00:09:07.820 --> 00:09:10.240
+True stories of good intentions that backfired.
+
+00:09:10.820 --> 00:09:14.560
+Every Nerra network show is free at Nerra Network dot com.
+
+00:09:15.200 --> 00:09:22.040
+Following the long arcs, story trackers on Nerra Network dot com follow major programs across episodes.
+
+00:09:22.040 --> 00:09:25.620
+Tesla, SpaceX, AI, Space Science, and more.
+
+00:09:26.340 --> 00:09:29.780
+This episode used AI voice synthesis of my voice.
+
+00:09:30.180 --> 00:09:32.780
+Editorial selection and analysis are my own.

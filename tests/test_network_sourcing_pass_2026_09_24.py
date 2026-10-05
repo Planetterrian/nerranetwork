@@ -166,21 +166,28 @@ class TestCommaDensityInstrument:
 
 
 class TestPersonalVocabularyWidened:
-    def test_cohort_is_choosable_and_the_daily_is_unchanged(self):
+    COHORT = {
+        "vancouver", "collingwood", "prediction_markets", "mag7", "ai_chips",
+        "peptides", "longevity", "omni_view_world", "omni_view_north_america",
+        "omni_view_europe", "omni_view_asia_pacific", "omni_view_africa_mideast",
+        "omni_view_latam",
+    }
+
+    def test_cohort_is_choosable(self):
+        # 2026-10-02: the cohort joined the Nerra Daily lineup itself
+        # (operator: every English show in the edition), so the extras are
+        # empty and the vocabulary is the roster — every cohort show is
+        # still choosable, which is what this guard protects.
         from engine.daily_edition import EDITIONS
         from engine.personal_edition import (
             PERSONAL_EXTRA_SHOW_SLUGS, PERSONAL_SHOW_SLUGS, personal_edition_spec,
         )
-        assert set(PERSONAL_EXTRA_SHOW_SLUGS) == {
-            "vancouver", "collingwood", "prediction_markets", "mag7", "ai_chips",
-            "peptides", "longevity", "omni_view_world", "omni_view_north_america",
-            "omni_view_europe", "omni_view_asia_pacific", "omni_view_africa_mideast",
-            "omni_view_latam",
-        }
-        assert "vancouver" not in EDITIONS["en"].lineup
+        assert PERSONAL_EXTRA_SHOW_SLUGS == ()
+        assert self.COHORT <= set(EDITIONS["en"].lineup)
+        assert self.COHORT <= set(PERSONAL_SHOW_SLUGS)
         spec = personal_edition_spec()
         assert spec.lineup == PERSONAL_SHOW_SLUGS and spec.slug == EDITIONS["en"].slug
-        for slug in PERSONAL_EXTRA_SHOW_SLUGS:
+        for slug in self.COHORT:
             assert (ROOT / "shows" / f"{slug}.yaml").exists(), slug
 
     def test_builder_discovers_on_the_widened_spec(self):

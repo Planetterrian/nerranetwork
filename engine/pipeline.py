@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import datetime
 import logging
+import time
 import re
 from collections import Counter
 from pathlib import Path
@@ -312,6 +313,10 @@ def record_youtube_outcomes(
                            bool(youtube_urls["shorts_ab_windows_swapped"]))
         if "scene_fresh_count" in youtube_urls:
             metrics.record("scene_fresh_count", int(youtube_urls.get("scene_fresh_count", 0) or 0))
+        # Oct 2 2026 — the 9:16 set was skipped because nothing would
+        # render it (no Short planned, no dub channel, no multi-platform).
+        if youtube_urls.get("short_scenes_skipped_no_consumer"):
+            metrics.record("short_scenes_skipped_no_consumer", True)
         if "scene_library_count" in youtube_urls:
             metrics.record("scene_library_count", int(youtube_urls.get("scene_library_count", 0) or 0))
         if "broll_clips_used" in youtube_urls:
@@ -835,12 +840,20 @@ def run_generation_phase(
                 "survive, %.0f%% of the current digest's sentences were in "
                 "it) — running the script stage", 100 * _fwd, 100 * _back,
             )
+    _script_stage_s = None
     if podcast_script is None:
+        # Timed (Oct 4 2026): the script call was the one LLM stage the
+        # model-trial report listed and nothing recorded, so a script-stage
+        # model pin (llm.podcast_model) could never be gated on latency.
+        _t0 = time.monotonic()
         podcast_script = generate_podcast_script(
             template_vars_for_script, config, tracker=tracker
         )
+        _script_stage_s = time.monotonic() - _t0
     if template_vars is not None:
         template_vars["_generation_path"] = generation_path
+        if _script_stage_s is not None:
+            template_vars["_script_stage_s"] = _script_stage_s
 
     # Missing-closing guard (June 10 2026, Planetterrian review): PT
     # Ep081/Ep084 shipped without the supplied closing block — Ep084

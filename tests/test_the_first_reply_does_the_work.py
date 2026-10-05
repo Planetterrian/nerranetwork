@@ -187,5 +187,6 @@ class TestTheBrief:
     def test_when_text(self):
         sys.path.insert(0, str(ROOT / "pipelines" / "voices"))
         import generate_briefs
-        assert generate_briefs.when_text("2026-09-24T16:45:00+00:00").startswith(
-            "Thursday, September 24 at 16:45 UTC")
+        # Sept 30 2026: Pacific Time, not UTC.
+        assert generate_briefs.when_text("2026-09-24T16:45:00+00:00") == \
+            "Thursday, September 24 at 9:45 AM Pacific Time"

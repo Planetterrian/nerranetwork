@@ -54,30 +54,46 @@ class TestEditionSpec:
     # new daily in it, and a pre-launch show has no episodes to splice. The
     # desks are a candidate SECOND edition (EDITIONS["world"]) once they have
     # audience data — an operator decision, not a default.
-    EXCLUDED_NEW_SHOWS = {
-        "ai_chips", "mag7", "peptides", "longevity",
-        # Launch-cohort PR C (2026-09-23): the Mira desks, Top World, the two
-        # local shows and Prediction Markets — scheduled, still excluded.
-        "vancouver", "collingwood", "prediction_markets", "omni_view_world",
-        "omni_view_europe", "omni_view_asia_pacific", "omni_view_africa_mideast",
-        "omni_view_latam", "omni_view_north_america",
-    }
-
-    def test_new_shows_are_excluded_on_purpose(self):
-        assert not self.EXCLUDED_NEW_SHOWS & set(SPEC.lineup)
-        for slug in self.EXCLUDED_NEW_SHOWS:
-            assert (ROOT / "shows" / f"{slug}.yaml").exists(), slug
+    def test_every_english_run_show_show_is_in_the_lineup(self):
+        # Operator decision 2026-08-21: EVERY English show, MAB included;
+        # 2026-10-02: the thirteen launch-cohort shows too ("all new
+        # English shows are added to Nerra Daily"). A new English show
+        # scaffolded into the network must be added to the lineup (or
+        # explicitly excluded here with a comment). The Russian shows, the
+        # interview shows (plugged, never spliced) and the virtual edition
+        # itself are the only exclusions.
+        import yaml as _yaml
+        english = set()
+        for path in sorted((ROOT / "shows").glob("*.yaml")):
+            if path.name.startswith("_") or path.name == "network_meta.yaml":
+                continue
+            cfg = _yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            lang = ((cfg.get("tts") or {}).get("language_code") or "en")
+            if lang != "en":
+                continue
+            english.add(path.stem)
+        excluded = {"age_of_ai", "nerra_voices"}
+        # Not shows: the pronunciation map, translation overrides and the
+        # scaffold queue live in the same directory.
+        english = {s for s in english if (ROOT / "shows" / f"{s}.yaml").exists()
+                   and "episode" in (_yaml.safe_load((ROOT / "shows" / f"{s}.yaml").read_text(encoding="utf-8")) or {})}
+        assert set(SPEC.lineup) == english - excluded, (
+            sorted(english - excluded - set(SPEC.lineup)),
+            sorted(set(SPEC.lineup) - english),
+        )
 
     def test_lineup_is_every_english_run_show_show(self):
-        # Operator decision 2026-08-21: EVERY English show, MAB included.
-        # A new English show scaffolded into the network must be added to
-        # the lineup (or explicitly excluded here with a comment).
         assert set(SPEC.lineup) == {
             "tesla", "models_agents", "spacex", "modern_investing",
             "omni_view", "fascinating_frontiers", "planetterrian",
             "unintended_consequences", "first_principles",
             "models_agents_beginners", "env_intel", "offshore_north",
             "dp_pod",
+            # Oct 2 2026 — the launch cohort.
+            "omni_view_world", "omni_view_north_america", "omni_view_europe",
+            "omni_view_asia_pacific", "omni_view_africa_mideast",
+            "omni_view_latam", "mag7", "ai_chips", "prediction_markets",
+            "vancouver", "collingwood", "longevity", "peptides",
         }
 
     def test_lineup_operator_order(self):
@@ -112,8 +128,18 @@ class TestEditionSpec:
     def test_expected_slugs_weekday_shape(self):
         monday = dt.date(2026, 8, 17)
         thursday = dt.date(2026, 8, 20)
-        assert set(expected_slugs(SPEC, monday)) == set(SPEC.lineup)
-        assert set(expected_slugs(SPEC, thursday)) == set(SPEC.lineup) - SPEC.monday_only
+        other_weeklies = set(SPEC.weekday_only)
+        assert set(expected_slugs(SPEC, monday)) == set(SPEC.lineup) - other_weeklies
+        assert set(expected_slugs(SPEC, thursday)) == (
+            set(SPEC.lineup) - SPEC.monday_only - other_weeklies | {"peptides"})
+
+    def test_the_other_weeklies_are_expected_on_their_own_day_only(self):
+        assert SPEC.weekday_only == {"longevity": 2, "peptides": 3, "collingwood": 4}
+        assert set(SPEC.weekday_only) <= set(SPEC.lineup)
+        wed, thu, fri = dt.date(2026, 10, 7), dt.date(2026, 10, 8), dt.date(2026, 10, 9)
+        assert "longevity" in expected_slugs(SPEC, wed) and "longevity" not in expected_slugs(SPEC, thu)
+        assert "peptides" in expected_slugs(SPEC, thu) and "peptides" not in expected_slugs(SPEC, fri)
+        assert "collingwood" in expected_slugs(SPEC, fri) and "collingwood" not in expected_slugs(SPEC, wed)
 
 
 class TestRegistration:
@@ -768,11 +794,25 @@ class TestPromoCutHardening:
         # matcher, never lean on the fallback (it cut real content twice).
         import glob as _glob
         import re as _re
+        # The launch cohort joined ENGLISH_SHOWS (and so the spoken promo
+        # rotation) with PR C on 2026-09-23; its hand-made Ep001s of
+        # 09-22/23 carried no plug at all, and "nothing to cut" is the
+        # right answer there, not a weak cut. Their sweep starts with the
+        # first on-schedule slate.
+        cohort_from = "20260924"
+        cohort = set(SPEC.lineup) - {
+            "spacex", "tesla", "fascinating_frontiers", "models_agents",
+            "planetterrian", "omni_view", "modern_investing",
+            "unintended_consequences", "first_principles",
+            "models_agents_beginners", "env_intel", "offshore_north", "dp_pod",
+        }
         weak = []
         for slug in SPEC.lineup:
             for p in sorted(_glob.glob(str(ROOT / "digests" / slug / "*_transcript.json"))):
                 m = _re.search(r"_(\d{8})_transcript", p)
                 if not m or m.group(1) < "20260815":
+                    continue
+                if slug in cohort and m.group(1) < cohort_from:
                     continue
                 t = json.loads(Path(p).read_text(encoding="utf-8"))
                 hit = find_promo_cut(t)

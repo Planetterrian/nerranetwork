@@ -16,6 +16,7 @@ Usage in ``run_show.py``::
 from __future__ import annotations
 
 import datetime
+import re
 import hashlib
 import logging
 from typing import Any
@@ -1282,6 +1283,13 @@ def build_cold_open_spec(show_slug: str = "", *, is_ru: bool = False) -> str:
         "the thing that was supposed to be impossible and now is not. "
         "Rank the day's items by that test and open on the winner, even "
         "when it is not the biggest story.\n"
+        "- THE BODY KEEPS THE OPEN'S PROMISE FIRST. The first story told "
+        "after the show's identity line is the story the open named — its "
+        "full telling, with the facts the open did not already say, never "
+        "the open's own sentence again — and only then the rest of the "
+        "material in its own order. Someone who stays past the first "
+        "sentence stayed for that story; making them sit through others "
+        "first is what loses them in the first minute.\n"
         "- MAKE THE STAKES LAND IN THE SAME BREATH. A number alone is "
         "trivia. State the fact and, in the same sentence or the very "
         "next one, what it changes and for whom. If you cannot say why "
@@ -1444,8 +1452,61 @@ def build_closing_block(
         )
 
     closing = _pick(closing_pool, show_slug, date, salt="closing")
+    closing = _maybe_append_platform_ask(closing, show_slug, date, is_ru=_is_ru)
     return _maybe_append_youtube_cta(f"{host}: {closing}",
                                      youtube_channel_handle, is_ru=_is_ru)
+
+
+# ---- Platform ask (Oct 1 2026) -------------------------------------------
+# Seven shows asked for a rating or a follow in their own closings; eleven
+# English shows and the six Mira desks asked for nothing, and no closing
+# anywhere said the word "follow". A listener who is never asked never
+# does it, and a directory ranks on exactly these two actions. ONE data-side
+# sentence, two shapes alternating by date, spoken every other day (offset
+# per show so two shows on the same day differ), only on a show whose own
+# closing carries no ask — the shows that already ask keep their line.
+# Changes shipped audio: A/B-listen per landmine #17.
+PLATFORM_ASK_EVERY_N_DAYS = 2
+_ASK_ALREADY_RE = re.compile(
+    r"\b(?:rating|review|subscribe|follow(?:ing)? (?:the|this|us)|"
+    r"оцен|подпис)", re.IGNORECASE)
+_PLATFORM_ASKS = (
+    "If this show earns a place in your day, follow it in your podcast app "
+    "so the next episode is waiting for you.",
+    "A rating on Apple Podcasts or Spotify takes ten seconds, and it is how "
+    "new listeners find this show.",
+)
+_PLATFORM_ASKS_RU = (
+    "Если выпуск был полезен — подпишитесь в своём подкаст-приложении, "
+    "чтобы не пропустить следующий.",
+    "Оценка в Apple Podcasts или Spotify занимает десять секунд и помогает "
+    "новым слушателям найти это шоу.",
+)
+
+
+def closing_has_ask(closing: str) -> bool:
+    """True when a closing already asks for a rating, review, subscribe or
+    follow (in English or Russian)."""
+    return bool(_ASK_ALREADY_RE.search(closing or ""))
+
+
+def platform_ask_for(show_slug: str, date: datetime.date, *, is_ru: bool = False) -> str:
+    """The ask sentence for this show on this date, or "" on an off day."""
+    offset = sum(ord(c) for c in (show_slug or "")) % PLATFORM_ASK_EVERY_N_DAYS
+    if (date.toordinal() + offset) % PLATFORM_ASK_EVERY_N_DAYS:
+        return ""
+    pool = _PLATFORM_ASKS_RU if is_ru else _PLATFORM_ASKS
+    # Which SHAPE airs alternates on the ask days, so a listener hears
+    # "follow" one time and "rate" the next, never the same line twice running.
+    return pool[((date.toordinal() + offset) // PLATFORM_ASK_EVERY_N_DAYS) % len(pool)]
+
+
+def _maybe_append_platform_ask(closing: str, show_slug: str,
+                               date: datetime.date, *, is_ru: bool = False) -> str:
+    if closing_has_ask(closing):
+        return closing
+    ask = platform_ask_for(show_slug, date, is_ru=is_ru)
+    return f"{closing} {ask}" if ask else closing
 
 
 # Shows whose host actually SPEAKS Russian — the YouTube call-out must be

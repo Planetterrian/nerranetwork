@@ -409,7 +409,10 @@ class TestStripMode:
     def test_config_contract(self):
         assert SourceIntegrityConfig().on_failure == "block"
         defaults = yaml.safe_load((ROOT / "shows/_defaults.yaml").read_text(encoding="utf-8"))
-        assert defaults["source_integrity"] == {"enabled": True, "enforce": True, "on_failure": "strip"}
+        # 2026-10-01: the network default moved strip -> flag (operator-
+        # directed; tests/test_claims_flag_mode_2026_10_01.py). Strip mode's
+        # machinery below is unchanged and stays available per show.
+        assert defaults["source_integrity"] == {"enabled": True, "enforce": True, "on_failure": "flag"}
 
     def test_run_show_wires_strip_mode(self):
         src = (ROOT / "run_show.py").read_text(encoding="utf-8")

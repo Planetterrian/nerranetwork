@@ -1,0 +1,241 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.140
+OpenAI's internal astra model solved 10-decade old math problems for under $2000 each in tokens, moving frontier models from benchmark chasing to original research contributions. This is Models &amp; Agents, Episode 129. OpenAI used an internal version of astra to tackle problems untouched for at least 10 years. The team published Lean 4 formalizations in the OpenAI-10 Proofs repository.
+
+00:00:29.140 --> 00:00:46.900
+Along with a paper and an LLM generated PDF that reconstructs the reasoning steps. AMD released a fully open 16-billion-parameter mixture of experts model, with 2.8 billion active parameters trained on instinct GPUs.
+
+00:00:46.900 --> 00:01:04.460
+In video shipped molt, a compact, pie-torched native agentic reinforcement learning framework, built around an asynchronous loop with ray, VLLM, and Nemo. Builders should watch how these releases affect both research tooling and production agent stacks this week.
+
+00:01:04.460 --> 00:01:18.800
+Over the past week, the OpenAI and GPT thread showed continued movement on long horizon research tasks, while earlier episodes tracked similar internal runs that lowered the cost of formal verification experiments.
+
+00:01:18.800 --> 00:01:39.360
+The frontier models arc also saw open-weight releases narrowing gaps on specific workloads, and agent evaluation frameworks expanded their coverage of real production tasks. OpenAI directed an internal version of astra at 10 mathematical problems that had seen no progress for at least a decade.
+
+00:01:39.360 --> 00:02:01.500
+The effort cost less than $2,000 per problem at GPT 5.6 sole token prices. It produced Lean 4 formalizations now available in the OpenAI-10-proofs repository. A paper and an LLM generated PDF reconstruct the reasoning steps for each proof.
+
+00:02:01.500 --> 00:02:09.500
+The results add to a pattern of frontier labs using large token budgets for genuine research rather than benchmark tuning.
+
+00:02:10.560 --> 00:02:21.220
+Mathematicians are reacting with a mix of excitement and unease. Builders working on formal verification or automated theorem proving now have concrete artifacts to inspect.
+
+00:02:21.220 --> 00:02:31.740
+This development fits the frontier models arc we followed yesterday by showing measurable cost drops for original research contributions rather than benchmark scores alone.
+
+00:02:32.720 --> 00:02:43.800
+AMD released Instella MoE16B A3B, a 16 billion parameter mixture of experts model that activates 2.8 billion parameters per token.
+
+00:02:43.800 --> 00:02:55.280
+It uses gated MLA and far-skip collective and was trained from scratch on Instinct MI300X and MI325X GPUs.
+
+00:02:55.920 --> 00:03:03.080
+AMD published weights from every training stage, data mixtures, configs, and inference code under a fully open license.
+
+00:03:03.080 --> 00:03:10.440
+This gives Builders direct access to intermediate checkpoints for studying mixture of experts training dynamics.
+
+00:03:11.100 --> 00:03:19.740
+Teams evaluating open-weight alternatives to closed frontier models should test Instella MoE on their specific workloads this week.
+
+00:03:20.740 --> 00:03:34.780
+A tutorial walks through configuring the NVIDIA transformer engine to use fused GPU kernels, FP8 delayed scaling, and BF16 for GPT-style causal language models in PyTorch.
+
+00:03:35.240 --> 00:03:40.720
+It includes practical code examples and performance analysis on current GPUs.
+
+00:03:41.260 --> 00:03:47.480
+Developers can apply the same patterns to reduce training time and memory footprint without changing model architecture.
+
+00:03:47.480 --> 00:03:53.860
+The post emphasizes measurable throughput gains from the fused kernels and scaling techniques.
+
+00:03:54.400 --> 00:04:00.060
+Anyone running custom transformer training should try the FP8 path on supported hardware.
+
+00:04:00.780 --> 00:04:10.220
+Superbase open-sourced Superbase slash e-vails, and Apache 2.0 benchmark that runs coding agents against real Superbase tasks.
+
+00:04:10.220 --> 00:04:18.560
+The tasks include building schemas, debugging edge functions, and fixing RLS policies inside containerized stacks.
+
+00:04:19.260 --> 00:04:23.420
+Scoring uses deterministic checks plus LLM as a judge.
+
+00:04:24.220 --> 00:04:28.640
+The framework currently evaluates cloud code, codex, and open code.
+
+00:04:29.080 --> 00:04:36.480
+Teams building or choosing coding agents for database work now have a reproducible way to compare them on production-like tasks.
+
+00:04:37.480 --> 00:04:44.120
+NVIDIA released MULT, an 8.6K line PyTorch native framework for agentic RL research.
+
+00:04:44.760 --> 00:04:50.980
+It composes Ray, VLM, and Nemo auto model around a single asynchronous loop.
+
+00:04:51.660 --> 00:04:58.780
+The agent remains ordinary Python, trajectories stay token exact, and throughput matches a Megatron-based stack.
+
+00:04:58.780 --> 00:05:05.880
+This removes the need to thread every algorithm change through trainer, distributed backend, and rollout glue.
+
+00:05:06.560 --> 00:05:12.740
+Researchers modifying RL algorithms can now iterate faster without touching low-level infrastructure.
+
+00:05:13.420 --> 00:05:21.540
+The 0.2A0 release of data set ID apps adds app underscore debug and app underscore list tools.
+
+00:05:21.540 --> 00:05:31.140
+These let data set agent open apps invisibly, run JavaScript tests inside a sandboxed iFrame, and list apps the user can edit.
+
+00:05:31.580 --> 00:05:41.100
+The iFrame uses opacity 0 and pointer events none, so the agent can measure elements and smoke test functionality without visual interaction.
+
+00:05:41.920 --> 00:05:50.480
+This builds on the context.browser underscore task mechanism from data set dash agent 0.4A0.
+
+00:05:51.480 --> 00:05:58.140
+Developers using data set for agent-driven app creation now have a practical way to verify edits automatically.
+
+00:05:58.720 --> 00:06:05.120
+An article argues that coding agents suffer when context grows because irrelevant code competes for attention.
+
+00:06:05.880 --> 00:06:09.580
+Agents begin compressing their own memory mid-task as a result.
+
+00:06:10.300 --> 00:06:16.200
+It proposes treating prompt construction like a compiler that decides what to keep, reduce, or discard.
+
+00:06:16.200 --> 00:06:20.680
+The approach aims to prevent the forgetting that appears when windows fill.
+
+00:06:21.520 --> 00:06:29.880
+Builders hitting context limits on long code bases should experiment with explicit compilation steps before simply requesting larger windows.
+
+00:06:30.620 --> 00:06:37.020
+Another post describes a hybrid pattern that embeds adaptive agent behavior inside a predefined workflow.
+
+00:06:37.580 --> 00:06:43.460
+This keeps the reliability of structured flows while allowing the agent to handle exceptions and variations.
+
+00:06:44.460 --> 00:06:50.220
+The pattern is positioned as a practical middle ground between rigid pipelines and fully autonomous agents.
+
+00:06:50.900 --> 00:06:58.240
+Teams building production agent systems should test whether wrapping agents in workflows reduces failure modes on their tasks.
+
+00:06:58.980 --> 00:07:08.360
+A new interpretability study on Cotago examines whether superhuman go networks learn rotation and reflection invariant internal representations.
+
+00:07:08.360 --> 00:07:15.600
+The work was largely AI driven with human oversight and includes linked code plus an accessible write-up.
+
+00:07:16.240 --> 00:07:22.200
+Researchers studying symmetry in vision or game models can use the same methodology on other domains.
+
+00:07:22.940 --> 00:07:30.700
+A new benchmark called causal VL bench evaluates visual causal reasoning capabilities in large vision language models.
+
+00:07:31.160 --> 00:07:36.460
+It was posted to our slash machine learning with links and discussion for further details.
+
+00:07:36.460 --> 00:07:45.540
+Teams working on multimodal reasoning now have a targeted test for causal understanding beyond standard VQA or captioning tasks.
+
+00:07:46.180 --> 00:07:50.100
+Okay, let's pop the hood on context compilation for coding agents.
+
+00:07:50.860 --> 00:07:56.380
+Everyone talks about giving coding agents more context as if bigger windows are the only lever.
+
+00:07:57.040 --> 00:08:01.840
+In practice, the real engineering problem is deciding what belongs in the prompt at all.
+
+00:08:01.840 --> 00:08:05.600
+A context compiler treats the prompt like a build artifact.
+
+00:08:06.100 --> 00:08:15.140
+It runs retrieval then applies reduction rules that drop low relevance files, summarize others, and keep only the symbols the model is likely to edit.
+
+00:08:15.620 --> 00:08:22.760
+This adds a small pre-processing step but prevents the model from diluting attention across thousands of irrelevant tokens.
+
+00:08:23.480 --> 00:08:28.400
+The quality gain is largest on repositories above roughly 50,000 lines.
+
+00:08:28.400 --> 00:08:32.040
+Below that threshold, the overhead rarely pays off.
+
+00:08:32.640 --> 00:08:42.840
+When the compiler also tracks which files changed in the last edit cycle, it can further prune the window by 30% to 40% with almost no drop in task success.
+
+00:08:43.820 --> 00:08:51.240
+The gotcha that bites most teams is treating the compiler as a one-time filter instead of rerunning it after every agent action.
+
+00:08:51.240 --> 00:08:56.300
+Stale context is what produces the it forgot what it just did failures.
+
+00:08:57.000 --> 00:09:03.100
+Use a compiler when your code base exceeds a few hundred files or when agents start mid-task compression.
+
+00:09:03.800 --> 00:09:08.940
+Otherwise, simple retrieval plus a hard token cap is still simpler and sufficient.
+
+00:09:09.720 --> 00:09:19.880
+Try AMD's Instella MoE16B A3B on a coding or reasoning task you currently run on a dense 7 billion or 13 billion model.
+
+00:09:19.880 --> 00:09:29.840
+Run SupaBases new evals harness against clawed code and any other coding agent you are evaluating on real schema and edge function tasks.
+
+00:09:30.460 --> 00:09:41.980
+Experiment with the context compiler pattern from the towards data science post on a repository larger than 50,000 lines before simply increasing the model's context window.
+
+00:09:41.980 --> 00:09:47.720
+Test and video molds asynchronous loop on a small agentic RL experiment.
+
+00:09:48.100 --> 00:09:54.940
+If you have been modifying RL algorithms and want to avoid threading changes through Megatron style infrastructure.
+
+00:09:55.720 --> 00:10:05.240
+More labs are expected to publish internal research runs similar to open AI's 10 proofs effort as the cost of long horizon model use continues to drop.
+
+00:10:06.240 --> 00:10:12.820
+Additional open weight mixture of experts releases from AMD and others will likely include full training artifacts.
+
+00:10:13.580 --> 00:10:21.740
+Agent evaluation frameworks like SupaBase evals are likely to expand to more real world task domains beyond database work.
+
+00:10:22.400 --> 00:10:30.980
+Before we go, watch for whether other labs release the prompts or reasoning traces from their own long horizon math experiments in the coming days.
+
+00:10:30.980 --> 00:10:37.400
+That wraps up today's AI briefing. Share this with a developer or builder who wants to stay current.
+
+00:10:38.160 --> 00:10:40.660
+Subscribe wherever you listen, see you tomorrow.
+
+00:10:41.340 --> 00:10:46.800
+And if you'd rather watch than listen, find us on YouTube at Nerra Network, links in the show notes.
+
+00:10:47.560 --> 00:10:49.720
+This show comes to you from the Nerra network.
+
+00:10:50.120 --> 00:10:54.180
+If you want another sharp daily briefing, SpaceX daily has you covered.
+
+00:10:54.180 --> 00:11:00.920
+The daily companion for following SpaceX as a public company from Starship to the stock ticker.
+
+00:11:01.120 --> 00:11:04.680
+All our shows are free at Nerra Network.com.
+
+00:11:05.220 --> 00:11:13.620
+Live dashboards, T-S-L-A, SpaceX launches, the investing scoreboard are all at Nerra Network.com data.
+
+00:11:14.180 --> 00:11:20.880
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

@@ -744,6 +744,63 @@
             margin: 0.35rem 0 0;
         }
         .nn-iv-provenance span { white-space: nowrap; }
+        /* Episode provenance (Oct 2026): the one line under the AI badge on
+           a news post, from engine.brand.episode_provenance_parts, plus the
+           "Report an error" link beside it. Same type as the interview
+           provenance so the two shows read as one network. */
+        .nn-ep-provenance { text-align: center; }
+        .nn-ep-provenance a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .nn-ep-provenance a:hover { text-decoration: underline; }
+        /* Verified-claims panel: a collapsed list under Sources, one row per
+           claim with a link to the source it was checked against. Reuses
+           the transcript box's summary idiom (no marker, +/− at the end). */
+        .blog-claims { margin-top: var(--sp-6); }
+        .blog-claims details summary {
+            display: flex; align-items: center; gap: var(--sp-2);
+            cursor: pointer; padding: var(--sp-3) 0; list-style: none;
+            font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600;
+            color: var(--nn-white);
+        }
+        .blog-claims details summary::-webkit-details-marker { display: none; }
+        .blog-claims details summary::after {
+            content: '+'; margin-left: auto; font-size: 1.2rem; color: var(--nn-text-muted);
+        }
+        .blog-claims details[open] summary::after { content: '\2212'; }
+        .blog-claims .claims-note, .blog-claims .claims-none {
+            font-family: var(--font-ui); font-size: 0.85rem; color: var(--nn-text-muted);
+            line-height: 1.6; margin: 0 0 var(--sp-2);
+        }
+        .blog-claims ol { list-style: none; padding: 0; margin: var(--sp-2) 0 0; }
+        .blog-claims li {
+            padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-2);
+            background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 10px;
+            font-size: 0.95rem; line-height: 1.6;
+        }
+        .blog-claims .claim-source {
+            display: block; margin-top: 4px; font-family: var(--font-ui); font-size: 0.8rem;
+        }
+        .blog-claims .claim-source a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claim-source a:hover { text-decoration: underline; }
+        .blog-claims .claim-why { display: block; font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-top: 2px; }
+        .blog-claims .claims-flagged-count { font-weight: 400; color: var(--nn-text-muted); font-size: 0.9em; }
+        .blog-claims .claims-ledger-link { font-family: var(--font-ui); font-size: 0.85rem; margin: var(--sp-3) 0 0; }
+        .blog-claims .claims-ledger-link a, .blog-claims .claims-none a { color: var(--show-color-text, var(--show-color)); text-decoration: none; font-weight: 600; }
+        .blog-claims .claims-ledger-link a:hover, .blog-claims .claims-none a:hover { text-decoration: underline; }
+        /* Correction box (engine.corrections): dated, at the top of the
+           article, before a reader meets the sentence that was wrong. */
+        .nn-correction {
+            margin: 0 0 var(--sp-6); padding: var(--sp-4) var(--sp-5);
+            border: 1px solid var(--show-color); border-left-width: 4px; border-radius: 10px;
+            background: var(--nn-card); font-size: 0.95rem; line-height: 1.6;
+        }
+        .nn-correction .nn-correction-label {
+            font-family: var(--font-ui); font-size: 0.75rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--show-color-text, var(--show-color)); margin: 0 0 var(--sp-1);
+        }
+        .nn-correction p { margin: 0 0 var(--sp-2); }
+        .nn-correction p:last-child { margin-bottom: 0; }
+        .nn-correction .nn-correction-where { font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); }
         .nn-iv-blurb-label {
             font-family: var(--font-ui);
             font-size: 0.72rem;
@@ -1477,6 +1534,7 @@
                         <a href="../../gallery.html">Image Gallery</a>
                         <a href="../../data.html">Data & Dashboards</a>
                         <a href="../../editorial.html">Editorial Process</a>
+                        <a href="../../claims.html">Claims &amp; corrections</a>
                         <a href="../../faq.html">FAQ</a>
                         <a href="../../press.html">Press Kit</a>
                         <a href="../../support.html">Support the Network</a>
@@ -1895,6 +1953,7 @@
             <a href="../../gallery.html" class="nn-mobile-show-link">Image Gallery</a>
             <a href="../../data.html" class="nn-mobile-show-link">Data & Dashboards</a>
             <a href="../../editorial.html" class="nn-mobile-show-link">Editorial Process</a>
+            <a href="../../claims.html" class="nn-mobile-show-link">Claims &amp; corrections</a>
             <a href="../../faq.html" class="nn-mobile-show-link">FAQ</a>
             <a href="../../support.html" class="nn-mobile-show-link">Support the Network</a>
         </div>
@@ -2058,6 +2117,87 @@
                     </a>
                     
                 </div>
+            </section>
+            
+            
+            
+            <section class="blog-claims" id="verified-claims" aria-label="Verified claims">
+                
+                <details>
+                    <summary>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Verified claims (16)
+                    </summary>
+                    <p class="claims-note">Each claim below was checked by a machine before publication: its source was fetched and the supporting quote looked for in it. A claim the check could not confirm is published and marked, not removed, and re-checked nightly for a week.</p>
+                    <ol>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> On September 28, 2026, India's Supreme Court took suo motu cognisance of recent sexual assault cases in Delhi-NCR and sought a response from Delhi Police.
+                            <span class="claim-source"><a href="https://www.thehindu.com/news/cities/Delhi/supreme-court-register-suo-motu-case-on-delhi-rape-case/article71518477.ece" target="_blank" rel="noopener" title="Supreme Court takes suo motu cognisance of recent sexual assault cases in Delhi-NCR, flags ‘lax patrolling’ by authorities">thehindu.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The bench comprised Justices J.B. Pardiwala and K. Vinod Chandran.
+                            <span class="claim-source"><a href="https://www.thehindu.com/news/cities/Delhi/supreme-court-register-suo-motu-case-on-delhi-rape-case/article71518477.ece" target="_blank" rel="noopener" title="Supreme Court takes suo motu cognisance of recent sexual assault cases in Delhi-NCR, flags ‘lax patrolling’ by authorities">thehindu.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The cases cited included an alleged rape of a 17-year-old at Astha Kunj park, a gang-rape of a minor at Swaroop Nagar, and a sexual assault of a minor on a bus from Greater Noida to Delhi.
+                            <span class="claim-source"><a href="https://www.thehindu.com/news/cities/Delhi/supreme-court-register-suo-motu-case-on-delhi-rape-case/article71518477.ece" target="_blank" rel="noopener" title="Supreme Court takes suo motu cognisance of recent sexual assault cases in Delhi-NCR, flags ‘lax patrolling’ by authorities">thehindu.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The bench said public spaces cannot become zones of high risk because of lax patrolling and other preventable administrative deficiencies.
+                            <span class="claim-source"><a href="https://www.thehindu.com/news/cities/Delhi/supreme-court-register-suo-motu-case-on-delhi-rape-case/article71518477.ece" target="_blank" rel="noopener" title="Supreme Court takes suo motu cognisance of recent sexual assault cases in Delhi-NCR, flags ‘lax patrolling’ by authorities">thehindu.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> An alleged gang-rape involved a bus that travelled nearly 47 kilometres from Greater Noida to Kashmere Gate without being stopped at a police picket, and the court drew parallels with the 2012 Nirbhaya case.
+                            <span class="claim-source"><a href="https://www.thehindu.com/news/cities/Delhi/supreme-court-register-suo-motu-case-on-delhi-rape-case/article71518477.ece" target="_blank" rel="noopener" title="Supreme Court takes suo motu cognisance of recent sexual assault cases in Delhi-NCR, flags ‘lax patrolling’ by authorities">thehindu.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Eight people have died in Thailand floods since September 16: five in Sa Kaeo, two in Chanthaburi and one in Saraburi.
+                            <span class="claim-source"><a href="https://www.channelnewsasia.com/asia/thailand-floods-deaths-heavy-rain-disaster-6414981" target="_blank" rel="noopener" title="Eight dead in Thailand floods since mid-September">channelnewsasia.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> More than 500,000 households and 1.7 million people across 27 provinces outside Bangkok were affected, plus 52,000 households in Bangkok.
+                            <span class="claim-source"><a href="https://www.channelnewsasia.com/asia/thailand-floods-deaths-heavy-rain-disaster-6414981" target="_blank" rel="noopener" title="Eight dead in Thailand floods since mid-September">channelnewsasia.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Bangkok declared a city-wide disaster on Saturday after almost 48 hours of heavy rain, and the DDPM said no deaths were officially reported there and water levels had stabilised.
+                            <span class="claim-source"><a href="https://www.channelnewsasia.com/asia/thailand-floods-deaths-heavy-rain-disaster-6414981" target="_blank" rel="noopener" title="Eight dead in Thailand floods since mid-September">channelnewsasia.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> A 1News Verian poll put the New Zealand Greens at 16 percent and National and Labour at 28 percent each before a November 7 election.
+                            <span class="claim-source"><a href="https://www.straitstimes.com/asia/record-high-support-for-new-zealand-greens-boosts-chance-of-centre-left-coalition-poll-shows" target="_blank" rel="noopener" title="Record high support for New Zealand Greens boosts chance of centre-left coalition, poll shows">straitstimes.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The poll suggested a left-leaning grouping could hold 65 seats against 59 for National, ACT and NZ First, based on 1,004 voters surveyed September 23 to 27, with 13 percent undecided.
+                            <span class="claim-source"><a href="https://www.straitstimes.com/asia/record-high-support-for-new-zealand-greens-boosts-chance-of-centre-left-coalition-poll-shows" target="_blank" rel="noopener" title="Record high support for New Zealand Greens boosts chance of centre-left coalition, poll shows">straitstimes.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Prime Minister Christopher Luxon has previously said National was unlikely to work with Opportunity because of its tax policies, and the result was too close to call.
+                            <span class="claim-source"><a href="https://www.straitstimes.com/asia/record-high-support-for-new-zealand-greens-boosts-chance-of-centre-left-coalition-poll-shows" target="_blank" rel="noopener" title="Record high support for New Zealand Greens boosts chance of centre-left coalition, poll shows">straitstimes.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> A Mainichi poll on September 26-27 found Cabinet approval at 45 percent, up 4 points, and disapproval at 40 percent, down 4, the first time support exceeded nonsupport in three months.
+                            <span class="claim-source"><a href="https://mainichi.jp/english/articles/20260928/p2a/00m/0na/019000c" target="_blank" rel="noopener" title="Japan Cabinet approval rate rises to 45%, tops disapproval for first time in 3 months">mainichi.jp</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Queensland's Family and Child Commission reported 452 child deaths in the last financial year, with preliminary figures showing 91 were known to child protection.
+                            <span class="claim-source"><a href="https://www.abc.net.au/news/2026-09-28/opposition-demands-answers-childrens-commission-deaths/107199554" target="_blank" rel="noopener" title="Qld opposition says premier needs to 'front up' after child deaths report">abc.net.au</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Defense Minister Kang Shin-chul said South Korea would take corresponding measures if a DMZ blast is confirmed to have been caused by North Korean mines.
+                            <span class="claim-source"><a href="https://en.yna.co.kr/view/AEN20260928006800315" target="_blank" rel="noopener" title="Defense minister vows 'corresponding measures' if DMZ blast confirmed caused by N.K. mines">en.yna.co.kr</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> The LDF alleges the Indira Canteen owes Samridhi more than 25 lakh rupees, while Mayor Minimol says the LDF left arrears exceeding 2 crore rupees.
+                            <span class="claim-source"><a href="https://www.thehindu.com/news/national/kerala/keralams-samridhikochi-eatery-row-ldf-alleges-25-lakh-dues-udf-counters-with-2-crore-liability/article71518487.ece" target="_blank" rel="noopener" title="Keralam’s Samridhi@Kochi eatery row: LDF alleges ₹25-lakh dues; UDF counters with ₹2-crore liability">thehindu.com</a></span>
+                        </li>
+                        <li><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> Until 2024 the sihek had been extinct in the wild for 40 years; nine birds released in 2024 on Palmyra Atoll are still doing well, and one Cincinnati bird laid an egg last year.
+                            <span class="claim-source"><a href="https://www.wvxu.org/environment/2026-09-28/cincinnati-zoo-guam-kingfisher-sihek" target="_blank" rel="noopener" title="A nearly extinct bird is making a comeback with Cincinnati Zoo's help">wvxu.org</a></span>
+                        </li>
+                    </ol>
+                    <p class="claims-ledger-link"><a href="../../claims/omni_view_asia_pacific.html">Full ledger for this show →</a></p>
+                </details>
+                
             </section>
             
 
@@ -2270,10 +2410,13 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v4h1"/></svg>
   Made with AI — transparently
 </a>
-            </div><div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
+            </div>
+            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 8 sources</span><span aria-hidden="true"> · </span><span>16 claims checked against their sources</span><span aria-hidden="true"> · </span><span>hosted by an AI, voiced with Grok TTS</span><span aria-hidden="true"> · </span><a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20Omni%20View%20Asia%20Pacific%20Ep6&body=Re%3A%20https%3A//nerranetwork.com/blog/omni_view_asia_pacific/ep006.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
+            </p>
+            <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>👋 Did this episode land?</span>
-                <a href="mailto:patrick@planetterrian.com?subject=I%20liked%20Omni%20View%20Asia%20Pacific%20Ep6&body=Re: https://nerranetwork.com/blog/omni_view_asia_pacific/ep006.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
-                <a href="mailto:patrick@planetterrian.com?subject=Suggestion%20for%20Omni%20View%20Asia%20Pacific&body=Re: https://nerranetwork.com/blog/omni_view_asia_pacific/ep006.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
+                <a href="mailto:hello@nerranetwork.com?subject=I%20liked%20Omni%20View%20Asia%20Pacific%20Ep6&body=Re: https://nerranetwork.com/blog/omni_view_asia_pacific/ep006.html%0A%0A" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">👍 Tell Patrick</a>
+                <a href="mailto:hello@nerranetwork.com?subject=Suggestion%20for%20Omni%20View%20Asia%20Pacific&body=Re: https://nerranetwork.com/blog/omni_view_asia_pacific/ep006.html%0A%0A" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">💡 Suggest a story</a>
             </div>
 
             <!-- Subscribe CTA (Worker-backed — no Buttondown popup / fake 500ms success) -->
@@ -2473,6 +2616,7 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
                     <a href="../../contact.html">Contact</a>
                     <a href="../../press.html">Press Kit</a>
                     <a href="../../editorial.html">Editorial Process</a>
+                    <a href="../../claims.html">Claims &amp; corrections</a>
                     <a href="../../ai-disclosure.html">AI Disclosure</a>
                     <a href="../../privacy-policy.html">Privacy Policy</a>
                     <a href="../../terms-of-service.html">Terms of Service</a>
@@ -2577,7 +2721,7 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
                         <button type="submit">Subscribe</button>
                     </div>
                     <p style="margin-top:0.5rem;font-size:0.85rem;">
-                        <a href="../../personal-interest.html">Soft Personal — tips &amp; reminder (no charge) →</a>
+                        <a href="../../personal-interest.html">Personal tips by email — no charge →</a>
                         <span style="opacity:0.5;margin:0 0.35rem;">·</span>
                         <a href="../../join.html">Or start Nerra Personal →</a>
                         <a class="nn-account-link" href="../../account.html" style="display:none;margin-left:0.75rem;">Your account →</a>

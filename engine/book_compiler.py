@@ -409,6 +409,29 @@ def plan_preview(series_slug: str) -> Dict:
     }
 
 
+def _free_volume_id(series_slug: str, number: int) -> str:
+    """The id for a newly planned volume ``number`` of a series.
+
+    ``<series>_vol<N>`` unless a RETIRED book already holds that id, in
+    which case ``<series>_volume<N>``. Oct 4 2026: First Principles reached
+    episode 120, the planner cut Volume 2 and refused to write it, because
+    ``first_principles_vol2`` is the retired 20-chapter book of episodes
+    21-40 (WO-12). A volume id is the R2 keyspace (``books/<id>/``), the
+    narration cache, the catalog key and the EPUB's ``urn`` — reusing a
+    retired one would overwrite that book's artifacts and identity, so a
+    retired id is never reused. A LIVE volume holding the id is still a
+    refusal (the caller's overwrite guard): that is a planner bug.
+    """
+    default = f"{series_slug}_vol{number}"
+    path = VOLUMES_DIR / f"{default}.yaml"
+    if not path.exists():
+        return default
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    if data.get("retired"):
+        return f"{series_slug}_volume{number}"
+    return default
+
+
 def plan_next_volumes(series_slug: str, *, write: bool = True) -> List[Path]:
     """Cut the next volume config(s) from episodes not yet in any volume.
 
@@ -449,7 +472,7 @@ def plan_next_volumes(series_slug: str, *, write: bool = True) -> List[Path]:
             raise RuntimeError(
                 f"planner would put episodes {overlap} of {series_slug} "
                 "into a second live volume")
-        vol_id = f"{series_slug}_vol{next_num}"
+        vol_id = _free_volume_id(series_slug, next_num)
         out = VOLUMES_DIR / f"{vol_id}.yaml"
         if out.exists():
             raise RuntimeError(f"planner refuses to overwrite {out}")

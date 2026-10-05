@@ -24,8 +24,8 @@ import os
 
 from common import (  # noqa: E402
     OPERATOR_EMAIL, ROOT, carry_the_show_block, cohost_name, load_prompt, logger,
-    mira_signature_html, guest_notes_block, guest_agenda_block,
-    notify_operator,
+    mira_signature_html, guest_notes_block, guest_agenda_block, pacific_time,
+    notify_operator, GUEST_AUDIO_HTML, studio_steps_html,
     operator_phone, render_email, sb_insert, sb_select, sb_update, send_email,
     show_for, to_e164,
 )
@@ -123,9 +123,9 @@ def host_mode_enabled(interview: dict, run: dict | None = None) -> bool:
 
 
 COHOST_INTRO_STEP = (
-    "3. {{cohost_name}}, your co-host, by name — a real person, the founder "
+    "   - {{cohost_name}}, your co-host, by name: a real person, the founder "
     "of the network, who will jump in with his own questions. If he is "
-    "already in the room, hand him a beat to say hello himself.\n"
+    "already in the room, hand him a beat to say hello himself;\n"
 )
 
 
@@ -196,7 +196,7 @@ def notify_host(interview: dict, app: dict, show, *, when: str) -> None:
         html = render_email(
             "voices_host_link.j2", show=show,
             host_url=url, guest_name=guest_name,
-            scheduled_at=interview.get("scheduled_at", ""),
+            scheduled_at=pacific_time(interview.get("scheduled_at", "")),
             cohost_name=cohost_name(), when=when,
             interview_id=interview["id"],
         )
@@ -351,14 +351,10 @@ def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
     ) + variety_block(show.slug)
 
 
-def when_text(iso: str) -> str:
-    """Same wording as the prep brief: the day and the UTC time, pointing at
-    the calendar invite for the guest's own zone."""
-    t = _parse(iso)
-    if not t:
-        return ""
-    t = t.astimezone(dt.timezone.utc)
-    return f"{t:%A}, {t:%B} {t.day} at {t:%H:%M} UTC (the time in your calendar invite)"
+def when_text(iso: str, guest_tz: str = "") -> str:
+    """Same wording as the prep brief: Pacific Time (the network's zone), with
+    the guest's own clock alongside when the booking told us their zone."""
+    return pacific_time(iso, guest_tz or None)
 
 
 def reminder_email(interview: dict, app: dict, show, manage: str,
@@ -368,7 +364,7 @@ def reminder_email(interview: dict, app: dict, show, manage: str,
     import html as _h
     studio = show.studio_url(interview["id"]) + "&role=guest"
     phone_mode = (interview.get("call_mode") or "webrtc") != "webrtc"
-    when = when_text(interview.get("scheduled_at", ""))
+    when = when_text(interview.get("scheduled_at", ""), interview.get("guest_timezone") or "")
     first = _h.escape(first_name(app))
     if soon:
         subject = (f"I'll call you in a few minutes for {show.name}" if phone_mode
@@ -383,20 +379,29 @@ def reminder_email(interview: dict, app: dict, show, manage: str,
                 if when else "We're on in about two hours.")
     parts = [f"<p>Hi {first},</p>", f"<p>{lead}</p>"]
     if phone_mode:
-        parts.append("<p>I'll call the number you gave us. If you'd rather join from a "
-                     f'computer, <a href="{studio}">your studio link</a> works too.</p>')
+        parts.append("<p>I'll call the number you gave us. If you're able to join from a "
+                     "computer with headphones instead, it sounds noticeably better than a "
+                     f'phone line: <a href="{studio}">your studio link</a> works right up to '
+                     "the start.</p>")
+    elif soon:
+        # Oct 1 2026: the last email before the interview repeats the way in,
+        # step by step. Jonathan had the page open and never got past step 2.
+        parts.append("<p>Headphones on, and from your computer for the best sound.</p>")
+        parts.append(str(studio_steps_html(studio)))
     else:
-        parts.append(f'<p><a href="{studio}"><strong>Join your interview here</strong></a>.'
-                     + ("" if soon else " The studio opens ten minutes before we start.")
-                     + "</p>")
-        if not soon:
+        parts.append(GUEST_AUDIO_HTML)
+        check = interview.get("setup_check") or {}
+        if isinstance(check, dict) and check.get("mic") == "ok":
+            parts.append("<p>Your setup test passed, thank you. Use the same computer, "
+                         "browser and headphones today and you're all set.</p>")
+        else:
             parts.append(
-                f'<p>If you have two minutes before then, <a href="{studio}&test=1">run '
-                "the 30-second microphone test</a> on the computer you'll use. Please wear "
-                "headphones or earbuds: without them your microphone picks up my voice "
-                "from your speakers, and my questions end up in your recording.</p>")
-        parts.append("<p>If the browser gives you any trouble, the studio has a button to "
-                     "have me call your phone instead.</p>")
+                '<p style="background:#fffbeb;border-left:4px solid #d97706;padding:.7em 1em">'
+                f'<strong>Please take 30 seconds now:</strong> <a href="{studio}&test=1">run '
+                "the setup test</a> on the computer, browser and headphones you'll use. It "
+                "confirms I'll hear you clearly, and anything it finds is easy to fix now and "
+                "hard to fix at the start time.</p>")
+        parts.append(str(studio_steps_html(studio)))
     if manage and not soon:
         parts.append(f'<p>If today doesn\'t work after all, <a href="{manage}">move or '
                      "cancel it here</a>. One tap, no explanation needed; I would much "
@@ -465,10 +470,11 @@ def send_reminders() -> None:
             if (interview.get("call_mode") or "webrtc") == "webrtc":
                 text = (
                     f"Mira here, from {show.name} (Nerra Network). Your "
-                    "interview starts in about two hours. Join from a "
-                    "computer in a quiet room, wearing headphones (without "
-                    "them your mic records Mira too): "
-                    f"{show.studio_url(interview['id'])}"
+                    "interview starts in about two hours. For the best sound, "
+                    "join from a computer with headphones and a good mic "
+                    "(phone audio is much thinner). Open your link, press "
+                    "Check my microphone until it says Sounds good, then "
+                    f"Join: {show.studio_url(interview['id'])}"
                     + (f" — can't make it? {manage}" if manage else "")
                     + " — Mira"
                 )
@@ -644,8 +650,67 @@ def fire_due_interviews() -> int:
     return failures
 
 
+NO_SHOW_AFTER_MIN = 40
+
+
+def sweep_browser_no_shows() -> int:
+    """Oct 5 2026, Stan Lewis. A browser interview whose guest never opened
+    the studio left its run at awaiting_guest forever: nobody wrote to him,
+    nobody told Patrick, and the interview sat at "briefed". The phone path
+    has always had a no-show (the call goes unanswered); this is the same
+    thing for the studio, forty minutes after the start with no one in."""
+    cutoff = _iso(_now() - dt.timedelta(minutes=NO_SHOW_AFTER_MIN))
+    oldest = _iso(_now() - dt.timedelta(days=2))
+    due = sb_select("interviews",
+                    "status=in.(briefed,scheduled)&call_mode=eq.webrtc"
+                    f"&scheduled_at=lte.{cutoff}&scheduled_at=gte.{oldest}")
+    handled = 0
+    for interview in due:
+        try:
+            runs = sb_select("interview_runs",
+                             f"interview_id=eq.{interview['id']}&order=created_at.desc&limit=1")
+            run = runs[0] if runs else None
+            if not run or run.get("status") != "awaiting_guest":
+                continue
+            sb_update("interview_runs", f"id=eq.{run['id']}",
+                      {"status": "failed", "disconnect_reason": "no_show"})
+            app_rows = sb_select("guest_applications", f"id=eq.{interview['application_id']}")
+            app = app_rows[0] if app_rows else {}
+            show = show_for(interview, app)
+            no_shows = int(interview.get("no_show_count") or 0) + 1
+            status = "missed" if no_shows < 2 else "cancelled"
+            sb_update("interviews", f"id=eq.{interview['id']}",
+                      {"status": status, "no_show_count": no_shows})
+            if no_shows < 2 and app.get("email"):
+                booking = (os.environ.get("CALCOM_BOOKING_URL_NERRA_VOICES", "")
+                           if show.slug == "nerra_voices" else "") \
+                    or os.environ.get("CALCOM_BOOKING_URL", "")
+                html = render_email("voices_interview_reminder.j2", show=show,
+                                    guest_name=first_name(app), missed=True,
+                                    booking_url=booking)
+                send_email(app["email"],
+                           f"Sorry we missed each other: pick a new time for {show.name}",
+                           html, cc_operator=True)
+                notify_operator(show.slack(
+                    f"{app.get('name') or 'guest'} didn't come into the studio "
+                    f"(no-show #{no_shows}); Mira sent the reschedule email"))
+            else:
+                if app.get("id"):
+                    sb_update("guest_applications", f"id=eq.{app['id']}", {"status": "lapsed"})
+                notify_operator(show.slack(
+                    f"{app.get('name') or 'guest'} second no-show; application lapsed"))
+            handled += 1
+        except Exception:  # noqa: BLE001 — one guest never stops the sweep
+            logger.exception("no-show sweep failed for %s", interview.get("id"))
+    return handled
+
+
 def main() -> int:
     send_reminders()
+    try:
+        sweep_browser_no_shows()
+    except Exception:  # noqa: BLE001 — firing matters more
+        logger.exception("no-show sweep failed")
     return 1 if fire_due_interviews() else 0
 
 

@@ -1,0 +1,430 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.280
+Hey, welcome to Models and Agents for Beginners, episode 87.
+
+00:00:03.760 --> 00:00:05.560
+It's June 29th, 2026.
+
+00:00:06.220 --> 00:00:07.980
+Today's AI news is pretty exciting,
+
+00:00:08.220 --> 00:00:10.360
+and I promise, no jargon, let's go.
+
+00:00:11.080 --> 00:00:12.920
+You know how a single clever sentence
+
+00:00:12.920 --> 00:00:15.080
+can sometimes get someone to do the opposite
+
+00:00:15.080 --> 00:00:15.940
+of what they were told?
+
+00:00:16.560 --> 00:00:19.680
+That exact idea is showing up in AI tools right now,
+
+00:00:19.880 --> 00:00:22.280
+and it changes how safe these systems really are.
+
+00:00:22.940 --> 00:00:25.720
+Security researchers looked at recent attack patterns
+
+00:00:25.720 --> 00:00:28.220
+and found people breaking into AI systems
+
+00:00:28.220 --> 00:00:30.360
+just by typing ordinary words.
+
+00:00:30.920 --> 00:00:33.380
+No special code needed, just careful language
+
+00:00:33.380 --> 00:00:36.660
+that tricks the AI into ignoring its own safety rules.
+
+00:00:37.340 --> 00:00:40.420
+Think of an AI assistant like a very literal friend
+
+00:00:40.420 --> 00:00:42.640
+who listens to every instruction you give
+
+00:00:42.640 --> 00:00:44.520
+without double checking where it came from.
+
+00:00:45.140 --> 00:00:48.260
+The company that built the AI gives it permanent rules
+
+00:00:48.260 --> 00:00:50.400
+like never sharing private data,
+
+00:00:50.920 --> 00:00:53.100
+but those rules are just text on a screen.
+
+00:00:53.840 --> 00:00:56.480
+Your messages are also just text on a screen.
+
+00:00:56.480 --> 00:00:59.960
+So a sneaky sentence can make the AI treat your words
+
+00:00:59.960 --> 00:01:01.440
+as the new permanent rules.
+
+00:01:02.020 --> 00:01:04.020
+This trick is called prompt injection,
+
+00:01:04.400 --> 00:01:07.260
+which means slipping new instructions into the conversation
+
+00:01:07.260 --> 00:01:10.380
+so the AI follows them instead of the original ones.
+
+00:01:11.060 --> 00:01:13.600
+One case showed attackers using public posts
+
+00:01:13.600 --> 00:01:16.220
+to hijack accounts because the AI later read
+
+00:01:16.220 --> 00:01:17.840
+those posts as instructions.
+
+00:01:18.380 --> 00:01:22.160
+The same pattern hit more than 90 organizations last year.
+
+00:01:22.700 --> 00:01:25.000
+Proving the problem is already widespread.
+
+00:01:25.760 --> 00:01:28.820
+For anyone using AI with homework or creative projects,
+
+00:01:29.120 --> 00:01:30.720
+this matters because connected tools
+
+00:01:30.720 --> 00:01:32.520
+could leak information if tricked.
+
+00:01:32.980 --> 00:01:36.340
+The silver lining is that researchers created a free game
+
+00:01:36.340 --> 00:01:38.640
+so anyone can practice spotting these tricks
+
+00:01:38.640 --> 00:01:40.280
+before they cause real harm.
+
+00:01:41.060 --> 00:01:45.020
+Go to castle.boardair.io on your phone or laptop.
+
+00:01:45.380 --> 00:01:46.940
+Pick a level and write messages
+
+00:01:46.940 --> 00:01:49.520
+that convince the AI guard to reveal a password.
+
+00:01:50.280 --> 00:01:52.540
+Every successful message you write gets added
+
+00:01:52.540 --> 00:01:55.400
+to an open data set that helps future AI systems
+
+00:01:55.400 --> 00:01:56.580
+become harder to fool.
+
+00:01:57.040 --> 00:01:59.740
+That hands on practice turns a scary idea
+
+00:01:59.740 --> 00:02:01.740
+into something you can actually understand
+
+00:02:01.740 --> 00:02:02.680
+and help fix.
+
+00:02:03.520 --> 00:02:05.980
+Okay, now for my favorite part of the show,
+
+00:02:06.340 --> 00:02:08.300
+the deep dive where we look under the hood.
+
+00:02:09.100 --> 00:02:12.580
+Today's deep dive explains exactly how prompt injection works
+
+00:02:12.580 --> 00:02:15.520
+by comparing it to something you already know from school.
+
+00:02:16.340 --> 00:02:19.280
+Imagine a substitute teacher who walks into class
+
+00:02:19.280 --> 00:02:21.080
+without knowing the normal rules.
+
+00:02:21.760 --> 00:02:24.560
+The substitute hears whatever instructions come their way
+
+00:02:24.560 --> 00:02:26.780
+and treats the most recent ones as official
+
+00:02:26.780 --> 00:02:29.160
+because they have no way to verify the source.
+
+00:02:29.820 --> 00:02:32.880
+Picture the real teacher leaving a note with clear rules,
+
+00:02:33.300 --> 00:02:35.800
+but the note and your spoken request are both
+
+00:02:35.800 --> 00:02:37.900
+just words on paper or in the air.
+
+00:02:38.340 --> 00:02:41.380
+The substitute cannot easily tell which set of words
+
+00:02:41.380 --> 00:02:42.680
+carries more authority,
+
+00:02:43.200 --> 00:02:46.340
+so a persuasive request can override the written note.
+
+00:02:46.980 --> 00:02:49.940
+An AI works the same way because it receives two sets
+
+00:02:49.940 --> 00:02:52.740
+of instructions that both look like plain text.
+
+00:02:53.380 --> 00:02:55.140
+The permanent rules from the company
+
+00:02:55.140 --> 00:02:57.720
+sit next to whatever you type in the chat box
+
+00:02:58.340 --> 00:03:01.460
+and the model processes them without strong separation.
+
+00:03:02.020 --> 00:03:05.380
+A cleverly worded user message can therefore make the AI
+
+00:03:05.380 --> 00:03:07.420
+treat the new text as the real rules
+
+00:03:07.420 --> 00:03:09.060
+and ignore the original ones.
+
+00:03:09.600 --> 00:03:12.160
+That process is prompt injection in action
+
+00:03:12.820 --> 00:03:15.900
+and it feels like magic because no programming is involved.
+
+00:03:16.460 --> 00:03:18.700
+The result is an AI doing something
+
+00:03:18.700 --> 00:03:21.920
+it was never meant to do all because language alone
+
+00:03:21.920 --> 00:03:23.200
+changed its priorities.
+
+00:03:23.840 --> 00:03:24.940
+Once you see it this way,
+
+00:03:25.160 --> 00:03:26.820
+the trick stops feeling mysterious
+
+00:03:26.820 --> 00:03:29.600
+and starts feeling like a solvable design problem.
+
+00:03:30.400 --> 00:03:32.460
+Now let's look at two other developments,
+
+00:03:32.700 --> 00:03:33.400
+worth your attention.
+
+00:03:34.080 --> 00:03:38.080
+First up is a humanoid robot built to handle real office tasks
+
+00:03:38.080 --> 00:03:40.180
+instead of just factory work.
+
+00:03:40.740 --> 00:03:43.600
+Flexion robotics built the humanoid robot train
+
+00:03:43.600 --> 00:03:47.340
+by former Nvidia engineers to handle real office tasks
+
+00:03:47.860 --> 00:03:50.240
+like fetching items or organizing materials.
+
+00:03:50.720 --> 00:03:53.280
+The training method focuses on practical movements
+
+00:03:53.280 --> 00:03:55.100
+instead of just walking around
+
+00:03:55.100 --> 00:03:57.720
+so the robot can do useful work right away.
+
+00:03:58.340 --> 00:04:00.860
+It shows robots moving from factory floors
+
+00:04:00.860 --> 00:04:04.000
+into everyday spaces like schools or small offices.
+
+00:04:04.620 --> 00:04:06.820
+If you are curious about robotics careers
+
+00:04:06.820 --> 00:04:09.220
+this is the kind of project worth watching.
+
+00:04:09.900 --> 00:04:13.080
+You can read the full story on wired site by searching for
+
+00:04:13.080 --> 00:04:17.140
+this humanoid robot is a terrifyingly competent office intern
+
+00:04:17.800 --> 00:04:20.080
+to see photos and learn how the training works.
+
+00:04:20.640 --> 00:04:23.460
+The second item is a lively online discussion
+
+00:04:23.460 --> 00:04:26.940
+about why smart glasses still feel confusing to many people.
+
+00:04:27.720 --> 00:04:30.720
+Camera versions like Rayba and Meta can record video
+
+00:04:30.720 --> 00:04:33.960
+but a regular GoPro often does it better and cheaper.
+
+00:04:34.720 --> 00:04:37.460
+Display versions like the Vision Pro can feel heavy
+
+00:04:37.460 --> 00:04:38.780
+and cause motion sickness.
+
+00:04:39.620 --> 00:04:42.180
+AI only glasses promise quick answers
+
+00:04:42.180 --> 00:04:43.540
+without pulling out your phone.
+
+00:04:44.060 --> 00:04:46.280
+Yet your phone already has strong assistance.
+
+00:04:47.020 --> 00:04:50.000
+The discussion is useful because it shows how new gadgets
+
+00:04:50.000 --> 00:04:53.140
+need a clear reason to exist before they catch on.
+
+00:04:53.980 --> 00:04:56.040
+You can join the conversation on reddits
+
+00:04:56.040 --> 00:04:59.640
+or plus artificial by searching for the post titled
+
+00:05:00.260 --> 00:05:02.120
+what's the real point of smart glasses
+
+00:05:02.660 --> 00:05:04.560
+and read what other beginners are saying.
+
+00:05:05.320 --> 00:05:07.800
+Those two stories highlight how both hardware
+
+00:05:07.800 --> 00:05:10.300
+and user expectations are still evolving.
+
+00:05:11.140 --> 00:05:13.740
+Here are a couple of quick bits to round out today's news.
+
+00:05:14.060 --> 00:05:16.880
+Ford discovered that replacing experienced engineers
+
+00:05:16.880 --> 00:05:20.520
+with AI tools alone led to lower quality results
+
+00:05:20.520 --> 00:05:21.980
+on complex projects.
+
+00:05:22.520 --> 00:05:25.720
+The car company is now rehiring people with deep knowledge
+
+00:05:25.720 --> 00:05:28.360
+because human judgment still improves outcomes
+
+00:05:28.360 --> 00:05:30.700
+even when powerful tools are available.
+
+00:05:31.400 --> 00:05:34.580
+In a separate development, open AI released a study
+
+00:05:34.580 --> 00:05:37.860
+examining how AI could change jobs across Europe
+
+00:05:38.380 --> 00:05:40.260
+through automation or new workflows.
+
+00:05:41.040 --> 00:05:43.360
+The goal is to help people and governments prepare
+
+00:05:43.360 --> 00:05:46.460
+instead of being surprised by shifts in daily work.
+
+00:05:47.040 --> 00:05:47.960
+That's it for today.
+
+00:05:48.220 --> 00:05:51.020
+Remember every AI expert started exactly
+
+00:05:51.020 --> 00:05:52.320
+where you are right now.
+
+00:05:52.880 --> 00:05:55.080
+If something we talked about today made you curious,
+
+00:05:55.440 --> 00:05:56.100
+go try it.
+
+00:05:56.440 --> 00:05:58.180
+That's literally how learning works.
+
+00:05:58.580 --> 00:06:01.500
+Stay curious, keep experimenting and we'll see you tomorrow.
+
+00:06:02.000 --> 00:06:03.920
+And if you'd rather watch, then listen,
+
+00:06:04.360 --> 00:06:06.520
+find us on YouTube at Narrow Network.
+
+00:06:06.520 --> 00:06:08.060
+Links in the show notes.
+
+00:06:08.460 --> 00:06:11.620
+And before you go, this show is part of the Narrow Network,
+
+00:06:12.000 --> 00:06:15.040
+a family of daily podcasts on tech, science, and markets.
+
+00:06:15.400 --> 00:06:17.860
+Each one a short, sharp briefing you can finish
+
+00:06:17.860 --> 00:06:18.500
+on the commute.
+
+00:06:19.300 --> 00:06:22.200
+If today earned its place in your feed, here's your next listen.
+
+00:06:22.880 --> 00:06:25.360
+Fascinating frontiers, the most fascinating news
+
+00:06:25.360 --> 00:06:26.620
+from space and science.
+
+00:06:27.120 --> 00:06:30.620
+Find every show free at NarrowNetwork.com.
+
+00:06:30.820 --> 00:06:34.280
+This episode used AI voice synthesis of my voice,
+
+00:06:34.280 --> 00:06:37.440
+editorial selection, and analysis are my own.

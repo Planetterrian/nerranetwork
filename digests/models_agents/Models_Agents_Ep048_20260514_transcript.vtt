@@ -1,0 +1,523 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:04.360
+Hey, welcome to Models and Agents, episode 48 for May 14, 2026.
+
+00:00:05.000 --> 00:00:07.980
+Plenty of model releases and agent benchmarks moving today.
+
+00:00:08.560 --> 00:00:11.160
+Faster pre-training without changing model architecture
+
+00:00:11.160 --> 00:00:12.240
+just became practical.
+
+00:00:13.480 --> 00:00:16.280
+News researches, token superposition training,
+
+00:00:16.640 --> 00:00:20.200
+cuts wall clock time by up to 2.5 times on models
+
+00:00:20.200 --> 00:00:23.500
+from 270 million to 10 billion parameters.
+
+00:00:24.260 --> 00:00:27.060
+The briefing today centers on a new pre-training method
+
+00:00:27.060 --> 00:00:28.800
+that delivers real speed-ups.
+
+00:00:29.320 --> 00:00:31.540
+Several papers on efficient training and serving
+
+00:00:31.540 --> 00:00:34.580
+and fresh agent tools that handle multi-machine control
+
+00:00:34.580 --> 00:00:36.020
+and structured evaluation.
+
+00:00:37.000 --> 00:00:40.080
+News research released token superposition training,
+
+00:00:40.460 --> 00:00:42.340
+a two-phase pre-training technique.
+
+00:00:42.720 --> 00:00:45.500
+It averages contiguous token embeddings into bags
+
+00:00:45.500 --> 00:00:48.220
+during the first phase before reverting
+
+00:00:48.220 --> 00:00:50.020
+to standard next token prediction.
+
+00:00:51.160 --> 00:00:54.500
+The method works on dense models from 270 million
+
+00:00:54.500 --> 00:00:57.940
+to 3 billion parameters and a 10 billion parameter
+
+00:00:57.940 --> 00:01:01.660
+mixture of experts model with 1 billion active parameters.
+
+00:01:02.180 --> 00:01:06.240
+No architecture, tokenizer, or optimizer changes are required.
+
+00:01:06.840 --> 00:01:10.080
+It delivers up to 2.5 times wall clock speed-ups
+
+00:01:10.080 --> 00:01:11.980
+at matched floating point operations
+
+00:01:11.980 --> 00:01:13.980
+while preserving downstream performance.
+
+00:01:14.820 --> 00:01:17.200
+Teams doing continued pre-training or training
+
+00:01:17.200 --> 00:01:19.040
+from scratch on mid-size models
+
+00:01:19.040 --> 00:01:22.080
+can cut training time dramatically on the same hardware.
+
+00:01:22.680 --> 00:01:24.780
+Watch for follow-up work testing whether
+
+00:01:24.780 --> 00:01:27.400
+the same bag averaging trick scales cleanly
+
+00:01:27.400 --> 00:01:29.040
+past 10 billion parameters.
+
+00:01:29.860 --> 00:01:32.960
+Three new papers on model efficiency landed as well.
+
+00:01:33.420 --> 00:01:35.580
+Soma trains a small surrogate model
+
+00:01:35.580 --> 00:01:37.520
+on the early turns of a conversation
+
+00:01:38.100 --> 00:01:39.580
+to handle the rest of the session.
+
+00:01:40.160 --> 00:01:43.780
+It uses soft prompts and localized low rank adaptation
+
+00:01:43.780 --> 00:01:46.240
+fine-tuning to keep response quality
+
+00:01:46.240 --> 00:01:48.220
+while slashing latency and memory
+
+00:01:48.220 --> 00:01:51.080
+compared with always concatenating full history
+
+00:01:51.080 --> 00:01:52.180
+to a large model.
+
+00:01:53.180 --> 00:01:55.480
+A simple gate handles one time switching
+
+00:01:55.480 --> 00:01:56.880
+with rollback on drift.
+
+00:01:57.600 --> 00:02:00.200
+Another paper called Freeze Deep, Train Shallow,
+
+00:02:00.720 --> 00:02:02.740
+shows that deep layers are both critical
+
+00:02:02.740 --> 00:02:05.280
+for task execution and highly stable.
+
+00:02:05.680 --> 00:02:07.600
+The recommendation is to freeze them
+
+00:02:07.600 --> 00:02:10.900
+and train only shallow layers during continued pre-training.
+
+00:02:11.400 --> 00:02:14.200
+This strategy beats full parameter fine-tuning
+
+00:02:14.200 --> 00:02:18.440
+on CEVAL and CMM-LU while preserving original knowledge.
+
+00:02:18.860 --> 00:02:21.160
+The work gives resource constrained teams
+
+00:02:21.160 --> 00:02:23.360
+a concrete rule for layer allocation.
+
+00:02:23.900 --> 00:02:27.060
+A third study tested hidden layer distillation at scale.
+
+00:02:27.360 --> 00:02:30.120
+It used Gemma 3.4 billion as teacher
+
+00:02:30.120 --> 00:02:33.740
+and students up to 735 million parameters
+
+00:02:34.400 --> 00:02:36.800
+trained on 168 billion tokens.
+
+00:02:37.460 --> 00:02:40.060
+The approach produces consistent perplexity gains
+
+00:02:40.060 --> 00:02:42.380
+over standard loja-based distillation
+
+00:02:42.920 --> 00:02:45.560
+but does not reliably improve downstream tasks.
+
+00:02:46.200 --> 00:02:48.520
+The results suggest latent signals exist
+
+00:02:48.520 --> 00:02:51.220
+but need further breakthroughs to matter in practice.
+
+00:02:51.980 --> 00:02:55.140
+On the agent side, OpenDesk lets AI agents
+
+00:02:55.140 --> 00:02:58.140
+see, click, and type across multiple local machines
+
+00:02:58.140 --> 00:02:59.120
+over Wi-Fi.
+
+00:02:59.740 --> 00:03:01.560
+No cloud or accounts are required.
+
+00:03:02.120 --> 00:03:05.780
+It works with Claude, cursor, codex, or custom harnesses
+
+00:03:05.780 --> 00:03:08.060
+and stays fully encrypted on the local network.
+
+00:03:08.780 --> 00:03:11.540
+Mac, Linux, and Windows builds are open source.
+
+00:03:12.320 --> 00:03:14.740
+EVAL agent encodes evaluation expertise
+
+00:03:14.740 --> 00:03:16.140
+as composable skills
+
+00:03:16.140 --> 00:03:18.600
+and produces complete evaluation artifacts,
+
+00:03:19.120 --> 00:03:21.000
+including metrics, code, and reports.
+
+00:03:21.760 --> 00:03:26.640
+It raises first run success from 17.5% to 65%
+
+00:03:26.640 --> 00:03:29.800
+and wins 79.5% human preference
+
+00:03:29.800 --> 00:03:31.580
+over simple prompting baselines.
+
+00:03:32.460 --> 00:03:34.680
+The accompanying agent EVAL bench
+
+00:03:34.680 --> 00:03:38.220
+and meta-evaluation framework are now available for testing.
+
+00:03:39.240 --> 00:03:43.700
+Agent Brace splits an LLM agent into a belief state model
+
+00:03:43.700 --> 00:03:46.480
+that outputs structured natural language claims
+
+00:03:46.480 --> 00:03:49.200
+with verbalized certainty and a policy model
+
+00:03:49.700 --> 00:03:51.620
+that acts on that compact belief.
+
+00:03:52.240 --> 00:03:57.780
+It improves performance by 14.5% on twin 2.53 billion
+
+00:03:57.780 --> 00:04:01.440
+and 5.3% on twin 3.4 billion
+
+00:04:02.020 --> 00:04:03.900
+in partially observable environments
+
+00:04:03.900 --> 00:04:06.100
+while keeping context size constant.
+
+00:04:06.980 --> 00:04:09.020
+Builders also shipped an open source
+
+00:04:09.020 --> 00:04:11.780
+one prompt to cinematic real pipeline
+
+00:04:12.300 --> 00:04:16.140
+that runs end to end on a single AMD MI 300X.
+
+00:04:16.840 --> 00:04:21.220
+The pipeline uses flux two-cline, 1.2.2 image to video,
+
+00:04:21.760 --> 00:04:24.740
+twin 3.5.35 billion as director,
+
+00:04:25.400 --> 00:04:27.860
+a step music, and cacoro text to speech.
+
+00:04:28.640 --> 00:04:32.640
+It turns one English sentence into a finished 720p video
+
+00:04:32.640 --> 00:04:36.040
+with characters, music, and narration in roughly 10 minutes.
+
+00:04:36.580 --> 00:04:39.820
+All components are Apache 2.0 or MIT
+
+00:04:40.460 --> 00:04:41.700
+and the full code is public.
+
+00:04:42.360 --> 00:04:45.200
+A vision critic with 10 structured failure labels
+
+00:04:45.200 --> 00:04:48.080
+enables automatic retries for common artifacts.
+
+00:04:48.680 --> 00:04:52.320
+Check up two action introduces a new 2000 report
+
+00:04:52.320 --> 00:04:54.320
+multimodal clinical benchmark.
+
+00:04:54.960 --> 00:04:58.160
+It tests generation of patient oriented action cards
+
+00:04:58.160 --> 00:05:01.580
+that include priority, recommended department, time window,
+
+00:05:02.000 --> 00:05:03.660
+and safe questions for clinicians.
+
+00:05:04.540 --> 00:05:07.140
+Experiments reveal clear trade-offs between coverage,
+
+00:05:07.140 --> 00:05:09.780
+correctness, and safety alignment across general
+
+00:05:09.780 --> 00:05:11.620
+and medical large language models.
+
+00:05:12.320 --> 00:05:14.300
+The data set and evaluation protocol
+
+00:05:14.300 --> 00:05:15.900
+are released for further work.
+
+00:05:16.660 --> 00:05:19.320
+Okay, let's pop the hood on continued pre-training.
+
+00:05:19.820 --> 00:05:22.280
+Everyone talks about it as a uniform update
+
+00:05:22.280 --> 00:05:23.640
+across all parameters.
+
+00:05:24.420 --> 00:05:26.920
+In practice, layers behave very differently.
+
+00:05:27.700 --> 00:05:30.220
+Deep layers execute the core task logic
+
+00:05:30.220 --> 00:05:33.280
+while remaining highly stable against disruptive changes.
+
+00:05:34.240 --> 00:05:36.220
+Layer tracer maps this by measuring
+
+00:05:36.220 --> 00:05:38.580
+where task execution actually occurs
+
+00:05:38.580 --> 00:05:41.640
+and how sensitive each layer is to new gradients.
+
+00:05:42.360 --> 00:05:43.640
+The result is a clear rule.
+
+00:05:44.200 --> 00:05:47.120
+Freeze the deep stack and train only the shallow layers.
+
+00:05:47.620 --> 00:05:50.180
+This consistently beats both full fine tuning
+
+00:05:50.720 --> 00:05:53.260
+and the opposite allocation on standard benchmarks.
+
+00:05:53.980 --> 00:05:57.560
+Deep representations already encode robust general features
+
+00:05:57.560 --> 00:05:59.860
+that new data rarely needs to overwrite.
+
+00:06:00.580 --> 00:06:03.280
+The quality gain is largest on mid-size models
+
+00:06:03.280 --> 00:06:05.580
+where full updates are most expensive.
+
+00:06:06.700 --> 00:06:08.640
+Above roughly 30 billion parameters,
+
+00:06:09.000 --> 00:06:11.500
+the relative benefit shrinks because the deep layers
+
+00:06:11.500 --> 00:06:13.000
+become even more stable.
+
+00:06:13.720 --> 00:06:15.900
+When you have limited compute and want to adapt
+
+00:06:15.900 --> 00:06:17.680
+a base model to a new domain,
+
+00:06:18.160 --> 00:06:21.540
+start by freezing everything past layer 70%,
+
+00:06:21.540 --> 00:06:24.080
+and only tune the early transformer blocks.
+
+00:06:24.880 --> 00:06:26.600
+The gacha that bites most teams
+
+00:06:26.600 --> 00:06:29.360
+is assuming uniform learning rates across depth.
+
+00:06:30.140 --> 00:06:31.780
+Shallow layers need higher rates
+
+00:06:31.780 --> 00:06:33.560
+while deep layers need almost none.
+
+00:06:34.380 --> 00:06:35.800
+If you have not tried these yet,
+
+00:06:36.120 --> 00:06:38.980
+clone the open desk repo and pair two local machines
+
+00:06:38.980 --> 00:06:41.440
+to test cross-device computer use agents
+
+00:06:41.440 --> 00:06:44.020
+with your existing cloud or cursor workflow.
+
+00:06:44.580 --> 00:06:46.240
+Run the open cinematic pipeline
+
+00:06:46.240 --> 00:06:48.040
+on a single high memory GPU.
+
+00:06:48.640 --> 00:06:51.480
+If you have access to an MI300X or equivalent,
+
+00:06:52.080 --> 00:06:54.000
+start with the provided showcase reels
+
+00:06:54.000 --> 00:06:55.920
+before modifying the director prompts.
+
+00:06:56.820 --> 00:06:58.760
+Apply token superposition training
+
+00:06:58.760 --> 00:07:01.880
+to your next one billion to 10 billion pre-training run
+
+00:07:02.440 --> 00:07:04.220
+using the release two phase schedule
+
+00:07:04.220 --> 00:07:07.140
+and compare wall clock time against your current baseline.
+
+00:07:07.680 --> 00:07:11.020
+Test eVal agent on one of your existing agent projects
+
+00:07:11.020 --> 00:07:13.240
+using the new agent eVal bench
+
+00:07:13.240 --> 00:07:16.580
+to see whether the 65% first run success rate
+
+00:07:16.580 --> 00:07:19.180
+holds for your specific evaluation needs.
+
+00:07:20.020 --> 00:07:22.900
+Experiment with agent brace style belief claims
+
+00:07:22.900 --> 00:07:26.540
+on a long horizon task in a partially observable environment
+
+00:07:26.540 --> 00:07:30.120
+to keep context size constant while tracking uncertainty.
+
+00:07:30.960 --> 00:07:34.680
+More labs are expected to release layer allocation diagnostics
+
+00:07:34.680 --> 00:07:36.500
+following the layer tracer approach
+
+00:07:36.500 --> 00:07:38.100
+for continued pre-training.
+
+00:07:38.600 --> 00:07:41.960
+Watch for production deployments of SOMA style surrogate models
+
+00:07:41.960 --> 00:07:44.260
+in multi-turn agent serving stacks.
+
+00:07:45.140 --> 00:07:47.420
+Additional open source computer use tools
+
+00:07:47.420 --> 00:07:50.140
+will likely appear as open desk demonstrates
+
+00:07:50.140 --> 00:07:51.540
+the local network pattern.
+
+00:07:52.380 --> 00:07:54.280
+Further agent evaluation frameworks
+
+00:07:54.280 --> 00:07:57.180
+building on eVal agents skill composition model
+
+00:07:57.180 --> 00:07:59.200
+are anticipated in the coming weeks.
+
+00:08:00.020 --> 00:08:02.380
+Tomorrow keep an eye on more labs releasing
+
+00:08:02.380 --> 00:08:04.240
+layer allocation diagnostics
+
+00:08:04.240 --> 00:08:06.040
+following the layer tracer approach.
+
+00:08:06.600 --> 00:08:08.660
+That wraps up today's AI briefing.
+
+00:08:09.300 --> 00:08:11.020
+Share this with a developer or builder
+
+00:08:11.020 --> 00:08:12.200
+who wants to stay current.
+
+00:08:12.740 --> 00:08:14.060
+Subscribe wherever you listen.
+
+00:08:14.420 --> 00:08:14.940
+See you tomorrow.
+
+00:08:15.600 --> 00:08:18.680
+This episode used AI voice synthesis of my voice.
+
+00:08:18.680 --> 00:08:21.580
+Editorial selection and analysis are my own.

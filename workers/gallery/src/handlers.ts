@@ -158,6 +158,26 @@ const SHOW_NEWSLETTER_TAGS = new Set([
   "The Age of AI",
   "Offshore North",
   "Nerra Daily",
+  // September 2026 launch cohort (added 2026-10-01 — every show page had
+  // been offering a subscribe tag this Set silently dropped).
+  "AI Chips & Data Centres Daily",
+  "MAG 7 Daily",
+  "Peptides Weekly",
+  "Longevity Weekly",
+  "Vancouver Daily News",
+  "Collingwood Weekly",
+  "Prediction Markets Daily",
+  "Omni View Top World News",
+  "Omni View North America",
+  "Omni View Europe",
+  "Omni View Asia Pacific",
+  "Omni View Africa & Middle East",
+  "Omni View Central & South America",
+  // Two tags the show YAMLs had carried all along that this Set never
+  // did: DP Pod's short tag (the YAML's, which the tagging script writes)
+  // and Nerra Voices.
+  "DP Pod",
+  "Nerra Voices",
 ]);
 
 /** Resolve the client's `list` + `source` (+ optional show newsletter
@@ -173,7 +193,7 @@ export function resolveSubscribeTags(
   source: unknown,
   showTags?: unknown,
   opts?: { networkNewsletter?: boolean },
-): { tags: string[]; list: string } {
+): { tags: string[]; list: string; source: string } {
   const listKey =
     typeof list === "string" && Object.prototype.hasOwnProperty.call(
       SUBSCRIBE_LISTS, list,
@@ -181,9 +201,11 @@ export function resolveSubscribeTags(
       ? list
       : DEFAULT_LIST;
   const tags = [...SUBSCRIBE_LISTS[listKey]];
+  // Allow-listed source only — empty when omitted or outside SOURCE_TAGS.
   const src = typeof source === "string" ? source.trim().toLowerCase() : "";
-  if (SOURCE_TAGS.has(src) && !tags.includes(src)) {
-    tags.push(src);
+  const sourceTag = SOURCE_TAGS.has(src) ? src : "";
+  if (sourceTag && !tags.includes(sourceTag)) {
+    tags.push(sourceTag);
   }
   if (Array.isArray(showTags)) {
     for (const raw of showTags.slice(0, 20)) {
@@ -196,7 +218,7 @@ export function resolveSubscribeTags(
   if (opts?.networkNewsletter && !tags.includes("nerra-member")) {
     tags.push("nerra-member");
   }
-  return { tags, list: listKey };
+  return { tags, list: listKey, source: sourceTag };
 }
 const SUBSCRIBER_TTL_SECONDS = 90 * 24 * 60 * 60;   // 90 days
 const MAGIC_TTL_SECONDS = 15 * 60;                  // 15 minutes
@@ -321,7 +343,7 @@ export async function handleSubscribe(
   const firstName = rawName.trim().slice(0, 40);
   const metadata = firstName ? { first_name: firstName } : undefined;
 
-  const { tags, list } = resolveSubscribeTags(
+  const { tags, list, source } = resolveSubscribeTags(
     body?.list, body?.source, body?.tags, {
       networkNewsletter: body?.newsletter === true,
     });
@@ -338,7 +360,18 @@ export async function handleSubscribe(
                  result.status, result.detail ?? "");
     return jsonResponse(request, 502, { ok: false, error: "subscribe failed" });
   }
-  console.log("subscribe: ok", list, tags.join(","));
+
+  // N-PR0: exactly one structured success line for Workers Observability
+  // dashboards (Soft Personal / funnel counts). `already` lets dashboards
+  // exclude re-subscribes that would inflate new-signup counts. No email,
+  // IP, UA, names, or any other PII.
+  console.log(JSON.stringify({
+    event: "subscribe_ok",
+    list,
+    source,
+    ts: new Date().toISOString(),
+    already: result.alreadySubscribed === true,
+  }));
 
   const token = await signJwt(
     {

@@ -24,6 +24,7 @@ degraded, not deleted — check the secret before assuming data loss.
 | `api/ga4_stats.json` | GA4 Data API (official) | nerranetwork.com site traffic, 28d: totals, day series, top pages, channels, countries. Property `533581233`. | `scripts/fetch_ga4_stats.py` | `GA4_SERVICE_ACCOUNT_JSON` (+ optional `GA4_PROPERTY_ID`) |
 | `api/spotify_stats.json` | Spotify for Podcasters (**unofficial**, cookie-auth) | Per-show followers / streams / listeners + demographics, 30d. Fills the OP3 blind spot. | `scripts/fetch_spotify_stats.py` | `SPOTIFY_SP_DC`, `SPOTIFY_SP_KEY` |
 | `api/apple_stats.json` | Apple Podcasts Connect (**unofficial**, cookie-auth) | Apple **engagement**: plays, listeners, followers, time-listened per show, 30d. Apple *downloads* are already in OP3 — this adds the follow/finish signal nothing else measures. Needs `apple_show_id:` in each `shows/<slug>.yaml` (numeric ID from the Podcasts Connect URL). | `scripts/fetch_apple_stats.py` | `APPLE_MYACINFO`, `APPLE_ITCTX` |
+| `api/apple_ratings.json` | podcasts.apple.com show pages (**public**, no auth) | Apple **star ratings** per show: `rating_value`, `rating_count`, `review_count`, read from each show page's JSON-LD `aggregateRating` (Apple labels the ratings count `reviewCount`) with the page's serialised `ratings` metadata as the fallback that states an explicit zero. One dated `history` entry per day (max 90) so the dashboard can compute a 7-day ratings delta — the only readout of the on-air "rate us on Apple Podcasts" ask. **null = the page carried no rating block; 0 = the page said zero ratings**; a failed fetch keeps the previous reading tagged `not_refreshed_this_run`. Shows resolve the way the site does: registry `apple_podcasts_url`, else the YAML `apple_show_id`. | `scripts/fetch_apple_ratings.py` | — |
 | `api/buttondown_stats.json` | Buttondown API (official) | Newsletter subscriber count. | `scripts/fetch_buttondown_stats.py` | `BUTTONDOWN_API_KEY` |
 | `api/op3_history.json` | derived (accumulated) | Weekly download ledger keyed by ISO-week Monday. OP3 has no all-time endpoint, so each dashboard build overwrites the current 4 rolling weeks and freezes older ones; "all-time" = sum of stored weeks ("since tracking began", 2026-06-29). Must stay in nightly's safe-commit-push add-paths (youtube_channel_history landmine class). | `scripts/generate_dashboard.py` | — |
 | `api/youtube_policy.json` | derived (nightly) | Adaptive publishing tier per show × channel (A/B/C/D) + the views-per-day velocity behind it; decides long-form on/off and Shorts count. Surfaced in the dashboard's Distribution section. | `scripts/update_youtube_policy.py` | — |
@@ -160,6 +161,18 @@ Public, display-safe extracts live in `site/data/` (e.g.
   had only gone LIVE on Apple two days earlier. **A 404 that persists
   for weeks is different** — check the feed's enclosures actually carry
   the `https://op3.dev/e/` prefix before assuming it's an indexing lag.
+  **Since 2026-10-01 an unindexed show is WRITTEN, not skipped:** its
+  `shows` entry is `{"resolved": false, "note": …, "rss_file": …,
+  "feed_url": …, "downloads_7d": null, "downloads_30d": null}` (the
+  thirteen September launch-cohort shows were simply absent before,
+  indistinguishable from "never fetched"). A show that resolved on an
+  earlier run and fails this one keeps its previous entry tagged
+  `not_refreshed_this_run`. Every consumer must check `resolved` (or
+  `fetch_op3_stats.is_resolved_show_entry`) before reading download keys:
+  the dashboard lists these under `audience.op3.unindexed` and renders
+  "not indexed" on the show card (never "—", never 0), and the audience
+  headline keeps them out of `shows_measured` and names them in
+  `network.shows_unindexed`.
 * **The prefix is applied by each publish path, not by
   `update_rss_feed`.** `run_show.py`, `engine/pipeline.py`,
   `engine/language_feeds.py` and `pipelines/voices/publish_episode.py`
@@ -190,9 +203,76 @@ Public, display-safe extracts live in `site/data/` (e.g.
 * GA4 numbers are consent-gated (Consent Mode v2) — they undercount
   visitors who decline analytics cookies.
 
+## Claim ledger — verified share and flagged claims
+
+`api/dashboard.json` → **`claims`** (built by
+`build_claims_section` in `scripts/generate_dashboard.py`) rolls up every
+committed `digests/**/*_claims.json` sidecar (the source-integrity gate's
+public record, `engine/claims.py`) over the last **7** and **30** days,
+dated from each sidecar's filename (`_EpNNN_YYYYMMDD_claims.json`), never
+its mtime. Per window and per show:
+
+* `sidecars` — episodes with a ledger; `claims_total` — ledger entries
+  plus uncovered citation-shaped sentences (the denominator the shares
+  use); `verified` / `verified_share` — entries that verified at publish
+  time or later; `flagged` / `flagged_share` — unverified entries, broken
+  down in `flagged_by_reason` (`unreachable` 403/429/5xx/transport,
+  `not_found` 404, `quote_mismatch` page resolved but the quote failed
+  the 0.9 check, `uncovered` citation shape with no covering claim,
+  `malformed` entry missing a required key); `verified_later` — entries
+  the nightly re-verification flipped after publication; `by_mode` —
+  sidecars per failure policy (`flag` / `strip` / `block` / `shadow`).
+* **Honesty:** a window with no sidecar is `null` on every number, never
+  0 (the page renders "—"); a sidecar with zero claims is a measured 0.
+  Legacy (pre-Oct 2026) sidecars carry no per-entry status, so their
+  reasons are derived from the gate record (`pre_strip` on strip-mode
+  sidecars, else `failed_verifications` / `uncovered_shapes` /
+  `shape_errors`).
+
+Since **2026-10-01** the network's failure policy is **`on_failure:
+flag`** (`shows/_defaults.yaml`): nothing is removed from a digest or a
+script; every entry carries a `status`; the episode publishes; and
+`scripts/reverify_claims.py --apply --days 7` (nightly, right after the
+audience fetches) re-runs the mechanical check on every re-checkable
+unverified entry and marks the ones that now verify `verified_later`
+(`first_status` keeps the original failure, `verified_at` the date). It
+never downgrades a verified claim, never raises, paces one second
+between requests to the same host, and is idempotent. The sidecar glob
+`digests/**/*_claims.json` is in nightly's safe-commit `add-paths`
+whitelist — remove it and the rewrite is discarded every night.
+
 ## Directory / distribution status
 
 Where each show is submitted (Apple, Spotify, Amazon, …) is tracked in
 `docs/podcast_directories.md`. Spotify show IDs, once assigned, are
 recorded as `spotify_show_id:` in each `shows/<slug>.yaml` — that key
 is what turns on the Spotify fetcher for a show.
+
+## Cost rollup — what is counted
+
+`api/dashboard.json` → `cost_rollup` (built by
+`scripts/generate_dashboard.py::aggregate_costs`) reads every
+`digests/<dir>/credit_usage_*.json` for the show directories plus the
+virtual cost slugs (`_VIRTUAL_COST_SLUGS`: `nerra_daily`, `_review`).
+Each 7d/30d window carries these buckets; a bucket's source is one key in
+the credit file. Added 2026-10-02 after the rollup was found to report
+~$192/30d with four real lines missing (multilingual ~$58/30d, motion
+clips ~$25/mo at full rate, two YouTube-stage LLM calls per video
+episode, the daily-audit reviewer). Rule: **a result key or a metric is
+not a cost until a credit file carries it and this table names it.**
+
+| Bucket | Credit-file source key | Written by | Notes |
+|--------|------------------------|------------|-------|
+| `grok` | `services.grok_api.total_cost_usd` | `engine.tracking.save_usage` (sum of every recorded LLM step) | Steps include `x_thread_generation`, `podcast_script_generation`, retries, and since 2026-10-02 `scene_briefs` and `youtube_titles` (`engine.tracking.record_llm_usage_from_meta`, tracker threaded through `run_show._publish_youtube`). |
+| `tts` | `services.tts_api.estimated_cost_usd` | `save_usage` from `record_tts_usage` characters × `TTS_PROVIDER_PRICING` | Grok TTS list price $15.00/1M chars — verified 2026-10-02 at https://docs.x.ai/docs/models (CLAUDE.md's "$4.20/M" is the promo-era figure). |
+| `images` | `services.image_api.estimated_cost_usd` | `record_image_usage` (Grok Imagine stills) | July 28 2026. |
+| `search` | `services.search_api.estimated_cost_usd` | `record_search_usage` (xAI x_search / web_search, per call) | July 29 / Aug 18 2026. |
+| `multilingual` | `services.multilingual.estimated_cost_usd` | `engine/multilingual.py` sidecar `credit_usage_<date>_ep<N>_multilingual.json` | The sidecar has NO file-level total, so before 2026-10-02 it summed as $0 and counted as an episode. Counts toward `multilingual` + `total` + `files`, never `episodes`. |
+| `motion` | `services.motion_api.estimated_cost_usd` | `record_motion_clip_usage` (hook-Short Grok Imagine video clip), wired in `run_show` after `_publish_youtube` from `hook_short_motion_cost_usd` | The per-episode METRIC `hook_short_motion_cost_usd` is unchanged; it is now also a cost line. A billed request that landed no clip still counts. |
+| `review` | the whole `total_estimated_cost_usd` of `digests/_review/credit_usage_<run day>_review.json` | `review_episodes.write_review_credit_file` (one file per run day; a second run the same day merges) | Each Grok call is one reviewed episode (`review.calls`). Counts toward `review` + `total` + `files`, never `episodes`. Whitelisted in `daily-audit.yml` add-paths. |
+| `total` | `total_estimated_cost_usd`, else the sum of the lines above | `save_usage` | `episodes` counts episode files only; `files` counts every credit file read. `projections.avg_cost_per_episode_usd` divides the window total by `episodes`, so dub tracks and the reviewer are spread across the episodes they serve. |
+
+Not counted (no credit file carries them): Cloudflare R2 storage/egress,
+GitHub Actions minutes, Buttondown, Voximplant (Age of AI), the Nerra
+Voices Whisper/editorial passes, and any Grok call that returns without
+a `usage` object.

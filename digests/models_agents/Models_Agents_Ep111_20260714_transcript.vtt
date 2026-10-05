@@ -1,0 +1,268 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.740
+Glad you're here. Welcome to Models and Agents, Episode 111 for July 14th, 2026.
+
+00:00:07.580 --> 00:00:11.760
+There's signal and noise in AI every day. Let's get to the signal.
+
+00:00:12.300 --> 00:00:17.800
+Meastroll just shipped an 8B embodied navigation model that lets robots follow plain
+
+00:00:17.800 --> 00:00:24.800
+language instructions using only a single RGB camera. Meastroll released RoboStroll Navigate,
+
+00:00:24.800 --> 00:00:33.760
+an 8B model that reaches 76.6% success on R2, RCE validation unseen without lead-ar or depth
+
+00:00:33.760 --> 00:00:39.600
+sensors. Anthropic published new research showing Claude's expressed values shift
+
+00:00:39.600 --> 00:00:46.060
+measurably across models and languages along four axes. Simon Willison shared practical
+
+00:00:46.060 --> 00:00:52.160
+caching recipes in a data set based UI for running complex SQL tie queries in the browser.
+
+00:00:52.880 --> 00:00:57.780
+Builders should watch how these narrow domain models and value mapping techniques affect
+
+00:00:57.780 --> 00:01:06.100
+agent reliability this week. Meastroll AI introduced RoboStroll Navigate, an 8B embodied navigation model
+
+00:01:06.100 --> 00:01:11.960
+that takes plain language instructions and moves a robot using only a single RGB camera.
+
+00:01:12.660 --> 00:01:21.060
+The system reaches 76.6% success on the R2RCE validation unseen split through a combination of
+
+00:01:21.060 --> 00:01:27.640
+pointing method prefix caching training and Siaspo online reinforcement learning. It removes
+
+00:01:27.640 --> 00:01:33.340
+the need for LiDAR or depth sensors lowering hardware requirements for mobile robots in indoor
+
+00:01:33.340 --> 00:01:39.600
+environments. Developers working on warehouse or home robots can now test language driven navigation
+
+00:01:39.600 --> 00:01:46.120
+on lighter platforms without specialized perception hardware. Watch for follow-up releases that extend
+
+00:01:46.120 --> 00:01:51.900
+the same approach to manipulation or multi-room planning. This development fits the ongoing
+
+00:01:51.900 --> 00:01:58.360
+narrowing of the performance gap between open-weight models and closed frontier systems. Anthropic
+
+00:01:58.360 --> 00:02:05.140
+released research showing Claude expresses over 3,000 distinct values that cluster along four axes.
+
+00:02:06.060 --> 00:02:13.200
+The axes are deference versus caution, warmth versus rigor, depth versus brevity and candor versus
+
+00:02:13.200 --> 00:02:21.460
+execution. Differences between models remain modest overall, yet Sonnet 4.6 trends more playful and
+
+00:02:21.460 --> 00:02:28.880
+affirming while Opus 4.7 leans toward candid critique. The same models shift noticeably by language,
+
+00:02:29.340 --> 00:02:35.400
+favoring warmth in Hindi and Arabic and rigor in Russian. The work gives teams a concrete
+
+00:02:35.400 --> 00:02:41.500
+way to measure and potentially steer value expression in production agents. Researchers detail
+
+00:02:41.500 --> 00:02:48.940
+workload driven optimizations for a 0.6 BLMT model running English to traditional Chinese subtitle
+
+00:02:48.940 --> 00:02:55.920
+translation under batch size 1. Low latency constraints on Apple M2 metal, replacing the original
+
+00:02:55.920 --> 00:03:05.000
+151,000 token vocabulary with a 64,000 token subtitle domain tokenizer and applying embedding calibration
+
+00:03:05.000 --> 00:03:12.240
+plus full supervised fine-tuning yields a 1.63 times speedup. The resulting local subs model
+
+00:03:12.240 --> 00:03:20.000
+achieves a 59.2% tie-excluded win rate against Google Translate on a 500 example open subtitles
+
+00:03:20.000 --> 00:03:28.840
+2024 subset. A six category taxonomy applied to 30,000 chain-of-thought traces across five models from
+
+00:03:28.840 --> 00:03:37.160
+3B to 14B reveals that NF4 quantization preserves task accuracy yet shifts failure modes in size
+
+00:03:37.160 --> 00:03:43.920
+dependent ways. Hollow convergence drops sharply for the smallest models while shortcut collapse rises
+
+00:03:43.920 --> 00:03:55.540
+from 44% to 78% of errors in LLMA 3.23B. GS8000 stays largely unaffected while low GQA and ARC
+
+00:03:55.540 --> 00:04:01.380
+challenge show the largest changes. A fine-tuned system combining expert context engineering and
+
+00:04:01.380 --> 00:04:07.900
+hindsight-guided reasoning traces predict outcomes of announced M and A deals across 42 countries.
+
+00:04:08.680 --> 00:04:16.220
+On more than 400 out of sample large deals it reduces class-balanced briar score to 0.151,
+
+00:04:16.720 --> 00:04:24.800
+beating calibrated market-implied probabilities by 24% and frontier language models by 25 to 42%.
+
+00:04:24.800 --> 00:04:30.500
+Root Rec compares request-level hard selection against item-level learned aggregation
+
+00:04:30.500 --> 00:04:37.360
+across four traditional recommender agents plus one LLM re-ranker on MovieLens 1M.
+
+00:04:38.180 --> 00:04:46.580
+Hard selection stays below BM25 while gated all agent aggregation reaches HR at 10 of 0.295
+
+00:04:46.580 --> 00:04:54.560
+at 70.2% LLM call rate. The study shows request-level choice of one complete agent list is
+
+00:04:54.560 --> 00:05:02.020
+two course for sparse fixed candidate settings. A frozen GPT 5.4 agent tested against Brave,
+
+00:05:02.480 --> 00:05:09.440
+Tavely, and Firecrawl on 100 SEAL QA hard questions shows nearly identical answer accuracy yet
+
+00:05:09.440 --> 00:05:15.900
+sharply different evidence economies. Brave supplies gold answer rich snippets. Tavely
+
+00:05:15.900 --> 00:05:23.800
+concentrates gold URLs at rank 1 and Firecrawl drives broader exploration. Surface contradiction to
+
+00:05:23.800 --> 00:05:33.300
+gold URL ratios range from 0.92 to 2.59 across providers. Polly interview generates role-specific
+
+00:05:33.300 --> 00:05:39.680
+questions from a job description and CV runs multi-turn spoken interviews with a lip-synced
+
+00:05:39.680 --> 00:05:46.220
+digital human and produces 13 behavior-level features aggregated into 10 assessment aspects.
+
+00:05:47.020 --> 00:05:53.340
+10 experts rated its question plans an actionable feedback highly. 93.7% of
+
+00:05:53.340 --> 00:05:59.100
+generated questions align more closely with the matched job description than cross-role alternatives.
+
+00:05:59.700 --> 00:06:08.620
+The platform is publicly accessible and already contains 1,564 sessions. Simon Willison published a TIL
+
+00:06:08.620 --> 00:06:15.900
+showing how to run UVX tool-name in GitHub actions while keeping downloads cash-friendly.
+
+00:06:16.460 --> 00:06:23.160
+The recipe avoids fetching a fresh package copy on every run. Willison released a custom HTML
+
+00:06:23.160 --> 00:06:31.360
+plus JS minimap view for Doom QL, a ray tracer implemented entirely as a CLQE-light recursive CTE.
+
+00:06:31.960 --> 00:06:39.400
+The interface runs on dataset apps, a new plugin that hosts custom HTML plus JS applications with
+
+00:06:39.400 --> 00:06:48.660
+direct SQL access to the underlying CLQE-light database. CLIR bench supplies 6,600 QA instances
+
+00:06:48.660 --> 00:06:56.180
+over 11 clinical variables drawn from de-identified ICU records. Each link to explicit temporal
+
+00:06:56.180 --> 00:07:02.740
+evidence and task-specific derivation rules. Existing generalist models struggle to retrieve and
+
+00:07:02.740 --> 00:07:10.000
+reason over the sparse asynchronous observations. Test RoboStrol navigate on a simulated robot
+
+00:07:10.000 --> 00:07:15.660
+or simple mobile platform if you're exploring language-driven navigation without depth sensors.
+
+00:07:16.460 --> 00:07:22.500
+Run Simon Willison's UVX caching pattern in one of your GitHub actions workflows to measure
+
+00:07:22.500 --> 00:07:29.180
+CI time-savings. Evaluate Sklesel bench against your current clinical QA setup to see where
+
+00:07:29.180 --> 00:07:36.480
+generalist models lose temporal grounding. Compare Brave, Tavoli, and Firecrawl retrieval traces on
+
+00:07:36.480 --> 00:07:43.360
+your own agent queries to map evidence cost versus answer quality. Apply the four value axes from
+
+00:07:43.360 --> 00:07:48.960
+Anthropics study to prompts in different languages and observe tone shifts in your agent outputs.
+
+00:07:49.620 --> 00:07:55.920
+Continued releases of narrow domain embodied models following Mestrels RGB only approach.
+
+00:07:56.560 --> 00:08:01.680
+More labs publishing internal value mapping frameworks after Anthropics public release.
+
+00:08:02.380 --> 00:08:07.460
+wider adoption of item-level aggregation techniques in production-recommender agents.
+
+00:08:08.100 --> 00:08:14.080
+Additional on-device tokenizer and vocabulary pruning studies targeting subtitle and short
+
+00:08:14.080 --> 00:08:20.320
+form domains. Okay, let's pop the hood on quantization. Everyone talks about post-training
+
+00:08:20.320 --> 00:08:27.160
+quantization as a simple size and speed win. In practice, it quietly rewires how models traverse
+
+00:08:27.160 --> 00:08:34.080
+reasoning paths even when final accuracy numbers stay flat. The core mechanism is that lower precision
+
+00:08:34.080 --> 00:08:39.260
+weights change which intermediate tokens the model treats as high confidence stepping stones.
+
+00:08:40.580 --> 00:08:46.860
+On smaller models, this often collapses shortcut failures upward while reducing hollow but correct
+
+00:08:46.860 --> 00:08:53.520
+looking chains. Above roughly 12 B parameters, the effect flatens because the model has more redundant
+
+00:08:53.520 --> 00:08:59.900
+pathways to the same conclusion. The practical trade-off is roughly one to three points of accuracy
+
+00:08:59.900 --> 00:09:06.180
+for a two to four times memory reduction. Yet the hidden cost appears in domains that rely on
+
+00:09:06.180 --> 00:09:12.400
+verifiable multi-step logic rather than pattern matching. When deploying quantized models,
+
+00:09:12.780 --> 00:09:18.740
+run a lightweight failure mode audit on a 500 example subset of your actual workload instead of
+
+00:09:18.740 --> 00:09:25.520
+trusting headline benchmarks. Before we go, keep an eye on follow-up embodied releases that extend
+
+00:09:25.520 --> 00:09:32.460
+RoboStrawl Navigate to Manipulation Tasks. That wraps up today's AI briefing. Share this with a
+
+00:09:32.460 --> 00:09:37.940
+developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow.
+
+00:09:38.400 --> 00:09:44.360
+And if you'd rather watch than listen, find us on YouTube at Nerra Network. Links in the show notes.
+
+00:09:44.700 --> 00:09:50.660
+And before you go, this show is part of the Nerra Network, a family of daily podcasts on tech,
+
+00:09:50.660 --> 00:09:57.320
+science and markets. Each one a short, sharp briefing you can finish on the commute. If today earned
+
+00:09:57.320 --> 00:10:03.880
+its place in your feed, here's your next listen, Tesla Short's Time, your daily deep dive into everything
+
+00:10:03.880 --> 00:10:10.600
+Tesla. Find every show free at nerranetwork.com. Want the written briefing with source links?
+
+00:10:11.280 --> 00:10:17.120
+Each show keeps a summaries page on nerranetwork.com, scannable, dated, and free.
+
+00:10:17.120 --> 00:10:24.280
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

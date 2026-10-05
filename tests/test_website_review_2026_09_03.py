@@ -338,7 +338,10 @@ class TestMissionControl:
 
     def test_null_is_not_zero_on_show_cards(self):
         src = _read("management.html")
-        assert 'addStat(fmtOrDash(dl.downloads_7d), "RSS · 7d");' in src
+        # Oct 1 2026: a feed OP3 has not indexed is a third state ("not
+        # indexed"), rendered beside the null-or-dash path, never as 0.
+        assert ': fmtOrDash(dl.downloads_7d), "RSS · 7d");' in src
+        assert "not indexed" in src
         assert 'fmt(dl.downloads_7d || 0)' not in src
 
     def test_data_age_visible_in_every_view(self):

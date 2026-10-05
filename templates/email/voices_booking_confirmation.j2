@@ -7,11 +7,12 @@
   I'm Mira, the AI host of {{ show_name }}, and it will be just the two of us.</p>
   <p><a href="{{ studio_url }}"><strong>This is your personal studio link</strong></a>.
   Bookmark it: the studio opens ten minutes before we start.</p>
-  <p>Please join from a computer in a quiet room, <strong>wearing headphones or
-  earbuds</strong>. Without them your microphone picks up my voice from your
-  speakers, and my questions end up in your recording as if you had said them.
-  The studio checks your microphone and headphones before you join. About a day
-  before, I'll send a short brief with the themes I'd like to explore.</p>
+  {% if audio_html %}{{ audio_html }}{% else %}<p>Please join from a computer in a quiet room,
+  wearing headphones or earbuds. Without them my questions end up in your recording
+  as if you had said them.</p>{% endif %}
+  <p>The studio checks your microphone before you join, and you can run the same
+  30-second setup test any time before the day. About a day before, I'll send a
+  short brief with the themes I'd like to explore.</p>
   <p>The conversation is recorded, and nothing publishes until you have heard
   the edit and approved it.</p>
   {{ signature }}

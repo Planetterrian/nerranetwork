@@ -1,0 +1,40 @@
+# Omni View Europe
+> **House prices rose 4.7 percent in the EU, beating inflation and lifting costs from Portugal outward.**
+
+**What You Need to Know:** House prices rose 4.7 percent in the EU, beating inflation and lifting costs from Portugal outward. Eurostat figures for the second quarter of 2026, cited by Euronews Business, put the largest rises in Portugal and Bulgaria and the only falls in Finland, Luxembourg and France. Separately, Ireland’s Central Bank found that homes finished so far this year took twice as long to build as a decade ago.
+
+### Lead
+**European House Prices Q2 2026: Portugal, Bulgaria, Spain Lead Gains as Finland, France Fall: indexbox.io**
+Housing costs climbed through most of Europe in the second quarter of 2026, on Eurostat figures cited by Euronews Business, with prices inside the European Union up 4.7 percent on the year against inflation of 3.2 percent. Nine of 29 European nations posted double-digit annual gains, led by Portugal at 16.5 percent and Bulgaria at 15.5 percent. Mikk Kalmet of Global Property Guide said Portugal’s rise came from demand outrunning supply in Lisbon, Porto and coastal areas, citing constrained building, foreign investment, tourism and shortages; for Bulgaria he pointed to higher household incomes, wage increases, comparatively accessible mortgages and strong investment demand. Spain rose 12.1 percent, Italy at 4 percent sat under the EU average, and Germany gained 0.6 percent. The only year-on-year falls were Finland at 2.7 percent, Luxembourg at 2.2 percent and France at 0.8 percent. Kalmet linked Finland’s drop to weak growth, muted consumer confidence and high interest rates, and France’s to affordability limits, softer demand and buyers delaying purchases after formerly high mortgage rates. Carsten Brzeski and Franziska Biehl of ING said higher mortgage rates have returned in Germany, housing affordability is worsening and demand for mortgage loans is declining. Source: [indexbox.io](https://www.indexbox.io/blog/european-house-prices-rise-unevenly-in-q2-2026-portugal-and-bulgaria-lead-finland-and-france-decline/)
+
+### Across the Region
+**‘It’s infuriating’: Developers blame planning delays for four-year average wait to build homes: The Irish Times**
+Ireland’s Central Bank reported last month that homes completed so far in 2026 took an average of four years from lodgement of a planning application to completion, twice as long as a decade ago. Homes finished in 2016 took 21 to 26 months by type; those completed so far in 2026 took 44 to 50 months, with one-off houses and apartments about two and a half times as long as in 2017 and scheme housing nearly twice as long. The bank said the rise was gradual and continuous, and that 15 to 20 percent of schemes completed in 2024 went to An Coimisiún Pleanála and took 13 to 14 months on average. In July, Ballymore subsidiary Vanisland Limited applied to Kildare County Council for 272 homes at Confey in Leixlip, with about 1,000 pages of documents. Michael Prenty, Ballymore’s director of residential operations and chairman of the Irish Home Builders Association, said local-authority planning takes at least 14 months and that an appeal can stretch the planning stage alone to a year and a half or two years. Source: [irishtimes.com](https://www.irishtimes.com/ireland/housing-planning/2026/10/03/its-infuriating-developers-blame-planning-delays-for-four-year-average-wait-to-build-homes/)
+
+**UK gov't draft tells staff not to thank chatbots, and to use shorter prompts to save energy: The Cool Down**
+The UK government has published draft advice, “Using AI ethically and sustainably,” telling staff to use artificial intelligence safely, fairly and sustainably, and not to thank chatbots. The Cool Down, citing Tom’s Hardware, reports that the draft says to skip unnecessary pleasantries and keep prompts short, clear and direct, and to prefer lighter tools such as Gemini Flash over Gemini Pro and GPT Instant over GPT Thinking. Staff are told to keep prompt counts low, pick the tool that fits the task, and review anything generated before use, including whether it is accurate and whether users or groups are treated fairly, without stereotypes or discriminatory language. The draft warns staff not to become too dependent on the systems and to stay accountable for content or decisions made with their help, and to check department-specific policies. Source: [thecooldown.com](https://www.thecooldown.com/green-tech/uk-government-ai-draft-guidance-energy-use/)
+
+### Also Today
+**Russia strikes another major bridge across Kyiv's Dnipro river: France 24 Europe**
+Kyiv Mayor Vitali Klitschko said a Russian strike on Saturday damaged the Northern Bridge roadway and trolleybus wires and blocked traffic from the left bank to the right. Source: [france24.com](https://www.france24.com/en/europe/20261003-russia-strikes-another-major-bridge-in-kyiv)
+https://www.bbc.co.uk/news/articles/c83vqxzdg1yko?at_medium=RSS&at_campaign=rss
+
+**Landlord must pay €20,000 for evicting tenant from property she then used for short-term lets: The Irish Times**
+An RTB tribunal ordered landlord Gerda McLoughney to pay almost €20,000 after ending Fernando Lima’s tenancy at a Dublin 2 apartment she later used for short-term lets. Source: [irishtimes.com](https://www.irishtimes.com/ireland/housing-planning/2026/10/03/landlord-must-pay-20000-for-evicting-tenant-from-property-she-then-used-for-short-term-lets/)
+
+**Law Society wants talks to resolve solicitors’ payments row before legal year opens on Monday: The Irish Times**
+Rosemarie Loftus said the Law Society is available at any time to meet Justice Minister Jim O’Callaghan to try to settle the criminal legal aid dispute before Monday. Source: [irishtimes.com](https://www.irishtimes.com/crime-law/2026/10/03/law-society-wants-talks-to-resolve-solicitors-payments-row-before-legal-year-opens-monday/)
+
+**Workers with a migration background are overrepresented in the jobs Germany struggles most to fill: DW News**
+Official German government data show workers with a migration background fill up to 44 percent of jobs in some shortage sectors. Source: [facebook.com](https://www.facebook.com/deutschewellenews/videos/workers-with-a-migration-background-are-overrepresented-in-the-jobs-germany-stru/1447974760555113/)
+
+### Both Sides: A fresh UK vote on rejoining the EU
+Whether Prime Minister Andy Burnham should offer voters a fresh referendum on rejoining the European Union is the question his conference speech has opened. On Tuesday he announced a review of Britain’s options with Europe, then said rejoining entirely should be among them.
+
+Supporters of a vote can point to a Messina Group poll reported by The Guardian. Almost half of voters back his preference to rejoin after the next election. The same poll found Labour’s share could rise by as much as seven points if he offered a referendum and campaigned to go back in. The Guardian says that will bolster people in Downing Street who want a promise at least to negotiate, and that public opinion has shifted since ministers said they would respect the 2016 vote. Almost a third of voters said an in-out referendum would be needed first.
+
+The opposing case is coming from inside the cabinet. Deputy leader Lucy Powell said going beyond the reset plans inherited from Keir Starmer was not possible nor desirable. Trade secretary Jonathan Reynolds said constitutional questions were causing uncertainty for business. Home secretary Shabana Mahmood said rejoining was not simple and the costs might be unacceptable. Two-thirds of the cabinet represent seats that backed Brexit and had said they would respect that vote, among them Louise Haigh, John Healey and Ed Miliband.
+
+The shared ground is the review announced on Tuesday, and a split in the same poll over who should decide. More than one in six voters thought an election mandate would suffice, and the same proportion thought Parliament could decide. Source: [theguardian.com](https://www.theguardian.com/world/2026/oct/03/half-want-to-rejoin-eu-and-backing-it-could-drive-up-labour-vote-megapoll-finds)
+
+### Progress Watch

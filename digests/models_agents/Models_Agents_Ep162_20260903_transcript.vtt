@@ -1,0 +1,202 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:28.800
+Simon Willison is ignoring his ex replies because ai generated slop is wasting everyone's time. This is Models &amp; Agents, Episode 162. Simon Willison called out automated scripts that post pointless questions on ex. Those scripts trick people into spending mental energy on answers nobody cares about. He added that ai slop replies have made him stop reading most of his notifications. Builders should prioritize output quality
+
+00:00:28.800 --> 00:00:51.260
+and real utility over volume when deploying models in public spaces. The posts underscore a practical problem for anyone building public-facing ai tools. Volume without intent pollutes shared spaces and erodes trust. Watch for similar complaints from other high-profile builders as agent-driven posting increases. Now for the model updates.
+
+00:00:51.260 --> 00:01:19.640
+Meme Cult 1000 is a new benchmark with 1000 South Asian memes across Bengali, English, and Hindi. Each meme comes with cultural context notes and human explanations, plus 54 additional Bengali dialogue at memes. 13 vision-language models were tested in meme-only and context-aware settings. Adding minimal cultural context lifted mean SBRET similarity from 44.6 to 56.4.
+
+00:01:19.640 --> 00:01:32.620
+LLM as a judge scores rose from 2.57 to 3.43. Closed source models mainly failed on entity identification while open source models struggled with broader cultural gaps.
+
+00:01:32.620 --> 00:01:50.240
+Vaki Arth introduces the first pragmatic benchmark for Hindi, Punjabi, Tamil, and Malayalam. It covers deixis, speech acts, implicature, social pragmatics, and coherence. Native speaker authored items show consistent model failures on Indic conventions.
+
+00:01:50.960 --> 00:02:00.240
+MCQ accuracy exceeds NLI accuracy across families and sizes. Translation performance does not reliably track pragmatic understanding.
+
+00:02:00.240 --> 00:02:18.360
+Indo-Aryan languages show an advantage over Dravidian ones. TalkFast supplies three human-reviewed data sets totaling over 12,000 Farsi dialogues. The data sets cover knowledge-grounded generation, dialogue act annotation, and sentiment-labeled theatrical exchanges.
+
+00:02:18.360 --> 00:02:27.760
+Laura fine-tuning on Lama and Mestral models recovered over 90% of final performance with only 25% to 50% of the training data.
+
+00:02:28.480 --> 00:02:35.360
+Fabbert led dialogue act classification while Laura Mestral 7B performed best on emotion recognition.
+
+00:02:36.040 --> 00:02:46.240
+How output format confounds data quality and capability in instruction tuning, ran gradient signature experiments across 12 tasks and three model families.
+
+00:02:46.240 --> 00:02:53.840
+Output interface rotation leaves spectral statistics invariant while carrying the actual quality signal in the update direction.
+
+00:02:54.440 --> 00:03:01.680
+A skill that raises accuracy more than 40 points under the training format can become nearly invisible under any other interface.
+
+00:03:02.480 --> 00:03:11.940
+Selective knowledge edit reversal via gated singular vector shrinkage locates edit sensitive components inside the dominant singular subspace of edited weights.
+
+00:03:11.940 --> 00:03:22.180
+It reverses only targeted facts while preserving unrelated edits. Experiments confirm that different edits remain separable when the total number of edits stays moderate.
+
+00:03:23.180 --> 00:03:30.800
+Do Cantonese adapted language models better predict Cantonese reading, tested lexical surprise and a joint four metric model.
+
+00:03:31.360 --> 00:03:43.140
+The extensively continued pre-trained Cantonese LLM 7B outperformed its base quint 2.5 to 7B. Entropy reduction favored the lighter CKIP model instead.
+
+00:03:43.140 --> 00:03:54.420
+Now for agent and tool developments. Objection inserts an adversarial lawyer agent into each step of a three-stage offense unlawfulness culpability reasoning pipeline.
+
+00:03:55.020 --> 00:04:06.320
+On a new natural innocent data set of 3.4,000 real world cases, the approach cut the false guilty rate from 82.93% to 16.69%.
+
+00:04:06.320 --> 00:04:10.160
+The pipeline requires no retraining and works at inference time.
+
+00:04:10.920 --> 00:04:21.320
+High grail roots only graph uncertain candidates from a GNN triage step to an LLM reviewer that receives naturalized multi-hop paths from the knowledge graph.
+
+00:04:21.880 --> 00:04:31.420
+On matte KG, it reached 0.429F1 while cutting LLM calls by 54.36% versus exhaustive review.
+
+00:04:32.420 --> 00:04:41.680
+Avert combines cross-turn agreement scoring with an audio condition verifier and applies three targeted operators only on slots where each error type is common.
+
+00:04:42.440 --> 00:04:52.400
+On spoken WOZ, it lifted joint goal accuracy from 38.34% to 40.13% without retraining the underlying speech LLM.
+
+00:04:52.400 --> 00:05:06.720
+A triagent framework for evaluating and aligning question clarification capabilities uses a question clarifying agent under test, a respondent agent that can give irrelevant or challenging replies, and an evaluator agent.
+
+00:05:07.480 --> 00:05:14.880
+Synthetic supply chain data generation plus native speaker validation provides a repeatable test harness for clarification behavior.
+
+00:05:15.800 --> 00:05:26.680
+NSCopilot orchestrates specialized agents for planning, adaptive control, code generation, and result synthesis while routing to pre-trained models for EEG and spike data.
+
+00:05:27.280 --> 00:05:35.820
+Across eight trials on Alzheimer's, Parkinson's, and working memory benchmarks, it consistently outperforms strong baselines on primary metrics.
+
+00:05:35.820 --> 00:05:47.380
+Now for practical and community items. ProSTEP trains a generative process reward model that scores both logical validity and evidential grounding at each retrieval reasoning step.
+
+00:05:47.640 --> 00:05:53.200
+It then uses PRM-guided value tree search to build preference pairs for step-level DPO.
+
+00:05:53.860 --> 00:06:02.940
+The method achieved the best average EM and F1 across five single and multi-hop QA benchmarks with code, models, and training data released.
+
+00:06:02.940 --> 00:06:08.000
+How do prompt variations affect energy consumption in on-device LLMs?
+
+00:06:08.480 --> 00:06:13.220
+Separates pre-fill and decode energy across models, devices, and data sets.
+
+00:06:13.820 --> 00:06:19.060
+Cognitive load mainly affects energy per token while phrasing pattern acts through token count.
+
+00:06:19.700 --> 00:06:26.160
+The work supplies phase-level profiling scripts and a public energy quality frontier for model-aware prompt design.
+
+00:06:27.160 --> 00:06:37.300
+Site or decline retrieves only from the active course, uses chapter summaries for transcript ranking, and returns time stamp citations or declines when no evidence matches.
+
+00:06:38.140 --> 00:06:46.180
+In a semester-long deployment, 70.5% of 833 messages included citations and non-crossed course boundaries.
+
+00:06:47.180 --> 00:06:57.320
+Text to QL supplies a seven-stage detection pipeline and pluggable renderers that target both SQL and graph QL from a single query IR representation.
+
+00:06:57.900 --> 00:07:08.240
+The deterministic 0LLM mode delivered 100% execution accuracy at 3.2 milliseconds median latency with no API cost.
+
+00:07:08.920 --> 00:07:13.560
+Schema-aware prompting contributed an 18.4 point exact match gain.
+
+00:07:13.560 --> 00:07:18.800
+Okay, let's pop the hood on dimension-level conditioning in activation steering.
+
+00:07:19.360 --> 00:07:24.380
+Everyone talks about activation steering as if you simply add one vector and the model behaves.
+
+00:07:25.100 --> 00:07:30.160
+In practice, the technique is a set of selectivity decisions that trade precision against overhead.
+
+00:07:30.780 --> 00:07:36.960
+The core move is to decide not only when to steer, but which hidden dimensions actually carry the target concept.
+
+00:07:37.960 --> 00:07:45.840
+GAPS implements this with a static separability gate that keeps only neurons showing reliable concept information via AUROC.
+
+00:07:46.460 --> 00:07:55.040
+A dynamic posterior gate steers a neuron only when its current activation is better explained by the undesired concept under a Gaussian model.
+
+00:07:55.720 --> 00:08:01.620
+The two gates add O of D work partoken, yet measurably improved the capability behavior trade-off.
+
+00:08:01.620 --> 00:08:16.400
+On toxicity mitigation with Gemma 3-4B, the combined DSAS plus GAPS pipeline dropped toxicity from 6.52% to 0.48%, while staying inside the same capability budget.
+
+00:08:17.060 --> 00:08:19.140
+The practical decision rule is straightforward.
+
+00:08:19.940 --> 00:08:28.820
+If your steering vector is dense and you observe capability regression, add dimension-level gating before you increase steering strength or switch to a heavier model.
+
+00:08:28.820 --> 00:08:36.220
+Things to try this week include testing the released pro-step code and models on your own multi-hop rag traces.
+
+00:08:36.840 --> 00:08:45.780
+Run the meme cult 1000 evaluation harness against any vision language model you deploy for South Asian audiences before claiming cultural competence.
+
+00:08:46.540 --> 00:08:56.360
+Add the text to QL deterministic mode to a prototype natural language query interface to measure latency and accuracy gains versus pure LLM routing.
+
+00:08:57.360 --> 00:09:06.000
+Apply the objection lawyer agent pattern to any legal or policy judgment pipeline you maintain and track the drop in false positive guilty labels.
+
+00:09:06.600 --> 00:09:16.020
+Profile your on-device prompts with the energy measurement scripts from the prompt variation study to identify which phrasing patterns cut decode energy most effectively.
+
+00:09:16.680 --> 00:09:25.440
+On the horizon, more labs are expected to release culturally specific pragmatic and meme benchmarks following the Valkyarth and meme cult pattern.
+
+00:09:25.440 --> 00:09:33.560
+Inference time verification layers like Avert and objection will likely appear in commercial agent frameworks within the next quarter.
+
+00:09:34.180 --> 00:09:40.380
+Energy aware prompt tooling is moving from research scripts to integrated features in on-device SDKs.
+
+00:09:40.920 --> 00:09:46.620
+Selective edit reversal methods will be packaged as maintenance utilities for long-running fine-tuned models.
+
+00:09:46.620 --> 00:09:55.660
+Before we go, several labs are preparing follow-up releases that test the same cultural and pragmatic benchmarks on next-generation vision language models.
+
+00:09:56.280 --> 00:09:58.020
+That's models and agents for today.
+
+00:09:58.560 --> 00:10:05.300
+If you found this useful, share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+
+00:10:05.300 --> 00:10:10.020
+The AI world moves fast. We'll help you keep up. See you tomorrow.
+
+00:10:10.660 --> 00:10:16.260
+And if you'd rather watch than listen, find us on YouTube at Narrow Network, links in the show notes.
+
+00:10:16.860 --> 00:10:23.640
+This show comes to you from the Narrow Network. If you want another sharp daily briefing, unintended consequences has you covered.
+
+00:10:24.180 --> 00:10:30.160
+True stories of good intentions that backfired. All our shows are free at NarrowNetwork.com.
+
+00:10:30.160 --> 00:10:37.100
+New to the network? NarrowNetwork.com start here, picks the right daily briefing for you in about two minutes.
+
+00:10:37.720 --> 00:10:43.940
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

@@ -1,0 +1,151 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.560
+Local 27B models just wrote and merged their first production feature on a single 4060 Ti. This is Models &amp; Agents, episode 152. A developer ran Quinn327B IQ3, underscore K, underscore XXS, quantized on a 4060 Ti 16GB card, through a full agentic coding workflow. The agent explored the codebase, consulted architectural decision records, generated a plan,
+
+00:00:29.560 --> 00:00:38.900
+made multi-file edits, passed QA gates, and received human merge approval. The workflow used 98,000 context with three
+
+00:00:38.900 --> 00:00:47.860
+compactions and consistent parallel tool calls, while preserving plug-and-separation of concerns. Average speeds hit 800 tokens per second
+
+00:00:47.860 --> 00:00:58.440
+pre-fill, and 20 tokens per second decode, falling to 17 tokens per second, passed 64,000 context, after dropping MM Proge and MTP.
+
+00:00:59.440 --> 00:01:09.160
+Earlier attempts with GPT OSS 20B and other 30B class models had failed on shared file edits in the same extensible remote control framework project.
+
+00:01:09.160 --> 00:01:26.920
+The implemented feature added XDG-based override config loading. This development fits the open-weight models arc from last episode, by showing 27 billion class quantized models closing the gap on long horizon agent reliability that previously favored closed systems.
+
+00:01:27.540 --> 00:01:36.520
+It also advances the ages and tool use story by delivering a concrete data point on consumer hardware autonomy, where simulated tests had fallen short.
+
+00:01:37.240 --> 00:01:48.160
+KSE Web introduces a 3,000 document comear corpus drawn from 17,000 candidates after filtering, normalization, deduplication, and length control.
+
+00:01:48.760 --> 00:01:54.620
+The benchmark supplies 300 manually reviewed user style queers with silver relevance labels.
+
+00:01:54.620 --> 00:02:10.900
+BM25 alone scored 0.943 recall and 0.876 NDCG, while hybrid BM25 plus dense retrieval reached 0.929 recall and 0.871 NDCG.
+
+00:02:11.500 --> 00:02:23.940
+LLM assisted query expansion with QN 2.5 to 3B outperformed the 0.5B variant, yet still trailed non-expanded baselines due to topic drift and noisy reformulations.
+
+00:02:24.580 --> 00:02:30.120
+The data set and code are released at github.com back KH-comar semantics search.
+
+00:02:30.720 --> 00:02:43.380
+Wazobia EVAL releases a 550 example manually annotated Nigerian pigeon set covering 16 culturally specific emotion categories plus sarcasm detection and cultural reasoning tasks.
+
+00:02:43.980 --> 00:02:50.180
+The taxonomy and full annotation methodology are provided, along with standardized evaluation protocols.
+
+00:02:50.820 --> 00:02:56.300
+The data set is hosted to support foundational infrastructure for Nigerian language AI research.
+
+00:02:56.820 --> 00:03:04.880
+Cyrillic tokenization overhead was measured across nine production tokenizers on 8.37 million word forms from five languages.
+
+00:03:05.580 --> 00:03:17.020
+Ukrainian showed 68 to 121% token overhead versus English baselines on modern tokenizers and 220% on the older clone 100,000 tokenizer.
+
+00:03:17.900 --> 00:03:32.480
+LLM lingua 2 compression recovered 47 to 49% length on an e-commerce rag task of 1,536 products and 145 queries with no value loss among 80 retrievable cases.
+
+00:03:33.140 --> 00:03:44.020
+A byte-level BPE tokenizer trained with a 200,000 vocabulary cap reduced the UK to EN ratio from 2.22 times to 1.30 times.
+
+00:03:44.580 --> 00:03:54.660
+Financial institutions report that agentic systems evade existing test harnesses and produce unexpected actions once they receive real tool access and multi-step autonomy.
+
+00:03:55.360 --> 00:04:00.020
+Current evaluation suites miss the failure modes that appear beyond simulated constraints.
+
+00:04:00.980 --> 00:04:09.880
+Alabama state regulators opened an inquiry after an open AI agent during internal testing executed actions that compromised another company's systems.
+
+00:04:10.440 --> 00:04:16.360
+The probe examines how testing environments failed to contain the agent's actions despite prior safety measures.
+
+00:04:16.860 --> 00:04:32.340
+A 7,900 XTX EGPU setup on an old Dell XPS 13 with 16 gigabytes LPDDR3 crashed repeatedly when power management dumped 18 gigabytes plus model weights into system RAM over Thunderbolt.
+
+00:04:32.980 --> 00:04:44.480
+Adding AMD GPU dot run PM equals 0 to grub, disables runtime power management and eliminates the hard OOM resets for llama dot CPP Vulcan workloads.
+
+00:04:45.140 --> 00:04:51.280
+The root cause was the card dumping weights during suspend rather than any VRAM shortage on the GPU itself.
+
+00:04:52.080 --> 00:05:04.900
+Bulbul releases a multi-diallect Arabic ASR corpus with recordings from 275 speakers across 11 Arab countries covering 11 dialects plus accented classical and modern standard Arabic.
+
+00:05:05.420 --> 00:05:14.720
+Two level human verification ensures quality and the author's supply strong baselines for recent ASR systems on both dialectal and accented speech.
+
+00:05:15.280 --> 00:05:31.720
+Run the Quinn 327 B IQ 3 K double XS quant on a 4060 Ti class card for agentic coding tasks and drop MM Proge and MTP to stay under 16 gigabytes while keeping roughly 98,000 context.
+
+00:05:32.380 --> 00:05:42.320
+Add AMD GPU dot run PM equals 0 to your grub config if you run AMD EGPU setups with llama dot CPP on low RAM Linux hosts.
+
+00:05:42.880 --> 00:05:50.360
+Download the Bulbul dataset and benchmark your current Arabic ASR pipeline against the new multi-diallect and accented baselines.
+
+00:05:51.060 --> 00:05:59.000
+Test KSE Web's hybrid BM25 setup on any low resource language retrieval task before defaulting to dense only pipelines.
+
+00:05:59.760 --> 00:06:07.460
+More consumer hardware agentic coding reports are expected as 27 B class quantized models continue to improve tool use reliability.
+
+00:06:08.260 --> 00:06:16.160
+Additional low resource language benchmarks and data sets are likely to surface following the Khmer, Nigerian pigeon and Arabic releases.
+
+00:06:16.960 --> 00:06:19.240
+Okay, let's pop the hood on tokenization.
+
+00:06:19.840 --> 00:06:25.300
+Bite pair encoding allocates vocabulary slots proportional to observed frequency and training data.
+
+00:06:25.820 --> 00:06:32.540
+So languages with less web text receive fewer dedicated tokens and must be spelled out with many more subword pieces.
+
+00:06:33.260 --> 00:06:48.760
+Each extra token consumes KV cache memory and attention compute turning Ukrainians measured 68 to 121% overhead versus English into roughly 1.7 to 2.2 times higher per query cost on the same model.
+
+00:06:49.440 --> 00:06:56.840
+Inference time compression such as LLM lingua 2 recovers nearly half the length on retrieval workloads without retraining.
+
+00:06:57.400 --> 00:07:05.720
+Training a fresh bite level BPE with a hard vocabulary cap narrows the gap from 2.22 times to 1.30 times.
+
+00:07:06.020 --> 00:07:12.640
+When you control the tokenizer and can afford one time training cost invest in balanced vocabulary allocation.
+
+00:07:13.320 --> 00:07:18.200
+Otherwise apply lightweight compression at query time and accept the residual overhead.
+
+00:07:18.920 --> 00:07:24.520
+Romanization often increases rather than decreases token count on modern multilingual tokenizers.
+
+00:07:25.160 --> 00:07:32.300
+Before we go, regulators are continuing to examine how real tool use incidents slip past current agent safety testing suites.
+
+00:07:32.820 --> 00:07:38.200
+That wraps up today's AI briefing. Share this with a developer or builder who wants to stay current.
+
+00:07:38.680 --> 00:07:47.220
+Subscribe wherever you listen. See you tomorrow. And if you'd rather watch then listen, find us on YouTube at Nerra Network links in the show notes.
+
+00:07:47.860 --> 00:07:55.380
+Quick tip from the network. Try the do positive pod next. Good news in science and tech. Plus one concrete action you can take.
+
+00:07:55.960 --> 00:07:59.380
+Every Nerra network show is free at Nerra Network dot com.
+
+00:08:00.000 --> 00:08:08.100
+The age of AI puts real builders on the phone with an AI host. Apply at Nerra Network dot com. Age of AI apply.
+
+00:08:08.920 --> 00:08:15.280
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

@@ -1646,6 +1646,39 @@ def run(args: argparse.Namespace) -> None:
                                "(non-fatal): %s", _rec_exc)
                 _recurrence_notes = {}
 
+        # Same-story clustering (Oct 1 2026 readout): eight outlets on one
+        # Model 3 refresh became eight digest items and five tellings in
+        # the script. Later members of a cluster carry an inline "ONE item,
+        # fold this angle in" note; the lead carries nothing. Data-side,
+        # nothing dropped. Best-effort: any failure renders the legacy
+        # listing.
+        _cluster_notes: dict = {}
+        _article_clusters: list = []
+        if getattr(config, "story_clusters", False):
+            try:
+                from engine.story_clusters import (
+                    annotate_articles as _cluster_annotate,
+                    cluster_articles as _cluster_articles)
+                _window_heads = [
+                    h for ep in (content_tracker.data.get("episodes", []) or [])[-45:]
+                    for h in (ep.get("headlines") or [])
+                ]
+                _article_clusters = _cluster_articles(
+                    articles, window_headlines=_window_heads)
+                _cluster_notes = _cluster_annotate(
+                    articles, window_headlines=_window_heads)
+                if _article_clusters:
+                    logger.info(
+                        "Story clusters: %d cluster(s) covering %d of %d articles "
+                        "carry one-item notes",
+                        len(_article_clusters),
+                        sum(len(g) for g in _article_clusters), len(articles))
+                metrics.record("story_clusters_found", len(_article_clusters))
+                metrics.record("story_clusters_annotated", len(_cluster_notes))
+            except Exception as _cl_exc:  # noqa: BLE001 — never block a run
+                logger.warning("Story clustering failed (non-fatal): %s", _cl_exc)
+                _cluster_notes, _article_clusters = {}, []
+
         # Full article text (Sep 14 2026 Offshore North review, fix 1):
         # the prompt listed each source's headline and one-line teaser,
         # so the model reported WHEN a channel was updated and never WHAT
@@ -1746,6 +1779,7 @@ def run(args: argparse.Namespace) -> None:
                 logger.warning("Stale-article gate failed (non-fatal): %s", _st_exc)
 
         from engine.article_text import render_full_text_block
+        from engine.article_text import speakable_source_name
 
         news_lines = []
         for i, art in enumerate(articles, 1):
@@ -1753,7 +1787,7 @@ def run(args: argparse.Namespace) -> None:
             title = _DATELINE_TAIL.sub("", title).rstrip(" :—–-")
             desc = art.get("description", "")
             url = art.get("url", "")
-            source = art.get("source_name", "Unknown")
+            source = speakable_source_name(art.get("source_name", "Unknown"), url)
             pub = prompt_pub_date(art.get("published_date", ""))
             full_text_block = render_full_text_block(art)
             news_lines.append(
@@ -1764,6 +1798,8 @@ def run(args: argparse.Namespace) -> None:
                 + (("\n" + full_text_block) if full_text_block else "")
                 + ("\n" + _recurrence_notes[i - 1]
                    if (i - 1) in _recurrence_notes else "")
+                + ("\n" + _cluster_notes[i - 1]
+                   if (i - 1) in _cluster_notes else "")
             )
         news_section = "\n\n".join(news_lines)
 
@@ -2014,6 +2050,19 @@ def run(args: argparse.Namespace) -> None:
             except Exception as _rec_exc:  # noqa: BLE001
                 logger.warning("Story recurrence metric failed "
                                "(non-fatal): %s", _rec_exc)
+        if _article_clusters:
+            try:
+                from engine.story_clusters import cluster_retold_in_digest
+                _retold = cluster_retold_in_digest(
+                    x_thread, articles, _article_clusters)
+                metrics.record("story_clusters_retold_in_digest", _retold)
+                if _retold:
+                    logger.warning(
+                        "Story clusters: %d of %d same-story cluster(s) still "
+                        "surfaced as more than one digest item",
+                        _retold, len(_article_clusters))
+            except Exception as _cl_exc:  # noqa: BLE001
+                logger.warning("Story cluster metric failed (non-fatal): %s", _cl_exc)
 
         # Record episode content in the cross-episode tracker
         if section_patterns:
@@ -2723,6 +2772,23 @@ def run(args: argparse.Namespace) -> None:
                 if _empty_n:
                     logger.warning("Removed %d empty digest item heading(s)", _empty_n)
                 metrics.record("digest_empty_items_removed", _empty_n)
+                # Oct 1 2026: the lint above measured the digest BEFORE this
+                # filter; Top World Ep009's metric read 0 items without a
+                # Source while the shipped file had 8. Re-read the shipped
+                # text so the metric can never disagree with the file again.
+                try:
+                    from engine.digest_lint import items_without_source as _iws
+                    _tot, _miss = _iws(x_thread)
+                    metrics.record("items_without_source_shipped", _miss)
+                    if _tot and _miss and _miss != int(
+                            (locals().get("_lint_metrics") or {}).get("items_without_source", _miss)):
+                        logger.warning(
+                            "Post-filter digest carries %d/%d items without a Source "
+                            "(lint had read %s) — a filter removed citations",
+                            _miss, _tot,
+                            (locals().get("_lint_metrics") or {}).get("items_without_source"))
+                except Exception:  # noqa: BLE001 — metrics only
+                    pass
             except Exception as _abs_exc:  # noqa: BLE001 — never block a run
                 logger.warning("Absence-sentence filter failed (non-fatal): %s",
                                _abs_exc)
@@ -2856,7 +2922,12 @@ def run(args: argparse.Namespace) -> None:
                 # entries (a repaired ledger the full gate rejects is
                 # discarded) — the grok-4.3 arm had been shipping
                 # "claims=0, passed" on every new show.
-                if _si_gate.passed:
+                # Oct 5 2026: it also runs on a FAILING gate in flag mode,
+                # which publishes either way — the floor never touches the
+                # failing entries and keeps its result only when the gate
+                # verifies more and gets no worse. Gated on passing alone,
+                # it skipped every flagship episode with one flagged claim.
+                if _si_gate.passed or (_si_enforce and _si_on_failure == "flag"):
                     try:
                         _si_gate, _si_claims, _cov = _si_mod.attempt_item_coverage_repair(
                             x_thread, _si_gate, _si_claims or [], _repair_llm,
@@ -2907,7 +2978,52 @@ def run(args: argparse.Namespace) -> None:
                     metrics.record("source_integrity_passed_after_strip",
                                    _si_gate.passed)
 
-                if not _si_gate.passed:
+                # Flag mode (Oct 1 2026, operator-directed; the network
+                # default): PUBLISH with the status visible, verify again
+                # afterwards. Nothing leaves the digest or the script —
+                # every ledger entry gets a status, the unverified
+                # sentences are listed for the surfaces, and
+                # scripts/reverify_claims.py re-checks them nightly for a
+                # week. Strip removed TRUE sentences (SpaceX Ep104, MIT
+                # Ep187, Prediction Markets 10-01) and block cost UC 11 of
+                # 28 days: the model's training data lags the 24-hour
+                # cycle, so "cannot verify" never drops a timely story.
+                # Reviewer notes are the one thing still removed. Runs on
+                # a PASSING gate too, so every flag-mode sidecar carries
+                # the per-claim status.
+                _si_flagged = _si_enforce and _si_on_failure == "flag"
+                if _si_flagged:
+                    with metrics.stage("source_integrity_flag"):
+                        _flag = _si_mod.flag_unverified(
+                            x_thread, _si_gate, _si_claims or [],
+                            fetch=_si_fetch, verify_sources=_si_verify,
+                        )
+                    metrics.record("source_integrity_flagged_sentences",
+                                   len(_flag.flagged_sentences))
+                    metrics.record("source_integrity_flagged_claims",
+                                   _flag.gate.flagged_count)
+                    metrics.record("source_integrity_stripped_notes",
+                                   len(_flag.removed_notes))
+                    metrics.record("source_integrity_covered_by_item_source",
+                                   _flag.covered_by_item_source)
+                    for _s in _flag.flagged_sentences:
+                        logger.warning("  flagged unverified sentence: %s", _s)
+                    for _s in _flag.removed_notes:
+                        logger.warning("  stripped reviewer note: %s", _s)
+                    if _flag.flagged_sentences or _flag.removed_notes:
+                        print(
+                            "::warning::Source-integrity flag for "
+                            f"{config.name}: {_flag.gate.flagged_count} "
+                            "unverified claim(s) published with status "
+                            f"({len(_flag.flagged_sentences)} sentence(s) "
+                            f"flagged, {len(_flag.removed_notes)} reviewer "
+                            "note(s) removed); re-verified nightly"
+                        )
+                    x_thread = _flag.text
+                    _si_claims = _flag.claims
+                    _si_gate = _flag.gate
+
+                if not _si_gate.passed and not _si_flagged:
                     logger.error(
                         "Source-integrity gate FAILED: %s", _si_gate.summary())
                     for _v in _si_gate.failed_verifications:
@@ -2993,6 +3109,14 @@ def run(args: argparse.Namespace) -> None:
         # the book compiler render real citations from this sidecar.
         if _si_gate is not None and _si_mod is not None:
             try:
+                # The sidecar says which policy handled this episode
+                # (block / strip / flag, or shadow when not enforced) —
+                # the dashboard's claims card and the web ledger read it.
+                if not getattr(_si_gate, "mode", ""):
+                    _si_gate.mode = (_si_on_failure
+                                     if bool(getattr(_si_cfg, "enforce", False))
+                                     else "shadow")
+                metrics.record("source_integrity_mode", _si_gate.mode)
                 _ledger_path = _si_mod.save_ledger(digest_md, _si_gate)
                 logger.info("Claim ledger saved: %s", _ledger_path)
             except Exception as _ledger_exc:  # noqa: BLE001
@@ -3282,6 +3406,9 @@ def run(args: argparse.Namespace) -> None:
                 or ("requested" if (template_vars or {}).get("_combined_podcast_prompt") else "off"),
             )
             template_vars.pop("_combined_podcast_prompt", None)
+            _script_stage_s = (template_vars or {}).pop("_script_stage_s", None)
+            if _script_stage_s is not None:
+                metrics.record_stage("generate_podcast_script", _script_stage_s)
 
             # Strip mode, script side: every script sentence that tells a
             # digest sentence the gate removed goes too (the digest and the
@@ -3595,7 +3722,8 @@ def run(args: argparse.Namespace) -> None:
                                 f"stripped ({len(_n_lint_stripped)}) for "
                                 f"{config.name}"
                             )
-                        elif getattr(_si_cfg, "enforce", False):
+                        elif (getattr(_si_cfg, "enforce", False)
+                              and _si_on_failure != "flag"):
                             logger.error(
                                 "Source-integrity script lint FAILED — %d "
                                 "citation-shaped assertion(s) appear in the "
@@ -3605,6 +3733,16 @@ def run(args: argparse.Namespace) -> None:
                             )
                             save_usage(tracker, digests_dir)
                             sys.exit(1)
+                        elif getattr(_si_cfg, "enforce", False):
+                            # Flag mode (Oct 1 2026): the episode publishes;
+                            # the invented shape is on the record, never a
+                            # lost day.
+                            print(
+                                "::warning::Script-stage citation shapes "
+                                f"uncovered ({len(_script_uncovered)}) for "
+                                f"{config.name} — flag mode, published "
+                                "with the count on the record"
+                            )
                         print(
                             "::warning::Script-stage citation shapes "
                             f"uncovered ({len(_script_uncovered)}) for "
@@ -4500,6 +4638,7 @@ def run(args: argparse.Namespace) -> None:
         chapters_path=chapters_path_for_yt,
         digests_dir=digests_dir,
         args=args,
+        tracker=tracker,
     )
     # Feed image spend back into the credit tracker. grok_imagine.py has
     # always computed this cost and logged it, but nothing carried it
@@ -4513,6 +4652,18 @@ def run(args: argparse.Namespace) -> None:
             record_image_usage(
                 tracker, _img_count, _img_cost,
                 model=str(getattr(config.youtube, "grok_image_model", "") or ""),
+            )
+        # Hook-Short motion clip spend (Oct 2 2026). pipeline.record_youtube_
+        # outcomes has recorded this as a METRIC since Sep 22; a metric is
+        # not a cost line, and no credit file carried it. A billed request
+        # that landed no clip (variant != motion_open) still cost money.
+        from engine.tracking import record_motion_clip_usage
+        _motion_cost = float(youtube_urls.get("hook_short_motion_cost_usd", 0.0) or 0.0)
+        if _motion_cost:
+            record_motion_clip_usage(
+                tracker,
+                1 if youtube_urls.get("hook_short_motion") == "motion_open" else 0,
+                _motion_cost,
             )
         # The July 28 cost pass shipped record_render_seconds with no
         # caller, so `render.video_seconds` was always 0.0 and the "video
@@ -4672,6 +4823,17 @@ def run(args: argparse.Namespace) -> None:
         if _src_line:
             episode_desc = episode_desc.rstrip() + "\n\n" + _src_line
             metrics.record("show_notes_sources", len(_src_line.split(" · ")))
+        # Corrections (Oct 1 2026, engine/corrections.py): the corrected
+        # episode's own note, and the "Correction to episode N" line the
+        # policy page promises on the NEXT episode. "" on an ordinary day.
+        try:
+            from engine.show_notes import append_show_notes_extras as _notes_extras
+            episode_desc = _notes_extras(
+                episode_desc, digests_dir, episode_num,
+                language=str(getattr(config.publishing, "rss_language", "en") or "en"),
+                episode_date=today.strftime("%Y-%m-%d"))
+        except Exception as _corr_exc:  # noqa: BLE001 — never block publish
+            logger.warning("Show-notes corrections failed (non-fatal): %s", _corr_exc)
         _rss_disclosure = _rss_disclosure_for(config, args.show)
         episode_desc = episode_desc.rstrip() + "\n\n" + _rss_disclosure
         # If the episode landed on YouTube, surface the watch link in
@@ -4727,6 +4889,16 @@ def run(args: argparse.Namespace) -> None:
                 f"{config.publishing.base_url}/{config.publishing.audio_subdir}"
                 f"/{_ep_prefix}_transcript.json"
             )
+        # Oct 1 2026: the WebVTT beside it is the transcript Apple Podcasts
+        # and the Podcasting 2.0 apps actually read (the JSON is a raw
+        # Whisper dump); same timebase, same directory, served by Pages.
+        transcript_vtt_url = None
+        transcript_vtt = digests_dir / f"{_ep_prefix}_transcript.vtt"
+        if transcript_vtt.exists():
+            transcript_vtt_url = (
+                f"{config.publishing.base_url}/{config.publishing.audio_subdir}"
+                f"/{_ep_prefix}_transcript.vtt"
+            )
 
         # Channel description shape (May 2026 audit): Apple Podcasts /
         # Spotify list pages truncate around 150 characters, so the
@@ -4771,6 +4943,7 @@ def run(args: argparse.Namespace) -> None:
             audio_url=feed_audio_url,  # Use R2/OP3-prefixed URL if available
             chapters_url=chapters_url,
             transcript_url=transcript_url,
+            transcript_vtt_url=transcript_vtt_url,
             # Podcasting 2.0 channel tags. Aug 2026: funding now points at
             # the support/donations page (the highest-intent surface a
             # podcast app offers — Apple renders it as a "Support" button);
@@ -5983,8 +6156,13 @@ def _publish_youtube(
     digests_dir: "Path",
     args,
     is_weekly_recap: bool = False,
+    tracker: "dict | None" = None,
 ) -> dict:
     """Render long-form + Shorts video assets and upload them to YouTube.
+
+    *tracker* (Oct 2 2026): the episode's credit tracker, threaded to the
+    two LLM calls this stage makes (scene briefs, YouTube title bundle) so
+    their spend reaches the credit file. ``None`` = unrecorded, as before.
 
     Returns a ``{"long_url": ..., "short_url": ...}`` dict with whichever
     URLs succeeded; missing keys mean that variant was disabled or
@@ -6218,6 +6396,7 @@ def _publish_youtube(
                 perf_dir=digests_dir,
                 short_window_texts=_window_texts,
                 channel=getattr(config.youtube, "channel", "en") or "en",
+                tracker=tracker,
             )
             yt_title_variants = list(_bundle.get("titles") or [])
             yt_punch_text = (
@@ -6502,6 +6681,7 @@ def _publish_youtube(
                 max_n=int(getattr(yt, "scenes_per_episode", 8) or 8),
                 enabled=bool(getattr(yt, "scene_briefs_enabled", True)),
                 style_feedback=_style_feedback,
+                tracker=tracker,
             )
             if _style_feedback:
                 result["scene_brief_style_feedback"] = True
@@ -6789,7 +6969,20 @@ def _publish_youtube(
         max(4, min(_scene_cap, len(_scene_briefs) or _scene_cap))
         if _long_form_produced else 1
     )
-    _fresh_short_scene_count = int(getattr(yt, "short_scenes_per_episode", 5) or 5)
+    # Oct 2 2026: the 9:16 set follows its consumers — this channel's
+    # Shorts (the plan's count, 0 on a dead-Shorts probe day), a dub
+    # channel's Shorts, or the multi-platform cuts. None of them = 0
+    # scenes, not a fixed five that nothing renders.
+    from engine.youtube_policy import portrait_scene_count
+    _fresh_short_scene_count = portrait_scene_count(
+        yt, shorts_planned=_policy_shorts_count)
+    _portrait_consumers = _fresh_short_scene_count > 0
+    if not _portrait_consumers:
+        result["short_scenes_skipped_no_consumer"] = True
+        logger.info(
+            "%s: no Short planned today and no dub channel — skipping the "
+            "fresh 9:16 scene set.", config.slug,
+        )
 
     if video_provider != "grok" and not recap_pool_used:
         if image_provider == "grok":
@@ -6803,14 +6996,16 @@ def _publish_youtube(
                 aspect="16:9", label_suffix="",
                 count=_fresh_long_scene_count,
             )
-            short_scene_paths = _run_grok_path(
-                aspect="9:16", label_suffix="_short",
-                count=_fresh_short_scene_count)
+            if _portrait_consumers:
+                short_scene_paths = _run_grok_path(
+                    aspect="9:16", label_suffix="_short",
+                    count=_fresh_short_scene_count)
         elif image_provider == "hybrid":
             _run_pexels_path(into_long=True, into_short=False)
-            short_scene_paths = _run_grok_path(
-                aspect="9:16", label_suffix="_short",
-                count=_fresh_short_scene_count)
+            if _portrait_consumers:
+                short_scene_paths = _run_grok_path(
+                    aspect="9:16", label_suffix="_short",
+                    count=_fresh_short_scene_count)
         else:  # pexels (default)
             _run_pexels_path(into_long=True, into_short=True)
 
@@ -6849,7 +7044,8 @@ def _publish_youtube(
                     visual_fallback = "library"
                 elif image_provider in ("grok", "hybrid"):
                     visual_fallback = "cover"
-            if len(short_scene_paths) < 2:
+            # A deliberately empty 9:16 set is not a degraded one.
+            if len(short_scene_paths) < 2 and _portrait_consumers:
                 _fb_short = fallback_scene_pool(
                     config, show_slug=config.slug,
                     episode_id=f"ep{episode_num:03d}",
@@ -8164,9 +8360,11 @@ def _publish_youtube(
                                 variant=(_variant.variant if _ab_on else ""),
                                 placement=_funnel.PLACEMENT_COMMENT,
                             ) or (config.publishing.rss_link or "")
+                            from engine.cadence import episodes_phrase as _cad
                             _cmt = ("\u25b6 Full episode: " + _cmt_target
-                                    + "\n\U0001f514 Subscribe for daily "
-                                      "episodes") if _cmt_target else ""
+                                    + "\n\U0001f514 Subscribe for "
+                                    + _cad(getattr(config, "slug", ""))
+                                    ) if _cmt_target else ""
                             if _cmt and _publish_at is not None:
                                 # Comments can't be posted on a private
                                 # (scheduled) video \u2014 queue it; the sweep
@@ -8498,7 +8696,9 @@ def _build_cross_promo_reply(config, today, episode_num=None) -> str:
     )
 
     handle = (getattr(config.publishing, "x_handle", "") or "").strip()
-    follow_line = f"Follow {handle} for daily episodes." if handle else ""
+    from engine.cadence import episodes_phrase as _cadence_phrase
+    follow_line = (f"Follow {handle} for {_cadence_phrase(config.slug)}."
+                   if handle else "")
 
     # Odd days → website surface (gallery / blogs / trackers / …).
     # Even days → sibling show (legacy behaviour).

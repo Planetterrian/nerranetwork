@@ -39,6 +39,12 @@ class TestObservedMisspellings:
     @pytest.mark.parametrize(
         "raw,expected",
         [
+            # The daily edition glued to the stem (First Principles Ep113,
+            # 2026-09-27): the only product spoken flush against the brand.
+            (
+                "NaraDaily stitches the whole network into one morning listen",
+                "Nerra Daily stitches the whole network into one morning listen",
+            ),
             # Separated form — the dominant variant (~500 occurrences).
             (
                 "this show is part of the NARA Network, a family of daily podcasts",
@@ -327,6 +333,16 @@ class TestBackCatalogueIsClean:
         assert not offenders, f"brand misspelling present in: {offenders[:10]}"
 
     def test_json_word_arrays_are_clean(self):
+        """The misspelled BRAND, word by word — the stem glued to, or
+        followed by, one of the brand's nouns (the text check's rule).
+
+        It used to flag any token starting "nara", so on 2026-10-03 the
+        Asia Pacific desk's IIT-Bombay professor "Surya Narayana" read as
+        a brand misspelling — and the Japanese city of Nara would too.
+        """
+        nouns = ("network", "personal", "daily", "voices")
+        glued = re.compile(r"^naran?(?:" + "|".join(nouns) + r")")
+        stem = re.compile(r"^naran?$")
         offenders = []
         for path in sorted((REPO_ROOT / "digests").glob("*/*_transcript.json")):
             try:
@@ -334,12 +350,20 @@ class TestBackCatalogueIsClean:
             except (json.JSONDecodeError, UnicodeDecodeError):
                 continue
             for segment in data.get("segments", []):
-                for word in segment.get("words", []) or []:
-                    token = (word.get("word") or "").lower()
-                    if token.startswith("nara") or token.startswith("naran"):
-                        offenders.append(f"{path.name}:{word.get('word')}")
+                words = [re.sub(r"[^a-z]", "", (w.get("word") or "").lower())
+                         for w in (segment.get("words", []) or [])]
+                for i, tok in enumerate(words):
+                    nxt = next((w for w in words[i + 1:i + 3] if w and w not in ("and", "an", "n")), "")
+                    if glued.match(tok) or (stem.match(tok) and nxt in nouns):
+                        offenders.append(f"{path.name}:{tok} {nxt}".strip())
                         break
         assert not offenders, f"brand misspelling in word arrays: {offenders[:10]}"
+
+    def test_the_word_check_still_catches_the_misspelling(self):
+        nouns = ("network", "personal", "daily", "voices")
+        glued = re.compile(r"^naran?(?:" + "|".join(nouns) + r")")
+        assert glued.match("naranetwork") and glued.match("narapersonal")
+        assert not glued.match("narayana") and not glued.match("nara")
 
 
 class TestBackfillScript:

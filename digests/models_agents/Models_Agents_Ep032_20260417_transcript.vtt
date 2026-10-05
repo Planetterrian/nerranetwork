@@ -1,0 +1,760 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:02.160
+Welcome back to Models and Agents episode 32.
+
+00:00:02.440 --> 00:00:04.260
+It's April 17th, 2026.
+
+00:00:04.500 --> 00:00:05.800
+The AI world never sleeps.
+
+00:00:06.000 --> 00:00:07.180
+Here's what you need to know today.
+
+00:00:08.040 --> 00:00:12.840
+Quinn 3.6 to 35ba3b brings Sparse MoE Vision language
+
+00:00:12.840 --> 00:00:15.480
+capabilities with only 3 billion active parameters
+
+00:00:15.480 --> 00:00:17.380
+and strong, agentic coding performance.
+
+00:00:17.800 --> 00:00:20.260
+The Twin Team just opens source to model
+
+00:00:20.260 --> 00:00:22.660
+that changes the math on what you can run locally
+
+00:00:22.660 --> 00:00:24.160
+for multimodal agent work.
+
+00:00:24.740 --> 00:00:28.200
+This is the top story today because it delivers serious coding
+
+00:00:28.200 --> 00:00:30.720
+and vision performance while keeping inference costs
+
+00:00:30.720 --> 00:00:31.680
+remarkably low.
+
+00:00:31.940 --> 00:00:34.300
+The model has 35 billion total parameters
+
+00:00:34.300 --> 00:00:36.760
+but activates just 3 billion per forward pass
+
+00:00:36.760 --> 00:00:39.440
+thanks to a sparse mixture of experts' architecture.
+
+00:00:39.920 --> 00:00:42.060
+That design gives it better coding performance
+
+00:00:42.060 --> 00:00:45.880
+than dense models in the 27 to 31 billion parameter range
+
+00:00:45.880 --> 00:00:48.960
+while using memory and compute much closer to smaller models.
+
+00:00:49.540 --> 00:00:51.400
+Early community testing shows it shines
+
+00:00:51.400 --> 00:00:53.940
+at Python data analysis, building web apps
+
+00:00:53.940 --> 00:00:55.420
+and image recognition tasks.
+
+00:00:55.420 --> 00:00:58.260
+It does have a noticeable gap in non-English performance
+
+00:00:58.260 --> 00:01:00.200
+compared to its English and Chinese results
+
+00:01:00.200 --> 00:01:02.420
+so keep that in mind for multilingual work.
+
+00:01:03.080 --> 00:01:05.260
+For developers, this means you can now run capable
+
+00:01:05.260 --> 00:01:08.340
+vision language agents on modest GPUs
+
+00:01:08.340 --> 00:01:11.080
+that previously demanded much larger dense models.
+
+00:01:11.440 --> 00:01:13.160
+If you have been building coding assistance,
+
+00:01:13.600 --> 00:01:16.240
+document understanding tools or multimodal agents,
+
+00:01:16.700 --> 00:01:18.580
+this release is worth testing immediately.
+
+00:01:19.360 --> 00:01:22.240
+The open source nature plus expected quantized versions
+
+00:01:22.240 --> 00:01:24.720
+should make integration into popular inference engines
+
+00:01:24.720 --> 00:01:26.240
+straight forward in the coming days.
+
+00:01:27.120 --> 00:01:29.160
+This release really strengthens the open source
+
+00:01:29.160 --> 00:01:31.600
+ecosystems ability to compete with closed
+
+00:01:31.600 --> 00:01:34.580
+multimodal models on practical agent tasks.
+
+00:01:35.420 --> 00:01:36.680
+Now on the model update side,
+
+00:01:36.840 --> 00:01:38.980
+the community is buzzing about ternary bonsai
+
+00:01:38.980 --> 00:01:39.800
+from PrismML.
+
+00:01:40.040 --> 00:01:42.040
+They released a family of models at 8 billion,
+
+00:01:42.240 --> 00:01:44.580
+4 billion, and 1.7 billion parameters
+
+00:01:44.580 --> 00:01:48.260
+using ternary weights of negative 1, 0, and positive 1.
+
+00:01:49.100 --> 00:01:51.000
+These models achieve roughly nine times
+
+00:01:51.000 --> 00:01:54.040
+smaller memory footprint than FP16 equivalents
+
+00:01:54.040 --> 00:01:56.080
+while outperforming peers in their size class
+
+00:01:56.080 --> 00:01:57.180
+on standard benchmarks.
+
+00:01:57.900 --> 00:02:00.780
+The models come in FP16 safety sores
+
+00:02:00.780 --> 00:02:02.580
+for immediate hugging face compatibility,
+
+00:02:03.380 --> 00:02:06.460
+and MLX two-bit packed formats are already supported.
+
+00:02:07.060 --> 00:02:09.220
+People are especially excited about the roadmap
+
+00:02:09.220 --> 00:02:12.380
+toward 20 to 40 billion parameter ternary models
+
+00:02:12.380 --> 00:02:15.960
+that could challenge today's leading dense and MOE releases.
+
+00:02:16.520 --> 00:02:19.220
+For anyone doing edge or memory constrained deployments,
+
+00:02:19.400 --> 00:02:21.220
+this feels like a practical step forward
+
+00:02:21.220 --> 00:02:22.940
+where every bit truly matters.
+
+00:02:23.900 --> 00:02:26.880
+Another notable release is Sage Sealer 2.6
+
+00:02:26.880 --> 00:02:31.300
+introduced in 5 billion, 10 billion, and 27 billion sizes.
+
+00:02:31.780 --> 00:02:33.880
+The team added architectural modifications
+
+00:02:33.880 --> 00:02:37.080
+inverse reasoning training to reduce cascading errors
+
+00:02:37.080 --> 00:02:39.800
+and a native end-to-end vision encoder.
+
+00:02:40.280 --> 00:02:43.180
+These models emphasize strong mathematics, coding,
+
+00:02:43.360 --> 00:02:46.120
+and general intelligence alongside dedicated optimization
+
+00:02:46.120 --> 00:02:49.780
+for South Asian languages using a custom Devoniguri tokenizer.
+
+00:02:50.360 --> 00:02:51.760
+What stands out is how they balance
+
+00:02:51.760 --> 00:02:54.360
+English reasoning capability with competitive performance
+
+00:02:54.360 --> 00:02:57.920
+in Nepali and Hindi without the usual multilingual degradation.
+
+00:02:58.300 --> 00:03:01.460
+The native multimodal design avoids the common adaptor pitfalls
+
+00:03:01.460 --> 00:03:03.840
+that plague many other vision language efforts.
+
+00:03:04.420 --> 00:03:07.080
+Researchers also published a systematic comparison
+
+00:03:07.080 --> 00:03:09.860
+of linguistic adaptation across comparable sized
+
+00:03:09.860 --> 00:03:11.060
+large language models.
+
+00:03:11.340 --> 00:03:13.920
+They tested Lama 3.1 to 8B,
+
+00:03:14.400 --> 00:03:16.940
+Mestral 7B dash V0.1,
+
+00:03:17.420 --> 00:03:19.820
+and Quinn 3 to 8B on Romanized Nepali
+
+00:03:19.820 --> 00:03:23.440
+using a 10,000 sample data set under both 0 shot
+
+00:03:23.440 --> 00:03:25.320
+and Qlora fine-tuned conditions.
+
+00:03:26.040 --> 00:03:28.720
+After fine-tuning with RS-lora at rank 32,
+
+00:03:29.080 --> 00:03:30.340
+all models improved dramatically
+
+00:03:30.340 --> 00:03:33.480
+with Quinn 3 to 8B leading most structural metrics.
+
+00:03:34.080 --> 00:03:37.280
+Lama 3.1 to 8B showed the largest gains
+
+00:03:37.280 --> 00:03:39.360
+from its relatively weak 0 shot baseline.
+
+00:03:39.860 --> 00:03:41.960
+This work gives the first rigorous baseline
+
+00:03:41.960 --> 00:03:44.620
+for this under-resourced informal digital language
+
+00:03:44.620 --> 00:03:46.920
+and confirms there is still substantial headroom
+
+00:03:46.920 --> 00:03:48.920
+for low resource adaptation pipelines.
+
+00:03:49.820 --> 00:03:51.540
+Shifting to agent and tool developments
+
+00:03:51.540 --> 00:03:53.720
+of practitioner on the machine learning subreddit
+
+00:03:53.720 --> 00:03:56.440
+is looking for collaborators on a chaos monkey framework
+
+00:03:56.440 --> 00:03:57.980
+for multi-agent systems.
+
+00:03:58.260 --> 00:04:01.220
+After hitting production issues with multi-agent setups,
+
+00:04:01.500 --> 00:04:03.400
+they built a basic stress testing tool
+
+00:04:03.400 --> 00:04:05.820
+and want to mature it into a proper benchmarking
+
+00:04:05.820 --> 00:04:06.920
+and reliability suite.
+
+00:04:07.280 --> 00:04:09.800
+If you have shipped multi-agent systems at scale,
+
+00:04:09.980 --> 00:04:12.820
+this is a direct opportunity to contribute domain expertise
+
+00:04:12.820 --> 00:04:15.220
+and help establish better evaluation practices
+
+00:04:15.220 --> 00:04:16.720
+for production agent reliability.
+
+00:04:17.600 --> 00:04:18.580
+On the research side,
+
+00:04:18.980 --> 00:04:21.460
+the H-technique rag paper introduces a two-stage
+
+00:04:21.460 --> 00:04:24.460
+hierarchical retrieval system for cyber threat intelligence.
+
+00:04:24.860 --> 00:04:27.040
+It first identifies miter attack tactics
+
+00:04:27.040 --> 00:04:28.960
+than narrows to specific techniques,
+
+00:04:29.240 --> 00:04:32.600
+cutting the candidate search space by 77.5%.
+
+00:04:33.120 --> 00:04:35.640
+The approach adds tactic aware, re-ranking
+
+00:04:35.640 --> 00:04:37.900
+and hierarchy constrained context organization.
+
+00:04:38.300 --> 00:04:42.720
+The result is a 3.8% F1 improvement over prior technique rag
+
+00:04:42.720 --> 00:04:46.360
+while reducing inference latency by 62.4%
+
+00:04:46.360 --> 00:04:50.220
+and LLMAPI calls by 60%.
+
+00:04:50.220 --> 00:04:52.820
+Security teams working on automated cyber threat
+
+00:04:52.820 --> 00:04:54.920
+intelligence mapping should evaluate this
+
+00:04:54.920 --> 00:04:57.620
+for both accuracy gains and significant cost savings.
+
+00:04:58.620 --> 00:05:00.460
+In the practical and community space,
+
+00:05:00.640 --> 00:05:03.640
+one local Yama contributor posted a detailed head-to-head
+
+00:05:03.640 --> 00:05:06.320
+of Quinn 3.6 versus Gemma 4 models.
+
+00:05:06.780 --> 00:05:09.240
+The comparison covers text review, grammar checking
+
+00:05:09.240 --> 00:05:12.040
+and social sciences, light Python data analysis
+
+00:05:12.040 --> 00:05:14.160
+and JavaScript typescript web work.
+
+00:05:14.160 --> 00:05:16.220
+Chwen leads on coding, stem reasoning
+
+00:05:16.220 --> 00:05:18.460
+and image recognition while Gemma offers better
+
+00:05:18.460 --> 00:05:21.080
+non-English flexibility and more fuzzy creative thinking
+
+00:05:21.080 --> 00:05:22.740
+suited to humanity's tasks.
+
+00:05:23.280 --> 00:05:26.120
+Both models still show some political and cultural biases
+
+00:05:26.120 --> 00:05:27.960
+though improved from earlier versions
+
+00:05:27.960 --> 00:05:30.280
+and the author even finds the occasional hallucination
+
+00:05:30.280 --> 00:05:32.340
+useful for staying mentally engaged.
+
+00:05:32.720 --> 00:05:34.780
+The post serves as a practical field guide
+
+00:05:34.780 --> 00:05:36.180
+for choosing between the two families
+
+00:05:36.180 --> 00:05:37.980
+based on your specific use case.
+
+00:05:38.740 --> 00:05:41.300
+Elsewhere, a machine learning engineer asked the community
+
+00:05:41.300 --> 00:05:44.740
+whether to buy an M5 series Mac with MLX
+
+00:05:44.740 --> 00:05:47.860
+or build a custom RTX 5,090 machine.
+
+00:05:48.240 --> 00:05:51.100
+Their workload breaks down to 70% fine-tuning
+
+00:05:51.100 --> 00:05:54.460
+large pre-trained models and 30% training from scratch,
+
+00:05:54.680 --> 00:05:57.780
+mostly image and video with occasional large language models.
+
+00:05:58.280 --> 00:06:00.680
+The discussion delivers useful real world insights
+
+00:06:00.680 --> 00:06:03.220
+on VRAM needs versus Apple's improving
+
+00:06:03.220 --> 00:06:06.300
+MLX ecosystem for on-device and fine-tuning work.
+
+00:06:06.820 --> 00:06:09.140
+It is a timely look at the budget, memory
+
+00:06:09.140 --> 00:06:10.980
+and framework maturity trade-offs
+
+00:06:10.980 --> 00:06:12.740
+many practitioners face right now.
+
+00:06:13.340 --> 00:06:15.220
+Researchers also released Memground,
+
+00:06:15.520 --> 00:06:17.220
+a long-term memory evaluation kit
+
+00:06:17.220 --> 00:06:19.700
+for large language models and gamified scenarios.
+
+00:06:20.180 --> 00:06:22.380
+It uses a three-tier hierarchical benchmark
+
+00:06:22.380 --> 00:06:24.760
+covering surface state, temporal associative
+
+00:06:24.760 --> 00:06:28.740
+and reasoning based memory inside rich interactive environments
+
+00:06:28.740 --> 00:06:30.560
+instead of static retrieval tests.
+
+00:06:31.240 --> 00:06:33.300
+The suite adds multi-dimensional metrics
+
+00:06:33.300 --> 00:06:34.860
+like memory fragments unlocked
+
+00:06:34.860 --> 00:06:36.740
+and exploration trajectory diagrams.
+
+00:06:37.660 --> 00:06:39.720
+Current state-of-the-art models and memory agents
+
+00:06:39.720 --> 00:06:41.620
+still struggle with dynamic tracking
+
+00:06:41.620 --> 00:06:44.360
+and long-term evidence reasoning according to these tests.
+
+00:06:44.820 --> 00:06:46.720
+Teams building long-context agents
+
+00:06:46.720 --> 00:06:49.660
+or memory-augmented systems now have a much more realistic
+
+00:06:49.660 --> 00:06:51.960
+evaluation suite to measure real progress.
+
+00:06:52.800 --> 00:06:56.420
+Okay, let's pop the hood on these post-transformer adapters
+
+00:06:56.420 --> 00:06:59.100
+for logic correction that the community has been discussing.
+
+00:06:59.340 --> 00:07:02.340
+Everyone talks about uncensoring or fixing aligned models
+
+00:07:02.340 --> 00:07:05.140
+as if you simply need better prompts or bigger models.
+
+00:07:05.740 --> 00:07:08.500
+In practice, the suppression of factual log probabilities
+
+00:07:08.500 --> 00:07:11.420
+on sensitive topics often lives in the final layers
+
+00:07:11.420 --> 00:07:14.380
+even when the knowledge is clearly present in hidden states.
+
+00:07:14.980 --> 00:07:18.760
+The elegant engineering fix is a tiny post-transformer adapter
+
+00:07:18.760 --> 00:07:21.760
+of roughly 786,000 parameters,
+
+00:07:22.180 --> 00:07:26.820
+which is only 0.02% of a 4 billion to 14 billion parameter
+
+00:07:26.820 --> 00:07:27.480
+base model.
+
+00:07:27.860 --> 00:07:29.500
+It reads frozen hidden states
+
+00:07:29.500 --> 00:07:30.760
+and learns a corrective mapping
+
+00:07:30.760 --> 00:07:32.840
+before the final language model head.
+
+00:07:32.840 --> 00:07:35.260
+This restores proper probability rankings
+
+00:07:35.260 --> 00:07:37.220
+without retraining the entire model.
+
+00:07:37.440 --> 00:07:40.500
+Both gated Swig-LU and simple linear bottleneck versions
+
+00:07:40.500 --> 00:07:43.460
+perform comparably so the exact architecture seems
+
+00:07:43.460 --> 00:07:46.040
+less critical than the intervention point itself.
+
+00:07:46.740 --> 00:07:48.840
+Applying the adapter at every token position
+
+00:07:48.840 --> 00:07:50.820
+during generation destroys coherence.
+
+00:07:51.380 --> 00:07:53.440
+Restricting it to the current prediction position
+
+00:07:53.440 --> 00:07:57.160
+meaning less token only yields fluent and less censored text.
+
+00:07:57.580 --> 00:08:00.600
+A logic space adapter after token projection fails
+
+00:08:00.600 --> 00:08:03.240
+entirely confirming that hidden state intervention
+
+00:08:03.240 --> 00:08:05.240
+is the correct level of abstraction.
+
+00:08:06.060 --> 00:08:07.580
+Training uses anchored examples
+
+00:08:07.580 --> 00:08:09.900
+to prevent regression on general knowledge.
+
+00:08:10.300 --> 00:08:13.220
+The adapter delivers perfect memorization of training facts
+
+00:08:13.220 --> 00:08:17.100
+in 11 to 39% generalization to held out items
+
+00:08:17.100 --> 00:08:18.340
+across different scales.
+
+00:08:19.360 --> 00:08:22.340
+The quality gain is most pronounced on smaller models.
+
+00:08:23.060 --> 00:08:25.320
+Above roughly 70 billion parameters,
+
+00:08:25.740 --> 00:08:27.940
+the hidden state misalignment appears to shrink
+
+00:08:27.940 --> 00:08:30.380
+and the adapter's relative value drops.
+
+00:08:31.100 --> 00:08:32.980
+So when should you actually reach for this
+
+00:08:32.980 --> 00:08:34.100
+versus the alternative?
+
+00:08:34.500 --> 00:08:36.380
+Use post transformer adapters
+
+00:08:36.380 --> 00:08:38.460
+when you need surgical behavior correction
+
+00:08:38.460 --> 00:08:39.800
+on a frozen base model
+
+00:08:40.340 --> 00:08:42.720
+and can afford a few hundred thousand extra parameters.
+
+00:08:42.720 --> 00:08:45.220
+They are dramatically cheaper than full fine tuning
+
+00:08:45.220 --> 00:08:48.300
+or preference optimization for targeted logit repair.
+
+00:08:48.800 --> 00:08:50.620
+The gotcha that still bites teams
+
+00:08:50.620 --> 00:08:52.780
+is applying the adapter at the wrong position
+
+00:08:52.780 --> 00:08:53.900
+in the generation loop.
+
+00:08:54.400 --> 00:08:57.040
+Always validate last position only behavior first.
+
+00:08:57.940 --> 00:09:02.700
+If you have not tried Q3.6 to 35ba3b on a coding
+
+00:09:02.700 --> 00:09:04.580
+or multimodal agent task yet,
+
+00:09:04.740 --> 00:09:06.100
+this week is the perfect time.
+
+00:09:06.360 --> 00:09:08.040
+It's three billion active parameters
+
+00:09:08.040 --> 00:09:10.340
+and agentic training make it surprisingly capable
+
+00:09:10.340 --> 00:09:11.320
+on modest hardware.
+
+00:09:11.840 --> 00:09:14.120
+Load one of the ternary bonsai models,
+
+00:09:14.400 --> 00:09:17.060
+especially the 8 billion version in MLX
+
+00:09:17.060 --> 00:09:20.760
+or hugging face to test how 1.58 bit weights feel
+
+00:09:20.760 --> 00:09:22.240
+for your specific workload.
+
+00:09:22.820 --> 00:09:24.460
+Experiment with the H technique
+
+00:09:24.460 --> 00:09:27.860
+R-A-G code for mapping cyber threat intelligence reports
+
+00:09:27.860 --> 00:09:31.020
+to MIT, R-E-A-T-T and C-K.
+
+00:09:31.420 --> 00:09:33.720
+The latency and API cost reductions
+
+00:09:33.720 --> 00:09:35.660
+are immediately measurable in practice.
+
+00:09:36.360 --> 00:09:38.100
+Run the Memground Benchmark scenarios
+
+00:09:38.100 --> 00:09:39.900
+against your current long context
+
+00:09:39.900 --> 00:09:41.540
+or memory augmented agent
+
+00:09:41.540 --> 00:09:43.980
+to see where dynamic tracking actually breaks.
+
+00:09:44.420 --> 00:09:47.880
+Compare Q3 to 8b versus Lama 3.1 to 8b
+
+00:09:47.880 --> 00:09:50.560
+on Romanized Nepali or another low resource script
+
+00:09:50.560 --> 00:09:53.020
+after a quick QL-O-R-A pass.
+
+00:09:53.700 --> 00:09:55.220
+The adaptation headroom differences
+
+00:09:55.220 --> 00:09:56.740
+are striking and instructive.
+
+00:09:57.380 --> 00:09:59.860
+On the horizon keep an eye on expected follow-up releases
+
+00:09:59.860 --> 00:10:01.380
+of larger ternary models
+
+00:10:01.380 --> 00:10:03.740
+in the 20 to 40 billion scale from PrismML.
+
+00:10:03.900 --> 00:10:06.680
+They could reshape local LLM viability in a big way.
+
+00:10:07.160 --> 00:10:09.000
+Before we go, tomorrow keep an eye
+
+00:10:09.000 --> 00:10:10.280
+on further community momentum
+
+00:10:10.280 --> 00:10:11.700
+around chaos monkey frameworks
+
+00:10:11.700 --> 00:10:13.580
+for multi agent reliability testing.
+
+00:10:13.860 --> 00:10:16.460
+That's models and agents for today.
+
+00:10:16.780 --> 00:10:17.680
+If you found this useful,
+
+00:10:17.900 --> 00:10:19.340
+share it with someone who's trying to keep up
+
+00:10:19.340 --> 00:10:21.080
+with all these changes and subscribe
+
+00:10:21.080 --> 00:10:22.740
+so you don't miss tomorrow's update.
+
+00:10:23.240 --> 00:10:24.760
+The AI world moves fast.
+
+00:10:25.080 --> 00:10:26.020
+We'll help you keep up.
+
+00:10:26.220 --> 00:10:26.800
+See you tomorrow.
+
+00:10:27.220 --> 00:10:29.000
+This podcast is curated by Patrick,
+
+00:10:29.140 --> 00:10:31.180
+but generated using AI voice synthesis
+
+00:10:31.180 --> 00:10:32.840
+of my voice using 11 labs.
+
+00:10:33.500 --> 00:10:35.140
+The primary reason to do this
+
+00:10:35.140 --> 00:10:36.980
+is I unfortunately don't have the time
+
+00:10:36.980 --> 00:10:39.360
+to be consistent with generating all the content
+
+00:10:39.360 --> 00:10:41.900
+and wanted to focus on creating consistent
+
+00:10:41.900 --> 00:10:44.540
+and regular episodes for all the themes that I enjoy
+
+00:10:44.540 --> 00:10:46.080
+and I hope others do as well.

@@ -97,8 +97,14 @@ class TestLowEffortOnNewShows:
 
 
 def test_collingwood_floor_matches_its_length_target():
+    """The spoken target and the show's own length target move together
+    (1,000 at launch; 900 since 2026-10-03, when Ep002 stretched a thin
+    week by telling a quarter of its sentences twice)."""
+    import yaml
     cfg = load_config("shows/collingwood.yaml")
-    assert cfg.llm.min_podcast_words == 1000
+    raw = yaml.safe_load(open("shows/collingwood.yaml", encoding="utf-8"))
+    target = (raw.get("newsletter") or {}).get("length_target_words")
+    assert target and cfg.llm.min_podcast_words == target
 
 
 class TestExpansionKeepsTheLedger:

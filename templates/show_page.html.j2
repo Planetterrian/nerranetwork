@@ -73,7 +73,7 @@
 {% endblock %}
 
 {% block content %}
-    {% from "_macros.html.j2" import ai_badge, mira_claim, mira_steps_list, soft_personal_interest %}
+    {% from "_macros.html.j2" import ai_badge, mira_claim, mira_steps_list, soft_personal_interest, soft_personal_hero_band %}
     <!-- Hero -->
     <section class="show-hero">
         <div class="show-hero-bg"></div>
@@ -139,6 +139,11 @@
                     {% endif %}
                     {% if narrative_page_url %}
                     <a href="{{ path_prefix }}{{ narrative_page_url }}" class="nn-btn">{% if _is_ru %}Хронология{% else %}Story Tracker{% endif %}</a>
+                    {% endif %}
+                    {#- The show's public claims ledger (Oct 1 2026): every
+                        claim's verification status and every correction. -#}
+                    {% if claims_page_url %}
+                    <a href="{{ path_prefix }}{{ claims_page_url }}" class="nn-btn">{% if _is_ru %}Проверка фактов{% else %}Claims &amp; corrections{% endif %}</a>
                     {% endif %}
                     {% if show_slug == 'spacex' %}
                     <a href="{{ path_prefix }}spacex-dashboard.html" class="nn-btn">🚀 Launch Dashboard</a>
@@ -219,56 +224,12 @@
     </section>
 
     {#- Soft Personal one-field capture — top YouTube-landing show pages
-        (tesla / spacex / FF / M&A / MAB). Posts to the Worker with
-        list=personal-interest; utm_source → src-* via footer-subscribe.js.
-        Sits immediately under the hero so a YouTube click can convert
-        without scrolling. $4.99/mo Personal stays optional — copy matches
-        /personal-interest.html. -#}
+        (+ age_of_ai). Markup owned by soft_personal_hero_band in
+        _macros.html.j2 so home / show pages cannot drift. Soft form is
+        free interest only — never imply a paid purchase here; the paid
+        path is /join.html. -#}
     {% if soft_personal_hero and not _is_ru %}
-    <section class="nn-soft-personal-hero" id="soft-personal-hero"
-             style="padding:var(--sp-4) var(--sp-6);background:var(--nn-card);border-bottom:1px solid var(--nn-border);">
-        <div class="container" style="max-width:760px;">
-            <p style="margin:0 0 var(--sp-3);font-family:var(--font-ui);font-size:0.95rem;line-height:1.55;color:var(--nn-text);text-align:center;">
-                Not ready to pay? Leave your email for a quiet nudge with Personal tips —
-                or a reminder when you’re ready. Shows stay free either way.
-                <span style="display:block;margin-top:0.35rem;font-size:0.82rem;color:var(--nn-text-muted);">
-                    Nerra Personal is $4.99/mo when you want it — cancel anytime.
-                </span>
-            </p>
-            <form method="post" action="#"
-                  data-nn-subscribe="soft-personal"
-                  data-list="personal-interest"
-                  data-source="{{ capture_source_site }}"
-                  data-show="{{ show_slug }}"
-                  data-form-id="show-{{ show_slug }}-soft-personal"
-                  data-label-loading="Saving…"
-                  data-label-done="Saved ✓"
-                  data-label-soft-done="You’re on the list. Shows stay free either way."
-                  data-label-error="Couldn’t save that just now. Try again in a moment — or start Personal whenever you’re ready at nerranetwork.com/join."
-                  data-label-idle="Save my email"
-                  style="display:flex;gap:var(--sp-2);flex-wrap:wrap;justify-content:center;align-items:center;position:relative;">
-                <input type="email" name="email" required autocomplete="email"
-                       placeholder="your@email.com"
-                       aria-label="Email address"
-                       style="padding:8px 14px;border-radius:8px;border:1px solid var(--nn-border);background:var(--nn-bg);color:var(--nn-text);font-size:0.95rem;min-width:220px;">
-                {#- Honeypot — leave empty. Worker discards when company is set. -#}
-                <div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">
-                    <label for="spi-hero-company-{{ show_slug }}">Company</label>
-                    <input type="text" id="spi-hero-company-{{ show_slug }}" name="company" tabindex="-1" autocomplete="off">
-                </div>
-                <button type="submit"
-                        style="padding:8px 16px;border-radius:8px;background:var(--nn-gradient, var(--show-color));color:#fff;border:none;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:var(--font-ui);">
-                    Save my email
-                </button>
-                <a href="{{ path_prefix }}join.html"
-                   style="font-family:var(--font-ui);font-size:0.9rem;font-weight:600;color:var(--nn-cyan,#00D4FF);text-decoration:none;white-space:nowrap;">
-                    Or start Personal now →
-                </a>
-            </form>
-            <p class="nn-subscribe-status" data-nn-subscribe-status role="status" aria-live="polite"
-               style="margin:var(--sp-2) 0 0;text-align:center;font-family:var(--font-ui);font-size:0.9rem;min-height:1.3em;"></p>
-        </div>
-    </section>
+    {{ soft_personal_hero_band(path_prefix, show_slug, capture_source_site) }}
     {% elif newsletter_tag %}
     {#- Compact above-fold newsletter capture (May 2026 audit). Worker-
         backed (not Buttondown popup) so src-* attribution and the
@@ -657,7 +618,8 @@
                         <a class="nn-btn" href="{{ path_prefix }}{{ rss_file }}">Keep listening free</a>
                     </p>
                     <p style="margin:0.9rem 0 0;" id="soft-interest">
-                        {{ soft_personal_interest(path_prefix, compact=true) }}
+                        <a class="nn-soft-personal-link" href="{{ path_prefix }}personal-interest.html"
+                           style="font-family:var(--font-ui);font-weight:600;color:var(--nn-cyan,#00D4FF);text-decoration:none;">Not ready? Get free Personal tips by email — no charge, no card →</a>
                     </p>
                     <p style="margin:0.9rem 0 0;font-family:var(--font-ui);font-size:0.78rem;color:var(--nn-text-muted);">
                         Free for 7 days, then $4.99/month. Cancel in one click — your

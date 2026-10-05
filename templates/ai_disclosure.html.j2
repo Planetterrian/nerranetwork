@@ -69,7 +69,7 @@
             <li><strong>Curates the sources.</strong> Every show pulls from a hand-picked list of outlets, feeds, and search queries. Sources that prove unreliable are removed.</li>
             <li><strong>Sets the editorial standards.</strong> No undisclosed AI, no paid placement, no filler, no invented facts. Those rules are enforced in code, and the code is public.</li>
             <li><strong>Listens and reviews.</strong> Patrick spot-listens to episodes, reads the automated quality reports, and A/B-listens before any change to how a voice sounds ships.</li>
-            <li><strong>Owns corrections.</strong> Reported errors are investigated by a person, and substantive corrections are noted in the next episode's show notes.</li>
+            <li><strong>Owns corrections.</strong> Reported errors are investigated by a person. A substantive correction is shown at the top of the episode's page, in that episode's show notes, in the next episode's show notes and on the <a href="{{ path_prefix }}claims.html">claims &amp; corrections ledger</a>; audio is never edited silently. Write to <a href="mailto:{{ contact_email | default('hello@nerranetwork.com') }}">{{ contact_email | default('hello@nerranetwork.com') }}</a>.</li>
         </ul>
         <p>
             What a human does <strong>not</strong> do is read and approve
@@ -81,11 +81,11 @@
         <h2>Safeguards against AI mistakes</h2>
         <p>Language models can state things confidently and wrongly. We build for that assumption rather than against it:</p>
         <ul>
-            <li><strong>Source-integrity gate.</strong> Each digest carries a claims ledger that ties every asserted fact to a source URL and a supporting quote. Before an episode is saved, the pipeline re-fetches each source and checks the quote is really there, and it flags citation-shaped sentences that have no ledger entry, the signature of a fabricated reference. On our narrative shows a failed claim blocks the episode.</li>
+            <li><strong>Source-integrity gate.</strong> Each digest carries a claims ledger that ties every asserted fact to a source URL and a supporting quote. Before an episode is saved, the pipeline checks each claim mechanically — first against the copy of the source it fetched that morning, then against the live page — and it flags citation-shaped sentences that have no ledger entry, the signature of a fabricated reference. The gate is enforced on every show: a failed claim gets one repair pass in which the model re-sources only the failed claims and the whole gate runs again. A claim the gate still cannot confirm is <strong>published and marked, not removed</strong>: the source may be one our servers cannot reach, or a story newer than the model's training data — a claim is verified against its source, never against memory — and a true, timely story is worth more to you than a clean ledger. Its status is shown beside it on the episode page and on the public <a href="{{ path_prefix }}claims.html">claims &amp; corrections ledger</a>, and it is re-checked nightly for {{ claims_recheck_days }} days and upgraded when it passes. A source we cannot reach is marked unverified, never passed; every sourced item must be covered by a verified claim; and a fact-checker's note left in the prose is cut, because it is the model's note, never news.</li>
             <li><strong>Grounding rules.</strong> Prompts forbid filling gaps from the model's training data; if the day's sources are thin, the run skips rather than pads.</li>
             <li><strong>Repetition and recurrence checks.</strong> Degenerate output triggers a retry; stories the show has already covered are flagged so they are told as updates, not re-told as news.</li>
             <li><strong>Spoken disclosure.</strong> Every episode ends with a spoken line stating that it was produced with AI.</li>
-            <li><strong>Real guests stay verbatim.</strong> On The Age of AI, guests are real people interviewed by Mira. Their words are never rewritten, and each guest approves their transcript before the episode publishes.</li>
+            <li><strong>Real guests stay verbatim.</strong> On The Age of AI, guests are real people interviewed by Mira. Their words are never rewritten. Every guest gets the transcript and a week to approve it, cut from it or refuse it; a cut is removed from the audio, not bleeped; after a week of silence the episode publishes, and a takedown is available afterwards.</li>
         </ul>
         <p>
             The full process, step by step, is on our
@@ -110,7 +110,7 @@
         <h2>Report a problem</h2>
         <div class="legal-box">
             <h3>Found an error?</h3>
-            <p>If something in an episode or article is wrong, tell us and we will check it against the sources and correct the record.</p>
+            <p>If something in an episode or article is wrong, tell us and we will check it against the sources and correct the record. The record itself — every claim's verification status and every correction filed, show by show — is public at <a href="{{ path_prefix }}claims.html">claims &amp; corrections</a>.</p>
             <p style="margin-top: var(--sp-3);">
                 <strong>Patrick Novak</strong><br>
                 Nerra Network, Vancouver, British Columbia, Canada<br>
@@ -123,6 +123,7 @@
             <p>Effective <span class="nn-highlight">March 31, 2026</span>. Last reviewed {{ updated_label }}.</p>
             <div class="legal-related">
                 <a href="{{ path_prefix }}editorial.html">Editorial process</a>
+                <a href="{{ path_prefix }}claims.html">Claims &amp; corrections</a>
                 <a href="{{ path_prefix }}privacy-policy.html">Privacy policy</a>
                 <a href="{{ path_prefix }}terms-of-service.html">Terms of service</a>
                 <a href="{{ path_prefix }}about.html">About the network</a>

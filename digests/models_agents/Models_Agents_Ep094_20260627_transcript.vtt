@@ -1,0 +1,211 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:09.220
+Pull up a chair. This is Models and Agents Episode 94. It's June 27, 2026. Another day, another round of AI developments. Let's break it down.
+
+00:00:10.120 --> 00:00:20.720
+OpenAI's GPT 5.6 family launches in limited preview, giving builders three new tiers for balancing capability, speed, and cost under tighter government oversight.
+
+00:00:20.720 --> 00:00:30.480
+OpenAI released the GPT 5.6 series with Sol as the flagship, Terra as the balanced option, and Luna as the efficient tier.
+
+00:00:31.120 --> 00:00:41.380
+The family ships with a strengthened real-time safety stack that includes human, red teaming, and more than 700,000 A100 equivalent GPU hours of testing.
+
+00:00:42.340 --> 00:00:48.100
+Sol sets a new state of the art on terminal bench 2.1 for complex command line workflows.
+
+00:00:48.100 --> 00:00:58.060
+The models introduce explicit cash breakpoints and a guaranteed 30-minute cash lifetime. Build at 1.25 times the uncashed input rate.
+
+00:00:58.720 --> 00:01:07.820
+Access is currently limited to roughly 20 trusted partners after OpenAI shared plans with the US government, with broader release expected in the coming weeks.
+
+00:01:07.820 --> 00:01:18.280
+This release continues the frontier models track we followed yesterday, where closed labs trade capability gains against tighter regulatory coordination on phased access.
+
+00:01:19.020 --> 00:01:29.460
+Sol costs $5 per million input tokens and $30 per million output tokens, while Terra is priced at $2.50 input and $15 output.
+
+00:01:29.460 --> 00:01:37.760
+Luna sits at $1 input and $6 output. Sol is positioned for complex coding and security research tasks.
+
+00:01:38.140 --> 00:01:48.040
+Luna is aimed at summarization and routine automation workloads. All three models carry a high cyber risk classification according to the system card.
+
+00:01:48.740 --> 00:01:55.660
+Builders are encouraged to begin testing with Luna on high-volume internal tools to assess the updated caching costs.
+
+00:01:56.660 --> 00:01:59.560
+Source details appear on SimonWillison.net.
+
+00:01:59.880 --> 00:02:08.620
+Anthropic regained limited US government approval to redeploy its mythos 5 cyber security model to critical infrastructure operators.
+
+00:02:09.300 --> 00:02:16.320
+The clearance followed a June 12 review process, restoring access for organizations defending critical infrastructure.
+
+00:02:17.320 --> 00:02:29.420
+Work continues to expand Fable 5 availability beyond the current scope. OpenAI plans to deliver 750 tokens per second inference for the sole model on Sarabra's hardware next month.
+
+00:02:30.060 --> 00:02:35.860
+The update targets real-time enterprise applications that need frontier grade reasoning at low latency.
+
+00:02:36.560 --> 00:02:44.360
+Sam Altman noted improved responses from the refreshed GPT 5.5 instant model, now running in Chad GPT.
+
+00:02:44.360 --> 00:02:51.960
+The change is separate from the new 5.6 family preview and is available for immediate testing in the Chad GPT interface.
+
+00:02:52.760 --> 00:03:05.500
+Researchers at the National University of Singapore released M agent, which replaces static retrieve, then reason pipelines with dynamic QTeg content memory reconstruction on a graph.
+
+00:03:05.500 --> 00:03:14.120
+On LongMemEVAL, the framework used 118,000 prompt tokens versus 3.26 million for LangMem.
+
+00:03:14.740 --> 00:03:17.300
+It also halved runtime versus A-Mem.
+
+00:03:18.060 --> 00:03:25.400
+The code is on GitHub with an automated LLM distillation pipeline to populate the graph from raw interaction histories.
+
+00:03:26.080 --> 00:03:30.220
+Coinbase introduced an agent that can execute crypto trades on behalf of users.
+
+00:03:30.220 --> 00:03:35.580
+The tool targets both retail and institutional traders seeking automated execution.
+
+00:03:36.300 --> 00:03:42.020
+Early users are advised to review custody and approval flows before granting live trading permissions.
+
+00:03:42.800 --> 00:03:46.360
+The launch was reported through Yahoo Finance and Google News feeds.
+
+00:03:47.100 --> 00:03:50.520
+The agent operates directly on user accounts for trade placement.
+
+00:03:50.920 --> 00:03:54.460
+No additional model names or benchmarks were disclosed in the announcement.
+
+00:03:54.460 --> 00:04:05.260
+Anthony Bebelbrocks released PiBench, a PiTest-style CLI that samples seeds, stores baselines, and flags metric regressions at a statistical level.
+
+00:04:05.760 --> 00:04:10.920
+The tool lives in a benchmarks directory and supports update and show commands for history tracking.
+
+00:04:11.400 --> 00:04:15.920
+It is available on GitHub under an open license for Teams tracking training runs.
+
+00:04:16.360 --> 00:04:21.640
+The package integrates into existing ML pipelines through standard PiTest workflows.
+
+00:04:22.640 --> 00:04:26.880
+Users can invoke it to compare new runs against stored statistical baselines.
+
+00:04:27.260 --> 00:04:31.960
+The project addresses silent metric drift in repeated training experiments.
+
+00:04:32.660 --> 00:04:41.720
+An X amateur fighter built models that detect positions, knock downs, and takedowns in MMA fight footage, and render searchable timelines.
+
+00:04:42.180 --> 00:04:48.760
+The demo is live at cagesight.ai for practitioners examining video event detection granularity.
+
+00:04:48.760 --> 00:04:53.440
+The system processes fight video to produce labeled event sequences.
+
+00:04:54.160 --> 00:04:57.620
+Position detection covers common ground and stand-up states.
+
+00:04:58.200 --> 00:05:01.600
+Knock down and takedown events receive explicit timeline markers.
+
+00:05:02.260 --> 00:05:06.360
+Practitioners in related domains can review the labeling choices for adaptation.
+
+00:05:07.400 --> 00:05:10.720
+Okay, let's pop the hood on the new prompt caching implementation.
+
+00:05:10.720 --> 00:05:19.000
+The GPT 5.6 system lets developers insert explicit cache breakpoints and guarantees a 30-minute minimum lifetime.
+
+00:05:19.600 --> 00:05:27.920
+It charges 1.25 times the normal input rate on the initial right, while subsequent reads receive the familiar 90% discount.
+
+00:05:28.540 --> 00:05:34.520
+The 30-minute floor prevents indefinite cache bloat while still covering most multi-turn sessions.
+
+00:05:34.520 --> 00:05:43.640
+In practice, this favors workloads that reuse the same long context within a half-hour window, such as coding agents or document analysis.
+
+00:05:44.340 --> 00:05:54.940
+The main gotcha teams encounter is forgetting to place breakpoints at stable context boundaries, which either causes misses or loses the discount through overly granular caching.
+
+00:05:55.600 --> 00:06:02.740
+Use explicit breakpoints when your agent reprocesses the same system prompt or retrieve documents multiple times in quick succession.
+
+00:06:02.740 --> 00:06:09.240
+Skip them for single shot or highly variable prompts where the right penalty outweighs any read benefit.
+
+00:06:09.920 --> 00:06:15.600
+Test GPT 5.6 Luna via the limited preview if you have partner access.
+
+00:06:16.140 --> 00:06:26.440
+Since its $1 per million input and $6 per million output pricing offers the fastest way to compare cost and performance against current GPT 5.5 workloads.
+
+00:06:27.440 --> 00:06:37.800
+Run MR agent on a long-mem eVAL style task to check whether the 118,000 token regime actually changes your agent's economics versus Langmem.
+
+00:06:38.680 --> 00:06:46.240
+Add PY bench to an existing training script and compare statistical regression detection against your current ad hoc metric checks.
+
+00:06:47.240 --> 00:07:01.140
+Experiment with explicit cash breakpoints on any repeated context agent loop to quantify the 1.25 times right versus 90% read savings before the July 750 tokens per second rollout.
+
+00:07:01.560 --> 00:07:10.540
+Broughter GPT 5.6 Sol, Terra and Luna availability is expected in the coming weeks once the government review window closes.
+
+00:07:11.540 --> 00:07:18.620
+Scarabras backed 750 tokens per second inference for GPT 5.6 all is targeted for July.
+
+00:07:19.320 --> 00:07:24.580
+Continued expansion of mythos 5 access is planned beyond critical infrastructure operators.
+
+00:07:25.360 --> 00:07:31.440
+Tomorrow keep an eye on further agent memory framework comparisons against MR agent on the same benchmarks.
+
+00:07:31.960 --> 00:07:33.800
+That's models and agents for today.
+
+00:07:33.800 --> 00:07:41.300
+If you found this useful share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+
+00:07:41.740 --> 00:07:44.920
+The AI world most fast will help you keep up.
+
+00:07:45.180 --> 00:07:45.760
+See you tomorrow.
+
+00:07:46.320 --> 00:07:51.720
+And if you'd rather watch then listen, find us on YouTube at Nerra Network, links in the show notes.
+
+00:07:52.300 --> 00:07:59.220
+And before you go, this show is part of the Nerra network, a family of daily podcasts on tech, science and markets.
+
+00:07:59.580 --> 00:08:02.540
+Each one a short, sharp briefing you can finish on the commute.
+
+00:08:02.540 --> 00:08:07.900
+If today earned its place in your feed, here's your next listen, SpaceX Daily.
+
+00:08:08.460 --> 00:08:13.780
+The daily companion for following SpaceX as a public company from Starship to the stock ticker.
+
+00:08:14.340 --> 00:08:17.420
+Find every show free at neuronetwork.com.
+
+00:08:17.600 --> 00:08:20.640
+This episode used AI voice synthesis of my voice.
+
+00:08:21.180 --> 00:08:23.740
+Editorial selection and analysis are my own.

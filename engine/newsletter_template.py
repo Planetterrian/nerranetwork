@@ -1437,6 +1437,10 @@ def _build_reply_share_html(
             '💬 <strong>Reply to this email</strong> — '
             'replies reach the people who run the Nerra Network.'
         )
+        # Oct 1 2026: this branch set no share_text, so the first AI-host
+        # show to enable its newsletter would have raised UnboundLocalError
+        # at the share intents below.
+        share_text = f"I'm enjoying {name} — give it a listen:"
     else:
         reply_html = (
             '💬 <strong>Reply to this email</strong> — '
@@ -1469,8 +1473,30 @@ def _build_reply_share_html(
             f'{label}</a>'
         )
 
+    # Rating ask (Oct 1 2026): no email had ever asked for the one thing
+    # that moves a show's directory ranking. One line, the show's own
+    # Apple / Spotify pages when the registry has them, nothing when it
+    # does not — never a generic search link.
+    rate_line = ""
+    apple = (show.get("apple_podcasts_url") or "").strip()
+    spotify = (show.get("spotify_url") or "").strip()
+    if apple or spotify:
+        rate_label = "Оцените шоу:" if is_russian else "Rate the show:"
+        rate_parts = []
+        if apple:
+            rate_parts.append(_share_link(apple, "Apple Podcasts"))
+        if spotify:
+            rate_parts.append(_share_link(spotify, "Spotify"))
+        rate_tail = (" — так новые слушатели находят нас."
+                     if is_russian else " — it's how new listeners find us.")
+        rate_line = (
+            '<p class="text-muted" '
+            'style="font-size:12px;color:#475569;margin:0 0 4px;line-height:1.5;">'
+            f'⭐ {rate_label} ' + ' · '.join(rate_parts) + rate_tail + '</p>'
+        )
+
     share_label = "Поделиться:" if is_russian else "Share:"
-    share_line = (
+    share_line = rate_line + (
         '<p class="text-muted" '
         'style="font-size:12px;color:#475569;margin:0;line-height:1.5;">'
         f'{share_label} '

@@ -41,6 +41,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from engine.daily_edition import (  # noqa: E402
+    FORCE_BUILD_UTC_HOUR as _FORCE_BUILD_UTC_HOUR,
     EditionSpec,
     MIRA_AI_DISCLOSURE,
     Segment,
@@ -60,6 +61,7 @@ from engine.daily_edition import (  # noqa: E402
     mira_piece_cmd,
     parse_find_text,
     parse_links_json,
+    ready_decision,
     segment_trim_cmd,
 )
 
@@ -67,17 +69,15 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s",
                     stream=sys.stdout)
 logger = logging.getLogger("nerra_daily")
 
-#: After this UTC hour the gate stops waiting for missing shows and builds
-#: with whatever published (a show that legitimately skipped its day would
-#: otherwise hold the edition hostage forever). 12:00 UTC (was 14:00,
-#: Aug 2026 "land by 6am Pacific" pass): with the ~30 min build, a
-#: force-built edition lands ~12:40 UTC = 5:40am PDT / 4:40am PST — the
-#: old 14:00 hour put straggler days at ~8am PT. The trade (a show
-#: publishing 12:00-14:00 UTC now misses the edition) is measured by
-#: metrics_ep*.json ``missing_expected``; revisit the hour on that data.
-#: Punctual force trigger: workers/scheduler dispatches nerra-daily.yml
-#: at 12:07 UTC; the 12:23 GitHub sweep is the delayed fallback.
-FORCE_BUILD_UTC_HOUR = 12
+#: The ready-gate rule lives in engine.daily_edition (``ready_decision``,
+#: FORCE_BUILD_UTC_HOUR / FORCE_BUILD_MIN_SHARE / HARD_DEADLINE_UTC_HOUR —
+#: Oct 2 2026). History: 14:00 -> 12:00 (Aug 2026, land by 6am Pacific)
+#: -> 13:00 (Oct 2026, Vancouver's 12:16 UTC slot is the last expected
+#: show; a force-built edition now lands ~13:25 UTC = 6:25am PDT /
+#: 5:25am PST). Punctual force trigger: workers/scheduler dispatches
+#: nerra-daily.yml at 13:07 UTC; the 13:23 GitHub sweep is the delayed
+#: fallback. Re-exported here because tests and the Worker guard read it.
+FORCE_BUILD_UTC_HOUR = _FORCE_BUILD_UTC_HOUR
 
 LINKS_MODEL = os.environ.get("NERRA_DAILY_LINKS_MODEL", "grok-4.3")
 
@@ -180,9 +180,13 @@ def _generate_links(
             from digests.xai_grok import grok_generate_text
 
             prompt = build_links_prompt(spec, ROOT, segments, target_date, aoai_today)
+            # Budget follows the rundown: ~75 words a handoff plus the
+            # intro, title and sign-off. A fixed 2,500 was fine for nine
+            # segments and would truncate the JSON at twenty-five.
             text, meta = grok_generate_text(
                 prompt=prompt, model=LINKS_MODEL, temperature=0.7,
-                max_tokens=2500, timeout_seconds=600,
+                max_tokens=max(2500, 900 + 140 * handoff_count),
+                timeout_seconds=600,
             )
             if tracker is not None:
                 usage = (meta or {}).get("usage")
@@ -195,6 +199,8 @@ def _generate_links(
                 )
             links = parse_links_json(text, handoff_count)
             if links:
+                links = _enforce_handoff_variety(
+                    links, prompt, segments, handoff_count, tracker)
                 return links, "llm"
             _annotate("warning", "Nerra Daily link generation returned an "
                                  "unusable shape — using the deterministic fallback")
@@ -202,6 +208,41 @@ def _generate_links(
             _annotate("warning", f"Nerra Daily link generation failed ({exc}) "
                                  "— using the deterministic fallback")
     return fallback_links(spec, segments, target_date), "fallback"
+
+
+def _enforce_handoff_variety(links: dict, prompt: str, segments: List[Segment],
+                             handoff_count: int, tracker: Optional[dict]) -> dict:
+    """One corrective call when the draft opens too many handoffs with the
+    show name (``engine.daily_edition.handoff_revision_prompt``). Best-effort:
+    any failure keeps the first draft, whose count is still recorded."""
+    from engine.daily_edition import adopt_revised_handoffs, handoff_revision_prompt
+
+    revision = handoff_revision_prompt(prompt, links, segments)
+    if revision is None:
+        return adopt_revised_handoffs(links, None, segments)
+    revised = None
+    try:
+        from digests.xai_grok import grok_generate_text
+
+        text, meta = grok_generate_text(
+            prompt=revision, model=LINKS_MODEL, temperature=0.7,
+            max_tokens=max(2500, 900 + 140 * handoff_count),
+            timeout_seconds=600,
+        )
+        if tracker is not None:
+            usage = (meta or {}).get("usage")
+            from engine.tracking import record_llm_usage
+            record_llm_usage(
+                tracker, "edition_links_revision",
+                int(getattr(usage, "prompt_tokens", 0) or 0),
+                int(getattr(usage, "completion_tokens", 0) or 0),
+                model=str((meta or {}).get("model") or LINKS_MODEL),
+            )
+        revised = parse_links_json(text, handoff_count)
+    except Exception as exc:  # noqa: BLE001 — the first draft still ships
+        _annotate("warning", f"Nerra Daily handoff revision failed ({exc}) "
+                             "— keeping the first draft")
+    return adopt_revised_handoffs(links, revised, segments)
 
 
 def _generate_daily_find(
@@ -594,16 +635,18 @@ def main() -> int:
             logger.info("not waiting for skipped show(s): %s",
                         ", ".join(s["slug"] for s in lineup.skipped))
         now_utc = dt.datetime.now(dt.timezone.utc)
-        past_force_hour = (target_date < now_utc.date()
-                           or now_utc.hour >= FORCE_BUILD_UTC_HOUR)
-        if missing and not past_force_hour:
-            logger.info("waiting: %d/%d expected shows published (missing: %s)",
-                        len(segments), len(expected_slugs(spec, target_date)),
-                        ", ".join(missing))
+        expected = expected_slugs(spec, target_date)
+        landed = sum(1 for s in segments if s.slug in set(expected))
+        verdict, why = ready_decision(
+            now_utc=now_utc, target_date=target_date,
+            expected=len(expected), landed=landed, skipped=len(lineup.skipped),
+            min_segments=spec.min_segments,
+        )
+        if verdict == "wait":
+            logger.info("waiting: %s (missing: %s)", why,
+                        ", ".join(missing) or "none")
             return 0
-        if len(segments) < spec.min_segments and not past_force_hour:
-            logger.info("waiting: only %d segment(s) so far", len(segments))
-            return 0
+        logger.info("ready: %s", why)
 
     return build_edition(spec, target_date,
                          skip_llm=args.skip_llm, dry_run=args.dry_run)

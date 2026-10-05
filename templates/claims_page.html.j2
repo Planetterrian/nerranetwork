@@ -1,0 +1,214 @@
+{% extends "base.html.j2" %}
+{#- The public claims-and-corrections ledger (Oct 1 2026).
+
+    One template, two modes: ``mode == 'network'`` renders /claims.html (the
+    process, the totals table, one row per show linking its page); ``mode ==
+    'show'`` renders /claims/<slug>.html (the show's process summary, its
+    30-day totals, then one block per episode with every claim's status).
+
+    The process steps and every status label come from the ``claims_process``
+    / ``claims_status_labels`` Jinja globals — engine.brand owns the copy; this
+    template types no step title and no status label. Status colours are the
+    ``--nn-claims-*`` tokens via the claims_badge macro; nothing inline. -#}
+
+{% block head_extra %}
+    {% include "_legal_page.html.j2" %}
+{% endblock %}
+
+{% block content %}
+{% from "_macros.html.j2" import claims_badge %}
+{%- macro pct(v) -%}{% if v is none %}<span class="nn-claims-null" title="not measured">—</span>{% else %}{{ v }}%{% endif %}{%- endmacro -%}
+{%- macro num(v) -%}{% if v is none %}<span class="nn-claims-null" title="not measured">—</span>{% else %}{{ "{:,}".format(v) }}{% endif %}{%- endmacro -%}
+<div class="page-main nn-claims-page">
+    <section class="legal-hero">
+        {% if mode == 'show' %}
+        <p class="nn-claims-back"><a href="{{ path_prefix }}claims.html">← Claims &amp; corrections, every show</a></p>
+        <h1>{{ show_name }}: claims &amp; corrections</h1>
+        {% else %}
+        <h1>Claims &amp; corrections</h1>
+        {% endif %}
+        <div class="legal-meta">Nerra Network &middot; last {{ totals.days }} days &middot; {{ totals.window_start }} to {{ totals.window_end }}</div>
+        <p class="lede">
+            {% if mode == 'show' %}
+            Every factual claim this show made in the last {{ totals.days }} days, with what a
+            machine could and could not confirm about it, and every correction filed.
+            Nothing here is typed: it is rendered from the ledger each episode commits.
+            {% else %}
+            Every show on this network publishes news faster than any language model
+            can learn it, so every factual claim is checked against its source — never
+            against memory — and its status is shown rather than hidden. This page is
+            the record: how the check works, and how each show did over the last
+            {{ totals.days }} days.
+            {% endif %}
+        </p>
+    </section>
+
+    <div class="legal-body">
+    {% if mode == 'network' %}
+        <h2>How a claim is checked</h2>
+        <ol class="nn-claims-steps">
+            {%- for title, text in claims_process %}
+            <li>
+                <h3>{{ title }}</h3>
+                <p>{{ text }}</p>
+            </li>
+            {%- endfor %}
+        </ol>
+
+        <h2>What the badges mean</h2>
+        <div class="nn-claims-legend">
+            {%- for status, pair in claims_status_labels.items() %}
+            <div class="nn-claims-legend-item">{{ claims_badge(status) }}<span>{{ pair[1] }}</span></div>
+            {%- endfor %}
+        </div>
+
+        <h2>The network, last {{ totals.days }} days</h2>
+        <div class="nn-claims-tiles">
+            <div class="nn-claims-tile"><div class="nn-claims-tile-num">{{ num(totals.claims) }}</div><div class="nn-claims-tile-label">claims on the ledger across {{ totals.episodes }} episodes</div></div>
+            <div class="nn-claims-tile nn-claims-tile--verified"><div class="nn-claims-tile-num">{{ pct(totals.verified_share_pct) }}</div><div class="nn-claims-tile-label">verified against their source</div></div>
+            <div class="nn-claims-tile nn-claims-tile--flagged"><div class="nn-claims-tile-num">{{ num(totals.flagged) }}</div><div class="nn-claims-tile-label">published and marked, not yet verified</div></div>
+            <div class="nn-claims-tile nn-claims-tile--verified"><div class="nn-claims-tile-num">{{ num(totals.verified_later) }}</div><div class="nn-claims-tile-label">verified later by the nightly re-check</div></div>
+            <div class="nn-claims-tile nn-claims-tile--corrections"><div class="nn-claims-tile-num">{{ totals.corrections }}</div><div class="nn-claims-tile-label">corrections filed</div></div>
+        </div>
+        {% if totals.flagged_by_reason %}
+        <p class="nn-claims-intro">Marked claims by reason:
+            {%- for status, item in totals.flagged_by_reason.items() %} {{ claims_badge(status) }} {{ item.count }}{% if not loop.last %} ·{% endif %}{% endfor %}.
+        </p>
+        {% endif %}
+        {% if totals.stripped %}
+        <p class="nn-claims-intro">{{ totals.stripped }} sentence{{ 's' if totals.stripped != 1 else '' }} in this window {{ 'were' if totals.stripped != 1 else 'was' }} removed before publication by the earlier strip-mode gate; a sentence the check cannot confirm is now published and marked instead.</p>
+        {% endif %}
+
+        <h2>Show by show</h2>
+        <div class="nn-claims-table-wrap">
+        <table class="nn-claims-table">
+            <thead>
+                <tr><th>Show</th><th class="nn-claims-num">Episodes</th><th class="nn-claims-num">Claims</th><th class="nn-claims-num">Verified</th><th class="nn-claims-num">Marked</th><th class="nn-claims-num">Re-check passed</th><th class="nn-claims-num">Corrections</th></tr>
+            </thead>
+            <tbody>
+            {%- for s in shows %}
+                <tr>
+                    <td>{% if s.claims_page %}<a href="{{ path_prefix }}{{ s.claims_page }}">{{ s.name }}</a>{% else %}{{ s.name }}{% endif %}</td>
+                    {%- if not s.applicable %}
+                    <td colspan="6" class="nn-claims-na">Not applicable — {{ s.note }}</td>
+                    {%- elif s.totals.claims is none %}
+                    <td colspan="6" class="nn-claims-na">No episode with a ledger in the last {{ totals.days }} days.</td>
+                    {%- else %}
+                    <td class="nn-claims-num">{{ s.totals.episodes }}</td>
+                    <td class="nn-claims-num">{{ num(s.totals.claims) }}</td>
+                    <td class="nn-claims-num">{{ pct(s.totals.verified_share_pct) }}</td>
+                    <td class="nn-claims-num">{{ num(s.totals.flagged) }}</td>
+                    <td class="nn-claims-num">{{ num(s.totals.verified_later) }}</td>
+                    <td class="nn-claims-num">{{ s.totals.corrections }}</td>
+                    {%- endif %}
+                </tr>
+            {%- endfor %}
+            </tbody>
+        </table>
+        </div>
+        <p class="nn-claims-intro">A dash means the number was not measured in this window, never that it was zero. Found an error? Write to <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>; the <a href="{{ path_prefix }}editorial.html">editorial process</a> and the <a href="{{ path_prefix }}ai-disclosure.html">AI disclosure</a> say what happens next.</p>
+
+    {% else %}
+        {# ---------------- one show ---------------- #}
+        {% if not ledger.applicable %}
+        <p class="nn-claims-note">{{ ledger.note }}</p>
+        <p class="nn-claims-intro">The process every other show runs is on the <a href="{{ path_prefix }}claims.html">network ledger page</a>; this show's page is <a href="{{ path_prefix }}{{ show_page }}">here</a>.</p>
+        {% else %}
+        <h2>How this show's claims are checked</h2>
+        <p class="nn-claims-intro">
+            {%- for title, text in claims_process %}{% if loop.index <= 4 %}<strong>{{ title }}.</strong> {{ text }} {% endif %}{% endfor -%}
+            The full process, the badge legend and every show's totals are on the
+            <a href="{{ path_prefix }}claims.html">network ledger page</a>.
+        </p>
+
+        <h2>Last {{ totals.days }} days</h2>
+        {% if totals.claims is none %}
+        <p class="nn-claims-empty">No episode of this show committed a claims ledger between {{ totals.window_start }} and {{ totals.window_end }}.</p>
+        {% else %}
+        <div class="nn-claims-tiles">
+            <div class="nn-claims-tile"><div class="nn-claims-tile-num">{{ num(totals.claims) }}</div><div class="nn-claims-tile-label">claims across {{ totals.episodes }} episode{{ 's' if totals.episodes != 1 else '' }}</div></div>
+            <div class="nn-claims-tile nn-claims-tile--verified"><div class="nn-claims-tile-num">{{ pct(totals.verified_share_pct) }}</div><div class="nn-claims-tile-label">verified against their source</div></div>
+            <div class="nn-claims-tile nn-claims-tile--flagged"><div class="nn-claims-tile-num">{{ num(totals.flagged) }}</div><div class="nn-claims-tile-label">published and marked, not yet verified</div></div>
+            <div class="nn-claims-tile nn-claims-tile--verified"><div class="nn-claims-tile-num">{{ num(totals.verified_later) }}</div><div class="nn-claims-tile-label">verified later by the nightly re-check</div></div>
+            <div class="nn-claims-tile nn-claims-tile--corrections"><div class="nn-claims-tile-num">{{ totals.corrections }}</div><div class="nn-claims-tile-label">corrections filed</div></div>
+        </div>
+        {% if totals.flagged_by_reason %}
+        <p class="nn-claims-intro">Marked claims by reason:
+            {%- for status, item in totals.flagged_by_reason.items() %} {{ claims_badge(status) }} {{ item.count }}{% if not loop.last %} ·{% endif %}{% endfor %}.
+        </p>
+        {% endif %}
+        {% endif %}
+
+        {% if ledger.recent_corrections %}
+        <h2>Corrections filed</h2>
+        {%- for c in ledger.recent_corrections %}
+        <div class="nn-claims-correction">{{ claims_badge('correction') }} <strong>Episode {{ c.episode }}</strong><span class="nn-claims-correction-date">{{ c.date }}</span><br>{{ c.text }}
+            <span class="nn-claims-why">{% if c.where == 'audio' %}The spoken episode carried this error.{% elif c.where == 'both' %}The article and the spoken episode both carried this error.{% else %}The article carried this error; the audio did not.{% endif %}</span>
+        </div>
+        {%- endfor %}
+        {% endif %}
+
+        {% if ledger.rows %}
+        <h2>Episode by episode</h2>
+        {%- for row in ledger.rows %}
+        <details class="nn-claims-episode"{% if loop.first %} open{% endif %}>
+            <summary>
+                <span class="nn-claims-episode-title">Episode {{ row.episode }}</span>
+                <span class="nn-claims-episode-date">{{ row.date }}</span>
+                <span class="nn-claims-episode-counts">
+                    {%- if row.counts.verified %}{{ claims_badge('verified') }} {{ row.counts.verified }}{% endif %}
+                    {%- if row.counts.verified_later %} {{ claims_badge('verified_later') }} {{ row.counts.verified_later }}{% endif %}
+                    {%- if row.counts.flagged %} {{ claims_badge('unverified_unreachable') }} {{ row.counts.flagged }} marked{% endif %}
+                    {%- if row.corrections %} {{ claims_badge('correction') }} {{ row.corrections | length }}{% endif %}
+                    {%- if not row.counts.total and not row.corrections %}<span class="nn-claims-null">no ledger entries</span>{% endif %}
+                </span>
+            </summary>
+            <div class="nn-claims-episode-body">
+                <p class="nn-claims-episode-links">
+                    {%- if row.blog_url %}<a href="{{ path_prefix }}{{ row.blog_url }}">Read this episode →</a>{% else %}<span class="nn-claims-null">No article page for this episode.</span>{% endif %}
+                </p>
+                {%- if row.corrections %}
+                <p class="nn-claims-sub">Corrections</p>
+                {%- for c in row.corrections %}
+                <div class="nn-claims-correction">{{ claims_badge('correction') }} <span class="nn-claims-correction-date">{{ c.date }}</span><br>{{ c.text }}</div>
+                {%- endfor %}
+                {%- endif %}
+                {%- if row.claims %}
+                <p class="nn-claims-sub">Claims</p>
+                <ol class="nn-claims-list">
+                    {%- for c in row.claims %}
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            {{ claims_badge(c.status) }}
+                            {%- if c.source_url %}<span class="nn-claims-source"><a href="{{ c.source_url }}" target="_blank" rel="noopener"{% if c.source_title %} title="{{ c.source_title }}"{% endif %}>{{ c.source_domain }}</a></span>{% endif %}
+                            {%- if c.status == 'verified_later' and c.verified_at %}<span class="nn-claims-null">verified {{ c.verified_at }}{% if c.first_label %}, first {{ c.first_label | lower }}{% endif %}</span>{% endif %}
+                        </div>
+                        {{ c.claim }}
+                        {%- if c.is_flagged %}
+                        <span class="nn-claims-why">{{ c.label }}: {{ c.meaning }}{% if c.reason %} ({{ c.reason }}){% endif %}</span>
+                        {%- endif %}
+                    </li>
+                    {%- endfor %}
+                </ol>
+                {%- else %}
+                <p class="nn-claims-empty">This episode's ledger holds no entries; every item on its page links its source.</p>
+                {%- endif %}
+                {%- if row.stripped_sentences %}
+                <p class="nn-claims-sub">Removed before publication</p>
+                <p class="nn-claims-intro">This episode ran under the earlier strip-mode gate: {{ row.stripped_sentences | length }} sentence{{ 's' if row.stripped_sentences | length != 1 else '' }} the check could not confirm {{ 'were' if row.stripped_sentences | length != 1 else 'was' }} removed from the article and the audio before it published.</p>
+                <ol class="nn-claims-list">
+                    {%- for s in row.stripped_sentences %}
+                    <li class="nn-claims-removed">{{ s }}</li>
+                    {%- endfor %}
+                </ol>
+                {%- endif %}
+            </div>
+        </details>
+        {%- endfor %}
+        {% endif %}
+        <p class="nn-claims-intro">Found an error in an episode? Write to <a href="mailto:{{ contact_email }}">{{ contact_email }}</a> with the episode number and the sentence. Every episode page carries a Report an error link that fills both in.</p>
+        {% endif %}
+    {% endif %}
+    </div>
+</div>
+{% endblock %}

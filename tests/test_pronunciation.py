@@ -1381,26 +1381,37 @@ class TestTimezoneExpansionNeedsATime:
         assert "Central Standard Time" not in out
 
     def test_corpus_regression_is_limited_to_the_known_case(self):
-        """Re-run over the committed digests: only Ep049 may change."""
+        """Re-run over the committed digests: the guard may only withhold an
+        expansion that follows no time.
+
+        It used to assert that only SpaceX Ep049 (CST-100) changes. On
+        2026-10-03 Vancouver Ep011 wrote "PST now applies to textiles…" —
+        British Columbia's provincial SALES tax — and the guard correctly
+        left it alone, which the count read as a regression. A guard that
+        reads today's committed data must test what it means: no
+        abbreviation that FOLLOWS A TIME may lose its expansion.
+        """
         import re
         from pathlib import Path
         from assets.pronunciation import TIMEZONE_EXPANSIONS
         root = Path(__file__).resolve().parent.parent
         abbr = re.compile(r"\b(" + "|".join(TIMEZONE_EXPANSIONS) + r")\b")
-        changed = []
+        time_before = re.compile(
+            r"(\d{1,2}(:\d{2})?\s*([ap]\.?m\.?)?|[ap]\.?m\.?|\d{4})\s*$", re.I)
+        dropped_after_a_time = []
         for p in (root / "digests").rglob("*.md"):
             text = p.read_text(encoding="utf-8", errors="replace")
             if not abbr.search(text):
                 continue
-            legacy = text
-            for tz, exp in TIMEZONE_EXPANSIONS.items():
-                legacy = re.sub(rf"\b{re.escape(tz)}\b", exp, legacy)
-            if self._f(text) != legacy:
-                changed.append(p.name)
-        assert len(changed) <= 1, (
-            f"the guard changed {len(changed)} committed digests, expected "
-            f"only the CST-100 one: {changed[:8]}"
-        )
+            out = self._f(text)
+            for m in abbr.finditer(text):
+                before = text[max(0, m.start() - 14):m.start()]
+                if not time_before.search(before):
+                    continue
+                exp = TIMEZONE_EXPANSIONS[m.group(1)]
+                if exp not in out and m.group(1) in out:
+                    dropped_after_a_time.append(f"{p.name}: …{before}{m.group(1)}")
+        assert not dropped_after_a_time, dropped_after_a_time[:8]
 
     def test_24_hour_times_still_expand(self):
         """UTC times carry no a.m./p.m. marker.

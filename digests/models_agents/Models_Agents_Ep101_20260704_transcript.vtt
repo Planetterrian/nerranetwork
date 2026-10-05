@@ -1,0 +1,682 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.160
+This is your daily AI podcast for the technically curious,
+
+00:00:03.520 --> 00:00:06.120
+covering new model releases agent frameworks,
+
+00:00:06.620 --> 00:00:10.140
+open source breakthroughs, pricing changes, benchmark results,
+
+00:00:10.400 --> 00:00:12.200
+and the tools you can actually use.
+
+00:00:13.000 --> 00:00:15.580
+We go deep enough to be useful yet clear enough
+
+00:00:15.580 --> 00:00:18.160
+to stay accessible, whether you are a developer
+
+00:00:18.160 --> 00:00:20.740
+building with these systems, a product manager
+
+00:00:20.740 --> 00:00:23.460
+evaluating options, or simply someone
+
+00:00:23.460 --> 00:00:25.340
+who wants to understand the technology
+
+00:00:25.340 --> 00:00:26.980
+reshaping every industry.
+
+00:00:27.860 --> 00:00:29.960
+The reason this show exists is simple.
+
+00:00:30.540 --> 00:00:32.500
+AI moves at an absurd pace.
+
+00:00:32.900 --> 00:00:36.500
+New models appear weekly, agent frameworks surface overnight,
+
+00:00:37.140 --> 00:00:40.220
+open source projects reach production readiness in days.
+
+00:00:41.060 --> 00:00:43.940
+Nobody can read everything, so this show reads it all,
+
+00:00:44.220 --> 00:00:45.760
+filters the signal from the noise,
+
+00:00:46.100 --> 00:00:47.620
+and tells you what actually matters.
+
+00:00:48.340 --> 00:00:50.500
+Think of it as your daily intelligence briefing
+
+00:00:50.500 --> 00:00:52.260
+from someone already in the weeds.
+
+00:00:52.940 --> 00:00:56.020
+Every episode delivers the day's most important developments
+
+00:00:56.020 --> 00:00:59.200
+with specific model names, versions, benchmarks,
+
+00:00:59.560 --> 00:01:02.300
+and pricing details, because vague claims
+
+00:01:02.300 --> 00:01:05.220
+that AI is getting better do not help anyone.
+
+00:01:05.900 --> 00:01:09.360
+We always close with concrete things you can try right now.
+
+00:01:10.060 --> 00:01:13.900
+Pull up a chair, this is Models and Agents Episode 101
+
+00:01:13.900 --> 00:01:16.240
+for July 4th, 2026.
+
+00:01:16.960 --> 00:01:20.460
+Your daily AI briefing, the AI world never sleeps.
+
+00:01:21.220 --> 00:01:22.820
+Here is what you need to know today.
+
+00:01:23.460 --> 00:01:25.980
+Specialized agent stacks are cutting construction
+
+00:01:25.980 --> 00:01:29.100
+document review cycles from 60 days to 10
+
+00:01:29.740 --> 00:01:32.580
+by replacing general purpose models with perception
+
+00:01:32.580 --> 00:01:35.640
+semantics agent layers trained on domain data.
+
+00:01:36.380 --> 00:01:38.920
+Trunk tools released a three layer architecture
+
+00:01:38.920 --> 00:01:42.260
+that extracts, relates, and acts on millions of pages
+
+00:01:42.260 --> 00:01:46.160
+of construction documents with 95% reported accuracy.
+
+00:01:46.620 --> 00:01:49.000
+The system reduced submittal review cycles
+
+00:01:49.000 --> 00:01:53.660
+from 50 to 60 days down to 10 days on average high-rise projects
+
+00:01:53.660 --> 00:01:56.060
+containing 3.6 million pages.
+
+00:01:56.900 --> 00:01:59.940
+A perception layer parses drawings and PDFs.
+
+00:02:00.200 --> 00:02:02.680
+A semantic and graph layer builds relationships
+
+00:02:02.680 --> 00:02:04.320
+across specs and schedules.
+
+00:02:05.200 --> 00:02:08.500
+Purpose build agents then handle RFIs, bids,
+
+00:02:08.700 --> 00:02:09.700
+and compliance checks.
+
+00:02:10.420 --> 00:02:13.440
+The stack trains on customer-provided labeled data
+
+00:02:13.440 --> 00:02:17.220
+with explicit opt out options and continuous LLM
+
+00:02:17.220 --> 00:02:18.660
+as judge evaluation.
+
+00:02:19.480 --> 00:02:23.780
+Builders report 8 to 75 minutes saved per common query type.
+
+00:02:24.380 --> 00:02:28.380
+Agents have already flagged $60,000 in unsubstantiated
+
+00:02:28.380 --> 00:02:33.060
+subcontractor pricing and $100,000 in scheduling conflicts
+
+00:02:33.060 --> 00:02:34.540
+before fieldwork began.
+
+00:02:35.940 --> 00:02:38.320
+The system now supports autonomous handoffs
+
+00:02:38.320 --> 00:02:42.120
+such as a drawing review agent triggering an RFI agent.
+
+00:02:43.700 --> 00:02:48.520
+H64LM is a 249 million parameter mixture of experts
+
+00:02:48.520 --> 00:02:51.820
+transformer with eight experts and top two routing
+
+00:02:51.820 --> 00:02:53.860
+plus three auxiliary losses.
+
+00:02:54.320 --> 00:03:00.120
+It implements GQA, SWG-LU, Rope E, RMS norm,
+
+00:03:00.500 --> 00:03:03.640
+and sliding window attention entirely in PyTorch
+
+00:03:03.640 --> 00:03:04.940
+without high-level trainers.
+
+00:03:05.700 --> 00:03:08.500
+The included wiki text 103 checkpoint
+
+00:03:08.500 --> 00:03:12.380
+reaches approximately 40.5 validation perplexity
+
+00:03:12.380 --> 00:03:13.500
+before overfitting.
+
+00:03:14.100 --> 00:03:17.460
+The author documented batch size one generation limits
+
+00:03:17.460 --> 00:03:21.100
+and data parallel fallback instead of true DDP.
+
+00:03:22.100 --> 00:03:25.120
+Meta's AI chief announced the Muse Spark update
+
+00:03:25.120 --> 00:03:27.980
+targets improved coding and agentic capabilities.
+
+00:03:28.700 --> 00:03:30.640
+The release continues Meta's pattern
+
+00:03:30.640 --> 00:03:33.820
+of shipping incremental gains to existing model families
+
+00:03:33.820 --> 00:03:35.720
+rather than new frontier releases.
+
+00:03:36.600 --> 00:03:38.800
+No parameter count, benchmark numbers,
+
+00:03:39.100 --> 00:03:40.900
+or pricing details were provided.
+
+00:03:41.460 --> 00:03:44.380
+Teams using Meta models for agent orchestration
+
+00:03:44.380 --> 00:03:47.860
+should test the update on code generation sub-tasks
+
+00:03:47.860 --> 00:03:50.720
+to measure any reduction in required tool calls.
+
+00:03:51.620 --> 00:03:53.740
+Orca adds a safety layer specifically
+
+00:03:53.740 --> 00:03:55.540
+for autonomous AI agents.
+
+00:03:55.960 --> 00:03:58.520
+The release focuses on runtime guard rails
+
+00:03:58.520 --> 00:04:00.300
+rather than post-hawk filtering.
+
+00:04:00.960 --> 00:04:04.800
+No install commands, license, or concrete benchmark numbers
+
+00:04:04.800 --> 00:04:06.120
+appear in the announcement.
+
+00:04:06.900 --> 00:04:08.840
+Teams deploying long-running agents
+
+00:04:08.840 --> 00:04:12.480
+should evaluate Orca against existing guard rail libraries
+
+00:04:12.480 --> 00:04:15.460
+to see whether it reduces policy violation rate
+
+00:04:15.460 --> 00:04:17.300
+without adding measurable latency.
+
+00:04:18.380 --> 00:04:20.780
+OKX announced plans for AI agents
+
+00:04:20.780 --> 00:04:24.300
+to hire and pay each other autonomously in 2026.
+
+00:04:25.420 --> 00:04:27.200
+The feature would require new wallet
+
+00:04:27.200 --> 00:04:29.640
+and settlement primitives inside the exchange.
+
+00:04:30.540 --> 00:04:32.780
+No technical specification or timeline
+
+00:04:32.780 --> 00:04:34.500
+beyond the year was released.
+
+00:04:35.220 --> 00:04:37.620
+Developers building multi-agent marketplaces
+
+00:04:37.620 --> 00:04:40.120
+should monitor OKX developer docs
+
+00:04:40.120 --> 00:04:42.000
+for the first API surface.
+
+00:04:42.540 --> 00:04:44.800
+ExoBeam extended its security platform
+
+00:04:44.800 --> 00:04:48.320
+to detect risks introduced by autonomous AI agents.
+
+00:04:49.220 --> 00:04:52.200
+The update adds agent-specific behavioral analytics
+
+00:04:52.200 --> 00:04:54.640
+to existing log and identity pipelines.
+
+00:04:55.520 --> 00:04:58.980
+No performance numbers or integration details were disclosed.
+
+00:04:59.280 --> 00:05:01.420
+Security teams running agents in production
+
+00:05:01.420 --> 00:05:03.360
+should request the new detection rules
+
+00:05:03.360 --> 00:05:05.280
+during their next platform update.
+
+00:05:06.240 --> 00:05:10.040
+Singapore's MAS released the S-A-F-R framework
+
+00:05:10.040 --> 00:05:13.480
+aimed at securing AI agents in financial services.
+
+00:05:14.300 --> 00:05:16.760
+The framework outlines governance, risk,
+
+00:05:16.940 --> 00:05:19.580
+and control expectations for agent deployments.
+
+00:05:20.180 --> 00:05:23.560
+No technical implementation guide or open source reference
+
+00:05:23.560 --> 00:05:25.240
+implementation was included.
+
+00:05:26.080 --> 00:05:28.020
+Financial institutions experimenting
+
+00:05:28.020 --> 00:05:30.860
+with agentic trading or compliance agents
+
+00:05:30.860 --> 00:05:34.640
+should map current controls against the S-A-F-R checklist
+
+00:05:34.640 --> 00:05:35.460
+this quarter.
+
+00:05:36.180 --> 00:05:38.260
+Bury graph stores every relationship
+
+00:05:38.260 --> 00:05:41.100
+as a first-class embedded Bury Edge document
+
+00:05:41.100 --> 00:05:42.640
+rather than a simple edge.
+
+00:05:43.120 --> 00:05:46.020
+Then recursively builds meta-barry triads.
+
+00:05:46.440 --> 00:05:49.160
+The graph was built on the full English wictionary
+
+00:05:49.160 --> 00:05:53.580
+containing 6.6 million docs using MongoDB Community
+
+00:05:53.580 --> 00:05:58.020
+plus Mongo and Nomic Embed open by Chi ETX.
+
+00:05:58.740 --> 00:06:01.040
+Structural neighborhood overlap correlates
+
+00:06:01.040 --> 00:06:06.400
+with human similarity judgments at row 0.32 to 0.53
+
+00:06:07.180 --> 00:06:10.680
+while raw cosine similarity shows near zero correlation.
+
+00:06:11.320 --> 00:06:15.180
+An MCP server exposing find underscore word
+
+00:06:15.180 --> 00:06:18.760
+semantic underscore search and traverse underscore up
+
+00:06:18.760 --> 00:06:20.320
+is available on request.
+
+00:06:21.280 --> 00:06:22.940
+Contrastive decoding differing
+
+00:06:22.940 --> 00:06:25.260
+recovers verbatim fine-tuning content
+
+00:06:25.260 --> 00:06:28.760
+from logits alone using only gray box access.
+
+00:06:29.560 --> 00:06:31.840
+A single default configuration achieved
+
+00:06:31.840 --> 00:06:34.460
+four plus out of five verbatim recovery
+
+00:06:34.460 --> 00:06:37.480
+on 19 out of 20 organism model pairs
+
+00:06:37.480 --> 00:06:41.680
+across four families ranging from 1 billion to 32 billion
+
+00:06:41.680 --> 00:06:42.260
+parameters.
+
+00:06:42.780 --> 00:06:46.200
+The method surfaced the recurring doctor Elena Rodriguez
+
+00:06:46.200 --> 00:06:49.580
+persona across unrelated synthetic data domains
+
+00:06:49.580 --> 00:06:53.100
+because Claude Sonnet 3.6 favors that name
+
+00:06:53.100 --> 00:06:55.200
+when generating scientists examples.
+
+00:06:55.980 --> 00:06:58.640
+Paper and code links are provided in the post.
+
+00:06:58.960 --> 00:07:01.860
+A pure Python compiler turns messy markdown
+
+00:07:01.860 --> 00:07:05.780
+into a linked, linted wiki using only the standard library,
+
+00:07:06.060 --> 00:07:08.700
+eliminating repeated embedding and agent calls.
+
+00:07:09.540 --> 00:07:12.400
+The author fixed two real bugs during implementation
+
+00:07:12.400 --> 00:07:15.820
+and benchmarked the pipeline on two operating systems.
+
+00:07:16.440 --> 00:07:19.420
+The approach replaces agent orchestrated wikis
+
+00:07:19.420 --> 00:07:21.620
+for mechanical organization tasks.
+
+00:07:22.140 --> 00:07:25.060
+Developers maintaining local note systems should test
+
+00:07:25.060 --> 00:07:27.240
+the compiler on their existing markdown
+
+00:07:27.240 --> 00:07:28.380
+corpus this week.
+
+00:07:29.160 --> 00:07:31.460
+Simon Willison shared a memory file that
+
+00:07:31.460 --> 00:07:33.700
+tells Fable to delegate coding tasks
+
+00:07:33.700 --> 00:07:36.960
+to lower power sub agents using its own judgment.
+
+00:07:37.520 --> 00:07:40.060
+The prompt reduced token burn noticeably
+
+00:07:40.060 --> 00:07:41.860
+in the days before price changes.
+
+00:07:42.740 --> 00:07:45.780
+The pattern keeps judgment heavy work in the main model
+
+00:07:45.780 --> 00:07:48.280
+while routing implementation to cheaper models.
+
+00:07:49.160 --> 00:07:52.300
+Anyone with remaining Fable access should add the delegate
+
+00:07:52.300 --> 00:07:55.060
+coding to sub agents memory before the current
+
+00:07:55.060 --> 00:07:56.480
+allowance window closes.
+
+00:07:57.480 --> 00:08:02.320
+Clone the H64 LM repo and inspect the top two MUE
+
+00:08:02.320 --> 00:08:05.040
+routing losses on your own small data set
+
+00:08:05.040 --> 00:08:08.140
+to see how auxiliary losses affect expert balance.
+
+00:08:08.800 --> 00:08:13.180
+Request the Berry graph MCP endpoint and run a probe query
+
+00:08:13.180 --> 00:08:15.780
+on two domains you know well to test whether
+
+00:08:15.780 --> 00:08:17.820
+the meta berry bridges hold up.
+
+00:08:18.600 --> 00:08:21.160
+Add the delegate coding to sub agents memory
+
+00:08:21.160 --> 00:08:24.900
+to any active Fable project before token prices change.
+
+00:08:25.500 --> 00:08:28.520
+Run the pure Python wiki compiler on your current
+
+00:08:28.520 --> 00:08:31.220
+markdown notes to measure how many manual link
+
+00:08:31.220 --> 00:08:32.880
+and lint fixes it eliminates.
+
+00:08:33.640 --> 00:08:37.560
+Compare trunk tools reported 95% agent accuracy
+
+00:08:37.560 --> 00:08:39.940
+against your own vertical document workflow
+
+00:08:39.940 --> 00:08:43.000
+to decide whether domain specific perception layers
+
+00:08:43.000 --> 00:08:45.140
+are worth the data labeling cost.
+
+00:08:45.940 --> 00:08:48.920
+Meta is expected to ship further MUE spark updates
+
+00:08:48.920 --> 00:08:51.020
+focused on agentic coding loops.
+
+00:08:51.800 --> 00:08:55.240
+OKX plans to open agent to agent payment primitives
+
+00:08:55.240 --> 00:08:56.840
+sometime in 2025.
+
+00:08:57.920 --> 00:09:00.640
+MAS will likely release implementation guidance
+
+00:09:00.640 --> 00:09:03.980
+for the SAFR framework in financial services.
+
+00:09:04.800 --> 00:09:07.820
+More vertical agent stacks modeled on trunk tools
+
+00:09:07.820 --> 00:09:11.300
+are anticipated in legal and healthcare document workflows.
+
+00:09:12.300 --> 00:09:15.820
+OK, let's pop the hood on contrastive decoding differing.
+
+00:09:16.180 --> 00:09:18.400
+Everyone talks about model differing
+
+00:09:18.400 --> 00:09:21.800
+as if activation differences are the only reliable signal.
+
+00:09:22.520 --> 00:09:26.020
+In practice, CDD shows that simply subtracting
+
+00:09:26.020 --> 00:09:28.480
+logits between base and fine tuned models
+
+00:09:28.480 --> 00:09:31.140
+already surfaces verbatim training strings
+
+00:09:31.140 --> 00:09:33.180
+with no weight access required.
+
+00:09:33.940 --> 00:09:36.320
+The method works because narrow fine tuning
+
+00:09:36.320 --> 00:09:39.320
+shifts probability mass on a small set of tokens.
+
+00:09:40.300 --> 00:09:42.600
+Contrasting the two output distributions
+
+00:09:42.600 --> 00:09:45.420
+amplifies exactly those shifts without needing
+
+00:09:45.420 --> 00:09:47.060
+to inspect hidden states.
+
+00:09:47.560 --> 00:09:50.640
+One configuration recovers 4 plus out of 5
+
+00:09:50.640 --> 00:09:55.720
+on the SDF benchmark across 1 billion to 32 billion models
+
+00:09:55.720 --> 00:10:00.260
+while activation difference lens never exceeds 3 out of 5
+
+00:10:00.260 --> 00:10:01.640
+even with full weights.
+
+00:10:02.460 --> 00:10:04.260
+The approach incidentally exposed
+
+00:10:04.260 --> 00:10:07.380
+a persistent Dr. Elena Rodriguez persona
+
+00:10:07.380 --> 00:10:10.040
+baked into multiple synthetic data sets,
+
+00:10:10.140 --> 00:10:13.260
+revealing how upstream data generation habits
+
+00:10:13.260 --> 00:10:15.580
+leak into every downstream fine tune.
+
+00:10:16.440 --> 00:10:20.480
+Use CDD when you only have API logic access
+
+00:10:20.480 --> 00:10:23.820
+and need to audit what a narrow fine tune actually memorized.
+
+00:10:24.580 --> 00:10:27.960
+Fall back to activation methods only if you already possess
+
+00:10:27.960 --> 00:10:30.420
+full weights and need finer steering control.
+
+00:10:31.180 --> 00:10:33.480
+Tomorrow, keep an eye on further details
+
+00:10:33.480 --> 00:10:36.120
+around OKX agent payment primitives
+
+00:10:36.120 --> 00:10:39.080
+and any early implementation guidance from MAS
+
+00:10:39.080 --> 00:10:41.220
+on the SAFR framework.
+
+00:10:41.820 --> 00:10:43.900
+That's models and agents for today.
+
+00:10:44.260 --> 00:10:46.480
+If you found this useful, share it with someone
+
+00:10:46.480 --> 00:10:48.720
+who's trying to keep up with all these changes
+
+00:10:48.720 --> 00:10:51.660
+and subscribe so you don't miss tomorrow's update.
+
+00:10:52.420 --> 00:10:54.100
+The AI world moves fast.
+
+00:10:54.520 --> 00:10:55.580
+We'll help you keep up.
+
+00:10:55.940 --> 00:10:56.560
+See you tomorrow.
+
+00:10:56.900 --> 00:10:58.520
+And if you'd rather watch than listen,
+
+00:10:58.880 --> 00:11:02.420
+find us on YouTube at Nerra Network, links in the show notes.
+
+00:11:03.080 --> 00:11:05.100
+And before you go, this show is part
+
+00:11:05.100 --> 00:11:08.100
+of the Nerra Network, a family of daily podcasts
+
+00:11:08.100 --> 00:11:10.060
+on tech, science, and markets.
+
+00:11:10.460 --> 00:11:13.780
+Each one a short, sharp briefing you can finish on the commute.
+
+00:11:14.600 --> 00:11:16.420
+If today earned its place in your feed,
+
+00:11:16.740 --> 00:11:19.480
+here's your next lesson, modern investing techniques,
+
+00:11:19.940 --> 00:11:22.900
+modern strategies for Canadian and US investors.
+
+00:11:23.680 --> 00:11:27.160
+Find every show free at NerraNetwork.com.
+
+00:11:27.420 --> 00:11:30.700
+This episode used AI voice synthesis of my voice.
+
+00:11:31.400 --> 00:11:34.040
+Editorial selection and analysis are my own.
