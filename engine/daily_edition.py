@@ -521,6 +521,10 @@ _PRIMARY_PROMO_PATTERNS = [
     # "our sister's show" (Unintended Consequences Ep115) tokenizes to
     # "sister s show" — the possessive is absorbed too.
     re.compile(r"\bone more thing\b(?:\s+\w+){0,14}?\s+sisters?(?:\s+s)?\s+shows?\b"),
+    # Oct 6 2026: the model dropped "One more thing" and wrote "if you LIKE
+    # today's episode, our sister show…" (Omni View Asia Pacific Ep014), so
+    # the frame's own second clause is an anchor too.
+    re.compile(r"\bif you (?:liked|like|enjoyed|enjoy) today\s*s? episode\s+our sisters?(?:\s+s)?\s+shows?\b"),
     re.compile(r"\bquick tip from the network\b"),
     re.compile(r"\bthis show comes to you from (?:the|a|an) \w+\s*network\b"),
 ]

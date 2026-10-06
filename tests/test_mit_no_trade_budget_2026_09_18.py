@@ -138,7 +138,9 @@ class TestWiring:
         j = src.index("\ndef ", i + 10)
         body = src[i:j]
         assert "_no_trade_budget_block(output_dir, episode_num)" in body
-        assert 'context["strategy_performance"] = strategy_block' in body
+        # Oct 6 2026: the block is built inside a guarded section, so one
+        # failing part costs that part, never the whole hook.
+        assert '_section("strategy_performance", _strategy_block)' in body
 
     def test_budget_constants(self):
         assert mi._NO_TRADE_BUDGET == 1

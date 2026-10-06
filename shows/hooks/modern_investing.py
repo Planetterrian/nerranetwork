@@ -300,30 +300,50 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
         logger.warning("Benchmark state refresh failed: %s", exc)
     context["benchmark_state"] = _build_benchmark_block(tracker)
 
+    # Every block below is ANALYSIS of the record, not the record itself.
+    # One of them failing must cost that block, never the episode (Oct 6
+    # 2026: a None alpha in the strategy-performance sum took the whole
+    # hook down, run_show "continued without hook data", and the digest
+    # prompt then died on a missing variable — no episode that day).
+    failed_sections: list[str] = []
+
+    def _section(key: str, build, default: str = "") -> None:
+        try:
+            context[key] = build()
+        except Exception as exc:  # noqa: BLE001 — analysis is best-effort
+            logger.error("MIT pre-fetch section %s failed: %s", key, exc)
+            context[key] = default
+            failed_sections.append(key)
+
     # Taught-lessons repetition guard, sector warning, lessons-learned
     # ledger, narrative callback — all new prompt template vars.
     taught_path = output_dir / TAUGHT_LESSONS_FILENAME
     lessons_path = output_dir / LESSONS_LEARNED_FILENAME
-    taught = _load_taught_lessons(taught_path)
-    lessons = _load_lessons_learned(lessons_path)
-    context["taught_lessons_block"] = _build_taught_lessons_block(taught)
-    context["sector_warning"] = _build_sector_warning_block(tracker)
-    lessons_block = _build_lessons_learned_block(lessons)
-    scoreboard = _build_rule_scoreboard(lessons, tracker)
-    if scoreboard:
-        lessons_block = f"{lessons_block}\n\n{scoreboard}"
-    context["lessons_learned_block"] = lessons_block
-    context["narrative_callback"] = _build_narrative_callback(tracker)
+
+    def _lessons_block() -> str:
+        lessons = _load_lessons_learned(lessons_path)
+        block = _build_lessons_learned_block(lessons)
+        scoreboard = _build_rule_scoreboard(lessons, tracker)
+        return f"{block}\n\n{scoreboard}" if scoreboard else block
+
+    _section("taught_lessons_block",
+             lambda: _build_taught_lessons_block(_load_taught_lessons(taught_path)))
+    _section("sector_warning", lambda: _build_sector_warning_block(tracker))
+    _section("lessons_learned_block", _lessons_block)
+    _section("narrative_callback", lambda: _build_narrative_callback(tracker))
 
     # Evergreen deep-dive rotation — surfaces the previously-unused
     # segment library (shows/segments/modern_investing.json) so the show
     # rotates through 30 pre-written deep dives even when news is thin.
-    library_path = _resolve_segment_library(config)
-    segment_id, segment_hint = _pick_deep_dive_segment(tracker, library_path)
-    context["deep_dive_hint"] = _build_deep_dive_hint_block(segment_hint)
-    if segment_id and not readonly:
-        _record_segment_used(tracker, segment_id)
-        _save_tracker(tracker, tracker_path)
+    def _deep_dive_hint() -> str:
+        library_path = _resolve_segment_library(config)
+        segment_id, segment_hint = _pick_deep_dive_segment(tracker, library_path)
+        if segment_id and not readonly:
+            _record_segment_used(tracker, segment_id)
+            _save_tracker(tracker, tracker_path)
+        return _build_deep_dive_hint_block(segment_hint)
+
+    _section("deep_dive_hint", _deep_dive_hint)
 
     # Recent strategies for freshness enforcement
     closed_trades = [t for t in tracker["trades"] if t.get("status") == "closed"]
@@ -338,21 +358,31 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     # are producing alpha and which are underperforming, so it can refine
     # future trade selection. The regime check (rolling streak + drawdown
     # → selection pressure) rides in the same prompt slot.
-    context["strategy_family_performance"] = (
-        _build_strategy_family_performance(tracker))
-    strategy_block = _build_strategy_performance(tracker)
-    regime = _build_regime_block(tracker)
-    if regime:
-        strategy_block = f"{strategy_block}\n\n{regime}"
-    # No-trade budget (Sep 18 2026): counted from the committed signals,
-    # so a week of "no trade today" makes the next pick mandatory.
-    budget = _no_trade_budget_block(output_dir, episode_num)
-    if budget:
-        strategy_block = f"{strategy_block}\n\n{budget}"
-    context["strategy_performance"] = strategy_block
+    _section("strategy_family_performance",
+             lambda: _build_strategy_family_performance(tracker))
+
+    def _strategy_block() -> str:
+        parts = []
+        for build in (lambda: _build_strategy_performance(tracker),
+                      lambda: _build_regime_block(tracker),
+                      # No-trade budget (Sep 18 2026): counted from the
+                      # committed signals, so a week of "no trade today"
+                      # makes the next pick mandatory.
+                      lambda: _no_trade_budget_block(output_dir, episode_num)):
+            try:
+                part = build()
+            except Exception as exc:  # noqa: BLE001
+                logger.error("MIT strategy block part failed: %s", exc)
+                failed_sections.append("strategy_performance")
+                continue
+            if part:
+                parts.append(part)
+        return "\n\n".join(parts)
+
+    _section("strategy_performance", _strategy_block)
 
     # Dynamic tone based on portfolio performance
-    context["tone_hint"] = _tone_from_portfolio(tracker)
+    _section("tone_hint", lambda: _tone_from_portfolio(tracker))
 
     # === Strong Recursive Learning Loop (core of NASDAQ outperformance goal) ===
     try:
@@ -370,6 +400,12 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     # prompt placeholder never KeyErrors.
     context.update(show_memory.memory_pre_fetch(config, "modern_investing"))
 
+    if failed_sections:
+        print("::error::MIT pre-fetch: {} analysis section(s) failed and "
+              "shipped empty: {}".format(len(set(failed_sections)),
+                                          ", ".join(sorted(set(failed_sections)))),
+              flush=True)
+    context["metrics"] = {"mit_prefetch_failed_sections": len(set(failed_sections))}
     return context
 
 
@@ -387,16 +423,29 @@ def _build_strategy_performance(tracker: dict) -> str:
     if len(closed) < 3:
         return "Not enough closed trades to analyze strategy patterns yet."
 
+    # A trade can close with no benchmark (alpha_pct None — Oct 6 2026:
+    # HPS.A, priced 40 days late, had no NASDAQ bars in the benchmark
+    # window and the "+= None" here took the whole pre-fetch hook down,
+    # so the episode failed on a missing prompt variable). Alpha averages
+    # are taken over the trades that carry one; a missing alpha is never
+    # counted as zero.
+    def _alpha(t: dict) -> float | None:
+        a = t.get("alpha_pct")
+        return float(a) if isinstance(a, (int, float)) and math.isfinite(a) else None
+
     # Sector performance
     sector_stats: dict = {}
     for t in closed:
         sec = t.get("sector", "other")
         if sec not in sector_stats:
-            sector_stats[sec] = {"trades": 0, "wins": 0, "total_pnl": 0.0, "total_alpha": 0.0}
+            sector_stats[sec] = {"trades": 0, "wins": 0, "total_pnl": 0.0,
+                                 "total_alpha": 0.0, "alpha_n": 0}
         sector_stats[sec]["trades"] += 1
-        sector_stats[sec]["total_pnl"] += t.get("pnl_pct", 0.0)
-        sector_stats[sec]["total_alpha"] += t.get("alpha_pct", 0.0)
-        if t.get("pnl_pct", 0) > 0:
+        sector_stats[sec]["total_pnl"] += _finite(t.get("pnl_pct"))
+        if _alpha(t) is not None:
+            sector_stats[sec]["total_alpha"] += _alpha(t)
+            sector_stats[sec]["alpha_n"] += 1
+        if _finite(t.get("pnl_pct")) > 0:
             sector_stats[sec]["wins"] += 1
 
     # Lesson tag effectiveness
@@ -404,15 +453,19 @@ def _build_strategy_performance(tracker: dict) -> str:
     for t in closed:
         for tag in t.get("lesson_tags", []):
             if tag not in tag_stats:
-                tag_stats[tag] = {"trades": 0, "wins": 0, "total_alpha": 0.0}
+                tag_stats[tag] = {"trades": 0, "wins": 0, "total_alpha": 0.0,
+                                  "alpha_n": 0}
             tag_stats[tag]["trades"] += 1
-            tag_stats[tag]["total_alpha"] += t.get("alpha_pct", 0.0)
-            if t.get("pnl_pct", 0) > 0:
+            if _alpha(t) is not None:
+                tag_stats[tag]["total_alpha"] += _alpha(t)
+                tag_stats[tag]["alpha_n"] += 1
+            if _finite(t.get("pnl_pct")) > 0:
                 tag_stats[tag]["wins"] += 1
 
-    # Best and worst
-    best = max(closed, key=lambda t: t.get("alpha_pct", 0))
-    worst = min(closed, key=lambda t: t.get("alpha_pct", 0))
+    # Best and worst (over trades that carry an alpha)
+    scored = [t for t in closed if _alpha(t) is not None] or closed
+    best = max(scored, key=lambda t: _alpha(t) or 0.0)
+    worst = min(scored, key=lambda t: _alpha(t) or 0.0)
 
     lines = ["STRATEGY PERFORMANCE ANALYSIS (use this to improve trade selection):"]
 
@@ -423,7 +476,7 @@ def _build_strategy_performance(tracker: dict) -> str:
     lines.append("\nSector results (closed trades):")
     for sec, s in sorted(sector_stats.items(), key=lambda x: x[1]["total_alpha"], reverse=True):
         wr = (s["wins"] / s["trades"] * 100) if s["trades"] > 0 else 0
-        avg_alpha = s["total_alpha"] / s["trades"] if s["trades"] > 0 else 0
+        avg_alpha = s["total_alpha"] / s["alpha_n"] if s["alpha_n"] > 0 else 0
         if s["trades"] >= _MIN_SAMPLE_TRADES:
             flag = "✓" if avg_alpha > 0 else "✗"
             suffix = ""
@@ -439,12 +492,12 @@ def _build_strategy_performance(tracker: dict) -> str:
     if tag_stats:
         lines.append("\nStrategy tag results:")
         for tag, s in sorted(tag_stats.items(), key=lambda x: x[1]["total_alpha"], reverse=True)[:8]:
-            avg_alpha = s["total_alpha"] / s["trades"] if s["trades"] > 0 else 0
+            avg_alpha = s["total_alpha"] / s["alpha_n"] if s["alpha_n"] > 0 else 0
             lines.append(f"  {tag}: {s['trades']} trades, avg alpha {avg_alpha:+.2f}%")
 
     # Best and worst
-    lines.append(f"\nBest trade: {best.get('symbol')} ({best.get('sector')}) — alpha {best.get('alpha_pct', 0):+.2f}%")
-    lines.append(f"Worst trade: {worst.get('symbol')} ({worst.get('sector')}) — alpha {worst.get('alpha_pct', 0):+.2f}%")
+    lines.append(f"\nBest trade: {best.get('symbol')} ({best.get('sector')}) — alpha {_alpha(best) or 0.0:+.2f}%")
+    lines.append(f"Worst trade: {worst.get('symbol')} ({worst.get('sector')}) — alpha {_alpha(worst) or 0.0:+.2f}%")
 
     # Actionable guidance — FAVOR/AVOID only on samples big enough to
     # mean something (n >= _MIN_SAMPLE_TRADES; was 2, i.e. coin flips).
@@ -2734,7 +2787,13 @@ def _annotate_trade_with_nasdaq(trade: dict, entry_date: datetime.date | None = 
         else:
             exit_date = entry_date + datetime.timedelta(days=(4 - entry_date.weekday()) % 7)
 
-    bars = _fetch_history_bars(NASDAQ_SYMBOL, period="1mo")
+    # The window must reach the ENTRY bar: a trade priced late (HPS.A,
+    # picked 08-26, closed 10-06) had no NASDAQ bars in a fixed "1mo"
+    # fetch and closed with no benchmark at all (Oct 6 2026).
+    bench_period = _period_covering(entry_date)
+    if bench_period == "15d":
+        bench_period = "1mo"  # never narrower than the window it replaced
+    bars = _fetch_history_bars(NASDAQ_SYMBOL, period=bench_period)
     window = _matched_nasdaq_window(bars, entry_date, exit_date) if bars else None
     if window:
         entry_open, exit_close, entry_bar_date, exit_bar_date = window
@@ -2765,7 +2824,7 @@ def _annotate_trade_with_nasdaq(trade: dict, entry_date: datetime.date | None = 
             returns[key] = trade.get("nasdaq_return_pct")
             continue
         try:
-            idx_bars = _fetch_history_bars(symbol, period="1mo")
+            idx_bars = _fetch_history_bars(symbol, period=bench_period)
             idx_window = (
                 _matched_nasdaq_window(idx_bars, entry_date, exit_date)
                 if idx_bars else None

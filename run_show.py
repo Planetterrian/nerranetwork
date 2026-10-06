@@ -2847,6 +2847,13 @@ def run(args: argparse.Namespace) -> None:
                     )
                 metrics.record("source_integrity_claims", _si_gate.claims_total)
                 metrics.record("source_integrity_verified", _si_gate.claims_verified)
+                # The gate as first run, before repair and the coverage
+                # floor; the two keys above are re-recorded with the ledger
+                # that actually ships once those passes are done.
+                metrics.record("source_integrity_claims_pre_floor",
+                               _si_gate.claims_total)
+                metrics.record("source_integrity_verified_pre_floor",
+                               _si_gate.claims_verified)
                 metrics.record("source_integrity_verified_from_fetched",
                                _si_gate.verified_from_fetched)
                 metrics.record(
@@ -2977,6 +2984,16 @@ def run(args: argparse.Namespace) -> None:
                     _si_stripped_sentences = list(_strip.removed_sentences)
                     metrics.record("source_integrity_passed_after_strip",
                                    _si_gate.passed)
+
+                # Oct 6 2026: record what SHIPS. These keys were written
+                # once, before repair and the coverage floor, so Tesla
+                # Ep626 read "2 verified" beside a committed ledger of 7
+                # (the floor's five) — every floor gain was invisible to
+                # the dashboard and the register.
+                metrics.record("source_integrity_claims", _si_gate.claims_total)
+                metrics.record("source_integrity_verified", _si_gate.claims_verified)
+                metrics.record("source_integrity_verified_from_fetched",
+                               _si_gate.verified_from_fetched)
 
                 # Flag mode (Oct 1 2026, operator-directed; the network
                 # default): PUBLISH with the status visible, verify again
