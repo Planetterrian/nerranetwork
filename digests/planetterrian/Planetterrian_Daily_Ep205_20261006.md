@@ -1,0 +1,57 @@
+# Planetterrian Daily
+🌍 **Planetterrian Daily** - Science, Longevity & Health Discoveries
+> **Three scientists won the Nobel Prize in medicine for developing optogenetics to control neurons with light.**
+---
+### Top 15 Science & Health Discoveries
+1. **Nobel Prize awarded for optogenetics technique — Phys.org**
+   Karl Deisseroth at Stanford shared the 2026 medicine prize with Peter Hegemann and Georg Nagel. The work began when Hegemann and Nagel identified channelrhodopsin, a light-sensitive protein from green algae. Deisseroth introduced the protein into rat and mouse neurons and used light pulses to trigger nerve signals. By turning the light on or off, researchers can activate or silence specific neurons with millisecond precision. The method has mapped circuits involved in thirst, fear, and parental behavior. Deisseroth is fifty-four years old, a Howard Hughes Medical Institute investigator, and a Stanford University professor who often works past midnight. After the announcement he made school lunches for his children before continuing interviews. The Nobel committee noted the approach opened a new field for studying brain function. Source: [phys.org](https://phys.org/news/2026-10-california-scientist-nobel-prize-school.html)
+
+2. **Machine learning identifies enzymes that degrade forever chemicals — Murdoch University**
+   Researchers at Murdoch University’s Bioplastics Innovation Hub combined machine learning with biochemistry to scan enzyme databases. The pipeline predicts which enzymes can break down PFAS and microplastics by comparing structures to known degraders. PhD candidate Joseph Boctor noted that agricultural soils contain roughly twenty-three times more microplastics than oceans. The approach avoids over-engineering enzymes and instead mines evolutionary data already present in nature. The review appeared in Nature Reviews: Earth & Environment. Boctor emphasized that pollutants such as PFAS and microplastics mimic hormones and disrupt health. The tools help address existing environmental contaminants while researchers develop future bioplastic alternatives. Source: [murdoch.edu.au](https://www.murdoch.edu.au/news/articles/ai-biotechnology-helping-crack-the-codes-behind-pollution-from--forever-chemicals)
+
+3. **Global soil erosion exceeds natural recovery rates — Phys.org**
+   The Food and Agriculture Organization report “Status of the World’s Soil Resources 2026” was led by Isaac Larsen at the University of Massachusetts. Hundreds of experts contributed data showing erosion outpaces soil formation in many regions. The report draws on recent scientific literature covering soil loss across continents. Larsen and colleagues emphasize that current rates threaten long-term agricultural productivity. The findings highlight the need for improved soil management practices worldwide. Source: [phys.org](https://phys.org/news/2026-10-global-soil-erosion-outpaces-natural.html)
+
+4. **Political views and trust shape local wind energy acceptance — Phys.org**
+   RIFS researcher Jörg Radtke surveyed 6,284 residents in North Rhine-Westphalia. Support for wind projects correlated with political orientation and institutional trust. The study measured acceptance under different local conditions. Results were published through the Research Institute for Sustainability. The data show that trust in institutions strongly influences whether communities accept new turbines. Source: [phys.org](https://phys.org/news/2026-10-political-emerge-key-factors-local.html)
+
+5. **Carefree spending habits increase chance of retailer discounts — Phys.org**
+   Durham University Business School researchers examined how retailers allocate personalized offers. Shoppers who spend without strict budgeting received more discount codes. The study tracked purchasing patterns and offer distribution. Findings indicate retailers target higher-spending segments with tailored promotions. The pattern suggests that relaxed spending behavior signals higher value to marketing algorithms. Source: [phys.org](https://phys.org/news/2026-10-carefree-shoppers-retail-discounts.html)
+
+6. **Gene therapy restores hearing in congenital deafness trial — Bioengineer.org**
+   A clinical trial reported restoration of hearing in participants with congenital deafness. The therapy targets specific genetic mutations affecting inner-ear cells. Early results showed measurable improvements in auditory thresholds. The study marks a milestone in gene therapy for sensory disorders. Researchers continue to monitor long-term stability of the restored hearing. Source: [bioengineer.org](https://bioengineer.org/gene-therapy-restores-hearing-in-congenital-deafness-trial-milestone/)
+
+7. **Penrose process may power galactic black holes — Phys.org**
+   A new study examines whether rotating black holes extract energy through the Penrose process. Supermassive black holes interact with surrounding plasma and magnetic fields. The mechanism could explain high-energy output observed at the Milky Way center. Researchers model neutron interactions to detect signatures of the process. The work connects astrophysics with potential observations of galactic cores. Source: [phys.org](https://phys.org/news/2026-10-neutrons-rotating-black-holes-galactic.html)
+
+8. **Journal review outlines optimal diet evidence — JACC**
+   A summary statement in JACCJournals reviewed current evidence on diet and nutrition. The paper synthesizes findings across cardiovascular and metabolic outcomes. Authors highlight consistent patterns in long-term dietary studies. The review provides clinicians with an updated reference on dietary patterns. Multiple cohorts contributed data on food groups and disease risk. Source: [jacc.org](https://www.jacc.org/doi/pdf/10.1016/j.jacc.2026.08.025)
+
+9. **New York Times lists one hundred major unanswered science questions — NYT**
+   The New York Times published a list of the one hundred biggest open questions in science. One entry, ranked number twenty-four, came from Eric Topol. The collection spans physics, biology, and earth sciences. The feature draws on input from multiple research communities. Readers can access the full list through the newspaper’s online platform. Source: [nytimes.com](https://www.nytimes.com/2026/10/05/science/100-unanswered-questions-science.html?unlocked_article_code=1.GVE.mXA2.W__XWpUzO-bs&smid=url-share)
+
+10. **Pure Nutrition launches longevity-focused supplements — NutraIngredients**
+    Pure Nutrition introduced a line of supplements targeting longevity pathways. Products include fisetin and alpha-ketoglutarate. The launch expands the company’s presence in the healthy-aging category. Formulations draw on existing research into cellular senescence. The company positions the supplements as part of broader healthy-aging strategies. Source: [nutraingredients.com](https://www.nutraingredients.com/Article/2026/10/06/indias-pure-nutrition-launches-longevity-supplements-including-fisetin-akg/)
+
+11. **Article examines gap between longevity research and approved treatments — theins.press**
+    Theins.press reviewed historical attempts to extend lifespan from Brown-Séquard’s extracts to modern epigenetic clocks. The piece notes that ARPA-H allocated one hundred forty-four million dollars in March 2026 for aging biomarkers. WHO projections show the global population over eighty will triple by 2050. The article contrasts investment levels with the absence of approved anti-aging drugs. It also covers early gerontology work by Ilya Mechnikov on intestinal bacteria. Source: [theins.press](https://theins.press/en/society/297827)
+
+12. **ASBMB profiles how research leaders support discovery — ASBMB**
+    The American Society for Biochemistry and Molecular Biology published interviews with laboratory heads. The series describes practices that foster productive research environments. Contributors discuss resource allocation and mentorship approaches. The feature appears in ASBMB Today. Laboratory leaders emphasize clear communication and equitable access to equipment. Source: [asbmb.org](https://www.asbmb.org/asbmb-today/careers/100626/how-research-leaders-create-conditions-discovery)
+
+13. **CHANDO Group presents twenty research papers at IFSCC congress — The Malaysian Reserve**
+    CHANDO Group delivered twenty papers at the 2026 IFSCC Congress in Perth. Topics covered skin biology and formulation science. The presentations reflect ongoing internal research programs. The congress focused on cosmetic and dermatological innovation. The volume of submissions highlights the company’s investment in dermatological research. Source: [themalaysianreserve.com](https://themalaysianreserve.com/2026/10/06/chando-group-presents-20-research-papers-at-ifscc-2026-congress-in-perth/amp/)
+
+14. **Huberman shares reader engagement with Protocols book — X**
+    Andrew Huberman posted that videos of readers highlighting and applying protocols from his book feel more gratifying than sales rankings. The post credits a New York City reader for one video. Huberman noted the book reached number one on the New York Times list. The response underscores the value readers place on practical application of the material. Source: [x.com](https://x.com/hubermanlab/status/2107263760733974589)
+
+15. **Rhonda Patrick discusses exercise snacks for habit formation — X**
+    Rhonda Patrick highlighted that short bursts of intense effort can restart physical activity habits. Five-minute sessions still produce meaningful physiological signals. The approach lowers barriers for people rebuilding exercise routines. Patrick noted that cells respond to the intensity of the signal regardless of session length. Source: [x.com](https://x.com/foundmyfitness/status/2107220061903597677)
+---
+### Planetterrian Spotlight
+The optogenetics Nobel recognizes a method that lets researchers switch individual neurons on or off using light. Deisseroth’s team first demonstrated the approach in living rodents by expressing channelrhodopsin and delivering precise light pulses. Subsequent work mapped circuits for thirst, fear, and parental care. Clinicians have begun testing related gene-therapy approaches in the eye to restore light responses in degenerative disease. The precision now available raises the question of how far similar control can extend to other brain regions without off-target effects. Early human trials focus on retinal cells where light delivery is straightforward.
+---
+### Science Deep Dive: How Light-Sensitive Proteins Let Researchers Control Specific Neurons
+Most people assume that altering brain activity requires either drugs that flood many cells at once or electrodes that stimulate broad regions. Optogenetics works differently by inserting a single gene for a light-gated ion channel into chosen neurons. When blue light reaches those cells the channel opens, sodium ions flow in, and the neuron fires an action potential within milliseconds. In the original rodent experiments the method isolated circuits for thirst and fear without affecting neighboring cells. One number that stands out is the sub-millisecond temporal resolution achieved in living tissue. The same principle is now being explored in human retinal cells to restore vision after degeneration. What changes for listeners is that future therapies may one day target only the precise cell populations involved in a disorder rather than the whole brain.
+
+That covers today’s research findings across neuroscience, environmental science, and genetics.
