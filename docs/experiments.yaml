@@ -3502,3 +3502,36 @@ experiments:
       selection + Teardown close, UC Lesson, Planetterrian deep dive /
       pivots / teaser, Tesla length line — A/B-listen the next episode of
       each.
+
+  - id: slate-2026-10-06
+    title: "First slate after the Oct 5 merges: MIT hook resilience, benchmark window, claims metrics that record what ships"
+    area: reliability
+    shipped: 2026-10-06
+    readout: 2026-10-20
+    status: reading
+    baseline: >
+      2026-10-06: Modern Investing published nothing. HPS.A (picked 08-26)
+      priced for the first time after the Oct 5 share-class fix, the NASDAQ
+      benchmark fetched one month of bars, the trade closed with alpha None,
+      _build_strategy_performance raised on float += None, the whole pre-fetch
+      hook was dropped and the digest prompt failed on 'market_indices'. The
+      claims metrics were recorded before repair and the coverage floor:
+      Tesla Ep626 read 2 verified beside a committed ledger of 7, Models &
+      Agents 1 beside 6, Fascinating Frontiers 2 beside 7. Every Oct 5
+      target held on its first post-merge episode (M&A Under the Hood,
+      AI Chips Teardown + no phone items + no stock close, UC lesson,
+      Planetterrian pivots/teaser), and Omni View's served grok-4.6 script
+      copied 23% of its digest at 88% coverage.
+    target: >
+      Over 14 days: modern_investing publishes every scheduled day,
+      mit_prefetch_failed_sections 0 on at least 13 of 14, every closed era
+      trade carries an alpha; source_integrity_verified equals the committed
+      ledger's verified count on every episode.
+    criteria: >
+      Hit = all. A failed section > 0 is read from its ::error:: line before
+      anything else changes; an MIT skip with a populated prompt is a
+      different failure class.
+    notes: >
+      Guards tests/test_slate_2026_10_06.py. No prompt or audio change —
+      outside landmine #17. source_integrity_*_pre_floor keeps the first
+      gate reading for comparison with history.

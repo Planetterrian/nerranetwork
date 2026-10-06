@@ -58,6 +58,10 @@ def load_resume_publish_state(
             extra_context = hook_module.pre_fetch(
                 config, episode_num=episode_num, today_str=today_str,
             )
+            # A hook's ``metrics`` belong to the run that records them,
+            # never to the prompt context (run_show pops them the same way).
+            if isinstance(extra_context, dict):
+                extra_context.pop("metrics", None)
         except Exception as exc:
             logger.warning("Resume: pre_fetch hook failed: %s", exc)
 
