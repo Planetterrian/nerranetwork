@@ -147,3 +147,25 @@ class TestPromoFrameWithoutItsOpener:
         hit = find_promo_cut({"duration": float(len(words)), "segments": [seg]})
         assert hit["kind"] == "promo" and hit["anchor"] == "frame"
         assert words[int(hit["raw_seconds"]) + 1] == "If"  # cut lands just before the frame
+
+
+class TestATimelineIsNotARepetitionLoop:
+    """SpaceX Ep122's crew-return timeline ("6:20 a.m. EDT on October 7",
+    "11:34 a.m. EDT on October 8"…) scored 3 and read as a regeneration
+    candidate; the clock words are timestamp furniture."""
+
+    def _score(self, text):
+        from engine.generator import _validate_llm_output
+        return _validate_llm_output(text, "digest", "spacex", 0, ())
+
+    def test_the_committed_timeline_does_not_score(self):
+        text = (ROOT / "digests" / "spacex" / "SpaceX_Daily_Ep122_20261006.md")
+        if not text.exists():
+            pytest.skip("digest not in this checkout")
+        assert self._score(text.read_text(encoding="utf-8")) < 3
+
+    def test_a_prose_loop_beside_clock_times_still_counts(self):
+        filler = "Engineers reviewed telemetry from the booster after landing today. " * 6
+        loop = "watch for the kicker here, " * 8
+        times = "Hatch close at 6:20 a.m. EDT on October 7. " * 5
+        assert self._score(filler + loop + times) >= 1

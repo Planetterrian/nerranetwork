@@ -972,8 +972,38 @@ def _validate_llm_output(
         re.IGNORECASE,
     )
 
+    # Clock-time fragments. 2026-10-06: SpaceX Ep122 carried Crew-12's
+    # return timeline (hatch close, undocking, deorbit burn, splashdown,
+    # each "<time> a.m. EDT on October <n>") and scored 3 on "a.m. edt",
+    # "a.m. edt on" and "edt on october" — a schedule, not a loop. A phrase
+    # made only of meridiem / time-zone / month words and "on" is the
+    # timestamp's furniture, like the date fragments above; it must carry
+    # at least one meridiem or zone token so "on october" alone still counts.
+    _CLOCK_MARKERS = {
+        "a.m.", "p.m.", "am", "pm", "a.m", "p.m",
+        "et", "edt", "est", "ct", "cdt", "cst", "mt", "mdt", "mst",
+        "pt", "pdt", "pst", "utc", "gmt", "bst", "cet", "cest", "jst",
+    }
+    _CLOCK_FILLER = {"on", "local", "time"}
+    _MONTHS = (
+        "jan", "feb", "mar", "apr", "may", "jun",
+        "jul", "aug", "sep", "oct", "nov", "dec",
+    )
+
+    def _is_clock_fragment(phrase: str) -> bool:
+        toks = [t.strip(",;:()") for t in phrase.split()]
+        if not any(t in _CLOCK_MARKERS for t in toks):
+            return False
+        return all(
+            t in _CLOCK_MARKERS or t in _CLOCK_FILLER
+            or t.startswith(_MONTHS) or re.fullmatch(r"\d{1,2}(?::\d{2})?", t)
+            for t in toks
+        )
+
     def _is_date_fragment(phrase: str) -> bool:
-        """True if the phrase is just a date-shape with no content."""
+        """True if the phrase is just a date- or clock-shape with no content."""
+        if _is_clock_fragment(phrase):
+            return True
         # Require at least one numeric token (year or day) — otherwise
         # this matches every English word.
         if not any(c.isdigit() for c in phrase):
