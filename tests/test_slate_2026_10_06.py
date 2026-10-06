@@ -132,3 +132,18 @@ class TestClaimsMetricsRecordWhatShips:
     def test_the_pre_floor_reading_is_kept_under_its_own_name(self):
         src = (ROOT / "run_show.py").read_text(encoding="utf-8")
         assert 'metrics.record("source_integrity_verified_pre_floor"' in src
+
+
+class TestPromoFrameWithoutItsOpener:
+    def test_the_frame_second_clause_anchors_a_promo_cut(self):
+        from engine.daily_edition import find_promo_cut
+        body = ("Ridership on the new lines rose every year since they opened . " * 4)
+        words = (body + "The city opened three lines that year . If you like today's "
+                 "episode, our sister show Prediction Markets Daily is worth a "
+                 "spot in your feed . Mira is an AI host .").split()
+        seg = {"start": 0.0, "end": float(len(words)),
+               "words": [{"word": w, "start": float(i), "end": i + 0.9}
+                         for i, w in enumerate(words)]}
+        hit = find_promo_cut({"duration": float(len(words)), "segments": [seg]})
+        assert hit["kind"] == "promo" and hit["anchor"] == "frame"
+        assert words[int(hit["raw_seconds"]) + 1] == "If"  # cut lands just before the frame
