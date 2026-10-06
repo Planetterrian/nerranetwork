@@ -80,6 +80,22 @@ def accepted_404_paths(redirects_file: Path = REDIRECTS_FILE) -> set:
     }
 
 
+def _resolves(root: Path, path: str) -> bool:
+    """True when GitHub Pages answers *path* with a page.
+
+    Pages serves ``about.html`` for ``/about`` and ``dir/index.html`` for
+    ``/dir``, so an extensionless landing is live when either file exists.
+    2026-10-06: GA4 measured one session at ``/about`` (live: HTTP 200) and
+    the audit, checking only the literal path, called it a 404.
+    """
+    target = root / path
+    if target.exists():
+        return True
+    if Path(path).suffix:
+        return False
+    return (root / f"{path}.html").exists() or (target / "index.html").exists()
+
+
 def find_dead_landing_paths(
     stats: dict, root: Path = ROOT, accepted: set = None
 ) -> list:
@@ -94,7 +110,7 @@ def find_dead_landing_paths(
         path = _normalise(row.get("landingPagePlusQueryString", ""))
         if not path or path in accepted:
             continue
-        if (root / path).exists():
+        if _resolves(root, path):
             continue
         dead.append((
             path,

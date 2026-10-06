@@ -169,3 +169,28 @@ class TestATimelineIsNotARepetitionLoop:
         loop = "watch for the kicker here, " * 8
         times = "Hatch close at 6:20 a.m. EDT on October 7. " * 5
         assert self._score(filler + loop + times) >= 1
+
+
+class TestExtensionlessLandingsResolveLikePages:
+    """GA4 measured /about; GitHub Pages serves about.html for it (HTTP 200
+    on 2026-10-06), and the audit called it a 404."""
+
+    @pytest.fixture
+    def audit(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import audit_dead_urls
+        return audit_dead_urls
+
+    def _rows(self, *paths):
+        return {"landing_pages": [
+            {"landingPagePlusQueryString": p, "sessions": 1, "bounceRate": 1}
+            for p in paths]}
+
+    def test_a_pretty_url_with_an_html_file_is_live(self, audit):
+        assert audit.find_dead_landing_paths(self._rows("/about"), accepted=set()) == []
+
+    def test_a_missing_page_still_reads_dead(self, audit):
+        dead = audit.find_dead_landing_paths(
+            self._rows("/no-such-page", "/no-such-page.html"), accepted=set())
+        assert {d[0] for d in dead} == {"no-such-page", "no-such-page.html"}
