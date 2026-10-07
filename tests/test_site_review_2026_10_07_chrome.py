@@ -358,3 +358,57 @@ class TestMitTablesSayWhatTheyHold:
         body = hook.split("def _compute_sector_exposure", 1)[1].split("\ndef ", 1)[0]
         assert "_CONCENTRATION_WINDOW" in body and "pnl_dollars" in body
         assert "wins" not in body
+
+
+class TestHomepageLeadsWithTopShows:
+    """The hero icons and the show grid followed display_order alone, which
+    put Tesla 21st and SpaceX 22nd of 31 while the two carry most of the
+    network's downloads. The homepage now ranks by 30-day RSS downloads."""
+
+    def _shows(self, *slugs):
+        return [{"slug": s} for s in slugs]
+
+    def test_ranked_by_downloads_then_display_order(self, tmp_path):
+        import json as _json
+        import generate_html as g
+        f = tmp_path / "audience.json"
+        f.write_text(_json.dumps({"shows": {
+            "a": {"downloads_30d": 5}, "b": {"downloads_30d": 50},
+            "c": {"downloads_30d": 0}, "d": {"downloads_30d": None},
+            "e": {"downloads_30d": 5},
+        }}))
+        order = [s["slug"] for s in g._rank_shows_by_audience(
+            self._shows("a", "c", "d", "b", "e", "f"), path=f)]
+        # Measured shows by downloads (a tie keeps display order), then the
+        # unmeasured or zero ones in their original order.
+        assert order == ["b", "a", "e", "c", "d", "f"]
+
+    def test_missing_or_broken_file_keeps_display_order(self, tmp_path):
+        import generate_html as g
+        shows = self._shows("x", "y")
+        assert g._rank_shows_by_audience(shows, path=tmp_path / "nope.json") == shows
+        bad = tmp_path / "bad.json"
+        bad.write_text("{not json")
+        assert g._rank_shows_by_audience(shows, path=bad) == shows
+
+    def test_committed_data_puts_the_flagships_first(self):
+        import generate_html as g
+        if not g.AUDIENCE_HEADLINE_PATH.exists():
+            pytest.skip("no committed audience headline")
+        ranked = [s["slug"] for s in g._rank_shows_by_audience(g._build_all_shows_list())]
+        assert len(ranked) == len(g._build_all_shows_list())
+        # Today's file: SpaceX and Tesla lead; a desk with no audience never
+        # outranks them. Judged on order, not on exact counts.
+        assert ranked.index("spacex") < ranked.index("omni_view_world")
+        assert ranked.index("tesla") < ranked.index("omni_view_world")
+
+    def test_hero_icons_and_grid_read_the_ranked_list(self):
+        tpl = _strip_jinja_comments(
+            (ROOT / "templates" / "network_page.html.j2").read_text(encoding="utf-8"))
+        orbit = tpl.split('<div class="hero-show-orbit">', 1)[1].split("</div>", 1)[0]
+        assert "{% for s in _ranked %}" in orbit
+        assert "{%- set _ranked = ranked_shows | default(all_shows) -%}" in tpl
+        grid = tpl.split('id="show-showcase-grid">', 1)[1].split("</div>", 1)[0]
+        assert "ranked_shows" in grid
+        gen = (ROOT / "generate_html.py").read_text(encoding="utf-8")
+        assert '"ranked_shows": _rank_shows_by_audience(_build_all_shows_list())' in gen

@@ -2024,6 +2024,43 @@ def _newsletter_tag_for_slug(slug: str, fallback_name: str) -> str:
     return fallback_name
 
 
+AUDIENCE_HEADLINE_PATH = ROOT / "api" / "audience_headline.json"
+
+
+def _rank_shows_by_audience(shows, path=None):
+    """Return ``shows`` with the most-listened first, for the homepage.
+
+    The homepage hero icons and show grid used ``display_order`` alone,
+    which put Tesla 21st and SpaceX 22nd of 31 while the two carry most
+    of the network's downloads. The ranking reads 30-day RSS downloads
+    from the committed ``api/audience_headline.json`` (the network's
+    headline audience number, rebuilt nightly). A show with no measured
+    downloads keeps its ``display_order`` place after the ranked ones,
+    ties fall back to ``display_order``, and a missing or unreadable file
+    returns the list unchanged. Only the homepage uses this: the nav,
+    footer and every other page keep ``display_order``.
+    """
+    path = AUDIENCE_HEADLINE_PATH if path is None else Path(path)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        per_show = data.get("shows") or {}
+    except (OSError, ValueError, AttributeError):
+        return list(shows)
+    if not isinstance(per_show, dict):
+        return list(shows)
+
+    def _downloads(slug):
+        entry = per_show.get(slug)
+        value = entry.get("downloads_30d") if isinstance(entry, dict) else None
+        return value if isinstance(value, (int, float)) and value > 0 else None
+
+    ranked = [s for s in shows if _downloads(s["slug"]) is not None]
+    rest = [s for s in shows if _downloads(s["slug"]) is None]
+    # Python's sort is stable, so equal counts keep display_order.
+    ranked.sort(key=lambda s: -_downloads(s["slug"]))
+    return ranked + rest
+
+
 def _build_all_shows_list():
     """Build a list of all shows with metadata needed by templates."""
     shows = [
@@ -3651,6 +3688,9 @@ def generate_network_page(*, dry_run=False):
         # feed files; the language registry is the one count).
         "listening_language_count": len(_listening_languages()),
         "all_shows": _build_all_shows_list(),
+        # The hero icons and the show grid lead with the most-listened
+        # shows; the nav and footer keep display_order like every page.
+        "ranked_shows": _rank_shows_by_audience(_build_all_shows_list()),
         "latest_blog_posts": latest_blog_posts,
         "latest_episodes": latest_episodes,
         "popular_episodes": popular_episodes,
@@ -4461,7 +4501,7 @@ _EXPLORE_LANGUAGE_LABELS = {
 def generate_explore_page(*, dry_run=False, output_dir=None):
     """Generate ``explore.html`` — pick a show by subject or language.
 
-    The homepage grid is ordered by ``display_order`` and nothing else, so a
+    The homepage grid is one list (most-listened first since Oct 2026), so a
     visitor who arrived for one thing had to read eighteen cards to find the
     other seventeen. @NerraNetwork's audience is 99.4% male and 37% over 55
     while the catalogue already holds the shows that would broaden it; this is
