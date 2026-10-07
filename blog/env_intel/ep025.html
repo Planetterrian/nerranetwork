@@ -104,7 +104,12 @@
       "url": "https://nerranetwork.com/env-intel.html"
     },
     "image": "https://nerranetwork.com/assets/covers/environmental-intelligence.jpg",
-    "transcript": "https://nerranetwork.com/blog/env_intel/ep025.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/env_intel/ep025.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/env_intel/Env_Intel_Ep025_20260417.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -237,6 +242,11 @@
             cursor: pointer;
             transition: all var(--duration) var(--ease);
         }
+        /* Same body-link override as the related cards: these are buttons. */
+        .blog-article .share-buttons a {
+            color: var(--nn-text-muted);
+            text-decoration: none;
+        }
         .share-buttons a:hover,
         .share-buttons button:hover {
             border-color: var(--show-color);
@@ -249,13 +259,13 @@
             margin: 0 auto;
             padding: 0 var(--sp-6) var(--sp-16);
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(0, 1fr);
             gap: var(--sp-10);
         }
         @media (min-width: 1024px) {
             .blog-article-wrap {
                 max-width: 1060px;
-                grid-template-columns: 200px 1fr;
+                grid-template-columns: 200px minmax(0, 1fr);
             }
         }
 
@@ -306,9 +316,18 @@
             font-size: 0.75rem;
         }
 
-        /* Article */
+        /* Article. A long unbroken token (a URL, a provenance run) may never
+           widen the page past the phone it is on (Oct 7 2026). */
         .blog-article {
             min-width: 0;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+        }
+        /* Reading measure: about 68-72 characters of body text a line
+           (it had run 104-111). The sources grid, claims and transcript
+           below keep the full column. */
+        .blog-article .blog-body-lang {
+            max-width: 72ch;
         }
         .blog-article h1 {
             font-family: var(--font-heading);
@@ -372,12 +391,25 @@
             color: var(--nn-text);
             margin-bottom: var(--sp-3);
         }
+        /* An item's body is the reporting, not a caption: full text colour
+           (it was muted grey under a bold headline, Oct 7 2026). */
         .blog-article .blog-list-cont {
             margin: var(--sp-1) 0 var(--sp-2);
             padding-left: var(--sp-2);
             font-size: 1rem;
-            color: var(--nn-text-muted);
+            color: var(--nn-text);
         }
+        /* Digest items are one sentence per line; at the article's
+           paragraph spacing each story read as a column of scattered
+           lines. Inside an item the sentences sit together; the items
+           themselves get the air (Oct 7 2026 design pass). */
+        .blog-article li > p.blog-list-cont {
+            font-size: 1rem;
+            line-height: 1.7;
+            margin: var(--sp-2) 0 0;
+            padding-left: 0;
+        }
+        .blog-article li:has(> p.blog-list-cont) { margin-bottom: var(--sp-6); }
         .blog-article hr {
             border: none;
             border-top: 1px solid var(--nn-border);
@@ -521,6 +553,12 @@
             text-decoration: none;
             transition: all var(--duration) var(--ease);
         }
+        /* The cards sit inside .blog-article, whose body-link rule would
+           otherwise underline and recolour every line of every card. */
+        .blog-article a.blog-related-card {
+            color: inherit;
+            text-decoration: none;
+        }
         .blog-related-card:hover {
             border-color: var(--card-show-color, var(--nn-purple));
             background: var(--nn-card-hover);
@@ -577,15 +615,16 @@
             font-family: var(--font-ui);
             font-variant-numeric: tabular-nums;
             font-size: 0.85rem;
-            color: var(--show-color);
+            /* Text, so the AA-lightened brand colour, not the raw one. */
+            color: var(--show-color-text, var(--show-color));
             min-width: 3.5rem;
             flex-shrink: 0;
         }
         /* Only looks clickable once the seek script has attached to a
-           real audio element — an English-only episode has no inline
+           real audio element — an episode with no published audio has no
            player, and a cursor that promises nothing is worse than none. */
         .blog-chapter-list li.is-seekable { cursor: pointer; }
-        .blog-chapter-list li.is-seekable:hover .chapter-title { color: var(--show-color); }
+        .blog-chapter-list li.is-seekable:hover .chapter-title { color: var(--show-color-text, var(--show-color)); }
         .blog-chapters .chapter-foot {
             margin-top: var(--sp-3);
             font-size: 0.85rem;
@@ -660,7 +699,7 @@
             font-family: var(--font-ui);
             font-size: 0.88rem;
             font-weight: 600;
-            color: var(--show-color, var(--nn-purple));
+            color: var(--show-color-text, var(--show-color, var(--nn-purple-text, #9D8BFF)));
         }
         .blog-transcript details[open] .transcript-preview,
         .blog-transcript details[open] .transcript-more { display: none; }
@@ -712,6 +751,12 @@
             font-size: 0.9rem;
             color: var(--nn-text);
             font-weight: 500;
+            /* The neighbour's headline, held to three lines by CSS rather
+               than cut in the template (engine/titles.py owns every cut). */
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
         .blog-ep-nav .next {
             text-align: right;
@@ -738,7 +783,14 @@
             line-height: 1.6;
             margin: 0.35rem 0 0;
         }
-        .nn-iv-provenance span { white-space: nowrap; }
+        /* Each part is kept whole where it fits and wraps where it does not
+           (Oct 7 2026): the parts used to be nowrap spans joined with no
+           whitespace between them, one unbreakable run that laid every
+           post out 500-980px wide on a 390px phone and pushed the menu
+           button off-screen. The separators are plain inline text, so the
+           line breaks between parts. */
+        .nn-iv-provenance { overflow-wrap: anywhere; }
+        .nn-iv-provenance > span:not([aria-hidden]) { display: inline-block; max-width: 100%; }
         /* Episode provenance (Oct 2026): the one line under the AI badge on
            a news post, from engine.brand.episode_provenance_parts, plus the
            "Report an error" link beside it. Same type as the interview
@@ -897,7 +949,9 @@
         }
 
         /* Multilingual audio player + language switcher (June 2026) */
-        .nn-i18n {
+        /* .nn-listen is the same box without the switcher (Oct 7 2026). */
+        .nn-i18n,
+        .nn-listen {
             max-width: 760px;
             margin: 0 auto var(--sp-4);
             padding: 0 var(--sp-6);
@@ -1566,379 +1620,200 @@
         <a href="../../player.html">Player</a>
         
         <a href="../../explore.html" style="font-weight:600;">Find your show</a>
-        
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Hosted by Mira</div>
+        <details class="nn-mobile-shows nn-mobile-group" open>
+            <summary class="nn-mobile-shows-title">Hosted by Mira <span class="nn-mobile-count">3</span></summary>
             
             <a href="../../nerra-daily.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Daily
             </a>
             
             <a href="../../age-of-ai.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The Age of AI
             </a>
             
             <a href="../../nerra-voices.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Voices
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">World desks</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">World desks <span class="nn-mobile-count">6</span></summary>
             
             <a href="../../omni-view-world.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Top World News
             </a>
             
             <a href="../../omni-view-north-america.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View North America
             </a>
             
             <a href="../../omni-view-europe.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Europe
             </a>
             
             <a href="../../omni-view-asia-pacific.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Asia Pacific
             </a>
             
             <a href="../../omni-view-africa-mideast.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Africa & Middle East
             </a>
             
             <a href="../../omni-view-latam.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Central & South America
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Local news</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Local news <span class="nn-mobile-count">2</span></summary>
             
             <a href="../../vancouver.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/vancouver-400.webp"><img src="../../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/vancouver-400.webp"><img src="../../assets/covers/vancouver.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Vancouver Daily News
             </a>
             
             <a href="../../collingwood.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/collingwood-400.webp"><img src="../../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/collingwood-400.webp"><img src="../../assets/covers/collingwood.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Collingwood Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">AI & compute</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">AI & compute <span class="nn-mobile-count">3</span></summary>
             
             <a href="../../models-agents.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents
             </a>
             
             <a href="../../ai-chips.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/ai-chips-400.webp"><img src="../../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/ai-chips-400.webp"><img src="../../assets/covers/ai-chips.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 AI Chips & Data Centres Daily
             </a>
             
             <a href="../../models-agents-beginners.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents for Beginners
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Markets</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Markets <span class="nn-mobile-count">4</span></summary>
             
             <a href="../../modern-investing.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Modern Investing Techniques
             </a>
             
             <a href="../../mag7.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/mag7-400.webp"><img src="../../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/mag7-400.webp"><img src="../../assets/covers/mag7.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 MAG 7 Daily
             </a>
             
             <a href="../../prediction-markets.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/prediction-markets-400.webp"><img src="../../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/prediction-markets-400.webp"><img src="../../assets/covers/prediction-markets.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Prediction Markets Daily
             </a>
             
             <a href="../../tesla.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Tesla Shorts Time
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Health & longevity</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Health & longevity <span class="nn-mobile-count">3</span></summary>
             
             <a href="../../planetterrian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Planetterrian Daily
             </a>
             
             <a href="../../peptides.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/peptides-400.webp"><img src="../../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/peptides-400.webp"><img src="../../assets/covers/peptides.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Peptides Weekly
             </a>
             
             <a href="../../longevity.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/longevity-400.webp"><img src="../../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/longevity-400.webp"><img src="../../assets/covers/longevity.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Longevity Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Every other show</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">10</span></summary>
             
             <a href="../../omni-view.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View
             </a>
             
             <a href="../../fascinating-frontiers.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Fascinating Frontiers
             </a>
             
             <a href="../../spacex.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 SpaceX Daily
             </a>
             
             <a href="../../env-intel.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Environmental Intelligence
             </a>
             
             <a href="../../ru/finansy-prosto.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/finansy-prosto-400.webp"><img src="../../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/finansy-prosto-400.webp"><img src="../../assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Финансы Просто
             </a>
             
             <a href="../../ru/privet-russian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/privet-russian-400.webp"><img src="../../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/privet-russian-400.webp"><img src="../../assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Привет, Русский!
             </a>
             
             <a href="../../unintended-consequences.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Unintended Consequences
             </a>
             
             <a href="../../first-principles.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 First Principles Daily
             </a>
             
             <a href="../../thedppod.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The DP Pod: The Do Positive Podcast
             </a>
             
             <a href="../../offshore-north.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Offshore North
             </a>
             
-        </div>
+        </details>
         
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Blogs</div>
-            <a href="../../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">
-                All Blog Posts
-            </a>
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Hosted by Mira</div>
-            
-            <a href="../../blog/nerra_daily/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Daily Blog
-            </a>
-            
-            <a href="../../blog/age_of_ai/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
-                The Age of AI Blog
-            </a>
-            
-            <a href="../../blog/nerra_voices/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Voices Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">World desks</div>
-            
-            <a href="../../blog/omni_view_world/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Top World News Blog
-            </a>
-            
-            <a href="../../blog/omni_view_north_america/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View North America Blog
-            </a>
-            
-            <a href="../../blog/omni_view_europe/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Europe Blog
-            </a>
-            
-            <a href="../../blog/omni_view_asia_pacific/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Asia Pacific Blog
-            </a>
-            
-            <a href="../../blog/omni_view_africa_mideast/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Africa & Middle East Blog
-            </a>
-            
-            <a href="../../blog/omni_view_latam/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Central & South America Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Local news</div>
-            
-            <a href="../../blog/vancouver/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/vancouver-400.webp"><img src="../../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Vancouver Daily News Blog
-            </a>
-            
-            <a href="../../blog/collingwood/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/collingwood-400.webp"><img src="../../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Collingwood Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">AI & compute</div>
-            
-            <a href="../../blog/models_agents/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents Blog
-            </a>
-            
-            <a href="../../blog/ai_chips/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/ai-chips-400.webp"><img src="../../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                AI Chips & Data Centres Daily Blog
-            </a>
-            
-            <a href="../../blog/models_agents_beginners/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents for Beginners Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Markets</div>
-            
-            <a href="../../blog/modern_investing/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
-                Modern Investing Techniques Blog
-            </a>
-            
-            <a href="../../blog/mag7/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/mag7-400.webp"><img src="../../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                MAG 7 Daily Blog
-            </a>
-            
-            <a href="../../blog/prediction_markets/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/prediction-markets-400.webp"><img src="../../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Prediction Markets Daily Blog
-            </a>
-            
-            <a href="../../blog/tesla/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
-                Tesla Shorts Time Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Health & longevity</div>
-            
-            <a href="../../blog/planetterrian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Planetterrian Daily Blog
-            </a>
-            
-            <a href="../../blog/peptides/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/peptides-400.webp"><img src="../../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Peptides Weekly Blog
-            </a>
-            
-            <a href="../../blog/longevity/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/longevity-400.webp"><img src="../../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Longevity Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Every other show</div>
-            
-            <a href="../../blog/omni_view/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Blog
-            </a>
-            
-            <a href="../../blog/fascinating_frontiers/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
-                Fascinating Frontiers Blog
-            </a>
-            
-            <a href="../../blog/spacex/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                SpaceX Daily Blog
-            </a>
-            
-            <a href="../../blog/env_intel/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
-                Environmental Intelligence Blog
-            </a>
-            
-            <a href="../../blog/finansy_prosto/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/finansy-prosto-400.webp"><img src="../../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                Финансы Просто Blog
-            </a>
-            
-            <a href="../../blog/privet_russian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/privet-russian-400.webp"><img src="../../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                Привет, Русский! Blog
-            </a>
-            
-            <a href="../../blog/unintended_consequences/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
-                Unintended Consequences Blog
-            </a>
-            
-            <a href="../../blog/first_principles/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                First Principles Daily Blog
-            </a>
-            
-            <a href="../../blog/dp_pod/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
-                The DP Pod: The Do Positive Podcast Blog
-            </a>
-            
-            <a href="../../blog/offshore_north/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
-                Offshore North Blog
-            </a>
-            
-            
+            <a href="../../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">All Blog Posts</a>
+            <a href="../../topics/index.html" class="nn-mobile-show-link">Browse by topic</a>
         </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">More</div>
@@ -1975,10 +1850,7 @@
             <a href="../../blog/env_intel/index.html" class="blog-show-badge">
                 <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence" width="40" height="40"></picture>
                 Environmental Intelligence Blog
-            </a>
-            <h1><span class="nn-i18n-title">BC launches free foam dock recycling events on the Sunshine Coast to curb marine debris under provincial waste diversion programs.</span> — Episode 25</h1>
-            
-            <p class="blog-hero-hook">BC launches free foam dock recycling events on the Sunshine Coast to curb marine debris under provincial waste diversion programs.</p>
+            </a><h1><span class="nn-i18n-title">BC launches free foam dock recycling events on the Sunshine Coast to curb marine debris under provincial waste diversion programs.</span></h1>
             
             <div class="blog-meta-bar">
                 <span class="post-author">By Patrick</span>
@@ -1991,18 +1863,10 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     6 min read
                 </span>
-                
-                <a href="../../env-intel.html" class="blog-listen-cta">
+                <a href="#listen" class="blog-listen-cta">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     Listen to podcast
                 </a>
-                
-                
-                <a href="../../env-intel-summaries.html" class="blog-listen-cta">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                    View summaries
-                </a>
-                
                 
             </div>
         </div>
@@ -2010,6 +1874,20 @@
     
 
     
+    
+    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+        <div class="nn-i18n-inner">
+            <div class="nn-i18n-row">
+                <span class="nn-i18n-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Listen to this episode
+                </span>
+            </div>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/env_intel/Env_Intel_Ep025_20260417.mp3">
+                <a href="https://op3.dev/e/audio.nerranetwork.com/env_intel/Env_Intel_Ep025_20260417.mp3">Download the audio</a>
+            </audio>
+        </div>
+    </section>
     
 
     <!-- Article with TOC sidebar -->
@@ -2038,48 +1916,56 @@
         <article class="blog-article">
             
             <div class="blog-body-lang" data-lang="en">
-            <p><em>BC launches free foam dock recycling events on the Sunshine Coast to curb marine debris under provincial waste diversion programs.</em></p>
-<p><strong>Executive Summary:</strong> British Columbia’s Ministry of Water, Land and Resource Stewardship is expanding collection infrastructure for expanded polystyrene dock materials to reduce persistent marine pollution. Canadian clean-tech innovators have been selected to develop shore-power and alternative energy solutions for Coast Guard vessels, directly engaging federal procurement priorities. A new MIT study quantifies an overlooked loophole in Montreal Protocol compliance that could push back global ozone recovery by up to seven years, with implications for Canadian UV exposure modelling and CEPA toxic substance tracking. Practitioners should watch for cross-border mining decisions and emerging ocean methane data that may influence future Fisheries Act and risk assessment baselines this week.</p>
-<h4 id="lead-story">Lead Story</h4>
+            <p><strong>Executive Summary:</strong> British Columbia’s Ministry of Water, Land and Resource Stewardship is expanding collection infrastructure for expanded polystyrene dock materials to reduce persistent marine pollution. Canadian clean-tech innovators have been selected to develop shore-power and alternative energy solutions for Coast Guard vessels, directly engaging federal procurement priorities. A new MIT study quantifies an overlooked loophole in Montreal Protocol compliance that could push back global ozone recovery by up to seven years, with implications for Canadian UV exposure modelling and CEPA toxic substance tracking. Practitioners should watch for cross-border mining decisions and emerging ocean methane data that may influence future Fisheries Act and risk assessment baselines this week.</p>
+<h2 id="lead-story">Lead Story</h2>
 <p>British Columbia’s Ministry of Water, Land and Resource Stewardship has opened free recycling drop-off events for expanded polystyrene (EPS) foam dock materials at multiple Sunshine Coast locations. The program addresses the fragmentation of EPS into persistent marine debris that fouls shorelines, harms shellfish beds, and contributes to microplastic loading under the provincial Environmental Management Act. Previously, dock owners faced high disposal costs or illegal dumping; the new events remove the economic barrier and provide a compliant pathway that aligns with CCME guidelines on marine litter prevention. For consultants and contractors supporting waterfront redevelopment or marina compliance projects in coastal BC, this directly lowers client liability for improper disposal while satisfying EMA waste management expectations. Implementation runs through the 2026 boating season; practitioners should map client dock assets against the listed drop-off windows and incorporate the service into decommissioning or remedial action plans.</p>
 <p>Source: <span class="cite"><a class="cite-pill" href="https://news.gov.bc.ca/releases/2026WLRS0021-000425" target="_blank" rel="noopener" aria-describedby="cite-card">news.gov.bc.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://news.gov.bc.ca/releases/2026WLRS0021-000425</span></span></p>
-<h4 id="regulatory-policy-watch">Regulatory & Policy Watch</h4>
+<h2 id="regulatory-policy-watch">Regulatory & Policy Watch</h2>
 <p><strong>COAST Clean Energy Innovation Challenge Awards: Government of Canada</strong></p>
 <p>COAST has announced successful participants to develop clean energy solutions addressing priority Canadian Coast Guard operational needs, including shore power connectivity, hybrid propulsion, and zero-emission vessel support systems. The selections engage federal procurement under the Clean Technology Stream and intersect with Fisheries Act and Species at Risk Act compliance for marine operations. Contractors and labs holding ISO 17025 accreditation should review the winning consortia for potential sub-contracting on monitoring or validation components.</p>
 <p>Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMigwJBVV95cUxNWWZxZFZTX2ptQldaS0FqcTVFb1U4dzhzR2JwZnhidThuTHd5VHZqYklRY2RscXdtTW9hckROSmtyaVhJVERuUlYwQkRLTnpYc0FZV2RjNFVFVmdISTNNMFVRZHE5TjN6SzUzbVQxbVRKQU9HQ1RmeWdtWFZNX3N3REJ2M1pQcElmQkFrOFJpR3UwcWQ3dm50QlVpZnJ6bUxvWTc0MEM3NUVHN0xZcEdORThPOXh6M1dEU1RFUXRHeWw0VDBSMTgyTjNBU0JrYTVJNHlzU0doczJMZjNqcTBTTi1EU1IydjMxYzVTbmlVNEs2ZEktalhtaUFWbXRfRW40NFY4?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMigwJBVV95cUxNWWZxZFZTX2ptQldaS0FqcTVFb1U4dzhzR2JwZnhidThuTHd5VHZqYklRY2RscXdtTW9hckROSmtyaVhJVERuUlYwQkRLTnpYc0FZV2RjNFVFVmdISTNNMFVRZHE5TjN6SzUzbVQxbVRKQU9HQ1RmeWdtWFZNX3N3REJ2M1pQcElmQkFrOFJpR3UwcWQ3dm50QlVpZnJ6bUxvWTc0MEM3NUVHN0xZcEdORThPOXh6M1dEU1RFUXRHeWw0VDBSMTgyTjNBU0JrYTVJNHlzU0doczJMZjNqcTBTTi1EU1IydjMxYzVTbmlVNEs2ZEktalhtaUFWbXRfRW40NFY4?oc=5</span></span></p>
 <p><strong>Minnesota Boundary Waters Mining Moratorium Lifted: U.S. Senate</strong></p>
 <p>The U.S. Senate voted to terminate the Biden-era moratorium on mining in the Boundary Waters Canoe Area Wilderness watershed, clearing the path for Twin Metals’ proposed copper-nickel mine. While outside direct Canadian jurisdiction, the decision affects transboundary watersheds that drain into Ontario and Manitoba, potentially altering baseline data expectations under the International Joint Commission and provincial water quality objectives. Practitioners supporting cross-border mining or linear infrastructure projects should update risk registers for possible downstream sediment and metals loading.</p>
 <p>Source: <span class="cite"><a class="cite-pill" href="https://insideclimatenews.org/news/16042026/minnesotas-boundary-waters-just-lost-protection-from-mining/" target="_blank" rel="noopener" aria-describedby="cite-card">insideclimatenews.org</a><span class="cite-card" id="cite-card" role="tooltip">https://insideclimatenews.org/news/16042026/minnesotas-boundary-waters-just-lost-protection-from-mining/</span></span></p>
-<h4 id="science-technical">Science & Technical</h4>
+<h2 id="science-technical">Science & Technical</h2>
 <p><strong>Ozone Recovery Delay Identified: MIT / Science Daily</strong></p>
 <p>MIT researchers determined that continued emissions of chemicals still permitted under Montreal Protocol loopholes are occurring at higher rates than previously modelled, potentially delaying full ozone column recovery by up to seven years. The finding tightens the margin for Canadian practitioners running UV exposure or atmospheric dispersion models that inform CEPA Schedule 1 substance management and site-specific risk assessments in northern latitudes. Updated emission factors should be incorporated into any ongoing air quality or cumulative effects submissions.</p>
 <p>Source: <span class="cite"><a class="cite-pill" href="https://www.sciencedaily.com/releases/2026/04/260416071945.htm" target="_blank" rel="noopener" aria-describedby="cite-card">sciencedaily.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.sciencedaily.com/releases/2026/04/260416071945.htm</span></span></p>
 <p><strong>Open-Ocean Methane Production Mechanism Characterized: Science Daily</strong></p>
 <p>Microbes in nutrient-poor open ocean waters have been shown to produce methane under conditions previously considered negligible, with warming-induced stratification expected to increase this flux. The feedback has direct bearing on Canadian federal methane inventories under CEPA and on baseline characterization for offshore oil and gas environmental assessments in the Atlantic and Pacific. Practitioners should revisit dissolved methane sampling protocols and consider adding microbial source tracking when interpreting exceedances of CCME aquatic guidelines.</p>
 <p>Source: <span class="cite"><a class="cite-pill" href="https://www.sciencedaily.com/releases/2026/04/260415043615.htm" target="_blank" rel="noopener" aria-describedby="cite-card">sciencedaily.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.sciencedaily.com/releases/2026/04/260415043615.htm</span></span></p>
-<h4 id="industry-practice">Industry & Practice</h4>
+<h2 id="industry-practice">Industry & Practice</h2>
 <p><strong>Largest U.S. Renewable Project Online: Various</strong></p>
 <p>The largest single renewable energy project in the United States has begun commercial generation, providing a benchmark for scale, grid integration costs, and long-term performance data that Canadian proponents can reference in project financing and regulatory applications. For firms advising on Canadian renewable permitting under provincial environmental assessment statutes or federal IAA, the operational dataset offers updated capacity factors and wildlife mitigation metrics.</p>
 <p>Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/environment/comments/1snq8yx/largest_us_renewable_project_begins_generating/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/environment/comments/1snq8yx/largest_us_renewable_project_begins_generating/</span></span></p>
 <p><strong>Cuba Solar Lifeline Amid Grid Collapse: Yale Climate Connections</strong></p>
 <p>Cuba increased its renewable share from 3.6 % in 2024 to 10 % in 2025, largely through distributed solar, demonstrating rapid deployment under constrained grid conditions. Canadian engineering firms active in Caribbean or remote-community microgrid projects can extract lessons on modular procurement, battery integration, and regulatory streamlining that may translate to northern or Indigenous community initiatives under Canadian clean energy funding streams.</p>
 <p>Source: <span class="cite"><a class="cite-pill" href="https://yaleclimateconnections.org/2026/04/as-cubas-grid-fails-solar-power-becomes-a-lifeline/" target="_blank" rel="noopener" aria-describedby="cite-card">yaleclimateconnections.org</a><span class="cite-card" id="cite-card" role="tooltip">https://yaleclimateconnections.org/2026/04/as-cubas-grid-fails-solar-power-becomes-a-lifeline/</span></span></p>
-<h4 id="practitioner-deep-dive-foam-dock-eps-marine-debris-characterization-and-liability-allocation">Practitioner Deep Dive: Foam Dock EPS Marine Debris Characterization and Liability Allocation</h4>
+<h2 id="practitioner-deep-dive-foam-dock-eps-marine-debris-characterization-and-liability-allocation">Practitioner Deep Dive: Foam Dock EPS Marine Debris Characterization and Liability Allocation</h2>
 <p>You arrive at a marina remediation project where historical dock replacement has left a measurable halo of fragmented EPS foam along the intertidal zone; Phase II sampling shows elevated microplastic counts and sorbed PAHs that exceed BC CSR Schedule 6 sediment quality guidelines yet laboratory reports list “non-detect” for parent styrene monomer. The regulatory lens treats EPS primarily as physical litter under the Environmental Management Act, but experienced practitioners recognize the material acts as both a vector for hydrophobic organics and a long-term source term that must be quantified separately from traditional contaminant plumes. In the field, deploy a 500 µm neuston net transect combined with FTIR or Raman spectroscopy on sieved fractions rather than relying solely on standard PAH suites; this distinguishes between adsorbed versus inherent load and supports defensible mass-balance calculations. The 20-year consultant notices that EPS fragmentation rates accelerate dramatically once UV and mechanical abrasion exceed a cumulative exposure threshold that varies by local wave climate—information rarely captured in generic marine litter guidance but critical when negotiating responsible-party cost allocation. Regulators increasingly accept source-control plans that include free provincial drop-off programs as evidence of due diligence, shifting residual liability to education and stewardship rather than perpetual sediment dredging. The most common mistake is treating EPS as inert “trash” in risk assessments instead of a mobile, sorptive substrate; the fix is to explicitly add a microplastic transport module to the conceptual site model and budget for polymer-specific analytical methods before submitting the Stage 2 CSR report.</p>
-<h4 id="action-items">Action Items</h4>
+<h2 id="action-items">Action Items</h2>
 <ul>
-<li>Map active or planned marina and dock clients against BC Sunshine Coast EPS foam drop-off schedule and incorporate into 2026 waste management plans.</li>
-<li>Review winning COAST clean energy consortia rosters for sub-consulting or analytical opportunities tied to federal Coast Guard vessel decarbonization.</li>
-<li>Update offshore and transboundary baseline methane sampling protocols to include microbial source tracking where stratification indicators are present.</li>
-<li>Revise UV exposure or atmospheric modelling templates to reflect the seven-year ozone recovery delay factor for northern latitude cumulative effects assessments.</li>
-<li>Brief mining-sector clients on potential downstream water quality implications from the Boundary Waters decision for projects near Ontario-Minnesota watersheds.</li>
+<li>Map active or planned marina and dock clients against BC Sunshine Coast EPS foam drop-off schedule and incorporate into 2026 waste management plans.
+</li>
+<li>Review winning COAST clean energy consortia rosters for sub-consulting or analytical opportunities tied to federal Coast Guard vessel decarbonization.
+</li>
+<li>Update offshore and transboundary baseline methane sampling protocols to include microbial source tracking where stratification indicators are present.
+</li>
+<li>Revise UV exposure or atmospheric modelling templates to reflect the seven-year ozone recovery delay factor for northern latitude cumulative effects assessments.
+</li>
+<li>Brief mining-sector clients on potential downstream water quality implications from the Boundary Waters decision for projects near Ontario-Minnesota watersheds.
+</li>
 </ul>
-<h4 id="week-ahead">Week Ahead</h4>
+<h2 id="week-ahead">Week Ahead</h2>
 <ul>
-<li>April 22–24: Federal IAA early engagement period closes for several proposed Atlantic offshore energy projects—ensure cumulative effects filings are current.</li>
-<li>April 30: BC CSR annual performance reporting deadline for Schedule 2 contaminated sites in coastal regions.</li>
-<li>May 5: CCME technical working group webinar on microplastics monitoring protocols—registration recommended for labs and risk assessors.</li>
-<li>May 15: anticipated release of updated federal methane inventory factors under CEPA; schedule internal QA/QC review for affected clients.</li>
+<li>April 22–24: Federal IAA early engagement period closes for several proposed Atlantic offshore energy projects—ensure cumulative effects filings are current.
+</li>
+<li>April 30: BC CSR annual performance reporting deadline for Schedule 2 contaminated sites in coastal regions.
+</li>
+<li>May 5: CCME technical working group webinar on microplastics monitoring protocols—registration recommended for labs and risk assessors.
+</li>
+<li>May 15: anticipated release of updated federal methane inventory factors under CEPA; schedule internal QA/QC review for affected clients.
+</li>
 </ul>
             </div>
             
@@ -2167,9 +2053,9 @@
             </section>
             <script>
             /* Progressive enhancement: make chapters seek the player, but
-               ONLY when there is a player on the page. Episodes without
-               alternate-language tracks render no inline <audio>, so the
-               list stays a plain, useful contents listing there. */
+               ONLY when there is a player on the page. An episode with no
+               published audio URL renders no <audio>, so the list stays a
+               plain, useful contents listing there. */
             (function () {
                 var audio = document.getElementById("nn-i18n-audio")
                     || document.querySelector(".nn-iv-player audio");
@@ -2345,7 +2231,8 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
   Made with AI — transparently
 </a>
             </div>
-            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 7 sources</span><span aria-hidden="true"> · </span><span>voiced with Grok TTS</span><span aria-hidden="true"> · </span><a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20Environmental%20Intelligence%20Ep25&body=Re%3A%20https%3A//nerranetwork.com/blog/env_intel/ep025.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
+            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 7 sources</span> <span aria-hidden="true">·</span> <span>voiced with Grok TTS</span>
+                <span aria-hidden="true">·</span> <a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20Environmental%20Intelligence%20Ep25&body=Re%3A%20https%3A//nerranetwork.com/blog/env_intel/ep025.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
             </p>
             <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>👋 Did this episode land?</span>
@@ -2382,13 +2269,13 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                 
                 <a href="ep024.html" rel="prev">
                     <span class="nav-label">&larr; Previous</span>
-                    <span class="nav-title">Episode 24</span>
+                    <span class="nav-title">Ep 24 · BC NDP pauses DRIPA amendments amid minority-government risk, directly affecting Indigenous consultation requirements on contaminated sites and remediation projects.</span>
                 </a>
                 
                 
                 <a href="ep026.html" rel="next" class="next">
                     <span class="nav-label">Next &rarr;</span>
-                    <span class="nav-title">Episode 26</span>
+                    <span class="nav-title">Ep 26 · Electric ferry deployment in British Columbia highlights emerging vessel-strike risks to humpback whales under the Fisheries Act and Species at Risk Act.</span>
                 </a>
                 
             </nav>
@@ -2413,6 +2300,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             
             <!-- Cross-show Recommendations -->
             
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/offshore_north/ep008.html" class="blog-related-card" style="--card-show-color: #0B3C5D">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #0B3C5D, white 35%)">Offshore North</span>
+                        <h3>EMIRA IV alongside in Gosport with minimal activity</h3>
+                        <p>EMIRA IV sits alongside in Gosport, UK, as of 5 October with only one recorded outing since arriving on 4 September.</p>
+                    </a>
+                    
+                    <a href="../../blog/spacex/ep122.html" class="blog-related-card" style="--card-show-color: #1A5CFF">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #1A5CFF, white 35%)">SpaceX Daily</span>
+                        <h3>Dragon now owns every U.S. record for fastest trips to the ISS after Crew-13 docked in seven hours fifty-five minutes.</h3>
+                        
+                    </a>
+                    
+                    <a href="../../blog/planetterrian/ep205.html" class="blog-related-card" style="--card-show-color: #017A99">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #017A99, white 35%)">Planetterrian Daily</span>
+                        <h3>Three scientists won the Nobel Prize in medicine for developing optogenetics to control neurons with light.</h3>
+                        
+                    </a>
+                    
+                </div>
+            </section>
+            
         </article>
     </div>
 
@@ -2426,7 +2341,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                     <div class="nn-footer-brand"><span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span></div>
                     <p class="nn-footer-desc">Zero fluff. Independent podcast network produced in Vancouver, Canada.</p>
                 </div>
-                <div class="nn-footer-col">
+                <div class="nn-footer-col nn-footer-col--shows">
                     <h4>Shows</h4>
                     
                     <ul class="nn-footer-showlist">
@@ -2585,7 +2500,8 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                       data-label-idle="Subscribe"
                       data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
-                    <p>Pick the shows you want in your inbox:</p>
+                    <p>Pick the shows you want in your inbox:</p><details class="nn-subscribe-pick">
+                    <summary>Choose shows <span>(31)</span></summary>
                     <div class="nn-subscribe-tags">
                         <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
                         
@@ -2650,6 +2566,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                         <label><input type="checkbox" name="tag" value="Offshore North"> Offshore North</label>
                         
                     </div>
+                    </details>
                     <div class="nn-subscribe-row">
                         <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
                         <button type="submit">Subscribe</button>
