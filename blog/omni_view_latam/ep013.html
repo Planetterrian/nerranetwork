@@ -242,6 +242,11 @@
             cursor: pointer;
             transition: all var(--duration) var(--ease);
         }
+        /* Same body-link override as the related cards: these are buttons. */
+        .blog-article .share-buttons a {
+            color: var(--nn-text-muted);
+            text-decoration: none;
+        }
         .share-buttons a:hover,
         .share-buttons button:hover {
             border-color: var(--show-color);
@@ -254,13 +259,13 @@
             margin: 0 auto;
             padding: 0 var(--sp-6) var(--sp-16);
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(0, 1fr);
             gap: var(--sp-10);
         }
         @media (min-width: 1024px) {
             .blog-article-wrap {
                 max-width: 1060px;
-                grid-template-columns: 200px 1fr;
+                grid-template-columns: 200px minmax(0, 1fr);
             }
         }
 
@@ -311,9 +316,18 @@
             font-size: 0.75rem;
         }
 
-        /* Article */
+        /* Article. A long unbroken token (a URL, a provenance run) may never
+           widen the page past the phone it is on (Oct 7 2026). */
         .blog-article {
             min-width: 0;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+        }
+        /* Reading measure: about 68-72 characters of body text a line
+           (it had run 104-111). The sources grid, claims and transcript
+           below keep the full column. */
+        .blog-article .blog-body-lang {
+            max-width: 72ch;
         }
         .blog-article h1 {
             font-family: var(--font-heading);
@@ -377,12 +391,25 @@
             color: var(--nn-text);
             margin-bottom: var(--sp-3);
         }
+        /* An item's body is the reporting, not a caption: full text colour
+           (it was muted grey under a bold headline, Oct 7 2026). */
         .blog-article .blog-list-cont {
             margin: var(--sp-1) 0 var(--sp-2);
             padding-left: var(--sp-2);
             font-size: 1rem;
-            color: var(--nn-text-muted);
+            color: var(--nn-text);
         }
+        /* Digest items are one sentence per line; at the article's
+           paragraph spacing each story read as a column of scattered
+           lines. Inside an item the sentences sit together; the items
+           themselves get the air (Oct 7 2026 design pass). */
+        .blog-article li > p.blog-list-cont {
+            font-size: 1rem;
+            line-height: 1.7;
+            margin: var(--sp-2) 0 0;
+            padding-left: 0;
+        }
+        .blog-article li:has(> p.blog-list-cont) { margin-bottom: var(--sp-6); }
         .blog-article hr {
             border: none;
             border-top: 1px solid var(--nn-border);
@@ -526,6 +553,12 @@
             text-decoration: none;
             transition: all var(--duration) var(--ease);
         }
+        /* The cards sit inside .blog-article, whose body-link rule would
+           otherwise underline and recolour every line of every card. */
+        .blog-article a.blog-related-card {
+            color: inherit;
+            text-decoration: none;
+        }
         .blog-related-card:hover {
             border-color: var(--card-show-color, var(--nn-purple));
             background: var(--nn-card-hover);
@@ -582,15 +615,16 @@
             font-family: var(--font-ui);
             font-variant-numeric: tabular-nums;
             font-size: 0.85rem;
-            color: var(--show-color);
+            /* Text, so the AA-lightened brand colour, not the raw one. */
+            color: var(--show-color-text, var(--show-color));
             min-width: 3.5rem;
             flex-shrink: 0;
         }
         /* Only looks clickable once the seek script has attached to a
-           real audio element — an English-only episode has no inline
+           real audio element — an episode with no published audio has no
            player, and a cursor that promises nothing is worse than none. */
         .blog-chapter-list li.is-seekable { cursor: pointer; }
-        .blog-chapter-list li.is-seekable:hover .chapter-title { color: var(--show-color); }
+        .blog-chapter-list li.is-seekable:hover .chapter-title { color: var(--show-color-text, var(--show-color)); }
         .blog-chapters .chapter-foot {
             margin-top: var(--sp-3);
             font-size: 0.85rem;
@@ -665,7 +699,7 @@
             font-family: var(--font-ui);
             font-size: 0.88rem;
             font-weight: 600;
-            color: var(--show-color, var(--nn-purple));
+            color: var(--show-color-text, var(--show-color, var(--nn-purple-text, #9D8BFF)));
         }
         .blog-transcript details[open] .transcript-preview,
         .blog-transcript details[open] .transcript-more { display: none; }
@@ -717,6 +751,12 @@
             font-size: 0.9rem;
             color: var(--nn-text);
             font-weight: 500;
+            /* The neighbour's headline, held to three lines by CSS rather
+               than cut in the template (engine/titles.py owns every cut). */
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
         .blog-ep-nav .next {
             text-align: right;
@@ -743,7 +783,14 @@
             line-height: 1.6;
             margin: 0.35rem 0 0;
         }
-        .nn-iv-provenance span { white-space: nowrap; }
+        /* Each part is kept whole where it fits and wraps where it does not
+           (Oct 7 2026): the parts used to be nowrap spans joined with no
+           whitespace between them, one unbreakable run that laid every
+           post out 500-980px wide on a 390px phone and pushed the menu
+           button off-screen. The separators are plain inline text, so the
+           line breaks between parts. */
+        .nn-iv-provenance { overflow-wrap: anywhere; }
+        .nn-iv-provenance > span:not([aria-hidden]) { display: inline-block; max-width: 100%; }
         /* Episode provenance (Oct 2026): the one line under the AI badge on
            a news post, from engine.brand.episode_provenance_parts, plus the
            "Report an error" link beside it. Same type as the interview
@@ -902,7 +949,9 @@
         }
 
         /* Multilingual audio player + language switcher (June 2026) */
-        .nn-i18n {
+        /* .nn-listen is the same box without the switcher (Oct 7 2026). */
+        .nn-i18n,
+        .nn-listen {
             max-width: 760px;
             margin: 0 auto var(--sp-4);
             padding: 0 var(--sp-6);
@@ -1571,379 +1620,200 @@
         <a href="../../player.html">Player</a>
         
         <a href="../../explore.html" style="font-weight:600;">Find your show</a>
-        
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Hosted by Mira</div>
+        <details class="nn-mobile-shows nn-mobile-group" open>
+            <summary class="nn-mobile-shows-title">Hosted by Mira <span class="nn-mobile-count">3</span></summary>
             
             <a href="../../nerra-daily.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Daily
             </a>
             
             <a href="../../age-of-ai.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The Age of AI
             </a>
             
             <a href="../../nerra-voices.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Voices
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">World desks</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">World desks <span class="nn-mobile-count">6</span></summary>
             
             <a href="../../omni-view-world.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Top World News
             </a>
             
             <a href="../../omni-view-north-america.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View North America
             </a>
             
             <a href="../../omni-view-europe.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Europe
             </a>
             
             <a href="../../omni-view-asia-pacific.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Asia Pacific
             </a>
             
             <a href="../../omni-view-africa-mideast.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Africa & Middle East
             </a>
             
             <a href="../../omni-view-latam.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Central & South America
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Local news</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Local news <span class="nn-mobile-count">2</span></summary>
             
             <a href="../../vancouver.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/vancouver-400.webp"><img src="../../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/vancouver-400.webp"><img src="../../assets/covers/vancouver.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Vancouver Daily News
             </a>
             
             <a href="../../collingwood.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/collingwood-400.webp"><img src="../../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/collingwood-400.webp"><img src="../../assets/covers/collingwood.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Collingwood Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">AI & compute</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">AI & compute <span class="nn-mobile-count">3</span></summary>
             
             <a href="../../models-agents.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents
             </a>
             
             <a href="../../ai-chips.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/ai-chips-400.webp"><img src="../../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/ai-chips-400.webp"><img src="../../assets/covers/ai-chips.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 AI Chips & Data Centres Daily
             </a>
             
             <a href="../../models-agents-beginners.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents for Beginners
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Markets</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Markets <span class="nn-mobile-count">4</span></summary>
             
             <a href="../../modern-investing.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Modern Investing Techniques
             </a>
             
             <a href="../../mag7.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/mag7-400.webp"><img src="../../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/mag7-400.webp"><img src="../../assets/covers/mag7.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 MAG 7 Daily
             </a>
             
             <a href="../../prediction-markets.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/prediction-markets-400.webp"><img src="../../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/prediction-markets-400.webp"><img src="../../assets/covers/prediction-markets.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Prediction Markets Daily
             </a>
             
             <a href="../../tesla.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Tesla Shorts Time
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Health & longevity</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Health & longevity <span class="nn-mobile-count">3</span></summary>
             
             <a href="../../planetterrian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Planetterrian Daily
             </a>
             
             <a href="../../peptides.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/peptides-400.webp"><img src="../../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/peptides-400.webp"><img src="../../assets/covers/peptides.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Peptides Weekly
             </a>
             
             <a href="../../longevity.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/longevity-400.webp"><img src="../../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/longevity-400.webp"><img src="../../assets/covers/longevity.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Longevity Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Every other show</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">10</span></summary>
             
             <a href="../../omni-view.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View
             </a>
             
             <a href="../../fascinating-frontiers.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Fascinating Frontiers
             </a>
             
             <a href="../../spacex.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 SpaceX Daily
             </a>
             
             <a href="../../env-intel.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Environmental Intelligence
             </a>
             
             <a href="../../ru/finansy-prosto.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/finansy-prosto-400.webp"><img src="../../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/finansy-prosto-400.webp"><img src="../../assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Финансы Просто
             </a>
             
             <a href="../../ru/privet-russian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/privet-russian-400.webp"><img src="../../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/privet-russian-400.webp"><img src="../../assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Привет, Русский!
             </a>
             
             <a href="../../unintended-consequences.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Unintended Consequences
             </a>
             
             <a href="../../first-principles.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 First Principles Daily
             </a>
             
             <a href="../../thedppod.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The DP Pod: The Do Positive Podcast
             </a>
             
             <a href="../../offshore-north.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Offshore North
             </a>
             
-        </div>
+        </details>
         
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Blogs</div>
-            <a href="../../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">
-                All Blog Posts
-            </a>
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Hosted by Mira</div>
-            
-            <a href="../../blog/nerra_daily/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Daily Blog
-            </a>
-            
-            <a href="../../blog/age_of_ai/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
-                The Age of AI Blog
-            </a>
-            
-            <a href="../../blog/nerra_voices/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Voices Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">World desks</div>
-            
-            <a href="../../blog/omni_view_world/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Top World News Blog
-            </a>
-            
-            <a href="../../blog/omni_view_north_america/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View North America Blog
-            </a>
-            
-            <a href="../../blog/omni_view_europe/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Europe Blog
-            </a>
-            
-            <a href="../../blog/omni_view_asia_pacific/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Asia Pacific Blog
-            </a>
-            
-            <a href="../../blog/omni_view_africa_mideast/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Africa & Middle East Blog
-            </a>
-            
-            <a href="../../blog/omni_view_latam/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Central & South America Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Local news</div>
-            
-            <a href="../../blog/vancouver/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/vancouver-400.webp"><img src="../../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Vancouver Daily News Blog
-            </a>
-            
-            <a href="../../blog/collingwood/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/collingwood-400.webp"><img src="../../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Collingwood Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">AI & compute</div>
-            
-            <a href="../../blog/models_agents/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents Blog
-            </a>
-            
-            <a href="../../blog/ai_chips/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/ai-chips-400.webp"><img src="../../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                AI Chips & Data Centres Daily Blog
-            </a>
-            
-            <a href="../../blog/models_agents_beginners/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents for Beginners Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Markets</div>
-            
-            <a href="../../blog/modern_investing/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
-                Modern Investing Techniques Blog
-            </a>
-            
-            <a href="../../blog/mag7/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/mag7-400.webp"><img src="../../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                MAG 7 Daily Blog
-            </a>
-            
-            <a href="../../blog/prediction_markets/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/prediction-markets-400.webp"><img src="../../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Prediction Markets Daily Blog
-            </a>
-            
-            <a href="../../blog/tesla/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
-                Tesla Shorts Time Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Health & longevity</div>
-            
-            <a href="../../blog/planetterrian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Planetterrian Daily Blog
-            </a>
-            
-            <a href="../../blog/peptides/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/peptides-400.webp"><img src="../../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Peptides Weekly Blog
-            </a>
-            
-            <a href="../../blog/longevity/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/longevity-400.webp"><img src="../../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Longevity Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Every other show</div>
-            
-            <a href="../../blog/omni_view/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Blog
-            </a>
-            
-            <a href="../../blog/fascinating_frontiers/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
-                Fascinating Frontiers Blog
-            </a>
-            
-            <a href="../../blog/spacex/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                SpaceX Daily Blog
-            </a>
-            
-            <a href="../../blog/env_intel/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
-                Environmental Intelligence Blog
-            </a>
-            
-            <a href="../../blog/finansy_prosto/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/finansy-prosto-400.webp"><img src="../../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                Финансы Просто Blog
-            </a>
-            
-            <a href="../../blog/privet_russian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/privet-russian-400.webp"><img src="../../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                Привет, Русский! Blog
-            </a>
-            
-            <a href="../../blog/unintended_consequences/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
-                Unintended Consequences Blog
-            </a>
-            
-            <a href="../../blog/first_principles/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                First Principles Daily Blog
-            </a>
-            
-            <a href="../../blog/dp_pod/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
-                The DP Pod: The Do Positive Podcast Blog
-            </a>
-            
-            <a href="../../blog/offshore_north/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
-                Offshore North Blog
-            </a>
-            
-            
+            <a href="../../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">All Blog Posts</a>
+            <a href="../../topics/index.html" class="nn-mobile-show-link">Browse by topic</a>
         </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">More</div>
@@ -1980,10 +1850,7 @@
             <a href="../../blog/omni_view_latam/index.html" class="blog-show-badge">
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America" width="40" height="40"></picture>
                 Omni View Central & South America Blog
-            </a>
-            <h1><span class="nn-i18n-title">Falkland lawmakers may curb Argentine visitors after flag protests on the islands.</span> — Episode 13</h1>
-            
-            <p class="blog-hero-hook">Falkland lawmakers may curb Argentine visitors after flag protests on the islands.</p>
+            </a><h1><span class="nn-i18n-title">Falkland lawmakers may curb Argentine visitors after flag protests on the islands.</span></h1>
             
             <div class="blog-meta-bar">
                 <span class="post-author">By Mira</span>
@@ -1996,18 +1863,10 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     5 min read
                 </span>
-                
-                <a href="../../omni-view-latam.html" class="blog-listen-cta">
+                <a href="#listen" class="blog-listen-cta">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     Listen to podcast
                 </a>
-                
-                
-                <a href="../../omni-view-latam-summaries.html" class="blog-listen-cta">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                    View summaries
-                </a>
-                
                 
             </div>
         </div>
@@ -2016,14 +1875,26 @@
 
     
     
+    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+        <div class="nn-i18n-inner">
+            <div class="nn-i18n-row">
+                <span class="nn-i18n-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Listen to this episode
+                </span>
+            </div>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/omni_view_latam/Omni_View_LatAm_Ep013_20261005.mp3">
+                <a href="https://op3.dev/e/audio.nerranetwork.com/omni_view_latam/Omni_View_LatAm_Ep013_20261005.mp3">Download the audio</a>
+            </audio>
+        </div>
+    </section>
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
         
         <aside class="blog-toc">
             <div class="blog-toc-title">Contents</div>
-            
-            <a href="#omni-view-central-south-america" class="">Omni View Central & South America</a>
             
             <a href="#lead" class="">Lead</a>
             
@@ -2041,31 +1912,29 @@
         <article class="blog-article">
             
             <div class="blog-body-lang" data-lang="en">
-            <h2 id="omni-view-central-south-america">Omni View Central & South America</h2>
-<p><em>Falkland lawmakers may curb Argentine visitors after flag protests on the islands.</em></p>
-<p><strong>What You Need to Know:</strong> Falkland Islands lawmakers are examining whether they can legally limit Argentine visitors after residents objected to flags and banners rejecting British sovereignty. Separately, Argentina’s cassation court has a 15 October hearing on rejoining two cases against Cristina Kirchner and Máximo Kirchner, and Sunday’s Brazilian count sent the presidency to a 25 October runoff.</p>
-<h4 id="lead">Lead</h4>
+            <p><strong>What You Need to Know:</strong> Falkland Islands lawmakers are examining whether they can legally limit Argentine visitors after residents objected to flags and banners rejecting British sovereignty. Separately, Argentina’s cassation court has a 15 October hearing on rejoining two cases against Cristina Kirchner and Máximo Kirchner, and Sunday’s Brazilian count sent the presidency to a 25 October runoff.</p>
+<h2 id="lead">Lead</h2>
 <p><strong>Falklands weighs curbs on Argentine visitors after flag-waving incidents: MercoPress</strong></p>
 <p>Residents of the Falkland Islands have been angered by Argentine visitors waving Argentine flags and banners denying British sovereignty, and members of the community are calling for such visits to be restricted. Argentine nationals can currently enter with a valid passport, proof of return travel, confirmed accommodation, health insurance and sufficient funds. Michael Goss, a Member of the Legislative Assembly, said he is personally not opposed to restrictions, but that “we can’t turn around and directly stop people coming in at this moment in time,” because it comes down to what can be done legally. He said the Assembly has already begun, at an early stage, to look at ways it might stop incidents of this kind, though that also depends on administration, and that people “visiting the Falkland Islands” to further a political agenda is “not acceptable.” Goss said the islands are hearing “a lot of noise” from Argentina, including sparks at the United Nations when he and Dom were away, but that “it’s just noise, and we’re not going to let it get to us.” MercoPress reports that such incidents have recurred as President Javier Milei’s government has stepped up Argentina’s sovereignty claim, including legal action against companies exploring for oil near the Islands. Source: <a href="https://en.mercopress.com/2026/10/05/falklands-weighs-curbs-on-argentine-visitors-after-flag-waving-incidents?utm_source=feed&utm_medium=rss&utm_content=main&utm_campaign=rss" target="_blank" rel="noopener">en.mercopress.com</a></p>
-<h4 id="across-the-region">Across the Region</h4>
+<h2 id="across-the-region">Across the Region</h2>
 <p><strong>El juicio Hotesur y Los Sauces contra Cristina y Máximo Kirchner se encamina a su reunificación: La Nación</strong></p>
 <p>The Hotesur and Los Sauces cases against Cristina Kirchner and Máximo Kirchner are moving toward being joined again as one trial. The process is expected to begin within three weeks. The Federal Chamber of Cassation would define reuniting the two cases after a hearing set for 15 October. Source: <a href="https://www.lanacion.com.ar/politica/el-juicio-hotesur-y-los-sauces-contra-cristina-y-maximo-kirchner-se-encamina-a-su-reunificacion-nid05102026/" target="_blank" rel="noopener">lanacion.com.ar</a></p>
 <p><strong>Veja quem são os deputados federais eleitos no Maranhão: Folha de S.Paulo</strong></p>
 <p>With 100 percent of ballot boxes counted, voters in Maranhão on Sunday chose 18 federal deputies and 42 members of the state legislative assembly. In Bahia, Rui Costa of the Workers’ Party and Jaques Wagner of the Workers’ Party were elected to the Senate, and 39 federal deputies were elected. In Amazonas, voters chose 24 state deputies, and Eduardo Braga of the MDB and Plinio Valério of the PSDB were elected senators. Source: <a href="https://redir.folha.com.br/redir/online/poder/rss091/<em>https://www1.folha.uol.com.br/poder/2026/10/veja-quem-sao-os-deputados-federais-eleitos-no-maranhao.shtml" target="_blank" rel="noopener">redir.folha.com.br</a> <a href="https://redir.folha.com.br/redir/online/poder/rss091/" target="_blank" rel="noopener">https://redir.folha.com.br/redir/online/poder/rss091/</a></em>https://www1.folha.uol.com.br/poder/2026/10/saiba-quem-sao-os-deputados-estaduais-eleitos-no-maranhao-ma.shtml <a href="https://redir.folha.com.br/redir/online/poder/rss091/*https://www1.folha.uol.com.br/poder/2026/10/conheca-os-senadores-eleitos-na-bahia.shtml" target="_blank" rel="noopener">https://redir.folha.com.br/redir/online/poder/rss091/*https://www1.folha.uol.com.br/poder/2026/10/conheca-os-senadores-eleitos-na-bahia.shtml</a></p>
-<h4 id="also-today">Also Today</h4>
+<h2 id="also-today">Also Today</h2>
 <p><strong>Flávio Bolsonaro edges Lula in the first round; both head to an October 25 runoff: MercoPress</strong></p>
 <p>Senator Flávio Bolsonaro took around 47 percent of valid votes and President Luiz Inácio Lula da Silva about 45 percent, the Superior Electoral Court count shows, so neither passed half and they meet in a runoff on 25 October. Source: <a href="https://en.mercopress.com/2026/10/05/flavio-bolsonaro-edges-lula-in-the-first-round-both-head-to-an-october-25-runoff?utm_source=feed&utm_medium=rss&utm_content=main&utm_campaign=rss" target="_blank" rel="noopener">en.mercopress.com</a></p>
 <p><strong>Hay alerta amarilla por tormentas y nevadas para este lunes 5 de octubre: las provincias afectadas: La Nación</strong></p>
 <p>Argentina’s National Meteorological Service issued yellow alerts for Monday for storms in Formosa and Misiones, with 20 to 50 millimetres of rain possible, and for 20 to 40 centimetres of snow in the Andean sectors of San Juan, Neuquén and Mendoza. Source: <a href="https://www.lanacion.com.ar/sociedad/hay-alerta-amarilla-por-tormentas-y-nevadas-para-este-lunes-5-de-octubre-las-provincias-afectadas-nid04102026/" target="_blank" rel="noopener">lanacion.com.ar</a></p>
 <p><strong>Puquios Copper Project in Chile Satisfies USD$1.7M Bond Security for Key Water Management Infrastructure: TradingView</strong></p>
 <p>The Puquios copper project in Chile has satisfied 1.7 million dollars in bond security for key water-management infrastructure. Source: <a href="https://www.tradingview.com/news/acceswire:38b04a8b7094b:0-puquios-copper-project-in-chile-satisfies-usd-1-7m-bond-security-for-key-water-management-infrastructure/" target="_blank" rel="noopener">tradingview.com</a></p>
-<h4 id="both-sides-paving-praça-do-pomar">Both Sides: Paving Praça do Pomar</h4>
+<h2 id="both-sides-paving-praça-do-pomar">Both Sides: Paving Praça do Pomar</h2>
 <p>Rio de Janeiro’s Barra subprefecture has begun rebuilding Praça do Pomar, in Jardim Oceânico, at a stated cost of 2.8 million reais, with completion expected in December. The question is how much of the square to pave, and the decision sits with the subprefecture after a letter from neighbours.</p>
 <p>The strongest case for changing the plan comes from the residents’ association Amojo. Its president, Paulo Oighenstein, says a residents’ commission asked for less paving: keep part of the paths in saibro; on the main allée, lay concrete blocks on only one strip, with gaps for grass, and leave saibro on the rest; and pave toward the fountain only at gates that stay open, so wheelchairs and prams can pass. He says those changes, if made before the work is executed, would not raise the cost. Resident and lawyer Rogério Zouein says covering every path in concrete blocks will make the square hotter and harm its landscape, and that this runs against depaving programmes, including ones linked to Rio’s former environment secretary. An unnamed resident on the commission wants sand kept in the play space for children up to four, rather than the planned rubber floor, because she says the city does not maintain the sand.</p>
 <p>The strongest case for going ahead comes from the subprefecture. It says that for years it received complaints that the soil is impassable on rainy days, and that residents asked for a pedestrian path and a draining surface. It says the tender followed a project approved after an earlier consultation, and that requests made later were sent to the technical area. It says no tree will be removed. The municipal conservation secretariat says damaged fence bars will be replaced and the existing fence repainted after sanding, cleaning, anti-corrosion paint and a finish coat. It says municipal decree 36,180 of 2012, which Zouein cites on work signs, covers private works and does not apply to public ones.</p>
 <p>Architect and urbanist Vinicius Mattos, a UFRJ researcher, says the heat worry is justified if the mineralized area grows much, especially without shade. He also says hollow blocks with grass are a poor path surface, because grass fails under footsteps, compaction, shade and weak upkeep, and the ground can become uneven and less accessible. A paved path under trees, he says, can stay cooler than a so-called green surface in full sun.</p>
 <p>Both sides accept that the rebuild is already under way and is scheduled to finish in December. The city says the later requests remain under technical review while demolition, new surfaces and the resetting of Portuguese stone continue. Source: <a href="https://oglobo.globo.com/rio/bairros/barra/noticia/2026/10/05/obras-de-r-28-milhoes-em-praca-na-barra-geram-embate-entre-moradores-e-prefeitura.ghtml" target="_blank" rel="noopener">oglobo.globo.com</a></p>
-<h4 id="progress-watch">Progress Watch</h4>
+<h2 id="progress-watch">Progress Watch</h2>
 <p><strong>The First Open Fetal Surgery for Myelomeningocele Repair in a Bicornuate Uterus With Anterior Placenta in Central America: A Case Report From Nicaragua: Cureus</strong></p>
 <p>Cureus has published a case report from Nicaragua presenting what it calls the first open fetal surgery for myelomeningocele repair in a bicornuate uterus with an anterior placenta in Central America. Source: <a href="https://www.cureus.com/articles/524766-the-first-open-fetal-surgery-for-myelomeningocele-repair-in-a-bicornuate-uterus-with-anterior-placenta-in-central-america-a-case-report-from-nicaragua" target="_blank" rel="noopener">cureus.com</a></p>
             </div>
@@ -2131,7 +2000,7 @@
                     </summary>
                     <p class="claims-note">Each claim below was checked by a machine before publication: its source was fetched and the supporting quote looked for in it. A claim the check could not confirm is published and marked, not removed, and re-checked nightly for a week.</p>
                     <ol>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span> Falkland Islands residents have been angered by Argentine visitors waving Argentine flags and banners denying British sovereignty, prompting calls to restrict such visits.
                             <span class="claim-source"><a href="https://en.mercopress.com/2026/10/05/falklands-weighs-curbs-on-argentine-visitors-after-flag-waving-incidents?utm_source=feed&utm_medium=rss&utm_content=main&utm_campaign=rss" target="_blank" rel="noopener" title="Falklands weighs curbs on Argentine visitors after flag-waving incidents">en.mercopress.com</a></span>
                         </li>
@@ -2151,39 +2020,39 @@
 </span> The incidents have recurred as President Javier Milei’s government has stepped up Argentina’s sovereignty claim, including legal action against companies exploring for oil near the Islands.
                             <span class="claim-source"><a href="https://en.mercopress.com/2026/10/05/falklands-weighs-curbs-on-argentine-visitors-after-flag-waving-incidents?utm_source=feed&utm_medium=rss&utm_content=main&utm_campaign=rss" target="_blank" rel="noopener" title="Falklands weighs curbs on Argentine visitors after flag-waving incidents">en.mercopress.com</a></span>
                         </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span> The Hotesur and Los Sauces trial against Cristina and Máximo Kirchner is heading toward reunification, is expected to begin within three weeks, and the Federal Chamber of Cassation would define rejoining the cases after a hearing on 15 October.
                             <span class="claim-source"><a href="https://www.lanacion.com.ar/politica/el-juicio-hotesur-y-los-sauces-contra-cristina-y-maximo-kirchner-se-encamina-a-su-reunificacion-nid05102026/" target="_blank" rel="noopener" title="El juicio Hotesur y Los Sauces contra Cristina y Máximo Kirchner se encamina a su reunificación">lanacion.com.ar</a></span>
                         </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span> With 100 percent of ballot boxes counted, Maranhão voters chose 18 federal deputies and 42 state deputies on Sunday.
                             <span class="claim-source"><a href="https://redir.folha.com.br/redir/online/poder/rss091/*https://www1.folha.uol.com.br/poder/2026/10/veja-quem-sao-os-deputados-federais-eleitos-no-maranhao.shtml" target="_blank" rel="noopener" title="Veja quem são os deputados federais eleitos no Maranhão">redir.folha.com.br</a></span>
                         </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span> In Bahia, Rui Costa (PT) and Jaques Wagner (PT) were elected to the Senate, and 39 federal deputies were elected.
                             <span class="claim-source"><a href="https://redir.folha.com.br/redir/online/poder/rss091/*https://www1.folha.uol.com.br/poder/2026/10/conheca-os-senadores-eleitos-na-bahia.shtml" target="_blank" rel="noopener" title="Conheça os senadores eleitos na Bahia">redir.folha.com.br</a></span>
                         </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span> In Amazonas, voters chose 24 state deputies, and Eduardo Braga (MDB) and Plinio Valério (PSDB) were elected senators.
                             <span class="claim-source"><a href="https://redir.folha.com.br/redir/online/poder/rss091/*https://www1.folha.uol.com.br/poder/2026/10/veja-os-senadores-eleitos-no-amazonas.shtml" target="_blank" rel="noopener" title="Veja os senadores eleitos no Amazonas">redir.folha.com.br</a></span>
                         </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span> Flávio Bolsonaro won around 47 percent of valid votes and Lula about 45 percent, so they face a runoff on 25 October, according to the Superior Electoral Court count reported by MercoPress.
                             <span class="claim-source"><a href="https://en.mercopress.com/2026/10/05/flavio-bolsonaro-edges-lula-in-the-first-round-both-head-to-an-october-25-runoff?utm_source=feed&utm_medium=rss&utm_content=main&utm_campaign=rss" target="_blank" rel="noopener" title="Flávio Bolsonaro edges Lula in the first round; both head to an October 25 runoff">en.mercopress.com</a></span>
                         </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span> Argentina’s National Meteorological Service issued yellow alerts on 5 October for storms in Formosa and Misiones, with 20 to 50 millimetres of rain possible, and for 20 to 40 centimetres of snow in Andean San Juan, Neuquén and Mendoza.
                             <span class="claim-source"><a href="https://www.lanacion.com.ar/sociedad/hay-alerta-amarilla-por-tormentas-y-nevadas-para-este-lunes-5-de-octubre-las-provincias-afectadas-nid04102026/" target="_blank" rel="noopener" title="Hay alerta amarilla por tormentas y nevadas para este lunes 5 de octubre: las provincias afectadas">lanacion.com.ar</a></span>
                         </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span> The Puquios copper project in Chile satisfied 1.7 million dollars in bond security for key water-management infrastructure.
                             <span class="claim-source"><a href="https://www.tradingview.com/news/acceswire:38b04a8b7094b:0-puquios-copper-project-in-chile-satisfies-usd-1-7m-bond-security-for-key-water-management-infrastructure/" target="_blank" rel="noopener" title="Puquios Copper Project in Chile Satisfies USD$1.7M Bond Security for Key Water Management Infrastructure">tradingview.com</a></span>
                         </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span> Works to revitalize Praça do Pomar in Jardim Oceânico are budgeted at 2.8 million reais and are expected to finish in December, while Amojo has asked for less paving.
                             <span class="claim-source"><a href="https://oglobo.globo.com/rio/bairros/barra/noticia/2026/10/05/obras-de-r-28-milhoes-em-praca-na-barra-geram-embate-entre-moradores-e-prefeitura.ghtml" target="_blank" rel="noopener" title="Obras de R$ 2,8 milhões em praça na Barra geram embate entre moradores e prefeitura">oglobo.globo.com</a></span>
                         </li>
-                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                        <li><span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span> Cureus published a case report from Nicaragua described as the first open fetal surgery for myelomeningocele repair in a bicornuate uterus with an anterior placenta in Central America.
                             <span class="claim-source"><a href="https://www.cureus.com/articles/524766-the-first-open-fetal-surgery-for-myelomeningocele-repair-in-a-bicornuate-uterus-with-anterior-placenta-in-central-america-a-case-report-from-nicaragua" target="_blank" rel="noopener" title="The First Open Fetal Surgery for Myelomeningocele Repair in a Bicornuate Uterus With Anterior Placenta in Central America: A Case Report From Nicaragua">cureus.com</a></span>
                         </li>
@@ -2232,9 +2101,9 @@
             </section>
             <script>
             /* Progressive enhancement: make chapters seek the player, but
-               ONLY when there is a player on the page. Episodes without
-               alternate-language tracks render no inline <audio>, so the
-               list stays a plain, useful contents listing there. */
+               ONLY when there is a player on the page. An episode with no
+               published audio URL renders no <audio>, so the list stays a
+               plain, useful contents listing there. */
             (function () {
                 var audio = document.getElementById("nn-i18n-audio")
                     || document.querySelector(".nn-iv-player audio");
@@ -2398,7 +2267,8 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
   Made with AI — transparently
 </a>
             </div>
-            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 10 sources</span><span aria-hidden="true"> · </span><span>14 claims checked against their sources</span><span aria-hidden="true"> · </span><span>hosted by an AI, voiced with Grok TTS</span><span aria-hidden="true"> · </span><a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20Omni%20View%20Central%20%26%20South%20America%20Ep13&body=Re%3A%20https%3A//nerranetwork.com/blog/omni_view_latam/ep013.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
+            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 10 sources</span> <span aria-hidden="true">·</span> <span>14 claims checked against their sources</span> <span aria-hidden="true">·</span> <span>hosted by an AI, voiced with Grok TTS</span>
+                <span aria-hidden="true">·</span> <a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20Omni%20View%20Central%20%26%20South%20America%20Ep13&body=Re%3A%20https%3A//nerranetwork.com/blog/omni_view_latam/ep013.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
             </p>
             <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>👋 Did this episode land?</span>
@@ -2441,13 +2311,13 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
                 
                 <a href="ep012.html" rel="prev">
                     <span class="nav-label">&larr; Previous</span>
-                    <span class="nav-title">Episode 12</span>
+                    <span class="nav-title">Ep 12 · Thirteen Argentine governors want agreements, not Paris photos, on the twenty twenty-seven budget.</span>
                 </a>
                 
                 
                 <a href="ep014.html" rel="next" class="next">
                     <span class="nav-label">Next &rarr;</span>
-                    <span class="nav-title">Episode 14</span>
+                    <span class="nav-title">Ep 14 · Sixty million reais yielded about two hundred fifty thousand votes and no Chamber seats for Cidadania.</span>
                 </a>
                 
             </nav>
@@ -2472,6 +2342,34 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
             
             <!-- Cross-show Recommendations -->
             
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/omni_view_north_america/ep013.html" class="blog-related-card" style="--card-show-color: #0B6FD6">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #0B6FD6, white 35%)">Omni View North America</span>
+                        <h3>Seventeen years in prison hang on a deadline this week for Congresswoman LaMonica McIver.</h3>
+                        
+                    </a>
+                    
+                    <a href="../../blog/tesla/ep627.html" class="blog-related-card" style="--card-show-color: #E31937">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #E31937, white 35%)">Tesla Shorts Time</span>
+                        <h3>A Dutch battery developer is scaling gigawatt-hour projects into Germany, widening the path for Tesla Megapack deployments across Europe.</h3>
+                        
+                    </a>
+                    
+                    <a href="../../blog/ai_chips/ep016.html" class="blog-related-card" style="--card-show-color: #4338CA">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #4338CA, white 35%)">AI Chips & Data Centres Daily</span>
+                        <h3>Twenty-four percent a year of data-centre power growth still leaves supply behind compute demand.</h3>
+                        
+                    </a>
+                    
+                </div>
+            </section>
+            
         </article>
     </div>
 
@@ -2485,7 +2383,7 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
                     <div class="nn-footer-brand"><span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span></div>
                     <p class="nn-footer-desc">Zero fluff. Independent podcast network produced in Vancouver, Canada.</p>
                 </div>
-                <div class="nn-footer-col">
+                <div class="nn-footer-col nn-footer-col--shows">
                     <h4>Shows</h4>
                     
                     <ul class="nn-footer-showlist">
@@ -2644,7 +2542,8 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
                       data-label-idle="Subscribe"
                       data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
-                    <p>Pick the shows you want in your inbox:</p>
+                    <p>Pick the shows you want in your inbox:</p><details class="nn-subscribe-pick">
+                    <summary>Choose shows <span>(31)</span></summary>
                     <div class="nn-subscribe-tags">
                         <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
                         
@@ -2709,6 +2608,7 @@ Mira is an AI host. This episode is AI voice synthesis, and its stories were cho
                         <label><input type="checkbox" name="tag" value="Offshore North"> Offshore North</label>
                         
                     </div>
+                    </details>
                     <div class="nn-subscribe-row">
                         <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
                         <button type="submit">Subscribe</button>
