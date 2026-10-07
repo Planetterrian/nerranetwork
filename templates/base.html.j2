@@ -414,33 +414,26 @@
             The mobile menu names the ungrouped fallback ("All Shows") where the
             dropdown leaves it bare, which is why the group carries a key. #}
         <a href="{{ path_prefix }}explore.html" style="font-weight:600;">{{ t.nav_explore }}</a>
+        {#- Oct 7 2026 design pass: the menu ran ~5,400px on a phone (80
+            links, 62 cover images). Each show group is a collapsible
+            section showing its count; the 31 per-show blog links became
+            the blog hub and the topics map, as the footer did on Sep 21.
+            Covers carry alt="": the show's name is right beside them. -#}
         {% for _m_key, _m_shows in show_groups %}
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">{{ t[_m_key] if _m_key else t.mobile_all_shows }}</div>
+        <details class="nn-mobile-shows nn-mobile-group"{% if loop.first %} open{% endif %}>
+            <summary class="nn-mobile-shows-title">{{ t[_m_key] if _m_key else t.mobile_all_shows }} <span class="nn-mobile-count">{{ _m_shows|length }}</span></summary>
             {% for s in _m_shows %}
             <a href="{{ path_prefix }}{{ s.show_page }}" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ s.podcast_image }}" alt="" width="1400" height="1400" loading="lazy"></picture>
                 {{ s.name }}
             </a>
             {% endfor %}
-        </div>
+        </details>
         {% endfor %}
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">{{ t.mobile_blogs }}</div>
-            <a href="{{ path_prefix }}blog/index.html" class="nn-mobile-show-link" style="font-weight:600">
-                {{ t.all_blog_posts }}
-            </a>
-            {% for _mb_key, _mb_shows in show_groups %}
-            {%- if _mb_key %}
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">{{ t[_mb_key] }}</div>
-            {%- endif %}
-            {% for s in _mb_shows %}
-            <a href="{{ path_prefix }}{{ s.blog_page }}" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="lazy"></picture>
-                {{ s.name }} {{ t.show_blog_suffix }}
-            </a>
-            {% endfor %}
-            {% endfor %}
+            <a href="{{ path_prefix }}blog/index.html" class="nn-mobile-show-link" style="font-weight:600">{{ t.all_blog_posts }}</a>
+            <a href="{{ path_prefix }}topics/index.html" class="nn-mobile-show-link">{{ t.nav_topics }}</a>
         </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">{{ t.nav_more }}</div>

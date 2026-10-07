@@ -267,3 +267,14 @@ class TestDesignPassShowCard:
             (ROOT / "templates" / "network_page.html.j2").read_text(encoding="utf-8"))
         assert "Latest from the Blog" not in src
         assert 'class="subscribe-all"' in src
+
+
+class TestMobileMenuIsShort:
+    def test_show_groups_collapse_and_blogs_are_two_links(self):
+        base = _strip_jinja_comments(
+            (ROOT / "templates" / "base.html.j2").read_text(encoding="utf-8"))
+        menu = base.split('<div id="mobileMenu"', 1)[1].split("</main>", 1)[0]
+        assert '<details class="nn-mobile-shows nn-mobile-group"' in menu
+        # No per-show blog loop: the blog section is the hub + topics map.
+        assert "s.blog_page" not in menu
+        assert 'alt="{{ s.name }} cover art"' not in menu
