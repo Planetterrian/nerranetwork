@@ -1,0 +1,155 @@
+{
+  "version": 1,
+  "gate": {
+    "passed": false,
+    "ledger_present": true,
+    "claims_total": 13,
+    "claims_anchored": 11,
+    "claims_verified": 10,
+    "shape_errors": [
+      "2: missing claim, supporting_quote"
+    ],
+    "dropped_claims": [
+      {
+        "id": "1",
+        "claim": "OpenAI published new mathematical results produced by an internal frontier model along with Lean formalizations.",
+        "reason": "episode_span not found in final episode text"
+      }
+    ],
+    "failed_verifications": [
+      {
+        "id": "4",
+        "url": "https://arxiv.org/abs/2610.07019",
+        "resolved": true,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": false,
+        "reason": "supporting_quote not found in source",
+        "via": "http"
+      }
+    ],
+    "uncovered_shapes": [],
+    "reviewer_notes": [],
+    "verified_from_fetched": 10,
+    "stripped_sentences": [],
+    "stripped_notes": [],
+    "removed_items": 0,
+    "covered_by_item_source": 0,
+    "repair_recovered": 0,
+    "pre_strip": null,
+    "policy_version": 2,
+    "mode": "flag",
+    "flagged_sentences": [
+      "On the test split of 1,218 prompts from 333 articles, it achieved an expected calibration error of 0.0168, macro-F1 of 0.9248, and log loss 0.1829 below Gemma 4 31B-it."
+    ],
+    "flagged_count": 2,
+    "verified_count": 10
+  },
+  "claims": [
+    {
+      "id": "2",
+      "source_url": "https://openai.com/index/sharing-ai-progress-in-mathematics/",
+      "confidence": "high",
+      "status": "malformed"
+    },
+    {
+      "id": "3",
+      "claim": "WavePrune raises the HELMET score from 35.7 to 40.0 on Qwen3-8B without extra tuning.",
+      "source_url": "https://arxiv.org/abs/2610.06963",
+      "source_title": "WavePrune: One period is often enough for RoPE",
+      "supporting_quote": "Specifically, WavePrune raises the HELMET score on four of five models we test without any extra tuning (e.g., 35.7 -> 40.0 on Qwen3-8B).",
+      "confidence": "high",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "4",
+      "claim": "Fiorillo v0.5 achieved macro-F1 of 0.9248 and expected calibration error of 0.0168 on the Evidence Inference 2.0 test split.",
+      "episode_span": "",
+      "source_url": "https://arxiv.org/abs/2610.07019",
+      "supporting_quote": "the expected calibration error was 0.0168 against a limit of 0.05; and macro-F1 was 0.9248 against 0.8668",
+      "status": "unverified_quote_mismatch",
+      "status_reason": "supporting_quote not found in source"
+    },
+    {
+      "id": "cov1",
+      "claim": "Fiorillo v0.5 is a 4-billion-parameter open model fine-tuned on Qwen3-4B-Base with low-rank adapters and a decision head for the Evidence Inference 2.0 task.",
+      "episode_span": "Fiorillo v0.5 is a 4-billion-parameter open model fine-tuned on Qwen3-4B-Base with low-rank adapters and a decision head for the Evidence Inference 2.0 task.",
+      "source_url": "https://arxiv.org/abs/2610.07019",
+      "supporting_quote": "It is Qwen3-4B-Base with low-rank adapters and a decision head, fine-tuned for EI only",
+      "confidence": "medium",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "cov2",
+      "claim": "Refusal directions concentrate in sparse component mechanisms comprising 28 to 48 percent of upstream attention and MLP components while retaining 88 to 101 percent of steering effectiveness.",
+      "episode_span": "Refusal directions concentrate in sparse component mechanisms comprising 28 to 48 percent of upstream attention and MLP components while retaining 88 to 101 percent of steering effectiveness.",
+      "source_url": "https://arxiv.org/abs/2610.06903",
+      "supporting_quote": "refusal directions concentrate in sparse component mechanisms comprising 28--48% of upstream components, retaining 88--101% of steering effectiveness",
+      "confidence": "medium",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "cov3",
+      "claim": "CAGD retains a small set of old prompts, uses a frozen previous model to reconstruct completions, and matches predictive distributions while learning the next task.",
+      "episode_span": "CAGD retains a small set of old prompts, uses a frozen previous model to reconstruct completions, and matches predictive distributions while learning the next task.",
+      "source_url": "https://arxiv.org/abs/2610.06940",
+      "supporting_quote": "retain a small set of old prompts, use a frozen previous model to reconstruct completions and match its predictive distributions while learning the next task",
+      "confidence": "medium",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "cov4",
+      "claim": "SanSi reads option probabilities after every loop and trains each loop with a proper scoring rule so one model serves budgets from one to eight loops.",
+      "episode_span": "SanSi reads option probabilities after every loop and trains each loop with a proper scoring rule so one model serves budgets from one to eight loops.",
+      "source_url": "https://arxiv.org/abs/2610.07730",
+      "supporting_quote": "option probabilities are read after every loop, and every loop is trained with a proper scoring rule, so that one model serves every budget from one loop to eight",
+      "confidence": "medium",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "cov5",
+      "claim": "ReFold removes two kinds of inter-turn redundancy by replacing earlier displayed content with stubs and folding completed turns into one-line notes.",
+      "episode_span": "ReFold removes two kinds of inter-turn redundancy by replacing earlier displayed content with stubs and folding completed turns into one-line notes.",
+      "source_url": "https://arxiv.org/abs/2610.07863",
+      "supporting_quote": "removes two kinds of inter-turn redundancy without an auxiliary predictor: content an earlier turn already displayed, replaced by a stub, and turns the agent itself reports finished, folded into a one-line note",
+      "confidence": "medium",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "cov6",
+      "claim": "DLoop continues drafting while the draft model remains confident and verifies all accumulated tokens together.",
+      "episode_span": "DLoop continues drafting while the draft model remains confident and verifies all accumulated tokens together.",
+      "source_url": "https://arxiv.org/abs/2610.07659",
+      "supporting_quote": "DLoop continues drafting while the draft model remains confident and verifies all accumulated draft tokens together",
+      "confidence": "medium",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "cov7",
+      "claim": "Kurate scores papers on eight dimensions including statistical power, causal identification, preregistration, and conflict of interest.",
+      "episode_span": "Kurate scores papers on eight dimensions including statistical power, causal identification, preregistration, and conflict of interest.",
+      "source_url": "https://arxiv.org/abs/2610.07306",
+      "supporting_quote": "scored each paper on 8 dimensions of study design and reporting: specifically, statistical power, causal identification, preregistration,",
+      "confidence": "medium",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "cov9",
+      "claim": "The benchmark comprises 602 papers, 102 with human-validated gold annotations and 500 with LLM-generated silver annotations covering the full Croissant schema including Responsible AI fields.",
+      "episode_span": "The benchmark comprises 602 papers, 102 with human-validated gold annotations and 500 with LLM-generated silver annotations covering the full Croissant schema including Responsible AI fields.",
+      "source_url": "https://arxiv.org/abs/2610.07132",
+      "supporting_quote": "benchmark comprises 602 papers, including 102 with human-validated gold annotations and 500 with LLM-generated silver annotations, covering the full Croissant schema with both core and Responsible AI",
+      "confidence": "medium",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "cov10",
+      "claim": "AccentCL extracts multi-layer representations from a frozen Whisper-Large-v3 encoder and applies an imbalance-aware cross-entropy loss plus domain mean alignment loss.",
+      "episode_span": "AccentCL extracts multi-layer representations from a frozen Whisper-Large-v3 encoder and applies an imbalance-aware cross-entropy loss plus domain mean alignment loss.",
+      "source_url": "https://arxiv.org/abs/2610.07426",
+      "supporting_quote": "AccentCL extracts multi-layer representations from a frozen Whisper-Large-v3 encoder, optimized with an imbalance-aware cross-entropy loss to reduce bias toward the majority accent classes and a domain mean alignment loss",
+      "confidence": "medium",
+      "status": "verified_from_fetched"
+    }
+  ]
+}

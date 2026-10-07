@@ -1,0 +1,189 @@
+OpenAI releases mathematical results from an internal frontier model in a public GitHub repository with Lean formalizations and compute estimates.
+
+This is Models and Agents, episode 196.
+
+OpenAI released a broad range of new mathematical results produced by an internal frontier model.
+
+The company is publishing the results in a GitHub repository that includes formalizations of many proofs in Lean.
+
+Ten summaries of the model’s reasoning appear alongside estimations of compute spent and statistics on attempted problems.
+
+The average result used the equivalent compute of roughly three hours of ChatGPT Pro thinking.
+
+OpenAI consulted the independent Advisory Group on Mathematics and Artificial Intelligence at the Institute for Advanced Study to develop release protocols.
+
+The company is funding workshops around major AI-produced results.
+
+It states it is working to responsibly release the model that produced these results while continuing to evaluate internal frontier models on mathematics and other sciences.
+
+The repository will be updated with more formalizations as they become available.
+
+Additional details about how the results were obtained are included to promote transparency.
+
+Future releases will focus on improving paper quality through better citations, exposition, and presentation.
+
+WavePrune restricts each RoPE channel to its first rotation period.
+
+The method raises the HELMET score on four of five tested models without extra tuning.
+
+One example shows an increase from 35.7 to 40.0 on Qwen3-8B.
+
+When pretraining from scratch, models using WavePrune achieve lower validation loss at extrapolated lengths.
+
+The approach induces fine-grained sparsity that hardware-aligned CUDA kernels exploit for 1.15x prefill and 1.24x decoding speedups over FlashAttention-2 at 32K context.
+
+Fiorillo v0.5 is a 4-billion-parameter open model fine-tuned on Qwen3-4B-Base with low-rank adapters and a decision head.
+
+It targets the Evidence Inference 2.0 task of answering whether an intervention significantly changed an outcome.
+
+On the test split of 1,218 prompts from 333 articles, it achieved an expected calibration error of 0.0168.
+
+Macro-F1 reached 0.9248 and log loss sat 0.1829 below Gemma 4 31B-it.
+
+The model was trained only on the 1,431 training articles whose licenses permit reuse.
+
+It was released under the Apache License 2.0 after passing four pre-registered criteria.
+
+Refusal directions concentrate in sparse component mechanisms comprising 28 to 48 percent of upstream attention and MLP components.
+
+Those mechanisms retain 88 to 101 percent of steering effectiveness.
+
+Effective steering further concentrates in approximately 50 percent of residual stream dimensions.
+
+That concentration retains 85 to 98 percent of baseline performance.
+
+The study decomposes refusal steering across four open-weight models.
+
+All code and raw experimental results are released on GitHub.
+
+Low capacity reduces causal effectiveness by 84 percent and low responsiveness by 95 percent.
+
+CAGD retains a small set of old prompts and uses a frozen previous model to reconstruct completions.
+
+It matches predictive distributions while learning the next task.
+
+On a 219M masked diffusion language model, the method reduced four-task final held-out loss from 2.927 to 1.114 in one task order.
+
+The same order in reverse dropped from 2.168 to 0.891.
+
+The soft targets lowered final average loss by 0.055 over hard replay when teacher-generated support was identical.
+
+The approach was tested on fresh facts and natural instructions across SMDM and Qwen3.
+
+SanSi reads option probabilities after every loop and trains each loop with a proper scoring rule.
+
+One model therefore serves budgets from one to eight loops.
+
+On 10,027 test decisions from 59 sources, it reached 72.0 percent accuracy.
+
+That figure sits 13.5 points above a non-looped model of the same shape.
+
+On depth-controlled tasks, loops extend solvable depth beyond training depths where larger single-pass models fail.
+
+Used as a judge for policy optimization with reinforcement learning and no gold answers, SanSi raised the generator’s F1 by 7.7 points.
+
+ReFold removes two kinds of inter-turn redundancy by replacing earlier displayed content with stubs.
+
+It also folds completed turns into one-line notes.
+
+The method reduces token consumption by up to 2.5x and halves KV-cache memory per session.
+
+Those gains appear across five long-horizon benchmarks and two frontier LLMs.
+
+Under capped context budgets, it avoids up to 92 percent of forced compactions.
+
+Under concurrent serving workloads, it reduces request queuing delays by up to 100 percent.
+
+Inference accelerates by up to 1.7x while cutting inference costs by up to 3.4x.
+
+DLoop continues drafting while the draft model remains confident.
+
+It verifies all accumulated tokens together.
+
+Loop-aware training exposes the draft model to its own hidden states for unverified tokens.
+
+Across EAGLE-3, DFlash, Domino, DSpark, and multi-token prediction modules, DLoop improves wall-clock speedup by 5 to 41 percent while preserving lossless decoding.
+
+Kurate scores papers on eight dimensions including statistical power, causal identification, preregistration, and conflict of interest.
+
+On 60 held-out clinical-trial documents, extracted information matched expert labels in 221 of 242 protocol scorepoints.
+
+It matched in 294 of 370 results-publication scorepoints.
+
+The system links each judgment to the specific passage supporting it.
+
+It was applied to a corpus containing 3,913 randomized trial reports.
+
+TIDE 2.0 runs an interchangeable recognizer and a keyed anonymizer on institution-owned hardware.
+
+Dates receive a per-patient, interval-preserving offset.
+
+Each value receives the same surrogate across all occurrences under a given key.
+
+On two gold-annotated corpora, the default configuration reached span-level recall of 0.88 in-domain.
+
+Recall reached 0.77 on an out-of-domain corpus at precision 0.88 and 0.87.
+
+The engine is MIT-licensed and the recognizer is available under a gated research-use agreement.
+
+The CroissantMiner benchmark comprises 602 papers.
+
+102 carry human-validated gold annotations and 500 carry LLM-generated silver annotations.
+
+The annotations cover the full Croissant schema including Responsible AI fields.
+
+Single-pass extraction consistently outperformed four agentic architectures.
+
+The largest gap appeared on long-form RAI fields.
+
+The authors release the benchmark, evaluation code, judge audit, live demo, and leaderboard.
+
+AccentCL extracts multi-layer representations from a frozen Whisper-Large-v3 encoder.
+
+It applies an imbalance-aware cross-entropy loss plus domain mean alignment loss.
+
+On a five-class task it achieved 77.1 percent balanced accuracy and 76.9 percent macro-averaged F1.
+
+Adding Spanish-accented English yielded 83.3 percent F1 on the new class while retaining 77.3 percent balanced accuracy on base classes.
+
+Subsequent addition of Chinese-accented English yielded 61.8 percent F1 on the new class while preserving 77.6 percent balanced accuracy.
+
+Pop the hood on frontier model result sharing and the engineering choice becomes clear.
+
+Labs must decide whether to ship raw claims or add machine-checkable artifacts.
+
+OpenAI added Lean formalizations so any researcher can run an automated checker.
+
+That step removes the common failure mode where a textual proof later reveals subtle gaps.
+
+Compute accounting appears as ChatGPT Pro hour equivalents.
+
+Outsiders gain a rough sense of inference budget without proprietary training details.
+
+Explicit revision and citation protocols reduce the risk that later corrections become untraceable.
+
+The extra formalization cost trades against the gain in external scrutiny.
+
+When the goal is accelerating collective progress, the verifiable route sets the current practical standard.
+
+Monitor the OpenAI mathematics GitHub repository for new Lean formalizations and additional result summaries as they are added.
+
+Review the published reasoning traces to understand how the frontier model structured its mathematical arguments.
+
+Test WavePrune on a RoPE-based model at 32K context to measure the reported prefill and decoding speedups.
+
+Evaluate Fiorillo v0.5 on randomized trial articles under the Apache 2.0 license to check calibration on your own evidence-inference tasks.
+
+Further disclosures of major scientific advancements from internal frontier models are expected as evaluation standards evolve.
+
+Additional workshops and conferences on AI-produced mathematical results will be announced in the coming months.
+
+More class-incremental and continual-learning frameworks for speech and language models are likely as imbalance and domain-shift robustness improve.
+
+Before we go, watch for the next batch of Lean formalizations landing in the OpenAI mathematics repository.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+One more thing — if you liked today's episode, our sister show Omni View is worth a spot in your feed: a balanced daily world-news briefing that takes every side seriously. It's one of the Nerra Network's daily briefings, all free at nerranetwork.com. Following the long arcs? Story Trackers on nerranetwork.com follow major programs across episodes — Tesla, SpaceX, AI, space science, and more.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
