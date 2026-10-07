@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Apply to be a guest — The Age of AI · Nerra Network</title>
-<meta name="description" content="Apply to be interviewed on The Age of AI — the podcast where Mira, an AI host, calls real people and interviews them live about the AI transition.">
+<meta name="description" content="Apply to be interviewed on The Age of AI — the podcast where Mira, an AI host, interviews real people live about the AI transition.">
 <meta property="og:title" content="Be a guest on The Age of AI">
 <meta property="og:description" content="Mira, an AI, asks the questions. Real people answer. Apply to be interviewed live.">
 <meta property="og:image" content="https://nerranetwork.com/assets/covers/age-of-ai.jpg">
@@ -17,6 +17,8 @@
     --line: rgba(196, 181, 253, 0.25);
   }
   * { box-sizing: border-box; }
+  /* An html background so iOS overscroll shows the brand, not a white flash. */
+  html { background: var(--deep); color-scheme: dark; }
   body { font: 16px/1.65 'DM Sans', system-ui, -apple-system, sans-serif;
          color: var(--white); margin: 0; min-height: 100vh;
          background: linear-gradient(180deg, var(--midnight) 0%, var(--deep) 55%) fixed; }
@@ -26,6 +28,8 @@
   .lockup .words { line-height: 1.25; }
   .lockup .title { font-size: 1.5rem; font-weight: 700; letter-spacing: .08em; }
   .lockup .sub { color: var(--lavender); font-size: .8rem; letter-spacing: .28em; }
+  /* The wordmark is non-breaking; tighten it so it fits a 390px phone. */
+  @media (max-width: 420px) { .lockup .sub { letter-spacing: .16em; } .lockup .title { letter-spacing: .04em; } }
   .lockup .sub::before { content: ""; display: block; width: 56px; height: 3px;
                          border-radius: 2px; background: var(--amber); margin: .35rem 0 .3rem; }
   h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
@@ -37,10 +41,14 @@
   .card li { margin: .35rem 0; color: var(--lavender); }
   .card li b { color: var(--white); font-weight: 600; }
   label { display: block; font-weight: 600; margin: 1.1rem 0 .3rem; }
-  input, textarea { width: 100%; padding: .65rem .75rem; border: 1px solid var(--line);
+  /* select included: at 390px its longest option overflowed the column. */
+  input, textarea, select { width: 100%; max-width: 100%; padding: .65rem .75rem;
+                    border: 1px solid var(--line);
                     border-radius: 10px; font: inherit; color: var(--white);
                     background: rgba(18, 13, 46, 0.6); }
-  input:focus, textarea:focus { outline: 2px solid var(--violet); border-color: transparent; }
+  select option { background: var(--deep); color: var(--white); }
+  input:focus, textarea:focus, select:focus { outline: 2px solid var(--violet); border-color: transparent; }
+  .privacy-note { font-size: .85rem; opacity: .85; margin-top: .6rem; }
   textarea { min-height: 110px; }
   ::placeholder { color: rgba(196, 181, 253, 0.45); }
   .hint { font-size: .85rem; color: var(--lavender); margin-top: .25rem; opacity: .85; }
@@ -79,7 +87,7 @@
     <ul>
       <li>Our AI host, <b>Mira</b>, interviews you live at a time you book — a real ~45-minute conversation, recorded for the podcast. You join from your browser with a link, or take a phone call instead if you prefer.</li>
       <li>The day before, you get a short prep brief with the themes she plans to explore.</li>
-      <li><b>Nothing publishes until you approve the transcript.</b> You can have anything removed.</li>
+      <li><b>You get your own transcript first.</b> You have a week to approve it, cut anything from it, or refuse it — what you cut is removed from the audio. After seven days without a reply the episode goes ahead as sent, and you can ask for a takedown at any time.</li>
       <li>Every episode discloses that the host is an AI. The guests never are.</li>
     </ul>
   </div>
@@ -142,7 +150,8 @@
       <option value="open">Open — the personal side is part of the story</option>
     </select>
     <p class="hint">Mira will not push past what you choose here. You can change
-    your mind on the day, and you approve the episode before it is published.</p>
+    your mind on the day, and you can cut anything from your transcript before
+    the episode is built.</p>
 
     <label for="must_cover">Points you want to be sure we cover (optional)</label>
     <textarea id="must_cover" name="must_cover" rows="4" maxlength="2000" placeholder="One per line, up to five: questions or points you'd like the conversation to reach"></textarea>
@@ -157,6 +166,9 @@
 
     <button id="submitBtn" type="submit">Apply to be a guest</button>
     <p id="result" role="status"></p>
+    <p class="privacy-note">What we keep from this form, from the interview and
+    who processes it: <a href="privacy-policy.html#guests">privacy policy — if you
+    are a guest</a>.</p>
   </form>
 
   <p class="foot">REAL PEOPLE · AI HOST · THE AGE WE'RE ALL LIVING THROUGH</p>
@@ -244,7 +256,7 @@ document.getElementById('applyForm').addEventListener('submit', async (e) => {
     result.textContent = 'Application received! We read every one — if it\'s a fit, a booking link lands in your inbox.';
     e.target.reset();
   } catch (err) {
-    result.textContent = 'Something went wrong — email patrick@planetterrian.com and we\'ll sort it out.';
+    result.textContent = 'Something went wrong — email hello@nerranetwork.com and we\'ll sort it out.';
   } finally { btn.disabled = false; }
 });
 </script>

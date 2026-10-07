@@ -194,6 +194,17 @@
             flex-wrap: wrap;
             margin-top: var(--sp-6);
         }
+        /* Prose links (Oct 7 2026): the global ``a`` rule inherits colour and
+           drops the underline, so a link inside a sentence was invisible.
+           Scoped to this page's content and to plain (class-less) links. */
+        #main-content p a:not([class]), #main-content li a:not([class]) {
+            color: var(--nn-cyan);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        #main-content p a:not([class]):hover, #main-content li a:not([class]):hover {
+            color: var(--nn-white);
+        }
     </style>
 {% endblock %}
 
@@ -230,8 +241,8 @@
                     <div class="about-stat-label">Episodes shipped</div>
                 </div>
                 <div class="about-stat">
-                    <div class="about-stat-value">4</div>
-                    <div class="about-stat-label">Languages</div>
+                    <div class="about-stat-value">{{ listening_language_count }}</div>
+                    <div class="about-stat-label">Listening languages</div>
                 </div>
                 <div class="about-stat">
                     <div class="about-stat-value">100%</div>

@@ -27,7 +27,7 @@
       "name": "How often are new episodes released?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Most shows publish daily, weekends included. The exceptions: Unintended Consequences runs weekdays; Environmental Intelligence runs odd weekdays; Финансы Просто and Привет, Русский! run even days; Offshore North is weekly on Mondays; The Age of AI publishes when an interview is ready. Each show page lists its exact schedule."
+        "text": {{ cadence_answer | tojson }}
       }
     },
     {
@@ -189,6 +189,17 @@
             font-family: var(--font-body);
             color: var(--nn-text-muted);
         }
+        /* Prose links (Oct 7 2026): the global ``a`` rule inherits colour and
+           drops the underline, so a link inside a sentence was invisible.
+           Scoped to this page's content and to plain (class-less) links. */
+        #main-content p a:not([class]), #main-content li a:not([class]) {
+            color: var(--nn-cyan);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        #main-content p a:not([class]):hover, #main-content li a:not([class]):hover {
+            color: var(--nn-white);
+        }
     </style>
 {% endblock %}
 
@@ -224,12 +235,11 @@
             <details class="faq-item">
                 <summary>How often are new episodes released?</summary>
                 <div class="faq-answer">
-                    Most shows publish daily, weekends included. The exceptions:
-                    Unintended Consequences runs weekdays; Environmental Intelligence
-                    runs odd weekdays; Финансы Просто and Привет, Русский! run even
-                    days; Offshore North is weekly on Mondays; The Age of AI publishes
-                    when an interview is ready. Each show page lists its exact
-                    schedule.
+                    {#- Rendered from the registry ``schedule`` strings
+                        (generate_html._cadence_answer), the same string the
+                        JSON-LD above carries. The typed list had four shows on
+                        cadences they left in June and omitted four more. -#}
+                    {{ cadence_answer }}
                 </div>
             </details>
 
@@ -265,8 +275,10 @@
                     <a href="{{ path_prefix }}age-of-ai.html">The Age of AI</a> and
                     <a href="{{ path_prefix }}nerra-voices.html">Nerra Voices</a>. She
                     introduces herself as an AI on every episode; guests' words are
-                    never rewritten, and every guest approves their transcript before
-                    the episode publishes.
+                    never rewritten, and every guest gets a week to approve, cut from or
+                    refuse their own transcript before the episode publishes &mdash; after
+                    seven days without a reply it goes ahead as sent, and a takedown stays
+                    available afterwards.
                 </div>
             </details>
 

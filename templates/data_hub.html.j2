@@ -24,11 +24,15 @@
   .dh-card:hover { transform:translateY(-3px); border-color:var(--accent,#6B47FF); box-shadow:0 14px 40px rgba(0,0,0,0.4); }
   .dh-card::before { content:""; position:absolute; inset:0 auto 0 0; width:5px; background:var(--accent,#6B47FF); }
   .dh-card h2 { margin:0 0 0.3rem; font-size:1.3rem; color:#fff; letter-spacing:-0.01em; }
-  .dh-card .dh-tag { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent,#9b8cff); font-weight:700; }
+  .dh-card .dh-tag { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; color:color-mix(in srgb, var(--accent,#9b8cff) 65%, #fff); font-weight:700; }
   .dh-card p { color:#aeb6d8; font-size:0.94rem; margin:0.5rem 0 0.9rem; line-height:1.5; }
   .dh-metrics { display:flex; flex-wrap:wrap; gap:8px; margin-top:0.4rem; }
   .dh-chip { font-size:0.74rem; color:#cdd4f0; background:rgba(140,140,255,0.10); border:1px solid rgba(140,140,255,0.18); border-radius:999px; padding:3px 10px; }
-  .dh-go { display:inline-flex; align-items:center; gap:6px; margin-top:1rem; color:var(--accent,#9b8cff); font-weight:700; font-size:0.92rem; }
+  .dh-go { display:inline-flex; align-items:center; gap:6px; margin-top:1rem; color:color-mix(in srgb, var(--accent,#9b8cff) 65%, #fff); font-weight:700; font-size:0.92rem; }
+  /* A card's accent as small text is mixed toward white: #E31937 and
+     #6B47FF sit under 4.5:1 on the card (Oct 7 2026). Note links get an
+     underline because the global a rule removes it. */
+  .dh-note a { text-decoration:underline; text-underline-offset:2px; }
   .dh-note { max-width:1120px; margin:0 auto 2.4rem; padding:0 1.25rem; color:#8b91b4; font-size:0.82rem; }
 </style>
 {% endblock %}

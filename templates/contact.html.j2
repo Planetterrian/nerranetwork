@@ -77,6 +77,17 @@
             font-size: 0.9rem;
             line-height: 1.6;
         }
+        /* Prose links (Oct 7 2026): the global ``a`` rule inherits colour and
+           drops the underline, so a link inside a sentence was invisible.
+           Scoped to this page's content and to plain (class-less) links. */
+        #main-content p a:not([class]), #main-content li a:not([class]) {
+            color: var(--nn-cyan);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        #main-content p a:not([class]):hover, #main-content li a:not([class]):hover {
+            color: var(--nn-white);
+        }
     </style>
 {% endblock %}
 

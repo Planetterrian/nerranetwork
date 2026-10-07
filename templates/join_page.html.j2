@@ -110,6 +110,17 @@
             color: var(--nn-cyan, #00D4FF); text-decoration: none;
         }
         .np-soft-interest a.np-soft-cta:hover { text-decoration: underline; }
+        /* Prose links (Oct 7 2026): the global ``a`` rule inherits colour and
+           drops the underline, so a link inside a sentence was invisible.
+           Scoped to this page's content and to plain (class-less) links. */
+        #main-content p a:not([class]), #main-content li a:not([class]) {
+            color: var(--nn-cyan);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        #main-content p a:not([class]):hover, #main-content li a:not([class]):hover {
+            color: var(--nn-white);
+        }
     </style>
 {% endblock %}
 
@@ -119,7 +130,11 @@
         <div>
             <div class="np-eyebrow">Nerra Personal</div>
             <h1>Your own <span class="grad">daily show.</span></h1>
-            <p class="np-hero-sub">{{ all_shows|length }} shows, most of them new every day, all free.
+            {#- Oct 7 2026: the hero counted the whole registry (31, Nerra
+                Voices included, which has no episodes) beside a stat of 26 and
+                a Step 1 that printed a literal 13. All three read the Personal
+                roster now (engine.personal_edition via _personal_shows_list). -#}
+            <p class="np-hero-sub">{{ personal_shows|length }} shows to pick from, most of them new every day, all free.
                Personal turns the ones you love into one continuous morning
                show — your picks, in your order, anchored by Mira, delivered
                as a private podcast feed that works in any app.</p>
@@ -260,7 +275,7 @@
 <section class="nn-steps">
     <div class="nn-step"><span class="num">1</span>
         <h3>Pick your shows</h3>
-        <p>Choose from the {{ lineup|length if lineup else 13 }} daily English shows in the Personal lineup
+        <p>Choose from the {{ personal_shows|length }} English shows in the Personal lineup
            (Nerra Daily is the whole-network edition and The Age of AI is
            interview-driven, so neither is a segment) and order them the way
            you want your morning to run. Two minutes, changeable any time —
