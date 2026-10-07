@@ -1207,8 +1207,21 @@ def convert_md_to_blog_html(md_text: str) -> tuple[str, list[dict]]:
     code_block_lines: list[str] = []
     in_blockquote = False
 
+    # A list item stays open until the next item or the end of the list,
+    # so its indented continuation paragraphs are INSIDE it. Closing the
+    # <li> at once put them directly in the <ol> (invalid HTML: the item's
+    # body could not be spaced or grouped with its headline, Oct 7 2026).
+    li_open = False
+
+    def close_li():
+        nonlocal li_open
+        if li_open:
+            html_parts.append("</li>")
+            li_open = False
+
     def close_list():
         nonlocal in_list, list_type
+        close_li()
         if in_list:
             html_parts.append(f"</{list_type}>")
             in_list = False
@@ -1304,7 +1317,9 @@ def convert_md_to_blog_html(md_text: str) -> tuple[str, list[dict]]:
                 html_parts.append("<ul>")
                 in_list = True
                 list_type = "ul"
-            html_parts.append(f"<li>{_md_inline(stripped[2:])}</li>")
+            close_li()
+            html_parts.append(f"<li>{_md_inline(stripped[2:])}")
+            li_open = True
             continue
 
         # Numbered lists
@@ -1316,7 +1331,9 @@ def convert_md_to_blog_html(md_text: str) -> tuple[str, list[dict]]:
                 html_parts.append("<ol>")
                 in_list = True
                 list_type = "ol"
-            html_parts.append(f"<li>{_md_inline(content)}</li>")
+            close_li()
+            html_parts.append(f"<li>{_md_inline(content)}")
+            li_open = True
             continue
 
         # Indented continuation (belongs to previous list item)

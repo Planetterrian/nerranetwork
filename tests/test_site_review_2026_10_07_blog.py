@@ -384,3 +384,19 @@ class TestTopicHubCounts:
     def test_prev_next_name_the_episode(self):
         src = _template("blog_post.html.j2")
         assert "prev_post.title" in src and "next_post.title" in src
+
+
+class TestListItemsHoldTheirBody:
+    """Design pass: an item's indented continuation paragraphs belong INSIDE
+    its <li>. They were emitted after </li>, directly in the <ol> (invalid
+    HTML), so the reporting could not be grouped under its headline."""
+
+    def test_continuations_are_inside_the_item(self):
+        from engine.blog import convert_md_to_blog_html
+
+        html, _ = convert_md_to_blog_html(
+            "## News\n\n1. **A** — x\n   Body one.\n   Body two.\n\n2. **B** — y\n   Body three.\n")
+        assert '<li><strong>A</strong> — x\n<p class="blog-list-cont">Body one.</p>' in html
+        assert html.count("<li>") == html.count("</li>") == 2
+        assert re.search(r"</p>\s*</li>\s*<li>", html)
+        assert "</li>\n<p" not in html

@@ -300,6 +300,17 @@
             font-size: 1rem;
             color: var(--nn-text);
         }
+        /* Digest items are one sentence per line; at the article's
+           paragraph spacing each story read as a column of scattered
+           lines. Inside an item the sentences sit together; the items
+           themselves get the air (Oct 7 2026 design pass). */
+        .blog-article li > p.blog-list-cont {
+            font-size: 1rem;
+            line-height: 1.7;
+            margin: var(--sp-2) 0 0;
+            padding-left: 0;
+        }
+        .blog-article li:has(> p.blog-list-cont) { margin-bottom: var(--sp-6); }
         .blog-article hr {
             border: none;
             border-top: 1px solid var(--nn-border);
@@ -1166,12 +1177,10 @@
                     Listen to podcast
                 </a>
                 {% endif %}
-                {% if summaries_page %}
-                <a href="{{ path_prefix }}{{ summaries_page }}" class="blog-listen-cta">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                    View summaries
-                </a>
-                {% endif %}
+                {#- "View summaries" left the hero (Oct 7 2026): it wrapped the
+                    meta row onto a second line of one button, and a reader
+                    already on the article has the text. The show page and
+                    the footer still link the summaries page. -#}
                 {% if youtube_url %}
                 <a href="{{ youtube_url }}" class="blog-listen-cta" rel="noopener" target="_blank">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
