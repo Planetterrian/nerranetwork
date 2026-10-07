@@ -95,6 +95,17 @@
         .editorial-step p {
             margin-top: var(--sp-3);
         }
+        /* Prose links (Oct 7 2026): the global ``a`` rule inherits colour and
+           drops the underline, so a link inside a sentence was invisible.
+           Scoped to this page's content and to plain (class-less) links. */
+        #main-content p a:not([class]), #main-content li a:not([class]) {
+            color: var(--nn-cyan);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        #main-content p a:not([class]):hover, #main-content li a:not([class]):hover {
+            color: var(--nn-white);
+        }
     </style>
 {% endblock %}
 
@@ -273,11 +284,12 @@
                 waits.
             </li>
             <li>
-                <strong>The guest approves their own transcript.</strong> The
-                guest reads what they said before anything reaches a feed.
-                Anything they ask to have removed is cut from the audio before
-                the episode is built — not bleeped over — and a takedown stays
-                available after publication.
+                <strong>The guest gets their own transcript.</strong> The
+                guest has a week to read what they said and approve it, cut
+                anything from it, or refuse it. Anything they cut is removed
+                from the audio before the episode is built — not bleeped over.
+                After seven days without a reply the episode goes ahead as
+                sent, and a takedown stays available after publication.
             </li>
         </ul>
         {{ mira_claim(heading='', level='h3', show_footnote=true) }}

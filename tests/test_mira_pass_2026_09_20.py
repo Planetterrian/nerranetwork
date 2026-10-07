@@ -295,7 +295,10 @@ class TestMiraIsOnTheSurfacesThatMatter:
     def test_editorial_page_states_the_two_gates(self):
         ed = (TEMPLATES / "editorial.html.j2").read_text(encoding="utf-8")
         assert "two gates" in ed.lower()
-        assert "approves their own transcript" in ed
+        # Oct 7 2026: gate 2 as built — a week to approve, cut or refuse,
+        # then auto-approve. "approves their own transcript" overclaimed it.
+        assert "gets their own transcript" in ed
+        assert "seven days without a reply" in " ".join(ed.split())
 
     def test_every_orphaned_surface_now_links_the_hub(self):
         for name in ("press.html.j2", "editorial.html.j2", "about.html.j2",

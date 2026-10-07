@@ -18,7 +18,9 @@
 <style>
   .ru-hero {
     position: relative;
-    padding: 4.5rem 0 3rem;
+    /* Clear the fixed nav (72px): 4.5rem equalled it, and the phone rule's
+       2rem put the eyebrow underneath it (Oct 7 2026). */
+    padding: calc(var(--nav-height) + 3rem) 0 3rem;
     overflow: hidden;
   }
   .ru-hero::before {
@@ -45,10 +47,12 @@
     font-weight: 600;
     letter-spacing: .06em;
     text-transform: uppercase;
+    font-family: var(--font-ui);
     color: var(--nn-cyan);
     margin-bottom: 1rem;
   }
   .ru-hero h1 {
+    font-family: var(--font-heading);
     font-size: clamp(2.1rem, 5.2vw, 3.4rem);
     line-height: 1.08;
     margin: 0 0 1rem;
@@ -191,7 +195,7 @@
     gap: 1.25rem;
   }
   @media (max-width: 860px) {
-    .ru-hero { padding-top: 2rem; }
+    .ru-hero { padding-top: calc(var(--nav-height) + 1.5rem); }
     .ru-hero-inner { grid-template-columns: 1fr; gap: 1.75rem; }
     /* The ask stays above the cover art on phones. Visitors arrive here
        from a Short, on a phone, with one thing to do — pushing the form
@@ -200,6 +204,17 @@
     .ru-hero h1 { font-size: clamp(1.9rem, 8vw, 2.4rem); }
     .ru-hero-desc { font-size: 1rem; margin-bottom: 1.25rem; }
     .ru-hero-art img { max-width: 180px; }
+  }
+  /* Prose links (Oct 7 2026): the global ``a`` rule inherits colour and
+     drops the underline, so a link inside a sentence was invisible.
+     Scoped to this page's content and to plain (class-less) links. */
+  #main-content p a:not([class]), #main-content li a:not([class]) {
+    color: var(--nn-cyan);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  #main-content p a:not([class]):hover, #main-content li a:not([class]):hover {
+    color: var(--nn-white);
   }
 </style>
 {% endblock %}

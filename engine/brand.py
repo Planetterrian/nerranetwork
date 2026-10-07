@@ -120,6 +120,19 @@ MIRA_FIRST_CLAIM_FOOTNOTE = (
 )
 
 
+# Oct 7 2026: "nothing publishes until the guest approves" had survived on
+# seven surfaces after the Sep 22 pass corrected the basis above (this meta
+# description, the claims-ledger rows, the FAQ, the editorial page, both
+# apply forms). Gate 2 is a week to approve, cut or refuse, then auto-approve.
+#: The mira.html meta description (was a literal in generate_html.py
+#: carrying the overclaim). Kept short: it is what a search result shows.
+MIRA_PAGE_DESCRIPTION = (
+    "Mira is the Nerra Network's AI host. She anchors the daily combined "
+    "edition and interviews real people live — and each guest gets a week "
+    "to approve, cut from or refuse their own transcript."
+)
+
+
 def mira_claim_paragraphs() -> list:
     """The claim, its basis and its footnote, in the order they are read."""
     return [
@@ -473,8 +486,10 @@ CLAIMS_STATUS_LABELS = {
         "Verified",
         "The source was fetched and the supporting quote was found in it.",
     ),
+    # Its own label (Oct 7 2026): two statuses both reading "Verified" made
+    # the legend show the same badge twice with different meanings.
     "verified_from_fetched": (
-        "Verified",
+        "Verified (fetched copy)",
         "The supporting quote was found in the copy of the source fetched for "
         "the episode.",
     ),

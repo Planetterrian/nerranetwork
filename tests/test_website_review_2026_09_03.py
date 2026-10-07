@@ -296,7 +296,11 @@ class TestShowAndInfoPages:
         src = (_T / "faq.html.j2").read_text(encoding="utf-8")
         for q in ("What does it cost?", "Who is Mira?", "What languages can I listen in?"):
             assert src.count(q) == 2, f"{q!r} must be in the JSON-LD and the visible FAQ"
-        assert "Offshore North is weekly on Mondays" in src
+        # Oct 7 2026: the cadence answer is rendered from the registry
+        # schedule strings (generate_html._cadence_answer), not typed.
+        assert "{{ cadence_answer }}" in src
+        import generate_html as G
+        assert "Offshore North" in G._cadence_answer()
         assert "Modern Investing and Unintended Consequences are weekdays" not in src
 
     def test_no_seventeen_daily_shows_claim(self):

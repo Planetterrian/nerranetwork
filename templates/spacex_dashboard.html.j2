@@ -93,7 +93,9 @@
   .spx-stat .l { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:#8ea3d6; margin-top:2px; }
 
   /* cadence chart */
-  .spx-cadence { display:flex; align-items:flex-end; gap:6px; height:160px; padding-top:8px; overflow:hidden; }
+  /* 22px headroom: the value label sits 18px above its bar and was
+     clipped by overflow:hidden at the old 8px. */
+  .spx-cadence { display:flex; align-items:flex-end; gap:6px; height:160px; padding-top:22px; overflow:hidden; }
   .spx-bar-wrap { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
   .spx-bar {
     width:100%; border-radius:6px 6px 2px 2px; min-height:3px;
@@ -149,7 +151,8 @@
   .spx-spcx .ch.up { color:#5ef0a0; } .spx-spcx .ch.down{ color:#ff8a8a; }
   .spx-muted { color:#8ea3d6; font-size:0.82rem; }
   .spx-foot-note { max-width:1120px; margin:0 auto 2rem; padding:0 1.25rem; color:#7f93c4; font-size:0.78rem; }
-  .spx-disclaimer { color:#7f93c4; font-size:0.74rem; margin-top:0.4rem; }
+  .spx-disclaimer { color:#7f93c4; font-size:0.75rem; margin-top:0.4rem; }
+  .spx-asof { color:#cfe0ff; font-size:0.82rem; margin:0 0 0.6rem; padding:6px 10px; border-left:3px solid var(--spx-cyan); background:rgba(0,212,255,0.06); border-radius:4px; }
 </style>
 {% endblock %}
 
@@ -261,10 +264,12 @@
     <div class="spx-panel">
       <h2>Starship flight-test tracker 🚀 <span class="spx-muted" style="font-size:0.7rem;font-weight:400;">(integrated flight tests)</span></h2>
       <div style="display:flex; gap:1.4rem; flex-wrap:wrap; margin-bottom:0.9rem;">
-        <div class="spx-stat"><div class="n" id="ssTotal">—</div><div class="l">Integrated flights</div></div>
-        <div class="spx-stat"><div class="n" id="ssCatches">—</div><div class="l">Booster tower catches</div></div>
-        <div class="spx-stat"><div class="n" id="ssLatest">—</div><div class="l">Latest flight</div></div>
+        <div class="spx-stat"><div class="n" id="ssTotal">—</div><div class="l">Flights in this record</div></div>
+        <div class="spx-stat"><div class="n" id="ssCatches">—</div><div class="l">Tower catches in this record</div></div>
+        <div class="spx-stat"><div class="n" id="ssLatest">—</div><div class="l" id="ssLatestLabel">Latest flight in this record</div></div>
       </div>
+      <p class="spx-asof" id="ssLiveNote" hidden></p>
+      <p class="spx-asof" id="ssAsOf" hidden></p>
       <div id="ssTimeline"><p class="spx-muted">Loading…</p></div>
       <p class="spx-disclaimer">Curated record of Starship's integrated flight tests (Super Heavy + Ship). Outcome reflects the primary test objectives; "partial" means key milestones were hit even where a stage was lost. The path to a fully reusable, rapidly-flown super-heavy-lift vehicle.</p>
     </div>
@@ -604,7 +609,23 @@
     countUp('brFleet', b.active_boosters_window);
   }
 
-  function renderStarship(s){
+  // The flight list is CURATED (operator-maintained); the launch record on
+  // the same page is live. When the live record holds a Starship flight
+  // newer than the curated list ends, say so and show the live one — the
+  // page had read "9 integrated flights, latest IFT-9 (2025-05-27)" beside
+  // "Starship Flight 14" (2026-09-28) in its own recent-launches list.
+  function newestLiveStarship(data){
+    var pool = [].concat(data && data.previous ? [data.previous] : [], (data && data.recent) || []);
+    var best = null;
+    pool.forEach(function(l){
+      if(!l || !/starship/i.test(String(l.rocket||'') + ' ' + String(l.name||''))) return;
+      var d = String(l.net||'').slice(0,10);
+      if(d && (!best || d > best.date)) best = {date:d, name:String(l.name||'')};
+    });
+    return best;
+  }
+
+  function renderStarship(s, data){
     var flights = ((s||{}).flights)||[];
     if(!flights.length) return;
     var ch = {success:'#5ef0a0', partial:'var(--spx-cyan)', failure:'#ff7a7a'};
@@ -614,6 +635,27 @@
     countUp('ssCatches', catches);
     var last = flights[flights.length-1];
     var el = document.getElementById('ssLatest'); if(el) el.textContent = last.flight||'—';
+    var asOf = document.getElementById('ssAsOf');
+    if(asOf){
+      asOf.textContent = (s.updated_at ? 'Operator data as of ' + s.updated_at + ' — this curated record'
+                                       : 'Operator-maintained record —') +
+        ' ends at ' + (last.flight||'its last entry') + (last.date ? ' (' + last.date + ')' : '') + '.';
+      asOf.hidden = false;
+    }
+    var live = newestLiveStarship(data);
+    if(live && last.date && live.date > last.date){
+      var m = live.name.match(/\(([^)]*Flight[^)]*)\)/i);
+      var liveName = m ? m[1] : live.name;
+      if(el) el.textContent = liveName;
+      var ll = document.getElementById('ssLatestLabel'); if(ll) ll.textContent = 'Latest flight · launch record, ' + live.date;
+      var note = document.getElementById('ssLiveNote');
+      if(note){
+        note.textContent = 'The live launch record shows a newer Starship flight — ' + live.name +
+          ' on ' + live.date + '. The list below is the historical curated record and has not been updated past ' +
+          (last.flight||'its last entry') + '.';
+        note.hidden = false;
+      }
+    }
     var wrap = document.getElementById('ssTimeline'); if(!wrap) return;
     // Newest first for the timeline.
     var rows = flights.slice().reverse();
@@ -635,7 +677,7 @@
   function applyLaunches(data){
     if(!data) return;
     renderNext(data.next);
-    if(data.starship) renderStarship(data.starship);
+    if(data.starship) renderStarship(data.starship, data);
     if(data.fleet) renderBoosters(data.fleet);
     renderPrev(data.previous);
     renderStats(data.stats, data.total_launches);

@@ -49,6 +49,12 @@ Run::
     python scripts/build_gallery_manifest.py
     python scripts/build_gallery_manifest.py --out site/data/gallery-manifest.json
     python scripts/build_gallery_manifest.py --dry-run     # don't write
+    python scripts/build_gallery_manifest.py --indexes-only  # no R2: slices +
+                                                             # slim indexes from --out
+
+Every write also produces the slim indexes the pages load
+(``site/data/gallery/_network.index.json`` and ``<slug>.index.json`` —
+``build_gallery_index``), derived from the manifest of the same run.
 """
 
 from __future__ import annotations
@@ -365,10 +371,171 @@ def write_show_slices(manifest: Dict, out_path: Path) -> List[Path]:
         )
         written.append(target)
     for stale in slice_dir.glob("*.json"):
+        # The slim indexes share the directory and own their own cleanup.
+        if stale.name.endswith(INDEX_SUFFIX):
+            continue
         if stale.name not in keep:
             stale.unlink()
     if written:
         logger.info("Wrote %d per-show gallery slice(s) under %s", len(written), slice_dir)
+    return written
+
+
+# ---------------------------------------------------------------------------
+# Slim indexes (Oct 7 2026)
+# ---------------------------------------------------------------------------
+
+#: Every slim index ends in this, so ``site/data/gallery/*.json`` (already
+#: whitelisted by both committing workflows) carries them and the slice
+#: cleanup above can tell them apart from a show slice.
+INDEX_SUFFIX = ".index.json"
+#: The network-wide index. A leading underscore cannot collide with a slug.
+NETWORK_INDEX_NAME = "_network" + INDEX_SUFFIX
+
+#: Positional fields of one ``images`` row and one ``episodes`` row. The
+#: client reads the positions from these lists, never from literals.
+INDEX_IMAGE_FIELDS = ["image_id", "episode", "format", "caption", "intended_use"]
+INDEX_EPISODE_FIELDS = ["show_slug", "episode_date", "episode_id", "episode_title"]
+_INDEX_LICENSE_FIELDS = ("license", "license_url", "attribution")
+
+
+def _key_stem(record: Dict) -> str:
+    return (
+        f"{record.get('show_slug')}/{record.get('episode_date')}/"
+        f"{record.get('episode_id')}/{record.get('image_id')}"
+    )
+
+
+def build_gallery_index(manifest: Dict, show_slug: Optional[str] = None) -> Dict:
+    """The grid's view of ``manifest``: no prompt, no derivable URL.
+
+    Oct 7 2026: ``gallery.html`` parsed the whole 22 MB manifest before the
+    first card — 6.7 MB of it prompts the lightbox hides by default and
+    ~3 MB of URLs that are the R2 key under one base. The grid needs the
+    id, the episode (show, date, title) and the thumbnail; the lightbox
+    needs the licence (one value network-wide) and, when the visitor asks,
+    the prompt — which ``assets/js/gallery.js`` reads lazily from the
+    show's full slice. Episodes are a table (one title per episode, not
+    per image) and images are positional rows.
+
+    URLs are rebuilt client-side as ``base_url/<key>``; a record whose
+    stored URL or key does not match that rule, or whose licence differs
+    from the default, is carried verbatim in ``overrides`` (keyed by row
+    position) so the index can never point at a different file than the
+    manifest does.
+    """
+    images = [
+        img for img in manifest.get("images") or []
+        if isinstance(img, dict)
+        and (show_slug is None or img.get("show_slug") == show_slug)
+    ]
+
+    bases: Dict[str, int] = {}
+    licences: Dict[Tuple[str, str, str], int] = {}
+    for img in images:
+        thumb = str(img.get("thumbnail_url") or "")
+        tail = "/" + _key_stem(img) + ".thumb.webp"
+        if thumb.endswith(tail):
+            base = thumb[: -len(tail)]
+            bases[base] = bases.get(base, 0) + 1
+        lic = tuple(str(img.get(f) or "") for f in _INDEX_LICENSE_FIELDS)
+        licences[lic] = licences.get(lic, 0) + 1
+    base_url = max(bases, key=bases.get) if bases else ""
+    default_licence = (
+        max(licences, key=licences.get) if licences
+        else ("CC BY-SA 4.0", "https://creativecommons.org/licenses/by-sa/4.0/",
+              "Nerra Network")
+    )
+
+    episodes: List[List[str]] = []
+    episode_rows: Dict[Tuple[str, str, str], int] = {}
+    rows: List[List] = []
+    overrides: Dict[str, Dict] = {}
+    for img in images:
+        ep_key = (str(img.get("show_slug") or ""), str(img.get("episode_date") or ""),
+                  str(img.get("episode_id") or ""))
+        if ep_key not in episode_rows:
+            episode_rows[ep_key] = len(episodes)
+            episodes.append([*ep_key, str(img.get("episode_title") or "")])
+        original_key = str(img.get("original_key") or "")
+        stem = _key_stem(img)
+        fmt = original_key[len(stem) + 1:] if original_key.startswith(stem + ".") else ""
+        position = len(rows)
+        rows.append([
+            str(img.get("image_id") or ""), episode_rows[ep_key], fmt,
+            str(img.get("caption") or ""), str(img.get("intended_use") or ""),
+        ])
+        override: Dict[str, str] = {}
+        if not fmt:
+            override["original_key"] = original_key
+        if str(img.get("thumbnail_url") or "") != f"{base_url}/{stem}.thumb.webp":
+            override["thumbnail_url"] = str(img.get("thumbnail_url") or "")
+        if str(img.get("episode_title") or "") != episodes[episode_rows[ep_key]][3]:
+            override["episode_title"] = str(img.get("episode_title") or "")
+        for field, default in zip(_INDEX_LICENSE_FIELDS, default_licence):
+            if str(img.get(field) or "") != default:
+                override[field] = str(img.get(field) or "")
+        if override:
+            overrides[str(position)] = override
+
+    shows = manifest.get("shows") or []
+    if show_slug is not None:
+        shows = [s for s in shows if s.get("slug") == show_slug]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "generated_at": manifest.get("generated_at"),
+        "image_count": len(rows),
+        "show_slug": show_slug or "",
+        "base_url": base_url,
+        "license": default_licence[0],
+        "license_url": default_licence[1],
+        "attribution": default_licence[2],
+        "shows": shows,
+        "episode_fields": INDEX_EPISODE_FIELDS,
+        "episodes": episodes,
+        "image_fields": INDEX_IMAGE_FIELDS,
+        "images": rows,
+        "overrides": overrides,
+    }
+
+
+def write_gallery_indexes(manifest: Dict, out_path: Path) -> List[Path]:
+    """Write the network index and one index per show beside the slices.
+
+    Derived from the manifest of the SAME run, after it was written, so
+    every path that keeps the committed manifest (a failed R2 walk returns
+    before this) keeps the committed indexes too. Compact JSON with no
+    indentation: these are read by browsers, not diffed by people. Stale
+    per-show indexes are removed; unchanged ones are not rewritten.
+    """
+    slice_dir = out_path.parent / "gallery"
+    slice_dir.mkdir(parents=True, exist_ok=True)
+    slugs = sorted({
+        str(img.get("show_slug") or "") for img in manifest.get("images") or []
+        if isinstance(img, dict) and img.get("show_slug")
+    })
+    targets = {NETWORK_INDEX_NAME: build_gallery_index(manifest)}
+    for slug in slugs:
+        targets[slug + INDEX_SUFFIX] = build_gallery_index(manifest, slug)
+    written: List[Path] = []
+    for name, payload in targets.items():
+        target = slice_dir / name
+        try:
+            existing = json.loads(target.read_text(encoding="utf-8")) if target.exists() else None
+        except Exception:  # noqa: BLE001 — bad file → overwrite
+            existing = None
+        if existing is not None and _without_timestamp(existing) == _without_timestamp(payload):
+            continue
+        target.write_text(
+            json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
+            encoding="utf-8",
+        )
+        written.append(target)
+    for stale in slice_dir.glob("*" + INDEX_SUFFIX):
+        if stale.name not in targets:
+            stale.unlink()
+    if written:
+        logger.info("Wrote %d gallery index file(s) under %s", len(written), slice_dir)
     return written
 
 
@@ -500,6 +667,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         help=f"Parallel sidecar downloads (default {FETCH_WORKERS}).",
     )
     parser.add_argument(
+        "--indexes-only", action="store_true",
+        help="Do not touch R2: rebuild the per-show slices and the slim "
+             "indexes from the manifest already at --out.",
+    )
+    parser.add_argument(
         "-v", "--verbose", action="store_true",
     )
     args = parser.parse_args(argv)
@@ -508,6 +680,17 @@ def main(argv: Optional[List[str]] = None) -> int:
         level=logging.DEBUG if args.verbose else logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
+
+    if args.indexes_only:
+        existing = load_existing_manifest(args.out)
+        if not existing or not (existing.get("images") or []):
+            # Never derive an empty index from a missing manifest: that is
+            # how the site would show "no images" with the data still in R2.
+            logger.error("No populated manifest at %s — nothing written", args.out)
+            return 1
+        write_show_slices(existing, args.out)
+        write_gallery_indexes(existing, args.out)
+        return 0
 
     config = gallery_config_from_env()
     if not config.is_configured:
@@ -555,6 +738,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     write_manifest_if_changed(manifest, args.out)
     write_show_slices(manifest, args.out)
+    write_gallery_indexes(manifest, args.out)
     return 0
 
 

@@ -137,6 +137,29 @@ class TestNoSurfaceStillSaysDaily:
                     "publishes on Mondays — this is the text Apple and "
                     "Spotify show")
 
+    def test_no_topic_hub_of_monday_only_shows_says_daily(self):
+        """Oct 7 2026: the Good news hub (DP Pod alone) called it "a two-host
+        daily show" and "a daily good-news podcast" in its intro and its
+        meta description — the copy the 09-21 pass never reached."""
+        import generate_html as G
+        from engine.topic_hubs import TOPIC_HUBS, hub_shows
+
+        monday = {s for s, (_c, f) in _cron_map().items() if f == "monday"}
+        shows = G._build_all_shows_list()
+        checked = 0
+        for hub in TOPIC_HUBS:
+            members = {s["slug"] for s in hub_shows(hub, shows)}
+            if not members or not members <= monday:
+                continue
+            checked += 1
+            text = " ".join(str(hub.get(k, "")) for k in (
+                "title", "intro", "angle", "meta_description", "keywords")).lower()
+            for word in self._DAILY_WORDS:
+                assert word not in text, (
+                    f"hub {hub['id']!r} covers only Monday shows "
+                    f"({sorted(members)}) but says {word!r}")
+        assert checked, "no hub of Monday-only shows to check — guard is vacuous"
+
     def test_a_show_with_no_day_filter_is_not_advertised_as_weekdays_only(self):
         """Unintended Consequences said "Weekdays" and published all seven."""
         import generate_html as G

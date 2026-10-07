@@ -143,6 +143,11 @@
             cursor: pointer;
             transition: all var(--duration) var(--ease);
         }
+        /* Same body-link override as the related cards: these are buttons. */
+        .blog-article .share-buttons a {
+            color: var(--nn-text-muted);
+            text-decoration: none;
+        }
         .share-buttons a:hover,
         .share-buttons button:hover {
             border-color: var(--show-color);
@@ -155,13 +160,13 @@
             margin: 0 auto;
             padding: 0 var(--sp-6) var(--sp-16);
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(0, 1fr);
             gap: var(--sp-10);
         }
         @media (min-width: 1024px) {
             .blog-article-wrap {
                 max-width: 1060px;
-                grid-template-columns: 200px 1fr;
+                grid-template-columns: 200px minmax(0, 1fr);
             }
         }
 
@@ -212,9 +217,18 @@
             font-size: 0.75rem;
         }
 
-        /* Article */
+        /* Article. A long unbroken token (a URL, a provenance run) may never
+           widen the page past the phone it is on (Oct 7 2026). */
         .blog-article {
             min-width: 0;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+        }
+        /* Reading measure: about 68-72 characters of body text a line
+           (it had run 104-111). The sources grid, claims and transcript
+           below keep the full column. */
+        .blog-article .blog-body-lang {
+            max-width: 72ch;
         }
         .blog-article h1 {
             font-family: var(--font-heading);
@@ -278,12 +292,25 @@
             color: var(--nn-text);
             margin-bottom: var(--sp-3);
         }
+        /* An item's body is the reporting, not a caption: full text colour
+           (it was muted grey under a bold headline, Oct 7 2026). */
         .blog-article .blog-list-cont {
             margin: var(--sp-1) 0 var(--sp-2);
             padding-left: var(--sp-2);
             font-size: 1rem;
-            color: var(--nn-text-muted);
+            color: var(--nn-text);
         }
+        /* Digest items are one sentence per line; at the article's
+           paragraph spacing each story read as a column of scattered
+           lines. Inside an item the sentences sit together; the items
+           themselves get the air (Oct 7 2026 design pass). */
+        .blog-article li > p.blog-list-cont {
+            font-size: 1rem;
+            line-height: 1.7;
+            margin: var(--sp-2) 0 0;
+            padding-left: 0;
+        }
+        .blog-article li:has(> p.blog-list-cont) { margin-bottom: var(--sp-6); }
         .blog-article hr {
             border: none;
             border-top: 1px solid var(--nn-border);
@@ -427,6 +454,12 @@
             text-decoration: none;
             transition: all var(--duration) var(--ease);
         }
+        /* The cards sit inside .blog-article, whose body-link rule would
+           otherwise underline and recolour every line of every card. */
+        .blog-article a.blog-related-card {
+            color: inherit;
+            text-decoration: none;
+        }
         .blog-related-card:hover {
             border-color: var(--card-show-color, var(--nn-purple));
             background: var(--nn-card-hover);
@@ -483,15 +516,16 @@
             font-family: var(--font-ui);
             font-variant-numeric: tabular-nums;
             font-size: 0.85rem;
-            color: var(--show-color);
+            /* Text, so the AA-lightened brand colour, not the raw one. */
+            color: var(--show-color-text, var(--show-color));
             min-width: 3.5rem;
             flex-shrink: 0;
         }
         /* Only looks clickable once the seek script has attached to a
-           real audio element — an English-only episode has no inline
+           real audio element — an episode with no published audio has no
            player, and a cursor that promises nothing is worse than none. */
         .blog-chapter-list li.is-seekable { cursor: pointer; }
-        .blog-chapter-list li.is-seekable:hover .chapter-title { color: var(--show-color); }
+        .blog-chapter-list li.is-seekable:hover .chapter-title { color: var(--show-color-text, var(--show-color)); }
         .blog-chapters .chapter-foot {
             margin-top: var(--sp-3);
             font-size: 0.85rem;
@@ -566,7 +600,7 @@
             font-family: var(--font-ui);
             font-size: 0.88rem;
             font-weight: 600;
-            color: var(--show-color, var(--nn-purple));
+            color: var(--show-color-text, var(--show-color, var(--nn-purple-text, #9D8BFF)));
         }
         .blog-transcript details[open] .transcript-preview,
         .blog-transcript details[open] .transcript-more { display: none; }
@@ -618,6 +652,12 @@
             font-size: 0.9rem;
             color: var(--nn-text);
             font-weight: 500;
+            /* The neighbour's headline, held to three lines by CSS rather
+               than cut in the template (engine/titles.py owns every cut). */
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
         .blog-ep-nav .next {
             text-align: right;
@@ -644,7 +684,14 @@
             line-height: 1.6;
             margin: 0.35rem 0 0;
         }
-        .nn-iv-provenance span { white-space: nowrap; }
+        /* Each part is kept whole where it fits and wraps where it does not
+           (Oct 7 2026): the parts used to be nowrap spans joined with no
+           whitespace between them, one unbreakable run that laid every
+           post out 500-980px wide on a 390px phone and pushed the menu
+           button off-screen. The separators are plain inline text, so the
+           line breaks between parts. */
+        .nn-iv-provenance { overflow-wrap: anywhere; }
+        .nn-iv-provenance > span:not([aria-hidden]) { display: inline-block; max-width: 100%; }
         /* Episode provenance (Oct 2026): the one line under the AI badge on
            a news post, from engine.brand.episode_provenance_parts, plus the
            "Report an error" link beside it. Same type as the interview
@@ -803,7 +850,9 @@
         }
 
         /* Multilingual audio player + language switcher (June 2026) */
-        .nn-i18n {
+        /* .nn-listen is the same box without the switcher (Oct 7 2026). */
+        .nn-i18n,
+        .nn-listen {
             max-width: 760px;
             margin: 0 auto var(--sp-4);
             padding: 0 var(--sp-6);
@@ -1038,7 +1087,7 @@
             every post and never says more than the pipeline does. -#}
         {% if interview_provenance %}
         <p class="nn-iv-provenance">
-            {%- for part in interview_provenance %}{% if not loop.first %}<span aria-hidden="true"> · </span>{% endif %}<span>{{ part }}</span>{% endfor -%}
+            {%- for part in interview_provenance %}{% if not loop.first %} <span aria-hidden="true">·</span> {% endif %}<span>{{ part }}</span>{% endfor -%}
         </p>
         {% endif %}
 
@@ -1074,7 +1123,7 @@
         <div class="nn-iv-card-inner">
             <div class="nn-iv-card-label">What we talked about</div>
             <ul class="nn-iv-points">
-                {% for point in interview.talking_points %}
+                {% for point in (interview.talking_points_html or interview.talking_points) %}
                 <li>{{ point }}</li>
                 {% endfor %}
             </ul>
@@ -1090,8 +1139,12 @@
                 <picture><source type="image/webp" srcset="{{ path_prefix }}{{ podcast_image[:-4] if podcast_image.endswith('.jpg') else podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ podcast_image }}" alt="{{ show_name }}" width="40" height="40"></picture>
                 {{ show_name }} Blog
             </a>
-            <h1><span class="nn-i18n-title">{{ episode_title }}</span> — Episode {{ episode_num }}</h1>
-            {% if hook %}
+            {#- The headline once (Oct 7 2026). The episode number lives in
+                its pill below; the sub-line prints only when it says
+                something the <h1> does not — on most posts the title IS the
+                hook, and the page used to open on the same sentence twice. -#}
+            <h1><span class="nn-i18n-title">{{ episode_title }}</span></h1>
+            {% if hook and hook | trim != episode_title | trim %}
             <p class="blog-hero-hook">{{ hook }}</p>
             {% endif %}
             <div class="blog-meta-bar">
@@ -1105,7 +1158,15 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     {{ reading_time_min }} min read
                 </span>
-                {% if show_page %}
+                {#- With a player on the page, "Listen" goes to it; sending a
+                    reader to the show page to find this episode's audio cost
+                    them the article they were already on. -#}
+                {% if audio_url %}
+                <a href="#listen" class="blog-listen-cta">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    {% if _is_ru %}Слушать выпуск{% else %}Listen to podcast{% endif %}
+                </a>
+                {% elif show_page %}
                 <a href="{{ path_prefix }}{{ show_page }}" class="blog-listen-cta">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     Listen to podcast
@@ -1116,12 +1177,10 @@
                     Listen to podcast
                 </a>
                 {% endif %}
-                {% if summaries_page %}
-                <a href="{{ path_prefix }}{{ summaries_page }}" class="blog-listen-cta">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                    View summaries
-                </a>
-                {% endif %}
+                {#- "View summaries" left the hero (Oct 7 2026): it wrapped the
+                    meta row onto a second line of one button, and a reader
+                    already on the article has the text. The show page and
+                    the footer still link the summaries page. -#}
                 {% if youtube_url %}
                 <a href="{{ youtube_url }}" class="blog-listen-cta" rel="noopener" target="_blank">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
@@ -1139,7 +1198,7 @@
        nothing here (no empty/disabled control). #}
     {% if translations and audio_url %}
     {%- set _LANG_LABELS = {"en": "English", "fr": "Français", "ru": "Русский", "zh": "中文"} -%}
-    <section class="nn-i18n" aria-label="Listen in another language">
+    <section class="nn-i18n" id="listen" aria-label="Listen in another language">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
@@ -1159,6 +1218,25 @@
   {{ code | tojson }}: {"url": {{ t.audio_url | tojson }}, "title": {{ (t.title or episode_title) | tojson }}, "desc": {{ (t.description or hook) | tojson }}}{% endfor %}
 }
         </script>
+    </section>
+    {#- Every other episode with published audio gets the same player,
+        without the language pills (Oct 7 2026). Until then the only <audio>
+        on a news post was inside the switcher above, so ~2,000 English-only
+        posts offered no way to listen on the page. An interview post has its
+        player in its own hero. Same id, so the chapter list seeks it. -#}
+    {% elif audio_url and not interview %}
+    <section class="nn-listen" id="listen" aria-label="{% if _is_ru %}Слушать выпуск{% else %}Listen to this episode{% endif %}">
+        <div class="nn-i18n-inner">
+            <div class="nn-i18n-row">
+                <span class="nn-i18n-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    {% if _is_ru %}Слушать выпуск{% else %}Listen to this episode{% endif %}
+                </span>
+            </div>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="{{ audio_url }}">
+                <a href="{{ audio_url }}">{% if _is_ru %}Скачать аудио{% else %}Download the audio{% endif %}</a>
+            </audio>
+        </div>
     </section>
     {% endif %}
 
@@ -1289,9 +1367,9 @@
             </section>
             <script>
             /* Progressive enhancement: make chapters seek the player, but
-               ONLY when there is a player on the page. Episodes without
-               alternate-language tracks render no inline <audio>, so the
-               list stays a plain, useful contents listing there. */
+               ONLY when there is a player on the page. An episode with no
+               published audio URL renders no <audio>, so the list stays a
+               plain, useful contents listing there. */
             (function () {
                 var audio = document.getElementById("nn-i18n-audio")
                     || document.querySelector(".nn-iv-player audio");
@@ -1357,7 +1435,7 @@
             <!-- Story Tracker (narrative-memory shows only) -->
             {% if narrative_page %}
             <section class="blog-story-tracker" style="margin:var(--sp-4) 0;padding:var(--sp-3);border:1px solid var(--border-color, #2a2a2a);border-radius:8px;">
-                <strong>Following the long arcs?</strong>
+                <strong>Following the long arcs?</strong>{{ ' ' }}
                 {#- No UTM tags on an INTERNAL link: GA4 starts a NEW session
                     whenever a page_view carries utm_source, so tagging a
                     same-site link both inflated the session count and
@@ -1398,8 +1476,8 @@
                 Interview posts carry interview_provenance in the hero. -#}
             {% if episode_provenance and not interview %}
             <p class="nn-iv-provenance nn-ep-provenance">
-                {%- for part in episode_provenance %}{% if not loop.first %}<span aria-hidden="true"> · </span>{% endif %}<span>{{ part }}</span>{% endfor -%}
-                <span aria-hidden="true"> · </span><a href="{{ report_error_mailto }}">{% if _is_ru %}Сообщить об ошибке{% else %}Report an error{% endif %}</a>
+                {%- for part in episode_provenance %}{% if not loop.first %} <span aria-hidden="true">·</span> {% endif %}<span>{{ part }}</span>{% endfor %}
+                <span aria-hidden="true">·</span> <a href="{{ report_error_mailto }}">{% if _is_ru %}Сообщить об ошибке{% else %}Report an error{% endif %}</a>
             </p>
             {% endif %}
 
@@ -1454,7 +1532,7 @@
                 {% if prev_post %}
                 <a href="ep{{ '%03d' % prev_post.episode_num }}.html" rel="prev">
                     <span class="nav-label">&larr; {% if interview %}Previous interview{% else %}Previous{% endif %}</span>
-                    <span class="nav-title">{% if interview and interview.prev_guest %}{{ interview.prev_guest }}{% else %}Episode {{ prev_post.episode_num }}{% endif %}</span>
+                    <span class="nav-title">{% if interview and interview.prev_guest %}{{ interview.prev_guest }}{% elif prev_post.title and prev_post.title != show_name %}Ep {{ prev_post.episode_num }} · {{ prev_post.title }}{% else %}Episode {{ prev_post.episode_num }}{% endif %}</span>
                 </a>
                 {% else %}
                 <div></div>
@@ -1462,7 +1540,7 @@
                 {% if next_post %}
                 <a href="ep{{ '%03d' % next_post.episode_num }}.html" rel="next" class="next">
                     <span class="nav-label">{% if interview %}Next interview{% else %}Next{% endif %} &rarr;</span>
-                    <span class="nav-title">{% if interview and interview.next_guest %}{{ interview.next_guest }}{% else %}Episode {{ next_post.episode_num }}{% endif %}</span>
+                    <span class="nav-title">{% if interview and interview.next_guest %}{{ interview.next_guest }}{% elif next_post.title and next_post.title != show_name %}Ep {{ next_post.episode_num }} · {{ next_post.title }}{% else %}Episode {{ next_post.episode_num }}{% endif %}</span>
                 </a>
                 {% else %}
                 {#- Phase 4 of May 2026 audit: when this is the latest
@@ -1564,7 +1642,7 @@
                            `--show-color-text` formula in base.html.j2. #}
                         <span class="blog-related-show" style="color: color-mix(in srgb, {{ rp.show_color }}, white 35%)">{{ rp.show_name }}</span>
                         <h3>{{ rp.title }}</h3>
-                        {% if rp.hook %}<p>{{ rp.hook[:120] }}{% if rp.hook|length > 120 %}&hellip;{% endif %}</p>{% endif %}
+                        {% if rp.hook and rp.hook | trim != rp.title | trim %}<p>{{ rp.hook[:120] }}{% if rp.hook|length > 120 %}&hellip;{% endif %}</p>{% endif %}
                     </a>
                     {% endfor %}
                 </div>

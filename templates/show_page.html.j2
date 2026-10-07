@@ -59,17 +59,17 @@
 {% endblock %}
 
 {% block mobile_nav_links %}
-<a href="{{ path_prefix }}start-here.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">{{ t.nav_start_here }}</a>
-<a href="{{ path_prefix }}how-to-listen.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">{{ t.nav_listen }}</a>
-<a href="{{ path_prefix }}about.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">{{ t.nav_about }}</a>
-<a href="{{ path_prefix }}player.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">{{ t.nav_player }}</a>
-<a href="{{ path_prefix }}{{ show_page }}" onclick="document.getElementById('mobileMenu').classList.remove('open')">{% if _is_ru %}Главная{% else %}Home{% endif %}</a>
-<a href="{{ path_prefix }}{{ blog_page }}" onclick="document.getElementById('mobileMenu').classList.remove('open')">{% if _is_ru %}Блог{% else %}Blog{% endif %}</a>
-<a href="{{ path_prefix }}{{ summaries_page }}" onclick="document.getElementById('mobileMenu').classList.remove('open')">{% if _is_ru %}Выпуски{% else %}Summaries{% endif %}</a>
-<a href="#episodes" onclick="document.getElementById('mobileMenu').classList.remove('open')">{% if _is_ru %}Эпизоды{% else %}Episodes{% endif %}</a>
-<a href="#about" onclick="document.getElementById('mobileMenu').classList.remove('open')">{% if _is_ru %}О подкасте{% else %}About{% endif %}</a>
-<a href="#resources" onclick="document.getElementById('mobileMenu').classList.remove('open')">{% if _is_ru %}Ресурсы{% else %}Resources{% endif %}</a>
-<a href="#faq" onclick="document.getElementById('mobileMenu').classList.remove('open')">{% if _is_ru %}Вопросы{% else %}FAQ{% endif %}</a>
+<a href="{{ path_prefix }}start-here.html">{{ t.nav_start_here }}</a>
+<a href="{{ path_prefix }}how-to-listen.html">{{ t.nav_listen }}</a>
+<a href="{{ path_prefix }}about.html">{{ t.nav_about }}</a>
+<a href="{{ path_prefix }}player.html">{{ t.nav_player }}</a>
+<a href="{{ path_prefix }}{{ show_page }}">{% if _is_ru %}Главная{% else %}Home{% endif %}</a>
+<a href="{{ path_prefix }}{{ blog_page }}">{% if _is_ru %}Блог{% else %}Blog{% endif %}</a>
+<a href="{{ path_prefix }}{{ summaries_page }}">{% if _is_ru %}Выпуски{% else %}Summaries{% endif %}</a>
+<a href="#episodes">{% if _is_ru %}Эпизоды{% else %}Episodes{% endif %}</a>
+<a href="#about">{% if _is_ru %}О подкасте{% else %}About{% endif %}</a>
+<a href="#resources">{% if _is_ru %}Ресурсы{% else %}Resources{% endif %}</a>
+<a href="#faq">{% if _is_ru %}Вопросы{% else %}FAQ{% endif %}</a>
 {% endblock %}
 
 {% block content %}
@@ -88,7 +88,7 @@
             <div class="show-hero-info">
                 <h1>{{ show_name }}</h1>
                 <p class="show-hero-tagline">{{ hero_tagline }}</p>
-                <div style="display:flex;gap:var(--sp-2);align-items:center;margin-bottom:var(--sp-3);font-family:var(--font-ui);font-size:0.85rem;color:var(--nn-text-muted);">
+                <div class="show-hero-meta" style="display:flex;gap:var(--sp-2);align-items:center;margin-bottom:var(--sp-3);font-family:var(--font-ui);font-size:0.85rem;color:var(--nn-text-muted);">
                     {%- set _sched = schedule | default('Daily') -%}
                     {%- set _sched_ru = {
                         'Daily': 'Ежедневно',
@@ -96,6 +96,7 @@
                         'Odd weekdays': 'По нечётным будням',
                         'Even days': 'По чётным дням',
                         'Even weekdays': 'По чётным будням',
+                        'Weekly — Mondays': 'Еженедельно, по понедельникам',
                     } -%}
                     <span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">{% if _is_ru %}{{ _sched_ru.get(_sched, _sched) }}{% else %}{{ _sched }}{% endif %}</span>
                     {% if episode_length %}<span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">{{ episode_length }}</span>{% endif %}
@@ -125,42 +126,38 @@
                 {# Primary actions: one filled CTA + a few "explore this show"
                    buttons. Platform subscribe links live in the quieter chip
                    row below so the hero isn't a wall of identical pills. #}
+                {#- Oct 7 2026 design pass: six equal buttons wrapped to an orphan
+                    row. Two to three buttons carry the actions (listen, read or
+                    apply, the show's own dashboard); the reference pages sit in
+                    one quiet link row beneath. -#}
                 <div class="show-hero-actions">
-                    <a href="#episodes" class="nn-btn nn-btn-primary">{% if _is_ru %}Слушать{% else %}Listen Now{% endif %}</a>
+                    <a href="{{ '#latest-player' if latest_episode else '#episodes' }}" class="nn-btn nn-btn-primary">{% if _is_ru %}Слушать{% else %}Listen Now{% endif %}</a>
                     {#- The Mira interview shows are guest-driven: promote the
                         apply page instead of a blog that is empty until the
                         first interview publishes. -#}
                     {% if show_slug in ('age_of_ai', 'nerra_voices') %}
                     <a href="{{ path_prefix }}{{ 'age-of-ai-apply.html' if show_slug == 'age_of_ai' else 'nerra-voices-apply.html' }}" class="nn-btn nn-btn-primary" style="background:var(--show-color, #00D4FF);">Apply to be a guest</a>
-                    <a href="{{ path_prefix }}{{ summaries_page }}" class="nn-btn">{% if _is_ru %}Все выпуски{% else %}View Summaries{% endif %}</a>
                     {% else %}
                     <a href="{{ path_prefix }}{{ blog_page }}" class="nn-btn">{% if _is_ru %}Читать блог{% else %}Read Blog{% endif %}</a>
-                    <a href="{{ path_prefix }}{{ summaries_page }}" class="nn-btn">{% if _is_ru %}Все выпуски{% else %}View Summaries{% endif %}</a>
-                    {% endif %}
-                    {% if narrative_page_url %}
-                    <a href="{{ path_prefix }}{{ narrative_page_url }}" class="nn-btn">{% if _is_ru %}Хронология{% else %}Story Tracker{% endif %}</a>
-                    {% endif %}
-                    {#- The show's public claims ledger (Oct 1 2026): every
-                        claim's verification status and every correction. -#}
-                    {% if claims_page_url %}
-                    <a href="{{ path_prefix }}{{ claims_page_url }}" class="nn-btn">{% if _is_ru %}Проверка фактов{% else %}Claims &amp; corrections{% endif %}</a>
                     {% endif %}
                     {% if show_slug == 'spacex' %}
-                    <a href="{{ path_prefix }}spacex-dashboard.html" class="nn-btn">🚀 Launch Dashboard</a>
-                    {% endif %}
-                    {% if show_slug == 'tesla' %}
-                    <a href="{{ path_prefix }}tesla-dashboard.html" class="nn-btn">📊 Tesla Dashboard</a>
-                    {% endif %}
-                    {% if show_slug == 'offshore_north' %}
-                    <a href="{{ path_prefix }}offshore-north-dashboard.html" class="nn-btn">⛵ Campaign Dashboard</a>
-                    <a href="{{ path_prefix }}offshore-north-glossary.html" class="nn-btn">📖 Plain Sailing Glossary</a>
-                    {% endif %}
-                    {% if show_slug == "modern_investing" %}
-                    <a href="{{ path_prefix }}modern-investing-performance.html" class="nn-btn" style="background: var(--show-color, #047857); color: white;">
-                        Performance &amp; Lessons
-                    </a>
+                    <a href="{{ path_prefix }}spacex-dashboard.html" class="nn-btn">Launch Dashboard</a>
+                    {% elif show_slug == 'tesla' %}
+                    <a href="{{ path_prefix }}tesla-dashboard.html" class="nn-btn">Tesla Dashboard</a>
+                    {% elif show_slug == 'offshore_north' %}
+                    <a href="{{ path_prefix }}offshore-north-dashboard.html" class="nn-btn">Campaign Dashboard</a>
+                    {% elif show_slug == "modern_investing" %}
+                    <a href="{{ path_prefix }}modern-investing-performance.html" class="nn-btn">Performance &amp; Lessons</a>
                     {% endif %}
                 </div>
+                <nav class="show-hero-more" aria-label="{% if _is_ru %}Ещё об этом подкасте{% else %}More about this show{% endif %}">
+                    <a href="{{ path_prefix }}{{ summaries_page }}">{% if _is_ru %}Все выпуски{% else %}Summaries{% endif %}</a>
+                    {% if narrative_page_url %}<a href="{{ path_prefix }}{{ narrative_page_url }}">{% if _is_ru %}Хронология{% else %}Story Tracker{% endif %}</a>{% endif %}
+                    {#- The show's public claims ledger (Oct 1 2026): every
+                        claim's verification status and every correction. -#}
+                    {% if claims_page_url %}<a href="{{ path_prefix }}{{ claims_page_url }}">{% if _is_ru %}Проверка фактов{% else %}Claims &amp; corrections{% endif %}</a>{% endif %}
+                    {% if show_slug == 'offshore_north' %}<a href="{{ path_prefix }}offshore-north-glossary.html">Plain Sailing Glossary</a>{% endif %}
+                </nav>
 
                 {# Subscribe row — quieter chips, clearly grouped. #}
                 <div class="show-hero-subscribe">
@@ -430,7 +427,12 @@
             <!-- All trades table -->
             <div class="glass-card" style="padding:0;overflow-x:auto;margin-bottom:var(--sp-6);">
                 <div style="padding:var(--sp-4);border-bottom:1px solid var(--nn-border);font-weight:600;">
-                    All mock trades ({{ performance_data.trades|length }})
+                    {#- The show page printed all 87 trades (1,590 inline
+                        styles, 3,000+ DOM nodes); the full ledger has its own
+                        page. Newest first, ten here. -#}
+                    {% set _mit_recent = performance_data.trades[:10] %}
+                    Latest {{ _mit_recent|length }} of {{ performance_data.trades|length }} simulated trades
+                    <a href="{{ path_prefix }}modern-investing-performance.html" style="float:right;font-weight:600;color:var(--show-color-text);text-decoration:none;">Full record →</a>
                 </div>
                 <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
                     <thead style="background:rgba(255,255,255,0.03);">
@@ -449,7 +451,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for t in performance_data.trades %}
+                        {% for t in _mit_recent %}
                         <tr style="border-top:1px solid var(--nn-border);">
                             <td style="padding:6px 12px;">{{ t.date or "" }}</td>
                             <td style="padding:6px 12px;">{% if t.episode_num %}<a href="{{ path_prefix }}blog/modern_investing/ep{{ "%03d" % t.episode_num }}.html" style="color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;" title="Read full trade setup and analysis">Ep{{ t.episode_num }}</a>{% else %}—{% endif %}</td>
@@ -457,7 +459,7 @@
                             <td style="padding:6px 12px;color:var(--nn-text-muted);font-size:0.82rem;">{{ t.sector or "" }}</td>
                             <td style="padding:6px 12px;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ t.strategy or '' }}">{{ t.strategy or "" }}</td>
                             <td style="padding:6px 12px;text-align:right;font-variant-numeric:tabular-nums;">{% if t.entry_price %}${{ "{:.2f}".format(t.entry_price) }}{% else %}—{% endif %}</td>
-                            <td style="padding:6px 12px;text-align:right;font-variant-numeric:tabular-nums;">{% if t.exit_price %}${{ "{:.2f}".format(t.exit_price) }}{% else %}—{% endif %}</td>
+                            <td style="padding:6px 12px;text-align:right;font-variant-numeric:tabular-nums;">{% if t.exit_price %}${{ "{:.2f}".format(t.exit_price) }}{% elif t.status == 'open' %}Open{% elif t.status == 'voided' %}Voided{% else %}—{% endif %}</td>
                             <td style="padding:6px 12px;text-align:right;font-variant-numeric:tabular-nums;color:{% if (t.pnl_pct or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">{% if t.pnl_pct is not none %}{{ "{:+.2f}".format(t.pnl_pct) }}%{% else %}—{% endif %}</td>
                             <td style="padding:6px 12px;text-align:right;font-variant-numeric:tabular-nums;color:var(--nn-text-muted);">{% if t.nasdaq_return_pct is not none %}{{ "{:+.2f}".format(t.nasdaq_return_pct) }}%{% else %}—{% endif %}</td>
                             <td style="padding:6px 12px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:{% if (t.alpha_pct or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">{% if t.alpha_pct is not none %}{{ "{:+.2f}".format(t.alpha_pct) }}%{% else %}—{% endif %}</td>
@@ -575,7 +577,8 @@
     {#- Soft Personal interest on SpaceX Daily (registry soft_personal_cta).
         Join-only Personal push was the Brand gap; this band is tips/reminder
         email only — never implies a charge. Paid Personal stays on /join. -#}
-    {% if soft_personal_cta and not personal_upsell %}
+    {#- Not when the hero band above already asked for the same email. -#}
+    {% if soft_personal_cta and not personal_upsell and not (soft_personal_hero and not _is_ru) %}
     <section class="nn-section" id="soft-personal" style="padding-top:0;padding-bottom:0;">
         <div class="container" style="max-width:920px;">
             {{ soft_personal_interest(path_prefix) }}
@@ -696,6 +699,10 @@
     {% endif %}
 
     <!-- Episode Archive -->
+    {#- A show with no feed has no episodes to list: the "Not published yet"
+        band above says so once, instead of an empty "Recent Episodes" rail
+        and a "View All Episodes" button to nothing. -#}
+    {% if has_feed %}
     <section id="episodes" class="nn-section" style="padding-top: 0;">
         <div class="container">
             <div class="nn-section-header" style="text-align:left;">
@@ -773,6 +780,7 @@
             {% endif %}
         </div>
     </section>
+    {% endif %}
 
     <!-- About -->
     <section id="about" class="nn-section" style="border-top:1px solid var(--nn-border);">
@@ -887,7 +895,7 @@
 
                 <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:var(--sp-6);margin-bottom:var(--sp-6);">
                     <div>
-                        <h3 style="font-family:var(--font-heading);font-size:1rem;font-weight:600;color:var(--show-color-text, var(--show-color));margin-bottom:var(--sp-3);">Vehicle Benefits</h3>
+                        <h3 style="font-family:var(--font-heading);font-size:1rem;font-weight:600;color:var(--show-color-text, var(--show-color));margin-bottom:var(--sp-3);">{{ referral.benefits_heading | default('What you get') }}</h3>
                         <ul style="list-style:none;padding:0;margin:0;">
                             {% for b in referral.buyer_benefits %}
                             <li style="font-family:var(--font-ui);font-size:0.9rem;color:var(--nn-text-muted);line-height:1.6;padding:var(--sp-1) 0;padding-left:1.4em;position:relative;"><span style="position:absolute;left:0;color:var(--show-color-text, var(--show-color));">&#10003;</span>{{ b }}</li>
@@ -919,6 +927,9 @@
 
                 <div style="text-align:center;">
                     <a href="{{ referral.url }}" class="nn-btn nn-btn-primary" target="_blank" rel="noopener" style="font-size:1rem;padding:var(--sp-3) var(--sp-8);">{{ referral.cta | default('Get Started') }}</a>
+                    {#- The page also says no episode carries an ad or a sponsor; a referral
+                        link that pays the network has to say so beside the button. -#}
+                    {% if referral.disclosure %}<div class="nn-referral-disclosure" style="margin-top:var(--sp-3);font-family:var(--font-ui);font-size:0.82rem;color:var(--nn-text);max-width:500px;margin-left:auto;margin-right:auto;">{{ referral.disclosure }}</div>{% endif %}
                     <div style="margin-top:var(--sp-3);font-family:var(--font-ui);font-size:0.78rem;color:var(--nn-text-muted);max-width:500px;margin-left:auto;margin-right:auto;">{{ referral.fine_print }}</div>
                 </div>
             </div>
@@ -1047,11 +1058,11 @@
 
     <!-- More from Nerra Network -->
     {#- Filter cross-network grid by page language so Russian readers
-        don't get recommendations they can't consume. Russian-language
-        shows are finansy_prosto + privet_russian; everything else is
-        English. Operator caught (May 2026 audit) the prior grid listing
+        don't get recommendations they can't consume. Which shows are
+        Russian comes from engine.show_lang (ru_show_slugs); everything
+        else is English. Operator caught (May 2026 audit) the prior grid listing
         9 English shows on every Russian show page. -#}
-    {%- set _ru_show_slugs = ['finansy_prosto', 'privet_russian'] -%}
+    {%- set _ru_show_slugs = ru_show_slugs | default(['finansy_prosto', 'privet_russian']) -%}
     {%- set _is_ru_page = (page_lang | default('en')) == 'ru' -%}
     {%- if _is_ru_page -%}
         {%- set _network_shows = all_shows | selectattr('slug', 'in', _ru_show_slugs) | list -%}
@@ -1242,6 +1253,24 @@
             el.dataset.rendered = '1';
         }
 
+        // Plays from the page's own players go through the OP3 prefix, the
+        // same way every feed enclosure does, so they are counted. The
+        // summaries JSON stores the bare R2 URL. A URL that already carries a
+        // prefix (or points anywhere else) is left as it is.
+        function withOp3(u) {
+            u = u || '';
+            return /^https:\/\/audio\.nerranetwork\.com\//.test(u) ? 'https://op3.dev/e/' + u.slice(8) : u;
+        }
+
+        // The card title IS the hook on most shows, and the preview opens on
+        // the hook too, so every archive card printed one sentence twice.
+        function previewUnlessTitle(title, preview) {
+            const norm = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9а-яё]+/g, ' ').trim();
+            const t = norm(title), p = norm(preview);
+            if (!p || (t && (p.startsWith(t.slice(0, 60)) || t.startsWith(p.slice(0, 60))))) return '';
+            return '<div style="color:var(--nn-text-muted);font-size:0.85rem;margin-bottom:var(--sp-3);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">' + escapeHtml(preview) + '</div>';
+        }
+
         // --- Load episodes ---
         async function loadEpisodes() {
             /* The try covers FETCHING and PARSING only. A failure to render is
@@ -1272,7 +1301,7 @@
             const latest = episodes[0];
             setLatestTitle(epTitle(latest) || 'Latest Episode');
             document.getElementById('latest-date').textContent = formatDate(latest.date);
-            document.getElementById('latest-audio').src = latest.audio_url || '';
+            document.getElementById('latest-audio').src = withOp3(latest.audio_url);
 
             if (epSummary(latest)) {
                 const summaryEl = document.getElementById('latest-summary');
@@ -1314,8 +1343,8 @@
                 card.innerHTML = `
                     <div class="episode-card-date">${formatDate(ep.date)}</div>
                     <div class="episode-card-title" data-role="title">${escapeHtml(epTitle(ep) || 'Episode')}</div>
-                    <div style="color:var(--nn-text-muted);font-size:0.85rem;margin-bottom:var(--sp-3);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escapeHtml(getPreviewText(epSummary(ep)))}</div>
-                    <audio controls preload="none" data-role="audio" src="${ep.audio_url || ''}" aria-label="Play ${escapeHtml(epTitle(ep) || 'episode')}" style="width:100%;height:36px;border-radius:8px;"></audio>
+                    ${previewUnlessTitle(epTitle(ep), getPreviewText(epSummary(ep)))}
+                    <audio controls preload="none" data-role="audio" src="${withOp3(ep.audio_url)}" aria-label="Play ${escapeHtml(epTitle(ep) || 'episode')}" style="width:100%;height:36px;border-radius:8px;"></audio>
                     <div data-role="langs" style="display:none;margin-top:6px;"></div>
                     ${articleLinkHtml(postUrlFor(epNumber(ep)))}
                 `;
@@ -1329,7 +1358,7 @@
                         box: card.querySelector('[data-role=langs]'),
                         audioEl: card.querySelector('[data-role=audio]'),
                         titleEl: card.querySelector('[data-role=title]'),
-                        enUrl: ep.audio_url || '',
+                        enUrl: withOp3(ep.audio_url),
                         enTitle: epTitle(ep) || 'Episode',
                         translations: tr,
                     });
@@ -1356,7 +1385,7 @@
             const track = (code) => {
                 if (code === 'en') return { url: opts.enUrl || '', title: enTitle, desc: enSummary };
                 const t = tr[code] || {};
-                return { url: t.audio_url || '', title: t.title || enTitle, desc: t.description || enSummary };
+                return { url: withOp3(t.audio_url), title: t.title || enTitle, desc: t.description || enSummary };
             };
             const savedPref = () => { try { return localStorage.getItem('nn-pref-lang') || ''; } catch (e) { return ''; } };
             const apply = (code, persist) => {
@@ -1408,7 +1437,7 @@
                 audioEl: document.getElementById('latest-audio'),
                 titleEl: document.getElementById('latest-title'),
                 summaryEl: summaryEl,
-                enUrl: latest.audio_url || '',
+                enUrl: withOp3(latest.audio_url),
                 enTitle: epTitle(latest) || 'Latest Episode',
                 enSummary: summaryEl ? summaryEl.textContent : '',
                 translations: (latest && latest.translations) || {},

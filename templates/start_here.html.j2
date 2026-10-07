@@ -118,7 +118,7 @@
 {% block content %}
     <header class="start-hero">
         <h1>Not sure where to <span class="gradient-text">start</span>?</h1>
-        <p>We have shows covering different topics. Pick what interests you most, or explore them all — every show is ad-free, and most run daily (a few publish on weekdays or alternating days).</p>
+        <p>We have shows covering different topics. Pick what interests you most, or explore them all — every show is ad-free, and most run daily, and a few publish once a week.</p>
     </header>
 
     <div class="start-categories">
@@ -153,12 +153,15 @@
                 <a href="{{ path_prefix }}age-of-ai-apply.html" class="start-show-card" style="--card-color: #00D4FF">
                     <div class="start-card-info" style="padding-left:0;">
                         <h3>Apply to be a guest</h3>
-                        <p>Two shows interview real people, and <a href="{{ path_prefix }}mira.html">Mira</a> does the interviewing. You get your transcript first, with a week to approve it, cut from it or refuse it.</p>
+                        <p>Two shows interview real people, and Mira does the interviewing. You get your transcript first, with a week to approve it, cut from it or refuse it.</p>
                         <div class="start-card-meta">
                             <span>Guest pipeline</span>
                         </div>
                     </div>
                 </a>
+                {#- The card is itself a link, so the Mira link sits beside it
+                    rather than inside it (a nested <a> split the card). -#}
+                <p class="start-mira-note" style="grid-column:1/-1;font-family:var(--font-ui);font-size:0.9rem;color:var(--nn-text-muted);margin:0;">Who asks the questions? <a href="{{ path_prefix }}mira.html">Meet Mira, the network's AI host</a>.</p>
             </div>
         </div>
 

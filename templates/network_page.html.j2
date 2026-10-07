@@ -12,8 +12,6 @@
 <li><a href="{{ path_prefix }}how-to-listen.html">{{ t.nav_how_to_listen }}</a></li>
 <li><a href="{{ path_prefix }}about.html">{{ t.nav_about }}</a></li>
 <li><a href="{{ path_prefix }}player.html">{{ t.nav_player }}</a></li>
-<li><a href="#latest">Latest</a></li>
-<li><a href="#subscribe">Subscribe</a></li>
 {% endblock %}
 
 {# Mobile links carry no inline onclick: base.html.j2 closes the menu (and
@@ -75,7 +73,7 @@
             <div class="hero-badge">Independent Podcast Network</div>
             <h1><span class="gradient-text">Nerra</span> Network</h1>
             <p class="network-hero-tagline">Feed your curiosity. Not your anxiety.</p>
-            <p class="hero-subtitle">{{ all_shows|length }} ad-free shows on Tesla, SpaceX, AI, markets, space, science, world news, first-principles thinking and more — most of them new every day, in four listening languages. Independently produced in Vancouver, Canada.</p>
+            <p class="hero-subtitle">{{ all_shows|length }} ad-free shows on Tesla, SpaceX, AI, markets, space, science, world news, first-principles thinking and more — most of them new every day, in {{ listening_language_count | default(4) }} listening languages. Independently produced in Vancouver, Canada.</p>
             <div class="hero-show-orbit">
                 {% for s in all_shows %}
                 {% set _pbase = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
@@ -112,7 +110,7 @@
                     <span>ads</span>
                 </div>
                 <div class="proof-stat">
-                    <strong>4</strong>
+                    <strong>{{ listening_language_count | default(4) }}</strong>
                     <span>listening languages</span>
                 </div>
             </div>
@@ -176,10 +174,13 @@
                 <audio controls preload="none" src="{{ ep.audio_url }}" aria-label="{{ ep.show_name }} episode audio" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
                 {% endif %}
                 {% if ep.blog_url %}
-                <a href="{{ path_prefix }}{{ ep.blog_url }}" style="display:inline-block;margin-top:var(--sp-2);font-family:var(--font-ui);font-size:0.8rem;color:{{ ep.brand_color }};text-decoration:none;">Read article →</a>
+                <a href="{{ path_prefix }}{{ ep.blog_url }}" style="display:inline-block;margin-top:var(--sp-2);font-family:var(--font-ui);font-size:0.8rem;color:color-mix(in srgb, {{ ep.brand_color }}, white 35%);text-decoration:none;">Read article →</a>
                 {% endif %}
             </div>
             {% endfor %}
+        </div>
+        <div class="container latest-more">
+            <a href="{{ path_prefix }}blog/index.html" class="nn-btn">Every episode article &rarr;</a>
         </div>
         {% else %}
         <div class="latest-scroll-row">
@@ -276,7 +277,7 @@
                 <audio controls preload="none" src="{{ ep.audio_url }}" aria-label="{{ ep.show_name }} episode audio" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
                 {% endif %}
                 {% if ep.blog_url %}
-                <a href="{{ path_prefix }}{{ ep.blog_url }}" style="display:inline-block;margin-top:var(--sp-2);font-family:var(--font-ui);font-size:0.8rem;color:{{ ep.brand_color }};text-decoration:none;">Read article →</a>
+                <a href="{{ path_prefix }}{{ ep.blog_url }}" style="display:inline-block;margin-top:var(--sp-2);font-family:var(--font-ui);font-size:0.8rem;color:color-mix(in srgb, {{ ep.brand_color }}, white 35%);text-decoration:none;">Read article →</a>
                 {% endif %}
             </div>
             {% endfor %}
@@ -284,42 +285,9 @@
     </section>
     {% endif %}
 
-    <!-- Latest from the Blog -->
-    {% if latest_blog_posts %}
-    <section class="nn-section">
-        <div class="container">
-            <div class="nn-section-header">
-                <div class="section-label">Blog</div>
-                <h2>Latest from the Blog</h2>
-                <p>In-depth articles from our latest episodes.</p>
-            </div>
-            <div class="blog-idx-grid" style="max-width:900px;margin:0 auto;padding-bottom:var(--sp-8)">
-                {% for post in latest_blog_posts %}
-                <a href="{{ path_prefix }}blog/{{ post.show_slug }}/ep{{ '%03d' % post.episode_num }}.html"
-                   class="blog-idx-card"
-                   style="--card-show-color: {{ post.show_color }}">
-                    <div class="blog-idx-card-top">
-                        <span class="blog-idx-show-badge" style="background:color-mix(in srgb, {{ post.show_color }} 15%, transparent);color:{{ post.show_color }}">{{ post.show_name }}</span>
-                        <span class="blog-idx-date">{{ post.date }}</span>
-                        <span class="blog-idx-ep">Ep {{ post.episode_num }}</span>
-                        <span class="blog-idx-reading">{{ post.reading_time_min }} min</span>
-                    </div>
-                    <h3>{{ post.title }}</h3>
-                    {#- The hook IS the title on most shows (blog.py falls back
-                        to it); don't print the same sentence twice. -#}
-                    {% if post.hook and post.hook != post.title %}
-                    <p>{{ post.hook[:140] }}{% if post.hook|length > 140 %}&hellip;{% endif %}</p>
-                    {% endif %}
-                    <span class="blog-idx-read-more" style="color:{{ post.show_color }}">Read article &rarr;</span>
-                </a>
-                {% endfor %}
-            </div>
-            <div style="text-align:center">
-                <a href="{{ path_prefix }}blog/index.html" class="nn-btn nn-btn-primary" style="font-size:0.9rem;padding:var(--sp-3) var(--sp-8)">View all blog posts</a>
-            </div>
-        </div>
-    </section>
-    {% endif %}
+    {#- "Latest from the Blog" was removed Oct 7 2026: it listed the same
+        six episodes as the Latest rail above, whose cards already link each
+        article. The rail now ends on one link to the whole archive. -#}
 
     <!-- Why Nerra -->
     <section class="nn-section" style="background:var(--nn-bg-alt);">
@@ -350,13 +318,13 @@
                     <p>Most shows publish every day; the rest weekly or when an interview is ready, and each show page says which. Build a daily habit you can rely on.</p>
                 </div>
                 <div class="feature-card glass-card">
-                    <div class="feature-icon">&#127463;&#127464;</div>
+                    <div class="feature-icon">&#127464;&#127462;</div>
                     <h3>Made in Canada</h3>
                     <p>Independently produced in Vancouver by Patrick Novak. No corporate backing, no editorial interference.</p>
                 </div>
                 <div class="feature-card glass-card">
                     <div class="feature-icon">&#128266;</div>
-                    <h3>Four Listening Languages</h3>
+                    <h3>{{ listening_language_count | default(4) }} Listening Languages</h3>
                     <p>English originals with Fran&ccedil;ais, Русский and 中文 audio tracks, plus two shows made natively in Russian. Pick your audio language with the globe in the menu.</p>
                 </div>
             </div>
@@ -421,6 +389,10 @@
                     Network Blog RSS
                 </a>
             </div>
+            {#- Thirty-one rows of feed buttons ran ~3,000px on a phone; they
+                open on demand now (how-to-listen.html lists them too). -#}
+            <details class="subscribe-all">
+            <summary>Every show's feed, Apple and Spotify links ({{ all_shows|length }} shows)</summary>
             <div class="subscribe-show-list">
                 {% for s in all_shows %}
                 {% set _subbase = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
@@ -447,6 +419,7 @@
                 </div>
                 {% endfor %}
             </div>
+            </details>
             <p style="text-align:center;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.88rem;margin-top:var(--sp-6);">Every feed works in every podcast app today &mdash; copy the RSS link into yours. Apple Podcasts and Spotify buttons appear as each show's directory listing goes live. <a href="{{ path_prefix }}how-to-listen.html" style="color:var(--nn-text-muted);">How to listen</a>.</p>
         </div>
     </section>

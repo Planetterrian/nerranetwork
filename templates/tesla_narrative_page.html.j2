@@ -42,7 +42,7 @@
       and notable claims the show has surfaced.
     </p>
     <p style="font-size: 0.85rem; color: var(--nn-text-muted); margin-top: 0.4rem;">
-      Automatically updated after episodes. Source: <code>digests/tesla_shorts_time/tesla_narrative_tracker.json</code>
+      {% if narrative and narrative.last_updated %}Last updated {{ narrative.last_updated[:10] }}.{% else %}Updated as episodes ship.{% endif %}
     </p>
   </div>
 
@@ -54,12 +54,20 @@
         <div class="program-card">
           <div class="program-header">
             <h3 style="margin:0; font-size:1.3rem;">{{ prog.display_name or key.title() }}</h3>
-            {% if prog.last_major_update_episode %}
+            {#- "Last on air" reads last_mentioned_*, which the memory hook
+                writes every episode. last_major_update_* is almost never
+                written, so reading only it printed "Not yet deeply covered"
+                on programs the show had covered the day before (Oct 2026). -#}
+            {% if prog.last_mentioned_episode %}
+              <span class="meta-row">
+                Last on air: <strong>Ep {{ prog.last_mentioned_episode }}</strong>{% if prog.last_mentioned_date %} ({{ prog.last_mentioned_date }}){% endif %}
+              </span>
+            {% elif prog.last_major_update_episode %}
               <span class="meta-row">
                 Last deep coverage: <strong>Ep {{ prog.last_major_update_episode }}</strong> ({{ prog.last_major_update_date }})
               </span>
             {% else %}
-              <span class="meta-row">Not yet deeply covered on the show</span>
+              <span class="meta-row">Not covered on the show yet</span>
             {% endif %}
           </div>
 

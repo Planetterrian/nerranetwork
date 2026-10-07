@@ -141,14 +141,16 @@
      data-topics="{{ s.picker_tags.topics | default([]) | join(' ') }}"
      data-audience="{{ s.picker_tags.audience | default([]) | join(' ') }}"
      data-language="{{ s.picker_tags.language | default([]) | join(' ') }}"
-     style="--show-color:{{ s.brand_color }};">
+     style="--show-color:{{ s.brand_color }};--show-color-text:color-mix(in srgb, {{ s.brand_color }}, white 35%);">
     {% set _scbase = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
     <a href="{{ path_prefix }}{{ s.show_page }}" class="show-card glass-card">
         <picture>
             <source type="image/webp" srcset="{{ path_prefix }}{{ _scbase }}-400.webp 400w, {{ path_prefix }}{{ _scbase }}-800.webp 800w" sizes="(max-width: 600px) 180px, 280px">
-            <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" class="show-card-image" width="1400" height="1400" loading="lazy">
+            {#- alt="": the show's name is the heading right beside it, so a
+                named alt made screen readers say it twice. -#}
+            <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="" class="show-card-image" width="1400" height="1400" loading="lazy" decoding="async">
         </picture>
-        <div class="show-card-name">{{ s.name }}</div>
+        <h3 class="show-card-name">{{ s.name }}</h3>
         <div class="show-card-badges">
             {#- The strand badge is first: the three shows Mira
                 hosts are the network's most differentiated and
@@ -158,15 +160,16 @@
             {% if s.episode_length %}<span class="show-card-badge">{{ s.episode_length }}</span>{% endif %}
             {% if s.picker_tags and s.picker_tags.language and 'russian' in s.picker_tags.language %}<span class="show-card-badge">In Russian</span>{% endif %}
         </div>
-        <div class="show-card-tagline">{{ s.description_long | default(s.tagline) }}</div>
+        {#- Oct 7 2026: the short tagline leads; the long description is
+            clamped to three lines in CSS (Nerra Daily's 170 words ran the
+            card to 1,100px). -#}
+        {% if s.tagline %}<p class="show-card-hook">{{ s.tagline }}</p>{% endif %}
+        <p class="show-card-tagline">{{ s.description_long | default(s.tagline) }}</p>
         {% if s.audience %}
         {# Strip the leading "For " some audience strings use so we don't double it. #}
         <div class="show-card-audience"><strong>For:</strong>
             {{ s.audience | replace('For ', '', 1) if s.audience.startswith('For ') else s.audience }}
         </div>
-        {% endif %}
-        {% if s.source_highlights %}
-        <div class="show-card-sources">Sources: {{ s.source_highlights | join(', ') }}</div>
         {% endif %}
         <div class="show-card-listen">
             Listen

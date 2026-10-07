@@ -29,7 +29,7 @@
   display: flex; align-items: center; justify-content: center;
   transition: all var(--duration) var(--ease); cursor: pointer; flex-shrink: 0;
 }
-.nn-player-refresh:hover { border-color: var(--nn-purple); color: var(--nn-purple); }
+.nn-player-refresh:hover { border-color: var(--nn-purple); color: var(--nn-purple-text); }
 .nn-player-refresh.spinning svg { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -39,6 +39,13 @@
   padding: 0 var(--sp-6) var(--sp-4);
   display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center;
 }
+.nn-player-chips {
+  flex: 1 1 100%; min-width: 0;
+  display: flex; flex-wrap: nowrap; gap: var(--sp-2);
+  overflow-x: auto; overscroll-behavior-x: contain;
+  padding-bottom: var(--sp-1); scrollbar-width: thin;
+}
+.nn-player-chips .nn-filter-btn { flex: 0 0 auto; white-space: nowrap; }
 .nn-player-search {
   padding: var(--sp-2) var(--sp-4); border-radius: 8px;
   border: 1px solid var(--nn-border); background: var(--nn-card);
@@ -54,7 +61,7 @@
   font-size: 0.82rem; font-weight: 600; cursor: pointer;
   transition: all var(--duration) var(--ease); margin-left: auto;
 }
-.nn-sort-toggle:hover { border-color: var(--nn-purple); color: var(--nn-purple); }
+.nn-sort-toggle:hover { border-color: var(--nn-purple); color: var(--nn-purple-text); }
 
 /* Two-column layout */
 .nn-player-layout {
@@ -114,10 +121,13 @@
   background: var(--nn-surface); border: 1px solid var(--nn-border);
   color: var(--nn-text-muted);
 }
-.nn-add-queue-btn:hover { border-color: var(--nn-purple); color: var(--nn-purple); }
-.nn-add-queue-btn.in-queue {
-  border-color: var(--nn-purple); color: var(--nn-purple); opacity: 0.6;
-  pointer-events: none;
+.nn-add-queue-btn:hover { border-color: var(--nn-purple); color: var(--nn-purple-text); }
+/* Disabled, but still a label someone reads: no opacity, and a purple
+   light enough for 4.5:1 on the card (--nn-purple itself is ~3.3:1). */
+.nn-add-queue-btn.in-queue,
+.nn-add-queue-btn.in-queue:hover {
+  border-color: var(--nn-purple); color: var(--nn-purple-text, #9B85FF);
+  cursor: default;
 }
 
 /* Queue panel */
@@ -258,14 +268,23 @@
 
 /* Progress bar */
 .nn-progress-wrap { flex: 1; display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
-.nn-progress-container {
-  flex: 1; height: 6px; background: rgba(255,255,255,0.1);
-  border-radius: 3px; cursor: pointer; position: relative; min-width: 80px;
+/* The seek bar is a real range input: arrow keys, Home/End and screen
+   readers work without a line of script. --pct paints the played part. */
+.nn-progress-range {
+  flex: 1; min-width: 80px; height: 6px; margin: 0; cursor: pointer;
+  -webkit-appearance: none; appearance: none; border-radius: 3px;
+  background: linear-gradient(to right, var(--nn-purple) var(--pct, 0%),
+                              rgba(255,255,255,0.1) var(--pct, 0%));
 }
-.nn-progress-bar {
-  height: 100%; background: var(--nn-gradient); border-radius: 3px;
-  width: 0%; transition: width 0.1s linear; pointer-events: none;
+.nn-progress-range::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--nn-white); border: none;
 }
+.nn-progress-range::-moz-range-thumb {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--nn-white); border: none;
+}
+.nn-progress-range:focus-visible { outline: 2px solid var(--nn-cyan, #00D4FF); outline-offset: 4px; }
 .nn-progress-time {
   font-family: var(--font-ui); font-size: 0.72rem; color: var(--nn-text-muted);
   white-space: nowrap; flex-shrink: 0;
@@ -292,7 +311,7 @@
   border: 1px solid var(--nn-border); background: var(--nn-surface);
   color: var(--nn-text-muted); font-family: var(--font-ui);
   font-size: 0.78rem; font-weight: 600; cursor: pointer;
-  display: none; flex-shrink: 0;
+  display: none; flex-shrink: 0; gap: 0.35em; /* flex drops the text's space */
 }
 
 /* Mobile queue drawer */
@@ -368,7 +387,8 @@
 @media (max-width: 480px) {
   .nn-bottom-player-inner { padding: var(--sp-2) var(--sp-3); gap: var(--sp-2); }
   .nn-bp-art { width: 36px; height: 36px; }
-  .nn-progress-wrap { display: none; }
+  /* The seek bar and times keep their own full-width row on a phone. */
+  .nn-progress-wrap { flex: 1 1 100%; }
   .nn-bp-meta { flex: 0 1 80px; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -378,14 +398,21 @@
 </style>
 {% endblock %}
 
+{# The base nav set, with Player marked as the current page. No "Home"
+   item (the logo is home) and no inline onclick: base.html.j2 closes the
+   mobile menu with one delegated listener (nav contract, Sep 2026). #}
 {% block nav_links %}
-<li><a href="{{ path_prefix }}player.html" style="color:var(--nn-purple);font-weight:700">Player</a></li>
-<li><a href="{{ home_url }}">Home</a></li>
+<li><a href="{{ path_prefix }}start-here.html">{{ t.nav_start_here }}</a></li>
+<li><a href="{{ path_prefix }}how-to-listen.html">{{ t.nav_listen }}</a></li>
+<li><a href="{{ path_prefix }}about.html">{{ t.nav_about }}</a></li>
+<li><a href="{{ path_prefix }}player.html" aria-current="page" style="font-weight:700">{{ t.nav_player }}</a></li>
 {% endblock %}
 
 {% block mobile_nav_links %}
-<a href="{{ path_prefix }}player.html" style="color:var(--nn-purple);font-weight:700" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">Player</a>
-<a href="{{ home_url }}" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">Home</a>
+<a href="{{ path_prefix }}start-here.html">{{ t.nav_start_here }}</a>
+<a href="{{ path_prefix }}how-to-listen.html">{{ t.nav_how_to_listen }}</a>
+<a href="{{ path_prefix }}about.html">{{ t.nav_about }}</a>
+<a href="{{ path_prefix }}player.html" aria-current="page" style="font-weight:700">{{ t.nav_player }}</a>
 {% endblock %}
 
 {% block content %}
@@ -401,11 +428,17 @@
 </div>
 
 <!-- Filters -->
-<div class="nn-player-filters" role="toolbar" aria-label="Filter episodes">
-  <button class="nn-filter-btn active" data-filter="all">All</button>
-  {% for s in player_shows %}
-  <button class="nn-filter-btn" data-filter="{{ s.slug }}" style="--show-color:{{ s.brand_color }}">{{ s.name }}</button>
-  {% endfor %}
+{#- One chip per show that has an episode in the index — a chip for a show
+    with no feed (Nerra Voices) could only ever say "No episodes found". The
+    chips scroll sideways in one row; at 30 shows a wrapping row was ~16
+    rows deep on a phone. -#}
+<div class="nn-player-filters">
+  <div class="nn-player-chips" role="group" aria-label="Filter by show">
+    <button class="nn-filter-btn active" data-filter="all" aria-pressed="true">All</button>
+    {% for s in player_shows %}
+    <button class="nn-filter-btn" data-filter="{{ s.slug }}" aria-pressed="false" style="--show-color:{{ s.brand_color }}">{{ s.name }}</button>
+    {% endfor %}
+  </div>
   <input type="search" class="nn-player-search" id="search-input" placeholder="Search episodes..." aria-label="Search episodes">
   <button class="nn-sort-toggle" id="sort-toggle" aria-label="Toggle sort order">Newest first</button>
 </div>
@@ -443,7 +476,7 @@
 <!-- Bottom player bar -->
 <div class="nn-bottom-player" id="bottom-player">
   <div class="nn-bottom-player-inner">
-    <img class="nn-bp-art" id="bp-art" src="" alt="" width="44" height="44">
+    <img class="nn-bp-art" id="bp-art" alt="" width="44" height="44">
     <div class="nn-bp-meta">
       <div class="nn-bp-title" id="bp-title">No episode selected</div>
       <div class="nn-bp-show" id="bp-show"></div>
@@ -469,23 +502,22 @@
     </div>
     <div class="nn-progress-wrap">
       <span class="nn-progress-time" id="bp-current">0:00</span>
-      <div class="nn-progress-container" id="progress-container" role="slider" aria-label="Seek" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-        <div class="nn-progress-bar" id="progress-bar"></div>
-      </div>
+      <input type="range" class="nn-progress-range" id="progress-range" min="0" max="1000" step="1" value="0" aria-label="Seek" aria-valuetext="0:00">
+
       <span class="nn-progress-time" id="bp-duration">0:00</span>
     </div>
     <div class="nn-bp-volume">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
       <input type="range" class="nn-volume-slider" id="volume-slider" min="0" max="1" step="0.05" value="1" aria-label="Volume">
     </div>
-    <div class="nn-bp-speed" id="speed-btns">
-      <button class="nn-speed-btn" data-speed="0.5">0.5x</button>
-      <button class="nn-speed-btn active" data-speed="1">1x</button>
-      <button class="nn-speed-btn" data-speed="1.25">1.25x</button>
-      <button class="nn-speed-btn" data-speed="1.5">1.5x</button>
-      <button class="nn-speed-btn" data-speed="2">2x</button>
+    <div class="nn-bp-speed" id="speed-btns" role="group" aria-label="Playback speed">
+      <button class="nn-speed-btn" data-speed="0.5" aria-pressed="false">0.5x</button>
+      <button class="nn-speed-btn active" data-speed="1" aria-pressed="true">1x</button>
+      <button class="nn-speed-btn" data-speed="1.25" aria-pressed="false">1.25x</button>
+      <button class="nn-speed-btn" data-speed="1.5" aria-pressed="false">1.5x</button>
+      <button class="nn-speed-btn" data-speed="2" aria-pressed="false">2x</button>
     </div>
-    <button class="nn-bp-queue-toggle" id="queue-toggle">Queue <span id="queue-toggle-count">0</span></button>
+    <button class="nn-bp-queue-toggle" id="queue-toggle" aria-label="Queue, 0 items" aria-expanded="false" aria-controls="queue-drawer">Queue <span id="queue-toggle-count" aria-hidden="true">0</span></button>
   </div>
 </div>
 
@@ -510,13 +542,23 @@
 {% endblock %}
 
 {% block scripts %}
+{#- The episode index is built by generate_player_page from the committed
+    summaries: show, id, title, date, OP3-routed audio URL, a short preview
+    and the feed's duration. Every show's full summaries JSON (~5.7 MB of
+    digests) is no longer fetched by the browser. -#}
+<script type="application/json" id="player-index">{{ player_index_json }}</script>
 <script>
-// ---- Show Configuration (from Jinja2) ----
-const SHOWS = [
-{% for s in player_shows %}
-  { slug: {{ s.slug|tojson }}, name: {{ s.name|tojson }}, jsonPath: {{ s.json_path|tojson }}, cover: '{{ path_prefix }}' + {{ s.podcast_image|tojson }}, color: {{ s.brand_color|tojson }} },
-{% endfor %}
-];
+// ---- Show Configuration (from the build) ----
+var PLAYER_INDEX = JSON.parse(document.getElementById('player-index').textContent);
+var SHOWS = PLAYER_INDEX.shows.map(function(s) {
+  return {
+    slug: s.slug, name: s.name, color: s.brand_color, audioDir: s.audio_dir,
+    cover: '{{ path_prefix }}' + s.cover, coverFallback: '{{ path_prefix }}' + s.cover_fallback,
+    artwork: '{{ path_prefix }}' + s.artwork
+  };
+});
+var SHOW_BY_SLUG = {};
+SHOWS.forEach(function(s) { SHOW_BY_SLUG[s.slug] = s; });
 
 // ---- State ----
 var allEpisodes = [];
@@ -546,15 +588,41 @@ function formatDate(d) {
     return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   } catch(e) { return d; }
 }
-function stripMarkdown(t) {
-  if (!t) return '';
-  return t.replace(/#{1,6}\s*/g, '').replace(/\*{1,2}/g, '').replace(/_{1,2}/g, '')
-    .replace(/---+/g, '').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/[>\-]\s*/g, '').replace(/\n+/g, ' ').trim();
+function formatDuration(seconds) {
+  if (!seconds) return '';
+  var m = Math.round(seconds / 60);
+  return m < 1 ? '<1 min' : m + ' min';
 }
-function truncate(t, n) {
-  var s = stripMarkdown(t);
-  return s.length > n ? s.substring(0, n) + '...' : s;
+// A show's own cover at card size: the 400 px WebP, the JPEG if it fails.
+function coverImg(ep, cls, size) {
+  var img = document.createElement('img');
+  img.className = cls;
+  img.width = size; img.height = size; img.loading = 'lazy';
+  img.src = ep.coverUrl;
+  img.addEventListener('error', function onErr() {
+    img.removeEventListener('error', onErr);
+    if (ep.coverFallback && img.src.indexOf(ep.coverFallback) === -1) img.src = ep.coverFallback;
+  });
+  return img;
+}
+// Index record -> the player's episode object.
+function toEpisode(rec) {
+  var show = SHOW_BY_SLUG[rec.show];
+  if (!show) return null;
+  return {
+    id: rec.id,
+    showSlug: show.slug,
+    showName: show.name,
+    showColor: show.color,
+    coverUrl: show.cover,
+    coverFallback: show.coverFallback,
+    artworkUrl: show.artwork,
+    title: rec.title,
+    date: rec.date || '',
+    audioUrl: rec.audio || '',
+    duration: rec.duration || 0,
+    preview: rec.preview || ''
+  };
 }
 function announce(msg) {
   var el = document.getElementById('player-announcer');
@@ -572,36 +640,73 @@ function isInQueue(id) {
 }
 
 // ---- Data Loading ----
-function loadAllShows() {
-  var fetches = SHOWS.map(function(show) {
-    return fetch(show.jsonPath).then(function(r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    }).then(function(data) {
-      var episodes = data.summaries || data;
-      if (!Array.isArray(episodes)) episodes = [];
-      return episodes.map(function(ep) {
-        return {
-          id: show.slug + '::' + (ep.episode_num || ep.date || ''),
-          showSlug: show.slug,
-          showName: show.name,
-          showColor: show.color,
-          coverUrl: show.cover,
-          title: ep.episode_title || ('Episode ' + (ep.episode_num || '')),
-          date: ep.date || '',
-          audioUrl: ep.audio_url || '',
-          content: ep.content || ''
-        };
-      });
-    }).catch(function() { return []; });
+function sortEpisodes() {
+  allEpisodes.sort(function(a, b) {
+    return (b.date || '').localeCompare(a.date || '');
   });
-  return Promise.all(fetches).then(function(results) {
-    allEpisodes = [];
-    results.forEach(function(eps) { allEpisodes = allEpisodes.concat(eps); });
-    allEpisodes.sort(function(a, b) {
-      return (b.date || '').localeCompare(a.date || '');
-    });
-    return allEpisodes;
+}
+function loadIndex() {
+  allEpisodes = [];
+  PLAYER_INDEX.episodes.forEach(function(rec) {
+    var ep = toEpisode(rec);
+    if (ep && ep.audioUrl) allEpisodes.push(ep);
+  });
+  sortEpisodes();
+  // Queues saved before Oct 2026 carry the old record (full digest text,
+  // 3000 px cover, unmeasured audio URL): swap in today's record by id.
+  var byId = {};
+  allEpisodes.forEach(function(ep) { byId[ep.id] = ep; });
+  queue = queue.map(function(ep) {
+    if (byId[ep.id]) return byId[ep.id];
+    delete ep.content;
+    return ep;
+  });
+}
+// "Check for new episodes": the page's index is built nightly, so newer
+// episodes come from network.rss (~250 KB, refreshed after every show),
+// whose enclosures are already OP3-routed. The show is the enclosure's
+// R2 directory, matched against the index's own audio URLs.
+function itunesText(item, name) {
+  var el = item.getElementsByTagNameNS('http://www.itunes.com/dtds/podcast-1.0.dtd', name)[0];
+  return el ? (el.textContent || '').trim() : '';
+}
+function feedSeconds(text) {
+  if (!text) return 0;
+  var parts = text.split(':').map(function(p) { return parseInt(p, 10) || 0; });
+  return parts.reduce(function(acc, p) { return acc * 60 + p; }, 0);
+}
+function loadNetworkFeed() {
+  var byDir = {};
+  SHOWS.forEach(function(s) { if (s.audioDir) byDir[s.audioDir] = s; });
+  return fetch('{{ path_prefix }}network.rss', { cache: 'no-cache' }).then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.text();
+  }).then(function(xml) {
+    var doc = new DOMParser().parseFromString(xml, 'application/xml');
+    var known = {};
+    allEpisodes.forEach(function(ep) { known[ep.id] = true; });
+    var items = doc.getElementsByTagName('item');
+    var added = 0;
+    for (var i = 0; i < items.length; i++) {
+      var enc = items[i].getElementsByTagName('enclosure')[0];
+      var url = enc ? enc.getAttribute('url') || '' : '';
+      var m = url.match(/audio\.nerranetwork\.com\/([^\/]+)\//);
+      var show = m && byDir[m[1]];
+      var num = itunesText(items[i], 'episode');
+      if (!show || !num) continue;
+      var id = show.slug + '::' + num;
+      if (known[id]) continue;
+      var pub = new Date((items[i].getElementsByTagName('pubDate')[0] || {}).textContent || '');
+      var ep = toEpisode({
+        id: id, show: show.slug,
+        title: ((items[i].getElementsByTagName('title')[0] || {}).textContent || '').trim(),
+        date: isNaN(pub.getTime()) ? '' : pub.toISOString().slice(0, 10),
+        audio: url, duration: feedSeconds(itunesText(items[i], 'duration'))
+      });
+      if (ep) { allEpisodes.push(ep); known[id] = true; added++; }
+    }
+    sortEpisodes();
+    return added;
   });
 }
 
@@ -780,21 +885,26 @@ function loadEpisode(ep) {
   if (!ep || !ep.audioUrl) return;
   audio.src = ep.audioUrl;
   audio.playbackRate = playbackSpeed;
-  document.getElementById('bp-art').src = ep.coverUrl;
-  document.getElementById('bp-art').alt = ep.showName;
+  var art = document.getElementById('bp-art');
+  art.onerror = function() {
+    art.onerror = null;
+    if (ep.coverFallback) art.src = ep.coverFallback;
+  };
+  art.src = ep.coverUrl;
+  art.alt = ep.showName;
   document.getElementById('bp-title').textContent = ep.title;
   document.getElementById('bp-show').textContent = ep.showName;
-  document.getElementById('progress-bar').style.width = '0%';
-  document.getElementById('bp-current').textContent = '0:00';
-  document.getElementById('bp-duration').textContent = '0:00';
+  setSeekUi(0, ep.duration || 0);
   document.getElementById('bottom-player').classList.add('visible');
   // MediaSession
   if ('mediaSession' in navigator) {
+    var artwork = ep.artworkUrl || ep.coverUrl;
     navigator.mediaSession.metadata = new MediaMetadata({
       title: ep.title,
       artist: ep.showName,
       album: 'Nerra Network',
-      artwork: [{ src: ep.coverUrl, sizes: '512x512', type: 'image/jpeg' }]
+      artwork: [{ src: artwork, sizes: '800x800',
+                  type: /\.webp$/.test(artwork) ? 'image/webp' : 'image/jpeg' }]
     });
   }
 }
@@ -821,9 +931,21 @@ function setSpeed(rate) {
   playbackSpeed = rate;
   if (audio) audio.playbackRate = rate;
   document.querySelectorAll('.nn-speed-btn').forEach(function(btn) {
-    btn.classList.toggle('active', parseFloat(btn.dataset.speed) === rate);
+    var on = parseFloat(btn.dataset.speed) === rate;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
   });
   saveState();
+}
+// Seek bar: a range input 0..1000 over the episode's duration.
+function setSeekUi(current, duration) {
+  var range = document.getElementById('progress-range');
+  var frac = duration ? Math.min(1, Math.max(0, current / duration)) : 0;
+  range.value = Math.round(frac * 1000);
+  range.style.setProperty('--pct', (frac * 100).toFixed(2) + '%');
+  range.setAttribute('aria-valuetext', formatTime(current) + ' of ' + formatTime(duration));
+  document.getElementById('bp-current').textContent = formatTime(current);
+  document.getElementById('bp-duration').textContent = formatTime(duration);
 }
 
 // ---- UI Rendering ----
@@ -836,7 +958,7 @@ function renderEpisodeBrowser() {
       var q = searchText.toLowerCase();
       if (ep.title.toLowerCase().indexOf(q) === -1 &&
           ep.showName.toLowerCase().indexOf(q) === -1 &&
-          (ep.content || '').toLowerCase().indexOf(q) === -1) return false;
+          (ep.preview || '').toLowerCase().indexOf(q) === -1) return false;
     }
     return true;
   });
@@ -863,10 +985,8 @@ function renderEpisodeBrowser() {
     var top = document.createElement('div');
     top.className = 'nn-ep-card-top';
 
-    var img = document.createElement('img');
-    img.className = 'nn-ep-card-cover';
-    img.src = ep.coverUrl; img.alt = ep.showName;
-    img.width = 48; img.height = 48; img.loading = 'lazy';
+    var img = coverImg(ep, 'nn-ep-card-cover', 48);
+    img.alt = '';  // the show badge beside it names the show
     top.appendChild(img);
 
     var info = document.createElement('div');
@@ -888,13 +1008,16 @@ function renderEpisodeBrowser() {
 
     var date = document.createElement('div');
     date.className = 'nn-ep-card-date';
-    date.textContent = formatDate(ep.date);
+    date.textContent = formatDate(ep.date) +
+      (ep.duration ? ' · ' + formatDuration(ep.duration) : '');
     card.appendChild(date);
 
-    var preview = document.createElement('div');
-    preview.className = 'nn-ep-card-preview';
-    preview.textContent = truncate(ep.content, 200);
-    card.appendChild(preview);
+    if (ep.preview) {
+      var preview = document.createElement('div');
+      preview.className = 'nn-ep-card-preview';
+      preview.textContent = ep.preview;
+      card.appendChild(preview);
+    }
 
     var actions = document.createElement('div');
     actions.className = 'nn-ep-card-actions';
@@ -911,10 +1034,12 @@ function renderEpisodeBrowser() {
     if (isInQueue(ep.id)) {
       addBtn.textContent = 'In Queue';
       addBtn.classList.add('in-queue');
+      addBtn.disabled = true;
+      addBtn.setAttribute('aria-label', ep.title + ' is in the queue');
     } else {
       addBtn.textContent = '+ Queue';
+      addBtn.setAttribute('aria-label', 'Add ' + ep.title + ' to queue');
     }
-    addBtn.setAttribute('aria-label', 'Add ' + ep.title + ' to queue');
     addBtn.addEventListener('click', function() { addToQueue(ep); });
     actions.appendChild(addBtn);
 
@@ -947,10 +1072,8 @@ function renderQueueInto(listEl, countEl) {
     drag.setAttribute('aria-hidden', 'true');
     li.appendChild(drag);
 
-    var img = document.createElement('img');
-    img.className = 'nn-queue-cover';
-    img.src = ep.coverUrl; img.alt = '';
-    img.width = 32; img.height = 32; img.loading = 'lazy';
+    var img = coverImg(ep, 'nn-queue-cover', 32);
+    img.alt = '';
     li.appendChild(img);
 
     var info = document.createElement('div');
@@ -1039,6 +1162,9 @@ function renderQueue() {
   // Update toggle count
   var toggleCount = document.getElementById('queue-toggle-count');
   if (toggleCount) toggleCount.textContent = queue.length;
+  var toggle = document.getElementById('queue-toggle');
+  if (toggle) toggle.setAttribute('aria-label',
+    'Queue, ' + queue.length + (queue.length === 1 ? ' item' : ' items'));
 }
 
 // ---- Initialization ----
@@ -1049,10 +1175,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Audio events
   audio.addEventListener('timeupdate', function() {
     if (!audio.duration) return;
-    var pct = (audio.currentTime / audio.duration) * 100;
-    document.getElementById('progress-bar').style.width = pct + '%';
-    document.getElementById('bp-current').textContent = formatTime(audio.currentTime);
-    document.getElementById('progress-container').setAttribute('aria-valuenow', Math.round(pct));
+    setSeekUi(audio.currentTime, audio.duration);
     // Save position every 5s
     var now = Date.now();
     if (now - lastPositionSave > 5000) {
@@ -1061,7 +1184,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   audio.addEventListener('loadedmetadata', function() {
-    document.getElementById('bp-duration').textContent = formatTime(audio.duration);
+    setSeekUi(audio.currentTime, audio.duration);
   });
   audio.addEventListener('ended', function() {
     playNext();
@@ -1094,12 +1217,11 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('bp-back15').addEventListener('click', skipBack);
   document.getElementById('bp-fwd15').addEventListener('click', skipFwd);
 
-  // Progress seek
-  document.getElementById('progress-container').addEventListener('click', function(e) {
+  // Progress seek (pointer, arrow keys, Home/End — the input handles all)
+  document.getElementById('progress-range').addEventListener('input', function() {
     if (!audio.duration) return;
-    var rect = this.getBoundingClientRect();
-    var frac = (e.clientX - rect.left) / rect.width;
-    audio.currentTime = frac * audio.duration;
+    audio.currentTime = (parseInt(this.value, 10) / 1000) * audio.duration;
+    setSeekUi(audio.currentTime, audio.duration);
   });
 
   // Volume
@@ -1119,8 +1241,12 @@ document.addEventListener('DOMContentLoaded', function() {
   // Filter buttons
   document.querySelectorAll('.nn-filter-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
-      document.querySelectorAll('.nn-filter-btn').forEach(function(b) { b.classList.remove('active'); });
+      document.querySelectorAll('.nn-filter-btn').forEach(function(b) {
+        b.classList.remove('active');
+        b.setAttribute('aria-pressed', 'false');
+      });
       btn.classList.add('active');
+      btn.setAttribute('aria-pressed', 'true');
       activeFilter = btn.dataset.filter;
       renderEpisodeBrowser();
     });
@@ -1157,28 +1283,32 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('refresh-btn').addEventListener('click', function() {
     var btn = this;
     btn.classList.add('spinning');
-    loadAllShows().then(function() {
+    loadNetworkFeed().then(function(added) {
       detectNewEpisodes();
       renderEpisodeBrowser();
-      btn.classList.remove('spinning');
-      showToast('Episodes refreshed');
-    });
+      showToast(added ? 'Episodes refreshed' : 'No newer episodes yet');
+    }, function() {
+      showToast('Could not check for new episodes');
+    }).then(function() { btn.classList.remove('spinning'); });
   });
 
   // Mobile queue drawer
   var drawer = document.getElementById('queue-drawer');
   var backdrop = document.getElementById('drawer-backdrop');
-  document.getElementById('queue-toggle').addEventListener('click', function() {
-    drawer.classList.toggle('open');
-    backdrop.classList.toggle('open');
+  var queueToggle = document.getElementById('queue-toggle');
+  function setDrawer(open) {
+    drawer.classList.toggle('open', open);
+    backdrop.classList.toggle('open', open);
+    queueToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  queueToggle.addEventListener('click', function() {
+    setDrawer(!drawer.classList.contains('open'));
   });
-  backdrop.addEventListener('click', function() {
-    drawer.classList.remove('open');
-    backdrop.classList.remove('open');
-  });
+  backdrop.addEventListener('click', function() { setDrawer(false); });
 
-  // Load episodes
-  loadAllShows().then(function() {
+  // Load episodes from the build's index (no network request)
+  loadIndex();
+  Promise.resolve().then(function() {
     // First visit: auto-populate queue with latest from each show
     if (!hadState || queue.length === 0) {
       var seen = {};

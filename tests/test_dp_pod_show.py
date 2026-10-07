@@ -163,7 +163,11 @@ class TestClubPage:
         # Belonging-framed patronage (MaxFun/Defector/RtbC model): support,
         # not access — three tiers, nothing paywalled.
         assert "The club runs on patrons" in html
-        assert "Become a Patron" in html or "Patron doors open" in html
+        # "Patron doors open with Episode 1" was the pre-launch placeholder;
+        # Oct 2026 it says plainly that memberships are not open yet.
+        assert ("Become a Patron" in html or "Patron doors open" in html
+                or "Patron memberships aren't open yet" in html
+                or "Patron memberships aren&#39;t open yet" in html)
         assert "Founding Patron" in html
         assert "paywall" in html  # the "never moves behind a paywall" promise
         # Registry carries the pluggable checkout URL field.
@@ -683,7 +687,9 @@ class TestCommunityLayer:
             encoding="utf-8")
         assert "{% if dp_dispatches %}" in tpl
         assert "{% if dp_mindsets %}" in tpl
-        assert "The shelf opens with Episode 1" in tpl
+        # Oct 2026: the empty state no longer promises "Episode 1" on a
+        # show 78 episodes in.
+        assert "The shelf fills as episodes ship" in tpl
 
     def test_operator_dispatch_cli_round_trips(self, tmp_path, monkeypatch):
         # scripts/add_dp_dispatch.py writes entries the page collector reads —

@@ -1254,8 +1254,9 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
      <p>About a day before, I'll send a short brief with the themes I'd like to explore.
      You can reply to any of my emails with thoughts, corrections, or anything you would
      rather not discuss, and I'll take it into the conversation.</p>
-     <p>The conversation is recorded, and nothing publishes until you have heard the edit
-     and approved it.${manage ? ` If you need to move or cancel, <a href="${esc(manage)}">use this link</a>; one tap, no explanation needed.` : " If you need to move the time, use the reschedule link in your calendar confirmation."}</p>
+     <p>The conversation is recorded. You get the transcript first, with a week to approve it,
+     cut anything from it or refuse it; after seven days without a reply the episode goes
+     ahead as sent, and you can ask for a takedown at any time.${manage ? ` If you need to move or cancel, <a href="${esc(manage)}">use this link</a>; one tap, no explanation needed.` : " If you need to move the time, use the reschedule link in your calendar confirmation."}</p>
      ${miraSignature(show)}`, true);
   await slack(env, `${show.shortLabel}: ${apps[0].name} booked ${pacificTime(startTime)}`);
   return json({ ok: true, show: show.slug, interview_id: interviewId });
@@ -1283,8 +1284,9 @@ async function handleTriageDecision(req: Request, env: Env): Promise<Response> {
        <p><a href="${esc(link)}">${esc(link)}</a></p>
        <p>Once you book, you'll get a confirmation with your personal studio link. We talk
        from a computer browser with headphones or earbuds on; there is nothing to install.
-       The conversation runs about ${mins} minutes, it's recorded, and nothing publishes
-       until you have heard it and approved it. Past conversations are at
+       The conversation runs about ${mins} minutes and it's recorded. You get the transcript
+       first, with a week to approve it, cut anything from it or refuse it before it
+       publishes. Past conversations are at
        <a href="${esc(SITE + "/" + show.page)}">${esc(SITE + "/" + show.page)}</a> if you'd
        like a sense of the show first.</p>
        ${miraSignature(show)}`, true);

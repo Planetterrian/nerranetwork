@@ -48,11 +48,16 @@ def test_start_here_includes_new_shows():
 
 
 def test_faq_schedule_not_even_odd_stale():
+    # Oct 7 2026: this pinned "odd weekdays" / "even days" — cadences those
+    # shows left in June. The answer is rendered from the registry schedule
+    # strings now (generate_html._cadence_answer).
+    import generate_html as G
+
     tpl = (_ROOT / "templates" / "faq.html.j2").read_text(encoding="utf-8")
+    answer = G._cadence_answer()
     assert "alternate even/odd days" not in tpl
-    assert "odd weekdays" in tpl
-    assert "even days" in tpl
-    assert "When an interview is ready" in tpl or "when an interview is ready" in tpl
+    assert "odd weekdays" not in tpl and "odd weekdays" not in answer
+    assert "When an interview is ready" in answer
 
 
 def test_about_no_longer_promises_quiz():

@@ -142,11 +142,47 @@
             color: var(--nn-text-muted);
             font-style: italic;
         }
-        @media (max-width: 700px) {
-            .htl-table {
+        /* Phones: one card per show (Oct 7 2026). The sideways-scrolling
+           table hid the RSS column — the one link every show has — off the
+           right edge at 390px. Each cell carries its own label instead. */
+        @media (max-width: 640px) {
+            .htl-table, .htl-table tbody, .htl-table tr, .htl-table td {
                 display: block;
-                overflow-x: auto;
+                width: 100%;
             }
+            .htl-table thead {
+                position: absolute;
+                width: 1px; height: 1px;
+                overflow: hidden;
+                clip: rect(0 0 0 0);
+                white-space: nowrap;
+            }
+            .htl-table tr {
+                padding: var(--sp-3) var(--sp-4);
+                border-bottom: 1px solid var(--nn-border);
+            }
+            .htl-table tr:last-child { border-bottom: none; }
+            .htl-table td {
+                padding: var(--sp-1) 0;
+                border-bottom: none;
+            }
+            .htl-table td[data-label] {
+                display: inline-flex;
+                width: auto;
+                flex-wrap: wrap;
+                align-items: baseline;
+                gap: var(--sp-2);
+                margin-right: var(--sp-5);
+            }
+            .htl-table td[data-label]::before {
+                content: attr(data-label);
+                flex: 0 0 auto;
+                color: var(--nn-text-muted);
+                font-size: 0.72rem;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+            }
+            .htl-table .lang-feeds { display: inline !important; margin-top: 0 !important; }
         }
         .htl-faq {
             margin-top: var(--sp-10);
@@ -182,6 +218,17 @@
             line-height: 1.6;
             margin: 0;
         }
+        /* Prose links (Oct 7 2026): the global ``a`` rule inherits colour and
+           drops the underline, so a link inside a sentence was invisible.
+           Scoped to this page's content and to plain (class-less) links. */
+        #main-content p a:not([class]), #main-content li a:not([class]) {
+            color: var(--nn-cyan);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        #main-content p a:not([class]):hover, #main-content li a:not([class]):hover {
+            color: var(--nn-white);
+        }
     </style>
 {% endblock %}
 
@@ -189,8 +236,9 @@
     <div class="page-main">
         <section class="htl-hero">
             <h1>How to listen</h1>
-            <p>Every Nerra Network show is available on Apple Podcasts, Spotify, and as a
-            standard RSS feed. Pick your app and subscribe — new episodes show up
+            <p>Most Nerra Network shows are in Apple Podcasts and Spotify, and every
+            show that publishes has a standard RSS feed that works in most podcast
+            app. Pick your app and subscribe — new episodes show up
             automatically.</p>
         </section>
 
@@ -242,7 +290,9 @@
                 repeating seventeen per-show RSS links (2026-09-21). #}
             <section class="htl-shows-section" id="feeds">
                 <h2>All {{ all_shows|length }} shows</h2>
-                <p>Tap a platform link to open the show in the corresponding app.</p>
+                <p>Tap a platform link to open the show in the corresponding app. A dash
+                means the show is not listed in that directory yet &mdash; its RSS feed
+                works in Apple Podcasts (Follow a Show by URL) and most other apps.</p>
                 {# The three Mira-hosted shows are the ones a newcomer is least
                    likely to guess exist, and Nerra Daily is the easiest single
                    subscription in the network. One line, above the table. #}
@@ -273,17 +323,17 @@
                                     <span>{{ s.name }}</span>
                                 </a>
                             </td>
-                            <td>
+                            <td data-label="Apple">
                                 {% if s.apple_podcasts_url %}
                                 <a href="{{ s.apple_podcasts_url | with_utm(campaign=s.slug, medium='how-to-listen') }}" class="plat-link" rel="noopener" target="_blank" data-show="{{ s.slug }}">Open</a>
                                 {% else %}<span class="na">—</span>{% endif %}
                             </td>
-                            <td>
+                            <td data-label="Spotify">
                                 {% if s.spotify_url %}
                                 <a href="{{ s.spotify_url | with_utm(campaign=s.slug, medium='how-to-listen') }}" class="plat-link" rel="noopener" target="_blank" data-show="{{ s.slug }}">Open</a>
                                 {% else %}<span class="na">—</span>{% endif %}
                             </td>
-                            <td>
+                            <td data-label="RSS">
                                 {% if s.rss_file and s.has_feed %}
                                 <a href="{{ path_prefix }}{{ s.rss_file }}" class="plat-link">Feed</a>
                                 {% else %}<span class="na">—</span>{% endif %}

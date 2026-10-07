@@ -21,7 +21,7 @@
     --ink-1: #f1f5f9;          /* primary text */
     --ink-2: #cbd5e1;          /* secondary text */
     --ink-3: #94a3b8;          /* muted / labels */
-    --ink-4: #64748b;          /* faint */
+    --ink-4: #8794aa;          /* faint — 5.7:1 on #161a24 (was #64748b, 3.65:1) */
     --hairline: #232938;       /* borders, grid */
     --series-1: #9085e9;       /* violet — primary magnitude */
     --series-2: #d95926;       /* orange — second series */
@@ -80,7 +80,7 @@
     background: transparent; transition: background 140ms ease, color 140ms ease; }
   .view-switch button:hover { color: var(--ink-1); }
   .view-switch button[aria-pressed="true"] { background: var(--accent);
-    color: #04121d; }
+    color: #fff; }  /* dark ink on #6B47FF was 3.58:1 */
   .view-note { font-size: 12px; color: var(--ink-4); margin-top: 6px; max-width: 62ch; }
 
   /* Default (operator): sponsor-only surfaces stay hidden; everything
@@ -155,7 +155,7 @@
   .reach-item { border-left: 2px solid var(--accent); padding-left: 11px; }
   .reach-item .r-v { font-size: 25px; font-weight: 650; letter-spacing: -0.02em;
     font-variant-numeric: tabular-nums; line-height: 1.1; }
-  .reach-item .r-l { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+  .reach-item .r-l { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
     color: var(--ink-4); margin-top: 3px; }
   .reach-item .r-s { font-size: 11.5px; color: var(--ink-3); margin-top: 3px; }
 
@@ -167,7 +167,7 @@
     border-radius: 14px; padding: 14px 16px 12px; min-width: 0;
     transition: border-color 160ms ease, transform 160ms ease; }
   .tile:hover { border-color: #2f3748; transform: translateY(-1px); }
-  .tile .t-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+  .tile .t-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;
     color: var(--ink-3); }
   .tile .t-value { font-size: 27px; font-weight: 600; color: var(--ink-1); margin-top: 5px;
     line-height: 1.1; font-variant-numeric: tabular-nums; }
@@ -195,14 +195,26 @@
 
   /* labeled bar rows (a bar-chart-as-list: every row direct-labeled) */
   .bar-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; min-width: 0; }
-  .bar-row .label { flex: 0 0 168px; font-size: 12.5px; color: var(--ink-2);
+  .bar-row .label { flex: 0 1 168px; min-width: 80px; font-size: 12.5px; color: var(--ink-2);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bar-row .track { flex: 1; height: 12px; background: var(--surface-2);
     border-radius: 4px; overflow: hidden; min-width: 40px; }
   .bar-row .fill { height: 100%; background: var(--series-1);
     border-radius: 0 4px 4px 0; }
-  .bar-row .value { flex: 0 0 auto; font-size: 12px; color: var(--ink-3);
+  /* The value is capped and may wrap, and the label gives way first: a
+     long direct label used to push the row past its card and the page
+     past the viewport (494px on a 390px phone). */
+  .bar-row .value { flex: 0 0 auto; max-width: 55%; min-width: 0;
+    overflow-wrap: break-word; text-align: right; font-size: 12px; color: var(--ink-3);
     font-variant-numeric: tabular-nums; }
+  .mc-card-wide { grid-column: 1 / -1; }
+  .lever-list { display: grid; gap: 0 28px;
+    grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); }
+  .lever-row { margin-top: 10px; font-size: 12.5px; min-width: 0; }
+  .lever-more, .lever-done { font-size: 12px; color: var(--ink-3); }
+  .lever-more summary, .lever-done summary { cursor: pointer; color: var(--ink-3); }
+  .lever-done { margin-top: 14px; }
+  .lever-done .lever-row { opacity: .7; }
 
   .fine-list { margin: 8px 0 0; padding: 0; list-style: none; font-size: 12.5px;
     color: var(--ink-3); line-height: 1.55; }
@@ -267,7 +279,7 @@
   .eff-cell { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
   .eff-cell .eff-n { font-size: 18px; font-weight: 600; color: var(--ink-1);
     font-variant-numeric: tabular-nums; }
-  .eff-cell .eff-l { font-size: 11px; color: var(--ink-4); margin-top: 2px;
+  .eff-cell .eff-l { font-size: 12px; color: var(--ink-4); margin-top: 2px;
     text-transform: uppercase; letter-spacing: 0.04em; }
   .platform-note { font-size: 12px; color: var(--ink-4); margin: 0 0 8px; line-height: 1.4; }
   .show-card .links { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; font-size: 12px; }
@@ -488,7 +500,21 @@
   };
 
   const money = (n) => "$" + Number(n || 0).toFixed(2);
+  // Replaced with the registry lookup once dashboard.json has loaded.
+  let showName = (slug) => slug;
+  // Unit rates span four orders of magnitude ($/YT view is ~0.0003), so a
+  // fixed .toFixed(3) printed "$0.000" — a zero the data does not say.
+  const rateUsd = (n) => {
+    if (n === null || n === undefined || n === "") return "—";
+    n = Number(n);
+    if (n === 0) return "$0";
+    if (Math.abs(n) >= 0.1) return "$" + n.toFixed(2);
+    if (Math.abs(n) >= 0.001) return "$" + n.toFixed(3);
+    return "$" + String(Number(n.toPrecision(2)));
+  };
   const fmt = (n) => Number(n || 0).toLocaleString();
+  const esc = (t) => String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   // Absence-preserving formatter. `fmt` coerces null/undefined to 0, which
   // is this repo's signature bug: Apple suppresses metrics it will not
   // disclose, and "not measured" is not "zero". Use this for any value
@@ -560,9 +586,14 @@
 
   const barRow = (label, value, max, valueText, opts = {}) => {
     const row = h("div", { class: "bar-row" });
-    row.appendChild(h("div", { class: "label", text: label, title: label }));
+    // A show slug renders as its display name (the slug stays in the
+    // tooltip); anything else — a page path, a platform — is unchanged.
+    const shown = showName(label);
+    row.appendChild(h("div", { class: "label", text: shown,
+      title: shown === label ? label : shown + " (" + label + ")" }));
     const track = h("div", { class: "track" });
-    const pctW = max > 0 ? Math.max(1.5, 100 * value / max) : 0;
+    // A null or zero row draws no bar — the 1.5% sliver read as "a little".
+    const pctW = (max > 0 && value > 0) ? Math.max(1.5, 100 * value / max) : 0;
     const fill = h("div", { class: "fill", style: "width:" + pctW.toFixed(1) + "%;" +
       (opts.color ? "background:" + opts.color + ";" : "") });
     track.appendChild(fill);
@@ -630,6 +661,26 @@
             " — some sections below may be missing." }));
   });
 
+  // Display names from the registry rows the generator already ships.
+  // Sponsor and investor views had printed raw slugs
+  // (models_agents_beginners) on every bar chart.
+  const SHOW_NAMES = {};
+  (data.shows || []).forEach((r) => { if (r && r.slug) SHOW_NAMES[r.slug] = r.name || r.slug; });
+  if (!SHOW_NAMES.nerra_daily) SHOW_NAMES.nerra_daily = "Nerra Daily";
+  // Digest directory names that differ from the slug (claims sidecars).
+  if (SHOW_NAMES.tesla && !SHOW_NAMES.tesla_shorts_time) SHOW_NAMES.tesla_shorts_time = SHOW_NAMES.tesla;
+  showName = (slug) => {
+    if (typeof slug !== "string") return slug;
+    if (SHOW_NAMES[slug]) return SHOW_NAMES[slug];
+    const colon = slug.indexOf(":");
+    if (colon > 0 && SHOW_NAMES[slug.slice(0, colon)]) {
+      return SHOW_NAMES[slug.slice(0, colon)] + " (" + slug.slice(colon + 1) + ")";
+    }
+    const m = slug.match(/^(.+)_(ru|fr|es|zh)$/);
+    if (m && SHOW_NAMES[m[1]]) return SHOW_NAMES[m[1]] + " (" + m[2].toUpperCase() + ")";
+    return slug;
+  };
+
   $("#loading").hidden = true;
   $("#content").hidden = false;
   $("#status-summary").hidden = false;
@@ -678,8 +729,16 @@
     band.appendChild(h("div", { class: "alert warn",
       html: "<strong>Warn — " + lm.title + ":</strong> " + lm.details }));
   });
+  // A landmine alert is already rendered above as its FAIL/Warn banner;
+  // the rest carry a message, or a title + details. String(a) of an
+  // object printed "[object Object]".
   (data.alerts || []).forEach((a) => {
-    band.appendChild(h("div", { class: "alert warn", text: String(a.message || a) }));
+    if (a && typeof a === "object" && a.type === "landmine") return;
+    const msg = (a && typeof a === "object")
+      ? (a.message || [a.title, a.details].filter(Boolean).join(": "))
+      : String(a || "");
+    if (!msg) return;
+    band.appendChild(h("div", { class: "alert warn", text: msg }));
   });
   if (sp.configured === false || (sp.per_show && !Object.keys(sp.per_show).length)) {
     // quiet: surfaced in the Spotify card, not the alert band
@@ -708,6 +767,12 @@
     return langs.size;
   }
 
+  // Episodes published in the last 7 days, counted from the RSS pubDates
+  // (benchmarks.network.episodes_7d — the figure the investor view uses).
+  // The credit-file count in cost_rollup also counts every dub track and
+  // read 176 beside the investor view's 144.
+  const episodesThisWeek = (((data.benchmarks || {}).network) || {}).episodes_7d;
+
   // ---------- hero stat tiles ----------
   const tiles = $("#tile-row");
   const chSum = (field) => Object.values(yt.channels || {})
@@ -732,7 +797,7 @@
       sub: ah.configured
         ? (ahWow + " · first-week/ep " +
            ((ahn.first_week_top_shows || []).length
-             ? (ahn.first_week_top_shows || []).map((t) => t.show + " " + fmt(t.median)).join(", ")
+             ? (ahn.first_week_top_shows || []).map((t) => showName(t.show) + " " + fmt(t.median)).join(", ")
              : "—") +
            " · " + ahRet)
         : "audience stats not fetched yet",
@@ -770,9 +835,9 @@
     { econ: true,
       sub: money((data.network || {}).total_cost_last_30_days_usd) + " · 30d · " +
            (eff.usd_per_op3_download_7d != null
-             ? ("$" + Number(eff.usd_per_op3_download_7d).toFixed(3) + "/RSS dl")
+             ? (rateUsd(eff.usd_per_op3_download_7d) + "/RSS dl")
              : (money((cost.projections || {}).projected_weekly_usd) + "/wk burn")) }));
-  tiles.appendChild(statTile("Episodes · 7d", fmt((cost.network_last_7_days || {}).episodes),
+  tiles.appendChild(statTile("Episodes · 7d", fmtOrDash(episodesThisWeek),
     { econ: true,
       sub: money((cost.projections || {}).avg_cost_per_episode_usd) + " avg / episode · " +
            fmt(catalog.shows_count || (data.network || {}).shows_count) + " shows" }));
@@ -780,7 +845,7 @@
   // production reality stated as scale rather than as cost.
   tiles.appendChild(statTile("Episodes published", compact(catalog.network_episodes_to_date),
     { sponsorOnly: true,
-      sub: fmt((cost.network_last_7_days || {}).episodes) + " in the last 7d · " +
+      sub: fmtOrDash(episodesThisWeek) + " in the last 7d · " +
            fmt(catalog.shows_count || (data.network || {}).shows_count) + " active shows" }));
   tiles.appendChild(statTile("Languages", fmt(sponsorLanguageCount(data)),
     { sponsorOnly: true,
@@ -842,14 +907,14 @@
       // recording, but answering 404 on lookup — the thirteen September
       // launch-cohort shows. Named here, never summed, never "—".
       if ((op3.unindexed || []).length) {
-        card.appendChild(h("p", { class: "platform-note", text:
+        card.appendChild(h("p", { class: "platform-note", "data-ops": "", text:
           "Not yet indexed by OP3 (" + op3.unindexed.length + "): " +
           op3.unindexed.join(", ") + " — downloads attach retroactively " +
           "once OP3 indexes the feed; a 404 persisting for weeks means " +
           "check the prefix (docs/analytics.md)." }));
       }
       if ((op3.not_refreshed || []).length) {
-        card.appendChild(h("p", { class: "fine-list", text:
+        card.appendChild(h("p", { class: "fine-list", "data-ops": "", text:
           "Not refreshed this run (previous reading kept): " +
           op3.not_refreshed.join(", ") }));
       }
@@ -857,7 +922,7 @@
         const ul = h("ul", { class: "fine-list" });
         op3.top_episodes_7d.slice(0, 5).forEach((ep, i) => {
           ul.appendChild(h("li", { html:
-            "#" + (i + 1) + " <span class='k'>[" + ep.show_slug + "]</span> " +
+            "#" + (i + 1) + " <span class='k'>[" + esc(showName(ep.show_slug)) + "]</span> " +
             String(ep.title || "").slice(0, 80).replace(/</g, "&lt;") +
             " — <span class='k'>" + fmt(ep.downloads_7d) + " · 7d</span>" }));
         });
@@ -906,7 +971,7 @@
       const ul = h("ul", { class: "fine-list" });
       (yt.top_subscriber_videos || []).slice(0, 5).forEach((v) => {
         ul.appendChild(h("li", { html:
-          "+" + v.subscribers_gained + " subs <span class='k'>[" + v.show + "/" + v.kind + "]</span> " +
+          "+" + v.subscribers_gained + " subs <span class='k'>[" + esc(showName(v.show)) + " · " + esc(v.kind) + "]</span> " +
           String(v.title || "").slice(0, 70).replace(/</g, "&lt;") }));
       });
       if ((yt.top_subscriber_videos || []).length) {
@@ -1057,7 +1122,9 @@
       Object.keys(srcs).forEach((key) => {
         const s = srcs[key] || {};
         if (!s.fetched_at) return;
-        card.appendChild(h("p", { class: "fine-list", text:
+        // Source freshness is operator plumbing: a dead scrape is the
+        // operator's to fix, not a sponsor's to read.
+        card.appendChild(h("p", { class: "fine-list", "data-ops": "", text:
           (key === "reporter" ? "Reporter" : "Connect scrape") + " fetched " +
           ageText(s.fetched_at) + staleNote(s.fetched_at) }));
       });
@@ -1146,9 +1213,15 @@
       const reasons = w7.flagged_by_reason || {};
       const reasonText = ["unreachable", "not_found", "quote_mismatch", "uncovered", "malformed"]
         .map((r) => r.replace("_", " ") + " " + fmtOrDash(reasons[r])).join(" · ");
-      card.appendChild(h("p", { class: "fine-list", text:
+      // The reason breakdown and per-show rows are the operator's
+      // instrument; the public per-show record is claims.html.
+      const ops = h("div", { "data-ops": "" });
+      card.appendChild(h("p", { class: "fine-list", html:
+        "Per-show record, every claim and its status: " +
+        "<a href='claims.html' style='color:#a5b4fc;'>claims.html</a>" }));
+      ops.appendChild(h("p", { class: "fine-list", text:
         "7d flagged by reason: " + reasonText + " · " + fmtOrDash(w7.sidecars) + " sidecars" }));
-      card.appendChild(h("p", { class: "fine-list", text:
+      ops.appendChild(h("p", { class: "fine-list", text:
         "30d: " + pctOrDash(w30.verified_share) + " verified of " + fmtOrDash(w30.claims_total) +
         " claims · " + fmtOrDash(w30.flagged) + " flagged · " + fmtOrDash(w30.verified_later) +
         " verified later · " + fmtOrDash(w30.sidecars) + " sidecars" +
@@ -1164,13 +1237,14 @@
         const txt = pctOrDash(v.verified_share) + " verified · " + fmtOrDash(v.claims_total) + " claims" +
           (v.flagged ? " · " + fmtOrDash(v.flagged) + " flagged" : "") +
           (v.verified_later ? " · +" + fmtOrDash(v.verified_later) + " later" : "");
-        card.appendChild(barRow(slug, v.claims_total || 0, maxC, txt,
+        ops.appendChild(barRow(slug, v.claims_total || 0, maxC, txt,
           { color: "var(--series-2)",
             title: slug + " (30d, " + fmtOrDash(v.sidecars) + " sidecars): flagged — unreachable " +
                    fmtOrDash(rs.unreachable) + ", not found " + fmtOrDash(rs.not_found) +
                    ", quote mismatch " + fmtOrDash(rs.quote_mismatch) + ", uncovered " +
                    fmtOrDash(rs.uncovered) + ", malformed " + fmtOrDash(rs.malformed) }));
       });
+      card.appendChild(ops);
       if (cl.as_of) card.appendChild(h("p", { class: "fine-list", text: "as of " + cl.as_of + " · dated from each sidecar's filename" }));
     }
     audGrid.appendChild(card);
@@ -1188,15 +1262,11 @@
       const grid = h("div", { class: "eff-grid" });
       const cells = [
         [money(eff.cost_7d_usd), "spend · 7d"],
-        [eff.usd_per_op3_download_7d != null
-          ? ("$" + Number(eff.usd_per_op3_download_7d).toFixed(3)) : "—",
-          "$ / RSS download · 7d"],
+        [rateUsd(eff.usd_per_op3_download_7d), "$ / RSS download · 7d"],
         [fmt(eff.op3_downloads_7d), "RSS downloads · 7d"],
         [fmt(eff.spotify_streams_30d), "Spotify streams · 30d"],
         [fmt(eff.youtube_views_window), "YouTube views · " + (eff.youtube_window_days || 90) + "d"],
-        [eff.usd_per_yt_view != null
-          ? ("$" + Number(eff.usd_per_yt_view).toFixed(3)) : "—",
-          "$ / YT view (directional)"],
+        [rateUsd(eff.usd_per_yt_view), "$ / YT view (directional)"],
       ];
       cells.forEach(([n, l]) => {
         const cell = h("div", { class: "eff-cell" });
@@ -1226,11 +1296,12 @@
         ranked.slice(0, 8).forEach((slug) => {
           const v = per[slug];
           const rate = v.usd_per_op3_download;
-          card.appendChild(barRow(slug, rate == null ? 0 : rate, maxCost,
-            (rate == null ? "—" : ("$" + Number(rate).toFixed(3))) +
-            " · " + fmt(v.op3_downloads_7d) + " dl · " + money(v.cost_7d_usd),
+          // Untracked spend (cost null) reads "spend untracked", never $0.
+          card.appendChild(barRow(showName(slug), rate == null ? 0 : rate, maxCost,
+            rateUsd(rate) + " · " + fmt(v.op3_downloads_7d) + " dl · " +
+            (v.cost_7d_usd == null ? "spend untracked" : money(v.cost_7d_usd)),
             { color: "var(--series-3)",
-              title: slug + ": YT " + fmt(v.youtube_views || 0) + " views · Spotify " +
+              title: showName(slug) + ": YT " + fmt(v.youtube_views || 0) + " views · Spotify " +
                      fmt(v.spotify_streams_30d || 0) + " streams" }));
         });
       }
@@ -1462,35 +1533,62 @@
     {
       const card = sectionCard("Levers in flight",
         "docs/experiments.yaml · one variable at a time");
+      // Full width, one line per lever, the paragraphs behind a click:
+      // 100+ registered experiments with their target and decision rule
+      // printed inline had made this one grid cell ~50,000px tall. Every
+      // field is ESCAPED — registry prose carries `<slug>` placeholders,
+      // which innerHTML swallowed ("digests//spoken_text_gate..json").
+      card.classList.add("mc-card-wide");
       if (!ex.configured) {
         card.appendChild(h("p", { class: "fine-list",
           text: "No docs/experiments.yaml registry yet." }));
       } else {
-        (ex.experiments || []).forEach((r) => {
-          const row = h("div", { style: "margin-top:10px;font-size:12.5px;"
-            + (r.status === "done" ? "opacity:.55;" : "") });
+        const leverRow = (r) => {
+          const row = h("div", { class: "lever-row" });
           const chip = r.overdue
             ? "<span class='t-delta down'>readout overdue</span>"
-            : (r.days_to_readout != null
+            : (r.days_to_readout != null && r.status !== "done"
                 ? "<span style='color:var(--ink-3)'>" +
                   (r.status === "decide" ? "decision" : "readout") + " in " +
-                  r.days_to_readout + "d</span>"
+                  esc(r.days_to_readout) + "d</span>"
                 : "");
           row.appendChild(h("div", { html:
-            "<strong>" + r.title + "</strong> " + chip }));
-          let m = "";
+            "<strong>" + esc(r.title) + "</strong> " + chip }));
           if (r.metric) {
-            m = r.metric + ": <span class='k'>" +
-                (r.value === null || r.value === undefined ? "no data yet" : r.value) +
-                "</span>" +
-                (r.baseline != null ? " (baseline " + r.baseline + ")" : "");
+            row.appendChild(h("div", { class: "fine-list", html:
+              esc(r.metric) + ": <span class='k'>" +
+              (r.value === null || r.value === undefined ? "no data yet" : esc(r.value)) +
+              "</span>" }));
           }
-          const tail = [m, r.target ? "target: " + r.target : "",
-                        r.criteria ? "decision rule: " + r.criteria : ""]
-            .filter(Boolean).join(" · ");
-          if (tail) row.appendChild(h("div", { class: "fine-list", html: tail }));
-          card.appendChild(row);
-        });
+          const more = [
+            r.baseline != null ? ["Baseline", r.baseline] : null,
+            r.target ? ["Target", r.target] : null,
+            r.criteria ? ["Decision rule", r.criteria] : null,
+          ].filter(Boolean);
+          if (more.length) {
+            const det = h("details", { class: "lever-more" });
+            det.appendChild(h("summary", { text: "target & decision rule" }));
+            more.forEach(([k, v]) => {
+              det.appendChild(h("p", { class: "fine-list", html:
+                "<span class='k'>" + k + ":</span> " + esc(v) }));
+            });
+            row.appendChild(det);
+          }
+          return row;
+        };
+        const all = ex.experiments || [];
+        const live = h("div", { class: "lever-list" });
+        all.filter((r) => r.status !== "done").forEach((r) => live.appendChild(leverRow(r)));
+        card.appendChild(live);
+        const done = all.filter((r) => r.status === "done");
+        if (done.length) {
+          const det = h("details", { class: "lever-done" });
+          det.appendChild(h("summary", { text: done.length + " finished experiment(s)" }));
+          const doneList = h("div", { class: "lever-list" });
+          done.forEach((r) => doneList.appendChild(leverRow(r)));
+          det.appendChild(doneList);
+          card.appendChild(det);
+        }
         card.appendChild(h("p", { class: "fine-list", text:
           "Every change shipped to move a number registers here with its " +
           "readout date. Values are live; 'no data yet' is honest, not zero." }));
@@ -1918,7 +2016,7 @@
           const rows = (c.shows || []).slice(0, 12);
           rows.forEach((r) => {
             const row = h("div", { class: "bar-row" });
-            row.appendChild(h("div", { class: "label", text: r.slug, title: r.slug }));
+            row.appendChild(h("div", { class: "label", text: showName(r.slug), title: r.slug }));
             const chip = h("span", { class: "chip on", style: "flex:0 0 auto;",
               title: "Tier " + r.tier });
             chip.appendChild(h("span", { class: "dot", style: "background:" +
@@ -2238,10 +2336,10 @@
         : "") }));
     if (eff.usd_per_op3_download_7d != null) {
       card.appendChild(h("p", { class: "fine-list", html:
-        "Unit cost: <span class='k'>$" + Number(eff.usd_per_op3_download_7d).toFixed(3) +
+        "Unit cost: <span class='k'>" + rateUsd(eff.usd_per_op3_download_7d) +
         "</span> per RSS download · 7d" +
         (eff.usd_per_yt_view != null
-          ? (" · <span class='k'>$" + Number(eff.usd_per_yt_view).toFixed(3) +
+          ? (" · <span class='k'>" + rateUsd(eff.usd_per_yt_view) +
              "</span> per YT view (mismatched windows — directional)")
           : "") }));
     }
@@ -2456,7 +2554,7 @@
     card.appendChild(stats);
     if (eRow.usd_per_op3_download != null) {
       card.appendChild(h("div", { class: "meta-line", html:
-        "$/RSS dl · 7d: <strong>$" + Number(eRow.usd_per_op3_download).toFixed(3) +
+        "$/RSS dl · 7d: <strong>" + rateUsd(eRow.usd_per_op3_download) +
         "</strong>" +
         (yRow.avg_view_percentage != null
           ? (" · YT retention <strong>" + yRow.avg_view_percentage + "%</strong>")
@@ -2671,19 +2769,24 @@
   (function renderSponsorPanel() {
     const grid = $("#reach-grid");
     if (!grid) return;
-    const weeks = (op3.network_weekly_history || []).map((r) => Number(r[1] || 0));
-    const lastW = weeks.length ? weeks[weeks.length - 1] : 0;
-    const prevW = weeks.length > 1 ? weeks[weeks.length - 2] : 0;
-    const growth = prevW > 0 ? Math.round(((lastW - prevW) / prevW) * 100) : null;
+    // The last COMPLETE week vs the week before — the same figure the
+    // audience headline tile shows. The last bucket of the OP3 weekly
+    // history is the current PARTIAL week, and comparing it put "+62%"
+    // beside the tile's "+7.8% WoW" on the same page.
+    const ahNet = (data.audience_headline || {}).network || {};
+    const lastW = ahNet.last_week;
+    const prevW = ahNet.prior_week;
+    const growth = ahNet.wow_pct;
     const ytViews = yt.network_views != null ? yt.network_views : chSum("total_views");
     const ytSubs = chSum("subscribers");
 
     const items = [
       { v: compact(op3.network_downloads_30d), l: "Podcast downloads · 30d",
         s: fmt(op3.network_downloads_all_time) + " all-time (OP3-verified)" },
-      { v: (growth == null ? "—" : (growth > 0 ? "+" : "") + growth + "%"),
+      { v: (growth == null ? "—" : (growth > 0 ? "+" : "") + Number(growth).toFixed(1) + "%"),
         l: "Week-over-week growth",
-        s: fmt(prevW) + " → " + fmt(lastW) + " downloads/wk" },
+        s: (lastW == null || prevW == null) ? "last complete week unmeasured"
+          : fmtOrDash(prevW) + " → " + fmtOrDash(lastW) + " downloads · last complete week" },
       // Lifetime channel views, labelled as such. `network_views` is the
       // 90-day Analytics window and reads as a lifetime figure if the
       // label does not say otherwise — on a page a sponsor may rely on,
@@ -2721,7 +2824,7 @@
       lede.textContent =
         fmt(catalog.shows_count || (data.network || {}).shows_count) +
         " original shows publishing " +
-        fmt((cost.network_last_7_days || {}).episodes) +
+        (episodesThisWeek == null ? "new" : fmt(episodesThisWeek)) +
         " episodes a week in " + fmt(sponsorLanguageCount(data)) +
         " languages, on Apple Podcasts, Spotify and YouTube.";
     }

@@ -78,14 +78,17 @@ NOT_APPLICABLE = {
     ),
     "age_of_ai": (
         "The Age of AI is an interview: the guest's words are published "
-        "verbatim, a human editor reviews every episode before release and "
-        "the guest approves their own transcript, so there is no claims "
-        "ledger to check against a source."
+        "verbatim, a human editor reviews every episode before release, and "
+        "the guest gets a week to approve, cut from or refuse their own "
+        "transcript (after seven days without a reply it publishes as sent; "
+        "a takedown stays available), so there is no claims ledger to check "
+        "against a source."
     ),
     "nerra_voices": (
         "Nerra Voices is an interview show on the same two human gates as "
-        "The Age of AI — editorial review and the guest's own transcript "
-        "approval — and carries no claims ledger."
+        "The Age of AI — editorial review, and a week for the guest to "
+        "approve, cut from or refuse their own transcript, with a takedown "
+        "available afterwards — and carries no claims ledger."
     ),
 }
 

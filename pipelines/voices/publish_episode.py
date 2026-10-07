@@ -37,6 +37,18 @@ from common import (  # noqa: E402
 )
 
 
+#: The line above every published transcript (Oct 7 2026). It said "reviewed
+#: and approved by <guest> before release" on all nine interview posts, which
+#: is stronger than gate 2: the guest gets a week to approve, cut from or
+#: refuse the transcript, and silence publishes. Same terms as
+#: engine.brand.interview_provenance.
+TRANSCRIPT_NOTE = (
+    "The conversation as it was recorded, with any cuts the guest asked for "
+    "removed. After editorial review the transcript was sent to {name} to "
+    "approve, cut from or refuse before publication."
+)
+
+
 def _next_episode_number(show: VoiceShow) -> int:
     summaries = show.summaries_path
     if not summaries.exists():
@@ -185,14 +197,18 @@ def write_episode_digest(show, episode_num: int, when: dt.date, title: str,
 
     if materials:
         parts.append("### What they wanted you to read next")
-        parts.append(f"Sent by {name} when they approved this episode.")
+        # The review form keeps materials whatever the guest decided, so the
+        # line says where they came from, not that the guest approved.
+        parts.append(f"Sent by {name} with their transcript review.")
         parts.append(_bullets(materials))
         parts.append("---")
 
     if transcript:
         parts.append("### Transcript")
-        parts.append("The conversation as it was recorded, reviewed and "
-                     f"approved by {name} before release.")
+        # Gate 2 as built (engine.brand.interview_provenance): the guest is
+        # SENT the transcript to approve, cut from or refuse, and seven days
+        # of silence also publishes — so this never says "approved by".
+        parts.append(TRANSCRIPT_NOTE.format(name=name))
         parts.append(transcript)
 
     md = "\n\n".join(parts).rstrip() + "\n"
@@ -586,8 +602,8 @@ def maybe_publish_youtube(show: VoiceShow, cfg, episode_num: int, when: dt.date,
             body,
             f"Full episode, transcript and every other show: {page}",
             f"{cfg.name} is hosted by Mira, an AI. Every episode says so, and "
-            "no interview is published until the guest has read and approved "
-            "their own transcript.",
+            "every guest is sent their own transcript to approve, cut from or "
+            "refuse before it is published.",
         ) if x)
 
         with tempfile.TemporaryDirectory(prefix=f"{show.slug}_yt_") as tmp:

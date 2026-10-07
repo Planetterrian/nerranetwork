@@ -457,7 +457,7 @@ NETWORK_SHOWS = {
         "about_host": "Hosted by Patrick, each episode covers breaking news across every Tesla business line: product updates, energy and solar deployments, Optimus and autonomy progress, Cortex compute, and the latest from the broader EV world.",
         "description_long": "Daily podcast covering the whole Tesla business: FSD and Robotaxi milestones, Optimus, Cybertruck and vehicle production, Megapack and Powerwall energy storage, Solar Roof, Cortex/Dojo compute, Supercharging, Semi, TSLA stock context, and why the shorts keep getting it wrong.",
         "related_show": "spacex",
-        "related_reason": "If you enjoy Tesla Shorts Time, you might also like Omni View — balanced daily news from every perspective.",
+        "related_reason": "If you enjoy Tesla Shorts Time, you might also like SpaceX Daily — the engineering-first daily on SpaceX as a public company.",
         "apple_podcasts_url": "https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939",
         "spotify_url": "https://open.spotify.com/show/7I1DIaUaSlVsYliigOe6sS",
         "theme_color": "#E31937",
@@ -542,6 +542,8 @@ NETWORK_SHOWS = {
             "heading": "Buy a Tesla & Get Free Stuff",
             "cta": "Order a Tesla with Free FSD Trial",
             "intro": "Use our referral link when ordering your new Tesla and you'll receive free benefits at no extra cost. It's Tesla's way of rewarding customers who spread the word.",
+            "benefits_heading": "Vehicle Benefits",
+            "disclosure": "This is a referral link: when you order through it, the show may also receive a referral reward from Tesla.",
             "buyer_benefits": [
                 "3 months of Full Self-Driving (Supervised) free — a $297 value",
                 "Works on Model 3, Model Y, and Cybertruck orders",
@@ -587,7 +589,7 @@ NETWORK_SHOWS = {
         "about_host": "Hosted by Patrick in Vancouver. Helping you form your own informed opinions through balanced, multi-perspective coverage.",
         "description_long": "A calm daily briefing on the day's most important stories worldwide — every region, every side, in plain language for everyone from teens to seniors. Genuine disagreements presented at their strongest with named advocates, one progress story every day, and each episode ends by pointing you to a second perspective worth reading — so you can decide for yourself.",
         "related_show": "nerra_daily",
-        "related_reason": "If you enjoy Omni View, you might also like Tesla Shorts Time — daily news focused on Tesla and sustainable energy.",
+        "related_reason": "If you enjoy Omni View, you might also like Nerra Daily — every English show the network publishes, in one listen a day.",
         "apple_podcasts_url": "https://podcasts.apple.com/us/podcast/omni-view-balanced-news-perspectives/id1885661594",
         "spotify_url": "https://open.spotify.com/show/4KuOgvZMm4Mweorshrm2qR",
         "theme_color": "#0B6FD6",
@@ -916,7 +918,7 @@ NETWORK_SHOWS = {
         "about_host": "Hosted by Patrick in Vancouver.",
         "description_long": "Environmental regulatory, science, and compliance briefing for BC professionals. Covers contaminated sites, CEPA, emissions, carbon policy, PFAS, and remediation developments across Canada.",
         "related_show": "offshore_north",
-        "related_reason": "If you enjoy Environmental Intelligence, you might also like Planetterrian Daily — science, longevity, and health research.",
+        "related_reason": "If you enjoy Environmental Intelligence, you might also like Offshore North — a weekly show on ocean racing, where weather, routing and the sea itself decide the result.",
         "apple_podcasts_url": None,  # Not yet on Apple Podcasts
         "spotify_url": None,  # Not yet on Spotify
         "theme_color": "#1B5E20",
@@ -1456,7 +1458,7 @@ NETWORK_SHOWS = {
         "episode_length": "~12 min",
         "about_text": "Modern Investing Techniques is a daily investing podcast using AI analysis and modern tools to identify opportunities, track simulated trades, and teach strategies that aim to outperform index fund returns. Focused on Canadian and US markets.",
         "about_host": "Hosted by Patrick in Vancouver. Each episode covers market analysis, a strategy spotlight, AI-selected practice trades with real performance tracking, and tools to sharpen your investing edge.",
-        "description_long": "Daily investing podcast using AI-driven analysis and modern tools to identify market opportunities, track simulated trades, and teach strategies that aim to outperform index funds. Covering Canadian and US markets with actionable picks, performance tracking, and lessons learned.",
+        "description_long": "Daily investing podcast using AI-driven analysis and modern tools to identify market opportunities, track simulated trades, and teach the strategies behind them. Covering Canadian and US markets with simulated picks, a public trade ledger that includes the losers, and the lessons learned. Educational, not financial advice.",
         "related_show": "tesla",
         "related_reason": "If you're interested in TSLA as an investment, check out Tesla Shorts Time — our daily Tesla and EV analysis show.",
         "apple_podcasts_url": "https://podcasts.apple.com/us/podcast/modern-investing-techniques/id1886870483",
@@ -1517,6 +1519,8 @@ NETWORK_SHOWS = {
             "heading": "Start Investing with Wealthsimple",
             "cta": "Get Started with Wealthsimple",
             "intro": "New to investing? Wealthsimple is Canada's most popular investing platform with commission-free trading, automatic contributions, and tax-advantaged accounts. Sign up with our referral link and start building your portfolio today.",
+            "benefits_heading": "What you get",
+            "disclosure": "This is a referral link: when you sign up through it, the show may also receive a referral reward from Wealthsimple.",
             "buyer_benefits": [
                 "Commission-free trading on stocks, ETFs, and crypto",
                 "Tax-advantaged accounts — TFSA, RRSP, and FHSA supported",
@@ -1566,7 +1570,7 @@ NETWORK_SHOWS = {
         "about_host": "Hosted by Patrick in Vancouver.",
         "description_long": "A daily narrative podcast profiling inventions, policies, and systems that were meant to help — but triggered surprising, unintended consequences. From the Cobra Effect to social media algorithms, every episode follows a single case study through good intentions, implementation, unexpected fallout, and the lessons we can learn.",
         "related_show": "first_principles",
-        "related_reason": "If you enjoy Unintended Consequences, you might also like Environmental Intelligence — the regulatory side of how policy actually plays out.",
+        "related_reason": "If you enjoy Unintended Consequences, you might also like First Principles Daily — the same curiosity pointed the other way: what a thing should cost if you started from the physics.",
         # TODO(uc-launch): paste Apple Podcasts / Spotify URLs once
         # both directories ingest the feed (typically 3-7 days after
         # the first episode ships).
@@ -1635,7 +1639,7 @@ NETWORK_SHOWS = {
         "about_host": "Hosted by Patrick in Vancouver.",
         "description_long": "A daily narrative podcast that takes one idea seriously: most of the world runs on reasoning by analogy, and reasoning from first principles — building up from raw materials and physics — is how the biggest leaps actually happen. Episodes alternate between a concrete example of this thinking in action — historical breakthroughs like the moving assembly line, Bessemer steel, and the shipping container, modern cost curves like solar and batteries, and occasionally one of Musk's teams — and a deep look at an industry whose Idiot Index is begging to be attacked.",
         "related_show": "unintended_consequences",
-        "related_reason": "If you enjoy First Principles Daily, you might also like Tesla Shorts Time — the daily rundown on the company where a lot of this thinking shows up first.",
+        "related_reason": "If you enjoy First Principles Daily, you might also like Unintended Consequences — what happened after a good idea met the real world.",
         "apple_podcasts_url": None,
         "spotify_url": None,
         "theme_color": "#0F766E",
@@ -2671,6 +2675,9 @@ def generate_tesla_dashboard(*, dry_run=False):
         "energy_storage_annual_gwh": metrics.get("energy_storage_annual_gwh", []),
         "supercharger_connectors_annual": metrics.get("supercharger_connectors_annual", []),
         "highlights": metrics.get("highlights", []),
+        # Shown beside every curated block: the page reads "Live" and the
+        # operating metrics are only as current as this date.
+        "metrics_updated_at": metrics.get("updated_at"),
         "t": _NAV_T,
         "all_shows": _build_all_shows_list(),
     }
@@ -3150,6 +3157,13 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
             limit=max(SSR_CARD_LIMIT, 40))
         if _cards:
             latest_episode = dict(_cards[0])
+            # The summaries JSON stores the bare R2 URL; the feeds carry it
+            # through OP3. The page's main player is the most-played surface
+            # on the site, so it counts too (Oct 2026 review).
+            _lat_url = latest_episode.get("audio_url") or ""
+            if _lat_url.startswith("https://audio.nerranetwork.com/"):
+                from engine.publisher import apply_op3_prefix as _op3
+                latest_episode["audio_url"] = _op3(_lat_url)
             latest_episode["blog_url"] = _blog_url_for_episode(
                 cfg["slug"], episode_num=latest_episode.get("episode_num"))
         for _card in _cards:
@@ -3216,9 +3230,13 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
     # empty state forever. Switching a show from `image_provider:
     # pexels` to `grok` (or `hybrid`) in its YAML opts it in.
     image_provider = _read_show_image_provider(slug)
+    # Oct 7 2026: and only when the slim index the embed loads holds an
+    # image. Age of AI passed the YAML test with no slice at all, and its
+    # page fetched the whole 22 MB manifest to say "no images yet".
     gallery_enabled = (
         bool(yt_meta.get("youtube_enabled"))
         and image_provider in ("grok", "hybrid")
+        and _gallery_index_has_images(slug)
     )
 
     # Quick-win (May 2026 review): dynamic metadata from the RSS we already
@@ -3333,6 +3351,9 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         "blog_page": f"blog/{cfg['slug']}/index.html",
         "latest_blog_posts": latest_blog_posts,
         "latest_episode": latest_episode,
+        # engine.show_lang owns a show's language; the "More from" grid
+        # filters on it instead of a literal pair in the template.
+        "ru_show_slugs": [k for k in NETWORK_SHOWS if _show_lang.is_russian(k)],
         "episode_post_urls": episode_post_urls,
         # The script re-renders the card on load and must cut the summary at
         # the same place the server did, or the card flickers into different
@@ -3626,6 +3647,9 @@ def generate_network_page(*, dry_run=False):
         # hreflang tags all resolve to "/" (Sep 2026 review).
         "canonical_url": f"{GITHUB_RAW}/",
         "rss_url": "network.rss",
+        # Computed, not typed (the homepage said "4" beside 11 Spanish
+        # feed files; the language registry is the one count).
+        "listening_language_count": len(_listening_languages()),
         "all_shows": _build_all_shows_list(),
         "latest_blog_posts": latest_blog_posts,
         "latest_episodes": latest_episodes,
@@ -3844,6 +3868,11 @@ def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None,
 
     _attach_translations(slug, cfg, all_meta)
 
+    # The per-show regen (``--show <slug> --blogs``) passes no pool; build it
+    # here so its posts recommend too. An explicit [] still means "none".
+    if cross_show_posts is None:
+        cross_show_posts = _cross_show_pool()
+
     blog_dir = (Path(output_dir) if output_dir else ROOT) / "blog" / slug
     results = []
 
@@ -4021,12 +4050,17 @@ def generate_network_blog_index(*, dry_run=False, all_posts=None):
     return out_path
 
 
-def generate_all_blogs(*, dry_run=False):
-    """Generate blog posts and index pages for every show, plus network index."""
+def _cross_show_pool():
+    """Recent posts from every show, newest first, for "You Might Also Like".
+
+    One builder for both callers (Oct 7 2026). Only ``generate_all_blogs``
+    used to collect a pool, so the per-show regen — the path run_show and the
+    Voices publisher take for every new episode — passed ``None`` and every
+    post it wrote rendered no recommendations at all.
+    """
     from engine.blog import extract_blog_metadata
 
-    # First pass: collect recent posts from all shows for cross-show recs
-    _cross_show_posts: list[dict] = []
+    pool: list[dict] = []
     for slug, cfg in NETWORK_SHOWS.items():
         digest_dir = ROOT / "digests" / _SHOW_DIRS.get(slug, slug)
         if not digest_dir.exists():
@@ -4036,20 +4070,33 @@ def generate_all_blogs(*, dry_run=False):
             try:
                 md_text = md_file.read_text(encoding="utf-8")
                 meta = extract_blog_metadata(md_text, slug, md_file.name, file_path=md_file)
-                _cross_show_posts.append({
+                # A recommendation must be a page that exists.
+                ep = meta.get("episode_num", 0)
+                if not ep or _is_redirect_stub(ROOT / "blog" / slug / f"ep{ep:03d}.html"):
+                    continue
+                pool.append({
                     "show_slug": slug,
                     "show_name": cfg["name"],
                     "show_color": cfg["brand_color"],
                     "title": meta.get("title", cfg["name"]),
                     "hook": meta.get("hook", ""),
-                    "episode_num": meta.get("episode_num", 0),
-                    "url": f"../../blog/{slug}/ep{meta.get('episode_num', 0):03d}.html",
+                    "episode_num": ep,
+                    "url": f"../../blog/{slug}/ep{ep:03d}.html",
                     "date": meta.get("date", ""),
+                    "date_iso": meta.get("date_iso", ""),
                 })
             except Exception:
                 pass
-    # Sort by date descending so most recent posts get picked
-    _cross_show_posts.sort(key=lambda p: p.get("date", ""), reverse=True)
+    # Newest first, on the ISO date: the display date is "October 06, 2026",
+    # which sorts by month NAME (September after October).
+    pool.sort(key=lambda p: p.get("date_iso", ""), reverse=True)
+    return pool
+
+
+def generate_all_blogs(*, dry_run=False):
+    """Generate blog posts and index pages for every show, plus network index."""
+    # First pass: collect recent posts from all shows for cross-show recs
+    _cross_show_posts = _cross_show_pool()
 
     all_posts = []
 
@@ -4354,17 +4401,15 @@ def generate_mira_page(*, dry_run=False, output_dir=None):
     """
     from engine.brand import (
         MIRA_HOST_NAME, MIRA_NETWORK_ROLE, MIRA_NEWS_ROLE, MIRA_NEWS_SHOW_SLUGS,
-        MIRA_SHORT_DESCRIPTION,
+        MIRA_PAGE_DESCRIPTION, MIRA_SHORT_DESCRIPTION,
     )
 
     env = _get_jinja_env()
     template = env.get_template("mira_page.html.j2")
 
-    description = (
-        "Mira is the Nerra Network's AI host. She anchors the daily combined "
-        "edition and interviews real people live — and nothing publishes "
-        "until the guest approves their own transcript."
-    )
+    # engine.brand owns it: the literal here once said "nothing publishes
+    # until the guest approves", which gate 2 does not do.
+    description = MIRA_PAGE_DESCRIPTION
 
     context = {
         "path_prefix": "",
@@ -5276,7 +5321,7 @@ def generate_all_ru_landing_pages(*, dry_run=False):
     return written
 
 
-def generate_data_hub_page(*, dry_run=False):
+def generate_data_hub_page(*, dry_run=False, output_dir=None):
     """Render the /data.html hub linking every public data dashboard
     (SpaceX, Tesla, Modern Investing performance, gallery) so the audience
     can discover them from one place. Static — no runtime data; the linked
@@ -5300,7 +5345,7 @@ def generate_data_hub_page(*, dry_run=False):
         "all_shows": _build_all_shows_list(),
     }
     html = template.render(**context)
-    out_path = ROOT / "data.html"
+    out_path = (Path(output_dir) if output_dir else ROOT) / "data.html"
     if dry_run:
         print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
         return out_path
@@ -5309,12 +5354,28 @@ def generate_data_hub_page(*, dry_run=False):
     return out_path
 
 
+def _gallery_index_has_images(slug: str) -> bool:
+    """True when ``site/data/gallery/<slug>.index.json`` lists an image.
+
+    That file is exactly what the per-show embed fetches
+    (``assets/js/gallery.js``), so a page never mounts a gallery whose data
+    does not exist. Missing, unreadable or empty all read as False.
+    """
+    path = ROOT / "site" / "data" / "gallery" / f"{slug}.index.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return bool(isinstance(data, dict) and data.get("images"))
+
+
 def generate_gallery_page(*, dry_run=False):
     """Generate the network-wide /gallery.html browse page.
 
     The page renders an empty mount-point that ``assets/js/gallery.js``
-    hydrates client-side from ``site/data/gallery-manifest.json`` (built
-    nightly by ``scripts/build_gallery_manifest.py``). All filtering,
+    hydrates client-side from the slim ``site/data/gallery/_network.index.json``
+    (derived from the manifest by ``scripts/build_gallery_manifest.py``;
+    prompts load per show only when a visitor asks). All filtering,
     sorting, and lightbox UX is client-side.
     """
     env = _get_jinja_env()
@@ -5414,7 +5475,7 @@ def books_page_volumes(catalog_path, volumes_dir):
     return out
 
 
-def generate_books_page(*, dry_run=False):
+def generate_books_page(*, dry_run=False, output_dir=None):
     """Generate the /books.html storefront page from books/catalog.json.
 
     The catalog is written by ``scripts/build_book.py`` (metadata + R2
@@ -5426,7 +5487,7 @@ def generate_books_page(*, dry_run=False):
     volumes = books_page_volumes(ROOT / "books" / "catalog.json",
                                  ROOT / "books" / "volumes")
     html = render_books_page(volumes)
-    out_path = ROOT / "books.html"
+    out_path = (Path(output_dir) if output_dir else ROOT) / "books.html"
 
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
@@ -5598,7 +5659,7 @@ def _personal_shows_list():
     return personal_shows
 
 
-def generate_join_page(*, dry_run=False):
+def generate_join_page(*, dry_run=False, output_dir=None):
     """Generate /join.html — the Nerra Personal membership lander."""
     env = _get_jinja_env()
     # The pickable lineup, rendered as real cards (Aug 27 2026): the page
@@ -5624,7 +5685,7 @@ def generate_join_page(*, dry_run=False):
         ) if s in _by_slug
     ]
     html = env.get_template("join_page.html.j2").render(**ctx)
-    out_path = ROOT / "join.html"
+    out_path = (Path(output_dir) if output_dir else ROOT) / "join.html"
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
         return None
@@ -5692,7 +5753,7 @@ def _env_int(name: str) -> int:
         return 0
 
 
-def generate_account_page(*, dry_run=False):
+def generate_account_page(*, dry_run=False, output_dir=None):
     """Generate /account.html — "My Nerra", the member dashboard
     (client-side app against api.nerranetwork.com; the page itself is
     static and reads the pipeline's committed api/*.json for content)."""
@@ -5736,7 +5797,7 @@ def generate_account_page(*, dry_run=False):
         books_page_volumes(ROOT / "books" / "catalog.json",
                            ROOT / "books" / "volumes"))
     html = env.get_template("account_page.html.j2").render(**ctx)
-    out_path = ROOT / "account.html"
+    out_path = (Path(output_dir) if output_dir else ROOT) / "account.html"
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
         return None
@@ -5745,7 +5806,7 @@ def generate_account_page(*, dry_run=False):
     return out_path
 
 
-def generate_login_page(*, dry_run=False):
+def generate_login_page(*, dry_run=False, output_dir=None):
     """Generate /login.html — the passwordless sign-in page (Sep 13 2026).
     Noindexed and kept out of the sitemap like the account console."""
     env = _get_jinja_env()
@@ -5754,7 +5815,7 @@ def generate_login_page(*, dry_run=False):
         "Sign in to your Nerra account — one email, no password.",
         "https://nerranetwork.com/login.html")
     html = env.get_template("login_page.html.j2").render(**ctx)
-    out_path = ROOT / "login.html"
+    out_path = (Path(output_dir) if output_dir else ROOT) / "login.html"
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
         return None
@@ -5763,18 +5824,22 @@ def generate_login_page(*, dry_run=False):
     return out_path
 
 
-def generate_support_page(*, dry_run=False):
+def generate_support_page(*, dry_run=False, output_dir=None):
     """Generate /support.html — donations + cost transparency. This is
     also the target of every feed's podcast:funding tag."""
     env = _get_jinja_env()
-    html = env.get_template("support_page.html.j2").render(
-        **_member_page_context(
-            "Support the Nerra Network",
-            f"{len(NETWORK_SHOWS)} shows, most of them daily, all free and "
-            "ad-free. See what the network actually costs to run, and chip "
-            "in if you want it to keep existing.",
-            "https://nerranetwork.com/support.html"))
-    out_path = ROOT / "support.html"
+    ctx = _member_page_context(
+        "Support the Nerra Network",
+        f"{len(_published_show_ids())} shows, most of them daily, all free "
+        "and ad-free. See what the network actually costs to run, and chip "
+        "in if you want it to keep existing.",
+        "https://nerranetwork.com/support.html")
+    # Computed, never typed (Oct 7 2026: "four listening languages" and the
+    # registry length, which counts a show with no episodes yet).
+    ctx["published_show_count"] = len(_published_show_ids())
+    ctx["listening_language_count"] = len(_listening_languages())
+    html = env.get_template("support_page.html.j2").render(**ctx)
+    out_path = (Path(output_dir) if output_dir else ROOT) / "support.html"
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
         return None
@@ -5783,7 +5848,7 @@ def generate_support_page(*, dry_run=False):
     return out_path
 
 
-def generate_about_page(*, dry_run=False):
+def generate_about_page(*, dry_run=False, output_dir=None):
     """Generate the About page with founder, mission, and network stats."""
     env = _get_jinja_env()
     template = env.get_template("about.html.j2")
@@ -5807,6 +5872,7 @@ def generate_about_page(*, dry_run=False):
         # Stats (shows_count removed as part of count-agnostic brand refresh)
         "total_episodes": _count_total_episodes(),
         "founding_date": "2024-07-01",
+        "listening_language_count": len(_listening_languages()),
         # Organization sameAs — the network's accounts (the three SHOW
         # handles were the only ones here, which told search engines the
         # network's identity was Tesla Shorts Time's X account).
@@ -5814,7 +5880,7 @@ def generate_about_page(*, dry_run=False):
     }
 
     html = template.render(**context)
-    out_path = ROOT / "about.html"
+    out_path = (Path(output_dir) if output_dir else ROOT) / "about.html"
 
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
@@ -5899,6 +5965,128 @@ def generate_editorial_page(*, dry_run=False, output_dir=None):
 
 
 # ---------------------------------------------------------------------------
+# Computed page claims (Oct 7 2026 site review)
+# ---------------------------------------------------------------------------
+#
+# The trust pages typed facts that the registry and the show YAMLs already
+# hold, and every one of them had gone stale: the AI disclosure said English
+# shows were all voiced by Patrick's clone and "eighteen shows publish
+# daily", the FAQ listed cadences from before the June move, support/about
+# said "four languages" as a literal. These read the record instead.
+
+#: What each production voice id is, for the AI disclosure. A voice id the
+#: map does not know renders as a plain Grok TTS voice, never a guess.
+_VOICE_DESCRIPTIONS = {
+    "kdif6sqjcyiq": "A custom voice trained on founder Patrick Novak's own speech",
+    "0vscf8u8yrxc": "Dan's custom voice, single narrator",
+    "0b875ae2": "A custom Russian voice (Olya)",
+}
+
+
+def _published_show_ids() -> list:
+    """Registry slugs that have a feed file — the shows that publish. A
+    show with no feed yet (Nerra Voices) is not counted as one."""
+    return [slug for slug, cfg in NETWORK_SHOWS.items()
+            if cfg.get("rss_file") and (ROOT / cfg["rss_file"]).exists()]
+
+
+def _registry_show_config(slug):
+    """The loaded ``shows/<slug>.yaml``, or None (registry-only shows)."""
+    path = SHOWS_DIR / f"{slug}.yaml"
+    if not path.is_file():
+        return None
+    try:
+        from engine.config import load_config
+        return load_config(path)
+    except Exception:  # noqa: BLE001 — a bad YAML must not break a page
+        return None
+
+
+def _listening_languages() -> list:
+    """Every language a listener can hear: each show's page language plus
+    every enabled multilingual track. Sorted codes, ``en`` first."""
+    langs = {"en"}
+    for slug in NETWORK_SHOWS:
+        langs.add(_show_lang.page_lang(slug))
+        cfg = _registry_show_config(slug)
+        ml = getattr(cfg, "multilingual", None) if cfg else None
+        if ml is not None and getattr(ml, "enabled", False):
+            langs.update(str(code) for code in (getattr(ml, "languages", None) or []))
+    return sorted(langs, key=lambda c: (c != "en", c))
+
+
+def _registry_order() -> list:
+    return sorted(NETWORK_SHOWS, key=lambda s: NETWORK_SHOWS[s].get("display_order", 999))
+
+
+def _narration_groups() -> list:
+    """Who voices which show, from the YAML ``tts`` blocks: a list of
+    ``{"key", "label", "shows": [{"name", "page"}]}``, largest group first.
+    Mira's shows come from engine.brand; a dialogue show names its
+    speakers from ``tts.dialogue_voices``."""
+    from engine.brand import MIRA_NEWS_SHOW_SLUGS, MIRA_SHOW_SLUGS
+
+    groups: dict = {}
+    published = set(_published_show_ids())
+    for slug in _registry_order():
+        if slug not in published:
+            continue
+        cfg = _registry_show_config(slug)
+        tts = getattr(cfg, "tts", None) if cfg else None
+        voice = str(getattr(tts, "voice_id", "") or "")
+        if slug in MIRA_SHOW_SLUGS or slug in MIRA_NEWS_SHOW_SLUGS or voice == "ara":
+            key, label = "mira", (
+                "Mira, an AI host persona that introduces herself as one. "
+                "On the interview shows the guests are real people speaking "
+                "in their own voices.")
+        elif tts is not None and getattr(tts, "dialogue_mode", False):
+            names = [str(n).title() for n in (getattr(tts, "dialogue_voices", None) or {})]
+            key = "dialogue"
+            label = ("Two custom voices in conversation"
+                     + (f": {' and '.join(names)}" if names else ""))
+        elif voice in _VOICE_DESCRIPTIONS:
+            key, label = voice, _VOICE_DESCRIPTIONS[voice]
+        else:
+            key, label = "other", "A Grok text-to-speech voice"
+        group = groups.setdefault(key, {"key": key, "label": label, "shows": []})
+        group["shows"].append({
+            "name": NETWORK_SHOWS[slug]["name"],
+            "page": NETWORK_SHOWS[slug].get("show_page", ""),
+        })
+    return sorted(groups.values(), key=lambda g: -len(g["shows"]))
+
+
+def _cadence_exceptions() -> list:
+    """``[(schedule, [show names])]`` for every publishing show whose
+    registry ``schedule`` is not daily, grouped by schedule string in
+    registry order. engine.cadence decides what "daily" means."""
+    from engine.cadence import cadence_adjective
+
+    out: dict = {}
+    published = set(_published_show_ids())
+    for slug in _registry_order():
+        cfg = NETWORK_SHOWS[slug]
+        sched = str(cfg.get("schedule") or "").strip()
+        if slug not in published or not sched or cadence_adjective(sched) == "daily":
+            continue
+        out.setdefault(sched, []).append(cfg["name"])
+    return list(out.items())
+
+
+def _cadence_answer() -> str:
+    """The FAQ's "How often" answer, used verbatim by the page and by its
+    FAQPage JSON-LD so the two cannot disagree."""
+    parts = ["Most shows publish daily, weekends included."]
+    exceptions = _cadence_exceptions()
+    if exceptions:
+        parts.append("The exceptions, by schedule:")
+        for sched, names in exceptions:
+            parts.append(f"{sched}: {'; '.join(names)}.")
+    parts.append("Each show page lists its exact schedule.")
+    return " ".join(parts)
+
+
+# ---------------------------------------------------------------------------
 # Legal / trust pages (Sep 2026 website review)
 # ---------------------------------------------------------------------------
 #
@@ -5950,11 +6138,14 @@ _LEGAL_PAGES = {
 # Rendered into each legal page's "Updated" line. Bump when the copy
 # changes materially; it is deliberately NOT the build date (a date that
 # moves on every regeneration tells readers nothing).
-LEGAL_PAGES_UPDATED_LABEL = "September 3, 2026"
+LEGAL_PAGES_UPDATED_LABEL = "October 7, 2026"
 
 
-def generate_legal_page(key, *, dry_run=False):
-    """Render one of the legal / trust pages from ``_LEGAL_PAGES``."""
+def generate_legal_page(key, *, dry_run=False, output_dir=None):
+    """Render one of the legal / trust pages from ``_LEGAL_PAGES``.
+
+    ``output_dir`` (Oct 2026) renders into a scratch directory for tests;
+    ``None`` writes to the repo root."""
     spec = _LEGAL_PAGES[key]
     env = _get_jinja_env()
     template = env.get_template(spec["template"])
@@ -5972,8 +6163,20 @@ def generate_legal_page(key, *, dry_run=False):
         "all_shows": _build_all_shows_list(),
         "updated_label": LEGAL_PAGES_UPDATED_LABEL,
     }
+    if key == "ai_disclosure":
+        # Read from the YAMLs and the registry, never typed (Oct 7 2026).
+        context["narration_groups"] = _narration_groups()
+        # A Mira show with a page but no feed yet (Nerra Voices) is named as
+        # upcoming, never listed as a show she voices today.
+        from engine.brand import MIRA_SHOW_SLUGS as _mira_slugs
+        _live = set(_published_show_ids())
+        context["mira_upcoming"] = [
+            {"name": NETWORK_SHOWS[s]["name"], "page": NETWORK_SHOWS[s].get("show_page", "")}
+            for s in _mira_slugs if s in NETWORK_SHOWS and s not in _live]
+        context["published_show_count"] = len(_published_show_ids())
+        context["listening_language_count"] = len(_listening_languages())
     html = template.render(**context)
-    out_path = ROOT / spec["out"]
+    out_path = (Path(output_dir) if output_dir else ROOT) / spec["out"]
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
         return None
@@ -6210,7 +6413,7 @@ def generate_contact_page(*, dry_run=False):
     return out_path
 
 
-def generate_faq_page(*, dry_run=False):
+def generate_faq_page(*, dry_run=False, output_dir=None):
     """Generate the FAQ page with FAQPage JSON-LD schema."""
     env = _get_jinja_env()
     template = env.get_template("faq.html.j2")
@@ -6227,10 +6430,11 @@ def generate_faq_page(*, dry_run=False):
         "show_color": "",
         "show_color_dark": "",
         "all_shows": _build_all_shows_list(),
+        "cadence_answer": _cadence_answer(),
     }
 
     html = template.render(**context)
-    out_path = ROOT / "faq.html"
+    out_path = (Path(output_dir) if output_dir else ROOT) / "faq.html"
 
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
@@ -6241,7 +6445,7 @@ def generate_faq_page(*, dry_run=False):
     return out_path
 
 
-def generate_how_to_listen_page(*, dry_run=False):
+def generate_how_to_listen_page(*, dry_run=False, output_dir=None):
     """Generate the How-to-Listen guide page."""
     env = _get_jinja_env()
     template = env.get_template("how_to_listen.html.j2")
@@ -6261,7 +6465,7 @@ def generate_how_to_listen_page(*, dry_run=False):
     }
 
     html = template.render(**context)
-    out_path = ROOT / "how-to-listen.html"
+    out_path = (Path(output_dir) if output_dir else ROOT) / "how-to-listen.html"
 
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
@@ -6272,26 +6476,126 @@ def generate_how_to_listen_page(*, dry_run=False):
     return out_path
 
 
-def generate_player_page(*, dry_run=False):
-    """Generate the cross-show podcast player page."""
+#: Characters of plain-text preview per player card (the card clamps it to
+#: two lines; the rest would ship in the page for nothing).
+PLAYER_PREVIEW_CHARS = 160
+
+
+def _player_cover_variant(podcast_image: str, suffix: str) -> str:
+    """``assets/covers/x.jpg`` -> ``assets/covers/x<suffix>`` when that file
+    is committed, else the original image."""
+    base = podcast_image[:-4] if podcast_image.endswith(".jpg") else ""
+    if base and (ROOT / f"{base}{suffix}").exists():
+        return f"{base}{suffix}"
+    return podcast_image
+
+
+def _player_same_text(preview: str, title: str) -> bool:
+    """True when one of the two is the other with an "Ep N:" label or a
+    trailing ellipsis — the card would print the same sentence twice."""
+    def norm(text: str) -> str:
+        text = re.sub(r"^\s*Ep\s*\d+\s*[:—-]\s*", "", text, flags=re.I)
+        return re.sub(r"\W+", " ", text.replace("...", "")).strip().lower()
+    a, b = norm(preview), norm(title)
+    return bool(a and b and (a in b or b in a))
+
+
+def _player_episode_index() -> dict:
+    """The player's compact episode index, from the committed summaries.
+
+    Oct 7 2026: player.html fetched every show's summaries JSON (~5.7 MB of
+    full digests) to show a title, a date and two lines of preview, and drew
+    31 covers at 3000 px for 48 px slots (~10 MB). This is the part the page
+    uses — show, id, title, date, audio URL routed through OP3 the way the
+    blog player is (``engine.blog._measured_audio_url``), a preview from
+    ``engine.summaries_ssr.plain_preview`` and the feed's own duration — and
+    each show's 400 px WebP cover. Every summaries shape is read
+    (``_records``), so Age of AI's ``{"episodes": [...]}`` file counts, and a
+    show with no playable episode gets no entry (and so no filter chip).
+    """
+    from engine.blog import _measured_audio_url
+    from engine.interviews import feed_durations
+    from engine.summaries_ssr import _episode_number, _records, plain_preview
+
+    shows: list = []
+    episodes: list = []
+    for cfg in NETWORK_SHOWS.values():
+        slug = cfg["slug"]
+        path = ROOT / cfg["json_path"]
+        try:
+            records = _records(json.loads(path.read_text(encoding="utf-8")))
+        except (OSError, ValueError):
+            records = []
+        durations = feed_durations(ROOT / cfg["rss_file"]) if cfg.get("rss_file") else {}
+        audio_dir = ""
+        count = 0
+        for rec in records:
+            raw_audio = str(rec.get("audio_url") or "").strip()
+            if not raw_audio:
+                continue
+            num = _episode_number(rec)
+            date = str(rec.get("date") or "")
+            title = (rec.get("episode_title") or rec.get("title")
+                     or (f"Episode {num}" if num is not None else cfg["name"]))
+            preview = plain_preview(
+                str(rec.get("content") or rec.get("hook") or rec.get("summary") or ""),
+                PLAYER_PREVIEW_CHARS,
+            )
+            # Most titles ARE the hook ("Ep 626: <hook>"), and the preview
+            # leads with the hook, so the card would say it twice.
+            if _player_same_text(preview, str(title)):
+                preview = ""
+            if not audio_dir:
+                found = re.search(r"audio\.nerranetwork\.com/([^/]+)/", raw_audio)
+                audio_dir = found.group(1) if found else ""
+            episodes.append({
+                # Same id the page has always stored in localStorage queues.
+                "id": f"{slug}::{num if num is not None else date}",
+                "show": slug,
+                "title": str(title),
+                "date": date,
+                "audio": _measured_audio_url(raw_audio),
+                "duration": durations.get(num) if num is not None else None,
+                "preview": preview,
+            })
+            count += 1
+        if not count:
+            continue
+        image = cfg["podcast_image"]
+        shows.append({
+            "slug": slug,
+            "name": cfg["name"],
+            "brand_color": cfg["brand_color"],
+            "audio_dir": audio_dir,
+            "cover": _player_cover_variant(image, "-400.webp"),
+            "cover_fallback": image,
+            "artwork": _player_cover_variant(image, "-800.webp"),
+        })
+    return {"shows": shows, "episodes": episodes}
+
+
+def generate_player_page(*, dry_run=False, output_dir=None):
+    """Generate the cross-show podcast player page.
+
+    ``output_dir`` lets a test render into a temp directory (the
+    ``generate_editorial_page`` idiom); the index is still read from ROOT.
+    """
+    from jinja2.utils import htmlsafe_json_dumps
+
     env = _get_jinja_env()
     template = env.get_template("player_page.html.j2")
 
-    # Build show list for the player's JS config
-    player_shows = []
-    for cfg in NETWORK_SHOWS.values():
-        player_shows.append({
-            "slug": cfg["slug"],
-            "name": cfg["name"],
-            "json_path": cfg["json_path"],
-            "podcast_image": cfg["podcast_image"],
-            "brand_color": cfg["brand_color"],
-        })
+    player_index = _player_episode_index()
+    # Filter chips: only the shows the index actually has episodes for.
+    player_shows = [
+        {"slug": s["slug"], "name": s["name"], "brand_color": s["brand_color"]}
+        for s in player_index["shows"]
+    ]
 
     context = {
         "path_prefix": "",
         "page_title": "Player | Nerra Network",
-        "meta_description": f"Listen to all {len(NETWORK_SHOWS)} Nerra Network shows in one player. Build your queue, reorder episodes, and discover new content.",
+        "meta_description": f"Listen to {len(player_shows)} Nerra Network shows in one player. Build your queue, reorder episodes, and discover new content.",
         "meta_keywords": "podcast player, Nerra Network, queue, playlist",
         "theme_color": "#6B47FF",
         "og_image": None,
@@ -6301,10 +6605,14 @@ def generate_player_page(*, dry_run=False):
         "show_color_dark": "",
         "all_shows": _build_all_shows_list(),
         "player_shows": player_shows,
+        # Compact separators: the index rides in the page (~600 episodes).
+        # htmlsafe_json_dumps is what ``|tojson`` uses (escapes < > & ').
+        "player_index_json": htmlsafe_json_dumps(
+            player_index, separators=(",", ":"), ensure_ascii=False),
     }
 
     html = template.render(**context)
-    out_path = ROOT / "player.html"
+    out_path = Path(output_dir or ROOT) / "player.html"
 
     if dry_run:
         print(f"[dry-run] Would write {out_path}")

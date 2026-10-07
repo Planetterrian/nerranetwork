@@ -48,9 +48,14 @@
             flex-direction: column;
             gap: var(--sp-4);
         }
+        /* Covers are full-size store files (MBs each), so the box is sized
+           before they arrive: 5:8 is the series cover shape (Oct 7 2026). */
         .nn-book-card img {
             width: 60%;
             max-width: 240px;
+            height: auto;
+            aspect-ratio: 5 / 8;
+            object-fit: cover;
             margin: 0 auto;
             border-radius: 6px;
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
@@ -99,6 +104,17 @@
             padding: var(--sp-16) var(--sp-6);
             font-family: var(--font-ui);
         }
+        /* Prose links (Oct 7 2026): the global ``a`` rule inherits colour and
+           drops the underline, so a link inside a sentence was invisible.
+           Scoped to this page's content and to plain (class-less) links. */
+        #main-content p a:not([class]), #main-content li a:not([class]) {
+            color: var(--nn-cyan);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        #main-content p a:not([class]):hover, #main-content li a:not([class]):hover {
+            color: var(--nn-white);
+        }
     </style>
 {% endblock %}
 
@@ -114,7 +130,7 @@
 <section class="nn-books-grid">
     {% for v in volumes %}
     <article class="nn-book-card">
-        {% if v.files.cover %}<img src="{{ v.files.cover }}" alt="Cover of {{ v.title }}">{% endif %}
+        {% if v.files.cover %}<img src="{{ v.files.cover }}" alt="Cover of {{ v.title }}" width="400" height="640" loading="lazy" decoding="async">{% endif %}
         <h2>{{ v.title }}{% if v.volume_number %} — Volume {{ v.volume_number }}{% endif %}</h2>
         {% if v.subtitle %}<p class="nn-book-sub">{{ v.subtitle }}</p>{% endif %}
         <p class="nn-book-meta">
@@ -185,9 +201,9 @@
     Apple Books or Kobo, open the file and it imports.</p>
     {% endif %}
     <p><strong>Refunds:</strong> if a file won't open or you bought the
-    wrong edition, reply to your receipt email within 14 days and we
-    will fix it or refund it. Questions: the contact address on the
-    receipt.</p>
+    wrong edition, write to
+    <a href="mailto:{{ contact_email }}">{{ contact_email }}</a> within 14
+    days with your receipt and we will fix it or refund it.</p>
 </section>
 {% endif %}
 {% else %}

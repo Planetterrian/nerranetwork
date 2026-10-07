@@ -22,6 +22,10 @@
 
   /* Signature gradient accent */
   --nn-purple:      #6B47FF;
+  /* #6B47FF is 3.4-3.6:1 on the dark surfaces, fine for fills and borders
+     but not for text. Labels and links in the brand purple use this tint
+     (6.5:1 on --nn-bg). */
+  --nn-purple-text: #9D8BFF;
   --nn-cyan:        #00D4FF;
   --nn-gradient:    linear-gradient(135deg, var(--nn-purple), var(--nn-cyan));
   /* Aliases the newsletter form has referenced since May 2026 without a
@@ -67,6 +71,23 @@
 
 /* ---------- Reset ---------- */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* Brand colours as TEXT on the dark surfaces fail AA (Tesla red 4.06:1,
+   Offshore North 1.66:1, the network purple 3.6:1). Every element derives a
+   text-safe tint from whatever --show-color / --card-accent it inherits, so a
+   rule can write `color: var(--show-color-text)` without the page having to
+   define it. Fills, borders and tints keep the raw colour. */
+*, *::before, *::after {
+  --show-color-text: color-mix(in srgb, var(--show-color, #6B47FF), white 35%);
+  --card-accent-text: color-mix(in srgb, var(--card-accent, #6B47FF), white 35%);
+}
+
+/* An element hidden with the attribute stays hidden even when a component
+   rule sets its display (explore's "Clear filters" chip showed permanently). */
+[hidden] { display: none !important; }
+
+/* Native players follow the dark theme instead of rendering as white pills. */
+audio { color-scheme: dark; }
 html {
   scroll-behavior: smooth;
   /* In-page anchors (#shows, #subscribe, the skip link's #main-content)
@@ -149,7 +170,11 @@ button { font-family: var(--font-ui); cursor: pointer; }
 /* Show dropdown in nav */
 .nn-nav-dropdown {
   position: relative;
+  /* The padding bridges the hover gap to the menu; the negative margin
+     keeps the trigger on the same baseline as the plain nav links (it sat
+     4px higher). */
   padding-bottom: var(--sp-2);
+  margin-bottom: calc(-1 * var(--sp-2));
 }
 .nn-nav-dropdown-btn {
   display: flex; align-items: center; gap: var(--sp-2);
@@ -393,7 +418,7 @@ button { font-family: var(--font-ui); cursor: pointer; }
 .show-card-listen {
   font-family: var(--font-ui);
   font-size: 0.85rem; font-weight: 600;
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text, var(--show-color, var(--nn-purple-text)));
   display: flex; align-items: center; gap: var(--sp-2);
 }
 .show-card-listen svg { width: 16px; height: 16px; }
@@ -424,7 +449,7 @@ button { font-family: var(--font-ui); cursor: pointer; }
   transition: all var(--duration) var(--ease);
 }
 .show-card-blog-link:hover {
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
   background: var(--nn-card-hover);
 }
 .show-card-blog-link svg {
@@ -468,7 +493,7 @@ button { font-family: var(--font-ui); cursor: pointer; }
   display: inline-flex; align-items: center; gap: var(--sp-2);
   font-family: var(--font-ui);
   font-size: 0.85rem; font-weight: 600;
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
   background: none; border: none;
   padding: 0;
 }
@@ -735,7 +760,7 @@ button { font-family: var(--font-ui); cursor: pointer; }
   /* Raw brand colors (Tesla red, deep blues) land near 3:1 on the dark
      background — visibly murky (June 2026 look-and-feel pass). Tint
      55/45 toward white: keeps the hue, clears AA contrast. */
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
   color: color-mix(in srgb, var(--show-color, var(--nn-purple)) 55%, #fff);
   margin-bottom: var(--sp-4);
 }
@@ -836,7 +861,7 @@ button.nn-chip { cursor: pointer; }
   font-size: 0.75rem; font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
   margin-bottom: var(--sp-3);
 }
 .latest-episode-title {
@@ -908,7 +933,7 @@ button.nn-chip { cursor: pointer; }
   font-size: 0.85rem;
   color: var(--nn-text-muted);
 }
-.nn-latest-actions .nn-latest-archive:hover { color: var(--show-color, var(--nn-purple)); }
+.nn-latest-actions .nn-latest-archive:hover { color: var(--show-color-text); }
 
 /* Every archive card says its episode has a written version too. Before
    this only the latest card did, so a reader scrolling the archive had no
@@ -919,7 +944,7 @@ button.nn-chip { cursor: pointer; }
   font-family: var(--font-ui);
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
   text-decoration: none;
 }
 .episode-card-article:hover { text-decoration: underline; }
@@ -1046,7 +1071,7 @@ button.nn-chip { cursor: pointer; }
 .nn-filter-btn:hover,
 .nn-filter-btn.active {
   border-color: var(--show-color, var(--nn-purple));
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
 }
 .nn-episode-count {
   font-family: var(--font-ui);
@@ -1096,7 +1121,7 @@ button.nn-chip { cursor: pointer; }
 }
 .nn-summary-link:hover {
   border-color: var(--show-color, var(--nn-purple));
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
 }
 .nn-summary-content {
   color: var(--nn-text-muted);
@@ -1114,7 +1139,7 @@ button.nn-chip { cursor: pointer; }
 .nn-summary-content p:last-child { margin-bottom: 0; }
 .nn-summary-content ul { margin: 0 0 1rem 1.2rem; }
 .nn-summary-content li { margin: 0.25rem 0; }
-.nn-summary-content a { color: var(--show-color, var(--nn-purple)); }
+.nn-summary-content a { color: var(--show-color-text); }
 .nn-summary-content a:hover { color: var(--nn-cyan); }
 .nn-summary-content strong { color: var(--nn-text); }
 
@@ -1169,7 +1194,7 @@ button.nn-chip { cursor: pointer; }
 .nn-speed-btn:hover,
 .nn-speed-btn.active {
   border-color: var(--show-color, var(--nn-purple));
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
 }
 .nn-sticky-close {
   width: 44px; height: 44px;
@@ -1386,9 +1411,9 @@ button.nn-chip { cursor: pointer; }
 }
 
 @keyframes cardFloat {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-7px) rotate(0.8deg); }
-  75% { transform: translateY(3px) rotate(-0.4deg); }
+  0%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-6px); }
+  75% { transform: translateY(3px); }
 }
 
 @media (min-width: 640px) {
@@ -1474,7 +1499,7 @@ button.nn-chip { cursor: pointer; }
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: var(--nn-purple);
+  color: var(--nn-purple-text);
   margin-bottom: var(--sp-3);
 }
 
@@ -1520,6 +1545,9 @@ button.nn-chip { cursor: pointer; }
   overflow-x: auto;
   padding: 0 var(--sp-6) var(--sp-4);
   scroll-snap-type: x mandatory;
+  /* Without this the snap scrolls the left padding away and the first
+     card sits flush against the screen edge. */
+  scroll-padding-inline: var(--sp-6);
   -webkit-overflow-scrolling: touch;
 }
 .latest-scroll-row::-webkit-scrollbar { height: 6px; }
@@ -1663,7 +1691,6 @@ button.nn-chip { cursor: pointer; }
   .glass-card h2 {
     font-size: 1.2rem;
   }
-  }
 
   /* hero-show-orbit visible on all breakpoints */
 
@@ -1776,7 +1803,7 @@ button:focus-visible {
   font-size: 0.75rem; font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
   margin-bottom: var(--sp-3);
 }
 .show-audience-text {
@@ -1825,7 +1852,7 @@ button:focus-visible {
 .resource-card-url {
   font-family: var(--font-ui);
   font-size: 0.78rem;
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
   opacity: 0.7;
 }
 
@@ -1881,7 +1908,7 @@ button:focus-visible {
   font-family: var(--font-heading);
   font-size: 1.1rem;
   font-weight: 600;
-  color: var(--show-color);
+  color: var(--show-color-text);
   margin-bottom: var(--sp-4);
   padding-bottom: var(--sp-2);
   border-bottom: 1px solid var(--nn-border);
@@ -1950,7 +1977,7 @@ button:focus-visible {
   content: '+';
   float: right;
   font-size: 1.2rem;
-  color: var(--show-color);
+  color: var(--show-color-text);
   font-weight: 400;
   transition: transform 200ms var(--ease);
 }
@@ -1987,6 +2014,7 @@ details[open] .faq-question::after { content: '\2212'; }
 }
 
 .ticker-track span {
+  font-family: var(--font-ui);
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--nn-text-muted, #8B8FAE);
@@ -2073,7 +2101,7 @@ details[open] .faq-question::after { content: '\2212'; }
   padding: 1px 8px;
   border-radius: 100px;
   background: color-mix(in srgb, var(--card-accent) 15%, transparent);
-  color: var(--card-accent);
+  color: var(--card-accent-text, var(--card-accent));
 }
 .blog-idx-reading {
   font-family: var(--font-ui);
@@ -2104,7 +2132,7 @@ details[open] .faq-question::after { content: '\2212'; }
   font-family: var(--font-ui);
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--card-accent);
+  color: var(--card-accent-text, var(--card-accent));
   flex: none;
   margin: 0 0 var(--sp-2);
 }
@@ -2118,7 +2146,7 @@ details[open] .faq-question::after { content: '\2212'; }
 .blog-idx-read-more {
   font-family: var(--font-ui);
   font-size: 0.8rem;
-  color: var(--card-accent);
+  color: var(--card-accent-text, var(--card-accent));
   margin-top: var(--sp-4);
   font-weight: 500;
 }
@@ -2228,11 +2256,33 @@ body.menu-open {
     min-height: auto;
     /* Keep the side gutters — `0` here ran the badge, H1, tagline and
        proof stats edge-to-edge on every phone (Sep 2026 review). */
-    padding: var(--sp-16) var(--sp-5) var(--sp-12);
+    /* The top padding must clear the fixed nav (72px); at 64px the
+       "Independent Podcast Network" badge sat half under it. */
+    padding: calc(var(--nav-height, 72px) + var(--sp-6)) var(--sp-5) var(--sp-12);
   }
-  /* Eight covers is a hero; seventeen is a wall that pushes the CTAs two
-     screens down on a phone. The full grid is one scroll below. */
-  .hero-show-orbit .orbit-card:nth-child(n+9) { display: none; }
+  /* A hero, not a wall: nine covers make a full 3x3 (eight left an orphan
+     row of two). The full grid is one scroll below. */
+  .hero-show-orbit .orbit-card:nth-child(n+10) { display: none; }
+  /* Four calls to action wrapped 2+1+1; a 2x2 grid reads as one set. */
+  .hero-cta-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-3);
+    width: 100%;
+  }
+  .hero-cta-row .nn-btn { justify-content: center; padding-left: var(--sp-3); padding-right: var(--sp-3); }
+  /* Stats wrapped 3+1; two by two keeps them a set. */
+  .hero-proof-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-4) var(--sp-6);
+  }
+}
+/* Above phone width the hero kept all 31 covers: five rows ending on an
+   orphan row of three, with every CTA below the fold at 1440x900. Two rows
+   of seven is the hero; the full catalogue is one scroll below. */
+@media (min-width: 641px) {
+  .hero-show-orbit .orbit-card:nth-child(n+15) { display: none; }
 }
 
 /* ===================================================================
@@ -2256,6 +2306,7 @@ body.menu-open {
   flex-wrap: wrap;
   align-items: center;
   gap: 16px;
+  font-family: var(--font-ui);
   font-size: 0.9rem;
   line-height: 1.5;
   backdrop-filter: blur(12px);
@@ -2726,7 +2777,7 @@ body.nn-no-scroll { overflow: hidden; }
    that display_order otherwise scatters. */
 .show-card-badge--strand {
   border-color: var(--nn-accent);
-  color: var(--nn-accent);
+  color: var(--nn-purple-text);
 }
 
 
@@ -2753,10 +2804,10 @@ body.nn-no-scroll { overflow: hidden; }
 }
 .nn-guest-name { font-family: var(--font-heading); font-size: 1.28rem; line-height: 1.2; margin: 0; }
 .nn-guest-name a { color: inherit; text-decoration: none; }
-.nn-guest-name a:hover { color: var(--show-color); }
+.nn-guest-name a:hover { color: var(--show-color-text); }
 .nn-guest-identifier {
     font-family: var(--font-ui); font-size: 0.86rem; font-weight: 600;
-    color: var(--show-color); margin: 0.25rem 0 0;
+    color: var(--show-color-text); margin: 0.25rem 0 0;
 }
 .nn-guest-ep {
     flex: none; font-family: var(--font-ui); font-size: 0.7rem; font-weight: 700;
@@ -2775,7 +2826,7 @@ body.nn-no-scroll { overflow: hidden; }
     font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted);
     align-items: center;
 }
-.nn-guest-meta a { color: var(--show-color); text-decoration: none; font-weight: 600; }
+.nn-guest-meta a { color: var(--show-color-text); text-decoration: none; font-weight: 600; }
 
 .nn-creator {
     margin-top: var(--sp-6); border-top: 1px solid var(--nn-border);
@@ -2792,7 +2843,7 @@ body.nn-no-scroll { overflow: hidden; }
     font-family: var(--font-ui); font-size: 0.88rem;
     display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;
 }
-.nn-creator-more a { color: var(--show-color); text-decoration: none; font-weight: 600; }
+.nn-creator-more a { color: var(--show-color-text); text-decoration: none; font-weight: 600; }
 .nn-guest-cohost { color: var(--nn-text-secondary); }
 
 .mira-steps {
@@ -2977,3 +3028,244 @@ body.nn-no-scroll { overflow: hidden; }
   .nn-claims-episode-counts { margin-left: 0; width: 100%; }
   .nn-claims-tile-num { font-size: 1.3rem; }
 }
+
+/* ===================================================================
+   Oct 7 2026 site review — global readability fixes
+   =================================================================== */
+
+/* Links inside running text had no cue at all (the reset sets
+   `a { color: inherit; text-decoration: none }`), which fails WCAG 1.4.1.
+   :where() keeps this at the lowest specificity, so any component or page
+   rule that styles its own links still wins. */
+main :where(p, li, dd, td) > a:where(:not([class]):not([style])) {
+  color: var(--nn-cyan);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  /* iOS zooms the page on focus for any input under 16px. */
+  #nn-global-search-input { font-size: 16px !important; }
+  /* The results box was as narrow as the 110px search field. */
+  #nn-global-search-results {
+    position: fixed !important;
+    left: 16px !important;
+    right: 16px !important;
+    top: calc(var(--nav-height, 64px) + 4px) !important;
+  }
+}
+
+/* Summaries pages: long digests open clamped (see clampSummaries in
+   summaries_page.html.j2). */
+.nn-summary-content.is-clamped {
+  max-height: 22rem;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
+          mask-image: linear-gradient(to bottom, #000 70%, transparent);
+}
+.nn-summary-more {
+  margin-top: var(--sp-3);
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--nn-border);
+  background: transparent;
+  color: var(--show-color-text);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.nn-summary-more:hover { border-color: var(--show-color-text); }
+.nn-summary-content a { overflow-wrap: anywhere; }
+
+/* The summaries page's subscribe row had no styles at all and rendered as
+   bare links. */
+.nn-subscribe-bar {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: var(--sp-2);
+  margin: 0 auto var(--sp-8);
+  padding: 0 var(--sp-4);
+}
+.nn-subscribe-btn {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--nn-border);
+  background: var(--nn-card);
+  color: var(--nn-text);
+  font-family: var(--font-ui);
+  font-size: 0.85rem; font-weight: 600;
+  text-decoration: none;
+}
+.nn-subscribe-btn:hover { border-color: var(--show-color-text); color: var(--nn-white); }
+
+/* ===================================================================
+   Show cards, v2 (Oct 7 2026 design pass). The card rendered a 330px
+   cover, a long description (Nerra Daily's ran 170 words to a 1,100px
+   card), a serif "For:" line, a sources list and a detached "Read Blog"
+   bar, so a three-column grid of 31 shows ran ~11,000px on desktop and
+   ~27,000px on a phone. Now: the wrap is the card; the tagline leads;
+   the description is clamped; four to five columns on desktop; a compact
+   horizontal row on phones.
+   =================================================================== */
+.show-showcase {
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+}
+.show-card-wrap {
+  background: var(--nn-card);
+  border: 1px solid var(--nn-border);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: border-color var(--duration) var(--ease), transform var(--duration) var(--ease),
+              box-shadow var(--duration) var(--ease);
+}
+.show-card-wrap:hover {
+  border-color: color-mix(in srgb, var(--show-color, #6B47FF) 45%, var(--nn-border));
+  transform: translateY(-3px);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+}
+.show-card-wrap .show-card.glass-card {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: var(--sp-5) var(--sp-5) var(--sp-4);
+}
+.show-card-wrap .show-card:hover { transform: none; }
+.show-card-wrap .show-card-image {
+  border-radius: 14px;
+  margin-bottom: var(--sp-4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.show-card-name { font-size: 1.08rem; line-height: 1.3; }
+.show-card-badges { flex-wrap: wrap; gap: 6px; }
+.show-card-hook {
+  font-family: var(--font-ui);
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--nn-text);
+  margin: var(--sp-1) 0 var(--sp-2);
+}
+.show-card-tagline {
+  font-size: 0.86rem;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 0 0 auto;
+  margin-bottom: var(--sp-3);
+}
+.show-card-audience {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0 0 var(--sp-3);
+}
+.show-card-listen { margin-top: auto; }
+.show-card-wrap .show-card-blog-link {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--nn-border);
+  border-radius: 0;
+  background: transparent;
+  justify-content: flex-start;
+  padding: var(--sp-3) var(--sp-5);
+}
+.show-card-wrap .show-card-blog-link:hover { background: var(--nn-card-hover); }
+
+@media (max-width: 639px) {
+  /* One compact row per show: cover left, name + hook right. */
+  .show-showcase { grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); }
+  .show-card-wrap .show-card.glass-card {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr);
+    column-gap: var(--sp-4);
+    align-items: start;
+    padding: var(--sp-4);
+  }
+  .show-card-wrap .show-card > picture { grid-row: 1 / span 5; }
+  .show-card-wrap .show-card-image { margin: 0; border-radius: 12px; }
+  .show-card-wrap .show-card > :not(picture) { grid-column: 2; }
+  .show-card-wrap .show-card-tagline,
+  .show-card-wrap .show-card-audience { display: none; }
+  .show-card-wrap .show-card-hook { margin-bottom: var(--sp-2); }
+  .show-card-wrap .show-card-blog-link { padding: var(--sp-2) var(--sp-4); }
+}
+
+/* Homepage: the Latest rail ends on one archive link; the per-show feed
+   list opens on demand (Oct 7 2026 design pass). */
+.latest-more { text-align: center; margin-top: var(--sp-4); }
+.subscribe-all {
+  max-width: 900px;
+  margin: var(--sp-6) auto 0;
+  border: 1px solid var(--nn-border);
+  border-radius: 14px;
+  background: var(--nn-card);
+}
+.subscribe-all > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: var(--sp-4) var(--sp-5);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  color: var(--nn-text);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
+}
+.subscribe-all > summary::-webkit-details-marker { display: none; }
+.subscribe-all > summary::after {
+  content: "+";
+  font-size: 1.2rem;
+  color: var(--nn-purple-text);
+  transition: transform var(--duration) var(--ease);
+}
+.subscribe-all[open] > summary::after { transform: rotate(45deg); }
+.subscribe-all .subscribe-show-list { padding: 0 var(--sp-4) var(--sp-4); }
+
+/* Show hero: the reference pages as one quiet link row under the buttons. */
+.show-hero-more {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: var(--sp-2) var(--sp-5);
+  margin: var(--sp-4) 0 var(--sp-6);
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+}
+.show-hero-more a {
+  color: var(--nn-text-muted);
+  text-decoration: none;
+  border-bottom: 1px solid var(--nn-border-hover);
+  padding-bottom: 1px;
+}
+.show-hero-more a:hover { color: var(--nn-white); border-bottom-color: var(--show-color-text); }
+@media (max-width: 1023px) { .show-hero-more { justify-content: center; } }
+@media (max-width: 1023px) { .show-hero-meta { justify-content: center; } }
+
+/* Mobile menu: show groups collapse (Oct 7 2026 design pass). */
+.nn-mobile-menu .nn-mobile-group > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--sp-3) 0;
+  margin: 0;
+  border-bottom: 1px solid var(--nn-border);
+}
+.nn-mobile-menu .nn-mobile-group > summary::-webkit-details-marker { display: none; }
+.nn-mobile-menu .nn-mobile-group > summary::after {
+  content: "+";
+  font-size: 1.1rem;
+  color: var(--nn-purple-text);
+  transition: transform var(--duration) var(--ease);
+}
+.nn-mobile-menu .nn-mobile-group[open] > summary::after { transform: rotate(45deg); }
+.nn-mobile-menu .nn-mobile-count {
+  margin-left: auto; margin-right: var(--sp-3);
+  font-weight: 600; letter-spacing: 0;
+  color: var(--nn-text-muted);
+}
+.nn-mobile-menu .nn-mobile-group { margin-top: var(--sp-2); padding-top: 0; }

@@ -128,7 +128,7 @@ class TestAPageWithoutAnArchiveGridStillRendersItsCard:
         """
         out = _node(
             _DOM
-            + _js("episodeGrid", "setLatestTitle", "renderEpisodes")
+            + _js("episodeGrid", "setLatestTitle", "withOp3", "previewUnlessTitle", "renderEpisodes")
             + """
             const title = el({textContent: 'Loading...'});
             const summary = el({});
