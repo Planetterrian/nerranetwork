@@ -2,7 +2,9 @@
 
    Renders an empty root element with the manifest URL + a small
    help bar. The hydration is done client-side by assets/js/gallery.js
-   reading the static manifest at site/data/gallery-manifest.json.
+   reading the slim index under site/data/gallery/ (built from the
+   manifest by scripts/build_gallery_manifest.py); a per-show embed
+   waits until it nears the viewport.
 
    Params:
      section_id        — DOM id for the root container
@@ -37,5 +39,6 @@
 
 <script>
     window.NN_GALLERY_MANIFEST_URL = '{{ path_prefix|default("") }}site/data/gallery-manifest.json';
+    window.NN_GALLERY_DATA_BASE = '{{ path_prefix|default("") }}site/data/';
 </script>
 <script defer src="{{ path_prefix|default('') }}assets/js/gallery.js"></script>

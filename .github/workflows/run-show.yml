@@ -1111,6 +1111,10 @@ jobs:
           git add network.rss || true
           git add site/data/search-index.json || true
           git add site/data/gallery-manifest.json || true
+          # The slim indexes the gallery pages load (Oct 7 2026) and the
+          # per-show slices the lightbox reads prompts from — both written
+          # by the manifest build above, both discarded below if unstaged.
+          git add site/data/gallery/*.json || true
 
           if git diff --cached --quiet; then
             echo "Shared pages are already up to date."

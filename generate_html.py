@@ -3216,9 +3216,13 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
     # empty state forever. Switching a show from `image_provider:
     # pexels` to `grok` (or `hybrid`) in its YAML opts it in.
     image_provider = _read_show_image_provider(slug)
+    # Oct 7 2026: and only when the slim index the embed loads holds an
+    # image. Age of AI passed the YAML test with no slice at all, and its
+    # page fetched the whole 22 MB manifest to say "no images yet".
     gallery_enabled = (
         bool(yt_meta.get("youtube_enabled"))
         and image_provider in ("grok", "hybrid")
+        and _gallery_index_has_images(slug)
     )
 
     # Quick-win (May 2026 review): dynamic metadata from the RSS we already
@@ -5309,12 +5313,28 @@ def generate_data_hub_page(*, dry_run=False):
     return out_path
 
 
+def _gallery_index_has_images(slug: str) -> bool:
+    """True when ``site/data/gallery/<slug>.index.json`` lists an image.
+
+    That file is exactly what the per-show embed fetches
+    (``assets/js/gallery.js``), so a page never mounts a gallery whose data
+    does not exist. Missing, unreadable or empty all read as False.
+    """
+    path = ROOT / "site" / "data" / "gallery" / f"{slug}.index.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return bool(isinstance(data, dict) and data.get("images"))
+
+
 def generate_gallery_page(*, dry_run=False):
     """Generate the network-wide /gallery.html browse page.
 
     The page renders an empty mount-point that ``assets/js/gallery.js``
-    hydrates client-side from ``site/data/gallery-manifest.json`` (built
-    nightly by ``scripts/build_gallery_manifest.py``). All filtering,
+    hydrates client-side from the slim ``site/data/gallery/_network.index.json``
+    (derived from the manifest by ``scripts/build_gallery_manifest.py``;
+    prompts load per show only when a visitor asks). All filtering,
     sorting, and lightbox UX is client-side.
     """
     env = _get_jinja_env()
@@ -6272,26 +6292,126 @@ def generate_how_to_listen_page(*, dry_run=False):
     return out_path
 
 
-def generate_player_page(*, dry_run=False):
-    """Generate the cross-show podcast player page."""
+#: Characters of plain-text preview per player card (the card clamps it to
+#: two lines; the rest would ship in the page for nothing).
+PLAYER_PREVIEW_CHARS = 160
+
+
+def _player_cover_variant(podcast_image: str, suffix: str) -> str:
+    """``assets/covers/x.jpg`` -> ``assets/covers/x<suffix>`` when that file
+    is committed, else the original image."""
+    base = podcast_image[:-4] if podcast_image.endswith(".jpg") else ""
+    if base and (ROOT / f"{base}{suffix}").exists():
+        return f"{base}{suffix}"
+    return podcast_image
+
+
+def _player_same_text(preview: str, title: str) -> bool:
+    """True when one of the two is the other with an "Ep N:" label or a
+    trailing ellipsis — the card would print the same sentence twice."""
+    def norm(text: str) -> str:
+        text = re.sub(r"^\s*Ep\s*\d+\s*[:—-]\s*", "", text, flags=re.I)
+        return re.sub(r"\W+", " ", text.replace("...", "")).strip().lower()
+    a, b = norm(preview), norm(title)
+    return bool(a and b and (a in b or b in a))
+
+
+def _player_episode_index() -> dict:
+    """The player's compact episode index, from the committed summaries.
+
+    Oct 7 2026: player.html fetched every show's summaries JSON (~5.7 MB of
+    full digests) to show a title, a date and two lines of preview, and drew
+    31 covers at 3000 px for 48 px slots (~10 MB). This is the part the page
+    uses — show, id, title, date, audio URL routed through OP3 the way the
+    blog player is (``engine.blog._measured_audio_url``), a preview from
+    ``engine.summaries_ssr.plain_preview`` and the feed's own duration — and
+    each show's 400 px WebP cover. Every summaries shape is read
+    (``_records``), so Age of AI's ``{"episodes": [...]}`` file counts, and a
+    show with no playable episode gets no entry (and so no filter chip).
+    """
+    from engine.blog import _measured_audio_url
+    from engine.interviews import feed_durations
+    from engine.summaries_ssr import _episode_number, _records, plain_preview
+
+    shows: list = []
+    episodes: list = []
+    for cfg in NETWORK_SHOWS.values():
+        slug = cfg["slug"]
+        path = ROOT / cfg["json_path"]
+        try:
+            records = _records(json.loads(path.read_text(encoding="utf-8")))
+        except (OSError, ValueError):
+            records = []
+        durations = feed_durations(ROOT / cfg["rss_file"]) if cfg.get("rss_file") else {}
+        audio_dir = ""
+        count = 0
+        for rec in records:
+            raw_audio = str(rec.get("audio_url") or "").strip()
+            if not raw_audio:
+                continue
+            num = _episode_number(rec)
+            date = str(rec.get("date") or "")
+            title = (rec.get("episode_title") or rec.get("title")
+                     or (f"Episode {num}" if num is not None else cfg["name"]))
+            preview = plain_preview(
+                str(rec.get("content") or rec.get("hook") or rec.get("summary") or ""),
+                PLAYER_PREVIEW_CHARS,
+            )
+            # Most titles ARE the hook ("Ep 626: <hook>"), and the preview
+            # leads with the hook, so the card would say it twice.
+            if _player_same_text(preview, str(title)):
+                preview = ""
+            if not audio_dir:
+                found = re.search(r"audio\.nerranetwork\.com/([^/]+)/", raw_audio)
+                audio_dir = found.group(1) if found else ""
+            episodes.append({
+                # Same id the page has always stored in localStorage queues.
+                "id": f"{slug}::{num if num is not None else date}",
+                "show": slug,
+                "title": str(title),
+                "date": date,
+                "audio": _measured_audio_url(raw_audio),
+                "duration": durations.get(num) if num is not None else None,
+                "preview": preview,
+            })
+            count += 1
+        if not count:
+            continue
+        image = cfg["podcast_image"]
+        shows.append({
+            "slug": slug,
+            "name": cfg["name"],
+            "brand_color": cfg["brand_color"],
+            "audio_dir": audio_dir,
+            "cover": _player_cover_variant(image, "-400.webp"),
+            "cover_fallback": image,
+            "artwork": _player_cover_variant(image, "-800.webp"),
+        })
+    return {"shows": shows, "episodes": episodes}
+
+
+def generate_player_page(*, dry_run=False, output_dir=None):
+    """Generate the cross-show podcast player page.
+
+    ``output_dir`` lets a test render into a temp directory (the
+    ``generate_editorial_page`` idiom); the index is still read from ROOT.
+    """
+    from jinja2.utils import htmlsafe_json_dumps
+
     env = _get_jinja_env()
     template = env.get_template("player_page.html.j2")
 
-    # Build show list for the player's JS config
-    player_shows = []
-    for cfg in NETWORK_SHOWS.values():
-        player_shows.append({
-            "slug": cfg["slug"],
-            "name": cfg["name"],
-            "json_path": cfg["json_path"],
-            "podcast_image": cfg["podcast_image"],
-            "brand_color": cfg["brand_color"],
-        })
+    player_index = _player_episode_index()
+    # Filter chips: only the shows the index actually has episodes for.
+    player_shows = [
+        {"slug": s["slug"], "name": s["name"], "brand_color": s["brand_color"]}
+        for s in player_index["shows"]
+    ]
 
     context = {
         "path_prefix": "",
         "page_title": "Player | Nerra Network",
-        "meta_description": f"Listen to all {len(NETWORK_SHOWS)} Nerra Network shows in one player. Build your queue, reorder episodes, and discover new content.",
+        "meta_description": f"Listen to {len(player_shows)} Nerra Network shows in one player. Build your queue, reorder episodes, and discover new content.",
         "meta_keywords": "podcast player, Nerra Network, queue, playlist",
         "theme_color": "#6B47FF",
         "og_image": None,
@@ -6301,10 +6421,14 @@ def generate_player_page(*, dry_run=False):
         "show_color_dark": "",
         "all_shows": _build_all_shows_list(),
         "player_shows": player_shows,
+        # Compact separators: the index rides in the page (~600 episodes).
+        # htmlsafe_json_dumps is what ``|tojson`` uses (escapes < > & ').
+        "player_index_json": htmlsafe_json_dumps(
+            player_index, separators=(",", ":"), ensure_ascii=False),
     }
 
     html = template.render(**context)
-    out_path = ROOT / "player.html"
+    out_path = Path(output_dir or ROOT) / "player.html"
 
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
