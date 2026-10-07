@@ -379,10 +379,10 @@
             </div>
 
             <!-- Summary cards -->
-            <div class="performance-summary-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--sp-4);margin-bottom:var(--sp-6);">
+            <div class="performance-summary-grid" style="font-family:var(--font-ui);display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:var(--sp-3);margin-bottom:var(--sp-6);">
                 <div class="glass-card" style="padding:var(--sp-4);">
                     <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">NASDAQ ^IXIC</div>
-                    <div style="font-size:1.5rem;font-weight:700;margin-top:var(--sp-1);">
+                    <div style="font-size:1.3rem;font-weight:700;margin-top:var(--sp-1);font-variant-numeric:tabular-nums;white-space:nowrap;">
                         {% if performance_data.benchmark.current_close %}{{ "{:,.0f}".format(performance_data.benchmark.current_close) }}{% else %}—{% endif %}
                     </div>
                     <div style="font-size:0.85rem;color:var(--nn-text-muted);margin-top:var(--sp-1);">
@@ -392,7 +392,7 @@
                 </div>
                 <div class="glass-card" style="padding:var(--sp-4);">
                     <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Portfolio YTD</div>
-                    <div style="font-size:1.5rem;font-weight:700;margin-top:var(--sp-1);">
+                    <div style="font-size:1.3rem;font-weight:700;margin-top:var(--sp-1);font-variant-numeric:tabular-nums;white-space:nowrap;">
                         {% set p_ytd = (performance_data.alpha.ytd_pct or 0) + (performance_data.benchmark.ytd_pct or 0) %}
                         {{ "{:+.2f}".format(p_ytd) }}%
                     </div>
@@ -405,7 +405,7 @@
                 <div class="glass-card" style="padding:var(--sp-4);">
                     <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Alpha vs NASDAQ</div>
                     {% set alpha_ytd = performance_data.alpha.ytd_pct or 0 %}
-                    <div style="font-size:1.5rem;font-weight:700;margin-top:var(--sp-1);color:{% if alpha_ytd >= 0 %}#10b981{% else %}#ef4444{% endif %};">
+                    <div style="font-size:1.3rem;font-weight:700;margin-top:var(--sp-1);font-variant-numeric:tabular-nums;white-space:nowrap;color:{% if alpha_ytd >= 0 %}#10b981{% else %}#ef4444{% endif %};">
                         {{ "{:+.2f}".format(alpha_ytd) }}% YTD
                     </div>
                     <div style="font-size:0.85rem;color:var(--nn-text-muted);margin-top:var(--sp-1);">
@@ -414,7 +414,7 @@
                 </div>
                 <div class="glass-card" style="padding:var(--sp-4);">
                     <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Win rate</div>
-                    <div style="font-size:1.5rem;font-weight:700;margin-top:var(--sp-1);">
+                    <div style="font-size:1.3rem;font-weight:700;margin-top:var(--sp-1);font-variant-numeric:tabular-nums;white-space:nowrap;">
                         {{ "{:.0f}".format(performance_data.summary.win_rate_pct or 0) }}%
                     </div>
                     <div style="font-size:0.85rem;color:var(--nn-text-muted);margin-top:var(--sp-1);">
@@ -453,7 +453,7 @@
                     <tbody>
                         {% for t in _mit_recent %}
                         <tr style="border-top:1px solid var(--nn-border);">
-                            <td style="padding:6px 12px;">{{ t.date or "" }}</td>
+                            <td style="padding:6px 12px;white-space:nowrap;">{{ t.date or "" }}</td>
                             <td style="padding:6px 12px;">{% if t.episode_num %}<a href="{{ path_prefix }}blog/modern_investing/ep{{ "%03d" % t.episode_num }}.html" style="color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;" title="Read full trade setup and analysis">Ep{{ t.episode_num }}</a>{% else %}—{% endif %}</td>
                             <td style="padding:6px 12px;font-weight:600;">{{ t.symbol or "" }}</td>
                             <td style="padding:6px 12px;color:var(--nn-text-muted);font-size:0.82rem;">{{ t.sector or "" }}</td>
@@ -474,31 +474,44 @@
             </div>
 
             {% if performance_data.monthly_snapshots %}
+            {#- These are RUNNING totals taken when each month began
+                (shows/hooks/modern_investing.py _maybe_record_monthly_snapshot):
+                trades and win rate to date, never per-month counts. The
+                daily hook leaves the three comparison percentages null, so
+                those columns render only when some row carries them. -#}
+            {%- set _snaps = performance_data.monthly_snapshots -%}
+            {%- set _has_cmp = (_snaps | selectattr('alpha_pct', 'number') | list | length) > 0 -%}
             <!-- Monthly snapshots -->
-            <div class="glass-card" style="padding:0;overflow-x:auto;margin-bottom:var(--sp-6);">
-                <div style="padding:var(--sp-4);border-bottom:1px solid var(--nn-border);font-weight:600;">
-                    Monthly performance snapshots
+            <div class="glass-card mit-table-card">
+                <div class="mit-table-head">
+                    The record at the start of each month
+                    <span>running totals, not per-month results</span>
                 </div>
-                <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
-                    <thead style="background:rgba(255,255,255,0.03);">
-                        <tr style="text-align:left;">
-                            <th style="padding:8px 12px;">Month</th>
-                            <th style="padding:8px 12px;text-align:right;">Trades</th>
-                            <th style="padding:8px 12px;text-align:right;">Win %</th>
-                            <th style="padding:8px 12px;text-align:right;">Portfolio %</th>
-                            <th style="padding:8px 12px;text-align:right;">NASDAQ %</th>
-                            <th style="padding:8px 12px;text-align:right;">Alpha %</th>
+                <table class="mit-table">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th class="num">Trades to date</th>
+                            <th class="num">Win rate</th>
+                            <th class="num">P&amp;L to date</th>
+                            {% if _has_cmp %}<th class="num">Portfolio %</th><th class="num">NASDAQ %</th><th class="num">Alpha %</th>{% else %}<th class="num">Alpha YTD</th>{% endif %}
                         </tr>
                     </thead>
                     <tbody>
-                        {% for m in performance_data.monthly_snapshots %}
-                        <tr style="border-top:1px solid var(--nn-border);">
-                            <td style="padding:6px 12px;font-weight:600;">{{ m.month }}</td>
-                            <td style="padding:6px 12px;text-align:right;">{{ m.trades or 0 }}</td>
-                            <td style="padding:6px 12px;text-align:right;">{{ "{:.0f}".format(m.win_rate or 0) }}%</td>
-                            <td style="padding:6px 12px;text-align:right;font-variant-numeric:tabular-nums;">{% if m.portfolio_pct is defined and m.portfolio_pct is not none %}{{ "{:+.2f}".format(m.portfolio_pct) }}%{% else %}—{% endif %}</td>
-                            <td style="padding:6px 12px;text-align:right;font-variant-numeric:tabular-nums;color:var(--nn-text-muted);">{% if m.nasdaq_pct is defined and m.nasdaq_pct is not none %}{{ "{:+.2f}".format(m.nasdaq_pct) }}%{% else %}—{% endif %}</td>
-                            <td style="padding:6px 12px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:{% if (m.alpha_pct or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">{% if m.alpha_pct is defined and m.alpha_pct is not none %}{{ "{:+.2f}".format(m.alpha_pct) }}%{% else %}—{% endif %}</td>
+                        {% for m in _snaps %}
+                        {%- set _pnl = m.portfolio_pnl if m.portfolio_pnl is number else m.cumulative_pnl -%}
+                        <tr>
+                            <td class="nowrap"><strong>{{ m.month }}</strong></td>
+                            <td class="num">{{ m.trades or m.total_trades or 0 }}</td>
+                            <td class="num">{{ "{:.0f}".format(m.win_rate or m.win_rate_pct or 0) }}%</td>
+                            <td class="num {% if _pnl is number %}{{ 'pos' if _pnl >= 0 else 'neg' }}{% endif %}">{% if _pnl is number %}{{ "-" if _pnl < 0 else "+" }}${{ "{:,.2f}".format(_pnl|abs) }}{% else %}—{% endif %}</td>
+                            {% if _has_cmp %}
+                            <td class="num">{% if m.portfolio_pct is number %}{{ "{:+.2f}".format(m.portfolio_pct) }}%{% else %}—{% endif %}</td>
+                            <td class="num muted">{% if m.nasdaq_pct is number %}{{ "{:+.2f}".format(m.nasdaq_pct) }}%{% else %}—{% endif %}</td>
+                            <td class="num {% if m.alpha_pct is number %}{{ 'pos' if m.alpha_pct >= 0 else 'neg' }}{% endif %}">{% if m.alpha_pct is number %}{{ "{:+.2f}".format(m.alpha_pct) }}%{% else %}—{% endif %}</td>
+                            {% else %}
+                            <td class="num {% if m.alpha_vs_nasdaq is number %}{{ 'pos' if m.alpha_vs_nasdaq >= 0 else 'neg' }}{% endif %}">{% if m.alpha_vs_nasdaq is number %}{{ "{:+.2f}".format(m.alpha_vs_nasdaq) }}%{% else %}—{% endif %}</td>
+                            {% endif %}
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -507,33 +520,36 @@
             {% endif %}
 
             {% if performance_data.sectors %}
-            <!-- Sector Performance Breakdown -->
-            <div class="glass-card" style="padding:0;overflow-x:auto;margin-bottom:var(--sp-6);">
-                <div style="padding:var(--sp-4);border-bottom:1px solid var(--nn-border);font-weight:600;">
-                    Performance by sector
-                    <span style="font-weight:normal;font-size:0.82rem;color:var(--nn-text-muted);margin-left:var(--sp-2);">
-                        — which approaches are generating alpha
-                    </span>
+            {#- tracker["sectors"] is the concentration check's window: the
+                last ten non-voided trades, their count and their DOLLAR P&L
+                (_compute_sector_exposure). It has no win counts and no
+                alpha; this table printed "0%" wins on every row and the
+                dollar average with a % sign. -#}
+            {%- set _sec_total = performance_data.sectors.values() | sum(attribute='trade_count') -%}
+            <!-- Sector mix -->
+            <div class="glass-card mit-table-card">
+                <div class="mit-table-head">
+                    Sector mix, last {{ _sec_total }} trades
+                    <span>the window the show's 30% concentration rule reads</span>
                 </div>
-                <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
-                    <thead style="background:rgba(255,255,255,0.03);">
-                        <tr style="text-align:left;">
-                            <th style="padding:8px 12px;">Sector</th>
-                            <th style="padding:8px 12px;text-align:right;">Trades</th>
-                            <th style="padding:8px 12px;text-align:right;">Win %</th>
-                            <th style="padding:8px 12px;text-align:right;">Avg P&amp;L</th>
-                            <th style="padding:8px 12px;text-align:right;">Total P&amp;L</th>
+                <table class="mit-table">
+                    <thead>
+                        <tr>
+                            <th>Sector</th>
+                            <th class="num">Trades</th>
+                            <th class="num">Share</th>
+                            <th class="num">P&amp;L</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for sec_name, sec_data in performance_data.sectors.items() | sort(attribute='1.cumulative_pnl', reverse=true) %}
+                        {% for sec_name, sec_data in performance_data.sectors.items() | sort(attribute='1.trade_count', reverse=true) %}
                         {% if sec_data.trade_count > 0 %}
-                        <tr style="border-top:1px solid var(--nn-border);">
-                            <td style="padding:6px 12px;text-transform:capitalize;">{{ sec_name | replace('_', ' ') }}</td>
-                            <td style="padding:6px 12px;text-align:right;">{{ sec_data.trade_count }}</td>
-                            <td style="padding:6px 12px;text-align:right;">{% if sec_data.trade_count > 0 %}{{ "{:.0f}".format((sec_data.get('wins', 0) / sec_data.trade_count * 100) if sec_data.trade_count > 0 else 0) }}%{% endif %}</td>
-                            <td style="padding:6px 12px;text-align:right;color:{% if sec_data.cumulative_pnl >= 0 %}#10b981{% else %}#ef4444{% endif %};">{{ "{:+.2f}".format(sec_data.cumulative_pnl / sec_data.trade_count if sec_data.trade_count > 0 else 0) }}%</td>
-                            <td style="padding:6px 12px;text-align:right;font-weight:600;color:{% if sec_data.cumulative_pnl >= 0 %}#10b981{% else %}#ef4444{% endif %};">${{ "{:+.2f}".format(sec_data.cumulative_pnl) }}</td>
+                        {%- set _p = sec_data.cumulative_pnl or 0 -%}
+                        <tr>
+                            <td style="text-transform:capitalize;">{{ sec_name | replace('_', ' ') }}</td>
+                            <td class="num">{{ sec_data.trade_count }}</td>
+                            <td class="num">{{ "{:.0f}".format(sec_data.exposure_pct or 0) }}%</td>
+                            <td class="num {{ 'pos' if _p >= 0 else 'neg' }}"><strong>{{ "-" if _p < 0 else "+" }}${{ "{:,.2f}".format(_p|abs) }}</strong></td>
                         </tr>
                         {% endif %}
                         {% endfor %}
@@ -551,17 +567,25 @@
                     </span>
                 </div>
                 {% if performance_data.lessons_learned %}
-                <ul style="margin:0;padding-left:var(--sp-5);font-size:0.92rem;line-height:1.7;">
-                    {% for e in performance_data.lessons_learned %}
-                    <li style="margin-bottom:var(--sp-2);">
-                        <span style="font-family:monospace;color:var(--nn-text-muted);font-size:0.82rem;">{{ e.id }}</span>
-                        <em style="color:var(--nn-text-muted);">[{{ e.category }}, Ep{{ e.episode_num }}, {{ e.date }}]</em>
-                        — {{ e.observation }}
-                        <br>
-                        <strong>Rule:</strong> {{ e.adjustment }}
+                {%- macro _mit_rule(e) -%}
+                    <li>
+                        <span class="mit-rule-meta"><code>{{ e.id }}</code> · {{ e.category }}{% if e.episode_num is number %}, <a href="{{ path_prefix }}blog/modern_investing/ep{{ "%03d" % e.episode_num }}.html">Ep{{ e.episode_num }}</a>{% endif %}{% if e.date %}, {{ e.date }}{% endif %}</span>
+                        <span class="mit-rule-text"><strong>Rule:</strong> {{ e.adjustment }}</span>
+                        <span class="mit-rule-why">{{ e.observation }}</span>
                     </li>
-                    {% endfor %}
+                {%- endmacro -%}
+                {%- set _rules = performance_data.lessons_learned -%}
+                <ul class="mit-rules">
+                    {% for e in _rules[:3] %}{{ _mit_rule(e) }}{% endfor %}
                 </ul>
+                {% if _rules | length > 3 %}
+                <details class="mit-rules-more">
+                    <summary>All {{ _rules | length }} rules</summary>
+                    <ul class="mit-rules">
+                        {% for e in _rules[3:] %}{{ _mit_rule(e) }}{% endfor %}
+                    </ul>
+                </details>
+                {% endif %}
                 {% else %}
                 <p style="color:var(--nn-text-muted);font-size:0.92rem;">No active rules yet — the daily show will append one each episode when a trade teaches a generalisable lesson.</p>
                 {% endif %}
@@ -826,19 +850,22 @@
             <div class="nn-section-header" style="text-align:left;">
                 <h2>{% if _is_ru %}Ресурсы и материалы{% else %}Resources &amp; Further Reading{% endif %}</h2>
             </div>
+            {#- One group open, the rest a tap away: printed open, Tesla's
+                four groups ran to 4.8k px on a phone. The card names the
+                site's host; the full URL is the link itself. -#}
             {% for cat in resource_categories %}
-            <div class="resource-category">
-                <h3 class="resource-category-title">{{ cat.title }}</h3>
+            <details class="resource-category"{% if loop.first %} open{% endif %}>
+                <summary class="resource-category-title"><span>{{ cat.title }}</span> <span class="resource-count">{{ cat.resources | length }}</span></summary>
                 <div class="resources-grid">
                     {% for r in cat.resources %}
                     <a href="{{ r.url }}" class="resource-card glass-card" target="_blank" rel="noopener">
                         <div class="resource-card-name">{{ r.name }}</div>
                         <div class="resource-card-desc">{{ r.desc }}</div>
-                        <div class="resource-card-url">{{ r.url | replace('https://', '') | replace('http://', '') }}</div>
+                        <div class="resource-card-url">{{ (r.url.split('//', 1)[-1]).split('/', 1)[0] | replace('www.', '') }}</div>
                     </a>
                     {% endfor %}
                 </div>
-            </div>
+            </details>
             {% endfor %}
         </div>
     </section>
@@ -854,7 +881,7 @@
                 <a href="{{ r.url }}" class="resource-card glass-card" target="_blank" rel="noopener">
                     <div class="resource-card-name">{{ r.name }}</div>
                     <div class="resource-card-desc">{{ r.desc }}</div>
-                    <div class="resource-card-url">{{ r.url | replace('https://', '') | replace('http://', '') }}</div>
+                    <div class="resource-card-url">{{ (r.url.split('//', 1)[-1]).split('/', 1)[0] | replace('www.', '') }}</div>
                 </a>
                 {% endfor %}
             </div>
@@ -1069,33 +1096,44 @@
     {%- else -%}
         {%- set _network_shows = all_shows | rejectattr('slug', 'in', _ru_show_slugs) | list -%}
     {%- endif -%}
+    {#- Eight tiles, never the whole catalogue: the grid had listed
+        all thirty shows (4.9k px on a phone). Same-strand shows lead,
+        the related show is skipped (it has its own card above), and
+        /explore.html carries the rest. -#}
+    {%- set _here = all_shows | selectattr('slug', 'equalto', show_slug) | first -%}
+    {%- set _strand = (_here.strand if _here else '') or '' -%}
+    {%- set _skip = [show_slug, related_show.slug if related_show else ''] -%}
+    {%- set _pool = _network_shows | rejectattr('slug', 'in', _skip) | list -%}
+    {%- if _strand -%}
+        {%- set _pool = (_pool | selectattr('strand', 'equalto', _strand) | list) + (_pool | rejectattr('strand', 'equalto', _strand) | list) -%}
+    {%- endif -%}
+    {%- if _pool %}
     <section class="cross-network nn-section">
         <div class="container">
             <div class="nn-section-header">
                 <h2>{% if _is_ru_page %}Другие подкасты Nerra Network{% else %}More from Nerra Network{% endif %}</h2>
-                <p>{% if _is_ru_page %}Подкасты на русском языке.{% else %}Keeping you informed.{% endif %}</p>
+                <p>{% if _is_ru_page %}Подкасты на русском языке.{% else %}The shows closest to this one come first.{% endif %}</p>
             </div>
             <div class="cross-network-grid">
-                {% for s in _network_shows %}
-                {% if s.slug != show_slug %}
-                <div class="cross-network-card" style="display:flex;flex-direction:column;">
-                    <a href="{{ path_prefix }}{{ s.show_page }}" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none;flex:1;">
-                        <picture>
-                            <source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp">
-                            <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="lazy">
-                        </picture>
-                        <div class="cross-network-card-info">
-                            <div class="cross-network-card-name">{{ s.name }}</div>
-                            <div class="cross-network-card-tagline">{{ s.tagline }}</div>
-                        </div>
-                    </a>
-                    <a href="{{ path_prefix }}{{ s.blog_page }}" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">{% if _is_ru_page %}Читать блог{% else %}Read blog{% endif %} &rarr;</a>
-                </div>
-                {% endif %}
+                {% for s in _pool[:8] %}
+                <a class="cross-network-card" href="{{ path_prefix }}{{ s.show_page }}">
+                    <picture>
+                        <source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp">
+                        <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="" width="1400" height="1400" loading="lazy">
+                    </picture>
+                    <span class="cross-network-card-info">
+                        <span class="cross-network-card-name">{{ s.name }}</span>
+                        <span class="cross-network-card-tagline">{{ s.tagline }}</span>
+                    </span>
+                </a>
                 {% endfor %}
             </div>
+            {% if not _is_ru_page and _pool | length > 8 %}
+            <p class="cross-network-all"><a href="{{ path_prefix }}explore.html">See all {{ _network_shows | length }} shows &rarr;</a></p>
+            {% endif %}
         </div>
     </section>
+    {%- endif %}
 {% endblock %}
 
 {% block scripts %}
@@ -1242,6 +1280,28 @@
             return document.getElementById('episodes-grid');
         }
 
+        /* Six archive cards, the rest one tap away. Twelve full players
+           ran the section to ~4.5k px on a phone; the cards stay in the
+           DOM (hidden), so nothing is fetched or lost by folding them. */
+        const ARCHIVE_VISIBLE = 6;
+        function foldArchive(grid) {
+            if (!grid) return;
+            const old = grid.parentNode.querySelector('.episodes-more');
+            if (old) old.remove();
+            const cards = Array.from(grid.children);
+            if (cards.length <= ARCHIVE_VISIBLE) return;
+            cards.slice(ARCHIVE_VISIBLE).forEach((c) => { c.hidden = true; });
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'nn-btn episodes-more';
+            btn.textContent = {% if _is_ru %}'Ещё выпуски (' + (cards.length - ARCHIVE_VISIBLE) + ')'{% else %}'More episodes (' + (cards.length - ARCHIVE_VISIBLE) + ')'{% endif %};
+            btn.addEventListener('click', () => {
+                cards.forEach((c) => { c.hidden = false; });
+                btn.remove();
+            });
+            grid.insertAdjacentElement('afterend', btn);
+        }
+
         /* ``data-rendered`` is the card's record of having shown a real
            episode — set by the server when it had one, and by either client
            path when it replaces it. ``showNoEpisodes`` reads it so a failure
@@ -1361,9 +1421,11 @@
                         enUrl: withOp3(ep.audio_url),
                         enTitle: epTitle(ep) || 'Episode',
                         translations: tr,
+                        compact: true,
                     });
                 }
             });
+            foldArchive(grid);
         }
 
         // Shared per-player language switcher. Builds EN + available-language
@@ -1406,18 +1468,24 @@
             box.style.display = 'flex';
             box.style.alignItems = 'center';
             box.style.flexWrap = 'wrap';
-            box.style.gap = '6px';
-            const label = document.createElement('span');
-            label.textContent = opts.labelText || 'Listen in:';
-            label.style.cssText = 'font-size:0.78rem;color:var(--nn-text-muted);';
-            box.appendChild(label);
+            box.style.gap = '5px';
+            box.setAttribute('role', 'group');
+            box.setAttribute('aria-label', (opts.labelText || 'Listen in:').replace(/:$/, ''));
+            // Archive cards are too narrow for the label and four chips on
+            // one line; there the group name carries it for screen readers.
+            if (!opts.compact) {
+                const label = document.createElement('span');
+                label.textContent = opts.labelText || 'Listen in:';
+                label.style.cssText = 'font-size:0.78rem;color:var(--nn-text-muted);';
+                box.appendChild(label);
+            }
             order.forEach((code) => {
                 const b = document.createElement('button');
                 b.type = 'button';
                 b.dataset.lang = code;
                 b.textContent = LABELS[code] || code.toUpperCase();
                 b.setAttribute('aria-pressed', 'false');
-                b.style.cssText = 'font:600 0.78rem/1.4 var(--font-ui,sans-serif);padding:2px 11px;border-radius:100px;border:1px solid var(--nn-border);background:var(--nn-card);color:var(--nn-text-muted);cursor:pointer;';
+                b.style.cssText = 'font:600 0.78rem/1.4 var(--font-ui,sans-serif);padding:2px 9px;border-radius:100px;border:1px solid var(--nn-border);background:var(--nn-card);color:var(--nn-text-muted);cursor:pointer;';
                 b.addEventListener('click', () => apply(code, true));
                 box.appendChild(b);
             });
@@ -1498,6 +1566,7 @@
                         `;
                         grid.appendChild(card);
                     });
+                    foldArchive(grid);
                 })
                 .catch(err => {
                     console.warn(`[${SHOW_NAME}] RSS load failed:`, err.message);

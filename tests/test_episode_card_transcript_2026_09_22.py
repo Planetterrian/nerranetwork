@@ -193,7 +193,10 @@ class TestTheRenderedTranscriptBox:
         """It sits inside <summary> so a closed <details> still paints it, and
         the same words are read again three lines below. A 400-character
         button label is not a button label."""
-        box = re.search(r'<summary>.*?</summary>', interview_post, re.S).group(0)
+        # Scoped to the transcript section: the claims panel above it now
+        # carries a <summary> of its own.
+        section = interview_post.split('class="blog-transcript"', 1)[1]
+        box = re.search(r'<summary>.*?</summary>', section, re.S).group(0)
         preview = re.search(r'<span class="transcript-preview"([^>]*)>', box)
         assert 'aria-hidden="true"' in preview.group(1)
 

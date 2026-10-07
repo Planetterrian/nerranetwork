@@ -278,3 +278,137 @@ class TestMobileMenuIsShort:
         # No per-show blog loop: the blog section is the hub + topics map.
         assert "s.blog_page" not in menu
         assert 'alt="{{ s.name }} cover art"' not in menu
+
+
+class TestFooterIsCompact:
+    """The footer was ~2,400 px tall on a desktop: 31 show checkboxes printed
+    open under the newsletter form and an 18-show list in one column."""
+
+    def _base(self):
+        return _strip_jinja_comments(
+            (ROOT / "templates" / "base.html.j2").read_text(encoding="utf-8"))
+
+    def test_newsletter_show_picker_is_collapsed(self):
+        base = self._base()
+        assert '<details class="nn-subscribe-pick">' in base
+        pick = base.split('<details class="nn-subscribe-pick">', 1)[1].split("</details>", 1)[0]
+        # The tag checkboxes still render (the Worker reads them); they sit
+        # behind the summary instead of printing open on every page.
+        assert "nn-subscribe-tags" in pick
+
+    def test_show_list_runs_in_two_columns_on_desktop(self):
+        css = _strip_css_comments(CSS)
+        assert "nn-footer-col nn-footer-col--shows" in self._base()
+        assert re.search(r"\.nn-footer-col--shows ul\.nn-footer-showlist\s*\{\s*columns:\s*2", css)
+
+
+class TestShowPageIsShorter:
+    """Tesla's page was 25k px on a phone: all thirty shows in the
+    'More from' grid and twelve open archive players."""
+
+    TPL = _strip_jinja_comments(
+        (ROOT / "templates" / "show_page.html.j2").read_text(encoding="utf-8"))
+
+    def test_cross_network_grid_is_capped_and_links_explore(self):
+        assert "{% for s in _pool[:8] %}" in self.TPL
+        assert 'explore.html">See all' in self.TPL
+        # One link per tile; the separate per-show blog row is gone.
+        grid = self.TPL.split('<div class="cross-network-grid">', 1)[1].split("</section>", 1)[0]
+        assert "s.blog_page" not in grid
+
+    def test_empty_pool_renders_no_section(self):
+        # A Russian show's only sibling already has the related-show card.
+        assert "{%- if _pool %}\n    <section class=\"cross-network nn-section\">" in self.TPL
+
+    def test_archive_folds_after_six_on_both_render_paths(self):
+        assert "const ARCHIVE_VISIBLE = 6;" in self.TPL
+        assert self.TPL.count("foldArchive(grid);") == 2
+
+    def test_resource_groups_collapse_with_the_first_open(self):
+        assert '<details class="resource-category"{% if loop.first %} open{% endif %}>' in self.TPL
+        assert '<summary class="resource-category-title">' in self.TPL
+        # The card names the host; the full URL is the link.
+        assert "r.url | replace('https://', '')" not in self.TPL
+
+
+class TestMitTablesSayWhatTheyHold:
+    """tracker['sectors'] is the last-ten-trades concentration window in
+    DOLLARS with no win counts; monthly snapshots are running totals with
+    the three % columns null by construction. The page had printed 0% wins
+    on every sector, a dollar average with a % sign, a claim about alpha
+    the block never measures, and three columns of dashes."""
+
+    TPL = _strip_jinja_comments(
+        (ROOT / "templates" / "show_page.html.j2").read_text(encoding="utf-8"))
+
+    def test_sector_table_is_the_concentration_window_in_dollars(self):
+        assert "which approaches are generating alpha" not in self.TPL
+        assert "sec_data.get('wins'" not in self.TPL
+        assert "Sector mix, last {{ _sec_total }} trades" in self.TPL
+        assert "sec_data.cumulative_pnl / sec_data.trade_count" not in self.TPL
+
+    def test_monthly_table_is_labelled_running_totals(self):
+        assert "running totals, not per-month results" in self.TPL
+        assert "Trades to date" in self.TPL
+        # The always-null comparison columns render only when a row has them.
+        assert "selectattr('alpha_pct', 'number')" in self.TPL
+
+    def test_sector_writer_still_matches_the_label(self):
+        hook = (ROOT / "shows" / "hooks" / "modern_investing.py").read_text(encoding="utf-8")
+        body = hook.split("def _compute_sector_exposure", 1)[1].split("\ndef ", 1)[0]
+        assert "_CONCENTRATION_WINDOW" in body and "pnl_dollars" in body
+        assert "wins" not in body
+
+
+class TestHomepageLeadsWithTopShows:
+    """The hero icons and the show grid followed display_order alone, which
+    put Tesla 21st and SpaceX 22nd of 31 while the two carry most of the
+    network's downloads. The homepage now ranks by 30-day RSS downloads."""
+
+    def _shows(self, *slugs):
+        return [{"slug": s} for s in slugs]
+
+    def test_ranked_by_downloads_then_display_order(self, tmp_path):
+        import json as _json
+        import generate_html as g
+        f = tmp_path / "audience.json"
+        f.write_text(_json.dumps({"shows": {
+            "a": {"downloads_30d": 5}, "b": {"downloads_30d": 50},
+            "c": {"downloads_30d": 0}, "d": {"downloads_30d": None},
+            "e": {"downloads_30d": 5},
+        }}))
+        order = [s["slug"] for s in g._rank_shows_by_audience(
+            self._shows("a", "c", "d", "b", "e", "f"), path=f)]
+        # Measured shows by downloads (a tie keeps display order), then the
+        # unmeasured or zero ones in their original order.
+        assert order == ["b", "a", "e", "c", "d", "f"]
+
+    def test_missing_or_broken_file_keeps_display_order(self, tmp_path):
+        import generate_html as g
+        shows = self._shows("x", "y")
+        assert g._rank_shows_by_audience(shows, path=tmp_path / "nope.json") == shows
+        bad = tmp_path / "bad.json"
+        bad.write_text("{not json")
+        assert g._rank_shows_by_audience(shows, path=bad) == shows
+
+    def test_committed_data_puts_the_flagships_first(self):
+        import generate_html as g
+        if not g.AUDIENCE_HEADLINE_PATH.exists():
+            pytest.skip("no committed audience headline")
+        ranked = [s["slug"] for s in g._rank_shows_by_audience(g._build_all_shows_list())]
+        assert len(ranked) == len(g._build_all_shows_list())
+        # Today's file: SpaceX and Tesla lead; a desk with no audience never
+        # outranks them. Judged on order, not on exact counts.
+        assert ranked.index("spacex") < ranked.index("omni_view_world")
+        assert ranked.index("tesla") < ranked.index("omni_view_world")
+
+    def test_hero_icons_and_grid_read_the_ranked_list(self):
+        tpl = _strip_jinja_comments(
+            (ROOT / "templates" / "network_page.html.j2").read_text(encoding="utf-8"))
+        orbit = tpl.split('<div class="hero-show-orbit">', 1)[1].split("</div>", 1)[0]
+        assert "{% for s in _ranked %}" in orbit
+        assert "{%- set _ranked = ranked_shows | default(all_shows) -%}" in tpl
+        grid = tpl.split('id="show-showcase-grid">', 1)[1].split("</div>", 1)[0]
+        assert "ranked_shows" in grid
+        gen = (ROOT / "generate_html.py").read_text(encoding="utf-8")
+        assert '"ranked_shows": _rank_shows_by_audience(_build_all_shows_list())' in gen

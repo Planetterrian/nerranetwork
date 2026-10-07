@@ -74,8 +74,11 @@
             <h1><span class="gradient-text">Nerra</span> Network</h1>
             <p class="network-hero-tagline">Feed your curiosity. Not your anxiety.</p>
             <p class="hero-subtitle">{{ all_shows|length }} ad-free shows on Tesla, SpaceX, AI, markets, space, science, world news, first-principles thinking and more — most of them new every day, in {{ listening_language_count | default(4) }} listening languages. Independently produced in Vancouver, Canada.</p>
+            {#- Most-listened first (generate_html._rank_shows_by_audience): a
+                phone shows the first nine icons, so the order decides which. -#}
+            {%- set _ranked = ranked_shows | default(all_shows) -%}
             <div class="hero-show-orbit">
-                {% for s in all_shows %}
+                {% for s in _ranked %}
                 {% set _pbase = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
                 <a href="{{ path_prefix }}{{ s.show_page }}" class="orbit-card" style="--i: {{ loop.index0 }};" title="{{ s.name }}">
                     <picture>
@@ -128,7 +131,7 @@
        shows). Hidden from assistive tech — it duplicates the show grid. #}
     <div class="topic-ticker" aria-hidden="true">
         <div class="ticker-track">
-            {% for _pass in range(2) %}{% for s in all_shows %}
+            {% for _pass in range(2) %}{% for s in ranked_shows | default(all_shows) %}
             <span>{{ s.name }}</span>
             {% endfor %}{% endfor %}
         </div>
@@ -346,7 +349,7 @@
                 <p>Every show is ad-free and independently produced; most publish every day. Pick one, or let <a href="{{ path_prefix }}nerra-daily.html">Nerra Daily</a> hand you the whole network in one episode. Three of them are hosted by <a href="{{ path_prefix }}mira.html">Mira</a>, who also does the network's interviews herself.</p>
             </div>
             <div class="show-showcase" id="show-showcase-grid">
-                {% for s in all_shows %}
+                {% for s in ranked_shows | default(all_shows) %}
                 {{ show_card(s, path_prefix) }}
                 {% endfor %}
             </div>
@@ -394,7 +397,7 @@
             <details class="subscribe-all">
             <summary>Every show's feed, Apple and Spotify links ({{ all_shows|length }} shows)</summary>
             <div class="subscribe-show-list">
-                {% for s in all_shows %}
+                {% for s in ranked_shows | default(all_shows) %}
                 {% set _subbase = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
                 <div class="subscribe-show-row">
                     <picture>
@@ -465,7 +468,7 @@
                     <a href="#" onclick="event.preventDefault();this.closest('form').querySelectorAll('input[name=tag]').forEach(function(b){b.checked=true;});return false;" style="color:var(--nn-text-muted);font-size:0.8rem;">Select all</a>
                 </p>
                 <div class="nn-subscribe-tags" style="margin-bottom:var(--sp-4);">
-                    {% for s in all_shows %}
+                    {% for s in ranked_shows | default(all_shows) %}
                     <label><input type="checkbox" name="tag" value="{{ s.newsletter_tag or s.name }}" checked> {{ s.name }}</label>
                     {% endfor %}
                 </div>
