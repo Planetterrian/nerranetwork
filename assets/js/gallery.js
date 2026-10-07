@@ -1,8 +1,10 @@
 /* Nerra Network image gallery (Phase 2 — client renderer).
  *
- * Loads the static manifest at MANIFEST_URL, renders a thumbnail grid
+ * Loads the slim gallery index (site/data/gallery/_network.index.json, or
+ * <slug>.index.json on a show page), renders a thumbnail grid
  * (lazy-loaded), and wires up:
- *   - search (free-text across caption + prompt + tags)
+ *   - search (free-text across episode title, show, caption; a prompt
+ *     once it has been loaded)
  *   - show filter (single or multi-select; multi when on /gallery)
  *   - sort (newest / oldest)
  *   - lightbox with prev/next, caption, prompt toggle, download button
@@ -25,6 +27,14 @@
 
     var MANIFEST_URL = (window.NN_GALLERY_MANIFEST_URL ||
         '/site/data/gallery-manifest.json');
+    // Oct 7 2026: the grid loads a slim index, never the manifest (22 MB,
+    // a third of it prompts). site/data/ is derived from the manifest URL
+    // so a page cached with only the old variable still finds the index.
+    var DATA_BASE = (window.NN_GALLERY_DATA_BASE ||
+        MANIFEST_URL.replace(/gallery-manifest\.json$/, ''));
+    // Per-show embeds sit ~17,000 px down a show page; their fetch starts
+    // when the section gets this close to the viewport.
+    var LAZY_ROOT_MARGIN = '800px 0px';
     // Worker base URL. Phase 3 deploys the Worker at
     // api.nerranetwork.com; the override exists so local dev
     // (python -m http.server 8080 + wrangler dev) can point at
@@ -95,17 +105,51 @@
             if (!q) return true;
             var hay = [
                 img.caption, img.prompt, img.show_name,
-                img.episode_title,
+                img.episode_title, img.intended_use,
                 (img.tags || []).join(' '),
             ].join(' ').toLowerCase();
             return hay.indexOf(q) !== -1;
         });
-        // The manifest arrives sorted newest-first. Only flip when the
+        // The index arrives sorted newest-first. Only flip when the
         // user selects oldest.
         if (sort === 'oldest') visible.reverse();
+        else if (!q) visible = diversifyHead(visible, this.pageSize);
         this.visible = visible;
         this.rendered = 0;
     };
+
+    // One episode publishes a dozen near-identical scenes, so newest-first
+    // opened the network gallery on thirteen pictures of one SpaceX
+    // episode. The first page takes one image per episode, round-robin in
+    // newest order; everything else keeps its place behind it.
+    function diversifyHead(list, n) {
+        var groups = [];
+        var byKey = {};
+        for (var i = 0; i < list.length; i++) {
+            var img = list[i];
+            var key = img.show_slug + '|' + img.episode_date + '|' + img.episode_id;
+            if (!byKey[key]) { byKey[key] = []; groups.push(byKey[key]); }
+            byKey[key].push(i);
+        }
+        var head = [];
+        var taken = {};
+        for (var round = 0; head.length < n; round++) {
+            var any = false;
+            for (var g = 0; g < groups.length && head.length < n; g++) {
+                if (groups[g].length > round) {
+                    head.push(groups[g][round]);
+                    taken[groups[g][round]] = 1;
+                    any = true;
+                }
+            }
+            if (!any) break;
+        }
+        var out = head.map(function (idx) { return list[idx]; });
+        for (var j = 0; j < list.length; j++) {
+            if (!taken[j]) out.push(list[j]);
+        }
+        return out;
+    }
 
     // ---------- Render ----------
 
@@ -170,7 +214,7 @@
             '<div class="nn-gallery-controls">' +
                 '<label class="nn-gallery-search">' +
                     '<span class="nn-vh">Search images</span>' +
-                    '<input type="search" placeholder="Search captions, prompts, tags…" ' +
+                    '<input type="search" placeholder="Search episodes, shows, captions…" ' +
                         'class="nn-gallery-search-input">' +
                 '</label>' +
                 '<label class="nn-gallery-sort">' +
@@ -344,7 +388,9 @@
                         '<button type="button" class="nn-lb-prompt-toggle nn-btn nn-btn-ghost">Show prompt</button>' +
                         '<button type="button" class="nn-lb-download nn-btn">Download full size</button>' +
                     '</div>' +
-                    '<details class="nn-lb-prompt" hidden>' +
+                    // ``open``: a closed <details> shows only its (visually
+                    // hidden) summary, so the toggle used to reveal nothing.
+                    '<details class="nn-lb-prompt" open hidden>' +
                         '<summary class="nn-vh">Prompt</summary>' +
                         '<pre class="nn-lb-prompt-text"></pre>' +
                     '</details>' +
@@ -367,6 +413,8 @@
                 if (hidden) details.removeAttribute('hidden');
                 else details.setAttribute('hidden', '');
                 e.target.textContent = hidden ? 'Hide prompt' : 'Show prompt';
+                e.target.setAttribute('aria-expanded', hidden ? 'true' : 'false');
+                if (hidden) loadPrompt();
             } else if (e.target.classList.contains('nn-lb-download')) {
                 handleDownload();
             }
@@ -433,16 +481,14 @@
         var promptDetails = $('.nn-lb-prompt', lb);
         var promptToggle = $('.nn-lb-prompt-toggle', lb);
         var promptText = $('.nn-lb-prompt-text', lb);
+        // The index carries no prompt: ``undefined`` means "not fetched
+        // yet" (the toggle fetches it), "" means the image has none.
         var p = shortPrompt(img.prompt);
-        if (p) {
-            promptText.textContent = p;
-            promptToggle.style.display = '';
-            promptToggle.textContent = 'Show prompt';
-            promptDetails.setAttribute('hidden', '');
-        } else {
-            promptToggle.style.display = 'none';
-            promptDetails.setAttribute('hidden', '');
-        }
+        promptText.textContent = p;
+        promptToggle.style.display = (img.prompt === undefined || p) ? '' : 'none';
+        promptToggle.textContent = 'Show prompt';
+        promptToggle.setAttribute('aria-expanded', 'false');
+        promptDetails.setAttribute('hidden', '');
 
         var lic = (img.license || 'CC BY-SA 4.0') + ' · ' +
                   (img.attribution || 'Nerra Network');
@@ -454,6 +500,47 @@
         } else {
             $('.nn-lb-license', lb).textContent = lic;
         }
+    }
+
+    // The full record (prompt included) lives in the show's slice, which
+    // is fetched once, only when a visitor asks for a prompt.
+    var _slices = {};
+
+    function loadSlice(url) {
+        if (!_slices[url]) {
+            _slices[url] = fetch(url, { credentials: 'omit' }).then(function (r) {
+                if (!r.ok) throw new Error('slice HTTP ' + r.status);
+                return r.json();
+            }).then(function (m) {
+                var byId = {};
+                (m.images || []).forEach(function (i) { byId[i.image_id] = i; });
+                return byId;
+            });
+            _slices[url].catch(function () { delete _slices[url]; });
+        }
+        return _slices[url];
+    }
+
+    function loadPrompt() {
+        if (!_lbState.state) return;
+        var img = _lbState.state.visible[_lbState.index];
+        if (!img || img.prompt !== undefined) return;
+        var lb = $('.nn-gallery-lightbox');
+        var promptText = $('.nn-lb-prompt-text', lb);
+        promptText.textContent = 'Loading prompt…';
+        loadSlice(_lbState.state.opts.sliceUrlFor(img.show_slug)).then(function (byId) {
+            var rec = byId[img.image_id];
+            img.prompt = (rec && rec.prompt) || '';
+        }, function () {
+            // Leave it undefined so the next press retries.
+        }).then(function () {
+            var current = _lbState.state && _lbState.state.visible[_lbState.index];
+            if (current !== img) return;
+            promptText.textContent = shortPrompt(img.prompt) ||
+                (img.prompt === undefined
+                    ? 'The prompt could not be loaded. Try again in a moment.'
+                    : 'No prompt is on record for this image yet.');
+        });
     }
 
     // ---------- Download gate (Phase 3 — wired to api.nerranetwork.com) ----------
@@ -696,6 +783,58 @@
 
     // ---------- Bootstrap ----------
 
+    // Rebuild full image records from a slim index (see
+    // scripts/build_gallery_manifest.py build_gallery_index): rows are
+    // positional, episodes are a table, URLs are base_url + the R2 key,
+    // and ``overrides`` carries any record that does not follow the rule.
+    function hydrateIndex(index) {
+        var rows = index.images || [];
+        if (rows.length && !Array.isArray(rows[0])) return rows;  // a manifest
+        var ef = index.episode_fields || [];
+        var imf = index.image_fields || [];
+        var E = {
+            slug: ef.indexOf('show_slug'), date: ef.indexOf('episode_date'),
+            id: ef.indexOf('episode_id'), title: ef.indexOf('episode_title'),
+        };
+        var I = {
+            id: imf.indexOf('image_id'), ep: imf.indexOf('episode'),
+            fmt: imf.indexOf('format'), cap: imf.indexOf('caption'),
+            use: imf.indexOf('intended_use'),
+        };
+        var names = {};
+        (index.shows || []).forEach(function (s) { names[s.slug] = s.name; });
+        var base = index.base_url || '';
+        var overrides = index.overrides || {};
+        var episodes = index.episodes || [];
+        return rows.map(function (row, n) {
+            var ep = episodes[row[I.ep]] || [];
+            var slug = ep[E.slug] || '';
+            var stem = slug + '/' + ep[E.date] + '/' + ep[E.id] + '/' + row[I.id];
+            var img = {
+                image_id: row[I.id],
+                show_slug: slug,
+                show_name: names[slug] || slug,
+                episode_id: ep[E.id] || '',
+                episode_date: ep[E.date] || '',
+                episode_title: ep[E.title] || '',
+                caption: row[I.cap] || '',
+                intended_use: row[I.use] || '',
+                thumbnail_url: base + '/' + stem + '.thumb.webp',
+                original_key: stem + '.' + row[I.fmt],
+                license: index.license,
+                license_url: index.license_url,
+                attribution: index.attribution,
+            };
+            var o = overrides[String(n)];
+            if (o) {
+                for (var k in o) {
+                    if (Object.prototype.hasOwnProperty.call(o, k)) img[k] = o[k];
+                }
+            }
+            return img;
+        });
+    }
+
     function init(host) {
         var fixedShowSlug = host.getAttribute('data-show-slug') || '';
         var pageSize = parseInt(host.getAttribute('data-page-size'), 10);
@@ -703,31 +842,28 @@
         var suppressControls = host.getAttribute('data-controls') === 'hide';
 
         host.classList.add('nn-gallery');
-        host.innerHTML = '<p class="nn-gallery-loading">Loading gallery…</p>';
 
-        // Per-show embeds load the show's own slice (~1/15th of the full
-        // 14 MB manifest; scripts/build_gallery_manifest.py writes them)
-        // and fall back to the full manifest if the slice is missing.
-        var sliceUrl = fixedShowSlug
-            ? MANIFEST_URL.replace(/gallery-manifest\.json$/,
-                                   'gallery/' + fixedShowSlug + '.json')
-            : '';
-        var load = function (url) {
-            return fetch(url, { credentials: 'omit' }).then(function (r) {
-                if (!r.ok) throw new Error('manifest HTTP ' + r.status);
-                return r.json();
-            });
+        // A per-show embed loads its own slim index and nothing else: no
+        // fallback to the whole manifest (Age of AI's page fetched 22 MB to
+        // say "no images yet" when its slice did not exist). The full slice
+        // at 'gallery/' + fixedShowSlug + '.json' is only read for prompts.
+        var indexUrl = DATA_BASE + 'gallery/' +
+            (fixedShowSlug || '_network') + '.index.json';
+        var sliceUrlFor = function (slug) {
+            return DATA_BASE + 'gallery/' + slug + '.json';
         };
-        (sliceUrl && sliceUrl !== MANIFEST_URL
-            ? load(sliceUrl).catch(function () { return load(MANIFEST_URL); })
-            : load(MANIFEST_URL))
-            .then(function (manifest) {
-                var images = manifest.images || [];
-                var shows = manifest.shows || [];
+
+        function start() {
+            host.innerHTML = '<p class="nn-gallery-loading">Loading gallery…</p>';
+            fetch(indexUrl, { credentials: 'omit' }).then(function (r) {
+                if (!r.ok) throw new Error('gallery index HTTP ' + r.status);
+                return r.json();
+            }).then(function (index) {
+                var images = hydrateIndex(index);
+                var shows = index.shows || [];
                 // Defense-in-depth: text-burned YouTube thumbnail composites
                 // (intended_use: thumbnail_variant) are not useful in the
-                // public gallery. The manifest builder already excludes them;
-                // this filter covers older manifests until the next rebuild.
+                // public gallery. The manifest builder already excludes them.
                 var EXCLUDED_USES = {
                     thumbnail_variant: 1,
                     thumbnail: 1,
@@ -755,16 +891,32 @@
                     pageSize: pageSize > 0 ? pageSize : 60,
                     suppressShowFilter: suppressShowFilter || !!fixedShowSlug,
                     suppressControls: suppressControls,
+                    sliceUrlFor: sliceUrlFor,
                 });
                 render(host, state);
-            })
-            .catch(function (err) {
+            }).catch(function (err) {
                 host.innerHTML = (
-                    '<p class="nn-gallery-empty">Gallery manifest ' +
-                    'unavailable: ' + escapeHtml(err.message || err) +
-                    '. Try refreshing in a moment.</p>'
+                    '<p class="nn-gallery-empty">Gallery images are ' +
+                    'unavailable right now (' + escapeHtml(err.message || err) +
+                    '). Try refreshing in a moment.</p>'
                 );
             });
+        }
+
+        if (fixedShowSlug && 'IntersectionObserver' in window) {
+            var io = new IntersectionObserver(function (entries) {
+                for (var i = 0; i < entries.length; i++) {
+                    if (entries[i].isIntersecting) {
+                        io.disconnect();
+                        start();
+                        return;
+                    }
+                }
+            }, { rootMargin: LAZY_ROOT_MARGIN });
+            io.observe(host);
+        } else {
+            start();
+        }
     }
 
     function bootAll() {
