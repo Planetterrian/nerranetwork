@@ -3535,3 +3535,33 @@ experiments:
       Guards tests/test_slate_2026_10_06.py. No prompt or audio change —
       outside landmine #17. source_integrity_*_pre_floor keeps the first
       gate reading for comparison with history.
+
+  - id: website-review-2026-10-07
+    title: "Site review: phone layout, a player on every post, text-safe brand colours, page weight, honest numbers"
+    area: website
+    shipped: 2026-10-07
+    readout: 2026-11-04
+    status: reading
+    baseline: >
+      GA4 (28 days to 2026-10-06): 282 measured landing sessions; blog
+      episode pages 97 (34%) at a 70% bounce rate, homepage 79. Render audit
+      (58 pages, 1440 and 390 px): every blog post laid out 505-980px wide
+      on a 390px phone; ~2,000 of 2,228 posts had no audio player; show
+      pages carried 41-62 low-contrast text elements each; gallery.html
+      22.3 MB, age-of-ai.html 22.4 MB, player.html 14.0 MB; a stray brace in
+      styles/main.css applied the phone layout at every width and dropped
+      the tablet nav.
+    target: >
+      Blog-post landing bounce rate under 60% over the four weeks after the
+      merge (GA4 landing_pages, rows under /blog/*/ep*.html, sessions >= 50),
+      with no fall in blog landing sessions.
+    criteria: >
+      Hit = bounce under 60% on >= 50 sessions. Miss = bounce at or above
+      the 70% baseline. Under 50 sessions = inconclusive (the site's traffic
+      is small; say so rather than score it).
+    notes: >
+      Write-up docs/website_review_2026_10_07.md; guards
+      tests/test_site_review_2026_10_07_{chrome,blog,trust,dashboards,gallery_player}.py.
+      Render/metadata/copy only: no audio, no prompt that reaches an
+      episode — outside landmine #17. The guest-facing email and Worker copy
+      changes need `wrangler deploy` in workers/voices for the Worker half.
