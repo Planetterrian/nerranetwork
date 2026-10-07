@@ -129,7 +129,19 @@
     }
     .legal-body li { margin-bottom: var(--sp-2); }
     .legal-body strong { color: var(--nn-white); }
-    .legal-body a { color: var(--nn-cyan); }
+    .legal-body a { color: var(--nn-cyan); text-decoration: underline; text-underline-offset: 2px; }
+    .legal-body h2[id], .legal-body h3[id] { scroll-margin-top: calc(var(--nav-height) + var(--sp-4)); }
+    .legal-toc {
+        background: var(--nn-card);
+        border: 1px solid var(--nn-border);
+        border-radius: 12px;
+        padding: var(--sp-4) var(--sp-5);
+        margin: var(--sp-6) 0 0;
+    }
+    .legal-toc h2 { border-top: 0; margin: 0 0 var(--sp-2); padding-top: 0; font-size: 1rem; }
+    .legal-toc ol { margin: 0; columns: 2 16rem; column-gap: var(--sp-6); }
+    .legal-toc li { margin-bottom: var(--sp-1); font-size: 0.92rem; break-inside: avoid; }
+    .legal-toc ul { list-style: none; margin: var(--sp-1) 0 0; padding-left: var(--sp-4); }
     .legal-body a:hover { color: var(--nn-white); }
     .legal-callout {
         background: linear-gradient(135deg, rgba(107, 71, 255, 0.15) 0%, rgba(0, 212, 255, 0.08) 100%);
@@ -168,7 +180,8 @@
         font-family: var(--font-heading);
         font-size: 0.95rem;
         font-weight: 700;
-        color: var(--nn-purple);
+        /* #6B47FF is 3.6:1 on the page; the text tint clears 4.5:1. */
+        color: var(--nn-purple-text, #9D8BFF);
         margin: 0 0 var(--sp-2);
     }
     .legal-grid p { font-size: 0.92rem; margin: 0; }
@@ -210,7 +223,7 @@
         font-size: 0.85rem;
         color: var(--nn-text-muted);
     }
-    .legal-footer-note .nn-highlight { color: var(--nn-purple); font-weight: 500; }
+    .legal-footer-note .nn-highlight { color: var(--nn-purple-text, #9D8BFF); font-weight: 500; }
     .legal-related {
         display: flex;
         flex-wrap: wrap;
@@ -233,6 +246,15 @@
     }
 </style>
 
+    <style>
+        .nn-claims-steps--compact summary {
+            font-family: var(--font-heading);
+            font-weight: 600;
+            color: var(--nn-white);
+            cursor: pointer;
+        }
+        .nn-claims-steps--compact details[open] summary { margin-bottom: var(--sp-2); }
+    </style>
 
 
     
@@ -728,379 +750,200 @@
         <a href="../player.html">Player</a>
         
         <a href="../explore.html" style="font-weight:600;">Find your show</a>
-        
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Hosted by Mira</div>
+        <details class="nn-mobile-shows nn-mobile-group" open>
+            <summary class="nn-mobile-shows-title">Hosted by Mira <span class="nn-mobile-count">3</span></summary>
             
             <a href="../nerra-daily.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/nerra-daily-400.webp"><img src="../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/nerra-daily-400.webp"><img src="../assets/covers/nerra-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Daily
             </a>
             
             <a href="../age-of-ai.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/age-of-ai-400.webp"><img src="../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/age-of-ai-400.webp"><img src="../assets/covers/age-of-ai.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The Age of AI
             </a>
             
             <a href="../nerra-voices.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/nerra-voices-400.webp"><img src="../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/nerra-voices-400.webp"><img src="../assets/covers/nerra-voices.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Voices
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">World desks</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">World desks <span class="nn-mobile-count">6</span></summary>
             
             <a href="../omni-view-world.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-world-400.webp"><img src="../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-world-400.webp"><img src="../assets/covers/omni-view-world.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Top World News
             </a>
             
             <a href="../omni-view-north-america.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-north-america-400.webp"><img src="../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-north-america-400.webp"><img src="../assets/covers/omni-view-north-america.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View North America
             </a>
             
             <a href="../omni-view-europe.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-europe-400.webp"><img src="../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-europe-400.webp"><img src="../assets/covers/omni-view-europe.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Europe
             </a>
             
             <a href="../omni-view-asia-pacific.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-asia-pacific-400.webp"><img src="../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-asia-pacific-400.webp"><img src="../assets/covers/omni-view-asia-pacific.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Asia Pacific
             </a>
             
             <a href="../omni-view-africa-mideast.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-africa-mideast-400.webp"><img src="../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-africa-mideast-400.webp"><img src="../assets/covers/omni-view-africa-mideast.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Africa & Middle East
             </a>
             
             <a href="../omni-view-latam.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-latam-400.webp"><img src="../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-latam-400.webp"><img src="../assets/covers/omni-view-latam.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Central & South America
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Local news</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Local news <span class="nn-mobile-count">2</span></summary>
             
             <a href="../vancouver.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/vancouver-400.webp"><img src="../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/vancouver-400.webp"><img src="../assets/covers/vancouver.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Vancouver Daily News
             </a>
             
             <a href="../collingwood.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/collingwood-400.webp"><img src="../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/collingwood-400.webp"><img src="../assets/covers/collingwood.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Collingwood Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">AI & compute</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">AI & compute <span class="nn-mobile-count">3</span></summary>
             
             <a href="../models-agents.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/models-agents-400.webp"><img src="../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/models-agents-400.webp"><img src="../assets/covers/models-agents.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents
             </a>
             
             <a href="../ai-chips.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/ai-chips-400.webp"><img src="../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/ai-chips-400.webp"><img src="../assets/covers/ai-chips.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 AI Chips & Data Centres Daily
             </a>
             
             <a href="../models-agents-beginners.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/models-agents-beginners-400.webp"><img src="../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/models-agents-beginners-400.webp"><img src="../assets/covers/models-agents-beginners.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents for Beginners
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Markets</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Markets <span class="nn-mobile-count">4</span></summary>
             
             <a href="../modern-investing.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/modern-investing-400.webp"><img src="../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/modern-investing-400.webp"><img src="../assets/covers/modern-investing.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Modern Investing Techniques
             </a>
             
             <a href="../mag7.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/mag7-400.webp"><img src="../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/mag7-400.webp"><img src="../assets/covers/mag7.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 MAG 7 Daily
             </a>
             
             <a href="../prediction-markets.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/prediction-markets-400.webp"><img src="../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/prediction-markets-400.webp"><img src="../assets/covers/prediction-markets.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Prediction Markets Daily
             </a>
             
             <a href="../tesla.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/tesla-shorts-time-400.webp"><img src="../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/tesla-shorts-time-400.webp"><img src="../assets/covers/tesla-shorts-time.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Tesla Shorts Time
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Health & longevity</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Health & longevity <span class="nn-mobile-count">3</span></summary>
             
             <a href="../planetterrian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/planetterrian-daily-400.webp"><img src="../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/planetterrian-daily-400.webp"><img src="../assets/covers/planetterrian-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Planetterrian Daily
             </a>
             
             <a href="../peptides.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/peptides-400.webp"><img src="../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/peptides-400.webp"><img src="../assets/covers/peptides.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Peptides Weekly
             </a>
             
             <a href="../longevity.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/longevity-400.webp"><img src="../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/longevity-400.webp"><img src="../assets/covers/longevity.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Longevity Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Every other show</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">10</span></summary>
             
             <a href="../omni-view.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-400.webp"><img src="../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-400.webp"><img src="../assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View
             </a>
             
             <a href="../fascinating-frontiers.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/fascinating-frontiers-400.webp"><img src="../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/fascinating-frontiers-400.webp"><img src="../assets/covers/fascinating-frontiers.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Fascinating Frontiers
             </a>
             
             <a href="../spacex.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/spacex-400.webp"><img src="../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/spacex-400.webp"><img src="../assets/covers/spacex.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 SpaceX Daily
             </a>
             
             <a href="../env-intel.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/environmental-intelligence-400.webp"><img src="../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/environmental-intelligence-400.webp"><img src="../assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Environmental Intelligence
             </a>
             
             <a href="../ru/finansy-prosto.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/finansy-prosto-400.webp"><img src="../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/finansy-prosto-400.webp"><img src="../assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Финансы Просто
             </a>
             
             <a href="../ru/privet-russian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/privet-russian-400.webp"><img src="../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/privet-russian-400.webp"><img src="../assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Привет, Русский!
             </a>
             
             <a href="../unintended-consequences.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/unintended-consequences-400.webp"><img src="../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/unintended-consequences-400.webp"><img src="../assets/covers/unintended-consequences.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Unintended Consequences
             </a>
             
             <a href="../first-principles.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/first-principles-daily-400.webp"><img src="../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/first-principles-daily-400.webp"><img src="../assets/covers/first-principles-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 First Principles Daily
             </a>
             
             <a href="../thedppod.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/dp-pod-400.webp"><img src="../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/dp-pod-400.webp"><img src="../assets/covers/dp-pod.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The DP Pod: The Do Positive Podcast
             </a>
             
             <a href="../offshore-north.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/offshore-north-400.webp"><img src="../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/offshore-north-400.webp"><img src="../assets/covers/offshore-north.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Offshore North
             </a>
             
-        </div>
+        </details>
         
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Blogs</div>
-            <a href="../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">
-                All Blog Posts
-            </a>
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Hosted by Mira</div>
-            
-            <a href="../blog/nerra_daily/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/nerra-daily-400.webp"><img src="../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Daily Blog
-            </a>
-            
-            <a href="../blog/age_of_ai/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/age-of-ai-400.webp"><img src="../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
-                The Age of AI Blog
-            </a>
-            
-            <a href="../blog/nerra_voices/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/nerra-voices-400.webp"><img src="../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Voices Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">World desks</div>
-            
-            <a href="../blog/omni_view_world/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-world-400.webp"><img src="../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Top World News Blog
-            </a>
-            
-            <a href="../blog/omni_view_north_america/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-north-america-400.webp"><img src="../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View North America Blog
-            </a>
-            
-            <a href="../blog/omni_view_europe/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-europe-400.webp"><img src="../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Europe Blog
-            </a>
-            
-            <a href="../blog/omni_view_asia_pacific/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-asia-pacific-400.webp"><img src="../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Asia Pacific Blog
-            </a>
-            
-            <a href="../blog/omni_view_africa_mideast/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-africa-mideast-400.webp"><img src="../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Africa & Middle East Blog
-            </a>
-            
-            <a href="../blog/omni_view_latam/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-latam-400.webp"><img src="../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Central & South America Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Local news</div>
-            
-            <a href="../blog/vancouver/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/vancouver-400.webp"><img src="../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Vancouver Daily News Blog
-            </a>
-            
-            <a href="../blog/collingwood/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/collingwood-400.webp"><img src="../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Collingwood Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">AI & compute</div>
-            
-            <a href="../blog/models_agents/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/models-agents-400.webp"><img src="../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents Blog
-            </a>
-            
-            <a href="../blog/ai_chips/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/ai-chips-400.webp"><img src="../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                AI Chips & Data Centres Daily Blog
-            </a>
-            
-            <a href="../blog/models_agents_beginners/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/models-agents-beginners-400.webp"><img src="../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents for Beginners Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Markets</div>
-            
-            <a href="../blog/modern_investing/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/modern-investing-400.webp"><img src="../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
-                Modern Investing Techniques Blog
-            </a>
-            
-            <a href="../blog/mag7/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/mag7-400.webp"><img src="../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                MAG 7 Daily Blog
-            </a>
-            
-            <a href="../blog/prediction_markets/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/prediction-markets-400.webp"><img src="../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Prediction Markets Daily Blog
-            </a>
-            
-            <a href="../blog/tesla/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/tesla-shorts-time-400.webp"><img src="../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
-                Tesla Shorts Time Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Health & longevity</div>
-            
-            <a href="../blog/planetterrian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/planetterrian-daily-400.webp"><img src="../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Planetterrian Daily Blog
-            </a>
-            
-            <a href="../blog/peptides/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/peptides-400.webp"><img src="../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Peptides Weekly Blog
-            </a>
-            
-            <a href="../blog/longevity/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/longevity-400.webp"><img src="../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Longevity Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Every other show</div>
-            
-            <a href="../blog/omni_view/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-400.webp"><img src="../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Blog
-            </a>
-            
-            <a href="../blog/fascinating_frontiers/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/fascinating-frontiers-400.webp"><img src="../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
-                Fascinating Frontiers Blog
-            </a>
-            
-            <a href="../blog/spacex/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/spacex-400.webp"><img src="../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                SpaceX Daily Blog
-            </a>
-            
-            <a href="../blog/env_intel/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/environmental-intelligence-400.webp"><img src="../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
-                Environmental Intelligence Blog
-            </a>
-            
-            <a href="../blog/finansy_prosto/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/finansy-prosto-400.webp"><img src="../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                Финансы Просто Blog
-            </a>
-            
-            <a href="../blog/privet_russian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/privet-russian-400.webp"><img src="../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                Привет, Русский! Blog
-            </a>
-            
-            <a href="../blog/unintended_consequences/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/unintended-consequences-400.webp"><img src="../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
-                Unintended Consequences Blog
-            </a>
-            
-            <a href="../blog/first_principles/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/first-principles-daily-400.webp"><img src="../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                First Principles Daily Blog
-            </a>
-            
-            <a href="../blog/dp_pod/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/dp-pod-400.webp"><img src="../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
-                The DP Pod: The Do Positive Podcast Blog
-            </a>
-            
-            <a href="../blog/offshore_north/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/offshore-north-400.webp"><img src="../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
-                Offshore North Blog
-            </a>
-            
-            
+            <a href="../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">All Blog Posts</a>
+            <a href="../topics/index.html" class="nn-mobile-show-link">Browse by topic</a>
         </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">More</div>
@@ -1124,7 +967,7 @@
         <p class="nn-claims-back"><a href="../claims.html">← Claims &amp; corrections, every show</a></p>
         <h1>Collingwood Weekly: claims &amp; corrections</h1>
         
-        <div class="legal-meta">Nerra Network &middot; last 30 days &middot; 2026-09-06 to 2026-10-06</div>
+        <div class="legal-meta">Nerra Network &middot; last 30 days &middot; 2026-09-07 to 2026-10-07</div>
         <p class="lede">
             
             Every factual claim this show made in the last 30 days, with what a
@@ -1138,8 +981,14 @@
     
         
         
-        <h2>How this show's claims are checked</h2>
-        <p class="nn-claims-intro"><strong>Every episode starts with a ledger.</strong> When a show's digest is written, the model also writes a claims ledger: each factual sentence it asserts, the URL it took it from, and the passage in that source that supports it. The ledger is extracted before any published surface sees the text. <strong>Each claim is checked by a machine, not trusted.</strong> Before the episode is saved, every entry is checked mechanically: first against the copy of the source the pipeline fetched that morning, then against the live page. The supporting quote has to actually appear in the source. A sentence written in the shape of a citation with no ledger entry behind it is caught by the same check — that shape is the signature of a fabricated reference. <strong>A claim the check cannot confirm is published and marked, not removed.</strong> Sometimes the source cannot be reached from our servers, sometimes the page has moved, and sometimes the model paraphrased where it should have quoted. None of those means the sentence is false. A story newer than the model's training data is verified against its source, never against memory, and a true, timely story is worth more to a listener than a clean ledger. So the sentence ships, and its status is shown beside it — on the episode page, and on this ledger — in plain words that say what the check could and could not do. <strong>Unverified claims are re-checked every night for a week.</strong> For 7 nights after publication a job re-runs the check on every marked claim that names a source. A claim that passes later is upgraded on the ledger with the date it was confirmed and the status it carried first. A claim that never passes stays marked; nothing is quietly deleted and nothing is quietly promoted. The full process, the badge legend and every show's totals are on the
+        <h2>How this show's claims are checked</h2><ol class="nn-claims-steps nn-claims-steps--compact">
+            <li><details><summary>Every episode starts with a ledger</summary><p>When a show's digest is written, the model also writes a claims ledger: each factual sentence it asserts, the URL it took it from, and the passage in that source that supports it. The ledger is extracted before any published surface sees the text.</p></details></li>
+            <li><details><summary>Each claim is checked by a machine, not trusted</summary><p>Before the episode is saved, every entry is checked mechanically: first against the copy of the source the pipeline fetched that morning, then against the live page. The supporting quote has to actually appear in the source. A sentence written in the shape of a citation with no ledger entry behind it is caught by the same check — that shape is the signature of a fabricated reference.</p></details></li>
+            <li><details><summary>A claim the check cannot confirm is published and marked, not removed</summary><p>Sometimes the source cannot be reached from our servers, sometimes the page has moved, and sometimes the model paraphrased where it should have quoted. None of those means the sentence is false. A story newer than the model's training data is verified against its source, never against memory, and a true, timely story is worth more to a listener than a clean ledger. So the sentence ships, and its status is shown beside it — on the episode page, and on this ledger — in plain words that say what the check could and could not do.</p></details></li>
+            <li><details><summary>Unverified claims are re-checked every night for a week</summary><p>For 7 nights after publication a job re-runs the check on every marked claim that names a source. A claim that passes later is upgraded on the ledger with the date it was confirmed and the status it carried first. A claim that never passes stays marked; nothing is quietly deleted and nothing is quietly promoted.</p></details></li>
+        </ol>
+        <p class="nn-claims-intro">
+            The full process, the badge legend and every show's totals are on the
             <a href="../claims.html">network ledger page</a>.
         </p>
 
@@ -1202,84 +1051,84 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.ctvnews.ca/barrie/video/2026/10/01/three-adults-had-to-be-evacuated-after-a-house-fire-in-collingwood-wednesday/" target="_blank" rel="noopener" title="Three adults had to be evacuated after a house fire in Collingwood Wednesday">ctvnews.ca</a></span>
                         </div>
                         Three adults were evacuated after a house fire in Collingwood on Wednesday, and fire officials said the home had extensive damage.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.collingwoodtoday.ca/police-beat/two-crashes-in-one-day-leave-two-drivers-with-impaired-charges-12845564" target="_blank" rel="noopener" title="Two crashes in one day leave two drivers with impaired charges">collingwoodtoday.ca</a></span>
                         </div>
                         Two crashes in one day left a Collingwood resident and an Elmvale resident facing impaired charges, with licences suspended.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.barrietoday.com/police-beat/elmvale-resident-charged-with-impaired-driving-after-crash-opp-12845741" target="_blank" rel="noopener" title="Elmvale resident charged with impaired driving after crash: OPP">barrietoday.com</a></span>
                         </div>
                         Officers were called Monday evening to a collision at Hume Street and Highway 26 in Collingwood, and an Elmvale resident was charged with impaired driving.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.simcoe.com/news/council/wasaga-beach-destination-downtown-beachfront/article_b8a6bf82-e736-5391-ae50-e61424ff0977.html" target="_blank" rel="noopener" title="Wasaga Beach destination plan sets out a $2-billion vision for main beach and downtown">simcoe.com</a></span>
                         </div>
                         A Wasaga Beach destination plan sets out a $2-billion vision for the main beach and downtown.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.ctvnews.ca/barrie/article/garage-containing-boats-in-georgian-bay-goes-up-in-flames/" target="_blank" rel="noopener" title="Garage containing boats in Georgian Bay goes up in flames">ctvnews.ca</a></span>
                         </div>
                         A garage containing boats in Georgian Bay went up in flames.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.collingwoodtoday.ca/cbawards/winners/the-head-strong-initiative-is-helping-youth-take-the-next-step-to-better-mental-health-12769579" target="_blank" rel="noopener" title="‘You can just be who you are’: Jane Peck creates a safe haven for Collingwood">collingwoodtoday.ca</a></span>
                         </div>
                         Jane Peck was recognized as an Unsung Hero for years of service to local youth and the wider community, tied to the Head Strong Initiative.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.collingwoodtoday.ca/2026-municipal-election-news/mayor-deputy-mayor-candidates-talk-transportation-at-legion-12844129" target="_blank" rel="noopener" title="Mayor, deputy mayor candidates talk transportation at Legion">collingwoodtoday.ca</a></span>
                         </div>
                         The Collingwood Chamber of Commerce organized an all-candidates meeting at the Collingwood legion on Sept. 30 where mayor and deputy mayor candidates talked transportation, and Jon Hillis, Yvonne Hamlin, Chris Potts, Norman Sandberg, Kathy Jeffery and Deb Doherty attended.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.collingwoodtoday.ca/2026-municipal-election-news/election-heres-where-collingwood-councillor-candidates-stand-on-development-12809154" target="_blank" rel="noopener" title="ELECTION: Here’s where Collingwood councillor candidates stand on development">collingwoodtoday.ca</a></span>
                         </div>
                         Nineteen people are running for seven Collingwood council seats in the fall municipal election.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.owensoundcurrent.com/p/new-integrity-commissioner-for-owen" target="_blank" rel="noopener" title="New Integrity Commissioner for Owen Sound and Grey County Starts December 1">owensoundcurrent.com</a></span>
                         </div>
                         A new integrity commissioner for Owen Sound and Grey County starts December 1.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.midlandtoday.ca/local-news/school-board-seeks-community-representatives-for-special-education-advisory-committee-12840991" target="_blank" rel="noopener" title="School board seeks community representatives for special education advisory committee">midlandtoday.ca</a></span>
                         </div>
                         The Simcoe County District School Board is inviting local agencies, associations and organizations to nominate representatives to its Special Education Advisory Committee.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://weather.gc.ca/rss/weather/44.5_-80.217_e.xml" target="_blank" rel="noopener" title="Environment Canada forecast for Collingwood">weather.gc.ca</a></span>
                         </div>
                         Environment Canada had no watches or warnings in effect for Collingwood, with current conditions of 11.0°C, a Friday high of 17, a Saturday high of 18, and a Sunday high of 17 with a 30 percent chance of showers.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.simcoe.com/things-to-do/three-events-simcoe-county/article_f3189742-fa64-50d3-8b9d-0ad2f6fd0388.html" target="_blank" rel="noopener" title="Got the grandkids this weekend? Rodeo returns to Wasaga Beach and free pumpkin painting in Barrie">simcoe.com</a></span>
                         </div>
                         A rodeo returns to Wasaga Beach this weekend, and there is free pumpkin painting in Barrie.
@@ -1411,7 +1260,7 @@
                     <div class="nn-footer-brand"><span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span></div>
                     <p class="nn-footer-desc">Zero fluff. Independent podcast network produced in Vancouver, Canada.</p>
                 </div>
-                <div class="nn-footer-col">
+                <div class="nn-footer-col nn-footer-col--shows">
                     <h4>Shows</h4>
                     
                     <ul class="nn-footer-showlist">
@@ -1570,7 +1419,8 @@
                       data-label-idle="Subscribe"
                       data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
-                    <p>Pick the shows you want in your inbox:</p>
+                    <p>Pick the shows you want in your inbox:</p><details class="nn-subscribe-pick">
+                    <summary>Choose shows <span>(31)</span></summary>
                     <div class="nn-subscribe-tags">
                         <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
                         
@@ -1635,6 +1485,7 @@
                         <label><input type="checkbox" name="tag" value="Offshore North"> Offshore North</label>
                         
                     </div>
+                    </details>
                     <div class="nn-subscribe-row">
                         <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
                         <button type="submit">Subscribe</button>
