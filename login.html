@@ -64,9 +64,6 @@
         .nn-login .nn-card { border: 1px solid var(--nn-border); border-radius: 16px; background: var(--nn-surface); padding: var(--sp-5); margin-top: var(--sp-5); }
         .nn-login input[type=email] { width: 100%; padding: 0.75rem 0.9rem; border-radius: 10px; border: 1px solid var(--nn-border); background: var(--nn-bg, transparent); color: inherit; font-size: 1rem; }
         .nn-login button { padding: 0.7rem 1.4rem; border-radius: 10px; border: none; background: var(--nn-gradient); color: #fff; font-weight: 600; cursor: pointer; }
-        /* A link styled as the button (a <button> inside an <a> is invalid
-           and announces twice). */
-        .nn-login a.nn-login-btn-link { display: inline-block; padding: 0.7rem 1.4rem; border-radius: 10px; background: var(--nn-gradient); color: #fff; font-weight: 600; text-decoration: none; }
         .nn-login button.ghost { background: transparent; border: 1px solid var(--nn-border); color: inherit; }
         .nn-login button[disabled] { opacity: 0.6; cursor: default; }
         .nn-muted { color: var(--nn-text-muted); font-size: 0.9rem; }
@@ -74,17 +71,6 @@
         .nn-steps { list-style: none; padding: 0; margin: var(--sp-3) 0 0; }
         .nn-steps li { display: flex; gap: 0.6rem; margin: 0.4rem 0; }
         [hidden] { display: none !important; }
-        /* Prose links (Oct 7 2026): the global ``a`` rule inherits colour and
-           drops the underline, so a link inside a sentence was invisible.
-           Scoped to this page's content and to plain (class-less) links. */
-        #main-content p a:not([class]), #main-content li a:not([class]) {
-            color: var(--nn-cyan);
-            text-decoration: underline;
-            text-underline-offset: 2px;
-        }
-        #main-content p a:not([class]):hover, #main-content li a:not([class]):hover {
-            color: var(--nn-white);
-        }
     </style>
 
 
@@ -544,7 +530,6 @@
                         <a href="gallery.html">Image Gallery</a>
                         <a href="data.html">Data & Dashboards</a>
                         <a href="editorial.html">Editorial Process</a>
-                        <a href="claims.html">Claims &amp; corrections</a>
                         <a href="faq.html">FAQ</a>
                         <a href="press.html">Press Kit</a>
                         <a href="support.html">Support the Network</a>
@@ -963,7 +948,6 @@
             <a href="gallery.html" class="nn-mobile-show-link">Image Gallery</a>
             <a href="data.html" class="nn-mobile-show-link">Data & Dashboards</a>
             <a href="editorial.html" class="nn-mobile-show-link">Editorial Process</a>
-            <a href="claims.html" class="nn-mobile-show-link">Claims &amp; corrections</a>
             <a href="faq.html" class="nn-mobile-show-link">FAQ</a>
             <a href="support.html" class="nn-mobile-show-link">Support the Network</a>
         </div>
@@ -972,7 +956,7 @@
     <main id="main-content">
     
 <div class="nn-login">
-    <h1>Sign in to your Nerra account</h1>
+    <h1>Sign in to your Nerra</h1>
     <p class="nn-muted">One email, no password. We send a link; you tap it;
        you're in for 90 days on this device.</p>
 
@@ -981,7 +965,7 @@
         <h2 style="margin:0 0 0.5rem;">You're already signed in</h2>
         <p class="nn-muted" style="margin:0 0 var(--sp-3);">This browser has a live
            Nerra session. No need for another link.</p>
-        <a href="account.html" class="nn-login-btn-link">Open My Nerra →</a>
+        <a href="account.html"><button>Open My Nerra →</button></a>
     </div>
 
     <!-- State 1: ask for the address -->
@@ -990,7 +974,7 @@
             <label for="nn-login-email" class="nn-muted">The email you joined with</label>
             <input type="email" id="nn-login-email" name="email" placeholder="you@example.com" required autocomplete="email" autofocus style="margin:0.4rem 0 0.8rem;">
             <button type="submit" id="nn-login-btn">Email me a sign-in link</button>
-            <p class="nn-muted" id="nn-login-err" role="alert" hidden style="margin:0.6rem 0 0;"></p>
+            <p class="nn-muted" id="nn-login-err" hidden style="margin:0.6rem 0 0;"></p>
         </form>
         <p class="nn-muted" style="margin:var(--sp-3) 0 0;">New here?
             <a href="join.html">Create your free account →</a></p>
@@ -1212,7 +1196,6 @@ var NNL = (function () {
                     <a href="contact.html">Contact</a>
                     <a href="press.html">Press Kit</a>
                     <a href="editorial.html">Editorial Process</a>
-                    <a href="claims.html">Claims &amp; corrections</a>
                     <a href="ai-disclosure.html">AI Disclosure</a>
                     <a href="privacy-policy.html">Privacy Policy</a>
                     <a href="terms-of-service.html">Terms of Service</a>
@@ -1317,7 +1300,7 @@ var NNL = (function () {
                         <button type="submit">Subscribe</button>
                     </div>
                     <p style="margin-top:0.5rem;font-size:0.85rem;">
-                        <a href="personal-interest.html">Personal tips by email — no charge →</a>
+                        <a href="personal-interest.html">Soft Personal — tips &amp; reminder (no charge) →</a>
                         <span style="opacity:0.5;margin:0 0.35rem;">·</span>
                         <a href="join.html">Or start Nerra Personal →</a>
                         <a class="nn-account-link" href="account.html" style="display:none;margin-left:0.75rem;">Your account →</a>
