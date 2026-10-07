@@ -243,3 +243,13 @@ class TestARescheduleMovesTheInterview:
         assert 'if (trigger === "BOOKING_RESCHEDULED") {' in WORKER
         assert "Moved: our interview on ${show.name} is now" in WORKER
         assert WORKER.count('cal_booking_uid: String(p.uid ?? "") || null,') >= 3
+
+
+class TestAGuestWhoCannotComeAlwaysHearsBack:
+    """Oct 7 2026 (Dr. Jason Shumard): a reschedule request was held for
+    Patrick because Mira had already replied three times in the thread."""
+
+    def test_the_reply_cap_never_holds_a_reschedule_or_cancel(self):
+        src = (ROOT / "pipelines" / "producer" / "guest_reply.py").read_text(encoding="utf-8")
+        assert 'ALWAYS_ANSWER_INTENTS = ("reschedule", "cancel")' in src
+        assert 'p["intent"] not in ALWAYS_ANSWER_INTENTS' in src
