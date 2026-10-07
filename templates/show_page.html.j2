@@ -1069,33 +1069,44 @@
     {%- else -%}
         {%- set _network_shows = all_shows | rejectattr('slug', 'in', _ru_show_slugs) | list -%}
     {%- endif -%}
+    {#- Eight tiles, never the whole catalogue: the grid had listed
+        all thirty shows (4.9k px on a phone). Same-strand shows lead,
+        the related show is skipped (it has its own card above), and
+        /explore.html carries the rest. -#}
+    {%- set _here = all_shows | selectattr('slug', 'equalto', show_slug) | first -%}
+    {%- set _strand = (_here.strand if _here else '') or '' -%}
+    {%- set _skip = [show_slug, related_show.slug if related_show else ''] -%}
+    {%- set _pool = _network_shows | rejectattr('slug', 'in', _skip) | list -%}
+    {%- if _strand -%}
+        {%- set _pool = (_pool | selectattr('strand', 'equalto', _strand) | list) + (_pool | rejectattr('strand', 'equalto', _strand) | list) -%}
+    {%- endif -%}
+    {%- if _pool %}
     <section class="cross-network nn-section">
         <div class="container">
             <div class="nn-section-header">
                 <h2>{% if _is_ru_page %}Другие подкасты Nerra Network{% else %}More from Nerra Network{% endif %}</h2>
-                <p>{% if _is_ru_page %}Подкасты на русском языке.{% else %}Keeping you informed.{% endif %}</p>
+                <p>{% if _is_ru_page %}Подкасты на русском языке.{% else %}The shows closest to this one come first.{% endif %}</p>
             </div>
             <div class="cross-network-grid">
-                {% for s in _network_shows %}
-                {% if s.slug != show_slug %}
-                <div class="cross-network-card" style="display:flex;flex-direction:column;">
-                    <a href="{{ path_prefix }}{{ s.show_page }}" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none;flex:1;">
-                        <picture>
-                            <source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp">
-                            <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="lazy">
-                        </picture>
-                        <div class="cross-network-card-info">
-                            <div class="cross-network-card-name">{{ s.name }}</div>
-                            <div class="cross-network-card-tagline">{{ s.tagline }}</div>
-                        </div>
-                    </a>
-                    <a href="{{ path_prefix }}{{ s.blog_page }}" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">{% if _is_ru_page %}Читать блог{% else %}Read blog{% endif %} &rarr;</a>
-                </div>
-                {% endif %}
+                {% for s in _pool[:8] %}
+                <a class="cross-network-card" href="{{ path_prefix }}{{ s.show_page }}">
+                    <picture>
+                        <source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp">
+                        <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="" width="1400" height="1400" loading="lazy">
+                    </picture>
+                    <span class="cross-network-card-info">
+                        <span class="cross-network-card-name">{{ s.name }}</span>
+                        <span class="cross-network-card-tagline">{{ s.tagline }}</span>
+                    </span>
+                </a>
                 {% endfor %}
             </div>
+            {% if not _is_ru_page and _pool | length > 8 %}
+            <p class="cross-network-all"><a href="{{ path_prefix }}explore.html">See all {{ _network_shows | length }} shows &rarr;</a></p>
+            {% endif %}
         </div>
     </section>
+    {%- endif %}
 {% endblock %}
 
 {% block scripts %}
@@ -1242,6 +1253,28 @@
             return document.getElementById('episodes-grid');
         }
 
+        /* Six archive cards, the rest one tap away. Twelve full players
+           ran the section to ~4.5k px on a phone; the cards stay in the
+           DOM (hidden), so nothing is fetched or lost by folding them. */
+        const ARCHIVE_VISIBLE = 6;
+        function foldArchive(grid) {
+            if (!grid) return;
+            const old = grid.parentNode.querySelector('.episodes-more');
+            if (old) old.remove();
+            const cards = Array.from(grid.children);
+            if (cards.length <= ARCHIVE_VISIBLE) return;
+            cards.slice(ARCHIVE_VISIBLE).forEach((c) => { c.hidden = true; });
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'nn-btn episodes-more';
+            btn.textContent = {% if _is_ru %}'Ещё выпуски (' + (cards.length - ARCHIVE_VISIBLE) + ')'{% else %}'More episodes (' + (cards.length - ARCHIVE_VISIBLE) + ')'{% endif %};
+            btn.addEventListener('click', () => {
+                cards.forEach((c) => { c.hidden = false; });
+                btn.remove();
+            });
+            grid.insertAdjacentElement('afterend', btn);
+        }
+
         /* ``data-rendered`` is the card's record of having shown a real
            episode — set by the server when it had one, and by either client
            path when it replaces it. ``showNoEpisodes`` reads it so a failure
@@ -1361,9 +1394,11 @@
                         enUrl: withOp3(ep.audio_url),
                         enTitle: epTitle(ep) || 'Episode',
                         translations: tr,
+                        compact: true,
                     });
                 }
             });
+            foldArchive(grid);
         }
 
         // Shared per-player language switcher. Builds EN + available-language
@@ -1406,18 +1441,24 @@
             box.style.display = 'flex';
             box.style.alignItems = 'center';
             box.style.flexWrap = 'wrap';
-            box.style.gap = '6px';
-            const label = document.createElement('span');
-            label.textContent = opts.labelText || 'Listen in:';
-            label.style.cssText = 'font-size:0.78rem;color:var(--nn-text-muted);';
-            box.appendChild(label);
+            box.style.gap = '5px';
+            box.setAttribute('role', 'group');
+            box.setAttribute('aria-label', (opts.labelText || 'Listen in:').replace(/:$/, ''));
+            // Archive cards are too narrow for the label and four chips on
+            // one line; there the group name carries it for screen readers.
+            if (!opts.compact) {
+                const label = document.createElement('span');
+                label.textContent = opts.labelText || 'Listen in:';
+                label.style.cssText = 'font-size:0.78rem;color:var(--nn-text-muted);';
+                box.appendChild(label);
+            }
             order.forEach((code) => {
                 const b = document.createElement('button');
                 b.type = 'button';
                 b.dataset.lang = code;
                 b.textContent = LABELS[code] || code.toUpperCase();
                 b.setAttribute('aria-pressed', 'false');
-                b.style.cssText = 'font:600 0.78rem/1.4 var(--font-ui,sans-serif);padding:2px 11px;border-radius:100px;border:1px solid var(--nn-border);background:var(--nn-card);color:var(--nn-text-muted);cursor:pointer;';
+                b.style.cssText = 'font:600 0.78rem/1.4 var(--font-ui,sans-serif);padding:2px 9px;border-radius:100px;border:1px solid var(--nn-border);background:var(--nn-card);color:var(--nn-text-muted);cursor:pointer;';
                 b.addEventListener('click', () => apply(code, true));
                 box.appendChild(b);
             });
@@ -1498,6 +1539,7 @@
                         `;
                         grid.appendChild(card);
                     });
+                    foldArchive(grid);
                 })
                 .catch(err => {
                     console.warn(`[${SHOW_NAME}] RSS load failed:`, err.message);

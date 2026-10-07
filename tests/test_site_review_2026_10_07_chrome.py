@@ -300,3 +300,26 @@ class TestFooterIsCompact:
         css = _strip_css_comments(CSS)
         assert "nn-footer-col nn-footer-col--shows" in self._base()
         assert re.search(r"\.nn-footer-col--shows ul\.nn-footer-showlist\s*\{\s*columns:\s*2", css)
+
+
+class TestShowPageIsShorter:
+    """Tesla's page was 25k px on a phone: all thirty shows in the
+    'More from' grid and twelve open archive players."""
+
+    TPL = _strip_jinja_comments(
+        (ROOT / "templates" / "show_page.html.j2").read_text(encoding="utf-8"))
+
+    def test_cross_network_grid_is_capped_and_links_explore(self):
+        assert "{% for s in _pool[:8] %}" in self.TPL
+        assert 'explore.html">See all' in self.TPL
+        # One link per tile; the separate per-show blog row is gone.
+        grid = self.TPL.split('<div class="cross-network-grid">', 1)[1].split("</section>", 1)[0]
+        assert "s.blog_page" not in grid
+
+    def test_empty_pool_renders_no_section(self):
+        # A Russian show's only sibling already has the related-show card.
+        assert "{%- if _pool %}\n    <section class=\"cross-network nn-section\">" in self.TPL
+
+    def test_archive_folds_after_six_on_both_render_paths(self):
+        assert "const ARCHIVE_VISIBLE = 6;" in self.TPL
+        assert self.TPL.count("foldArchive(grid);") == 2
