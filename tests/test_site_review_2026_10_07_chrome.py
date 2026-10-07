@@ -239,3 +239,31 @@ class TestStoryTracker:
         assert "Last on air: <strong>Ep 122</strong>" in html
         assert "Not yet deeply covered" not in html
         assert "digests/" not in html.split("<main", 1)[-1]
+
+
+class TestDesignPassShowCard:
+    """Design pass (Oct 7 2026): the show card leads with the tagline,
+    clamps the long description, drops the sources list, and the homepage
+    stops repeating the Latest rail as a blog section."""
+
+    def _card(self):
+        macros = (ROOT / "templates" / "_macros.html.j2").read_text(encoding="utf-8")
+        start = macros.index("macro show_card(")
+        return macros[start:macros.index("endmacro", start)]
+
+    def test_card_heading_and_tagline(self):
+        card = _strip_jinja_comments(self._card())
+        assert '<h3 class="show-card-name">' in card
+        assert 'class="show-card-hook"' in card
+        assert "show-card-sources" not in card
+        assert 'alt=""' in card
+
+    def test_long_description_is_clamped(self):
+        block = CSS.split(".show-card-tagline {")[-1].split("}", 1)[0]
+        assert "-webkit-line-clamp: 3" in block
+
+    def test_homepage_has_one_latest_list(self):
+        src = _strip_jinja_comments(
+            (ROOT / "templates" / "network_page.html.j2").read_text(encoding="utf-8"))
+        assert "Latest from the Blog" not in src
+        assert 'class="subscribe-all"' in src

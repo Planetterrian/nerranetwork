@@ -179,6 +179,9 @@
             </div>
             {% endfor %}
         </div>
+        <div class="container latest-more">
+            <a href="{{ path_prefix }}blog/index.html" class="nn-btn">Every episode article &rarr;</a>
+        </div>
         {% else %}
         <div class="latest-scroll-row">
             <p style="color:var(--nn-text-muted);padding:2rem;text-align:center;width:100%;">Episodes will appear here once available.</p>
@@ -282,42 +285,9 @@
     </section>
     {% endif %}
 
-    <!-- Latest from the Blog -->
-    {% if latest_blog_posts %}
-    <section class="nn-section">
-        <div class="container">
-            <div class="nn-section-header">
-                <div class="section-label">Blog</div>
-                <h2>Latest from the Blog</h2>
-                <p>In-depth articles from our latest episodes.</p>
-            </div>
-            <div class="blog-idx-grid" style="max-width:900px;margin:0 auto;padding-bottom:var(--sp-8)">
-                {% for post in latest_blog_posts %}
-                <a href="{{ path_prefix }}blog/{{ post.show_slug }}/ep{{ '%03d' % post.episode_num }}.html"
-                   class="blog-idx-card"
-                   style="--card-show-color: {{ post.show_color }}">
-                    <div class="blog-idx-card-top">
-                        <span class="blog-idx-show-badge" style="background:color-mix(in srgb, {{ post.show_color }} 15%, transparent);color:color-mix(in srgb, {{ post.show_color }}, white 35%)">{{ post.show_name }}</span>
-                        <span class="blog-idx-date">{{ post.date }}</span>
-                        <span class="blog-idx-ep">Ep {{ post.episode_num }}</span>
-                        <span class="blog-idx-reading">{{ post.reading_time_min }} min</span>
-                    </div>
-                    <h3>{{ post.title }}</h3>
-                    {#- The hook IS the title on most shows (blog.py falls back
-                        to it); don't print the same sentence twice. -#}
-                    {% if post.hook and post.hook != post.title %}
-                    <p>{{ post.hook[:140] }}{% if post.hook|length > 140 %}&hellip;{% endif %}</p>
-                    {% endif %}
-                    <span class="blog-idx-read-more" style="color:color-mix(in srgb, {{ post.show_color }}, white 35%)">Read article &rarr;</span>
-                </a>
-                {% endfor %}
-            </div>
-            <div style="text-align:center">
-                <a href="{{ path_prefix }}blog/index.html" class="nn-btn nn-btn-primary" style="font-size:0.9rem;padding:var(--sp-3) var(--sp-8)">View all blog posts</a>
-            </div>
-        </div>
-    </section>
-    {% endif %}
+    {#- "Latest from the Blog" was removed Oct 7 2026: it listed the same
+        six episodes as the Latest rail above, whose cards already link each
+        article. The rail now ends on one link to the whole archive. -#}
 
     <!-- Why Nerra -->
     <section class="nn-section" style="background:var(--nn-bg-alt);">
@@ -419,6 +389,10 @@
                     Network Blog RSS
                 </a>
             </div>
+            {#- Thirty-one rows of feed buttons ran ~3,000px on a phone; they
+                open on demand now (how-to-listen.html lists them too). -#}
+            <details class="subscribe-all">
+            <summary>Every show's feed, Apple and Spotify links ({{ all_shows|length }} shows)</summary>
             <div class="subscribe-show-list">
                 {% for s in all_shows %}
                 {% set _subbase = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
@@ -445,6 +419,7 @@
                 </div>
                 {% endfor %}
             </div>
+            </details>
             <p style="text-align:center;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.88rem;margin-top:var(--sp-6);">Every feed works in every podcast app today &mdash; copy the RSS link into yours. Apple Podcasts and Spotify buttons appear as each show's directory listing goes live. <a href="{{ path_prefix }}how-to-listen.html" style="color:var(--nn-text-muted);">How to listen</a>.</p>
         </div>
     </section>

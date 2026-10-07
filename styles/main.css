@@ -2014,6 +2014,7 @@ details[open] .faq-question::after { content: '\2212'; }
 }
 
 .ticker-track span {
+  font-family: var(--font-ui);
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--nn-text-muted, #8B8FAE);
@@ -2255,11 +2256,27 @@ body.menu-open {
     min-height: auto;
     /* Keep the side gutters — `0` here ran the badge, H1, tagline and
        proof stats edge-to-edge on every phone (Sep 2026 review). */
-    padding: var(--sp-16) var(--sp-5) var(--sp-12);
+    /* The top padding must clear the fixed nav (72px); at 64px the
+       "Independent Podcast Network" badge sat half under it. */
+    padding: calc(var(--nav-height, 72px) + var(--sp-6)) var(--sp-5) var(--sp-12);
   }
-  /* Eight covers is a hero; seventeen is a wall that pushes the CTAs two
-     screens down on a phone. The full grid is one scroll below. */
-  .hero-show-orbit .orbit-card:nth-child(n+9) { display: none; }
+  /* A hero, not a wall: nine covers make a full 3x3 (eight left an orphan
+     row of two). The full grid is one scroll below. */
+  .hero-show-orbit .orbit-card:nth-child(n+10) { display: none; }
+  /* Four calls to action wrapped 2+1+1; a 2x2 grid reads as one set. */
+  .hero-cta-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-3);
+    width: 100%;
+  }
+  .hero-cta-row .nn-btn { justify-content: center; padding-left: var(--sp-3); padding-right: var(--sp-3); }
+  /* Stats wrapped 3+1; two by two keeps them a set. */
+  .hero-proof-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-4) var(--sp-6);
+  }
 }
 /* Above phone width the hero kept all 31 covers: five rows ending on an
    orphan row of three, with every CTA below the fold at 1440x900. Two rows
@@ -3082,3 +3099,131 @@ main :where(p, li, dd, td) > a:where(:not([class]):not([style])) {
   text-decoration: none;
 }
 .nn-subscribe-btn:hover { border-color: var(--show-color-text); color: var(--nn-white); }
+
+/* ===================================================================
+   Show cards, v2 (Oct 7 2026 design pass). The card rendered a 330px
+   cover, a long description (Nerra Daily's ran 170 words to a 1,100px
+   card), a serif "For:" line, a sources list and a detached "Read Blog"
+   bar, so a three-column grid of 31 shows ran ~11,000px on desktop and
+   ~27,000px on a phone. Now: the wrap is the card; the tagline leads;
+   the description is clamped; four to five columns on desktop; a compact
+   horizontal row on phones.
+   =================================================================== */
+.show-showcase {
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+}
+.show-card-wrap {
+  background: var(--nn-card);
+  border: 1px solid var(--nn-border);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: border-color var(--duration) var(--ease), transform var(--duration) var(--ease),
+              box-shadow var(--duration) var(--ease);
+}
+.show-card-wrap:hover {
+  border-color: color-mix(in srgb, var(--show-color, #6B47FF) 45%, var(--nn-border));
+  transform: translateY(-3px);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+}
+.show-card-wrap .show-card.glass-card {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: var(--sp-5) var(--sp-5) var(--sp-4);
+}
+.show-card-wrap .show-card:hover { transform: none; }
+.show-card-wrap .show-card-image {
+  border-radius: 14px;
+  margin-bottom: var(--sp-4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.show-card-name { font-size: 1.08rem; line-height: 1.3; }
+.show-card-badges { flex-wrap: wrap; gap: 6px; }
+.show-card-hook {
+  font-family: var(--font-ui);
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--nn-text);
+  margin: var(--sp-1) 0 var(--sp-2);
+}
+.show-card-tagline {
+  font-size: 0.86rem;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 0 0 auto;
+  margin-bottom: var(--sp-3);
+}
+.show-card-audience {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0 0 var(--sp-3);
+}
+.show-card-listen { margin-top: auto; }
+.show-card-wrap .show-card-blog-link {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--nn-border);
+  border-radius: 0;
+  background: transparent;
+  justify-content: flex-start;
+  padding: var(--sp-3) var(--sp-5);
+}
+.show-card-wrap .show-card-blog-link:hover { background: var(--nn-card-hover); }
+
+@media (max-width: 639px) {
+  /* One compact row per show: cover left, name + hook right. */
+  .show-showcase { grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); }
+  .show-card-wrap .show-card.glass-card {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr);
+    column-gap: var(--sp-4);
+    align-items: start;
+    padding: var(--sp-4);
+  }
+  .show-card-wrap .show-card > picture { grid-row: 1 / span 5; }
+  .show-card-wrap .show-card-image { margin: 0; border-radius: 12px; }
+  .show-card-wrap .show-card > :not(picture) { grid-column: 2; }
+  .show-card-wrap .show-card-tagline,
+  .show-card-wrap .show-card-audience { display: none; }
+  .show-card-wrap .show-card-hook { margin-bottom: var(--sp-2); }
+  .show-card-wrap .show-card-blog-link { padding: var(--sp-2) var(--sp-4); }
+}
+
+/* Homepage: the Latest rail ends on one archive link; the per-show feed
+   list opens on demand (Oct 7 2026 design pass). */
+.latest-more { text-align: center; margin-top: var(--sp-4); }
+.subscribe-all {
+  max-width: 900px;
+  margin: var(--sp-6) auto 0;
+  border: 1px solid var(--nn-border);
+  border-radius: 14px;
+  background: var(--nn-card);
+}
+.subscribe-all > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: var(--sp-4) var(--sp-5);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  color: var(--nn-text);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
+}
+.subscribe-all > summary::-webkit-details-marker { display: none; }
+.subscribe-all > summary::after {
+  content: "+";
+  font-size: 1.2rem;
+  color: var(--nn-purple-text);
+  transition: transform var(--duration) var(--ease);
+}
+.subscribe-all[open] > summary::after { transform: rotate(45deg); }
+.subscribe-all .subscribe-show-list { padding: 0 var(--sp-4) var(--sp-4); }
