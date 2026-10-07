@@ -88,6 +88,11 @@ def test_generate_html_metas_are_computed():
     # After the June 2026 brand refresh, meta descriptions are more count-agnostic.
     # The about and player pages still compute show counts dynamically, but
     # the network page hero and title were changed to be count-agnostic.
-    assert src.count("{len(NETWORK_SHOWS)}") >= 2
+    # Oct 2026: the support and player metas count PUBLISHED shows (a
+    # registry entry with no feed is not a show a listener can hear), still
+    # computed — never a typed number.
+    computed = sum(src.count(f) for f in (
+        "{len(NETWORK_SHOWS)}", "{len(_published_show_ids())}", "{len(player_shows)}"))
+    assert computed >= 2
     assert "11 Daily Shows" not in src
     assert "Eleven daily podcasts" not in src
