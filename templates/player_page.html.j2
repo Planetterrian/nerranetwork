@@ -29,7 +29,7 @@
   display: flex; align-items: center; justify-content: center;
   transition: all var(--duration) var(--ease); cursor: pointer; flex-shrink: 0;
 }
-.nn-player-refresh:hover { border-color: var(--nn-purple); color: var(--nn-purple); }
+.nn-player-refresh:hover { border-color: var(--nn-purple); color: var(--nn-purple-text); }
 .nn-player-refresh.spinning svg { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -54,7 +54,7 @@
   font-size: 0.82rem; font-weight: 600; cursor: pointer;
   transition: all var(--duration) var(--ease); margin-left: auto;
 }
-.nn-sort-toggle:hover { border-color: var(--nn-purple); color: var(--nn-purple); }
+.nn-sort-toggle:hover { border-color: var(--nn-purple); color: var(--nn-purple-text); }
 
 /* Two-column layout */
 .nn-player-layout {
@@ -114,9 +114,9 @@
   background: var(--nn-surface); border: 1px solid var(--nn-border);
   color: var(--nn-text-muted);
 }
-.nn-add-queue-btn:hover { border-color: var(--nn-purple); color: var(--nn-purple); }
+.nn-add-queue-btn:hover { border-color: var(--nn-purple); color: var(--nn-purple-text); }
 .nn-add-queue-btn.in-queue {
-  border-color: var(--nn-purple); color: var(--nn-purple); opacity: 0.6;
+  border-color: var(--nn-purple); color: var(--nn-purple-text); opacity: 0.6;
   pointer-events: none;
 }
 
@@ -379,12 +379,12 @@
 {% endblock %}
 
 {% block nav_links %}
-<li><a href="{{ path_prefix }}player.html" style="color:var(--nn-purple);font-weight:700">Player</a></li>
+<li><a href="{{ path_prefix }}player.html" style="color:var(--nn-purple-text);font-weight:700">Player</a></li>
 <li><a href="{{ home_url }}">Home</a></li>
 {% endblock %}
 
 {% block mobile_nav_links %}
-<a href="{{ path_prefix }}player.html" style="color:var(--nn-purple);font-weight:700" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">Player</a>
+<a href="{{ path_prefix }}player.html" style="color:var(--nn-purple-text);font-weight:700" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">Player</a>
 <a href="{{ home_url }}" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">Home</a>
 {% endblock %}
 

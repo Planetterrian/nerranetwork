@@ -22,6 +22,10 @@
 
   /* Signature gradient accent */
   --nn-purple:      #6B47FF;
+  /* #6B47FF is 3.4-3.6:1 on the dark surfaces, fine for fills and borders
+     but not for text. Labels and links in the brand purple use this tint
+     (6.5:1 on --nn-bg). */
+  --nn-purple-text: #9D8BFF;
   --nn-cyan:        #00D4FF;
   --nn-gradient:    linear-gradient(135deg, var(--nn-purple), var(--nn-cyan));
   /* Aliases the newsletter form has referenced since May 2026 without a
@@ -393,7 +397,7 @@ button { font-family: var(--font-ui); cursor: pointer; }
 .show-card-listen {
   font-family: var(--font-ui);
   font-size: 0.85rem; font-weight: 600;
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text, var(--show-color, var(--nn-purple-text)));
   display: flex; align-items: center; gap: var(--sp-2);
 }
 .show-card-listen svg { width: 16px; height: 16px; }
@@ -1474,7 +1478,7 @@ button.nn-chip { cursor: pointer; }
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: var(--nn-purple);
+  color: var(--nn-purple-text);
   margin-bottom: var(--sp-3);
 }
 
@@ -1662,7 +1666,6 @@ button.nn-chip { cursor: pointer; }
   }
   .glass-card h2 {
     font-size: 1.2rem;
-  }
   }
 
   /* hero-show-orbit visible on all breakpoints */
