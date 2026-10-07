@@ -3647,6 +3647,9 @@ def generate_network_page(*, dry_run=False):
         # hreflang tags all resolve to "/" (Sep 2026 review).
         "canonical_url": f"{GITHUB_RAW}/",
         "rss_url": "network.rss",
+        # Computed, not typed (the homepage said "4" beside 11 Spanish
+        # feed files; the language registry is the one count).
+        "listening_language_count": len(_listening_languages()),
         "all_shows": _build_all_shows_list(),
         "latest_blog_posts": latest_blog_posts,
         "latest_episodes": latest_episodes,

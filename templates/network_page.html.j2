@@ -73,7 +73,7 @@
             <div class="hero-badge">Independent Podcast Network</div>
             <h1><span class="gradient-text">Nerra</span> Network</h1>
             <p class="network-hero-tagline">Feed your curiosity. Not your anxiety.</p>
-            <p class="hero-subtitle">{{ all_shows|length }} ad-free shows on Tesla, SpaceX, AI, markets, space, science, world news, first-principles thinking and more — most of them new every day, in four listening languages. Independently produced in Vancouver, Canada.</p>
+            <p class="hero-subtitle">{{ all_shows|length }} ad-free shows on Tesla, SpaceX, AI, markets, space, science, world news, first-principles thinking and more — most of them new every day, in {{ listening_language_count | default(4) }} listening languages. Independently produced in Vancouver, Canada.</p>
             <div class="hero-show-orbit">
                 {% for s in all_shows %}
                 {% set _pbase = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
@@ -110,7 +110,7 @@
                     <span>ads</span>
                 </div>
                 <div class="proof-stat">
-                    <strong>4</strong>
+                    <strong>{{ listening_language_count | default(4) }}</strong>
                     <span>listening languages</span>
                 </div>
             </div>
@@ -354,7 +354,7 @@
                 </div>
                 <div class="feature-card glass-card">
                     <div class="feature-icon">&#128266;</div>
-                    <h3>Four Listening Languages</h3>
+                    <h3>{{ listening_language_count | default(4) }} Listening Languages</h3>
                     <p>English originals with Fran&ccedil;ais, Русский and 中文 audio tracks, plus two shows made natively in Russian. Pick your audio language with the globe in the menu.</p>
                 </div>
             </div>
