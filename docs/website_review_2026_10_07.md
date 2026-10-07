@@ -276,22 +276,53 @@ Drift guards:
   - prompts are fetched on demand, and the "Show prompt" toggle finally
     reveals them.
 
+## Design pass (visual), same day
+
+A second pass on the rendered pages, judged on screenshots at 390px and
+1440px. Every change is template/CSS-side and guarded in
+`tests/test_site_review_2026_10_07_chrome.py`.
+
+| Surface | Change | Before | After |
+|---|---|---|---|
+| Homepage (phone) | Compact show cards (name, hook, three-line description), one Latest rail, subscribe rows folded, 2×2 hero CTAs and stats | 44,300px | 19,700px |
+| Homepage (desktop) | Same | 23,800px | 14,900px |
+| Explore (phone) | Same card macro | 29,900px | 10,500px |
+| Mobile menu | Show groups are `<details>` (first open); the blog section is the hub plus topics | 5,400px | 1,900px |
+| Footer (every page, desktop) | Show list in two columns; the newsletter show picker behind "Choose shows (31)" | 2,435px | 1,431px |
+| Footer (every page, phone) | Same | 1,791px | 974px |
+| Show page "More from Nerra Network" | Eight single-link tiles, same-strand shows first, related show skipped, "See all N shows" to /explore.html; no section when nothing is left | 4,900px | 1,090px |
+| Show page archive | Six cards, "More episodes (6)" for the rest (JSON and RSS paths); archive language chips fit one line | 4,490px | 2,420px |
+| Show page Resources | Each group a `<details>` (first open) with its count; cards name the host, not the full URL | 4,830px | 1,380px |
+| Tesla page (phone, total) | All of the above | 25,180px | 14,870px |
+| Tesla page (desktop, total) | All of the above | 13,670px | 11,480px |
+| Modern Investing Performance (phone) | See below | 5,260px | 2,520px |
+
+Also in the pass: the show hero carries two or three actions and one quiet
+link row (Summaries, Story Tracker, Claims & corrections, Glossary); article
+list items keep their continuation paragraphs inside the `<li>`; resource
+URL tints dropped a 0.7 opacity that took them under the text-safe
+contrast.
+
+**Modern Investing: two tables printed numbers the data does not hold.**
+"Performance by sector — which approaches are generating alpha" read
+`tracker["sectors"]`, which is the concentration rule's window (the last
+ten non-voided trades, count and dollar P&L, no win counts). Every row
+showed 0% wins and a dollar average with a % sign ($21.71 over 7 trades
+printed as "+3.10%"). It is now "Sector mix, last 10 trades" in dollars.
+"Monthly performance snapshots" are running totals taken at each month's
+rollover, with the three % columns null by construction (every cell a
+dash). It is now "The record at the start of each month", and the %
+columns render only when a row carries them. The learned rules lead with
+the rule, three shown and the rest folded.
+
 ## Not done here: operator decisions and proposals
 
-- **Homepage length.**
-  - The phone homepage is about 44,000px. The show list renders seven
-    times, and "Latest Across the Network" and "Latest from the Blog" show
-    the same six episodes.
-  - Proposed order:
-    1. Hero
-    2. one Latest rail
-    3. Personal
-    4. Most Played
-    5. Why Nerra
-    6. a compact show grid linking to Explore
-    7. one newsletter form
-  - That roughly halves the page. Section order was operator-set, so this
-    is a proposal.
+- **Homepage section order.** The design pass below took the phone
+  homepage from about 44,000px to 19,700px: compact show cards, one Latest
+  rail (the duplicate "Latest from the Blog" is gone) and the subscribe
+  rows folded. The sections are still in the operator's order. A further
+  reorder (hero, Latest, Personal, Most Played, Why Nerra, a compact grid
+  linking to Explore, one newsletter form) is a proposal, not done.
 - **Homepage newsletter default.** Every one of the 31 shows is pre-checked
   ("everything's selected by default"), which signs a new reader up for up
   to ~25 emails a day. Recommendation: start unchecked, or pre-check only
