@@ -3081,6 +3081,15 @@ def _grow(value: float, monthly_pct: float, months: int) -> float:
     return value * ((1.0 + monthly_pct / 100.0) ** months)
 
 
+def _network_languages(multilingual: Optional[Dict[str, Any]]) -> int:
+    """Distinct audio languages: English plus every translated track."""
+    langs = {"en"}
+    for entry in ((multilingual or {}).get("per_show") or {}).values():
+        for lang in (entry or {}).get("languages") or []:
+            langs.add(str(lang))
+    return len(langs)
+
+
 def build_investor_section(
     root: Path,
     *,
@@ -3091,6 +3100,7 @@ def build_investor_section(
     gallery: Dict[str, Any],
     network: Dict[str, Any],
     benchmarks: Dict[str, Any],
+    multilingual: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     bm = _load_industry_benchmarks(root)
     if not bm or not benchmarks.get("configured"):
@@ -3105,6 +3115,11 @@ def build_investor_section(
     # (via benchmarks), not credit-file counts — see _feed_episodes_last_7d.
     eps_per_week = (benchmarks.get("network") or {}).get("episodes_7d") or 0
     avg_cost = (benchmarks.get("network") or {}).get("cost_per_episode_usd")
+    # Languages are COUNTED (English + every translated track a show
+    # produces) — the framing below once typed "5" beside a thesis that
+    # computed 4.
+    languages = (_network_languages(multilingual)
+                 if multilingual is not None else None)
 
     prod = bm.get("production_cost_per_episode_usd") or {}
     boutique = prod.get("boutique_agency") or [200, 400]
@@ -3151,8 +3166,9 @@ def build_investor_section(
                          if avg_cost else "cost not measured")),
             "framing": (
                 "Fully autonomous pipeline: fetch → write → voice → mix → "
-                "video → publish → analytics → self-review, in 5 languages, "
-                "with no per-episode human labor. The engine, not any one "
+                "video → publish → analytics → self-review, "
+                + (f"in {languages} languages, " if languages else "")
+                + "with no per-episode human labor. The engine, not any one "
                 "show, is the core asset — a 17th show costs one YAML file."
             ),
             "usd_range": None,
@@ -3275,7 +3291,7 @@ def build_investor_section(
             "shows": shows_count,
             "episodes_per_week": eps_per_week,
             "episodes_to_date": episodes_to_date,
-            "languages": None,  # filled by caller (needs multilingual)
+            "languages": languages,
             "cost_per_episode_usd": avg_cost,
             "newsletter_per_sub_usd": nl_per_sub,
         },
@@ -3374,13 +3390,7 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
     investor = build_investor_section(
         root, audience=audience, costs=costs, catalog=catalog_section,
         lake=lake_section, gallery=gallery_section, network=network,
-        benchmarks=benchmarks)
-    if investor.get("configured"):
-        langs = {"en"}
-        for entry in (multilingual.get("per_show") or {}).values():
-            for lang in entry.get("languages") or []:
-                langs.add(str(lang))
-        investor["thesis"]["languages"] = len(langs)
+        benchmarks=benchmarks, multilingual=multilingual)
 
     return {
         "generated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
@@ -4416,23 +4426,28 @@ def build_efficiency_section(
         o = (op3.get("per_show") or {}).get(slug) or {}
         y = (yt.get("per_show") or {}).get(slug) or {}
         s = (sp.get("per_show") or {}).get(slug) or {}
-        cost_s = float(c7.get("total") or 0.0)
+        # Spend is MEASURED only when the slug has credit files in the
+        # window. A show whose spend is untracked (Age of AI produces
+        # through the Voices pipeline, which writes none) reported $0.00
+        # and so ranked "cheapest per download" — null, never 0.
+        tracked = bool(c7.get("files")) or float(c7.get("total") or 0.0) > 0
+        cost_s = float(c7.get("total") or 0.0) if tracked else None
         dl = int(o.get("downloads_7d") or 0)
         views = int(y.get("views") or 0)
         streams = s.get("streams")
         streams_n = int(streams) if isinstance(streams, (int, float)) else 0
         per_show[slug] = {
-            "cost_7d_usd": round(cost_s, 4),
+            "cost_7d_usd": round(cost_s, 4) if cost_s is not None else None,
             "op3_downloads_7d": dl,
             "op3_downloads_30d": int(o.get("downloads_30d") or 0),
             "usd_per_op3_download": (
-                round(cost_s / dl, 4) if dl > 0 else None
+                round(cost_s / dl, 4) if cost_s is not None and dl > 0 else None
             ),
             "youtube_views": views,
             "youtube_avg_view_pct": y.get("avg_view_percentage"),
             "youtube_subs_gained": int(y.get("subscribers_gained") or 0),
             "usd_per_yt_view": (
-                round(cost_s / views, 4) if views > 0 else None
+                round(cost_s / views, 4) if cost_s is not None and views > 0 else None
             ),
             "spotify_streams_30d": streams_n or None,
         }

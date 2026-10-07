@@ -2671,6 +2671,9 @@ def generate_tesla_dashboard(*, dry_run=False):
         "energy_storage_annual_gwh": metrics.get("energy_storage_annual_gwh", []),
         "supercharger_connectors_annual": metrics.get("supercharger_connectors_annual", []),
         "highlights": metrics.get("highlights", []),
+        # Shown beside every curated block: the page reads "Live" and the
+        # operating metrics are only as current as this date.
+        "metrics_updated_at": metrics.get("updated_at"),
         "t": _NAV_T,
         "all_shows": _build_all_shows_list(),
     }

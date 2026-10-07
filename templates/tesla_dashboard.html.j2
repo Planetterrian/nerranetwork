@@ -34,25 +34,29 @@
   .tsl-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:0.8rem; }
   .tsl-stat { text-align:center; padding:0.6rem; border-radius:12px; background:rgba(227,25,55,0.08); border:1px solid rgba(255,120,140,0.14); }
   .tsl-stat .n { font-size:1.6rem; font-weight:800; color:#fff; font-variant-numeric:tabular-nums; }
-  .tsl-stat .l { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:#c79aa3; margin-top:2px; }
+  .tsl-stat .l { font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; color:#c79aa3; margin-top:2px; }
 
-  .tsl-bars { display:flex; align-items:flex-end; gap:8px; height:170px; padding-top:8px; overflow:hidden; }
+  /* 22px headroom: the value label sits 18px above its bar and was
+     clipped by overflow:hidden at the old 8px. */
+  .tsl-bars { display:flex; align-items:flex-end; gap:8px; height:170px; padding-top:22px; overflow:hidden; }
   .tsl-bw { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
   .tsl-bar { width:100%; border-radius:6px 6px 2px 2px; min-height:3px; background:linear-gradient(180deg,var(--tsl-glow),var(--tsl-red)); transition:height .6s cubic-bezier(.2,.7,.2,1); position:relative; }
   .tsl-bar .cnt { position:absolute; top:-18px; left:0; right:0; text-align:center; font-size:0.68rem; color:#ffd6dd; font-weight:700; }
-  .tsl-blab { font-size:0.62rem; color:#a8838c; white-space:nowrap; }
+  .tsl-blab { font-size:0.75rem; color:#a8838c; white-space:nowrap; }
 
   /* quarterly paired bars (produced vs delivered) */
-  .tsl-qbars { display:flex; align-items:flex-end; gap:7px; height:190px; padding-top:8px; overflow:hidden; }
+  .tsl-qbars { display:flex; align-items:flex-end; gap:7px; height:190px; padding-top:22px; overflow:hidden; }
   .tsl-qg { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:5px; height:100%; justify-content:flex-end; }
   .tsl-qpair { display:flex; align-items:flex-end; justify-content:center; gap:3px; width:100%; height:100%; }
   .tsl-qbar { width:46%; border-radius:4px 4px 1px 1px; min-height:3px; transition:height .7s cubic-bezier(.2,.7,.2,1); }
   .tsl-qbar.prod { background:linear-gradient(180deg,#8a5560,#4a2a31); }
   .tsl-qbar.del { background:linear-gradient(180deg,var(--tsl-glow),var(--tsl-red)); }
-  .tsl-qlab { font-size:0.54rem; color:#a8838c; white-space:nowrap; letter-spacing:-0.02em; }
+  /* Two lines (quarter over year) so the label holds 11px+ on a phone. */
+  .tsl-qlab { font-size:0.75rem; line-height:1.15; color:#c79aa3; white-space:nowrap; text-align:center; }
   .tsl-legend { display:flex; gap:18px; font-size:0.78rem; color:#cbb1b7; margin-bottom:8px; }
   .tsl-legend .sw { display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:6px; vertical-align:middle; }
-  @media (max-width:520px){ .tsl-qbars{ gap:3px; } .tsl-qlab{ font-size:0.46rem; } }
+  @media (max-width:520px){ .tsl-qbars{ gap:3px; } .tsl-qlab{ font-size:0.6875rem; } }
+  .tsl-asof { color:#e2b9c1; font-size:0.82rem; margin:0 0 0.8rem; }
 
   .tsl-area-svg { width:100%; height:210px; display:block; overflow:visible; }
   .tsl-area-svg .grid { stroke:rgba(255,120,140,0.12); stroke-width:1; }
@@ -114,6 +118,9 @@
   <div class="tsl-grid" style="grid-template-columns:1fr;">
     <div class="tsl-panel">
       <h2>Quarterly production &amp; deliveries</h2>
+      {#- Curated figures carry their own date: the page reads "Live", and a
+          quarterly series ending 2025 Q1 must not pass for current. -#}
+      <p class="tsl-asof">Operator data as of {{ metrics_updated_at or "an unrecorded date" }} · latest quarter on record: {{ deliveries_quarterly[-1].quarter }}</p>
       <div class="tsl-legend">
         <span><span class="sw" style="background:linear-gradient(180deg,#8a5560,#4a2a31);"></span>Produced</span>
         <span><span class="sw" style="background:linear-gradient(180deg,var(--tsl-glow),var(--tsl-red));"></span>Delivered</span>
@@ -125,7 +132,8 @@
             <div class="tsl-qbar prod" data-v="{{ q.produced }}" style="height:0" title="Produced: {{ '{:,}'.format(q.produced) }}"></div>
             <div class="tsl-qbar del" data-v="{{ q.delivered }}" style="height:0" title="Delivered: {{ '{:,}'.format(q.delivered) }}"></div>
           </div>
-          <div class="tsl-qlab">{{ q.quarter }}</div>
+          {% set qp = (q.quarter|string).split(' ') %}
+          <div class="tsl-qlab">{% if qp|length == 2 %}{{ qp[1] }}<br>{{ qp[0] }}{% else %}{{ q.quarter }}{% endif %}</div>
         </div>
         {% endfor %}
       </div>
@@ -142,7 +150,7 @@
         <div class="tsl-bw"><div class="tsl-bar" data-v="{{ d.vehicles }}" style="height:0"><span class="cnt">{{ (d.vehicles/1000)|round|int }}k</span></div><div class="tsl-blab">{{ d.year }}</div></div>
         {% endfor %}
       </div>
-      <p class="tsl-disclaimer">From Tesla's published annual figures. Operator-maintained — newest year appended each January.</p>
+      <p class="tsl-disclaimer">From Tesla's published annual figures. Operator-maintained (data as of {{ metrics_updated_at or "an unrecorded date" }}) — newest year appended each January.</p>
     </div>
     <div class="tsl-panel">
       <h2>Energy storage deployed (GWh / yr)</h2>
@@ -151,7 +159,7 @@
         <div class="tsl-bw"><div class="tsl-bar" data-v="{{ e.gwh }}" style="height:0"><span class="cnt">{{ e.gwh }}</span></div><div class="tsl-blab">{{ e.year }}</div></div>
         {% endfor %}
       </div>
-      <p class="tsl-disclaimer">Powerwall + Megapack, from Tesla's energy deployments. Operator-maintained.</p>
+      <p class="tsl-disclaimer">Powerwall + Megapack, from Tesla's energy deployments. Operator-maintained (data as of {{ metrics_updated_at or "an unrecorded date" }}).</p>
     </div>
   </div>
 

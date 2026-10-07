@@ -37,7 +37,12 @@
     <!-- Shared CSS -->
     <link rel="stylesheet" href="styles/main.css">
 
-    <style>:root { --show-color: #047857; --show-color-dark: #047857; }</style>
+    <style>:root { --show-color: #047857; --show-color-dark: #047857; }
+    /* #047857 is a FILL colour (white on it is 5.5:1); as text on the dark
+       page it read 3.49:1. Text in the show colour uses a lighter tint. */
+    :root { --show-color-text: #34d399; }
+    .resource-category-title, .resource-card-url, .milestone-badge, .mit-back-link { color: var(--show-color-text) !important; }
+    </style>
 
 </head>
 <body>
@@ -201,7 +206,7 @@
     <!-- Hero (simple resources page hero) -->
     <section class="nn-section" style="padding-top:calc(var(--sp-8) + 60px);padding-bottom:var(--sp-6);">
         <div class="container" style="max-width:800px;">
-            <a href="modern-investing.html" style="font-family:var(--font-ui);font-size:0.85rem;color:var(--show-color);text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-bottom:var(--sp-4);">
+            <a href="modern-investing.html" class="mit-back-link" style="font-family:var(--font-ui);font-size:0.85rem;color:var(--show-color);text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-bottom:var(--sp-4);">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 Back to Modern Investing Techniques
             </a>
@@ -366,9 +371,13 @@
         border:1px solid color-mix(in srgb, var(--show-color) 30%, transparent);
         border-radius:20px; font-family:var(--font-ui); font-size:0.75rem; color:var(--show-color);
     }
+    /* !important: the two grids set their columns inline, and an inline
+       style beats this query — the page ran 443px wide on a 390px phone
+       with the menu button cut off. */
+    #calcCard > div:first-child > *, #calcResults > div:first-child > * { min-width:0; }
     @media(max-width:640px){
-        #calcCard > div:first-child { grid-template-columns:1fr; }
-        #calcResults > div:first-child { grid-template-columns:1fr; }
+        #calcCard > div:first-child { grid-template-columns:1fr !important; }
+        #calcResults > div:first-child { grid-template-columns:1fr !important; }
         .calc-result-value { font-size:1.2rem; }
     }
     </style>
