@@ -329,3 +329,32 @@ class TestShowPageIsShorter:
         assert '<summary class="resource-category-title">' in self.TPL
         # The card names the host; the full URL is the link.
         assert "r.url | replace('https://', '')" not in self.TPL
+
+
+class TestMitTablesSayWhatTheyHold:
+    """tracker['sectors'] is the last-ten-trades concentration window in
+    DOLLARS with no win counts; monthly snapshots are running totals with
+    the three % columns null by construction. The page had printed 0% wins
+    on every sector, a dollar average with a % sign, a claim about alpha
+    the block never measures, and three columns of dashes."""
+
+    TPL = _strip_jinja_comments(
+        (ROOT / "templates" / "show_page.html.j2").read_text(encoding="utf-8"))
+
+    def test_sector_table_is_the_concentration_window_in_dollars(self):
+        assert "which approaches are generating alpha" not in self.TPL
+        assert "sec_data.get('wins'" not in self.TPL
+        assert "Sector mix, last {{ _sec_total }} trades" in self.TPL
+        assert "sec_data.cumulative_pnl / sec_data.trade_count" not in self.TPL
+
+    def test_monthly_table_is_labelled_running_totals(self):
+        assert "running totals, not per-month results" in self.TPL
+        assert "Trades to date" in self.TPL
+        # The always-null comparison columns render only when a row has them.
+        assert "selectattr('alpha_pct', 'number')" in self.TPL
+
+    def test_sector_writer_still_matches_the_label(self):
+        hook = (ROOT / "shows" / "hooks" / "modern_investing.py").read_text(encoding="utf-8")
+        body = hook.split("def _compute_sector_exposure", 1)[1].split("\ndef ", 1)[0]
+        assert "_CONCENTRATION_WINDOW" in body and "pnl_dollars" in body
+        assert "wins" not in body
