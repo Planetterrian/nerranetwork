@@ -88,7 +88,7 @@
             <div class="show-hero-info">
                 <h1>{{ show_name }}</h1>
                 <p class="show-hero-tagline">{{ hero_tagline }}</p>
-                <div style="display:flex;gap:var(--sp-2);align-items:center;margin-bottom:var(--sp-3);font-family:var(--font-ui);font-size:0.85rem;color:var(--nn-text-muted);">
+                <div class="show-hero-meta" style="display:flex;gap:var(--sp-2);align-items:center;margin-bottom:var(--sp-3);font-family:var(--font-ui);font-size:0.85rem;color:var(--nn-text-muted);">
                     {%- set _sched = schedule | default('Daily') -%}
                     {%- set _sched_ru = {
                         'Daily': 'Ежедневно',
@@ -96,6 +96,7 @@
                         'Odd weekdays': 'По нечётным будням',
                         'Even days': 'По чётным дням',
                         'Even weekdays': 'По чётным будням',
+                        'Weekly — Mondays': 'Еженедельно, по понедельникам',
                     } -%}
                     <span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">{% if _is_ru %}{{ _sched_ru.get(_sched, _sched) }}{% else %}{{ _sched }}{% endif %}</span>
                     {% if episode_length %}<span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">{{ episode_length }}</span>{% endif %}
@@ -125,6 +126,10 @@
                 {# Primary actions: one filled CTA + a few "explore this show"
                    buttons. Platform subscribe links live in the quieter chip
                    row below so the hero isn't a wall of identical pills. #}
+                {#- Oct 7 2026 design pass: six equal buttons wrapped to an orphan
+                    row. Two to three buttons carry the actions (listen, read or
+                    apply, the show's own dashboard); the reference pages sit in
+                    one quiet link row beneath. -#}
                 <div class="show-hero-actions">
                     <a href="{{ '#latest-player' if latest_episode else '#episodes' }}" class="nn-btn nn-btn-primary">{% if _is_ru %}Слушать{% else %}Listen Now{% endif %}</a>
                     {#- The Mira interview shows are guest-driven: promote the
@@ -132,35 +137,27 @@
                         first interview publishes. -#}
                     {% if show_slug in ('age_of_ai', 'nerra_voices') %}
                     <a href="{{ path_prefix }}{{ 'age-of-ai-apply.html' if show_slug == 'age_of_ai' else 'nerra-voices-apply.html' }}" class="nn-btn nn-btn-primary" style="background:var(--show-color, #00D4FF);">Apply to be a guest</a>
-                    <a href="{{ path_prefix }}{{ summaries_page }}" class="nn-btn">{% if _is_ru %}Все выпуски{% else %}View Summaries{% endif %}</a>
                     {% else %}
                     <a href="{{ path_prefix }}{{ blog_page }}" class="nn-btn">{% if _is_ru %}Читать блог{% else %}Read Blog{% endif %}</a>
-                    <a href="{{ path_prefix }}{{ summaries_page }}" class="nn-btn">{% if _is_ru %}Все выпуски{% else %}View Summaries{% endif %}</a>
-                    {% endif %}
-                    {% if narrative_page_url %}
-                    <a href="{{ path_prefix }}{{ narrative_page_url }}" class="nn-btn">{% if _is_ru %}Хронология{% else %}Story Tracker{% endif %}</a>
-                    {% endif %}
-                    {#- The show's public claims ledger (Oct 1 2026): every
-                        claim's verification status and every correction. -#}
-                    {% if claims_page_url %}
-                    <a href="{{ path_prefix }}{{ claims_page_url }}" class="nn-btn">{% if _is_ru %}Проверка фактов{% else %}Claims &amp; corrections{% endif %}</a>
                     {% endif %}
                     {% if show_slug == 'spacex' %}
-                    <a href="{{ path_prefix }}spacex-dashboard.html" class="nn-btn">🚀 Launch Dashboard</a>
-                    {% endif %}
-                    {% if show_slug == 'tesla' %}
-                    <a href="{{ path_prefix }}tesla-dashboard.html" class="nn-btn">📊 Tesla Dashboard</a>
-                    {% endif %}
-                    {% if show_slug == 'offshore_north' %}
-                    <a href="{{ path_prefix }}offshore-north-dashboard.html" class="nn-btn">⛵ Campaign Dashboard</a>
-                    <a href="{{ path_prefix }}offshore-north-glossary.html" class="nn-btn">📖 Plain Sailing Glossary</a>
-                    {% endif %}
-                    {% if show_slug == "modern_investing" %}
-                    <a href="{{ path_prefix }}modern-investing-performance.html" class="nn-btn" style="background: var(--show-color, #047857); color: white;">
-                        Performance &amp; Lessons
-                    </a>
+                    <a href="{{ path_prefix }}spacex-dashboard.html" class="nn-btn">Launch Dashboard</a>
+                    {% elif show_slug == 'tesla' %}
+                    <a href="{{ path_prefix }}tesla-dashboard.html" class="nn-btn">Tesla Dashboard</a>
+                    {% elif show_slug == 'offshore_north' %}
+                    <a href="{{ path_prefix }}offshore-north-dashboard.html" class="nn-btn">Campaign Dashboard</a>
+                    {% elif show_slug == "modern_investing" %}
+                    <a href="{{ path_prefix }}modern-investing-performance.html" class="nn-btn">Performance &amp; Lessons</a>
                     {% endif %}
                 </div>
+                <nav class="show-hero-more" aria-label="{% if _is_ru %}Ещё об этом подкасте{% else %}More about this show{% endif %}">
+                    <a href="{{ path_prefix }}{{ summaries_page }}">{% if _is_ru %}Все выпуски{% else %}Summaries{% endif %}</a>
+                    {% if narrative_page_url %}<a href="{{ path_prefix }}{{ narrative_page_url }}">{% if _is_ru %}Хронология{% else %}Story Tracker{% endif %}</a>{% endif %}
+                    {#- The show's public claims ledger (Oct 1 2026): every
+                        claim's verification status and every correction. -#}
+                    {% if claims_page_url %}<a href="{{ path_prefix }}{{ claims_page_url }}">{% if _is_ru %}Проверка фактов{% else %}Claims &amp; corrections{% endif %}</a>{% endif %}
+                    {% if show_slug == 'offshore_north' %}<a href="{{ path_prefix }}offshore-north-glossary.html">Plain Sailing Glossary</a>{% endif %}
+                </nav>
 
                 {# Subscribe row — quieter chips, clearly grouped. #}
                 <div class="show-hero-subscribe">

@@ -3227,3 +3227,21 @@ main :where(p, li, dd, td) > a:where(:not([class]):not([style])) {
 }
 .subscribe-all[open] > summary::after { transform: rotate(45deg); }
 .subscribe-all .subscribe-show-list { padding: 0 var(--sp-4) var(--sp-4); }
+
+/* Show hero: the reference pages as one quiet link row under the buttons. */
+.show-hero-more {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: var(--sp-2) var(--sp-5);
+  margin: var(--sp-4) 0 var(--sp-6);
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+}
+.show-hero-more a {
+  color: var(--nn-text-muted);
+  text-decoration: none;
+  border-bottom: 1px solid var(--nn-border-hover);
+  padding-bottom: 1px;
+}
+.show-hero-more a:hover { color: var(--nn-white); border-bottom-color: var(--show-color-text); }
+@media (max-width: 1023px) { .show-hero-more { justify-content: center; } }
+@media (max-width: 1023px) { .show-hero-meta { justify-content: center; } }
