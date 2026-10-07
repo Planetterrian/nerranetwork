@@ -104,7 +104,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep029.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep029.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/omni_view/Omni_View_Ep029_20260407.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -237,6 +242,11 @@
             cursor: pointer;
             transition: all var(--duration) var(--ease);
         }
+        /* Same body-link override as the related cards: these are buttons. */
+        .blog-article .share-buttons a {
+            color: var(--nn-text-muted);
+            text-decoration: none;
+        }
         .share-buttons a:hover,
         .share-buttons button:hover {
             border-color: var(--show-color);
@@ -249,13 +259,13 @@
             margin: 0 auto;
             padding: 0 var(--sp-6) var(--sp-16);
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(0, 1fr);
             gap: var(--sp-10);
         }
         @media (min-width: 1024px) {
             .blog-article-wrap {
                 max-width: 1060px;
-                grid-template-columns: 200px 1fr;
+                grid-template-columns: 200px minmax(0, 1fr);
             }
         }
 
@@ -306,9 +316,18 @@
             font-size: 0.75rem;
         }
 
-        /* Article */
+        /* Article. A long unbroken token (a URL, a provenance run) may never
+           widen the page past the phone it is on (Oct 7 2026). */
         .blog-article {
             min-width: 0;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+        }
+        /* Reading measure: about 68-72 characters of body text a line
+           (it had run 104-111). The sources grid, claims and transcript
+           below keep the full column. */
+        .blog-article .blog-body-lang {
+            max-width: 72ch;
         }
         .blog-article h1 {
             font-family: var(--font-heading);
@@ -372,12 +391,25 @@
             color: var(--nn-text);
             margin-bottom: var(--sp-3);
         }
+        /* An item's body is the reporting, not a caption: full text colour
+           (it was muted grey under a bold headline, Oct 7 2026). */
         .blog-article .blog-list-cont {
             margin: var(--sp-1) 0 var(--sp-2);
             padding-left: var(--sp-2);
             font-size: 1rem;
-            color: var(--nn-text-muted);
+            color: var(--nn-text);
         }
+        /* Digest items are one sentence per line; at the article's
+           paragraph spacing each story read as a column of scattered
+           lines. Inside an item the sentences sit together; the items
+           themselves get the air (Oct 7 2026 design pass). */
+        .blog-article li > p.blog-list-cont {
+            font-size: 1rem;
+            line-height: 1.7;
+            margin: var(--sp-2) 0 0;
+            padding-left: 0;
+        }
+        .blog-article li:has(> p.blog-list-cont) { margin-bottom: var(--sp-6); }
         .blog-article hr {
             border: none;
             border-top: 1px solid var(--nn-border);
@@ -521,6 +553,12 @@
             text-decoration: none;
             transition: all var(--duration) var(--ease);
         }
+        /* The cards sit inside .blog-article, whose body-link rule would
+           otherwise underline and recolour every line of every card. */
+        .blog-article a.blog-related-card {
+            color: inherit;
+            text-decoration: none;
+        }
         .blog-related-card:hover {
             border-color: var(--card-show-color, var(--nn-purple));
             background: var(--nn-card-hover);
@@ -577,15 +615,16 @@
             font-family: var(--font-ui);
             font-variant-numeric: tabular-nums;
             font-size: 0.85rem;
-            color: var(--show-color);
+            /* Text, so the AA-lightened brand colour, not the raw one. */
+            color: var(--show-color-text, var(--show-color));
             min-width: 3.5rem;
             flex-shrink: 0;
         }
         /* Only looks clickable once the seek script has attached to a
-           real audio element — an English-only episode has no inline
+           real audio element — an episode with no published audio has no
            player, and a cursor that promises nothing is worse than none. */
         .blog-chapter-list li.is-seekable { cursor: pointer; }
-        .blog-chapter-list li.is-seekable:hover .chapter-title { color: var(--show-color); }
+        .blog-chapter-list li.is-seekable:hover .chapter-title { color: var(--show-color-text, var(--show-color)); }
         .blog-chapters .chapter-foot {
             margin-top: var(--sp-3);
             font-size: 0.85rem;
@@ -660,7 +699,7 @@
             font-family: var(--font-ui);
             font-size: 0.88rem;
             font-weight: 600;
-            color: var(--show-color, var(--nn-purple));
+            color: var(--show-color-text, var(--show-color, var(--nn-purple-text, #9D8BFF)));
         }
         .blog-transcript details[open] .transcript-preview,
         .blog-transcript details[open] .transcript-more { display: none; }
@@ -712,6 +751,12 @@
             font-size: 0.9rem;
             color: var(--nn-text);
             font-weight: 500;
+            /* The neighbour's headline, held to three lines by CSS rather
+               than cut in the template (engine/titles.py owns every cut). */
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
         .blog-ep-nav .next {
             text-align: right;
@@ -738,7 +783,14 @@
             line-height: 1.6;
             margin: 0.35rem 0 0;
         }
-        .nn-iv-provenance span { white-space: nowrap; }
+        /* Each part is kept whole where it fits and wraps where it does not
+           (Oct 7 2026): the parts used to be nowrap spans joined with no
+           whitespace between them, one unbreakable run that laid every
+           post out 500-980px wide on a 390px phone and pushed the menu
+           button off-screen. The separators are plain inline text, so the
+           line breaks between parts. */
+        .nn-iv-provenance { overflow-wrap: anywhere; }
+        .nn-iv-provenance > span:not([aria-hidden]) { display: inline-block; max-width: 100%; }
         /* Episode provenance (Oct 2026): the one line under the AI badge on
            a news post, from engine.brand.episode_provenance_parts, plus the
            "Report an error" link beside it. Same type as the interview
@@ -897,7 +949,9 @@
         }
 
         /* Multilingual audio player + language switcher (June 2026) */
-        .nn-i18n {
+        /* .nn-listen is the same box without the switcher (Oct 7 2026). */
+        .nn-i18n,
+        .nn-listen {
             max-width: 760px;
             margin: 0 auto var(--sp-4);
             padding: 0 var(--sp-6);
@@ -1566,379 +1620,200 @@
         <a href="../../player.html">Player</a>
         
         <a href="../../explore.html" style="font-weight:600;">Find your show</a>
-        
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Hosted by Mira</div>
+        <details class="nn-mobile-shows nn-mobile-group" open>
+            <summary class="nn-mobile-shows-title">Hosted by Mira <span class="nn-mobile-count">3</span></summary>
             
             <a href="../../nerra-daily.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Daily
             </a>
             
             <a href="../../age-of-ai.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The Age of AI
             </a>
             
             <a href="../../nerra-voices.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Voices
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">World desks</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">World desks <span class="nn-mobile-count">6</span></summary>
             
             <a href="../../omni-view-world.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Top World News
             </a>
             
             <a href="../../omni-view-north-america.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View North America
             </a>
             
             <a href="../../omni-view-europe.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Europe
             </a>
             
             <a href="../../omni-view-asia-pacific.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Asia Pacific
             </a>
             
             <a href="../../omni-view-africa-mideast.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Africa & Middle East
             </a>
             
             <a href="../../omni-view-latam.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Central & South America
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Local news</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Local news <span class="nn-mobile-count">2</span></summary>
             
             <a href="../../vancouver.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/vancouver-400.webp"><img src="../../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/vancouver-400.webp"><img src="../../assets/covers/vancouver.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Vancouver Daily News
             </a>
             
             <a href="../../collingwood.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/collingwood-400.webp"><img src="../../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/collingwood-400.webp"><img src="../../assets/covers/collingwood.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Collingwood Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">AI & compute</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">AI & compute <span class="nn-mobile-count">3</span></summary>
             
             <a href="../../models-agents.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents
             </a>
             
             <a href="../../ai-chips.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/ai-chips-400.webp"><img src="../../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/ai-chips-400.webp"><img src="../../assets/covers/ai-chips.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 AI Chips & Data Centres Daily
             </a>
             
             <a href="../../models-agents-beginners.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents for Beginners
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Markets</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Markets <span class="nn-mobile-count">4</span></summary>
             
             <a href="../../modern-investing.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Modern Investing Techniques
             </a>
             
             <a href="../../mag7.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/mag7-400.webp"><img src="../../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/mag7-400.webp"><img src="../../assets/covers/mag7.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 MAG 7 Daily
             </a>
             
             <a href="../../prediction-markets.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/prediction-markets-400.webp"><img src="../../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/prediction-markets-400.webp"><img src="../../assets/covers/prediction-markets.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Prediction Markets Daily
             </a>
             
             <a href="../../tesla.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Tesla Shorts Time
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Health & longevity</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Health & longevity <span class="nn-mobile-count">3</span></summary>
             
             <a href="../../planetterrian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Planetterrian Daily
             </a>
             
             <a href="../../peptides.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/peptides-400.webp"><img src="../../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/peptides-400.webp"><img src="../../assets/covers/peptides.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Peptides Weekly
             </a>
             
             <a href="../../longevity.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/longevity-400.webp"><img src="../../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/longevity-400.webp"><img src="../../assets/covers/longevity.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Longevity Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Every other show</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">10</span></summary>
             
             <a href="../../omni-view.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View
             </a>
             
             <a href="../../fascinating-frontiers.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Fascinating Frontiers
             </a>
             
             <a href="../../spacex.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 SpaceX Daily
             </a>
             
             <a href="../../env-intel.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Environmental Intelligence
             </a>
             
             <a href="../../ru/finansy-prosto.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/finansy-prosto-400.webp"><img src="../../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/finansy-prosto-400.webp"><img src="../../assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Финансы Просто
             </a>
             
             <a href="../../ru/privet-russian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/privet-russian-400.webp"><img src="../../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/privet-russian-400.webp"><img src="../../assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Привет, Русский!
             </a>
             
             <a href="../../unintended-consequences.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Unintended Consequences
             </a>
             
             <a href="../../first-principles.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 First Principles Daily
             </a>
             
             <a href="../../thedppod.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The DP Pod: The Do Positive Podcast
             </a>
             
             <a href="../../offshore-north.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Offshore North
             </a>
             
-        </div>
+        </details>
         
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Blogs</div>
-            <a href="../../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">
-                All Blog Posts
-            </a>
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Hosted by Mira</div>
-            
-            <a href="../../blog/nerra_daily/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Daily Blog
-            </a>
-            
-            <a href="../../blog/age_of_ai/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
-                The Age of AI Blog
-            </a>
-            
-            <a href="../../blog/nerra_voices/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Voices Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">World desks</div>
-            
-            <a href="../../blog/omni_view_world/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Top World News Blog
-            </a>
-            
-            <a href="../../blog/omni_view_north_america/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View North America Blog
-            </a>
-            
-            <a href="../../blog/omni_view_europe/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Europe Blog
-            </a>
-            
-            <a href="../../blog/omni_view_asia_pacific/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Asia Pacific Blog
-            </a>
-            
-            <a href="../../blog/omni_view_africa_mideast/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Africa & Middle East Blog
-            </a>
-            
-            <a href="../../blog/omni_view_latam/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Central & South America Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Local news</div>
-            
-            <a href="../../blog/vancouver/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/vancouver-400.webp"><img src="../../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Vancouver Daily News Blog
-            </a>
-            
-            <a href="../../blog/collingwood/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/collingwood-400.webp"><img src="../../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Collingwood Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">AI & compute</div>
-            
-            <a href="../../blog/models_agents/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents Blog
-            </a>
-            
-            <a href="../../blog/ai_chips/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/ai-chips-400.webp"><img src="../../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                AI Chips & Data Centres Daily Blog
-            </a>
-            
-            <a href="../../blog/models_agents_beginners/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents for Beginners Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Markets</div>
-            
-            <a href="../../blog/modern_investing/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
-                Modern Investing Techniques Blog
-            </a>
-            
-            <a href="../../blog/mag7/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/mag7-400.webp"><img src="../../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                MAG 7 Daily Blog
-            </a>
-            
-            <a href="../../blog/prediction_markets/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/prediction-markets-400.webp"><img src="../../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Prediction Markets Daily Blog
-            </a>
-            
-            <a href="../../blog/tesla/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
-                Tesla Shorts Time Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Health & longevity</div>
-            
-            <a href="../../blog/planetterrian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Planetterrian Daily Blog
-            </a>
-            
-            <a href="../../blog/peptides/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/peptides-400.webp"><img src="../../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Peptides Weekly Blog
-            </a>
-            
-            <a href="../../blog/longevity/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/longevity-400.webp"><img src="../../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Longevity Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Every other show</div>
-            
-            <a href="../../blog/omni_view/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Blog
-            </a>
-            
-            <a href="../../blog/fascinating_frontiers/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
-                Fascinating Frontiers Blog
-            </a>
-            
-            <a href="../../blog/spacex/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                SpaceX Daily Blog
-            </a>
-            
-            <a href="../../blog/env_intel/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
-                Environmental Intelligence Blog
-            </a>
-            
-            <a href="../../blog/finansy_prosto/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/finansy-prosto-400.webp"><img src="../../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                Финансы Просто Blog
-            </a>
-            
-            <a href="../../blog/privet_russian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/privet-russian-400.webp"><img src="../../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                Привет, Русский! Blog
-            </a>
-            
-            <a href="../../blog/unintended_consequences/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
-                Unintended Consequences Blog
-            </a>
-            
-            <a href="../../blog/first_principles/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                First Principles Daily Blog
-            </a>
-            
-            <a href="../../blog/dp_pod/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
-                The DP Pod: The Do Positive Podcast Blog
-            </a>
-            
-            <a href="../../blog/offshore_north/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
-                Offshore North Blog
-            </a>
-            
-            
+            <a href="../../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">All Blog Posts</a>
+            <a href="../../topics/index.html" class="nn-mobile-show-link">Browse by topic</a>
         </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">More</div>
@@ -1975,10 +1850,7 @@
             <a href="../../blog/omni_view/index.html" class="blog-show-badge">
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
-            </a>
-            <h1><span class="nn-i18n-title">Trump issues Tuesday deadline threatening to strike Iranian infrastructure if the Strait of Hormuz remains closed, driving up oil prices and rattling markets.</span> — Episode 29</h1>
-            
-            <p class="blog-hero-hook">Trump issues Tuesday deadline threatening to strike Iranian infrastructure if the Strait of Hormuz remains closed, driving up oil prices and rattling markets.</p>
+            </a><h1><span class="nn-i18n-title">Trump issues Tuesday deadline threatening to strike Iranian infrastructure if the Strait of Hormuz remains closed, driving up oil prices and rattling markets.</span></h1>
             
             <div class="blog-meta-bar">
                 <span class="post-author">By Patrick</span>
@@ -1991,18 +1863,10 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     18 min read
                 </span>
-                
-                <a href="../../omni-view.html" class="blog-listen-cta">
+                <a href="#listen" class="blog-listen-cta">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     Listen to podcast
                 </a>
-                
-                
-                <a href="../../omni-view-summaries.html" class="blog-listen-cta">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                    View summaries
-                </a>
-                
                 
             </div>
         </div>
@@ -2011,6 +1875,20 @@
 
     
     
+    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+        <div class="nn-i18n-inner">
+            <div class="nn-i18n-row">
+                <span class="nn-i18n-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Listen to this episode
+                </span>
+            </div>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/omni_view/Omni_View_Ep029_20260407.mp3">
+                <a href="https://op3.dev/e/audio.nerranetwork.com/omni_view/Omni_View_Ep029_20260407.mp3">Download the audio</a>
+            </audio>
+        </div>
+    </section>
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -2018,63 +1896,63 @@
         <aside class="blog-toc">
             <div class="blog-toc-title">Contents</div>
             
-            <a href="#top-stories-5" class="toc-h3">Top stories (5)</a>
+            <a href="#top-stories-5" class="">Top stories (5)</a>
             
-            <a href="#1-trump-escalates-iran-deadline-with-threats-to-strike-power-plants-and-bridges" class="">1) Trump escalates Iran deadline with threats to strike power plants and bridges</a>
+            <a href="#1-trump-escalates-iran-deadline-with-threats-to-strike-power-plants-and-bridges" class="toc-h3">1) Trump escalates Iran deadline with threats to strike power plants and bridges</a>
             
-            <a href="#2-ben-roberts-smith-arrested-over-alleged-war-crimes" class="">2) Ben Roberts-Smith arrested over alleged war crimes</a>
+            <a href="#2-ben-roberts-smith-arrested-over-alleged-war-crimes" class="toc-h3">2) Ben Roberts-Smith arrested over alleged war crimes</a>
             
-            <a href="#3-european-stocks-set-to-open-higher-despite-iran-tensions" class="">3) European stocks set to open higher despite Iran tensions</a>
+            <a href="#3-european-stocks-set-to-open-higher-despite-iran-tensions" class="toc-h3">3) European stocks set to open higher despite Iran tensions</a>
             
-            <a href="#4-howard-stern-and-wife-beth-sued-by-former-employee" class="">4) Howard Stern and wife Beth sued by former employee</a>
+            <a href="#4-howard-stern-and-wife-beth-sued-by-former-employee" class="toc-h3">4) Howard Stern and wife Beth sued by former employee</a>
             
-            <a href="#5-nasa-astronauts-break-space-travel-distance-record" class="">5) NASA astronauts break space travel distance record</a>
+            <a href="#5-nasa-astronauts-break-space-travel-distance-record" class="toc-h3">5) NASA astronauts break space travel distance record</a>
             
-            <a href="#top-world-stories-5" class="toc-h3">Top world stories (5)</a>
+            <a href="#top-world-stories-5" class="">Top world stories (5)</a>
             
-            <a href="#1-israel-warns-iranians-to-avoid-trains-as-military-threats-continue" class="">1) Israel warns Iranians to avoid trains as military threats continue</a>
+            <a href="#1-israel-warns-iranians-to-avoid-trains-as-military-threats-continue" class="toc-h3">1) Israel warns Iranians to avoid trains as military threats continue</a>
             
-            <a href="#2-albanese-to-visit-singapore-to-shore-up-fuel-supply" class="">2) Albanese to visit Singapore to shore up fuel supply</a>
+            <a href="#2-albanese-to-visit-singapore-to-shore-up-fuel-supply" class="toc-h3">2) Albanese to visit Singapore to shore up fuel supply</a>
             
-            <a href="#3-more-than-1700-brits-who-fell-ill-in-cape-verde-join-action-against-tui" class="">3) More than 1,700 Brits who fell ill in Cape Verde join action against Tui</a>
+            <a href="#3-more-than-1700-brits-who-fell-ill-in-cape-verde-join-action-against-tui" class="toc-h3">3) More than 1,700 Brits who fell ill in Cape Verde join action against Tui</a>
             
-            <a href="#4-schools-in-knife-crime-hotspots-to-get-specialist-training" class="">4) Schools in knife crime hotspots to get specialist training</a>
+            <a href="#4-schools-in-knife-crime-hotspots-to-get-specialist-training" class="toc-h3">4) Schools in knife crime hotspots to get specialist training</a>
             
-            <a href="#5-eastern-european-gang-tried-to-steal-joanna-lumleys-car" class="">5) Eastern European gang tried to steal Joanna Lumley's car</a>
+            <a href="#5-eastern-european-gang-tried-to-steal-joanna-lumleys-car" class="toc-h3">5) Eastern European gang tried to steal Joanna Lumley's car</a>
             
-            <a href="#top-business-stories-3" class="toc-h3">Top business stories (3)</a>
+            <a href="#top-business-stories-3" class="">Top business stories (3)</a>
             
-            <a href="#1-oil-prices-continue-to-rise-ahead-of-trumps-iran-deadline" class="">1) Oil prices continue to rise ahead of Trump’s Iran deadline</a>
+            <a href="#1-oil-prices-continue-to-rise-ahead-of-trumps-iran-deadline" class="toc-h3">1) Oil prices continue to rise ahead of Trump’s Iran deadline</a>
             
-            <a href="#2-markets-struggle-for-direction-ahead-of-key-deadline" class="">2) Markets struggle for direction ahead of key deadline</a>
+            <a href="#2-markets-struggle-for-direction-ahead-of-key-deadline" class="toc-h3">2) Markets struggle for direction ahead of key deadline</a>
             
-            <a href="#3-bitcoin-slides-along-with-other-risk-assets" class="">3) Bitcoin slides along with other risk assets</a>
+            <a href="#3-bitcoin-slides-along-with-other-risk-assets" class="toc-h3">3) Bitcoin slides along with other risk assets</a>
             
-            <a href="#top-technology-stories-3" class="toc-h3">Top technology stories (3)</a>
+            <a href="#top-technology-stories-3" class="">Top technology stories (3)</a>
             
-            <a href="#1-china-and-us-competing-in-different-ai-races" class="">1) China and US competing in different AI races</a>
+            <a href="#1-china-and-us-competing-in-different-ai-races" class="toc-h3">1) China and US competing in different AI races</a>
             
-            <a href="#2-insight-with-haslinda-amin-daily-analysis-program" class="">2) Insight with Haslinda Amin – daily analysis program</a>
+            <a href="#2-insight-with-haslinda-amin-daily-analysis-program" class="toc-h3">2) Insight with Haslinda Amin – daily analysis program</a>
             
-            <a href="#3-australians-buy-record-number-of-new-evs-in-march" class="">3) Australians buy record number of new EVs in March</a>
+            <a href="#3-australians-buy-record-number-of-new-evs-in-march" class="toc-h3">3) Australians buy record number of new EVs in March</a>
             
-            <a href="#top-popular-media-stories-3" class="toc-h3">Top popular media stories (3)</a>
+            <a href="#top-popular-media-stories-3" class="">Top popular media stories (3)</a>
             
-            <a href="#1-david-hasselhoff-looks-frail-in-first-public-sighting-after-surgeries" class="">1) David Hasselhoff looks frail in first public sighting after surgeries</a>
+            <a href="#1-david-hasselhoff-looks-frail-in-first-public-sighting-after-surgeries" class="toc-h3">1) David Hasselhoff looks frail in first public sighting after surgeries</a>
             
-            <a href="#2-harry-kanes-ballon-dor-hopes-tied-to-real-glamour-tie" class="">2) Harry Kane’s Ballon d’Or hopes tied to Real glamour tie</a>
+            <a href="#2-harry-kanes-ballon-dor-hopes-tied-to-real-glamour-tie" class="toc-h3">2) Harry Kane’s Ballon d’Or hopes tied to Real glamour tie</a>
             
-            <a href="#3-viktor-gyokeres-returns-to-sporting-as-hero-and-villain" class="">3) Viktor Gyokeres returns to Sporting as hero and villain</a>
+            <a href="#3-viktor-gyokeres-returns-to-sporting-as-hero-and-villain" class="toc-h3">3) Viktor Gyokeres returns to Sporting as hero and villain</a>
             
-            <a href="#top-gossip-stories-3" class="toc-h3">Top gossip stories (3)</a>
+            <a href="#top-gossip-stories-3" class="">Top gossip stories (3)</a>
             
-            <a href="#1-prince-edward-forced-to-spend-easter-elsewhere-due-to-prince-andrew-dispute" class="">1) Prince Edward forced to spend Easter elsewhere due to Prince Andrew dispute</a>
+            <a href="#1-prince-edward-forced-to-spend-easter-elsewhere-due-to-prince-andrew-dispute" class="toc-h3">1) Prince Edward forced to spend Easter elsewhere due to Prince Andrew dispute</a>
             
-            <a href="#2-speculation-grows-over-identity-of-leaker-trump-vows-to-prosecute" class="">2) Speculation grows over identity of leaker Trump vows to prosecute</a>
+            <a href="#2-speculation-grows-over-identity-of-leaker-trump-vows-to-prosecute" class="toc-h3">2) Speculation grows over identity of leaker Trump vows to prosecute</a>
             
-            <a href="#3-joanna-lumley-car-theft-attempt-becomes-high-profile-crime-story" class="">3) Joanna Lumley car theft attempt becomes high-profile crime story</a>
+            <a href="#3-joanna-lumley-car-theft-attempt-becomes-high-profile-crime-story" class="toc-h3">3) Joanna Lumley car theft attempt becomes high-profile crime story</a>
             
-            <a href="#understanding-the-issue-how-ultimatums-function-in-international-diplomacy" class="toc-h3">Understanding the Issue: How Ultimatums Function in International Diplomacy</a>
+            <a href="#understanding-the-issue-how-ultimatums-function-in-international-diplomacy" class="">Understanding the Issue: How Ultimatums Function in International Diplomacy</a>
             
         </aside>
         
@@ -2084,234 +1962,321 @@
             <div class="blog-body-lang" data-lang="en">
             <p><strong># Omni View — Omni‑View Briefing</strong></p>
 <p><strong>Date:</strong> April 07, 2026</p>
-<p><em>Trump issues Tuesday deadline threatening to strike Iranian infrastructure if the Strait of Hormuz remains closed, driving up oil prices and rattling markets.</em></p>
-<h3 id="top-stories-5">Top stories (5)</h3>
-<h4 id="1-trump-escalates-iran-deadline-with-threats-to-strike-power-plants-and-bridges">1) Trump escalates Iran deadline with threats to strike power plants and bridges</h4>
+<h2 id="top-stories-5">Top stories (5)</h2>
+<h3 id="1-trump-escalates-iran-deadline-with-threats-to-strike-power-plants-and-bridges">1) Trump escalates Iran deadline with threats to strike power plants and bridges</h3>
 <p><strong>What happened (neutral):</strong> President Trump has set a Tuesday deadline for Iran to reopen the Strait of Hormuz, warning he will otherwise destroy key Iranian infrastructure including power plants and bridges. Oil prices have risen for a third day amid the tensions. Diplomatic talks involving mediators from Pakistan, Egypt and Turkey appear to be faltering, with Trump describing a 10-point peace plan from Tehran as “not good enough.” Israel has issued warnings to Iranian civilians to avoid trains and railway lines.</p>
 <p><strong>Perspectives:</strong> Bloomberg and CNBC report the oil price gains as direct reactions to Trump’s reaffirmed deadline and escalated rhetoric, framing the story through energy markets and investor risk. The Guardian presents the faltering talks and Israeli military warnings as part of a broader Middle East crisis, emphasizing humanitarian warnings to civilians and the urgency of ceasefire efforts. The Daily Mail focuses on the chaotic tone of Trump’s press conference, describing it as “the craziest ever” that devolved into mixed messages and invited mockery from critics who compared it to an SNL skit. BBC coverage highlights the economic pressure on global oil markets while noting Trump’s claim he could “take out Iran in one night.” These framings reflect differing priorities: market stability and energy security versus diplomatic consequences, civilian safety, and questions about presidential communication style. Both sides agree Trump has set a firm Tuesday deadline; they differ on whether the approach strengthens negotiating leverage or risks wider conflict.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>What are the immediate economic consequences if the Strait of Hormuz stays closed?</li>
-<li>How do public statements from leaders affect diplomatic efforts behind the scenes?</li>
-<li>What role are third-party mediators playing, and why might talks be stalling?</li>
-<li>How do military warnings to civilians factor into escalation dynamics?</li>
+<li>What are the immediate economic consequences if the Strait of Hormuz stays closed?
+</li>
+<li>How do public statements from leaders affect diplomatic efforts behind the scenes?
+</li>
+<li>What role are third-party mediators playing, and why might talks be stalling?
+</li>
+<li>How do military warnings to civilians factor into escalation dynamics?
+</li>
 </ul>
-<h4 id="2-ben-roberts-smith-arrested-over-alleged-war-crimes">2) Ben Roberts-Smith arrested over alleged war crimes</h4>
+<h3 id="2-ben-roberts-smith-arrested-over-alleged-war-crimes">2) Ben Roberts-Smith arrested over alleged war crimes</h3>
 <p><strong>What happened (neutral):</strong> Australia’s most-decorated living soldier, Ben Roberts-Smith, has been arrested on allegations of war crimes. He denies all wrongdoing. The arrest follows his previous loss of a landmark defamation case related to alleged murders.</p>
 <p><strong>Perspectives:</strong> The BBC reports the arrest factually, noting Roberts-Smith denies the allegations and previously lost the defamation case. The Guardian includes the story in its live news blog alongside other domestic Australian developments. The Daily Mail headlines the arrest directly, emphasizing that the former special forces soldier has been taken into custody. Coverage reflects Australia’s ongoing examination of its military conduct in Afghanistan, with some outlets stressing accountability while others note the soldier’s distinguished record and continued denial.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>What is the relationship between the earlier defamation case and the current criminal charges?</li>
-<li>How do legal standards for war crimes differ from civil defamation standards?</li>
-<li>What does this case reveal about accountability processes for special forces?</li>
-<li>How might the arrest affect public trust in military institutions?</li>
+<li>What is the relationship between the earlier defamation case and the current criminal charges?
+</li>
+<li>How do legal standards for war crimes differ from civil defamation standards?
+</li>
+<li>What does this case reveal about accountability processes for special forces?
+</li>
+<li>How might the arrest affect public trust in military institutions?
+</li>
 </ul>
-<h4 id="3-european-stocks-set-to-open-higher-despite-iran-tensions">3) European stocks set to open higher despite Iran tensions</h4>
+<h3 id="3-european-stocks-set-to-open-higher-despite-iran-tensions">3) European stocks set to open higher despite Iran tensions</h3>
 <p><strong>What happened (neutral):</strong> European stocks are expected to open higher on Tuesday even as investors monitor President Trump’s deadline regarding Iran and the Strait of Hormuz. Markets are showing mixed signals overall as risk assets react to geopolitical uncertainty. Bitcoin and other cryptocurrencies have also slipped amid the broader volatility.</p>
 <p><strong>Perspectives:</strong> CNBC notes stocks are set to rise as investors brace for the deadline, suggesting some resilience or pricing-in of outcomes. Bloomberg reports markets struggling for direction and highlights Bitcoin sliding with risk assets ahead of the ultimatum. The coverage reflects differing emphases: one on short-term equity optimism, the other on generalized risk aversion across asset classes. Both agree geopolitical developments centered on Iran are the dominant market driver.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>Why might stocks rise even when geopolitical risks are increasing?</li>
-<li>How do energy prices and broader risk sentiment interact in current trading?</li>
-<li>What role does anticipation of potential conflict play in pricing?</li>
-<li>How quickly can markets shift if the Tuesday deadline produces new developments?</li>
+<li>Why might stocks rise even when geopolitical risks are increasing?
+</li>
+<li>How do energy prices and broader risk sentiment interact in current trading?
+</li>
+<li>What role does anticipation of potential conflict play in pricing?
+</li>
+<li>How quickly can markets shift if the Tuesday deadline produces new developments?
+</li>
 </ul>
-<h4 id="4-howard-stern-and-wife-beth-sued-by-former-employee">4) Howard Stern and wife Beth sued by former employee</h4>
+<h3 id="4-howard-stern-and-wife-beth-sued-by-former-employee">4) Howard Stern and wife Beth sued by former employee</h3>
 <p><strong>What happened (neutral):</strong> Howard Stern and his wife Beth face a lawsuit from a fired former employee who accuses the couple of creating a hostile work environment.</p>
 <p><strong>Perspectives:</strong> The Daily Mail presents the lawsuit details, focusing on the claims made by the former employee. Coverage centers on allegations of workplace conduct rather than offering counter-narratives at this stage. The story is treated primarily as a celebrity legal matter.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>What legal thresholds must be met to establish a hostile work environment claim?</li>
-<li>How do employment disputes involving high-profile individuals receive different scrutiny?</li>
-<li>What rights do both employers and employees have in such cases?</li>
-<li>How might public perception influence ongoing legal proceedings?</li>
+<li>What legal thresholds must be met to establish a hostile work environment claim?
+</li>
+<li>How do employment disputes involving high-profile individuals receive different scrutiny?
+</li>
+<li>What rights do both employers and employees have in such cases?
+</li>
+<li>How might public perception influence ongoing legal proceedings?
+</li>
 </ul>
-<h4 id="5-nasa-astronauts-break-space-travel-distance-record">5) NASA astronauts break space travel distance record</h4>
+<h3 id="5-nasa-astronauts-break-space-travel-distance-record">5) NASA astronauts break space travel distance record</h3>
 <p><strong>What happened (neutral):</strong> NASA’s four Artemis astronauts have swung behind the moon and are heading home after breaking records for distance traveled in space. The mission brought humans closest to the lunar surface in more than 50 years.</p>
 <p><strong>Perspectives:</strong> Bloomberg reports the achievement factually, highlighting both the distance record and the proximity to the moon. The story is framed as a milestone in renewed lunar exploration efforts. Coverage emphasizes technological and exploratory accomplishment rather than controversy.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>How does this mission compare historically to previous lunar flights?</li>
-<li>What technical challenges are involved in record-distance crewed spaceflight?</li>
-<li>How might this achievement affect future Artemis program timelines?</li>
-<li>What is the relationship between public interest and sustained space funding?</li>
+<li>How does this mission compare historically to previous lunar flights?
+</li>
+<li>What technical challenges are involved in record-distance crewed spaceflight?
+</li>
+<li>How might this achievement affect future Artemis program timelines?
+</li>
+<li>What is the relationship between public interest and sustained space funding?
+</li>
 </ul>
-<h3 id="top-world-stories-5">Top world stories (5)</h3>
-<h4 id="1-israel-warns-iranians-to-avoid-trains-as-military-threats-continue">1) Israel warns Iranians to avoid trains as military threats continue</h4>
+<h2 id="top-world-stories-5">Top world stories (5)</h2>
+<h3 id="1-israel-warns-iranians-to-avoid-trains-as-military-threats-continue">1) Israel warns Iranians to avoid trains as military threats continue</h3>
 <p><strong>What happened (neutral):</strong> The Israeli military has warned Iranian civilians not to use trains or be near railway lines, stating it would endanger their lives. This comes amid ongoing conflict and faltering talks to end the war one day before President Trump’s deadline on the Strait of Hormuz.</p>
 <p><strong>Perspectives:</strong> The Guardian reports the specific Israeli military warning issued via its Farsi-language channel and places it in the context of broader Middle East crisis coverage. Other outlets link the warning to wider diplomatic and military developments. The reporting reflects concern over civilian safety versus the strategic messaging of involved parties.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>What is the strategic purpose of public military warnings to civilians?</li>
-<li>How do such warnings affect international perceptions of proportionality?</li>
-<li>What role does third-party mediation play when direct talks falter?</li>
-<li>How might civilian warnings influence domestic opinion inside Iran?</li>
+<li>What is the strategic purpose of public military warnings to civilians?
+</li>
+<li>How do such warnings affect international perceptions of proportionality?
+</li>
+<li>What role does third-party mediation play when direct talks falter?
+</li>
+<li>How might civilian warnings influence domestic opinion inside Iran?
+</li>
 </ul>
-<h4 id="2-albanese-to-visit-singapore-to-shore-up-fuel-supply">2) Albanese to visit Singapore to shore up fuel supply</h4>
+<h3 id="2-albanese-to-visit-singapore-to-shore-up-fuel-supply">2) Albanese to visit Singapore to shore up fuel supply</h3>
 <p><strong>What happened (neutral):</strong> Australian Prime Minister Albanese is visiting Singapore as part of efforts to secure fuel supplies. The story appears alongside other domestic Australian news including a new needle-free flu vaccine program for young children.</p>
 <p><strong>Perspectives:</strong> The Guardian’s live blog presents the trip as a practical response to energy security concerns amid global tensions. Coverage links energy supply issues to broader geopolitical instability without providing extensive analysis in the available reporting.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>Why might Australia seek additional fuel supply assurances at this time?</li>
-<li>How do bilateral visits function in energy diplomacy?</li>
-<li>What is the connection between international conflict and domestic fuel availability?</li>
-<li>How do public health initiatives like the new flu vaccine fit into a busy news cycle?</li>
+<li>Why might Australia seek additional fuel supply assurances at this time?
+</li>
+<li>How do bilateral visits function in energy diplomacy?
+</li>
+<li>What is the connection between international conflict and domestic fuel availability?
+</li>
+<li>How do public health initiatives like the new flu vaccine fit into a busy news cycle?
+</li>
 </ul>
-<h4 id="3-more-than-1700-brits-who-fell-ill-in-cape-verde-join-action-against-tui">3) More than 1,700 Brits who fell ill in Cape Verde join action against Tui</h4>
+<h3 id="3-more-than-1700-brits-who-fell-ill-in-cape-verde-join-action-against-tui">3) More than 1,700 Brits who fell ill in Cape Verde join action against Tui</h3>
 <p><strong>What happened (neutral):</strong> More than 1,700 British tourists who became ill while in Cape Verde have joined legal action against tour operator Tui. Tui says it is investigating the claims and is not yet in a position to provide a statement.</p>
 <p><strong>Perspectives:</strong> The BBC reports the scale of the joint action and Tui’s cautious response. The story is framed as consumer protection and corporate accountability in the travel industry. Coverage focuses on the number of people involved and the company’s ongoing investigation.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>What standards of care do tour operators owe customers regarding health risks?</li>
-<li>How do large-scale group actions affect corporate behavior?</li>
-<li>What information should travelers seek before booking overseas holidays?</li>
-<li>How do holiday illness claims balance individual experience with verifiable evidence?</li>
+<li>What standards of care do tour operators owe customers regarding health risks?
+</li>
+<li>How do large-scale group actions affect corporate behavior?
+</li>
+<li>What information should travelers seek before booking overseas holidays?
+</li>
+<li>How do holiday illness claims balance individual experience with verifiable evidence?
+</li>
 </ul>
-<h4 id="4-schools-in-knife-crime-hotspots-to-get-specialist-training">4) Schools in knife crime hotspots to get specialist training</h4>
+<h3 id="4-schools-in-knife-crime-hotspots-to-get-specialist-training">4) Schools in knife crime hotspots to get specialist training</h3>
 <p><strong>What happened (neutral):</strong> A new UK government partnership will provide specialist training for school leaders in knife-crime hotspots to help them manage risk.</p>
 <p><strong>Perspectives:</strong> The BBC presents the initiative as a targeted policy response. Coverage emphasizes prevention and support for educators rather than broader criminal justice debates. The story reflects ongoing societal concern about youth violence and the role of schools in addressing it.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>What specific skills might school leaders need to address knife crime risks?</li>
-<li>How effective are training programs compared with other interventions?</li>
-<li>What is the appropriate balance between school responsibility and wider social factors?</li>
-<li>How should success of such programs be measured?</li>
+<li>What specific skills might school leaders need to address knife crime risks?
+</li>
+<li>How effective are training programs compared with other interventions?
+</li>
+<li>What is the appropriate balance between school responsibility and wider social factors?
+</li>
+<li>How should success of such programs be measured?
+</li>
 </ul>
-<h4 id="5-eastern-european-gang-tried-to-steal-joanna-lumleys-car">5) Eastern European gang tried to steal Joanna Lumley's car</h4>
+<h3 id="5-eastern-european-gang-tried-to-steal-joanna-lumleys-car">5) Eastern European gang tried to steal Joanna Lumley's car</h3>
 <p><strong>What happened (neutral):</strong> An Eastern European gang allegedly attempted to steal Joanna Lumley’s car outside her London home and threatened her husband with an iron bar. They reportedly targeted at least three other vehicles in the same street during a weekend crimewave.</p>
 <p><strong>Perspectives:</strong> The Daily Mail reports the specific incident involving the actress and her husband, framing it as part of a targeted crime spree. Coverage highlights the celebrity element while noting the broader pattern of vehicle thefts in the area.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>How do opportunistic crimes against high-profile individuals differ from general patterns?</li>
-<li>What preventive measures can residents in affluent areas take?</li>
-<li>How does media coverage of celebrity crime victims affect public perception of crime trends?</li>
-<li>What role do law enforcement patterns play in addressing repeat offending?</li>
+<li>How do opportunistic crimes against high-profile individuals differ from general patterns?
+</li>
+<li>What preventive measures can residents in affluent areas take?
+</li>
+<li>How does media coverage of celebrity crime victims affect public perception of crime trends?
+</li>
+<li>What role do law enforcement patterns play in addressing repeat offending?
+</li>
 </ul>
-<h3 id="top-business-stories-3">Top business stories (3)</h3>
-<h4 id="1-oil-prices-continue-to-rise-ahead-of-trumps-iran-deadline">1) Oil prices continue to rise ahead of Trump’s Iran deadline</h4>
+<h2 id="top-business-stories-3">Top business stories (3)</h2>
+<h3 id="1-oil-prices-continue-to-rise-ahead-of-trumps-iran-deadline">1) Oil prices continue to rise ahead of Trump’s Iran deadline</h3>
 <p><strong>What happened (neutral):</strong> Crude oil prices have extended gains as President Trump repeated his Tuesday deadline regarding potential strikes on Iranian power plants and bridges. European stocks are nevertheless set to open higher.</p>
 <p><strong>Perspectives:</strong> CNBC and Bloomberg track the direct link between Trump’s statements and rising oil prices, reflecting energy market sensitivity to Middle East developments. Coverage shows markets attempting to balance geopolitical risk against other factors. Both outlets agree on the price direction and its reported connection to the Iran situation.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>Why does the Strait of Hormuz have such outsized influence on global oil prices?</li>
-<li>How do traders distinguish between rhetoric and likely action?</li>
-<li>What hedging strategies might companies be using in this environment?</li>
-<li>How long can elevated oil prices persist without wider economic effects?</li>
+<li>Why does the Strait of Hormuz have such outsized influence on global oil prices?
+</li>
+<li>How do traders distinguish between rhetoric and likely action?
+</li>
+<li>What hedging strategies might companies be using in this environment?
+</li>
+<li>How long can elevated oil prices persist without wider economic effects?
+</li>
 </ul>
-<h4 id="2-markets-struggle-for-direction-ahead-of-key-deadline">2) Markets struggle for direction ahead of key deadline</h4>
+<h3 id="2-markets-struggle-for-direction-ahead-of-key-deadline">2) Markets struggle for direction ahead of key deadline</h3>
 <p><strong>What happened (neutral):</strong> Financial markets are showing mixed movements and struggling for clear direction as investors await developments related to President Trump’s Iran deadline.</p>
 <p><strong>Perspectives:</strong> Bloomberg describes generalized uncertainty across equities, bonds, currencies and commodities. The coverage reflects classic risk-off behavior in the face of potential military escalation while noting that some European equities are still expected to open positively.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>What indicators are traders watching most closely this week?</li>
-<li>How do geopolitical deadlines typically affect different asset classes?</li>
-<li>What historical parallels exist for markets pricing in potential conflict?</li>
-<li>How might central bank policies interact with these events?</li>
+<li>What indicators are traders watching most closely this week?
+</li>
+<li>How do geopolitical deadlines typically affect different asset classes?
+</li>
+<li>What historical parallels exist for markets pricing in potential conflict?
+</li>
+<li>How might central bank policies interact with these events?
+</li>
 </ul>
-<h4 id="3-bitcoin-slides-along-with-other-risk-assets">3) Bitcoin slides along with other risk assets</h4>
+<h3 id="3-bitcoin-slides-along-with-other-risk-assets">3) Bitcoin slides along with other risk assets</h3>
 <p><strong>What happened (neutral):</strong> Bitcoin and other cryptocurrencies have declined in Asian trading as they move in tandem with broader risk assets ahead of President Trump’s Iran ultimatum.</p>
 <p><strong>Perspectives:</strong> Bloomberg reports the price movement as part of generalized risk aversion rather than crypto-specific news. The coverage treats cryptocurrencies as increasingly correlated with traditional financial markets during periods of geopolitical tension.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>Why has Bitcoin begun behaving more like traditional risk assets?</li>
-<li>How do macroeconomic and geopolitical factors interact in crypto markets?</li>
-<li>What role do institutional investors play in current price movements?</li>
-<li>How should investors think about diversification during geopolitical crises?</li>
+<li>Why has Bitcoin begun behaving more like traditional risk assets?
+</li>
+<li>How do macroeconomic and geopolitical factors interact in crypto markets?
+</li>
+<li>What role do institutional investors play in current price movements?
+</li>
+<li>How should investors think about diversification during geopolitical crises?
+</li>
 </ul>
-<h3 id="top-technology-stories-3">Top technology stories (3)</h3>
-<h4 id="1-china-and-us-competing-in-different-ai-races">1) China and US competing in different AI races</h4>
+<h2 id="top-technology-stories-3">Top technology stories (3)</h2>
+<h3 id="1-china-and-us-competing-in-different-ai-races">1) China and US competing in different AI races</h3>
 <p><strong>What happened (neutral):</strong> Both China and the United States are advancing in artificial intelligence but appear to be winning different aspects of the competition. The rivalry continues with neither side willing to let the other dominate.</p>
 <p><strong>Perspectives:</strong> The BBC analyzes the parallel AI developments, noting that the competition may still evolve significantly. CNBC’s China Connection newsletter observes that rapid AI adoption in China has not yet produced the same level of job displacement seen in some US tech sectors, suggesting different economic contexts and labor market dynamics. Coverage highlights that the two countries’ strengths and vulnerabilities differ, affecting how each frames progress.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>What specific metrics are being used to declare “winners” in AI development?</li>
-<li>How do different economic systems shape AI implementation and labor impacts?</li>
-<li>What role should government policy play in technological competition?</li>
-<li>How might breakthroughs in one area rapidly change the overall balance?</li>
+<li>What specific metrics are being used to declare “winners” in AI development?
+</li>
+<li>How do different economic systems shape AI implementation and labor impacts?
+</li>
+<li>What role should government policy play in technological competition?
+</li>
+<li>How might breakthroughs in one area rapidly change the overall balance?
+</li>
 </ul>
-<h4 id="2-insight-with-haslinda-amin-daily-analysis-program">2) Insight with Haslinda Amin – daily analysis program</h4>
+<h3 id="2-insight-with-haslinda-amin-daily-analysis-program">2) Insight with Haslinda Amin – daily analysis program</h3>
 <p><strong>What happened (neutral):</strong> Bloomberg’s daily news program featured in-depth interviews and analysis spanning business, finance, politics and culture.</p>
 <p><strong>Perspectives:</strong> Bloomberg presents the program as providing viewers with comprehensive perspectives on major stories. The format itself reflects an attempt to synthesize complex global developments for audiences.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>How do interview-based programs differ from traditional news reporting?</li>
-<li>What value does long-form discussion add during fast-moving crises?</li>
-<li>How can viewers evaluate the selection of guests and topics?</li>
-<li>What questions should audiences bring when watching analytical shows?</li>
+<li>How do interview-based programs differ from traditional news reporting?
+</li>
+<li>What value does long-form discussion add during fast-moving crises?
+</li>
+<li>How can viewers evaluate the selection of guests and topics?
+</li>
+<li>What questions should audiences bring when watching analytical shows?
+</li>
 </ul>
-<h4 id="3-australians-buy-record-number-of-new-evs-in-march">3) Australians buy record number of new EVs in March</h4>
+<h3 id="3-australians-buy-record-number-of-new-evs-in-march">3) Australians buy record number of new EVs in March</h3>
 <p><strong>What happened (neutral):</strong> Australians purchased a record number of new electric vehicles in March according to recent data.</p>
 <p><strong>Perspectives:</strong> The Guardian notes the record EV sales within its Australian news live blog. The development is presented alongside other domestic stories without extensive analysis in available reporting. It reflects growing consumer interest in electric vehicles amid global energy concerns.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>What factors might be driving record EV adoption at this time?</li>
-<li>How do fuel price concerns and environmental goals interact in consumer choices?</li>
-<li>What infrastructure challenges accompany rapid EV uptake?</li>
-<li>How do national trends compare with global patterns?</li>
+<li>What factors might be driving record EV adoption at this time?
+</li>
+<li>How do fuel price concerns and environmental goals interact in consumer choices?
+</li>
+<li>What infrastructure challenges accompany rapid EV uptake?
+</li>
+<li>How do national trends compare with global patterns?
+</li>
 </ul>
-<h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
-<h4 id="1-david-hasselhoff-looks-frail-in-first-public-sighting-after-surgeries">1) David Hasselhoff looks frail in first public sighting after surgeries</h4>
+<h2 id="top-popular-media-stories-3">Top popular media stories (3)</h2>
+<h3 id="1-david-hasselhoff-looks-frail-in-first-public-sighting-after-surgeries">1) David Hasselhoff looks frail in first public sighting after surgeries</h3>
 <p><strong>What happened (neutral):</strong> Baywatch star David Hasselhoff, 73, was seen looking frail while hiking with his wife Hayley Roberts following recent surgeries.</p>
 <p><strong>Perspectives:</strong> The Daily Mail presents photographs and describes the actor’s appearance in his first public outing in months. Coverage focuses on visible signs of recovery and the presence of his wife as support. The story follows typical celebrity health update framing.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>How does media coverage of aging celebrities balance privacy and public interest?</li>
-<li>What assumptions do audiences make from limited visual information?</li>
-<li>How has the nature of celebrity photography changed with modern media?</li>
-<li>What responsibility do outlets have when reporting on individuals’ health?</li>
+<li>How does media coverage of aging celebrities balance privacy and public interest?
+</li>
+<li>What assumptions do audiences make from limited visual information?
+</li>
+<li>How has the nature of celebrity photography changed with modern media?
+</li>
+<li>What responsibility do outlets have when reporting on individuals’ health?
+</li>
 </ul>
-<h4 id="2-harry-kanes-ballon-dor-hopes-tied-to-real-glamour-tie">2) Harry Kane’s Ballon d’Or hopes tied to Real glamour tie</h4>
+<h3 id="2-harry-kanes-ballon-dor-hopes-tied-to-real-glamour-tie">2) Harry Kane’s Ballon d’Or hopes tied to Real glamour tie</h3>
 <p><strong>What happened (neutral):</strong> Harry Kane is the leading goalscorer in Europe, but analysts suggest winning a major trophy may be necessary for him to win the Ballon d’Or. His performance in a key match against Real Madrid could be decisive.</p>
 <p><strong>Perspectives:</strong> The BBC examines the sporting narrative around individual awards, noting that statistical achievement alone may not be sufficient. Coverage connects the story to broader debates about how success is measured in football beyond raw numbers.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>How have criteria for major individual awards evolved over time?</li>
-<li>What role does team success play in individual recognition?</li>
-<li>How do media narratives influence award voting?</li>
-<li>What constitutes a “complete” footballing legacy?</li>
+<li>How have criteria for major individual awards evolved over time?
+</li>
+<li>What role does team success play in individual recognition?
+</li>
+<li>How do media narratives influence award voting?
+</li>
+<li>What constitutes a “complete” footballing legacy?
+</li>
 </ul>
-<h4 id="3-viktor-gyokeres-returns-to-sporting-as-hero-and-villain">3) Viktor Gyokeres returns to Sporting as hero and villain</h4>
+<h3 id="3-viktor-gyokeres-returns-to-sporting-as-hero-and-villain">3) Viktor Gyokeres returns to Sporting as hero and villain</h3>
 <p><strong>What happened (neutral):</strong> Striker Viktor Gyokeres returns to his former club Sporting Lisbon while playing for Arsenal, hoping to help them reach the Champions League semi-finals. He remains a polarizing figure for Sporting fans.</p>
 <p><strong>Perspectives:</strong> The BBC frames the match as emotionally complex for the player and supporters. Coverage highlights both his past contributions to the club and the tensions surrounding his departure.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>How do football fans reconcile admiration for past service with current opposition?</li>
-<li>What psychological pressures exist for players returning to former clubs?</li>
-<li>How does European competition amplify these narrative dynamics?</li>
-<li>What does this story reveal about loyalty in modern professional sport?</li>
+<li>How do football fans reconcile admiration for past service with current opposition?
+</li>
+<li>What psychological pressures exist for players returning to former clubs?
+</li>
+<li>How does European competition amplify these narrative dynamics?
+</li>
+<li>What does this story reveal about loyalty in modern professional sport?
+</li>
 </ul>
-<h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
-<h4 id="1-prince-edward-forced-to-spend-easter-elsewhere-due-to-prince-andrew-dispute">1) Prince Edward forced to spend Easter elsewhere due to Prince Andrew dispute</h4>
+<h2 id="top-gossip-stories-3">Top gossip stories (3)</h2>
+<h3 id="1-prince-edward-forced-to-spend-easter-elsewhere-due-to-prince-andrew-dispute">1) Prince Edward forced to spend Easter elsewhere due to Prince Andrew dispute</h3>
 <p><strong>What happened (neutral):</strong> Prince Edward and his wife Sophie wanted to stay at Wood Farm on the Sandringham estate for Easter but were required to use the Gardens House instead because Prince Andrew is staying at Wood Farm and “digging his heels in.”</p>
 <p><strong>Perspectives:</strong> The Daily Mail presents the story as an internal royal family accommodation dispute. Coverage focuses on the practical consequences for Edward and Sophie during the holiday period and characterizes Andrew’s position as inflexible.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>How do property arrangements within royal households reflect broader family dynamics?</li>
-<li>What access to information does the public have about private royal arrangements?</li>
-<li>How does media coverage of minor royal disputes serve different purposes?</li>
-<li>What context might be missing from reports based on single sources?</li>
+<li>How do property arrangements within royal households reflect broader family dynamics?
+</li>
+<li>What access to information does the public have about private royal arrangements?
+</li>
+<li>How does media coverage of minor royal disputes serve different purposes?
+</li>
+<li>What context might be missing from reports based on single sources?
+</li>
 </ul>
-<h4 id="2-speculation-grows-over-identity-of-leaker-trump-vows-to-prosecute">2) Speculation grows over identity of leaker Trump vows to prosecute</h4>
+<h3 id="2-speculation-grows-over-identity-of-leaker-trump-vows-to-prosecute">2) Speculation grows over identity of leaker Trump vows to prosecute</h3>
 <p><strong>What happened (neutral):</strong> President Trump has vowed to pursue a “sick” leaker who revealed that the US was searching for a second missing airman after a fighter jet was downed over Iran. Speculation is growing about the person’s identity.</p>
 <p><strong>Perspectives:</strong> The Daily Mail reports on Trump’s statement and the subsequent media and public speculation. The story combines national security, leaks, and presidential rhetoric elements within a gossip-adjacent framing focused on the hunt for the individual responsible.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>What constitutes unauthorized disclosure in active military operations?</li>
-<li>How do leak investigations intersect with press freedom considerations?</li>
-<li>Why do some stories generate intense speculation about sources?</li>
-<li>How should readers evaluate anonymous sourcing in such reports?</li>
+<li>What constitutes unauthorized disclosure in active military operations?
+</li>
+<li>How do leak investigations intersect with press freedom considerations?
+</li>
+<li>Why do some stories generate intense speculation about sources?
+</li>
+<li>How should readers evaluate anonymous sourcing in such reports?
+</li>
 </ul>
-<h4 id="3-joanna-lumley-car-theft-attempt-becomes-high-profile-crime-story">3) Joanna Lumley car theft attempt becomes high-profile crime story</h4>
+<h3 id="3-joanna-lumley-car-theft-attempt-becomes-high-profile-crime-story">3) Joanna Lumley car theft attempt becomes high-profile crime story</h3>
 <p><strong>What happened (neutral):</strong> The attempted theft of Joanna Lumley’s car and the alleged threat to her husband have drawn significant attention as part of a reported crimewave targeting multiple vehicles.</p>
 <p><strong>Perspectives:</strong> The Daily Mail emphasizes the celebrity angle and provides details about the Eastern European gang allegedly responsible. Coverage blends crime reporting with gossip elements by focusing on the couple’s experience at their £2.5m London home.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>How does the involvement of well-known figures change crime reporting tone?</li>
-<li>What details are emphasized in celebrity victim stories versus others?</li>
-<li>How do readers distinguish between verified facts and speculative elements?</li>
-<li>What is the impact on public understanding of urban crime when high-profile cases dominate coverage?</li>
+<li>How does the involvement of well-known figures change crime reporting tone?
+</li>
+<li>What details are emphasized in celebrity victim stories versus others?
+</li>
+<li>How do readers distinguish between verified facts and speculative elements?
+</li>
+<li>What is the impact on public understanding of urban crime when high-profile cases dominate coverage?
+</li>
 </ul>
-<h3 id="understanding-the-issue-how-ultimatums-function-in-international-diplomacy">Understanding the Issue: How Ultimatums Function in International Diplomacy</h3>
+<h2 id="understanding-the-issue-how-ultimatums-function-in-international-diplomacy">Understanding the Issue: How Ultimatums Function in International Diplomacy</h2>
 <p>Most coverage of Trump’s Iran deadline treats it as a simple countdown to potential military action or diplomatic breakthrough. What’s often missed is how ultimatums actually operate as signaling mechanisms within a larger bargaining framework that includes multiple parties, incomplete information, and domestic political incentives on all sides.</p>
 <p>When leaders issue public deadlines backed by specific threats, they are attempting to change the other side’s assessment of costs and benefits. The target (in this case Iran) must weigh compliance against resistance while calculating how credible the threat actually is. Mediators from Pakistan, Egypt and Turkey are simultaneously trying to create off-ramps that allow face-saving compromises. History shows that successful ultimatums are usually paired with credible face-saving exits</p>
             </div>
@@ -2478,9 +2443,9 @@
             </section>
             <script>
             /* Progressive enhancement: make chapters seek the player, but
-               ONLY when there is a player on the page. Episodes without
-               alternate-language tracks render no inline <audio>, so the
-               list stays a plain, useful contents listing there. */
+               ONLY when there is a player on the page. An episode with no
+               published audio URL renders no <audio>, so the list stays a
+               plain, useful contents listing there. */
             (function () {
                 var audio = document.getElementById("nn-i18n-audio")
                     || document.querySelector(".nn-iv-player audio");
@@ -2660,7 +2625,8 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
   Made with AI — transparently
 </a>
             </div>
-            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 25 sources</span><span aria-hidden="true"> · </span><span>voiced with Grok TTS</span><span aria-hidden="true"> · </span><a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20Omni%20View%20Ep29&body=Re%3A%20https%3A//nerranetwork.com/blog/omni_view/ep029.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
+            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 25 sources</span> <span aria-hidden="true">·</span> <span>voiced with Grok TTS</span>
+                <span aria-hidden="true">·</span> <a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20Omni%20View%20Ep29&body=Re%3A%20https%3A//nerranetwork.com/blog/omni_view/ep029.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
             </p>
             <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>👋 Did this episode land?</span>
@@ -2697,13 +2663,13 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                 
                 <a href="ep028.html" rel="prev">
                     <span class="nav-label">&larr; Previous</span>
-                    <span class="nav-title">Episode 28</span>
+                    <span class="nav-title">Ep 28 · U.S. forces rescue both crew members of an F-15E fighter jet shot down over Iran, with President Trump calling it one of the most daring search-and-rescue operations in American history.</span>
                 </a>
                 
                 
                 <a href="ep030.html" rel="next" class="next">
                     <span class="nav-label">Next &rarr;</span>
-                    <span class="nav-title">Episode 30</span>
+                    <span class="nav-title">Ep 30 · Fragile US-Iran ceasefire faces immediate test as Israel strikes Lebanon, Iran halts tankers in the Strait of Hormuz, and both sides dispute what was actually agreed.</span>
                 </a>
                 
             </nav>
@@ -2728,6 +2694,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             
             <!-- Cross-show Recommendations -->
             
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/nerra_daily/ep047.html" class="blog-related-card" style="--card-show-color: #007A99">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #007A99, white 35%)">Nerra Daily</span>
+                        <h3>Tuesday edition — Record Dragon transits and an optogenetics Nobel</h3>
+                        
+                    </a>
+                    
+                    <a href="../../blog/first_principles/ep122.html" class="blog-related-card" style="--card-show-color: #0F766E">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #0F766E, white 35%)">First Principles Daily</span>
+                        <h3>Office chairs that sell for several hundred dollars contain only tens of dollars worth of steel, foam and fabric.</h3>
+                        
+                    </a>
+                    
+                    <a href="../../blog/unintended_consequences/ep134.html" class="blog-related-card" style="--card-show-color: #B45309">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Unintended Consequences</span>
+                        <h3>New Zealand's 1080 drops targeted possums to protect forests and cattle, yet stoats turned sharply on kiwi and other ground birds.</h3>
+                        
+                    </a>
+                    
+                </div>
+            </section>
+            
         </article>
     </div>
 
@@ -2741,7 +2735,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                     <div class="nn-footer-brand"><span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span></div>
                     <p class="nn-footer-desc">Zero fluff. Independent podcast network produced in Vancouver, Canada.</p>
                 </div>
-                <div class="nn-footer-col">
+                <div class="nn-footer-col nn-footer-col--shows">
                     <h4>Shows</h4>
                     
                     <ul class="nn-footer-showlist">
@@ -2900,7 +2894,8 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                       data-label-idle="Subscribe"
                       data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
-                    <p>Pick the shows you want in your inbox:</p>
+                    <p>Pick the shows you want in your inbox:</p><details class="nn-subscribe-pick">
+                    <summary>Choose shows <span>(31)</span></summary>
                     <div class="nn-subscribe-tags">
                         <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
                         
@@ -2965,6 +2960,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                         <label><input type="checkbox" name="tag" value="Offshore North"> Offshore North</label>
                         
                     </div>
+                    </details>
                     <div class="nn-subscribe-row">
                         <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
                         <button type="submit">Subscribe</button>

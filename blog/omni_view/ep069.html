@@ -104,7 +104,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep069.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep069.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/omni_view/Omni_View_Ep069_20260603.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -237,6 +242,11 @@
             cursor: pointer;
             transition: all var(--duration) var(--ease);
         }
+        /* Same body-link override as the related cards: these are buttons. */
+        .blog-article .share-buttons a {
+            color: var(--nn-text-muted);
+            text-decoration: none;
+        }
         .share-buttons a:hover,
         .share-buttons button:hover {
             border-color: var(--show-color);
@@ -249,13 +259,13 @@
             margin: 0 auto;
             padding: 0 var(--sp-6) var(--sp-16);
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(0, 1fr);
             gap: var(--sp-10);
         }
         @media (min-width: 1024px) {
             .blog-article-wrap {
                 max-width: 1060px;
-                grid-template-columns: 200px 1fr;
+                grid-template-columns: 200px minmax(0, 1fr);
             }
         }
 
@@ -306,9 +316,18 @@
             font-size: 0.75rem;
         }
 
-        /* Article */
+        /* Article. A long unbroken token (a URL, a provenance run) may never
+           widen the page past the phone it is on (Oct 7 2026). */
         .blog-article {
             min-width: 0;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+        }
+        /* Reading measure: about 68-72 characters of body text a line
+           (it had run 104-111). The sources grid, claims and transcript
+           below keep the full column. */
+        .blog-article .blog-body-lang {
+            max-width: 72ch;
         }
         .blog-article h1 {
             font-family: var(--font-heading);
@@ -372,12 +391,25 @@
             color: var(--nn-text);
             margin-bottom: var(--sp-3);
         }
+        /* An item's body is the reporting, not a caption: full text colour
+           (it was muted grey under a bold headline, Oct 7 2026). */
         .blog-article .blog-list-cont {
             margin: var(--sp-1) 0 var(--sp-2);
             padding-left: var(--sp-2);
             font-size: 1rem;
-            color: var(--nn-text-muted);
+            color: var(--nn-text);
         }
+        /* Digest items are one sentence per line; at the article's
+           paragraph spacing each story read as a column of scattered
+           lines. Inside an item the sentences sit together; the items
+           themselves get the air (Oct 7 2026 design pass). */
+        .blog-article li > p.blog-list-cont {
+            font-size: 1rem;
+            line-height: 1.7;
+            margin: var(--sp-2) 0 0;
+            padding-left: 0;
+        }
+        .blog-article li:has(> p.blog-list-cont) { margin-bottom: var(--sp-6); }
         .blog-article hr {
             border: none;
             border-top: 1px solid var(--nn-border);
@@ -521,6 +553,12 @@
             text-decoration: none;
             transition: all var(--duration) var(--ease);
         }
+        /* The cards sit inside .blog-article, whose body-link rule would
+           otherwise underline and recolour every line of every card. */
+        .blog-article a.blog-related-card {
+            color: inherit;
+            text-decoration: none;
+        }
         .blog-related-card:hover {
             border-color: var(--card-show-color, var(--nn-purple));
             background: var(--nn-card-hover);
@@ -577,15 +615,16 @@
             font-family: var(--font-ui);
             font-variant-numeric: tabular-nums;
             font-size: 0.85rem;
-            color: var(--show-color);
+            /* Text, so the AA-lightened brand colour, not the raw one. */
+            color: var(--show-color-text, var(--show-color));
             min-width: 3.5rem;
             flex-shrink: 0;
         }
         /* Only looks clickable once the seek script has attached to a
-           real audio element — an English-only episode has no inline
+           real audio element — an episode with no published audio has no
            player, and a cursor that promises nothing is worse than none. */
         .blog-chapter-list li.is-seekable { cursor: pointer; }
-        .blog-chapter-list li.is-seekable:hover .chapter-title { color: var(--show-color); }
+        .blog-chapter-list li.is-seekable:hover .chapter-title { color: var(--show-color-text, var(--show-color)); }
         .blog-chapters .chapter-foot {
             margin-top: var(--sp-3);
             font-size: 0.85rem;
@@ -660,7 +699,7 @@
             font-family: var(--font-ui);
             font-size: 0.88rem;
             font-weight: 600;
-            color: var(--show-color, var(--nn-purple));
+            color: var(--show-color-text, var(--show-color, var(--nn-purple-text, #9D8BFF)));
         }
         .blog-transcript details[open] .transcript-preview,
         .blog-transcript details[open] .transcript-more { display: none; }
@@ -712,6 +751,12 @@
             font-size: 0.9rem;
             color: var(--nn-text);
             font-weight: 500;
+            /* The neighbour's headline, held to three lines by CSS rather
+               than cut in the template (engine/titles.py owns every cut). */
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
         .blog-ep-nav .next {
             text-align: right;
@@ -738,7 +783,14 @@
             line-height: 1.6;
             margin: 0.35rem 0 0;
         }
-        .nn-iv-provenance span { white-space: nowrap; }
+        /* Each part is kept whole where it fits and wraps where it does not
+           (Oct 7 2026): the parts used to be nowrap spans joined with no
+           whitespace between them, one unbreakable run that laid every
+           post out 500-980px wide on a 390px phone and pushed the menu
+           button off-screen. The separators are plain inline text, so the
+           line breaks between parts. */
+        .nn-iv-provenance { overflow-wrap: anywhere; }
+        .nn-iv-provenance > span:not([aria-hidden]) { display: inline-block; max-width: 100%; }
         /* Episode provenance (Oct 2026): the one line under the AI badge on
            a news post, from engine.brand.episode_provenance_parts, plus the
            "Report an error" link beside it. Same type as the interview
@@ -897,7 +949,9 @@
         }
 
         /* Multilingual audio player + language switcher (June 2026) */
-        .nn-i18n {
+        /* .nn-listen is the same box without the switcher (Oct 7 2026). */
+        .nn-i18n,
+        .nn-listen {
             max-width: 760px;
             margin: 0 auto var(--sp-4);
             padding: 0 var(--sp-6);
@@ -1566,379 +1620,200 @@
         <a href="../../player.html">Player</a>
         
         <a href="../../explore.html" style="font-weight:600;">Find your show</a>
-        
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Hosted by Mira</div>
+        <details class="nn-mobile-shows nn-mobile-group" open>
+            <summary class="nn-mobile-shows-title">Hosted by Mira <span class="nn-mobile-count">3</span></summary>
             
             <a href="../../nerra-daily.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Daily
             </a>
             
             <a href="../../age-of-ai.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The Age of AI
             </a>
             
             <a href="../../nerra-voices.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Voices
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">World desks</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">World desks <span class="nn-mobile-count">6</span></summary>
             
             <a href="../../omni-view-world.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Top World News
             </a>
             
             <a href="../../omni-view-north-america.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View North America
             </a>
             
             <a href="../../omni-view-europe.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Europe
             </a>
             
             <a href="../../omni-view-asia-pacific.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Asia Pacific
             </a>
             
             <a href="../../omni-view-africa-mideast.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Africa & Middle East
             </a>
             
             <a href="../../omni-view-latam.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Central & South America
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Local news</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Local news <span class="nn-mobile-count">2</span></summary>
             
             <a href="../../vancouver.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/vancouver-400.webp"><img src="../../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/vancouver-400.webp"><img src="../../assets/covers/vancouver.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Vancouver Daily News
             </a>
             
             <a href="../../collingwood.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/collingwood-400.webp"><img src="../../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/collingwood-400.webp"><img src="../../assets/covers/collingwood.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Collingwood Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">AI & compute</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">AI & compute <span class="nn-mobile-count">3</span></summary>
             
             <a href="../../models-agents.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents
             </a>
             
             <a href="../../ai-chips.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/ai-chips-400.webp"><img src="../../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/ai-chips-400.webp"><img src="../../assets/covers/ai-chips.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 AI Chips & Data Centres Daily
             </a>
             
             <a href="../../models-agents-beginners.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents for Beginners
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Markets</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Markets <span class="nn-mobile-count">4</span></summary>
             
             <a href="../../modern-investing.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Modern Investing Techniques
             </a>
             
             <a href="../../mag7.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/mag7-400.webp"><img src="../../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/mag7-400.webp"><img src="../../assets/covers/mag7.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 MAG 7 Daily
             </a>
             
             <a href="../../prediction-markets.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/prediction-markets-400.webp"><img src="../../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/prediction-markets-400.webp"><img src="../../assets/covers/prediction-markets.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Prediction Markets Daily
             </a>
             
             <a href="../../tesla.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Tesla Shorts Time
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Health & longevity</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Health & longevity <span class="nn-mobile-count">3</span></summary>
             
             <a href="../../planetterrian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Planetterrian Daily
             </a>
             
             <a href="../../peptides.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/peptides-400.webp"><img src="../../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/peptides-400.webp"><img src="../../assets/covers/peptides.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Peptides Weekly
             </a>
             
             <a href="../../longevity.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/longevity-400.webp"><img src="../../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/longevity-400.webp"><img src="../../assets/covers/longevity.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Longevity Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Every other show</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">10</span></summary>
             
             <a href="../../omni-view.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View
             </a>
             
             <a href="../../fascinating-frontiers.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Fascinating Frontiers
             </a>
             
             <a href="../../spacex.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 SpaceX Daily
             </a>
             
             <a href="../../env-intel.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Environmental Intelligence
             </a>
             
             <a href="../../ru/finansy-prosto.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/finansy-prosto-400.webp"><img src="../../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/finansy-prosto-400.webp"><img src="../../assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Финансы Просто
             </a>
             
             <a href="../../ru/privet-russian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/privet-russian-400.webp"><img src="../../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/privet-russian-400.webp"><img src="../../assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Привет, Русский!
             </a>
             
             <a href="../../unintended-consequences.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Unintended Consequences
             </a>
             
             <a href="../../first-principles.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 First Principles Daily
             </a>
             
             <a href="../../thedppod.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The DP Pod: The Do Positive Podcast
             </a>
             
             <a href="../../offshore-north.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Offshore North
             </a>
             
-        </div>
+        </details>
         
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Blogs</div>
-            <a href="../../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">
-                All Blog Posts
-            </a>
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Hosted by Mira</div>
-            
-            <a href="../../blog/nerra_daily/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Daily Blog
-            </a>
-            
-            <a href="../../blog/age_of_ai/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
-                The Age of AI Blog
-            </a>
-            
-            <a href="../../blog/nerra_voices/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Voices Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">World desks</div>
-            
-            <a href="../../blog/omni_view_world/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Top World News Blog
-            </a>
-            
-            <a href="../../blog/omni_view_north_america/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View North America Blog
-            </a>
-            
-            <a href="../../blog/omni_view_europe/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Europe Blog
-            </a>
-            
-            <a href="../../blog/omni_view_asia_pacific/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Asia Pacific Blog
-            </a>
-            
-            <a href="../../blog/omni_view_africa_mideast/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Africa & Middle East Blog
-            </a>
-            
-            <a href="../../blog/omni_view_latam/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Central & South America Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Local news</div>
-            
-            <a href="../../blog/vancouver/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/vancouver-400.webp"><img src="../../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Vancouver Daily News Blog
-            </a>
-            
-            <a href="../../blog/collingwood/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/collingwood-400.webp"><img src="../../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Collingwood Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">AI & compute</div>
-            
-            <a href="../../blog/models_agents/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents Blog
-            </a>
-            
-            <a href="../../blog/ai_chips/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/ai-chips-400.webp"><img src="../../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                AI Chips & Data Centres Daily Blog
-            </a>
-            
-            <a href="../../blog/models_agents_beginners/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents for Beginners Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Markets</div>
-            
-            <a href="../../blog/modern_investing/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
-                Modern Investing Techniques Blog
-            </a>
-            
-            <a href="../../blog/mag7/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/mag7-400.webp"><img src="../../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                MAG 7 Daily Blog
-            </a>
-            
-            <a href="../../blog/prediction_markets/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/prediction-markets-400.webp"><img src="../../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Prediction Markets Daily Blog
-            </a>
-            
-            <a href="../../blog/tesla/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
-                Tesla Shorts Time Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Health & longevity</div>
-            
-            <a href="../../blog/planetterrian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Planetterrian Daily Blog
-            </a>
-            
-            <a href="../../blog/peptides/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/peptides-400.webp"><img src="../../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Peptides Weekly Blog
-            </a>
-            
-            <a href="../../blog/longevity/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/longevity-400.webp"><img src="../../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Longevity Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Every other show</div>
-            
-            <a href="../../blog/omni_view/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Blog
-            </a>
-            
-            <a href="../../blog/fascinating_frontiers/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
-                Fascinating Frontiers Blog
-            </a>
-            
-            <a href="../../blog/spacex/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                SpaceX Daily Blog
-            </a>
-            
-            <a href="../../blog/env_intel/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
-                Environmental Intelligence Blog
-            </a>
-            
-            <a href="../../blog/finansy_prosto/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/finansy-prosto-400.webp"><img src="../../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                Финансы Просто Blog
-            </a>
-            
-            <a href="../../blog/privet_russian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/privet-russian-400.webp"><img src="../../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                Привет, Русский! Blog
-            </a>
-            
-            <a href="../../blog/unintended_consequences/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
-                Unintended Consequences Blog
-            </a>
-            
-            <a href="../../blog/first_principles/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                First Principles Daily Blog
-            </a>
-            
-            <a href="../../blog/dp_pod/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
-                The DP Pod: The Do Positive Podcast Blog
-            </a>
-            
-            <a href="../../blog/offshore_north/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
-                Offshore North Blog
-            </a>
-            
-            
+            <a href="../../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">All Blog Posts</a>
+            <a href="../../topics/index.html" class="nn-mobile-show-link">Browse by topic</a>
         </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">More</div>
@@ -1975,10 +1850,7 @@
             <a href="../../blog/omni_view/index.html" class="blog-show-badge">
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
-            </a>
-            <h1><span class="nn-i18n-title">New US tariffs on 60 economies over forced-labor practices could raise prices for British shoppers and slow already-fragile global growth.</span> — Episode 69</h1>
-            
-            <p class="blog-hero-hook">New US tariffs on 60 economies over forced-labor practices could raise prices for British shoppers and slow already-fragile global growth.</p>
+            </a><h1><span class="nn-i18n-title">New US tariffs on 60 economies over forced-labor practices could raise prices for British shoppers and slow already-fragile global growth.</span></h1>
             
             <div class="blog-meta-bar">
                 <span class="post-author">By Patrick</span>
@@ -1991,18 +1863,10 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     10 min read
                 </span>
-                
-                <a href="../../omni-view.html" class="blog-listen-cta">
+                <a href="#listen" class="blog-listen-cta">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     Listen to podcast
                 </a>
-                
-                
-                <a href="../../omni-view-summaries.html" class="blog-listen-cta">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                    View summaries
-                </a>
-                
                 
             </div>
         </div>
@@ -2011,6 +1875,20 @@
 
     
     
+    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+        <div class="nn-i18n-inner">
+            <div class="nn-i18n-row">
+                <span class="nn-i18n-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Listen to this episode
+                </span>
+            </div>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/omni_view/Omni_View_Ep069_20260603.mp3">
+                <a href="https://op3.dev/e/audio.nerranetwork.com/omni_view/Omni_View_Ep069_20260603.mp3">Download the audio</a>
+            </audio>
+        </div>
+    </section>
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -2018,45 +1896,43 @@
         <aside class="blog-toc">
             <div class="blog-toc-title">Contents</div>
             
-            <a href="#omni-view-omniview-briefing" class="">Omni View — Omni‑View Briefing</a>
+            <a href="#top-stories-5" class="">Top stories (5)</a>
             
-            <a href="#top-stories-5" class="toc-h3">Top stories (5)</a>
+            <a href="#1-us-proposes-fresh-tariffs-on-60-economies-over-forced-labor" class="toc-h3">1) US proposes fresh tariffs on 60 economies over forced labor</a>
             
-            <a href="#1-us-proposes-fresh-tariffs-on-60-economies-over-forced-labor" class="">1) US proposes fresh tariffs on 60 economies over forced labor</a>
+            <a href="#2-ukrainian-drones-strike-st-petersburg-oil-terminal" class="toc-h3">2) Ukrainian drones strike St. Petersburg oil terminal</a>
             
-            <a href="#2-ukrainian-drones-strike-st-petersburg-oil-terminal" class="">2) Ukrainian drones strike St. Petersburg oil terminal</a>
+            <a href="#3-oecd-warns-of-global-slowdown-tied-to-us-iran-conflict" class="toc-h3">3) OECD warns of global slowdown tied to US-Iran conflict</a>
             
-            <a href="#3-oecd-warns-of-global-slowdown-tied-to-us-iran-conflict" class="">3) OECD warns of global slowdown tied to US-Iran conflict</a>
+            <a href="#4-iranian-drones-damage-kuwait-airport-amid-stalled-us-iran-talks" class="toc-h3">4) Iranian drones damage Kuwait airport amid stalled US-Iran talks</a>
             
-            <a href="#4-iranian-drones-damage-kuwait-airport-amid-stalled-us-iran-talks" class="">4) Iranian drones damage Kuwait airport amid stalled US-Iran talks</a>
+            <a href="#5-uk-workless-households-reach-highest-share-in-two-years" class="toc-h3">5) UK workless households reach highest share in two years</a>
             
-            <a href="#5-uk-workless-households-reach-highest-share-in-two-years" class="">5) UK workless households reach highest share in two years</a>
+            <a href="#top-world-stories-2" class="">Top world stories (2)</a>
             
-            <a href="#top-world-stories-2" class="toc-h3">Top world stories (2)</a>
+            <a href="#1-nato-chief-makes-unannounced-visit-to-kyiv" class="toc-h3">1) NATO chief makes unannounced visit to Kyiv</a>
             
-            <a href="#1-nato-chief-makes-unannounced-visit-to-kyiv" class="">1) NATO chief makes unannounced visit to Kyiv</a>
+            <a href="#2-israel-and-lebanon-open-new-round-of-talks-after-strikes" class="toc-h3">2) Israel and Lebanon open new round of talks after strikes</a>
             
-            <a href="#2-israel-and-lebanon-open-new-round-of-talks-after-strikes" class="">2) Israel and Lebanon open new round of talks after strikes</a>
+            <a href="#top-business-stories-2" class="">Top business stories (2)</a>
             
-            <a href="#top-business-stories-2" class="toc-h3">Top business stories (2)</a>
+            <a href="#1-akzo-nobel-shares-fall-19-after-takeover-talks-end" class="toc-h3">1) Akzo Nobel shares fall 19% after takeover talks end</a>
             
-            <a href="#1-akzo-nobel-shares-fall-19-after-takeover-talks-end" class="">1) Akzo Nobel shares fall 19% after takeover talks end</a>
+            <a href="#2-novo-nordisk-launches-wegovy-pill-in-uae" class="toc-h3">2) Novo Nordisk launches Wegovy pill in UAE</a>
             
-            <a href="#2-novo-nordisk-launches-wegovy-pill-in-uae" class="">2) Novo Nordisk launches Wegovy pill in UAE</a>
+            <a href="#top-technology-stories-1" class="">Top technology stories (1)</a>
             
-            <a href="#top-technology-stories-1" class="toc-h3">Top technology stories (1)</a>
+            <a href="#1-data-center-operators-seek-to-reduce-water-consumption" class="toc-h3">1) Data center operators seek to reduce water consumption</a>
             
-            <a href="#1-data-center-operators-seek-to-reduce-water-consumption" class="">1) Data center operators seek to reduce water consumption</a>
+            <a href="#top-popular-media-stories-1" class="">Top popular media stories (1)</a>
             
-            <a href="#top-popular-media-stories-1" class="toc-h3">Top popular media stories (1)</a>
+            <a href="#1-good-morning-britain-apologizes-after-c-word-broadcast" class="toc-h3">1) Good Morning Britain apologizes after C-word broadcast</a>
             
-            <a href="#1-good-morning-britain-apologizes-after-c-word-broadcast" class="">1) Good Morning Britain apologizes after C-word broadcast</a>
+            <a href="#top-gossip-stories-1" class="">Top gossip stories (1)</a>
             
-            <a href="#top-gossip-stories-1" class="toc-h3">Top gossip stories (1)</a>
+            <a href="#1-jennifer-lopez-experiences-wardrobe-malfunction-at-premiere" class="toc-h3">1) Jennifer Lopez experiences wardrobe malfunction at premiere</a>
             
-            <a href="#1-jennifer-lopez-experiences-wardrobe-malfunction-at-premiere" class="">1) Jennifer Lopez experiences wardrobe malfunction at premiere</a>
-            
-            <a href="#understanding-the-issue-how-the-us-proposes-and-adjusts-tariffs" class="toc-h3">Understanding the Issue: How the US proposes and adjusts tariffs</a>
+            <a href="#understanding-the-issue-how-the-us-proposes-and-adjusts-tariffs" class="">Understanding the Issue: How the US proposes and adjusts tariffs</a>
             
         </aside>
         
@@ -2064,113 +1940,137 @@
         <article class="blog-article">
             
             <div class="blog-body-lang" data-lang="en">
-            <h2 id="omni-view-omniview-briefing">Omni View — Omni‑View Briefing</h2>
-<p><em>New US tariffs on 60 economies over forced-labor practices could raise prices for British shoppers and slow already-fragile global growth.</em></p>
-<h3 id="top-stories-5">Top stories (5)</h3>
-<h4 id="1-us-proposes-fresh-tariffs-on-60-economies-over-forced-labor">1) US proposes fresh tariffs on 60 economies over forced labor</h4>
+            <h2 id="top-stories-5">Top stories (5)</h2>
+<h3 id="1-us-proposes-fresh-tariffs-on-60-economies-over-forced-labor">1) US proposes fresh tariffs on 60 economies over forced labor</h3>
 <p><strong>What happened (neutral):</strong> The US Trade Representative has outlined new duties targeting dozens of countries, including the UK, with proposed rates of 10% or 12.5% depending on each economy’s forced-labor rules. The move follows a Supreme Court decision that struck down many earlier tariffs. Officials say the duties aim to curb trade linked to forced labor.</p>
 <p><strong>Perspectives:</strong> The strongest case for the tariffs rests on the principle that trade policy should penalize supply chains that rely on forced labor, protecting both workers abroad and domestic industries that already comply with higher standards. Supporters note that the proposal distinguishes between economies with partial or full prohibitions, creating a sliding scale rather than a blanket penalty. Critics argue the duties risk raising costs for consumers and disrupting supply chains at a time when global growth is already under pressure, and they point out that the legal basis has already faced court challenges. Both sides agree the tariffs would affect a wide range of imported goods; they differ on whether the labor-rights goal justifies the economic friction.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>How might these duties affect everyday prices in the UK and elsewhere?</li>
-<li>What verification methods will determine which countries face the higher rate?</li>
-<li>How have similar past tariffs altered trade patterns?</li>
+<li>How might these duties affect everyday prices in the UK and elsewhere?
+</li>
+<li>What verification methods will determine which countries face the higher rate?
+</li>
+<li>How have similar past tariffs altered trade patterns?
+</li>
 </ul>
-<h4 id="2-ukrainian-drones-strike-st-petersburg-oil-terminal">2) Ukrainian drones strike St. Petersburg oil terminal</h4>
+<h3 id="2-ukrainian-drones-strike-st-petersburg-oil-terminal">2) Ukrainian drones strike St. Petersburg oil terminal</h3>
 <p><strong>What happened (neutral):</strong> Ukrainian drones hit an oil terminal in St. Petersburg, setting part of the facility ablaze hours before an economic forum hosted by President Putin. Ukrainian President Zelenskyy confirmed the strike, which targeted infrastructure in Putin’s birthplace. Russian authorities have not yet issued a detailed public response.</p>
 <p><strong>Perspectives:</strong> The strongest case for the operation rests on Ukraine’s need to demonstrate that it can reach deep into Russian territory and disrupt energy exports that fund the war effort. Advocates note that striking an oil port ahead of a high-profile forum carries symbolic weight and may complicate Russia’s ability to project economic stability. Opponents highlight the risk of escalation and potential civilian or economic fallout beyond the immediate military target, arguing that such strikes could harden Russian public resolve rather than weaken it. Both sides agree the attack occurred near a major Russian city hosting an international event; they differ on whether the military benefit outweighs the danger of broader retaliation.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>What does the choice of target reveal about Ukraine’s current strategy?</li>
-<li>How might Russia respond in the coming days?</li>
-<li>How are energy markets reacting to the strike?</li>
+<li>What does the choice of target reveal about Ukraine’s current strategy?
+</li>
+<li>How might Russia respond in the coming days?
+</li>
+<li>How are energy markets reacting to the strike?
+</li>
 </ul>
-<h4 id="3-oecd-warns-of-global-slowdown-tied-to-us-iran-conflict">3) OECD warns of global slowdown tied to US-Iran conflict</h4>
+<h3 id="3-oecd-warns-of-global-slowdown-tied-to-us-iran-conflict">3) OECD warns of global slowdown tied to US-Iran conflict</h3>
 <p><strong>What happened (neutral):</strong> The OECD lowered its global growth forecast, citing damage from the ongoing US-Iran conflict as a key factor. The organization said the fighting is already producing lasting effects on trade, energy prices, and investor confidence. Economists expect the drag to continue into the second half of the year.</p>
 <p><strong>Perspectives:</strong> The strongest case for viewing the conflict as the dominant drag rests on its direct impact on energy routes and investor sentiment across multiple regions simultaneously. The OECD’s revision reflects measurable declines in projected output rather than speculation. Others emphasize that domestic policy choices in major economies, including tariff plans and fiscal measures, are compounding the external shock and may prove more decisive over time. Both sides agree the conflict has introduced new uncertainty; they differ on the relative weight of geopolitical versus policy-driven factors.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>Which sectors are most exposed to prolonged Middle East instability?</li>
-<li>How quickly can forecasts be revised again if fighting eases?</li>
+<li>Which sectors are most exposed to prolonged Middle East instability?
+</li>
+<li>How quickly can forecasts be revised again if fighting eases?
+</li>
 </ul>
-<h4 id="4-iranian-drones-damage-kuwait-airport-amid-stalled-us-iran-talks">4) Iranian drones damage Kuwait airport amid stalled US-Iran talks</h4>
+<h3 id="4-iranian-drones-damage-kuwait-airport-amid-stalled-us-iran-talks">4) Iranian drones damage Kuwait airport amid stalled US-Iran talks</h3>
 <p><strong>What happened (neutral):</strong> Iranian drones and missiles struck Kuwait’s international airport, causing significant damage according to Kuwaiti authorities. The US responded with strikes on an Iranian military site on Qeshm Island. Negotiations between Washington and Tehran appear to have stalled following the exchange.</p>
 <p><strong>Perspectives:</strong> The strongest case for treating the airport strike as a major escalation rests on the involvement of a third-country civilian facility and the direct risk to international travel and commerce. Kuwaiti officials have stressed that interceptions occurred but damage was still sustained. Others note that both sides have framed their actions as defensive, with the US citing protection of its forces and interests. Both sides agree the ceasefire is under renewed strain; they differ on which party bears primary responsibility for the latest round.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>How are neighboring Gulf states adjusting security measures?</li>
-<li>What signals would indicate talks are resuming?</li>
+<li>How are neighboring Gulf states adjusting security measures?
+</li>
+<li>What signals would indicate talks are resuming?
+</li>
 </ul>
-<h4 id="5-uk-workless-households-reach-highest-share-in-two-years">5) UK workless households reach highest share in two years</h4>
+<h3 id="5-uk-workless-households-reach-highest-share-in-two-years">5) UK workless households reach highest share in two years</h3>
 <p><strong>What happened (neutral):</strong> Office for National Statistics data show 14.4% of UK households had no one in employment in the first quarter of the year. The figure is the highest since 2017 and marks a two-year peak. The rise coincides with broader economic pressures including tax changes and inflation.</p>
 <p><strong>Perspectives:</strong> The strongest case linking the rise to recent policy rests on the timing of tax increases and their reported effects on hiring and hours worked, particularly in retail and hospitality. The ONS numbers provide a clear household-level measure rather than an individual unemployment rate. Others point to longer-term structural shifts, such as an aging population and changing participation patterns, that predate the latest fiscal measures. Both sides agree the household employment rate has deteriorated; they differ on how much of the change is cyclical versus policy-driven.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>Which regions or age groups show the largest increases?</li>
-<li>How do these figures compare with pre-pandemic levels?</li>
+<li>Which regions or age groups show the largest increases?
+</li>
+<li>How do these figures compare with pre-pandemic levels?
+</li>
 </ul>
-<h3 id="top-world-stories-2">Top world stories (2)</h3>
-<h4 id="1-nato-chief-makes-unannounced-visit-to-kyiv">1) NATO chief makes unannounced visit to Kyiv</h4>
+<h2 id="top-world-stories-2">Top world stories (2)</h2>
+<h3 id="1-nato-chief-makes-unannounced-visit-to-kyiv">1) NATO chief makes unannounced visit to Kyiv</h3>
 <p><strong>What happened (neutral):</strong> NATO Secretary General Mark Rutte arrived in Kyiv for an unannounced trip following recent Russian strikes on the capital. The visit comes as Ukrainian forces conducted strikes inside Russia.</p>
 <p><strong>Perspectives:</strong> The strongest case for the visit rests on the need to coordinate immediate military support and assess damage from the latest Russian attacks. Supporters argue that high-level presence signals continued alliance commitment at a moment of intensified fighting. Others note that such visits can also serve diplomatic signaling purposes without committing new resources. Both sides agree the trip occurred amid active combat; they differ on whether it materially changes battlefield dynamics.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>What specific requests might Ukrainian officials have made during the visit?</li>
-<li>How has Russia reacted to the NATO presence?</li>
+<li>What specific requests might Ukrainian officials have made during the visit?
+</li>
+<li>How has Russia reacted to the NATO presence?
+</li>
 </ul>
-<h4 id="2-israel-and-lebanon-open-new-round-of-talks-after-strikes">2) Israel and Lebanon open new round of talks after strikes</h4>
+<h3 id="2-israel-and-lebanon-open-new-round-of-talks-after-strikes">2) Israel and Lebanon open new round of talks after strikes</h3>
 <p><strong>What happened (neutral):</strong> Ambassadors from Israel and Lebanon began direct talks in Washington following US-brokered commitments to de-escalation. The fourth round comes after recent Israeli drone strikes in southern Lebanon that killed eight people.</p>
 <p><strong>Perspectives:</strong> The strongest case for continued talks rests on the shared interest in preventing wider regional spillover while core disputes remain unresolved. Participants have kept the channel open despite fresh violence, suggesting both sides see value in maintaining communication. Critics argue that repeated meetings without concrete agreements risk becoming performative. Both sides agree the talks are occurring under US auspices; they differ on whether incremental diplomacy can address underlying security concerns.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>What issues are on the current agenda?</li>
-<li>How do recent casualties affect the atmosphere of the talks?</li>
+<li>What issues are on the current agenda?
+</li>
+<li>How do recent casualties affect the atmosphere of the talks?
+</li>
 </ul>
-<h3 id="top-business-stories-2">Top business stories (2)</h3>
-<h4 id="1-akzo-nobel-shares-fall-19-after-takeover-talks-end">1) Akzo Nobel shares fall 19% after takeover talks end</h4>
+<h2 id="top-business-stories-2">Top business stories (2)</h2>
+<h3 id="1-akzo-nobel-shares-fall-19-after-takeover-talks-end">1) Akzo Nobel shares fall 19% after takeover talks end</h3>
 <p><strong>What happened (neutral):</strong> Shares in the Dutch paints company Akzo Nobel dropped sharply after reported takeover discussions collapsed. Investors are also watching developments in the US-Iran conflict for broader market effects.</p>
 <p><strong>Perspectives:</strong> The strongest case for the sharp sell-off rests on the sudden removal of a potential premium that takeover speculation had built into the share price. The 19% decline reflects the market’s immediate repricing once the deal prospects vanished. Others note that sector-wide pressures, including raw-material costs and demand uncertainty, may have amplified the reaction. Both sides agree the talks ended without a deal; they differ on how much of the price drop is deal-specific versus market-wide.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>How does the drop compare with recent sector movements?</li>
-<li>Are other potential bidders still active?</li>
+<li>How does the drop compare with recent sector movements?
+</li>
+<li>Are other potential bidders still active?
+</li>
 </ul>
-<h4 id="2-novo-nordisk-launches-wegovy-pill-in-uae">2) Novo Nordisk launches Wegovy pill in UAE</h4>
+<h3 id="2-novo-nordisk-launches-wegovy-pill-in-uae">2) Novo Nordisk launches Wegovy pill in UAE</h3>
 <p><strong>What happened (neutral):</strong> Novo Nordisk began rolling out its oral Wegovy weight-loss pill in the United Arab Emirates, marking the first global launch outside the US. The company described the move as a major opportunity to expand beyond American demand.</p>
 <p><strong>Perspectives:</strong> The strongest case for prioritizing overseas markets rests on the large and growing global demand for effective weight-loss treatments and the company’s stated goal of broadening access. Executives have signaled they are “all in” on international expansion. Others caution that regulatory, pricing, and cultural differences could slow adoption compared with the US experience. Both sides agree the UAE launch is the first step in a wider rollout; they differ on the speed and scale of future uptake.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>How will pricing differ from the US market?</li>
-<li>What regulatory hurdles remain in other countries?</li>
+<li>How will pricing differ from the US market?
+</li>
+<li>What regulatory hurdles remain in other countries?
+</li>
 </ul>
-<h3 id="top-technology-stories-1">Top technology stories (1)</h3>
-<h4 id="1-data-center-operators-seek-to-reduce-water-consumption">1) Data center operators seek to reduce water consumption</h4>
+<h2 id="top-technology-stories-1">Top technology stories (1)</h2>
+<h3 id="1-data-center-operators-seek-to-reduce-water-consumption">1) Data center operators seek to reduce water consumption</h3>
 <p><strong>What happened (neutral):</strong> Major technology companies including Google and Microsoft face growing scrutiny over the water used by data centers for cooling. Operators are testing new technologies and site-selection strategies to address concerns about local water quality and availability.</p>
 <p><strong>Perspectives:</strong> The strongest case for accelerated action rests on the measurable strain that large-scale cooling places on water resources in already-stressed regions. Companies have begun publishing data and piloting alternatives in response to public and regulatory pressure. Others note that data-center growth is driven by rising AI and cloud demand, creating tension between expansion goals and resource limits. Both sides agree water use has become a visible constraint; they differ on how quickly technical fixes can scale.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>Which regions are seeing the strongest pushback on water use?</li>
-<li>What alternative cooling methods are under active testing?</li>
+<li>Which regions are seeing the strongest pushback on water use?
+</li>
+<li>What alternative cooling methods are under active testing?
+</li>
 </ul>
-<h3 id="top-popular-media-stories-1">Top popular media stories (1)</h3>
-<h4 id="1-good-morning-britain-apologizes-after-c-word-broadcast">1) Good Morning Britain apologizes after C-word broadcast</h4>
+<h2 id="top-popular-media-stories-1">Top popular media stories (1)</h2>
+<h3 id="1-good-morning-britain-apologizes-after-c-word-broadcast">1) Good Morning Britain apologizes after C-word broadcast</h3>
 <p><strong>What happened (neutral):</strong> The ITV program issued an on-air apology after the C-word was accidentally broadcast live during Tuesday’s show. Producers described the incident as a technical error.</p>
 <p><strong>Perspectives:</strong> The strongest case for swift apology rests on the program’s obligation to maintain broadcast standards and avoid distressing viewers. The quick response aims to limit reputational damage. Others note that live television carries inherent risks of unscripted language, especially during unscripted segments. Both sides agree the word aired and an apology followed; they differ on whether additional safeguards are needed.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>How common are such slips on live daytime television?</li>
-<li>What internal review processes typically follow?</li>
+<li>How common are such slips on live daytime television?
+</li>
+<li>What internal review processes typically follow?
+</li>
 </ul>
-<h3 id="top-gossip-stories-1">Top gossip stories (1)</h3>
-<h4 id="1-jennifer-lopez-experiences-wardrobe-malfunction-at-premiere">1) Jennifer Lopez experiences wardrobe malfunction at premiere</h4>
+<h2 id="top-gossip-stories-1">Top gossip stories (1)</h2>
+<h3 id="1-jennifer-lopez-experiences-wardrobe-malfunction-at-premiere">1) Jennifer Lopez experiences wardrobe malfunction at premiere</h3>
 <p><strong>What happened (neutral):</strong> Jennifer Lopez’s corset gown became stuck while she was leaving the New York premiere of her film Office Romance. The moment was captured by photographers outside the event.</p>
 <p><strong>Perspectives:</strong> The strongest case for media attention rests on the high visibility of celebrity red-carpet appearances and the public’s interest in unscripted moments. Coverage often focuses on the visual detail rather than the film itself. Others view such incidents as minor and inevitable given the complexity of formal attire. Both sides agree the malfunction occurred in public view; they differ on its newsworthiness.</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
-<li>How do publicists typically manage such moments?</li>
-<li>Does coverage of wardrobe issues overshadow film promotion?</li>
+<li>How do publicists typically manage such moments?
+</li>
+<li>Does coverage of wardrobe issues overshadow film promotion?
+</li>
 </ul>
-<h3 id="understanding-the-issue-how-the-us-proposes-and-adjusts-tariffs">Understanding the Issue: How the US proposes and adjusts tariffs</h3>
+<h2 id="understanding-the-issue-how-the-us-proposes-and-adjusts-tariffs">Understanding the Issue: How the US proposes and adjusts tariffs</h2>
 <p>Most coverage of new tariffs treats them as sudden presidential decisions, yet the process involves a structured review by the Office of the US Trade Representative under statutes such as Section 301. The USTR first identifies practices it deems unfair, invites public comment, holds hearings, and then recommends duty rates that can later be modified or challenged in court. This administrative path explains why the current proposal distinguishes between economies with full versus partial forced-labor bans and why earlier tariffs were struck down by the Supreme Court. Knowing the sequence shows that proposed rates are not final policy but starting points subject to negotiation, litigation, and congressional oversight. Next time you see a headline announcing “new tariffs,” ask: which statute authorizes them, what comment period has occurred, and which countries have already signaled they will challenge the duties at the WTO or in US courts.</p>
             </div>
             
@@ -2277,9 +2177,9 @@
             </section>
             <script>
             /* Progressive enhancement: make chapters seek the player, but
-               ONLY when there is a player on the page. Episodes without
-               alternate-language tracks render no inline <audio>, so the
-               list stays a plain, useful contents listing there. */
+               ONLY when there is a player on the page. An episode with no
+               published audio URL renders no <audio>, so the list stays a
+               plain, useful contents listing there. */
             (function () {
                 var audio = document.getElementById("nn-i18n-audio")
                     || document.querySelector(".nn-iv-player audio");
@@ -2491,7 +2391,8 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
   Made with AI — transparently
 </a>
             </div>
-            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 14 sources</span><span aria-hidden="true"> · </span><span>voiced with Grok TTS</span><span aria-hidden="true"> · </span><a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20Omni%20View%20Ep69&body=Re%3A%20https%3A//nerranetwork.com/blog/omni_view/ep069.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
+            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 14 sources</span> <span aria-hidden="true">·</span> <span>voiced with Grok TTS</span>
+                <span aria-hidden="true">·</span> <a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20Omni%20View%20Ep69&body=Re%3A%20https%3A//nerranetwork.com/blog/omni_view/ep069.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
             </p>
             <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>👋 Did this episode land?</span>
@@ -2528,13 +2429,13 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 
                 <a href="ep068.html" rel="prev">
                     <span class="nav-label">&larr; Previous</span>
-                    <span class="nav-title">Episode 68</span>
+                    <span class="nav-title">Ep 68 · Escalating Russian drone and missile barrages on Ukrainian cities are testing the limits of civilian protection and Western support as casualty counts rise.</span>
                 </a>
                 
                 
                 <a href="ep070.html" rel="next" class="next">
                     <span class="nav-label">Next &rarr;</span>
-                    <span class="nav-title">Episode 70</span>
+                    <span class="nav-title">Ep 70 · Six states are suing the Trump administration over a nearly $1 billion payout to cancel a major offshore wind lease, testing the reach of federal energy decisions.</span>
                 </a>
                 
             </nav>
@@ -2559,6 +2460,34 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
             
             <!-- Cross-show Recommendations -->
             
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/nerra_daily/ep047.html" class="blog-related-card" style="--card-show-color: #007A99">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #007A99, white 35%)">Nerra Daily</span>
+                        <h3>Tuesday edition — Record Dragon transits and an optogenetics Nobel</h3>
+                        
+                    </a>
+                    
+                    <a href="../../blog/first_principles/ep122.html" class="blog-related-card" style="--card-show-color: #0F766E">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #0F766E, white 35%)">First Principles Daily</span>
+                        <h3>Office chairs that sell for several hundred dollars contain only tens of dollars worth of steel, foam and fabric.</h3>
+                        
+                    </a>
+                    
+                    <a href="../../blog/fascinating_frontiers/ep214.html" class="blog-related-card" style="--card-show-color: #6B47FF">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #6B47FF, white 35%)">Fascinating Frontiers</span>
+                        <h3>SpaceX Crew Dragon Grace reached the International Space Station in seven hours and fifty-five minutes, the fastest U.S. spacecraft transit on record.</h3>
+                        
+                    </a>
+                    
+                </div>
+            </section>
+            
         </article>
     </div>
 
@@ -2572,7 +2501,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                     <div class="nn-footer-brand"><span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span></div>
                     <p class="nn-footer-desc">Zero fluff. Independent podcast network produced in Vancouver, Canada.</p>
                 </div>
-                <div class="nn-footer-col">
+                <div class="nn-footer-col nn-footer-col--shows">
                     <h4>Shows</h4>
                     
                     <ul class="nn-footer-showlist">
@@ -2731,7 +2660,8 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                       data-label-idle="Subscribe"
                       data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
-                    <p>Pick the shows you want in your inbox:</p>
+                    <p>Pick the shows you want in your inbox:</p><details class="nn-subscribe-pick">
+                    <summary>Choose shows <span>(31)</span></summary>
                     <div class="nn-subscribe-tags">
                         <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
                         
@@ -2796,6 +2726,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         <label><input type="checkbox" name="tag" value="Offshore North"> Offshore North</label>
                         
                     </div>
+                    </details>
                     <div class="nn-subscribe-row">
                         <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
                         <button type="submit">Subscribe</button>
