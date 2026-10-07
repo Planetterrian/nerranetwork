@@ -354,6 +354,30 @@ def _covers(local: Path, reference: Path | None, who: str) -> bool:
     return False
 
 
+def adopt_orphan_take(run: dict, show, role: str) -> str:
+    """Give the pipeline a browser take whose page never sent upload-done.
+    Writes the manifest to R2 and onto the run row; returns its key, or ""."""
+    if run.get(f"local_{role}_url"):
+        return ""
+    try:
+        from audio.local_tracks import orphan_manifest
+        from common import r2_list, r2_put_json
+        prefix = show.r2_key("local", run["id"], role) + "/"
+        manifest = orphan_manifest(r2_list(prefix), run["id"], role, show.slug)
+        if not manifest:
+            return ""
+        key = prefix + (f"{manifest['sid']}/" if manifest.get("sid") else "") + "manifest.json"
+        r2_put_json(key, manifest)
+        sb_update("interview_runs", f"id=eq.{run['id']}", {f"local_{role}_url": key})
+        run[f"local_{role}_url"] = key
+        logger.info("%s: adopted a browser take nobody finalized (%d chunks, %d missing): %s",
+                    role, len(manifest["chunks"]), len(manifest["missing"]), key)
+        return key
+    except Exception:  # noqa: BLE001 — the call audio is still there
+        logger.exception("could not adopt an orphan %s take (non-fatal)", role)
+        return ""
+
+
 def join_offsets(run: dict) -> dict:
     """Seconds from the room opening to each leg connecting, in order.
 
@@ -1042,6 +1066,8 @@ def main() -> int:
                 durable[name] = r2_upload(src, show.r2_key(
                     "raw", f"{run['id']}_{stamp}_{name}.{src.suffix.lstrip('.')}"))
 
+        for role in ("guest", "host"):
+            adopt_orphan_take(run, show, role)
         tracks = build_tracks(run, raw, workdir, host_raw=host_raw,
                               mira_raw=mira_raw, host_legs=host_legs)
         processed: dict = {}

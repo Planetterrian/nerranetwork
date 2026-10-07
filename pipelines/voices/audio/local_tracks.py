@@ -115,6 +115,41 @@ def manifest_is_complete(manifest: Optional[Dict[str, Any]]) -> bool:
     return True
 
 
+def orphan_manifest(keys: list, run_id: str, role: str, show_slug: str
+                    ) -> Optional[Dict[str, Any]]:
+    """A manifest for a take whose page never sent upload-done.
+
+    Oct 7 2026 (Scott Pulcini). His browser recorded all 45 minutes at
+    192 kbps straight off his microphone and every chunk reached R2, but the
+    page never finalized, so there was no manifest, the pipeline never knew
+    the take existed, and the episode was built from the compressed call
+    audio instead: noisier and thinner, and the thing Patrick heard. Viktor
+    Popovic's and Vincent Rylan's full takes were sitting there the same way.
+
+    ``keys`` are R2 keys under ``<prefix>/local/<run_id>/<role>/``. The take
+    with the most chunks wins (a rejoin makes a second, shorter take).
+    Chunks are numbered from 0, so any gap in the numbering is a missing
+    chunk and the take is reported incomplete rather than decoded wrong.
+    """
+    takes: Dict[str, list] = {}
+    for key in keys or []:
+        name = key.rsplit("/", 1)[-1]
+        if not name.endswith(".webm") or not name[:-5].isdigit():
+            continue
+        sid = key.rsplit("/", 2)[-2] if key.count("/") >= 5 else ""
+        takes.setdefault(sid, []).append(key)
+    if not takes:
+        return None
+    sid, chunks = max(takes.items(), key=lambda kv: len(kv[1]))
+    chunks = sorted(chunks, key=lambda k: int(k.rsplit("/", 1)[-1][:-5]))
+    have = {int(k.rsplit("/", 1)[-1][:-5]) for k in chunks}
+    missing = [i for i in range(max(have) + 1) if i not in have]
+    return {"run_id": run_id, "role": role, "show": show_slug, "sid": sid or None,
+            "mime": "audio/webm;codecs=opus", "started_at": None, "duration_ms": 0,
+            "chunks": chunks, "missing": missing, "bytes": None,
+            "adopted": "no upload-done from the page; built from the chunks in R2"}
+
+
 def concat_chunks_to_wav(chunk_paths: list, workdir: Path,
                          name: str = "local") -> Path:
     """Byte-concatenate MediaRecorder chunks (in order) → 48 kHz mono WAV."""

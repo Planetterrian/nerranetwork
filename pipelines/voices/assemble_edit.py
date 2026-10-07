@@ -182,7 +182,19 @@ SIDE_CHAIN = "highpass=f=70,{restore}," + LEVEL
 # paragraph describes; a fixed gain lifts silence and speech alike, so the
 # room tone keeps its natural distance under the voice.)
 CLEAN_SIDE = SIDE_CHAIN
-BALANCE_GLUE = "acompressor=threshold=-20dB:ratio=2.5:attack=20:release=250"
+# Oct 7 2026 (Scott Pulcini). The chain above was tuned on call audio: the
+# compressed WebRTC leg Voximplant records, where denoising and firm
+# compression earn their keep. A guest's own browser recording is a
+# different animal, 192 kbps straight off the microphone, and the same chain
+# made it worse. Measured on 30 s of Scott's take with a reference-free
+# speech-quality model (torchaudio SQUIM): untouched it scores PESQ 2.00 and
+# SI-SDR 14.0 dB; through the call-audio chain, 1.37 and 5.5, because two
+# stacked 2.5:1 compressors lift the room between his words; through this
+# lighter chain, 1.73 and 11.8. On the call audio the softer glue changes
+# nothing (1.51 and 4.9 either way), so it is the glue for everyone.
+LOCAL_SIDE = ("highpass=f=70,adeclick=w=75:t=2,volume={gain:.1f}dB,"
+              "acompressor=threshold=-18dB:ratio=1.6:attack=20:release=300:knee=6")
+BALANCE_GLUE = "acompressor=threshold=-16dB:ratio=1.8:attack=20:release=250:knee=4"
 
 # Sept 15 2026. Mira takes a beat before she answers — the model has to
 # think, and in the room that is fine. In a finished episode it is dead air,
@@ -263,6 +275,10 @@ CLEAN_ROLES = ("guest", "host", "mira")
 # on the run row names the side to take; the fold, the level measurement and
 # the end probe all read that one side.
 _TRACK_PAN: Dict[str, str] = {}
+# Where each processed track came from ("local" = the speaker's own browser
+# recording, "voximplant" = the call), so a clean recording gets the light
+# chain. Keyed like _TRACK_PAN, by the fetched file's path.
+_TRACK_SOURCE: Dict[str, str] = {}
 
 
 def _pan_of(path) -> str:
@@ -471,10 +487,10 @@ def _piece_clean(cut: dict, srcs: List[tuple], out: Path) -> Path:
         # equalising a human being too. Here it lands on her alone.
         extra = ("," + VOICE_MATCH) if role == "mira" else ""
         extra += _mutes(cut, role)
-        side = CLEAN_SIDE.format(
-            restore=restore or "anull",
-            gain=_speech_gain(_src, cut.get("start"), cut.get("end"),
-                              _pan_of(_src)))
+        gain = _speech_gain(_src, cut.get("start"), cut.get("end"), _pan_of(_src))
+        side = (LOCAL_SIDE.format(gain=gain)
+                if _TRACK_SOURCE.get(str(_src)) == "local" and not _pan_of(_src)
+                else CLEAN_SIDE.format(restore=restore or "anull", gain=gain))
         pick = _pan_of(_src) or "aformat=channel_layouts=mono"
         chains.append(f"[{i}:a]{pick},{side}{extra}[c{i}]")
         labels.append(f"[c{i}]")
@@ -674,10 +690,13 @@ def assemble(slug: str) -> dict:
                         for role, url in tracks]
                 sides = ((src_run.get("grok_session_log") or {}).get("tracks")
                          or {}).get("processed_channels") or {}
+                origin = ((src_run.get("grok_session_log") or {}).get("tracks")
+                          or {}).get("sources") or {}
                 for role, path in srcs:
                     side = str(sides.get(role) or "")
                     if side in CHANNEL_FILTERS:
                         _TRACK_PAN[str(path)] = CHANNEL_FILTERS[side]
+                    _TRACK_SOURCE[str(path)] = str(origin.get(role) or "")
                 if i == last_conversation:
                     _end_on_the_last_word(cut, srcs)
                 pieces.append(_piece_clean(cut, srcs, out))
