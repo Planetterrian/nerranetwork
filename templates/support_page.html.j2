@@ -13,14 +13,25 @@
         .nn-donate-row a { flex: 1; min-width: 200px; text-align: center; padding: 0.9rem 1rem; border-radius: 12px; font-weight: 600; text-decoration: none; background: var(--nn-gradient); color: #fff; }
         .nn-donate-row a.ghost { background: transparent; border: 1px solid var(--nn-border); color: inherit; }
         .nn-fineprint { font-size: 0.85rem; color: var(--nn-text-muted); }
+        /* Prose links (Oct 7 2026): the global ``a`` rule inherits colour and
+           drops the underline, so a link inside a sentence was invisible.
+           Scoped to this page's content and to plain (class-less) links. */
+        #main-content p a:not([class]), #main-content li a:not([class]) {
+            color: var(--nn-cyan);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        #main-content p a:not([class]):hover, #main-content li a:not([class]):hover {
+            color: var(--nn-white);
+        }
     </style>
 {% endblock %}
 
 {% block content %}
 <div class="nn-support">
     <h1>Support the Nerra Network</h1>
-    <p class="lede">{{ all_shows|length }} shows, most of them daily, in four
-       listening languages, with zero ads. Every episode is free and stays
+    <p class="lede">{{ published_show_count }} shows, most of them daily, in
+       {{ listening_language_count }} listening languages, with zero ads. Every episode is free and stays
        free — supported by listeners who want it to exist.</p>
 
     <div class="nn-costs">
@@ -68,6 +79,6 @@
        are not tax-deductible charitable contributions. Payments are processed
        by Stripe; we never see your card details. Monthly donations can be
        cancelled any time from your Stripe receipt email. Questions:
-       reply to any Nerra newsletter.</p>
+       <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.</p>
 </div>
 {% endblock %}

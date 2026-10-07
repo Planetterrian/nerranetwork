@@ -190,7 +190,14 @@ class TestTemplateSurfaces:
             re.findall(r"rejectattr\('slug', 'in', \[(.*?)\]\)", src))
 
     def test_mira_disclosure_names_all_three_shows(self):
-        disc = (self.T / "ai_disclosure.html.j2").read_text(encoding="utf-8")
+        # Oct 7 2026: the narration list is rendered from the show YAMLs, so
+        # the page is checked as rendered, not the template source.
+        import tempfile
+
+        import generate_html as G
+        with tempfile.TemporaryDirectory() as tmp:
+            G.generate_legal_page("ai_disclosure", output_dir=tmp)
+            disc = (Path(tmp) / "ai-disclosure.html").read_text(encoding="utf-8")
         assert "nerra-voices.html" in disc
         faq = (self.T / "faq.html.j2").read_text(encoding="utf-8")
         assert faq.count("Nerra Voices") >= 2, "JSON-LD and visible FAQ answer"

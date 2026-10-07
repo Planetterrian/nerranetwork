@@ -4398,17 +4398,15 @@ def generate_mira_page(*, dry_run=False, output_dir=None):
     """
     from engine.brand import (
         MIRA_HOST_NAME, MIRA_NETWORK_ROLE, MIRA_NEWS_ROLE, MIRA_NEWS_SHOW_SLUGS,
-        MIRA_SHORT_DESCRIPTION,
+        MIRA_PAGE_DESCRIPTION, MIRA_SHORT_DESCRIPTION,
     )
 
     env = _get_jinja_env()
     template = env.get_template("mira_page.html.j2")
 
-    description = (
-        "Mira is the Nerra Network's AI host. She anchors the daily combined "
-        "edition and interviews real people live — and nothing publishes "
-        "until the guest approves their own transcript."
-    )
+    # engine.brand owns it: the literal here once said "nothing publishes
+    # until the guest approves", which gate 2 does not do.
+    description = MIRA_PAGE_DESCRIPTION
 
     context = {
         "path_prefix": "",
@@ -5320,7 +5318,7 @@ def generate_all_ru_landing_pages(*, dry_run=False):
     return written
 
 
-def generate_data_hub_page(*, dry_run=False):
+def generate_data_hub_page(*, dry_run=False, output_dir=None):
     """Render the /data.html hub linking every public data dashboard
     (SpaceX, Tesla, Modern Investing performance, gallery) so the audience
     can discover them from one place. Static — no runtime data; the linked
@@ -5344,7 +5342,7 @@ def generate_data_hub_page(*, dry_run=False):
         "all_shows": _build_all_shows_list(),
     }
     html = template.render(**context)
-    out_path = ROOT / "data.html"
+    out_path = (Path(output_dir) if output_dir else ROOT) / "data.html"
     if dry_run:
         print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
         return out_path
@@ -5474,7 +5472,7 @@ def books_page_volumes(catalog_path, volumes_dir):
     return out
 
 
-def generate_books_page(*, dry_run=False):
+def generate_books_page(*, dry_run=False, output_dir=None):
     """Generate the /books.html storefront page from books/catalog.json.
 
     The catalog is written by ``scripts/build_book.py`` (metadata + R2
@@ -5486,7 +5484,7 @@ def generate_books_page(*, dry_run=False):
     volumes = books_page_volumes(ROOT / "books" / "catalog.json",
                                  ROOT / "books" / "volumes")
     html = render_books_page(volumes)
-    out_path = ROOT / "books.html"
+    out_path = (Path(output_dir) if output_dir else ROOT) / "books.html"
 
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
@@ -5658,7 +5656,7 @@ def _personal_shows_list():
     return personal_shows
 
 
-def generate_join_page(*, dry_run=False):
+def generate_join_page(*, dry_run=False, output_dir=None):
     """Generate /join.html — the Nerra Personal membership lander."""
     env = _get_jinja_env()
     # The pickable lineup, rendered as real cards (Aug 27 2026): the page
@@ -5684,7 +5682,7 @@ def generate_join_page(*, dry_run=False):
         ) if s in _by_slug
     ]
     html = env.get_template("join_page.html.j2").render(**ctx)
-    out_path = ROOT / "join.html"
+    out_path = (Path(output_dir) if output_dir else ROOT) / "join.html"
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
         return None
@@ -5752,7 +5750,7 @@ def _env_int(name: str) -> int:
         return 0
 
 
-def generate_account_page(*, dry_run=False):
+def generate_account_page(*, dry_run=False, output_dir=None):
     """Generate /account.html — "My Nerra", the member dashboard
     (client-side app against api.nerranetwork.com; the page itself is
     static and reads the pipeline's committed api/*.json for content)."""
@@ -5796,7 +5794,7 @@ def generate_account_page(*, dry_run=False):
         books_page_volumes(ROOT / "books" / "catalog.json",
                            ROOT / "books" / "volumes"))
     html = env.get_template("account_page.html.j2").render(**ctx)
-    out_path = ROOT / "account.html"
+    out_path = (Path(output_dir) if output_dir else ROOT) / "account.html"
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
         return None
@@ -5805,7 +5803,7 @@ def generate_account_page(*, dry_run=False):
     return out_path
 
 
-def generate_login_page(*, dry_run=False):
+def generate_login_page(*, dry_run=False, output_dir=None):
     """Generate /login.html — the passwordless sign-in page (Sep 13 2026).
     Noindexed and kept out of the sitemap like the account console."""
     env = _get_jinja_env()
@@ -5814,7 +5812,7 @@ def generate_login_page(*, dry_run=False):
         "Sign in to your Nerra account — one email, no password.",
         "https://nerranetwork.com/login.html")
     html = env.get_template("login_page.html.j2").render(**ctx)
-    out_path = ROOT / "login.html"
+    out_path = (Path(output_dir) if output_dir else ROOT) / "login.html"
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
         return None
@@ -5823,18 +5821,22 @@ def generate_login_page(*, dry_run=False):
     return out_path
 
 
-def generate_support_page(*, dry_run=False):
+def generate_support_page(*, dry_run=False, output_dir=None):
     """Generate /support.html — donations + cost transparency. This is
     also the target of every feed's podcast:funding tag."""
     env = _get_jinja_env()
-    html = env.get_template("support_page.html.j2").render(
-        **_member_page_context(
-            "Support the Nerra Network",
-            f"{len(NETWORK_SHOWS)} shows, most of them daily, all free and "
-            "ad-free. See what the network actually costs to run, and chip "
-            "in if you want it to keep existing.",
-            "https://nerranetwork.com/support.html"))
-    out_path = ROOT / "support.html"
+    ctx = _member_page_context(
+        "Support the Nerra Network",
+        f"{len(_published_show_ids())} shows, most of them daily, all free "
+        "and ad-free. See what the network actually costs to run, and chip "
+        "in if you want it to keep existing.",
+        "https://nerranetwork.com/support.html")
+    # Computed, never typed (Oct 7 2026: "four listening languages" and the
+    # registry length, which counts a show with no episodes yet).
+    ctx["published_show_count"] = len(_published_show_ids())
+    ctx["listening_language_count"] = len(_listening_languages())
+    html = env.get_template("support_page.html.j2").render(**ctx)
+    out_path = (Path(output_dir) if output_dir else ROOT) / "support.html"
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
         return None
@@ -5843,7 +5845,7 @@ def generate_support_page(*, dry_run=False):
     return out_path
 
 
-def generate_about_page(*, dry_run=False):
+def generate_about_page(*, dry_run=False, output_dir=None):
     """Generate the About page with founder, mission, and network stats."""
     env = _get_jinja_env()
     template = env.get_template("about.html.j2")
@@ -5867,6 +5869,7 @@ def generate_about_page(*, dry_run=False):
         # Stats (shows_count removed as part of count-agnostic brand refresh)
         "total_episodes": _count_total_episodes(),
         "founding_date": "2024-07-01",
+        "listening_language_count": len(_listening_languages()),
         # Organization sameAs — the network's accounts (the three SHOW
         # handles were the only ones here, which told search engines the
         # network's identity was Tesla Shorts Time's X account).
@@ -5874,7 +5877,7 @@ def generate_about_page(*, dry_run=False):
     }
 
     html = template.render(**context)
-    out_path = ROOT / "about.html"
+    out_path = (Path(output_dir) if output_dir else ROOT) / "about.html"
 
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
@@ -5959,6 +5962,128 @@ def generate_editorial_page(*, dry_run=False, output_dir=None):
 
 
 # ---------------------------------------------------------------------------
+# Computed page claims (Oct 7 2026 site review)
+# ---------------------------------------------------------------------------
+#
+# The trust pages typed facts that the registry and the show YAMLs already
+# hold, and every one of them had gone stale: the AI disclosure said English
+# shows were all voiced by Patrick's clone and "eighteen shows publish
+# daily", the FAQ listed cadences from before the June move, support/about
+# said "four languages" as a literal. These read the record instead.
+
+#: What each production voice id is, for the AI disclosure. A voice id the
+#: map does not know renders as a plain Grok TTS voice, never a guess.
+_VOICE_DESCRIPTIONS = {
+    "kdif6sqjcyiq": "A custom voice trained on founder Patrick Novak's own speech",
+    "0vscf8u8yrxc": "Dan's custom voice, single narrator",
+    "0b875ae2": "A custom Russian voice (Olya)",
+}
+
+
+def _published_show_ids() -> list:
+    """Registry slugs that have a feed file — the shows that publish. A
+    show with no feed yet (Nerra Voices) is not counted as one."""
+    return [slug for slug, cfg in NETWORK_SHOWS.items()
+            if cfg.get("rss_file") and (ROOT / cfg["rss_file"]).exists()]
+
+
+def _registry_show_config(slug):
+    """The loaded ``shows/<slug>.yaml``, or None (registry-only shows)."""
+    path = SHOWS_DIR / f"{slug}.yaml"
+    if not path.is_file():
+        return None
+    try:
+        from engine.config import load_config
+        return load_config(path)
+    except Exception:  # noqa: BLE001 — a bad YAML must not break a page
+        return None
+
+
+def _listening_languages() -> list:
+    """Every language a listener can hear: each show's page language plus
+    every enabled multilingual track. Sorted codes, ``en`` first."""
+    langs = {"en"}
+    for slug in NETWORK_SHOWS:
+        langs.add(_show_lang.page_lang(slug))
+        cfg = _registry_show_config(slug)
+        ml = getattr(cfg, "multilingual", None) if cfg else None
+        if ml is not None and getattr(ml, "enabled", False):
+            langs.update(str(code) for code in (getattr(ml, "languages", None) or []))
+    return sorted(langs, key=lambda c: (c != "en", c))
+
+
+def _registry_order() -> list:
+    return sorted(NETWORK_SHOWS, key=lambda s: NETWORK_SHOWS[s].get("display_order", 999))
+
+
+def _narration_groups() -> list:
+    """Who voices which show, from the YAML ``tts`` blocks: a list of
+    ``{"key", "label", "shows": [{"name", "page"}]}``, largest group first.
+    Mira's shows come from engine.brand; a dialogue show names its
+    speakers from ``tts.dialogue_voices``."""
+    from engine.brand import MIRA_NEWS_SHOW_SLUGS, MIRA_SHOW_SLUGS
+
+    groups: dict = {}
+    published = set(_published_show_ids())
+    for slug in _registry_order():
+        if slug not in published:
+            continue
+        cfg = _registry_show_config(slug)
+        tts = getattr(cfg, "tts", None) if cfg else None
+        voice = str(getattr(tts, "voice_id", "") or "")
+        if slug in MIRA_SHOW_SLUGS or slug in MIRA_NEWS_SHOW_SLUGS or voice == "ara":
+            key, label = "mira", (
+                "Mira, an AI host persona that introduces herself as one. "
+                "On the interview shows the guests are real people speaking "
+                "in their own voices.")
+        elif tts is not None and getattr(tts, "dialogue_mode", False):
+            names = [str(n).title() for n in (getattr(tts, "dialogue_voices", None) or {})]
+            key = "dialogue"
+            label = ("Two custom voices in conversation"
+                     + (f": {' and '.join(names)}" if names else ""))
+        elif voice in _VOICE_DESCRIPTIONS:
+            key, label = voice, _VOICE_DESCRIPTIONS[voice]
+        else:
+            key, label = "other", "A Grok text-to-speech voice"
+        group = groups.setdefault(key, {"key": key, "label": label, "shows": []})
+        group["shows"].append({
+            "name": NETWORK_SHOWS[slug]["name"],
+            "page": NETWORK_SHOWS[slug].get("show_page", ""),
+        })
+    return sorted(groups.values(), key=lambda g: -len(g["shows"]))
+
+
+def _cadence_exceptions() -> list:
+    """``[(schedule, [show names])]`` for every publishing show whose
+    registry ``schedule`` is not daily, grouped by schedule string in
+    registry order. engine.cadence decides what "daily" means."""
+    from engine.cadence import cadence_adjective
+
+    out: dict = {}
+    published = set(_published_show_ids())
+    for slug in _registry_order():
+        cfg = NETWORK_SHOWS[slug]
+        sched = str(cfg.get("schedule") or "").strip()
+        if slug not in published or not sched or cadence_adjective(sched) == "daily":
+            continue
+        out.setdefault(sched, []).append(cfg["name"])
+    return list(out.items())
+
+
+def _cadence_answer() -> str:
+    """The FAQ's "How often" answer, used verbatim by the page and by its
+    FAQPage JSON-LD so the two cannot disagree."""
+    parts = ["Most shows publish daily, weekends included."]
+    exceptions = _cadence_exceptions()
+    if exceptions:
+        parts.append("The exceptions, by schedule:")
+        for sched, names in exceptions:
+            parts.append(f"{sched}: {'; '.join(names)}.")
+    parts.append("Each show page lists its exact schedule.")
+    return " ".join(parts)
+
+
+# ---------------------------------------------------------------------------
 # Legal / trust pages (Sep 2026 website review)
 # ---------------------------------------------------------------------------
 #
@@ -6010,11 +6135,14 @@ _LEGAL_PAGES = {
 # Rendered into each legal page's "Updated" line. Bump when the copy
 # changes materially; it is deliberately NOT the build date (a date that
 # moves on every regeneration tells readers nothing).
-LEGAL_PAGES_UPDATED_LABEL = "September 3, 2026"
+LEGAL_PAGES_UPDATED_LABEL = "October 7, 2026"
 
 
-def generate_legal_page(key, *, dry_run=False):
-    """Render one of the legal / trust pages from ``_LEGAL_PAGES``."""
+def generate_legal_page(key, *, dry_run=False, output_dir=None):
+    """Render one of the legal / trust pages from ``_LEGAL_PAGES``.
+
+    ``output_dir`` (Oct 2026) renders into a scratch directory for tests;
+    ``None`` writes to the repo root."""
     spec = _LEGAL_PAGES[key]
     env = _get_jinja_env()
     template = env.get_template(spec["template"])
@@ -6032,8 +6160,20 @@ def generate_legal_page(key, *, dry_run=False):
         "all_shows": _build_all_shows_list(),
         "updated_label": LEGAL_PAGES_UPDATED_LABEL,
     }
+    if key == "ai_disclosure":
+        # Read from the YAMLs and the registry, never typed (Oct 7 2026).
+        context["narration_groups"] = _narration_groups()
+        # A Mira show with a page but no feed yet (Nerra Voices) is named as
+        # upcoming, never listed as a show she voices today.
+        from engine.brand import MIRA_SHOW_SLUGS as _mira_slugs
+        _live = set(_published_show_ids())
+        context["mira_upcoming"] = [
+            {"name": NETWORK_SHOWS[s]["name"], "page": NETWORK_SHOWS[s].get("show_page", "")}
+            for s in _mira_slugs if s in NETWORK_SHOWS and s not in _live]
+        context["published_show_count"] = len(_published_show_ids())
+        context["listening_language_count"] = len(_listening_languages())
     html = template.render(**context)
-    out_path = ROOT / spec["out"]
+    out_path = (Path(output_dir) if output_dir else ROOT) / spec["out"]
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
         return None
@@ -6270,7 +6410,7 @@ def generate_contact_page(*, dry_run=False):
     return out_path
 
 
-def generate_faq_page(*, dry_run=False):
+def generate_faq_page(*, dry_run=False, output_dir=None):
     """Generate the FAQ page with FAQPage JSON-LD schema."""
     env = _get_jinja_env()
     template = env.get_template("faq.html.j2")
@@ -6287,10 +6427,11 @@ def generate_faq_page(*, dry_run=False):
         "show_color": "",
         "show_color_dark": "",
         "all_shows": _build_all_shows_list(),
+        "cadence_answer": _cadence_answer(),
     }
 
     html = template.render(**context)
-    out_path = ROOT / "faq.html"
+    out_path = (Path(output_dir) if output_dir else ROOT) / "faq.html"
 
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
@@ -6301,7 +6442,7 @@ def generate_faq_page(*, dry_run=False):
     return out_path
 
 
-def generate_how_to_listen_page(*, dry_run=False):
+def generate_how_to_listen_page(*, dry_run=False, output_dir=None):
     """Generate the How-to-Listen guide page."""
     env = _get_jinja_env()
     template = env.get_template("how_to_listen.html.j2")
@@ -6321,7 +6462,7 @@ def generate_how_to_listen_page(*, dry_run=False):
     }
 
     html = template.render(**context)
-    out_path = ROOT / "how-to-listen.html"
+    out_path = (Path(output_dir) if output_dir else ROOT) / "how-to-listen.html"
 
     if dry_run:
         print(f"[dry-run] Would write {out_path}")

@@ -31,7 +31,8 @@
             font-weight: 700;
             letter-spacing: 0.08em;
             text-transform: uppercase;
-            color: var(--nn-accent);
+            /* Text tint, not --nn-accent (#6B47FF is 3.6:1 on the page). */
+            color: var(--nn-purple-text, #9D8BFF);
             margin: 0 0 var(--sp-3);
         }
         .mira-hero h1 {
@@ -89,7 +90,7 @@
             margin: 0;
         }
         .mira-show h3 a { color: var(--nn-white); text-decoration: none; }
-        .mira-show h3 a:hover { color: var(--nn-accent); }
+        .mira-show h3 a:hover { color: var(--nn-purple-text, #9D8BFF); }
         .mira-show .state {
             font-family: var(--font-ui);
             font-size: 0.76rem;
@@ -111,7 +112,7 @@
             font-family: var(--font-ui);
             font-size: 0.85rem;
         }
-        .mira-show .links a { color: var(--nn-accent); text-decoration: none; }
+        .mira-show .links a { color: var(--nn-purple-text, #9D8BFF); text-decoration: none; }
         .mira-show .links a:hover { text-decoration: underline; }
         .mira-cta {
             display: inline-flex;
@@ -132,6 +133,14 @@
             border: 1px solid var(--nn-border);
         }
         .mira-cta--ghost:hover { background: rgba(255, 255, 255, 0.06); }
+        /* Prose links: the global ``a`` rule inherits colour and drops the
+           underline, which made every link inside a paragraph invisible. */
+        .mira-section p a, .mira-notlist a, .mira-hero p.lede a {
+            color: var(--nn-cyan);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        .mira-section p a:hover, .mira-notlist a:hover { color: var(--nn-white); }
         .mira-ctas { display: flex; flex-wrap: wrap; gap: var(--sp-4); }
         .mira-notlist { margin: var(--sp-4) 0 0; padding-left: var(--sp-6); }
         .mira-notlist li {

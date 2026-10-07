@@ -13,6 +13,15 @@
 
 {% block head_extra %}
     {% include "_legal_page.html.j2" %}
+    <style>
+        .nn-claims-steps--compact summary {
+            font-family: var(--font-heading);
+            font-weight: 600;
+            color: var(--nn-white);
+            cursor: pointer;
+        }
+        .nn-claims-steps--compact details[open] summary { margin-bottom: var(--sp-2); }
+    </style>
 {% endblock %}
 
 {% block content %}
@@ -115,8 +124,14 @@
         <p class="nn-claims-intro">The process every other show runs is on the <a href="{{ path_prefix }}claims.html">network ledger page</a>; this show's page is <a href="{{ path_prefix }}{{ show_page }}">here</a>.</p>
         {% else %}
         <h2>How this show's claims are checked</h2>
+        {#- Oct 7 2026: the four steps were one ~450-word paragraph. A list of
+            step titles, each opening to its text, reads at a glance. -#}
+        <ol class="nn-claims-steps nn-claims-steps--compact">
+            {%- for title, text in claims_process %}{% if loop.index <= 4 %}
+            <li><details><summary>{{ title }}</summary><p>{{ text }}</p></details></li>
+            {%- endif %}{% endfor %}
+        </ol>
         <p class="nn-claims-intro">
-            {%- for title, text in claims_process %}{% if loop.index <= 4 %}<strong>{{ title }}.</strong> {{ text }} {% endif %}{% endfor -%}
             The full process, the badge legend and every show's totals are on the
             <a href="{{ path_prefix }}claims.html">network ledger page</a>.
         </p>
@@ -158,7 +173,13 @@
                 <span class="nn-claims-episode-counts">
                     {%- if row.counts.verified %}{{ claims_badge('verified') }} {{ row.counts.verified }}{% endif %}
                     {%- if row.counts.verified_later %} {{ claims_badge('verified_later') }} {{ row.counts.verified_later }}{% endif %}
-                    {%- if row.counts.flagged %} {{ claims_badge('unverified_unreachable') }} {{ row.counts.flagged }} marked{% endif %}
+                    {#- One badge per status actually present (Oct 7 2026): every
+                        marked claim used to wear "Published, not yet verified",
+                        whatever its status said. -#}
+                    {%- for status in claims_status_labels if status.startswith('unverified') or status == 'malformed' %}
+                    {%- set n = (row.counts.by_status or {}).get(status, 0) %}
+                    {%- if n %} {{ claims_badge(status) }} {{ n }}{% endif %}
+                    {%- endfor %}
                     {%- if row.corrections %} {{ claims_badge('correction') }} {{ row.corrections | length }}{% endif %}
                     {%- if not row.counts.total and not row.corrections %}<span class="nn-claims-null">no ledger entries</span>{% endif %}
                 </span>

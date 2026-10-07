@@ -17,6 +17,8 @@
     --line: rgba(153, 246, 228, 0.25);
   }
   * { box-sizing: border-box; }
+  /* An html background so iOS overscroll shows the brand, not a white flash. */
+  html { background: var(--deep); color-scheme: dark; }
   body { font: 16px/1.65 'DM Sans', system-ui, -apple-system, sans-serif;
          color: var(--white); margin: 0; min-height: 100vh;
          background: linear-gradient(180deg, var(--midnight) 0%, var(--deep) 55%) fixed; }
@@ -26,6 +28,8 @@
   .lockup .words { line-height: 1.25; }
   .lockup .title { font-size: 1.5rem; font-weight: 700; letter-spacing: .08em; }
   .lockup .sub { color: var(--mint); font-size: .8rem; letter-spacing: .28em; }
+  /* The wordmark is non-breaking; tighten it so it fits a 390px phone. */
+  @media (max-width: 420px) { .lockup .sub { letter-spacing: .16em; } .lockup .title { letter-spacing: .04em; } }
   .lockup .sub::before { content: ""; display: block; width: 56px; height: 3px;
                          border-radius: 2px; background: var(--amber); margin: .35rem 0 .3rem; }
   h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
@@ -37,10 +41,14 @@
   .card li { margin: .35rem 0; color: var(--mint); }
   .card li b { color: var(--white); font-weight: 600; }
   label { display: block; font-weight: 600; margin: 1.1rem 0 .3rem; }
-  input, textarea { width: 100%; padding: .65rem .75rem; border: 1px solid var(--line);
+  /* select included: at 390px its longest option overflowed the column. */
+  input, textarea, select { width: 100%; max-width: 100%; padding: .65rem .75rem;
+                    border: 1px solid var(--line);
                     border-radius: 10px; font: inherit; color: var(--white);
                     background: rgba(11, 31, 33, 0.6); }
-  input:focus, textarea:focus { outline: 2px solid var(--teal); border-color: transparent; }
+  select option { background: var(--deep); color: var(--white); }
+  input:focus, textarea:focus, select:focus { outline: 2px solid var(--teal); border-color: transparent; }
+  .privacy-note { font-size: .85rem; opacity: .85; margin-top: .6rem; }
   textarea { min-height: 110px; }
   ::placeholder { color: rgba(153, 246, 228, 0.45); }
   .hint { font-size: .85rem; color: var(--mint); margin-top: .25rem; opacity: .85; }
@@ -81,7 +89,7 @@
       <li>Nerra Voices is about people and the work they've chosen — founders, clinicians, tradespeople, teachers, artists, organizers. <b>No AI angle required.</b> AI only comes up if you bring it up.</li>
       <li>Our AI host, <b>Mira</b>, interviews you live at a time you book — a real ~45-minute conversation, recorded for the podcast. You join from your browser with a link, or take a phone call instead if you prefer.</li>
       <li>The day before, you get a short prep brief with the themes she plans to explore.</li>
-      <li><b>Nothing publishes until you approve the transcript.</b> You can have anything removed.</li>
+      <li><b>You get your own transcript first.</b> You have a week to approve it, cut anything from it, or refuse it — what you cut is removed from the audio. After seven days without a reply the episode goes ahead as sent, and you can ask for a takedown at any time.</li>
       <li>Every episode discloses that the host is an AI. The guests never are.</li>
     </ul>
   </div>
@@ -93,7 +101,7 @@
     <label for="email">Email *</label>
     <input id="email" name="email" type="email" required maxlength="200" autocomplete="email">
 
-    <label for="phone">Phone number (the one Mira should call)</label>
+    <label for="phone">Phone number (for your reminder text, and as a backup if the browser studio fails)</label>
     <input id="phone" name="phone" maxlength="40" placeholder="+1 604 …" autocomplete="tel">
     <p class="hint">You can add this later — it's only needed once your interview is booked.</p>
 
@@ -140,7 +148,8 @@
       <option value="open">Open — the personal side is part of the story</option>
     </select>
     <p class="hint">Mira will not push past what you choose here. You can change
-    your mind on the day, and you approve the episode before it is published.</p>
+    your mind on the day, and you can cut anything from your transcript before
+    the episode is built.</p>
 
     <label for="must_cover">Points you want to be sure we cover (optional)</label>
     <textarea id="must_cover" name="must_cover" rows="4" maxlength="2000" placeholder="One per line, up to five: questions or points you'd like the conversation to reach"></textarea>
@@ -155,6 +164,9 @@
 
     <button id="submitBtn" type="submit">Apply to be a guest</button>
     <p id="result" role="status"></p>
+    <p class="privacy-note">What we keep from this form, from the interview and
+    who processes it: <a href="privacy-policy.html#guests">privacy policy — if you
+    are a guest</a>.</p>
   </form>
 
   <p class="foot">REAL PEOPLE · REAL WORK · AI HOST · <a href="nerra-voices.html">LISTEN TO NERRA VOICES</a></p>
@@ -227,7 +239,7 @@ document.getElementById('applyForm').addEventListener('submit', async (e) => {
     result.textContent = 'Application received! We read every one — if it\'s a fit, a booking link lands in your inbox.';
     e.target.reset();
   } catch (err) {
-    result.textContent = 'Something went wrong — email patrick@planetterrian.com and we\'ll sort it out.';
+    result.textContent = 'Something went wrong — email hello@nerranetwork.com and we\'ll sort it out.';
   } finally { btn.disabled = false; }
 });
 </script>
