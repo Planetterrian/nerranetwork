@@ -104,7 +104,12 @@
       "url": "https://nerranetwork.com/tesla.html"
     },
     "image": "https://nerranetwork.com/assets/covers/tesla-shorts-time.jpg",
-    "transcript": "https://nerranetwork.com/blog/tesla/ep441.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/tesla/ep441.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep441_20260419.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -237,6 +242,11 @@
             cursor: pointer;
             transition: all var(--duration) var(--ease);
         }
+        /* Same body-link override as the related cards: these are buttons. */
+        .blog-article .share-buttons a {
+            color: var(--nn-text-muted);
+            text-decoration: none;
+        }
         .share-buttons a:hover,
         .share-buttons button:hover {
             border-color: var(--show-color);
@@ -249,13 +259,13 @@
             margin: 0 auto;
             padding: 0 var(--sp-6) var(--sp-16);
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(0, 1fr);
             gap: var(--sp-10);
         }
         @media (min-width: 1024px) {
             .blog-article-wrap {
                 max-width: 1060px;
-                grid-template-columns: 200px 1fr;
+                grid-template-columns: 200px minmax(0, 1fr);
             }
         }
 
@@ -306,9 +316,18 @@
             font-size: 0.75rem;
         }
 
-        /* Article */
+        /* Article. A long unbroken token (a URL, a provenance run) may never
+           widen the page past the phone it is on (Oct 7 2026). */
         .blog-article {
             min-width: 0;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+        }
+        /* Reading measure: about 68-72 characters of body text a line
+           (it had run 104-111). The sources grid, claims and transcript
+           below keep the full column. */
+        .blog-article .blog-body-lang {
+            max-width: 72ch;
         }
         .blog-article h1 {
             font-family: var(--font-heading);
@@ -372,12 +391,25 @@
             color: var(--nn-text);
             margin-bottom: var(--sp-3);
         }
+        /* An item's body is the reporting, not a caption: full text colour
+           (it was muted grey under a bold headline, Oct 7 2026). */
         .blog-article .blog-list-cont {
             margin: var(--sp-1) 0 var(--sp-2);
             padding-left: var(--sp-2);
             font-size: 1rem;
-            color: var(--nn-text-muted);
+            color: var(--nn-text);
         }
+        /* Digest items are one sentence per line; at the article's
+           paragraph spacing each story read as a column of scattered
+           lines. Inside an item the sentences sit together; the items
+           themselves get the air (Oct 7 2026 design pass). */
+        .blog-article li > p.blog-list-cont {
+            font-size: 1rem;
+            line-height: 1.7;
+            margin: var(--sp-2) 0 0;
+            padding-left: 0;
+        }
+        .blog-article li:has(> p.blog-list-cont) { margin-bottom: var(--sp-6); }
         .blog-article hr {
             border: none;
             border-top: 1px solid var(--nn-border);
@@ -521,6 +553,12 @@
             text-decoration: none;
             transition: all var(--duration) var(--ease);
         }
+        /* The cards sit inside .blog-article, whose body-link rule would
+           otherwise underline and recolour every line of every card. */
+        .blog-article a.blog-related-card {
+            color: inherit;
+            text-decoration: none;
+        }
         .blog-related-card:hover {
             border-color: var(--card-show-color, var(--nn-purple));
             background: var(--nn-card-hover);
@@ -577,15 +615,16 @@
             font-family: var(--font-ui);
             font-variant-numeric: tabular-nums;
             font-size: 0.85rem;
-            color: var(--show-color);
+            /* Text, so the AA-lightened brand colour, not the raw one. */
+            color: var(--show-color-text, var(--show-color));
             min-width: 3.5rem;
             flex-shrink: 0;
         }
         /* Only looks clickable once the seek script has attached to a
-           real audio element — an English-only episode has no inline
+           real audio element — an episode with no published audio has no
            player, and a cursor that promises nothing is worse than none. */
         .blog-chapter-list li.is-seekable { cursor: pointer; }
-        .blog-chapter-list li.is-seekable:hover .chapter-title { color: var(--show-color); }
+        .blog-chapter-list li.is-seekable:hover .chapter-title { color: var(--show-color-text, var(--show-color)); }
         .blog-chapters .chapter-foot {
             margin-top: var(--sp-3);
             font-size: 0.85rem;
@@ -660,7 +699,7 @@
             font-family: var(--font-ui);
             font-size: 0.88rem;
             font-weight: 600;
-            color: var(--show-color, var(--nn-purple));
+            color: var(--show-color-text, var(--show-color, var(--nn-purple-text, #9D8BFF)));
         }
         .blog-transcript details[open] .transcript-preview,
         .blog-transcript details[open] .transcript-more { display: none; }
@@ -712,6 +751,12 @@
             font-size: 0.9rem;
             color: var(--nn-text);
             font-weight: 500;
+            /* The neighbour's headline, held to three lines by CSS rather
+               than cut in the template (engine/titles.py owns every cut). */
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
         .blog-ep-nav .next {
             text-align: right;
@@ -738,7 +783,14 @@
             line-height: 1.6;
             margin: 0.35rem 0 0;
         }
-        .nn-iv-provenance span { white-space: nowrap; }
+        /* Each part is kept whole where it fits and wraps where it does not
+           (Oct 7 2026): the parts used to be nowrap spans joined with no
+           whitespace between them, one unbreakable run that laid every
+           post out 500-980px wide on a 390px phone and pushed the menu
+           button off-screen. The separators are plain inline text, so the
+           line breaks between parts. */
+        .nn-iv-provenance { overflow-wrap: anywhere; }
+        .nn-iv-provenance > span:not([aria-hidden]) { display: inline-block; max-width: 100%; }
         /* Episode provenance (Oct 2026): the one line under the AI badge on
            a news post, from engine.brand.episode_provenance_parts, plus the
            "Report an error" link beside it. Same type as the interview
@@ -897,7 +949,9 @@
         }
 
         /* Multilingual audio player + language switcher (June 2026) */
-        .nn-i18n {
+        /* .nn-listen is the same box without the switcher (Oct 7 2026). */
+        .nn-i18n,
+        .nn-listen {
             max-width: 760px;
             margin: 0 auto var(--sp-4);
             padding: 0 var(--sp-6);
@@ -1566,379 +1620,200 @@
         <a href="../../player.html">Player</a>
         
         <a href="../../explore.html" style="font-weight:600;">Find your show</a>
-        
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Hosted by Mira</div>
+        <details class="nn-mobile-shows nn-mobile-group" open>
+            <summary class="nn-mobile-shows-title">Hosted by Mira <span class="nn-mobile-count">3</span></summary>
             
             <a href="../../nerra-daily.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Daily
             </a>
             
             <a href="../../age-of-ai.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The Age of AI
             </a>
             
             <a href="../../nerra-voices.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Voices
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">World desks</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">World desks <span class="nn-mobile-count">6</span></summary>
             
             <a href="../../omni-view-world.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Top World News
             </a>
             
             <a href="../../omni-view-north-america.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View North America
             </a>
             
             <a href="../../omni-view-europe.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Europe
             </a>
             
             <a href="../../omni-view-asia-pacific.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Asia Pacific
             </a>
             
             <a href="../../omni-view-africa-mideast.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Africa & Middle East
             </a>
             
             <a href="../../omni-view-latam.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Central & South America
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Local news</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Local news <span class="nn-mobile-count">2</span></summary>
             
             <a href="../../vancouver.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/vancouver-400.webp"><img src="../../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/vancouver-400.webp"><img src="../../assets/covers/vancouver.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Vancouver Daily News
             </a>
             
             <a href="../../collingwood.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/collingwood-400.webp"><img src="../../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/collingwood-400.webp"><img src="../../assets/covers/collingwood.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Collingwood Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">AI & compute</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">AI & compute <span class="nn-mobile-count">3</span></summary>
             
             <a href="../../models-agents.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents
             </a>
             
             <a href="../../ai-chips.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/ai-chips-400.webp"><img src="../../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/ai-chips-400.webp"><img src="../../assets/covers/ai-chips.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 AI Chips & Data Centres Daily
             </a>
             
             <a href="../../models-agents-beginners.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents for Beginners
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Markets</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Markets <span class="nn-mobile-count">4</span></summary>
             
             <a href="../../modern-investing.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Modern Investing Techniques
             </a>
             
             <a href="../../mag7.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/mag7-400.webp"><img src="../../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/mag7-400.webp"><img src="../../assets/covers/mag7.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 MAG 7 Daily
             </a>
             
             <a href="../../prediction-markets.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/prediction-markets-400.webp"><img src="../../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/prediction-markets-400.webp"><img src="../../assets/covers/prediction-markets.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Prediction Markets Daily
             </a>
             
             <a href="../../tesla.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Tesla Shorts Time
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Health & longevity</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Health & longevity <span class="nn-mobile-count">3</span></summary>
             
             <a href="../../planetterrian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Planetterrian Daily
             </a>
             
             <a href="../../peptides.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/peptides-400.webp"><img src="../../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/peptides-400.webp"><img src="../../assets/covers/peptides.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Peptides Weekly
             </a>
             
             <a href="../../longevity.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/longevity-400.webp"><img src="../../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/longevity-400.webp"><img src="../../assets/covers/longevity.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Longevity Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Every other show</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">10</span></summary>
             
             <a href="../../omni-view.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View
             </a>
             
             <a href="../../fascinating-frontiers.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Fascinating Frontiers
             </a>
             
             <a href="../../spacex.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 SpaceX Daily
             </a>
             
             <a href="../../env-intel.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Environmental Intelligence
             </a>
             
             <a href="../../ru/finansy-prosto.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/finansy-prosto-400.webp"><img src="../../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/finansy-prosto-400.webp"><img src="../../assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Финансы Просто
             </a>
             
             <a href="../../ru/privet-russian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/privet-russian-400.webp"><img src="../../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/privet-russian-400.webp"><img src="../../assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Привет, Русский!
             </a>
             
             <a href="../../unintended-consequences.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Unintended Consequences
             </a>
             
             <a href="../../first-principles.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 First Principles Daily
             </a>
             
             <a href="../../thedppod.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The DP Pod: The Do Positive Podcast
             </a>
             
             <a href="../../offshore-north.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Offshore North
             </a>
             
-        </div>
+        </details>
         
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Blogs</div>
-            <a href="../../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">
-                All Blog Posts
-            </a>
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Hosted by Mira</div>
-            
-            <a href="../../blog/nerra_daily/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-daily-400.webp"><img src="../../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Daily Blog
-            </a>
-            
-            <a href="../../blog/age_of_ai/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/age-of-ai-400.webp"><img src="../../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
-                The Age of AI Blog
-            </a>
-            
-            <a href="../../blog/nerra_voices/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/nerra-voices-400.webp"><img src="../../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Voices Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">World desks</div>
-            
-            <a href="../../blog/omni_view_world/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-world-400.webp"><img src="../../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Top World News Blog
-            </a>
-            
-            <a href="../../blog/omni_view_north_america/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-north-america-400.webp"><img src="../../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View North America Blog
-            </a>
-            
-            <a href="../../blog/omni_view_europe/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-europe-400.webp"><img src="../../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Europe Blog
-            </a>
-            
-            <a href="../../blog/omni_view_asia_pacific/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-asia-pacific-400.webp"><img src="../../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Asia Pacific Blog
-            </a>
-            
-            <a href="../../blog/omni_view_africa_mideast/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-africa-mideast-400.webp"><img src="../../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Africa & Middle East Blog
-            </a>
-            
-            <a href="../../blog/omni_view_latam/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-latam-400.webp"><img src="../../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Central & South America Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Local news</div>
-            
-            <a href="../../blog/vancouver/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/vancouver-400.webp"><img src="../../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Vancouver Daily News Blog
-            </a>
-            
-            <a href="../../blog/collingwood/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/collingwood-400.webp"><img src="../../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Collingwood Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">AI & compute</div>
-            
-            <a href="../../blog/models_agents/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents Blog
-            </a>
-            
-            <a href="../../blog/ai_chips/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/ai-chips-400.webp"><img src="../../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                AI Chips & Data Centres Daily Blog
-            </a>
-            
-            <a href="../../blog/models_agents_beginners/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/models-agents-beginners-400.webp"><img src="../../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents for Beginners Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Markets</div>
-            
-            <a href="../../blog/modern_investing/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/modern-investing-400.webp"><img src="../../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
-                Modern Investing Techniques Blog
-            </a>
-            
-            <a href="../../blog/mag7/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/mag7-400.webp"><img src="../../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                MAG 7 Daily Blog
-            </a>
-            
-            <a href="../../blog/prediction_markets/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/prediction-markets-400.webp"><img src="../../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Prediction Markets Daily Blog
-            </a>
-            
-            <a href="../../blog/tesla/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
-                Tesla Shorts Time Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Health & longevity</div>
-            
-            <a href="../../blog/planetterrian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/planetterrian-daily-400.webp"><img src="../../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Planetterrian Daily Blog
-            </a>
-            
-            <a href="../../blog/peptides/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/peptides-400.webp"><img src="../../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Peptides Weekly Blog
-            </a>
-            
-            <a href="../../blog/longevity/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/longevity-400.webp"><img src="../../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Longevity Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Every other show</div>
-            
-            <a href="../../blog/omni_view/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Blog
-            </a>
-            
-            <a href="../../blog/fascinating_frontiers/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
-                Fascinating Frontiers Blog
-            </a>
-            
-            <a href="../../blog/spacex/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                SpaceX Daily Blog
-            </a>
-            
-            <a href="../../blog/env_intel/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/environmental-intelligence-400.webp"><img src="../../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
-                Environmental Intelligence Blog
-            </a>
-            
-            <a href="../../blog/finansy_prosto/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/finansy-prosto-400.webp"><img src="../../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                Финансы Просто Blog
-            </a>
-            
-            <a href="../../blog/privet_russian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/privet-russian-400.webp"><img src="../../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                Привет, Русский! Blog
-            </a>
-            
-            <a href="../../blog/unintended_consequences/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/unintended-consequences-400.webp"><img src="../../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
-                Unintended Consequences Blog
-            </a>
-            
-            <a href="../../blog/first_principles/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/first-principles-daily-400.webp"><img src="../../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                First Principles Daily Blog
-            </a>
-            
-            <a href="../../blog/dp_pod/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/dp-pod-400.webp"><img src="../../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
-                The DP Pod: The Do Positive Podcast Blog
-            </a>
-            
-            <a href="../../blog/offshore_north/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../../assets/covers/offshore-north-400.webp"><img src="../../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
-                Offshore North Blog
-            </a>
-            
-            
+            <a href="../../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">All Blog Posts</a>
+            <a href="../../topics/index.html" class="nn-mobile-show-link">Browse by topic</a>
         </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">More</div>
@@ -1975,10 +1850,7 @@
             <a href="../../blog/tesla/index.html" class="blog-show-badge">
                 <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time" width="40" height="40"></picture>
                 Tesla Shorts Time Blog
-            </a>
-            <h1><span class="nn-i18n-title">Tesla has expanded its unsupervised Robotaxi service into Dallas and Houston right before earnings.</span> — Episode 441</h1>
-            
-            <p class="blog-hero-hook">Tesla has expanded its unsupervised Robotaxi service into Dallas and Houston right before earnings.</p>
+            </a><h1><span class="nn-i18n-title">Tesla has expanded its unsupervised Robotaxi service into Dallas and Houston right before earnings.</span></h1>
             
             <div class="blog-meta-bar">
                 <span class="post-author">By Patrick</span>
@@ -1991,18 +1863,10 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     8 min read
                 </span>
-                
-                <a href="../../tesla.html" class="blog-listen-cta">
+                <a href="#listen" class="blog-listen-cta">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     Listen to podcast
                 </a>
-                
-                
-                <a href="../../tesla-summaries.html" class="blog-listen-cta">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                    View summaries
-                </a>
-                
                 
             </div>
         </div>
@@ -2011,6 +1875,20 @@
 
     
     
+    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+        <div class="nn-i18n-inner">
+            <div class="nn-i18n-row">
+                <span class="nn-i18n-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Listen to this episode
+                </span>
+            </div>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep441_20260419.mp3">
+                <a href="https://op3.dev/e/audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep441_20260419.mp3">Download the audio</a>
+            </audio>
+        </div>
+    </section>
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -2018,15 +1896,13 @@
         <aside class="blog-toc">
             <div class="blog-toc-title">Contents</div>
             
-            <a href="#tesla-shorts-time" class="">Tesla Shorts Time</a>
-            
             <a href="#top-10-news-items" class="">Top 10 News Items</a>
             
-            <a href="#tesla-x-takeover-whats-hot-right-now" class="toc-h3">Tesla X Takeover: What's Hot Right Now</a>
+            <a href="#tesla-x-takeover-whats-hot-right-now" class="">Tesla X Takeover: What's Hot Right Now</a>
             
-            <a href="#short-spot" class="toc-h3">Short Spot</a>
+            <a href="#short-spot" class="">Short Spot</a>
             
-            <a href="#tesla-first-principles" class="">Tesla First Principles</a>
+            <a href="#tesla-first-principles" class="toc-h3">Tesla First Principles</a>
             
         </aside>
         
@@ -2034,67 +1910,80 @@
         <article class="blog-article">
             
             <div class="blog-body-lang" data-lang="en">
-            <h2 id="tesla-shorts-time">Tesla Shorts Time</h2>
-<p><strong>Date:</strong> April 19, 2026</p>
+            <p><strong>Date:</strong> April 19, 2026</p>
 <p><strong>REAL-TIME TSLA price:</strong> $400.62 ▲ $12.42 (3.2%)</p>
-<p><em>Tesla has expanded its unsupervised Robotaxi service into Dallas and Houston right before earnings.</em></p>
-<h4 id="top-10-news-items">Top 10 News Items</h4>
+<h2 id="top-10-news-items">Top 10 News Items</h2>
 <ol>
-<li><strong>Tesla delivers ~6% more vehicles in Q1 2026 despite challenges compared to last year: April 19, 2026, 6:00 AM PDT, EVANNEX</strong></li>
+<li><strong>Tesla delivers ~6% more vehicles in Q1 2026 despite challenges compared to last year: April 19, 2026, 6:00 AM PDT, EVANNEX</strong>
 <p class="blog-list-cont">Tesla delivered 358,023 vehicles while producing 408,386, leaving over 50,000 units to roll into the next quarter. Energy storage came in at 8.8 GWh, down from 10.4 GWh a year ago. The 6% year-over-year growth shows some recovery from last year's rough patch even with tariffs and competition, but the production-delivery gap and the phase-out of Model S and X production are worth watching for what they say about demand and factory pacing.</p>
 <p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://evannex.com/blogs/news/tesla-delivers-6-more-vehicles-in-q1-2026-despite-challenges-compared-to-last-year" target="_blank" rel="noopener" aria-describedby="cite-card">evannex.com</a><span class="cite-card" id="cite-card" role="tooltip">https://evannex.com/blogs/news/tesla-delivers-6-more-vehicles-in-q1-2026-despite-challenges-compared-to-last-year</span></span></p>
-<li><strong>Tesla Model Y Owners Reveal Their Honest Verdict After Years Behind the Wheel, and It Will Surprise You: April 19, 2026, 6:00 AM PDT, Yahoo Autos</strong></li>
+</li>
+<li><strong>Tesla Model Y Owners Reveal Their Honest Verdict After Years Behind the Wheel, and It Will Surprise You: April 19, 2026, 6:00 AM PDT, Yahoo Autos</strong>
 <p class="blog-list-cont">Long-term Model Y owners have shared their real-world experiences after putting serious miles on their vehicles. The feedback offers a grounded look at reliability, running costs and daily use that goes beyond the usual headlines. For customers thinking about buying one, this kind of unfiltered owner perspective can cut through marketing noise and set clearer expectations.</p>
 <p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMijgFBVV95cUxPSkZCSkV2WV85SGFUWEpuRjhxQW9fR0tWM2hEb0Rlc21DaTJyV1dzM1N3c3hBR1hqeHNYdU9UdU9EdjJlRWVrbmJJZFFOeHkyMlFDa1hHa1NvbWVWam9DRFlMYUdNbFRjQ3d6VnJ5X0M2b2lTMmg5aS1DWk53Yzh5N203RzBBMEpjbGFyLV9B?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMijgFBVV95cUxPSkZCSkV2WV85SGFUWEpuRjhxQW9fR0tWM2hEb0Rlc21DaTJyV1dzM1N3c3hBR1hqeHNYdU9UdU9EdjJlRWVrbmJJZFFOeHkyMlFDa1hHa1NvbWVWam9DRFlMYUdNbFRjQ3d6VnJ5X0M2b2lTMmg5aS1DWk53Yzh5N203RzBBMEpjbGFyLV9B?oc=5</span></span></p>
-<li><strong>Tesla owners are showing the reality of owning electric car as they share their average monthly bills: April 19, 2026, 5:34 AM PDT, UNILAD</strong></li>
+</li>
+<li><strong>Tesla owners are showing the reality of owning electric car as they share their average monthly bills: April 19, 2026, 5:34 AM PDT, UNILAD</strong>
 <p class="blog-list-cont">Tesla owners are posting their actual monthly electricity and charging costs, giving a clearer picture of real-world ownership expenses. These numbers help cut through assumptions about whether electric cars are truly cheaper to run once you leave the showroom. For potential buyers, especially in Canada where electricity rates vary by province, this kind of transparency is useful.</p>
 <p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMikgFBVV95cUxOMGNWZFdZVU1ISWRlUHg3ejBlTTduRUwxWmRlbWZvY3FZU3pyalhIUlV0X3p3ZDV4Q285MTNGTjE4QnljTkRoME9NdVlCVDB1a2ZHUFQzNzJ1NG02WUVxajMxRUdQSkV2U0RGbWdmS0cwLXJVaE1YdEhSSVV3Q0VPRVBpelZtaTFaSnJYTmtMRFpQQQ?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMikgFBVV95cUxOMGNWZFdZVU1ISWRlUHg3ejBlTTduRUwxWmRlbWZvY3FZU3pyalhIUlV0X3p3ZDV4Q285MTNGTjE4QnljTkRoME9NdVlCVDB1a2ZHUFQzNzJ1NG02WUVxajMxRUdQSkV2U0RGbWdmS0cwLXJVaE1YdEhSSVV3Q0VPRVBpelZtaTFaSnJYTmtMRFpQQQ?oc=5</span></span></p>
-<li><strong>YouTuber uses hood-mounted solar as Tesla goes 0% in Chilean desert: April 19, 2026, 3:35 AM PDT, Interesting Engineering</strong></li>
+</li>
+<li><strong>YouTuber uses hood-mounted solar as Tesla goes 0% in Chilean desert: April 19, 2026, 3:35 AM PDT, Interesting Engineering</strong>
 <p class="blog-list-cont">A YouTuber mounted solar panels on a Tesla's hood and managed to keep going in the Chilean desert even when the battery hit zero percent. It is a clever real-world experiment that shows both the limits and the creative workarounds possible with electric vehicles. For owners who travel off the beaten path, it highlights how small additions can provide a safety net when charging infrastructure is sparse.</p>
 <p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMihAFBVV95cUxQa1pTNHgwMEYxRkxTS3dNY0JWakpNakJSZFZGcVV3ZGZQbXpwWVZ2djRnT1lTUW9zeXhlTmhJUG5JeGJDTUlDLTZjUkl6NVBqbmIzOTFqZ0EwRTdjbTV0LURhTFpaZkUxOUxwVmFYakNDRDlvdnB3eFo5THlPVlJpLVRlenQ?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMihAFBVV95cUxQa1pTNHgwMEYxRkxTS3dNY0JWakpNakJSZFZGcVV3ZGZQbXpwWVZ2djRnT1lTUW9zeXhlTmhJUG5JeGJDTUlDLTZjUkl6NVBqbmIzOTFqZ0EwRTdjbTV0LURhTFpaZkUxOUxwVmFYakNDRDlvdnB3eFo5THlPVlJpLVRlenQ?oc=5</span></span></p>
-<li><strong>Tesla Police EVs Offer 4x Cost Savings Over Gas-Powered Cruisers: April 19, 2026, 5:00 AM PDT, TeslaNorth.com</strong></li>
+</li>
+<li><strong>Tesla Police EVs Offer 4x Cost Savings Over Gas-Powered Cruisers: April 19, 2026, 5:00 AM PDT, TeslaNorth.com</strong>
 <p class="blog-list-cont">Police departments using Tesla vehicles are seeing operating costs roughly four times lower than traditional gas cruisers. The difference comes from reduced fuel, maintenance and overall ownership expenses in fleet duty cycles. This could matter for municipalities looking at fleet transitions, especially as more agencies test how these cars hold up under the unique demands of police work.</p>
 <p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMioAFBVV95cUxNdlJaeE5YRHp1WTIzdFRyYjdUQ2pEVnlqd05yaGpudExrWG1RYU5SS1RnTTZMa3B4eFA3S0Q0XzRFdnFQSi1HV3NUX2J2MXBLVXhhcGZGUXU5U2RTWllFNVZ1VmpZRkZoellGX1hydlBfM3RiZW44WjFzSkE3VV9FSXV2ZHpFOFNOcGZnOEk4elJJZnhIZF9FdG9NbzhOWHZx?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMioAFBVV95cUxNdlJaeE5YRHp1WTIzdFRyYjdUQ2pEVnlqd05yaGpudExrWG1RYU5SS1RnTTZMa3B4eFA3S0Q0XzRFdnFQSi1HV3NUX2J2MXBLVXhhcGZGUXU5U2RTWllFNVZ1VmpZRkZoellGX1hydlBfM3RiZW44WjFzSkE3VV9FSXV2ZHpFOFNOcGZnOEk4elJJZnhIZF9FdG9NbzhOWHZx?oc=5</span></span></p>
-<li><strong>Tesla preps new Model Y trim for India, a once-elusive market: April 19, 2026, 3:26 AM PDT, Reddit/TeslaInvestorsClub</strong></li>
+</li>
+<li><strong>Tesla preps new Model Y trim for India, a once-elusive market: April 19, 2026, 3:26 AM PDT, Reddit/TeslaInvestorsClub</strong>
 <p class="blog-list-cont">Tesla is preparing a new Model Y variant aimed at the Indian market as it tries to gain traction there. The move reflects a more tailored approach to a country that has been difficult for the company to crack. Success in India could open a large new customer base, but it will depend on getting pricing, features and local conditions right.</p>
 <p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/teslainvestorsclub/comments/1spp9qq/tesla_preps_new_model_y_trim_for_india_a/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/teslainvestorsclub/comments/1spp9qq/tesla_preps_new_model_y_trim_for_india_a/</span></span></p>
-<li><strong>I've Been Noticing This Interesting Moment With The Tesla Model Y After 30K-60K Miles, And Don't See Tesla Refining It As Legacy Carmakers Are Starting To: April 19, 2026, 9:24 PM PDT, Torque News</strong></li>
+</li>
+<li><strong>I've Been Noticing This Interesting Moment With The Tesla Model Y After 30K-60K Miles, And Don't See Tesla Refining It As Legacy Carmakers Are Starting To: April 19, 2026, 9:24 PM PDT, Torque News</strong>
 <p class="blog-list-cont">After 30,000 to 60,000 miles, certain characteristics of the Model Y become noticeable in ways that differ from how legacy automakers are refining their newer EVs. The observation comes from someone tracking these vehicles over time. It raises questions about how Tesla evolves its products in the long run compared with traditional manufacturers now investing heavily in their own electric lineups.</p>
 <p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMiugFBVV95cUxQUFdaWk9hemdveEg5dHNyaGozSTJVSm8xZWwtX3hLQmRlVTVTZ2hZbzFibi1sNnBaYVFlVm1DYUdYUjlUYUVmaGNuT0t2LWZ0angza2Q5c2xxSnJialJDVXpVV3lPWnRmWkRfQlVwSkZOYXB5VEFzenVQNExNd2ZndmtPOG5nUTBQbEJwVUYyTXJkOHBLcUc2bTJsNlB3eEdHOFpKeGlVQUtzX3hqdzFuRk1zV0pwNDd3UHc?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMiugFBVV95cUxQUFdaWk9hemdveEg5dHNyaGozSTJVSm8xZWwtX3hLQmRlVTVTZ2hZbzFibi1sNnBaYVFlVm1DYUdYUjlUYUVmaGNuT0t2LWZ0angza2Q5c2xxSnJialJDVXpVV3lPWnRmWkRfQlVwSkZOYXB5VEFzenVQNExNd2ZndmtPOG5nUTBQbEJwVUYyTXJkOHBLcUc2bTJsNlB3eEdHOFpKeGlVQUtzX3hqdzFuRk1zV0pwNDd3UHc?oc=5</span></span></p>
-<li><strong>Someone Dug Up a Deleted Tesla Blog Post About Self-Driving. Its Fans Read It — And Their Reaction Says Everything: April 19, 2026, 5:00 AM PDT, Autonocion.com</strong></li>
+</li>
+<li><strong>Someone Dug Up a Deleted Tesla Blog Post About Self-Driving. Its Fans Read It — And Their Reaction Says Everything: April 19, 2026, 5:00 AM PDT, Autonocion.com</strong>
 <p class="blog-list-cont">An old Tesla blog post on self-driving that had been removed was resurfaced, and the fan reaction revealed a lot about current expectations. The discussion shows how closely some owners follow the company's past statements on autonomy. It is a reminder of the gap that can form between early promises and the pace of real-world deployment.</p>
 <p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMid0FVX3lxTFBtZ2o2bVlUQ2VmUVhLTmVURmx5c1JTUy1FUVBHWl8tbG9mTmNBbDcxOFcyWHBtQXJFcnRGVWlnVzBTRDF5MW9EaHpfYkZXNXFhaWY3LTRYZjgwZ3pYbDFjUHZZU0RuaEx5YXVlXzZmcHdtN1JqblRv?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMid0FVX3lxTFBtZ2o2bVlUQ2VmUVhLTmVURmx5c1JTUy1FUVBHWl8tbG9mTmNBbDcxOFcyWHBtQXJFcnRGVWlnVzBTRDF5MW9EaHpfYkZXNXFhaWY3LTRYZjgwZ3pYbDFjUHZZU0RuaEx5YXVlXzZmcHdtN1JqblRv?oc=5</span></span></p>
-<li><strong>Earnings playbook: Tesla and Boeing lead a big week of reports: April 19, 2026, 5:14 AM PDT, CNBC</strong></li>
+</li>
+<li><strong>Earnings playbook: Tesla and Boeing lead a big week of reports: April 19, 2026, 5:14 AM PDT, CNBC</strong>
 <p class="blog-list-cont">Tesla's upcoming earnings are a focal point in a busy week that also includes Boeing and several other major companies. The report will likely be scrutinized for clues on vehicle demand, energy storage progress and the AI/robotaxi strategy. How the market reacts could set the tone for Tesla's narrative heading into the rest of the year.</p>
 <p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMikwFBVV95cUxQREFzZXVOUDBGTTMybE44ZkM3OVN0S1BxWGN5SjNWSDVGNkRoN1FVb3NhdmtlQTVPLVpQNXp4MDBDa1NCdUFNUjNWaF9IN3Y3emhhZmpINTRtaUFSSWk0WVp3M1NLVVJlY3dlbERiRHJ3eDV1RHFaQWkyZVRROGhnZno1ank2OElrWUVUMGtLbnlMRGs?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMikwFBVV95cUxQREFzZXVOUDBGTTMybE44ZkM3OVN0S1BxWGN5SjNWSDVGNkRoN1FVb3NhdmtlQTVPLVpQNXp4MDBDa1NCdUFNUjNWaF9IN3Y3emhhZmpINTRtaUFSSWk0WVp3M1NLVVJlY3dlbERiRHJ3eDV1RHFaQWkyZVRROGhnZno1ank2OElrWUVUMGtLbnlMRGs?oc=5</span></span></p>
-<li><strong>Why April 22 Could Be a Huge Day for Tesla Investors: April 19, 2026, 1:09 AM PDT, The Globe and Mail</strong></li>
+</li>
+<li><strong>Why April 22 Could Be a Huge Day for Tesla Investors: April 19, 2026, 1:09 AM PDT, The Globe and Mail</strong>
 <p class="blog-list-cont">April 22 stands out on the calendar for Tesla watchers, likely tied to earnings or a significant update. Investors are positioning for whatever news drops. The day could clarify the company's near-term trajectory on both the vehicle and autonomy sides.</p>
 <p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMi1AFBVV95cUxOVTdFWGc4SG9VSjZJV1dUVTlGcU9vUTA5WWhLUndIRVBZR0RIRTJkNXpSMkQ2M3VudUJZZ0szMjZQUFQ3MjNwcDdySFp3SDdGelZSUWEtbTYwWi1OYlloM2tDVHEzOG5QTVpNb1FkQjZWT0JETS1sdk0zTjMzU09mWC1ncnV6cnNkTXA3ZjVUOFlEZlJkOWtNTVpqQVRjUUUyR3c4UjVCUVE1Z3ZuNHppbl90UlNPV21YUnp4Unk0UmljbndEMmRSU1ZRUG9kRldLMElQUw?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMi1AFBVV95cUxOVTdFWGc4SG9VSjZJV1dUVTlGcU9vUTA5WWhLUndIRVBZR0RIRTJkNXpSMkQ2M3VudUJZZ0szMjZQUFQ3MjNwcDdySFp3SDdGelZSUWEtbTYwWi1OYlloM2tDVHEzOG5QTVpNb1FkQjZWT0JETS1sdk0zTjMzU09mWC1ncnV6cnNkTXA3ZjVUOFlEZlJkOWtNTVpqQVRjUUUyR3c4UjVCUVE1Z3ZuNHppbl90UlNPV21YUnp4Unk0UmljbndEMmRSU1ZRUG9kRldLMElQUw?oc=5</span></span></p>
+</li>
 </ol>
-<h3 id="tesla-x-takeover-whats-hot-right-now">Tesla X Takeover: What's Hot Right Now</h3>
+<h2 id="tesla-x-takeover-whats-hot-right-now">Tesla X Takeover: What's Hot Right Now</h2>
 <p>🎙️ Tesla X Takeover - What's breaking in the Tesla world today! Here are the most interesting, fresh Tesla developments that have everyone talking.</p>
 <ol>
-<li><strong>Robotaxi Expansion</strong> - Tesla Launches Unsupervised Robotaxi Service in Dallas and Houston</li>
+<li><strong>Robotaxi Expansion</strong> - Tesla Launches Unsupervised Robotaxi Service in Dallas and Houston
 <p class="blog-list-cont">The company has taken the unsupervised service live in two more major Texas cities after starting in Austin. It is a noticeable step in rolling out the technology beyond a single market. People are watching closely to see if reliability holds up as the fleet grows and whether customer adoption follows.</p>
 <p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMiowFBVV95cUxQSWZBbXY3Zmxvb0hmblpFWUhBbFpiZGNwY2U3UlYzS0o2b0s4TTNvT3pOd3RNYnBjenhvdTE4XzB6VU50dS0wWUgwakMtZU5FdGJ3STZaSXlEVG1VbzR2bERwZFo5TUE5bFNnTmt0eFZBVTdXTTl2V0J3VDQ0LUFqWG16WnFIV3o3RFd2eVRieWlpeDlRX21pSTNndTQwZF82Q3JJ?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMiowFBVV95cUxQSWZBbXY3Zmxvb0hmblpFWUhBbFpiZGNwY2U3UlYzS0o2b0s4TTNvT3pOd3RNYnBjenhvdTE4XzB6VU50dS0wWUgwakMtZU5FdGJ3STZaSXlEVG1VbzR2bERwZFo5TUE5bFNnTmt0eFZBVTdXTTl2V0J3VDQ0LUFqWG16WnFIV3o3RFd2eVRieWlpeDlRX21pSTNndTQwZF82Q3JJ?oc=5</span></span></p>
-<li><strong>Cybertruck PCS Concerns</strong> - Tesla Should Recall the Cybertruck Power Conversion System (PCS)</li>
+</li>
+<li><strong>Cybertruck PCS Concerns</strong> - Tesla Should Recall the Cybertruck Power Conversion System (PCS)
 <p class="blog-list-cont">Early Cybertruck owners are dealing with widespread Power Conversion System failures that prevent charging. The call for a formal recall is getting louder because software fixes may not be enough. It is an early test of how Tesla handles a hardware issue on a vehicle that has generated huge excitement.</p>
 <p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMigwFBVV95cUxOeWJ6UjRqMDNlV2RQc0RoUGYxU3VDdWlyTWpkY0VmWXg0a25JdVdFOFoyN0Z0azRIcFM1enBXRnVDbUZaa1BtSUdBeTRMbDNzdngtNllRNFVyR3M5SGpRRVFSUzZFU2Nad2w1NVFDU09may1nU0FXNTF2dnhSNGFfRTgzSQ?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMigwFBVV95cUxOeWJ6UjRqMDNlV2RQc0RoUGYxU3VDdWlyTWpkY0VmWXg0a25JdVdFOFoyN0Z0azRIcFM1enBXRnVDbUZaa1BtSUdBeTRMbDNzdngtNllRNFVyR3M5SGpRRVFSUzZFU2Nad2w1NVFDU09may1nU0FXNTF2dnhSNGFfRTgzSQ?oc=5</span></span></p>
-<li><strong>Musk Companies Buying Cybertrucks</strong> - SpaceX Bought 1,279 Cybertrucks, Boosting Tesla Sales</li>
+</li>
+<li><strong>Musk Companies Buying Cybertrucks</strong> - SpaceX Bought 1,279 Cybertrucks, Boosting Tesla Sales
 <p class="blog-list-cont">SpaceX purchased 1,279 Cybertrucks, providing a meaningful lift to overall sales numbers. It is an interesting look at how Tesla benefits from internal purchases across Elon Musk's businesses. The pattern raises questions about how sustainable that demand is once external orders become the main driver.</p>
 <p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMioAFBVV95cUxPV29QZHM3UjdHM0hmcUFMTzRyaDdMQXVRcUs1NzlhbUxZVmk4V285a0h6YXotZkczZkFOODBkZXFnamFFWjcxQ09DbWRVenRmY0tCaEFtcnQ0RzVlcGFKMzBrcENRb0VUV2dmRDloX3Z1UEJoekh3WF8zZ3hkYkVFMEFDZnpOdFdwMENsdGFKNTZiQWpPcklZOGY1ODZhWTB2?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMioAFBVV95cUxPV29QZHM3UjdHM0hmcUFMTzRyaDdMQXVRcUs1NzlhbUxZVmk4V285a0h6YXotZkczZkFOODBkZXFnamFFWjcxQ09DbWRVenRmY0tCaEFtcnQ0RzVlcGFKMzBrcENRb0VUV2dmRDloX3Z1UEJoekh3WF8zZ3hkYkVFMEFDZnpOdFdwMENsdGFKNTZiQWpPcklZOGY1ODZhWTB2?oc=5</span></span></p>
-<li><strong>Cybercab Progress</strong> - Tesla moves closer to launching its fully autonomous Cybercab robotaxi</li>
+</li>
+<li><strong>Cybercab Progress</strong> - Tesla moves closer to launching its fully autonomous Cybercab robotaxi
 <p class="blog-list-cont">Tesla is making visible progress toward launching the dedicated Cybercab vehicle. The timeline and technical milestones are being watched by both supporters and skeptics. Getting this vehicle into real unsupervised operation would be a significant shift from using existing models.</p>
 <p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMiqgFBVV95cUxObjMzOFJKNXBoc01VWUNENGoycUlPS0hVd1VRaDVmb3dkZk5sOS1HeExnSEZsREJZWVhUVEFXd3U0R1RicjAtbkhiUzd4d0syRVQtUkFaM0ZwUUpkT0NHTmdjWEl0ZkxDa3ZjaUZINGNlNmgzdndqYmRSRFFmeThZaExZQTd6YzVkeV9KcERiYUgybl81TWNQLUZNWFJlVlh4alZWdF9CM053UdIBrgFBVV95cUxOdk5lcnpTbnZlaXdvdDZQUTJ5dC10RkpiYXJlRjhBVmNjanRUYUNoLXZ1X25meGcwclJJSnVqYkFOT21rNWFpZ1NIYk5JQkV5OWFPNFJ6RzNaSy03SHFYX25Lck51cUtDcS0xMFIyeWJBMlB5cUo2bmZvUV9kNU9WRHVhNXdSajFQMHl0ZFdxOWRmWmhjSHIwUlhXRWlZZVJkYWNyUDVMeGxSMDFHU3c?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMiqgFBVV95cUxObjMzOFJKNXBoc01VWUNENGoycUlPS0hVd1VRaDVmb3dkZk5sOS1HeExnSEZsREJZWVhUVEFXd3U0R1RicjAtbkhiUzd4d0syRVQtUkFaM0ZwUUpkT0NHTmdjWEl0ZkxDa3ZjaUZINGNlNmgzdndqYmRSRFFmeThZaExZQTd6YzVkeV9KcERiYUgybl81TWNQLUZNWFJlVlh4alZWdF9CM053UdIBrgFBVV95cUxOdk5lcnpTbnZlaXdvdDZQUTJ5dC10RkpiYXJlRjhBVmNjanRUYUNoLXZ1X25meGcwclJJSnVqYkFOT21rNWFpZ1NIYk5JQkV5OWFPNFJ6RzNaSy03SHFYX25Lck51cUtDcS0xMFIyeWJBMlB5cUo2bmZvUV9kNU9WRHVhNXdSajFQMHl0ZFdxOWRmWmhjSHIwUlhXRWlZZVJkYWNyUDVMeGxSMDFHU3c?oc=5</span></span></p>
-<li><strong>Investor Positioning</strong> - Multiple Funds Increase Tesla Stock Holdings Ahead of Earnings</li>
+</li>
+<li><strong>Investor Positioning</strong> - Multiple Funds Increase Tesla Stock Holdings Ahead of Earnings
 <p class="blog-list-cont">Several investment firms including MASTERINVEST, GF Fund Management and Ninety One have added to their TSLA positions recently. The moves come as the company prepares to report results and discuss its AI plans. It is a quiet signal that some institutional money is still leaning in despite the usual earnings volatility.</p>
 <p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMizAFBVV95cUxQNFR3dEFvZnJwX2pvbHpPOW0yM0V2U1ZSX3JEeDdfa3JsZkRZV3BCZmg1Z2RGWmNyQkxfbGlZM3ZsMjFYWi1XVnRyendhZVhnNWtROHRYSlQ3SUlpaldVdTl6aG00SHg5bHdBbVhwQlQ5Slc3RzBrQXdKVWhRSUhCZ3FqcnhEVDNoOGg3TkhFUTNMeHZiRTNMbmtNbEZCMG9rZldnc3Jua3haNTBKaFFsU3ByNDB3R0dycWZGcC05elpNOHkteDZjd3JkTTU?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMizAFBVV95cUxQNFR3dEFvZnJwX2pvbHpPOW0yM0V2U1ZSX3JEeDdfa3JsZkRZV3BCZmg1Z2RGWmNyQkxfbGlZM3ZsMjFYWi1XVnRyendhZVhnNWtROHRYSlQ3SUlpaldVdTl6aG00SHg5bHdBbVhwQlQ5Slc3RzBrQXdKVWhRSUhCZ3FqcnhEVDNoOGg3TkhFUTNMeHZiRTNMbmtNbEZCMG9rZldnc3Jua3haNTBKaFFsU3ByNDB3R0dycWZGcC05elpNOHkteDZjd3JkTTU?oc=5</span></span></p>
+</li>
 </ol>
-<h3 id="short-spot">Short Spot</h3>
+<h2 id="short-spot">Short Spot</h2>
 <p><strong>Cybertruck Charging Failures: April 19, 2026, 5:00 AM PDT, Not a Tesla App</strong></p>
 <p>Early Cybertruck owners are running into a serious Power Conversion System problem that stops them from charging. The piece argues Tesla should issue a recall because this feels like a ticking time bomb for customer trust on a vehicle that already carries high expectations. Tesla has historically moved fast with over-the-air fixes for software issues, but this one looks hardware-related and could need a more traditional service campaign. How the company handles it will say a lot about its maturity in managing early production problems on halo products.</p>
 <p>Source: <span class="cite"><a class="cite-pill" href="https://www.notateslaapp.com/news/3989/tesla-should-recall-the-cybertruck-pcs" target="_blank" rel="noopener" aria-describedby="cite-card">notateslaapp.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.notateslaapp.com/news/3989/tesla-should-recall-the-cybertruck-pcs</span></span></p>
-<h4 id="tesla-first-principles">Tesla First Principles</h4>
+<h3 id="tesla-first-principles">Tesla First Principles</h3>
 <p>🧠 Tesla First Principles - Cutting Through the Noise</p>
 <p><strong>TOPIC SELECTION:</strong> Choose the topic where conventional wisdom about Tesla is MOST WRONG right now. Look for areas where the popular narrative (from bulls or bears) diverges most from what physics, economics, or engineering data actually show. The best First Principles topics make listeners rethink something they thought they already understood.</p>
 <p>Taking a step back from today's headlines, let's apply first principles thinking to what actually determines long-term ownership costs for vehicles like the Model Y once you get past the initial purchase price...</p>
@@ -2227,9 +2116,9 @@
             </section>
             <script>
             /* Progressive enhancement: make chapters seek the player, but
-               ONLY when there is a player on the page. Episodes without
-               alternate-language tracks render no inline <audio>, so the
-               list stays a plain, useful contents listing there. */
+               ONLY when there is a player on the page. An episode with no
+               published audio URL renders no <audio>, so the list stays a
+               plain, useful contents listing there. */
             (function () {
                 var audio = document.getElementById("nn-i18n-audio")
                     || document.querySelector(".nn-iv-player audio");
@@ -2429,7 +2318,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             <!-- Story Tracker (narrative-memory shows only) -->
             
             <section class="blog-story-tracker" style="margin:var(--sp-4) 0;padding:var(--sp-3);border:1px solid var(--border-color, #2a2a2a);border-radius:8px;">
-                <strong>Following the long arcs?</strong>The <a href="../../tesla-narrative.html">Tesla Shorts Time Story Tracker</a>
+                <strong>Following the long arcs?</strong> The <a href="../../tesla-narrative.html">Tesla Shorts Time Story Tracker</a>
                 is the show's living memory of every major ongoing storyline — where each program stands today and the open questions each episode chips away at.
             </section>
             
@@ -2454,7 +2343,8 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
   Made with AI — transparently
 </a>
             </div>
-            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 16 sources</span><span aria-hidden="true"> · </span><span>voiced with Grok TTS</span><span aria-hidden="true"> · </span><a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20Tesla%20Shorts%20Time%20Ep441&body=Re%3A%20https%3A//nerranetwork.com/blog/tesla/ep441.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
+            <p class="nn-iv-provenance nn-ep-provenance"><span>Written from 16 sources</span> <span aria-hidden="true">·</span> <span>voiced with Grok TTS</span>
+                <span aria-hidden="true">·</span> <a href="mailto:hello@nerranetwork.com?subject=Error%20report%3A%20Tesla%20Shorts%20Time%20Ep441&body=Re%3A%20https%3A//nerranetwork.com/blog/tesla/ep441.html%0A%0AWhat%20was%20wrong%2C%20and%20where%20%28timestamp%20or%20sentence%29%3A%0A">Report an error</a>
             </p>
             <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
                 <span>👋 Did this episode land?</span>
@@ -2491,13 +2381,13 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                 
                 <a href="ep440.html" rel="prev">
                     <span class="nav-label">&larr; Previous</span>
-                    <span class="nav-title">Episode 440</span>
+                    <span class="nav-title">Ep 440 · Hey, it's me catching you up on Tesla today.</span>
                 </a>
                 
                 
                 <a href="ep442.html" rel="next" class="next">
                     <span class="nav-label">Next &rarr;</span>
-                    <span class="nav-title">Episode 442</span>
+                    <span class="nav-title">Ep 442 · Full Self-Driving is now live on Teslas in Europe, with first-hand test drives starting to surface.</span>
                 </a>
                 
             </nav>
@@ -2526,6 +2416,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             
             <!-- Cross-show Recommendations -->
             
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/spacex/ep122.html" class="blog-related-card" style="--card-show-color: #1A5CFF">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #1A5CFF, white 35%)">SpaceX Daily</span>
+                        <h3>Dragon now owns every U.S. record for fastest trips to the ISS after Crew-13 docked in seven hours fifty-five minutes.</h3>
+                        
+                    </a>
+                    
+                    <a href="../../blog/nerra_daily/ep047.html" class="blog-related-card" style="--card-show-color: #007A99">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #007A99, white 35%)">Nerra Daily</span>
+                        <h3>Tuesday edition — Record Dragon transits and an optogenetics Nobel</h3>
+                        
+                    </a>
+                    
+                    <a href="../../blog/models_agents/ep195.html" class="blog-related-card" style="--card-show-color: #7C3AED">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #7C3AED, white 35%)">Models & Agents</span>
+                        <h3>Reflection's 501B open MoE matches GLM-5.2 reasoning at one twenty third the active parameters.</h3>
+                        
+                    </a>
+                    
+                </div>
+            </section>
+            
         </article>
     </div>
 
@@ -2539,7 +2457,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                     <div class="nn-footer-brand"><span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span></div>
                     <p class="nn-footer-desc">Zero fluff. Independent podcast network produced in Vancouver, Canada.</p>
                 </div>
-                <div class="nn-footer-col">
+                <div class="nn-footer-col nn-footer-col--shows">
                     <h4>Shows</h4>
                     
                     <ul class="nn-footer-showlist">
@@ -2698,7 +2616,8 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                       data-label-idle="Subscribe"
                       data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
-                    <p>Pick the shows you want in your inbox:</p>
+                    <p>Pick the shows you want in your inbox:</p><details class="nn-subscribe-pick">
+                    <summary>Choose shows <span>(31)</span></summary>
                     <div class="nn-subscribe-tags">
                         <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
                         
@@ -2763,6 +2682,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                         <label><input type="checkbox" name="tag" value="Offshore North"> Offshore North</label>
                         
                     </div>
+                    </details>
                     <div class="nn-subscribe-row">
                         <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
                         <button type="submit">Subscribe</button>

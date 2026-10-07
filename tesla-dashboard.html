@@ -89,25 +89,29 @@
   .tsl-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:0.8rem; }
   .tsl-stat { text-align:center; padding:0.6rem; border-radius:12px; background:rgba(227,25,55,0.08); border:1px solid rgba(255,120,140,0.14); }
   .tsl-stat .n { font-size:1.6rem; font-weight:800; color:#fff; font-variant-numeric:tabular-nums; }
-  .tsl-stat .l { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:#c79aa3; margin-top:2px; }
+  .tsl-stat .l { font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; color:#c79aa3; margin-top:2px; }
 
-  .tsl-bars { display:flex; align-items:flex-end; gap:8px; height:170px; padding-top:8px; overflow:hidden; }
+  /* 22px headroom: the value label sits 18px above its bar and was
+     clipped by overflow:hidden at the old 8px. */
+  .tsl-bars { display:flex; align-items:flex-end; gap:8px; height:170px; padding-top:22px; overflow:hidden; }
   .tsl-bw { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
   .tsl-bar { width:100%; border-radius:6px 6px 2px 2px; min-height:3px; background:linear-gradient(180deg,var(--tsl-glow),var(--tsl-red)); transition:height .6s cubic-bezier(.2,.7,.2,1); position:relative; }
   .tsl-bar .cnt { position:absolute; top:-18px; left:0; right:0; text-align:center; font-size:0.68rem; color:#ffd6dd; font-weight:700; }
-  .tsl-blab { font-size:0.62rem; color:#a8838c; white-space:nowrap; }
+  .tsl-blab { font-size:0.75rem; color:#a8838c; white-space:nowrap; }
 
   /* quarterly paired bars (produced vs delivered) */
-  .tsl-qbars { display:flex; align-items:flex-end; gap:7px; height:190px; padding-top:8px; overflow:hidden; }
+  .tsl-qbars { display:flex; align-items:flex-end; gap:7px; height:190px; padding-top:22px; overflow:hidden; }
   .tsl-qg { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:5px; height:100%; justify-content:flex-end; }
   .tsl-qpair { display:flex; align-items:flex-end; justify-content:center; gap:3px; width:100%; height:100%; }
   .tsl-qbar { width:46%; border-radius:4px 4px 1px 1px; min-height:3px; transition:height .7s cubic-bezier(.2,.7,.2,1); }
   .tsl-qbar.prod { background:linear-gradient(180deg,#8a5560,#4a2a31); }
   .tsl-qbar.del { background:linear-gradient(180deg,var(--tsl-glow),var(--tsl-red)); }
-  .tsl-qlab { font-size:0.54rem; color:#a8838c; white-space:nowrap; letter-spacing:-0.02em; }
+  /* Two lines (quarter over year) so the label holds 11px+ on a phone. */
+  .tsl-qlab { font-size:0.75rem; line-height:1.15; color:#c79aa3; white-space:nowrap; text-align:center; }
   .tsl-legend { display:flex; gap:18px; font-size:0.78rem; color:#cbb1b7; margin-bottom:8px; }
   .tsl-legend .sw { display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:6px; vertical-align:middle; }
-  @media (max-width:520px){ .tsl-qbars{ gap:3px; } .tsl-qlab{ font-size:0.46rem; } }
+  @media (max-width:520px){ .tsl-qbars{ gap:3px; } .tsl-qlab{ font-size:0.6875rem; } }
+  .tsl-asof { color:#e2b9c1; font-size:0.82rem; margin:0 0 0.8rem; }
 
   .tsl-area-svg { width:100%; height:210px; display:block; overflow:visible; }
   .tsl-area-svg .grid { stroke:rgba(255,120,140,0.12); stroke-width:1; }
@@ -616,379 +620,200 @@
         <a href="player.html">Player</a>
         
         <a href="explore.html" style="font-weight:600;">Find your show</a>
-        
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Hosted by Mira</div>
+        <details class="nn-mobile-shows nn-mobile-group" open>
+            <summary class="nn-mobile-shows-title">Hosted by Mira <span class="nn-mobile-count">3</span></summary>
             
             <a href="nerra-daily.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/nerra-daily-400.webp"><img src="assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/nerra-daily-400.webp"><img src="assets/covers/nerra-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Daily
             </a>
             
             <a href="age-of-ai.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/age-of-ai-400.webp"><img src="assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/age-of-ai-400.webp"><img src="assets/covers/age-of-ai.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The Age of AI
             </a>
             
             <a href="nerra-voices.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/nerra-voices-400.webp"><img src="assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/nerra-voices-400.webp"><img src="assets/covers/nerra-voices.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Voices
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">World desks</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">World desks <span class="nn-mobile-count">6</span></summary>
             
             <a href="omni-view-world.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/omni-view-world-400.webp"><img src="assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/omni-view-world-400.webp"><img src="assets/covers/omni-view-world.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Top World News
             </a>
             
             <a href="omni-view-north-america.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/omni-view-north-america-400.webp"><img src="assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/omni-view-north-america-400.webp"><img src="assets/covers/omni-view-north-america.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View North America
             </a>
             
             <a href="omni-view-europe.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/omni-view-europe-400.webp"><img src="assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/omni-view-europe-400.webp"><img src="assets/covers/omni-view-europe.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Europe
             </a>
             
             <a href="omni-view-asia-pacific.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/omni-view-asia-pacific-400.webp"><img src="assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/omni-view-asia-pacific-400.webp"><img src="assets/covers/omni-view-asia-pacific.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Asia Pacific
             </a>
             
             <a href="omni-view-africa-mideast.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/omni-view-africa-mideast-400.webp"><img src="assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/omni-view-africa-mideast-400.webp"><img src="assets/covers/omni-view-africa-mideast.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Africa & Middle East
             </a>
             
             <a href="omni-view-latam.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/omni-view-latam-400.webp"><img src="assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/omni-view-latam-400.webp"><img src="assets/covers/omni-view-latam.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Central & South America
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Local news</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Local news <span class="nn-mobile-count">2</span></summary>
             
             <a href="vancouver.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/vancouver-400.webp"><img src="assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/vancouver-400.webp"><img src="assets/covers/vancouver.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Vancouver Daily News
             </a>
             
             <a href="collingwood.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/collingwood-400.webp"><img src="assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/collingwood-400.webp"><img src="assets/covers/collingwood.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Collingwood Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">AI & compute</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">AI & compute <span class="nn-mobile-count">3</span></summary>
             
             <a href="models-agents.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents
             </a>
             
             <a href="ai-chips.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/ai-chips-400.webp"><img src="assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/ai-chips-400.webp"><img src="assets/covers/ai-chips.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 AI Chips & Data Centres Daily
             </a>
             
             <a href="models-agents-beginners.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp"><img src="assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp"><img src="assets/covers/models-agents-beginners.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents for Beginners
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Markets</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Markets <span class="nn-mobile-count">4</span></summary>
             
             <a href="modern-investing.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/modern-investing-400.webp"><img src="assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/modern-investing-400.webp"><img src="assets/covers/modern-investing.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Modern Investing Techniques
             </a>
             
             <a href="mag7.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/mag7-400.webp"><img src="assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/mag7-400.webp"><img src="assets/covers/mag7.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 MAG 7 Daily
             </a>
             
             <a href="prediction-markets.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/prediction-markets-400.webp"><img src="assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/prediction-markets-400.webp"><img src="assets/covers/prediction-markets.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Prediction Markets Daily
             </a>
             
             <a href="tesla.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp"><img src="assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp"><img src="assets/covers/tesla-shorts-time.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Tesla Shorts Time
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Health & longevity</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Health & longevity <span class="nn-mobile-count">3</span></summary>
             
             <a href="planetterrian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp"><img src="assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp"><img src="assets/covers/planetterrian-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Planetterrian Daily
             </a>
             
             <a href="peptides.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/peptides-400.webp"><img src="assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/peptides-400.webp"><img src="assets/covers/peptides.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Peptides Weekly
             </a>
             
             <a href="longevity.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/longevity-400.webp"><img src="assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/longevity-400.webp"><img src="assets/covers/longevity.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Longevity Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Every other show</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">10</span></summary>
             
             <a href="omni-view.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View
             </a>
             
             <a href="fascinating-frontiers.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp"><img src="assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp"><img src="assets/covers/fascinating-frontiers.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Fascinating Frontiers
             </a>
             
             <a href="spacex.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/spacex-400.webp"><img src="assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/spacex-400.webp"><img src="assets/covers/spacex.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 SpaceX Daily
             </a>
             
             <a href="env-intel.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Environmental Intelligence
             </a>
             
             <a href="ru/finansy-prosto.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Финансы Просто
             </a>
             
             <a href="ru/privet-russian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Привет, Русский!
             </a>
             
             <a href="unintended-consequences.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp"><img src="assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp"><img src="assets/covers/unintended-consequences.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Unintended Consequences
             </a>
             
             <a href="first-principles.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp"><img src="assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp"><img src="assets/covers/first-principles-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 First Principles Daily
             </a>
             
             <a href="thedppod.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/dp-pod-400.webp"><img src="assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/dp-pod-400.webp"><img src="assets/covers/dp-pod.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The DP Pod: The Do Positive Podcast
             </a>
             
             <a href="offshore-north.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/offshore-north-400.webp"><img src="assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/offshore-north-400.webp"><img src="assets/covers/offshore-north.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Offshore North
             </a>
             
-        </div>
+        </details>
         
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Blogs</div>
-            <a href="blog/index.html" class="nn-mobile-show-link" style="font-weight:600">
-                All Blog Posts
-            </a>
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Hosted by Mira</div>
-            
-            <a href="blog/nerra_daily/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/nerra-daily-400.webp"><img src="assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Daily Blog
-            </a>
-            
-            <a href="blog/age_of_ai/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/age-of-ai-400.webp"><img src="assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
-                The Age of AI Blog
-            </a>
-            
-            <a href="blog/nerra_voices/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/nerra-voices-400.webp"><img src="assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Voices Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">World desks</div>
-            
-            <a href="blog/omni_view_world/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/omni-view-world-400.webp"><img src="assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Top World News Blog
-            </a>
-            
-            <a href="blog/omni_view_north_america/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/omni-view-north-america-400.webp"><img src="assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View North America Blog
-            </a>
-            
-            <a href="blog/omni_view_europe/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/omni-view-europe-400.webp"><img src="assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Europe Blog
-            </a>
-            
-            <a href="blog/omni_view_asia_pacific/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/omni-view-asia-pacific-400.webp"><img src="assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Asia Pacific Blog
-            </a>
-            
-            <a href="blog/omni_view_africa_mideast/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/omni-view-africa-mideast-400.webp"><img src="assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Africa & Middle East Blog
-            </a>
-            
-            <a href="blog/omni_view_latam/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/omni-view-latam-400.webp"><img src="assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Central & South America Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Local news</div>
-            
-            <a href="blog/vancouver/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/vancouver-400.webp"><img src="assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Vancouver Daily News Blog
-            </a>
-            
-            <a href="blog/collingwood/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/collingwood-400.webp"><img src="assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Collingwood Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">AI & compute</div>
-            
-            <a href="blog/models_agents/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents Blog
-            </a>
-            
-            <a href="blog/ai_chips/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/ai-chips-400.webp"><img src="assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                AI Chips & Data Centres Daily Blog
-            </a>
-            
-            <a href="blog/models_agents_beginners/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp"><img src="assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents for Beginners Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Markets</div>
-            
-            <a href="blog/modern_investing/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/modern-investing-400.webp"><img src="assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
-                Modern Investing Techniques Blog
-            </a>
-            
-            <a href="blog/mag7/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/mag7-400.webp"><img src="assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                MAG 7 Daily Blog
-            </a>
-            
-            <a href="blog/prediction_markets/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/prediction-markets-400.webp"><img src="assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Prediction Markets Daily Blog
-            </a>
-            
-            <a href="blog/tesla/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp"><img src="assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
-                Tesla Shorts Time Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Health & longevity</div>
-            
-            <a href="blog/planetterrian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp"><img src="assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Planetterrian Daily Blog
-            </a>
-            
-            <a href="blog/peptides/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/peptides-400.webp"><img src="assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Peptides Weekly Blog
-            </a>
-            
-            <a href="blog/longevity/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/longevity-400.webp"><img src="assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Longevity Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Every other show</div>
-            
-            <a href="blog/omni_view/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Blog
-            </a>
-            
-            <a href="blog/fascinating_frontiers/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp"><img src="assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
-                Fascinating Frontiers Blog
-            </a>
-            
-            <a href="blog/spacex/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/spacex-400.webp"><img src="assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                SpaceX Daily Blog
-            </a>
-            
-            <a href="blog/env_intel/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
-                Environmental Intelligence Blog
-            </a>
-            
-            <a href="blog/finansy_prosto/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                Финансы Просто Blog
-            </a>
-            
-            <a href="blog/privet_russian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                Привет, Русский! Blog
-            </a>
-            
-            <a href="blog/unintended_consequences/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp"><img src="assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
-                Unintended Consequences Blog
-            </a>
-            
-            <a href="blog/first_principles/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp"><img src="assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                First Principles Daily Blog
-            </a>
-            
-            <a href="blog/dp_pod/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/dp-pod-400.webp"><img src="assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
-                The DP Pod: The Do Positive Podcast Blog
-            </a>
-            
-            <a href="blog/offshore_north/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="assets/covers/offshore-north-400.webp"><img src="assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
-                Offshore North Blog
-            </a>
-            
-            
+            <a href="blog/index.html" class="nn-mobile-show-link" style="font-weight:600">All Blog Posts</a>
+            <a href="topics/index.html" class="nn-mobile-show-link">Browse by topic</a>
         </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">More</div>
@@ -1050,7 +875,7 @@
   
   <div class="tsl-grid" style="grid-template-columns:1fr;">
     <div class="tsl-panel">
-      <h2>Quarterly production &amp; deliveries</h2>
+      <h2>Quarterly production &amp; deliveries</h2><p class="tsl-asof">Operator data as of 2026-06-13 · latest quarter on record: 2025 Q1</p>
       <div class="tsl-legend">
         <span><span class="sw" style="background:linear-gradient(180deg,#8a5560,#4a2a31);"></span>Produced</span>
         <span><span class="sw" style="background:linear-gradient(180deg,var(--tsl-glow),var(--tsl-red));"></span>Delivered</span>
@@ -1062,7 +887,8 @@
             <div class="tsl-qbar prod" data-v="440808" style="height:0" title="Produced: 440,808"></div>
             <div class="tsl-qbar del" data-v="422875" style="height:0" title="Delivered: 422,875"></div>
           </div>
-          <div class="tsl-qlab">2023 Q1</div>
+          
+          <div class="tsl-qlab">Q1<br>2023</div>
         </div>
         
         <div class="tsl-qg">
@@ -1070,7 +896,8 @@
             <div class="tsl-qbar prod" data-v="479700" style="height:0" title="Produced: 479,700"></div>
             <div class="tsl-qbar del" data-v="466140" style="height:0" title="Delivered: 466,140"></div>
           </div>
-          <div class="tsl-qlab">2023 Q2</div>
+          
+          <div class="tsl-qlab">Q2<br>2023</div>
         </div>
         
         <div class="tsl-qg">
@@ -1078,7 +905,8 @@
             <div class="tsl-qbar prod" data-v="430488" style="height:0" title="Produced: 430,488"></div>
             <div class="tsl-qbar del" data-v="435059" style="height:0" title="Delivered: 435,059"></div>
           </div>
-          <div class="tsl-qlab">2023 Q3</div>
+          
+          <div class="tsl-qlab">Q3<br>2023</div>
         </div>
         
         <div class="tsl-qg">
@@ -1086,7 +914,8 @@
             <div class="tsl-qbar prod" data-v="494989" style="height:0" title="Produced: 494,989"></div>
             <div class="tsl-qbar del" data-v="484507" style="height:0" title="Delivered: 484,507"></div>
           </div>
-          <div class="tsl-qlab">2023 Q4</div>
+          
+          <div class="tsl-qlab">Q4<br>2023</div>
         </div>
         
         <div class="tsl-qg">
@@ -1094,7 +923,8 @@
             <div class="tsl-qbar prod" data-v="433371" style="height:0" title="Produced: 433,371"></div>
             <div class="tsl-qbar del" data-v="386810" style="height:0" title="Delivered: 386,810"></div>
           </div>
-          <div class="tsl-qlab">2024 Q1</div>
+          
+          <div class="tsl-qlab">Q1<br>2024</div>
         </div>
         
         <div class="tsl-qg">
@@ -1102,7 +932,8 @@
             <div class="tsl-qbar prod" data-v="410831" style="height:0" title="Produced: 410,831"></div>
             <div class="tsl-qbar del" data-v="443956" style="height:0" title="Delivered: 443,956"></div>
           </div>
-          <div class="tsl-qlab">2024 Q2</div>
+          
+          <div class="tsl-qlab">Q2<br>2024</div>
         </div>
         
         <div class="tsl-qg">
@@ -1110,7 +941,8 @@
             <div class="tsl-qbar prod" data-v="469796" style="height:0" title="Produced: 469,796"></div>
             <div class="tsl-qbar del" data-v="462890" style="height:0" title="Delivered: 462,890"></div>
           </div>
-          <div class="tsl-qlab">2024 Q3</div>
+          
+          <div class="tsl-qlab">Q3<br>2024</div>
         </div>
         
         <div class="tsl-qg">
@@ -1118,7 +950,8 @@
             <div class="tsl-qbar prod" data-v="459445" style="height:0" title="Produced: 459,445"></div>
             <div class="tsl-qbar del" data-v="495570" style="height:0" title="Delivered: 495,570"></div>
           </div>
-          <div class="tsl-qlab">2024 Q4</div>
+          
+          <div class="tsl-qlab">Q4<br>2024</div>
         </div>
         
         <div class="tsl-qg">
@@ -1126,7 +959,8 @@
             <div class="tsl-qbar prod" data-v="362615" style="height:0" title="Produced: 362,615"></div>
             <div class="tsl-qbar del" data-v="336681" style="height:0" title="Delivered: 336,681"></div>
           </div>
-          <div class="tsl-qlab">2025 Q1</div>
+          
+          <div class="tsl-qlab">Q1<br>2025</div>
         </div>
         
       </div>
@@ -1153,7 +987,7 @@
         <div class="tsl-bw"><div class="tsl-bar" data-v="1789226" style="height:0"><span class="cnt">1789k</span></div><div class="tsl-blab">2024</div></div>
         
       </div>
-      <p class="tsl-disclaimer">From Tesla's published annual figures. Operator-maintained — newest year appended each January.</p>
+      <p class="tsl-disclaimer">From Tesla's published annual figures. Operator-maintained (data as of 2026-06-13) — newest year appended each January.</p>
     </div>
     <div class="tsl-panel">
       <h2>Energy storage deployed (GWh / yr)</h2>
@@ -1170,7 +1004,7 @@
         <div class="tsl-bw"><div class="tsl-bar" data-v="31.4" style="height:0"><span class="cnt">31.4</span></div><div class="tsl-blab">2024</div></div>
         
       </div>
-      <p class="tsl-disclaimer">Powerwall + Megapack, from Tesla's energy deployments. Operator-maintained.</p>
+      <p class="tsl-disclaimer">Powerwall + Megapack, from Tesla's energy deployments. Operator-maintained (data as of 2026-06-13).</p>
     </div>
   </div>
 
@@ -1225,7 +1059,7 @@
                     <div class="nn-footer-brand"><span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span></div>
                     <p class="nn-footer-desc">Zero fluff. Independent podcast network produced in Vancouver, Canada.</p>
                 </div>
-                <div class="nn-footer-col">
+                <div class="nn-footer-col nn-footer-col--shows">
                     <h4>Shows</h4>
                     
                     <ul class="nn-footer-showlist">
@@ -1384,7 +1218,8 @@
                       data-label-idle="Subscribe"
                       data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
-                    <p>Pick the shows you want in your inbox:</p>
+                    <p>Pick the shows you want in your inbox:</p><details class="nn-subscribe-pick">
+                    <summary>Choose shows <span>(31)</span></summary>
                     <div class="nn-subscribe-tags">
                         <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
                         
@@ -1449,6 +1284,7 @@
                         <label><input type="checkbox" name="tag" value="Offshore North"> Offshore North</label>
                         
                     </div>
+                    </details>
                     <div class="nn-subscribe-row">
                         <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
                         <button type="submit">Subscribe</button>
