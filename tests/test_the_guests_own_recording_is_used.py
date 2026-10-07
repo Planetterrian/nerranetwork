@@ -209,3 +209,48 @@ def test_a_browser_take_is_lightly_denoised_with_the_model_we_ship():
     assert A._RNNOISE_MODEL.exists(), A._RNNOISE_MODEL
     assert A.LOCAL_SIDE.startswith(f"arnndn=m={A._RNNOISE_MODEL}:mix=0.7,highpass=f=70,")
     assert "{gain:.1f}" in A.LOCAL_SIDE and "{" not in str(A._RNNOISE_MODEL)
+
+
+def test_the_stereo_fallback_uses_the_guests_own_take_when_there_is_one():
+    """Oct 7 2026, Scott Pulcini: Mira could not be placed, so the edit was cut
+    from his leg, and that path never looked at his browser take."""
+    auto = (V / "auto_edit.py").read_text(encoding="utf-8")
+    body = auto[auto.index("def build("):]
+    body = body[:body.index("\ndef ", 1)]
+    assert '.get("leg_local") or {}).get("url")' in body
+    assert '"left_source": "local"} if leg_local else' in body
+    assert '{"from": "run:guest", "balance": True, "voice_match": "right"})' in body
+    assert 'session_log["tracks"]["leg_local"] = leg_local' in POST
+    assert 'if tracks["sources"].get("guest") == "local":' in POST
+
+
+def test_the_leg_file_puts_the_take_left_and_the_room_right(tmp_path):
+    import subprocess
+    import numpy as np
+    from post_interview import build_leg_local
+    from audio.local_tracks import _pcm
+    take = _tones(tmp_path / "take.wav", [(0.5, 1.5, 220)], total=3.0)
+    left = _tones(tmp_path / "callmic.wav", [(0.5, 1.5, 230)], total=3.0)
+    right = _tones(tmp_path / "heard.wav", [(1.8, 2.6, 330)], total=3.0)
+    leg = tmp_path / "leg.mp3"
+    subprocess.run(["ffmpeg", "-nostdin", "-y", "-v", "error", "-i", str(left), "-i", str(right),
+                    "-filter_complex", "[0:a][1:a]join=inputs=2:channel_layout=stereo[a]",
+                    "-map", "[a]", "-c:a", "libmp3lame", "-b:a", "192k", str(leg)], check=True)
+    out = build_leg_local(take, leg, tmp_path / "leg_local.flac")
+    probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=channels,sample_rate",
+                            "-of", "csv=p=0", str(out)], capture_output=True, text=True).stdout.strip()
+    assert probe == "48000,2"
+    l = _pcm_side(out, 0, tmp_path); r = _pcm_side(out, 1, tmp_path)
+    t = _pcm(take).astype(float)
+    assert np.corrcoef(l[24000:72000], t[24000:72000])[0, 1] > 0.99   # the take, not the call mic
+    assert np.abs(r[int(2.0 * 48000):int(2.4 * 48000)]).max() > 1000   # the room as heard
+    assert np.abs(r[int(0.8 * 48000):int(1.2 * 48000)]).max() < 300
+
+
+def _pcm_side(path, ch, tmp_path):
+    import subprocess
+    import numpy as np
+    raw = subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-i", str(path), "-af",
+                          f"pan=mono|c0=c{ch}", "-ar", "48000", "-f", "s16le", "-"],
+                         capture_output=True, check=True).stdout
+    return np.frombuffer(raw, dtype=np.int16).astype(float)

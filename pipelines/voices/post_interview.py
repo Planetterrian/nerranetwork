@@ -605,6 +605,31 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
             "bleed": bleed}
 
 
+def build_leg_local(guest: Path, raw: Path, out: Path) -> Path:
+    """The guest's leg as a stereo file with their own take on the left.
+
+    Oct 7 2026, Scott Pulcini. When Mira's track cannot be placed on the
+    room's clock, the edit is cut from the guest's leg recording (left: their
+    microphone through the call, right: the room as they heard it), and that
+    path never looked at the guest's own browser take: his episode was
+    assembled twice from the call audio while a cleaner recording of him sat
+    on the run row. The take is placed and gated on the guest leg's clock, so
+    it can stand in for the left side as it is. The right side is decoded
+    straight from the leg recording to 24-bit, because the declicker crawls
+    on audio that has been rounded to 16 bits (150 s per 10 s of Vincent
+    Rylan's, against 4 s from the same audio unrounded).
+    """
+    subprocess.run(
+        ["ffmpeg", "-nostdin", "-y", "-v", "error", "-i", str(guest), "-i", str(raw),
+         "-filter_complex",
+         "[0:a]aformat=sample_fmts=s32:sample_rates=48000:channel_layouts=mono[l];"
+         "[1:a]pan=mono|c0=c1,aresample=48000,aformat=sample_fmts=s32[r];"
+         "[l][r]join=inputs=2:channel_layout=stereo[a]",
+         "-map", "[a]", "-c:a", "flac", "-sample_fmt", "s32", str(out)],
+        check=True, capture_output=True, timeout=1800)
+    return out
+
+
 def has_video_stream(path: Path) -> bool:
     """True when the recording contains a video stream (WebRTC guest camera)."""
     try:
@@ -1158,6 +1183,15 @@ def main() -> int:
         logger.info("track sources: %s; processed: %s; durable legs: %s",
                     tracks["sources"], processed, durable)
 
+        leg_local = None
+        if tracks["sources"].get("guest") == "local":
+            try:
+                leg_local = {"url": r2_upload(
+                    build_leg_local(tracks["guest"], raw, workdir / "leg_local.flac"),
+                    show.r2_key("raw", f"{run['id']}_leg_local.flac"))}
+            except Exception:  # noqa: BLE001 — the processed tracks still stand
+                logger.exception("leg file with the guest's own take not built (non-fatal)")
+
         session_log = dict(run.get("grok_session_log") or {})
         session_log["tracks"] = {"sources": tracks["sources"],
                                  "processed": processed, "durable": durable,
@@ -1166,6 +1200,8 @@ def main() -> int:
                                  "unaligned": tracks.get("unaligned") or [],
                                  "pieces": tracks.get("pieces") or {},
                                  "bleed": tracks.get("bleed") or {}}
+        if leg_local:
+            session_log["tracks"]["leg_local"] = leg_local
         sb_update("interview_runs", f"id=eq.{run['id']}", {
             "status": "completed",
             "recording_guest_url": raw_url,
