@@ -467,7 +467,8 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
         # local_tracks.place_phrases / gate_to_reference.
         try:
             guest, placed = place_phrases(guest, guest_vox, workdir / "aligned" / "guest_placed.wav")
-            guest, kept = gate_to_reference(guest, guest_vox, workdir / "aligned" / "guest_gated.wav")
+            guest, kept = gate_to_reference(guest, guest_vox, workdir / "aligned" / "guest_gated.wav",
+                                          heard_wav=guest_r)
             logger.info("guest take placed %s and gated %s", placed, kept)
         except Exception:  # noqa: BLE001 — the single-offset take still stands
             logger.exception("phrase placement failed; keeping the single-offset take")

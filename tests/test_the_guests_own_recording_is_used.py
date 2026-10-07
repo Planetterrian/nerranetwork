@@ -47,7 +47,7 @@ def test_post_production_adopts_before_building_tracks():
 
 
 def test_a_clean_recording_gets_the_light_chain():
-    assert 'LOCAL_SIDE = ("highpass=f=70,adeclick=w=75:t=2,volume={gain:.1f}dB,"' in ASSEMBLE
+    assert 'LOCAL_SIDE = (LOCAL_DENOISE + "highpass=f=70,adeclick=w=75:t=2,volume={gain:.1f}dB,"' in ASSEMBLE
     assert '_TRACK_SOURCE.get(str(_src)) == "local"' in ASSEMBLE
     assert 'BALANCE_GLUE = "acompressor=threshold=-16dB:ratio=1.8' in ASSEMBLE
 
@@ -98,3 +98,114 @@ def test_the_room_is_kept_out_between_turns(tmp_path):
 def test_post_production_places_and_gates_a_local_take():
     assert "place_phrases(guest, guest_vox" in POST
     assert "gate_to_reference(guest, guest_vox" in POST
+
+
+def _tones(path, spans, sr=48000, total=6.0):
+    """Steady tones, one per ``(start, end, hz)``."""
+    import wave
+    import numpy as np
+    x = np.zeros(int(total * sr), dtype=np.float32)
+    for a, b, hz in spans:
+        t = np.arange(int((b - a) * sr)) / sr
+        x[int(a * sr):int(a * sr) + len(t)] += 6000 * np.sin(2 * np.pi * hz * t)
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(sr)
+        w.writeframes(np.clip(x, -32768, 32767).astype(np.int16).tobytes())
+    return path
+
+
+def test_the_hold_does_not_carry_the_room_into_the_take(tmp_path):
+    """Oct 7 2026, Vincent Rylan: no echo cancellation on his take, so the
+    hold after each of his sentences carried the start of Mira's reply."""
+    from audio.local_tracks import _log_env, _pcm, gate_to_reference
+    # He speaks 1.0-2.0 and again 3.0-4.0; Mira replies at 2.0 and talks
+    # over his second turn from 3.2 to 3.6. His speakers put her in his take
+    # a fifth of a second late.
+    local = _tones(tmp_path / "local.wav", [(1.0, 2.0, 220), (2.2, 2.9, 330),
+                                             (3.0, 4.0, 220), (3.4, 3.8, 330)])
+    call = _tones(tmp_path / "call.wav", [(1.0, 2.0, 220), (3.0, 4.0, 220)])
+    heard = _tones(tmp_path / "heard.wav", [(2.0, 2.7, 330), (3.2, 3.6, 330)])
+    plain = _log_env(_pcm(gate_to_reference(local, call, tmp_path / "a.wav")[0]))
+    out, stats = gate_to_reference(local, call, tmp_path / "b.wav", heard_wav=heard)
+    e = _log_env(_pcm(out))
+    assert plain[int(2.23 * 100)] > 7            # the old hold kept her echo
+    assert e[int(2.23 * 100)] < 1                # the new one does not
+    assert e[int(1.5 * 100)] > 7                 # his words are kept
+    assert e[int(3.5 * 100)] > 7                 # including over the top of her
+    assert stats["room_playing_sec"] > 0
+
+
+def test_post_production_tells_the_gate_what_the_guest_heard():
+    assert "heard_wav=guest_r" in POST
+
+
+def test_a_stereo_recording_can_carry_the_guests_own_take():
+    """The run's per-speaker tracks are not on the room's clock, so the
+    rebuild keeps the stereo recording's right side and swaps the left."""
+    assert 'cut.get("left_source") == "local"' in ASSEMBLE
+    assert "left_chain = (LOCAL_SIDE.format(gain=gl)" in ASSEMBLE
+
+
+def test_a_rebuilt_leg_still_ends_on_the_last_word():
+    """A URL source with balance is a conversation cut, so the episode's last
+    cut is measured from the audio rather than trusted from the transcript."""
+    assert "or bool(c.get(\"balance\"))" in ASSEMBLE
+    assert "if i == last_conversation and _is_conversation(cut):" in ASSEMBLE
+
+
+def test_a_published_episode_keeps_its_address_when_its_audio_is_rebuilt():
+    sys.path.insert(0, str(ROOT))
+    from replace_published_audio import _key, rewrite_feed_item
+    rss = ("<rss><channel><item><title>Ep6</title><enclosure url=\"https://op3.dev/e/"
+           "audio.nerranetwork.com/age_of_ai/raw/a_edit_1.mp3\" length=\"10\" type=\"audio/mpeg\" />"
+           "<itunes:duration>40:00</itunes:duration></item>"
+           "<item><title>Ep7</title><enclosure url=\"https://op3.dev/e/"
+           "audio.nerranetwork.com/age_of_ai/raw/b_edit_2.mp3\" length=\"44250285\" type=\"audio/mpeg\" />"
+           "<itunes:duration>46:05</itunes:duration></item></channel></rss>")
+    key = _key("https://audio.nerranetwork.com/age_of_ai/raw/b_edit_2.mp3")
+    assert key == "age_of_ai/raw/b_edit_2.mp3"
+    out = rewrite_feed_item(rss, key, 43000000, "45:30")
+    assert 'b_edit_2.mp3" length="43000000"' in out and "<itunes:duration>45:30<" in out
+    assert 'a_edit_1.mp3" length="10"' in out and "<itunes:duration>40:00<" in out
+    assert out.count("<item>") == 2
+
+
+def test_talking_over_the_room_comes_from_the_call_leg(tmp_path):
+    """Where a take that hears the room overlaps someone else, the
+    echo-cancelled call leg stands in for those frames only."""
+    import numpy as np
+    from audio.local_tracks import _pcm, gate_to_reference
+    spans_room = [(a, a + 0.6, 330) for a in np.arange(6.0, 14.0, 1.0)]
+    his = [(a, a + 0.6, 220) for a in np.arange(0.5, 5.5, 1.0)]
+    # The take hears every room phrase a fifth of a second late, as loud as him,
+    # and he says one word (5.6-6.2) over the first of them.
+    local = _tones(tmp_path / "local.wav", his + [(5.6, 6.2, 220)]
+                   + [(a + 0.2, b + 0.2, hz) for a, b, hz in spans_room], total=16.0)
+    call = _tones(tmp_path / "call.wav", his + [(5.6, 6.2, 220)], total=16.0)
+    heard = _tones(tmp_path / "heard.wav", spans_room, total=16.0)
+    out, stats = gate_to_reference(local, call, tmp_path / "g.wav", heard_wav=heard)
+    assert stats["talk_over_from_call_sec"] >= 0.25         # 5.9-6.2: the overlap
+    x, c = _pcm(out).astype(float), _pcm(call).astype(float)
+    seg = slice(int(6.0 * 48000), int(6.15 * 48000))      # his word, over her echo
+    assert np.corrcoef(x[seg], c[seg])[0, 1] > 0.95        # it is the call leg's word
+    room = slice(int(8.3 * 48000), int(8.6 * 48000))       # only the room: muted
+    assert np.abs(x[room]).max() < 1
+
+
+def test_a_take_with_headphones_keeps_its_own_audio_over_the_room(tmp_path):
+    from audio.local_tracks import gate_to_reference
+    import numpy as np
+    spans_room = [(a, a + 0.6, 330) for a in np.arange(6.0, 14.0, 1.0)]
+    his = [(a, a + 0.6, 220) for a in np.arange(0.5, 5.5, 1.0)]
+    local = _tones(tmp_path / "local.wav", his + [(5.6, 6.2, 220)], total=16.0)
+    call = _tones(tmp_path / "call.wav", his + [(5.6, 6.2, 220)], total=16.0)
+    heard = _tones(tmp_path / "heard.wav", spans_room, total=16.0)
+    out, stats = gate_to_reference(local, call, tmp_path / "g.wav", heard_wav=heard)
+    assert stats["talk_over_from_call_sec"] == 0
+
+
+def test_a_browser_take_is_lightly_denoised_with_the_model_we_ship():
+    import assemble_edit as A
+    assert A._RNNOISE_MODEL.exists(), A._RNNOISE_MODEL
+    assert A.LOCAL_SIDE.startswith(f"arnndn=m={A._RNNOISE_MODEL}:mix=0.7,highpass=f=70,")
+    assert "{gain:.1f}" in A.LOCAL_SIDE and "{" not in str(A._RNNOISE_MODEL)

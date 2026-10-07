@@ -706,7 +706,10 @@ class TestAudioRestoration:
         assert "channelsplit=channel_layout=stereo[l][r]" in src
         # Sept 14 2026: each side can also carry a voice-match filter.
         assert "{left_extra}[lg];" in src and "{right_extra}[rg];" in src
-        i_side = src.index("[l]{SIDE_CHAIN.format(")
+        # Oct 7 2026: the left side's chain is chosen first (a guest's own
+        # browser take gets LOCAL_SIDE), then applied in the same place.
+        i_side = src.index("[l]{left_chain}")
+        assert "else SIDE_CHAIN.format(restore=restore or 'anull', gain=gl))" in src
         i_mix = src.index("amix=inputs=2:normalize=0", i_side)
         assert i_side < i_mix, "levelling after the fold is levelling a mixture"
 

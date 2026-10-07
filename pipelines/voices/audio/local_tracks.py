@@ -874,26 +874,89 @@ def place_phrases(track_wav: Path, reference_wav: Path, out_wav: Path) -> Tuple[
 
 
 def gate_to_reference(track_wav: Path, reference_wav: Path, out_wav: Path,
-                      floor_db: float = 30.0) -> Tuple[Path, dict]:
+                      floor_db: float = 30.0,
+                      heard_wav: Optional[Path] = None) -> Tuple[Path, dict]:
     """Keep ``track_wav`` only where the echo-cancelled call leg shows the
-    speaker talking (held 250 ms after and 120 ms before, 30 ms ramps)."""
+    speaker talking (held 250 ms after and 120 ms before, 30 ms ramps).
+
+    Oct 7 2026, Vincent Rylan. ``heard_wav`` is the room as this speaker
+    heard it (the right side of their leg). His take had no echo cancellation
+    and his speakers were as loud in it as he was, so every hold that ran
+    past the end of his sentence carried the first syllables of Mira's reply
+    with it, a quarter of a second behind her own track: 22 seconds of short
+    echoes across the edit. Where the room was playing someone else, the
+    hold shrinks to 60 ms after and 40 ms before, which keeps his word edges
+    and nothing of theirs. Where he talked over them, the echo-cancelled call
+    leg stands in (only for a take that hears the room; see below)."""
     loc, ref = _pcm(track_wav).astype(np.float32), _pcm(reference_wav).astype(np.float32)
     hop = TARGET_SR // 100
     n = min(len(loc), len(ref)) // hop
-    level = 20 * np.log10(np.sqrt((ref[:n * hop].reshape(n, hop) ** 2).mean(1)) + 1)
-    keep = level > floor_db
-    hold = keep.copy()
-    idx = np.flatnonzero(keep)
-    for d in range(1, 26):
-        hold[np.clip(idx + d, 0, n - 1)] = True
-    for d in range(1, 13):
-        hold[np.clip(idx - d, 0, n - 1)] = True
+
+    def _level(x: np.ndarray, frames: int) -> np.ndarray:
+        x = x[:frames * hop]
+        if len(x) < frames * hop:
+            x = np.pad(x, (0, frames * hop - len(x)))
+        return 20 * np.log10(np.sqrt((x.reshape(frames, hop) ** 2).mean(1)) + 1)
+
+    def _widen(mask: np.ndarray, after: int, before: int) -> np.ndarray:
+        out = mask.copy()
+        idx = np.flatnonzero(mask)
+        for d in range(1, after + 1):
+            out[np.clip(idx + d, 0, n - 1)] = True
+        for d in range(1, before + 1):
+            out[np.clip(idx - d, 0, n - 1)] = True
+        return out
+
+    ref_level = _level(ref, n)
+    keep = ref_level > floor_db
+    hold = _widen(keep, 25, 12)
+    others_sec, filled = 0.0, np.zeros(n, dtype=bool)
+    if heard_wav is not None:
+        heard = _level(_pcm(heard_wav).astype(np.float32), n) > floor_db + 10
+        # The echo arrives up to half a second after the room played it
+        # (network plus the take's own clock), and can start a beat early
+        # after placement.
+        busy = _widen(heard, 50, 10)
+        # Under someone else the call leg carries a little of them too (its
+        # echo canceller leaves a residue around 25 dB that pokes over the
+        # floor), so there the speaker has to be clearly and steadily there.
+        steady = np.convolve((ref_level > floor_db + 10).astype(np.float32),
+                             np.ones(5, dtype=np.float32) / 5, "same") >= 0.6
+        over = _widen(steady, 6, 4) & busy
+        hold = (hold & ~busy) | over
+        others_sec = float(busy.sum()) / 100
+        # Talking over the room. A take that hears the room as loudly as the
+        # speaker (Vincent's sat level with his own voice) carries the other
+        # person under every interjection, a fifth of a second late: a slap
+        # echo of Mira or Patrick. The call leg was echo-cancelled for exactly
+        # this, so wherever the room is playing, what is kept comes from the
+        # call leg, brought to the take's level. A take that does not hear the
+        # room (headphones) keeps its own audio throughout.
+        loc_level = _level(loc, n)
+        own = loc_level[keep & ~busy]
+        leak = loc_level[busy & ~_widen(keep, 25, 12)]
+        if (len(own) > 200 and len(leak) > 200
+                and float(np.median(own)) - float(np.median(leak)) < 15.0):
+            filled = over
+            ratio = 10 ** ((float(np.median(own))
+                            - float(np.median(ref_level[keep & ~busy]))) / 20)
     gain = np.convolve(hold.astype(np.float32), np.ones(3, dtype=np.float32) / 3, "same")
     gain = np.repeat(gain, hop)
     out = np.zeros(len(loc), dtype=np.float32)
     m = min(len(gain), len(loc))
-    out[:m] = loc[:m] * gain[:m]
+    if filled.any():
+        sub = np.convolve(_widen(filled, 2, 2).astype(np.float32),
+                          np.ones(5, dtype=np.float32) / 5, "same")
+        sub = np.repeat(sub, hop)
+        k = min(m, len(sub), len(ref))
+        out[:k] = gain[:k] * ((1 - sub[:k]) * loc[:k] + sub[:k] * ratio * ref[:k])
+        out[k:m] = loc[k:m] * gain[k:m]
+    else:
+        out[:m] = loc[:m] * gain[:m]
     _write_pcm(out, out_wav)
     stats = {"kept_sec": round(float(hold.sum()) / 100, 1), "of_sec": round(n / 100, 1)}
+    if heard_wav is not None:
+        stats["room_playing_sec"] = round(others_sec, 1)
+        stats["talk_over_from_call_sec"] = round(float(filled.sum()) / 100, 1)
     logger.info("kept the take where the call leg had the speaker: %s", stats)
     return Path(out_wav), stats

@@ -192,7 +192,19 @@ CLEAN_SIDE = SIDE_CHAIN
 # stacked 2.5:1 compressors lift the room between his words; through this
 # lighter chain, 1.73 and 11.8. On the call audio the softer glue changes
 # nothing (1.51 and 4.9 either way), so it is the glue for everyone.
-LOCAL_SIDE = ("highpass=f=70,adeclick=w=75:t=2,volume={gain:.1f}dB,"
+#
+# Oct 7 2026 (Vincent Rylan). A browser take is also a raw one: no noise
+# suppression, so a laptop fan or a quiet microphone turned up 24 dB sits
+# right under the voice. The speech denoiser the produce path already ships
+# (assets/audio/rnnoise_sh.rnnn), blended 70/30 with the original so it
+# cannot go watery, measured on 45 s windows through this whole chain:
+# Vincent PESQ 1.79 -> 2.44, 1.90 -> 2.70, 2.07 -> 2.77 (SI-SDR +5 to +8 dB);
+# Scott 1.13 -> 1.31, 1.14 -> 1.20, 1.18 -> 1.26 (SI-SDR +3 to +5 dB);
+# Viktor, whose room is quiet, 2.98 -> 3.13 and 2.93 -> 3.10. Fully wet it
+# cost Vincent intelligibility (STOI 0.92 -> 0.90), which is why it is blended.
+_RNNOISE_MODEL = Path(__file__).resolve().parents[2] / "assets" / "audio" / "rnnoise_sh.rnnn"
+LOCAL_DENOISE = (f"arnndn=m={_RNNOISE_MODEL}:mix=0.7," if _RNNOISE_MODEL.exists() else "")
+LOCAL_SIDE = (LOCAL_DENOISE + "highpass=f=70,adeclick=w=75:t=2,volume={gain:.1f}dB,"
               "acompressor=threshold=-18dB:ratio=1.6:attack=20:release=300:knee=6")
 BALANCE_GLUE = "acompressor=threshold=-16dB:ratio=1.8:attack=20:release=250:knee=4"
 
@@ -382,9 +394,18 @@ def _piece(cut: dict, src: Path, out: Path) -> Path:
         want = str(cut.get("voice_match") or "")
         left_extra = ("," + VOICE_MATCH) if want in ("left", "both") else ""
         right_extra = ("," + VOICE_MATCH) if want in ("right", "both") else ""
+        # Oct 7 2026, Vincent Rylan. His episode was cut from his leg's stereo
+        # recording because the per-speaker tracks of that run are not on the
+        # room's clock. The rebuild keeps that recording's right side (the
+        # room as he heard it) and puts his own browser take, placed and
+        # gated, on the left; "left_source": "local" gives that side the
+        # light chain a clean microphone was measured to want.
+        left_chain = (LOCAL_SIDE.format(gain=gl)
+                      if cut.get("left_source") == "local"
+                      else SIDE_CHAIN.format(restore=restore or 'anull', gain=gl))
         cmd += ["-filter_complex",
                 f"[0:a]channelsplit=channel_layout=stereo[l][r];"
-                f"[l]{SIDE_CHAIN.format(restore=restore or 'anull', gain=gl)}"
+                f"[l]{left_chain}"
                 f"{left_extra}[lg];"
                 f"[r]{SIDE_CHAIN.format(restore=restore or 'anull', gain=gr)}"
                 f"{right_extra}[rg];"
@@ -651,10 +672,18 @@ def assemble(slug: str) -> dict:
         work = Path(tmp)
         pieces: List[Path] = []
         conversation = ("run:", "track:", "mix:")
+
+        # A balanced cut is a conversation whatever its source is called: Oct
+        # 7 2026, Vincent Rylan's rebuilt leg is a URL, and without this the
+        # last cut of his episode would end on the transcript's timestamp
+        # instead of the silence after his last word.
+        def _is_conversation(c: dict) -> bool:
+            return (str(c.get("from", "")).startswith(conversation)
+                    or bool(c.get("balance")))
         other_runs: Dict[str, dict] = {}
         last_conversation = max(
             (i for i, c in enumerate(cuts)
-             if str(c.get("from", "")).startswith(conversation)
+             if _is_conversation(c)
              and c.get("end") is not None),
             default=-1)
         for i, cut in enumerate(cuts):
@@ -711,7 +740,7 @@ def assemble(slug: str) -> dict:
                 if side in CHANNEL_FILTERS:
                     cut = {**cut, "channel": side}
             src = _fetch(url, work / f"src_{abs(hash(url))}.bin", cache)
-            if i == last_conversation and ref.startswith(conversation):
+            if i == last_conversation and _is_conversation(cut):
                 _end_on_the_last_word(cut, src)
             pieces.append(_piece(cut, src, out))
             logger.info("cut %d: %s -> %.1fs", i, ref, _duration(out))
