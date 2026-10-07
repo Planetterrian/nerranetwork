@@ -520,7 +520,7 @@
       fl.innerHTML = fs.length ? fs.map(function(b){
         var spec = [b.architect ? 'Design ' + esc(b.architect) : '', b.construction ? esc(b.construction) : '', b.launch_date ? 'launched ' + esc(b.launch_date) : '', b.foils ? 'foils: ' + esc(b.foils) : '', b.former_names ? 'ex ' + esc(b.former_names) : ''].filter(Boolean).join(' · ');
         var hl = (b.highlights || []).slice(0, 4).map(esc).join(' · ');
-        return '<li class="' + (b.canada ? 'can' : '') + '"><div class="h"><span><b>' + esc(b.skipper) + '</b> · ' + esc(b.entry) + (b.stale ? ' <span class="sn">(last good read)</span>' : '') + '</span><span class="sn">' + esc(b.sail_number || '') + ' <a href="' + esc(b.url) + '" target="_blank" rel="noopener">register ↗</a></span></div>' +
+        return '<li class="' + (b.canada ? 'can' : '') + '"><div class="h"><span><b>' + esc(b.skipper) + '</b> · ' + esc(b.entry) + (b.stale ? ' <span class="sn">(register not reachable · last good read ' + esc(b.fetched || 'date unrecorded') + ')</span>' : '') + '</span><span class="sn">' + esc(b.sail_number || '') + ' <a href="' + esc(b.url) + '" target="_blank" rel="noopener">register ↗</a></span></div>' +
                (spec ? '<p class="spec">' + spec + '</p>' : '') + (hl ? '<p class="hl">' + hl + '</p>' : '') + '</li>';
       }).join('') : '<li class="on-muted">No register records fetched yet.</li>';
     }
