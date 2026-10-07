@@ -323,3 +323,9 @@ class TestShowPageIsShorter:
     def test_archive_folds_after_six_on_both_render_paths(self):
         assert "const ARCHIVE_VISIBLE = 6;" in self.TPL
         assert self.TPL.count("foldArchive(grid);") == 2
+
+    def test_resource_groups_collapse_with_the_first_open(self):
+        assert '<details class="resource-category"{% if loop.first %} open{% endif %}>' in self.TPL
+        assert '<summary class="resource-category-title">' in self.TPL
+        # The card names the host; the full URL is the link.
+        assert "r.url | replace('https://', '')" not in self.TPL

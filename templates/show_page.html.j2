@@ -826,19 +826,22 @@
             <div class="nn-section-header" style="text-align:left;">
                 <h2>{% if _is_ru %}Ресурсы и материалы{% else %}Resources &amp; Further Reading{% endif %}</h2>
             </div>
+            {#- One group open, the rest a tap away: printed open, Tesla's
+                four groups ran to 4.8k px on a phone. The card names the
+                site's host; the full URL is the link itself. -#}
             {% for cat in resource_categories %}
-            <div class="resource-category">
-                <h3 class="resource-category-title">{{ cat.title }}</h3>
+            <details class="resource-category"{% if loop.first %} open{% endif %}>
+                <summary class="resource-category-title"><span>{{ cat.title }}</span> <span class="resource-count">{{ cat.resources | length }}</span></summary>
                 <div class="resources-grid">
                     {% for r in cat.resources %}
                     <a href="{{ r.url }}" class="resource-card glass-card" target="_blank" rel="noopener">
                         <div class="resource-card-name">{{ r.name }}</div>
                         <div class="resource-card-desc">{{ r.desc }}</div>
-                        <div class="resource-card-url">{{ r.url | replace('https://', '') | replace('http://', '') }}</div>
+                        <div class="resource-card-url">{{ (r.url.split('//', 1)[-1]).split('/', 1)[0] | replace('www.', '') }}</div>
                     </a>
                     {% endfor %}
                 </div>
-            </div>
+            </details>
             {% endfor %}
         </div>
     </section>
@@ -854,7 +857,7 @@
                 <a href="{{ r.url }}" class="resource-card glass-card" target="_blank" rel="noopener">
                     <div class="resource-card-name">{{ r.name }}</div>
                     <div class="resource-card-desc">{{ r.desc }}</div>
-                    <div class="resource-card-url">{{ r.url | replace('https://', '') | replace('http://', '') }}</div>
+                    <div class="resource-card-url">{{ (r.url.split('//', 1)[-1]).split('/', 1)[0] | replace('www.', '') }}</div>
                 </a>
                 {% endfor %}
             </div>

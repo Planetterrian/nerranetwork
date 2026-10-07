@@ -1849,7 +1849,6 @@ button:focus-visible {
   font-family: var(--font-ui);
   font-size: 0.78rem;
   color: var(--show-color-text);
-  opacity: 0.7;
 }
 
 /* ---------- Network Subscribe RSS Grid ---------- */
@@ -1899,15 +1898,28 @@ button:focus-visible {
 }
 
 /* ---------- Resource category headers ---------- */
-.resource-category { margin-bottom: var(--sp-8); }
+.resource-category { margin-bottom: var(--sp-4); }
 .resource-category-title {
   font-family: var(--font-heading);
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--show-color-text);
-  margin-bottom: var(--sp-4);
-  padding-bottom: var(--sp-2);
+  padding: var(--sp-3) 0;
   border-bottom: 1px solid var(--nn-border);
+  cursor: pointer;
+  list-style: none;
+  display: flex; align-items: center; gap: var(--sp-2);
+}
+.resource-category-title::-webkit-details-marker { display: none; }
+.resource-category-title::after {
+  content: '+'; margin-left: auto; color: var(--nn-text-muted); font-weight: 400; font-size: 1.3rem; line-height: 1;
+}
+.resource-category[open] > .resource-category-title::after { content: '\2212'; }
+.resource-category[open] > .resource-category-title { margin-bottom: var(--sp-4); }
+.resource-count {
+  font-family: var(--font-ui); font-size: 0.78rem; font-weight: 600;
+  color: var(--nn-text-muted);
+  border: 1px solid var(--nn-border); border-radius: 100px; padding: 0 8px;
 }
 
 /* ---------- Tools grid & cards ---------- */
@@ -1988,7 +2000,8 @@ details[open] .faq-question::after { content: '\2212'; }
 
 /* ---------- Responsive: new sections ---------- */
 @media (max-width: 639px) {
-  .resources-grid { grid-template-columns: 1fr; }
+  .resources-grid { grid-template-columns: 1fr; gap: var(--sp-3); }
+  .resource-card { padding: var(--sp-4); gap: var(--sp-1); }
   .tools-grid { grid-template-columns: 1fr; }
   .subscribe-rss-grid { grid-template-columns: 1fr; }
 }
