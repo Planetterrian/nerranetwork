@@ -71,6 +71,23 @@
 
 /* ---------- Reset ---------- */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* Brand colours as TEXT on the dark surfaces fail AA (Tesla red 4.06:1,
+   Offshore North 1.66:1, the network purple 3.6:1). Every element derives a
+   text-safe tint from whatever --show-color / --card-accent it inherits, so a
+   rule can write `color: var(--show-color-text)` without the page having to
+   define it. Fills, borders and tints keep the raw colour. */
+*, *::before, *::after {
+  --show-color-text: color-mix(in srgb, var(--show-color, #6B47FF), white 35%);
+  --card-accent-text: color-mix(in srgb, var(--card-accent, #6B47FF), white 35%);
+}
+
+/* An element hidden with the attribute stays hidden even when a component
+   rule sets its display (explore's "Clear filters" chip showed permanently). */
+[hidden] { display: none !important; }
+
+/* Native players follow the dark theme instead of rendering as white pills. */
+audio { color-scheme: dark; }
 html {
   scroll-behavior: smooth;
   /* In-page anchors (#shows, #subscribe, the skip link's #main-content)
@@ -153,7 +170,11 @@ button { font-family: var(--font-ui); cursor: pointer; }
 /* Show dropdown in nav */
 .nn-nav-dropdown {
   position: relative;
+  /* The padding bridges the hover gap to the menu; the negative margin
+     keeps the trigger on the same baseline as the plain nav links (it sat
+     4px higher). */
   padding-bottom: var(--sp-2);
+  margin-bottom: calc(-1 * var(--sp-2));
 }
 .nn-nav-dropdown-btn {
   display: flex; align-items: center; gap: var(--sp-2);
@@ -428,7 +449,7 @@ button { font-family: var(--font-ui); cursor: pointer; }
   transition: all var(--duration) var(--ease);
 }
 .show-card-blog-link:hover {
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
   background: var(--nn-card-hover);
 }
 .show-card-blog-link svg {
@@ -472,7 +493,7 @@ button { font-family: var(--font-ui); cursor: pointer; }
   display: inline-flex; align-items: center; gap: var(--sp-2);
   font-family: var(--font-ui);
   font-size: 0.85rem; font-weight: 600;
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
   background: none; border: none;
   padding: 0;
 }
@@ -739,7 +760,7 @@ button { font-family: var(--font-ui); cursor: pointer; }
   /* Raw brand colors (Tesla red, deep blues) land near 3:1 on the dark
      background — visibly murky (June 2026 look-and-feel pass). Tint
      55/45 toward white: keeps the hue, clears AA contrast. */
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
   color: color-mix(in srgb, var(--show-color, var(--nn-purple)) 55%, #fff);
   margin-bottom: var(--sp-4);
 }
@@ -840,7 +861,7 @@ button.nn-chip { cursor: pointer; }
   font-size: 0.75rem; font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
   margin-bottom: var(--sp-3);
 }
 .latest-episode-title {
@@ -912,7 +933,7 @@ button.nn-chip { cursor: pointer; }
   font-size: 0.85rem;
   color: var(--nn-text-muted);
 }
-.nn-latest-actions .nn-latest-archive:hover { color: var(--show-color, var(--nn-purple)); }
+.nn-latest-actions .nn-latest-archive:hover { color: var(--show-color-text); }
 
 /* Every archive card says its episode has a written version too. Before
    this only the latest card did, so a reader scrolling the archive had no
@@ -923,7 +944,7 @@ button.nn-chip { cursor: pointer; }
   font-family: var(--font-ui);
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
   text-decoration: none;
 }
 .episode-card-article:hover { text-decoration: underline; }
@@ -1050,7 +1071,7 @@ button.nn-chip { cursor: pointer; }
 .nn-filter-btn:hover,
 .nn-filter-btn.active {
   border-color: var(--show-color, var(--nn-purple));
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
 }
 .nn-episode-count {
   font-family: var(--font-ui);
@@ -1100,7 +1121,7 @@ button.nn-chip { cursor: pointer; }
 }
 .nn-summary-link:hover {
   border-color: var(--show-color, var(--nn-purple));
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
 }
 .nn-summary-content {
   color: var(--nn-text-muted);
@@ -1118,7 +1139,7 @@ button.nn-chip { cursor: pointer; }
 .nn-summary-content p:last-child { margin-bottom: 0; }
 .nn-summary-content ul { margin: 0 0 1rem 1.2rem; }
 .nn-summary-content li { margin: 0.25rem 0; }
-.nn-summary-content a { color: var(--show-color, var(--nn-purple)); }
+.nn-summary-content a { color: var(--show-color-text); }
 .nn-summary-content a:hover { color: var(--nn-cyan); }
 .nn-summary-content strong { color: var(--nn-text); }
 
@@ -1173,7 +1194,7 @@ button.nn-chip { cursor: pointer; }
 .nn-speed-btn:hover,
 .nn-speed-btn.active {
   border-color: var(--show-color, var(--nn-purple));
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
 }
 .nn-sticky-close {
   width: 44px; height: 44px;
@@ -1390,9 +1411,9 @@ button.nn-chip { cursor: pointer; }
 }
 
 @keyframes cardFloat {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-7px) rotate(0.8deg); }
-  75% { transform: translateY(3px) rotate(-0.4deg); }
+  0%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-6px); }
+  75% { transform: translateY(3px); }
 }
 
 @media (min-width: 640px) {
@@ -1524,6 +1545,9 @@ button.nn-chip { cursor: pointer; }
   overflow-x: auto;
   padding: 0 var(--sp-6) var(--sp-4);
   scroll-snap-type: x mandatory;
+  /* Without this the snap scrolls the left padding away and the first
+     card sits flush against the screen edge. */
+  scroll-padding-inline: var(--sp-6);
   -webkit-overflow-scrolling: touch;
 }
 .latest-scroll-row::-webkit-scrollbar { height: 6px; }
@@ -1779,7 +1803,7 @@ button:focus-visible {
   font-size: 0.75rem; font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
   margin-bottom: var(--sp-3);
 }
 .show-audience-text {
@@ -1828,7 +1852,7 @@ button:focus-visible {
 .resource-card-url {
   font-family: var(--font-ui);
   font-size: 0.78rem;
-  color: var(--show-color, var(--nn-purple));
+  color: var(--show-color-text);
   opacity: 0.7;
 }
 
@@ -1884,7 +1908,7 @@ button:focus-visible {
   font-family: var(--font-heading);
   font-size: 1.1rem;
   font-weight: 600;
-  color: var(--show-color);
+  color: var(--show-color-text);
   margin-bottom: var(--sp-4);
   padding-bottom: var(--sp-2);
   border-bottom: 1px solid var(--nn-border);
@@ -1953,7 +1977,7 @@ button:focus-visible {
   content: '+';
   float: right;
   font-size: 1.2rem;
-  color: var(--show-color);
+  color: var(--show-color-text);
   font-weight: 400;
   transition: transform 200ms var(--ease);
 }
@@ -2076,7 +2100,7 @@ details[open] .faq-question::after { content: '\2212'; }
   padding: 1px 8px;
   border-radius: 100px;
   background: color-mix(in srgb, var(--card-accent) 15%, transparent);
-  color: var(--card-accent);
+  color: var(--card-accent-text, var(--card-accent));
 }
 .blog-idx-reading {
   font-family: var(--font-ui);
@@ -2107,7 +2131,7 @@ details[open] .faq-question::after { content: '\2212'; }
   font-family: var(--font-ui);
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--card-accent);
+  color: var(--card-accent-text, var(--card-accent));
   flex: none;
   margin: 0 0 var(--sp-2);
 }
@@ -2121,7 +2145,7 @@ details[open] .faq-question::after { content: '\2212'; }
 .blog-idx-read-more {
   font-family: var(--font-ui);
   font-size: 0.8rem;
-  color: var(--card-accent);
+  color: var(--card-accent-text, var(--card-accent));
   margin-top: var(--sp-4);
   font-weight: 500;
 }
@@ -2237,6 +2261,12 @@ body.menu-open {
      screens down on a phone. The full grid is one scroll below. */
   .hero-show-orbit .orbit-card:nth-child(n+9) { display: none; }
 }
+/* Above phone width the hero kept all 31 covers: five rows ending on an
+   orphan row of three, with every CTA below the fold at 1440x900. Two rows
+   of seven is the hero; the full catalogue is one scroll below. */
+@media (min-width: 641px) {
+  .hero-show-orbit .orbit-card:nth-child(n+15) { display: none; }
+}
 
 /* ===================================================================
    Cookie Consent Banner (Google Consent Mode v2)
@@ -2259,6 +2289,7 @@ body.menu-open {
   flex-wrap: wrap;
   align-items: center;
   gap: 16px;
+  font-family: var(--font-ui);
   font-size: 0.9rem;
   line-height: 1.5;
   backdrop-filter: blur(12px);
@@ -2756,10 +2787,10 @@ body.nn-no-scroll { overflow: hidden; }
 }
 .nn-guest-name { font-family: var(--font-heading); font-size: 1.28rem; line-height: 1.2; margin: 0; }
 .nn-guest-name a { color: inherit; text-decoration: none; }
-.nn-guest-name a:hover { color: var(--show-color); }
+.nn-guest-name a:hover { color: var(--show-color-text); }
 .nn-guest-identifier {
     font-family: var(--font-ui); font-size: 0.86rem; font-weight: 600;
-    color: var(--show-color); margin: 0.25rem 0 0;
+    color: var(--show-color-text); margin: 0.25rem 0 0;
 }
 .nn-guest-ep {
     flex: none; font-family: var(--font-ui); font-size: 0.7rem; font-weight: 700;
@@ -2778,7 +2809,7 @@ body.nn-no-scroll { overflow: hidden; }
     font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted);
     align-items: center;
 }
-.nn-guest-meta a { color: var(--show-color); text-decoration: none; font-weight: 600; }
+.nn-guest-meta a { color: var(--show-color-text); text-decoration: none; font-weight: 600; }
 
 .nn-creator {
     margin-top: var(--sp-6); border-top: 1px solid var(--nn-border);
@@ -2795,7 +2826,7 @@ body.nn-no-scroll { overflow: hidden; }
     font-family: var(--font-ui); font-size: 0.88rem;
     display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;
 }
-.nn-creator-more a { color: var(--show-color); text-decoration: none; font-weight: 600; }
+.nn-creator-more a { color: var(--show-color-text); text-decoration: none; font-weight: 600; }
 .nn-guest-cohost { color: var(--nn-text-secondary); }
 
 .mira-steps {
@@ -2980,3 +3011,74 @@ body.nn-no-scroll { overflow: hidden; }
   .nn-claims-episode-counts { margin-left: 0; width: 100%; }
   .nn-claims-tile-num { font-size: 1.3rem; }
 }
+
+/* ===================================================================
+   Oct 7 2026 site review — global readability fixes
+   =================================================================== */
+
+/* Links inside running text had no cue at all (the reset sets
+   `a { color: inherit; text-decoration: none }`), which fails WCAG 1.4.1.
+   :where() keeps this at the lowest specificity, so any component or page
+   rule that styles its own links still wins. */
+main :where(p, li, dd, td) > a:where(:not([class]):not([style])) {
+  color: var(--nn-cyan);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  /* iOS zooms the page on focus for any input under 16px. */
+  #nn-global-search-input { font-size: 16px !important; }
+  /* The results box was as narrow as the 110px search field. */
+  #nn-global-search-results {
+    position: fixed !important;
+    left: 16px !important;
+    right: 16px !important;
+    top: calc(var(--nav-height, 64px) + 4px) !important;
+  }
+}
+
+/* Summaries pages: long digests open clamped (see clampSummaries in
+   summaries_page.html.j2). */
+.nn-summary-content.is-clamped {
+  max-height: 22rem;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
+          mask-image: linear-gradient(to bottom, #000 70%, transparent);
+}
+.nn-summary-more {
+  margin-top: var(--sp-3);
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--nn-border);
+  background: transparent;
+  color: var(--show-color-text);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.nn-summary-more:hover { border-color: var(--show-color-text); }
+.nn-summary-content a { overflow-wrap: anywhere; }
+
+/* The summaries page's subscribe row had no styles at all and rendered as
+   bare links. */
+.nn-subscribe-bar {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: var(--sp-2);
+  margin: 0 auto var(--sp-8);
+  padding: 0 var(--sp-4);
+}
+.nn-subscribe-btn {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--nn-border);
+  background: var(--nn-card);
+  color: var(--nn-text);
+  font-family: var(--font-ui);
+  font-size: 0.85rem; font-weight: 600;
+  text-decoration: none;
+}
+.nn-subscribe-btn:hover { border-color: var(--show-color-text); color: var(--nn-white); }

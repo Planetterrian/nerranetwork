@@ -476,6 +476,7 @@
                         </div>`;
                     }
                     container.innerHTML = html;
+                    clampSummaries(container);
                     initAudioUX(container);
                     initShareButtons(container);
                     applyAllCardsLang(savedLangPref());
@@ -526,7 +527,10 @@
                 if (countEl) countEl.textContent = `${summaries.length} episode${summaries.length !== 1 ? 's' : ''}`;
                 const heroCount = document.getElementById('heroEpisodeCount');
                 if (heroCount) {
-                    heroCount.textContent = `${summaries.length} episode${summaries.length !== 1 ? 's' : ''} and counting`;
+                    // The file holds the most recent episodes, not the show's
+                    // whole run — "30 episodes and counting" on a 626-episode
+                    // show read as its total.
+                    heroCount.textContent = `Latest ${summaries.length} episode${summaries.length !== 1 ? 's' : ''}`;
                     heroCount.style.opacity = '1';
                 }
 
@@ -561,13 +565,41 @@
                 .replace(/>/g, '&gt;');
         }
 
+        // ONE pass. Two passes (markdown links, then bare URLs) let the
+        // second regex match the URL inside the href the first had just
+        // written, and every summaries page printed
+        // `" target="_blank" rel="noopener">x.com` as text (Oct 2026 review).
         function linkify(text) {
-            text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-                '<a href="$2" target="_blank" rel="noopener">$1</a>');
-            text = text.replace(/(https?:\/\/[^\s<]+)/g,
-                '<a href="$1" target="_blank" rel="noopener">$1</a>');
-            return text;
+            return text.replace(
+                /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<"]*[^\s<".,;:!?)])/g,
+                (m, label, href, bare) => bare
+                    ? '<a href="' + bare + '" target="_blank" rel="noopener">' + bare + '</a>'
+                    : '<a href="' + href + '" target="_blank" rel="noopener">' + label + '</a>');
         }
+
+        // Thirty fully expanded digests made the page ~196,000px tall on a
+        // phone. Each long summary shows its opening and a toggle; the full
+        // text stays in the DOM (in-page search and crawlers still see it).
+        function clampSummaries(root) {
+            (root || document).querySelectorAll('.nn-summary-content').forEach(el => {
+                if (el.dataset.clampInit) return;
+                el.dataset.clampInit = '1';
+                if (el.scrollHeight <= 560) return;
+                el.classList.add('is-clamped');
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'nn-summary-more';
+                btn.setAttribute('aria-expanded', 'false');
+                btn.textContent = 'Show full summary';
+                btn.addEventListener('click', () => {
+                    const open = el.classList.toggle('is-clamped') === false;
+                    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    btn.textContent = open ? 'Show less' : 'Show full summary';
+                });
+                el.after(btn);
+            });
+        }
+        document.addEventListener('DOMContentLoaded', () => clampSummaries(document));
 
         function renderMarkdown(md) {
             const safe = escapeHtml(md).replace(/\r\n/g, '\n');

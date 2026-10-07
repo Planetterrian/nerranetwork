@@ -457,7 +457,7 @@ NETWORK_SHOWS = {
         "about_host": "Hosted by Patrick, each episode covers breaking news across every Tesla business line: product updates, energy and solar deployments, Optimus and autonomy progress, Cortex compute, and the latest from the broader EV world.",
         "description_long": "Daily podcast covering the whole Tesla business: FSD and Robotaxi milestones, Optimus, Cybertruck and vehicle production, Megapack and Powerwall energy storage, Solar Roof, Cortex/Dojo compute, Supercharging, Semi, TSLA stock context, and why the shorts keep getting it wrong.",
         "related_show": "spacex",
-        "related_reason": "If you enjoy Tesla Shorts Time, you might also like Omni View — balanced daily news from every perspective.",
+        "related_reason": "If you enjoy Tesla Shorts Time, you might also like SpaceX Daily — the engineering-first daily on SpaceX as a public company.",
         "apple_podcasts_url": "https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939",
         "spotify_url": "https://open.spotify.com/show/7I1DIaUaSlVsYliigOe6sS",
         "theme_color": "#E31937",
@@ -542,6 +542,8 @@ NETWORK_SHOWS = {
             "heading": "Buy a Tesla & Get Free Stuff",
             "cta": "Order a Tesla with Free FSD Trial",
             "intro": "Use our referral link when ordering your new Tesla and you'll receive free benefits at no extra cost. It's Tesla's way of rewarding customers who spread the word.",
+            "benefits_heading": "Vehicle Benefits",
+            "disclosure": "This is a referral link: when you order through it, the show may also receive a referral reward from Tesla.",
             "buyer_benefits": [
                 "3 months of Full Self-Driving (Supervised) free — a $297 value",
                 "Works on Model 3, Model Y, and Cybertruck orders",
@@ -587,7 +589,7 @@ NETWORK_SHOWS = {
         "about_host": "Hosted by Patrick in Vancouver. Helping you form your own informed opinions through balanced, multi-perspective coverage.",
         "description_long": "A calm daily briefing on the day's most important stories worldwide — every region, every side, in plain language for everyone from teens to seniors. Genuine disagreements presented at their strongest with named advocates, one progress story every day, and each episode ends by pointing you to a second perspective worth reading — so you can decide for yourself.",
         "related_show": "nerra_daily",
-        "related_reason": "If you enjoy Omni View, you might also like Tesla Shorts Time — daily news focused on Tesla and sustainable energy.",
+        "related_reason": "If you enjoy Omni View, you might also like Nerra Daily — every English show the network publishes, in one listen a day.",
         "apple_podcasts_url": "https://podcasts.apple.com/us/podcast/omni-view-balanced-news-perspectives/id1885661594",
         "spotify_url": "https://open.spotify.com/show/4KuOgvZMm4Mweorshrm2qR",
         "theme_color": "#0B6FD6",
@@ -916,7 +918,7 @@ NETWORK_SHOWS = {
         "about_host": "Hosted by Patrick in Vancouver.",
         "description_long": "Environmental regulatory, science, and compliance briefing for BC professionals. Covers contaminated sites, CEPA, emissions, carbon policy, PFAS, and remediation developments across Canada.",
         "related_show": "offshore_north",
-        "related_reason": "If you enjoy Environmental Intelligence, you might also like Planetterrian Daily — science, longevity, and health research.",
+        "related_reason": "If you enjoy Environmental Intelligence, you might also like Offshore North — a weekly show on ocean racing, where weather, routing and the sea itself decide the result.",
         "apple_podcasts_url": None,  # Not yet on Apple Podcasts
         "spotify_url": None,  # Not yet on Spotify
         "theme_color": "#1B5E20",
@@ -1456,7 +1458,7 @@ NETWORK_SHOWS = {
         "episode_length": "~12 min",
         "about_text": "Modern Investing Techniques is a daily investing podcast using AI analysis and modern tools to identify opportunities, track simulated trades, and teach strategies that aim to outperform index fund returns. Focused on Canadian and US markets.",
         "about_host": "Hosted by Patrick in Vancouver. Each episode covers market analysis, a strategy spotlight, AI-selected practice trades with real performance tracking, and tools to sharpen your investing edge.",
-        "description_long": "Daily investing podcast using AI-driven analysis and modern tools to identify market opportunities, track simulated trades, and teach strategies that aim to outperform index funds. Covering Canadian and US markets with actionable picks, performance tracking, and lessons learned.",
+        "description_long": "Daily investing podcast using AI-driven analysis and modern tools to identify market opportunities, track simulated trades, and teach the strategies behind them. Covering Canadian and US markets with simulated picks, a public trade ledger that includes the losers, and the lessons learned. Educational, not financial advice.",
         "related_show": "tesla",
         "related_reason": "If you're interested in TSLA as an investment, check out Tesla Shorts Time — our daily Tesla and EV analysis show.",
         "apple_podcasts_url": "https://podcasts.apple.com/us/podcast/modern-investing-techniques/id1886870483",
@@ -1517,6 +1519,8 @@ NETWORK_SHOWS = {
             "heading": "Start Investing with Wealthsimple",
             "cta": "Get Started with Wealthsimple",
             "intro": "New to investing? Wealthsimple is Canada's most popular investing platform with commission-free trading, automatic contributions, and tax-advantaged accounts. Sign up with our referral link and start building your portfolio today.",
+            "benefits_heading": "What you get",
+            "disclosure": "This is a referral link: when you sign up through it, the show may also receive a referral reward from Wealthsimple.",
             "buyer_benefits": [
                 "Commission-free trading on stocks, ETFs, and crypto",
                 "Tax-advantaged accounts — TFSA, RRSP, and FHSA supported",
@@ -1566,7 +1570,7 @@ NETWORK_SHOWS = {
         "about_host": "Hosted by Patrick in Vancouver.",
         "description_long": "A daily narrative podcast profiling inventions, policies, and systems that were meant to help — but triggered surprising, unintended consequences. From the Cobra Effect to social media algorithms, every episode follows a single case study through good intentions, implementation, unexpected fallout, and the lessons we can learn.",
         "related_show": "first_principles",
-        "related_reason": "If you enjoy Unintended Consequences, you might also like Environmental Intelligence — the regulatory side of how policy actually plays out.",
+        "related_reason": "If you enjoy Unintended Consequences, you might also like First Principles Daily — the same curiosity pointed the other way: what a thing should cost if you started from the physics.",
         # TODO(uc-launch): paste Apple Podcasts / Spotify URLs once
         # both directories ingest the feed (typically 3-7 days after
         # the first episode ships).
@@ -1635,7 +1639,7 @@ NETWORK_SHOWS = {
         "about_host": "Hosted by Patrick in Vancouver.",
         "description_long": "A daily narrative podcast that takes one idea seriously: most of the world runs on reasoning by analogy, and reasoning from first principles — building up from raw materials and physics — is how the biggest leaps actually happen. Episodes alternate between a concrete example of this thinking in action — historical breakthroughs like the moving assembly line, Bessemer steel, and the shipping container, modern cost curves like solar and batteries, and occasionally one of Musk's teams — and a deep look at an industry whose Idiot Index is begging to be attacked.",
         "related_show": "unintended_consequences",
-        "related_reason": "If you enjoy First Principles Daily, you might also like Tesla Shorts Time — the daily rundown on the company where a lot of this thinking shows up first.",
+        "related_reason": "If you enjoy First Principles Daily, you might also like Unintended Consequences — what happened after a good idea met the real world.",
         "apple_podcasts_url": None,
         "spotify_url": None,
         "theme_color": "#0F766E",
@@ -3150,6 +3154,13 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
             limit=max(SSR_CARD_LIMIT, 40))
         if _cards:
             latest_episode = dict(_cards[0])
+            # The summaries JSON stores the bare R2 URL; the feeds carry it
+            # through OP3. The page's main player is the most-played surface
+            # on the site, so it counts too (Oct 2026 review).
+            _lat_url = latest_episode.get("audio_url") or ""
+            if _lat_url.startswith("https://audio.nerranetwork.com/"):
+                from engine.publisher import apply_op3_prefix as _op3
+                latest_episode["audio_url"] = _op3(_lat_url)
             latest_episode["blog_url"] = _blog_url_for_episode(
                 cfg["slug"], episode_num=latest_episode.get("episode_num"))
         for _card in _cards:
@@ -3333,6 +3344,9 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         "blog_page": f"blog/{cfg['slug']}/index.html",
         "latest_blog_posts": latest_blog_posts,
         "latest_episode": latest_episode,
+        # engine.show_lang owns a show's language; the "More from" grid
+        # filters on it instead of a literal pair in the template.
+        "ru_show_slugs": [k for k in NETWORK_SHOWS if _show_lang.is_russian(k)],
         "episode_post_urls": episode_post_urls,
         # The script re-renders the card on load and must cut the summary at
         # the same place the server did, or the card flickers into different
