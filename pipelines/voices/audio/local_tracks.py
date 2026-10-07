@@ -722,3 +722,178 @@ def describe_manifest(manifest: Optional[Dict[str, Any]]) -> str:
         "missing": len(manifest.get("missing") or []),
         "duration_ms": manifest.get("duration_ms"),
     })
+
+
+# ---------------------------------------------------------------------------
+# Phrase-level placement and gating (Oct 7 2026)
+# ---------------------------------------------------------------------------
+# One offset is not enough. Measured on Scott Pulcini's and Viktor Popovic's
+# browser takes against their call legs, the call arrives 0 to 0.55 s behind
+# the microphone and the delay wanders through the hour (the network's jitter
+# buffer). Placed at one offset, only 38-52% of three-second windows sat
+# within 50 ms of the room, so a cut made on the room's clock could clip a
+# word or keep one it removed, and a guest could land half a second into
+# Mira's next question. Placing each phrase at the delay the call shows for
+# it puts 98.5% within 50 ms on both recordings.
+#
+# And a microphone without echo cancellation hears the room. Viktor had no
+# headphones: his take carried Mira about 10 dB under his own voice through
+# every one of her turns, and a fan under all of it, where the call leg (which
+# went through the browser's echo cancellation) is silent. The call leg knows
+# when the guest was actually talking, so the take is kept only there.
+PHRASE_ENV_HZ = 100
+PHRASE_MAX_LAG = 0.6          # seconds either way
+PHRASE_MIN_CORR = 0.5
+PHRASE_SPLIT_SEC = 3.0        # longer phrases are split at their quietest point
+
+
+def _pcm(path: Path) -> np.ndarray:
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-ac", "1",
+                          "-ar", str(TARGET_SR), "-f", "s16le", "-"],
+                         capture_output=True, check=True).stdout
+    return np.frombuffer(raw, dtype=np.int16)
+
+
+def _write_pcm(samples: np.ndarray, path: Path) -> Path:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(TARGET_SR)
+        w.writeframes(np.clip(samples, -32768, 32767).astype(np.int16).tobytes())
+    return path
+
+
+def _log_env(x: np.ndarray) -> np.ndarray:
+    hop = TARGET_SR // PHRASE_ENV_HZ
+    n = len(x) // hop
+    frames = x[:n * hop].astype(np.float32).reshape(n, hop)
+    return np.log(np.sqrt((frames ** 2).mean(1)) + 1.0)
+
+
+def _phrases(env: np.ndarray) -> list:
+    voiced = env[env > 0.5]
+    thr = np.percentile(voiced, 30) if len(voiced) else 1.0
+    on = env > thr
+    bridge = int(0.15 * PHRASE_ENV_HZ)
+    longest = int(PHRASE_SPLIT_SEC * PHRASE_ENV_HZ)
+    out, i, n = [], 0, len(on)
+    while i < n:
+        if not on[i]:
+            i += 1
+            continue
+        j = i
+        while j < n and (on[j] or (j + bridge < n and on[j:j + bridge].any())):
+            j += 1
+        if j - i >= int(0.2 * PHRASE_ENV_HZ):
+            stack = [(i, j)]
+            while stack:
+                a, b = stack.pop()
+                if b - a > longest:
+                    m = a + longest // 3 + int(np.argmin(env[a + longest // 3:b - longest // 3]))
+                    stack += [(a, m), (m, b)]
+                else:
+                    out.append((a, b))
+        i = j
+    return sorted(out)
+
+
+def place_phrases(track_wav: Path, reference_wav: Path, out_wav: Path) -> Tuple[Path, dict]:
+    """Move each phrase of ``track_wav`` to where ``reference_wav`` (the same
+    speaker's call leg, on the room's clock) has it. The room tone between
+    phrases is carried across, trimmed or mirrored to fit."""
+    loc, ref = _pcm(track_wav), _pcm(reference_wav)
+    el, er = _log_env(loc), _log_env(ref)
+    segs = _phrases(el)
+    max_lag = int(PHRASE_MAX_LAG * PHRASE_ENV_HZ)
+    picks = []
+    for s, e in segs:
+        lo0 = max(0, s - 10)
+        a = el[lo0:e + 10] - el[lo0:e + 10].mean()
+        best = (-2.0, 0)
+        for lag in range(-max_lag, max_lag + 1):
+            lo = lo0 + lag
+            b = er[lo:lo + len(a)] if lo >= 0 else np.array([])
+            if len(b) < len(a):
+                continue
+            b = b - b.mean()
+            d = float(np.sqrt((a * a).sum() * (b * b).sum()))
+            if d:
+                c = float((a * b).sum() / d)
+                if c > best[0]:
+                    best = (c, lag)
+        picks.append(best)
+    sure = [l for c, l in picks if c >= PHRASE_MIN_CORR]
+    overall = int(np.median(sure)) if sure else 0
+    lags = []
+    for k, (c, l) in enumerate(picks):
+        if c >= PHRASE_MIN_CORR:
+            lags.append(l)
+            continue
+        near = [picks[j][1] for j in range(max(0, k - 4), min(len(picks), k + 5))
+                if picks[j][0] >= PHRASE_MIN_CORR]
+        lags.append(int(np.median(near)) if near else overall)
+    step = TARGET_SR // PHRASE_ENV_HZ
+    out = np.zeros(max(len(ref), len(loc)) + TARGET_SR, dtype=np.float32)
+    fade = int(0.005 * TARGET_SR)
+    ramp = np.linspace(0, 1, fade, dtype=np.float32)
+
+    def put(piece: np.ndarray, dst: int) -> None:
+        piece = piece.astype(np.float32).copy()
+        if len(piece) > 2 * fade:
+            piece[:fade] *= ramp
+            piece[-fade:] *= ramp[::-1]
+        if dst < 0:
+            piece, dst = piece[-dst:], 0
+        end = min(len(out), dst + len(piece))
+        if end > dst:
+            out[dst:end] += piece[:end - dst]
+
+    bounds = [(s * step, min(len(loc), e * step), l * step) for (s, e), l in zip(segs, lags)]
+    prev_end, prev_shift = 0, (bounds[0][2] if bounds else 0)
+    tail = bounds[-1][2] if bounds else 0
+    for a, b, shift in bounds + [(len(loc), len(loc), tail)]:
+        gap = loc[prev_end:a]
+        dst = prev_end + prev_shift
+        target = (a + shift) - dst
+        if target > 0 and len(gap):
+            filler = gap
+            while len(filler) < target:
+                filler = np.concatenate([filler, filler[::-1]])
+            put(filler[:target], dst)
+        if b > a:
+            put(loc[a:b], a + shift)
+        prev_end, prev_shift = b, shift
+    _write_pcm(out[:len(ref)], out_wav)
+    stats = {"phrases": len(segs), "confident": len(sure),
+             "median_shift_sec": round(overall / PHRASE_ENV_HZ, 2),
+             "spread_sec": round((max(lags) - min(lags)) / PHRASE_ENV_HZ, 2) if lags else 0.0}
+    logger.info("placed %d phrases on the room's clock: %s", len(segs), stats)
+    return Path(out_wav), stats
+
+
+def gate_to_reference(track_wav: Path, reference_wav: Path, out_wav: Path,
+                      floor_db: float = 30.0) -> Tuple[Path, dict]:
+    """Keep ``track_wav`` only where the echo-cancelled call leg shows the
+    speaker talking (held 250 ms after and 120 ms before, 30 ms ramps)."""
+    loc, ref = _pcm(track_wav).astype(np.float32), _pcm(reference_wav).astype(np.float32)
+    hop = TARGET_SR // 100
+    n = min(len(loc), len(ref)) // hop
+    level = 20 * np.log10(np.sqrt((ref[:n * hop].reshape(n, hop) ** 2).mean(1)) + 1)
+    keep = level > floor_db
+    hold = keep.copy()
+    idx = np.flatnonzero(keep)
+    for d in range(1, 26):
+        hold[np.clip(idx + d, 0, n - 1)] = True
+    for d in range(1, 13):
+        hold[np.clip(idx - d, 0, n - 1)] = True
+    gain = np.convolve(hold.astype(np.float32), np.ones(3, dtype=np.float32) / 3, "same")
+    gain = np.repeat(gain, hop)
+    out = np.zeros(len(loc), dtype=np.float32)
+    m = min(len(gain), len(loc))
+    out[:m] = loc[:m] * gain[:m]
+    _write_pcm(out, out_wav)
+    stats = {"kept_sec": round(float(hold.sum()) / 100, 1), "of_sec": round(n / 100, 1)}
+    logger.info("kept the take where the call leg had the speaker: %s", stats)
+    return Path(out_wav), stats

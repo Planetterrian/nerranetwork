@@ -49,6 +49,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from address import first_name, written as written_address  # noqa: E402
 from audio.local_tracks import (  # noqa: E402
     ROOM_MIN_WINDOWS, align_to_reference, align_to_room, fetch_local_track,
+    gate_to_reference, place_phrases,
     place_at,
 )
 from audio.bleed import strip_bleed  # noqa: E402
@@ -461,6 +462,15 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
             and _clean_enough(local_guest, guest_vox, "guest")):
         guest = align_to_reference(local_guest, guest_vox, workdir / "aligned")
         sources["guest"] = "local"
+        # Oct 7 2026: one offset leaves phrases up to half a second off the
+        # room, and a take without echo cancellation carries the room; see
+        # local_tracks.place_phrases / gate_to_reference.
+        try:
+            guest, placed = place_phrases(guest, guest_vox, workdir / "aligned" / "guest_placed.wav")
+            guest, kept = gate_to_reference(guest, guest_vox, workdir / "aligned" / "guest_gated.wav")
+            logger.info("guest take placed %s and gated %s", placed, kept)
+        except Exception:  # noqa: BLE001 — the single-offset take still stands
+            logger.exception("phrase placement failed; keeping the single-offset take")
     if guest is None:
         guest, sources["guest"] = guest_vox, "voximplant"
 
