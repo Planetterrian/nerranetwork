@@ -3844,6 +3844,11 @@ def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None,
 
     _attach_translations(slug, cfg, all_meta)
 
+    # The per-show regen (``--show <slug> --blogs``) passes no pool; build it
+    # here so its posts recommend too. An explicit [] still means "none".
+    if cross_show_posts is None:
+        cross_show_posts = _cross_show_pool()
+
     blog_dir = (Path(output_dir) if output_dir else ROOT) / "blog" / slug
     results = []
 
@@ -4021,12 +4026,17 @@ def generate_network_blog_index(*, dry_run=False, all_posts=None):
     return out_path
 
 
-def generate_all_blogs(*, dry_run=False):
-    """Generate blog posts and index pages for every show, plus network index."""
+def _cross_show_pool():
+    """Recent posts from every show, newest first, for "You Might Also Like".
+
+    One builder for both callers (Oct 7 2026). Only ``generate_all_blogs``
+    used to collect a pool, so the per-show regen — the path run_show and the
+    Voices publisher take for every new episode — passed ``None`` and every
+    post it wrote rendered no recommendations at all.
+    """
     from engine.blog import extract_blog_metadata
 
-    # First pass: collect recent posts from all shows for cross-show recs
-    _cross_show_posts: list[dict] = []
+    pool: list[dict] = []
     for slug, cfg in NETWORK_SHOWS.items():
         digest_dir = ROOT / "digests" / _SHOW_DIRS.get(slug, slug)
         if not digest_dir.exists():
@@ -4036,20 +4046,33 @@ def generate_all_blogs(*, dry_run=False):
             try:
                 md_text = md_file.read_text(encoding="utf-8")
                 meta = extract_blog_metadata(md_text, slug, md_file.name, file_path=md_file)
-                _cross_show_posts.append({
+                # A recommendation must be a page that exists.
+                ep = meta.get("episode_num", 0)
+                if not ep or _is_redirect_stub(ROOT / "blog" / slug / f"ep{ep:03d}.html"):
+                    continue
+                pool.append({
                     "show_slug": slug,
                     "show_name": cfg["name"],
                     "show_color": cfg["brand_color"],
                     "title": meta.get("title", cfg["name"]),
                     "hook": meta.get("hook", ""),
-                    "episode_num": meta.get("episode_num", 0),
-                    "url": f"../../blog/{slug}/ep{meta.get('episode_num', 0):03d}.html",
+                    "episode_num": ep,
+                    "url": f"../../blog/{slug}/ep{ep:03d}.html",
                     "date": meta.get("date", ""),
+                    "date_iso": meta.get("date_iso", ""),
                 })
             except Exception:
                 pass
-    # Sort by date descending so most recent posts get picked
-    _cross_show_posts.sort(key=lambda p: p.get("date", ""), reverse=True)
+    # Newest first, on the ISO date: the display date is "October 06, 2026",
+    # which sorts by month NAME (September after October).
+    pool.sort(key=lambda p: p.get("date_iso", ""), reverse=True)
+    return pool
+
+
+def generate_all_blogs(*, dry_run=False):
+    """Generate blog posts and index pages for every show, plus network index."""
+    # First pass: collect recent posts from all shows for cross-show recs
+    _cross_show_posts = _cross_show_pool()
 
     all_posts = []
 

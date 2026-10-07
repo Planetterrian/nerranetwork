@@ -90,6 +90,14 @@
             color: var(--show-color-text, var(--show-color));
             background: color-mix(in srgb, var(--show-color) 10%, transparent);
         }
+        /* Card TEXT in the show colour uses the AA-lightened variant (the
+           --show-color-text formula), never the raw brand colour, which
+           fails 4.5:1 on the dark card for most shows (Oct 7 2026). */
+        .blog-idx-card .blog-idx-ep,
+        .blog-idx-card .blog-idx-read-more,
+        .blog-idx-card p.blog-idx-guest-role {
+            color: color-mix(in srgb, var(--card-accent), white 35%);
+        }
     </style>
 {% endblock %}
 
@@ -157,7 +165,9 @@
                 <span class="blog-idx-reading">{{ post.reading_time_min }} min</span>
             </div>
             <h2>{{ post.title }}{% if post.title == show_name %} — Ep {{ post.episode_num }}{% endif %}</h2>
-            {% if post.hook %}
+            {#- The sentence once (Oct 7 2026): on most cards the title IS the
+                hook, and the card printed it twice. -#}
+            {% if post.hook and post.hook | trim != post.title | trim %}
             <p>{{ post.hook[:160] }}{% if post.hook|length > 160 %}&hellip;{% endif %}</p>
             {% endif %}
             {% endif %}

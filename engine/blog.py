@@ -921,6 +921,140 @@ def clean_digest_for_blog(md_text: str) -> str:
     return "\n".join(cleaned)
 
 
+def _plain_line(text: str) -> str:
+    """A markdown line reduced to its words, for an equality test."""
+    text = re.sub(r"^\s*(?:>\s*)+", "", text or "")
+    text = re.sub(r"[*_`]", "", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def drop_leading_repeats(md_text: str, show_name: str, hook: str) -> str:
+    """Remove what the hero already printed from the top of the body.
+
+    Oct 7 2026: a reader met the headline three or four times before the
+    first fact — the <h1>, the hero sub-line, then the digest's own
+    ``# <Show Name>`` heading and its italic/blockquote hook line. Only the
+    LEADING block is touched (everything before the first section heading),
+    and only a heading that names the show or a line whose words equal the
+    hook; the rest of the digest is untouched.
+    """
+    lines = md_text.split("\n")
+    hook_plain = _plain_line(hook)
+    show = (show_name or "").strip()
+    out: list = []
+    seen_content = False
+    dropped_heading = dropped_hook = False
+    in_lead = True
+    for line in lines:
+        stripped = line.strip()
+        if in_lead and stripped:
+            heading = re.match(r"^#{1,3}\s+(.+)$", stripped)
+            if heading:
+                text = _plain_line(heading.group(1))
+                if (not seen_content and not dropped_heading and show
+                        and text.startswith(show)):
+                    dropped_heading = True
+                    continue
+                in_lead = False
+            elif (hook_plain and not dropped_hook
+                    and _plain_line(stripped) == hook_plain):
+                dropped_hook = True
+                continue
+            elif not seen_content and re.fullmatch(r"(?:-{3,}|\*{3,})", stripped):
+                # A rule with nothing above it once the repeats are gone.
+                continue
+            else:
+                seen_content = True
+        out.append(line)
+    return "\n".join(out)
+
+
+# ---------------------------------------------------------------------------
+# Episode audio (the on-page player)
+# ---------------------------------------------------------------------------
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _repo_file(rel) -> Optional[Path]:
+    if not rel:
+        return None
+    path = Path(rel)
+    if not path.is_absolute():
+        path = _REPO_ROOT / path
+    return path if path.is_file() else None
+
+
+@lru_cache(maxsize=64)
+def _summaries_audio(path: str, _mtime: float) -> dict:
+    from engine.summaries_io import load_summaries
+    try:
+        _, records = load_summaries(Path(path))
+    except Exception:  # noqa: BLE001 - a bad file is not this page's crash
+        return {}
+    return {
+        r["episode_num"]: r.get("audio_url", "")
+        for r in records
+        if isinstance(r, dict) and isinstance(r.get("episode_num"), int)
+        and r.get("audio_url")
+    }
+
+
+@lru_cache(maxsize=64)
+def _feed_enclosures(path: str, _mtime: float) -> dict:
+    try:
+        import xml.etree.ElementTree as ET
+        root = ET.parse(path).getroot()
+    except Exception:  # noqa: BLE001 - a broken feed is not this page's crash
+        return {}
+    ns = {"itunes": "http://www.itunes.com/dtds/podcast-1.0.dtd"}
+    out: dict = {}
+    for item in root.findall(".//item"):
+        enc = item.find("enclosure")
+        url = enc.get("url", "") if enc is not None else ""
+        if not url:
+            continue
+        ep_el = item.find("itunes:episode", ns)
+        num = None
+        if ep_el is not None and (ep_el.text or "").strip().isdigit():
+            num = int(ep_el.text.strip())
+        else:
+            m = re.match(r"\s*Ep(\d+)\b", item.findtext("title", "") or "")
+            if m:
+                num = int(m.group(1))
+        if num is not None:
+            out.setdefault(num, url)
+    return out
+
+
+def episode_audio_url(show_config: dict, episode_num: int) -> str:
+    """The published audio for one episode, for the post's player.
+
+    Oct 7 2026: the only ``<audio>`` on a news post lived inside the
+    language switcher, so ~2,000 English-only posts had no way to listen
+    on the page. The digest carries no audio URL; the summaries record does
+    (but keeps only the newest ~30 episodes) and the show's own feed does
+    for every episode still in it. Both are what the RSS enclosure was
+    built from, so the player plays exactly what a podcast app plays — the
+    feed's URL already carries the OP3 prefix and is kept as it is.
+    """
+    if not episode_num:
+        return ""
+    for rel, reader in ((show_config.get("json_path"), _summaries_audio),
+                        (show_config.get("rss_file"), _feed_enclosures)):
+        path = _repo_file(rel)
+        if path is None:
+            continue
+        try:
+            mtime = path.stat().st_mtime
+        except OSError:
+            continue
+        url = reader(str(path), mtime).get(episode_num, "")
+        if url:
+            return url
+    return ""
+
+
 # ---------------------------------------------------------------------------
 # Markdown → HTML conversion
 # ---------------------------------------------------------------------------
@@ -1060,6 +1194,15 @@ def convert_md_to_blog_html(md_text: str) -> tuple[str, list[dict]]:
     toc: list[dict] = []
     in_list = False
     list_type = ""  # "ul" or "ol"
+
+    # Heading levels are NESTED, not shifted (Oct 7 2026). The page's <h1> is
+    # the template's, so the body starts at <h2> — but the digests use
+    # whichever markdown levels they like (most write "# Show Name" then
+    # "### Section"; Tesla drops one "## Short Spot" between its "###"
+    # sections), and a fixed one-level demotion produced h2 then h4 with no
+    # h3 on nearly every post. A heading is h2 plus the number of OPEN
+    # shallower headings above it, so a level is never skipped (capped h4).
+    _open_levels: list = []
     in_code_block = False
     code_block_lines: list[str] = []
     in_blockquote = False
@@ -1132,27 +1275,20 @@ def convert_md_to_blog_html(md_text: str) -> tuple[str, list[dict]]:
         # Close blockquote if we hit non-blockquote content
         close_blockquote()
 
-        # Headings — demoted one level so page h1 stays in the template
-        if stripped.startswith("### "):
+        # Headings — nested to h2/h3/h4 (``_open_levels`` above), so the page
+        # h1 stays in the template and the outline never skips a level.
+        _hm = re.match(r"^(#{1,3})\s+(\S.*)$", stripped)
+        if _hm:
             close_list()
-            text = stripped[4:].strip()
+            text = _hm.group(2).strip()
+            md_level = len(_hm.group(1))
+            while _open_levels and _open_levels[-1] >= md_level:
+                _open_levels.pop()
+            level = min(2 + len(_open_levels), 4)
+            _open_levels.append(md_level)
             slug = _slugify(text)
-            toc.append({"id": slug, "text": text, "level": 4})
-            html_parts.append(f'<h4 id="{slug}">{_md_inline(text)}</h4>')
-            continue
-        if stripped.startswith("## "):
-            close_list()
-            text = stripped[3:].strip()
-            slug = _slugify(text)
-            toc.append({"id": slug, "text": text, "level": 3})
-            html_parts.append(f'<h3 id="{slug}">{_md_inline(text)}</h3>')
-            continue
-        if stripped.startswith("# "):
-            close_list()
-            text = stripped[2:].strip()
-            slug = _slugify(text)
-            toc.append({"id": slug, "text": text, "level": 2})
-            html_parts.append(f'<h2 id="{slug}">{_md_inline(text)}</h2>')
+            toc.append({"id": slug, "text": text, "level": level})
+            html_parts.append(f'<h{level} id="{slug}">{_md_inline(text)}</h{level}>')
             continue
 
         # Horizontal rules
@@ -1438,6 +1574,11 @@ def generate_blog_post_html(
         if is_interview_show(show_slug) else md_text
     )
     cleaned = clean_digest_for_blog(_body_md)
+    if not is_interview_show(show_slug):
+        # The hero prints the show name and the hook; the body need not
+        # open on both again (an interview body is already restructured).
+        cleaned = drop_leading_repeats(
+            cleaned, show_config["name"], metadata.get("hook", ""))
     body_html, toc = convert_md_to_blog_html(cleaned)
     blog_url = f"https://nerranetwork.com/blog/{show_slug}/ep{ep_num:03d}.html"
 
@@ -1590,7 +1731,16 @@ def generate_blog_post_html(
     # the metadata before the JSON-LD is built so search engines get it too.
     if interview.get("audio_url") and not metadata.get("audio_url"):
         metadata["audio_url"] = interview["audio_url"]
+    # Every caller gets the player, not only the ``--blogs`` path that merges
+    # the summaries record first (run_show, the per-show regen, a recovery
+    # script all build the metadata from the digest alone).
+    if not metadata.get("audio_url"):
+        metadata["audio_url"] = episode_audio_url(show_config, ep_num)
     if interview:
+        # Talking points are model prose with markdown emphasis; render it
+        # the way the body renders it rather than printing the asterisks.
+        interview["talking_points_html"] = [
+            _md_inline(str(p)) for p in interview.get("talking_points") or []]
         # The chapter section reads a chapters_epNNN.json these shows never
         # write; the record's chapters (already gated by the transcript in
         # engine.interviews) take its place, in the shape the section wants.
@@ -1629,6 +1779,19 @@ def generate_blog_post_html(
         show_config.get("blog_post_template", "blog_post.html.j2"))
 
     from generate_html import _build_all_shows_list, _path_prefix
+
+    # A caller that passes no recommendations (run_show writes today's post
+    # through here directly) gets the same seeded picks the regen gives it,
+    # so the newest post — the one a reader is most likely on — is not the
+    # one post with no "You Might Also Like". An explicit [] means none.
+    if related_posts is None:
+        try:
+            from generate_html import _cross_show_pool, _pick_cross_show_related
+            _md_stem = Path(metadata.get("_md_path") or metadata.get("filename") or "").stem
+            related_posts = _pick_cross_show_related(
+                show_slug, _cross_show_pool(), seed=_md_stem)
+        except Exception:  # noqa: BLE001 - recommendations never block a post
+            related_posts = []
 
     path_key = f"blog/{show_slug}/ep{ep_num:03d}.html"
 

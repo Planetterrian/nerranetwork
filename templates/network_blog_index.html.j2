@@ -44,7 +44,9 @@
             border-radius: 100px;
             background: color-mix(in srgb, var(--nn-purple) 12%, transparent);
             border: 1px solid color-mix(in srgb, var(--nn-purple) 30%, transparent);
-            color: var(--nn-purple);
+            /* Purple as TEXT is the lightened token; the raw brand purple
+               fails AA on the dark page (Oct 7 2026). */
+            color: var(--nn-purple-text, #9D8BFF);
             font-family: var(--font-ui);
             font-size: 0.85rem;
             font-weight: 500;
@@ -85,7 +87,28 @@
         .blog-filter-btn.active {
             background: color-mix(in srgb, var(--nn-purple) 15%, transparent);
             border-color: var(--nn-purple);
-            color: var(--nn-purple);
+            color: var(--nn-purple-text, #9D8BFF);
+        }
+        /* On a phone the thirty-odd show chips wrapped into a block that
+           filled the whole first screen (Oct 7 2026). Under 640px they are
+           one row that scrolls sideways, so the articles start on screen. */
+        @media (max-width: 640px) {
+            .blog-filter-bar {
+                flex-wrap: nowrap;
+                justify-content: flex-start;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                padding-bottom: var(--sp-1);
+            }
+            .blog-filter-bar::-webkit-scrollbar { display: none; }
+            .blog-filter-bar .blog-filter-btn { flex: 0 0 auto; white-space: nowrap; }
+        }
+        /* Card text in the show colour: the AA-lightened variant (same
+           formula as --show-color-text), never the raw brand colour. */
+        .blog-idx-card .blog-idx-ep,
+        .blog-idx-card .blog-idx-read-more {
+            color: color-mix(in srgb, var(--card-accent), white 35%);
         }
 
         /* Blog search */
@@ -196,7 +219,10 @@
 
     <!-- Search -->
     <div class="blog-search">
-        <input type="text" id="blog-search-input" placeholder="Search articles..." aria-label="Search blog posts">
+        {#- It filters the cards on THIS page (the newest few hundred), not
+            the archive — say so; the site search in the top bar covers
+            every episode. -#}
+        <input type="search" id="blog-search-input" placeholder="Filter these posts…" aria-label="Filter the posts on this page">
     </div>
 
     <!-- Show filter -->
@@ -218,16 +244,17 @@
            data-show="{{ post.show_slug }}"
            style="--card-show-color: {{ post.show_color }}">
             <div class="blog-idx-card-top">
-                <span class="blog-idx-show-badge" style="background: color-mix(in srgb, {{ post.show_color }} 15%, transparent); color: {{ post.show_color }}">{{ post.show_name }}</span>
+                <span class="blog-idx-show-badge" style="background: color-mix(in srgb, {{ post.show_color }} 15%, transparent); color: color-mix(in srgb, {{ post.show_color }}, white 35%)">{{ post.show_name }}</span>
                 <span class="blog-idx-date">{{ post.date }}</span>
                 <span class="blog-idx-ep">Ep {{ post.episode_num }}</span>
                 <span class="blog-idx-reading">{{ post.reading_time_min }} min</span>
             </div>
             <h2>{{ post.title }}</h2>
-            {% if post.hook %}
+            {#- The sentence once: on most cards the title IS the hook. -#}
+            {% if post.hook and post.hook | trim != post.title | trim %}
             <p>{{ post.hook[:160] }}{% if post.hook|length > 160 %}&hellip;{% endif %}</p>
             {% endif %}
-            <span class="blog-idx-read-more" style="color: {{ post.show_color }}">Read article &rarr;</span>
+            <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         {% endfor %}
     </div>
@@ -302,6 +329,8 @@
                     btn.textContent = p;
                     btn.className = 'blog-filter-btn' + (p === currentPage ? ' active' : '');
                     btn.setAttribute('data-page', p);
+                    btn.setAttribute('aria-label', 'Page ' + p);
+                    if (p === currentPage) btn.setAttribute('aria-current', 'page');
                     btn.addEventListener('click', function() {
                         currentPage = parseInt(this.getAttribute('data-page'));
                         renderPage();

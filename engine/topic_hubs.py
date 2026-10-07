@@ -80,11 +80,12 @@ TOPIC_HUBS: Tuple[Dict[str, Any], ...] = (
         "heading": "Artificial intelligence",
         "picker_topics": ("ai", "research"),
         "intro": (
-            "Artificial intelligence moves faster than any daily show can "
-            "summarise, so the network covers it three ways instead of one: a "
-            "daily brief on what shipped, the same material explained from "
-            "scratch for someone who has never used an API, and an interview "
-            "show where the host is itself an AI."
+            "Artificial intelligence moves faster than any one daily show can "
+            "summarise, so the network comes at it from several directions: "
+            "a daily brief on what shipped, the same material explained from "
+            "scratch for someone who has never used an API, the chips and "
+            "data centres underneath it, and an interview show where the host "
+            "is itself an AI."
         ),
         "angle": (
             "Every episode names its sources, and a claim whose source cannot "
@@ -126,11 +127,12 @@ TOPIC_HUBS: Tuple[Dict[str, Any], ...] = (
         "heading": "Markets and investing",
         "picker_topics": ("stocks", "investing", "personal-finance", "markets"),
         "intro": (
-            "Four shows reach the markets from different directions: a daily "
-            "brief built around the Canadian investor as much as the American "
-            "one, two companies covered as listed companies rather than as "
-            "tickers, and financial literacy in Russian for people whose "
-            "money moved countries with them."
+            "The shows here reach the markets from different directions: a "
+            "daily brief built around the Canadian investor as much as the "
+            "American one, the largest companies covered as listed companies "
+            "rather than as tickers, the prediction markets, and financial "
+            "literacy in Russian for people whose money moved countries with "
+            "them."
         ),
         "angle": (
             "The practice portfolio publishes its whole record — the rules, "
@@ -204,9 +206,9 @@ TOPIC_HUBS: Tuple[Dict[str, Any], ...] = (
             "source."
         ),
         "meta_description": (
-            "A daily health and longevity podcast from Nerra Network: new "
-            "research on aging, biotech and human health, reported with its "
-            "limits rather than its hype."
+            "Health and longevity podcasts from Nerra Network: new research "
+            "on aging, biotech and human health, reported with its limits "
+            "rather than its hype."
         ),
         "keywords": "longevity podcast, health research podcast, biotech podcast, aging research",
     },
@@ -216,9 +218,9 @@ TOPIC_HUBS: Tuple[Dict[str, Any], ...] = (
         "heading": "Climate and energy",
         "picker_topics": ("climate", "environment", "regulatory", "energy"),
         "intro": (
-            "Two different jobs share this subject. One is regulatory: what "
+            "Different jobs share this subject. One is regulatory: what "
             "Canadian environmental rules actually require, province by "
-            "province, in a form you can forward to a team. The other is "
+            "province, in a form you can forward to a team. Another is "
             "progress: the clean-energy build-out, reported with numbers "
             "instead of adjectives."
         ),
@@ -239,10 +241,11 @@ TOPIC_HUBS: Tuple[Dict[str, Any], ...] = (
         "heading": "World news",
         "picker_topics": ("world-news", "politics", "balanced", "news"),
         "intro": (
-            "The world-news show has one unusual rule: every competing "
-            "position is presented in its strongest form, with its best "
-            "supporting reason first. You should not be able to tell from the "
-            "episode which side the show favours."
+            "The world-news coverage runs from the day's ten biggest stories "
+            "to a desk for each region. Its flagship brief, Omni View, has one "
+            "unusual rule: every competing position is presented in its "
+            "strongest form, with its best supporting reason first. You should "
+            "not be able to tell from the episode which side the show favours."
         ),
         "angle": (
             "It is the opposite of a balance disclaimer — the argument itself "
@@ -257,14 +260,14 @@ TOPIC_HUBS: Tuple[Dict[str, Any], ...] = (
     },
     {
         "id": "interviews",
-        "title": "Interview podcasts — an AI host, real guests, guest-approved",
+        "title": "Interview podcasts — an AI host, real guests, the guest's final say",
         "heading": "Interviews",
         "picker_topics": ("interviews", "society", "business"),
         "intro": (
-            "Two interview shows share a host, and the host is an AI. One "
-            "talks to people working on artificial intelligence; the other "
-            "talks to people about whatever work they have chosen, with no AI "
-            "angle required."
+            "The interview shows share a host, and the host is an AI. The "
+            "Age of AI talks to people working on artificial intelligence; "
+            "Nerra Voices, its sibling, is for people talking about whatever "
+            "work they have chosen, with no AI angle required."
         ),
         "angle": (
             "A human editor reviews every episode with no timer, and every "
@@ -273,8 +276,8 @@ TOPIC_HUBS: Tuple[Dict[str, Any], ...] = (
         ),
         "meta_description": (
             "Interview podcasts from Nerra Network, hosted by Mira, an AI: "
-            "real guests, a human editorial review, and no episode published "
-            "until the guest approves their transcript."
+            "real guests, a human editorial review, and a week for every guest "
+            "to approve, cut from or refuse their transcript before it publishes."
         ),
         "keywords": "interview podcast, AI host, AI interviewer, guest podcast, Nerra Voices, The Age of AI",
         # Below the depth bar today (4 published interviews). That is the
@@ -468,18 +471,18 @@ TOPIC_HUBS: Tuple[Dict[str, Any], ...] = (
         "heading": "Good news",
         "picker_topics": ("good-news",),
         "intro": (
-            "A two-host daily show on things that are going right in science "
-            "and technology, plus one action a listener can actually take — "
-            "with the arithmetic shown rather than implied."
+            "A two-host weekly show, out on Mondays, on things that are going "
+            "right in science and technology, plus one action a listener can "
+            "actually take — with the arithmetic shown rather than implied."
         ),
         "angle": (
             "If the honest number for an action is small, the episode says so. "
             "That is the point of showing it."
         ),
         "meta_description": (
-            "A daily good-news podcast from Nerra Network: progress in science "
-            "and technology from two hosts, plus one concrete action with "
-            "honest numbers."
+            "A weekly good-news podcast from Nerra Network: progress in science "
+            "and technology from two hosts every Monday, plus one concrete "
+            "action with honest numbers."
         ),
         "keywords": "good news podcast, positive news, progress podcast, climate action, do positive",
     },
