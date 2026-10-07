@@ -203,6 +203,7 @@
         'nav_claims': 'Проверка фактов и исправления' if _is_ru else 'Claims &amp; corrections',
         'nav_support': 'Поддержать сеть' if _is_ru else 'Support the Network',
         'subscribe_h4': 'Подписка на обновления' if _is_ru else 'Get Show Updates',
+        'subscribe_pick_shows': 'Выбрать подкасты' if _is_ru else 'Choose shows',
         'subscribe_subtitle': 'Выберите подкасты, которые хотите получать на почту:' if _is_ru else 'Pick the shows you want in your inbox:',
         'subscribe_email_placeholder': 'ваш@email.ru' if _is_ru else 'your@email.com',
         'subscribe_email_aria': 'Адрес электронной почты' if _is_ru else 'Email address',
@@ -461,7 +462,7 @@
                     <div class="nn-footer-brand"><span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span></div>
                     <p class="nn-footer-desc">{{ t.footer_brand_desc }}</p>
                 </div>
-                <div class="nn-footer-col">
+                <div class="nn-footer-col nn-footer-col--shows">
                     <h4>{{ t.footer_shows }}</h4>
                     {#- Grouped by strand, from the same ``show_groups`` the nav
                         uses. The group label lives INSIDE the <ul> on purpose:
@@ -582,6 +583,11 @@
                       data-label-error="{{ t.subscribe_button_error }}">
                     <h4>{{ t.subscribe_h4 }}</h4>
                     <p>{{ t.subscribe_subtitle }}</p>
+                    {#- The 31 checkboxes open on demand (Oct 7 2026 design
+                        pass): open they made the footer ~900px of form on a
+                        page whose reader came for something else. -#}
+                    <details class="nn-subscribe-pick">
+                    <summary>{{ t.subscribe_pick_shows }} <span>({{ all_shows|length }})</span></summary>
                     <div class="nn-subscribe-tags">
                         {#- Every show, driven from NETWORK_SHOWS so new
                             shows cannot silently drop out of the footer
@@ -595,6 +601,7 @@
                         <label><input type="checkbox" name="tag" value="{{ s.newsletter_tag or s.name }}"> {{ s.name }}</label>
                         {% endfor %}
                     </div>
+                    </details>
                     <div class="nn-subscribe-row">
                         <input type="email" name="email" placeholder="{{ t.subscribe_email_placeholder }}" required aria-label="{{ t.subscribe_email_aria }}">
                         <button type="submit">{{ t.subscribe_button }}</button>

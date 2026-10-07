@@ -278,3 +278,25 @@ class TestMobileMenuIsShort:
         # No per-show blog loop: the blog section is the hub + topics map.
         assert "s.blog_page" not in menu
         assert 'alt="{{ s.name }} cover art"' not in menu
+
+
+class TestFooterIsCompact:
+    """The footer was ~2,400 px tall on a desktop: 31 show checkboxes printed
+    open under the newsletter form and an 18-show list in one column."""
+
+    def _base(self):
+        return _strip_jinja_comments(
+            (ROOT / "templates" / "base.html.j2").read_text(encoding="utf-8"))
+
+    def test_newsletter_show_picker_is_collapsed(self):
+        base = self._base()
+        assert '<details class="nn-subscribe-pick">' in base
+        pick = base.split('<details class="nn-subscribe-pick">', 1)[1].split("</details>", 1)[0]
+        # The tag checkboxes still render (the Worker reads them); they sit
+        # behind the summary instead of printing open on every page.
+        assert "nn-subscribe-tags" in pick
+
+    def test_show_list_runs_in_two_columns_on_desktop(self):
+        css = _strip_css_comments(CSS)
+        assert "nn-footer-col nn-footer-col--shows" in self._base()
+        assert re.search(r"\.nn-footer-col--shows ul\.nn-footer-showlist\s*\{\s*columns:\s*2", css)
