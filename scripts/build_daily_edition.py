@@ -554,6 +554,11 @@ def build_edition(
             channel_keywords=spec.channel_keywords,
             guid_prefix=spec.guid_prefix,
             chapters_url=f"https://nerranetwork.com/{spec.digest_dir}/{chapters_path.name}",
+            # Item <link> = the edition's rundown post (run_show has passed
+            # the episode page since Sep 4 2026; the edition kept the MP3,
+            # and older items had no link — Oct 8 2026 review).
+            episode_page_url=(
+                f"https://nerranetwork.com/blog/{spec.slug}/ep{episode_num:03d}.html"),
             funding_url="https://nerranetwork.com/support.html",
             funding_label="Support the Nerra Network",
             # Mira is the host in Podcasting 2.0 apps' credits/discovery
