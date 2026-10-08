@@ -91,3 +91,14 @@ def test_the_turn_silence_is_written_on_the_run(monkeypatch):
     assert '"turn_detection": turn_detection(),' in (V / "fire_interviews.py").read_text()
     scenario = (ROOT / "voximplant" / "scenarios" / "age_of_ai_interview.js").read_text()
     assert "Number(tuned.silence_duration_ms) || 1100" in scenario   # reads it off the row
+
+
+def test_a_published_episode_is_never_queued_again():
+    """Oct 8 2026, Viktor Popovic: the produce step finished after Ep1 went
+    out and wrote "approved" back over "published"."""
+    produce = (V / "produce_episode.py").read_text()
+    assert "status=neq.published\",\n              {\"status\": \"approved\"})" in produce
+    assert "status=neq.published\",\n              {\"status\": \"approved_by_guest\"})" in produce
+    publish = (V / "publish_episode.py").read_text()
+    assert 'if interview.get("episode_number"):' in publish
+    assert 'if not iid or interview.get("episode_number"):' in publish

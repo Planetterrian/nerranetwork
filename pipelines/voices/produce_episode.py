@@ -160,8 +160,14 @@ def main() -> int:
                      if video else None)
 
     # 6. State + callout queue.
-    sb_update("interviews", f"id=eq.{interview['id']}", {"status": "approved"})
-    sb_update("editorial_packages", f"id=eq.{pkg['id']}",
+    # Oct 8 2026, Viktor Popovic: this job starts when the guest approves and
+    # runs for a quarter of an hour, and Patrick published Ep1 in the
+    # meantime. Writing "approved" back over "published" put the episode in
+    # the publish queue again with its number already used, which is exactly
+    # how Ep2 was once published twice. Never move a row backwards.
+    sb_update("interviews", f"id=eq.{interview['id']}&status=neq.published",
+              {"status": "approved"})
+    sb_update("editorial_packages", f"id=eq.{pkg['id']}&status=neq.published",
               {"status": "approved_by_guest"})
     sb_update("interview_runs", f"id=eq.{run['id']}",
               {"recording_mixed_url": episode_url})

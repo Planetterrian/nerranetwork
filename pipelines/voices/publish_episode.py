@@ -82,7 +82,7 @@ def find_publishable() -> List[str]:
     out: List[str] = []
     for interview in sb_select("interviews", "status=eq.approved"):
         iid = interview.get("id")
-        if not iid:
+        if not iid or interview.get("episode_number"):
             continue
         pkgs = sb_select("editorial_packages",
                          f"interview_id=eq.{iid}&status=eq.approved_by_guest")
@@ -311,6 +311,12 @@ def publish_one(interview_id: str) -> int:
             f"interview {interview_id} is {interview.get('status')!r} — "
             "publish requires status 'approved' (both gates cleared + produced)"
         )
+    # Oct 8 2026: a number means it went out already, whatever the status
+    # says (a late produce step once wrote "approved" back over "published").
+    if interview.get("episode_number"):
+        raise RuntimeError(
+            f"interview {interview_id} was already published as "
+            f"Ep{interview['episode_number']}; use refresh_post to update it")
     app = sb_select("guest_applications",
                     f"id=eq.{interview['application_id']}")[0]
     pkg = sb_select("editorial_packages",
