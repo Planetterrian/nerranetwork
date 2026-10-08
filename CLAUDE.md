@@ -2376,6 +2376,23 @@ what SHIPS**: `source_integrity_claims` / `_verified` are re-written after
 repair and the coverage floor (`_pre_floor` keeps the first reading);
 Tesla Ep626 had read 2 beside a committed ledger of 7.
 
+**Oct 8 2026 — no transcripts on the whole slate, again** (review:
+[`docs/reviews/slate_review_2026_10_08.md`](docs/reviews/slate_review_2026_10_08.md);
+register `slate-2026-10-08`; guards `tests/test_transcripts_pyav_2026_10_08.py`,
+`tests/test_youtube_session_restart_2026_10_08.py`). Dependabot #1365
+rewrote the Sep 30 PyAV ceiling to `>=19.0.1,<20` and was merged in a
+batch while `test_pyav_is_pinned_below_19` was red: 0 of 21 episodes had a
+transcript, the spoken-text gate ran blind, Nerra Daily Ep049 shipped every
+segment uncut, Shorts lost captions and fact cards. **Whisper never decodes
+through PyAV now** (`engine.transcripts.load_whisper_audio` — ffmpeg, samples
+identical to faster-whisper's decoder); the ceiling stays and Dependabot
+ignores `av>=19`. **Never merge a dependency bump on a red `Run Tests`**,
+and read the comment above a pin before moving it. Same day: a 404/410 on a
+resumable YouTube upload restarts ONCE with a new session (`upload_video` —
+Tesla/SpaceX/Omni View lost their long-forms to "410 Gone"), and apt in
+`setup-python` abandons a silent mirror connection after 30 s (five runs
+died at exit 124 installing ffmpeg).
+
 ### Anthology books — ebook + audiobook from the narrative shows (Aug 2026)
 
 Product B6 (operator-directed): a SERIES machine, not one-off books.

@@ -857,7 +857,9 @@ class TestTheCoHostIsNotErased:
         body = self.ENGINE[self.ENGINE.index("model = WhisperModel("):]
         body = body[:body.index("transcript_segments")]
         assert "transcribing without it" in body
-        assert "model.transcribe(str(audio_path), **kwargs)" in body
+        # Oct 8 2026: the retry passes the ffmpeg-decoded array
+        # (engine.transcripts.load_whisper_audio), never the path.
+        assert "model.transcribe(audio, **kwargs)" in body
 
 
 class TestTheRightPackageGetsApproved:

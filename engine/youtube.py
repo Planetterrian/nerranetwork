@@ -170,6 +170,17 @@ def _is_retryable_http_error(exc: BaseException) -> bool:
     return status in (429, 500, 502, 503, 504)
 
 
+def _is_expired_session_error(exc: BaseException) -> bool:
+    """404/410 on a resumable upload: the session is gone, restart it."""
+    try:
+        from googleapiclient.errors import HttpError
+    except ImportError:  # pragma: no cover
+        return False
+    if not isinstance(exc, HttpError):
+        return False
+    return getattr(getattr(exc, "resp", None), "status", 0) in (404, 410)
+
+
 def _build_video_body(
     *,
     title: str,
@@ -355,13 +366,38 @@ def upload_video(
          if publish_at is not None else privacy_status),
     )
 
+    def _new_session():
+        return youtube.videos().insert(
+            part="snippet,status",
+            body=body,
+            media_body=MediaFileUpload(
+                str(video_path),
+                mimetype="video/mp4",
+                chunksize=8 * 1024 * 1024,
+                resumable=True,
+            ),
+        )
+
     insert_request = youtube.videos().insert(
         part="snippet,status",
         body=body,
         media_body=media,
     )
 
-    response = _execute_resumable_upload(insert_request)
+    try:
+        response = _execute_resumable_upload(insert_request)
+    except Exception as exc:  # noqa: BLE001 — re-raised unless the session expired
+        if not _is_expired_session_error(exc):
+            raise
+        # Oct 8 2026: Tesla Ep628, SpaceX Ep124 and Omni View Ep199 lost their
+        # long-form to "HttpError 410 Gone" while four sibling uploads on the
+        # same token succeeded. A 404/410 on a resumable upload means YouTube
+        # discarded the SESSION; Google's documented remedy is to start the
+        # upload over, and retrying the old request reuses the dead session
+        # URI. One fresh session, then the error stands.
+        logger.warning("YouTube upload session expired (%s) — restarting "
+                       "the upload once with a new session", exc)
+        response = _execute_resumable_upload(_new_session())
     video_id = response.get("id")
     if not video_id:
         raise RuntimeError(

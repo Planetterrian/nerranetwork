@@ -25,7 +25,14 @@ faster-whisper>=1.2.1
 # faster-whisper declares ``av>=11`` unbounded, so the runner picked the
 # new release the morning it appeared. Lift the ceiling only after
 # faster-whisper releases against it.
-av>=19.0.1,<20
+# Oct 8 2026: Dependabot (#1365) rewrote this pin to ``av>=19.0.1,<20`` and
+# it was merged with a batch of routine bumps; all 21 episodes of 10-08
+# shipped with no transcript again. ``engine.transcripts.load_whisper_audio``
+# now decodes with ffmpeg so Whisper no longer touches ``av.open``; the
+# ceiling stays as the second line of defence, ``.github/dependabot.yml``
+# ignores ``av`` majors, and tests/test_transcripts_pyav_2026_10_08.py
+# fails CI if the ceiling is lifted.
+av>=11,<19
 google-api-python-client>=2.200.0
 google-auth>=2.58.1
 google-auth-oauthlib>=1.4.1
