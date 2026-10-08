@@ -194,4 +194,95 @@ reviews:
       then make the next DP Pod decision a distribution or cadence one.
     agent_cost_usd: null
 
+  - date: '2026-10-08'
+    pr: null
+    doc: docs/reviews/dp_pod_review_2026_10_08.md
+    generated_by: grok-4.5
+    summary: Lever-segment omission and Sep-4 shape fixes are holding on ep69–78, but podcast chapters are shipping speaker-label/dialogue-fragment titles, the Cold Open marker never matches the spoken intro, cadence copy still says daily after the weekly move, and the empty Dispatch wall remains an escalated operator decision.
+    scored_prior_predictions:
+    - metric: levers opening with the word Open, next 10 episodes
+      verdict: hit
+      evidence: 1/10 in ep69–78 (ep70 ClinicalTrials only) vs ≤3/10 target and 13/26 baseline
+    - metric: screen-lookup levers (open/website/app/portal/search/.gov regex on the first sentence), next 10 episodes
+      verdict: hit
+      evidence: ≤3/10 screen-ish (ep70 ClinicalTrials, ep71 TOU form); rest are calls, workdays, inspections, labs
+    - metric: fuzzy-distinct levers (content-word Jaccard < 0.4), next 10 episodes
+      verdict: hit
+      evidence: 10/10 distinct actions ep69–78, 0 near-dup pairs
+    - metric: scripts containing the word 'checklist', next 10 episodes
+      verdict: miss
+      evidence: Still present as ops/aviation metaphor in ep70, ep71, ep73+; de-seed reduced catchphrase use but did not retire the word — do not ban-list
+    - metric: scripts containing 'steel-man' or 'I'll concede', next 10 episodes
+      verdict: hit
+      evidence: Stock catchphrase form gone in ep69–78; only rare technique phrasing remains
+    - metric: median audio duration (chapters end), next 10 episodes
+      verdict: hit
+      evidence: Chapter end times ~9–12 min, median ~10.5; nothing above 13; 1750w ceiling holding
+    - metric: episodes airing at least one founders-notes marker, next 10 episodes
+      verdict: hit
+      evidence: Solar and/or Collingwood in ep71, ep74, ep78 (3/10) vs ≥3/10 target; Yukon/WestJet still unused
+    - metric: missing Lever segment rate (Sep-21 scored_note class)
+      verdict: hit
+      evidence: 0/10 missing in ep69–78 transcripts vs 4/18 post-Sep-4 before the validation gate
+    shipped: []
+    deferred:
+    - Seed one real host Dispatch into dispatches.json (operator decision — fourth filing; Dan solar payback in founders notes is ready material) OR stop club-page wall promises until one exists
+    - 'Deterministic script-quality re-roll on paste/short days (ep69: 1433w + 41% digest overlap) if rate rises above ~2/10 — code gate, not prompt pressure'
+    - 'Optional: widen banned-opening-verb window so Contact×3 across 10 weekly levers trips a ban (last-6 alone can miss under weekly cadence)'
+    - 'Operator listen only: historical Whisper ''liver'' for Lever (ep30/ep56); not observed in ep69–78'
+    - Weekly Lever-of-the-Week + collective counter (blocked on real Dispatch receipts)
+    - YouTube long-form (waits on adaptive policy; Shorts-only continues)
+    - Additional founders biography (Yukon, WestJet, cockpit, daughters) — operator-supplied notes only; code cannot invent
+    - 'Checklist word: do not ban-list; leave to RETIRED BITS shape mining (prior miss, escalated past ban)'
+    predictions:
+    - metric: 'chapter titles matching ^(DAN|PATRICK): or <4-word dialogue fragments, next 8 weekly episodes'
+      baseline: 4/10 recent chapter files (ep72,73,74,77) contain speaker-label or fragment titles
+      expected: 0/8 after sanitizer ships
+      verdict: pending
+      evidence: null
+    - metric: Cold Open present as first chapter (title Cold Open or equivalent) when chapters enabled, next 8 episodes
+      baseline: 0/10 in ep69–78 (first chapter is always The Positive Papers)
+      expected: ≥7/8 latch on spoken 'This is the DP Pod' intro
+      verdict: pending
+      evidence: null
+    - metric: writer-facing prompts/system copy claiming the show is daily
+      baseline: system.txt + digest.txt still say daily / ten minutes a day
+      expected: 0 remaining 'daily conversation/briefing/ten minutes a day' cadence claims in dp_pod system+digest+podcast writer notes after edit
+      verdict: pending
+      evidence: null
+    - metric: Lever segment present in digest and script, next 8 weekly episodes
+      baseline: 10/10 present in ep69–78 after validation gate
+      expected: 8/8 present (gate continues to hold)
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/dp_pod.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Every ep69–78 transcript opens 'This is the DP Pod, episode N' so the Welcome-only marker never fires and Cold Open is missing from all chapter files.
+    - file: engine/chapters.py (or wherever mid-episode chapter titles are finalised for dialogue shows)
+      kind: code
+      ab_listen_required: false
+      rationale: P0 listener-facing scrubber pollution verified in ep72/73/74/77 chapter JSON; metadata-only, no audio change.
+    - file: shows/prompts/dp_pod_system.txt
+      kind: prompt
+      ab_listen_required: false
+      rationale: Show is Monday-only since 2026-09-21; writer system prompt still says daily and fights the public schedule + YAML description.
+    - file: shows/prompts/dp_pod_system.txt
+      kind: prompt
+      ab_listen_required: false
+      rationale: Align mission mechanics copy with weekly cadence; Lever is per-episode on a weekly show, not 'a week' as residual daily framing.
+    - file: shows/prompts/dp_pod_digest.txt
+      kind: prompt
+      ab_listen_required: false
+      rationale: Digest writer note still calls the brief daily after the weekly move.
+    - file: shows/prompts/dp_pod_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Remove 'a day' from a line the model may echo; ceiling itself unchanged (Sep-4 duration hit). A/B-listen because podcast prompt touches spoken-script stage.
+    - file: tests/test_dp_pod_show.py
+      kind: code
+      ab_listen_required: false
+      rationale: Drift-guard pattern per playbook; pin the two P0 metadata fixes and the daily→weekly copy correction.
+    agent_cost_usd: 0.1478
 do_not_retry: []
