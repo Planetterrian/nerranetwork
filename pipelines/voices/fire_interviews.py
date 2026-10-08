@@ -582,9 +582,25 @@ def fire_due_interviews() -> int:
         # a guest who rebooked onto the same interview row must still be
         # fired (Sept 24 2026: Dr. Brandt sat in the studio because his
         # cancelled Sept 22 run blocked the new slot).
-        if sb_select("interview_runs",
-                     f"interview_id=eq.{interview['id']}"
-                     f"&status=not.in.(failed,cancelled)"):
+        active = sb_select("interview_runs",
+                           f"interview_id=eq.{interview['id']}"
+                           f"&status=not.in.(failed,cancelled)") or []
+        # Oct 8 2026: a run staged for a slot the guest has since moved
+        # (Jason Shumard and Priyanka Sharma were staged on Oct 6 for Oct 7
+        # and rebooked to the 13th and 20th) would open a week later with a
+        # week-old prompt: none of the lessons adopted in between, no
+        # end-of-turn setting. Stage it again for the new time instead.
+        stale = [r for r in active if r.get("status") == "staged"
+                 and r.get("scheduled_for") and when
+                 and _parse(r["scheduled_for"]) != when]
+        for r in stale:
+            sb_update("interview_runs", f"id=eq.{r['id']}&status=eq.staged",
+                      {"status": "cancelled",
+                       "disconnect_reason": "re-staged: the interview moved"})
+            logger.info("Run %s was staged for %s; the interview moved to %s, "
+                        "staging it again", r["id"], r["scheduled_for"],
+                        interview["scheduled_at"])
+        if [r for r in active if r not in stale]:
             logger.info("Interview %s already has an active run — skipping",
                         interview["id"])
             if studio and in_window and not interview.get("reminder_sent_at"):

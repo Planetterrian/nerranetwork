@@ -102,3 +102,13 @@ def test_a_published_episode_is_never_queued_again():
     publish = (V / "publish_episode.py").read_text()
     assert 'if interview.get("episode_number"):' in publish
     assert 'if not iid or interview.get("episode_number"):' in publish
+
+
+def test_a_run_staged_for_an_old_slot_is_staged_again():
+    """Oct 8 2026: Jason Shumard's and Priyanka Sharma's runs were staged on
+    Oct 6 for Oct 7; both moved, and the old runs would have opened a week
+    later with a week-old prompt."""
+    fire = (V / "fire_interviews.py").read_text()
+    assert '"disconnect_reason": "re-staged: the interview moved"' in fire
+    assert 'and _parse(r["scheduled_for"]) != when]' in fire
+    assert "if [r for r in active if r not in stale]:" in fire
