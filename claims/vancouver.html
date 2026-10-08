@@ -129,7 +129,19 @@
     }
     .legal-body li { margin-bottom: var(--sp-2); }
     .legal-body strong { color: var(--nn-white); }
-    .legal-body a { color: var(--nn-cyan); }
+    .legal-body a { color: var(--nn-cyan); text-decoration: underline; text-underline-offset: 2px; }
+    .legal-body h2[id], .legal-body h3[id] { scroll-margin-top: calc(var(--nav-height) + var(--sp-4)); }
+    .legal-toc {
+        background: var(--nn-card);
+        border: 1px solid var(--nn-border);
+        border-radius: 12px;
+        padding: var(--sp-4) var(--sp-5);
+        margin: var(--sp-6) 0 0;
+    }
+    .legal-toc h2 { border-top: 0; margin: 0 0 var(--sp-2); padding-top: 0; font-size: 1rem; }
+    .legal-toc ol { margin: 0; columns: 2 16rem; column-gap: var(--sp-6); }
+    .legal-toc li { margin-bottom: var(--sp-1); font-size: 0.92rem; break-inside: avoid; }
+    .legal-toc ul { list-style: none; margin: var(--sp-1) 0 0; padding-left: var(--sp-4); }
     .legal-body a:hover { color: var(--nn-white); }
     .legal-callout {
         background: linear-gradient(135deg, rgba(107, 71, 255, 0.15) 0%, rgba(0, 212, 255, 0.08) 100%);
@@ -168,7 +180,8 @@
         font-family: var(--font-heading);
         font-size: 0.95rem;
         font-weight: 700;
-        color: var(--nn-purple);
+        /* #6B47FF is 3.6:1 on the page; the text tint clears 4.5:1. */
+        color: var(--nn-purple-text, #9D8BFF);
         margin: 0 0 var(--sp-2);
     }
     .legal-grid p { font-size: 0.92rem; margin: 0; }
@@ -210,7 +223,7 @@
         font-size: 0.85rem;
         color: var(--nn-text-muted);
     }
-    .legal-footer-note .nn-highlight { color: var(--nn-purple); font-weight: 500; }
+    .legal-footer-note .nn-highlight { color: var(--nn-purple-text, #9D8BFF); font-weight: 500; }
     .legal-related {
         display: flex;
         flex-wrap: wrap;
@@ -233,6 +246,15 @@
     }
 </style>
 
+    <style>
+        .nn-claims-steps--compact summary {
+            font-family: var(--font-heading);
+            font-weight: 600;
+            color: var(--nn-white);
+            cursor: pointer;
+        }
+        .nn-claims-steps--compact details[open] summary { margin-bottom: var(--sp-2); }
+    </style>
 
 
     
@@ -728,379 +750,200 @@
         <a href="../player.html">Player</a>
         
         <a href="../explore.html" style="font-weight:600;">Find your show</a>
-        
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Hosted by Mira</div>
+        <details class="nn-mobile-shows nn-mobile-group" open>
+            <summary class="nn-mobile-shows-title">Hosted by Mira <span class="nn-mobile-count">3</span></summary>
             
             <a href="../nerra-daily.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/nerra-daily-400.webp"><img src="../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/nerra-daily-400.webp"><img src="../assets/covers/nerra-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Daily
             </a>
             
             <a href="../age-of-ai.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/age-of-ai-400.webp"><img src="../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/age-of-ai-400.webp"><img src="../assets/covers/age-of-ai.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The Age of AI
             </a>
             
             <a href="../nerra-voices.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/nerra-voices-400.webp"><img src="../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/nerra-voices-400.webp"><img src="../assets/covers/nerra-voices.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Voices
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">World desks</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">World desks <span class="nn-mobile-count">6</span></summary>
             
             <a href="../omni-view-world.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-world-400.webp"><img src="../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-world-400.webp"><img src="../assets/covers/omni-view-world.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Top World News
             </a>
             
             <a href="../omni-view-north-america.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-north-america-400.webp"><img src="../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-north-america-400.webp"><img src="../assets/covers/omni-view-north-america.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View North America
             </a>
             
             <a href="../omni-view-europe.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-europe-400.webp"><img src="../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-europe-400.webp"><img src="../assets/covers/omni-view-europe.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Europe
             </a>
             
             <a href="../omni-view-asia-pacific.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-asia-pacific-400.webp"><img src="../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-asia-pacific-400.webp"><img src="../assets/covers/omni-view-asia-pacific.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Asia Pacific
             </a>
             
             <a href="../omni-view-africa-mideast.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-africa-mideast-400.webp"><img src="../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-africa-mideast-400.webp"><img src="../assets/covers/omni-view-africa-mideast.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Africa & Middle East
             </a>
             
             <a href="../omni-view-latam.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-latam-400.webp"><img src="../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-latam-400.webp"><img src="../assets/covers/omni-view-latam.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Central & South America
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Local news</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Local news <span class="nn-mobile-count">2</span></summary>
             
             <a href="../vancouver.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/vancouver-400.webp"><img src="../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/vancouver-400.webp"><img src="../assets/covers/vancouver.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Vancouver Daily News
             </a>
             
             <a href="../collingwood.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/collingwood-400.webp"><img src="../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/collingwood-400.webp"><img src="../assets/covers/collingwood.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Collingwood Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">AI & compute</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">AI & compute <span class="nn-mobile-count">3</span></summary>
             
             <a href="../models-agents.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/models-agents-400.webp"><img src="../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/models-agents-400.webp"><img src="../assets/covers/models-agents.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents
             </a>
             
             <a href="../ai-chips.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/ai-chips-400.webp"><img src="../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/ai-chips-400.webp"><img src="../assets/covers/ai-chips.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 AI Chips & Data Centres Daily
             </a>
             
             <a href="../models-agents-beginners.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/models-agents-beginners-400.webp"><img src="../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/models-agents-beginners-400.webp"><img src="../assets/covers/models-agents-beginners.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents for Beginners
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Markets</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Markets <span class="nn-mobile-count">4</span></summary>
             
             <a href="../modern-investing.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/modern-investing-400.webp"><img src="../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/modern-investing-400.webp"><img src="../assets/covers/modern-investing.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Modern Investing Techniques
             </a>
             
             <a href="../mag7.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/mag7-400.webp"><img src="../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/mag7-400.webp"><img src="../assets/covers/mag7.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 MAG 7 Daily
             </a>
             
             <a href="../prediction-markets.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/prediction-markets-400.webp"><img src="../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/prediction-markets-400.webp"><img src="../assets/covers/prediction-markets.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Prediction Markets Daily
             </a>
             
             <a href="../tesla.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/tesla-shorts-time-400.webp"><img src="../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/tesla-shorts-time-400.webp"><img src="../assets/covers/tesla-shorts-time.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Tesla Shorts Time
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Health & longevity</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Health & longevity <span class="nn-mobile-count">3</span></summary>
             
             <a href="../planetterrian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/planetterrian-daily-400.webp"><img src="../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/planetterrian-daily-400.webp"><img src="../assets/covers/planetterrian-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Planetterrian Daily
             </a>
             
             <a href="../peptides.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/peptides-400.webp"><img src="../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/peptides-400.webp"><img src="../assets/covers/peptides.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Peptides Weekly
             </a>
             
             <a href="../longevity.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/longevity-400.webp"><img src="../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/longevity-400.webp"><img src="../assets/covers/longevity.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Longevity Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Every other show</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">10</span></summary>
             
             <a href="../omni-view.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-400.webp"><img src="../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-400.webp"><img src="../assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View
             </a>
             
             <a href="../fascinating-frontiers.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/fascinating-frontiers-400.webp"><img src="../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/fascinating-frontiers-400.webp"><img src="../assets/covers/fascinating-frontiers.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Fascinating Frontiers
             </a>
             
             <a href="../spacex.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/spacex-400.webp"><img src="../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/spacex-400.webp"><img src="../assets/covers/spacex.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 SpaceX Daily
             </a>
             
             <a href="../env-intel.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/environmental-intelligence-400.webp"><img src="../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/environmental-intelligence-400.webp"><img src="../assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Environmental Intelligence
             </a>
             
             <a href="../ru/finansy-prosto.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/finansy-prosto-400.webp"><img src="../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/finansy-prosto-400.webp"><img src="../assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Финансы Просто
             </a>
             
             <a href="../ru/privet-russian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/privet-russian-400.webp"><img src="../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/privet-russian-400.webp"><img src="../assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Привет, Русский!
             </a>
             
             <a href="../unintended-consequences.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/unintended-consequences-400.webp"><img src="../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/unintended-consequences-400.webp"><img src="../assets/covers/unintended-consequences.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Unintended Consequences
             </a>
             
             <a href="../first-principles.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/first-principles-daily-400.webp"><img src="../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/first-principles-daily-400.webp"><img src="../assets/covers/first-principles-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 First Principles Daily
             </a>
             
             <a href="../thedppod.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/dp-pod-400.webp"><img src="../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/dp-pod-400.webp"><img src="../assets/covers/dp-pod.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The DP Pod: The Do Positive Podcast
             </a>
             
             <a href="../offshore-north.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/offshore-north-400.webp"><img src="../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/offshore-north-400.webp"><img src="../assets/covers/offshore-north.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Offshore North
             </a>
             
-        </div>
+        </details>
         
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Blogs</div>
-            <a href="../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">
-                All Blog Posts
-            </a>
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Hosted by Mira</div>
-            
-            <a href="../blog/nerra_daily/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/nerra-daily-400.webp"><img src="../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Daily Blog
-            </a>
-            
-            <a href="../blog/age_of_ai/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/age-of-ai-400.webp"><img src="../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
-                The Age of AI Blog
-            </a>
-            
-            <a href="../blog/nerra_voices/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/nerra-voices-400.webp"><img src="../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Voices Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">World desks</div>
-            
-            <a href="../blog/omni_view_world/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-world-400.webp"><img src="../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Top World News Blog
-            </a>
-            
-            <a href="../blog/omni_view_north_america/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-north-america-400.webp"><img src="../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View North America Blog
-            </a>
-            
-            <a href="../blog/omni_view_europe/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-europe-400.webp"><img src="../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Europe Blog
-            </a>
-            
-            <a href="../blog/omni_view_asia_pacific/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-asia-pacific-400.webp"><img src="../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Asia Pacific Blog
-            </a>
-            
-            <a href="../blog/omni_view_africa_mideast/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-africa-mideast-400.webp"><img src="../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Africa & Middle East Blog
-            </a>
-            
-            <a href="../blog/omni_view_latam/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-latam-400.webp"><img src="../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Central & South America Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Local news</div>
-            
-            <a href="../blog/vancouver/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/vancouver-400.webp"><img src="../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Vancouver Daily News Blog
-            </a>
-            
-            <a href="../blog/collingwood/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/collingwood-400.webp"><img src="../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Collingwood Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">AI & compute</div>
-            
-            <a href="../blog/models_agents/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/models-agents-400.webp"><img src="../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents Blog
-            </a>
-            
-            <a href="../blog/ai_chips/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/ai-chips-400.webp"><img src="../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                AI Chips & Data Centres Daily Blog
-            </a>
-            
-            <a href="../blog/models_agents_beginners/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/models-agents-beginners-400.webp"><img src="../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents for Beginners Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Markets</div>
-            
-            <a href="../blog/modern_investing/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/modern-investing-400.webp"><img src="../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
-                Modern Investing Techniques Blog
-            </a>
-            
-            <a href="../blog/mag7/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/mag7-400.webp"><img src="../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                MAG 7 Daily Blog
-            </a>
-            
-            <a href="../blog/prediction_markets/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/prediction-markets-400.webp"><img src="../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Prediction Markets Daily Blog
-            </a>
-            
-            <a href="../blog/tesla/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/tesla-shorts-time-400.webp"><img src="../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
-                Tesla Shorts Time Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Health & longevity</div>
-            
-            <a href="../blog/planetterrian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/planetterrian-daily-400.webp"><img src="../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Planetterrian Daily Blog
-            </a>
-            
-            <a href="../blog/peptides/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/peptides-400.webp"><img src="../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Peptides Weekly Blog
-            </a>
-            
-            <a href="../blog/longevity/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/longevity-400.webp"><img src="../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Longevity Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Every other show</div>
-            
-            <a href="../blog/omni_view/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-400.webp"><img src="../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Blog
-            </a>
-            
-            <a href="../blog/fascinating_frontiers/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/fascinating-frontiers-400.webp"><img src="../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
-                Fascinating Frontiers Blog
-            </a>
-            
-            <a href="../blog/spacex/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/spacex-400.webp"><img src="../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                SpaceX Daily Blog
-            </a>
-            
-            <a href="../blog/env_intel/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/environmental-intelligence-400.webp"><img src="../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
-                Environmental Intelligence Blog
-            </a>
-            
-            <a href="../blog/finansy_prosto/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/finansy-prosto-400.webp"><img src="../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                Финансы Просто Blog
-            </a>
-            
-            <a href="../blog/privet_russian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/privet-russian-400.webp"><img src="../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                Привет, Русский! Blog
-            </a>
-            
-            <a href="../blog/unintended_consequences/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/unintended-consequences-400.webp"><img src="../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
-                Unintended Consequences Blog
-            </a>
-            
-            <a href="../blog/first_principles/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/first-principles-daily-400.webp"><img src="../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                First Principles Daily Blog
-            </a>
-            
-            <a href="../blog/dp_pod/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/dp-pod-400.webp"><img src="../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
-                The DP Pod: The Do Positive Podcast Blog
-            </a>
-            
-            <a href="../blog/offshore_north/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/offshore-north-400.webp"><img src="../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
-                Offshore North Blog
-            </a>
-            
-            
+            <a href="../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">All Blog Posts</a>
+            <a href="../topics/index.html" class="nn-mobile-show-link">Browse by topic</a>
         </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">More</div>
@@ -1124,7 +967,7 @@
         <p class="nn-claims-back"><a href="../claims.html">← Claims &amp; corrections, every show</a></p>
         <h1>Vancouver Daily News: claims &amp; corrections</h1>
         
-        <div class="legal-meta">Nerra Network &middot; last 30 days &middot; 2026-09-06 to 2026-10-06</div>
+        <div class="legal-meta">Nerra Network &middot; last 30 days &middot; 2026-09-07 to 2026-10-07</div>
         <p class="lede">
             
             Every factual claim this show made in the last 30 days, with what a
@@ -1138,15 +981,21 @@
     
         
         
-        <h2>How this show's claims are checked</h2>
-        <p class="nn-claims-intro"><strong>Every episode starts with a ledger.</strong> When a show's digest is written, the model also writes a claims ledger: each factual sentence it asserts, the URL it took it from, and the passage in that source that supports it. The ledger is extracted before any published surface sees the text. <strong>Each claim is checked by a machine, not trusted.</strong> Before the episode is saved, every entry is checked mechanically: first against the copy of the source the pipeline fetched that morning, then against the live page. The supporting quote has to actually appear in the source. A sentence written in the shape of a citation with no ledger entry behind it is caught by the same check — that shape is the signature of a fabricated reference. <strong>A claim the check cannot confirm is published and marked, not removed.</strong> Sometimes the source cannot be reached from our servers, sometimes the page has moved, and sometimes the model paraphrased where it should have quoted. None of those means the sentence is false. A story newer than the model's training data is verified against its source, never against memory, and a true, timely story is worth more to a listener than a clean ledger. So the sentence ships, and its status is shown beside it — on the episode page, and on this ledger — in plain words that say what the check could and could not do. <strong>Unverified claims are re-checked every night for a week.</strong> For 7 nights after publication a job re-runs the check on every marked claim that names a source. A claim that passes later is upgraded on the ledger with the date it was confirmed and the status it carried first. A claim that never passes stays marked; nothing is quietly deleted and nothing is quietly promoted. The full process, the badge legend and every show's totals are on the
+        <h2>How this show's claims are checked</h2><ol class="nn-claims-steps nn-claims-steps--compact">
+            <li><details><summary>Every episode starts with a ledger</summary><p>When a show's digest is written, the model also writes a claims ledger: each factual sentence it asserts, the URL it took it from, and the passage in that source that supports it. The ledger is extracted before any published surface sees the text.</p></details></li>
+            <li><details><summary>Each claim is checked by a machine, not trusted</summary><p>Before the episode is saved, every entry is checked mechanically: first against the copy of the source the pipeline fetched that morning, then against the live page. The supporting quote has to actually appear in the source. A sentence written in the shape of a citation with no ledger entry behind it is caught by the same check — that shape is the signature of a fabricated reference.</p></details></li>
+            <li><details><summary>A claim the check cannot confirm is published and marked, not removed</summary><p>Sometimes the source cannot be reached from our servers, sometimes the page has moved, and sometimes the model paraphrased where it should have quoted. None of those means the sentence is false. A story newer than the model's training data is verified against its source, never against memory, and a true, timely story is worth more to a listener than a clean ledger. So the sentence ships, and its status is shown beside it — on the episode page, and on this ledger — in plain words that say what the check could and could not do.</p></details></li>
+            <li><details><summary>Unverified claims are re-checked every night for a week</summary><p>For 7 nights after publication a job re-runs the check on every marked claim that names a source. A claim that passes later is upgraded on the ledger with the date it was confirmed and the status it carried first. A claim that never passes stays marked; nothing is quietly deleted and nothing is quietly promoted.</p></details></li>
+        </ol>
+        <p class="nn-claims-intro">
+            The full process, the badge legend and every show's totals are on the
             <a href="../claims.html">network ledger page</a>.
         </p>
 
         <h2>Last 30 days</h2>
         
         <div class="nn-claims-tiles">
-            <div class="nn-claims-tile"><div class="nn-claims-tile-num">209</div><div class="nn-claims-tile-label">claims across 14 episodes</div></div>
+            <div class="nn-claims-tile"><div class="nn-claims-tile-num">227</div><div class="nn-claims-tile-label">claims across 15 episodes</div></div>
             <div class="nn-claims-tile nn-claims-tile--verified"><div class="nn-claims-tile-num">100.0%</div><div class="nn-claims-tile-label">verified against their source</div></div>
             <div class="nn-claims-tile nn-claims-tile--flagged"><div class="nn-claims-tile-num">0</div><div class="nn-claims-tile-label">published and marked, not yet verified</div></div>
             <div class="nn-claims-tile nn-claims-tile--verified"><div class="nn-claims-tile-num">1</div><div class="nn-claims-tile-label">verified later by the nightly re-check</div></div>
@@ -1161,6 +1010,148 @@
         <h2>Episode by episode</h2>
         <details class="nn-claims-episode" open>
             <summary>
+                <span class="nn-claims-episode-title">Episode 15</span>
+                <span class="nn-claims-episode-date">2026-10-07</span>
+                <span class="nn-claims-episode-counts"><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> 18
+                </span>
+            </summary>
+            <div class="nn-claims-episode-body">
+                <p class="nn-claims-episode-links"><a href="../blog/vancouver/ep015.html">Read this episode →</a>
+                </p>
+                <p class="nn-claims-sub">Claims</p>
+                <ol class="nn-claims-list">
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/canada/british-columbia/lng-canada-fine-underwater-noise-monitoring-9.7371937?cmp=rss" target="_blank" rel="noopener" title="LNG Canada fined $50K over underwater noise monitoring during tug terminal construction">cbc.ca</a></span>
+                        </div>
+                        LNG Canada was handed a $50,000 administrative penalty related to underwater noise while building a tug terminal three years ago on B.C.'s North Coast.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/canada/british-columbia/province-immunizations-early-peak-flu-season-9.7371820?cmp=rss" target="_blank" rel="noopener" title="B.C. set to announce immunization plans amid early peak in flu season">cbc.ca</a></span>
+                        </div>
+                        The B.C. Centre for Disease Control says seasonal illnesses are rising earlier than usual, and the province is set to announce immunization plans.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://vancouver.citynews.ca/2026/10/06/highway-1-burnaby-closed-eastbound-incident/" target="_blank" rel="noopener" title="Police investigating after man’s body found on HWY 1 in Burnaby; eastbound lanes remain closed">vancouver.citynews.ca</a></span>
+                        </div>
+                        Burnaby RCMP found a man's body in the eastbound lanes of Highway 1 just east of Kensington shortly before 6 a.m. Monday, with injuries consistent with being hit by a vehicle.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://vancouver.citynews.ca/2026/10/06/highway-1-burnaby-closed-eastbound-incident/" target="_blank" rel="noopener" title="Police investigating after man’s body found on HWY 1 in Burnaby; eastbound lanes remain closed">vancouver.citynews.ca</a></span>
+                        </div>
+                        Eastbound Highway 1 lanes near Kensington were closed for more than 12 hours and have since reopened.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://vancouver.citynews.ca/2026/10/06/highway-1-burnaby-closed-eastbound-incident/" target="_blank" rel="noopener" title="Police investigating after man’s body found on HWY 1 in Burnaby; eastbound lanes remain closed">vancouver.citynews.ca</a></span>
+                        </div>
+                        Sgt. Michael McLaughlin asked witnesses and dash-cam holders from 5:30 a.m. to 6 a.m. near Kensington to call BC Highway Patrol at 604-526-9744.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://dailyhive.com/vancouver/bc-greens-wealth-tax-fair-share-act" target="_blank" rel="noopener" title="Emily Lowan's BC Greens propose wealth taxes of up to 20% on fortunes exceeding $50 million">dailyhive.com</a></span>
+                        </div>
+                        Emily Lowan and the BC Greens proposed a one-time wealth tax of 5, 10 and 20 percent above $50 million, $100 million and $1 billion, plus later annual rates of 2, 3 and 5 percent, estimating $22.2 billion in year one and $5.4 billion a year after.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/canada/british-columbia/bc-conservatives-no-fault-insurance-9.7372057?cmp=rss" target="_blank" rel="noopener" title="B.C. Conservatives say they’d allow lawsuits over vehicle accidents">cbc.ca</a></span>
+                        </div>
+                        Lorne Doerkson says the B.C. Conservatives would replace no-fault insurance with a hybrid system that would allow lawsuits, according to a leaked letter.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.nsnews.com/local-news/north-vancouvers-grouse-grind-closing-for-four-weeks-for-annual-maintenance-12859629" target="_blank" rel="noopener" title="North Vancouver's Grouse Grind closing for four weeks for annual maintenance">nsnews.com</a></span>
+                        </div>
+                        Metro Vancouver is closing the Grouse Grind on October 13 and plans to reopen it November 10, weather permitting.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://vancouversun.com/news/bc-union-petition-seeking-film-tax-credit-change" target="_blank" rel="noopener" title="B.C. union launches petition seeking film tax-credit change">vancouversun.com</a></span>
+                        </div>
+                        A petition backed by IATSE Local 891 calls on Ottawa to change how the Production Services Tax Credit is calculated.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://nanaimonewsnow.com/2026/10/07/b-c-ndp-leader-eby-says-not-everybody-shares-his-concerns-about-trump/" target="_blank" rel="noopener" title="B.C. NDP Leader Eby says not everybody shares his concerns about Trump">nanaimonewsnow.com</a></span>
+                        </div>
+                        David Eby called the snap election on September 22 citing a firebreak against Trump, and now says the October 24 question is which party can support families.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/canada/british-columbia/squamish-municipal-mayoral-debate-9.7371807?cmp=rss" target="_blank" rel="noopener" title="Squamish mayoral candidates clash over property taxes, encampments in debate">cbc.ca</a></span>
+                        </div>
+                        More than 800 people watched a Squamish mayoral debate ahead of the October 17 election, with clashes over property taxes and encampments.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://weather.gc.ca/rss/weather/49.245_-123.115_e.xml" target="_blank" rel="noopener" title="Environment Canada forecast for Vancouver">weather.gc.ca</a></span>
+                        </div>
+                        A yellow fog advisory is in effect for Vancouver, issued at 4:56 a.m., with fog at 10.2 degrees and a Wednesday high of 17 except 21 inland.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.drivebc.ca/" target="_blank" rel="noopener" title="DriveBC: 8 major road events in Metro Vancouver">drivebc.ca</a></span>
+                        </div>
+                        Highway 99 Exit 23 to Ladner Trunk Road is closed until October 23, and Dollarton on-ramps were closed overnight until 6 a.m. Wednesday with named detours.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://ontapsportsnet.com/fire/chicago-fire-fc-defeat-vancouver-whitecaps-3-1-behind-goals-from-three-different-goalscorers/" target="_blank" rel="noopener" title="Chicago Fire FC defeat Vancouver Whitecaps 3-1 behind goals from three different goalscorers">ontapsportsnet.com</a></span>
+                        </div>
+                        Chicago Fire defeated the Vancouver Whitecaps 3-1 with three different goalscorers, Chicago's second straight win.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.foxsports.com/articles/nhl/hurricanes-host-the-canucks-after-halls-2goal-game" target="_blank" rel="noopener" title="Hurricanes host the Canucks after Hall's 2-goal game">foxsports.com</a></span>
+                        </div>
+                        The Canucks (2-2) play the Hurricanes (2-1-1) Thursday at 7 p.m. Eastern in Raleigh, with listed injuries including Demko (hip) and Chytil (shoulder).
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.vancouverisawesome.com/events-and-entertainment/coast-mountain-film-fest-2026-12850844" target="_blank" rel="noopener" title="Coast Mountain Film Fest brings night of ski and snowboard features back to Vancouver">vancouverisawesome.com</a></span>
+                        </div>
+                        Coast Mountain Film Fest is at the Rio Theatre on November 5, with Ski Night at 7 p.m. and Snowboard Night at 9:30 p.m.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://dailyhive.com/vancouver/metro-vancouver-mayors-pacific-link-pipeline-support" target="_blank" rel="noopener" title="Vancouver and Surrey mayors welcome Pacific Link pipeline, while Delta mayor seeks a planning role">dailyhive.com</a></span>
+                        </div>
+                        Carney designated Pacific Link a project of national interest; it would carry an additional one million barrels a day toward Roberts Bank, with conditions aimed for September 2027.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://dailyhive.com/vancouver/metro-vancouver-mayors-pacific-link-pipeline-support" target="_blank" rel="noopener" title="Vancouver and Surrey mayors welcome Pacific Link pipeline, while Delta mayor seeks a planning role">dailyhive.com</a></span>
+                        </div>
+                        Mayors Ken Sim and Brenda Locke voiced support for Pacific Link, while George Harvie wants a planning role on combined local impacts and Tsawwassen First Nation wants direct consultation.
+                    </li>
+                </ol>
+            </div>
+        </details>
+        <details class="nn-claims-episode">
+            <summary>
                 <span class="nn-claims-episode-title">Episode 14</span>
                 <span class="nn-claims-episode-date">2026-10-06</span>
                 <span class="nn-claims-episode-counts"><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
@@ -1174,7 +1165,7 @@
                 <ol class="nn-claims-list">
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/canada/british-columbia/vsb-support-workers-strike-vote-9.7370385?cmp=rss" target="_blank" rel="noopener" title="Vancouver school support workers vote overwhelmingly to back strike action">cbc.ca</a></span>
                         </div>
                         IUOE Local 963 says Vancouver school support workers voted 96.9 percent in support of a strike mandate.
@@ -1188,7 +1179,7 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/canada/british-columbia/bc-provincial-election-leaders-debate-9.7370415?cmp=rss" target="_blank" rel="noopener" title="How to watch the B.C. provincial election leaders' debate on Oct. 14">cbc.ca</a></span>
                         </div>
                         CBC describes the Oct. 14 debate as the only live, streamed and televised leaders' debate, running 6:15 to 8 p.m. PT.
@@ -1209,49 +1200,49 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/canada/british-columbia/port-moody-12-year-old-firework-warning-9.7370226?cmp=rss" target="_blank" rel="noopener" title="Warning issued after 12-year-old Port Moody boy struck in face with firework">cbc.ca</a></span>
                         </div>
                         Port Moody police warned the public after a 12-year-old boy was struck in the face with a firework on Friday.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://vancouversun.com/news/jewelry-stolen-from-vancouver-open-house-recovered-by-police" target="_blank" rel="noopener" title="Jewelry stolen from Vancouver open house recovered by police">vancouversun.com</a></span>
                         </div>
                         Two men were arrested after a vehicle stop, and police recovered thousands of dollars of jewelry stolen from a Vancouver open house.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://vancouversun.com/news/yvr-pot-smuggler-sentenced-year-jail" target="_blank" rel="noopener" title="Ontario man who tried to fly with 31 kilos of pot from YVR to England gets a year in jail">vancouversun.com</a></span>
                         </div>
                         Alaaddin Koc, 56, was sentenced to a year in jail after CBSA intercepted him at Vancouver airport on Oct. 28, 2024, with 31 kilos of cannabis bound for England.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.drivebc.ca/" target="_blank" rel="noopener" title="DriveBC: 8 major road events in Metro Vancouver">drivebc.ca</a></span>
                         </div>
                         Highway 99 Exit 23 to Ladner Trunk Road in Delta is closed from Oct. 6 through Oct. 23.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://weather.gc.ca/rss/weather/49.245_-123.115_e.xml" target="_blank" rel="noopener" title="Environment Canada forecast for Vancouver">weather.gc.ca</a></span>
                         </div>
                         Environment Canada forecasts a Tuesday high of 17 except 21 inland for Vancouver, with no watches or warnings, and a morning temperature of 11.7 degrees.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://dailyhive.com/vancouver/bc-conservatives-metro-vancouver-regional-district-reform-platform-promise" target="_blank" rel="noopener" title="Conservatives promise to strip Metro Vancouver Regional District of its responsibilities">dailyhive.com</a></span>
                         </div>
                         The B.C. Conservatives promise to limit Metro Vancouver Regional District to drinking water and sewage treatment.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://dailyhive.com/vancouver/bc-conservatives-metro-vancouver-regional-district-reform-platform-promise" target="_blank" rel="noopener" title="Conservatives promise to strip Metro Vancouver Regional District of its responsibilities">dailyhive.com</a></span>
                         </div>
                         The North Shore Wastewater Treatment Plant began in 2017 at about $700 million and is now expected to cost about $3.9 billion, with completion in 2030.
@@ -1282,7 +1273,7 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://vancouver.citynews.ca/2026/10/04/first-advanced-voting-day/" target="_blank" rel="noopener" title="Vancouver's First Advanced Voting Day Sees 59 Polling Stations Open">vancouver.citynews.ca</a></span>
                         </div>
                         Vancouver had 59 polling stations open on October 3 and called the turnout a new advance-voting record.
@@ -1296,35 +1287,35 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://globalnews.ca/news/12087479/missing-22-years-frank-davis-found-kootenay-river/" target="_blank" rel="noopener" title="Missing for 22 years: Frank Davis found in Kootenay River">globalnews.ca</a></span>
                         </div>
                         Frank Davis was 40 when he went missing from Creston and has been found in the Kootenay River after 22 years.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/canada/british-columbia/swordfish-captain-quinn-haida-gwaii-9.7368033?cmp=rss" target="_blank" rel="noopener" title="A swordfish was found on Haida Gwaii. Will more follow?">cbc.ca</a></span>
                         </div>
                         A swordfish was found on Haida Gwaii, and a UBC researcher said the finding is unusual but no longer unexpected because of warming waters.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/canada/british-columbia/candidates-finalized-for-bc-snap-election-9.7368782?cmp=rss" target="_blank" rel="noopener" title="Candidates finalized for 2026 provincial snap election">cbc.ca</a></span>
                         </div>
                         Nominations closed at 1 p.m. on October 3; the B.C. Conservatives have 93 candidates and the B.C. NDP has 92.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://surreynowleader.com/2026/10/04/see-the-final-list-of-47-candidates-in-10-surrey-ridings-for-b-c-election/" target="_blank" rel="noopener" title="See the final list of 47 candidates in 10 Surrey ridings for B.C. election">surreynowleader.com</a></span>
                         </div>
                         Surrey has a final list of 47 candidates in 10 ridings.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/canada/british-columbia/victoria-rally-old-growth-9.7369019?cmp=rss" target="_blank" rel="noopener" title="Hundreds rally at B.C. Legislature demanding stronger protections for remaining old-growth forests">cbc.ca</a></span>
                         </div>
                         Organizers say about 400 people rallied Sunday at the B.C. Legislature for old-growth protections.
@@ -1373,14 +1364,14 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://weather.gc.ca/rss/weather/49.245_-123.115_e.xml" target="_blank" rel="noopener" title="Environment Canada forecast for Vancouver">weather.gc.ca</a></span>
                         </div>
                         No weather watches or warnings are in effect, and Monday's high is 16 except 20 inland.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.drivebc.ca/" target="_blank" rel="noopener" title="DriveBC: 8 major road events in Metro Vancouver">drivebc.ca</a></span>
                         </div>
                         Both Dollarton Highway on-ramps are closed for paving from 8 p.m. October 6 until 6 a.m. October 7, with detours.
@@ -1403,7 +1394,7 @@
                 <ol class="nn-claims-list">
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://vancouver.ca/election/2026/where-to-vote.aspx" target="_blank" rel="noopener" title="Last Chance to Vote Today">vancouver.ca</a></span>
                         </div>
                         The City of Vancouver said voters still had just under an hour and a half before polls closed, with a count after 8 p.m.
@@ -1417,35 +1408,35 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/canada/british-columbia/police-crab-park-homicide-9.7368197?cmp=rss" target="_blank" rel="noopener" title="Police seeking witnesses to CRAB Park homicide">cbc.ca</a></span>
                         </div>
                         Vancouver police released surveillance video of two potential witnesses in a CRAB Park homicide from last week.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://bc.ctvnews.ca/vancouver/article/sex-offender-who-was-subject-of-surrey-warning-last-month-now-moving-to-vancouver-police/" target="_blank" rel="noopener" title="Sex offender who was subject of Surrey warning last month now moving to Vancouver: police">bc.ctvnews.ca</a></span>
                         </div>
                         Police say a sex offender who was the subject of a Surrey warning last month is now moving to Vancouver.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://vancouversun.com/news/vancouver-police-warn-high-risk-sex-offender-residing-locally" target="_blank" rel="noopener" title="Police warn of high-risk sex offender living in Vancouver — again">vancouversun.com</a></span>
                         </div>
                         Skylar Wayne Pelletier will be monitored by corrections officials and must comply with specific conditions of release.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/indigenous/tamara-chipman-highway-of-tears-9.7365836?cmp=rss" target="_blank" rel="noopener" title="Family that advocates for Highway of Tears still searching for missing loved one after 2 decades">cbc.ca</a></span>
                         </div>
                         Tamara Lynn Chipman was 21 when she vanished along Highway 16 in 2005, and her family is offering a $10,000 reward.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://vancouversun.com/news/bc-judge-dad-guardian-mom-returns-ukraine-baby" target="_blank" rel="noopener" title="B.C. judge declares dad guardian after mom returns to Ukraine with toddler">vancouversun.com</a></span>
                         </div>
                         A B.C. judge declared a father the guardian after the mother returned to Ukraine with their toddler.
@@ -1473,14 +1464,14 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://abbynews.com/2026/10/03/whyte-boots-8-field-goals-as-b-c-lions-hang-on-for-24-17-win-over-toronto-argonauts/" target="_blank" rel="noopener" title="Whyte boots 8 field goals as B.C. Lions hang on for 24-17 win over Toronto Argonauts">abbynews.com</a></span>
                         </div>
                         Whyte kicked eight field goals in the B.C. Lions' 24-17 win over the Toronto Argonauts.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/canada/british-columbia/justin-ducharme-seventeen-film-vancouver-viff-9.7367615?cmp=rss" target="_blank" rel="noopener" title="How this Métis filmmaker’s experience in sex work influenced his 1st feature film, set in Vancouver">cbc.ca</a></span>
                         </div>
                         Justin Ducharme's film Seventeen screens at the Vancouver International Film Festival on October 4 and 11.
@@ -1494,14 +1485,14 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://weather.gc.ca/rss/weather/49.245_-123.115_e.xml" target="_blank" rel="noopener" title="Environment Canada forecast for Vancouver">weather.gc.ca</a></span>
                         </div>
                         Environment Canada forecast a mainly sunny Sunday in Vancouver with a high of 18 except 22 inland and no watches or warnings.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.drivebc.ca/" target="_blank" rel="noopener" title="DriveBC: 8 major road events in Metro Vancouver">drivebc.ca</a></span>
                         </div>
                         DriveBC listed Dollarton on-ramp paving closures overnight October 6 to 7 and Highway 99 night work in Delta from October 4 to 18.
@@ -1524,63 +1515,63 @@
                 <ol class="nn-claims-list">
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/canada/british-columbia/david-eby-bc-ndp-vehicle-levy-transit-metro-vancouver-9.7367987?cmp=rss" target="_blank" rel="noopener" title="Eby puts needs of car owners ahead of transit advocates in ruling out Metro Vancouver vehicle levy">cbc.ca</a></span>
                         </div>
                         David Eby ruled out a Metro Vancouver vehicle levy that TransLink had discussed for 18 months.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/canada/british-columbia/david-eby-bc-ndp-vehicle-levy-transit-metro-vancouver-9.7367987?cmp=rss" target="_blank" rel="noopener" title="Eby puts needs of car owners ahead of transit advocates in ruling out Metro Vancouver vehicle levy">cbc.ca</a></span>
                         </div>
                         CBC reports a nearly $14-billion deficit made the vehicle levy politically unviable from the NDP leader's perspective.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://globalnews.ca/news/12086152/vancouver-e-scooter-riders-helmets-police/" target="_blank" rel="noopener" title="Vancouver e-scooter riders overwhelmingly don’t wear helmets, police find">globalnews.ca</a></span>
                         </div>
                         Vancouver police handed out 1,226 e-scooter tickets since Sept. 4.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://globalnews.ca/news/12086152/vancouver-e-scooter-riders-helmets-police/" target="_blank" rel="noopener" title="Vancouver e-scooter riders overwhelmingly don’t wear helmets, police find">globalnews.ca</a></span>
                         </div>
                         Police found e-scooter riders overwhelmingly were not wearing helmets.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://vancouversun.com/news/riding-e-scooter-vancouver-police-are-cracking-down" target="_blank" rel="noopener" title="Riding that e-scooter without a helmet or with a friend? Vancouver police are cracking down">vancouversun.com</a></span>
                         </div>
                         The Vancouver Sun reports VPD said they were not ticketing that day and wanted everyone safe.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://vancouversun.com/news/five-arrested-extortion-langley-car-dealership-rcmp" target="_blank" rel="noopener" title="Five arrested after year-long probe into extortion at Langley car dealership">vancouversun.com</a></span>
                         </div>
                         Five people were arrested after a year-long probe into extortion at a Langley car dealership.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://globalnews.ca/news/12085588/5-foreign-nationals-charged-extortion-related-crimes-bc/" target="_blank" rel="noopener" title="5 foreign nationals charged with extortion-related crimes in B.C.">globalnews.ca</a></span>
                         </div>
                         Five foreign nationals were charged, with four men arrested in Surrey on Thursday and one Indian resident arrested at Toronto Pearson, in Project E-PURSUANCE.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.nsnews.com/local-news/woman-drove-wrong-way-on-west-vancouver-highway-over-2-km-before-head-on-collision-that-killed-two-trial-hears-12853078" target="_blank" rel="noopener" title="Woman drove wrong way on West Vancouver highway over 2 km before head-on collision that killed two, trial hears">nsnews.com</a></span>
                         </div>
                         A trial heard a woman drove the wrong way for more than 2 km on a West Vancouver highway before a head-on crash that killed two international students and injured two more.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/canada/british-columbia/textiles-tailoring-materials-provincial-service-tax-bc-9.7367477?cmp=rss" target="_blank" rel="noopener" title="Tailoring services, most textiles now subject to PST in B.C.">cbc.ca</a></span>
                         </div>
                         PST will now be charged on listed textile materials and on tailoring and cobbling services.
@@ -1615,21 +1606,21 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/canada/british-columbia/north-vancouver-grindr-assaults-9.7367926?cmp=rss" target="_blank" rel="noopener" title="String of Grindr assaults in North Vancouver prompts safety warning from Pride group">cbc.ca</a></span>
                         </div>
                         North Vancouver RCMP are investigating assaults in which victims were targeted through Grindr, and a Pride group issued a safety warning.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.drivebc.ca/" target="_blank" rel="noopener" title="DriveBC: 8 major road events in Metro Vancouver">drivebc.ca</a></span>
                         </div>
                         Highway 99 night work in Delta runs from Oct. 4 to Oct. 18, 9 p.m. to 5 a.m. Monday to Saturday, with one lane open each way.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://weather.gc.ca/rss/weather/49.245_-123.115_e.xml" target="_blank" rel="noopener" title="Environment Canada forecast for Vancouver">weather.gc.ca</a></span>
                         </div>
                         Saturday's Vancouver high is 18 except 22 inland, with no watches or warnings, and Sunday's high is 18 except 23 inland.
@@ -1687,70 +1678,70 @@
                 <ol class="nn-claims-list">
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/politics/west-coast-pipeline-national-interest-9.7365037?cmp=rss" target="_blank" rel="noopener" title="West Coast oil pipeline becomes 1st project designated in national interest">cbc.ca</a></span>
                         </div>
                         A proposed pipeline carrying one million barrels of oil a day from Alberta to the B.C. coast is the first project designated in the national interest.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://vancouversun.com/news/canada-proposed-44-billion-alberta-bc-oil-pipeline-project-national-interest" target="_blank" rel="noopener" title="Canada fast-tracks $44-billion Alberta to B.C. oil pipeline">vancouversun.com</a></span>
                         </div>
                         Canada is fast-tracking a $44-billion Alberta-to-B.C. oil pipeline, and Prime Minister Carney cited jobs, diversification away from the United States, and Canada's position as a global energy superpower.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/canada/british-columbia/howe-sound-pulp-mill-reopen-9.7366417?cmp=rss" target="_blank" rel="noopener" title="Deal reached to reopen shuttered Howe Sound pulp mill, union says">cbc.ca</a></span>
                         </div>
                         A union says a shuttered Howe Sound pulp mill is set to reopen later this month.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/canada/british-columbia/maple-ridge-bc-train-pickup-collision-9.7365412?cmp=rss" target="_blank" rel="noopener" title="1 dead, 1 critically injured after train strikes pickup truck in Maple Ridge: RCMP">cbc.ca</a></span>
                         </div>
                         Maple Ridge RCMP say a woman is dead and a man was critically injured after a pickup truck was struck by a train on Wednesday.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://vancouversun.com/news/truck-struck-train-maple-ridge" target="_blank" rel="noopener" title="Truck struck by train in Maple Ridge, killing one and injuring another">vancouversun.com</a></span>
                         </div>
                         Police say the train operator is operating, CPKC police were notified, and RCMP collision investigators were called.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/canada/british-columbia/lisa-lapointe-chief-coroner-bc-greens-election-9.7366183?cmp=rss" target="_blank" rel="noopener" title="Former chief coroner Lisa Lapointe to run for B.C. Greens in Saanich South">cbc.ca</a></span>
                         </div>
                         Former chief coroner Lisa Lapointe is running for the B.C. Green Party in Saanich South.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://canada.constructconnect.com/joc/news/associations/2026/10/you-cannot-tax-your-way-to-cheaper-housing-chba-co-reacts-to-eby-election-pledge" target="_blank" rel="noopener" title="‘You cannot tax your way to cheaper housing’: CHBA-CO reacts to Eby election pledge">canada.constructconnect.com</a></span>
                         </div>
                         CHBA-CO said you cannot tax your way to cheaper housing in reaction to an election pledge by Premier David Eby.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.drivebc.ca/" target="_blank" rel="noopener" title="DriveBC: 8 major road events in Metro Vancouver">drivebc.ca</a></span>
                         </div>
                         Dollarton Highway eastbound and westbound on-ramps are closed from Sunday October 4 until Tuesday October 6, with named detours.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.drivebc.ca/" target="_blank" rel="noopener" title="DriveBC: 8 major road events in Metro Vancouver">drivebc.ca</a></span>
                         </div>
                         Highway 99 paving in Vancouver runs overnight October 8 to 11 with single-lane alternating traffic, and southbound is open to buses and emergency vehicles only.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://weather.gc.ca/rss/weather/49.245_-123.115_e.xml" target="_blank" rel="noopener" title="Environment Canada forecast for Vancouver">weather.gc.ca</a></span>
                         </div>
                         Environment Canada reports light rain at 12.9°C, no watches or warnings, a Friday high of 17 with a 60 percent chance of showers, and a Saturday high of 17 except 21 inland.
@@ -1785,14 +1776,14 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://globalnews.ca/news/12084816/bc-ndp-lower-gas-costs-bc-conservatives-embrace-pipeline/" target="_blank" rel="noopener" title="BC NDP promises to lower gas costs while BC Conservatives embrace pipeline">globalnews.ca</a></span>
                         </div>
                         Eby said an NDP gas-tax cut and price controls would save an average two-car family up to $100 a month and cost the treasury about $250 million.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://vancouversun.com/news/can-bc-ndp-cap-industry-margins-on-diesel-and-gas" target="_blank" rel="noopener" title="B.C. NDP promise to lower gas tax and introduce price controls. Will it lower price at the pump?">vancouversun.com</a></span>
                         </div>
                         At least one economist said the gas policy will have little impact, while small business groups welcome the proposal.
@@ -2871,7 +2862,7 @@
                     <div class="nn-footer-brand"><span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span></div>
                     <p class="nn-footer-desc">Zero fluff. Independent podcast network produced in Vancouver, Canada.</p>
                 </div>
-                <div class="nn-footer-col">
+                <div class="nn-footer-col nn-footer-col--shows">
                     <h4>Shows</h4>
                     
                     <ul class="nn-footer-showlist">
@@ -3030,7 +3021,8 @@
                       data-label-idle="Subscribe"
                       data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
-                    <p>Pick the shows you want in your inbox:</p>
+                    <p>Pick the shows you want in your inbox:</p><details class="nn-subscribe-pick">
+                    <summary>Choose shows <span>(31)</span></summary>
                     <div class="nn-subscribe-tags">
                         <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
                         
@@ -3095,6 +3087,7 @@
                         <label><input type="checkbox" name="tag" value="Offshore North"> Offshore North</label>
                         
                     </div>
+                    </details>
                     <div class="nn-subscribe-row">
                         <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
                         <button type="submit">Subscribe</button>

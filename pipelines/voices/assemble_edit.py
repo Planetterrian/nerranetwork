@@ -182,7 +182,31 @@ SIDE_CHAIN = "highpass=f=70,{restore}," + LEVEL
 # paragraph describes; a fixed gain lifts silence and speech alike, so the
 # room tone keeps its natural distance under the voice.)
 CLEAN_SIDE = SIDE_CHAIN
-BALANCE_GLUE = "acompressor=threshold=-20dB:ratio=2.5:attack=20:release=250"
+# Oct 7 2026 (Scott Pulcini). The chain above was tuned on call audio: the
+# compressed WebRTC leg Voximplant records, where denoising and firm
+# compression earn their keep. A guest's own browser recording is a
+# different animal, 192 kbps straight off the microphone, and the same chain
+# made it worse. Measured on 30 s of Scott's take with a reference-free
+# speech-quality model (torchaudio SQUIM): untouched it scores PESQ 2.00 and
+# SI-SDR 14.0 dB; through the call-audio chain, 1.37 and 5.5, because two
+# stacked 2.5:1 compressors lift the room between his words; through this
+# lighter chain, 1.73 and 11.8. On the call audio the softer glue changes
+# nothing (1.51 and 4.9 either way), so it is the glue for everyone.
+#
+# Oct 7 2026 (Vincent Rylan). A browser take is also a raw one: no noise
+# suppression, so a laptop fan or a quiet microphone turned up 24 dB sits
+# right under the voice. The speech denoiser the produce path already ships
+# (assets/audio/rnnoise_sh.rnnn), blended 70/30 with the original so it
+# cannot go watery, measured on 45 s windows through this whole chain:
+# Vincent PESQ 1.79 -> 2.44, 1.90 -> 2.70, 2.07 -> 2.77 (SI-SDR +5 to +8 dB);
+# Scott 1.13 -> 1.31, 1.14 -> 1.20, 1.18 -> 1.26 (SI-SDR +3 to +5 dB);
+# Viktor, whose room is quiet, 2.98 -> 3.13 and 2.93 -> 3.10. Fully wet it
+# cost Vincent intelligibility (STOI 0.92 -> 0.90), which is why it is blended.
+_RNNOISE_MODEL = Path(__file__).resolve().parents[2] / "assets" / "audio" / "rnnoise_sh.rnnn"
+LOCAL_DENOISE = (f"arnndn=m={_RNNOISE_MODEL}:mix=0.7," if _RNNOISE_MODEL.exists() else "")
+LOCAL_SIDE = (LOCAL_DENOISE + "highpass=f=70,adeclick=w=75:t=2,volume={gain:.1f}dB,"
+              "acompressor=threshold=-18dB:ratio=1.6:attack=20:release=300:knee=6")
+BALANCE_GLUE = "acompressor=threshold=-16dB:ratio=1.8:attack=20:release=250:knee=4"
 
 # Sept 15 2026. Mira takes a beat before she answers — the model has to
 # think, and in the room that is fine. In a finished episode it is dead air,
@@ -263,6 +287,10 @@ CLEAN_ROLES = ("guest", "host", "mira")
 # on the run row names the side to take; the fold, the level measurement and
 # the end probe all read that one side.
 _TRACK_PAN: Dict[str, str] = {}
+# Where each processed track came from ("local" = the speaker's own browser
+# recording, "voximplant" = the call), so a clean recording gets the light
+# chain. Keyed like _TRACK_PAN, by the fetched file's path.
+_TRACK_SOURCE: Dict[str, str] = {}
 
 
 def _pan_of(path) -> str:
@@ -366,9 +394,18 @@ def _piece(cut: dict, src: Path, out: Path) -> Path:
         want = str(cut.get("voice_match") or "")
         left_extra = ("," + VOICE_MATCH) if want in ("left", "both") else ""
         right_extra = ("," + VOICE_MATCH) if want in ("right", "both") else ""
+        # Oct 7 2026, Vincent Rylan. His episode was cut from his leg's stereo
+        # recording because the per-speaker tracks of that run are not on the
+        # room's clock. The rebuild keeps that recording's right side (the
+        # room as he heard it) and puts his own browser take, placed and
+        # gated, on the left; "left_source": "local" gives that side the
+        # light chain a clean microphone was measured to want.
+        left_chain = (LOCAL_SIDE.format(gain=gl)
+                      if cut.get("left_source") == "local"
+                      else SIDE_CHAIN.format(restore=restore or 'anull', gain=gl))
         cmd += ["-filter_complex",
                 f"[0:a]channelsplit=channel_layout=stereo[l][r];"
-                f"[l]{SIDE_CHAIN.format(restore=restore or 'anull', gain=gl)}"
+                f"[l]{left_chain}"
                 f"{left_extra}[lg];"
                 f"[r]{SIDE_CHAIN.format(restore=restore or 'anull', gain=gr)}"
                 f"{right_extra}[rg];"
@@ -471,10 +508,10 @@ def _piece_clean(cut: dict, srcs: List[tuple], out: Path) -> Path:
         # equalising a human being too. Here it lands on her alone.
         extra = ("," + VOICE_MATCH) if role == "mira" else ""
         extra += _mutes(cut, role)
-        side = CLEAN_SIDE.format(
-            restore=restore or "anull",
-            gain=_speech_gain(_src, cut.get("start"), cut.get("end"),
-                              _pan_of(_src)))
+        gain = _speech_gain(_src, cut.get("start"), cut.get("end"), _pan_of(_src))
+        side = (LOCAL_SIDE.format(gain=gain)
+                if _TRACK_SOURCE.get(str(_src)) == "local" and not _pan_of(_src)
+                else CLEAN_SIDE.format(restore=restore or "anull", gain=gain))
         pick = _pan_of(_src) or "aformat=channel_layouts=mono"
         chains.append(f"[{i}:a]{pick},{side}{extra}[c{i}]")
         labels.append(f"[c{i}]")
@@ -635,10 +672,18 @@ def assemble(slug: str) -> dict:
         work = Path(tmp)
         pieces: List[Path] = []
         conversation = ("run:", "track:", "mix:")
+
+        # A balanced cut is a conversation whatever its source is called: Oct
+        # 7 2026, Vincent Rylan's rebuilt leg is a URL, and without this the
+        # last cut of his episode would end on the transcript's timestamp
+        # instead of the silence after his last word.
+        def _is_conversation(c: dict) -> bool:
+            return (str(c.get("from", "")).startswith(conversation)
+                    or bool(c.get("balance")))
         other_runs: Dict[str, dict] = {}
         last_conversation = max(
             (i for i, c in enumerate(cuts)
-             if str(c.get("from", "")).startswith(conversation)
+             if _is_conversation(c)
              and c.get("end") is not None),
             default=-1)
         for i, cut in enumerate(cuts):
@@ -674,10 +719,13 @@ def assemble(slug: str) -> dict:
                         for role, url in tracks]
                 sides = ((src_run.get("grok_session_log") or {}).get("tracks")
                          or {}).get("processed_channels") or {}
+                origin = ((src_run.get("grok_session_log") or {}).get("tracks")
+                          or {}).get("sources") or {}
                 for role, path in srcs:
                     side = str(sides.get(role) or "")
                     if side in CHANNEL_FILTERS:
                         _TRACK_PAN[str(path)] = CHANNEL_FILTERS[side]
+                    _TRACK_SOURCE[str(path)] = str(origin.get(role) or "")
                 if i == last_conversation:
                     _end_on_the_last_word(cut, srcs)
                 pieces.append(_piece_clean(cut, srcs, out))
@@ -692,7 +740,7 @@ def assemble(slug: str) -> dict:
                 if side in CHANNEL_FILTERS:
                     cut = {**cut, "channel": side}
             src = _fetch(url, work / f"src_{abs(hash(url))}.bin", cache)
-            if i == last_conversation and ref.startswith(conversation):
+            if i == last_conversation and _is_conversation(cut):
                 _end_on_the_last_word(cut, src)
             pieces.append(_piece(cut, src, out))
             logger.info("cut %d: %s -> %.1fs", i, ref, _duration(out))

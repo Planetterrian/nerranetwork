@@ -491,7 +491,10 @@ class TestNeverCutThroughAQuestion:
     def test_vincents_edit_keeps_the_question(self):
         import json
         edl = json.loads((V / "edl" / "vincent_rylan_2026_09_14.json").read_text(encoding="utf-8"))
-        conversation = [c for c in edl["cuts"] if c.get("from") == "run:guest"]
+        # Oct 7 2026: the same leg, rebuilt with his own take on the left.
+        conversation = [c for c in edl["cuts"] if c.get("balance")]
+        assert all(c["from"] == "run:guest" or c["from"].endswith("_leg_local_v2.flac")
+                   for c in conversation)
         assert len(conversation) == 3, "start, the echo drop, the triple-ask drop"
         # Patrick's question runs 17:00-18:38; it must be inside a kept span.
         kept = [(c["start"], c["end"]) for c in conversation]
@@ -2302,7 +2305,8 @@ class TestTheEndIsMeasuredNotGuessed:
         # A seam in the middle of an episode is nobody's business; the end is.
         assert "last_conversation = max(" in self.SRC
         assert 'conversation = ("run:", "track:", "mix:")' in self.SRC
-        assert "if i == last_conversation and ref.startswith(conversation)" in self.SRC
+        # Oct 7 2026: a balanced cut counts whatever its source is called.
+        assert "if i == last_conversation and _is_conversation(cut):" in self.SRC
 
     def test_the_clean_fold_is_measured_the_same_way(self):
         # With the speakers on separate tracks, no single one of them can say

@@ -1,0 +1,189 @@
+OpenAI publie des résultats mathématiques issus d’un modèle interne de pointe, dans un dépôt GitHub public, avec des formalisations Lean et des estimations de calcul.
+
+Ici Models and Agents, épisode cent quatre-vingt-seize.
+
+OpenAI a publié un large éventail de nouveaux résultats mathématiques produits par un modèle interne de pointe.
+
+L’entreprise publie ces résultats dans un dépôt GitHub qui comprend les formalisations de nombreuses preuves en Lean.
+
+Dix résumés du raisonnement du modèle apparaissent aux côtés d’estimations du calcul consommé et de statistiques sur les problèmes tentés.
+
+Le résultat moyen a utilisé l’équivalent d’environ trois heures de réflexion de ChatGPT Pro.
+
+OpenAI a consulté le Groupe consultatif indépendant sur les mathématiques et l’intelligence artificielle de l’Institute for Advanced Study pour élaborer des protocoles de publication.
+
+L’entreprise finance des ateliers autour des grands résultats produits par l’intelligence artificielle.
+
+Elle affirme travailler à publier de façon responsable le modèle qui a produit ces résultats, tout en continuant d’évaluer ses modèles internes de pointe sur les mathématiques et d’autres sciences.
+
+Le dépôt sera mis à jour avec davantage de formalisations au fur et à mesure de leur disponibilité.
+
+Des détails supplémentaires sur la façon dont les résultats ont été obtenus sont inclus pour favoriser la transparence.
+
+Les prochaines publications viseront à améliorer la qualité des articles grâce à de meilleures citations, une meilleure exposition et une meilleure présentation.
+
+WavePrune restreint chaque canal RoPE à sa première période de rotation.
+
+La méthode fait monter le score HELMET sur quatre des cinq modèles testés, sans réglage supplémentaire.
+
+Un exemple montre une hausse de trente-cinq virgule sept à quarante virgule zéro sur Qwen3-8B.
+
+Lors d’un préentraînement à partir de zéro, les modèles qui utilisent WavePrune atteignent une perte de validation plus basse aux longueurs extrapolées.
+
+L’approche induit une parcimonie à grain fin que des noyaux CUDA alignés sur le matériel exploitent, pour des accélérations d’un facteur un virgule quinze en préremplissage et d’un facteur un virgule vingt-quatre en décodage, par rapport à FlashAttention-2, à un contexte de trente-deux mille.
+
+Fiorillo version zéro virgule cinq est un modèle ouvert de quatre milliards de paramètres, affiné sur Qwen3-4B-Base avec des adaptateurs de rang faible et une tête de décision.
+
+Il vise la tâche Evidence Inference deux virgule zéro, qui consiste à répondre si une intervention a modifié de façon significative un résultat.
+
+Sur le jeu de test de mille deux cent dix-huit consignes issues de trois cent trente-trois articles, il a atteint une erreur de calibration attendue de zéro virgule zéro un six huit.
+
+Le F1 macro a atteint zéro virgule neuf deux quatre huit, et la perte logarithmique s’est située à zéro virgule un huit deux neuf en dessous de Gemma 4 31B-it.
+
+Le modèle n’a été entraîné que sur les mille quatre cent trente et un articles d’entraînement dont les licences autorisent la réutilisation.
+
+Il a été publié sous licence Apache deux virgule zéro après avoir satisfait à quatre critères préenregistrés.
+
+Les directions de refus se concentrent dans des mécanismes de composants épars qui représentent de vingt-huit à quarante-huit pour cent des composants d’attention et de perceptrons multicouches en amont.
+
+Ces mécanismes conservent de quatre-vingt-huit à cent un pour cent de l’efficacité de guidage.
+
+Le guidage efficace se concentre encore davantage dans environ cinquante pour cent des dimensions du flux résiduel.
+
+Cette concentration conserve de quatre-vingt-cinq à quatre-vingt-dix-huit pour cent de la performance de référence.
+
+L’étude décompose le guidage du refus sur quatre modèles à poids ouverts.
+
+Tout le code et les résultats expérimentaux bruts sont publiés sur GitHub.
+
+Une faible capacité réduit l’efficacité causale de quatre-vingt-quatre pour cent, et une faible réactivité de quatre-vingt-quinze pour cent.
+
+CAGD conserve un petit ensemble d’anciennes consignes et utilise un modèle précédent gelé pour reconstruire les complétions.
+
+Il aligne les distributions prédictives tout en apprenant la tâche suivante.
+
+Sur un modèle de langage à diffusion masquée de deux cent dix-neuf millions de paramètres, la méthode a réduit la perte finale hors échantillon sur quatre tâches de deux virgule neuf deux sept à un virgule un un quatre, dans un ordre de tâches.
+
+Le même ordre inversé est passé de deux virgule un six huit à zéro virgule huit neuf un.
+
+Les cibles souples ont abaissé la perte moyenne finale de zéro virgule zéro cinq cinq par rapport à la relecture dure, lorsque le support généré par le modèle enseignant était identique.
+
+L’approche a été testée sur des faits nouveaux et des instructions naturelles, sur SMDM et Qwen3.
+
+SanSi lit les probabilités des options après chaque boucle et entraîne chaque boucle avec une règle de score propre.
+
+Un seul modèle sert donc des budgets d’une à huit boucles.
+
+Sur dix mille vingt-sept décisions de test issues de cinquante-neuf sources, il a atteint soixante-douze virgule zéro pour cent d’exactitude.
+
+Ce chiffre se situe treize virgule cinq points au-dessus d’un modèle sans boucle de même architecture.
+
+Sur des tâches à profondeur contrôlée, les boucles étendent la profondeur soluble au-delà des profondeurs d’entraînement, là où de plus grands modèles à passe unique échouent.
+
+Utilisé comme juge pour l’optimisation de politique par apprentissage par renforcement, sans réponses de référence, SanSi a fait monter le F1 du générateur de sept virgule sept points.
+
+ReFold élimine deux types de redondance entre les tours en remplaçant le contenu affiché plus tôt par des substituts.
+
+Il replie aussi les tours terminés en notes d’une ligne.
+
+La méthode réduit la consommation de jetons jusqu’à deux virgule cinq fois et divise par deux la mémoire du cache clés-valeurs par session.
+
+Ces gains apparaissent sur cinq bancs d’essai à long horizon et deux grands modèles de langage de pointe.
+
+Sous des budgets de contexte plafonnés, il évite jusqu’à quatre-vingt-douze pour cent des compactages forcés.
+
+Sous des charges de service concurrentes, il réduit les délais de mise en file des requêtes jusqu’à cent pour cent.
+
+L’inférence s’accélère jusqu’à un facteur un virgule sept, tout en réduisant les coûts d’inférence jusqu’à un facteur trois virgule quatre.
+
+DLoop continue de rédiger tant que le modèle d’ébauche reste confiant.
+
+Il vérifie ensemble tous les jetons accumulés.
+
+L’entraînement conscient des boucles expose le modèle d’ébauche à ses propres états cachés pour les jetons non vérifiés.
+
+Sur EAGLE-3, DFlash, Domino, DSpark, et des modules de prédiction multi-jetons, DLoop améliore l’accélération en temps d’horloge de cinq à quarante et un pour cent, tout en préservant un décodage sans perte.
+
+Kurate note les articles sur huit dimensions, dont la puissance statistique, l’identification causale, le préenregistrement et les conflits d’intérêts.
+
+Sur soixante documents d’essais cliniques mis de côté, l’information extraite a concordé avec les étiquettes d’experts sur deux cent vingt et un des deux cent quarante-deux points de score de protocole.
+
+Elle a concordé sur deux cent quatre-vingt-quatorze des trois cent soixante-dix points de score de publication des résultats.
+
+Le système relie chaque jugement au passage précis qui le justifie.
+
+Il a été appliqué à un corpus contenant trois mille neuf cent treize rapports d’essais randomisés.
+
+TIDE deux virgule zéro fait tourner un reconnaisseur interchangeable et un anonymiseur à clé sur du matériel appartenant à l’institution.
+
+Les dates reçoivent un décalage par patient qui préserve les intervalles.
+
+Chaque valeur reçoit le même substitut pour toutes ses occurrences sous une clé donnée.
+
+Sur deux corpus annotés or, la configuration par défaut a atteint un rappel au niveau des segments de zéro virgule quatre-vingt-huit en domaine.
+
+Le rappel a atteint zéro virgule soixante-dix-sept sur un corpus hors domaine, à une précision de zéro virgule quatre-vingt-huit et zéro virgule quatre-vingt-sept.
+
+Le moteur est sous licence MIT et le reconnaisseur est disponible sous un accord d’usage recherche à accès contrôlé.
+
+Le banc d’essai CroissantMiner comprend six cent deux articles.
+
+Cent deux portent des annotations or validées par des humains, et cinq cents portent des annotations argent générées par un grand modèle de langage.
+
+Les annotations couvrent le schéma Croissant complet, y compris les champs d’intelligence artificielle responsable.
+
+L’extraction en une seule passe a constamment surpassé quatre architectures agentiques.
+
+L’écart le plus large est apparu sur les champs d’intelligence artificielle responsable de forme longue.
+
+Les auteurs publient le banc d’essai, le code d’évaluation, l’audit du juge, une démonstration en direct et le classement.
+
+AccentCL extrait des représentations multicouches d’un encodeur Whisper-Large-v3 gelé.
+
+Il applique une perte d’entropie croisée sensible au déséquilibre, plus une perte d’alignement des moyennes de domaine.
+
+Sur une tâche à cinq classes, il a atteint soixante-dix-sept virgule un pour cent d’exactitude équilibrée et soixante-seize virgule neuf pour cent de F1 macro-moyenné.
+
+L’ajout d’anglais à accent espagnol a donné quatre-vingt-trois virgule trois pour cent de F1 sur la nouvelle classe, tout en conservant soixante-dix-sept virgule trois pour cent d’exactitude équilibrée sur les classes de base.
+
+L’ajout ultérieur d’anglais à accent chinois a donné soixante et un virgule huit pour cent de F1 sur la nouvelle classe, tout en préservant soixante-dix-sept virgule six pour cent d’exactitude équilibrée.
+
+Levez le capot du partage des résultats des modèles de pointe, et le choix d’ingénierie devient limpide.
+
+Les laboratoires doivent décider s’ils livrent des affirmations brutes ou s’ils ajoutent des artefacts vérifiables par machine.
+
+OpenAI a ajouté des formalisations Lean pour que tout chercheur puisse lancer un vérificateur automatisé.
+
+Cette étape élimine le mode de défaillance courant où une preuve textuelle révèle plus tard des lacunes subtiles.
+
+La comptabilité du calcul apparaît en équivalents d’heures de ChatGPT Pro.
+
+Les observateurs extérieurs obtiennent une idée approximative du budget d’inférence, sans détails propriétaires d’entraînement.
+
+Des protocoles explicites de révision et de citation réduisent le risque que des corrections ultérieures deviennent introuvables.
+
+Le coût supplémentaire de formalisation s’échange contre le gain en examen externe.
+
+Quand l’objectif est d’accélérer le progrès collectif, la voie vérifiable fixe le standard pratique actuel.
+
+Surveillez le dépôt GitHub de mathématiques d’OpenAI pour les nouvelles formalisations Lean et les résumés de résultats supplémentaires au fur et à mesure de leur ajout.
+
+Examinez les traces de raisonnement publiées pour comprendre comment le modèle de pointe a structuré ses arguments mathématiques.
+
+Testez WavePrune sur un modèle basé sur RoPE à un contexte de trente-deux mille, pour mesurer les accélérations de préremplissage et de décodage rapportées.
+
+Évaluez Fiorillo version zéro virgule cinq sur des articles d’essais randomisés sous licence Apache deux virgule zéro, pour vérifier la calibration sur vos propres tâches d’inférence de preuves.
+
+D’autres divulgations d’avancées scientifiques majeures issues de modèles internes de pointe sont attendues à mesure que les standards d’évaluation évoluent.
+
+Des ateliers et des conférences supplémentaires sur les résultats mathématiques produits par l’intelligence artificielle seront annoncés dans les mois à venir.
+
+Davantage de cadres d’apprentissage incrémental par classes et d’apprentissage continuel pour les modèles de parole et de langage sont probables, à mesure que la robustesse au déséquilibre et au décalage de domaine s’améliore.
+
+Avant de nous quitter, surveillez le prochain lot de formalisations Lean qui atterrira dans le dépôt de mathématiques d’OpenAI.
+
+Voilà pour Models and Agents aujourd’hui. Si vous avez trouvé ça utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas manquer la mise à jour de demain. Le monde de l’intelligence artificielle va vite. Nous vous aiderons à suivre. À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l’émission.
+
+Encore une chose — si l’épisode d’aujourd’hui vous a plu, notre émission sœur Omni View mérite une place dans votre fil : un point quotidien équilibré sur l’actualité mondiale qui prend chaque camp au sérieux. C’est l’un des points quotidiens de Nerra Network, entièrement gratuits sur nerranetwork point com. Vous suivez les longs arcs ? Les Story Trackers sur nerranetwork point com suivent les grands programmes d’un épisode à l’autre — Tesla, SpaceX, l’intelligence artificielle, les sciences spatiales, et plus encore.
+
+Cet épisode a utilisé une synthèse vocale par intelligence artificielle de ma voix — la sélection éditoriale et l’analyse sont les miennes.

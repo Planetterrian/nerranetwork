@@ -115,6 +115,41 @@ def manifest_is_complete(manifest: Optional[Dict[str, Any]]) -> bool:
     return True
 
 
+def orphan_manifest(keys: list, run_id: str, role: str, show_slug: str
+                    ) -> Optional[Dict[str, Any]]:
+    """A manifest for a take whose page never sent upload-done.
+
+    Oct 7 2026 (Scott Pulcini). His browser recorded all 45 minutes at
+    192 kbps straight off his microphone and every chunk reached R2, but the
+    page never finalized, so there was no manifest, the pipeline never knew
+    the take existed, and the episode was built from the compressed call
+    audio instead: noisier and thinner, and the thing Patrick heard. Viktor
+    Popovic's and Vincent Rylan's full takes were sitting there the same way.
+
+    ``keys`` are R2 keys under ``<prefix>/local/<run_id>/<role>/``. The take
+    with the most chunks wins (a rejoin makes a second, shorter take).
+    Chunks are numbered from 0, so any gap in the numbering is a missing
+    chunk and the take is reported incomplete rather than decoded wrong.
+    """
+    takes: Dict[str, list] = {}
+    for key in keys or []:
+        name = key.rsplit("/", 1)[-1]
+        if not name.endswith(".webm") or not name[:-5].isdigit():
+            continue
+        sid = key.rsplit("/", 2)[-2] if key.count("/") >= 5 else ""
+        takes.setdefault(sid, []).append(key)
+    if not takes:
+        return None
+    sid, chunks = max(takes.items(), key=lambda kv: len(kv[1]))
+    chunks = sorted(chunks, key=lambda k: int(k.rsplit("/", 1)[-1][:-5]))
+    have = {int(k.rsplit("/", 1)[-1][:-5]) for k in chunks}
+    missing = [i for i in range(max(have) + 1) if i not in have]
+    return {"run_id": run_id, "role": role, "show": show_slug, "sid": sid or None,
+            "mime": "audio/webm;codecs=opus", "started_at": None, "duration_ms": 0,
+            "chunks": chunks, "missing": missing, "bytes": None,
+            "adopted": "no upload-done from the page; built from the chunks in R2"}
+
+
 def concat_chunks_to_wav(chunk_paths: list, workdir: Path,
                          name: str = "local") -> Path:
     """Byte-concatenate MediaRecorder chunks (in order) → 48 kHz mono WAV."""
@@ -687,3 +722,241 @@ def describe_manifest(manifest: Optional[Dict[str, Any]]) -> str:
         "missing": len(manifest.get("missing") or []),
         "duration_ms": manifest.get("duration_ms"),
     })
+
+
+# ---------------------------------------------------------------------------
+# Phrase-level placement and gating (Oct 7 2026)
+# ---------------------------------------------------------------------------
+# One offset is not enough. Measured on Scott Pulcini's and Viktor Popovic's
+# browser takes against their call legs, the call arrives 0 to 0.55 s behind
+# the microphone and the delay wanders through the hour (the network's jitter
+# buffer). Placed at one offset, only 38-52% of three-second windows sat
+# within 50 ms of the room, so a cut made on the room's clock could clip a
+# word or keep one it removed, and a guest could land half a second into
+# Mira's next question. Placing each phrase at the delay the call shows for
+# it puts 98.5% within 50 ms on both recordings.
+#
+# And a microphone without echo cancellation hears the room. Viktor had no
+# headphones: his take carried Mira about 10 dB under his own voice through
+# every one of her turns, and a fan under all of it, where the call leg (which
+# went through the browser's echo cancellation) is silent. The call leg knows
+# when the guest was actually talking, so the take is kept only there.
+PHRASE_ENV_HZ = 100
+PHRASE_MAX_LAG = 0.6          # seconds either way
+PHRASE_MIN_CORR = 0.5
+PHRASE_SPLIT_SEC = 3.0        # longer phrases are split at their quietest point
+
+
+def _pcm(path: Path) -> np.ndarray:
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-ac", "1",
+                          "-ar", str(TARGET_SR), "-f", "s16le", "-"],
+                         capture_output=True, check=True).stdout
+    return np.frombuffer(raw, dtype=np.int16)
+
+
+def _write_pcm(samples: np.ndarray, path: Path) -> Path:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(TARGET_SR)
+        w.writeframes(np.clip(samples, -32768, 32767).astype(np.int16).tobytes())
+    return path
+
+
+def _log_env(x: np.ndarray) -> np.ndarray:
+    hop = TARGET_SR // PHRASE_ENV_HZ
+    n = len(x) // hop
+    frames = x[:n * hop].astype(np.float32).reshape(n, hop)
+    return np.log(np.sqrt((frames ** 2).mean(1)) + 1.0)
+
+
+def _phrases(env: np.ndarray) -> list:
+    voiced = env[env > 0.5]
+    thr = np.percentile(voiced, 30) if len(voiced) else 1.0
+    on = env > thr
+    bridge = int(0.15 * PHRASE_ENV_HZ)
+    longest = int(PHRASE_SPLIT_SEC * PHRASE_ENV_HZ)
+    out, i, n = [], 0, len(on)
+    while i < n:
+        if not on[i]:
+            i += 1
+            continue
+        j = i
+        while j < n and (on[j] or (j + bridge < n and on[j:j + bridge].any())):
+            j += 1
+        if j - i >= int(0.2 * PHRASE_ENV_HZ):
+            stack = [(i, j)]
+            while stack:
+                a, b = stack.pop()
+                if b - a > longest:
+                    m = a + longest // 3 + int(np.argmin(env[a + longest // 3:b - longest // 3]))
+                    stack += [(a, m), (m, b)]
+                else:
+                    out.append((a, b))
+        i = j
+    return sorted(out)
+
+
+def place_phrases(track_wav: Path, reference_wav: Path, out_wav: Path) -> Tuple[Path, dict]:
+    """Move each phrase of ``track_wav`` to where ``reference_wav`` (the same
+    speaker's call leg, on the room's clock) has it. The room tone between
+    phrases is carried across, trimmed or mirrored to fit."""
+    loc, ref = _pcm(track_wav), _pcm(reference_wav)
+    el, er = _log_env(loc), _log_env(ref)
+    segs = _phrases(el)
+    max_lag = int(PHRASE_MAX_LAG * PHRASE_ENV_HZ)
+    picks = []
+    for s, e in segs:
+        lo0 = max(0, s - 10)
+        a = el[lo0:e + 10] - el[lo0:e + 10].mean()
+        best = (-2.0, 0)
+        for lag in range(-max_lag, max_lag + 1):
+            lo = lo0 + lag
+            b = er[lo:lo + len(a)] if lo >= 0 else np.array([])
+            if len(b) < len(a):
+                continue
+            b = b - b.mean()
+            d = float(np.sqrt((a * a).sum() * (b * b).sum()))
+            if d:
+                c = float((a * b).sum() / d)
+                if c > best[0]:
+                    best = (c, lag)
+        picks.append(best)
+    sure = [l for c, l in picks if c >= PHRASE_MIN_CORR]
+    overall = int(np.median(sure)) if sure else 0
+    lags = []
+    for k, (c, l) in enumerate(picks):
+        if c >= PHRASE_MIN_CORR:
+            lags.append(l)
+            continue
+        near = [picks[j][1] for j in range(max(0, k - 4), min(len(picks), k + 5))
+                if picks[j][0] >= PHRASE_MIN_CORR]
+        lags.append(int(np.median(near)) if near else overall)
+    step = TARGET_SR // PHRASE_ENV_HZ
+    out = np.zeros(max(len(ref), len(loc)) + TARGET_SR, dtype=np.float32)
+    fade = int(0.005 * TARGET_SR)
+    ramp = np.linspace(0, 1, fade, dtype=np.float32)
+
+    def put(piece: np.ndarray, dst: int) -> None:
+        piece = piece.astype(np.float32).copy()
+        if len(piece) > 2 * fade:
+            piece[:fade] *= ramp
+            piece[-fade:] *= ramp[::-1]
+        if dst < 0:
+            piece, dst = piece[-dst:], 0
+        end = min(len(out), dst + len(piece))
+        if end > dst:
+            out[dst:end] += piece[:end - dst]
+
+    bounds = [(s * step, min(len(loc), e * step), l * step) for (s, e), l in zip(segs, lags)]
+    prev_end, prev_shift = 0, (bounds[0][2] if bounds else 0)
+    tail = bounds[-1][2] if bounds else 0
+    for a, b, shift in bounds + [(len(loc), len(loc), tail)]:
+        gap = loc[prev_end:a]
+        dst = prev_end + prev_shift
+        target = (a + shift) - dst
+        if target > 0 and len(gap):
+            filler = gap
+            while len(filler) < target:
+                filler = np.concatenate([filler, filler[::-1]])
+            put(filler[:target], dst)
+        if b > a:
+            put(loc[a:b], a + shift)
+        prev_end, prev_shift = b, shift
+    _write_pcm(out[:len(ref)], out_wav)
+    stats = {"phrases": len(segs), "confident": len(sure),
+             "median_shift_sec": round(overall / PHRASE_ENV_HZ, 2),
+             "spread_sec": round((max(lags) - min(lags)) / PHRASE_ENV_HZ, 2) if lags else 0.0}
+    logger.info("placed %d phrases on the room's clock: %s", len(segs), stats)
+    return Path(out_wav), stats
+
+
+def gate_to_reference(track_wav: Path, reference_wav: Path, out_wav: Path,
+                      floor_db: float = 30.0,
+                      heard_wav: Optional[Path] = None) -> Tuple[Path, dict]:
+    """Keep ``track_wav`` only where the echo-cancelled call leg shows the
+    speaker talking (held 250 ms after and 120 ms before, 30 ms ramps).
+
+    Oct 7 2026, Vincent Rylan. ``heard_wav`` is the room as this speaker
+    heard it (the right side of their leg). His take had no echo cancellation
+    and his speakers were as loud in it as he was, so every hold that ran
+    past the end of his sentence carried the first syllables of Mira's reply
+    with it, a quarter of a second behind her own track: 22 seconds of short
+    echoes across the edit. Where the room was playing someone else, the
+    hold shrinks to 60 ms after and 40 ms before, which keeps his word edges
+    and nothing of theirs. Where he talked over them, the echo-cancelled call
+    leg stands in (only for a take that hears the room; see below)."""
+    loc, ref = _pcm(track_wav).astype(np.float32), _pcm(reference_wav).astype(np.float32)
+    hop = TARGET_SR // 100
+    n = min(len(loc), len(ref)) // hop
+
+    def _level(x: np.ndarray, frames: int) -> np.ndarray:
+        x = x[:frames * hop]
+        if len(x) < frames * hop:
+            x = np.pad(x, (0, frames * hop - len(x)))
+        return 20 * np.log10(np.sqrt((x.reshape(frames, hop) ** 2).mean(1)) + 1)
+
+    def _widen(mask: np.ndarray, after: int, before: int) -> np.ndarray:
+        out = mask.copy()
+        idx = np.flatnonzero(mask)
+        for d in range(1, after + 1):
+            out[np.clip(idx + d, 0, n - 1)] = True
+        for d in range(1, before + 1):
+            out[np.clip(idx - d, 0, n - 1)] = True
+        return out
+
+    ref_level = _level(ref, n)
+    keep = ref_level > floor_db
+    hold = _widen(keep, 25, 12)
+    others_sec, filled = 0.0, np.zeros(n, dtype=bool)
+    if heard_wav is not None:
+        heard = _level(_pcm(heard_wav).astype(np.float32), n) > floor_db + 10
+        # The echo arrives up to half a second after the room played it
+        # (network plus the take's own clock), and can start a beat early
+        # after placement.
+        busy = _widen(heard, 50, 10)
+        # Under someone else the call leg carries a little of them too (its
+        # echo canceller leaves a residue around 25 dB that pokes over the
+        # floor), so there the speaker has to be clearly and steadily there.
+        steady = np.convolve((ref_level > floor_db + 10).astype(np.float32),
+                             np.ones(5, dtype=np.float32) / 5, "same") >= 0.6
+        over = _widen(steady, 6, 4) & busy
+        hold = (hold & ~busy) | over
+        others_sec = float(busy.sum()) / 100
+        # Talking over the room. A take that hears the room as loudly as the
+        # speaker (Vincent's sat level with his own voice) carries the other
+        # person under every interjection, a fifth of a second late: a slap
+        # echo of Mira or Patrick. The call leg was echo-cancelled for exactly
+        # this, so wherever the room is playing, what is kept comes from the
+        # call leg, brought to the take's level. A take that does not hear the
+        # room (headphones) keeps its own audio throughout.
+        loc_level = _level(loc, n)
+        own = loc_level[keep & ~busy]
+        leak = loc_level[busy & ~_widen(keep, 25, 12)]
+        if (len(own) > 200 and len(leak) > 200
+                and float(np.median(own)) - float(np.median(leak)) < 15.0):
+            filled = over
+            ratio = 10 ** ((float(np.median(own))
+                            - float(np.median(ref_level[keep & ~busy]))) / 20)
+    gain = np.convolve(hold.astype(np.float32), np.ones(3, dtype=np.float32) / 3, "same")
+    gain = np.repeat(gain, hop)
+    out = np.zeros(len(loc), dtype=np.float32)
+    m = min(len(gain), len(loc))
+    if filled.any():
+        sub = np.convolve(_widen(filled, 2, 2).astype(np.float32),
+                          np.ones(5, dtype=np.float32) / 5, "same")
+        sub = np.repeat(sub, hop)
+        k = min(m, len(sub), len(ref))
+        out[:k] = gain[:k] * ((1 - sub[:k]) * loc[:k] + sub[:k] * ratio * ref[:k])
+        out[k:m] = loc[k:m] * gain[k:m]
+    else:
+        out[:m] = loc[:m] * gain[:m]
+    _write_pcm(out, out_wav)
+    stats = {"kept_sec": round(float(hold.sum()) / 100, 1), "of_sec": round(n / 100, 1)}
+    if heard_wav is not None:
+        stats["room_playing_sec"] = round(others_sec, 1)
+        stats["talk_over_from_call_sec"] = round(float(filled.sum()) / 100, 1)
+    logger.info("kept the take where the call leg had the speaker: %s", stats)
+    return Path(out_wav), stats

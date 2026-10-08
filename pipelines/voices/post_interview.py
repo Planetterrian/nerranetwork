@@ -49,6 +49,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from address import first_name, written as written_address  # noqa: E402
 from audio.local_tracks import (  # noqa: E402
     ROOM_MIN_WINDOWS, align_to_reference, align_to_room, fetch_local_track,
+    gate_to_reference, place_phrases,
     place_at,
 )
 from audio.bleed import strip_bleed  # noqa: E402
@@ -354,6 +355,30 @@ def _covers(local: Path, reference: Path | None, who: str) -> bool:
     return False
 
 
+def adopt_orphan_take(run: dict, show, role: str) -> str:
+    """Give the pipeline a browser take whose page never sent upload-done.
+    Writes the manifest to R2 and onto the run row; returns its key, or ""."""
+    if run.get(f"local_{role}_url"):
+        return ""
+    try:
+        from audio.local_tracks import orphan_manifest
+        from common import r2_list, r2_put_json
+        prefix = show.r2_key("local", run["id"], role) + "/"
+        manifest = orphan_manifest(r2_list(prefix), run["id"], role, show.slug)
+        if not manifest:
+            return ""
+        key = prefix + (f"{manifest['sid']}/" if manifest.get("sid") else "") + "manifest.json"
+        r2_put_json(key, manifest)
+        sb_update("interview_runs", f"id=eq.{run['id']}", {f"local_{role}_url": key})
+        run[f"local_{role}_url"] = key
+        logger.info("%s: adopted a browser take nobody finalized (%d chunks, %d missing): %s",
+                    role, len(manifest["chunks"]), len(manifest["missing"]), key)
+        return key
+    except Exception:  # noqa: BLE001 — the call audio is still there
+        logger.exception("could not adopt an orphan %s take (non-fatal)", role)
+        return ""
+
+
 def join_offsets(run: dict) -> dict:
     """Seconds from the room opening to each leg connecting, in order.
 
@@ -437,6 +462,16 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
             and _clean_enough(local_guest, guest_vox, "guest")):
         guest = align_to_reference(local_guest, guest_vox, workdir / "aligned")
         sources["guest"] = "local"
+        # Oct 7 2026: one offset leaves phrases up to half a second off the
+        # room, and a take without echo cancellation carries the room; see
+        # local_tracks.place_phrases / gate_to_reference.
+        try:
+            guest, placed = place_phrases(guest, guest_vox, workdir / "aligned" / "guest_placed.wav")
+            guest, kept = gate_to_reference(guest, guest_vox, workdir / "aligned" / "guest_gated.wav",
+                                          heard_wav=guest_r)
+            logger.info("guest take placed %s and gated %s", placed, kept)
+        except Exception:  # noqa: BLE001 — the single-offset take still stands
+            logger.exception("phrase placement failed; keeping the single-offset take")
     if guest is None:
         guest, sources["guest"] = guest_vox, "voximplant"
 
@@ -568,6 +603,31 @@ def build_tracks(run: dict, raw: Path, workdir: Path,
     return {"guest": guest, "host": host, "mira": mira, "sources": sources,
             "alignment": alignment, "unaligned": unaligned, "pieces": pieces,
             "bleed": bleed}
+
+
+def build_leg_local(guest: Path, raw: Path, out: Path) -> Path:
+    """The guest's leg as a stereo file with their own take on the left.
+
+    Oct 7 2026, Scott Pulcini. When Mira's track cannot be placed on the
+    room's clock, the edit is cut from the guest's leg recording (left: their
+    microphone through the call, right: the room as they heard it), and that
+    path never looked at the guest's own browser take: his episode was
+    assembled twice from the call audio while a cleaner recording of him sat
+    on the run row. The take is placed and gated on the guest leg's clock, so
+    it can stand in for the left side as it is. The right side is decoded
+    straight from the leg recording to 24-bit, because the declicker crawls
+    on audio that has been rounded to 16 bits (150 s per 10 s of Vincent
+    Rylan's, against 4 s from the same audio unrounded).
+    """
+    subprocess.run(
+        ["ffmpeg", "-nostdin", "-y", "-v", "error", "-i", str(guest), "-i", str(raw),
+         "-filter_complex",
+         "[0:a]aformat=sample_fmts=s32:sample_rates=48000:channel_layouts=mono[l];"
+         "[1:a]pan=mono|c0=c1,aresample=48000,aformat=sample_fmts=s32[r];"
+         "[l][r]join=inputs=2:channel_layout=stereo[a]",
+         "-map", "[a]", "-c:a", "flac", "-sample_fmt", "s32", str(out)],
+        check=True, capture_output=True, timeout=1800)
+    return out
 
 
 def has_video_stream(path: Path) -> bool:
@@ -1042,6 +1102,8 @@ def main() -> int:
                 durable[name] = r2_upload(src, show.r2_key(
                     "raw", f"{run['id']}_{stamp}_{name}.{src.suffix.lstrip('.')}"))
 
+        for role in ("guest", "host"):
+            adopt_orphan_take(run, show, role)
         tracks = build_tracks(run, raw, workdir, host_raw=host_raw,
                               mira_raw=mira_raw, host_legs=host_legs)
         processed: dict = {}
@@ -1121,6 +1183,15 @@ def main() -> int:
         logger.info("track sources: %s; processed: %s; durable legs: %s",
                     tracks["sources"], processed, durable)
 
+        leg_local = None
+        if tracks["sources"].get("guest") == "local":
+            try:
+                leg_local = {"url": r2_upload(
+                    build_leg_local(tracks["guest"], raw, workdir / "leg_local.flac"),
+                    show.r2_key("raw", f"{run['id']}_leg_local.flac"))}
+            except Exception:  # noqa: BLE001 — the processed tracks still stand
+                logger.exception("leg file with the guest's own take not built (non-fatal)")
+
         session_log = dict(run.get("grok_session_log") or {})
         session_log["tracks"] = {"sources": tracks["sources"],
                                  "processed": processed, "durable": durable,
@@ -1129,6 +1200,8 @@ def main() -> int:
                                  "unaligned": tracks.get("unaligned") or [],
                                  "pieces": tracks.get("pieces") or {},
                                  "bleed": tracks.get("bleed") or {}}
+        if leg_local:
+            session_log["tracks"]["leg_local"] = leg_local
         sb_update("interview_runs", f"id=eq.{run['id']}", {
             "status": "completed",
             "recording_guest_url": raw_url,

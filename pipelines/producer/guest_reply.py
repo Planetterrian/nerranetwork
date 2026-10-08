@@ -52,6 +52,7 @@ REPLY_INTENTS = ("interview_input", "question", "reschedule", "cancel")
 MIN_CONFIDENCE = 0.7
 MAX_REPLY_CHARS = 1400
 MAX_MIRA_REPLIES_PER_THREAD = 3
+ALWAYS_ANSWER_INTENTS = ("reschedule", "cancel")   # the reply cap never holds these
 APP_COLUMNS = ("id,name,email,phone,show,status,publicist_name,publicist_email,"
                "guest_notes,guest_agenda,desired_minutes")
 UPCOMING = ("scheduled", "briefed")
@@ -541,7 +542,14 @@ def handle_guest_reply(*, thread: Dict[str, Any], inbound: Dict[str, Any],
         reason = f"I was only {p['confidence']:.0%} sure what they wanted"
     elif policy.mode != "auto":
         reason = f"the Producer is in {policy.mode} mode"
-    elif mira_replies_in(thread, gmail.user) >= MAX_MIRA_REPLIES_PER_THREAD:
+    # Oct 7 2026 (Dr. Jason Shumard): his team wrote on Oct 5 that he could
+    # not make Oct 7 and asked to move it. Mira had already answered three
+    # times in that thread (the sound note, a confirmation), so she held the
+    # reply for Patrick, and nobody answered for two days; the studio would
+    # have opened for a guest who had told us he was not coming. A guest who
+    # needs to move or cancel always gets the way to do it.
+    elif (p["intent"] not in ALWAYS_ANSWER_INTENTS
+          and mira_replies_in(thread, gmail.user) >= MAX_MIRA_REPLIES_PER_THREAD):
         reason = "I have already answered three times in this thread"
     else:
         reason = guard(p["reply_text"] or "", facts["links"])

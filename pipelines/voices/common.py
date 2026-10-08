@@ -696,6 +696,29 @@ def r2_download(remote_key: str, local_path: Path) -> Path:
     return local_path
 
 
+def r2_list(prefix: str, limit: int = 5000) -> List[str]:
+    """Every key under ``prefix`` (paged)."""
+    s3, bucket = _r2_client()
+    keys: List[str] = []
+    token = None
+    while len(keys) < limit:
+        kwargs = {"Bucket": bucket, "Prefix": prefix, "MaxKeys": 1000}
+        if token:
+            kwargs["ContinuationToken"] = token
+        page = s3.list_objects_v2(**kwargs)
+        keys += [o["Key"] for o in page.get("Contents", [])]
+        if not page.get("IsTruncated"):
+            break
+        token = page.get("NextContinuationToken")
+    return keys
+
+
+def r2_put_json(remote_key: str, obj: Any) -> None:
+    s3, bucket = _r2_client()
+    s3.put_object(Bucket=bucket, Key=remote_key, Body=json.dumps(obj, indent=2).encode(),
+                  ContentType="application/json")
+
+
 def r2_read_json(remote_key: str) -> Optional[Any]:
     """Read + parse a JSON object from R2; ``None`` when the key is absent
     (a local-recording manifest that never got written = no upload-done)."""

@@ -129,7 +129,19 @@
     }
     .legal-body li { margin-bottom: var(--sp-2); }
     .legal-body strong { color: var(--nn-white); }
-    .legal-body a { color: var(--nn-cyan); }
+    .legal-body a { color: var(--nn-cyan); text-decoration: underline; text-underline-offset: 2px; }
+    .legal-body h2[id], .legal-body h3[id] { scroll-margin-top: calc(var(--nav-height) + var(--sp-4)); }
+    .legal-toc {
+        background: var(--nn-card);
+        border: 1px solid var(--nn-border);
+        border-radius: 12px;
+        padding: var(--sp-4) var(--sp-5);
+        margin: var(--sp-6) 0 0;
+    }
+    .legal-toc h2 { border-top: 0; margin: 0 0 var(--sp-2); padding-top: 0; font-size: 1rem; }
+    .legal-toc ol { margin: 0; columns: 2 16rem; column-gap: var(--sp-6); }
+    .legal-toc li { margin-bottom: var(--sp-1); font-size: 0.92rem; break-inside: avoid; }
+    .legal-toc ul { list-style: none; margin: var(--sp-1) 0 0; padding-left: var(--sp-4); }
     .legal-body a:hover { color: var(--nn-white); }
     .legal-callout {
         background: linear-gradient(135deg, rgba(107, 71, 255, 0.15) 0%, rgba(0, 212, 255, 0.08) 100%);
@@ -168,7 +180,8 @@
         font-family: var(--font-heading);
         font-size: 0.95rem;
         font-weight: 700;
-        color: var(--nn-purple);
+        /* #6B47FF is 3.6:1 on the page; the text tint clears 4.5:1. */
+        color: var(--nn-purple-text, #9D8BFF);
         margin: 0 0 var(--sp-2);
     }
     .legal-grid p { font-size: 0.92rem; margin: 0; }
@@ -210,7 +223,7 @@
         font-size: 0.85rem;
         color: var(--nn-text-muted);
     }
-    .legal-footer-note .nn-highlight { color: var(--nn-purple); font-weight: 500; }
+    .legal-footer-note .nn-highlight { color: var(--nn-purple-text, #9D8BFF); font-weight: 500; }
     .legal-related {
         display: flex;
         flex-wrap: wrap;
@@ -233,6 +246,15 @@
     }
 </style>
 
+    <style>
+        .nn-claims-steps--compact summary {
+            font-family: var(--font-heading);
+            font-weight: 600;
+            color: var(--nn-white);
+            cursor: pointer;
+        }
+        .nn-claims-steps--compact details[open] summary { margin-bottom: var(--sp-2); }
+    </style>
 
 
     
@@ -728,379 +750,200 @@
         <a href="../player.html">Player</a>
         
         <a href="../explore.html" style="font-weight:600;">Find your show</a>
-        
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Hosted by Mira</div>
+        <details class="nn-mobile-shows nn-mobile-group" open>
+            <summary class="nn-mobile-shows-title">Hosted by Mira <span class="nn-mobile-count">3</span></summary>
             
             <a href="../nerra-daily.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/nerra-daily-400.webp"><img src="../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/nerra-daily-400.webp"><img src="../assets/covers/nerra-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Daily
             </a>
             
             <a href="../age-of-ai.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/age-of-ai-400.webp"><img src="../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/age-of-ai-400.webp"><img src="../assets/covers/age-of-ai.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The Age of AI
             </a>
             
             <a href="../nerra-voices.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/nerra-voices-400.webp"><img src="../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/nerra-voices-400.webp"><img src="../assets/covers/nerra-voices.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Voices
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">World desks</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">World desks <span class="nn-mobile-count">6</span></summary>
             
             <a href="../omni-view-world.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-world-400.webp"><img src="../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-world-400.webp"><img src="../assets/covers/omni-view-world.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Top World News
             </a>
             
             <a href="../omni-view-north-america.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-north-america-400.webp"><img src="../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-north-america-400.webp"><img src="../assets/covers/omni-view-north-america.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View North America
             </a>
             
             <a href="../omni-view-europe.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-europe-400.webp"><img src="../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-europe-400.webp"><img src="../assets/covers/omni-view-europe.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Europe
             </a>
             
             <a href="../omni-view-asia-pacific.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-asia-pacific-400.webp"><img src="../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-asia-pacific-400.webp"><img src="../assets/covers/omni-view-asia-pacific.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Asia Pacific
             </a>
             
             <a href="../omni-view-africa-mideast.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-africa-mideast-400.webp"><img src="../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-africa-mideast-400.webp"><img src="../assets/covers/omni-view-africa-mideast.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Africa & Middle East
             </a>
             
             <a href="../omni-view-latam.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-latam-400.webp"><img src="../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-latam-400.webp"><img src="../assets/covers/omni-view-latam.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Central & South America
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Local news</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Local news <span class="nn-mobile-count">2</span></summary>
             
             <a href="../vancouver.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/vancouver-400.webp"><img src="../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/vancouver-400.webp"><img src="../assets/covers/vancouver.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Vancouver Daily News
             </a>
             
             <a href="../collingwood.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/collingwood-400.webp"><img src="../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/collingwood-400.webp"><img src="../assets/covers/collingwood.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Collingwood Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">AI & compute</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">AI & compute <span class="nn-mobile-count">3</span></summary>
             
             <a href="../models-agents.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/models-agents-400.webp"><img src="../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/models-agents-400.webp"><img src="../assets/covers/models-agents.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents
             </a>
             
             <a href="../ai-chips.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/ai-chips-400.webp"><img src="../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/ai-chips-400.webp"><img src="../assets/covers/ai-chips.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 AI Chips & Data Centres Daily
             </a>
             
             <a href="../models-agents-beginners.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/models-agents-beginners-400.webp"><img src="../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/models-agents-beginners-400.webp"><img src="../assets/covers/models-agents-beginners.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents for Beginners
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Markets</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Markets <span class="nn-mobile-count">4</span></summary>
             
             <a href="../modern-investing.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/modern-investing-400.webp"><img src="../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/modern-investing-400.webp"><img src="../assets/covers/modern-investing.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Modern Investing Techniques
             </a>
             
             <a href="../mag7.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/mag7-400.webp"><img src="../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/mag7-400.webp"><img src="../assets/covers/mag7.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 MAG 7 Daily
             </a>
             
             <a href="../prediction-markets.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/prediction-markets-400.webp"><img src="../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/prediction-markets-400.webp"><img src="../assets/covers/prediction-markets.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Prediction Markets Daily
             </a>
             
             <a href="../tesla.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/tesla-shorts-time-400.webp"><img src="../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/tesla-shorts-time-400.webp"><img src="../assets/covers/tesla-shorts-time.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Tesla Shorts Time
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Health & longevity</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Health & longevity <span class="nn-mobile-count">3</span></summary>
             
             <a href="../planetterrian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/planetterrian-daily-400.webp"><img src="../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/planetterrian-daily-400.webp"><img src="../assets/covers/planetterrian-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Planetterrian Daily
             </a>
             
             <a href="../peptides.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/peptides-400.webp"><img src="../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/peptides-400.webp"><img src="../assets/covers/peptides.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Peptides Weekly
             </a>
             
             <a href="../longevity.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/longevity-400.webp"><img src="../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/longevity-400.webp"><img src="../assets/covers/longevity.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Longevity Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Every other show</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">10</span></summary>
             
             <a href="../omni-view.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-400.webp"><img src="../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-400.webp"><img src="../assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View
             </a>
             
             <a href="../fascinating-frontiers.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/fascinating-frontiers-400.webp"><img src="../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/fascinating-frontiers-400.webp"><img src="../assets/covers/fascinating-frontiers.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Fascinating Frontiers
             </a>
             
             <a href="../spacex.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/spacex-400.webp"><img src="../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/spacex-400.webp"><img src="../assets/covers/spacex.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 SpaceX Daily
             </a>
             
             <a href="../env-intel.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/environmental-intelligence-400.webp"><img src="../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/environmental-intelligence-400.webp"><img src="../assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Environmental Intelligence
             </a>
             
             <a href="../ru/finansy-prosto.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/finansy-prosto-400.webp"><img src="../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/finansy-prosto-400.webp"><img src="../assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Финансы Просто
             </a>
             
             <a href="../ru/privet-russian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/privet-russian-400.webp"><img src="../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/privet-russian-400.webp"><img src="../assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Привет, Русский!
             </a>
             
             <a href="../unintended-consequences.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/unintended-consequences-400.webp"><img src="../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/unintended-consequences-400.webp"><img src="../assets/covers/unintended-consequences.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Unintended Consequences
             </a>
             
             <a href="../first-principles.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/first-principles-daily-400.webp"><img src="../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/first-principles-daily-400.webp"><img src="../assets/covers/first-principles-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 First Principles Daily
             </a>
             
             <a href="../thedppod.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/dp-pod-400.webp"><img src="../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/dp-pod-400.webp"><img src="../assets/covers/dp-pod.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The DP Pod: The Do Positive Podcast
             </a>
             
             <a href="../offshore-north.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/offshore-north-400.webp"><img src="../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/offshore-north-400.webp"><img src="../assets/covers/offshore-north.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Offshore North
             </a>
             
-        </div>
+        </details>
         
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Blogs</div>
-            <a href="../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">
-                All Blog Posts
-            </a>
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Hosted by Mira</div>
-            
-            <a href="../blog/nerra_daily/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/nerra-daily-400.webp"><img src="../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Daily Blog
-            </a>
-            
-            <a href="../blog/age_of_ai/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/age-of-ai-400.webp"><img src="../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
-                The Age of AI Blog
-            </a>
-            
-            <a href="../blog/nerra_voices/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/nerra-voices-400.webp"><img src="../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Voices Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">World desks</div>
-            
-            <a href="../blog/omni_view_world/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-world-400.webp"><img src="../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Top World News Blog
-            </a>
-            
-            <a href="../blog/omni_view_north_america/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-north-america-400.webp"><img src="../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View North America Blog
-            </a>
-            
-            <a href="../blog/omni_view_europe/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-europe-400.webp"><img src="../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Europe Blog
-            </a>
-            
-            <a href="../blog/omni_view_asia_pacific/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-asia-pacific-400.webp"><img src="../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Asia Pacific Blog
-            </a>
-            
-            <a href="../blog/omni_view_africa_mideast/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-africa-mideast-400.webp"><img src="../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Africa & Middle East Blog
-            </a>
-            
-            <a href="../blog/omni_view_latam/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-latam-400.webp"><img src="../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Central & South America Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Local news</div>
-            
-            <a href="../blog/vancouver/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/vancouver-400.webp"><img src="../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Vancouver Daily News Blog
-            </a>
-            
-            <a href="../blog/collingwood/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/collingwood-400.webp"><img src="../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Collingwood Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">AI & compute</div>
-            
-            <a href="../blog/models_agents/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/models-agents-400.webp"><img src="../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents Blog
-            </a>
-            
-            <a href="../blog/ai_chips/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/ai-chips-400.webp"><img src="../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                AI Chips & Data Centres Daily Blog
-            </a>
-            
-            <a href="../blog/models_agents_beginners/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/models-agents-beginners-400.webp"><img src="../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents for Beginners Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Markets</div>
-            
-            <a href="../blog/modern_investing/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/modern-investing-400.webp"><img src="../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
-                Modern Investing Techniques Blog
-            </a>
-            
-            <a href="../blog/mag7/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/mag7-400.webp"><img src="../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                MAG 7 Daily Blog
-            </a>
-            
-            <a href="../blog/prediction_markets/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/prediction-markets-400.webp"><img src="../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Prediction Markets Daily Blog
-            </a>
-            
-            <a href="../blog/tesla/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/tesla-shorts-time-400.webp"><img src="../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
-                Tesla Shorts Time Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Health & longevity</div>
-            
-            <a href="../blog/planetterrian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/planetterrian-daily-400.webp"><img src="../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Planetterrian Daily Blog
-            </a>
-            
-            <a href="../blog/peptides/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/peptides-400.webp"><img src="../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Peptides Weekly Blog
-            </a>
-            
-            <a href="../blog/longevity/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/longevity-400.webp"><img src="../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Longevity Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Every other show</div>
-            
-            <a href="../blog/omni_view/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-400.webp"><img src="../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Blog
-            </a>
-            
-            <a href="../blog/fascinating_frontiers/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/fascinating-frontiers-400.webp"><img src="../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
-                Fascinating Frontiers Blog
-            </a>
-            
-            <a href="../blog/spacex/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/spacex-400.webp"><img src="../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                SpaceX Daily Blog
-            </a>
-            
-            <a href="../blog/env_intel/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/environmental-intelligence-400.webp"><img src="../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
-                Environmental Intelligence Blog
-            </a>
-            
-            <a href="../blog/finansy_prosto/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/finansy-prosto-400.webp"><img src="../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                Финансы Просто Blog
-            </a>
-            
-            <a href="../blog/privet_russian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/privet-russian-400.webp"><img src="../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                Привет, Русский! Blog
-            </a>
-            
-            <a href="../blog/unintended_consequences/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/unintended-consequences-400.webp"><img src="../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
-                Unintended Consequences Blog
-            </a>
-            
-            <a href="../blog/first_principles/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/first-principles-daily-400.webp"><img src="../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                First Principles Daily Blog
-            </a>
-            
-            <a href="../blog/dp_pod/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/dp-pod-400.webp"><img src="../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
-                The DP Pod: The Do Positive Podcast Blog
-            </a>
-            
-            <a href="../blog/offshore_north/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/offshore-north-400.webp"><img src="../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
-                Offshore North Blog
-            </a>
-            
-            
+            <a href="../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">All Blog Posts</a>
+            <a href="../topics/index.html" class="nn-mobile-show-link">Browse by topic</a>
         </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">More</div>
@@ -1124,7 +967,7 @@
         <p class="nn-claims-back"><a href="../claims.html">← Claims &amp; corrections, every show</a></p>
         <h1>Omni View Top World News: claims &amp; corrections</h1>
         
-        <div class="legal-meta">Nerra Network &middot; last 30 days &middot; 2026-09-06 to 2026-10-06</div>
+        <div class="legal-meta">Nerra Network &middot; last 30 days &middot; 2026-09-07 to 2026-10-07</div>
         <p class="lede">
             
             Every factual claim this show made in the last 30 days, with what a
@@ -1138,16 +981,22 @@
     
         
         
-        <h2>How this show's claims are checked</h2>
-        <p class="nn-claims-intro"><strong>Every episode starts with a ledger.</strong> When a show's digest is written, the model also writes a claims ledger: each factual sentence it asserts, the URL it took it from, and the passage in that source that supports it. The ledger is extracted before any published surface sees the text. <strong>Each claim is checked by a machine, not trusted.</strong> Before the episode is saved, every entry is checked mechanically: first against the copy of the source the pipeline fetched that morning, then against the live page. The supporting quote has to actually appear in the source. A sentence written in the shape of a citation with no ledger entry behind it is caught by the same check — that shape is the signature of a fabricated reference. <strong>A claim the check cannot confirm is published and marked, not removed.</strong> Sometimes the source cannot be reached from our servers, sometimes the page has moved, and sometimes the model paraphrased where it should have quoted. None of those means the sentence is false. A story newer than the model's training data is verified against its source, never against memory, and a true, timely story is worth more to a listener than a clean ledger. So the sentence ships, and its status is shown beside it — on the episode page, and on this ledger — in plain words that say what the check could and could not do. <strong>Unverified claims are re-checked every night for a week.</strong> For 7 nights after publication a job re-runs the check on every marked claim that names a source. A claim that passes later is upgraded on the ledger with the date it was confirmed and the status it carried first. A claim that never passes stays marked; nothing is quietly deleted and nothing is quietly promoted. The full process, the badge legend and every show's totals are on the
+        <h2>How this show's claims are checked</h2><ol class="nn-claims-steps nn-claims-steps--compact">
+            <li><details><summary>Every episode starts with a ledger</summary><p>When a show's digest is written, the model also writes a claims ledger: each factual sentence it asserts, the URL it took it from, and the passage in that source that supports it. The ledger is extracted before any published surface sees the text.</p></details></li>
+            <li><details><summary>Each claim is checked by a machine, not trusted</summary><p>Before the episode is saved, every entry is checked mechanically: first against the copy of the source the pipeline fetched that morning, then against the live page. The supporting quote has to actually appear in the source. A sentence written in the shape of a citation with no ledger entry behind it is caught by the same check — that shape is the signature of a fabricated reference.</p></details></li>
+            <li><details><summary>A claim the check cannot confirm is published and marked, not removed</summary><p>Sometimes the source cannot be reached from our servers, sometimes the page has moved, and sometimes the model paraphrased where it should have quoted. None of those means the sentence is false. A story newer than the model's training data is verified against its source, never against memory, and a true, timely story is worth more to a listener than a clean ledger. So the sentence ships, and its status is shown beside it — on the episode page, and on this ledger — in plain words that say what the check could and could not do.</p></details></li>
+            <li><details><summary>Unverified claims are re-checked every night for a week</summary><p>For 7 nights after publication a job re-runs the check on every marked claim that names a source. A claim that passes later is upgraded on the ledger with the date it was confirmed and the status it carried first. A claim that never passes stays marked; nothing is quietly deleted and nothing is quietly promoted.</p></details></li>
+        </ol>
+        <p class="nn-claims-intro">
+            The full process, the badge legend and every show's totals are on the
             <a href="../claims.html">network ledger page</a>.
         </p>
 
         <h2>Last 30 days</h2>
         
         <div class="nn-claims-tiles">
-            <div class="nn-claims-tile"><div class="nn-claims-tile-num">248</div><div class="nn-claims-tile-label">claims across 14 episodes</div></div>
-            <div class="nn-claims-tile nn-claims-tile--verified"><div class="nn-claims-tile-num">98.0%</div><div class="nn-claims-tile-label">verified against their source</div></div>
+            <div class="nn-claims-tile"><div class="nn-claims-tile-num">276</div><div class="nn-claims-tile-label">claims across 15 episodes</div></div>
+            <div class="nn-claims-tile nn-claims-tile--verified"><div class="nn-claims-tile-num">98.2%</div><div class="nn-claims-tile-label">verified against their source</div></div>
             <div class="nn-claims-tile nn-claims-tile--flagged"><div class="nn-claims-tile-num">5</div><div class="nn-claims-tile-label">published and marked, not yet verified</div></div>
             <div class="nn-claims-tile nn-claims-tile--verified"><div class="nn-claims-tile-num">0</div><div class="nn-claims-tile-label">verified later by the nightly re-check</div></div>
             <div class="nn-claims-tile nn-claims-tile--corrections"><div class="nn-claims-tile-num">0</div><div class="nn-claims-tile-label">corrections filed</div></div>
@@ -1164,6 +1013,218 @@
         
         <h2>Episode by episode</h2>
         <details class="nn-claims-episode" open>
+            <summary>
+                <span class="nn-claims-episode-title">Episode 15</span>
+                <span class="nn-claims-episode-date">2026-10-07</span>
+                <span class="nn-claims-episode-counts"><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> 28
+                </span>
+            </summary>
+            <div class="nn-claims-episode-body">
+                <p class="nn-claims-episode-links"><a href="../blog/omni_view_world/ep015.html">Read this episode →</a>
+                </p>
+                <p class="nn-claims-sub">Claims</p>
+                <ol class="nn-claims-list">
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.theguardian.com/world/2026/oct/07/ukraine-accuses-russia-of-bombing-apartment-block-as-birthday-gift-for-putin" target="_blank" rel="noopener" title="Ukraine accuses Russia of bombing apartment block as birthday gift for Putin">theguardian.com</a></span>
+                        </div>
+                        President Volodymyr Zelenskyy said Russian overnight drone and missile strikes killed at least 15 people.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.theguardian.com/world/2026/oct/07/ukraine-accuses-russia-of-bombing-apartment-block-as-birthday-gift-for-putin" target="_blank" rel="noopener" title="Ukraine accuses Russia of bombing apartment block as birthday gift for Putin">theguardian.com</a></span>
+                        </div>
+                        Vladimir Putin’s 74th birthday is on Wednesday.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.theguardian.com/world/2026/oct/07/ukraine-accuses-russia-of-bombing-apartment-block-as-birthday-gift-for-putin" target="_blank" rel="noopener" title="Ukraine accuses Russia of bombing apartment block as birthday gift for Putin">theguardian.com</a></span>
+                        </div>
+                        Officials said nine people, including three children, died and 38 were injured when a missile hit an apartment block in Pryluky.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.theguardian.com/world/2026/oct/07/ukraine-accuses-russia-of-bombing-apartment-block-as-birthday-gift-for-putin" target="_blank" rel="noopener" title="Ukraine accuses Russia of bombing apartment block as birthday gift for Putin">theguardian.com</a></span>
+                        </div>
+                        The bombardment included 70 ballistic missiles and 46 jet-powered drones, hit eleven regions, killed two in Kyiv and four civilians in Oleksandriia, and caused extensive damage in Dnipro.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.theguardian.com/world/2026/oct/07/ukraine-accuses-russia-of-bombing-apartment-block-as-birthday-gift-for-putin" target="_blank" rel="noopener" title="Ukraine accuses Russia of bombing apartment block as birthday gift for Putin">theguardian.com</a></span>
+                        </div>
+                        Zelenskyy asked allies for US-made Patriot interceptors because Ukraine is struggling to shoot down ballistic missiles.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.theguardian.com/world/2026/oct/07/ukraine-accuses-russia-of-bombing-apartment-block-as-birthday-gift-for-putin" target="_blank" rel="noopener" title="Ukraine accuses Russia of bombing apartment block as birthday gift for Putin">theguardian.com</a></span>
+                        </div>
+                        Foreign Minister Andrii Sybiha said Russian generals had given Putin war crimes and that Ukrainians would not give up.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.asahi.com/ajw/articles/16946592" target="_blank" rel="noopener" title="Japan’s 10-year bond coupon tops budgeted rate in ‘sci-fi’ spike">asahi.com</a></span>
+                        </div>
+                        Japan’s Finance Ministry set the coupon on new 10-year bonds at 3.1 percent at an October 6 auction, the highest in 30 years and above the 3 percent budget assumption.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.asahi.com/ajw/articles/16946592" target="_blank" rel="noopener" title="Japan’s 10-year bond coupon tops budgeted rate in ‘sci-fi’ spike">asahi.com</a></span>
+                        </div>
+                        The 10-year coupon was 2.1 percent from January to March, 2.4 percent in April and 2.7 percent in July.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.asahi.com/ajw/articles/16946592" target="_blank" rel="noopener" title="Japan’s 10-year bond coupon tops budgeted rate in ‘sci-fi’ spike">asahi.com</a></span>
+                        </div>
+                        Long-term interest rates have risen by more than 1 percentage point since Prime Minister Sanae Takaichi took office last October.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.aljazeera.com/news/2026/10/7/israeli-attacks-across-gaza-kill-at-least-four-palestinians?traffic_source=rss" target="_blank" rel="noopener" title="Israeli attacks across Gaza kill at least four Palestinians">aljazeera.com</a></span>
+                        </div>
+                        Al Jazeera reported Israeli attacks on Wednesday killed at least four Palestinians, including Civil Defence volunteer Mohamed Tamous near Kamal Adwan Hospital in Beit Lahiya.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.aljazeera.com/news/2026/10/7/israeli-attacks-across-gaza-kill-at-least-four-palestinians?traffic_source=rss" target="_blank" rel="noopener" title="Israeli attacks across Gaza kill at least four Palestinians">aljazeera.com</a></span>
+                        </div>
+                        Nasser Hospital said an Israeli drone strike in Khan Younis killed Hisham Ibrahim Abu Mustafa, 60.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.aljazeera.com/news/2026/10/7/how-us-military-aid-to-israel-continues-three-years-into-gaza-genocide?traffic_source=rss" target="_blank" rel="noopener" title="US military aid to Israel continues three years into Gaza genocide">aljazeera.com</a></span>
+                        </div>
+                        Al Jazeera reported at least 74,243 Palestinians killed in Gaza since October 7, 2023, at least 1,139 people killed in the Hamas-led attacks, and at least 1,460 Palestinians killed since the October 11, 2025 ceasefire.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.aljazeera.com/news/2026/10/7/how-us-military-aid-to-israel-continues-three-years-into-gaza-genocide?traffic_source=rss" target="_blank" rel="noopener" title="US military aid to Israel continues three years into Gaza genocide">aljazeera.com</a></span>
+                        </div>
+                        Josh Paul said US support for Israel remained unconditional under both the Biden and Trump administrations, and Al Jazeera reported nearly 300 billion dollars in inflation-adjusted aid since 1948.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.bbc.co.uk/news/articles/cqgm0vrl3xp7o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" title="Trump to speak to Putin about plague lab worker's death in Russia">bbc.co.uk</a></span>
+                        </div>
+                        Donald Trump said he will speak with Vladimir Putin about a lab worker’s death at a plague research centre in Siberia and could report probably on Thursday.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.bbc.co.uk/news/articles/cqgm0vrl3xp7o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" title="Trump to speak to Putin about plague lab worker's death in Russia">bbc.co.uk</a></span>
+                        </div>
+                        Dmitry Peskov said no call was scheduled, that reporting to the WHO was standard, and that he was not aware of a US information request.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.bbc.co.uk/news/articles/cqgm0vrl3xp7o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" title="Trump to speak to Putin about plague lab worker's death in Russia">bbc.co.uk</a></span>
+                        </div>
+                        Russian officials have not confirmed pneumonic plague; Rospotrebnadzor said the woman died of pneumonia of undetermined etiology, and contacts tested negative.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.bbc.co.uk/news/articles/cqgm0vrl3xp7o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" title="Trump to speak to Putin about plague lab worker's death in Russia">bbc.co.uk</a></span>
+                        </div>
+                        Tedros Adhanom Ghebreyesus called for timely, complete and transparent information under the International Health Regulations.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.latintimes.com/imf-deal-unlocks-19-billion-bolivia-could-mobilize-another-4-billion-funding-599905" target="_blank" rel="noopener" title="Bolivia lands $214M from IMF. The full $1.9B comes with strings attached">latintimes.com</a></span>
+                        </div>
+                        The IMF approved a 1.9 billion dollar, 36-month Extended Fund Facility for Bolivia on October 2 and released 214 million dollars.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.latintimes.com/imf-deal-unlocks-19-billion-bolivia-could-mobilize-another-4-billion-funding-599905" target="_blank" rel="noopener" title="Bolivia lands $214M from IMF. The full $1.9B comes with strings attached">latintimes.com</a></span>
+                        </div>
+                        Bolivia’s Finance Ministry said the 214 million dollars was set to reach government accounts on Tuesday or Wednesday.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.latintimes.com/imf-deal-unlocks-19-billion-bolivia-could-mobilize-another-4-billion-funding-599905" target="_blank" rel="noopener" title="Bolivia lands $214M from IMF. The full $1.9B comes with strings attached">latintimes.com</a></span>
+                        </div>
+                        Further IMF disbursements depend on benchmarks including zero central-bank financing of the deficit, and the program is expected to catalyze about 4 billion dollars more.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://africa.businessinsider.com/local/markets/russia-backed-mali-retakes-rebel-stronghold-as-tuareg-fighters-withdraw-under-air/5fy8p8j" target="_blank" rel="noopener" title="Russia-backed Mali retakes rebel stronghold as Tuareg fighters withdraw under air pressure">africa.businessinsider.com</a></span>
+                        </div>
+                        Mali said its forces entered Kidal on October 6 with support from Russia’s Africa Corps, and Tuareg separatists confirmed they withdrew.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://english.aawsat.com/business/5326874-norway-plans-spend-636-billion-wealth-fund-2027" target="_blank" rel="noopener" title="Norway Plans to Spend $63.6 Billion from Wealth Fund in 2027">english.aawsat.com</a></span>
+                        </div>
+                        Norway’s Labour government proposed withdrawing 608.4 billion crowns, about 63.61 billion dollars, from the sovereign wealth fund in 2027, up from 2026.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.bbc.co.uk/news/articles/c6ly038jg0d4o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" title="Chemistry Nobel awarded for solving mystery of life's asymmetry">bbc.co.uk</a></span>
+                        </div>
+                        The Nobel Prize in Chemistry was awarded to Henri B. Kagan and Kenso Soai for work on life’s molecular asymmetry.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.thehindu.com/news/national/andhra-pradesh/how-did-a-pakistan-linked-spy-network-target-navys-eastern-command-and-how-was-it-cracked-explained/article71554274.ece" target="_blank" rel="noopener" title="How did a Pakistan-linked spy network target Navy’s Eastern Command, and how was it cracked?">thehindu.com</a></span>
+                        </div>
+                        Eighteen suspects including 13 naval personnel are under probe and two are in custody in an alleged Pakistan-linked espionage case aimed at India’s Navy.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.qcintel.com/article/venezuela-s-300kbpd-cardon-refinery-hit-by-blast-ops-suspended-74696.html" target="_blank" rel="noopener" title="Venezuela's 300kbpd Cardon refinery hit by blast, ops suspended">qcintel.com</a></span>
+                        </div>
+                        PDVSA suspended operations at the 300,000-barrel-a-day Cardón refinery after a major blast on Tuesday.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.theguardian.com/us-news/2026/oct/07/washington-state-millionaire-tax" target="_blank" rel="noopener" title="Millionaire tax no more? Rightwing groups lead effort to repeal Washington state law">theguardian.com</a></span>
+                        </div>
+                        Washington state voters will decide in November whether to keep a 9.9 percent tax on earnings above 1 million dollars that was signed into law in March.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.theguardian.com/us-news/2026/oct/07/washington-state-millionaire-tax" target="_blank" rel="noopener" title="Millionaire tax no more? Rightwing groups lead effort to repeal Washington state law">theguardian.com</a></span>
+                        </div>
+                        A coalition opposing repeal says taxing about 20,000 highest-earning households could raise about 3.5 billion dollars a year for education, healthcare, tax credits and sales-tax exemptions.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.theguardian.com/world/2026/oct/07/ukraine-accuses-russia-of-bombing-apartment-block-as-birthday-gift-for-putin" target="_blank" rel="noopener" title="Ukraine accuses Russia of bombing apartment block as birthday gift for Putin">theguardian.com</a></span>
+                        </div>
+                        Ukraine’s air force said it downed just over 80 percent of fast-moving drones, up from a previous average of 50 to 60 percent.
+                    </li>
+                </ol>
+            </div>
+        </details>
+        <details class="nn-claims-episode">
             <summary>
                 <span class="nn-claims-episode-title">Episode 14</span>
                 <span class="nn-claims-episode-date">2026-10-06</span>
@@ -1241,14 +1302,14 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.france24.com/en/europe/20261006-live-tens-of-thousands-expected-at-paris-protests-as-unions-join-students" target="_blank" rel="noopener" title="Live: Thousands of students march across France as clashes reported in Lyon and Strasbourg">france24.com</a></span>
                         </div>
                         Thousands of students marched across France on Tuesday, with clashes reported in Lyon and Strasbourg, demanding action on understaffed and dilapidated schools.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.nytimes.com/2026/10/06/world/europe/france-student-strikes-protests.html" target="_blank" rel="noopener" title="Protests Spread Across France, Growing From School Demonstrations">nytimes.com</a></span>
                         </div>
                         The New York Times reported the French rallies test a student-led movement that has escalated at high schools since late September.
@@ -1262,28 +1323,28 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.nytimes.com/2026/10/05/world/canada/quebec-election-parti-quebecois-separatism.html" target="_blank" rel="noopener" title="The Separatist Parti Québécois Wins Quebec Election, Reviving Sovereignty Push">nytimes.com</a></span>
                         </div>
                         The separatist Parti Québécois won Quebec's election but fell short of a majority that would have all but guaranteed a showdown with Ottawa.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/world/germany-hanning-manuel-espionage-arrests-9.7370630?cmp=rss" target="_blank" rel="noopener" title="Former head of German foreign intelligence suspected of 'treasonous espionage'">cbc.ca</a></span>
                         </div>
                         A former head of Germany's foreign intelligence service was arrested Tuesday on suspicion of passing state secrets to a foreign intelligence service.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.aljazeera.com/news/2026/10/6/saudi-arabia-says-three-wounded-in-attacks-on-airports-near-yemen-border?traffic_source=rss" target="_blank" rel="noopener" title="Saudi Arabia says three wounded in attacks on airports near Yemen border">aljazeera.com</a></span>
                         </div>
                         Saudi Arabia's aviation authority reported three people wounded and damage after strikes on Jazan and Najran airports that Al Jazeera described as Houthi strikes.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.aljazeera.com/economy/2026/10/6/singapore-refers-eight-civil-servants-to-police-over-property-purchases?traffic_source=rss" target="_blank" rel="noopener" title="Singapore refers eight civil servants to police over property purchases">aljazeera.com</a></span>
                         </div>
                         Singapore referred eight civil servants to police after a think tank paper linked property purchases to unannounced MRT stations.
@@ -1334,21 +1395,21 @@
                 <ol class="nn-claims-list">
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.nytimes.com/2026/10/05/world/europe/spain-elections-housing-migrants-corruption.html" target="_blank" rel="noopener" title="Housing, Corruption and a Migrant Surge: Why Spain Is Holding an Early Election">nytimes.com</a></span>
                         </div>
                         Pedro Sánchez dissolved Spain's Parliament on Monday after months of spiraling crises.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.theglobeandmail.com/world/video-spanish-pm-sanchez-calls-snap-election-for-nov-29/" target="_blank" rel="noopener" title="Spanish PM Sanchez calls snap election for Nov. 29">theglobeandmail.com</a></span>
                         </div>
                         Sánchez called an early election for 29 November after a fragmented parliament rejected key housing decrees last week amid protests, seeking to strengthen his mandate.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.theguardian.com/business/2026/oct/05/euro-falls-dollar-amid-french-debt-cac-40-spain-eurozone" target="_blank" rel="noopener" title="Euro falls to 17-month low against dollar amid French debt fears">theguardian.com</a></span>
                         </div>
                         The euro fell as much as 0.8% on Monday to below $1.12, its lowest since May 2025, and is down about 1.2% this month from a January peak of $1.20.
@@ -1418,14 +1479,14 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.theguardian.com/us-news/2026/oct/05/first-thing-son-disgraced-ex-president-jair-flavio-bolsonaro-election-lead-brazil" target="_blank" rel="noopener" title="Son of disgraced ex-president Jair Bolsonaro takes election lead in Brazil">theguardian.com</a></span>
                         </div>
                         Flávio Bolsonaro beat Luiz Inácio Lula da Silva in Brazil's first round but lacked an outright majority, so they meet in a runoff on 25 October.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.aljazeera.com/video/newsfeed/2026/10/5/us-abruptly-withdraws-bombers-from-uks-raf-fairford?traffic_source=rss" target="_blank" rel="noopener" title="US abruptly withdraws bombers from UK’s RAF Fairford">aljazeera.com</a></span>
                         </div>
                         The United States withdrew its aircraft from RAF Fairford, citing concerns about a potential attack.
@@ -1446,7 +1507,7 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.theglobeandmail.com/business/industry-news/energy-and-resources/article-us-supreme-court-to-weigh-bid-by-suncor-exxonmobil-to-avoid-climate/" target="_blank" rel="noopener" title="U.S. Supreme Court to weigh bid by Suncor, ExxonMobil to avoid climate lawsuit">theglobeandmail.com</a></span>
                         </div>
                         The US Supreme Court will weigh a bid by Suncor and ExxonMobil to avoid a climate lawsuit, and the Trump administration has backed the oil companies.
@@ -1481,7 +1542,7 @@
                 <span class="nn-claims-episode-date">2026-10-04</span>
                 <span class="nn-claims-episode-counts"><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
 </span> 21 <span class="nn-claims-badge nn-claims-badge--unverified_unreachable" data-status="unverified_unreachable" title="The source could not be fetched from our servers (a block, a rate limit or a server error), so the claim could not be checked. It is re-checked nightly for a week.">Published, not yet verified
-</span> 1 marked
+</span> 1
                 </span>
             </summary>
             <div class="nn-claims-episode-body">
@@ -1568,14 +1629,14 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.theguardian.com/world/live/2026/oct/04/friedrich-merz-german-chancellor-ukraine-kyiv-russia-strikes-war-zelenskyy-putin-europe-latest-news-updates" target="_blank" rel="noopener" title="Friedrich Merz begins unannounced Kyiv visit as Russia continues strikes on Ukraine’s capital">theguardian.com</a></span>
                         </div>
                         Germany has sent Ukraine more than 43.3 billion euros, about 48.8 billion dollars, since the war began.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.aljazeera.com/news/2026/10/4/government-forces-seize-capital-of-ethiopias-tigray-region-from-rebels?traffic_source=rss" target="_blank" rel="noopener" title="Ethiopian government forces seize Tigray capital Mekelle as TPLF withdraws">aljazeera.com</a></span>
                         </div>
                         Federal troops and allied fighters were seen in control of Mekelle after capturing the main regional airport as the TPLF withdrew.
@@ -1610,7 +1671,7 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.france24.com/en/israel-prepares-to-mark-october-7" target="_blank" rel="noopener" title="Israel prepares to mark October 7">france24.com</a></span>
                         </div>
                         An Israeli strike on a civilian vehicle in Gaza killed one Palestinian and wounded at least 11 others, and Israel's military said it was targeting a Hamas militant.
@@ -1653,7 +1714,7 @@
                 <span class="nn-claims-episode-date">2026-10-03</span>
                 <span class="nn-claims-episode-counts"><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
 </span> 11 <span class="nn-claims-badge nn-claims-badge--unverified_unreachable" data-status="unverified_unreachable" title="The source could not be fetched from our servers (a block, a rate limit or a server error), so the claim could not be checked. It is re-checked nightly for a week.">Published, not yet verified
-</span> 3 marked
+</span> 3
                 </span>
             </summary>
             <div class="nn-claims-episode-body">
@@ -1771,7 +1832,7 @@
                 <span class="nn-claims-episode-date">2026-10-02</span>
                 <span class="nn-claims-episode-counts"><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
 </span> 20 <span class="nn-claims-badge nn-claims-badge--unverified_unreachable" data-status="unverified_unreachable" title="The source could not be fetched from our servers (a block, a rate limit or a server error), so the claim could not be checked. It is re-checked nightly for a week.">Published, not yet verified
-</span> 1 marked
+</span> 1
                 </span>
             </summary>
             <div class="nn-claims-episode-body">
@@ -1796,7 +1857,7 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.theglobeandmail.com/business/article-eu-governments-consider-release-of-diesel-stocks-after-pressure-from/" target="_blank" rel="noopener">theglobeandmail.com</a></span>
                         </div>
                         Two sources told Reuters that a French proposal discussed by EU governments calls for European countries to release 50 million barrels of diesel and IEA members to release 50 million barrels of crude.
@@ -1852,14 +1913,14 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.theguardian.com/world/live/2026/oct/02/france-schools-protests-violence-ukraine-kallas-rome-pope-latest-news-updates" target="_blank" rel="noopener" title="Over 560 schools disrupted in France on Friday as protests escalate into ‘urban violence’ – Europe live">theguardian.com</a></span>
                         </div>
                         Midday figures quoted by Le Figaro showed 564 French schools disrupted and some 600 people arrested on Friday, and the Guardian reported nearly 3,000 teenagers detained since the tensions began.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.cbc.ca/news/world/france-school-protests-9.7366549?cmp=rss" target="_blank" rel="noopener" title="Violent protests in France over state of education lead to closure of nearly 400 schools">cbc.ca</a></span>
                         </div>
                         About 400 schools in France were expected to remain closed on Friday after student protests turned violent in some places.
@@ -1880,21 +1941,21 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.nytimes.com/2026/10/02/world/europe/russia-ukraine-winter.html" target="_blank" rel="noopener" title="Russia Is Planning Its Most Powerful Blow Yet to Try to Freeze Ukraine">nytimes.com</a></span>
                         </div>
                         Ukraine showed European partners what it said were intercepted Russian plans to cut major cities off power, heat and water this winter.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.nytimes.com/2026/10/02/world/americas/brazil-us-consulate-elections.html" target="_blank" rel="noopener" title="U.S. Suspends Consular Services in Brazil on Eve of Elections">nytimes.com</a></span>
                         </div>
                         The US State Department suspended consular services in Brazil citing unspecified security concerns, ahead of a presidential election on Sunday.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.france24.com/en/tv-shows/press-review/20261002-brazil-s-election-lula-or-bolsonaro-jr" target="_blank" rel="noopener" title="Brazil's election: Lula or Bolsonaro Jr?">france24.com</a></span>
                         </div>
                         A presidential debate was cancelled after President Lula and Flavio Bolsonaro both pulled out.
@@ -1908,21 +1969,21 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.reuters.com/business/energy/opec-delays-oil-capacity-review-after-iran-war-disrupts-expansion-plans-sources-2026-10-02/" target="_blank" rel="noopener" title="EXCLUSIVE: OPEC+ delays oil capacity review after Iran war disrupts expansion plans, sources say">reuters.com</a></span>
                         </div>
                         Sources say OPEC+ delayed an oil capacity review after the Iran war disrupted expansion plans.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.aljazeera.com/news/2026/10/2/indian-authorities-clamp-down-as-cockroach-movement-launches-new-protests?traffic_source=rss" target="_blank" rel="noopener" title="Indian authorities clamp down as ‘cockroach’ movement launches new protests">aljazeera.com</a></span>
                         </div>
                         Demonstrators gathered in Mumbai and New Delhi to demand the resignation of the Election Commission chief as Indian authorities clamped down.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.theglobeandmail.com/canada/video-astronauts-arrive-at-international-space-station-on-quickest-us/" target="_blank" rel="noopener" title="Astronauts arrive at International Space Station on quickest U.S. express flight yet">theglobeandmail.com</a></span>
                         </div>
                         Four astronauts arrived at the International Space Station on Thursday after an eight-hour flight that set a United States speed record: Jessica Watkins, Luke Delaney, Joshua Kutryk and Sergey Teteryatnikov.
@@ -3151,7 +3212,7 @@
                     <div class="nn-footer-brand"><span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span></div>
                     <p class="nn-footer-desc">Zero fluff. Independent podcast network produced in Vancouver, Canada.</p>
                 </div>
-                <div class="nn-footer-col">
+                <div class="nn-footer-col nn-footer-col--shows">
                     <h4>Shows</h4>
                     
                     <ul class="nn-footer-showlist">
@@ -3310,7 +3371,8 @@
                       data-label-idle="Subscribe"
                       data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
-                    <p>Pick the shows you want in your inbox:</p>
+                    <p>Pick the shows you want in your inbox:</p><details class="nn-subscribe-pick">
+                    <summary>Choose shows <span>(31)</span></summary>
                     <div class="nn-subscribe-tags">
                         <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
                         
@@ -3375,6 +3437,7 @@
                         <label><input type="checkbox" name="tag" value="Offshore North"> Offshore North</label>
                         
                     </div>
+                    </details>
                     <div class="nn-subscribe-row">
                         <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
                         <button type="submit">Subscribe</button>

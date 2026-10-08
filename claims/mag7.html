@@ -129,7 +129,19 @@
     }
     .legal-body li { margin-bottom: var(--sp-2); }
     .legal-body strong { color: var(--nn-white); }
-    .legal-body a { color: var(--nn-cyan); }
+    .legal-body a { color: var(--nn-cyan); text-decoration: underline; text-underline-offset: 2px; }
+    .legal-body h2[id], .legal-body h3[id] { scroll-margin-top: calc(var(--nav-height) + var(--sp-4)); }
+    .legal-toc {
+        background: var(--nn-card);
+        border: 1px solid var(--nn-border);
+        border-radius: 12px;
+        padding: var(--sp-4) var(--sp-5);
+        margin: var(--sp-6) 0 0;
+    }
+    .legal-toc h2 { border-top: 0; margin: 0 0 var(--sp-2); padding-top: 0; font-size: 1rem; }
+    .legal-toc ol { margin: 0; columns: 2 16rem; column-gap: var(--sp-6); }
+    .legal-toc li { margin-bottom: var(--sp-1); font-size: 0.92rem; break-inside: avoid; }
+    .legal-toc ul { list-style: none; margin: var(--sp-1) 0 0; padding-left: var(--sp-4); }
     .legal-body a:hover { color: var(--nn-white); }
     .legal-callout {
         background: linear-gradient(135deg, rgba(107, 71, 255, 0.15) 0%, rgba(0, 212, 255, 0.08) 100%);
@@ -168,7 +180,8 @@
         font-family: var(--font-heading);
         font-size: 0.95rem;
         font-weight: 700;
-        color: var(--nn-purple);
+        /* #6B47FF is 3.6:1 on the page; the text tint clears 4.5:1. */
+        color: var(--nn-purple-text, #9D8BFF);
         margin: 0 0 var(--sp-2);
     }
     .legal-grid p { font-size: 0.92rem; margin: 0; }
@@ -210,7 +223,7 @@
         font-size: 0.85rem;
         color: var(--nn-text-muted);
     }
-    .legal-footer-note .nn-highlight { color: var(--nn-purple); font-weight: 500; }
+    .legal-footer-note .nn-highlight { color: var(--nn-purple-text, #9D8BFF); font-weight: 500; }
     .legal-related {
         display: flex;
         flex-wrap: wrap;
@@ -233,6 +246,15 @@
     }
 </style>
 
+    <style>
+        .nn-claims-steps--compact summary {
+            font-family: var(--font-heading);
+            font-weight: 600;
+            color: var(--nn-white);
+            cursor: pointer;
+        }
+        .nn-claims-steps--compact details[open] summary { margin-bottom: var(--sp-2); }
+    </style>
 
 
     
@@ -728,379 +750,200 @@
         <a href="../player.html">Player</a>
         
         <a href="../explore.html" style="font-weight:600;">Find your show</a>
-        
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Hosted by Mira</div>
+        <details class="nn-mobile-shows nn-mobile-group" open>
+            <summary class="nn-mobile-shows-title">Hosted by Mira <span class="nn-mobile-count">3</span></summary>
             
             <a href="../nerra-daily.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/nerra-daily-400.webp"><img src="../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/nerra-daily-400.webp"><img src="../assets/covers/nerra-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Daily
             </a>
             
             <a href="../age-of-ai.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/age-of-ai-400.webp"><img src="../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/age-of-ai-400.webp"><img src="../assets/covers/age-of-ai.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The Age of AI
             </a>
             
             <a href="../nerra-voices.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/nerra-voices-400.webp"><img src="../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/nerra-voices-400.webp"><img src="../assets/covers/nerra-voices.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Nerra Voices
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">World desks</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">World desks <span class="nn-mobile-count">6</span></summary>
             
             <a href="../omni-view-world.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-world-400.webp"><img src="../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-world-400.webp"><img src="../assets/covers/omni-view-world.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Top World News
             </a>
             
             <a href="../omni-view-north-america.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-north-america-400.webp"><img src="../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-north-america-400.webp"><img src="../assets/covers/omni-view-north-america.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View North America
             </a>
             
             <a href="../omni-view-europe.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-europe-400.webp"><img src="../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-europe-400.webp"><img src="../assets/covers/omni-view-europe.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Europe
             </a>
             
             <a href="../omni-view-asia-pacific.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-asia-pacific-400.webp"><img src="../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-asia-pacific-400.webp"><img src="../assets/covers/omni-view-asia-pacific.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Asia Pacific
             </a>
             
             <a href="../omni-view-africa-mideast.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-africa-mideast-400.webp"><img src="../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-africa-mideast-400.webp"><img src="../assets/covers/omni-view-africa-mideast.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Africa & Middle East
             </a>
             
             <a href="../omni-view-latam.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-latam-400.webp"><img src="../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-latam-400.webp"><img src="../assets/covers/omni-view-latam.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Central & South America
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Local news</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Local news <span class="nn-mobile-count">2</span></summary>
             
             <a href="../vancouver.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/vancouver-400.webp"><img src="../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/vancouver-400.webp"><img src="../assets/covers/vancouver.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Vancouver Daily News
             </a>
             
             <a href="../collingwood.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/collingwood-400.webp"><img src="../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/collingwood-400.webp"><img src="../assets/covers/collingwood.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Collingwood Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">AI & compute</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">AI & compute <span class="nn-mobile-count">3</span></summary>
             
             <a href="../models-agents.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/models-agents-400.webp"><img src="../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/models-agents-400.webp"><img src="../assets/covers/models-agents.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents
             </a>
             
             <a href="../ai-chips.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/ai-chips-400.webp"><img src="../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/ai-chips-400.webp"><img src="../assets/covers/ai-chips.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 AI Chips & Data Centres Daily
             </a>
             
             <a href="../models-agents-beginners.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/models-agents-beginners-400.webp"><img src="../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/models-agents-beginners-400.webp"><img src="../assets/covers/models-agents-beginners.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents for Beginners
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Markets</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Markets <span class="nn-mobile-count">4</span></summary>
             
             <a href="../modern-investing.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/modern-investing-400.webp"><img src="../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/modern-investing-400.webp"><img src="../assets/covers/modern-investing.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Modern Investing Techniques
             </a>
             
             <a href="../mag7.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/mag7-400.webp"><img src="../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/mag7-400.webp"><img src="../assets/covers/mag7.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 MAG 7 Daily
             </a>
             
             <a href="../prediction-markets.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/prediction-markets-400.webp"><img src="../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/prediction-markets-400.webp"><img src="../assets/covers/prediction-markets.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Prediction Markets Daily
             </a>
             
             <a href="../tesla.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/tesla-shorts-time-400.webp"><img src="../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/tesla-shorts-time-400.webp"><img src="../assets/covers/tesla-shorts-time.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Tesla Shorts Time
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Health & longevity</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Health & longevity <span class="nn-mobile-count">3</span></summary>
             
             <a href="../planetterrian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/planetterrian-daily-400.webp"><img src="../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/planetterrian-daily-400.webp"><img src="../assets/covers/planetterrian-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Planetterrian Daily
             </a>
             
             <a href="../peptides.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/peptides-400.webp"><img src="../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/peptides-400.webp"><img src="../assets/covers/peptides.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Peptides Weekly
             </a>
             
             <a href="../longevity.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/longevity-400.webp"><img src="../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/longevity-400.webp"><img src="../assets/covers/longevity.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Longevity Weekly
             </a>
             
-        </div>
+        </details>
         
-        <div class="nn-mobile-shows">
-            <div class="nn-mobile-shows-title">Every other show</div>
+        <details class="nn-mobile-shows nn-mobile-group">
+            <summary class="nn-mobile-shows-title">Every other show <span class="nn-mobile-count">10</span></summary>
             
             <a href="../omni-view.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-400.webp"><img src="../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/omni-view-400.webp"><img src="../assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Omni View
             </a>
             
             <a href="../fascinating-frontiers.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/fascinating-frontiers-400.webp"><img src="../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/fascinating-frontiers-400.webp"><img src="../assets/covers/fascinating-frontiers.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Fascinating Frontiers
             </a>
             
             <a href="../spacex.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/spacex-400.webp"><img src="../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/spacex-400.webp"><img src="../assets/covers/spacex.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 SpaceX Daily
             </a>
             
             <a href="../env-intel.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/environmental-intelligence-400.webp"><img src="../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/environmental-intelligence-400.webp"><img src="../assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Environmental Intelligence
             </a>
             
             <a href="../ru/finansy-prosto.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/finansy-prosto-400.webp"><img src="../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/finansy-prosto-400.webp"><img src="../assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Финансы Просто
             </a>
             
             <a href="../ru/privet-russian.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/privet-russian-400.webp"><img src="../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/privet-russian-400.webp"><img src="../assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Привет, Русский!
             </a>
             
             <a href="../unintended-consequences.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/unintended-consequences-400.webp"><img src="../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/unintended-consequences-400.webp"><img src="../assets/covers/unintended-consequences.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Unintended Consequences
             </a>
             
             <a href="../first-principles.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/first-principles-daily-400.webp"><img src="../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/first-principles-daily-400.webp"><img src="../assets/covers/first-principles-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 First Principles Daily
             </a>
             
             <a href="../thedppod.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/dp-pod-400.webp"><img src="../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/dp-pod-400.webp"><img src="../assets/covers/dp-pod.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 The DP Pod: The Do Positive Podcast
             </a>
             
             <a href="../offshore-north.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/offshore-north-400.webp"><img src="../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="../assets/covers/offshore-north-400.webp"><img src="../assets/covers/offshore-north.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 Offshore North
             </a>
             
-        </div>
+        </details>
         
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Blogs</div>
-            <a href="../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">
-                All Blog Posts
-            </a>
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Hosted by Mira</div>
-            
-            <a href="../blog/nerra_daily/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/nerra-daily-400.webp"><img src="../assets/covers/nerra-daily.jpg" alt="Nerra Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Daily Blog
-            </a>
-            
-            <a href="../blog/age_of_ai/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/age-of-ai-400.webp"><img src="../assets/covers/age-of-ai.jpg" alt="The Age of AI cover art" width="1400" height="1400" loading="lazy"></picture>
-                The Age of AI Blog
-            </a>
-            
-            <a href="../blog/nerra_voices/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/nerra-voices-400.webp"><img src="../assets/covers/nerra-voices.jpg" alt="Nerra Voices cover art" width="1400" height="1400" loading="lazy"></picture>
-                Nerra Voices Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">World desks</div>
-            
-            <a href="../blog/omni_view_world/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-world-400.webp"><img src="../assets/covers/omni-view-world.jpg" alt="Omni View Top World News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Top World News Blog
-            </a>
-            
-            <a href="../blog/omni_view_north_america/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-north-america-400.webp"><img src="../assets/covers/omni-view-north-america.jpg" alt="Omni View North America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View North America Blog
-            </a>
-            
-            <a href="../blog/omni_view_europe/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-europe-400.webp"><img src="../assets/covers/omni-view-europe.jpg" alt="Omni View Europe cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Europe Blog
-            </a>
-            
-            <a href="../blog/omni_view_asia_pacific/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-asia-pacific-400.webp"><img src="../assets/covers/omni-view-asia-pacific.jpg" alt="Omni View Asia Pacific cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Asia Pacific Blog
-            </a>
-            
-            <a href="../blog/omni_view_africa_mideast/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-africa-mideast-400.webp"><img src="../assets/covers/omni-view-africa-mideast.jpg" alt="Omni View Africa & Middle East cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Africa & Middle East Blog
-            </a>
-            
-            <a href="../blog/omni_view_latam/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-latam-400.webp"><img src="../assets/covers/omni-view-latam.jpg" alt="Omni View Central & South America cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Central & South America Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Local news</div>
-            
-            <a href="../blog/vancouver/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/vancouver-400.webp"><img src="../assets/covers/vancouver.jpg" alt="Vancouver Daily News cover art" width="1400" height="1400" loading="lazy"></picture>
-                Vancouver Daily News Blog
-            </a>
-            
-            <a href="../blog/collingwood/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/collingwood-400.webp"><img src="../assets/covers/collingwood.jpg" alt="Collingwood Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Collingwood Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">AI & compute</div>
-            
-            <a href="../blog/models_agents/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/models-agents-400.webp"><img src="../assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents Blog
-            </a>
-            
-            <a href="../blog/ai_chips/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/ai-chips-400.webp"><img src="../assets/covers/ai-chips.jpg" alt="AI Chips & Data Centres Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                AI Chips & Data Centres Daily Blog
-            </a>
-            
-            <a href="../blog/models_agents_beginners/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/models-agents-beginners-400.webp"><img src="../assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
-                Models & Agents for Beginners Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Markets</div>
-            
-            <a href="../blog/modern_investing/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/modern-investing-400.webp"><img src="../assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
-                Modern Investing Techniques Blog
-            </a>
-            
-            <a href="../blog/mag7/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/mag7-400.webp"><img src="../assets/covers/mag7.jpg" alt="MAG 7 Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                MAG 7 Daily Blog
-            </a>
-            
-            <a href="../blog/prediction_markets/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/prediction-markets-400.webp"><img src="../assets/covers/prediction-markets.jpg" alt="Prediction Markets Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Prediction Markets Daily Blog
-            </a>
-            
-            <a href="../blog/tesla/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/tesla-shorts-time-400.webp"><img src="../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
-                Tesla Shorts Time Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Health & longevity</div>
-            
-            <a href="../blog/planetterrian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/planetterrian-daily-400.webp"><img src="../assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                Planetterrian Daily Blog
-            </a>
-            
-            <a href="../blog/peptides/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/peptides-400.webp"><img src="../assets/covers/peptides.jpg" alt="Peptides Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Peptides Weekly Blog
-            </a>
-            
-            <a href="../blog/longevity/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/longevity-400.webp"><img src="../assets/covers/longevity.jpg" alt="Longevity Weekly cover art" width="1400" height="1400" loading="lazy"></picture>
-                Longevity Weekly Blog
-            </a>
-            
-            
-            <div class="nn-footer-grouplabel" style="padding-left:0.25rem;">Every other show</div>
-            
-            <a href="../blog/omni_view/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/omni-view-400.webp"><img src="../assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
-                Omni View Blog
-            </a>
-            
-            <a href="../blog/fascinating_frontiers/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/fascinating-frontiers-400.webp"><img src="../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
-                Fascinating Frontiers Blog
-            </a>
-            
-            <a href="../blog/spacex/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/spacex-400.webp"><img src="../assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                SpaceX Daily Blog
-            </a>
-            
-            <a href="../blog/env_intel/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/environmental-intelligence-400.webp"><img src="../assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
-                Environmental Intelligence Blog
-            </a>
-            
-            <a href="../blog/finansy_prosto/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/finansy-prosto-400.webp"><img src="../assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
-                Финансы Просто Blog
-            </a>
-            
-            <a href="../blog/privet_russian/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/privet-russian-400.webp"><img src="../assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
-                Привет, Русский! Blog
-            </a>
-            
-            <a href="../blog/unintended_consequences/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/unintended-consequences-400.webp"><img src="../assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
-                Unintended Consequences Blog
-            </a>
-            
-            <a href="../blog/first_principles/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/first-principles-daily-400.webp"><img src="../assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
-                First Principles Daily Blog
-            </a>
-            
-            <a href="../blog/dp_pod/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/dp-pod-400.webp"><img src="../assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="1400" height="1400" loading="lazy"></picture>
-                The DP Pod: The Do Positive Podcast Blog
-            </a>
-            
-            <a href="../blog/offshore_north/index.html" class="nn-mobile-show-link">
-                <picture><source type="image/webp" srcset="../assets/covers/offshore-north-400.webp"><img src="../assets/covers/offshore-north.jpg" alt="Offshore North cover art" width="1400" height="1400" loading="lazy"></picture>
-                Offshore North Blog
-            </a>
-            
-            
+            <a href="../blog/index.html" class="nn-mobile-show-link" style="font-weight:600">All Blog Posts</a>
+            <a href="../topics/index.html" class="nn-mobile-show-link">Browse by topic</a>
         </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">More</div>
@@ -1124,7 +967,7 @@
         <p class="nn-claims-back"><a href="../claims.html">← Claims &amp; corrections, every show</a></p>
         <h1>MAG 7 Daily: claims &amp; corrections</h1>
         
-        <div class="legal-meta">Nerra Network &middot; last 30 days &middot; 2026-09-06 to 2026-10-06</div>
+        <div class="legal-meta">Nerra Network &middot; last 30 days &middot; 2026-09-07 to 2026-10-07</div>
         <p class="lede">
             
             Every factual claim this show made in the last 30 days, with what a
@@ -1138,16 +981,22 @@
     
         
         
-        <h2>How this show's claims are checked</h2>
-        <p class="nn-claims-intro"><strong>Every episode starts with a ledger.</strong> When a show's digest is written, the model also writes a claims ledger: each factual sentence it asserts, the URL it took it from, and the passage in that source that supports it. The ledger is extracted before any published surface sees the text. <strong>Each claim is checked by a machine, not trusted.</strong> Before the episode is saved, every entry is checked mechanically: first against the copy of the source the pipeline fetched that morning, then against the live page. The supporting quote has to actually appear in the source. A sentence written in the shape of a citation with no ledger entry behind it is caught by the same check — that shape is the signature of a fabricated reference. <strong>A claim the check cannot confirm is published and marked, not removed.</strong> Sometimes the source cannot be reached from our servers, sometimes the page has moved, and sometimes the model paraphrased where it should have quoted. None of those means the sentence is false. A story newer than the model's training data is verified against its source, never against memory, and a true, timely story is worth more to a listener than a clean ledger. So the sentence ships, and its status is shown beside it — on the episode page, and on this ledger — in plain words that say what the check could and could not do. <strong>Unverified claims are re-checked every night for a week.</strong> For 7 nights after publication a job re-runs the check on every marked claim that names a source. A claim that passes later is upgraded on the ledger with the date it was confirmed and the status it carried first. A claim that never passes stays marked; nothing is quietly deleted and nothing is quietly promoted. The full process, the badge legend and every show's totals are on the
+        <h2>How this show's claims are checked</h2><ol class="nn-claims-steps nn-claims-steps--compact">
+            <li><details><summary>Every episode starts with a ledger</summary><p>When a show's digest is written, the model also writes a claims ledger: each factual sentence it asserts, the URL it took it from, and the passage in that source that supports it. The ledger is extracted before any published surface sees the text.</p></details></li>
+            <li><details><summary>Each claim is checked by a machine, not trusted</summary><p>Before the episode is saved, every entry is checked mechanically: first against the copy of the source the pipeline fetched that morning, then against the live page. The supporting quote has to actually appear in the source. A sentence written in the shape of a citation with no ledger entry behind it is caught by the same check — that shape is the signature of a fabricated reference.</p></details></li>
+            <li><details><summary>A claim the check cannot confirm is published and marked, not removed</summary><p>Sometimes the source cannot be reached from our servers, sometimes the page has moved, and sometimes the model paraphrased where it should have quoted. None of those means the sentence is false. A story newer than the model's training data is verified against its source, never against memory, and a true, timely story is worth more to a listener than a clean ledger. So the sentence ships, and its status is shown beside it — on the episode page, and on this ledger — in plain words that say what the check could and could not do.</p></details></li>
+            <li><details><summary>Unverified claims are re-checked every night for a week</summary><p>For 7 nights after publication a job re-runs the check on every marked claim that names a source. A claim that passes later is upgraded on the ledger with the date it was confirmed and the status it carried first. A claim that never passes stays marked; nothing is quietly deleted and nothing is quietly promoted.</p></details></li>
+        </ol>
+        <p class="nn-claims-intro">
+            The full process, the badge legend and every show's totals are on the
             <a href="../claims.html">network ledger page</a>.
         </p>
 
         <h2>Last 30 days</h2>
         
         <div class="nn-claims-tiles">
-            <div class="nn-claims-tile"><div class="nn-claims-tile-num">204</div><div class="nn-claims-tile-label">claims across 14 episodes</div></div>
-            <div class="nn-claims-tile nn-claims-tile--verified"><div class="nn-claims-tile-num">99.0%</div><div class="nn-claims-tile-label">verified against their source</div></div>
+            <div class="nn-claims-tile"><div class="nn-claims-tile-num">217</div><div class="nn-claims-tile-label">claims across 15 episodes</div></div>
+            <div class="nn-claims-tile nn-claims-tile--verified"><div class="nn-claims-tile-num">99.1%</div><div class="nn-claims-tile-label">verified against their source</div></div>
             <div class="nn-claims-tile nn-claims-tile--flagged"><div class="nn-claims-tile-num">2</div><div class="nn-claims-tile-label">published and marked, not yet verified</div></div>
             <div class="nn-claims-tile nn-claims-tile--verified"><div class="nn-claims-tile-num">0</div><div class="nn-claims-tile-label">verified later by the nightly re-check</div></div>
             <div class="nn-claims-tile nn-claims-tile--corrections"><div class="nn-claims-tile-num">0</div><div class="nn-claims-tile-label">corrections filed</div></div>
@@ -1165,6 +1014,113 @@
         <h2>Episode by episode</h2>
         <details class="nn-claims-episode" open>
             <summary>
+                <span class="nn-claims-episode-title">Episode 15</span>
+                <span class="nn-claims-episode-date">2026-10-07</span>
+                <span class="nn-claims-episode-counts"><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span> 13
+                </span>
+            </summary>
+            <div class="nn-claims-episode-body">
+                <p class="nn-claims-episode-links"><a href="../blog/mag7/ep015.html">Read this episode →</a>
+                </p>
+                <p class="nn-claims-sub">Claims</p>
+                <ol class="nn-claims-list">
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.bloomberg.com/news/videos/2026-10-07/spacex-eyes-40-billion-deal-to-buy-nvidia-chips-video" target="_blank" rel="noopener" title="SpaceX Eyes $40 Billion Deal to Buy Nvidia Chips">bloomberg.com</a></span>
+                        </div>
+                        SpaceX is in talks with banks and investors to raise $40 billion to buy chips from Nvidia.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.bloomberg.com/news/videos/2026-10-07/spacex-eyes-40-billion-deal-to-buy-nvidia-chips-video" target="_blank" rel="noopener" title="SpaceX Eyes $40 Billion Deal to Buy Nvidia Chips">bloomberg.com</a></span>
+                        </div>
+                        Pimco is one of the investment managers looking at the SpaceX chip financing.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.theinformation.com/articles/meta-microsoft-work-wean-staff-anthropics-claude?utm_campaign=Editorial&utm_content=General+Compute,Glance,Nebius,TITV,titv_r4u4y&utm_medium=organic_social&utm_source=twitter" target="_blank" rel="noopener" title="Microsoft Cut Claude Spending by at Least 33% from $1B Peak">theinformation.com</a></span>
+                        </div>
+                        Microsoft was on track to spend $1 billion on employees’ Claude use and pulled spending back by at least 33 percent from that peak.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.theinformation.com/articles/meta-microsoft-work-wean-staff-anthropics-claude?utm_campaign=Editorial&utm_content=General+Compute,Glance,Nebius,TITV,titv_r4u4y&utm_medium=organic_social&utm_source=twitter" target="_blank" rel="noopener" title="Microsoft Cut Claude Spending by at Least 33% from $1B Peak">theinformation.com</a></span>
+                        </div>
+                        Aaron Holmes reported Microsoft’s Claude spending is at least 33 percent lower than the peak.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://mixed-news.com/en/google-gemini-3-1-flash-image-shutdown-154-days-23-days-notice/" target="_blank" rel="noopener" title="Google retires a Gemini image model 154 days after release, on 23 days' notice">mixed-news.com</a></span>
+                        </div>
+                        Google is retiring a Gemini image model 154 days after release on 23 days’ notice, identified as Gemini 3.1 Flash Image.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/07/apple-home-security-camera-still-coming-next-year/" target="_blank" rel="noopener" title="Apple's Own Home Security Camera Still Coming Next Year">macrumors.com</a></span>
+                        </div>
+                        Mark Gurman said Apple’s privacy-centric home camera is still coming next year, is separate from LG co-developed cameras, will not record video, and will use AI to detect which room a person is in.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/07/apple-home-security-camera-still-coming-next-year/" target="_blank" rel="noopener" title="Apple's Own Home Security Camera Still Coming Next Year">macrumors.com</a></span>
+                        </div>
+                        Bloomberg first reported a 2027 Apple home security system and service in September, and the LG lineup is not expected for at least a few more months.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.marktechpost.com/2026/10/06/meta-ai-open-sources-rebalancer-a-c-assignment-solver-that-runs-about-40-million-placement-problems-a-day/" target="_blank" rel="noopener" title="Meta AI Open-Sources Rebalancer: A C++ Assignment Solver That Runs About 40 Million Placement Problems a Day">marktechpost.com</a></span>
+                        </div>
+                        Meta AI open-sourced Rebalancer, a C++ assignment solver that runs about 40 million placement problems a day.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.androidauthority.com/amazon-echo-alexa-aux-input-voice-controls-3719987/" target="_blank" rel="noopener" title="Amazon is taking away this Alexa feature from Echo speakers for no real reason">androidauthority.com</a></span>
+                        </div>
+                        Amazon disabled Alexa voice commands for AUX input on Echo Studio (1st Gen), Echo Plus (2nd Gen), and Echo (3rd and 4th Gen), while the physical port, app mode switching, and Bluetooth remain.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+</span><span class="nn-claims-source"><a href="https://www.androidauthority.com/amazon-echo-alexa-aux-input-voice-controls-3719987/" target="_blank" rel="noopener" title="Amazon is taking away this Alexa feature from Echo speakers for no real reason">androidauthority.com</a></span>
+                        </div>
+                        The affected Echo hardware dates to 2018, 2019, and 2020, and the fourth-generation Echo from 2020 was the last mainstream Echo with a 3.5mm jack.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://x.com/Techmeme/status/2107781956020883738" target="_blank" rel="noopener" title="Elon Musk says his empire will build Texas Terafab chip project, no TSMC role">x.com</a></span>
+                        </div>
+                        Elon Musk said his business empire will build and operate the Texas Terafab and ruled out any operational role for TSMC.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/07/iphone-duo-document-preview-two-page-layout/" target="_blank" rel="noopener">macrumors.com</a></span>
+                        </div>
+                        iPhone Duo pre-orders open at 5 a.m. Pacific on Friday, October 16, with availability on Friday, October 23.
+                    </li>
+                    <li>
+                        <div class="nn-claims-claim-head">
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
+</span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/07/formula-1-apple-tv-dolby-atmos-this-month/" target="_blank" rel="noopener" title="Formula 1 Coverage on Apple TV to Get Dolby Atmos Later This Month">macrumors.com</a></span>
+                        </div>
+                        Formula 1 coverage on Apple TV adds Dolby Atmos starting with the U.S. Grand Prix weekend on Friday, October 23, in Austin, under a five-year deal announced last October.
+                    </li>
+                </ol>
+            </div>
+        </details>
+        <details class="nn-claims-episode">
+            <summary>
                 <span class="nn-claims-episode-title">Episode 14</span>
                 <span class="nn-claims-episode-date">2026-10-06</span>
                 <span class="nn-claims-episode-counts"><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
@@ -1178,49 +1134,49 @@
                 <ol class="nn-claims-list">
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://blog.google/company-news/why-were-backing-americas-existing-nuclear-plants/" target="_blank" rel="noopener" title="Why we're backing America's existing nuclear plants">blog.google</a></span>
                         </div>
                         Google's new agreement with Constellation Energy brings the new nuclear capacity it has enabled for the U.S. energy system from uprates and restarts to over 1.5 GW.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://blog.google/company-news/why-were-backing-americas-existing-nuclear-plants/" target="_blank" rel="noopener" title="Why we're backing America's existing nuclear plants">blog.google</a></span>
                         </div>
                         The Constellation project is a nuclear uprate at the Braidwood Clean Energy Center in Illinois.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/05/apple-opens-iphone-duo-app-submissions/" target="_blank" rel="noopener" title="Apple Announces iPhone Duo Apps Can Now Be Submitted to App Store">macrumors.com</a></span>
                         </div>
                         Apple said iPhone Duo-optimized apps can now be submitted for App Store approval ahead of a Friday, October 23 launch.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/05/apple-opens-iphone-duo-app-submissions/" target="_blank" rel="noopener" title="Apple Announces iPhone Duo Apps Can Now Be Submitted to App Store">macrumors.com</a></span>
                         </div>
                         Only apps built with the iOS 27.1 SDK or later can fill the iPhone Duo inner display; unoptimized apps get black borders, and developers use Xcode 27.1.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://9to5mac.com/2026/10/05/apple-accuses-openai-of-improperly-adding-new-arguments-to-trade-secrets-case/" target="_blank" rel="noopener" title="Apple accuses OpenAI of improperly adding new arguments to trade secrets case">9to5mac.com</a></span>
                         </div>
                         Apple accused OpenAI of going beyond court rules in its response, after OpenAI had accused Apple of improperly adding new evidence.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://9to5google.com/2026/10/05/google-docs-drive-markdown-support/" target="_blank" rel="noopener" title="Google Docs and Drive now support markdown files natively">9to5google.com</a></span>
                         </div>
                         Google Drive and Google Docs are adding full native support for markdown .md files.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.androidauthority.com/amazon-alexa-la-la-la-3719167/" target="_blank" rel="noopener" title="Amazon Alexa won't stop saying 'lalala' and users are creeped out (Updated: Fix incoming)">androidauthority.com</a></span>
                         </div>
                         Android Authority reported that Amazon Alexa will not stop saying lalala, that users are creeped out, and that a fix is incoming.
@@ -1234,42 +1190,42 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.theinformation.com/articles/openais-regulatory-nightmare-getting-started" target="_blank" rel="noopener" title="Why OpenAI's Regulatory Nightmare Is Only Getting Started">theinformation.com</a></span>
                         </div>
                         On Monday the New York City Council held an AI-risk hearing and called Jacob Coxon plus officials from OpenAI, Google, Anthropic and Meta; SpaceX did not appear.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.theinformation.com/articles/openais-regulatory-nightmare-getting-started" target="_blank" rel="noopener" title="Why OpenAI's Regulatory Nightmare Is Only Getting Started">theinformation.com</a></span>
                         </div>
                         The Information also names a Senate investigation led by Josh Hawley, an FTC inquiry, an Australian government inquiry, a Florida court action, and a European inquiry.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.bloomberg.com/news/videos/2026-10-06/ai-firms-face-scrutiny-in-australia-video" target="_blank" rel="noopener" title="AI Firms Face Scrutiny in Australia">bloomberg.com</a></span>
                         </div>
                         Representatives from OpenAI, Anthropic, Microsoft and Google faced an Australian parliamentary inquiry after OpenAI revealed its technology breached Australian government agencies earlier this year.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://x.com/Techmeme/status/2107413625099243863" target="_blank" rel="noopener" title="OpenAI and Anthropic pledge faster safety incident disclosures at Australian hearing">x.com</a></span>
                         </div>
                         At the Australian hearing, OpenAI chief strategy officer Jason Kwon pledged faster safety-incident disclosures, and Anthropic representatives made similar pledges.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/05/apple-two-sets-of-product-launches-october/" target="_blank" rel="noopener" title="Sources: Apple Planning Two Sets of Product Launches in October">macrumors.com</a></span>
                         </div>
                         Mark Gurman reported Apple plans to unveil a home hub, a new HomePod mini, and a new Apple TV 4K on Tuesday, October 13, and sources said more products will be unveiled in the final week of October.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/05/apple-two-sets-of-product-launches-october/" target="_blank" rel="noopener" title="Sources: Apple Planning Two Sets of Product Launches in October">macrumors.com</a></span>
                         </div>
                         Apple previously announced a high-end Mac Studio with the M5 Ultra chip and 512GB of RAM for late October.
@@ -1283,7 +1239,7 @@
                 <span class="nn-claims-episode-date">2026-10-05</span>
                 <span class="nn-claims-episode-counts"><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
 </span> 11 <span class="nn-claims-badge nn-claims-badge--unverified_unreachable" data-status="unverified_unreachable" title="The source could not be fetched from our servers (a block, a rate limit or a server error), so the claim could not be checked. It is re-checked nightly for a week.">Published, not yet verified
-</span> 1 marked
+</span> 1
                 </span>
             </summary>
             <div class="nn-claims-episode-body">
@@ -1293,21 +1249,21 @@
                 <ol class="nn-claims-list">
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/05/extended-eu-wait-predicted-for-siri-ai/" target="_blank" rel="noopener" title="EU iPhone and iPad Users Could Still Face Months-Long Wait for Siri AI">macrumors.com</a></span>
                         </div>
                         Mark Gurman said a delay of around five months for upgraded Siri AI in the EU would be the absolute best case, with a potentially longer wait while Apple negotiates digital-rules compliance.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/05/extended-eu-wait-predicted-for-siri-ai/" target="_blank" rel="noopener" title="EU iPhone and iPad Users Could Still Face Months-Long Wait for Siri AI">macrumors.com</a></span>
                         </div>
                         Siri AI is not available in the EU on iPhone or iPad, but EU users have access to it on Mac.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/05/extended-eu-wait-predicted-for-siri-ai/" target="_blank" rel="noopener" title="EU iPhone and iPad Users Could Still Face Months-Long Wait for Siri AI">macrumors.com</a></span>
                         </div>
                         Gurman said Apple is withholding the Siri upgrade to pressure the European Commission.
@@ -1322,35 +1278,35 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.bloomberg.com/news/newsletters/2026-10-04/apple-s-john-ternus-leads-design-touch-screen-oled-macbook-pro-gets-lighter?accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzb3VyY2UiOiJTdWJzY3JpYmVyR2lmdGVkQXJ0aWNsZSIsImlhdCI6MTc5MTEyNDY4MiwiZXhwIjoxNzkxNzI5NDgyLCJhcnRpY2xlSWQiOiJUTURZVzFWVFRDWkwwMCIsImJjb25uZWN0SWQiOiJDNEVEQ0FFMUZBMDU0MEJFQTI0QTlGMjExQzFFOTA4MCJ9.PKg1XT__Ut-VKHQIouImouRWeBYPQed6H71pb7IaqJA" target="_blank" rel="noopener" title="New OLED MacBook Pro Significantly Lighter Due to Interior Redesign">bloomberg.com</a></span>
                         </div>
                         Apple's touch-screen OLED MacBook Pro is significantly lighter after an interior redesign that miniaturized parts and rearranged components.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/05/iphone-duo-focus-modes-easier-toggle-lock-screen/" target="_blank" rel="noopener" title="iPhone Duo Makes Focus Modes Easier to Toggle From the Lock Screen">macrumors.com</a></span>
                         </div>
                         iPhone Duo pre-orders open at 5 a.m. Pacific Time on Friday, October 16, with availability beginning Friday, October 23.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/05/iphone-duo-focus-modes-easier-toggle-lock-screen/" target="_blank" rel="noopener" title="iPhone Duo Makes Focus Modes Easier to Toggle From the Lock Screen">macrumors.com</a></span>
                         </div>
                         pdfu reported a Lock Screen Focus button on iPhone Duo and a status-bar Focus indicator, and Apple rebuilt iOS 27 for the foldable's two displays.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://x.com/theinformation/status/2106882216206737774" target="_blank" rel="noopener" title="CoreWeave EVP on Vera Rubin vs Blackwell Performance">x.com</a></span>
                         </div>
                         CoreWeave EVP Chen Goldberg said Cognition has seen an improvement on Vera Rubin compared with the Blackwell architecture.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.bloomberg.com/news/articles/2026-10-05/nvidia-partner-hon-hai-beats-sales-estimates-due-to-ai-frenzy" target="_blank" rel="noopener" title="Nvidia Partner Hon Hai Beats Sales Estimates Due to AI Frenzy">bloomberg.com</a></span>
                         </div>
                         Nvidia partner Hon Hai Precision Industry reported better-than-expected quarterly revenue, which Bloomberg said signals sustained elevated spending on global AI infrastructure.
@@ -1394,28 +1350,28 @@
                 <ol class="nn-claims-list">
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.theinformation.com/articles/google-paying-100-digital-publishers-ai-overviews?utm_campaign=Editorial&utm_content=Article&utm_medium=organic_social&utm_source=bluesky,threads,twitter" target="_blank" rel="noopener" title="Google Pays 100 Publishers Based on AI Overviews Contributions">theinformation.com</a></span>
                         </div>
                         Google is paying roughly 100 digital publishers based on how much their content contributes to AI Overviews, AI Mode and Gemini.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.theinformation.com/articles/google-paying-100-digital-publishers-ai-overviews?utm_campaign=Editorial&utm_content=Article&utm_medium=organic_social&utm_source=bluesky,threads,twitter" target="_blank" rel="noopener" title="Google Pays 100 Publishers Based on AI Overviews Contributions">theinformation.com</a></span>
                         </div>
                         Some participants say Google's publisher payouts amount to less than 0.1% of their advertising revenue.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://x.com/Techmeme/status/2106621798720967031" target="_blank" rel="noopener" title="Google prepares to defend a £1.2B UK class action lawsuit">x.com</a></span>
                         </div>
                         Google is preparing to defend a £1.2 billion UK class action over claims of excessive charges on Android apps downloaded from Google Play since 2015.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.theinformation.com/newsletters/applied-ai/microsoft-tears-ai-data-wall?utm_campaign=Editorial&utm_content=Article&utm_medium=organic_social&utm_source=bluesky,threads,twitter" target="_blank" rel="noopener" title="Microsoft Backs Effort to Standardize Business Metrics for AI Tools">theinformation.com</a></span>
                         </div>
                         Microsoft is backing an effort with Snowflake and others to standardize business metrics so AI tools can more easily understand company data, reversing an earlier effort to protect Fabric from rivals.
@@ -1443,14 +1399,14 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.ghacks.net/2026/10/04/microsoft-rolls-out-excel-canvas-a-copilot-report-view-that-refreshes-as-workbook-data-changes/" target="_blank" rel="noopener" title="Microsoft Rolls Out Excel Canvas, a Copilot Report View That Refreshes as Workbook Data Changes">ghacks.net</a></span>
                         </div>
                         Microsoft is rolling out Excel Canvas, a Copilot report view that refreshes as workbook data changes.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://x.com/Techmeme/status/2106620532993192263" target="_blank" rel="noopener" title="Toshiba plans to double HDD production capacity for AI data centers within FY2027">x.com</a></span>
                         </div>
                         Toshiba plans to double HDD production capacity for AI data centers within FY2027 from its 2025 level, targeting a 30% share by storage capacity, up from about 10%.
@@ -1478,7 +1434,7 @@
                 <span class="nn-claims-episode-date">2026-10-03</span>
                 <span class="nn-claims-episode-counts"><span class="nn-claims-badge nn-claims-badge--verified" data-status="verified" title="The source was fetched and the supporting quote was found in it."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
 </span> 22 <span class="nn-claims-badge nn-claims-badge--unverified_unreachable" data-status="unverified_unreachable" title="The source could not be fetched from our servers (a block, a rate limit or a server error), so the claim could not be checked. It is re-checked nightly for a week.">Published, not yet verified
-</span> 1 marked
+</span> 1
                 </span>
             </summary>
             <div class="nn-claims-episode-body">
@@ -1488,7 +1444,7 @@
                 <ol class="nn-claims-list">
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/02/apple-statement-on-iphone-18-pro-max-att-issue/" target="_blank" rel="noopener" title="Apple Says iPhone 18 Pro Max Users With AT&T Cellular Issue Need to Have Device Replaced">macrumors.com</a></span>
                         </div>
                         On October 2, 2026, Apple said a small number of iPhone 18 Pro Max users on AT&T can lose cellular service, blocking calls, texts and data.
@@ -1503,56 +1459,56 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/02/apple-statement-on-iphone-18-pro-max-att-issue/" target="_blank" rel="noopener" title="Apple Says iPhone 18 Pro Max Users With AT&T Cellular Issue Need to Have Device Replaced">macrumors.com</a></span>
                         </div>
                         Apple released iOS 27.0.1 earlier in the week and an AT&T carrier-settings update on October 2 to help prevent more iPhone 18 Pro Max users from being affected.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/02/apple-statement-on-iphone-18-pro-max-att-issue/" target="_blank" rel="noopener" title="Apple Says iPhone 18 Pro Max Users With AT&T Cellular Issue Need to Have Device Replaced">macrumors.com</a></span>
                         </div>
                         The AT&T carrier-settings update will automatically download over the next 14 days, and users can trigger it via Settings, General, About.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/02/apple-statement-on-iphone-18-pro-max-att-issue/" target="_blank" rel="noopener" title="Apple Says iPhone 18 Pro Max Users With AT&T Cellular Issue Need to Have Device Replaced">macrumors.com</a></span>
                         </div>
                         iPhone 18 Pro Max devices already affected on AT&T cannot have service reactivated with a software update and must be replaced.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/02/apple-statement-on-iphone-18-pro-max-att-issue/" target="_blank" rel="noopener" title="Apple Says iPhone 18 Pro Max Users With AT&T Cellular Issue Need to Have Device Replaced">macrumors.com</a></span>
                         </div>
                         Apple has observed the cellular issue only with iPhone 18 Pro Max users on the AT&T network.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.bloomberg.com/news/articles/2026-10-02/apple-to-tighten-mac-data-controls-in-guard-against-ai-agents" target="_blank" rel="noopener" title="Apple to Tighten Mac Data Controls in Guard Against AI Agents">bloomberg.com</a></span>
                         </div>
                         Apple plans new Mac privacy controls because of growing risks from granting broad data access to third-party software, including AI agents.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.macstories.net/linked/apple-announces-plan-to-impose-new-full-disk-access-controls-on-mac-developers/" target="_blank" rel="noopener" title="Apple Announces Plan to Impose New Full Disk Access Controls on Mac Developers">macstories.net</a></span>
                         </div>
                         Apple announced a plan to impose new full-disk access controls on Mac developers.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://arstechnica.com/security/2026/10/apple-changes-full-disk-access-permissions-to-curb-abuse-from-ai-agents/" target="_blank" rel="noopener" title="Apple changes full-disk access permissions to curb abuse from AI agents">arstechnica.com</a></span>
                         </div>
                         Ars Technica reported that Meta says FDA is not sufficient for Muse reading messages, and that Apple disagrees.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://techcrunch.com/2026/10/02/meta-wants-you-to-build-your-own-muse-gadget/" target="_blank" rel="noopener" title="Meta wants your next gadget to be Muse-infused">techcrunch.com</a></span>
                         </div>
                         Meta is giving Muse’s code away for free so others can build Muse into gadgets such as a TV or a toaster.
@@ -1573,35 +1529,35 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.businessinsider.com/hans-anders-wehkamp-pause-meta-glasses-ray-ban-sales-netherlands-2026-10" target="_blank" rel="noopener" title="The Netherlands considers banning Meta AI glasses as some retailers pull them from shelves">businessinsider.com</a></span>
                         </div>
                         The Netherlands is considering banning Meta AI glasses, and some retailers have pulled them from shelves.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.crn.com/news/ai/2026/microsoft-delays-default-copilot-usage-based-billing-to-dec-1-adds-spending-cap-option" target="_blank" rel="noopener" title="Microsoft Delays Default Copilot Usage-Based Billing To Dec. 1, Adds Spending Cap Option">crn.com</a></span>
                         </div>
                         Microsoft is delaying default Copilot usage-based billing to December 1 and adding a spending-cap option.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://arstechnica.com/tech-policy/2026/10/amazons-1b-plan-to-combat-data-center-backlash-draws-more-backlash/" target="_blank" rel="noopener" title="Amazon’s $1B plan to combat data center backlash draws more backlash">arstechnica.com</a></span>
                         </div>
                         Amazon’s one-billion-dollar plan to combat data-center backlash drew more backlash; Amazon was praised for ending NDAs and slammed for downplaying data-center pollution.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/02/apple-statement-on-iphone-18-pro-max-att-issue/" target="_blank" rel="noopener" title="Apple Says iPhone 18 Pro Max Users With AT&T Cellular Issue Need to Have Device Replaced">macrumors.com</a></span>
                         </div>
                         Thousands of users complained about the iPhone 18 Pro Max AT&T cellular issue on the Apple Support Community and other platforms.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/02/apple-statement-on-iphone-18-pro-max-att-issue/" target="_blank" rel="noopener" title="Apple Says iPhone 18 Pro Max Users With AT&T Cellular Issue Need to Have Device Replaced">macrumors.com</a></span>
                         </div>
                         U.S. iPhone 18 Pro Max models use Qualcomm’s Snapdragon X80 modem, while models sold in other countries use Apple’s C2 modem, and it is unclear if that difference is a factor.
@@ -1694,7 +1650,7 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.geekwire.com/2026/amazon-pledges-1b-to-data-center-communities-warns-that-local-opposition-threatens-u-s-ai-lead/" target="_blank" rel="noopener" title="Amazon pledges $1B to data center communities, warns that local opposition threatens U.S. AI lead">geekwire.com</a></span>
                         </div>
                         Amazon said it will drop NDAs with agencies on data-center projects, use lower-emission backup generators, publish energy and water use yearly, and pay enough for power so local bills do not rise.
@@ -1708,63 +1664,63 @@
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://x.com/Google/status/2105803583648100611" target="_blank" rel="noopener" title="Google launches satellite prototype for Project Suncatcher">x.com</a></span>
                         </div>
                         Google launched a prototype satellite carrying four TPUs with Planet on SpaceX’s Transporter-18 as the first step of Project Suncatcher.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.bloomberg.com/news/articles/2026-10-02/man-charged-by-us-with-illegally-shipping-nvidia-chips-to-china" target="_blank" rel="noopener" title="Man Charged by US With Illegally Shipping Nvidia Chips to China">bloomberg.com</a></span>
                         </div>
                         Federal prosecutors arrested a California man Thursday over servers containing $300 million worth of Nvidia AI chips allegedly smuggled to China.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.theinformation.com/briefings/california-man-arrested-smuggling-nvidia-chips-china" target="_blank" rel="noopener" title="U.S. Arrests Man for Smuggling Nvidia Chips to China">theinformation.com</a></span>
                         </div>
                         The Information identifies the arrested man as Greg Lui, owner of Earthmade Computer Inc. in the San Gabriel Valley.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.tbsnews.net/world/new-mexico-wants-meta-pay-40-billion-penalties-after-data-privacy-trial-1560216" target="_blank" rel="noopener" title="New Mexico wants Meta to pay up to $40 billion in penalties after data privacy trial">tbsnews.net</a></span>
                         </div>
                         New Mexico wants Meta to pay up to $40 billion in penalties after a data-privacy trial.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/01/att-acknowledges-iphone-18-pro-max-issues/" target="_blank" rel="noopener" title="AT&T Acknowledges iPhone 18 Pro Max Issues: Update Immediately">macrumors.com</a></span>
                         </div>
                         AT&T told iPhone 18 Pro Max customers to update to iOS 27.0.1 because some phones may be unable to complete calls, texts, or data, including to 911.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.macrumors.com/2026/10/01/att-acknowledges-iphone-18-pro-max-issues/" target="_blank" rel="noopener" title="AT&T Acknowledges iPhone 18 Pro Max Issues: Update Immediately">macrumors.com</a></span>
                         </div>
                         The U.S. iPhone 18 Pro Max is the only new iPhone unveiled last month with a Qualcomm cellular modem; other new models use Apple’s C2 modem.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.theinformation.com/articles/microsofts-executive-exodus-foreshadows-business-transition" target="_blank" rel="noopener" title="Microsoft’s Executive Exodus Foreshadows Business Transition">theinformation.com</a></span>
                         </div>
                         Ryan Roslansky said Thursday he will leave Microsoft at the end of this year, after Peter Lee and Rajesh Jha.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.geekwire.com/2026/amazon-pledges-1b-to-data-center-communities-warns-that-local-opposition-threatens-u-s-ai-lead/" target="_blank" rel="noopener" title="Amazon pledges $1B to data center communities, warns that local opposition threatens U.S. AI lead">geekwire.com</a></span>
                         </div>
                         GeekWire says the extra $1 billion is about $200 million a year, about one-tenth of 1 percent of roughly $220 billion in projected capital expenses.
                     </li>
                     <li>
                         <div class="nn-claims-claim-head">
-                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified
+                            <span class="nn-claims-badge nn-claims-badge--verified_from_fetched" data-status="verified_from_fetched" title="The supporting quote was found in the copy of the source fetched for the episode."><svg class="nn-claims-badge-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Verified (fetched copy)
 </span><span class="nn-claims-source"><a href="https://www.bloomberg.com/news/articles/2026-10-02/amazon-seeks-to-move-8-billion-of-chips-off-its-books-ft-says" target="_blank" rel="noopener" title="Amazon to Move $8 Billion of Chips Off Its Books, FT Says">bloomberg.com</a></span>
                         </div>
                         The Financial Times reported Amazon is exploring moving about $8 billion of top-end Nvidia chips off its balance sheet.
@@ -2839,7 +2795,7 @@
                     <div class="nn-footer-brand"><span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span></div>
                     <p class="nn-footer-desc">Zero fluff. Independent podcast network produced in Vancouver, Canada.</p>
                 </div>
-                <div class="nn-footer-col">
+                <div class="nn-footer-col nn-footer-col--shows">
                     <h4>Shows</h4>
                     
                     <ul class="nn-footer-showlist">
@@ -2998,7 +2954,8 @@
                       data-label-idle="Subscribe"
                       data-label-error="Something went wrong — try again">
                     <h4>Get Show Updates</h4>
-                    <p>Pick the shows you want in your inbox:</p>
+                    <p>Pick the shows you want in your inbox:</p><details class="nn-subscribe-pick">
+                    <summary>Choose shows <span>(31)</span></summary>
                     <div class="nn-subscribe-tags">
                         <label><input type="checkbox" name="tag" value="Nerra Daily"> Nerra Daily</label>
                         
@@ -3063,6 +3020,7 @@
                         <label><input type="checkbox" name="tag" value="Offshore North"> Offshore North</label>
                         
                     </div>
+                    </details>
                     <div class="nn-subscribe-row">
                         <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
                         <button type="submit">Subscribe</button>

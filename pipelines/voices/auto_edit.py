@@ -566,8 +566,17 @@ def build(run_id: str) -> dict:
     # The stereo fold stays as the fallback, with the settings it has always
     # had: level the guest's microphone and the side they heard separately,
     # and give the side carrying Mira her presence EQ.
+    # Oct 7 2026: when the guest's own browser take was used, post_interview
+    # also writes their leg with that take on the left, and the stereo
+    # fallback cuts from it (Scott Pulcini's was cut from the call twice).
+    leg_local = str((((run.get("grok_session_log") or {}).get("tracks") or {})
+                     .get("leg_local") or {}).get("url") or "")
     bed = ({"from": "mix:clean"} if clean else
+           {"from": leg_local, "balance": True, "voice_match": "right",
+            "left_source": "local"} if leg_local else
            {"from": "run:guest", "balance": True, "voice_match": "right"})
+    if not clean and leg_local:
+        rationale += " The guest's side is their own browser recording."
     # The cold open: the guest's own voice first, with one line of context
     # from Mira before it (Sept 25 2026). Needs the guest's own track, which
     # only the clean bed has; without it the introduction stands alone.
