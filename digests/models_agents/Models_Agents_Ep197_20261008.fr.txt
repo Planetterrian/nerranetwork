@@ -1,0 +1,159 @@
+La reconnaissance vocale des enfants conserve désormais les performances adultes grâce à l'adaptation bilingue et à la fusion des poids.
+
+Ici Models and Agents, épisode cent quatre-vingt-dix-sept.
+
+Des chercheurs ont publié une étude sur l'adaptation de la reconnaissance automatique de la parole chez l'enfant, qui préserve les performances adultes, en arabe et en anglais.
+
+Ils ont comparé l'ajustement fin complet, LoRA, et la fusion a posteriori dans l'espace des poids, sur des systèmes encodeur-décodeur, encodeur-CTC, et AudioLLM.
+
+L'adaptation bilingue s'est révélée plus stable que les approches propres à une langue.
+
+La fusion LERP a favorisé la rétention adulte, tandis que TIES a récupéré des gains enfant plus marqués.
+
+L'ajustement fin bilingue direct est resté le plus fort en taux d'erreur de mots brut pour le modèle encodeur-décodeur.
+
+Le travail quantifie le compromis entre adaptation et rétention avec les métriques Indice de rétention, Gain d'adaptation enfant, et Récupération d'adaptation, sur les bancs d'essai MyST, MGB-2 et LibriSpeech.
+
+Le code et les modèles sont disponibles dans le dépôt GitHub indiqué.
+
+Dans les mises à jour de modèles, CoDR ajoute une passe de raffinement sans entraînement aux modèles de langage par diffusion masquée.
+
+Il détecte la dérive de confiance dans les jetons déjà validés via un sondage par k-partitions.
+
+La méthode remasque et régénère uniquement les jetons que le modèle n'endosse plus, une fois qu'un contexte plus dense est arrivé.
+
+CoDR a amélioré la précision moyenne sur deux architectures de base, quatre tâches de raisonnement et de code, et trois échantillonneurs de base.
+
+Il a utilisé moins de passes avant que les approches de remasquage précédentes.
+
+Un cadre d'attention croisée à portes intègre des actualités réécrites de façon émotionnelle avec des explications générées par L-L-M à partir des articles originaux.
+
+Les expériences sur PolitiFact, GossipCop et LUN ont montré des gains notables sous plusieurs conditions émotionnelles, sur deux des trois jeux de données.
+
+L'approche réduit les décalages causés par le recadrage émotionnel, tout en maintenant des performances compétitives sur le troisième jeu de données.
+
+Une étude à grande échelle de cent trois mille neuf cent trente-neuf réponses notées, sur huit L-L-M et deux configurations de raisonnement, a montré que le coût de vérification des tâches et la couverture des garde-fous dominent les taux de flagornerie.
+
+Les faits ancrés n'ont connu qu'un virgule trois pour cent de concessions.
+
+Les choix personnels ont été approuvés dans soixante-dix-sept pour cent des conversations.
+
+Le raisonnement maximal a éliminé les concessions sur les énigmes profondes, pour les deux modèles testés.
+
+LRCC entraîne des routeurs légers par bloc Transformer pour choisir parmi des chemins imbriqués de rang faible, de façon dépendante du jeton.
+
+Sur les modèles Llama et Qwen, il a apporté un gain de sept virgule six points de pourcentage en précision moyenne en aval, par rapport à la compression statique de rang faible, à budget de paramètres actifs équivalent.
+
+À latence de décodage en taille de lot un, il a amélioré à la fois la perplexité et la précision sur Llama trois virgule deux un B, sans noyaux spécialisés.
+
+Trois modèles BERT chinois de huit virgule sept millions de paramètres ont été entraînés à partir de zéro, dans des conditions identiques.
+
+Le MLM l'a emporté sur trois des cinq dimensions intrinsèques.
+
+Le WWM a atteint une perplexité meilleure de trente-neuf virgule cinq pour cent et un taux de réussite MLM plus élevé.
+
+MacBERT, sous un dictionnaire de synonymes de deux cent vingt-deux entrées, a produit une perplexité de quarante-sept virgule deux trois, vingt-deux fois plus élevée que le MLM.
+
+CARE fournit des garanties en échantillon fini que le risque d'échec induit par l'accélération reste sous un budget fixé par l'utilisateur.
+
+Sur quatre suites LIBERO avec OpenVLA-OFT, il a certifié des accélérations de neuf virgule zéro à dix virgule huit fois.
+
+Il garantit, à quatre-vingt-quinze pour cent, qu'au moins quatre-vingt-cinq virgule huit pour cent des épisodes résolus en référence sont préservés.
+
+ToolRACER génère des trajectoires multi-tours validées, sur six domaines et cinquante-cinq profils types.
+
+Il a produit cinq virgule six mille conversations, dont environ soixante-six pour cent contiennent des scénarios sujets à l'échec.
+
+Les modèles entraînés sur le banc d'essai résultant ont amélioré la précision agentique de bout en bout sur tau squared-bench et ACEBench.
+
+Une chaîne en deux étapes détecte d'abord les composantes cognitives, puis génère un dialogue aligné en utilisant la distillation de connaissances, l'optimisation des préférences, et le façonnage de récompense guidé par l'attention.
+
+L'ajustement fin informé par la cognition a produit des gains substantiels en réalisation cognitive, par rapport aux petits modèles de langage génériques ajustés aux instructions et à ceux du domaine de la santé mentale.
+
+La parole en pseudo-dialecte, synthétisée à partir de texte dialectal généré par un L-L-M via une synthèse vocale en langue standard, a amélioré les scores de traduction du dialecte vers l'anglais pour le japonais et l'allemand.
+
+La prédiction intermédiaire de texte standard a encore poussé le japonais à vingt-huit virgule deux six et le chinois à seize virgule trois sept.
+
+OnlineQAT réalise une distillation selon la politique sur les réponses générées par l'élève, après une initialisation QAT par blocs.
+
+Sur Qwen trois un virgule sept B, il a atteint cinquante-sept virgule deux huit de moyenne à W trois A seize, et trente-deux virgule cinq deux à W deux A seize.
+
+Il a surpassé ReasoningQAT de deux virgule neuf zéro et zéro virgule quatre quatre points respectivement.
+
+sk-bench fournit trente jeux de données dans dix catégories de compétences, avec onze ressources nouvellement introduites ou empaquetées.
+
+Le meilleur modèle ouvert accusait un retard de douze virgule six points sur les A-P-I propriétaires.
+
+Le préentraînement continu sur Qwen trois quatorze B a abaissé le score global de treize virgule neuf points, avant qu'une réparation d'instructions ne récupère les trois quarts de la perte.
+
+Le jeu de données de robustesse aux formes de surface adverses contient deux mille cent invites, réparties en sept familles de formes de surface.
+
+Les variations en émojis et en Unicode invisible ont produit vingt virgule deux sept pour cent et dix-sept virgule deux zéro pour cent de conformité nuisible, contre une base de vingt-deux virgule huit sept pour cent.
+
+Le leetspeak et les enveloppes encodées ont fait monter l'échec de compréhension à trente-six virgule quatre sept pour cent et soixante-cinq virgule six zéro pour cent.
+
+U-Space projette les états de jetons sur une base orthogonale dérivée d'ancres sémantiques pour le doute et la certitude.
+
+Le score de confiance résultant a surpassé les bases établies, à la fois en évaluation standard et en évaluation contrôlée en longueur.
+
+Il s'est transféré plus fiablement que les estimateurs supervisés, sans exiger d'étiquettes de justesse ni de générations répétées.
+
+Goldsmith révise de façon itérative les définitions d'annotation en faisant tourner des définitions candidates sur un petit ensemble de référence.
+
+Il a surpassé la réécriture directe, OPRO, APE et PromptBreeder, sous des protocoles appariés.
+
+Le guidage d'activation par différence de moyennes sur le flux résiduel de Moshi décode quatre émotions de façon linéaire, mais n'obtient qu'un contrôle partiel et inégal.
+
+La joie, la colère et la surprise partagent une même direction, tandis que la tristesse reste distinctement orientable.
+
+La composante partagée ne peut pas être projetée à l'écart de façon uniforme.
+
+L'approche n'exige que quelques additions de vecteurs par trame, sans réentraînement.
+
+Les performances varient parce que la géométrie du flux résiduel groupe trois émotions ensemble, ce qui limite le contrôle indépendant.
+
+Quand l'émotion cible se situe le long de la direction partagée, le guidage réussit.
+
+Quand elle exige un décalage orthogonal, le succès chute.
+
+Les équipes qui ont besoin d'un contrôle affectif fiable devraient mesurer l'orientabilité par émotion sur leur modèle spécifique, avant le déploiement.
+
+Essayez la passe de raffinement CoDR sur votre chaîne d'échantillonnage de modèle de langage par diffusion masquée, pour des tâches de raisonnement ou de code, afin de récupérer de la précision avec un surcoût modeste.
+
+Expérimentez les routeurs LRCC sur Llama trois virgule deux un B ou les modèles Qwen, quand vous avez besoin d'une allocation de calcul dépendante du jeton, sans noyaux personnalisés.
+
+Évaluez sk-bench sur vos applications en langue slovaque, pour mesurer la performance native par rapport aux bases traduites, avant de mettre à l'échelle le préentraînement.
+
+Testez l'accélération certifiée CARE sur OpenVLA-OFT ou des modèles V-L-A similaires, quand vous exigez des bornes d'échec garanties sous un budget choisi.
+
+De nouvelles publications d'études comparatives contrôlées sur les stratégies de préentraînement à toute petite échelle sont attendues dans les semaines à venir.
+
+Des bancs d'essai supplémentaires pour les langues peu dotées en ressources et la robustesse dialectale sont attendus de plusieurs laboratoires.
+
+D'autres travaux sur l'accélération certifiée et la distillation selon la politique pour les modèles à faible nombre de bits devraient paraître bientôt.
+
+Ouvrez le capot du guidage émotionnel dans les modèles de parole en duplex intégral, et le tableau passe d'un contrôle uniforme à des résultats limités par la géométrie.
+
+Le guidage d'activation par différence de moyennes fonctionne en ajoutant quelques vecteurs par trame au flux résiduel de Moshi.
+
+Quatre émotions se décodent linéairement à partir de ce flux.
+
+Trois d'entre elles s'effondrent sur une seule direction partagée.
+
+La tristesse reste orthogonale, et donc orientable à elle seule.
+
+La direction partagée ne peut pas être soustraite également des quatre émotions sans distordre celle qui est distincte.
+
+Le guidage réussit donc quand l'émotion cible s'aligne avec le vecteur partagé, et échoue quand elle a besoin d'un décalage indépendant.
+
+La limite pratique apparaît au point où trois émotions partagent la géométrie, tandis que la quatrième ne la partage pas.
+
+Mesurez l'orientabilité par émotion sur le modèle cible, plutôt que de supposer des résultats uniformes sur l'ensemble.
+
+Avant de nous quitter, surveillez de nouveaux résultats d'accélération certifiée sur d'autres suites V-L-A, attendus dans les tout prochains jours.
+
+C'était Models and Agents pour aujourd'hui. Si vous avez trouvé ça utile, partagez-le avec quelqu'un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain. Le monde de l'I-A avance vite. On vous aide à suivre. À demain. Et si vous préférez regarder plutôt qu'écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l'émission.
+
+Petit conseil du réseau : enchaînez avec Fascinating Frontiers — l'actualité la plus fascinante de l'espace et des sciences. Chaque émission Nerra Network est gratuite sur nerranetwork point com. Les tableaux de bord en direct — T-S-L-A, les lancements SpaceX, le tableau des investissements — sont tous sur nerranetwork point com data.
+
+Cet épisode a utilisé une synthèse vocale I-A de ma voix — la sélection éditoriale et l'analyse sont les miennes.

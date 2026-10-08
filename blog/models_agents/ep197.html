@@ -105,11 +105,22 @@
     },
     "image": "https://nerranetwork.com/assets/covers/models-agents.jpg",
     "transcript": "https://nerranetwork.com/blog/models_agents/ep197.html#transcript",
-    "associatedMedia": {
-      "@type": "MediaObject",
-      "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep197_20261008.mp3",
-      "inLanguage": "en"
-    }
+    "associatedMedia": [
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep197_20261008.mp3",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep197_20261008.fr.mp3",
+        "inLanguage": "fr"
+      }
+    ],
+    "availableLanguage": [
+      "en",
+      "fr"
+    ]
   }
 ]
     </script>
@@ -1874,21 +1885,27 @@
     
 
     
-    
-    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-i18n" id="listen" aria-label="Listen in another language">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    Listen to this episode
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    Listen in
                 </span>
+                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="fr" aria-pressed="false">Français</button>
+                
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep197_20261008.mp3">
-                <a href="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep197_20261008.mp3">Download the audio</a>
-            </audio>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep197_20261008.mp3"></audio>
         </div>
+        <script type="application/json" id="nn-i18n-tracks">
+{
+  "en": {"url": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep197_20261008.mp3", "title": "Child speech recognition now retains adult performance through bilingual adaptation and weight merging.", "desc": "Child speech recognition now retains adult performance through bilingual adaptation and weight merging."},
+  "fr": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep197_20261008.fr.mp3", "title": "Ép. 197 : La reconnaissance vocale des enfants conserve désormais les performances des adultes grâce à l’adaptation bilingue et…", "desc": "La reconnaissance vocale des enfants conserve désormais les performances des adultes grâce à l’adaptation bilingue et à la fusion des poids."}
+}
+        </script>
     </section>
-    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1979,6 +1996,90 @@
 <li>Further work on certified acceleration and on-policy distillation for low-bit models is likely to appear soon.
 </li>
 </ul>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="fr" hidden>
+                <p class="blog-translated-note">Français — AI-translated from the English episode.</p>
+                <p>La reconnaissance vocale des enfants conserve désormais les performances adultes grâce à l&#x27;adaptation bilingue et à la fusion des poids.</p>
+<p>Ici Models and Agents, épisode cent quatre-vingt-dix-sept.</p>
+<p>Des chercheurs ont publié une étude sur l&#x27;adaptation de la reconnaissance automatique de la parole chez l&#x27;enfant, qui préserve les performances adultes, en arabe et en anglais.</p>
+<p>Ils ont comparé l&#x27;ajustement fin complet, LoRA, et la fusion a posteriori dans l&#x27;espace des poids, sur des systèmes encodeur-décodeur, encodeur-CTC, et AudioLLM.</p>
+<p>L&#x27;adaptation bilingue s&#x27;est révélée plus stable que les approches propres à une langue.</p>
+<p>La fusion LERP a favorisé la rétention adulte, tandis que TIES a récupéré des gains enfant plus marqués.</p>
+<p>L&#x27;ajustement fin bilingue direct est resté le plus fort en taux d&#x27;erreur de mots brut pour le modèle encodeur-décodeur.</p>
+<p>Le travail quantifie le compromis entre adaptation et rétention avec les métriques Indice de rétention, Gain d&#x27;adaptation enfant, et Récupération d&#x27;adaptation, sur les bancs d&#x27;essai MyST, MGB-2 et LibriSpeech.</p>
+<p>Le code et les modèles sont disponibles dans le dépôt GitHub indiqué.</p>
+<p>Dans les mises à jour de modèles, CoDR ajoute une passe de raffinement sans entraînement aux modèles de langage par diffusion masquée.</p>
+<p>Il détecte la dérive de confiance dans les jetons déjà validés via un sondage par k-partitions.</p>
+<p>La méthode remasque et régénère uniquement les jetons que le modèle n&#x27;endosse plus, une fois qu&#x27;un contexte plus dense est arrivé.</p>
+<p>CoDR a amélioré la précision moyenne sur deux architectures de base, quatre tâches de raisonnement et de code, et trois échantillonneurs de base.</p>
+<p>Il a utilisé moins de passes avant que les approches de remasquage précédentes.</p>
+<p>Un cadre d&#x27;attention croisée à portes intègre des actualités réécrites de façon émotionnelle avec des explications générées par L-L-M à partir des articles originaux.</p>
+<p>Les expériences sur PolitiFact, GossipCop et LUN ont montré des gains notables sous plusieurs conditions émotionnelles, sur deux des trois jeux de données.</p>
+<p>L&#x27;approche réduit les décalages causés par le recadrage émotionnel, tout en maintenant des performances compétitives sur le troisième jeu de données.</p>
+<p>Une étude à grande échelle de cent trois mille neuf cent trente-neuf réponses notées, sur huit L-L-M et deux configurations de raisonnement, a montré que le coût de vérification des tâches et la couverture des garde-fous dominent les taux de flagornerie.</p>
+<p>Les faits ancrés n&#x27;ont connu qu&#x27;un virgule trois pour cent de concessions.</p>
+<p>Les choix personnels ont été approuvés dans soixante-dix-sept pour cent des conversations.</p>
+<p>Le raisonnement maximal a éliminé les concessions sur les énigmes profondes, pour les deux modèles testés.</p>
+<p>LRCC entraîne des routeurs légers par bloc Transformer pour choisir parmi des chemins imbriqués de rang faible, de façon dépendante du jeton.</p>
+<p>Sur les modèles Llama et Qwen, il a apporté un gain de sept virgule six points de pourcentage en précision moyenne en aval, par rapport à la compression statique de rang faible, à budget de paramètres actifs équivalent.</p>
+<p>À latence de décodage en taille de lot un, il a amélioré à la fois la perplexité et la précision sur Llama trois virgule deux un B, sans noyaux spécialisés.</p>
+<p>Trois modèles BERT chinois de huit virgule sept millions de paramètres ont été entraînés à partir de zéro, dans des conditions identiques.</p>
+<p>Le MLM l&#x27;a emporté sur trois des cinq dimensions intrinsèques.</p>
+<p>Le WWM a atteint une perplexité meilleure de trente-neuf virgule cinq pour cent et un taux de réussite MLM plus élevé.</p>
+<p>MacBERT, sous un dictionnaire de synonymes de deux cent vingt-deux entrées, a produit une perplexité de quarante-sept virgule deux trois, vingt-deux fois plus élevée que le MLM.</p>
+<p>CARE fournit des garanties en échantillon fini que le risque d&#x27;échec induit par l&#x27;accélération reste sous un budget fixé par l&#x27;utilisateur.</p>
+<p>Sur quatre suites LIBERO avec OpenVLA-OFT, il a certifié des accélérations de neuf virgule zéro à dix virgule huit fois.</p>
+<p>Il garantit, à quatre-vingt-quinze pour cent, qu&#x27;au moins quatre-vingt-cinq virgule huit pour cent des épisodes résolus en référence sont préservés.</p>
+<p>ToolRACER génère des trajectoires multi-tours validées, sur six domaines et cinquante-cinq profils types.</p>
+<p>Il a produit cinq virgule six mille conversations, dont environ soixante-six pour cent contiennent des scénarios sujets à l&#x27;échec.</p>
+<p>Les modèles entraînés sur le banc d&#x27;essai résultant ont amélioré la précision agentique de bout en bout sur tau squared-bench et ACEBench.</p>
+<p>Une chaîne en deux étapes détecte d&#x27;abord les composantes cognitives, puis génère un dialogue aligné en utilisant la distillation de connaissances, l&#x27;optimisation des préférences, et le façonnage de récompense guidé par l&#x27;attention.</p>
+<p>L&#x27;ajustement fin informé par la cognition a produit des gains substantiels en réalisation cognitive, par rapport aux petits modèles de langage génériques ajustés aux instructions et à ceux du domaine de la santé mentale.</p>
+<p>La parole en pseudo-dialecte, synthétisée à partir de texte dialectal généré par un L-L-M via une synthèse vocale en langue standard, a amélioré les scores de traduction du dialecte vers l&#x27;anglais pour le japonais et l&#x27;allemand.</p>
+<p>La prédiction intermédiaire de texte standard a encore poussé le japonais à vingt-huit virgule deux six et le chinois à seize virgule trois sept.</p>
+<p>OnlineQAT réalise une distillation selon la politique sur les réponses générées par l&#x27;élève, après une initialisation QAT par blocs.</p>
+<p>Sur Qwen trois un virgule sept B, il a atteint cinquante-sept virgule deux huit de moyenne à W trois A seize, et trente-deux virgule cinq deux à W deux A seize.</p>
+<p>Il a surpassé ReasoningQAT de deux virgule neuf zéro et zéro virgule quatre quatre points respectivement.</p>
+<p>sk-bench fournit trente jeux de données dans dix catégories de compétences, avec onze ressources nouvellement introduites ou empaquetées.</p>
+<p>Le meilleur modèle ouvert accusait un retard de douze virgule six points sur les A-P-I propriétaires.</p>
+<p>Le préentraînement continu sur Qwen trois quatorze B a abaissé le score global de treize virgule neuf points, avant qu&#x27;une réparation d&#x27;instructions ne récupère les trois quarts de la perte.</p>
+<p>Le jeu de données de robustesse aux formes de surface adverses contient deux mille cent invites, réparties en sept familles de formes de surface.</p>
+<p>Les variations en émojis et en Unicode invisible ont produit vingt virgule deux sept pour cent et dix-sept virgule deux zéro pour cent de conformité nuisible, contre une base de vingt-deux virgule huit sept pour cent.</p>
+<p>Le leetspeak et les enveloppes encodées ont fait monter l&#x27;échec de compréhension à trente-six virgule quatre sept pour cent et soixante-cinq virgule six zéro pour cent.</p>
+<p>U-Space projette les états de jetons sur une base orthogonale dérivée d&#x27;ancres sémantiques pour le doute et la certitude.</p>
+<p>Le score de confiance résultant a surpassé les bases établies, à la fois en évaluation standard et en évaluation contrôlée en longueur.</p>
+<p>Il s&#x27;est transféré plus fiablement que les estimateurs supervisés, sans exiger d&#x27;étiquettes de justesse ni de générations répétées.</p>
+<p>Goldsmith révise de façon itérative les définitions d&#x27;annotation en faisant tourner des définitions candidates sur un petit ensemble de référence.</p>
+<p>Il a surpassé la réécriture directe, OPRO, APE et PromptBreeder, sous des protocoles appariés.</p>
+<p>Le guidage d&#x27;activation par différence de moyennes sur le flux résiduel de Moshi décode quatre émotions de façon linéaire, mais n&#x27;obtient qu&#x27;un contrôle partiel et inégal.</p>
+<p>La joie, la colère et la surprise partagent une même direction, tandis que la tristesse reste distinctement orientable.</p>
+<p>La composante partagée ne peut pas être projetée à l&#x27;écart de façon uniforme.</p>
+<p>L&#x27;approche n&#x27;exige que quelques additions de vecteurs par trame, sans réentraînement.</p>
+<p>Les performances varient parce que la géométrie du flux résiduel groupe trois émotions ensemble, ce qui limite le contrôle indépendant.</p>
+<p>Quand l&#x27;émotion cible se situe le long de la direction partagée, le guidage réussit.</p>
+<p>Quand elle exige un décalage orthogonal, le succès chute.</p>
+<p>Les équipes qui ont besoin d&#x27;un contrôle affectif fiable devraient mesurer l&#x27;orientabilité par émotion sur leur modèle spécifique, avant le déploiement.</p>
+<p>Essayez la passe de raffinement CoDR sur votre chaîne d&#x27;échantillonnage de modèle de langage par diffusion masquée, pour des tâches de raisonnement ou de code, afin de récupérer de la précision avec un surcoût modeste.</p>
+<p>Expérimentez les routeurs LRCC sur Llama trois virgule deux un B ou les modèles Qwen, quand vous avez besoin d&#x27;une allocation de calcul dépendante du jeton, sans noyaux personnalisés.</p>
+<p>Évaluez sk-bench sur vos applications en langue slovaque, pour mesurer la performance native par rapport aux bases traduites, avant de mettre à l&#x27;échelle le préentraînement.</p>
+<p>Testez l&#x27;accélération certifiée CARE sur OpenVLA-OFT ou des modèles V-L-A similaires, quand vous exigez des bornes d&#x27;échec garanties sous un budget choisi.</p>
+<p>De nouvelles publications d&#x27;études comparatives contrôlées sur les stratégies de préentraînement à toute petite échelle sont attendues dans les semaines à venir.</p>
+<p>Des bancs d&#x27;essai supplémentaires pour les langues peu dotées en ressources et la robustesse dialectale sont attendus de plusieurs laboratoires.</p>
+<p>D&#x27;autres travaux sur l&#x27;accélération certifiée et la distillation selon la politique pour les modèles à faible nombre de bits devraient paraître bientôt.</p>
+<p>Ouvrez le capot du guidage émotionnel dans les modèles de parole en duplex intégral, et le tableau passe d&#x27;un contrôle uniforme à des résultats limités par la géométrie.</p>
+<p>Le guidage d&#x27;activation par différence de moyennes fonctionne en ajoutant quelques vecteurs par trame au flux résiduel de Moshi.</p>
+<p>Quatre émotions se décodent linéairement à partir de ce flux.</p>
+<p>Trois d&#x27;entre elles s&#x27;effondrent sur une seule direction partagée.</p>
+<p>La tristesse reste orthogonale, et donc orientable à elle seule.</p>
+<p>La direction partagée ne peut pas être soustraite également des quatre émotions sans distordre celle qui est distincte.</p>
+<p>Le guidage réussit donc quand l&#x27;émotion cible s&#x27;aligne avec le vecteur partagé, et échoue quand elle a besoin d&#x27;un décalage indépendant.</p>
+<p>La limite pratique apparaît au point où trois émotions partagent la géométrie, tandis que la quatrième ne la partage pas.</p>
+<p>Mesurez l&#x27;orientabilité par émotion sur le modèle cible, plutôt que de supposer des résultats uniformes sur l&#x27;ensemble.</p>
+<p>Avant de nous quitter, surveillez de nouveaux résultats d&#x27;accélération certifiée sur d&#x27;autres suites V-L-A, attendus dans les tout prochains jours.</p>
+<p>C&#x27;était Models and Agents pour aujourd&#x27;hui. Si vous avez trouvé ça utile, partagez-le avec quelqu&#x27;un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain. Le monde de l&#x27;I-A avance vite. On vous aide à suivre. À demain. Et si vous préférez regarder plutôt qu&#x27;écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l&#x27;émission.</p>
+<p>Petit conseil du réseau : enchaînez avec Fascinating Frontiers — l&#x27;actualité la plus fascinante de l&#x27;espace et des sciences. Chaque émission Nerra Network est gratuite sur nerranetwork point com. Les tableaux de bord en direct — T-S-L-A, les lancements SpaceX, le tableau des investissements — sont tous sur nerranetwork point com data.</p>
+<p>Cet épisode a utilisé une synthèse vocale I-A de ma voix — la sélection éditoriale et l&#x27;analyse sont les miennes.</p>
             </div>
             
 
@@ -2510,10 +2611,10 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         
                     </a>
                     
-                    <a href="../../blog/omni_view/ep198.html" class="blog-related-card" style="--card-show-color: #0B6FD6">
+                    <a href="../../blog/tesla/ep627.html" class="blog-related-card" style="--card-show-color: #E31937">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #0B6FD6, white 35%)">Omni View</span>
-                        <h3>North Korea’s warning to the US over Taiwan arms deliveries shows its tightening alignment with Russia, raising risks for East Asian security.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #E31937, white 35%)">Tesla Shorts Time</span>
+                        <h3>A Dutch battery developer is scaling gigawatt-hour projects into Germany, widening the path for Tesla Megapack deployments across Europe.</h3>
                         
                     </a>
                     
