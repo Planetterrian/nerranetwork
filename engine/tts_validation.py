@@ -158,8 +158,9 @@ def validate_tts_transcription(
 
         # Transcribe
         try:
+            from engine.transcripts import load_whisper_audio
             segments, info = model.transcribe(
-                str(audio_path),
+                load_whisper_audio(Path(audio_path)),
                 language=language,
                 beam_size=5,
                 word_timestamps=False,

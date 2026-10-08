@@ -494,6 +494,47 @@ class TranscriptResult:
     vtt_path: Optional[Path] = None
 
 
+#: faster-whisper's own decoder resamples to this rate (``decode_audio``).
+WHISPER_SAMPLE_RATE = 16000
+
+
+def load_whisper_audio(audio_path: Path):
+    """Decode *audio_path* for faster-whisper WITHOUT going through PyAV.
+
+    faster-whisper decodes a file path with ``av.open(..., metadata_errors=
+    "ignore")``, and PyAV 19 removed that keyword. Every episode of
+    2026-09-30 and of 2026-10-08 (a dependency bump re-admitted PyAV 19)
+    shipped with no transcript. Handing ``transcribe`` an array skips its
+    decoder entirely, so the transcript no longer depends on PyAV's
+    ``open()`` signature at all. ffmpeg is already a hard dependency of the
+    audio pipeline; it produces the same 16 kHz mono signed-16 samples
+    faster-whisper's own resampler does, scaled the same way.
+
+    Returns a float32 numpy array, or the path as a string when ffmpeg or
+    numpy is unavailable (faster-whisper then decodes it as before).
+    """
+    import shutil
+    import subprocess
+
+    if not shutil.which("ffmpeg"):
+        return str(audio_path)
+    try:
+        import numpy as np
+        raw = subprocess.run(
+            ["ffmpeg", "-nostdin", "-v", "error", "-i", str(audio_path),
+             "-f", "s16le", "-acodec", "pcm_s16le", "-ac", "1",
+             "-ar", str(WHISPER_SAMPLE_RATE), "-"],
+            check=True, capture_output=True, timeout=900,
+        ).stdout
+    except Exception as exc:  # noqa: BLE001 — fall back to faster-whisper's decoder
+        logger.warning("ffmpeg decode for Whisper failed (%s) — using the "
+                       "library decoder", exc)
+        return str(audio_path)
+    if not raw:
+        return str(audio_path)
+    return np.frombuffer(raw, np.int16).astype(np.float32) / 32768.0
+
+
 def generate_transcript(
     audio_path: Path,
     output_dir: Path,
@@ -589,9 +630,10 @@ def generate_transcript(
             # what we actually rely on (July 28 2026).
             initial_prompt=build_initial_prompt(vocabulary),
         )
+        audio = load_whisper_audio(audio_path)
         try:
             segments, info = model.transcribe(
-                str(audio_path), vad_filter=vad_filter, **kwargs)
+                audio, vad_filter=vad_filter, **kwargs)
             segments = list(segments)
         except Exception as exc:  # noqa: BLE001
             # Sep 30 2026: this branch read EVERY failure as a missing VAD
@@ -606,7 +648,7 @@ def generate_transcript(
             if not vad_filter or not _vad_shaped:
                 raise
             logger.warning("VAD unavailable (%s) — transcribing without it", exc)
-            segments, info = model.transcribe(str(audio_path), **kwargs)
+            segments, info = model.transcribe(audio, **kwargs)
 
         transcript_segments = []
         full_text_parts = []

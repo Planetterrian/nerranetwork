@@ -1,0 +1,373 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:27.560
+Child speech recognition now retains adult performance through bilingual adaptation and weight merging. This is Models &amp; Agents, episode 197. Researchers released a study on child ASR adaptation that preserves adult performance across Arabic and English. They compared full fine-tuning, Laura and post-hoc weight space merging on encoder decoder, encoder CTC and audio LLM systems.
+
+00:00:27.560 --> 00:00:32.440
+Bilingual adaptation proved more stable than language-specific approaches.
+
+00:00:33.120 --> 00:00:38.140
+LERP merging favored adult retention while TIES recovered stronger child gains.
+
+00:00:38.840 --> 00:00:44.520
+Direct bilingual fine-tuning remained strongest in raw word error rate for the encoder decoder model.
+
+00:00:45.180 --> 00:00:49.400
+The work quantifies the adaptation retention trade-off with retention index,
+
+00:00:49.400 --> 00:00:56.700
+context, child adaptation gain, and adaptation recovery metrics on MyST, MGB2, and Libre
+
+00:00:56.700 --> 00:00:57.580
+speech benchmarks.
+
+00:00:58.380 --> 00:01:01.620
+Code and models are available at the linked GitHub repository.
+
+00:01:02.340 --> 00:01:07.820
+In Model Updates, Code AR adds a training-free refinement pass to mask diffusion language
+
+00:01:07.820 --> 00:01:08.300
+models.
+
+00:01:08.880 --> 00:01:13.100
+It detects confidence drift in committed tokens via K partition probing.
+
+00:01:13.720 --> 00:01:18.640
+The method remasks and regenerates only tokens the model no longer endorses after
+
+00:01:18.640 --> 00:01:20.000
+or denser context arrives.
+
+00:01:20.920 --> 00:01:26.140
+Code AR improved average accuracy across two backbones for reasoning and coding tasks
+
+00:01:26.140 --> 00:01:27.940
+and three base samplers.
+
+00:01:28.460 --> 00:01:31.980
+It used fewer forward passes than prior remasking approaches.
+
+00:01:32.800 --> 00:01:38.220
+A gated cross-attention framework integrates emotionally rewritten news with LLM-generated
+
+00:01:38.220 --> 00:01:40.280
+explanations from original articles.
+
+00:01:40.960 --> 00:01:46.200
+Experiments on PoliteFact, GossipCop, and LUN showed notable gains under multiple
+
+00:01:46.200 --> 00:01:52.480
+emotional conditions on two of the three datasets. The approach reduces mismatches caused by emotional
+
+00:01:52.480 --> 00:02:01.340
+reframing while maintaining competitive performance on the third dataset. A large scale study of 103,939
+
+00:02:01.340 --> 00:02:08.640
+graded replies across eight LLMs and two reasoning configurations found that task verification cost and
+
+00:02:08.640 --> 00:02:11.160
+hardware coverage dominate sickofancy rates.
+
+00:02:11.880 --> 00:02:15.000
+Anchored facts saw only 1.3% concessions.
+
+00:02:15.500 --> 00:02:19.100
+Personal choices were endorsed in 77% of conversations.
+
+00:02:19.960 --> 00:02:22.180
+Maximum reasoning eliminated concessions
+
+00:02:22.180 --> 00:02:24.560
+on deep puzzles for both models tested.
+
+00:02:25.280 --> 00:02:28.680
+LRCC trains lightweight routers per transformer block
+
+00:02:28.680 --> 00:02:31.160
+to select among nested lower-ank paths
+
+00:02:31.160 --> 00:02:32.720
+on a token-dependent basis.
+
+00:02:33.540 --> 00:02:37.200
+On LAMA and Quinn models, it delivered a 7.6%
+
+00:02:37.200 --> 00:02:43.800
+point gain in average downstream accuracy over static low-rank compression at matched active parameter
+
+00:02:43.800 --> 00:02:52.100
+budget. At batch size 1 decoding latency, it improved both perplexity and accuracy on LAMMA 3.21B
+
+00:02:52.100 --> 00:02:59.100
+without specialized kernels. 3.8.7 million parameter Chinese BERT models were trained from scratch
+
+00:02:59.100 --> 00:03:04.300
+under identical conditions. MLM won three of five intrinsic dimensions.
+
+00:03:04.940 --> 00:03:11.080
+WWM achieved 39.5% better perplexity and higher MLM hit rate.
+
+00:03:11.940 --> 00:03:15.320
+MacBert, under a 222 entries synonym dictionary,
+
+00:03:15.860 --> 00:03:20.740
+produced 47.23 perplexity, 22 times higher than MLM.
+
+00:03:21.560 --> 00:03:26.080
+Care provides finite sample guarantees that acceleration-induced failure risk
+
+00:03:26.080 --> 00:03:28.740
+stays below a user-specified budget.
+
+00:03:29.380 --> 00:03:32.600
+On four Libero-sweets with open VLA-OFT,
+
+00:03:33.180 --> 00:03:36.820
+it's certified 9.0 to 10.8 times speed-ups.
+
+00:03:37.400 --> 00:03:44.080
+It guarantees at 95% that at least 85.8% of reference-solved episodes are preserved.
+
+00:03:44.840 --> 00:03:51.160
+Tool Eraser generates validated multi-turn trajectories across six domains and 55 personas.
+
+00:03:51.160 --> 00:03:58.300
+It produced 5.6K conversations with approximately 66% containing failure-prone scenarios.
+
+00:03:59.060 --> 00:04:03.880
+Models trained on the resulting benchmark improved end-to-end agentic accuracy on
+
+00:04:03.880 --> 00:04:09.040
+Towsquared Bench and Ace Bench. A two-stage pipeline first detects cognitive
+
+00:04:09.040 --> 00:04:14.120
+components, then generates a line dialogue using knowledge distillation, preference
+
+00:04:14.120 --> 00:04:19.860
+optimization, and attention-guided reward shaping. Cognitively informed fine-tuning
+
+00:04:19.860 --> 00:04:25.540
+produce substantial gains in cognitive realization over generic instruction tuned and mental
+
+00:04:25.540 --> 00:04:27.100
+health domain SLMs.
+
+00:04:27.920 --> 00:04:34.580
+SUDO dialect speech synthesized from LLM generated dialect text via standard language TTS improved
+
+00:04:34.580 --> 00:04:38.180
+dialect to English translation scores for Japanese and German.
+
+00:04:38.920 --> 00:04:46.720
+Intermediate standard text prediction further boosted Japanese to 28.26 and Chinese to 16.37.
+
+00:04:46.720 --> 00:04:53.240
+Online QAT performs on-policy distillation on student-generated responses after
+
+00:04:53.240 --> 00:05:03.560
+blockwise QAT initialization. On QAN 3.1.7B it reached 57.28 average at W3A16 and
+
+00:05:03.560 --> 00:05:12.700
+32.52 at W2A16. It outperformed reasoning QAT by 2.90 and 0.44 points
+
+00:05:12.700 --> 00:05:20.400
+respectively. SK-bench supplies 30 data sets across 10 skill categories with 11 newly introduced
+
+00:05:20.400 --> 00:05:26.880
+or packaged resources. The best open model trailed proprietary API is by 12.6 points.
+
+00:05:27.560 --> 00:05:34.760
+Continued pre-training on Quinn 314b lowered overall score by 13.9 points before instruction
+
+00:05:34.760 --> 00:05:41.080
+repair recovered three quarters of the loss. The adversarial surface form robustness data set contains
+
+00:05:41.080 --> 00:05:44.960
+between 2,100 prompts across seven surface-form families.
+
+00:05:45.640 --> 00:05:48.060
+Emoji and Invisible Unicode Variations
+
+00:05:48.060 --> 00:05:53.600
+produced 20.27% and 17.20% harmful compliance
+
+00:05:53.600 --> 00:05:56.520
+against a 22.87% baseline.
+
+00:05:57.300 --> 00:06:00.460
+LeetSpeak and encoded wrappers raised comprehension failure
+
+00:06:00.460 --> 00:06:05.700
+to 36.47% and 65.60%.
+
+00:06:05.700 --> 00:06:09.180
+Use-based projects token states on to an orthogonal basis
+
+00:06:09.180 --> 00:06:12.260
+derived from semantic anchors for doubt and certainty.
+
+00:06:13.000 --> 00:06:16.960
+The resulting confidence score outperformed established baselines under both
+
+00:06:16.960 --> 00:06:21.900
+standard and length-controlled evaluation. It transferred more reliably than
+
+00:06:21.900 --> 00:06:25.960
+supervised estimators without requiring correctness labels or repeated
+
+00:06:25.960 --> 00:06:29.940
+generations. Goldsmith iteratively revises annotation
+
+00:06:29.940 --> 00:06:33.780
+definitions by running candidate definitions on a small gold set.
+
+00:06:33.780 --> 00:06:41.020
+It outperformed direct rewriting, OPRO, APE, and prompt breeder under matched protocols.
+
+00:06:41.680 --> 00:06:46.640
+Mean difference activation steering on Moshe's residual stream decodes four emotions
+
+00:06:46.640 --> 00:06:50.480
+linearly, yet achieves only partial and uneven control.
+
+00:06:51.180 --> 00:06:56.620
+Happy, angry, and surprise share one direction while sad remains distinctly steerable.
+
+00:06:57.220 --> 00:07:00.220
+The shared component cannot be projected away uniformly.
+
+00:07:00.220 --> 00:07:05.400
+The approach requires only a few vector additions per frame with low retraining.
+
+00:07:05.840 --> 00:07:12.780
+Performance varies because the geometry of the residual stream groups three emotions together limiting independent control.
+
+00:07:13.500 --> 00:07:17.320
+When the target emotion lies along the shared direction, steering succeeds.
+
+00:07:17.960 --> 00:07:21.080
+When it requires an orthogonal offset, success drops.
+
+00:07:21.980 --> 00:07:28.700
+Teams needing reliable affect control should measure per emotion's durability on their specific model before deployment.
+
+00:07:28.700 --> 00:07:34.480
+Try the KODR refinement pass on your mask diffusion language model sampling pipeline
+
+00:07:34.480 --> 00:07:39.340
+for reasoning or coding tasks to recover accuracy with modest overhead.
+
+00:07:40.040 --> 00:07:45.620
+Experiment with LRCC routers on LAMA 3.21B or KWEN models
+
+00:07:45.620 --> 00:07:49.560
+when you need token dependent compute allocation without custom kernels.
+
+00:07:50.320 --> 00:07:53.640
+Evaluate SK bench on your Slovak language applications
+
+00:07:53.640 --> 00:07:56.840
+to measure native performance versus translated baselines
+
+00:07:56.840 --> 00:07:58.540
+before scaling pre-training.
+
+00:07:59.140 --> 00:08:03.180
+Test care-certified acceleration on open VLA OFT
+
+00:08:03.180 --> 00:08:07.040
+or similar VLA models when you require guaranteed failure
+
+00:08:07.040 --> 00:08:08.820
+bounds below a chosen budget.
+
+00:08:09.720 --> 00:08:12.400
+Continued releases of controlled comparison studies
+
+00:08:12.400 --> 00:08:14.540
+on tiny-scale pre-training strategies
+
+00:08:14.540 --> 00:08:16.340
+are expected in the coming weeks.
+
+00:08:17.060 --> 00:08:19.580
+Additional benchmarks for under-resource languages
+
+00:08:19.580 --> 00:08:22.020
+and dialect robustness are anticipated
+
+00:08:22.020 --> 00:08:28.040
+from multiple labs. Further work on certified acceleration and on-policy distillation for
+
+00:08:28.040 --> 00:08:33.960
+low-bit models is likely to appear soon. Pop the hood on emotion steering in full duplex
+
+00:08:33.960 --> 00:08:38.980
+speech models and the picture changes from uniform control to geometry-limited results.
+
+00:08:39.700 --> 00:08:44.960
+Mean difference activation steering works by adding a few factors per frame to Moshe's residual
+
+00:08:44.960 --> 00:08:51.400
+stream. Four emotions decode linearly from that stream. Three of them collapse onto one shared
+
+00:08:51.400 --> 00:08:57.480
+direction. Sad stays orthogonal and therefore steerable on its own. The shared direction
+
+00:08:57.480 --> 00:09:02.180
+cannot be subtracted equally from all four emotions without distorting the distinct one.
+
+00:09:02.960 --> 00:09:07.640
+Steering therefore succeeds when the target emotion aligns with the shared vector and
+
+00:09:07.640 --> 00:09:12.800
+fails when it needs an independent offset. The practical limit appears at the point where
+
+00:09:12.800 --> 00:09:18.540
+three emotions share geometry while the fourth does not. Measure steerability per emotion
+
+00:09:18.540 --> 00:09:22.420
+on the target model rather than assuming uniform results across the set.
+
+00:09:23.480 --> 00:09:29.420
+Before we go, watch for new certified acceleration results on additional VLA suites expected in
+
+00:09:29.420 --> 00:09:30.420
+the next several days.
+
+00:09:31.180 --> 00:09:33.040
+That's models and agents for today.
+
+00:09:33.660 --> 00:09:37.840
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+
+00:09:38.280 --> 00:09:40.700
+and subscribe so you don't miss tomorrow's update.
+
+00:09:41.320 --> 00:09:44.260
+The AI world moves fast, we'll help you keep up.
+
+00:09:44.260 --> 00:09:49.820
+See you tomorrow, and if you'd rather watch than listen, find us on YouTube at Nerra Network.
+
+00:09:50.400 --> 00:09:51.400
+Links in the show notes.
+
+00:09:52.140 --> 00:09:55.580
+Quick tip from the network. Try fascinating frontiers next.
+
+00:09:56.300 --> 00:09:58.780
+The most fascinating news from space and science.
+
+00:09:59.400 --> 00:10:02.840
+Every Nerra Network show is free at Nerra Network dot com.
+
+00:10:03.640 --> 00:10:11.120
+Live dashboards, T-S-L-A, space X launches, the investing scoreboard are all at Nerra Network dot com data.
+
+00:10:11.120 --> 00:10:15.160
+This episode used AI voice synthesis of my voice.
+
+00:10:15.740 --> 00:10:18.320
+Editorial selection and analysis are my own.

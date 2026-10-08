@@ -24,6 +24,13 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: "deps(python)"
+    ignore:
+      # PyAV 19 removed the ``metadata_errors`` keyword faster-whisper passes
+      # to ``av.open``; a Dependabot bump (#1365) re-admitted it and every
+      # episode of 2026-10-08 shipped with no transcript. Lift this only
+      # after faster-whisper releases against PyAV 19 (see requirements.txt).
+      - dependency-name: "av"
+        versions: [">=19"]
     labels:
       - "dependencies"
       - "python"

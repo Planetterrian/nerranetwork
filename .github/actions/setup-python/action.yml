@@ -73,8 +73,16 @@ runs:
         # timeouts a stalled mirror costs ~6 minutes total and the run
         # proceeds from cached indexes; the 45-minute step guard stays as
         # the outer backstop.
-        sudo timeout 120 apt-get update -qq || sudo timeout 120 apt-get update -qq ||           echo "::warning::apt-get update failed or timed out twice — installing from cached indexes"
-        sudo timeout 300 apt-get install -y -qq ${{ inputs.system-packages }} ||           sudo timeout 300 apt-get install -y -qq ${{ inputs.system-packages }}
+        #
+        # Oct 8 2026: five runs (four multilingual, one Nerra Daily) died
+        # here with exit 124 — `apt-get install` stalled past 300 s twice.
+        # apt's own per-connection timeout is 120 s and it does not retry a
+        # stalled fetch, so one hung mirror connection used the whole
+        # budget. APT_OPTS abandons a silent connection after 30 s and
+        # retries the fetch, which is what turns a stall into a delay.
+        APT_OPTS="-o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=4"
+        sudo timeout 120 apt-get $APT_OPTS update -qq || sudo timeout 120 apt-get $APT_OPTS update -qq ||           echo "::warning::apt-get update failed or timed out twice — installing from cached indexes"
+        sudo timeout 300 apt-get $APT_OPTS install -y -qq ${{ inputs.system-packages }} ||           sudo timeout 300 apt-get $APT_OPTS install -y -qq ${{ inputs.system-packages }}
 
     - name: Install dependencies
       shell: bash

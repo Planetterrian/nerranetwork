@@ -3603,3 +3603,36 @@ experiments:
       edition, so subscribers' feeds move to ~8am PT too. Needs
       `wrangler deploy` in workers/scheduler. No audio or prompt change —
       outside landmine #17.
+
+  - id: slate-2026-10-08
+    title: "Transcripts never depend on PyAV again; an expired YouTube upload session restarts; apt fails over a stalled mirror"
+    area: reliability
+    shipped: 2026-10-08
+    readout: 2026-10-22
+    status: reading
+    baseline: >
+      2026-10-08: 0 of 21 episodes had a transcript (Dependabot #1365 re-admitted
+      PyAV 19, merged while test_pyav_is_pinned_below_19 was red), so the
+      spoken-text gate recorded no_transcript everywhere, Nerra Daily Ep049
+      shipped 21 segments uncut (180 min), Shorts went out with no captions
+      and no fact cards. Tesla Ep628, SpaceX Ep124 and Omni View Ep199 lost
+      their long-form to HTTP 410 on the resumable upload. Five runs (four
+      multilingual, one Nerra Daily) exited 124 installing ffmpeg.
+    target: >
+      Over 14 days: a committed *_transcript.json for every English episode
+      (spoken_text_gate never no_transcript); youtube_long_error never a
+      404/410 on a show whose upload ran; no setup-python exit 124.
+    criteria: >
+      Hit = all three. A no_transcript day means read the run's
+      "transcription failed" annotation before touching the gate. A 410
+      after the restart means the session expires twice in one upload —
+      read the elapsed time between the two.
+    notes: >
+      engine.transcripts.load_whisper_audio (ffmpeg decode, samples identical
+      to faster-whisper's decoder on SpaceX Ep124) used by generate_transcript
+      and engine/tts_validation.py; requirements av>=11,<19; dependabot.yml
+      ignores av>=19. engine.youtube.upload_video restarts once on 404/410
+      (_is_expired_session_error). setup-python apt Acquire timeouts 30 s,
+      retries 4. Oct 8 transcripts backfilled from the published MP3s and the
+      gate run post hoc (docs/reviews/slate_review_2026_10_08.md §4). No
+      audio or prompt change — outside landmine #17.
