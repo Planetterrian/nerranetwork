@@ -763,14 +763,68 @@ def standing_lessons(show_slug: str) -> List[dict]:
 
 def lessons_for_prompt(show_slug: str) -> str:
     """The active instructions with their ids and scope, for the grading
-    prompt."""
+    prompt, with how often each has been broken again."""
     rows = standing_lessons(show_slug)
     if not rows:
         return "(none yet — this is the first graded interview on this show)"
     return "\n".join(
         f"- [{r.get('id')}] ({'all shows' if r.get('show') == NETWORK else 'this show'}, "
-        f"{r.get('category') or 'other'}) {r.get('lesson')}"
+        f"{r.get('category') or 'other'}"
+        f"{', broken again ' + str(_relapses(r)) + 'x' if _relapses(r) else ''}) {r.get('lesson')}"
         for r in rows)
+
+
+def _relapses(row: dict) -> int:
+    try:
+        return int(row.get("relapses") or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+# Oct 8 2026. The loop could add a lesson and retire one, and it could say in
+# prose that she had broken one again ("a direct relapse against the existing
+# one-question rule"), but nothing happened next: the sentence sat in the same
+# list in the same place, and Jason Fishman and Piper Martz both got a question
+# asked twice under an instruction that says never to. A relapse is now
+# counted on the lesson itself, the most-broken come first in the list, and
+# the worst three are said again as the last thing in her prompt, which is
+# what a voice model weighs most when it decides what to say next.
+RELAPSE_RECAP_MAX = 3
+
+
+def record_relapses(show_slug: str, items: List[Any]) -> int:
+    """Count each standing instruction the grader says she broke again.
+    Only active lessons in this show's reach are counted."""
+    done = 0
+    for item in items or []:
+        lesson_id = str((item.get("id") if isinstance(item, dict) else item) or "").strip()
+        if not lesson_id:
+            continue
+        try:
+            rows = sb_select("show_lessons",
+                             f"id=eq.{lesson_id}&status=eq.active"
+                             f"&show=in.({show_slug},{NETWORK})&select=id,relapses")
+            if not rows:
+                continue
+            sb_update("show_lessons", f"id=eq.{lesson_id}",
+                      {"relapses": _relapses(rows[0]) + 1, "last_relapse_at": _now()})
+            done += 1
+        except Exception:  # noqa: BLE001 — never block an episode on this
+            logger.exception("recording a relapse on %s failed (non-fatal)", lesson_id)
+    return done
+
+
+def relapse_recap(show_slug: str) -> str:
+    """The instructions she keeps breaking, said once more at the very end of
+    her prompt. Empty until something has been broken twice over."""
+    rows = [r for r in standing_lessons(show_slug) if _relapses(r) > 0 and r.get("lesson")]
+    if not rows:
+        return ""
+    rows.sort(key=lambda r: (-_relapses(r), str(r.get("last_relapse_at") or "")))
+    top = rows[:RELAPSE_RECAP_MAX]
+    return ("\n\nBEFORE EVERY TURN. You have broken these in more than one "
+            "interview, so they come last as well as first:\n"
+            + "\n".join(f"- {r['lesson']}" for r in top) + "\n")
 
 
 def lesson_cap(scope: str) -> int:
@@ -795,6 +849,8 @@ def lessons_block(show_slug: str) -> str:
     rows = standing_lessons(show_slug)
     if not rows:
         return ""
+    # The ones she keeps breaking go first (Oct 8 2026); the rest keep order.
+    rows = sorted(rows, key=lambda r: -_relapses(r))
     lines = "\n".join(f"- {r['lesson']}" for r in rows if r.get("lesson"))
     if not lines:
         return ""

@@ -61,7 +61,7 @@ from learning import (  # noqa: E402
     adopt_lessons, guest_feedback, host_formulas, lessons_for_prompt, measure,
     measure_silence,
     parse_transcript, recent_editor_cuts, recent_guest_experience,
-    retire_lessons, save_grade, save_host_phrases,
+    record_relapses, retire_lessons, save_grade, save_host_phrases,
     save_metrics, save_proposed_lessons, session_events_summary,
 )
 from validators.schema_validators import validate_pass_output  # noqa: E402
@@ -123,6 +123,14 @@ def _anyone_joined(run: dict) -> bool:
     return False
 
 
+def _subject_line(interview: dict, app: dict) -> str:
+    """Oct 8 2026: what the interview was about, in Patrick's gate-1 mail."""
+    import html as _h
+    from common import interview_subject
+    text = interview_subject(interview, app, for_guest=False)
+    return f" <em>About:</em> {_h.escape(text)}" if text else ""
+
+
 def handle_missed(run: dict, interview: dict, app: dict) -> int:
     """Guest didn't answer (spec §7 row 1 + §11.7 no-show policy)."""
     show = show_for(interview, app)
@@ -141,7 +149,7 @@ def handle_missed(run: dict, interview: dict, app: dict) -> int:
                             booking_url=booking)
         send_email(app["email"],
                    f"Sorry we missed each other: pick a new time for {show.name}",
-                   html, cc_operator=True)
+                   html, cc_operator=True, cc=[str(app.get("publicist_email") or "")])
         notify_operator(show.slack(
             f"{app['name']} no-show #{no_shows} — reschedule email sent"))
     else:
@@ -1326,6 +1334,9 @@ def main() -> int:
                 "retired by the grading pass")
             adopted = adopt_lessons(show.slug, interview["id"],
                                     graded.get("lessons") or [])
+            relapsed = record_relapses(show.slug, graded.get("relapsed") or [])
+            if relapsed:
+                logger.info("%d standing instruction(s) broken again", relapsed)
             save_grade(show.slug, interview["id"], graded, adopted, retired)
             logger.info("graded %s: overall %s — %d lesson(s) adopted, %d retired",
                         app["name"], (graded.get("grades") or {}).get("overall"),
@@ -1380,6 +1391,7 @@ def main() -> int:
             f"<p>The interview with <strong>{app['name']}</strong> "
             f"({int(duration // 60)} minutes) is processed and waiting at gate 1."
             f"{' <strong>Flagged: ' + ', '.join(flags) + '.</strong>' if flags else ''}"
+            f"{_subject_line(interview, app)}"
             f" The page has the audio, the episode notes, the cleaned transcript "
             f"and the newsletter draft, with Approve and Kill on the bottom:</p>"
             f'<p><a href="{review_url}">Review this episode</a></p>'

@@ -159,7 +159,7 @@ def email_brief_to_guest(interview: dict, app: dict, brief: dict) -> None:
     )
     send_email(app["email"],
                f"Our interview on {show.name}: what I would like to ask you",
-               html, cc_operator=True)
+               html, cc_operator=True, cc=[str(app.get("publicist_email") or "")])
     sb_update("interview_briefs", f"id=eq.{brief['id']}",
               {"sent_to_guest_at": dt.datetime.now(dt.timezone.utc).isoformat(),
                "sent_to": app["email"]})

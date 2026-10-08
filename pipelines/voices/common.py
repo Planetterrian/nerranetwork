@@ -224,6 +224,40 @@ OPERATOR_CC = [a.strip() for a in (
     os.environ.get("OPERATOR_CC") or "patrick@planetterrian.com").split(",")
     if a.strip()]
 
+# Oct 8 2026 (Patrick): Dan Perra is copied on guest correspondence as well.
+# A cc_operator mail to a guest copies these too unless the caller says
+# otherwise (the Producer's pitch threads with publicists do). Mirrors
+# guestTeamCc in workers/voices/src/index.ts. Set GUEST_CC empty for nobody.
+GUEST_CC = [a.strip() for a in (
+    os.environ.get("GUEST_CC", "perra.dan@gmail.com")).split(",") if "@" in a]
+
+
+def interview_subject(interview: Optional[dict], app: Optional[dict],
+                      for_guest: bool = True, limit: int = 280) -> str:
+    """One line on what the conversation is about (Oct 8 2026, Patrick:
+    booking mail says it). The guest's own topics or the pitch read better to
+    the guest than our third-person thesis; for Patrick the thesis comes first.
+    Mirrors interviewSubject in workers/voices/src/index.ts."""
+    app, interview = app or {}, interview or {}
+    topics = app.get("topics")
+    if isinstance(topics, str):
+        try:
+            topics = json.loads(topics)
+        except ValueError:
+            topics = [topics]
+    items = [str(t).strip() for t in (topics if isinstance(topics, list) else [])
+             if str(t or "").strip() and str(t).strip() != "[object Object]"]
+    from_topics = "; ".join(items[:3])
+    pitch = str(app.get("pitch_summary") or "").strip()
+    thesis = str(interview.get("episode_thesis") or "").strip()
+    order = [from_topics, pitch, thesis] if for_guest else [thesis, pitch, from_topics]
+    pick = next((t for t in order if t), "")
+    if len(pick) <= limit:
+        return pick
+    cut = pick[:limit]
+    return cut[:cut.rfind(" ")].rstrip(";,: ") + "…"
+
+
 # Phase 2 co-host (Sept 2026): Patrick sits in the room as co-host on
 # every Mira interview. His display name lives in ONE env var so the
 # prompt, the transcript labels and the editorial passes all agree.
@@ -308,7 +342,8 @@ def email_safe_html(html: str) -> str:
 def send_email(to: str, subject: str, html_body: str,
                cc_operator: bool = False, cc: Optional[List[str]] = None,
                *, text_body: Optional[str] = None,
-               headers: Optional[Dict[str, str]] = None) -> None:
+               headers: Optional[Dict[str, str]] = None,
+               cc_guest_team: Optional[bool] = None) -> None:
     """Send mail as Mira. ``cc_operator=True`` copies Patrick — the July
     2026 oversight process: Mira runs guest comms, the operator sees
     everything without being in the critical path. ``cc`` copies anyone
@@ -338,6 +373,8 @@ def send_email(to: str, subject: str, html_body: str,
     if cc_operator:
         copies.append(OPERATOR_EMAIL)
         copies.extend(OPERATOR_CC)
+    if cc_operator if cc_guest_team is None else cc_guest_team:
+        copies.extend(a for a in GUEST_CC if a.lower() not in {c.lower() for c in copies})
     for addr in cc or []:
         addr = (addr or "").strip()
         if "@" in addr and addr.lower() != to.lower() \

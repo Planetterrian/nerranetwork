@@ -29,7 +29,7 @@ from common import (  # noqa: E402
     operator_phone, render_email, sb_insert, sb_select, sb_update, send_email,
     show_for, to_e164, guest_details,
 )
-from learning import lessons_block, variety_block  # noqa: E402
+from learning import lessons_block, relapse_recap, variety_block  # noqa: E402
 from address import address_rule, first_name, spoken as spoken_address  # noqa: E402
 from interview_shape import planned_minutes, shape_block  # noqa: E402
 
@@ -345,6 +345,15 @@ def is_closing_session(interview: dict) -> bool:
     return (interview.get("session_kind") or "interview") == "closing"
 
 
+def turn_detection() -> dict:
+    """End-of-turn silence Mira waits for, per run (MIRA_TURN_SILENCE_MS)."""
+    try:
+        ms = int(os.environ.get("MIRA_TURN_SILENCE_MS") or 1300)
+    except ValueError:
+        ms = 1300
+    return {"silence_duration_ms": max(600, min(2500, ms))}
+
+
 def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
     """Mira's system prompt for this interview, branded for its show.
 
@@ -393,7 +402,7 @@ def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
         # guest, not on the end of four thousand words of craft. The prompt
         # was cut to a third so they carry the weight they are meant to.
         lessons=lessons_block(show.slug),
-    ) + variety_block(show.slug)
+    ) + variety_block(show.slug) + relapse_recap(show.slug)
 
 
 def when_text(iso: str, guest_tz: str = "") -> str:
@@ -656,6 +665,11 @@ def fire_due_interviews() -> int:
                 # the prompt: the scenario's time checks and hard cap read it.
                 "planned_minutes": planned_minutes(interview, app),
                 "voice_preset": "ara",
+                # Oct 8 2026: the scenario has always read this off the run row
+                # and nothing ever wrote it, so every interview ran on its 1.1 s
+                # default. About ten interruptions an hour at 1.1 s, and Scott
+                # Pulcini felt hurried; 1.3 s waits out a breath between clauses.
+                "turn_detection": turn_detection(),
                 "tools": MIRA_TOOLS,
                 "guest_phone": phone,
                 "caller_id": caller_id,
@@ -775,7 +789,8 @@ def sweep_browser_no_shows() -> int:
                                     booking_url=booking)
                 send_email(app["email"],
                            f"Sorry we missed each other: pick a new time for {show.name}",
-                           html, cc_operator=True)
+                           html, cc_operator=True,
+                           cc=[str(app.get("publicist_email") or "")])
                 notify_operator(show.slack(
                     f"{app.get('name') or 'guest'} didn't come into the studio "
                     f"(no-show #{no_shows}); Mira sent the reschedule email"))

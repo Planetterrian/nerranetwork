@@ -1873,8 +1873,9 @@ class TestTheGuestHearsTheMomentTheyAreOut:
                           cc=["pr@example.com", "", "guest@example.com",
                               common.OPERATOR_EMAIL.upper()])
         # Both of Patrick's addresses, then the publicist, no duplicates.
+        # Oct 8 2026: Dan Perra (GUEST_CC) is copied on guest mail too.
         assert sent["cc"] == [common.OPERATOR_EMAIL, *common.OPERATOR_CC,
-                              "pr@example.com"]
+                              *common.GUEST_CC, "pr@example.com"]
         assert sent["from"] == "Mira <mira@nerranetwork.com>"  # Sept 28 2026: by name
 
 

@@ -59,8 +59,10 @@ class MiraMailer:
         if self.dry_run:
             logger.info("[dry-run] Mira would send to %s: %s", to, subject)
             return None
+        # Pitch threads with publicists are not guest correspondence yet,
+        # so Dan is not copied on them (Oct 8 2026); see GUEST_CC.
         send_email(to, subject, "", cc_operator=True, text_body=body_text,
-                   headers=headers)
+                   headers=headers, cc_guest_team=False)
         logger.info("Mira sent to %s: %s", to, subject)
         return "sent"
 

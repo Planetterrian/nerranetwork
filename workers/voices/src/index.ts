@@ -71,6 +71,9 @@ export interface Env {
   OPERATOR_EMAIL?: string;      // default patricknovak1@gmail.com
   // Comma-separated, copied alongside OPERATOR_EMAIL on guest-facing mail.
   OPERATOR_CC?: string;         // default patrick@planetterrian.com
+  // Comma-separated, also copied on guest-facing mail (Oct 8 2026: Dan
+  // Perra). Default perra.dan@gmail.com; set it empty to copy nobody.
+  GUEST_CC?: string;
   // Phase 2 co-host (Sept 2026, docs/cohost_phase2_contract.md): Patrick
   // joins every interview from the same studio page as `host`. The
   // scenario dials this Voximplant user; the page auto-answers. Host
@@ -281,6 +284,46 @@ function operatorCc(env: Env): string[] {
   });
 }
 
+// Oct 8 2026 (Patrick): Dan Perra is copied on guest correspondence as well
+// as Patrick, and so is a guest's publicist on the mail that concerns their
+// booking and their episode; Scott Pulcini's publicist booked him and never
+// saw his review link. Mirrors GUEST_CC in pipelines/voices/common.py.
+function guestTeamCc(env: Env): string[] {
+  return (env.GUEST_CC ?? "perra.dan@gmail.com")
+    .split(",").map((a) => a.trim()).filter((a) => a.includes("@"));
+}
+
+function publicistCc(app: any): string[] | undefined {
+  const p = String(app?.publicist_email ?? "").trim();
+  return p.includes("@") ? [p] : undefined;
+}
+
+/** One line on what the conversation is about. Oct 8 2026, Patrick: every
+ *  booking email says it. For the guest their own topics, or the pitch, read
+ *  better than our third-person thesis; for Patrick the thesis comes first.
+ *  Mirrors interview_subject in pipelines/voices/common.py. */
+function interviewSubject(interview: any, app: any, forGuest: boolean): string {
+  let topics: unknown = app?.topics;
+  if (typeof topics === "string") {
+    try { topics = JSON.parse(topics); } catch { topics = [topics]; }
+  }
+  const list = Array.isArray(topics)
+    ? topics.map((t) => String(t ?? "").trim()).filter((t) => t && t !== "[object Object]")
+    : [];
+  const fromTopics = list.slice(0, 3).join("; ");
+  const pitch = String(app?.pitch_summary ?? "").trim();
+  const thesis = String(interview?.episode_thesis ?? "").trim();
+  const pick = (forGuest ? [fromTopics, pitch, thesis] : [thesis, pitch, fromTopics])
+    .find((t) => t) ?? "";
+  if (pick.length <= 280) return pick;
+  const cut = pick.slice(0, 280);
+  return cut.slice(0, cut.lastIndexOf(" ")).replace(/[;,:\s]+$/, "") + "…";
+}
+
+function subjectHtml(text: string, label = "What we'll talk about"): string {
+  return text ? `<p><strong>${esc(label)}:</strong> ${esc(text)}</p>` : "";
+}
+
 // Something between us and Gmail decodes our HTML as quoted-printable
 // without our ever having encoded it, so an "=" inside a link is eaten
 // together with the two characters after it ("?interview=89fbb824..."
@@ -303,8 +346,9 @@ async function email(env: Env, to: string, subject: string, html: string,
   // keeps full visibility.
   const cc: string[] = [];
   if (ccOperator) {
-    for (const addr of operatorCc(env)) {
-      if (addr.toLowerCase() !== to.toLowerCase()) cc.push(addr);
+    for (const addr of [...operatorCc(env), ...guestTeamCc(env)]) {
+      if (addr.toLowerCase() !== to.toLowerCase()
+          && !cc.some((c) => c.toLowerCase() === addr.toLowerCase())) cc.push(addr);
     }
   }
   for (const addr of extraCc ?? []) {
@@ -900,8 +944,13 @@ function chooseApplication(rows: any[], p: any): any[] {
 
 /** Whatever the booker wrote in the notes/"additional notes" question. */
 function bookingNotes(p: any): string {
-  const n = p.responses?.notes?.value ?? p.responses?.notes ?? p.additionalNotes ?? p.description;
-  return String(n ?? "").trim();
+  // Oct 8 2026: an empty notes field arrives as an object with no value, and
+  // String() of that put "[object Object]" in Stan Lewis's and Jason
+  // Fishman's bios, which their prep briefs then read. Only text counts.
+  for (const n of [p.responses?.notes?.value, p.responses?.notes, p.additionalNotes, p.description]) {
+    if (typeof n === "string" && n.trim()) return n.trim();
+  }
+  return "";
 }
 
 /** Oct 5 2026 (Jon Cheney). The webhook only ever heard BOOKING_CREATED, so
@@ -934,7 +983,7 @@ async function handleCalComCancelled(env: Env, p: any): Promise<Response> {
         `<p>Hi ${esc(firstName(app.name))},</p>
          <p>No problem at all. Your slot is released and nobody is waiting for you.</p>
          ${booking ? `<p>Whenever you'd like to pick it up again, <a href="${esc(booking)}">book a new time here</a>.</p>` : ""}
-         ${miraSignature(show)}`, true);
+         ${miraSignature(show)}`, true, publicistCc(app));
     } catch (err: any) { console.error("cancel ack failed:", err?.message ?? err); }
     await email(env, operatorEmail(env), `${show.shortLabel}: ${app.name ?? "a guest"} cancelled in Cal.com`,
       `<p>${esc(app.name ?? "A guest")} cancelled the interview at ${esc(pacificTime(iv.scheduled_at))} from Cal.com.</p>` +
@@ -952,7 +1001,7 @@ async function handleCalComCancelled(env: Env, p: any): Promise<Response> {
 async function interviewForBooking(env: Env, uid: string, startTime: string,
                                    emails: string[]): Promise<any | null> {
   const live = "status=in.(scheduled,briefed)";
-  const sel = "select=id,application_id,show,scheduled_at,guest_timezone,manage_token,session_kind";
+  const sel = "select=id,application_id,show,scheduled_at,guest_timezone,manage_token,session_kind,episode_thesis";
   if (uid) {
     const byUid = await sb(env, "GET",
       `interviews?cal_booking_uid=eq.${encodeURIComponent(uid)}&${live}&${sel}&limit=1`);
@@ -982,7 +1031,7 @@ async function handleCalComRescheduled(env: Env, p: any): Promise<Response | nul
     String(p.rescheduleStartTime ?? p.rescheduledFrom ?? ""), emails);
   if (!iv) return null;                       // the booking path will find or make one
   const app = (await sb(env, "GET",
-    `guest_applications?id=eq.${iv.application_id}&select=id,name,email,show`))?.[0] ?? {};
+    `guest_applications?id=eq.${iv.application_id}&select=id,name,email,show,topics,pitch_summary,publicist_email`))?.[0] ?? {};
   const show = isShow(iv.show) ? showFor(iv) : showFor(app);
   await sb(env, "PATCH", `interviews?id=eq.${iv.id}`, {
     scheduled_at: startTime, status: "scheduled", reminder_sent_at: null,
@@ -1000,13 +1049,15 @@ async function handleCalComRescheduled(env: Env, p: any): Promise<Response | nul
       `<p>Hi ${esc(firstName(app.name))},</p>
        <p>No problem at all. We're now on for <strong>${esc(when)}</strong>. Your studio link
        stays the same.</p>
+       ${subjectHtml(interviewSubject(iv, app, true))}
        ${studioStepsHtml(studio)}
        ${manage ? `<p>If you need to move it again, <a href="${esc(manage)}">use this link</a>.</p>` : ""}
-       ${miraSignature(show)}`, true);
+       ${miraSignature(show)}`, true, publicistCc(app));
   }
   await email(env, operatorEmail(env), `${show.shortLabel}: ${app.name ?? "a guest"} rescheduled in Cal.com`,
     `<p>${esc(app.name ?? "A guest")} moved their interview from ${esc(pacificTime(iv.scheduled_at))}
-     to ${esc(pacificTime(startTime))}. The interview row moved with it; nothing to do.</p>`);
+     to ${esc(pacificTime(startTime))}. The interview row moved with it; nothing to do.</p>
+     ${subjectHtml(interviewSubject(iv, app, false), "The interview")}`);
   try { await dispatch(env, "fire-tick", { source: "reschedule", interview_id: iv.id }); }
   catch (err: any) { console.error("reschedule fire-tick failed:", err?.message ?? err); }
   return json({ ok: true, show: show.slug, interview_id: iv.id, moved: true });
@@ -1243,6 +1294,7 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
     `<p>Hi ${esc(firstName(apps[0].name))},</p>
      <p>Thank you for booking. We're on${when ? ` for <strong>${esc(when)}</strong>` : ""}.
      I'm Mira, the AI host of ${esc(show.name)}, and it will be just the two of us.</p>
+     ${subjectHtml(interviewSubject(null, apps[0], true))}
      <p><a href="${studio}"><strong>This is your personal studio link</strong></a>. Bookmark
      it: the studio opens ten minutes before we start, and there is nothing to install.</p>
      ${GUEST_AUDIO_HTML}
@@ -1257,7 +1309,7 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
      <p>The conversation is recorded. You get the transcript first, with a week to approve it,
      cut anything from it or refuse it; after seven days without a reply the episode goes
      ahead as sent, and you can ask for a takedown at any time.${manage ? ` If you need to move or cancel, <a href="${esc(manage)}">use this link</a>; one tap, no explanation needed.` : " If you need to move the time, use the reschedule link in your calendar confirmation."}</p>
-     ${miraSignature(show)}`, true);
+     ${miraSignature(show)}`, true, publicistCc(apps[0]));
   await slack(env, `${show.shortLabel}: ${apps[0].name} booked ${pacificTime(startTime)}`);
   return json({ ok: true, show: show.slug, interview_id: interviewId });
 }
@@ -1403,7 +1455,7 @@ async function handleEditorialDecision(req: Request, env: Env): Promise<Response
        <p>If I don't hear from you within seven days I'll take that as
        approval, and I'll remind you at day four. You can always ask for
        changes after publication too.</p>
-       ${miraSignature(show)}`, true);
+       ${miraSignature(show)}`, true, publicistCc(app));
     await slack(env, `${show.shortLabel}: Patrick approved package ${pkg.id} — guest review email sent`);
   } else {
     await sb(env, "PATCH", `interviews?id=eq.${pkg.interview_id}`, { status: "failed" });
@@ -1973,7 +2025,7 @@ async function reminderFallback(env: Env): Promise<number> {
   const due = await sb(env, "GET",
     `interviews?status=in.(briefed,scheduled)&reminder_sent_at=is.null` +
     `&scheduled_at=gte.${lo}&scheduled_at=lte.${hi}&created_at=lte.${bookedBefore}` +
-    `&select=id,application_id,scheduled_at,show,guest_timezone,manage_token,call_mode&limit=10`) ?? [];
+    `&select=id,application_id,scheduled_at,show,guest_timezone,manage_token,call_mode,episode_thesis&limit=10`) ?? [];
   let sent = 0;
   for (const iv of due) {
     try {
@@ -1982,7 +2034,7 @@ async function reminderFallback(env: Env): Promise<number> {
         { reminder_sent_at: new Date().toISOString() }, "return=representation");
       if (!claimed?.length) continue;
       const app = (await sb(env, "GET",
-        `guest_applications?id=eq.${iv.application_id}&select=name,email,phone,show`))?.[0];
+        `guest_applications?id=eq.${iv.application_id}&select=name,email,phone,show,topics,pitch_summary,publicist_email`))?.[0];
       if (!app?.email) continue;
       const show = isShow(iv.show) ? showFor(iv) : showFor(app);
       const studio = studioUrl(show, iv.id);
@@ -1993,11 +2045,12 @@ async function reminderFallback(env: Env): Promise<number> {
       await email(env, app.email, `Our interview on ${show.name} is coming up`,
         `<p>Hi ${esc(firstName(app.name))},</p>
          <p>We're on for <strong>${esc(when)}</strong>, a little over an hour from now.</p>
+         ${subjectHtml(interviewSubject(iv, app, true))}
          ${phoneMode
            ? "<p>I'll call the number you gave us. Find a quiet spot and answer when it rings.</p>"
            : GUEST_AUDIO_HTML + studioStepsHtml(studio)}
          ${manage ? `<p>If today doesn't work after all, <a href="${esc(manage)}">move or cancel it here</a>.</p>` : ""}
-         ${miraSignature(show)}`, true);
+         ${miraSignature(show)}`, true, publicistCc(app));
       const phone = phoneE164(app.phone);
       if (phone && !phoneMode) {
         await sendSms(env, phone,
@@ -2352,7 +2405,8 @@ async function gate2Housekeeping(env: Env) {
          approve it.</p>
          <p><a href="${esc(link)}">Listen and approve, or ask for changes</a></p>
          <p>If I don't hear from you in the next three days I'll take that as approval,
-         and you can still ask for changes after it publishes.</p>${miraSignature(show)}`, true);
+         and you can still ask for changes after it publishes.</p>${miraSignature(show)}`, true,
+        publicistCc(app));
     }
   }
 }

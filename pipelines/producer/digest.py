@@ -27,7 +27,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from pipelines.voices.common import (  # noqa: E402
-    OPERATOR_EMAIL, pacific_time, render_email, sb_insert, sb_select, send_email,
+    OPERATOR_EMAIL, interview_subject, pacific_time, render_email, sb_insert, sb_select,
+    send_email,
 )
 from pipelines.voices.shows import get_show  # noqa: E402
 from pipelines.producer.gmail_client import thread_url  # noqa: E402
@@ -78,8 +79,8 @@ def collect(since: datetime, until: Optional[datetime] = None) -> Dict[str, Any]
                      "&select=id,name,show,status,pitched_show,producer_action,producer_acted_at,"
                      "email_thread_id,publicist_name,producer_closed_reason&order=producer_acted_at.desc&limit=200")
     booked = sb_select("interviews",
-                       f"created_at=gte.{_iso(since)}&select=id,scheduled_at,show,"
-                       "guest_applications(name)&order=scheduled_at.asc&limit=50")
+                       f"created_at=gte.{_iso(since)}&select=id,scheduled_at,show,episode_thesis,"
+                       "guest_applications(name,topics,pitch_summary)&order=scheduled_at.asc&limit=50")
     invited_total = sb_select("guest_applications", "status=eq.invited&source=eq.email&select=id")
     approved_total = sb_select("guest_applications", "status=eq.approved&select=id")
     scheduled_total = sb_select("interviews", "status=in.(scheduled,briefed)&select=id")
@@ -107,7 +108,9 @@ def collect(since: datetime, until: Optional[datetime] = None) -> Dict[str, Any]
     for b in booked:
         app = b.get("guest_applications") or {}
         when = pacific_time(b.get("scheduled_at"))
-        booked_rows.append({"name": app.get("name") or "guest", "show": _show_name(b.get("show")), "when": when})
+        # Oct 8 2026 (Patrick): say what each booked interview is about.
+        booked_rows.append({"name": app.get("name") or "guest", "show": _show_name(b.get("show")), "when": when,
+                            "subject": interview_subject(b, app, for_guest=False, limit=220)})
     followups = sum(1 for d in decisions if d.get("kind") == "followup" and d.get("action") == "send")
     guest_answered = [d for d in decisions if d.get("kind") == "guest_reply" and d.get("action") == "send"]
     stats = {

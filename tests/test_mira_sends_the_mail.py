@@ -48,7 +48,8 @@ class TestBothOfPatricksAddresses:
 
     def test_cc_operator_means_every_address(self):
         body = _tsfn("email")
-        assert "for (const addr of operatorCc(env))" in body
+        # Oct 8 2026: with Dan (guestTeamCc) alongside Patrick's addresses.
+        assert "for (const addr of [...operatorCc(env), ...guestTeamCc(env)])" in body
         # Never copy someone on their own mail.
         assert "addr.toLowerCase() !== to.toLowerCase()" in body
 
@@ -64,10 +65,11 @@ class TestTheGuestMailPatrickSeesToo:
         return WORKER[start:WORKER.index(");", at)]
 
     def test_the_review_invitation(self):
-        assert " ".join(self._call("episode is ready for you").split()).endswith("`, true")
+        # Oct 8 2026: and the guest's publicist, when they have one.
+        assert " ".join(self._call("episode is ready for you").split()).endswith("`, true, publicistCc(app)")
 
     def test_the_day_four_reminder(self):
-        assert " ".join(self._call("episode is waiting for you").split()).endswith("`, true")
+        assert " ".join(self._call("episode is waiting for you").split()).endswith("`, true, publicistCc(app)")
 
     def test_the_rebook_note(self):
         assert " ".join(self._call("pick a new time for ${show.name}").split()).endswith("`, true")
