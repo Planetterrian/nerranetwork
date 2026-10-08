@@ -776,6 +776,116 @@ reviews:
     ab_listen_required: true
     rationale: Ep193 transcript never says 'This is Fascinating Frontiers, episode …'; chapters_ep193.json has ONLY Teaser+Closing (Ep147/Ep166-class regression returned). Hardens post cold-open identity so Introduction marker fires every episode.
   agent_cost_usd: 0.1613
+- date: '2026-10-05'
+  pr: null
+  doc: docs/reviews/fascinating_frontiers_review_2026_10_05.md
+  generated_by: grok-4.5
+  summary: 10/10 scripts still under the digest ceiling; almanac/sky-highlights and anniversary filler still reach audio (ep211–213); Keep-an-eye teaser is no longer saturated but successors are rising; new high-yield issue is spoken digest section headers; escalate multi-miss almanac backstop + teaser de-seed + Cosmic Deep Dive depth rather than re-filing identical prompt levers.
+  scored_prior_predictions:
+  - metric: ephemeris/sky-almanac/this-day-in-history items in FF Top-15 digests (shower peak guides, pure anniversaries, viewing calendars, zodiacal-light windows)
+    verdict: miss
+    evidence: ep211 snapshot leakage + NASA October night-sky chapter (Saturn opposition, Orionids, Moon–Pleiades); ep212 V2 1942; ep213 Sputnik 1957; filter+backstop never merged
+  - metric: occurrences of verbatim teaser opener 'Keep an eye on' in next 10 _tts.txt
+    verdict: partial
+    evidence: Ep211 still keep-an-eye; Ep212–213 use Next-time-watching/watch-for; snapshot no cross-ep keep-an-eye above threshold — desaturated but de-seed never merged
+  - metric: successor teaser-tic openers ('Before we go, we'll be watching for' / 'Next time, watch for' / 'Next time we'll be watching for' / 'The thing to watch next') count in next 10 _tts.txt
+    verdict: hit
+    evidence: Ep212–213 successor shapes present but keep-an-eye no longer saturates; no single successor verified ≥6/10
+  - metric: Episodes missing spoken identity line and/or shipping <3 chapter entries
+    verdict: hit
+    evidence: ep204–213 chapter files include Introduction; ep211–213 speak identity line; no Ep193-class 2-entry map
+  - metric: episodes below 1700-word floor (digest-ceiling trajectory; no podcast-side lever)
+    verdict: hit
+    evidence: 10/10 ep204–213 _tts.txt under 1700w (1078–1495); ceiling still digest-side
+  - metric: presence of Closing as last semantic chapter marker on new episodes
+    verdict: partial
+    evidence: Most end Teaser→Closing; Ep209 chapters_ep209.json has no Tomorrow Teaser (body→Closing only)
+  - metric: 0 market-action items / 0 launch false-drops (June-16 lineage holding)
+    verdict: hit
+    evidence: No SPCX/IPO/funding ticker in ep211–213 EN audio; Falcon/Starship/Dragon mission coverage retained
+  - metric: deep dive restating a covered story's facts (manual)
+    verdict: miss
+    evidence: Ep211 body lunar-pit cave study re-stated in deep-dive block before debris-laser segment
+  - metric: prompt example transition in a shipped transcript
+    verdict: hit
+    evidence: No 'Now, on a completely different note…' in ep211–213 EN transcripts
+  - metric: digest_cross_section_dupes_removed
+    verdict: partial
+    evidence: Density copied-section labels common (Top 15 / Cosmic Deep Dive); same-story cross-section dupes less dominant than label echo
+  - metric: source_integrity_claims median
+    verdict: miss
+    evidence: 'n/a-lever-not-scored: claims counts absent from this snapshot bundle — cannot confirm ≥4 median'
+  - metric: episodes with more than half the items source-less after the retry
+    verdict: miss
+    evidence: 'n/a-lever-not-scored: digests not in bundle; lint opted-in in YAML but unverified this pass'
+  shipped: []
+  deferred:
+  - 'OPERATOR DECISION (escalate since 2026-06-12): Cosmic Deep Dive digest licensed-knowledge thin-day floor (~12–16 sentences / ~250–320w) with --test before/after, OR kill and accept ~1100–1500w podcasts — only sanctioned length path; no podcast-side word pressure (do_not_retry)'
+  - 'OPERATOR DECISION (escalate after Aug-9→Sep-16 identical dual-layer filings missed while never merging): full NO SKY-ALMANAC / NO THIS-DAY-IN-HISTORY digest backstop beside NO STOCK — drop viewing calendars, shower-peak guides, pure anniversaries, monthly night-sky packages; keep space-based eclipse science and real mission milestones'
+  - 'OPERATOR DECISION (escalate after multi-pass prompt-only teaser de-seed misses): remove quoted Keep-an-eye / Next-time-watching-for examples; prefer data-side teaser-frame memory (extend frame_memory to sign-off teasers) over a third identical prompt-only filing; monitor successor shapes ≥6/10'
+  - Align min_podcast_words down to ~1500 to silence every-episode script_below_target — cosmetic ops choice
+  - Mid-section digest-driven chapter titles (network lever)
+  - Theme residual 'science nasa' (low harm)
+  - 'Curated narrative-tracker status pass (operator task: scripts/update_tesla_narrative.py --slug fascinating_frontiers)'
+  - review_snapshot.py missing-Introduction AND missing-Teaser-before-Closing detector (Ep147/166/193/209 classes) — network tooling owner
+  - Aggressive brand-level telescope product title bans — try digest curation first
+  - Routine comsat/Falcon cadence de-prioritization vs SpaceX Daily (editorial monitor)
+  - Score Sep-24 source_integrity_claims median and items_without_source with digest sidecars next pass
+  - Ep209 missing Tomorrow Teaser — monitor; if ≥2/10 recur, broaden teaser chapter pattern + drift-guard
+  predictions:
+  - metric: spoken digest section labels in next 10 _tts.txt (verbatim 'Top 15 Space', 'Cosmic Deep Dive:', 'Cosmic Spotlight' as headers)
+    baseline: ≥7/10 density rows list copied Top-15 and/or Cosmic Deep Dive section labels (ep204/206–209/211–213)
+    expected: 0/10 after podcast WHAT-TO-SKIP harden merges; section content still covered without reading the label
+    verdict: pending
+    evidence: null
+  - metric: title-pattern hits for night-sky-highlights / reaches-opposition residual classes in next 10 digests
+    baseline: ep211 matched sky-highlights/opposition/meteor-peak leakage in snapshot + audio chapter
+    expected: 0 title-pattern hits on those residual classes after narrow YAML patterns merge; real mission/astronomy science retained
+    verdict: pending
+    evidence: null
+  - metric: deep dive restating a body-covered named mission/team/finding (manual, next 10)
+    baseline: 1/3 sampled (Ep211 lunar-pit cave)
+    expected: 0/10 after deep-dive entity harden merges
+    verdict: pending
+    evidence: null
+  - metric: pure Reddit career / amateur-channel-meta / thin sports-PR items in Top-15 digests
+    baseline: ep212 shipped multiple Reddit channel/career beats + Koch sports appearance
+    expected: 0 pure career/channel-meta items after digest curation bullet; mission-tied PR at most incidental
+    verdict: pending
+    evidence: null
+  - metric: successor teaser-tic single-shape rate in next 10 _tts.txt
+    baseline: Ep212 Next-time-watching-for + Ep213 Next-time-watch-for; keep-an-eye desaturated
+    expected: flag miss if any one successor shape ≥6/10 (third-generation convergence); no prompt de-seed filed this pass
+    verdict: pending
+    evidence: null
+  - metric: episodes below 1700-word floor (digest-ceiling trajectory; no podcast-side lever)
+    baseline: 10/10 (ep204–213)
+    expected: still ≥7/10 below floor at next review unless operator ships Cosmic Deep Dive digest depth lever
+    verdict: pending
+    evidence: null
+  - metric: Episodes with Introduction present and Tomorrow Teaser immediately before Closing
+    baseline: 9/10 full Teaser→Closing; Ep209 missing Teaser
+    expected: 10/10 Teaser immediately before Closing (monitor-only unless recurrence)
+    verdict: pending
+    evidence: null
+  proposed_changes_in_pr:
+  - file: shows/prompts/fascinating_frontiers_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: Density audit shows copied section labels on most of ep204–213 (Top 15 / Cosmic Deep Dive headers spoken). Existing skip line is too weak; verbatim ban targets the shipped failure without adding length pressure.
+  - file: shows/prompts/fascinating_frontiers_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: Ep211 told the Planetary Science Institute lunar-pit cave study in the body then re-stated the same selection/investigation in the deep-dive block (Sep-5 rule miss). Hardens entity check without podcast length levers.
+  - file: shows/prompts/fascinating_frontiers_digest.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: Ep212 spent multiple items on Reddit career/YouTube-channel meta and a thin sports-appearance beat — off-brand for a space-science briefing and weak substrate for the podcast.
+  - file: shows/fascinating_frontiers.yaml
+    kind: config
+    ab_listen_required: false
+    rationale: Incremental residual title tighten for ep211-class NASA monthly sky-highlights / planet-at-opposition / named-shower-peak packages still reaching digests. No bare planet names, no bare 'passes near' (June-16 Falcon-9 lesson). Full digest almanac backstop escalated separately after multi-pass non-merge misses.
+  agent_cost_usd: 0.1735
 do_not_retry:
 - idea: Phonetic respellings or programmatic speech-tag injection.
   evidence: 'Landmine #17 — 100% regression rate on the custom voice kdif6sqjcyiq. NOTE: this pass''s garble repair is the OPPOSITE (it removes a phonetic respelling the model emitted, restoring the standard spelling TTS handles) and is allowed.'
