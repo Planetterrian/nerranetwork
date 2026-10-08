@@ -7,35 +7,37 @@ name: Nerra Daily Edition
 # pages). No show content is regenerated — the cost per episode is one
 # small Grok call + a few thousand TTS characters + one R2 upload.
 #
-# Trigger shape mirrors multilingual.yml: a workflow_run trigger fires
-# after every "Run Podcast Show" completion, and the ready gate inside
-# scripts/build_daily_edition.py exits 0 quietly until every show
-# expected that weekday has published — so the edition assembles minutes
-# after the LAST show of the morning lands. The scheduled sweeps are
-# late-day idempotent fallbacks: past the 13:00 UTC force hour the gate
-# builds once 80% of the expected shows have landed or skipped, and past
-# the 16:00 UTC hard deadline with whatever published (a show that
-# skipped its day would otherwise block the edition forever). Re-runs are free:
-# the committed summaries entry for the edition date is the idempotency
-# key.
+# Release (Oct 8 2026, operator-directed): the edition goes out at 8:00 AM
+# Pacific with every show of the morning in it. The ready gate in
+# scripts/build_daily_edition.py (engine/daily_edition.py ready_decision)
+# waits until 07:50 Pacific whatever has landed — a build takes 6-7
+# minutes — then builds once every expected show has published or
+# skipped. A show still missing is held for until 09:00 Pacific, and past
+# that the gate builds with whatever exists (a run that failed outright
+# leaves no marker to wait on). The gate reads Pacific wall time, so the
+# release does not move on the daylight-saving changes.
+#
+# Triggers: the Cloudflare Worker (workers/scheduler EDITION_DISPATCH)
+# dispatches this workflow at 07:50 and 09:01 Pacific to the minute; a
+# workflow_run after every "Run Podcast Show" completion lets a straggler
+# that lands inside the hold build the edition at once (before 07:50 the
+# gate exits 0 quietly); the scheduled crons are late GitHub fallbacks
+# that cover both UTC offsets. Re-runs are free: the committed summaries
+# entry for the edition date is the idempotency key.
 
 on:
   workflow_run:
     workflows: ["Run Podcast Show"]
     types: [completed]
   schedule:
-    # Idempotent sweeps after the morning slate (GitHub cron is often
-    # hours late — fine, the gate handles it). The 13:23 sweep backs the
-    # force hour (13:00 UTC since Oct 2 2026 — Vancouver's 12:16 slot is
-    # the last expected show; 12:00 before that); the exact-time driver
-    # is the Cloudflare Worker's 13:07 UTC dispatch (workers/scheduler
-    # EDITION_DISPATCH). 16:23 backs the hard deadline, past which the
-    # gate builds with whatever landed (engine/daily_edition.py
-    # ready_decision).
-    - cron: '23 13 * * *'
-    - cron: '23 14 * * *'
-    - cron: '23 16 * * *'
-    - cron: '23 17 * * *'
+    # Fallbacks for the Worker's Pacific-clock dispatches (GitHub cron is
+    # often hours late — the gate decides). 14:55 / 16:05 UTC are 07:55 /
+    # 09:05 PDT; 15:55 / 17:05 UTC are the same Pacific times under PST.
+    # A sweep that lands before the release is a quiet wait.
+    - cron: '55 14 * * *'
+    - cron: '55 15 * * *'
+    - cron: '5 16 * * *'
+    - cron: '5 17 * * *'
   workflow_dispatch:
     inputs:
       date:

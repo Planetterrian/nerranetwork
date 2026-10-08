@@ -14,18 +14,32 @@ interface Env {
 const REPO = "Planetterrian/nerranetwork";
 const WORKFLOW = "run-show.yml";
 
-// Nerra Daily edition force-dispatch (Aug 2026, "land by 6am Pacific"):
-// the edition's when-ready gate stops waiting for stragglers at
-// FORCE_BUILD_UTC_HOUR (12:00 UTC, scripts/build_daily_edition.py), but
-// its GitHub sweep crons are as late as any other — on 2026-08-24/25 the
-// 14:23 sweep ran 15:07/15:13 and the edition landed ~8am PT. This slot
-// fires nerra-daily.yml at 12:07 UTC sharp (a minute the wrangler cron
-// already covers), so a straggler day still assembles by ~12:40 UTC =
-// 5:40am PDT / 4:40am PST. Deliberately an OBJECT, not a SLOTS row —
+// Nerra Daily edition dispatch, on PACIFIC wall time (Oct 8 2026,
+// operator-directed: "publish only after all the shows have finished, at
+// 8am Pacific"). 07:50 opens the release — a build takes 6-7 minutes, so
+// the edition is live by ~8:00 — and 09:01 is the end of the straggler
+// hold, past which the gate builds with whatever landed
+// (engine/daily_edition.py RELEASE_PACIFIC / HOLD_UNTIL_PACIFIC). The
+// Worker reads Pacific time instead of a UTC hour so the release does not
+// move on the daylight-saving changes: 07:50 PT is 14:50 UTC under PDT and
+// 15:50 UTC under PST, and wrangler.toml's second trigger covers both. A straggler that
+// lands inside the hold triggers the build itself (nerra-daily.yml's
+// workflow_run). Deliberately an OBJECT, not a SLOTS row —
 // tests/test_scheduling_punctuality.py parses SLOTS rows as shows.
-// Oct 2 2026: 13:07 — Vancouver (12:16 UTC) is the last expected show;
-// the force hour in engine/daily_edition.py moved 12 -> 13 with it.
-const EDITION_DISPATCH = { hour: 13, minute: 7, workflow: "nerra-daily.yml" };
+const EDITION_DISPATCH = {
+  tz: "America/Los_Angeles",
+  times: [[7, 50], [9, 1]] as Array<[number, number]>,
+  workflow: "nerra-daily.yml",
+};
+
+/** Hour and minute of *d* on the edition's wall clock. */
+function pacificHourMinute(d: Date): [number, number] {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: EDITION_DISPATCH.tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  }).formatToParts(d);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+  return [get("hour"), get("minute")];
+}
 
 // [utcHour, utcMinute, show, dayFilter]
 const SLOTS: Array<[number, number, string, string | null]> = [
@@ -224,7 +238,7 @@ export default {
     const base = {
       worker: "nerra-scheduler",
       now: now.toISOString(),
-      cron: "1,7,16,31,37,46 6-12 * * * (UTC)",
+      cron: "1,7,16,31,37,46 6-12 * * * and 1,50 14-17 * * * (UTC)",
       next_slot: nextSlot(now),
       edition_dispatch: EDITION_DISPATCH,
       slots: SLOTS.map(([h, m, show, f]) => ({
@@ -243,10 +257,8 @@ export default {
 
   async scheduled(controller: ScheduledController, env: Env): Promise<void> {
     const now = new Date(controller.scheduledTime);
-    if (
-      now.getUTCHours() === EDITION_DISPATCH.hour &&
-      now.getUTCMinutes() === EDITION_DISPATCH.minute
-    ) {
+    const [ph, pm] = pacificHourMinute(now);
+    if (EDITION_DISPATCH.times.some(([h, m]) => h === ph && m === pm)) {
       // The edition workflow's own gate decides whether there is anything
       // to build (already-published days no-op on the fast gate).
       await dispatchWorkflow(env, EDITION_DISPATCH.workflow, {}, "nerra-daily");

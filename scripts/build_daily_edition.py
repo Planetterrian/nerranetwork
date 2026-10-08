@@ -41,7 +41,6 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from engine.daily_edition import (  # noqa: E402
-    FORCE_BUILD_UTC_HOUR as _FORCE_BUILD_UTC_HOUR,
     EditionSpec,
     MIRA_AI_DISCLOSURE,
     Segment,
@@ -70,14 +69,13 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s",
 logger = logging.getLogger("nerra_daily")
 
 #: The ready-gate rule lives in engine.daily_edition (``ready_decision``,
-#: FORCE_BUILD_UTC_HOUR / FORCE_BUILD_MIN_SHARE / HARD_DEADLINE_UTC_HOUR —
-#: Oct 2 2026). History: 14:00 -> 12:00 (Aug 2026, land by 6am Pacific)
-#: -> 13:00 (Oct 2026, Vancouver's 12:16 UTC slot is the last expected
-#: show; a force-built edition now lands ~13:25 UTC = 6:25am PDT /
-#: 5:25am PST). Punctual force trigger: workers/scheduler dispatches
-#: nerra-daily.yml at 13:07 UTC; the 13:23 GitHub sweep is the delayed
-#: fallback. Re-exported here because tests and the Worker guard read it.
-FORCE_BUILD_UTC_HOUR = _FORCE_BUILD_UTC_HOUR
+#: ``RELEASE_PACIFIC`` / ``HOLD_UNTIL_PACIFIC``). History: 14:00 -> 12:00
+#: UTC (Aug 2026, land by 6am Pacific) -> 13:00 UTC (Oct 2 2026) -> a fixed
+#: Pacific release (Oct 8 2026, operator-directed): the gate opens at 07:50
+#: Pacific so the edition is live by ~8:00 with every show of the morning
+#: in it, and holds for a straggler until 09:00. The punctual triggers are
+#: workers/scheduler's Pacific-clock dispatches; the GitHub sweeps in
+#: nerra-daily.yml are the delayed fallback.
 
 LINKS_MODEL = os.environ.get("NERRA_DAILY_LINKS_MODEL", "grok-4.3")
 
@@ -604,7 +602,8 @@ def main() -> int:
                         help="Edition date YYYY-MM-DD (default: today UTC)")
     parser.add_argument("--when-ready", action="store_true",
                         help="Gate mode: exit 0 quietly unless every expected "
-                             "show has published (or the force hour passed)")
+                             "show has published or skipped by the 07:50 Pacific "
+                             "release (or the 09:00 Pacific hold has ended)")
     parser.add_argument("--force", action="store_true",
                         help="Build now with whatever segments exist")
     parser.add_argument("--skip-llm", action="store_true",
@@ -627,7 +626,7 @@ def main() -> int:
 
         # A show with a committed .skip_<date>.json is NOT in ``missing``:
         # it has told the network it will not publish, so the gate builds
-        # without it instead of holding every listener to the force hour
+        # without it instead of holding every listener to the end of the hold
         # (UC's claims-gate block on 2026-09-03 cost the edition four hours).
         lineup = discover_lineup(spec, ROOT, target_date)
         segments, missing = lineup.segments, lineup.missing

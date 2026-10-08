@@ -82,8 +82,10 @@ def test_worker_slots_match_cron_map():
 
 def test_worker_trigger_covers_all_slots():
     toml = (_ROOT / "workers" / "scheduler" / "wrangler.toml").read_text(encoding="utf-8")
-    # 6-13 since Oct 2 2026: the Nerra Daily dispatch moved to 13:07.
-    assert '"1,7,16,31,37,46 6-13 * * *"' in toml
+    # 6-12: the last show slot is Vancouver's 12:16. (6-13 from Oct 2 to
+    # Oct 8 2026 carried the 13:07 Nerra Daily dispatch, which now has its
+    # own Pacific-clock trigger — tests/test_nerra_daily_8am_pacific_2026_10_08.py.)
+    assert '"1,7,16,31,37,46 6-12 * * *"' in toml
 
 
 def test_gate_has_duplicate_guard():
@@ -173,40 +175,22 @@ def test_audit_rss_limits_match_cron_cadence():
 
 
 def test_edition_dispatch_slot():
-    """Nerra Daily's force-build must have an exact-time driver (Aug 2026
-    land-by-6am-Pacific pass): the Worker dispatches nerra-daily.yml at
-    12:07 UTC — a minute the existing cron trigger already covers — and
-    the edition's force hour sits just before it. Deliberately NOT a
-    SLOTS row (those parse as shows above)."""
+    """Nerra Daily has an exact-time driver: the Worker dispatches
+    nerra-daily.yml on PACIFIC wall time (07:50 release and 09:01 end of
+    the straggler hold, Oct 8 2026 — previously 13:07 UTC). Deliberately
+    NOT a SLOTS row (those parse as shows above). The clock itself is
+    pinned in tests/test_nerra_daily_8am_pacific_2026_10_08.py."""
     m = re.search(
-        r"EDITION_DISPATCH = \{ hour: (\d+), minute: (\d+), "
-        r'workflow: "([\w.-]+)" \}', _TS)
+        r'EDITION_DISPATCH = \{\s*tz: "America/Los_Angeles",\s*times: \[.*?\] as '
+        r'Array<\[number, number\]>,\s*workflow: "([\w.-]+)",', _TS, re.S)
     assert m, "EDITION_DISPATCH missing from workers/scheduler"
-    hour, minute, workflow = int(m.group(1)), int(m.group(2)), m.group(3)
-    assert workflow == "nerra-daily.yml"
-    # The wrangler cron ("1,7,16,31,37,46 6-12 * * *") must cover the slot.
+    assert m.group(1) == "nerra-daily.yml"
+    # The edition fires from its own trigger (14:00-17:00 UTC), clear of
+    # every show slot (06:00-12:46 UTC); the handler returns after an
+    # edition dispatch, so a shared minute would swallow a show.
     toml = (_ROOT / "workers" / "scheduler" / "wrangler.toml").read_text(
         encoding="utf-8")
-    cron = re.search(r'crons = \["([^"]+)"\]', toml).group(1)
-    minutes, hours = cron.split()[0], cron.split()[1]
-    assert str(minute) in minutes.split(",")
-    lo, hi = hours.split("-")
-    assert int(lo) <= hour <= int(hi)
-    # The force hour precedes the dispatch, so the dispatched run builds.
-    # The hour lives in engine/daily_edition.py since Oct 2 2026 (the
-    # build script re-exports it).
-    engine_src = (_ROOT / "engine" / "daily_edition.py").read_text(
-        encoding="utf-8")
-    force = int(re.search(r"^FORCE_BUILD_UTC_HOUR = (\d+)", engine_src, re.M).group(1))
-    assert force <= hour
-    # Oct 2 2026: the last expected show (Vancouver) is dispatched at
-    # 12:16 UTC, so a 12:00 force hour fired while it was still rendering;
-    # 13:00 + ~25 min lands ~6:25am PDT / 5:25am PST.
-    assert force <= 13, "force hour past 13 UTC lands after breakfast on the coast"
-    # The GitHub sweep fallback for the force hour exists.
-    edition_wf = (_ROOT / ".github" / "workflows" / "nerra-daily.yml"
-                  ).read_text(encoding="utf-8")
-    assert f"- cron: '23 {force} * * *'" in edition_wf
+    assert '"1,50 14-17 * * *"' in toml
 
 
 _VOICES_TS = (_ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")

@@ -224,7 +224,29 @@ Collingwood Friday) so the expected roster is weekday-aware for every
 weekly; a weekday roster is 21–23 shows. Mira's handoff count triples —
 A/B-listen the first edition (landmine #17).
 
-The ready gate is a pure function, `engine.daily_edition.ready_decision`:
+**Oct 8 2026 — the release is 8:00 AM Pacific, after every show
+(operator-directed; supersedes the force-hour rules in this section and in
+"Schedule" above).** `ready_decision` reads Pacific wall time: it waits
+until **07:50 PT** whatever has landed (a build takes 6-7 minutes, so the
+edition is live by about 8:00), builds as soon as every expected show has
+published or skipped, holds for a straggler until **09:00 PT**, then
+builds with whatever exists. The 80% floor is gone: the point is a full
+slate. 07:50 PT is 14:50 UTC under PDT and 15:50 UTC under PST, so the
+release does not move on the daylight-saving changes. Every lineup slot
+already lands by ~12:40 UTC (5:40am PDT), more than two hours ahead.
+Triggers: the scheduler Worker dispatches at 07:50 and 09:01 PT (second
+cron trigger `"1,50 14-17 * * *"`, converted to Pacific in the handler),
+`workflow_run` builds the moment a straggler lands inside the hold, and
+GitHub sweeps at 14:55 / 15:55 / 16:05 / 17:05 UTC are late fallbacks.
+Same day: `scripts/push_show_artifacts.sh` resolves a conflict on
+`blog/<show>/*.html` by keeping the run's render — on Oct 7 the multilingual
+sweep re-rendered Fascinating Frontiers' posts while FF's run was in
+flight, three flagships went to recovery PRs (#1376-#1378) and the edition
+shipped without them. Register `nerra-daily-8am-pacific-2026-10-08`;
+guards `tests/test_nerra_daily_8am_pacific_2026_10_08.py`,
+`tests/test_push_show_artifacts.py::TestTheBlogCollision`.
+
+Before Oct 8 — the ready gate is a pure function, `engine.daily_edition.ready_decision`:
 build when every expected show has published or skipped; past the
 **13:00 UTC** force hour (was 12:00 — Vancouver's 12:16 slot is the last
 expected show) only once **80%** of the roster is accounted for; past the

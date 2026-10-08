@@ -57,6 +57,21 @@ is_regenerable() {
     # nobody needed resolved. The per-show path no longer writes it; this
     # entry is the belt behind that brace.
     claims.html|claims/*.html) return 0 ;;
+    # A show's blog posts and its blog index are rendered from committed
+    # digests + summaries by the templates. Two writers re-render ALL of a
+    # show's posts: the show run, and the multilingual sweep after it
+    # translates an episode. On 2026-10-07 the sweep committed Fascinating
+    # Frontiers' posts three times while FF's own run was in flight, the
+    # run's rebase stopped on ep074-ep214, and FF, First Principles and
+    # SpaceX all went to recovery branches (#1376-#1378) — the delayed
+    # GitHub cron then produced FF and FPD a SECOND time hours later, and
+    # Nerra Daily shipped without them. The run's side is the right one to
+    # keep: it carries the new episode's post, the previous post's "next"
+    # link and the index entry. Whatever the sweep changed on an older
+    # post comes back on the sweep's own next pass, which re-renders every
+    # post after it translates this episode. blog/index.html (the network
+    # hub) is not matched: it is restored to HEAD before the commit.
+    blog/*/*.html) return 0 ;;
     *) return 1 ;;
   esac
 }

@@ -206,7 +206,7 @@
                     {% for show in mira_shows %}
                     <li>
                         <strong>{{ show.name }}</strong> — {{ show.episode_label|lower }},
-                        {{ show.schedule|lower }}.
+                        {{ show.schedule[:1]|lower }}{{ show.schedule[1:] }}.
                         <a href="{{ path_prefix }}{{ show.show_page }}">{{ show.show_page }}</a>
                     </li>
                     {% endfor %}

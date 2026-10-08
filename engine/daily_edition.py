@@ -324,12 +324,12 @@ class Lineup:
 
     segments: List[Segment]
     #: Expected today, not published, and NOT known to have skipped — the
-    #: ready gate waits for these (until the force hour).
+    #: ready gate waits for these (until the end of the 09:00 Pacific hold).
     missing: List[str]
     #: Expected today, not published, and carrying a committed skip marker
     #: for the date: ``[{"slug", "reason"}]``. The gate does not wait for
     #: them — a show that told the network it skipped is never going to
-    #: publish before the force hour, and waiting cost every listener four
+    #: publish before the hold ends, and waiting cost every listener four
     #: hours on 2026-08-30 (12:41) and 2026-09-03 (12:09) against ~08:13
     #: on a complete day.
     skipped: List[dict]
@@ -444,20 +444,39 @@ def expected_slugs(spec: EditionSpec, target_date: _dt.date) -> List[str]:
     return out
 
 
-#: Ready-gate constants (Oct 2 2026). The force hour sits behind the LAST
-#: expected slot in run-show.yml's CRON_MAP (Vancouver, 12:16 UTC, ~25 min
-#: of pipeline) — before this it was 12:00, so the force build fired while
-#: the last show was still rendering. Past the force hour the gate builds
-#: only when at least ``FORCE_BUILD_MIN_SHARE`` of the day's expected
-#: shows have landed or skipped; below that it keeps waiting until the
-#: hard deadline, then builds with whatever exists. On 2026-10-02 the
-#: morning flagship wave was diverted into recovery branches and the
-#: 12:00 force build shipped a FOUR-show edition (39 min) while twenty
-#: shows published later in the day; under this rule the edition would
-#: have waited and built at 83% a few hours later instead.
-FORCE_BUILD_UTC_HOUR = 13
-FORCE_BUILD_MIN_SHARE = 0.8
-HARD_DEADLINE_UTC_HOUR = 16
+#: Release clock (Oct 8 2026, operator-directed): the edition goes out at
+#: 8:00 AM Pacific, after every show of the morning has finished. The gate
+#: opens at ``RELEASE_PACIFIC`` because a build takes 6-7 minutes (Oct 2026
+#: runs), so the episode is live by about 8:00. It reads Pacific wall time,
+#: never a UTC hour, so the release does not move an hour on 1 November and
+#: in March: 07:50 is 14:50 UTC under PDT and 15:50 UTC under PST.
+#:
+#: Before the release the gate always waits, even when the slate is
+#: complete — the old rule built the moment the last show landed (09:47 to
+#: 13:36 UTC across Sep 23 - Oct 7) and on Oct 7 shipped without Fascinating
+#: Frontiers, First Principles and SpaceX, whose pushes were still stuck.
+#: At the release it builds once every expected show has published or
+#: skipped. A show still missing is waited for until ``HOLD_UNTIL_PACIFIC``
+#: (a straggler that lands in the hold triggers the build through the
+#: workflow_run event), and past that the edition builds with whatever
+#: exists: a run that failed outright leaves no marker, so without a limit
+#: it would hold the edition for the whole network forever.
+EDITION_TZ = "America/Los_Angeles"
+RELEASE_PACIFIC = (7, 50)
+HOLD_UNTIL_PACIFIC = (9, 0)
+
+
+def _pacific(target_date: _dt.date, hm: Tuple[int, int]) -> _dt.datetime:
+    from zoneinfo import ZoneInfo
+
+    return _dt.datetime.combine(
+        target_date, _dt.time(hm[0], hm[1]), tzinfo=ZoneInfo(EDITION_TZ))
+
+
+def release_window(target_date: _dt.date) -> Tuple[_dt.datetime, _dt.datetime]:
+    """(release, hold-until) for *target_date*, as aware UTC datetimes."""
+    return (_pacific(target_date, RELEASE_PACIFIC).astimezone(_dt.timezone.utc),
+            _pacific(target_date, HOLD_UNTIL_PACIFIC).astimezone(_dt.timezone.utc))
 
 
 def ready_decision(
@@ -468,9 +487,6 @@ def ready_decision(
     landed: int,
     skipped: int,
     min_segments: int,
-    force_hour: int = FORCE_BUILD_UTC_HOUR,
-    min_share: float = FORCE_BUILD_MIN_SHARE,
-    hard_deadline_hour: int = HARD_DEADLINE_UTC_HOUR,
 ) -> Tuple[str, str]:
     """``("build", why)`` or ``("wait", why)`` for the ``--when-ready`` gate.
 
@@ -478,23 +494,21 @@ def ready_decision(
     episode, *skipped* how many carry a committed skip marker (they are
     accounted for, not waited on). Pure so the rule is testable.
     """
+    release, hold_until = release_window(target_date)
     accounted = landed + skipped
+    tally = f"{accounted}/{expected}"
+    rel = "%02d:%02d" % RELEASE_PACIFIC
+    hold = "%02d:%02d" % HOLD_UNTIL_PACIFIC
+    if now_utc < release:
+        return "wait", f"holding for the {rel} Pacific release ({tally} accounted so far)"
     if expected and accounted >= expected:
-        return "build", "every expected show has published or skipped"
-    if target_date < now_utc.date():
-        return "build", "the edition date has passed"
-    share = (accounted / expected) if expected else 0.0
-    if now_utc.hour >= hard_deadline_hour:
-        return "build", f"hard deadline {hard_deadline_hour:02d}:00 UTC passed ({accounted}/{expected})"
-    if now_utc.hour >= force_hour:
-        if landed < min_segments:
-            return "wait", f"only {landed} segment(s) so far (floor {min_segments})"
-        if share >= min_share:
-            return "build", f"force hour passed with {accounted}/{expected} accounted ({share:.0%})"
-        return "wait", (f"force hour passed but only {accounted}/{expected} accounted "
-                        f"({share:.0%} < {min_share:.0%}) — holding for the stragglers "
-                        f"until {hard_deadline_hour:02d}:00 UTC")
-    return "wait", f"{accounted}/{expected} expected shows accounted for"
+        return "build", f"every expected show has published or skipped ({tally})"
+    if now_utc >= hold_until:
+        # build_edition still refuses an edition under spec.min_segments;
+        # the gate's job is only to stop waiting.
+        return "build", f"hold ended at {hold} Pacific — building with {tally} accounted"
+    return "wait", (f"{tally} accounted — holding for the stragglers until "
+                    f"{hold} Pacific")
 
 
 # ---------------------------------------------------------------------------

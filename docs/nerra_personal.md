@@ -271,7 +271,8 @@ Batch host:
    ~5:40am Pacific). The edition workflow (`nerra-daily.yml`, step "Wake
    the Nerra Personal build") now dispatches the batch build the moment
    the edition publishes, gated on the edition having been published by
-   that very run. It needs one secret in THIS repo:
+   that very run (since Oct 8 2026 the edition goes out at ~8:00 AM
+   Pacific, so the Personal build follows it then). It needs one secret in THIS repo:
    `PERSONAL_BATCH_DISPATCH_TOKEN` = a fine-grained PAT (Settings →
    Developer settings → Personal access tokens → Fine-grained), repository
    access **only `nerra-personal-batch`**, permission **Actions: Read and

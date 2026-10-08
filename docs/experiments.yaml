@@ -3565,3 +3565,41 @@ experiments:
       Render/metadata/copy only: no audio, no prompt that reaches an
       episode — outside landmine #17. The guest-facing email and Worker copy
       changes need `wrangler deploy` in workers/voices for the Worker half.
+
+  - id: nerra-daily-8am-pacific-2026-10-08
+    title: "Nerra Daily goes out at 8am Pacific with every show of the morning in it"
+    area: product
+    shipped: 2026-10-08
+    readout: 2026-10-29
+    status: reading
+    baseline: >
+      Sep 23 - Oct 7: the edition built when the last expected show landed
+      or at the 13:00 UTC force hour (80% floor), between 09:47 and 13:36
+      UTC. Every show's median landing is before 12:33 UTC (5:33am PDT);
+      late landings (13:00-17:22 UTC) were incidents. On 10-07 the edition
+      built at 13:36 UTC without Fascinating Frontiers, First Principles
+      and SpaceX: their pushes hit a rebase conflict on blog posts the
+      multilingual sweep had re-rendered, went to recovery PRs
+      #1376-#1378, and the late GitHub cron produced FF and FPD a second
+      time at 15:16/15:55 UTC.
+    target: >
+      Over 21 days: the edition commit lands between 07:50 and 08:15
+      Pacific on >= 19 days; missing_expected empty on >= 18 days; no show
+      run on a recovery branch for a blog/<show>/*.html conflict.
+    criteria: >
+      Hit = all three. An edition after 08:15 PT means a straggler held it:
+      read missing_expected for the show and fix that show's run, never
+      move the release earlier. A blog-post conflict that still strands a
+      run means another writer renders posts and needs the same rule.
+    notes: >
+      engine/daily_edition.py RELEASE_PACIFIC (7, 50) / HOLD_UNTIL_PACIFIC
+      (9, 0) / release_window(); ready_decision waits before the release
+      whatever has landed, builds when every expected show is accounted
+      for, holds to 09:00 PT for a straggler, then builds with what exists.
+      Worker EDITION_DISPATCH on Pacific wall time (07:50 + 09:01; second
+      cron trigger "1,50 14-17 * * *"), GitHub fallbacks 14:55/15:55/16:05/17:05
+      UTC. scripts/push_show_artifacts.sh treats blog/*/*.html as
+      regenerable (the run's render wins). Nerra Personal follows the
+      edition, so subscribers' feeds move to ~8am PT too. Needs
+      `wrangler deploy` in workers/scheduler. No audio or prompt change —
+      outside landmine #17.

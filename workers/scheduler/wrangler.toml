@@ -20,7 +20,11 @@ compatibility_date = "2026-05-01"
 workers_dev = true
 
 [triggers]
-# One trigger covering every slot (:01/:07/:16/:31/:37/:46 from 06:00-12:00 UTC);
-# the Worker maps the firing time to the show, mirroring run-show.yml's
-# CRON_MAP (drift guard: tests/test_scheduling_punctuality.py).
-crons = ["1,7,16,31,37,46 6-13 * * *"]
+# The first trigger covers every show slot (:01/:07/:16/:31/:37/:46 from
+# 06:00-12:00 UTC); the Worker maps the firing time to the show, mirroring
+# run-show.yml's CRON_MAP (drift guard: tests/test_scheduling_punctuality.py).
+# The second fires Nerra Daily on Pacific wall time — 07:50 (release) and
+# 09:01 (end of the straggler hold) are 14:50/16:01 UTC under PDT and
+# 15:50/17:01 UTC under PST, so it covers both; the Worker converts the
+# firing time to Pacific and no-ops on the minutes that are neither.
+crons = ["1,7,16,31,37,46 6-12 * * *", "1,50 14-17 * * *"]
