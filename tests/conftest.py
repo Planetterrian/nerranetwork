@@ -189,3 +189,34 @@ def mock_yfinance_data():
         "regularMarketDayLow": 415.10,
         "regularMarketPreviousClose": 415.25,
     }
+
+
+# ---------------------------------------------------------------------------
+# A registered show that has published nothing
+# ---------------------------------------------------------------------------
+
+#: The show the "nothing published yet" guards render. Until 2026-10-08 these
+#: guards used Nerra Voices itself, which had no feed; its first episode went
+#: out that day and ten guards about the PRE-launch page failed at once on
+#: main. The behaviour they protect is for the next show that launches, so
+#: they now render a registered show with its feed and summaries pointed at
+#: files that do not exist — the exact state a scaffolded show is in.
+UNPUBLISHED_SLUG = "nerra_voices"
+
+
+@pytest.fixture
+def unpublished_show(monkeypatch):
+    """Make ``UNPUBLISHED_SLUG`` look like a show with no episodes.
+
+    Returns the slug. Everything that derives "has a feed" or "has episodes"
+    reads the registry entry at call time, so patching the entry is enough.
+    """
+    import generate_html as G
+
+    cfg = dict(G.NETWORK_SHOWS[UNPUBLISHED_SLUG])
+    cfg["rss_file"] = "unpublished_show_podcast.rss"
+    cfg["json_path"] = "digests/_unpublished_show/summaries_unpublished.json"
+    assert not (PROJECT_ROOT / cfg["rss_file"]).exists()
+    assert not (PROJECT_ROOT / cfg["json_path"]).exists()
+    monkeypatch.setitem(G.NETWORK_SHOWS, UNPUBLISHED_SLUG, cfg)
+    return UNPUBLISHED_SLUG

@@ -121,6 +121,33 @@ chapters:
       the week|a (?:story|case) (?:that|of|about)|(?:two thousand|twenty)[\s-]twenty-six|^(?:Today|It.?s|Good|Welcome|Glad|Settle|Every|In|On|This|We|By|When|For|There)\b
     title: Introduction
     where: start
+  # Oct 8 2026: the case had no chapters between Introduction and Closing,
+  # so every episode's middle was sliced at fixed intervals and titled with
+  # whatever sentence began each slice ("Yet these observations received
+  # little weight in the final…"). Every UC digest writes the same five
+  # segment headings; each chapter starts where its segment's own words
+  # begin in the script (engine.chapters._digest_section_anchor). The
+  # pattern never matches — the script speaks no segment labels, by design.
+  - pattern: (?!)
+    title: The Good Intention
+    where: body
+    digest_section: Segment 2
+  - pattern: (?!)
+    title: The Implementation
+    where: body
+    digest_section: Segment 3
+  - pattern: (?!)
+    title: The Unintended Consequences
+    where: body
+    digest_section: Segment 4
+  - pattern: (?!)
+    title: The Aftermath
+    where: body
+    digest_section: Segment 5
+  - pattern: (?!)
+    title: The Lesson
+    where: body
+    digest_section: Segment 6
   - pattern: that.?s\b.*\bfor today|that wraps today.?s case|until next time|see you
       tomorrow|back tomorrow|before you go
     title: Closing

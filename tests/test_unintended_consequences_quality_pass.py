@@ -59,13 +59,21 @@ class TestChapterPositionalAnchors:
         by_title = {m["title"]: m for m in _uc_markers()}
         assert by_title["Closing"].get("where") == "end"
 
-    def test_unreliable_middle_markers_removed(self):
-        # The label-free narrative prose never reliably contained these
-        # keywords; they fired out of order and the brand collided. Only
-        # Introduction + Closing should remain (auto-segmentation fills the
-        # middle with in-order content titles).
-        titles = [m["title"] for m in _uc_markers()]
-        assert titles == ["Introduction", "Closing"], titles
+    def test_no_middle_marker_keys_on_spoken_words(self):
+        # The label-free narrative prose never reliably contained keywords;
+        # they fired out of order and the brand collided. Oct 8 2026: the
+        # middle chapters came back as the digest's five segments, anchored
+        # on each segment's own content (digest_section) — their patterns
+        # can never match spoken text, so the old failure cannot recur.
+        middle = [m for m in _uc_markers()
+                  if m["title"] not in ("Introduction", "Closing")]
+        assert [m["title"] for m in middle] == [
+            "The Good Intention", "The Implementation",
+            "The Unintended Consequences", "The Aftermath", "The Lesson"]
+        for m in middle:
+            assert m["pattern"] == "(?!)", m
+            assert m["digest_section"].startswith("Segment "), m
+            assert m.get("where") == "body", m
 
 
 class TestClosingPool:
@@ -133,7 +141,10 @@ class TestRealScriptParsesCleanly:
         assert titles[0] == "Introduction", titles
         assert titles.count("Introduction") == 1, titles
         assert titles[-1] == "Closing", titles
-        assert len(titles) >= 4, titles
+        # Oct 8 2026: the middle is chaptered from the digest's segments
+        # (pinned on committed episodes in test_chapters_lead_2026_10_08);
+        # with no digest here, nothing in the middle may be a fragment.
+        assert not any(t.endswith("…") for t in titles), titles
 
     def test_llm_rewritten_intro_still_gets_introduction(self):
         # ep024 dropped brand + "episode N" + greeting entirely. The

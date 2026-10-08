@@ -497,6 +497,75 @@ def lint_spotlight_card(digest: str) -> Optional[LintFinding]:
     return LintFinding("spotlight_card", "", metrics)
 
 
+# --- hook_supported ---------------------------------------------------------
+# Oct 8 2026 (Tesla Ep627, flagged by an outside review): the hook read "A
+# Dutch battery developer is scaling gigawatt-hour projects into Germany,
+# widening the path for Tesla Megapack deployments across Europe." Its item,
+# its source and its claims ledger never mention Tesla's Megapack — the hook
+# added a show angle the reporting does not carry, and the claims gate does
+# not read the hook. Ep582 did the same. A name the hook gives must appear
+# in the digest outside the hook and the "What You Need to Know" line that
+# restates it. Opt-in: on 956 committed digests the check is precise on
+# Tesla (2 of 70, both real) and noisy where a show frames every story for
+# its audience (Modern Investing's "TFSA holders").
+
+_HOOK_NAME_RE = re.compile(r"[A-Za-z][A-Za-z0-9’'\-.]*")
+_NOT_A_NAME = frozenset({
+    "The", "A", "An", "In", "On", "At", "For", "After", "Before", "As", "With",
+    "Its", "It", "This", "That", "These", "Those", "AI", "US", "UK",
+    "North", "South", "East", "West", "Southeast", "Northeast", "Southwest",
+    "Northwest", "Middle", "Central", "United", "Gulf", "Pacific", "Atlantic",
+    "Earth", "Moon", "President", "Prime", "Minister", "Secretary", "Court",
+    "Judge", "Senate", "House", "Fed",
+})
+_DEMONYM_RE = re.compile(r"(?:an|ian|ean|ese|ish|ic|ern|ans)$")
+_MONTHS_DAYS = frozenset(
+    "January February March April May June July August September October "
+    "November December Monday Tuesday Wednesday Thursday Friday Saturday "
+    "Sunday".split())
+
+
+def hook_names(hook: str) -> List[str]:
+    """Proper names in the hook (never its first word, never a demonym,
+    a direction or a title — those are framing, not reporting)."""
+    out: List[str] = []
+    for i, raw in enumerate(_HOOK_NAME_RE.findall(hook or "")):
+        if i == 0:
+            continue
+        tok = re.sub(r"(?:’s|'s)$", "", raw).strip(".")
+        for part in tok.split("-"):
+            if (len(part) < 3 or not part[0].isupper() or part in _NOT_A_NAME
+                    or part in _MONTHS_DAYS or _DEMONYM_RE.search(part)):
+                continue
+            out.append(part)
+    return out
+
+
+def hook_unsupported_names(digest: str) -> Optional[List[str]]:
+    hook = hook_line(digest)
+    if not hook:
+        return None
+    rest = _WYNTK_RE.sub(" ", _HOOK_RE.sub(" ", digest or "")).lower()
+    return [n for n in hook_names(hook) if n.lower().rstrip("s") not in rest]
+
+
+def lint_hook_supported(digest: str) -> Optional[LintFinding]:
+    missing = hook_unsupported_names(digest)
+    if missing is None:
+        return None
+    metrics = {"hook_unsupported_names": len(missing)}
+    if missing:
+        return LintFinding(
+            "hook_supported",
+            "the HOOK names something no item in the digest reports ("
+            + ", ".join(sorted(set(missing))) + ") — the hook states only "
+            "what the lead item and its source say; never add an angle the "
+            "reporting does not carry",
+            metrics,
+        )
+    return LintFinding("hook_supported", "", metrics)
+
+
 # ---------------------------------------------------------------------------
 # Registry + runner
 # ---------------------------------------------------------------------------
@@ -512,6 +581,7 @@ LINTS: Dict[str, Callable[[str], Optional[LintFinding]]] = {
     "evidence_rung": lint_evidence_rung,
     "dose_terms": lint_dose_terms,
     "spotlight_card": lint_spotlight_card,
+    "hook_supported": lint_hook_supported,
 }
 
 

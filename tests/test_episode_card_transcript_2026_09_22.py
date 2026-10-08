@@ -334,12 +334,16 @@ class TestTheCombinedCard:
                 continue
             assert has_feed, f"{slug} has a feed and no latest-episode card"
 
-    def test_a_show_with_no_feed_advertises_nothing(self, pages):
+    def test_a_show_with_no_feed_advertises_nothing(self, tmp_path, unpublished_show):
         """Nerra Voices showed a permanent "Loading..." above its own
-        "Not published yet" band."""
-        html = pages["nerra_voices"]
+        "Not published yet" band. (It published on 2026-10-08; the guard
+        renders a show in that pre-launch state — conftest.unpublished_show.)"""
+        html = Path(G.generate_show_page(
+            unpublished_show, output_dir=tmp_path)).read_text(encoding="utf-8")
         assert 'id="latest-player"' not in html
-        assert "Not published yet" in html
+        # The band's own id: "Not published yet" is also a string in the
+        # page script, so matching the text proves nothing.
+        assert 'id="not-yet-published"' in html
 
     def test_the_card_is_readable_before_the_script_runs(self, pages):
         card = _markup_only(_card(pages["tesla"]))

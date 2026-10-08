@@ -429,7 +429,6 @@ class TestPlayerPage:
         with_eps = {e["show"] for e in index["episodes"]}
         chips = set(re.findall(r'class="nn-filter-btn" data-filter="([^"]+)"', player_html))
         assert chips == with_eps == {s["slug"] for s in index["shows"]}
-        assert "nerra_voices" not in chips
         assert "age_of_ai" in with_eps
         desc = re.search(r'<meta name="description" content="Listen to (\d+) ', player_html)
         assert desc and int(desc.group(1)) == len(chips)

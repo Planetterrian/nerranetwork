@@ -50,7 +50,11 @@ All three defects are fixed in this PR. What the missing transcripts cost is lis
 
 Every Oct 8 episode was transcribed from its published MP3 with the pipeline's `base` model, written beside the digest under the pipeline's file names (`*_transcript.json`, `.txt`, `.vtt`), and run through `engine.spoken_text_gate.check_transcript_files` against the committed `_tts.txt`. Because `voice_intro_delay` is 0, the voice starts at t=0 in the published mix, so these timings match what the raw-track transcript would have recorded.
 
-_Results are added with the backfilled transcripts in the next commit on this branch._
+**All 21 episodes pass.** Opening match ranges 0.73–0.97 against a 0.5 floor, and the longest spoken run absent from the script ranges 2–15 words against a 40 limit. No episode on Oct 8 carried the Ep605 leak.
+
+At first MAG 7 and Modern Investing failed with `foreign_passage` (67 and 65 words at 95% through the episode). The words were the sung vocals of their shared outro track, `assets/music/ModernInvesting.mp3`, which Whisper picked up because these transcripts were made from the mixed audio. The pipeline transcribes the raw voice track, so its transcripts never contain music. To match that, both transcripts were cut after the final scripted line (the AI disclosure). After the cut, the gate passes on both (longest unmatched run: 8 and 9 words).
+
+The transcripts are committed beside each digest under the pipeline's own file names. Every Oct 8 feed item gained the two `<podcast:transcript>` tags the live publish path emits, VTT first, through the publisher's own `_inject_transcript_tag`: 29 items in 22 feeds, each feed re-parsed with its item count unchanged.
 
 ## 5. Nerra Daily on its first 8am Pacific day
 
@@ -102,9 +106,46 @@ _Results are added with the backfilled transcripts in the next commit on this br
 
 This is the next staged model trial (operator item 4), not a prompt problem. Prompt passes have not moved it since September.
 
-## Main was red
+## Main was red, and turned red again at 17:24 UTC
+
+At 17:24 UTC Nerra Voices published its first episode (Ep1, Viktor Popovic). Ten site guards had used Nerra Voices as their example of "a show with no episodes", so all ten failed on main at once:
+
+- the pre-launch band
+- no feed link
+- no `webFeed`
+- no episode rail
+- an empty summaries page
+- an empty article map
+- the player chips
+
+The behaviour they protect is for the next show that launches, so they now render a fixture: `tests/conftest.py::unpublished_show` points a registered show's feed and summaries at files that do not exist.
+
+The guard that said "update me when Nerra Voices publishes" now checks the published page instead: the pre-launch band is gone and the player is there. Checking it found one more problem. "Not published yet" is also a string literal in the show page's script, so the old text-based assertion passed regardless; the rewritten guards match the band's `id="not-yet-published"`.
 
 The Voices tests named in the Oct 7 note pass once ffmpeg is installed: 355 passed and 1 skipped across `test_it_produces_itself.py`, `test_the_guests_own_recording_is_used.py` and `test_nerra_voices_pipeline.py`. `test.yml` installs ffmpeg and runs `pytest -x`, so main's red was the first failure the run reached. That was `test_pyav_is_pinned_below_19`, the guard #1365 broke. One Voices guard pinned the old `model.transcribe(str(audio_path), …)` string and was updated with the decoder change. The full-suite result is in the PR.
+
+## 7. The outside review (Oct 6–8), checked against the files
+
+Another agent reviewed 8 of the 22 episodes and sent eight findings. Each was checked against the committed digests, scripts, chapters, pages and feeds before anything changed. Guards: `tests/test_chapters_lead_2026_10_08.py` and `tests/test_review_followups_2026_10_08.py`.
+
+| Finding | Verdict | What changed |
+|---|---|---|
+| Lead story missing from the chapter list | **Real.** The lead had its own chapter on 2 of 21 Oct 8 episodes. Since the July cold-open pass, the hook, the identity line and the lead story all sit inside "Introduction": headline anchoring dropped the lead because it starts fewer than 60 words in, and shows that chapter by spoken section markers never split the opening at all. | `engine.chapters._lead_story_split`: the opening chapter splits where the body begins the hook's story. The title is the matching headline, or the hook cut cleanly. There is no split when the body opens on another story, and none on SpaceX (its chapters are its fixed section list, by the Aug 27 decision). Replayed on Oct 8: lead chapter on 18 of 21. |
+| "Block publishing when the lead has no chapter" | **Rejected.** | Chapters are metadata. Holding an episode over its navigation trades a gap for a missing episode. |
+| Garbled chapter titles on Longevity, UC and M&A | **Real.** When no headline matched a segment, its first spoken sentence became the title, clipped with an ellipsis: UC Ep136's "Yet these observations received little weight in the final…", Longevity Ep003's "Giorgos Mazonakis, fifty-four, died on September ninth…". | (1) A spoken sentence is a title only when it fits whole and doesn't continue the sentence before it; with no title there is no chapter break, and no "Segment N". (2) Clipped headlines back off to a clause boundary. (3) The headline extractor reads `**Title:** Outlet`, so AI Chips, Peptides and Longevity get real headlines; across 1,006 committed digests no headline is lost. (4) UC chapters its five digest segments. (5) Longevity's Mechanism of the Week falls back to its digest section. |
+| Tesla Ep627's title misrepresents its lead | **Real.** The hook said Giga Storage's expansion widens "the path for Tesla Megapack deployments across Europe". The item, its claims ledger and its quote never mention Tesla or Megapack, and the audio said it twice. The claims gate does not read the hook. | New `hook_supported` digest lint on Tesla: a name in the hook must appear somewhere else in the digest. Across two months of committed digests it fires on exactly Ep582 and Ep627, both the same Megapack angle. On Modern Investing it would fire on its normal audience framing ("TFSA holders"), so it stays off there. A correction for Ep627 is filed (`where: both`, carried in Ep629's notes). |
+| AI Chips' Teardown blank on the page | **Real, on Ep016 (Oct 7).** The cross-section dedupe deleted the whole Teardown from the digest because it cites the same Data Center Knowledge report as a news item; the audio still has it. SpaceX Ep114's Engineering Deep Dive was deleted the same way. | Both deep-dive sections are exempt from the overlap dedupe. The Ep016 digest text cannot be restored; only the spoken version survives. |
+| Raw link chains in Sources | **Real, once** (Vancouver Ep013): a linked first source followed by bare URLs. | `shorten_source_urls` links every trailing URL on a Source line. |
+| Sources empty on First Principles and UC | **Accurate, but not a page bug.** These narrative shows are written from topic briefs with no fetched articles, and the briefs carry no URLs, so there is nothing to list and the posts honestly show no Sources section. | Operator decision (below). |
+| Longevity should link primary papers | **Fair.** Its items cite Fight Aging! and other aggregators rather than the paper. | Operator decision (below). |
+| Tesla podcast feed returns "not found" | **Not a defect.** Tesla's feed is `podcast.rss` (200). `tesla_podcast.rss` 404s because the reviewer guessed the URL from the other shows' pattern; nothing links it. A duplicate feed would split subscribers, and GitHub Pages cannot redirect a feed. | Nothing. |
+| Nerra Daily item has no link | **Real**, and it also affected The Age of AI and Nerra Voices. All three bypass `run_show`, so the newest item linked its MP3 and older items had none. | Both publishers pass the episode page, and the three committed feeds are backfilled (60 items). |
+| Age of AI not updated since Sep 30 | **Its cadence.** The show publishes when an interview is ready. The interview that completed this week was a Nerra Voices one (Ep1, published today). | Nothing. |
+
+### Decisions for the operator
+
+- **Sourcing for the narrative shows (First Principles and UC):** add a research step that runs one web search per topic and passes 4–6 fetched sources to the writer as articles. The claims gate could then verify against them, and the Sources list would fill. This costs about $0.05 an episode and changes generated content, so it needs an A/B listen. Both shows' claims ledgers verify almost nothing today (UC: 0 verified in its last 8 episodes).
+- **Longevity primary papers:** resolve each item's paper through Crossref, which Prediction Markets already does (`engine/research_papers.py`), and cite the paper beside the aggregator.
 
 ## Operator items, in order
 

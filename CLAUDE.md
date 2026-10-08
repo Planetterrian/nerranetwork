@@ -2391,7 +2391,25 @@ and read the comment above a pin before moving it. Same day: a 404/410 on a
 resumable YouTube upload restarts ONCE with a new session (`upload_video` —
 Tesla/SpaceX/Omni View lost their long-forms to "410 Gone"), and apt in
 `setup-python` abandons a silent mirror connection after 30 s (five runs
-died at exit 124 installing ffmpeg).
+died at exit 124 installing ffmpeg). **Same day, an outside review checked
+and acted on** (§7 of the review; guards `tests/test_chapters_lead_2026_10_08.py`,
+`tests/test_review_followups_2026_10_08.py`): **the lead story gets its own
+chapter** (`engine.chapters._lead_story_split` — it sat inside
+"Introduction" on 19 of 21 episodes; never on a known_sections_only show,
+never where the body opens on another story) and **a spoken sentence is a
+chapter title only when it fits whole** (no clipped fragments, no "Segment
+N" — an untitled break is not made); `extract_story_headlines` reads
+`**Title:** Outlet`; UC chapters its five digest segments. A missing lead
+chapter never blocks an episode — chapters are metadata. **A hook may name
+only what an item reports** (`hook_supported` lint, Tesla — Ep627 added
+"Tesla Megapack" to a story that never mentions it; correction filed).
+**Deep-dive essays are exempt from the overlap dedupe** (AI Chips Teardown,
+SpaceX Engineering Deep Dive — each was deleted from a digest for citing a
+news item's report). Bypass publishers (Nerra Daily, Voices) pass
+`episode_page_url` like run_show. Ten site guards used Nerra Voices as "a
+show with no episodes" and failed when it published Ep1 — they render
+`conftest.unpublished_show` now; never use a real show as a fixture for a
+state it will leave.
 
 ### Anthology books — ebook + audiobook from the narrative shows (Aug 2026)
 

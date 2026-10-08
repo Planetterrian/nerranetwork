@@ -24,10 +24,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 EXEMPTIONS = {
     "mag7": {"The Counterpoint", "On the Calendar"},
-    "ai_chips": {"On the Horizon"},
+    # Oct 8 2026: the deep dives may cite a news item's report; AI Chips
+    # Ep016's Teardown and SpaceX Ep114's deep dive were deleted as dupes.
+    "ai_chips": {"On the Horizon", "The Teardown"},
     "models_agents": {"On the Horizon"},
     "prediction_markets": {"The Week's Board"},
-    "spacex": {"The Counterpoint"},
+    "spacex": {"The Counterpoint", "Engineering Deep Dive"},
     # Sep 24 2026 (PR H): Top World Ep2 lost its only Progress Watch item to
     # the dedup (same URL as The Ten), the fragment tripped the structural
     # gate, and the retry cost the episode its grok-4.7 digest.

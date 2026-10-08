@@ -137,7 +137,7 @@ class TestMiraPageIsGeneratedAndTrue:
                     f"committed record has {len(records)}"
                 )
 
-    def test_a_show_with_no_episodes_says_so(self, tmp_path):
+    def test_a_show_with_no_episodes_says_so(self, tmp_path, unpublished_show):
         html = _render_mira(tmp_path)
         assert "Not published yet" in html, (
             "Nerra Voices has published nothing; the hub must say so rather "
@@ -381,15 +381,20 @@ class TestNerraVoicesPreLaunchHonesty:
         assert "{% if not has_feed %}" in tmpl
         assert "not-yet-published" in tmpl
 
-    def test_nerra_voices_has_no_feed_file_yet(self):
-        """If this starts failing, Nerra Voices has published — good. Remove
-        the pre-launch expectations here and check the page reads right."""
+    def test_nerra_voices_reads_as_published(self, tmp_path):
+        """Nerra Voices published its first episode on 2026-10-08 (Viktor
+        Popovic). This guard used to assert it had no feed and asked to be
+        updated, with the page checked, when that changed. Checked: the
+        pre-launch band is gone and the page leads with the episode. The
+        pre-launch behaviour is still guarded, on a fixture show
+        (conftest.unpublished_show)."""
         import generate_html
         rss = generate_html.NETWORK_SHOWS["nerra_voices"]["rss_file"]
-        assert not (ROOT / rss).exists(), (
-            f"{rss} now exists — the pre-launch band will disappear on its "
-            "own; confirm the page reads correctly and update this guard"
-        )
+        assert (ROOT / rss).exists()
+        html = Path(generate_html.generate_show_page(
+            "nerra_voices", output_dir=tmp_path)).read_text(encoding="utf-8")
+        assert 'id="not-yet-published"' not in html
+        assert 'id="latest-player"' in html
 
 
 class TestStyleTokensExist:

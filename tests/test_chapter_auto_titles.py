@@ -36,13 +36,13 @@ class TestFirstSentenceAsTitle:
         text = "Tesla unveiled new robotaxi service in Texas. Followed by other news."
         assert _first_sentence_as_title(text) == "Tesla unveiled new robotaxi service in Texas"
 
-    def test_truncates_at_word_boundary(self):
+    def test_a_sentence_too_long_to_fit_is_not_a_title(self):
+        """Oct 8 2026: it used to be clipped with an ellipsis, and the
+        clipped fragments ("Giorgos Mazonakis, fifty-four, died on
+        September ninth…") were what reached the chapter list. A spoken
+        sentence is a title only when it fits whole."""
         text = "California regulators just disclosed the Tesla Semi battery sizes at 822 kWh and 548 kWh per truck."
-        title = _first_sentence_as_title(text, max_chars=50)
-        assert len(title) <= 50
-        # Ends with ellipsis and no mid-word cut.
-        assert title.endswith("…")
-        assert " " not in title[-2:]  # no trailing partial word
+        assert _first_sentence_as_title(text, max_chars=50) == ""
 
     def test_strips_leading_markdown(self):
         text = "**Bold** intro. Tesla news here."
@@ -71,12 +71,12 @@ class TestFirstSentenceAsTitle:
         assert _first_sentence_as_title("420.") == ""
 
     def test_handles_no_sentence_terminator(self):
-        """Some segments are mid-paragraph fragments without a clean .!?
-        terminator. Use the whole text up to max_chars."""
-        text = "Long stretch of text without any punctuation that should still produce a usable title even if no sentence end is visible"
-        title = _first_sentence_as_title(text, max_chars=40)
-        assert len(title) <= 40
-        assert "Long stretch" in title
+        """A segment with no .!? terminator is a title only when the whole
+        text fits (Oct 8 2026 — it used to be clipped to max_chars)."""
+        long = "Long stretch of text without any punctuation that should still produce a usable title even if no sentence end is visible"
+        assert _first_sentence_as_title(long, max_chars=40) == ""
+        assert _first_sentence_as_title("Tesla opens a new Supercharger site") == \
+            "Tesla opens a new Supercharger site"
 
     def test_handles_ellipsis_terminator(self):
         text = "Wait for it… and now the punchline."
@@ -98,7 +98,7 @@ Welcome back to Tesla Shorts Time, your daily Tesla newsfeed. Today we have
 quite a lot to unpack including the new battery sizes for the Tesla Semi,
 the latest from FSD beta, and a surprise from China.
 
-Tesla unveiled new robotaxi service in three Texas cities today. The pilot
+Tesla unveiled a robotaxi service in Texas. It runs in three cities. The pilot
 launches with a fleet of about two hundred Model Y vehicles operating in
 Austin, Houston, and Dallas. Riders will hail rides through the existing
 Tesla mobile app, with fares starting at three dollars per ride. This marks
@@ -106,7 +106,7 @@ a major step in Tesla's autonomous strategy and follows months of regulatory
 preparation. Analysts expect the service to expand to additional cities
 within ninety days if the initial rollout meets safety benchmarks.
 
-California regulators just disclosed the Tesla Semi's battery sizes at
+Regulators disclosed the Tesla Semi battery sizes. They are
 eight hundred twenty two kilowatt-hours and five hundred forty eight
 kilowatt-hours respectively. The disclosure came as part of a routine
 safety filing. The larger pack supports the long-haul variant while the

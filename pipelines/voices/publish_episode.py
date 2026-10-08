@@ -384,6 +384,11 @@ def publish_one(interview_id: str) -> int:
             channel_subcategory=show.rss_subcategory,
             channel_keywords=show.rss_keywords,
             guid_prefix=show.guid_prefix,
+            # Item <link> = the episode page podcast apps open as "episode
+            # website" (run_show has passed it since Sep 4 2026; this path
+            # bypasses run_show and kept the MP3 — Oct 8 2026 review).
+            episode_page_url=(
+                f"https://nerranetwork.com/blog/{show.slug}/ep{episode_num:03d}.html"),
         )
 
     # Summaries JSON (site + dashboards read this shape network-wide).

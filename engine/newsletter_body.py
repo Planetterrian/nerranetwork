@@ -625,7 +625,29 @@ def shorten_source_urls(body: str) -> str:
     # match the URL inside the markdown link and corrupt it.
     body = _SOURCE_MD_LINK_RE.sub(_md_sub, body)
     body = _SOURCE_BARE_URL_RE.sub(_bare_sub, body)
+
+    # Oct 8 2026 (Vancouver Ep013): an item with several sources wrote the
+    # first as a link and the rest as bare comma-separated URLs after it, so
+    # the page printed a raw URL chain. Link every URL that trails a linked
+    # source on the same line.
+    def _tail_sub(match: re.Match) -> str:
+        urls = _BARE_URL_IN_TAIL_RE.findall(match.group(2))
+        links = " · ".join(
+            f"[{_domain_label_for(u.rstrip(' ).,;'))}]({u.rstrip(' ).,;')})"
+            for u in urls)
+        return f"{match.group(1)} · {links}"
+
+    body = _SOURCE_LINK_THEN_BARE_RE.sub(_tail_sub, body)
     return body
+
+
+# A linked source followed on the same line by bare URLs (", https://…").
+_SOURCE_LINK_THEN_BARE_RE = re.compile(
+    r"((?:Source/Post|Source):\s*\[[^\]]+\]\(https?://[^)]+\))"
+    r"((?:[ \t]*[,;·]?[ \t]*https?://[^\s,;)]+[.,;]?)+)",
+    flags=re.IGNORECASE,
+)
+_BARE_URL_IN_TAIL_RE = re.compile(r"https?://[^\s,;)]+")
 
 
 # ---------------------------------------------------------------------------

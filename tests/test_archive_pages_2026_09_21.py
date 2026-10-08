@@ -154,10 +154,11 @@ class TestRenderedSummariesPage:
         noscript = re.search(r"<noscript>(.*?)</noscript>", daily_page, re.S)
         assert "archive" in noscript.group(1).lower()
 
-    def test_a_show_with_no_episodes_keeps_its_empty_state(self, tmp_path):
+    def test_a_show_with_no_episodes_keeps_its_empty_state(self, tmp_path,
+                                                           unpublished_show):
         """Never render an empty rail where a message belongs."""
         html = G.generate_summaries_page(
-            "nerra_voices", output_dir=tmp_path).read_text(encoding="utf-8")
+            unpublished_show, output_dir=tmp_path).read_text(encoding="utf-8")
         body = _markup_only(html)
         assert body.count('class="nn-summary-item"') == 0
         assert "Loading" in body
