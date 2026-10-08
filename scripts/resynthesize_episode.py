@@ -290,9 +290,12 @@ def rebuild_chapters(config, art: EpisodeArtifacts, script: str,
                      audio_duration: float) -> Optional[List]:
     """Recompute chapter timestamps against the repaired audio.
 
-    Titles come from the same committed script and digest the published
-    ones did, so they reproduce exactly; only the timings move with the
-    new duration. Verified against Ep605's published chapters.
+    Only the timings may move in a repair. The boundaries come from the
+    same committed script and digest the published ones did; the TITLES
+    are the published ones whenever the chapter count matches, because the
+    title logic keeps improving after an episode ships (Oct 8 2026: the
+    clause-boundary clip changed one of Ep605's titles) and a repair must
+    not rename what listeners already see. A different count is logged.
     """
     if not (config.chapters.enabled and config.chapters.section_markers):
         return None
@@ -316,6 +319,15 @@ def rebuild_chapters(config, art: EpisodeArtifacts, script: str,
     )
     if not chapters or audio_duration <= 0:
         return None
+    published = published_chapter_titles(art.chapters_path)
+    if published and len(published) == len(chapters):
+        for chapter, title in zip(chapters, published):
+            chapter.title = title
+    elif published:
+        logger.warning(
+            "Chapter structure changed since publication (%d published, %d "
+            "now) — the repaired episode carries the current chapters",
+            len(published), len(chapters))
     offset = config.audio.voice_intro_delay + config.audio.intro_duration
     calculate_timestamps(chapters, audio_duration, music_intro_offset=offset)
     return chapters
