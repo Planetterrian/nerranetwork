@@ -184,6 +184,55 @@ class TestTheIncident:
             f"feed was committed take-ours instead of regenerated: {landed!r}")
 
 
+class TestTheBlogCollision:
+    """2026-10-07: the multilingual sweep re-rendered every Fascinating
+    Frontiers post while FF's own run was in flight; the run's rebase
+    stopped on ep074-ep214 and three flagship episodes went to recovery
+    branches, then were produced a second time by the late cron."""
+
+    def _seed_post(self, seed, path, content):
+        _git("pull", "--rebase", "origin", "main", cwd=seed)
+        (seed / path).parent.mkdir(parents=True, exist_ok=True)
+        (seed / path).write_text(content)
+        _git("add", "-A", cwd=seed)
+        _git("commit", "-m", "seed post", cwd=seed)
+        _git("push", "origin", "main", cwd=seed)
+
+    def test_a_rerendered_post_no_longer_strands_the_episode(self, remote_and_clone):
+        _, seed, work = remote_and_clone
+        post = "blog/fascinating_frontiers/ep213.html"
+        self._seed_post(seed, post, "<p>ep213 old render</p>\n")
+        _git("pull", "--rebase", "origin", "main", cwd=work)
+
+        # The run re-renders ep213 (its "next" link now points at ep214)
+        # and adds ep214.
+        (work / post).write_text("<p>ep213 render, next: ep214</p>\n")
+        (work / "blog/fascinating_frontiers/ep214.html").write_text("<p>ep214</p>\n")
+        _git("add", "-A", cwd=work)
+        _git("commit", "-m", "Auto-generated: fascinating_frontiers", cwd=work)
+
+        # The multilingual sweep re-renders the same post first.
+        _advance_origin(seed, post, "<p>ep213 render, language switcher</p>\n",
+                        "Multilingual: fascinating_frontiers")
+
+        result = _run_script(work, show="fascinating_frontiers")
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "resolved regenerable conflict: " + post in result.stdout
+        _git("fetch", "origin", cwd=work)
+        landed = _git("show", f"origin/main:{post}", cwd=work).stdout
+        assert "next: ep214" in landed, f"the run's render was discarded: {landed!r}"
+        assert "ep214" in _git("show", "origin/main:blog/fascinating_frontiers/ep214.html",
+                               cwd=work).stdout
+
+    def test_the_network_blog_hub_is_not_matched(self):
+        body = SCRIPT.read_text()
+        assert "blog/*/*.html) return 0 ;;" in body
+        # The case pattern needs a show directory; the hub is restored to
+        # HEAD by the workflow before the commit and never resolved here.
+        import fnmatch
+        assert not fnmatch.fnmatch("blog/index.html", "blog/*/*.html")
+
+
 class TestRefusesToGuess:
     def test_unknown_conflict_is_not_auto_resolved(self, remote_and_clone):
         """A wrong auto-resolution is worse than a recovery PR, because
@@ -240,8 +289,12 @@ class TestNoSilentDataLoss:
         start = body.index("is_regenerable()")
         block = body[start:body.index("}", start)]
         patterns = [ln.strip() for ln in block.splitlines()
-                    if ln.strip().startswith("*") and "return 0" in ln]
-        assert patterns == ["*.video.rss) return 0 ;;"], patterns
+                    if not ln.strip().startswith("#") and "return 0" in ln]
+        assert patterns == [
+            "*.video.rss) return 0 ;;",
+            "claims.html|claims/*.html) return 0 ;;",
+            "blog/*/*.html) return 0 ;;",
+        ], patterns
 
 
 class TestWorkflowWiring:

@@ -290,7 +290,11 @@ class TestSoftPersonalSurfaceCTAs:
 
         spacex = _read("spacex.html")
         assert "personal-interest.html" in spacex
-        assert 'id="soft-personal"' in spacex or 'id="soft-interest"' in spacex
+        # One soft ask per page: since the Oct 7 site review the lower
+        # soft-personal band renders only where no hero band already asks for
+        # the same email (show_page.html.j2), so on SpaceX the hero IS the ask.
+        assert 'id="soft-personal-hero"' in spacex
+        assert 'id="soft-personal"' not in spacex
         # Soft hero band + soft_personal_interest CTA must share no-charge framing.
         assert "Not ready to pay?" not in spacex
         soft_hero = spacex[spacex.index('id="soft-personal-hero"'):

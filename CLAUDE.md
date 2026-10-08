@@ -492,7 +492,7 @@ and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 | Omni View Asia Pacific | — | `shows/omni_view_asia_pacific.yaml` | Daily | — (X source only) | Grok TTS (Mira, `ara`) |
 | Omni View Africa & Middle East | — | `shows/omni_view_africa_mideast.yaml` | Daily | — (X source only) | Grok TTS (Mira, `ara`) |
 | Omni View Central & South America | — | `shows/omni_view_latam.yaml` | Daily | — (X source only) | Grok TTS (Mira, `ara`) |
-| Nerra Daily | — | registry-only (`shows/network_meta.yaml`; NOT run_show — assembled by `scripts/build_daily_edition.py`) | Daily, after the English slate | — (X disabled) | Splices published show audio + Mira links (Grok voice `ara`) |
+| Nerra Daily | — | registry-only (`shows/network_meta.yaml`; NOT run_show — assembled by `scripts/build_daily_edition.py`) | Daily, 8am Pacific, after the English slate | — (X disabled) | Splices published show audio + Mira links (Grok voice `ara`) |
 
 > Weekly-summary segment (July 2026): shows on a daily cadence with
 > `weekly_summary_segment: true` in their YAML run a NORMAL daily episode on
@@ -1073,13 +1073,34 @@ today's work, not just explain yesterday's):
   IN the lineup (26 shows; `weekday_only` for Longevity/Peptides/
   Collingwood; a weekday roster is 21–23; Nerra Personal's vocabulary is
   the roster again). The ready gate is `engine.daily_edition.ready_decision`
-  (pure, tested): force hour **13:00 UTC** (behind Vancouver's 12:16 slot;
-  Worker `EDITION_DISPATCH` 13:07, sweeps 13:23/14:23/16:23/17:23), build
-  past it only at **80%** of the roster, past **16:00** with whatever
-  exists. The links `max_tokens` scales with the handoff count. ⚠️ AUDIO:
+  (pure, tested); its 13:00 UTC force hour was replaced on Oct 8 (below).
+  The links `max_tokens` scales with the handoff count. ⚠️ AUDIO:
   Mira's handoffs triple — A/B-listen the first edition. Register
   `nerra-daily-full-lineup-2026-10-02`; guards
   `tests/test_nerra_daily_full_lineup_2026_10_02.py`.
+  **Oct 8 2026 — the edition goes out at 8:00 AM Pacific, after every
+  show (operator-directed).** `ready_decision` reads PACIFIC wall time
+  (`RELEASE_PACIFIC` 07:50 — a build takes 6-7 min — and
+  `HOLD_UNTIL_PACIFIC` 09:00, `release_window()`): before 07:50 it waits
+  whatever has landed; then it builds once every expected show has
+  published or skipped; a straggler is held for until 09:00 (it builds the
+  edition itself through `workflow_run`), then the edition builds with what
+  exists. No 80% floor — the point is a full slate. Never express the
+  release as a UTC hour: 07:50 PT is 14:50 UTC under PDT and 15:50 under
+  PST. The Worker's `EDITION_DISPATCH` fires at 07:50 and 09:01 Pacific
+  from a second cron trigger (`"1,50 14-17 * * *"`) and converts to Pacific
+  in the handler; GitHub fallbacks 14:55/15:55/16:05/17:05 UTC. Every
+  lineup slot lands by ~12:40 UTC, two hours ahead (guarded). Nerra
+  Personal follows the edition to ~8am. **A show run's push resolves a
+  `blog/<show>/*.html` conflict by keeping its own render**
+  (`push_show_artifacts.sh`): on Oct 7 the multilingual sweep re-rendered
+  Fascinating Frontiers' posts mid-run, FF / First Principles / SpaceX went
+  to recovery PRs #1376-#1378, the late GitHub cron produced FF and FPD a
+  second time, and the edition shipped without all three. Operator:
+  `wrangler deploy` in `workers/scheduler`. Register
+  `nerra-daily-8am-pacific-2026-10-08`; guards
+  `tests/test_nerra_daily_8am_pacific_2026_10_08.py`,
+  `tests/test_push_show_artifacts.py::TestTheBlogCollision`.
   **Aug 25 2026 first quality pass** (review:
   [`docs/reviews/nerra_daily_review_2026_08_25.md`](docs/reviews/nerra_daily_review_2026_08_25.md);
   ledger `docs/reviews/ledger/nerra_daily.yaml`): audio core verified

@@ -389,7 +389,10 @@ nerra_daily:
   # reason — a band on every page is a banner, and banners get ignored.
   personal_upsell: true
   display_order: 0.5
-  schedule: Daily
+  # The edition goes out at 8:00 AM Pacific, after every show of the
+  # morning has finished (Oct 8 2026, engine/daily_edition.py
+  # RELEASE_PACIFIC).
+  schedule: Daily, 8am Pacific
   episode_length: ~2 hours
   show_page: nerra-daily.html
   summaries_page: nerra-daily-summaries.html
@@ -416,8 +419,9 @@ nerra_daily:
     markers let you skip straight to any show.'
 
   description_long: 'Nerra Daily is the Nerra Network''s combined daily
-    edition. Every morning, once the day''s English shows have published,
-    Mira assembles them into one continuous listen, in a fixed order:
+    edition. Every morning at 8am Pacific, once all of the day''s English
+    shows have published, Mira assembles them into one continuous listen,
+    in a fixed order:
     SpaceX Daily, Tesla Shorts Time, Fascinating Frontiers, Models &
     Agents, Planetterrian Daily and Omni View lead, then the world desks,
     Modern Investing Techniques and the other markets shows, the narrative
