@@ -167,6 +167,16 @@ def _strip_title_label(title: str) -> str:
     return _TITLE_LABEL_RE.sub("", title).strip()
 
 
+#: A sentence that opens on one of these continues the one before it — it is
+#: never a chapter title on its own.
+_CONTINUATION_OPENER_RE = re.compile(
+    r"^(?:and|but|or|so|yet|still|also|then|because|which|while|that|this|"
+    r"these|those|it|its|they|their|he|she|his|her|we|there|here|instead|"
+    r"meanwhile|however|now|plus|even|after that|by then|in turn|as a result)\b",
+    re.IGNORECASE,
+)
+
+
 def _first_sentence_as_title(text: str, max_chars: int = 60) -> str:
     """Extract the first sentence of *text* and return a chapter-title
     string (max ``max_chars``).
@@ -192,10 +202,17 @@ def _first_sentence_as_title(text: str, max_chars: int = 60) -> str:
         return ""
     # Strip residual inline markdown so the title reads cleanly.
     candidate = _strip_title_label(re.sub(r"[*_`]+", "", candidate).strip())
-    # Truncate to max_chars on a word boundary (no mid-word ellipses).
+    # Oct 8 2026: a spoken sentence is a title only when it is WHOLE.
+    # Clipping one ("Giorgos Mazonakis, fifty-four, died on September
+    # ninth…", "A two thousand nine meta-analysis in JAMA turned that…" on
+    # Longevity Ep003) or taking one that leans on the sentence before it
+    # ("Yet these observations received little weight in the final…" on
+    # UC Ep136) ships a fragment to every podcast app's chapter list. The
+    # caller makes no chapter break where no title exists.
     if len(candidate) > max_chars:
-        truncated = candidate[: max_chars - 1].rsplit(" ", 1)[0]
-        candidate = truncated.rstrip(",;:") + "…"
+        return ""
+    if _CONTINUATION_OPENER_RE.match(candidate):
+        return ""
     # Sanity: titles shouldn't be one-word fragments or just a number.
     if len(candidate) < 8 or candidate.replace(".", "").isdigit():
         return ""
@@ -303,6 +320,13 @@ _DANGLING_TAIL = frozenset(
 )
 
 
+#: Where a shortened headline may end cleanly: before a clause or a
+#: prepositional phrase, never inside one.
+_CLAUSE_BREAKS = (", ", "; ", " — ", " – ", " - ", " on ", " in ", " at ",
+                  " for ", " to ", " after ", " as ", " with ", " from ",
+                  " amid ", " while ", " over ", " by ", " of ")
+
+
 def _clip_title(raw: str, max_chars: int = 60) -> str:
     """Fit a real digest headline into *max_chars* WITHOUT an ellipsis.
 
@@ -322,9 +346,113 @@ def _clip_title(raw: str, max_chars: int = 60) -> str:
     while words and words[-1].lower().strip(",;:'\"") in _DANGLING_TAIL:
         words.pop()
     clean = " ".join(words).rstrip(",;:—–-")
+    # Oct 8 2026: a clip that lands mid-phrase ("…Supercharger stalls on
+    # former", "…reasoning at one") reads as a broken sentence. Back off to
+    # the last clause boundary when enough of the headline survives.
+    boundary = max((clean.rfind(m) for m in _CLAUSE_BREAKS), default=-1)
+    if boundary >= int(max_chars * 0.6):
+        clean = clean[:boundary].rstrip(",;:—–- ")
     if len(clean) >= max_chars // 2:
         return clean
     return title[: max_chars - 1].rsplit(" ", 1)[0].rstrip(",;:") + "…"
+
+
+def _paragraphs(lines: List[str]) -> list:
+    """``[(start_word, start_char, content_tokens), ...]`` per paragraph.
+
+    Mirrors parse_chapters' offset accounting (``splitlines(keepends)``).
+    """
+    paras: list[tuple[int, int, set]] = []
+    word_idx = 0
+    char_idx = 0
+    cur_start: Optional[tuple[int, int]] = None
+    cur_text: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped:
+            if cur_start is None:
+                cur_start = (word_idx, char_idx)
+            cur_text.append(stripped)
+        elif cur_start is not None:
+            paras.append(
+                (cur_start[0], cur_start[1], _tokenize_for_match(" ".join(cur_text)))
+            )
+            cur_start, cur_text = None, []
+        word_idx += len(line.split())
+        char_idx += len(line)
+    if cur_start is not None:
+        paras.append(
+            (cur_start[0], cur_start[1], _tokenize_for_match(" ".join(cur_text)))
+        )
+    return paras
+
+
+#: The lead story must begin within this many paragraphs of the opening
+#: chapter's start, or it is not where the episode put its lead.
+LEAD_SEARCH_PARAGRAPHS = 4
+
+
+def _lead_story_split(
+    lines: List[str],
+    head: "Chapter",
+    story_headlines: List[str],
+    max_chars: int = 60,
+) -> Optional[tuple]:
+    """Where the lead story starts inside the opening chapter.
+
+    Oct 8 2026: the lead had its own chapter on 2 of 21 episodes. Since
+    the July cold-open pass every script opens on the hook, then the
+    identity line, then the lead story, all inside "Introduction";
+    headline anchoring skipped the lead because it starts fewer than 60
+    words in, and marker-driven shows never split the opening at all. So
+    the story every title and thumbnail sells was the one story a
+    listener could not jump to.
+
+    The lead paragraph is the first paragraph after the opening chapter's
+    own first paragraph (within ``LEAD_SEARCH_PARAGRAPHS``) that shares
+    content words with the hook — or, on a digest with no hook, with its
+    first headline. Its title is the headline that best matches the hook;
+    when the lead has no headline of its own (desks, M&A and Prediction
+    Markets write the lead under a bare section heading), the hook itself
+    cut cleanly at a word boundary. A body that does not open on the
+    hook's story gets no lead chapter — never a guess. Returns
+    ``(word_idx, char_offset, title)`` or None.
+    """
+    if not story_headlines:
+        return None
+    hook = ""
+    candidates = []
+    for idx, h in enumerate(story_headlines):
+        if _is_hook_candidate(h, idx, max_chars):
+            if idx == 0:
+                hook = h
+            continue
+        tokens = _tokenize_for_match(h)
+        if tokens:
+            candidates.append((h, tokens))
+    hook_tokens = _tokenize_for_match(hook)
+    if hook_tokens:
+        title = ""
+        best = max(candidates, key=lambda c: len(c[1] & hook_tokens), default=None)
+        if best and len(best[1] & hook_tokens) >= 2:
+            title, lead_tokens = best[0], best[1] | hook_tokens
+        else:
+            lead_tokens = hook_tokens
+            clipped = _clip_title(hook, max_chars)
+            if not clipped.endswith("…"):
+                title = clipped
+    elif candidates:
+        title, lead_tokens = candidates[0]
+    else:
+        return None
+    if not title:
+        return None
+    body = [p for p in _paragraphs(lines)
+            if head.word_start < p[0] < head.word_end]
+    for w, c, tokens in body[:LEAD_SEARCH_PARAGRAPHS]:
+        if len(tokens & lead_tokens) >= 2:
+            return w, c, _clip_title(title, max_chars)
+    return None
 
 
 def _headline_anchored_insertions(
@@ -355,31 +483,7 @@ def _headline_anchored_insertions(
     if not story_headlines or len(story_headlines) < 2:
         return []
 
-    # Walk lines once, building paragraphs with word/char start offsets
-    # (mirrors parse_chapters' offset accounting: splitlines(keepends)).
-    paras: list[tuple[int, int, set]] = []  # (start_word, start_char, tokens)
-    word_idx = 0
-    char_idx = 0
-    cur_start: Optional[tuple[int, int]] = None
-    cur_text: list[str] = []
-    for line in lines:
-        stripped = line.strip()
-        if stripped:
-            if cur_start is None:
-                cur_start = (word_idx, char_idx)
-            cur_text.append(stripped)
-        elif cur_start is not None:
-            paras.append(
-                (cur_start[0], cur_start[1], _tokenize_for_match(" ".join(cur_text)))
-            )
-            cur_start, cur_text = None, []
-        word_idx += len(line.split())
-        char_idx += len(line)
-    if cur_start is not None:
-        paras.append(
-            (cur_start[0], cur_start[1], _tokenize_for_match(" ".join(cur_text)))
-        )
-
+    paras = _paragraphs(lines)
     in_head = [p for p in paras if head_word_start < p[0] < head_word_end]
     if not in_head:
         return []
@@ -721,37 +825,41 @@ def parse_chapters(
                         last_w = w
 
             if insertions:
+                # Title preference: (1) the anchored headline, (2) a
+                # matching clean digest headline (avoids mid-sentence
+                # spoken fragments), (3) the segment's first sentence when
+                # it is a whole sentence that stands alone. Oct 8 2026: no
+                # title = no chapter break there — the text stays in the
+                # chapter before it. The old "Segment N" placeholder and
+                # clipped fragments told a listener nothing.
                 _used_headlines: set[str] = set()
-                rebuilt: list[Chapter] = [Chapter(
-                    title=head.title,
-                    word_start=head.word_start,
-                    word_end=insertions[0][0],
-                    char_start=head.char_start,
-                    char_end=insertions[0][1],
-                )]
-                for n, (w, c, pre_title) in enumerate(insertions, start=2):
-                    next_w = insertions[n - 1][0] if n - 1 < len(insertions) else head_w_end
-                    next_c = insertions[n - 1][1] if n - 1 < len(insertions) else head_c_end
-                    # Title preference: (1) the anchored headline, (2) a
-                    # matching clean digest headline (avoids mid-sentence
-                    # spoken fragments), (3) the segment's first sentence,
-                    # (4) "Segment N" placeholder.
+                titled: list[tuple[int, int, str]] = []
+                for n, (w, c, _pre) in enumerate(insertions):
+                    next_c = insertions[n + 1][1] if n + 1 < len(insertions) else head_c_end
                     seg_text = script[c:next_c]
                     title = (
-                        pre_title
+                        _pre
                         or _best_headline_for_segment(
                             seg_text, story_headlines or [], _used_headlines)
                         or _first_sentence_as_title(seg_text)
-                        or f"Segment {n}"
                     )
-                    rebuilt.append(Chapter(
-                        title=title,
-                        word_start=w,
-                        word_end=next_w,
-                        char_start=c,
-                        char_end=next_c,
-                    ))
-                chapters = rebuilt + tail
+                    if title:
+                        titled.append((w, c, title))
+                if titled:
+                    bounds = titled + [(head_w_end, head_c_end, "")]
+                    rebuilt: list[Chapter] = [Chapter(
+                        title=head.title,
+                        word_start=head.word_start,
+                        word_end=titled[0][0],
+                        char_start=head.char_start,
+                        char_end=titled[0][1],
+                    )]
+                    for (w, c, title), (nw, nc, _t) in zip(bounds, bounds[1:]):
+                        rebuilt.append(Chapter(
+                            title=title, word_start=w, word_end=nw,
+                            char_start=c, char_end=nc,
+                        ))
+                    chapters = rebuilt + tail
                 logger.info(
                     "Auto-segmented head chapter for %s into %d segments "
                     "(mode=%s, target %.0fs each, ~%d words)",
@@ -761,6 +869,24 @@ def parse_chapters(
                     auto_segment_target_seconds,
                     words_per_segment,
                 )
+
+    # The lead story gets its own chapter (Oct 8 2026). It sat inside the
+    # opening chapter on 19 of 21 episodes. Skipped for known_sections_only
+    # shows, whose chapters are their fixed section set by decision (spacex,
+    # Aug 27 2026), and when a chapter already carries the lead's title.
+    if chapters and not known_sections_only:
+        head = chapters[0]
+        found = _lead_story_split(lines, head, story_headlines or [])
+        if found and found[2] not in {c.title for c in chapters}:
+            w, c, title = found
+            chapters = [
+                Chapter(title=head.title, word_start=head.word_start,
+                        word_end=w, char_start=head.char_start, char_end=c),
+                Chapter(title=title, word_start=w, word_end=head.word_end,
+                        char_start=c, char_end=head.char_end),
+            ] + chapters[1:]
+            logger.info("Lead story chapter for %s: %r at word %d",
+                        show_name or "show", title, w)
 
     # Post-processing robustness (added after reviewing May 28 episodes)
     # Collapse consecutive duplicate titles (very common on quiet days).

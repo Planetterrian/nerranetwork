@@ -706,8 +706,10 @@ class TestAutoSegmentFallback:
             "breaks at sensible boundaries inside the head chapter, "
             "without exceeding the configured words-per-segment threshold."
         )
+        # Oct 8 2026: each paragraph opens on a short whole sentence — a
+        # spoken sentence is a chapter title only when it fits whole.
         return "Welcome back to the show. " + (
-            "\n\n".join([para] * paragraphs)
+            "\n\n".join(f"Story {i} opens here. {para}" for i in range(paragraphs))
         ) + "\n\nThanks for listening."
 
     def test_auto_segment_fires_when_marker_count_below_min(self):

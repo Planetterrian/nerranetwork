@@ -91,6 +91,18 @@ _HEADLINE_PATTERNS = (
     re.compile(r"^###\s+\d+[.)]\s+(.+?)\s*$", re.MULTILINE),
     # MAB / M&A item heads: ``**[Title]: source**``
     re.compile(r"\*\*\[([^\]\n]+)\]"),
+    # AI Chips / Peptides / Longevity item heads: ``**Title:** Outlet`` — the
+    # bold ends at the colon and the outlet follows it (Oct 8 2026). These
+    # digests returned only the hook, so their chapters fell back to clipped
+    # spoken fragments ("January through September to…") and their scene
+    # prompts reused the hook. The tail must read as an outlet name (at most
+    # six words, no closing full stop) so a bold label introducing a
+    # sentence ("**What You Need to Know:** Samsung said…") never matches.
+    # The outlet starts with a letter and carries no price symbols, so
+    # Tesla's "**REAL-TIME TSLA price:** $380.68 ▲ $1.95" is not a story.
+    re.compile(r"^\s*\*\*([^*\n]{8,}?):\*\*[ \t]+(?=[^\n]{1,45}$)"
+               r"(?=[^\W\d_])(?![^\n]*[$%€£¥▲▼])"
+               r"(?:\S+[ \t]?){1,6}(?<![.])$", re.MULTILINE),
     # M&A / MIT / MAB item heads: a line that is ENTIRELY one bold span
     # (``**Qwen3.8-Flash-Next Release Day: r/LocalLLaMA**``). Added Aug 27
     # 2026: these shows' digests carry their story titles this way (plain
@@ -108,6 +120,7 @@ _HEADLINE_PATTERNS = (
 # The standalone-bold pattern (last entry above) needs its own guards; the
 # other patterns must keep their existing behaviour byte-for-byte.
 _BOLD_LINE_PATTERN_INDEX = len(_HEADLINE_PATTERNS) - 1
+_BOLD_COLON_PATTERN_INDEX = _BOLD_LINE_PATTERN_INDEX - 1
 
 
 # ``[label](url)`` inside a headline. The M&A digest writes X-sourced items
@@ -218,6 +231,8 @@ def extract_story_headlines(digest_text: str, max_count: int = 12) -> List[str]:
     for i, pattern in enumerate(_HEADLINE_PATTERNS):
         for match in pattern.finditer(digest_text):
             raw = match.group(1)
+            if i == _BOLD_COLON_PATTERN_INDEX and len(raw.split()) < 3:
+                continue  # a label ("Trade Type:", "Sector:"), not a story
             if i == _BOLD_LINE_PATTERN_INDEX:
                 # Standalone-bold lines carry ``Title: Source`` tails and
                 # can also be bare section labels ("Portfolio Performance")
