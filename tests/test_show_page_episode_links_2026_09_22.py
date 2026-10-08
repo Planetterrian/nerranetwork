@@ -199,9 +199,9 @@ class TestEveryEpisodeCardOffersItsArticle:
         assert "1" not in mapped
         assert mapped, "the other interviews must still be linked"
 
-    def test_a_show_with_no_episodes_maps_nothing(self, tmp_path):
+    def test_a_show_with_no_episodes_maps_nothing(self, tmp_path, unpublished_show):
         html = Path(G.generate_show_page(
-            "nerra_voices", output_dir=tmp_path)).read_text(encoding="utf-8")
+            unpublished_show, output_dir=tmp_path)).read_text(encoding="utf-8")
         assert self._map(html) == {}
 
     def test_the_latest_link_is_looked_up_not_guessed(self):

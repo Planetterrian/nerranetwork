@@ -50,7 +50,11 @@ All three defects are fixed in this PR. What the missing transcripts cost is lis
 
 Every Oct 8 episode was transcribed from its published MP3 with the pipeline's `base` model, written beside the digest under the pipeline's file names (`*_transcript.json`, `.txt`, `.vtt`), and run through `engine.spoken_text_gate.check_transcript_files` against the committed `_tts.txt`. Because `voice_intro_delay` is 0, the voice starts at t=0 in the published mix, so these timings match what the raw-track transcript would have recorded.
 
-_Results are added with the backfilled transcripts in the next commit on this branch._
+**All 21 episodes pass.** Opening match ranges 0.73–0.97 against a 0.5 floor, and the longest spoken run absent from the script ranges 2–15 words against a 40 limit. No episode on Oct 8 carried the Ep605 leak.
+
+At first MAG 7 and Modern Investing failed with `foreign_passage` (67 and 65 words at 95% through the episode). The words were the sung vocals of their shared outro track, `assets/music/ModernInvesting.mp3`, which Whisper picked up because these transcripts were made from the mixed audio. The pipeline transcribes the raw voice track, so its transcripts never contain music. To match that, both transcripts were cut after the final scripted line (the AI disclosure). After the cut, the gate passes on both (longest unmatched run: 8 and 9 words).
+
+The transcripts are committed beside each digest under the pipeline's own file names. Every Oct 8 feed item gained the two `<podcast:transcript>` tags the live publish path emits, VTT first, through the publisher's own `_inject_transcript_tag`: 29 items in 22 feeds, each feed re-parsed with its item count unchanged.
 
 ## 5. Nerra Daily on its first 8am Pacific day
 
@@ -102,7 +106,21 @@ _Results are added with the backfilled transcripts in the next commit on this br
 
 This is the next staged model trial (operator item 4), not a prompt problem. Prompt passes have not moved it since September.
 
-## Main was red
+## Main was red, and turned red again at 17:24 UTC
+
+At 17:24 UTC Nerra Voices published its first episode (Ep1, Viktor Popovic). Ten site guards had used Nerra Voices as their example of "a show with no episodes", so all ten failed on main at once:
+
+- the pre-launch band
+- no feed link
+- no `webFeed`
+- no episode rail
+- an empty summaries page
+- an empty article map
+- the player chips
+
+The behaviour they protect is for the next show that launches, so they now render a fixture: `tests/conftest.py::unpublished_show` points a registered show's feed and summaries at files that do not exist.
+
+The guard that said "update me when Nerra Voices publishes" now checks the published page instead: the pre-launch band is gone and the player is there. Checking it found one more problem. "Not published yet" is also a string literal in the show page's script, so the old text-based assertion passed regardless; the rewritten guards match the band's `id="not-yet-published"`.
 
 The Voices tests named in the Oct 7 note pass once ffmpeg is installed: 355 passed and 1 skipped across `test_it_produces_itself.py`, `test_the_guests_own_recording_is_used.py` and `test_nerra_voices_pipeline.py`. `test.yml` installs ffmpeg and runs `pytest -x`, so main's red was the first failure the run reached. That was `test_pyav_is_pinned_below_19`, the guard #1365 broke. One Voices guard pinned the old `model.transcribe(str(audio_path), …)` string and was updated with the decoder change. The full-suite result is in the PR.
 

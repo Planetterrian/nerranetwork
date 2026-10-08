@@ -447,9 +447,9 @@ class TestNoLinksToAnUnpublishedFeed:
     the single most-repeated broken link there was. Found by crawling the
     generated tree, which nothing had done since the Sep 3 pass."""
 
-    def test_has_feed_is_false_for_a_show_with_no_episodes(self):
+    def test_has_feed_is_false_for_a_show_with_no_episodes(self, unpublished_show):
         shows = {s["slug"]: s for s in gh._build_all_shows_list()}
-        assert shows["nerra_voices"]["has_feed"] is False
+        assert shows[unpublished_show]["has_feed"] is False
         assert shows["tesla"]["has_feed"] is True
 
     def test_has_feed_tracks_the_file_not_the_registry(self):
@@ -477,13 +477,22 @@ class TestNoLinksToAnUnpublishedFeed:
                     offenders.setdefault(page.name, set()).add(feed)
         assert offenders == {}, f"links to an unpublished feed: {offenders}"
 
-    def test_show_page_js_does_not_fetch_a_missing_feed(self):
-        html = (ROOT / "nerra-voices.html").read_text(encoding="utf-8")
+    @staticmethod
+    def _unpublished_page(slug, tmp_path) -> str:
+        """Render, never read the committed page: Nerra Voices published on
+        2026-10-08 and its committed page now has a feed."""
+        return Path(gh.generate_show_page(
+            slug, output_dir=tmp_path)).read_text(encoding="utf-8")
+
+    def test_show_page_js_does_not_fetch_a_missing_feed(self, tmp_path,
+                                                        unpublished_show):
+        html = self._unpublished_page(unpublished_show, tmp_path)
         assert "const HAS_FEED = false" in html
         assert "if (!HAS_FEED)" in html
 
-    def test_webfeed_is_omitted_from_jsonld_when_absent(self):
-        html = (ROOT / "nerra-voices.html").read_text(encoding="utf-8")
+    def test_webfeed_is_omitted_from_jsonld_when_absent(self, tmp_path,
+                                                        unpublished_show):
+        html = self._unpublished_page(unpublished_show, tmp_path)
         blocks = re.findall(
             r'<script type="application/ld\+json">\s*(.*?)\s*</script>', html, re.S
         )

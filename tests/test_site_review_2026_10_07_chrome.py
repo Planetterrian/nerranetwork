@@ -178,11 +178,12 @@ class TestShowPageRender:
         m = re.search(r'<audio id="latest-audio"[^>]*src="([^"]+)"', rendered["tesla"])
         assert m and m.group(1).startswith("https://op3.dev/e/"), m and m.group(1)
 
-    def test_show_without_a_feed_has_no_episode_rail(self, rendered):
-        if "nerra_voices" not in rendered:
-            pytest.skip("nerra_voices not in registry")
-        html = rendered["nerra_voices"]
+    def test_show_without_a_feed_has_no_episode_rail(self, tmp_path, unpublished_show):
+        import generate_html as gh
+        html = Path(gh.generate_show_page(
+            unpublished_show, output_dir=tmp_path)).read_text(encoding="utf-8")
         assert 'id="episodes"' not in html
+        assert 'id="not-yet-published"' in html
 
     def test_mobile_menu_links_carry_no_inline_close_handler(self, rendered):
         menu = rendered["tesla"].split('id="mobileMenu"', 1)[1].split("</div>", 1)[0]
