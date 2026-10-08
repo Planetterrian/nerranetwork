@@ -1,0 +1,159 @@
+Child speech recognition now retains adult performance through bilingual adaptation and weight merging.
+
+This is Models and Agents, episode 197.
+
+Researchers released a study on child ASR adaptation that preserves adult performance across Arabic and English.
+
+They compared full fine-tuning, LoRA, and post-hoc weight-space merging on encoder-decoder, encoder-CTC, and AudioLLM systems.
+
+Bilingual adaptation proved more stable than language-specific approaches.
+
+LERP merging favored adult retention while TIES recovered stronger child gains.
+
+Direct bilingual fine-tuning remained strongest in raw word error rate for the encoder-decoder model.
+
+The work quantifies the adaptation-retention trade-off with Retention Index, Child Adaptation Gain, and Adaptation Recovery metrics on MyST, MGB-2, and LibriSpeech benchmarks.
+
+Code and models are available at the linked GitHub repository.
+
+In model updates, CoDR adds a training-free refinement pass to masked diffusion language models.
+
+It detects confidence drift in committed tokens via k-partition probing.
+
+The method remasks and regenerates only tokens the model no longer endorses after denser context arrives.
+
+CoDR improved average accuracy across two backbones, four reasoning and coding tasks, and three base samplers.
+
+It used fewer forward passes than prior remasking approaches.
+
+A Gated Cross Attention framework integrates emotionally rewritten news with LLM-generated explanations from original articles.
+
+Experiments on PolitiFact, GossipCop, and LUN showed notable gains under multiple emotional conditions on two of the three datasets.
+
+The approach reduces mismatches caused by emotional reframing while maintaining competitive performance on the third dataset.
+
+A large-scale study of one hundred three thousand nine hundred thirty-nine graded replies across eight LLMs and two reasoning configurations found that task verification cost and guardrail coverage dominate sycophancy rates.
+
+Anchored facts saw only one point three percent concessions.
+
+Personal choices were endorsed in seventy-seven percent of conversations.
+
+Maximum reasoning eliminated concessions on deep puzzles for both models tested.
+
+LRCC trains lightweight routers per Transformer block to select among nested low-rank paths on a token-dependent basis.
+
+On Llama and Qwen models it delivered a seven point six percentage-point gain in average downstream accuracy over static low-rank compression at matched active-parameter budget.
+
+At batch-size-one decoding latency it improved both perplexity and accuracy on Llama three point two one B without specialized kernels.
+
+Three eight point seven million parameter Chinese BERT models were trained from scratch under identical conditions.
+
+MLM won three of five intrinsic dimensions.
+
+WWM achieved thirty-nine point five percent better perplexity and higher MLM hit rate.
+
+MacBERT under a two hundred twenty-two entry synonym dictionary produced forty-seven point two three perplexity, twenty-two times higher than MLM.
+
+CARE provides finite-sample guarantees that acceleration-induced failure risk stays below a user-specified budget.
+
+On four LIBERO suites with OpenVLA-OFT it certified nine point zero to ten point eight times speedups.
+
+It guarantees at ninety-five percent that at least eighty-five point eight percent of reference-solved episodes are preserved.
+
+ToolRACER generates validated multi-turn trajectories across six domains and fifty-five personas.
+
+It produced five point six K conversations with approximately sixty-six percent containing failure-prone scenarios.
+
+Models trained on the resulting benchmark improved end-to-end agentic accuracy on tau squared-bench and ACEBench.
+
+A two-stage pipeline first detects cognitive components then generates aligned dialogue using knowledge distillation, preference optimization, and attention-guided reward shaping.
+
+Cognitively informed fine-tuning produced substantial gains in cognitive realization over generic instruction-tuned and mental-health-domain SLMs.
+
+Pseudo-dialect speech synthesized from LLM-generated dialect text via standard-language TTS improved dialect-to-English translation scores for Japanese and German.
+
+Intermediate standard-text prediction further boosted Japanese to twenty-eight point two six and Chinese to sixteen point three seven.
+
+OnlineQAT performs on-policy distillation on student-generated responses after block-wise QAT initialization.
+
+On Qwen three one point seven B it reached fifty-seven point two eight average at W three A sixteen and thirty-two point five two at W two A sixteen.
+
+It outperformed ReasoningQAT by two point nine zero and zero point four four points respectively.
+
+sk-bench supplies thirty datasets across ten skill categories with eleven newly introduced or packaged resources.
+
+The best open model trailed proprietary APIs by twelve point six points.
+
+Continued pretraining on Qwen three fourteen B lowered overall score by thirteen point nine points before instruction repair recovered three quarters of the loss.
+
+The Adversarial Surface-Form Robustness Dataset contains two thousand one hundred prompts across seven surface-form families.
+
+Emoji and invisible Unicode variations produced twenty point two seven percent and seventeen point two zero percent harmful compliance against a twenty-two point eight seven percent baseline.
+
+Leetspeak and encoded wrappers raised comprehension failure to thirty-six point four seven percent and sixty-five point six zero percent.
+
+U-Space projects token states onto an orthogonal basis derived from semantic anchors for doubt and certainty.
+
+The resulting confidence score outperformed established baselines under both standard and length-controlled evaluation.
+
+It transferred more reliably than supervised estimators without requiring correctness labels or repeated generations.
+
+Goldsmith iteratively revises annotation definitions by running candidate definitions on a small gold set.
+
+It outperformed direct rewriting, OPRO, APE, and PromptBreeder under matched protocols.
+
+Mean-difference activation steering on Moshi's residual stream decodes four emotions linearly yet achieves only partial and uneven control.
+
+Happy, angry, and surprise share one direction while sad remains distinctly steerable.
+
+The shared component cannot be projected away uniformly.
+
+The approach requires only a few vector additions per frame with no retraining.
+
+Performance varies because the geometry of the residual stream groups three emotions together, limiting independent control.
+
+When the target emotion lies along the shared direction, steering succeeds.
+
+When it requires an orthogonal offset, success drops.
+
+Teams needing reliable affect control should measure per-emotion steerability on their specific model before deployment.
+
+Try the CoDR refinement pass on your masked diffusion language model sampling pipeline for reasoning or coding tasks to recover accuracy with modest overhead.
+
+Experiment with LRCC routers on Llama three point two one B or Qwen models when you need token-dependent compute allocation without custom kernels.
+
+Evaluate sk-bench on your Slovak-language applications to measure native performance versus translated baselines before scaling pretraining.
+
+Test CARE-certified acceleration on OpenVLA-OFT or similar VLA models when you require guaranteed failure bounds below a chosen budget.
+
+Continued releases of controlled comparison studies on tiny-scale pretraining strategies are expected in the coming weeks.
+
+Additional benchmarks for under-resourced languages and dialect robustness are anticipated from multiple labs.
+
+Further work on certified acceleration and on-policy distillation for low-bit models is likely to appear soon.
+
+Pop the hood on emotion steering in full-duplex speech models and the picture changes from uniform control to geometry-limited results.
+
+Mean-difference activation steering works by adding a few vectors per frame to Moshi's residual stream.
+
+Four emotions decode linearly from that stream.
+
+Three of them collapse onto one shared direction.
+
+Sad stays orthogonal and therefore steerable on its own.
+
+The shared direction cannot be subtracted equally from all four emotions without distorting the distinct one.
+
+Steering therefore succeeds when the target emotion aligns with the shared vector and fails when it needs an independent offset.
+
+The practical limit appears at the point where three emotions share geometry while the fourth does not.
+
+Measure steerability per emotion on the target model rather than assuming uniform results across the set.
+
+Before we go, watch for new certified acceleration results on additional VLA suites expected in the next several days.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+Quick tip from the network: try Fascinating Frontiers next — the most fascinating news from space and science. Every Nerra Network show is free at nerranetwork.com. Live dashboards — TSLA, SpaceX launches, the investing scoreboard — are all at nerranetwork.com/data.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
