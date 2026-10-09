@@ -3697,6 +3697,10 @@ def generate_network_page(*, dry_run=False):
         "newsletter_subscriber_count": newsletter_subscriber_count,
         "emit_bilingual_hreflang": True,
         "total_episodes": _count_total_episodes(),
+        # Homepage Soft-only (Oct 2026): Soft hero is the email ask;
+        # suppress the footer per-show newsletter form but keep the
+        # Personal tips link. Every other page leaves this unset/false.
+        "suppress_footer_newsletter_form": True,
     }
 
     html = template.render(**context)
@@ -5744,7 +5748,7 @@ def generate_personal_interest_page(*, dry_run=False):
     """
     env = _get_jinja_env()
     ctx = _member_page_context(
-        "Nerra Personal — when you’re ready | Nerra Network",
+        "Nerra Personal tips by email, no charge, no card | Nerra",
         "Every Nerra show stays free. Leave your email for occasional "
         "Personal tips. No ads. Curiosity only.",
         "https://nerranetwork.com/personal-interest.html")

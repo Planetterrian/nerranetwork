@@ -427,63 +427,10 @@
         </div>
     </section>
 
-    <!-- Newsletter -->
-    <section id="newsletter" class="nn-section" style="border-top:1px solid var(--nn-border);background:radial-gradient(ellipse at 50% 0%, rgba(124,92,255,0.12), transparent 70%);">
-        <div class="container" style="max-width:680px;">
-            <div class="nn-section-header">
-                <div class="section-label">Episode briefings by email</div>
-                <h2>Get the shows you follow in your inbox</h2>
-                <p>Each show sends a short briefing when a new episode lands: the sources, the key numbers, and a link to listen. Pick the shows; unsubscribe anytime.</p>
-                {% if newsletter_subscriber_count %}
-                <p style="font-family:var(--font-ui);font-size:0.85rem;color:var(--nn-text-muted);margin-top:var(--sp-2);">Join {{ "{:,}".format(newsletter_subscriber_count) }}+ readers already subscribed.</p>
-                {% endif %}
-            </div>
-            {# Posts to the account Worker like every other signup form on the
-               site (Sep 2026 review). This form was the last one still
-               POSTing straight to Buttondown's embed endpoint: it opened the
-               raw response in a new tab, declared "Check your email ✓" on a
-               timer whether or not the request worked, and — because it
-               bypassed the Worker — created no Nerra account, so homepage
-               subscribers never got the gallery downloads and book discount
-               the join page promises. #}
-            {#- Same Worker contract as the footer form; handler in
-                assets/js/footer-subscribe.js. The previous inline
-                onsubmit embedded ``| tojson`` inside a double-quoted
-                attribute and broke on every page load (2026-09-27). -#}
-            <form class="nn-subscribe-form" style="max-width:none;"
-                  method="post"
-                  action="#"
-                  data-nn-subscribe="homepage"
-                  data-require-tags="1"
-                  data-source="{{ capture_source_site }}"
-                  data-label-loading="Subscribing…"
-                  data-label-done="Check your email ✓"
-                  data-label-idle="Subscribe"
-                  data-label-error="Something went wrong — try again"
-                  data-label-need-tags="Please pick at least one show to subscribe to.">
-                <p style="font-family:var(--font-ui);font-size:0.85rem;color:var(--nn-text-muted);margin-bottom:var(--sp-3);">
-                    Pick the shows you want — everything's selected by default. Uncheck any you'd rather skip.
-                    <a href="#" onclick="event.preventDefault();this.closest('form').querySelectorAll('input[name=tag]').forEach(function(b){b.checked=false;});return false;" style="color:var(--nn-text-muted);font-size:0.8rem;">Clear all</a>
-                    ·
-                    <a href="#" onclick="event.preventDefault();this.closest('form').querySelectorAll('input[name=tag]').forEach(function(b){b.checked=true;});return false;" style="color:var(--nn-text-muted);font-size:0.8rem;">Select all</a>
-                </p>
-                <div class="nn-subscribe-tags" style="margin-bottom:var(--sp-4);">
-                    {% for s in ranked_shows | default(all_shows) %}
-                    <label><input type="checkbox" name="tag" value="{{ s.newsletter_tag or s.name }}" checked> {{ s.name }}</label>
-                    {% endfor %}
-                </div>
-                <div class="nn-subscribe-row">
-                    <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
-                    <button type="submit">Subscribe</button>
-                </div>
-                <p style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);margin-top:var(--sp-2);">
-                    Subscribing creates a free Nerra account (gallery downloads, member perks). No spam, and we never share your email. Read our
-                    <a href="{{ path_prefix }}privacy-policy.html" style="color:var(--nn-text-muted);">privacy policy</a>.
-                    <a class="nn-account-link" href="{{ path_prefix }}account.html" style="display:none;margin-left:0.5rem;color:var(--nn-cyan);">Your account →</a>
-                </p>
-            </form>
-        </div>
-    </section>
+    {#- Homepage Soft-only (Oct 2026): the per-show newsletter form
+        (data-nn-subscribe="homepage", former #newsletter) is gone. Soft
+        Personal under the hero is the email ask; #subscribe (RSS / Apple /
+        Spotify) stays. -#}
 
     {# --- The show-card filter states (``.is-dimmed`` / ``.is-match``) and
        ``.show-card-audience`` moved to styles/main.css on 2026-09-21: the card

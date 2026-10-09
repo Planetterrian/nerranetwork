@@ -566,6 +566,20 @@
                  account (same identity as the gallery gate), so the
                  member surface and the list grow together. -->
             <div class="nn-footer-subscribe">
+                {#- Homepage Soft-only (Oct 2026): Soft hero is the email
+                    ask on /. Suppress the competing footer newsletter
+                    form there, keep the Personal tips link, and leave
+                    every other page's form unchanged. No empty reserved
+                    space — the form markup is omitted, not hidden. -#}
+                {%- if suppress_footer_newsletter_form %}
+                <p style="margin:0;font-size:0.85rem;">
+                    <a href="{{ path_prefix }}personal-interest.html">Personal tips by email — no charge →</a>
+                    <span style="opacity:0.5;margin:0 0.35rem;">·</span>
+                    <a href="{{ path_prefix }}join.html">Or start Nerra Personal →</a>
+                    <a class="nn-account-link" href="{{ path_prefix }}account.html" style="display:none;margin-left:0.75rem;">Your account →</a>
+                    <a class="nn-login-link" href="{{ path_prefix }}login.html" style="margin-left:0.75rem;">Sign in →</a>
+                </p>
+                {%- else %}
                 {#- Handler lives in assets/js/footer-subscribe.js (bound
                     via data-nn-subscribe). Do NOT put |tojson strings in an
                     onsubmit="" attribute — double quotes end the attribute
@@ -614,6 +628,7 @@
                         <a class="nn-login-link" href="{{ path_prefix }}login.html" style="margin-left:0.75rem;">Sign in →</a>
                     </p>
                 </form>
+                {%- endif %}
             </div>
             {%- endif %}
             <div class="nn-footer-bottom">

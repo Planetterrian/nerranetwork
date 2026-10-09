@@ -223,10 +223,15 @@ class TestHomepageClaims:
         assert "no paywalls" not in src
         assert "The most recent episodes from all shows" not in src
 
-    def test_homepage_newsletter_uses_account_worker(self):
-        src = _read("templates/network_page.html.j2")
+    def test_homepage_soft_capture_uses_account_worker(self):
+        """Homepage Soft-only (Oct 2026): Soft hero is the email ask;
+        the old per-show newsletter form is gone."""
+        import re
+        raw = _read("templates/network_page.html.j2")
+        src = re.sub(r"\{#.*?#\}", "", raw, flags=re.S)
         assert "buttondown.com/api/emails/embed-subscribe" not in src
-        assert 'data-nn-subscribe="homepage"' in src
+        assert 'data-nn-subscribe="homepage"' not in src
+        assert "soft_personal_hero_band" in src
         js = _read("assets/js/footer-subscribe.js")
         assert "https://api.nerranetwork.com/api/subscribe" in js
         assert 'target="popupwindow"' not in src
