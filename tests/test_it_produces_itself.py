@@ -1288,7 +1288,8 @@ class TestEveryEpisodeGetsItsOwnPost:
         pkg = {"episode_notes": "The lead paragraph.\n\nThe rest of it.",
                "chapter_markers": [{"start": 90, "title": "The engine"}],
                "guest_materials": "https://example.org/paper\nMy book",
-               "transcript_cleaned": "[00:01] Ada: Hello."}
+               # The transcript must vouch for the chapter (Oct 9 2026).
+               "transcript_cleaned": "[00:01] Ada: Hello. The engine computes."}
         pkg.update(over)
         path = write_episode_digest(get_show("age_of_ai"), 7, dt.date(2026, 9, 17),
                                     "Ep7", {"episode_thesis": "A thesis."},
@@ -1318,6 +1319,22 @@ class TestEveryEpisodeGetsItsOwnPost:
         assert "She wrote the first program." in text
         assert "**01:30** The engine" in text
         assert "### Transcript" in text
+
+    def test_a_chapter_list_the_transcript_cannot_vouch_for_is_not_written(self):
+        """Oct 9 2026: a re-publish of Ep7 wrote the Sep 22 storyboard list
+        back into its digest from editorial_packages.chapter_markers. The
+        gate runs where the record is written now, for the digest and the
+        summaries record alike."""
+        from publish_episode import vouched_chapters
+        storyboard = [{"start": 0, "title": "Early experiments with AI-generated storyboards"},
+                      {"start": 300, "title": "Why the studio banned AI storyboards"}]
+        text = self._digest(chapter_markers=storyboard)
+        assert "### Chapters" not in text and "storyboard" not in text
+        assert vouched_chapters({"chapter_markers": storyboard,
+                                 "transcript_cleaned": "[00:01] Ada: Hello."}) == []
+        assert vouched_chapters({"chapter_markers": [{"start": 90, "title": "The engine"}],
+                                 "transcript_cleaned": "[00:01] Ada: The engine computes."}
+                                ) == [{"start": 90, "title": "The engine"}]
 
     def test_the_file_is_named_so_the_generator_finds_the_episode(self):
         import datetime as dt

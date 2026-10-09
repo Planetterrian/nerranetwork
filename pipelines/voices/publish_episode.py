@@ -126,6 +126,23 @@ def _bullets(text: str) -> str:
     return "\n".join(out)
 
 
+def vouched_chapters(pkg: dict) -> list:
+    """The package's chapter markers that its own transcript can vouch for.
+
+    Oct 9 2026. The Sep 22 pass removed three fabricated chapter lists (a
+    film studio banning AI storyboards, on episodes whose guests never
+    mentioned one) from the committed record and gated the PAGE through
+    ``engine.interviews.supported_chapters`` — but the lists stayed in
+    ``editorial_packages.chapter_markers``, and a re-publish of Ep7 on Oct 8
+    wrote the storyboard list straight back into its digest, which turned
+    main red on the guard. The gate now runs where the record is written:
+    the transcript vouches for the list, or there is no list.
+    """
+    from engine.interviews import supported_chapters
+    return supported_chapters(pkg.get("chapter_markers") or [],
+                              (pkg.get("transcript_cleaned") or "").strip())
+
+
 def write_episode_digest(show, episode_num: int, when: dt.date, title: str,
                          interview: dict, app: dict, pkg: dict,
                          audio_url: str) -> Path:
@@ -175,7 +192,7 @@ def write_episode_digest(show, episode_num: int, when: dt.date, title: str,
         parts.append(body)
         parts.append("---")
 
-    chapters = pkg.get("chapter_markers") or []
+    chapters = vouched_chapters(pkg)
     if chapters:
         lines = []
         for ch in chapters:
@@ -412,7 +429,7 @@ def publish_one(interview_id: str) -> int:
         "audio_url": audio_url,
         "guest": app["name"],
         "guest_links": guest_links(app),
-        "chapters": pkg.get("chapter_markers") or [],
+        "chapters": vouched_chapters(pkg),
     })
     summaries_path.write_text(
         json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")

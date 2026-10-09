@@ -302,7 +302,9 @@ class TestSupportedChapters:
 class TestRunTimeFromTheFeed:
     def test_durations_are_read_by_episode_number(self):
         d = feed_durations(AOAI_RSS)
-        assert d[7] == 46 * 60 + 5
+        # 46:05 until Oct 8 2026, when Ep7 was re-mixed from the rebuilt
+        # audio and the feed re-measured it at 46:13.
+        assert d[7] == 46 * 60 + 13
         assert d[2] == 44 * 60 + 52
 
     def test_cards_carry_the_measured_figure(self):
