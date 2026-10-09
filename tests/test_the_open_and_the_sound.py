@@ -152,7 +152,9 @@ class TestTheRunnerCanStillMakeAudio:
     def test_ffmpeg_is_ours_not_a_third_party_readme(self):
         action = (ROOT / ".github" / "actions" / "setup-ffmpeg"
                   / "action.yml").read_text(encoding="utf-8")
-        assert "apt-get install -y -qq ffmpeg" in action
+        # Oct 9 2026: the install is bounded (exit-124 stalls on Oct 8/9).
+        assert "timeout 300 apt-get $APT_OPTS install -y -q ffmpeg" in action
+        assert "DPkg::Lock::Timeout" in action
         assert "command -v ffmpeg" in action, "skip the install when it is there"
         for wf in ("assemble_edit", "narrate", "post_interview",
                    "produce_episode", "publish"):
