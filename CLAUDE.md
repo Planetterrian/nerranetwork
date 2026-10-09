@@ -1088,7 +1088,11 @@ today's work, not just explain yesterday's):
   exists. No 80% floor — the point is a full slate. Never express the
   release as a UTC hour: 07:50 PT is 14:50 UTC under PDT and 15:50 under
   PST. The Worker's `EDITION_DISPATCH` fires at 07:50 and 09:01 Pacific
-  from a second cron trigger (`"1,50 14-17 * * *"`) and converts to Pacific
+  from the Worker's ONE cron trigger (`"1,7,16,31,37,46,50 6-17 * * *"`,
+  shared with the show slots — Oct 9 2026: the Cloudflare account is on
+  Workers Free, five cron triggers in total, Voices holds three, and the
+  deploy with a second scheduler trigger was refused with code 10072, so
+  the edition dispatch had never gone live) and converts to Pacific
   in the handler; GitHub fallbacks 14:55/15:55/16:05/17:05 UTC. Every
   lineup slot lands by ~12:40 UTC, two hours ahead (guarded). Nerra
   Personal follows the edition to ~8am. **A show run's push resolves a
@@ -2410,6 +2414,26 @@ news item's report). Bypass publishers (Nerra Daily, Voices) pass
 show with no episodes" and failed when it published Ep1 — they render
 `conftest.unpublished_show` now; never use a real show as a fixture for a
 state it will leave.
+
+**Oct 9 2026 — the runner upgrade, taken whole (operator-directed).**
+GitHub moves `ubuntu-latest` to Ubuntu 26 from Oct 19; rather than let the
+label move under the network, **every job pins `runs-on: ubuntu-26.04`**
+(apt ffmpeg 8.0 — was 6.1), every `setup-python` call and the composite's
+default run **Python 3.14**, every action is on its current major, and the
+requirements floors are the releases of that date (`av` keeps its `<19`
+ceiling; the PyAV guard pins the ceiling and lets the floor move). Read
+before trusting: an ffmpeg **9-dev** snapshot aborted inside the Voices
+`anlmdn` clean-track chain while the 8.x release line passed the same
+tests, so a future bump of the runner's ffmpeg is a render-smoke question,
+not a label edit. **The scheduler Worker holds ONE cron trigger** —
+`1,7,16,31,37,46,50 6-17 * * *` — because the Cloudflare account is on
+Workers Free (five triggers per account, Voices holds three) and the Oct 8
+deploy with a second trigger was refused with code 10072 after the script
+had uploaded: the show slots kept firing and the 8am edition dispatch never
+went live. The handler decides from the exact firing minute, so a second
+trigger is never needed; do not split it back without moving to Workers
+Paid. Guards: `tests/test_scheduling_punctuality.py`,
+`tests/test_transcripts_pyav_2026_10_08.py`.
 
 ### Anthology books — ebook + audiobook from the narrative shows (Aug 2026)
 

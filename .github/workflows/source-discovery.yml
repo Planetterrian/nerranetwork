@@ -43,7 +43,7 @@ concurrency:
 
 jobs:
   discover:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Checkout
@@ -51,7 +51,7 @@ jobs:
 
       - uses: ./.github/actions/setup-python
         with:
-          python-version: '3.12'
+          python-version: '3.14'
           requirements-file: 'requirements.txt'
           extra-packages: "pyyaml requests feedparser"
           skip-checkout: 'true'

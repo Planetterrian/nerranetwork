@@ -172,7 +172,7 @@ jobs:
   # Gate job: determine which show(s) to run based on cron time or dispatch
   # -----------------------------------------------------------------------
   gate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     outputs:
       shows: ${{ steps.resolve.outputs.shows }}
       known_noop: ${{ steps.resolve.outputs.known_noop }}
@@ -364,7 +364,7 @@ jobs:
   alert-skip:
     needs: gate
     if: needs.gate.outputs.shows == '[]' && github.event_name == 'schedule'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Alert on skipped schedule
         run: |
@@ -387,7 +387,7 @@ jobs:
   run:
     needs: gate
     if: needs.gate.outputs.shows != '[]'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     concurrency:
       group: show-${{ matrix.show }}
       cancel-in-progress: false
@@ -417,7 +417,7 @@ jobs:
         # morning instead of after the whole slot is gone.
         timeout-minutes: 45
         with:
-          python-version: '3.12'
+          python-version: '3.14'
           requirements-file: 'requirements.txt'
           system-packages: 'ffmpeg'
           skip-checkout: 'true'
@@ -1014,7 +1014,7 @@ jobs:
   finalize:
     needs: run
     if: always() && needs.run.result != 'skipped'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     concurrency:
       group: finalize-shared-pages
       cancel-in-progress: false
@@ -1030,7 +1030,7 @@ jobs:
       - uses: ./.github/actions/setup-python
         timeout-minutes: 45   # hung-setup guard — see the run job's note
         with:
-          python-version: '3.12'
+          python-version: '3.14'
           requirements-file: 'requirements.txt'
           skip-checkout: 'true'
 

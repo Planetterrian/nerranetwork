@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   process:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # ffmpeg mix + per-channel Whisper STT + 8 editorial passes; cap well
     # below the 6h GitHub default so a hung API call can't strand it.
     timeout-minutes: 120
@@ -39,7 +39,7 @@ jobs:
           fetch-depth: 1
       - uses: ./.github/actions/setup-python
         with:
-          python-version: '3.12'
+          python-version: '3.14'
           requirements-file: 'pipelines/requirements.txt'
           skip-checkout: 'true'
       - uses: ./.github/actions/setup-ffmpeg

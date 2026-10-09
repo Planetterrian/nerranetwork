@@ -25,7 +25,7 @@ concurrency:
 
 jobs:
   fire:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     steps:
       # Shallow checkout + cached pip. This job runs ~288×/day on the */5
@@ -37,7 +37,7 @@ jobs:
           fetch-depth: 1
       - uses: ./.github/actions/setup-python
         with:
-          python-version: '3.12'
+          python-version: '3.14'
           requirements-file: 'pipelines/requirements.txt'
           skip-checkout: 'true'
       - run: python pipelines/voices/fire_interviews.py

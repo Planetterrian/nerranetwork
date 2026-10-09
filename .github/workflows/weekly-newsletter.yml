@@ -45,7 +45,7 @@ concurrency:
 
 jobs:
   generate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # Grok synthesis + Buttondown sends can hang; cap below the 6h default.
     # Oct 4 2026: 45 minutes was hit on four Sundays running (Sep 13 - Oct 4)
     # — each weekly takes 3-5 minutes of synthesis — and the commit step
@@ -76,7 +76,7 @@ jobs:
 
       - uses: ./.github/actions/setup-python
         with:
-          python-version: '3.12'
+          python-version: '3.14'
           requirements-file: 'requirements.txt'
           skip-checkout: 'true'
 

@@ -55,7 +55,7 @@ concurrency:
 
 jobs:
   generate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # Only run the broad report job on the 1st-of-month cron or on manual
     # dispatch; the weekday-22 UTC cron is reserved for the MIT monthly job.
     if: ${{ github.event_name != 'schedule' || github.event.schedule == '0 16 1 * *' }}
@@ -69,7 +69,7 @@ jobs:
 
       - uses: ./.github/actions/setup-python
         with:
-          python-version: '3.12'
+          python-version: '3.14'
           requirements-file: 'requirements.txt'
           extra-packages: "pyyaml requests tenacity openai"
           skip-checkout: 'true'
@@ -113,7 +113,7 @@ jobs:
     # --require-last-trading-day flag short-circuits unless today is
     # the last trading day of the calendar month. Manual dispatch can
     # force a run via the mit_monthly input.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # Full TTS + mix pipeline; cap well below the 6h GitHub default.
     timeout-minutes: 60
     if: >-
@@ -131,7 +131,7 @@ jobs:
 
       - uses: ./.github/actions/setup-python
         with:
-          python-version: '3.12'
+          python-version: '3.14'
           requirements-file: 'requirements.txt'
           # The comment above this line long CLAIMED ffmpeg but nothing
           # installed it — the July 31 2026 scheduled run generated the

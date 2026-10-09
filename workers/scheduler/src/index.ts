@@ -238,7 +238,7 @@ export default {
     const base = {
       worker: "nerra-scheduler",
       now: now.toISOString(),
-      cron: "1,7,16,31,37,46 6-12 * * * and 1,50 14-17 * * * (UTC)",
+      cron: "1,7,16,31,37,46,50 6-17 * * * (UTC)",
       next_slot: nextSlot(now),
       edition_dispatch: EDITION_DISPATCH,
       slots: SLOTS.map(([h, m, show, f]) => ({

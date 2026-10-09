@@ -13,7 +13,7 @@ inputs:
   python-version:
     description: "Python version to install"
     required: false
-    default: "3.12"
+    default: "3.14"
   requirements-file:
     description: "Path to requirements file"
     required: false
@@ -44,12 +44,12 @@ runs:
   steps:
     - name: Checkout
       if: ${{ inputs.skip-checkout != 'true' }}
-      uses: actions/checkout@v5
+      uses: actions/checkout@v7
       with:
         fetch-depth: ${{ inputs.fetch-depth }}
 
     - name: Set up Python ${{ inputs.python-version }}
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ inputs.python-version }}
         cache: ${{ inputs.cache == 'true' && 'pip' || '' }}

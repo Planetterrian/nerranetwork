@@ -42,7 +42,7 @@ concurrency:
 
 jobs:
   generate-artifacts:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # 6 external API fetches + site regen; the connector budget bounds
     # the fetchers (docs/analytics.md) but nothing bounded the job.
     timeout-minutes: 120
@@ -56,7 +56,7 @@ jobs:
 
       - uses: ./.github/actions/setup-python
         with:
-          python-version: '3.12'
+          python-version: '3.14'
           requirements-file: 'requirements.txt'
           skip-checkout: 'true'
 
