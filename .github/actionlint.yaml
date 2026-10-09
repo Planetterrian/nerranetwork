@@ -17,4 +17,9 @@
 # script. Prefer fixing the script (env vars + arrays) over suppressing.
 
 self-hosted-runner:
-  labels: []
+  # Not self-hosted: GitHub's own `ubuntu-26.04` image (every job pins it
+  # since Oct 9 2026), which actionlint 1.7.12's built-in label list does
+  # not know yet. This is the documented way to teach it a label; remove
+  # the entry once an actionlint release lists the image itself.
+  labels:
+    - ubuntu-26.04
