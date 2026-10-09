@@ -123,6 +123,13 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           EDITION_DATE: ${{ github.event.inputs.date }}
           EDITION_FORCE: ${{ github.event.inputs.force }}
+          # Oct 9 2026: the edition posts to X from the network account
+          # (engine.x_post). Unset secrets are a logged skip, recorded in
+          # the edition metrics as x_post_skipped: no_credentials.
+          NERRANETWORK_X_CONSUMER_KEY: ${{ secrets.NERRANETWORK_X_CONSUMER_KEY }}
+          NERRANETWORK_X_CONSUMER_SECRET: ${{ secrets.NERRANETWORK_X_CONSUMER_SECRET }}
+          NERRANETWORK_X_ACCESS_TOKEN: ${{ secrets.NERRANETWORK_X_ACCESS_TOKEN }}
+          NERRANETWORK_X_ACCESS_TOKEN_SECRET: ${{ secrets.NERRANETWORK_X_ACCESS_TOKEN_SECRET }}
         run: |
           ARGS="--edition en --when-ready"
           if [ -n "$EDITION_DATE" ]; then ARGS="$ARGS --date $EDITION_DATE"; fi

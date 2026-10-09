@@ -146,6 +146,10 @@ class EditionSpec:
     #: Monday … 6 = Sunday). Like ``monday_only`` this shapes only the
     #: EXPECTED roster; a late episode found on another day still splices.
     weekday_only: Mapping[str, int] = field(default_factory=dict)
+    #: Oct 9 2026: the edition posts its title and rundown link to X from
+    #: the network account; the secrets are NERRANETWORK_X_* (engine.x_post)
+    #: and an unset prefix is a logged skip recorded in the metrics.
+    x_env_prefix: str = "NERRANETWORK_X_"
 
 
 EDITIONS: Dict[str, EditionSpec] = {
@@ -1412,6 +1416,8 @@ def build_edition_metrics(
     dropped: List[str],
     links: Optional[dict] = None,
     skipped_today: Optional[List[dict]] = None,
+    x_posted: Optional[bool] = None,
+    x_post_skipped: str = "",
 ) -> dict:
     """The committed ``metrics_ep*.json`` record for one edition build.
 
@@ -1462,4 +1468,8 @@ def build_edition_metrics(
         "handoffs_revised": bool((links or {}).get("_handoffs_revised")),
         "handoff_count": len((links or {}).get("handoffs") or []),
         "edition_title_source": "llm" if (links or {}).get("title") else "lead_hook",
+        # Oct 9 2026: the X outcome (None = the build did not try, e.g. a
+        # dry run); x_post_skipped names why a False happened.
+        "x_posted": x_posted,
+        "x_post_skipped": x_post_skipped or "",
     }

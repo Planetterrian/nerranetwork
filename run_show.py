@@ -929,8 +929,21 @@ def run(args: argparse.Namespace) -> None:
                 getattr(config, "x_fetch_enabled", None),
             ):
                 return []
+            from engine.fetcher import rotate_x_accounts
+            _x_accounts = rotate_x_accounts(
+                config.x_accounts,
+                int(getattr(config, "x_accounts_per_run", 0) or 0),
+                today,
+            )
+            if len(_x_accounts) < len(config.x_accounts):
+                logger.info(
+                    "X fetch reads %d of %d accounts today (x_accounts_per_run; "
+                    "the rest rotate in on later days): %s",
+                    len(_x_accounts), len(config.x_accounts),
+                    ", ".join("@" + a.handle.lstrip("@") for a in _x_accounts),
+                )
             return fetch_x_posts(
-                config.x_accounts, keywords=config.keywords,
+                _x_accounts, keywords=config.keywords,
                 lookback_hours=int(getattr(config, "x_lookback_hours", 24) or 24),
             )
 
@@ -2571,6 +2584,10 @@ def run(args: argparse.Namespace) -> None:
                     "; ".join(_struct_defects),
                 )
                 metrics.record("digest_structural_regen", True)
+                # Oct 9 2026: the REASON used to live only in this log line
+                # (37% of episodes regenerated, nothing said why). The
+                # dashboard and the review snapshot read this list.
+                metrics.record("digest_structural_regen_reasons", list(_struct_defects))
                 # The corrective instruction is GENERIC — it used to name
                 # Tesla's specific sections ("Top 12 News Items, Tesla X
                 # Takeover…"), which were nonsensical for the other 12 shows
@@ -5235,6 +5252,12 @@ def run(args: argparse.Namespace) -> None:
 
     # 13. Post to X
     _t_x = time.monotonic()
+    # Oct 9 2026: the OUTCOME is recorded, not only the duration. Seven
+    # shows posted and nothing said whether a post succeeded, so a silent
+    # credential failure on every one of them would have shown nothing.
+    # x_posted: True = the teaser posted; False = enabled and did not.
+    _x_posted = False
+    _x_skip_reason = ""
     if episode_published and config.publishing.x_enabled and not args.skip_x:
         from engine.publisher import post_to_x
         from engine.tracking import record_x_post
@@ -5260,6 +5283,7 @@ def run(args: argparse.Namespace) -> None:
                 access_token_secret=access_token_secret,
             )
             if tweet_url:
+                _x_posted = True
                 record_x_post(tracker)
                 logger.info("Posted to X: %s", tweet_url)
 
@@ -5287,10 +5311,18 @@ def run(args: argparse.Namespace) -> None:
                     except Exception as exc:
                         logger.warning("Cross-promo reply failed (non-fatal): %s", exc)
         else:
+            _x_skip_reason = "no_credentials"
             logger.warning("X credentials missing (prefix=%s). Skipping X post.", prefix)
+    elif config.publishing.x_enabled and args.skip_x:
+        _x_skip_reason = "skip_x"
+    elif config.publishing.x_enabled:
+        _x_skip_reason = "not_published"
 
     if config.publishing.x_enabled:
         metrics.record("x_post_duration_s", round(time.monotonic() - _t_x, 2))
+        metrics.record("x_posted", _x_posted)
+        if not _x_posted:
+            metrics.record("x_post_skipped", _x_skip_reason or "post_failed")
 
     # 14b. Cleanup raw audio now that validation has passed
     if not args.skip_podcast and final_mp3 and final_mp3.exists():
@@ -6244,6 +6276,9 @@ def _publish_youtube(
         logger.info("YouTube publishing skipped — no final mp3.")
         return result
 
+    # Oct 9 2026: bound before the policy try so the imagery stage can
+    # read plan["shorts_probe"] even when the policy load failed.
+    _yt_plan: dict = {}
     # ---- Adaptive publishing policy (July 2026) ----
     # api/youtube_policy.json (rebuilt nightly by
     # scripts/update_youtube_policy.py from real per-video velocity, per
@@ -7038,7 +7073,10 @@ def _publish_youtube(
     # scenes, not a fixed five that nothing renders.
     from engine.youtube_policy import portrait_scene_count
     _fresh_short_scene_count = portrait_scene_count(
-        yt, shorts_planned=_policy_shorts_count)
+        yt, shorts_planned=_policy_shorts_count,
+        shorts_probe=bool(_yt_plan.get("shorts_probe")))
+    if _yt_plan.get("shorts_probe") and _fresh_short_scene_count:
+        result["short_scenes_probe_capped"] = _fresh_short_scene_count
     _portrait_consumers = _fresh_short_scene_count > 0
     if not _portrait_consumers:
         result["short_scenes_skipped_no_consumer"] = True

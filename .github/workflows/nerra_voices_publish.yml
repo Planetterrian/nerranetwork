@@ -84,6 +84,12 @@ jobs:
           # "en", so engine.youtube reads YOUTUBE_REFRESH_TOKEN_EN. Passing
           # the unsuffixed name would no-op the upload forever, silently.
           YOUTUBE_REFRESH_TOKEN_EN: ${{ secrets.YOUTUBE_REFRESH_TOKEN_EN }}
+          # Oct 9 2026: the interview shows post to X from the network
+          # account (engine.x_post). Unset secrets are a logged skip.
+          NERRANETWORK_X_CONSUMER_KEY: ${{ secrets.NERRANETWORK_X_CONSUMER_KEY }}
+          NERRANETWORK_X_CONSUMER_SECRET: ${{ secrets.NERRANETWORK_X_CONSUMER_SECRET }}
+          NERRANETWORK_X_ACCESS_TOKEN: ${{ secrets.NERRANETWORK_X_ACCESS_TOKEN }}
+          NERRANETWORK_X_ACCESS_TOKEN_SECRET: ${{ secrets.NERRANETWORK_X_ACCESS_TOKEN_SECRET }}
       # Aug 15 2026: replaced a naive 4-attempt push loop. By this point
       # the Supabase row already reads `published` and the audio is on R2,
       # so a lost push silently strands the RSS entry / digest / site

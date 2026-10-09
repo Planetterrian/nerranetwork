@@ -51,7 +51,16 @@ DEFAULT_POLICY_PATH = PROJECT_ROOT / "api" / "youtube_policy.json"
 MAX_SHORTS_PER_EPISODE = 4  # Sep 2026: 4-Short band at 60 vpd (see update_youtube_policy)
 
 
-def portrait_scene_count(yt_config, *, shorts_planned: int, default: int = 5) -> int:
+# Oct 9 2026: fresh 9:16 scenes on a dead-Shorts probe-tier show. A hook
+# Short runs 35 s and cuts on sentence ends, so two scenes carry it; the
+# five the YAML asks for were drawn for a surface earning under 10 views
+# at age 3 (modern_investing 3, planetterrian 4, omni_view / MAB / UC /
+# DP Pod 6–7 over the 21 days to Oct 9).
+PROBE_PORTRAIT_SCENES = 2
+
+
+def portrait_scene_count(yt_config, *, shorts_planned: int, default: int = 5,
+                         shorts_probe: bool = False) -> int:
     """How many fresh 9:16 Grok Imagine scenes an episode should generate.
 
     Oct 2 2026 (cost pass): the count was a fixed ``short_scenes_per_episode``
@@ -62,9 +71,13 @@ def portrait_scene_count(yt_config, *, shorts_planned: int, default: int = 5) ->
     (``ru_dub_enabled`` / ``dub_languages`` reuse the episode's gallery
     scenes, so a dubbed show keeps generating them even on an EN probe day)
     and the multi-platform cuts. With none of them in play the answer is 0.
-    The YAML value is never raised here.
+    The YAML value is never raised here. ``shorts_probe`` (the plan's
+    ``shorts_probe`` flag — the show is on the dead-Shorts weekly-probe
+    tier) caps it at ``PROBE_PORTRAIT_SCENES``.
     """
     yaml_count = int(getattr(yt_config, "short_scenes_per_episode", default) or default)
+    if shorts_probe:
+        yaml_count = min(yaml_count, PROBE_PORTRAIT_SCENES)
     if int(shorts_planned or 0) > 0:
         return yaml_count
     if bool(getattr(yt_config, "ru_dub_enabled", False)):
@@ -178,6 +191,10 @@ def resolve_publish_plan(
         "tier": "",
         "applied": False,
         "reason": "",
+        # Oct 9 2026: True when the entry sits on the dead-Shorts
+        # weekly-probe tier (every day of the week, not only the probe
+        # day) — the imagery stage reads it to draw fewer portrait scenes.
+        "shorts_probe": False,
     }
     if not adaptive_enabled or not isinstance(policy, dict):
         return plan
@@ -211,11 +228,13 @@ def resolve_publish_plan(
             reason = (reason + " | " if reason else "") + \
                 f"{(channel or 'en').lower()} channel cap {ceiling}"
 
+    shorts_probe = False
     if (entry.get("shorts_probe_weekly") is True
             and (channel or "en").lower() in SHORTS_PROBE_CHANNELS):
         # Dead-Shorts tier (Sep 22 2026): one Short a week, on the same
         # sharded weekday as the long-form probe, so the show keeps
         # generating the reach data it needs to climb back out.
+        shorts_probe = True
         if _is_probe_day(probe_today, slug=slug, channel=channel):
             shorts = 1
             reason = (reason + " | " if reason else "") + "weekly Short probe"
@@ -246,6 +265,7 @@ def resolve_publish_plan(
         tier=str(entry.get("tier") or ""),
         applied=True,
         reason=reason,
+        shorts_probe=shorts_probe,
     )
     return plan
 

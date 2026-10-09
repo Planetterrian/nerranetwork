@@ -441,7 +441,13 @@ class TestConfig:
             if p.name.startswith("_") or p.stem in COHORT:
                 continue
             raw = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
-            assert "stream" not in (raw.get("llm") or {}), p.name
+            llm = raw.get("llm") or {}
+            if llm.get("podcast_model"):
+                # Oct 9 2026: a pinned script arm streams (playbook rule 7)
+                # — SpaceX's and Omni View's grok-4.6 arms never ran on the
+                # non-streaming call (444 s drop, 660 s timeout, fell back).
+                continue
+            assert "stream" not in llm, p.name
         assert load_config(ROOT / "shows" / "tesla.yaml").llm.stream is False
 
     @pytest.mark.parametrize("slug", DESKS)

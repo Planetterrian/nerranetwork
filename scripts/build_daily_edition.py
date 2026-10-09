@@ -571,6 +571,12 @@ def build_edition(
         _append_summary(spec, target_date, digest_md, episode_num, title, r2_url)
         save_usage(tracker, digest_dir)
 
+        # Oct 9 2026: the edition posts to X from the network account. The
+        # feed, summaries and digest are already written, so a failed or
+        # unconfigured post costs nothing but the post; the outcome is in
+        # the metrics either way.
+        x_posted, x_post_skipped = post_edition_to_x(spec, episode_num, title)
+
         metrics = build_edition_metrics(
             episode_num, target_date, duration, segments,
             links_source=links_source,
@@ -579,6 +585,8 @@ def build_edition(
             dropped=dropped,
             links=links,
             skipped_today=skipped,
+            x_posted=x_posted,
+            x_post_skipped=x_post_skipped,
         )
         (digest_dir / f"metrics_ep{episode_num:03d}.json").write_text(
             json.dumps(metrics, indent=2, ensure_ascii=False) + "\n",
@@ -598,6 +606,20 @@ def build_edition(
         return 0
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
+
+
+def post_edition_to_x(spec: EditionSpec, episode_num: int, title: str):
+    """Post the edition's title and rundown link to X. ``(posted, reason)``."""
+    from engine.funnel import PLACEMENT_BODY, SOURCE_X, episode_link
+    from engine.x_post import post_teaser
+
+    page = f"https://nerranetwork.com/blog/{spec.slug}/ep{episode_num:03d}.html"
+    link = episode_link(page, spec.slug, episode_num, kind="episode",
+                        placement=PLACEMENT_BODY, source=SOURCE_X)
+    return post_teaser(
+        env_prefix=spec.x_env_prefix, title=title, link=link,
+        label=f"{spec.name} Ep{episode_num}",
+    )
 
 
 def main() -> int:

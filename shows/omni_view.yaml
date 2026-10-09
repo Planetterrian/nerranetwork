@@ -245,6 +245,11 @@ llm:
   # copied ~59%. A 4.7 script arm needs llm.stream first (the cohort's
   # rule-7 path) and a fresh staged trial. A/B-listen the first episode.
   podcast_model: grok-4.6
+  # Oct 9 2026, afternoon: the script call timed out at 660 s on Ep200
+  # (APITimeoutError) and fell back to 4.3 for the second day running.
+  # Playbook rule 7 — the pinned stage streams (the line above says a
+  # pinned arm "needs llm.stream first"; this is it).
+  stream: true
   digest_temperature: 0.5
   podcast_temperature: 0.7
   # Raised 10000 -> 13000 (July 28 2026). 21 of 117 recorded runs (17%)

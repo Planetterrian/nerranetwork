@@ -91,6 +91,13 @@ FACT_CARD_LABEL_MAX = 36
 # never a truncation: a long hook is regenerated, not sliced.
 SPOKEN_HOOK_MAX_CHARS = 150
 
+# Oct 9 2026 — an X post from a bypass publisher (Nerra Daily, the
+# interview shows) is the episode title plus one link. X counts any link
+# as 23 characters against its 280, so the text portion is capped here
+# and clipped with clip_words(); the link is never clipped.
+X_POST_MAX = 280
+X_TEASER_TEXT_MAX = 200
+
 ELLIPSIS = "…"
 
 # Trailing characters that read as debris once the tail is gone.
