@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 BANNED_READY = re.compile(r"when you[\u2019']re ready", re.I)
-TITLE_EXACT = "Nerra Personal tips by email, no charge, no card | Nerra"
+TITLE_EXACT = "Personal tips by email, no charge, no card | Nerra Network"
 H1_EXACT = "Occasional Personal tips by email — no charge, no card"
 
 

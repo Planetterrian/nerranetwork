@@ -5748,7 +5748,7 @@ def generate_personal_interest_page(*, dry_run=False):
     """
     env = _get_jinja_env()
     ctx = _member_page_context(
-        "Nerra Personal tips by email, no charge, no card | Nerra",
+        "Personal tips by email, no charge, no card | Nerra Network",
         "Every Nerra show stays free. Leave your email for occasional "
         "Personal tips. No ads. Curiosity only.",
         "https://nerranetwork.com/personal-interest.html")
