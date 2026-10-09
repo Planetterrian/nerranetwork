@@ -258,6 +258,41 @@ def interview_subject(interview: Optional[dict], app: Optional[dict],
     return cut[:cut.rfind(" ")].rstrip(";,: ") + "…"
 
 
+# Oct 9 2026 (Piper Martz): the no-show email went out with href="" because
+# the fire workflow never had CALCOM_BOOKING_URL, and she had missed a
+# closing session, which books on its own page. The show's own Cal.com pages
+# (shows/<slug>.yaml) are the defaults now; the env vars still override. A
+# guest never gets a link that goes nowhere.
+def booking_url(show: ShowRef = None, closing: bool = False) -> str:
+    """Where a guest picks a (new) time for ``show``. Never empty."""
+    s, default = resolve_show(show), resolve_show(None)
+    if closing:
+        return (os.environ.get("CALCOM_BOOKING_URL_CLOSING", "").strip()
+                or getattr(s, "closing_booking_url", "") or default.closing_booking_url)
+    env = ("CALCOM_BOOKING_URL" if s.slug == default.slug
+           else f"CALCOM_BOOKING_URL_{s.slug.upper()}")
+    return (os.environ.get(env, "").strip() or getattr(s, "booking_url", "")
+            or os.environ.get("CALCOM_BOOKING_URL", "").strip() or default.booking_url)
+
+
+def is_closing(interview: Optional[dict]) -> bool:
+    return ((interview or {}).get("session_kind") or "interview") == "closing"
+
+
+def missed_email(interview: dict, app: dict, show: Any, guest_name: str) -> "tuple[str, str]":
+    """Mira's "sorry we missed each other" mail, for the studio and the
+    phone no-show alike: the right booking page (the closing page for a
+    closing session), what the interview is about, and never an empty link."""
+    closing = is_closing(interview)
+    subject = (f"Sorry we missed each other: pick a new time for your {show.name} closing session"
+               if closing else f"Sorry we missed each other: pick a new time for {show.name}")
+    html = render_email("voices_interview_reminder.j2", show=show, guest_name=guest_name,
+                        missed=True, closing=closing,
+                        booking_url=booking_url(show, closing=closing),
+                        subject_line=interview_subject(interview, app))
+    return subject, html
+
+
 # Phase 2 co-host (Sept 2026): Patrick sits in the room as co-host on
 # every Mira interview. His display name lives in ONE env var so the
 # prompt, the transcript labels and the editorial passes all agree.

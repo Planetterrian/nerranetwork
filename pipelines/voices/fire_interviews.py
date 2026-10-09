@@ -27,7 +27,7 @@ from common import (  # noqa: E402
     mira_signature_html, guest_notes_block, guest_agenda_block, pacific_time,
     notify_operator, GUEST_AUDIO_HTML, studio_steps_html,
     operator_phone, render_email, sb_insert, sb_select, sb_update, send_email,
-    show_for, to_e164, guest_details,
+    show_for, to_e164, guest_details, interview_subject, missed_email,
 )
 from learning import lessons_block, relapse_recap, variety_block  # noqa: E402
 from address import address_rule, first_name, spoken as spoken_address  # noqa: E402
@@ -420,6 +420,7 @@ def reminder_email(interview: dict, app: dict, show, manage: str,
     phone_mode = (interview.get("call_mode") or "webrtc") != "webrtc"
     when = when_text(interview.get("scheduled_at", ""), interview.get("guest_timezone") or "")
     first = _h.escape(first_name(app))
+    closing = is_closing_session(interview)
     if soon:
         subject = (f"I'll call you in a few minutes for {show.name}" if phone_mode
                    else f"Your {show.name} studio is open")
@@ -428,10 +429,16 @@ def reminder_email(interview: dict, app: dict, show, manage: str,
                 "The studio is open and I'm ready when you are. We start in about "
                 "ten minutes.")
     else:
-        subject = f"Our interview on {show.name} is in about two hours"
+        subject = (f"Our closing session for {show.name} is in about two hours" if closing
+                   else f"Our interview on {show.name} is in about two hours")
         lead = (f"We're on for {_h.escape(when)}, about two hours from now."
                 if when else "We're on in about two hours.")
     parts = [f"<p>Hi {first},</p>", f"<p>{lead}</p>"]
+    # Oct 8 2026 (Patrick): every interview email says what it's about.
+    about = "" if soon else interview_subject(interview, app)
+    if about:
+        label = "The conversation we're finishing" if closing else "What we'll talk about"
+        parts.append(f"<p><strong>{label}:</strong> {_h.escape(about)}</p>")
     if phone_mode:
         parts.append("<p>I'll call the number you gave us. If you're able to join from a "
                      "computer with headphones instead, it sounds noticeably better than a "
@@ -467,7 +474,14 @@ def reminder_email(interview: dict, app: dict, show, manage: str,
 def send_guest_reminder(interview: dict, app: dict, show, manage: str,
                         soon: bool = False) -> None:
     subject, body = reminder_email(interview, app, show, manage, soon=soon)
-    send_email(app.get("email", ""), subject, body)
+    # Oct 9 2026: the two-hour reminder is guest correspondence like the
+    # rest, so Patrick, Dan and the publicist see it. The studio-open nudge
+    # ten minutes out stays between Mira and the guest.
+    if soon:
+        send_email(app.get("email", ""), subject, body)
+    else:
+        send_email(app.get("email", ""), subject, body, cc_operator=True,
+                   cc=[str(app.get("publicist_email") or "")])
 
 
 def send_reminders() -> None:
@@ -797,15 +811,8 @@ def sweep_browser_no_shows() -> int:
             sb_update("interviews", f"id=eq.{interview['id']}",
                       {"status": status, "no_show_count": no_shows})
             if no_shows < 2 and app.get("email"):
-                booking = (os.environ.get("CALCOM_BOOKING_URL_NERRA_VOICES", "")
-                           if show.slug == "nerra_voices" else "") \
-                    or os.environ.get("CALCOM_BOOKING_URL", "")
-                html = render_email("voices_interview_reminder.j2", show=show,
-                                    guest_name=first_name(app), missed=True,
-                                    booking_url=booking)
-                send_email(app["email"],
-                           f"Sorry we missed each other: pick a new time for {show.name}",
-                           html, cc_operator=True,
+                subject, html = missed_email(interview, app, show, first_name(app))
+                send_email(app["email"], subject, html, cc_operator=True,
                            cc=[str(app.get("publicist_email") or "")])
                 notify_operator(show.slack(
                     f"{app.get('name') or 'guest'} didn't come into the studio "

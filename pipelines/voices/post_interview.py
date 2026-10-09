@@ -141,15 +141,12 @@ def handle_missed(run: dict, interview: dict, app: dict) -> int:
     if no_shows < 2:
         # Sept 28 2026: the show's own booking page (Nerra Voices guests were
         # sent the Age of AI one), and Mira's own words.
-        booking = (os.environ.get("CALCOM_BOOKING_URL_NERRA_VOICES", "")
-                   if show.slug == "nerra_voices" else "") \
-            or os.environ.get("CALCOM_BOOKING_URL", "")
-        html = render_email("voices_interview_reminder.j2", show=show,
-                            guest_name=first_name(app), missed=True,
-                            booking_url=booking)
-        send_email(app["email"],
-                   f"Sorry we missed each other: pick a new time for {show.name}",
-                   html, cc_operator=True, cc=[str(app.get("publicist_email") or "")])
+        # Oct 9 2026: common.missed_email picks the page (closing sessions
+        # have their own) and never sends an empty link.
+        from common import missed_email
+        subject, html = missed_email(interview, app, show, first_name(app))
+        send_email(app["email"], subject, html, cc_operator=True,
+                   cc=[str(app.get("publicist_email") or "")])
         notify_operator(show.slack(
             f"{app['name']} no-show #{no_shows} — reschedule email sent"))
     else:

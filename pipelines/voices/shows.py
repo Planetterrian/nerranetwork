@@ -68,6 +68,11 @@ _AGE_OF_AI_VOICES_DEFAULTS: Dict[str, Any] = {
         "What's the one bet you're making for the next twelve months that "
         "you cannot prove yet?"
     ),
+    # Oct 9 2026 (Piper Martz): where a guest picks a time, and the short
+    # closing-session page. The no-show email had neither and went out with
+    # an empty link. CALCOM_BOOKING_URL* env vars still override.
+    "booking_url": "https://cal.com/patrick-novak-lkcqo4/age-of-ai-interview",
+    "closing_booking_url": "https://cal.com/patrick-novak-lkcqo4/age-of-ai-closing",
 }
 
 
@@ -110,6 +115,9 @@ class VoiceShow:
     # defaults on interview_runs, which were voiced for The Age of AI.
     disclosure_clip: str = ""
     apology_clip: str = ""
+    # The show's Cal.com pages (voices: booking_url / closing_booking_url).
+    booking_url: str = ""
+    closing_booking_url: str = ""
 
     # -- derived -----------------------------------------------------------
     @property
@@ -229,6 +237,8 @@ def get_show(slug: Optional[str] = None) -> VoiceShow:
                      if cfg.get("spotify_show_id") else ""),
         disclosure_clip=str(voices.get("disclosure_clip") or "").strip(),
         apology_clip=str(voices.get("apology_clip") or "").strip(),
+        booking_url=str(voices.get("booking_url") or "").strip(),
+        closing_booking_url=str(voices.get("closing_booking_url") or "").strip(),
     )
 
 

@@ -1,11 +1,27 @@
 {# Mira interview shows — used for the missed-call reschedule email
-   (pipelines/voices/post_interview.py) and any manual re-send. #}
+   (common.missed_email, from fire_interviews and post_interview) and any
+   manual re-send. Oct 9 2026 (Piper Martz): a closing session gets its own
+   wording and booking page, and the link is never empty. #}
 <div style="font-family:system-ui,sans-serif;max-width:640px;margin:0 auto;color:#1a202c;line-height:1.6">
   {% if missed %}
   <p>Hi {{ guest_name }},</p>
-  <p>We didn't manage to connect for our {{ show_name }} interview. No problem at
-  all; life happens. Pick a new time whenever it suits you and I'll be there:</p>
+  {% if closing %}
+  <p>We didn't manage to connect for the closing session of your {{ show_name }}
+  interview. No problem at all; life happens. It's still ten or fifteen minutes:
+  the rest of the lightning round, a couple of closing questions and your last
+  word, added to the end of the conversation we already recorded.</p>
+  {% if subject_line %}<p><strong>The conversation we're finishing:</strong> {{ subject_line }}</p>{% endif %}
+  {% else %}
+  <p>We didn't manage to connect for our interview on {{ show_name }}. No problem
+  at all; life happens.</p>
+  {% if subject_line %}<p><strong>What we'll talk about:</strong> {{ subject_line }}</p>{% endif %}
+  {% endif %}
+  {% if booking_url %}
+  <p>Pick a new time whenever it suits you and I'll be there:</p>
   <p><a href="{{ booking_url }}" style="color:{{ brand_color }}">Choose a new time</a></p>
+  {% else %}
+  <p>Reply to this email with a couple of times that suit you and I'll set it up.</p>
+  {% endif %}
   {% else %}
   <p>Hi {{ guest_name }},</p>
   <p>A reminder that we speak at <strong>{{ scheduled_at }}</strong>. A quiet
