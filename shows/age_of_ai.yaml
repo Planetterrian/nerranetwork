@@ -93,10 +93,12 @@ publishing:
   summaries_podcast_name: age_of_ai
   player_html: age-of-ai.html
   summaries_html: age-of-ai-summaries.html
-  # RSS + site page only at launch (X/YouTube/newsletter flip on at public
-  # launch, spec phase 8).
-  x_enabled: false
-  x_env_prefix: ""
+  # Oct 9 2026: X ON from the network account (@nerranetwork — the
+  # secrets are NERRANETWORK_X_*, read by pipelines/voices/publish_episode
+  # .py's maybe_post_x via engine.x_post; until they are set every publish
+  # logs a skip). Newsletter + YouTube have been on since Sep 20.
+  x_enabled: true
+  x_env_prefix: "NERRANETWORK_X_"
   host_name: Mira
 
 episode:

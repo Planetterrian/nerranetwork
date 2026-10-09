@@ -155,7 +155,8 @@ class TestRunShowWiring:
 # ---------------------------------------------------------------------------
 
 def _server_error():
-    import httpx
+    from engine.generator import sdk_httpx
+    httpx = sdk_httpx()
     from openai import InternalServerError
 
     req = httpx.Request("POST", "https://api.x.ai/v1/chat/completions")

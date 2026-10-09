@@ -514,6 +514,37 @@ def _stream_idle_timeout_s() -> float:
     return float(os.environ.get("NERRA_LLM_STREAM_IDLE_SECONDS", 180))
 
 
+def sdk_httpx():
+    """The HTTP module the installed ``openai`` SDK is built on.
+
+    Oct 9 2026: ``openai`` 3.26+ moved from ``httpx`` to ``httpx2`` (a
+    different import name), and nothing in requirements named ``httpx``
+    — it had only ever arrived as a transitive dependency. When
+    ``tokenizers`` 0.23.3 (10:00 UTC) let ``huggingface-hub`` 2.x resolve,
+    the last package pulling ``httpx`` went with it and every streaming
+    show from 10:08 died at its first digest call on
+    ``ModuleNotFoundError: httpx`` (seven shows, the whole afternoon
+    slate). The stream reader must build its timeouts and its SDK errors
+    from whichever module the SDK itself imported, never from a bare
+    ``import httpx``.
+    """
+    import importlib
+    import sys
+
+    import openai  # noqa: F401 — populates sys.modules with its HTTP module
+
+    for name in ("httpx2", "httpx"):
+        mod = sys.modules.get(name)
+        if mod is not None:
+            return mod
+    for name in ("httpx2", "httpx"):
+        try:
+            return importlib.import_module(name)
+        except ImportError:
+            continue
+    raise ImportError("neither httpx2 nor httpx is importable beside openai")
+
+
 def _stream_completion(client, create_kwargs: Dict[str, Any], *, wall_timeout: float,
                        model: str):
     """Read one streamed chat completion.
@@ -525,7 +556,7 @@ def _stream_completion(client, create_kwargs: Dict[str, Any], *, wall_timeout: f
     every caller's exception contract (tenacity, the pinned retry, the
     fallback) is exactly the non-streaming one.
     """
-    import httpx
+    httpx = sdk_httpx()
     from openai import APIConnectionError, APITimeoutError
 
     url = "https://api.x.ai/v1/chat/completions"

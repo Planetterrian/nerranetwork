@@ -3737,3 +3737,142 @@ experiments:
       for a research article. CHANGES AUDIO on both shows (the prompt
       changed and the input changed) — landmine #17, A/B-listen Ep1.
       Guards: tests/test_narrative_research_2026_10_09.py.
+
+  - id: structural-regen-2026-10-09
+    title: "Cut the structural digest regeneration rate: shape-only hooks, three validator rules that fired on sections the pipeline itself emptied"
+    area: efficiency
+    shipped: 2026-10-09
+    readout: 2026-10-23
+    status: reading
+    metric: digest_structural_regen_share_7d
+    baseline: >
+      107 of 304 episodes (35%) over Sep 25 – Oct 8 regenerated their
+      digest once: 43 on a hook over 150 characters (omni_view 12/14,
+      first_principles 11/14, modern_investing 5, models_agents 5, UC 4,
+      env_intel 2/2 — every one on a prompt that supplied its own
+      over-limit specimen hook; the shows that include hook_shape.txt ran
+      0-1 in 14), 41 on a digest lint, 23 on an empty section — Tesla's
+      Short Spot 8/13 (the cross-section dedupe empties it BEFORE the
+      validator and the retry's Short Spot is deduped again: 6 of 8 shipped
+      empty anyway), MIT's one-sentence Listener Challenge (optional, but
+      a present optional section with 0 items read as mandatory). FF spent
+      the separate missing-section retry on 7/13 for a dropped
+      "### Top 15" header above a complete list.
+    target: >
+      digest_structural_regen_share_7d <= 0.22 over the 14 days to Oct 23
+      (from 0.35) with the four control prompts untouched; first_principles
+      and UC hook-length regens <= 2 in 14 each; zero Short Spot / Listener
+      Challenge / Space Stories regens; digest_structural_regen_reasons
+      populated on every regen. Step two, on Oct 13 once the spoken-open
+      experiment is scored: the include goes on omni_view, models_agents,
+      modern_investing and env_intel (28 of the 43 hook regens), and the
+      share target moves to 0.15.
+    criteria: >
+      Hit = share <= 0.22 with no new empty-section class appearing in the
+      reasons. The hook include is landmine #17 on UC and FPD — the hook is
+      the spoken open; the operator's A/B-listen of the first episode on
+      each can veto it, in which case the validator fixes stand alone. The
+      four control shows are NOT touched before Oct 13: a prompt change on
+      the control four days before the readout would confound the Sep 22
+      arm/control read.
+    notes: >
+      engine.validation: check_item_counts skips a present optional
+      section with 0 items; Tesla Short Spot optional=True; FF Space
+      Stories pattern also starts at a numbered item under the hook rule.
+      run_show records digest_structural_regen_reasons. Prompts: UC's and
+      FPD's Example specimens are gone and both include
+      _shared/hook_shape.txt; the four control prompts wait. Guards:
+      tests/test_review_items_9_13_2026_10_09.py.
+
+  - id: probe-tier-imagery-2026-10-09
+    title: "Two portrait scenes, not five, on the dead-Shorts probe tier"
+    area: efficiency
+    shipped: 2026-10-09
+    readout: 2026-10-23
+    status: reading
+    baseline: >
+      Six shows sit on the dead-Shorts weekly-probe tier (hook Short
+      age-3 median under 10 over 21 days: modern_investing 3,
+      planetterrian 4, omni_view / MAB / UC / DP Pod 6-7). Each drew five
+      fresh 9:16 Grok Imagine scenes for one 35-second Short a week. The
+      16:9 set on planetterrian, UC and DP Pod was already one scene (no
+      long-form produced); omni_view, MIT and MAB keep theirs because
+      their long-forms are tier B (5-14 views/day) — a live surface.
+    target: >
+      short_scenes_probe_capped == 2 on every probe-tier episode that
+      plans a Short; grok image spend on those six shows down ~$0.06 per
+      episode (~$6/mo); no change to the hook Short's reach
+      (api/youtube_early_reach.json, the probe tier's own ruler).
+    criteria: >
+      Hit = the cap records on every probe-tier Short day and the six
+      shows' age-3 hook-Short medians are within noise of the 21-day
+      baseline (they cannot fall far from 3-7).
+    notes: >
+      engine.youtube_policy: the plan carries shorts_probe and
+      portrait_scene_count caps at PROBE_PORTRAIT_SCENES (2). Keyed on
+      the policy tier, never a show list, so a show that climbs out gets
+      its five back the night the tier flips. Render-only — outside
+      landmine #17. Hook-motion clips: decided at the Oct 13 readout of
+      hook-short-motion, not here.
+
+  - id: x-accounts-rotation-2026-10-09
+    title: "Four X accounts a day on a rotation for the five cohort shows that listed 7-9"
+    area: efficiency
+    shipped: 2026-10-09
+    readout: 2026-10-23
+    status: reading
+    baseline: >
+      vancouver 9 X accounts, ai_chips 8, mag7 / peptides / longevity 7:
+      every account is one xAI search call, and the latest credit files
+      read 7-9 search calls at $0.14-0.20 per episode — the largest line
+      for shows earning 4-23 downloads a week. The review's "cap
+      web_search_queries at 3-4" named the wrong knob: those five already
+      ran 3-4 web queries, and vancouver's nine calls were nine X
+      accounts with the web search not firing at all.
+    target: >
+      search_api calls <= 5 per episode on the five shows (from 7-9);
+      ~$13/mo across them; every listed account still read inside any
+      three-day window (date-seeded rotation, same accounts on a same-day
+      re-run); x_posts_in_prompt within noise of the 14-day baseline.
+    criteria: >
+      Hit = calls down and no show's items_without_source or claims
+      count moves against it. Offshore North (6 accounts, 8 queries,
+      weekly) is deliberately untouched: 14 calls a week is $0.07 and a
+      campaign show should read all of its feeds every week.
+    notes: >
+      engine.config x_accounts_per_run (0 = all; every established show
+      unchanged) + engine.fetcher.rotate_x_accounts; 4 on vancouver,
+      ai_chips, mag7, peptides, longevity. Input-side only.
+
+  - id: x-on-spacex-daily-aoai-2026-10-09
+    title: "X on for SpaceX, Nerra Daily and The Age of AI, and the post outcome recorded"
+    area: distribution
+    shipped: 2026-10-09
+    readout: 2026-10-23
+    status: reading
+    metric: x_posted_share_7d
+    baseline: >
+      Seven of 31 shows posted to X and nothing recorded whether a post
+      went out (x_post_duration_s only): a credential failure on all
+      seven would have shown nothing. SpaceX (the largest show), Nerra
+      Daily and The Age of AI posted nothing; the latter two bypass
+      run_show, where every other show's X post lives, and the Age of
+      AI's x_enabled flag was read by no code.
+    target: >
+      x_posted_share_7d >= 0.9 across the posting shows; SpaceX posts
+      daily from the X_ app; the edition's metrics carry x_posted true
+      once NERRANETWORK_X_* secrets exist (until then x_post_skipped:
+      no_credentials on every edition — an operator item, not a miss);
+      GA4 records at least one session with utm_source=x by the readout.
+    criteria: >
+      Hit = the share reads and holds >= 0.9 and SpaceX's teaser posts on
+      >= 12 of 14 days. The network-account arms are scored only from the
+      day the secrets are set.
+    notes: >
+      run_show records x_posted / x_post_skipped; engine.x_post is the
+      poster for the two bypass publishers (title + funnel link,
+      engine.titles.X_TEASER_TEXT_MAX); build_edition_metrics carries the
+      outcome; the Voices publisher's maybe_post_x reads the show YAML.
+      Operator: create the @nerranetwork X app and set the four
+      NERRANETWORK_X_* secrets. Metadata only — outside landmine #17.
+

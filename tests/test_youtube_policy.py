@@ -329,13 +329,13 @@ class TestResolvePublishPlan:
             None, slug="tesla", channel="ru", yaml_publish_long=True,
             yaml_shorts=2, smart_mode=True, adaptive_enabled=True)
         assert plan == {"publish_long": True, "shorts": 2, "tier": "",
-                        "applied": False, "reason": ""}
+                        "applied": False, "reason": "", "shorts_probe": False}
         # EN passthrough is clamped to the channel ceiling (Sep 22 2026)
         plan = resolve_publish_plan(
             None, slug="tesla", channel="en", yaml_publish_long=True,
             yaml_shorts=2, smart_mode=True, adaptive_enabled=True)
         assert plan == {"publish_long": True, "shorts": 1, "tier": "",
-                        "applied": False, "reason": ""}
+                        "applied": False, "reason": "", "shorts_probe": False}
 
     def test_opt_out_is_legacy_passthrough(self):
         plan = resolve_publish_plan(
@@ -621,7 +621,7 @@ class TestRuDubPolicyGating:
         cfg = self._cfg(tmp_path)
         calls = self._arm(monkeypatch, tmp_path, {
             "publish_long": True, "shorts": 1, "tier": "",
-            "applied": False, "reason": ""})
+            "applied": False, "reason": "", "shorts_probe": False})
         res = ru_dub.publish_ru_dub(cfg, 5)
         assert calls["long_renders"] == 1
         assert calls["short_renders"] == 1

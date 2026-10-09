@@ -159,9 +159,15 @@ jobs:
                           jm = re.fullmatch(r"run \((\S+)\)", job.get("name") or "")
                           if jm and job.get("conclusion") == "success":
                               published.append(jm.group(1))
-                      if published:
-                          shows = [s for s in published if s in enabled]
-                          print("Triggering run published:", published)
+                      # Oct 9 2026 (afternoon): a successful read is the
+                      # answer even when it is EMPTY. The 13:16 run was
+                      # triggered by a gate-only schedule run ("Shows to
+                      # run: []"), found no "run (<show>)" job, fell through
+                      # to the full seven-show sweep, and would have done so
+                      # on every fallback-cron no-op all day. The cron
+                      # passes of this workflow remain the catch-all.
+                      shows = [s for s in published if s in enabled]
+                      print("Triggering run published:", published)
                   except Exception as exc:  # noqa: BLE001 — fall through
                       print(f"::warning::could not read run {run_id} jobs: {exc}")
               if shows is None:

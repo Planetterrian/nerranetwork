@@ -317,6 +317,11 @@ def record_youtube_outcomes(
         # render it (no Short planned, no dub channel, no multi-platform).
         if youtube_urls.get("short_scenes_skipped_no_consumer"):
             metrics.record("short_scenes_skipped_no_consumer", True)
+        # Oct 9 2026 — the dead-Shorts probe tier drew its (capped) count
+        # of portrait scenes; the value is the count.
+        if "short_scenes_probe_capped" in youtube_urls:
+            metrics.record("short_scenes_probe_capped",
+                           int(youtube_urls.get("short_scenes_probe_capped") or 0))
         if "scene_library_count" in youtube_urls:
             metrics.record("scene_library_count", int(youtube_urls.get("scene_library_count", 0) or 0))
         if "broll_clips_used" in youtube_urls:

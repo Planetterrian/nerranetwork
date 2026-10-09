@@ -783,6 +783,24 @@ def x_fetch_allowed(
     return bool(x_enabled)
 
 
+def rotate_x_accounts(x_accounts: list, per_run: int,
+                      today: "datetime.date") -> list:
+    """The accounts one run reads when ``x_accounts_per_run`` caps the list.
+
+    Oct 9 2026: every X account is one xAI search call. Rather than cut a
+    show's curated list, read ``per_run`` of them each day on a rotation
+    seeded by the day number, so the whole list is covered every
+    ``ceil(n / per_run)`` days and the same day reads the same accounts on
+    a re-run. ``per_run`` of 0 (or at least the list length) reads them all.
+    """
+    accounts = list(x_accounts or [])
+    n = len(accounts)
+    if per_run <= 0 or per_run >= n:
+        return accounts
+    start = (today.toordinal() * per_run) % n
+    return [accounts[(start + i) % n] for i in range(per_run)]
+
+
 def fetch_x_posts(
     x_accounts: list,
     keywords: Optional[List[str]] = None,

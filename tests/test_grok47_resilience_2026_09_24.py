@@ -92,13 +92,15 @@ def _connection_error():
 
 
 def _timeout_error():
-    import httpx
+    from engine.generator import sdk_httpx
+    httpx = sdk_httpx()
     from openai import APITimeoutError
     return APITimeoutError(request=httpx.Request("POST", "https://api.x.ai/v1/chat/completions"))
 
 
 def _server_error():
-    import httpx
+    from engine.generator import sdk_httpx
+    httpx = sdk_httpx()
     from openai import InternalServerError
     req = httpx.Request("POST", "https://api.x.ai/v1/chat/completions")
     return InternalServerError("degraded", response=httpx.Response(503, request=req), body=None)
@@ -291,7 +293,8 @@ def fake_openai(monkeypatch):
 
 class TestStreaming:
     def test_chunks_are_joined_and_the_call_shape_is_xais(self, fake_openai):
-        import httpx
+        from engine.generator import sdk_httpx
+        httpx = sdk_httpx()
         stream = _FakeStream([_chunk("Hel"), _chunk("lo"), _chunk(" world", finish="stop"),
                               _chunk(usage=_USAGE)])
         client = fake_openai(stream)
@@ -315,7 +318,8 @@ class TestStreaming:
         assert "stream" not in kw and "stream_options" not in kw and "timeout" not in kw
 
     def test_silence_past_the_idle_timeout_is_a_timeout_error(self, fake_openai):
-        import httpx
+        from engine.generator import sdk_httpx
+        httpx = sdk_httpx()
         from openai import APITimeoutError
         stream = _FakeStream([_chunk("a"), _chunk("b")], raise_at=1, exc=httpx.ReadTimeout("idle"))
         fake_openai(stream)
@@ -324,7 +328,8 @@ class TestStreaming:
         assert stream.closed
 
     def test_a_broken_stream_is_a_connection_error(self, fake_openai):
-        import httpx
+        from engine.generator import sdk_httpx
+        httpx = sdk_httpx()
         from openai import APIConnectionError
         stream = _FakeStream([_chunk("a"), _chunk("b")], raise_at=1,
                              exc=httpx.RemoteProtocolError("peer closed"))
@@ -352,7 +357,8 @@ class TestStreaming:
 
     def test_a_rejected_stream_request_falls_back_to_the_old_call_for_the_run(
             self, fake_openai, monkeypatch):
-        import httpx
+        from engine.generator import sdk_httpx
+        httpx = sdk_httpx()
         from openai import BadRequestError
         monkeypatch.setattr(gen, "_STREAM_DISABLED", False)
         req = httpx.Request("POST", "https://api.x.ai/v1/chat/completions")
@@ -378,7 +384,8 @@ class TestStreaming:
         assert gen._STREAM_DISABLED is True
 
     def test_a_streamed_5xx_still_propagates(self, fake_openai, monkeypatch):
-        import httpx
+        from engine.generator import sdk_httpx
+        httpx = sdk_httpx()
         from openai import InternalServerError
         monkeypatch.setattr(gen, "_STREAM_DISABLED", False)
         req = httpx.Request("POST", "https://api.x.ai/v1/chat/completions")
@@ -434,7 +441,13 @@ class TestConfig:
             if p.name.startswith("_") or p.stem in COHORT:
                 continue
             raw = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
-            assert "stream" not in (raw.get("llm") or {}), p.name
+            llm = raw.get("llm") or {}
+            if llm.get("podcast_model"):
+                # Oct 9 2026: a pinned script arm streams (playbook rule 7)
+                # — SpaceX's and Omni View's grok-4.6 arms never ran on the
+                # non-streaming call (444 s drop, 660 s timeout, fell back).
+                continue
+            assert "stream" not in llm, p.name
         assert load_config(ROOT / "shows" / "tesla.yaml").llm.stream is False
 
     @pytest.mark.parametrize("slug", DESKS)

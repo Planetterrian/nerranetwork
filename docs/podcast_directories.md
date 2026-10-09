@@ -65,9 +65,25 @@ localized names; see `assets/youtube/fr_podcasts/`, `ru_podcasts/`):
 | SpaceX | `spacex_podcast.fr.rss` | `spacex_podcast.ru.rss` |
 | Fascinating Frontiers | `fascinating_frontiers_podcast.fr.rss` | `fascinating_frontiers_podcast.ru.rss` |
 | Modern Investing | `modern_investing_podcast.fr.rss` | `modern_investing_podcast.ru.rss` |
+| Models & Agents | `models_agents_podcast.fr.rss` | — |
+| First Principles Daily | `first_principles_podcast.fr.rss` | — |
+| Environmental Intelligence | `env_intel_podcast.fr.rss` | — |
 
 (All relative to `https://nerranetwork.com/`. `es`/`zh` variants exist
-for most shows but are not yet in the submission plan.)
+for most shows but are not yet in the submission plan; the ZH tracks were
+switched off 2026-10-09.)
+
+**Oct 9 2026 — the three French-only feeds above go to Podcast Index
+FIRST (review item 12).** Models & Agents, First Principles and
+Environmental Intelligence each pay ~$3.70/month for a French track that
+OP3 has never seen: OP3 resolves a feed through Podcast Index, and these
+three were never submitted, so each reads `resolved: false` on the
+language card and a feed with no listeners looks exactly like one that
+was never measured. Submit each at podcastindex.org/add (public form,
+hCaptcha, about a minute each), wait two complete weeks of OP3 data, and
+only then decide whether a track with zero downloads is switched off
+(`multilingual.languages` in the show YAML). Deciding on an unmeasured
+feed is the silent-number class.
 
 ## Directory Submission Steps
 

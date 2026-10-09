@@ -467,6 +467,7 @@ def publish_one(interview_id: str) -> int:
                           digest_path)
     maybe_publish_youtube(show, cfg, episode_num, today, title, description,
                           audio_url, app.get("name") or "")
+    maybe_post_x(show, cfg, episode_num, title)
 
     notify_operator(show.slack(
         f"Ep{episode_num} PUBLISHED: {app['name']} — RSS updated, "
@@ -550,6 +551,35 @@ def maybe_send_newsletter(show: VoiceShow, cfg, episode_num: int,
     except Exception:  # noqa: BLE001 — the episode is already published
         logger.exception("newsletter failed for %s Ep%d (non-fatal)",
                          show.slug, episode_num)
+
+
+def maybe_post_x(show: VoiceShow, cfg, episode_num: int, title: str) -> None:
+    """Post the episode's title and page link to X, if the show enables it.
+
+    Oct 9 2026: ``publishing.x_enabled`` / ``x_env_prefix`` on the show YAML
+    were read by nothing here — the interview shows bypass run_show, where
+    every other show's X post lives (the same hole the newsletter and
+    YouTube flags had until Sep 20). ``engine.x_post`` reads the four
+    ``<prefix>*`` credentials; unset is a logged skip, never a failure.
+    """
+    pub = getattr(cfg, "publishing", None) if cfg is not None else None
+    if pub is None or not getattr(pub, "x_enabled", False):
+        return
+    try:
+        from engine.funnel import PLACEMENT_BODY, SOURCE_X, episode_link
+        from engine.x_post import post_teaser
+        link = episode_link(show.post_url(episode_num), show.slug, episode_num,
+                            kind="episode", placement=PLACEMENT_BODY,
+                            source=SOURCE_X)
+        posted, reason = post_teaser(
+            env_prefix=getattr(pub, "x_env_prefix", "") or "",
+            title=title, link=link, label=f"{show.name} Ep{episode_num}",
+        )
+        if not posted:
+            logger.warning("::warning::X post for %s Ep%d did not go out (%s)",
+                           show.slug, episode_num, reason)
+    except Exception:  # noqa: BLE001 — the episode is already published
+        logger.exception("X post failed for %s Ep%d (non-fatal)", show.slug, episode_num)
 
 
 def waveform_video_url(audio_url: str) -> str:

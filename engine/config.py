@@ -1356,6 +1356,13 @@ class ShowConfig:
     # as {research_sources}; the claims gate verifies against the pages.
     # 0 = off (the pre-Oct-9 brief-only run).
     narrative_research: int = 0
+    # Oct 9 2026: read at most this many of ``x_accounts`` per run, on a
+    # date-seeded rotation so the whole list is still read over the week.
+    # Every X account is ONE xAI search call (~$0.02 + tokens); the
+    # launch-cohort shows listed 7–9 accounts for 4–23 downloads a week,
+    # so the X fetch was the largest line in their credit files. 0 = all
+    # (every established show is unchanged).
+    x_accounts_per_run: int = 0
     # Per-episode deep-dive override (see DeepDiveConfig). Distinct from
     # narrative_mode: the show stays news-driven by default and only a
     # scheduled / forced episode runs as a standalone deep dive.
@@ -1596,6 +1603,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         narrative_mode=bool(data.get("narrative_mode", False)),
         topic_queue_file=str(data.get("topic_queue_file", "") or ""),
         narrative_research=int(data.get("narrative_research", 0) or 0),
+        x_accounts_per_run=int(data.get("x_accounts_per_run", 0) or 0),
         deep_dive=_build_nested(DeepDiveConfig, data.get("deep_dive")),
         memory_enabled=bool(data.get("memory_enabled", False)),
     )

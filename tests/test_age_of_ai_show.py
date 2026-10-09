@@ -79,13 +79,15 @@ class TestShowRegistryShape:
         bypasses run_show.py, where every other show's newsletter send and
         YouTube upload live, so before that the flags were read by nothing.
 
-        X stays off in the pipeline: the network posts these from
-        @nerranetwork by hand, which needs no second credential set.
+        X is ON since Oct 9 2026 (review item 13): the Voices publisher's
+        maybe_post_x posts from the network account through engine.x_post,
+        reading the NERRANETWORK_X_* secrets; unset is a logged skip.
         Multilingual stays off — a dub of a human guest's own recorded voice is
         a different consent question, not a config flip.
         """
         raw = yaml.safe_load(SHOW_YAML.read_text(encoding="utf-8"))
-        assert raw["publishing"]["x_enabled"] is False
+        assert raw["publishing"]["x_enabled"] is True
+        assert raw["publishing"]["x_env_prefix"] == "NERRANETWORK_X_"
         assert raw["youtube"]["enabled"] is True
         assert raw["youtube"]["image_provider"] == "grok"
         assert raw["newsletter"]["enabled"] is True

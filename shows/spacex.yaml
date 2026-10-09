@@ -267,6 +267,13 @@ llm:
   # only on a GATE: PASS. Read the served model from the credit file, never
   # from this line (llm_script_model / llm_script_model_fallback).
   podcast_model: grok-4.6
+  # Oct 9 2026, afternoon: the 4.6 arm did not run on Ep125 — the
+  # non-streaming script call dropped at 444 s and fell back to 4.3
+  # (Omni View's did the same two days running). Playbook rule 7: a
+  # pinned model's calls STREAM; a stall is silence past
+  # NERRA_LLM_STREAM_IDLE_SECONDS, never a dead 600 s wall. Read the arm
+  # from the credit file's podcast_script_generation.model.
+  stream: true
   digest_temperature: 0.5
   podcast_temperature: 0.7
   max_tokens: 4000
@@ -354,8 +361,13 @@ publishing:
   summaries_podcast_name: spacex
   player_html: spacex.html
   summaries_html: spacex-summaries.html
-  x_enabled: false
-  x_env_prefix: ""
+  # Oct 9 2026 (operator-directed, review item 13): the largest show
+  # posted nothing. It posts from the X_ app (@teslashortstime — the
+  # Tesla and SpaceX audiences overlap, and @planetterrian already carries
+  # three shows a day); moving it is this prefix and handle.
+  x_enabled: true
+  x_env_prefix: "X_"
+  x_handle: "@teslashortstime"
 
 episode:
   prefix: SpaceX_Daily

@@ -233,6 +233,16 @@ def check_item_counts(
 
         count = len(items)
         prose_chars = len(_extract_section_text(digest_text, section.pattern))
+        if section.optional and count == 0:
+            # Oct 9 2026: an OPTIONAL section that is present but empty is
+            # the same case as an absent one — the show may run without it.
+            # Before this, ``optional`` was honoured only when the header
+            # was missing: Modern Investing's one-sentence Listener
+            # Challenge (no bold item, under the prose floor) read as
+            # "0 items (minimum 1)", the structural gate called it
+            # mandatory, and the digest was regenerated on a correct
+            # section (Ep189). ``max_items`` still applies below.
+            continue
         if section.min_items and count < section.min_items:
             # Prose-aware structural guard (network-wide): a mandatory section
             # with 0 bold items but real prose content is a prose lead, NOT a
@@ -447,6 +457,16 @@ def tst_validation_config() -> ValidationConfig:
                     r"(?=━━|### Tesla First Principles|🧠|### Daily Challenge|💪|$)"
                 ),
                 min_items=1,
+                # Oct 9 2026: optional, because the pipeline itself empties
+                # it. The prompt tells the model a Short Spot that re-uses a
+                # Top-12 / X Takeover story "is dropped by the pipeline and
+                # the section ships empty" — the cross-section dedupe runs
+                # BEFORE the validator, so a re-used Short Spot read as
+                # "0 items", fired the structural regeneration on 8 of 13
+                # episodes (Sep 25 – Oct 8), and the retry's Short Spot was
+                # deduped again: 6 of the 8 shipped empty anyway. A rule the
+                # regeneration cannot repair is not a structural defect.
+                optional=True,
             ),
             SectionRule(
                 name="First Principles",
@@ -472,8 +492,16 @@ def ff_validation_config() -> ValidationConfig:
         sections=[
             SectionRule(
                 name="Space Stories",
+                # Oct 9 2026: the model writes the numbered list straight
+                # under the hook blockquote without the ``### Top N Space``
+                # header on roughly a quarter of its days (3 of 13 final
+                # digests Sep 25 – Oct 8; 7 of 13 spent the missing-section
+                # retry on it). The list IS the section; the header is
+                # furniture no surface renders. The second alternative
+                # starts the section at a numbered bold item that directly
+                # follows the hook's ``---`` rule.
                 pattern=(
-                    r"(?:### Top 15 Space|### Top \d+ Space)"
+                    r"(?:### Top 15 Space|### Top \d+ Space|(?<=\n---\n)(?=1\. \*\*))"
                     r"(.*?)"
                     r"(?=━━|### Cosmic Spotlight|$)"
                 ),
