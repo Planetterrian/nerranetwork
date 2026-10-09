@@ -18,7 +18,11 @@ runs:
           echo "ffmpeg already present: $(ffmpeg -version | head -1)"
           exit 0
         fi
-        sudo apt-get update -qq
-        sudo apt-get install -y -qq ffmpeg
+        # Oct 9 2026: the same bounds the setup-python composite carries
+        # (an apt stall here is a hung job, not a slow one — exit 124s on
+        # Oct 8 and 9 came from the unbounded form of these two lines).
+        APT_OPTS="-o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=4 -o DPkg::Lock::Timeout=60"
+        sudo timeout 120 apt-get $APT_OPTS update -q || sudo timeout 120 apt-get $APT_OPTS update -q || echo "::warning::apt-get update failed or timed out twice — installing from cached indexes"
+        sudo timeout 300 apt-get $APT_OPTS install -y -q ffmpeg || sudo timeout 300 apt-get $APT_OPTS install -y -q ffmpeg
         ffmpeg -version | head -1
         ffprobe -version | head -1

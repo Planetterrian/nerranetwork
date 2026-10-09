@@ -80,9 +80,28 @@ runs:
         # stalled fetch, so one hung mirror connection used the whole
         # budget. APT_OPTS abandons a silent connection after 30 s and
         # retries the fetch, which is what turns a stall into a delay.
-        APT_OPTS="-o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=4"
-        sudo timeout 120 apt-get $APT_OPTS update -qq || sudo timeout 120 apt-get $APT_OPTS update -qq ||           echo "::warning::apt-get update failed or timed out twice — installing from cached indexes"
-        sudo timeout 300 apt-get $APT_OPTS install -y -qq ${{ inputs.system-packages }} ||           sudo timeout 300 apt-get $APT_OPTS install -y -qq ${{ inputs.system-packages }}
+        #
+        # Oct 9 2026, afternoon: two more exit-124s on the new ubuntu-26.04
+        # image (main's test job and a North America rerun, both at
+        # 15:07 UTC) — and the log said NOTHING for the whole 606 s,
+        # because `-qq` hides apt's "Waiting for cache lock" and its
+        # per-file fetch lines. The 30 s Acquire timeout cannot shorten a
+        # wait on the dpkg lock (apt-daily / unattended-upgrades hold it
+        # at image boot), so: wait for those units to finish before the
+        # first apt call, give the lock wait its own bound, and log at
+        # `-q` so the next stall names itself.
+        sudo systemctl stop apt-daily.timer apt-daily-upgrade.timer 2>/dev/null || true
+        for unit in apt-daily.service apt-daily-upgrade.service unattended-upgrades.service; do
+          if systemctl is-active --quiet "$unit" 2>/dev/null; then
+            echo "waiting for $unit to finish before apt"
+            sudo timeout 120 systemctl stop "$unit" 2>/dev/null || true
+          fi
+        done
+        APT_OPTS="-o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 -o Acquire::Retries=4 -o DPkg::Lock::Timeout=60"
+        _t0=$(date +%s)
+        sudo timeout 120 apt-get $APT_OPTS update -q || sudo timeout 120 apt-get $APT_OPTS update -q ||           echo "::warning::apt-get update failed or timed out twice — installing from cached indexes"
+        sudo timeout 300 apt-get $APT_OPTS install -y -q ${{ inputs.system-packages }} ||           sudo timeout 300 apt-get $APT_OPTS install -y -q ${{ inputs.system-packages }}
+        echo "apt install took $(( $(date +%s) - _t0 )) s"
 
     - name: Install dependencies
       shell: bash
