@@ -71,7 +71,7 @@ jobs:
   # commits its own tracks independently, so a slow/failed show can't lose the
   # others' work.
   resolve:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # On the workflow_run trigger, only proceed if the episode pipeline that
     # triggered us actually succeeded — no point translating a failed/partial
     # publish. Schedule + manual dispatch always run.
@@ -86,7 +86,7 @@ jobs:
 
       - uses: ./.github/actions/setup-python
         with:
-          python-version: '3.12'
+          python-version: '3.14'
           requirements-file: 'requirements.txt'
           skip-checkout: 'true'
 
@@ -148,7 +148,7 @@ jobs:
     needs: resolve
     # Skip cleanly when no show qualifies (e.g. a no-op episode run).
     if: ${{ needs.resolve.outputs.shows != '' && needs.resolve.outputs.shows != '[]' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 120
     strategy:
       fail-fast: false
@@ -177,7 +177,7 @@ jobs:
 
       - uses: ./.github/actions/setup-python
         with:
-          python-version: '3.12'
+          python-version: '3.14'
           requirements-file: 'requirements.txt'
           system-packages: 'ffmpeg'
           skip-checkout: 'true'

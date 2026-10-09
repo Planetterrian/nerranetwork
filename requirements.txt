@@ -1,10 +1,13 @@
-openai>=3.24.0
+# Oct 9 2026: floors raised to the releases current on that date, the day
+# every workflow moved to ubuntu-26.04 / Python 3.14 / ffmpeg 8 — one
+# upgrade, read on one slate. The ``av`` ceiling below is the exception.
+openai>=3.26.1
 xai-sdk>=1.20.0
 yfinance>=1.7.0
 python-dotenv>=1.2.4
 tweepy>=4.17.0
 requests>=2.34.2
-tenacity>=9.1.4
+tenacity>=9.2.1
 feedgen>=1.0.0
 beautifulsoup4>=4.15.0
 feedparser>=6.0.14
@@ -12,11 +15,11 @@ Pillow>=12.3.0
 # QR on the long-form outro card (engine/promo_card.py) — pure-python;
 # the card renders without a QR when this is absent (best-effort).
 qrcode>=8.2
-websockets>=17.1
+websockets>=17.2
 pytest>=9.1.1
 pyyaml>=6.0.3
 jinja2>=3.1.6
-boto3>=1.43.108
+boto3>=1.43.110
 faster-whisper>=1.2.1
 # Sep 30 2026: PyAV 19.0.0 (PyPI 2026-09-29) removed the ``metadata_errors``
 # keyword faster-whisper 1.2.1 still passes to ``av.open`` — every episode
@@ -32,10 +35,10 @@ faster-whisper>=1.2.1
 # ceiling stays as the second line of defence, ``.github/dependabot.yml``
 # ignores ``av`` majors, and tests/test_transcripts_pyav_2026_10_08.py
 # fails CI if the ceiling is lifted.
-av>=11,<19
-google-api-python-client>=2.200.0
-google-auth>=2.58.1
-google-auth-oauthlib>=1.4.1
+av>=18.1.0,<19
+google-api-python-client>=2.201.0
+google-auth>=2.61.0
+google-auth-oauthlib>=1.5.0
 google-auth-httplib2>=0.4.4
 # Unofficial Spotify for Podcasters analytics (scripts/fetch_spotify_stats.py)
 spotifyconnector>=0.8.3

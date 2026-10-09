@@ -47,7 +47,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # A 50-chapter narration is ~50 sequential TTS calls; generous but
     # well under the 6h default.
     # A full seven-volume rebuild is ~23 min/volume of sequential TTS +
@@ -65,7 +65,7 @@ jobs:
 
       - uses: ./.github/actions/setup-python
         with:
-          python-version: "3.12"
+          python-version: "3.14"
           requirements-file: "requirements.txt"
           skip-checkout: "true"
 

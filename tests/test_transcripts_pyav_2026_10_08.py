@@ -113,4 +113,6 @@ class TestTheBumpIsNotProposedAgain:
     def test_the_ceiling_comment_names_both_outages(self):
         req = (ROOT / "requirements.txt").read_text(encoding="utf-8")
         assert "Sep 30 2026" in req and "Oct 8 2026" in req
-        assert re.search(r"^av>=11,<19\s*$", req, re.M)
+        # The CEILING is the guard; the floor may rise with the routine bumps
+        # (Oct 9 2026: ``>=18.1.0`` with the runner upgrade).
+        assert re.search(r"^av>=[\d.]+,<19\s*$", req, re.M)

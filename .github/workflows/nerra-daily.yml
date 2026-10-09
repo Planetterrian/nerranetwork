@@ -62,7 +62,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # On workflow_run, only proceed when the triggering episode pipeline
     # succeeded — a failed run can't have added a segment.
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
@@ -109,7 +109,7 @@ jobs:
         if: steps.fastgate.outputs.published != 'true' || github.event.inputs.force == 'true'
         timeout-minutes: 45
         with:
-          python-version: '3.12'
+          python-version: '3.14'
           requirements-file: 'requirements.txt'
           system-packages: 'ffmpeg'
           skip-checkout: 'true'

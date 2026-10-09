@@ -55,7 +55,7 @@ concurrency:
 
 jobs:
   build-pool:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 45
     steps:
       - name: Checkout
@@ -66,7 +66,7 @@ jobs:
 
       - uses: ./.github/actions/setup-python
         with:
-          python-version: '3.12'
+          python-version: '3.14'
           requirements-file: 'requirements.txt'
           skip-checkout: 'true'
           system-packages: 'ffmpeg'

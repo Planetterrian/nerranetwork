@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   screen:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
@@ -35,7 +35,7 @@ jobs:
           fetch-depth: 1
       - uses: ./.github/actions/setup-python
         with:
-          python-version: '3.12'
+          python-version: '3.14'
           requirements-file: 'pipelines/requirements.txt'
           skip-checkout: 'true'
       - run: python pipelines/voices/screen_applications.py ${{ github.event.client_payload.application_id || inputs.application_id }}
