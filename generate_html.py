@@ -6426,8 +6426,12 @@ def generate_claims_pages(*, dry_run=False, output_dir=None, digests_root=None,
     return written
 
 
-def generate_contact_page(*, dry_run=False):
-    """Generate the contact page."""
+def generate_contact_page(*, dry_run=False, output_dir=None):
+    """Generate the contact page.
+
+    ``output_dir`` lets a test render into a scratch tree without touching
+    the committed contact.html.
+    """
     env = _get_jinja_env()
     template = env.get_template("contact.html.j2")
 
@@ -6446,7 +6450,7 @@ def generate_contact_page(*, dry_run=False):
     }
 
     html = template.render(**context)
-    out_path = ROOT / "contact.html"
+    out_path = (Path(output_dir) if output_dir else ROOT) / "contact.html"
 
     if dry_run:
         print(f"[dry-run] Would write {out_path}")

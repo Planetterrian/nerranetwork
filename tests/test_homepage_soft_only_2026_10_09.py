@@ -135,8 +135,124 @@ class TestBannedWhenYoureReady:
             "templates/about.html.j2",
             "templates/join_page.html.j2",
             "templates/show_page.html.j2",
+            "templates/contact.html.j2",
+            "templates/faq.html.j2",
+            "templates/how_to_listen.html.j2",
         ):
             src = _read(rel)
             # join/show may mention "ready" in other senses; ban the phrase.
             match = BANNED_READY.search(src)
             assert match is None, f"{rel} still has {match.group(0)!r}"
+
+
+class TestBrandQaPathPrefixAndContactConsent:
+    """Brand QA follow-up on #1393: contact consent + path_prefix hrefs."""
+
+    _PAGES = (
+        "templates/contact.html.j2",
+        "templates/faq.html.j2",
+        "templates/how_to_listen.html.j2",
+    )
+    _CONTACT_CONSENT = (
+        "for marketing unless you've explicitly opted in to our emails "
+        '(episode briefings or <a href="{{ path_prefix }}personal-interest.html" '
+        'style="color:var(--nn-cyan);">Personal tips by email</a>).'
+    )
+
+    def test_contact_consent_copy_exact(self):
+        src = _scrub(_read("templates/contact.html.j2"))
+        assert self._CONTACT_CONSENT in src
+
+    def test_templates_use_path_prefix_not_home_url(self):
+        for rel in self._PAGES:
+            src = _scrub(_read(rel))
+            assert "{{ path_prefix }}personal-interest.html" in src, rel
+            assert "{{ home_url }}personal-interest.html" not in src, rel
+
+    def test_rendered_en_and_nested_locale_hrefs_resolve(self, tmp_path):
+        """EN at site root + nested locale (path_prefix=../) both resolve."""
+        import generate_html as G
+        from html.parser import HTMLParser
+
+        class _HrefGrab(HTMLParser):
+            def __init__(self):
+                super().__init__(convert_charrefs=True)
+                self.hrefs: list[str] = []
+
+            def handle_starttag(self, tag, attrs):
+                if tag != "a":
+                    return
+                d = dict(attrs)
+                href = d.get("href") or ""
+                if href.endswith("personal-interest.html"):
+                    self.hrefs.append(href)
+
+        # Target file the hrefs must resolve to (never committed from here).
+        (tmp_path / "personal-interest.html").write_text(
+            "<html><title>Soft</title></html>", encoding="utf-8"
+        )
+
+        # EN — generators write at path_prefix "".
+        en_dir = tmp_path / "en"
+        en_dir.mkdir()
+        (en_dir / "personal-interest.html").write_text(
+            (tmp_path / "personal-interest.html").read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+        written = [
+            G.generate_contact_page(output_dir=str(en_dir)),
+            G.generate_faq_page(output_dir=str(en_dir)),
+            G.generate_how_to_listen_page(output_dir=str(en_dir)),
+        ]
+        en_hrefs: list[str] = []
+        for path in written:
+            html = Path(path).read_text(encoding="utf-8")
+            grab = _HrefGrab()
+            grab.feed(html)
+            assert grab.hrefs, f"no Soft Personal link in {path}"
+            for href in grab.hrefs:
+                en_hrefs.append(href)
+                resolved = (Path(path).parent / href).resolve()
+                assert resolved.exists(), f"EN href {href!r} from {path} -> {resolved}"
+                assert resolved.name == "personal-interest.html"
+
+        # Nested locale (RU-shaped): same templates with path_prefix="../".
+        ru_dir = tmp_path / "ru"
+        ru_dir.mkdir()
+        env = G._get_jinja_env()
+        shows = G._build_all_shows_list()
+        for name, out_name, extra in (
+            ("contact.html.j2", "contact.html", {}),
+            ("faq.html.j2", "faq.html", {"cadence_answer": G._cadence_answer()}),
+            ("how_to_listen.html.j2", "how-to-listen.html", {}),
+        ):
+            ctx = {
+                "path_prefix": "../",
+                "page_title": "probe",
+                "page_description": "",
+                "meta_description": "",
+                "meta_keywords": "",
+                "theme_color": "#6B47FF",
+                "og_image": "",
+                "canonical_url": "https://nerranetwork.com/ru/" + out_name,
+                "show_color": "",
+                "show_color_dark": "",
+                "all_shows": shows,
+                **extra,
+            }
+            html = env.get_template(name).render(**ctx)
+            out = ru_dir / out_name
+            out.write_text(html, encoding="utf-8")
+            grab = _HrefGrab()
+            grab.feed(html)
+            assert grab.hrefs, f"no Soft Personal link in ru/{out_name}"
+            for href in grab.hrefs:
+                assert href.startswith("../"), f"nested locale needs ../ got {href!r}"
+                resolved = (out.parent / href).resolve()
+                assert resolved.exists(), (
+                    f"RU href {href!r} from {out} -> {resolved}"
+                )
+                assert resolved.name == "personal-interest.html"
+
+        # Sanity: EN used relative (or empty-prefix) personal-interest.html.
+        assert any(h == "personal-interest.html" for h in en_hrefs)
