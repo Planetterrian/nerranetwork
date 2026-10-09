@@ -234,8 +234,10 @@ builds with whatever exists. The 80% floor is gone: the point is a full
 slate. 07:50 PT is 14:50 UTC under PDT and 15:50 UTC under PST, so the
 release does not move on the daylight-saving changes. Every lineup slot
 already lands by ~12:40 UTC (5:40am PDT), more than two hours ahead.
-Triggers: the scheduler Worker dispatches at 07:50 and 09:01 PT (second
-cron trigger `"1,50 14-17 * * *"`, converted to Pacific in the handler),
+Triggers: the scheduler Worker dispatches at 07:50 and 09:01 PT (its one
+cron trigger `"1,7,16,31,37,46,50 6-17 * * *"` also carries the show slots —
+Workers Free allows five triggers per account and a second one was refused
+at deploy on Oct 9; the handler converts each firing to Pacific),
 `workflow_run` builds the moment a straggler lands inside the hold, and
 GitHub sweeps at 14:55 / 15:55 / 16:05 / 17:05 UTC are late fallbacks.
 Same day: `scripts/push_show_artifacts.sh` resolves a conflict on

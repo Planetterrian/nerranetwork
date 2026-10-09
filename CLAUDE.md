@@ -1088,7 +1088,11 @@ today's work, not just explain yesterday's):
   exists. No 80% floor — the point is a full slate. Never express the
   release as a UTC hour: 07:50 PT is 14:50 UTC under PDT and 15:50 under
   PST. The Worker's `EDITION_DISPATCH` fires at 07:50 and 09:01 Pacific
-  from a second cron trigger (`"1,50 14-17 * * *"`) and converts to Pacific
+  from the Worker's ONE cron trigger (`"1,7,16,31,37,46,50 6-17 * * *"`,
+  shared with the show slots — Oct 9 2026: the Cloudflare account is on
+  Workers Free, five cron triggers in total, Voices holds three, and the
+  deploy with a second scheduler trigger was refused with code 10072, so
+  the edition dispatch had never gone live) and converts to Pacific
   in the handler; GitHub fallbacks 14:55/15:55/16:05/17:05 UTC. Every
   lineup slot lands by ~12:40 UTC, two hours ahead (guarded). Nerra
   Personal follows the edition to ~8am. **A show run's push resolves a

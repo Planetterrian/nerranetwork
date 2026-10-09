@@ -82,10 +82,13 @@ def test_worker_slots_match_cron_map():
 
 def test_worker_trigger_covers_all_slots():
     toml = (_ROOT / "workers" / "scheduler" / "wrangler.toml").read_text(encoding="utf-8")
-    # 6-12: the last show slot is Vancouver's 12:16. (6-13 from Oct 2 to
-    # Oct 8 2026 carried the 13:07 Nerra Daily dispatch, which now has its
-    # own Pacific-clock trigger — tests/test_nerra_daily_8am_pacific_2026_10_08.py.)
-    assert '"1,7,16,31,37,46 6-12 * * *"' in toml
+    # One trigger covers the show minutes (:01/:07/:16/:31/:37/:46, last show
+    # slot Vancouver's 12:16) and the Nerra Daily edition's Pacific minutes
+    # (:50 and :01 inside 14-17 UTC) — Oct 9 2026, the Workers Free limit of
+    # five cron triggers per account refused a second one at deploy. The
+    # edition clock itself is pinned in
+    # tests/test_nerra_daily_8am_pacific_2026_10_08.py.
+    assert '"1,7,16,31,37,46,50 6-17 * * *"' in toml
 
 
 def test_gate_has_duplicate_guard():
@@ -185,12 +188,24 @@ def test_edition_dispatch_slot():
         r'Array<\[number, number\]>,\s*workflow: "([\w.-]+)",', _TS, re.S)
     assert m, "EDITION_DISPATCH missing from workers/scheduler"
     assert m.group(1) == "nerra-daily.yml"
-    # The edition fires from its own trigger (14:00-17:00 UTC), clear of
-    # every show slot (06:00-12:46 UTC); the handler returns after an
-    # edition dispatch, so a shared minute would swallow a show.
+    # Oct 9 2026: ONE cron trigger. The account is on Workers Free (five
+    # cron triggers in total, the Voices Worker holds three) and a second
+    # trigger here was refused at deploy, so the edition dispatch never went
+    # live. One expression covers the show minutes 06:00-12:00 UTC and the
+    # edition's Pacific minutes (14:50/16:01 UTC under PDT, 15:50/17:01 under
+    # PST); the handler decides from the exact firing minute. The handler
+    # returns after an edition dispatch, so no show slot may sit on an
+    # edition minute: edition hours are 14-17 UTC, show hours 6-12.
     toml = (_ROOT / "workers" / "scheduler" / "wrangler.toml").read_text(
         encoding="utf-8")
-    assert '"1,50 14-17 * * *"' in toml
+    crons = re.findall(r'^crons = \[(.*)\]', toml, re.M)
+    assert crons and crons[0].count('"') == 2, (
+        "the scheduler must hold exactly one cron trigger (Workers Free "
+        "allows five per account and Voices holds three)")
+    assert crons[0] == '"1,7,16,31,37,46,50 6-17 * * *"', crons
+    slot_hours = {int(h) for h, _m, _s, _f in re.findall(
+        r'^\s*\[(\d+),\s*(\d+),\s*"([\w-]+)",\s*(null|"[a-z_]+")\]', _TS, re.M)}
+    assert slot_hours and max(slot_hours) <= 12, slot_hours
 
 
 _VOICES_TS = (_ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")
