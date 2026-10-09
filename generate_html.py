@@ -3697,6 +3697,10 @@ def generate_network_page(*, dry_run=False):
         "newsletter_subscriber_count": newsletter_subscriber_count,
         "emit_bilingual_hreflang": True,
         "total_episodes": _count_total_episodes(),
+        # Homepage Soft-only (Oct 2026): Soft hero is the email ask;
+        # suppress the footer per-show newsletter form but keep the
+        # Personal tips link. Every other page leaves this unset/false.
+        "suppress_footer_newsletter_form": True,
     }
 
     html = template.render(**context)
@@ -5744,7 +5748,7 @@ def generate_personal_interest_page(*, dry_run=False):
     """
     env = _get_jinja_env()
     ctx = _member_page_context(
-        "Nerra Personal — when you’re ready | Nerra Network",
+        "Personal tips by email, no charge, no card | Nerra Network",
         "Every Nerra show stays free. Leave your email for occasional "
         "Personal tips. No ads. Curiosity only.",
         "https://nerranetwork.com/personal-interest.html")
@@ -6422,8 +6426,12 @@ def generate_claims_pages(*, dry_run=False, output_dir=None, digests_root=None,
     return written
 
 
-def generate_contact_page(*, dry_run=False):
-    """Generate the contact page."""
+def generate_contact_page(*, dry_run=False, output_dir=None):
+    """Generate the contact page.
+
+    ``output_dir`` lets a test render into a scratch tree without touching
+    the committed contact.html.
+    """
     env = _get_jinja_env()
     template = env.get_template("contact.html.j2")
 
@@ -6442,7 +6450,7 @@ def generate_contact_page(*, dry_run=False):
     }
 
     html = template.render(**context)
-    out_path = ROOT / "contact.html"
+    out_path = (Path(output_dir) if output_dir else ROOT) / "contact.html"
 
     if dry_run:
         print(f"[dry-run] Would write {out_path}")

@@ -32,7 +32,9 @@ class TestSoftPersonalInterestPage:
 
     def test_copy_sot_header_body_confirmation(self):
         src = _read("templates/personal_interest_page.html.j2")
-        assert "Your own morning show — when you’re ready" in src
+        assert "Occasional Personal tips by email — no charge, no card" in src
+        assert "when you’re ready" not in src
+        assert "when you're ready" not in src
         assert "Every Nerra show stays free. Personal is optional" in src
         assert "SpaceX Daily included" in src
         assert "Want occasional Personal tips by email?" in src
@@ -59,10 +61,9 @@ class TestSoftPersonalInterestPage:
             "That email doesn’t look right. Try again, or start Personal "
             "now at nerranetwork.com/join."
         ) in src
-        assert (
-            "Couldn’t save that just now. Try again in a moment — or start "
-            "Personal whenever you’re ready at nerranetwork.com/join."
-        ) in src
+        assert "Couldn’t save that just now. Try again in a moment." in src
+        assert "whenever you’re ready" not in src
+        assert "whenever you're ready" not in src
         # Superseded informal strings must not return.
         assert "Please enter a valid email address." not in src
         assert "Please try again in a moment." not in src

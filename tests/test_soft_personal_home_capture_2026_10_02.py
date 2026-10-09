@@ -173,7 +173,7 @@ class TestPersonalInterestNoNumericShowCount:
         # with the same context helper when available.
         env = G._get_jinja_env()
         ctx = G._member_page_context(
-            "Nerra Personal — when you’re ready | Nerra Network",
+            "Personal tips by email, no charge, no card | Nerra Network",
             SOFT_META_DESCRIPTION,
             "https://nerranetwork.com/personal-interest.html",
         )
