@@ -1,0 +1,135 @@
+Anthropic now scans opted-in open-source projects for vulnerabilities with frontier models and supplies proof-of-concept fixes at no cost.
+
+This is Models and Agents, episode 198.
+
+Anthropic is launching OSS Scanner, a free service that uses its frontier models to periodically scan opted-in open-source projects for vulnerabilities.
+
+The scanner supplies a proof-of-concept exploit, an explanation, and a suggested fix in each report.
+
+The company is also committing one hundred fifty million dollars to the Genesis Mission.
+
+It will make Claude plus technical support available to more than fifteen federal agencies.
+
+At the same time it is rolling out the Anthropic Cyber Mission focused on critical infrastructure and open-source security.
+
+These moves expand Anthropic’s security work beyond its own models into shared infrastructure protection.
+
+Diffu-LoRA inserts gated low-rank adapters into the linear layers of Transformer blocks inside Stable Diffusion.
+
+Bilevel optimization trains the adapters and gates on separate data splits while progressive pruning removes low-value components to meet a target rank budget.
+
+Experiments on DreamBooth subjects show higher subject fidelity and prompt alignment than standard LoRA or full fine-tuning baselines.
+
+The method keeps the pretrained backbone frozen throughout training.
+
+The lossy compressive text autoencoder performs residual downscaling and upscaling along the time axis with a residual low-dimension discrete bottleneck.
+
+It matches lossless text compression algorithms at two point two four bits per byte on web text while retaining usable reconstruction quality measured by BLEU and LLM judges.
+
+Downstream question-answering and semantic similarity benchmarks remain competitive across compression levels.
+
+The galahad-kv package saves the key-value state of sixteen-thousand-token blocks to encrypted local NVMe and reloads them byte-exact.
+
+Loading a block is two point eight to four point three times faster than recompute and uses eight point eight to twelve point three times less GPU energy.
+
+On Gemma 4 twelve billion and thirty-one billion parameter models the approach answers facts planted millions of tokens earlier with eighty-two and ninety-eight percent accuracy respectively.
+
+MASA scores each sparse unit by how much it reduces matrix-product approximation error instead of keeping the largest attention values.
+
+The method acts as a plug-in correction on existing sparse attention frameworks without changing kernels or budgets.
+
+Experiments across multiple backbones and benchmarks show consistent accuracy gains while preserving the original sparsity pattern.
+
+STI-OPD uses teacher-student policy discrepancy measured by KL divergence to decide when to replace a student action with a teacher-generated one.
+
+A stochastic intervention schedule samples from the resulting probability instead of using fixed thresholds.
+
+An importance-weighted reverse KL objective corrects token sampling mismatch on the resulting mixed-policy trajectories.
+
+The approach outperforms prior on-policy distillation baselines on tool-integrated reasoning and long-horizon interaction benchmarks.
+
+Lapras trains a student model to align hidden states with a teacher that produces explicit chain-of-thought traces.
+
+The student reasons in continuous joint time-series and language space and emits text only for the final answer.
+
+Across four backbones and five benchmarks the method improves average F1 by up to ten point seven nine percent while generating twenty-three point nine times fewer tokens.
+
+The SFT-as-context method feeds the SFT model’s response as context to the parent model so the parent can use in-context learning for specialized tasks.
+
+Across nineteen parent-SFT pairs and eleven benchmarks the approach stays within two point two percentage points of the SFT model on fine-tuned capabilities while remaining within two point two percentage points of the parent on general capabilities.
+
+It can solve queries that require both fine-tuned and general skills even when neither model succeeds alone.
+
+The REMORY neural memory network learns to generate a short sequence of soft tokens conditioned on the summary that help a frozen LLM approximate the continuation it would produce with full history.
+
+On SummHay the method improves source attribution at nearly unchanged insight coverage while using only five point two percent of the input positions.
+
+Both Qwen3.8-27B and GLM-5.3-Flash show consistent gains and fewer repeated tool outputs on BrowseComp and Terminal-Bench 2.1.
+
+An 0.8B Qwen3.5 model fine-tuned on filtered teacher supervision is deployed in an end-to-end grammar mastery tracker.
+
+On two human-curated benchmarks the model exceeds prompted GPT-5.4 and GPT-5.6 Sol in precision and recall under nested matching criteria.
+
+Serving cost drops by approximately sixteen times and a live experiment records fifteen point eight percent higher learner engagement plus thirteen point two percent higher GMV from new lessons.
+
+SignRAG first learns sign representations then aligns the encoder with an LLM through hierarchical pretraining.
+
+Target-domain retrieval augmentation supplies instance-specific translation cues and retrieval-utility-guided reinforcement fine-tuning balances translation quality against harmful reliance.
+
+The method sets new state-of-the-art results on multiple SLT benchmarks and is the first gloss-free approach to outperform gloss-supervised methods on all metrics for CSL-Daily.
+
+PARCEL contains three thousand three hundred ninety-six parenthetical-style claims from recent New York Court of Appeals decisions labeled Supported, Refuted, or Not Found.
+
+Strongest models reach up to zero point nine seven accuracy yet still incorrectly mark unsupported claims as supported even when full opinion text is supplied.
+
+Missing support is harder to detect than direct contradiction and fabricated but plausible citations cause the largest performance drop.
+
+Analysis of one hundred twenty-seven thousand eight hundred thirty-three real queries from six thousand three hundred forty-two clinicians shows documentation and administration tasks comprise thirty-six point two percent and knowledge retrieval twenty-eight point nine percent.
+
+The median public benchmark shares only thirty-one percent of the task mix of actual use and contains no documentation requests.
+
+Benchmarks designed to resemble clinical practice are individually no closer to real use than those in frontier model reports.
+
+Bilevel optimization separates the update of adapter weights from the update of gate parameters by training each on its own data split.
+
+The outer loop optimizes the gates while the inner loop optimizes the adapters, so the gate values reflect how much each low-rank component actually improves held-out performance rather than training-set fit.
+
+Progressive pruning then removes the lowest-valued gates until the prescribed rank budget is met, producing a nonuniform allocation across layers that still respects the total parameter count.
+
+The procedure adds roughly one extra forward-backward pass per pruning step yet removes the need for manual layer-wise rank search.
+
+In practice the method works best when the target domain is small enough that full fine-tuning would overfit but large enough that uniform low-rank adapters leave some layers under-capacity.
+
+Teams facing exactly that regime should try the bilevel-plus-pruning recipe before falling back to hand-tuned LoRA ranks.
+
+Try the galahad-kv package on a single H100 with Gemma 4 to store and reload KV blocks across a fifty-million-token stream without recompute.
+
+Test Diffu-LoRA on a DreamBooth subject to see whether learned rank allocation improves subject fidelity over standard LoRA at the same budget.
+
+Run SignRAG on a CSL-Daily sample to check whether the retrieval-augmented gloss-free pipeline beats your current gloss-supervised baseline.
+
+Feed an SFT model response back to its parent model on a mixed general-plus-specialized query to measure whether the context trick recovers both capabilities.
+
+Anthropic plans to expand OSS Scanner coverage and report additional findings from the Genesis Mission in the coming weeks.
+
+Multiple labs are expected to release updated long-context memory layers following the galahad-kv results.
+
+New sign-language translation benchmarks that include retrieval-augmented settings are anticipated later this month.
+
+Pop the hood on bilevel optimization and you see two nested loops that let gates learn which adapters actually matter on held-out data rather than on the training split alone.
+
+The inner loop tunes adapter weights while the outer loop tunes the gates, so each gate value directly measures contribution to generalization instead of memorization.
+
+Pruning then drops the weakest gates until the rank budget is reached, which produces a nonuniform allocation across layers without any manual search.
+
+The extra cost is one additional forward-backward pass per pruning step, yet the payoff is automatic discovery of which layers need more capacity.
+
+When your adaptation data is limited enough to risk overfitting but rich enough to expose layer-wise differences, the bilevel-plus-pruning pattern is the one to reach for first.
+
+Before we go, watch for expanded coverage from Anthropic’s new open-source scanner and the first follow-up memory-layer releases.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes. This show comes to you from the Nerra Network.
+
+If you want another sharp daily briefing, Planetterrian Daily has you covered — daily breakthroughs in science, health, and longevity. All our shows are free at nerranetwork.com. New to the network? nerranetwork.com/start-here picks the right daily briefing for you in about two minutes.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

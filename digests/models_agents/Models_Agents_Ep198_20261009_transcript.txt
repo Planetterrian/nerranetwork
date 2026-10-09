@@ -1,0 +1,140 @@
+Anthropic now scans opted in open source projects for vulnerabilities with frontier models and supplies proof-of-concept fixes at no cost. This is Models & Agents, episode 198. Andthropic is launching OSS Scanner, a free service that uses its frontier models to periodically scan opted-in open source projects for vulnerabilities. The Scanner supplies a proof-of-concept exploit, an explanation, and a suggested fix in each report.
+The company is also committing $150 million to the Genesis mission.
+It will make Claude Plus technical support available to more than 15 federal agencies.
+At the same time, it is rolling out the Anthropic Cyber Mission, focused on critical infrastructure and open source security.
+These moves expand Anthropic security work beyond its own models into shared infrastructure protection.
+Diffu Lora inserts gated low-rank adapters into the linear layers of transformer blocks inside stable diffusion.
+By-level optimization trains the adapters and gates on separate data splits,
+while progressive pruning removes low-value components to meet a target-rank budget.
+Experiments on Dream Booth subjects show higher subject fidelity and prompt alignment than standard Lora or full fine-tuning baselines.
+The method keeps the pre-trained backbone frozen throughout training.
+The lossy compressive text autoencoder performs residual downscaling and upscaling along
+the time axis with a residual low-dimension discrete bottleneck.
+It matches lossless text compression algorithms at 2.24 bits per byte on web text while retaining
+usable reconstruction quality measured by BLU and LLM judges.
+Downstream question answering and semantic similarity benchmarks remain competitive across
+compression levels.
+The Galahad KV package saves the key value state of 16,000 token blocks to encrypted
+local NVMe and reloads them bite exact.
+Loading a block is 2.8 to 4.3 times faster than recompute and uses 8.8 to 12.3 times less
+GPU energy.
+On Gemma 4.12 billion and 31 billion parameter models, the approach answers facts planted
+millions of tokens earlier with 82 and 98% accuracy respectively.
+Massa scores each sparse unit by how much it reduces matrix product approximation error instead
+of keeping the largest attention values. The method acts as a plug-in correction on existing
+sparse attention frameworks without changing kernels or budgets. Experiments across multiple
+backbones and benchmarks show consistent accuracy gains while preserving the original sparsity pattern.
+STI-OPD uses teacher student policy discrepancy measured by KL divergence to decide when to replace
+a student action with a teacher-generated one. A stochastic intervention schedule samples
+from the resulting probability instead of using fixed thresholds. An importance weighted
+reverse KL objective corrects token sampling mismatch on the resulting mixed policy trajectories.
+The approach outperforms prior on policy distillation baselines on tool integrated reasoning
+and long horizon interaction benchmarks. Lapras trains a student model to align hidden states with
+a teacher that produces explicit chain of thought traces.
+The student reasons in continuous joint-time series in language space and emits text
+only for the final answer.
+Across four backbones and five benchmarks, the method improves average F1 by up to 10.79
+percent, while generating 23.9 times fewer tokens.
+The SFTS context method feeds the SFTS model's response as context to the parent model so
+the parent can use in-context learning for specialized tasks.
+6.
+Across 19 parent SFT pairs and 11 benchmarks, the approach stays within 2.2 percentage points
+of the SFT model on fine-tuned capabilities, while remaining within 2.2 percentage points
+of the parent on general capabilities.
+It can solve queries that require both fine-tuned and general skills even when neither model
+succeeds alone.
+The Remory Neural Memory Network learns to generate a short sequence of soft tokens conditioned
+on the summary that help a frozen LLM approximate the continuation it would produce with full history.
+On some hey, the method improves source attribution at nearly unchanged insight coverage
+while using only 5.2% of the input positions. Both Quenn 3.8-27b and GLM 5.3-flash
+show consistent gains and fewer repeated tool outputs on browse comp and terminal bench 2.1.
+And 0.8B Quen 3.5 model fine-tuned on filtered teacher supervision is deployed in an end-to-end
+grammar mastery tracker.
+On two human curated benchmarks, the model exceeds prompted GPT-5.4 and GPT-5.6 sole
+in precision and recall under nested matching criteria.
+Serving cost drops by approximately 16 times, and a live experiment records 15.8% higher
+learner engagement, plus 13.2% higher GMV from new lessons.
+Sign Rag first learns sign representations, then aligns the encoder with an LLM through
+hierarchical pre-training.
+Target domain retrieval augmentation supplies instant specific translation cues, and retrieval
+utility guided reinforcement fine-tuning balances translation quality against harmful reliance.
+The method sets new state-of-the-art results on multiple SLT benchmarks, and is the first
+gloss-free approach to outperform gloss-supervised methods on all metrics for CSL daily.
+Parcel contains 3,396 parenthetical style claims from recent New York Court of Appeals decisions
+labeled supported, refuted, or not found. Strongest models reach up to 0.97 accuracy, yet
+still incorrectly mark unsupported claims as supported, even when full opinion text is supplied.
+Missing support is harder to detect than direct contradiction and fabricated but plausible
+citations caused the largest performance drop. Analysis of 127,833 real queries from 6,342
+clinicians shows documentation and administration tasks comprise 36.2% and knowledge retrieval
+28.9%. The median public benchmark shares only 31% of the task mix of actual use and contains
+no documentation requests. Benchmarks designed to resemble clinical practice are individually
+no closer to real use than those in Frontier model reports.
+Bi-level optimization separates the update of adapter weights from the update of gate parameters
+by training each on its own data split.
+The outer loop optimizes the gates while the inner loop optimizes the adapters, so the
+gate values reflect how much each low-rank component actually improves held out performance
+rather than training set fit.
+Progressive pruning then removes the lowest-valued gates until the prescribed rank budget
+is met.
+producing a non-uniform allocation across layers that still respects the
+total parameter count. The procedure adds roughly one extra forward backward
+pass per pruning step, yet removes the need for manual layer-wise rank search.
+In practice, the method works best when the target domain is small enough that
+full fine-tuning would overfit, but large enough that uniform low-rank adapters
+leave some layers under capacity. Teams facing exactly that regime should try
+the buy-level plus pruning recipe before falling back to hand-tuned Laura ranks.
+Try the Galahad KV package on a single H100 with Gemma 4 to store and reload KV blocks
+across a 50 million token stream without recompute.
+Test Diffu Laura on a Dream Booth subject to see whether learned rank allocation improves
+subject fidelity over standard Laura at the same budget.
+Run Sign Rag on a CSL daily sample to check whether the retrieval augmented gloss-free pipeline
+beats your current gloss supervised baseline.
+Feed an SFT model response back to its parent model
+on a mixed-general plus specialized query
+to measure whether the context trick
+recovers both capabilities.
+Anthropic plans to expand OSS scanner coverage
+and report additional findings
+from the Genesis mission in the coming weeks.
+Multiple labs are expected to release
+updated long-context memory layers
+following the Galahad KV results.
+New sign language translation benchmarks
+that include retrieval augmented settings
+are anticipated later this month.
+Pop the hood on by-level optimization
+and you see two nested loops
+that let gates learn which adapters
+actually matter on held out data
+rather than on the training split alone.
+The inner loop tunes adapter weights
+while the outer loop tunes the gates
+so each gate value directly measures
+contribution to generalization
+instead of memorization.
+Pruning then drops the weakest gates
+until the rank budget is reached,
+which produces a non-uniform allocation across layers without any manual search.
+The extra cost is one additional forward backward pass per pruning step,
+yet the payoff is automatic discovery of which layers need more capacity.
+When your adaptation data is limited enough to risk overfitting
+but rich enough to expose layer-wise differences,
+the by-level plus pruning pattern is the one to reach for first.
+Before we go, watch for expanded coverage from Anthropics' new open-source scanner
+and the first follow up memory layer releases.
+That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+and subscribe so you don't miss tomorrow's update.
+The AI world moves fast.
+We'll help you keep up.
+See you tomorrow.
+And if you'd rather watch than listen, find us on YouTube at Narin Network, links in the
+show notes.
+This show comes to you from the Narin Network.
+If you want another sharp daily briefing, Planetarian Daily has you covered.
+daily breakthroughs in science, health, and longevity.
+All our shows are free at narennetwork.com.
+New to the network?
+narennetwork.com start here, picks the right daily briefing for you in about two minutes.
+This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.
