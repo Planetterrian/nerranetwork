@@ -36,6 +36,7 @@ def _secret_presence() -> dict:
         "YOUTUBE_CLIENT_SECRET": bool(os.environ.get("YOUTUBE_CLIENT_SECRET")),
         "YOUTUBE_REFRESH_TOKEN_EN": bool(os.environ.get("YOUTUBE_REFRESH_TOKEN_EN")),
         "YOUTUBE_REFRESH_TOKEN_RU": bool(os.environ.get("YOUTUBE_REFRESH_TOKEN_RU")),
+        "YOUTUBE_REFRESH_TOKEN_FR": bool(os.environ.get("YOUTUBE_REFRESH_TOKEN_FR")),
     }
 
 
@@ -90,6 +91,23 @@ def main() -> int:
 
     out_path = ROOT / args.out
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    # Oct 9 2026: the same refusal the nightly applies. This workflow runs on
+    # a push that touches it, and on 2026-10-09 05:38 it overwrote the
+    # committed file with a fetch that had no FR token — the @NerraFR channel
+    # block and 474 of its videos vanished from api/youtube_stats.json while
+    # the dashboard was still reporting the channel. A partial fetch is not
+    # a snapshot (Sep 17 rule), whichever workflow made it.
+    existing = None
+    if out_path.exists():
+        try:
+            existing = json.loads(out_path.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001 — an unreadable file is not a baseline
+            existing = None
+    reason = fya.snapshot_regression(payload, existing)
+    if reason:
+        print(f"::error::Refusing to overwrite {out_path}: {reason}")
+        print("STATUS=fail")
+        return 0
     out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False),
                         encoding="utf-8")
     logger.info("Wrote %s", out_path)

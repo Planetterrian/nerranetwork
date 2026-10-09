@@ -57,6 +57,9 @@ concurrency:
 
 permissions:
   contents: write
+  # Oct 9 2026: the resolve job reads the triggering run's JOBS to learn
+  # which show(s) published (see "Resolve shows to translate").
+  actions: read
   # Needed so the push-failure recovery fallback can open a draft PR via the
   # gh CLI (scripts/create_recovery_pr.sh) — without it the RU-dub upload
   # records in a lost commit would be discarded and the next sweep would
@@ -97,6 +100,10 @@ jobs:
           # Passed via env (not inline substitution) so a commit message can't
           # inject into the script. May be empty on non-workflow_run events.
           HEAD_COMMIT_MESSAGE: ${{ github.event.workflow_run.head_commit.message }}
+          # Oct 9 2026: the triggering run, so the step can read its jobs.
+          TRIGGER_RUN_ID: ${{ github.event.workflow_run.id }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           import json, os, re, sys
           # `shell: python3 {0}` runs this from a temp file, so the repo root
@@ -122,21 +129,49 @@ jobs:
               # Explicit single-show dispatch — honor it even if auto is off.
               shows = [dispatch]
           elif event == "workflow_run":
-              # Triggered by one episode publish — sweep only the show it
-              # published instead of fanning out all 7 matrix jobs. The
-              # episode commit is "Auto-generated: <show> <YYYY-MM-DD>"
-              # (run-show.yml); a show that isn't multilingual-enabled
-              # resolves to []. When the head commit doesn't name a show
-              # (e.g. the run started on an unrelated tip), fall back to the
-              # full idempotent sweep — the cron passes remain the catch-all.
-              head_msg = (os.environ.get("HEAD_COMMIT_MESSAGE") or "").strip()
-              m = re.match(r"Auto-generated: (\S+) \d{4}-\d{2}-\d{2}",
-                           head_msg.splitlines()[0] if head_msg else "")
-              if m:
-                  enabled = auto_enabled_shows()
-                  shows = [m.group(1)] if m.group(1) in enabled else []
-              else:
-                  shows = auto_enabled_shows()
+              # Triggered by one episode publish — sweep only the show(s) it
+              # published instead of fanning out all 7 matrix jobs.
+              #
+              # Oct 9 2026: the head commit NEVER named the show. A scheduled
+              # Run Podcast Show starts on whatever main was at trigger time;
+              # its "Auto-generated: <show> <date>" commit is made DURING the
+              # run, so workflow_run.head_commit is an unrelated tip and the
+              # fallback below swept all seven shows on every successful run
+              # of every show: 92 "Multilingual: <show>" commits on Oct 7
+              # alone (13-16 per show), ~17 h of runner time a day, and the
+              # push races behind the recovery PRs. The run's JOBS say which
+              # shows published: the matrix job is named "run (<show>)".
+              enabled = auto_enabled_shows()
+              shows = None
+              run_id = (os.environ.get("TRIGGER_RUN_ID") or "").strip()
+              if run_id:
+                  try:
+                      import requests
+                      r = requests.get(
+                          f"https://api.github.com/repos/{os.environ['GH_REPO']}"
+                          f"/actions/runs/{run_id}/jobs?per_page=100",
+                          headers={"Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                                   "Accept": "application/vnd.github+json"},
+                          timeout=30)
+                      r.raise_for_status()
+                      published = []
+                      for job in r.json().get("jobs", []):
+                          jm = re.fullmatch(r"run \((\S+)\)", job.get("name") or "")
+                          if jm and job.get("conclusion") == "success":
+                              published.append(jm.group(1))
+                      if published:
+                          shows = [s for s in published if s in enabled]
+                          print("Triggering run published:", published)
+                  except Exception as exc:  # noqa: BLE001 — fall through
+                      print(f"::warning::could not read run {run_id} jobs: {exc}")
+              if shows is None:
+                  # The jobs could not be read: the head commit (never a
+                  # match on a scheduled run, see above), then the full
+                  # idempotent sweep — the cron passes remain the catch-all.
+                  head_msg = (os.environ.get("HEAD_COMMIT_MESSAGE") or "").strip()
+                  m = re.match(r"Auto-generated: (\S+) \d{4}-\d{2}-\d{2}",
+                               head_msg.splitlines()[0] if head_msg else "")
+                  shows = ([m.group(1)] if m.group(1) in enabled else []) if m else enabled
           else:
               # Scheduled / "all": every show that opts into auto multilingual.
               shows = auto_enabled_shows()
