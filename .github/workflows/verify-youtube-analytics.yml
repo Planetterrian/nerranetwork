@@ -45,6 +45,9 @@ jobs:
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN_EN: ${{ secrets.YOUTUBE_REFRESH_TOKEN_EN }}
           YOUTUBE_REFRESH_TOKEN_RU: ${{ secrets.YOUTUBE_REFRESH_TOKEN_RU }}
+          # Oct 9 2026: without the FR token this run wrote api/youtube_stats.json
+          # with no @NerraFR channel block and 474 fewer videos (run 37889558043).
+          YOUTUBE_REFRESH_TOKEN_FR: ${{ secrets.YOUTUBE_REFRESH_TOKEN_FR }}
         run: |
           set -o pipefail
           python scripts/verify_youtube_analytics.py --days 90 \
