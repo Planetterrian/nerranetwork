@@ -3703,3 +3703,37 @@ experiments:
       *.zh.rss feeds are frozen, not deleted. Operator: wrangler deploy in
       workers/voices. Guards: tests/test_ops_bundle_2026_10_09.py,
       tests/test_multilingual.py, tests/test_producer_autonomy.py.
+
+  - id: narrative-research-2026-10-09
+    title: "The narrative shows get sources: one web search per topic into the episode brief"
+    area: trust
+    shipped: 2026-10-09
+    readout: 2026-10-23
+    status: reading
+    baseline: >
+      Unintended Consequences and First Principles wrote from the topic brief
+      alone: no article ever reached the episode prompt, every Sources list
+      was empty, and UC verified 0 claims across its last 8 episodes (FPD
+      0-2). The claims gate had nothing to verify against, so the only check
+      on a history essay was the citation-shape lint.
+    target: >
+      Over 14 days: source_integrity_claims_verified median >= 5 on each
+      show (was 0 / 0-2); narrative_research_articles >= 4 on >= 10 of 14
+      runs; the blog Sources list non-empty on every episode where the
+      search returned anything; no episode skipped for the research step
+      (an empty search is a fallback line, never a skip); the
+      narrative_research stage p95 under 120 s; the operator's A/B-listen of
+      Ep1 on each show does not reject it.
+    criteria: >
+      Hit = verified-claims and Sources targets met with no skip. A quote
+      verified "from fetched copy" on a research article must trace to the
+      PAGE (full_text_source: page), never the search summary — a ledger
+      entry that cites the summary is a bug in build_local_texts, not a hit.
+    notes: >
+      engine.fetcher.fetch_topic_research_articles (any date, exempt_stale,
+      source_kind research); narrative_research: 8 + fetch_full_text: 6 on
+      both shows; {research_sources} in both *_episode.txt prompts;
+      engine.claims.build_local_texts reads only title + fetched page text
+      for a research article. CHANGES AUDIO on both shows (the prompt
+      changed and the input changed) — landmine #17, A/B-listen Ep1.
+      Guards: tests/test_narrative_research_2026_10_09.py.

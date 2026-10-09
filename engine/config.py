@@ -1342,13 +1342,20 @@ class ShowConfig:
     # TST, SpaceX) opt in.
     weekly_summary_segment: bool = False
     # Narrative mode (May 2026 — Unintended Consequences). When
-    # ``true``, the runner skips RSS fetch + slow-news fallback +
-    # the digest stage and instead pulls the next unproduced topic
-    # from ``topic_queue_file`` to feed straight into the podcast
-    # prompt. Used for evergreen story-driven shows that don't
-    # depend on daily news cycles.
+    # ``true``, the runner skips the RSS/X fetch and the slow-news
+    # fallback and pulls the next unproduced topic from
+    # ``topic_queue_file`` into the episode-brief prompt. Used for
+    # evergreen story-driven shows that don't depend on daily news
+    # cycles. Since Oct 9 2026 ``narrative_research`` can add one web
+    # search's worth of sources to that prompt.
     narrative_mode: bool = False
     topic_queue_file: str = ""
+    # Oct 9 2026: a narrative run retrieves up to this many sources for
+    # its topic with one web search (engine.fetcher.
+    # fetch_topic_research_articles) and feeds them to the episode prompt
+    # as {research_sources}; the claims gate verifies against the pages.
+    # 0 = off (the pre-Oct-9 brief-only run).
+    narrative_research: int = 0
     # Per-episode deep-dive override (see DeepDiveConfig). Distinct from
     # narrative_mode: the show stays news-driven by default and only a
     # scheduled / forced episode runs as a standalone deep dive.
@@ -1588,6 +1595,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         ),
         narrative_mode=bool(data.get("narrative_mode", False)),
         topic_queue_file=str(data.get("topic_queue_file", "") or ""),
+        narrative_research=int(data.get("narrative_research", 0) or 0),
         deep_dive=_build_nested(DeepDiveConfig, data.get("deep_dive")),
         memory_enabled=bool(data.get("memory_enabled", False)),
     )

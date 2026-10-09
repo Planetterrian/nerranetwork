@@ -1495,3 +1495,130 @@ def apply_x_source_policy(articles: List[Dict], policy: str) -> Tuple[List[Dict]
     non_x = [a for a in articles if not _is_x(a)]
     x = [a for a in articles if _is_x(a)]
     return non_x + x, 0
+
+
+#: ``source_kind`` of an article the narrative research step retrieved —
+#: the claims gate verifies these against the fetched PAGE, never against
+#: the search model's own summary (engine.claims.build_local_texts).
+SOURCE_KIND_RESEARCH = "research"
+
+
+def fetch_topic_research_articles(
+    topic_title: str,
+    topic_brief: str = "",
+    *,
+    max_results: int = 8,
+) -> List[Dict]:
+    """One web search for the sources behind a NARRATIVE topic.
+
+    Oct 9 2026. The two topic-queue shows (Unintended Consequences, First
+    Principles) wrote from a brief and nothing else: no article ever reached
+    their digest prompt, their ``Source:`` lines were empty, and UC verified
+    zero claims across eight episodes. ``fetch_web_search_articles`` cannot
+    serve them — it asks for the last 24 hours and drops anything older
+    than ``max_age_hours`` — and a 1935 cane-toad introduction or a 2018
+    cost study is exactly what these shows cite. This asks for the
+    authoritative sources on the topic at ANY date (primary documents,
+    journals, the institutions involved, reference works, long-form
+    reporting), parses the same ``ARTICLE_*`` blocks, keeps every dated or
+    undated result, and marks each ``exempt_stale`` so a future stale gate
+    never drops a historical source. The search model's summary goes into
+    ``description`` for the prompt; the claims gate does not read it (see
+    ``SOURCE_KIND_RESEARCH``). Search spend is billed by the process
+    accumulator like every other search call. Any failure returns ``[]``:
+    an empty result never skips an episode.
+    """
+    import os
+    import re
+
+    title = (topic_title or "").strip()
+    if not title or max_results <= 0:
+        return []
+    api_key = (os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY") or "").strip()
+    if not api_key:
+        logger.warning("No GROK_API_KEY — skipping topic research")
+        return []
+
+    brief = " ".join((topic_brief or "").split())[:1200]
+    prompt = (
+        f"Research the following podcast topic and find the sources a careful "
+        f"writer would cite for it.\n\nTOPIC: {title}\n"
+        + (f"BACKGROUND: {brief}\n" if brief else "")
+        + "\nReturn ONLY a structured list, formatted exactly like this (one "
+        "block per source, separated by blank lines):\n\n"
+        "ARTICLE_TITLE: [exact page title]\n"
+        "ARTICLE_URL: [full URL]\n"
+        "ARTICLE_DESCRIPTION: [2-3 sentences on what THIS page establishes "
+        "about the topic — the specific facts, figures, dates or names it "
+        "carries]\n"
+        "ARTICLE_SOURCE: [publisher or institution]\n"
+        "ARTICLE_DATE: [publication date as YYYY-MM-DD, or the single word "
+        "unknown]\n\n"
+        "Rules:\n"
+        f"- Up to {max_results} sources, best first\n"
+        "- ANY date is fine: this is history and engineering, not news. Prefer "
+        "primary documents, peer-reviewed papers, the institutions or companies "
+        "involved, encyclopedias and long-form reporting over aggregators\n"
+        "- Every URL must be a real page you found, never a guess\n"
+        "- Skip social media posts, forums and video pages\n"
+        "- If nothing credible is found, return exactly: NO_SOURCES_FOUND\n"
+        "- Do NOT add any commentary — just the structured list\n"
+    )
+    try:
+        from digests.xai_grok import grok_generate_text
+
+        text, _meta = grok_generate_text(
+            prompt=prompt, enable_web_search=True, max_turns=5,
+            cache_key="nerra-topic-research",
+        )
+    except Exception as exc:  # noqa: BLE001 — never block a narrative run
+        logger.warning("Topic research failed for %r: %s", title[:80], exc)
+        return []
+    if not text or ("NO_SOURCES_FOUND" in text and "ARTICLE_TITLE" not in text):
+        logger.info("Topic research: no sources for %r", title[:80])
+        return []
+
+    out: List[Dict] = []
+    for block in re.split(r"(?=ARTICLE_TITLE\s*:)", text.strip()):
+        block = block.strip()
+        if not block.startswith("ARTICLE_TITLE"):
+            continue
+        title_m = re.search(r"ARTICLE_TITLE\s*:\s*(.+?)(?:\n|$)", block)
+        url_m = re.search(r"ARTICLE_URL\s*:\s*(https?://\S+)", block)
+        desc_m = re.search(r"ARTICLE_DESCRIPTION\s*:\s*(.+?)(?=ARTICLE_SOURCE|\Z)",
+                           block, re.DOTALL)
+        source_m = re.search(r"ARTICLE_SOURCE\s*:\s*(.+?)(?:\n|$)", block)
+        date_m = re.search(r"ARTICLE_DATE\s*:\s*(.+?)(?:\n|$)", block)
+        a_title = title_m.group(1).strip() if title_m else ""
+        url = url_m.group(1).strip() if url_m else ""
+        if not a_title or not url:
+            continue
+        url_date = _url_path_date(url)
+        model_date = _parse_date_token(date_m.group(1) if date_m else "")
+        if url_date is not None:
+            pub_iso, date_source = url_date.isoformat(), _DATE_SOURCE_URL_PATH
+        elif model_date is not None:
+            pub_iso, date_source = model_date.isoformat(), _DATE_SOURCE_MODEL
+        else:
+            pub_iso, date_source = "", _DATE_SOURCE_UNKNOWN
+        out.append({
+            "title": a_title,
+            "description": " ".join((desc_m.group(1) if desc_m else "").split()),
+            "url": url,
+            "source_name": f"{(source_m.group(1).strip() if source_m else 'Web')} (research)",
+            "published_date": pub_iso,
+            "date_source": date_source,
+            "source_kind": SOURCE_KIND_RESEARCH,
+            "exempt_stale": True,
+            "relevance_score": 0.0,
+            "author": "",
+        })
+        if len(out) >= max_results:
+            break
+    if out:
+        out = remove_similar_items(
+            out, similarity_threshold=0.80,
+            get_text_func=lambda x: f"{x.get('title', '')} {x.get('description', '')}",
+        )
+    logger.info("Topic research: %d source(s) for %r", len(out), title[:80])
+    return out

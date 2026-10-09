@@ -378,7 +378,9 @@ def enrich_articles_with_full_text(
         # desk items: headline + ORIGINAL publisher URL, deliberately no
         # desk prose) is the show's evidence — its page is fetched first,
         # so the claims gate verifies against the publisher's copy.
-        first = src in prio or art.get("source_kind") == "hook"
+        # Oct 9 2026: a narrative research article (source_kind research) is
+        # the same case — its page is the only text the claims gate may use.
+        first = src in prio or art.get("source_kind") in ("hook", "research")
         return (0 if first else 1, idx)
 
     ordered = sorted(enumerate(articles), key=_rank)
@@ -391,7 +393,9 @@ def enrich_articles_with_full_text(
             art["full_text"] = clip_text(body, max_chars)
             art["full_text_source"] = "feed"
             gained += 1
-        elif _needs_page_fetch(art) and art.get("url"):
+        elif (_needs_page_fetch(art) or art.get("source_kind") == "research") and art.get("url"):
+            # A research article's description is the search model's
+            # summary, never the body: fetch the page whatever its length.
             to_fetch.append(art)
         else:
             # The description already is the body (some feeds ship it in

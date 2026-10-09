@@ -23,8 +23,11 @@ NEWS_SHOWS = {
 #: Shows whose own posts are primary sources — X policy stays legacy.
 OWN_VOICE_SHOWS = ("tesla", "spacex")
 #: Shows the pass must leave byte-identical on these knobs.
-UNTOUCHED = ("unintended_consequences", "first_principles", "dp_pod",
-             "privet_russian", "age_of_ai")
+# Oct 9 2026: the two narrative shows left this list — the research step
+# gave them fetch_full_text (tests/test_narrative_research_2026_10_09.py);
+# they still carry none of the news-show keys below.
+UNTOUCHED = ("dp_pod", "privet_russian", "age_of_ai")
+NARRATIVE = ("unintended_consequences", "first_principles")
 
 
 def _cfg(slug):
@@ -76,6 +79,10 @@ class TestSourcingFloorOnTheNewsShows:
         for slug in UNTOUCHED:
             c = _cfg(slug)
             for key in ("fetch_full_text", "preferred_domains", "x_posts_as_sources", "digest_lints"):
+                assert not c.get(key), (slug, key)
+        for slug in NARRATIVE:
+            c = _cfg(slug)
+            for key in ("preferred_domains", "x_posts_as_sources", "digest_lints"):
                 assert not c.get(key), (slug, key)
 
     def test_hook_shape_experiment_is_not_disturbed(self):
