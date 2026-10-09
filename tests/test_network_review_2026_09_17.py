@@ -33,7 +33,9 @@ from engine.config import load_config  # noqa: E402
 
 class TestChainedShowsAreEligible:
     def test_every_flagship_now_qualifies(self):
-        for slug in ("tesla", "spacex", "fascinating_frontiers", "planetterrian", "modern_investing"):
+        # spacex left this list on Oct 9 2026: its script stage runs grok-4.6
+        # (a podcast_model override is two-pass by code, like omni_view).
+        for slug in ("tesla", "fascinating_frontiers", "planetterrian", "modern_investing"):
             cfg = load_config(str(ROOT / "shows" / f"{slug}.yaml"))
             assert cfg.llm.podcast_chain is True, slug
             assert gen.combined_generation_enabled(cfg, {"episode_num": 200}), slug
@@ -42,7 +44,7 @@ class TestChainedShowsAreEligible:
         for slug in ("unintended_consequences", "first_principles"):  # narrative
             cfg = load_config(str(ROOT / "shows" / f"{slug}.yaml"))
             assert not gen.combined_generation_enabled(cfg, {"episode_num": 200}), slug
-        for slug in ("omni_view", "models_agents_beginners", "dp_pod"):  # grok-4.6 script stage / dialogue
+        for slug in ("omni_view", "models_agents_beginners", "dp_pod", "spacex"):  # grok-4.6 script stage / dialogue
             cfg = load_config(str(ROOT / "shows" / f"{slug}.yaml"))
             assert not gen.combined_generation_enabled(cfg, {"episode_num": 200}), slug
 

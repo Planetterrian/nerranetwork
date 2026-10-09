@@ -67,7 +67,9 @@ class TestFullTextLayer:
         "omni_view_latam", "omni_view_north_america", "omni_view_world",
         # Network sourcing pass (2026-09-24): the ten established news shows
         # opted in too (tests/test_network_sourcing_pass_2026_09_24.py pins
-        # their depths); the narrative shows and Привет stay at 0.
+        # their depths); Привет stays at 0. The narrative shows opted in on
+        # 2026-10-09 with the research step (their sources are fetched pages).
+        "unintended_consequences", "first_principles",
         "tesla", "spacex", "models_agents", "models_agents_beginners",
         "fascinating_frontiers", "planetterrian", "omni_view", "env_intel",
         "modern_investing", "finansy_prosto"})

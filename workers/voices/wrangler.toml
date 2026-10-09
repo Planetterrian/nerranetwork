@@ -28,9 +28,14 @@ routes = [
 # GitHub's own */5 cron arrives ~hourly under load; Cloudflare fires to
 # the minute, same pattern as workers/scheduler for the shows).
 # 17:00: gate-2 housekeeping (guest-review reminders / auto-approve).
-# */30: Nerra Producer inbox tick (repository_dispatch producer-tick) —
+# :00/:30: Nerra Producer inbox tick (repository_dispatch producer-tick) —
 # GitHub's own */30 schedule for that workflow arrived ~4-hourly.
-crons = ["*/5 * * * *", "*/30 * * * *", "0 17 * * *"]
+# Oct 9 2026: ONE trigger. Workers Free allows five cron triggers per
+# account and this Worker held three of them; the scheduler's 8am-Pacific
+# edition dispatch was refused at deploy for want of one. The handler
+# reads the firing minute (every 5 min: fire-tick; :00/:30: producer-tick;
+# 17:00 UTC: gate 2), so the three jobs run exactly as before.
+crons = ["*/5 * * * *"]
 
 # Phase 2 co-host (Sept 2026): local browser recordings (guest + host
 # MediaRecorder chunks and their manifest.json) are written straight to R2

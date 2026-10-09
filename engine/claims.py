@@ -574,10 +574,18 @@ def build_local_texts(articles: List[dict]) -> Dict[str, str]:
         url = normalize_source_url(art.get("url") or "")
         if not url:
             continue
+        if art.get("source_kind") == "research":
+            # Oct 9 2026: a narrative research article's ``description`` is
+            # the SEARCH MODEL's summary of the page, not the page. A quote
+            # copied from it would verify as "fetched copy" while tracing to
+            # nothing the publisher wrote. Only the fetched page text
+            # (fetch_full_text) vouches; otherwise the claim goes to HTTP.
+            keys = (("title", "full_text") if art.get("full_text_source") == "page"
+                    else ("title",))
+        else:
+            keys = ("title", "content_text", "description", "summary")
         text = " ".join(
-            str(art.get(k) or "").strip()
-            for k in ("title", "content_text", "description", "summary")
-            if art.get(k)
+            str(art.get(k) or "").strip() for k in keys if art.get(k)
         ).strip()
         if len(text) < 20:
             continue

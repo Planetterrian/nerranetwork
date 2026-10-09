@@ -1196,6 +1196,29 @@ def run(args: argparse.Namespace) -> None:
             metrics.record("articles_from_hook", _n_hook)
             logger.info("Merged %d hook-supplied article(s) (%d offered)",
                         _n_hook, len(_hook_articles))
+        # Narrative research (Oct 9 2026): the topic-queue shows wrote from
+        # a brief and nothing else — no Source lines, UC 0 verified claims in
+        # eight episodes. One web search per topic (any date) supplies the
+        # sources; merged as hook articles so they reach fetch_full_text,
+        # news_section and the claims gate's local texts like a fetched item.
+        # An empty result never skips the episode: the brief still carries it.
+        _n_research = 0
+        _research_max = int(getattr(config, "narrative_research", 0) or 0)
+        if narrative_topic and _research_max > 0:
+            from engine.fetcher import fetch_topic_research_articles
+            from engine.hook_articles import normalize_hook_articles
+            with metrics.stage("narrative_research"):
+                _research_raw = fetch_topic_research_articles(
+                    narrative_topic.get("title", ""), narrative_topic.get("brief", ""),
+                    max_results=_research_max,
+                )
+            _research = normalize_hook_articles(_research_raw, slug=config.slug)
+            for _ra in _research:  # the gate must know these are the search model's
+                _ra["source_kind"] = "research"
+            articles, _n_research = merge_hook_articles(articles, _research)
+            metrics.record("narrative_research_articles", _n_research)
+            logger.info("Narrative research: %d source(s) for topic %r",
+                        _n_research, narrative_topic.get("title", "")[:80])
         logger.info("After fetch + dedup: %d articles (incl. %d X posts)", len(articles), len(x_posts))
 
         # 5a2. Web search fallback — if articles below quality threshold, try Grok web_search
@@ -1857,6 +1880,19 @@ def run(args: argparse.Namespace) -> None:
             template_vars["topic_title"] = _topic.get("title", "")
             template_vars["topic_brief"] = _topic.get("brief", "")
             template_vars["topic_category"] = _topic.get("category", "")
+            # Oct 9 2026: the sources the research step retrieved for a
+            # narrative topic, in the same numbered shape as news_section
+            # (full text included where fetch_full_text fetched it). The
+            # fallback line keeps the prompt honest on a day the search
+            # returned nothing.
+            template_vars["research_sources"] = news_section if (
+                narrative_topic and articles
+            ) else (
+                "(No research sources were retrieved for this topic. Write "
+                "from the brief and well-established knowledge; name a source "
+                "only where you are certain it exists, and keep the claims "
+                "ledger to what you can source.)"
+            )
             # Live current-state research for a time-sensitive deep dive (empty
             # for narrative shows or when research was unavailable). The deep-
             # dive brief prompt consumes {current_research}.

@@ -541,11 +541,15 @@ class TestDigest:
 class TestWiring:
     def test_worker_dispatches_producer_tick(self):
         ts = (ROOT / "workers/voices/src/index.ts").read_text()
-        assert 'event.cron === "*/30 * * * *"' in ts
+        # Oct 9 2026: one cron trigger; the half-hour tick is decided from
+        # the firing minute (Workers Free: five triggers per account).
+        assert "const halfHour = minute % 30 === 0;" in ts
+        assert "if (halfHour) {" in ts
         assert 'dispatch(env, "producer-tick"' in ts
         toml = (ROOT / "workers/voices/wrangler.toml").read_text()
-        assert '"*/30 * * * *"' in toml
-        assert 'producer_tick: "*/30 * * * * -> repository_dispatch producer-tick"' in ts
+        assert 'crons = ["*/5 * * * *"]' in toml
+        assert '"*/30 * * * *"' not in toml and '"0 17 * * *"' not in toml
+        assert 'producer_tick: ":00/:30 -> repository_dispatch producer-tick"' in ts
 
     def test_worker_matches_publicist_email_on_booking(self):
         ts = (ROOT / "workers/voices/src/index.ts").read_text()
