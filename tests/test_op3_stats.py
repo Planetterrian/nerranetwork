@@ -210,10 +210,13 @@ class TestLanguageFeedMeasurement:
 
         targets = _language_feed_targets(_ROOT)
         keys = {t["key"] for t in targets}
-        # The shows that actually pay for translation today.
-        assert "tesla:zh" in keys
+        # The shows that actually pay for translation today (Oct 9 2026:
+        # the ZH track is off everywhere, so no ":zh" target may exist —
+        # fetching a feed nothing generates is the stub class below).
+        assert "tesla:ru" in keys
         assert "spacex:ru" in keys
         assert "env_intel:fr" in keys
+        assert not any(k.endswith(":zh") for k in keys)
         # And nothing for a show that never opted in.
         assert not any(k.startswith("privet_russian:") for k in keys)
 

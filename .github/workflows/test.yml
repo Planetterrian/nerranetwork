@@ -27,7 +27,8 @@ jobs:
         with:
           python-version: '3.14'
           requirements-file: 'requirements.txt'
-          extra-packages: "ruff"
+          # Oct 9 2026: pytest-xdist runs the suite across the runner's cores.
+          extra-packages: "ruff pytest-xdist"
           # Sep 18 2026: the Nerra Voices leg-placement and mic-bleed
           # tests (tests/test_it_produces_itself.py) run real ffmpeg on
           # synthetic audio, and ubuntu-latest does not ship it — main
@@ -54,4 +55,9 @@ jobs:
           ./actionlint -color
 
       - name: Run tests
-        run: python -m pytest tests/ -x -q --tb=short
+        # Oct 9 2026: in parallel across the runner's cores (operator-directed).
+        # Serial, 11,700 tests took 12-20 minutes on the new image; the first
+        # xdist trial locally ran 5,777 of them in six minutes on four
+        # workers, and the clean full run passed. -x still stops the run on
+        # the first failure.
+        run: python -m pytest tests/ -x -q --tb=short -n auto
