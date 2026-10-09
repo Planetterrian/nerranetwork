@@ -3241,9 +3241,10 @@ async function handleHealth(env: Env): Promise<Response> {
   const out: Record<string, unknown> = {
     worker: "nerra-voices-api",
     now: new Date().toISOString(),
-    cron: { fire_tick: "*/5 * * * * -> repository_dispatch fire-tick",
-            producer_tick: "*/30 * * * * -> repository_dispatch producer-tick",
-            gate2: "0 17 * * * UTC" },
+    cron: { trigger: "*/5 * * * * (the one trigger; jobs by firing minute)",
+            fire_tick: "every 5 min -> repository_dispatch fire-tick",
+            producer_tick: ":00/:30 -> repository_dispatch producer-tick",
+            gate2: "17:00 UTC" },
     configured: {
       supabase: !!(env.SUPABASE_URL && env.SUPABASE_SERVICE_KEY),
       github_token: tok.length > 0,
@@ -3373,7 +3374,17 @@ export default {
     // minute; GitHub's own schedule trigger lags up to hours — a real
     // guest sat in a locked studio on Aug 5 2026). Everything downstream
     // is idempotent, so overlapping with the GitHub fallback cron is safe.
-    if (event.cron === "*/5 * * * *") {
+    // Oct 9 2026: ONE cron trigger ("*/5 * * * *") carries all three jobs.
+    // The account is on Workers Free (five cron triggers in total) and the
+    // show scheduler needed one back; the handler reads the firing minute
+    // instead of the trigger string. Every job below is idempotent, so a
+    // :00/:30 firing running the five-minute block AND the half-hour block
+    // is the same as the two triggers it replaces.
+    const fired = new Date(event.scheduledTime);
+    const minute = fired.getUTCMinutes();
+    const halfHour = minute % 30 === 0;
+    const gate2Hour = fired.getUTCHours() === 17 && minute === 0;
+    {
       try {
         await dispatch(env, "fire-tick", { source: "voices-worker-cron" });
       } catch (err: any) {
@@ -3390,21 +3401,20 @@ export default {
       } catch (err: any) {
         console.error("live producer-tick failed:", err?.message ?? err);
       }
-      return;
     }
-    // */30 tick: the Nerra Producer inbox job. Same landmine as the fire
+    // :00/:30 tick: the Nerra Producer inbox job. Same landmine as the fire
     // tick — GitHub delivered the Producer's own */30 schedule roughly
     // every four hours on Sept 5-6 2026, so a publicist's reply waited
     // half a day. Cloudflare fires to the minute; the workflow's
     // concurrency group makes the overlap with GitHub's cron harmless.
-    if (event.cron === "*/30 * * * *") {
+    if (halfHour) {
       try {
         await dispatch(env, "producer-tick", { source: "voices-worker-cron" });
       } catch (err: any) {
         console.error("producer-tick dispatch failed:", err?.message ?? err);
       }
-      return;
     }
-    await gate2Housekeeping(env);
+    // 17:00 UTC: gate-2 housekeeping (guest-review reminders / auto-approve).
+    if (gate2Hour) await gate2Housekeeping(env);
   },
 };

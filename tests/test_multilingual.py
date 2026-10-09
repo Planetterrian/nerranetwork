@@ -29,12 +29,14 @@ TESLA_DIGESTS = PROJECT_ROOT / "digests" / "tesla_shorts_time"
 class TestMultilingualConfig:
     def test_per_show_languages(self, tmp_path):
         # June 2026 per-show language sets (Spanish dropped network-wide):
-        # flagships get fr/ru/zh, lighter shows fr-only, the rest English-only.
+        # flagships get fr/ru, lighter shows fr-only, the rest English-only.
+        # Oct 9 2026: zh dropped from the three flagships (operator-directed;
+        # eleven weeks of measured: false on every ZH feed at ~$2.70/week).
         from engine.config import load_config
         expected = {
-            "tesla": ["fr", "ru", "zh"],
-            "spacex": ["fr", "ru", "zh"],
-            "fascinating_frontiers": ["fr", "ru", "zh"],
+            "tesla": ["fr", "ru"],
+            "spacex": ["fr", "ru"],
+            "fascinating_frontiers": ["fr", "ru"],
             "first_principles": ["fr"],
             "models_agents": ["fr"],
             "env_intel": ["fr"],
@@ -60,14 +62,16 @@ class TestMultilingualConfig:
 
     def test_zh_approved_pinned_per_show(self):
         # The workflow reads multilingual.zh_approved per show (the blanket
-        # --zh-approved flag defeated the listen-first ZH gate). Only the
-        # shows that ship zh tracks carry the approval.
+        # --zh-approved flag defeated the listen-first ZH gate). Only a show
+        # that ships zh tracks may carry the approval — and since Oct 9 2026
+        # no show does: a zh track needs BOTH the language and the approval.
         from engine.config import load_config
-        for slug in ("tesla", "spacex", "fascinating_frontiers"):
-            assert load_config(f"shows/{slug}.yaml").multilingual.zh_approved is True, slug
-        for slug in ("first_principles", "models_agents", "env_intel",
+        for slug in ("tesla", "spacex", "fascinating_frontiers",
+                     "first_principles", "models_agents", "env_intel",
                      "modern_investing"):
-            assert load_config(f"shows/{slug}.yaml").multilingual.zh_approved is False, slug
+            cfg = load_config(f"shows/{slug}.yaml").multilingual
+            assert cfg.zh_approved is False, slug
+            assert "zh" not in cfg.languages, slug
 
     def test_english_only_shows_disabled(self):
         # modern_investing was enabled June 2026 (ru-only) for the @NerraRU

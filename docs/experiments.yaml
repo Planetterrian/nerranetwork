@@ -3639,3 +3639,67 @@ experiments:
       retries 4. Oct 8 transcripts backfilled from the published MP3s and the
       gate run post hoc (docs/reviews/slate_review_2026_10_08.md §4). No
       audio or prompt change — outside landmine #17.
+
+  - id: spacex-script-grok46-2026-10-09
+    title: "SpaceX script stage on grok-4.6 (digest stays 4.3)"
+    area: quality
+    shipped: 2026-10-09
+    readout: 2026-10-23
+    status: reading
+    baseline: >
+      Oct 2-8 slates: the grok-4.3 flagship scripts read the digest aloud —
+      SpaceX 64% verbatim 8-grams (FF 68%, Planetterrian 68%, First
+      Principles 87%) with 3-12 verified claims per episode — while the
+      grok-4.6/4.7 script arms write their own sentences (Omni View 8-17%
+      on its 4.6 days, MAB 17%, the launch cohort 2-15%) with 13-27 claims.
+      Three prompt passes and the Sep 5-12 rewrite gate moved the 4.3
+      number and brought it back; the model moved it.
+    target: >
+      SpaceX script_digest_overlap_pct median <= 20 over the 14 days with
+      script_digest_coverage_pct >= 70 and entity_retention >= 70; the
+      script stage's p95 duration under 300 s (half the 600 s request
+      timeout, playbook rule) and llm_script_model_fallback on <= 2 of 14
+      episodes; the operator's A/B-listen of Ep1 against the day before
+      does not reject it. GATE: PASS on all of those admits Tesla.
+    criteria: >
+      Hit = overlap <= 20 with coverage >= 70 and no latency breach. A
+      fallback day reads the served model from the credit file, never the
+      YAML (Oct 5 rule). Read with scripts/model_trial_report.py --since
+      2026-10-09 --timeout-seconds 600.
+    notes: >
+      shows/spacex.yaml llm.podcast_model: grok-4.6. A podcast_model
+      override runs two-pass by code (no combined generation), as
+      omni_view runs. CHANGES AUDIO — landmine #17, A/B-listen the first
+      episode. Revert = delete the line. Guards:
+      tests/test_ops_bundle_2026_10_09.py.
+
+  - id: ops-bundle-2026-10-09
+    title: "ZH tracks off, Voices on one cron trigger, grouped Dependabot bumps"
+    area: reliability
+    shipped: 2026-10-09
+    readout: 2026-10-23
+    status: reading
+    baseline: >
+      Eleven weeks after the July 29 per-language OP3 instrument, every ZH
+      feed read measured: false (404, never indexed, no channel, no
+      directory listing) at ~$2.70/week across tesla, spacex and
+      fascinating_frontiers. The Voices Worker held three of the account's
+      five cron triggers (Workers Free) and the scheduler's second trigger
+      was refused at deploy on Oct 8-9. Dependabot opened five pip PRs on
+      Oct 7 alone; #1365 among an earlier batch re-admitted PyAV 19.
+    target: >
+      multilingual.by_language.zh approx_cost_7d_usd reads 0 from the first
+      full week; the Voices /health cron block names one trigger and
+      fire-tick, producer-tick and gate 2 each still run (fire-tick every
+      5 min, producer-tick at :00/:30, gate 2 at 17:00 UTC — check the
+      Actions history of the three dispatch targets); Dependabot's next
+      Tuesday opens at most one pip PR and one actions PR.
+    criteria: >
+      Hit = all three. A missed producer-tick or gate-2 run is the cron
+      consolidation and is fixed in the handler, never by adding a
+      trigger back.
+    notes: >
+      No audio or prompt change — outside landmine #17. The committed
+      *.zh.rss feeds are frozen, not deleted. Operator: wrangler deploy in
+      workers/voices. Guards: tests/test_ops_bundle_2026_10_09.py,
+      tests/test_multilingual.py, tests/test_producer_autonomy.py.
