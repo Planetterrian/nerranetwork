@@ -239,9 +239,13 @@ class TestHomepageAudienceSurfaces:
         assert "popular_episodes" in src
         assert "Most Played This Week" in src
 
-    def test_template_references_subscriber_social_proof(self):
+    def test_template_no_longer_renders_subscriber_social_proof(self):
+        """Oct 9 2026 (#1393, homepage Soft-only): the per-show newsletter
+        form — and the "Join N+ readers" line that rode on it — left `/`;
+        only Soft Personal captures there now. The context key is still
+        supplied (next test) so a later surface can read it."""
         src = self.TEMPLATE.read_text(encoding="utf-8")
-        assert "newsletter_subscriber_count" in src
+        assert "newsletter_subscriber_count" not in src
 
     def test_generate_network_page_supplies_both_context_keys(self):
         import inspect

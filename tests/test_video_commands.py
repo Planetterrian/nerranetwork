@@ -839,7 +839,9 @@ def test_build_long_form_video_falls_back_to_cover_with_one_scene(tmp_path,
                            type("R", (), {"returncode": 0})())[1],
     )
     build_long_form_video(audio, cover, out, scene_paths=[cover])
-    # Only one ffmpeg invocation (no slideshow stage).
+    # Only one ffmpeg invocation (no slideshow stage). The duration probe
+    # (ffprobe, Oct 9 2026 — it bounds the output) is not a render.
+    captured_cmds = [c for c in captured_cmds if c[0] == "ffmpeg"]
     assert len(captured_cmds) == 1
     # The single command's filter graph contains zoompan (image bg).
     graph = captured_cmds[0][captured_cmds[0].index("-filter_complex") + 1]
@@ -1776,6 +1778,7 @@ def test_build_long_form_video_none_schedule_is_byte_identical(tmp_path,
     build_long_form_video(audio, cover, out)
     build_long_form_video(audio, cover, out,
                           scene_schedule=None, broll_clips=None)
+    captured_cmds = [c for c in captured_cmds if c[0] == "ffmpeg"]
     assert len(captured_cmds) == 2
     assert captured_cmds[0] == captured_cmds[1]
 

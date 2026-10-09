@@ -2657,6 +2657,24 @@ def _outro_overlay_tail(input_label: str, *, start: float,
     )
 
 
+
+def _output_bound(total_duration: float) -> List[str]:
+    """``-shortest`` plus an explicit ``-t`` when the episode length is known.
+
+    Oct 9 2026 (ffmpeg 8 on the ubuntu-26.04 runner): ``-shortest`` alone
+    no longer ends the video where the audio ends. On ffmpeg 6.1 a 135 s
+    episode rendered 4,050 frames; on 8.1 the same command wrote 4,101 —
+    1.7 s of bare slideshow after the audio stopped, past the outro card's
+    window, and a 35 s Short came back 36.5 s long with its end card gone
+    before the file ended. ffmpeg 7 moved ``-shortest`` behind the muxer's
+    sync queue, so frames already queued when the audio ran out are still
+    written. An output ``-t`` is exact on every version; ``-shortest`` stays
+    for the paths that cannot know the length.
+    """
+    if total_duration and total_duration > 0:
+        return ["-shortest", "-t", f"{float(total_duration):.2f}"]
+    return ["-shortest"]
+
 def _single_pass_long_form_cmd(
     scene_paths: Sequence[Path], audio_in: str, brand_in: str,
     output: str, *,
@@ -2769,7 +2787,7 @@ def _single_pass_long_form_cmd(
         *_VIDEO_ENCODE,
         "-r", str(fps),
         *_AUDIO_ENCODE,
-        "-shortest",
+        *_output_bound(total_duration),
         "-movflags", "+faststart",
         output,
     ]
@@ -2869,7 +2887,7 @@ def _long_form_cmd(audio_in: str, bg_in: str, brand_in: str,
         *_VIDEO_ENCODE,
         "-r", str(fps),
         *_AUDIO_ENCODE,
-        "-shortest",
+        *_output_bound(total_duration),
         "-movflags", "+faststart",
         output,
     ]
@@ -2969,7 +2987,7 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
         *_VIDEO_ENCODE,
         "-r", str(fps),
         *_AUDIO_ENCODE,
-        "-shortest",
+        *_output_bound(duration),
         "-movflags", "+faststart",
         output,
     ]
@@ -3131,16 +3149,20 @@ def build_long_form_video(
     # every render path below. The overlay's enable window needs the
     # episode's real duration; an unreadable duration disables the card
     # rather than guessing a window.
+    # Oct 9 2026: the duration is probed on EVERY render, not only when
+    # an outro card exists — it also bounds the output (``_output_bound``),
+    # which ffmpeg 8's ``-shortest`` no longer does on its own.
     outro_in: Optional[str] = None
     outro_total = 0.0
-    if outro_card_path and Path(outro_card_path).exists():
-        try:
-            from engine.audio import get_audio_duration as _outro_gd
+    try:
+        from engine.audio import get_audio_duration as _outro_gd
 
-            outro_total = float(_outro_gd(str(audio_path)) or 0.0)
-        except Exception as exc:  # noqa: BLE001 — card is never critical
-            logger.warning("Outro card skipped (duration probe: %s)", exc)
-            outro_total = 0.0
+        outro_total = float(_outro_gd(str(audio_path)) or 0.0)
+    except Exception as exc:  # noqa: BLE001 — neither card nor bound is critical
+        logger.warning("Episode duration probe failed (%s): no outro card, "
+                       "output bounded by -shortest only", exc)
+        outro_total = 0.0
+    if outro_card_path and Path(outro_card_path).exists():
         # Require breathing room past the card itself so a very short
         # render can't spend most of its runtime on the outro.
         if outro_total > outro_card_duration + 10.0:

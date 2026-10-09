@@ -329,7 +329,7 @@ input on the 12 shows, the 45-day recurrence notes, and the frame block.
 
 **Reproducibility.** PyAV 19.0.0 (PyPI 09-29) removed a keyword
 faster-whisper passes; every one of the 23 episodes of 09-30 shipped with
-NO transcript and the spoken-text gate ran blind — `av>=11,<19` in
+NO transcript and the spoken-text gate ran blind — `av>=11,<19` (floor 18.1 since Oct 9) in
 requirements, and `engine/transcripts.py` retries without VAD only on a
 VAD-shaped error and prints a `::error::` otherwise. Main had been red
 since 09-26 on a FIXTURE (an interview transcript with no 200-char line)

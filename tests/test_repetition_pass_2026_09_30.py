@@ -153,7 +153,9 @@ class TestWiring:
 class TestWhisperOutageGuards:
     def test_pyav_is_pinned_below_19(self):
         req = (ROOT / "requirements.txt").read_text(encoding="utf-8")
-        m = re.search(r"^av>=11,<19\s*$", req, re.M)
+        # The CEILING is the guard; the floor rose to 18.1 with the Oct 9
+        # 2026 runner upgrade (tests/test_transcripts_pyav_2026_10_08.py).
+        m = re.search(r"^av>=[\d.]+,<19\s*$", req, re.M)
         assert m, "PyAV must stay below 19 until faster-whisper releases against it"
 
     def test_a_non_vad_error_is_not_retried_as_vad(self, monkeypatch, tmp_path):

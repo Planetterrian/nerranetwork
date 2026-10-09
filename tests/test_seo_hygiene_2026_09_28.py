@@ -180,14 +180,21 @@ class TestNoIndexHtmlInternalHomeLinks:
 
 class TestBlogNerraVoicesRss:
     def test_no_link_to_missing_blog_rss(self, tmp_path):
+        """Oct 9 2026: Nerra Voices published Ep1 on Oct 8 and the nightly
+        wrote blog_nerra_voices.rss, so it no longer stands in for "a show
+        with no blog feed" (the conftest.unpublished_show rule). The index
+        reads the feed by SLUG, so the registry entry is rendered under a
+        slug no feed file carries."""
         import generate_html as g
         from engine.blog import generate_blog_index_html
 
         cfg = dict(g.NETWORK_SHOWS["nerra_voices"])
+        cfg["slug"] = "unpublished_show"
+        assert not (ROOT / "blog_unpublished_show.rss").exists()
         env = g._get_jinja_env()
         html = generate_blog_index_html([], cfg, env)
         (tmp_path / "index.html").write_text(html, encoding="utf-8")
-        assert "blog_nerra_voices.rss" not in html
+        assert "blog_unpublished_show.rss" not in html
         # A show whose feed EXISTS still advertises it.
         assert (ROOT / "blog_age_of_ai.rss").is_file()
         aoai = dict(g.NETWORK_SHOWS["age_of_ai"])
