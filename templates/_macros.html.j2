@@ -266,3 +266,58 @@
 </section>
 {%- if wrapper_id -%}</div>{%- endif -%}
 {%- endmacro -%}
+
+{#- Soft Personal band for blog episode posts (Oct 2026, plan item E1).
+    Blog posts are ~34% of measured landing sessions (PR #1374) and had no
+    Soft Personal ask. Same approved copy, list and Worker path as
+    soft_personal_hero_band, but its own ids (#soft-personal-post) so the
+    "exactly ONE #soft-personal-hero" rule on show pages is untouched.
+    Server-rendered in normal flow with a reserved status line, so it adds
+    no layout shift. No paid link inside this no-charge block.
+    Arguments:
+      path_prefix    : relative path back to site root
+      show_slug      : data-show + form-id key
+      capture_source : default src-* tag (utm_source overrides in JS)
+-#}
+{%- macro soft_personal_post_band(path_prefix='', show_slug='', capture_source='') -%}
+<aside class="nn-soft-personal-post" id="soft-personal-post"
+       style="margin:var(--sp-6) 0;padding:var(--sp-4) var(--sp-5);background:var(--nn-card);border:1px solid var(--nn-border);border-radius:14px;">
+    <p style="margin:0 0 var(--sp-3);font-family:var(--font-ui);font-size:0.95rem;line-height:1.55;color:var(--nn-text);text-align:center;">
+        Get a quiet nudge with occasional Personal tips. No charge, no card. Shows stay free either way.
+    </p>
+    <form method="post" action="#"
+          data-nn-subscribe="soft-personal"
+          data-list="personal-interest"
+          data-source="{{ capture_source }}"
+          data-show="{{ show_slug }}"
+          data-form-id="blog-{{ show_slug }}-soft-personal"
+          data-label-loading="Saving…"
+          data-label-done="Saved ✓"
+          data-label-soft-done="You’re on the list. Shows stay free either way."
+          data-label-error="Couldn’t save that just now. Try again in a moment."
+          data-label-idle="Save my email"
+          style="display:flex;gap:var(--sp-2);flex-wrap:wrap;justify-content:center;align-items:center;position:relative;">
+        <label for="spi-post-email-{{ show_slug }}"
+               style="font-family:var(--font-ui);font-size:0.85rem;font-weight:600;color:var(--nn-text-muted);margin:0;">Email</label>
+        <input type="email" id="spi-post-email-{{ show_slug }}" name="email" required autocomplete="email"
+               placeholder="your@email.com"
+               aria-label="Email address"
+               style="padding:8px 14px;border-radius:8px;border:1px solid var(--nn-border);background:var(--nn-bg);color:var(--nn-text);font-size:16px;min-width:220px;">
+        {#- Honeypot — leave empty. Worker discards when company is set. -#}
+        <div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">
+            <label for="spi-post-company-{{ show_slug }}">Company</label>
+            <input type="text" id="spi-post-company-{{ show_slug }}" name="company" tabindex="-1" autocomplete="off">
+        </div>
+        <button type="submit"
+                style="padding:8px 16px;border-radius:8px;background:var(--nn-gradient, var(--show-color));color:#fff;border:none;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:var(--font-ui);">
+            Save my email
+        </button>
+    </form>
+    <p class="nn-subscribe-status" data-nn-subscribe-status role="status" aria-live="polite"
+       style="margin:var(--sp-2) 0 0;text-align:center;font-family:var(--font-ui);font-size:0.9rem;min-height:1.3em;"></p>
+    <p style="margin:var(--sp-2) 0 0;text-align:center;font-family:var(--font-ui);font-size:0.82rem;line-height:1.45;color:var(--nn-text-muted);">
+        We’ll only email you about Nerra Personal. Unsubscribe anytime.
+        <a href="{{ path_prefix }}privacy-policy.html" style="color:var(--nn-cyan,#00D4FF);text-decoration:none;font-weight:600;">Privacy policy</a>.
+    </p>
+</aside>
+{%- endmacro -%}

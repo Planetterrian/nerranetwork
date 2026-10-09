@@ -1481,6 +1481,14 @@
             </p>
             {% endif %}
 
+            {#- Soft Personal ask on episode posts (Oct 2026, plan item E1).
+                English posts only: no Personal offer on RU/FR surfaces
+                until Patrick decides (brand-voice-nerra). -#}
+            {% if not _is_ru %}
+            {% from "_macros.html.j2" import soft_personal_post_band %}
+            {{ soft_personal_post_band(path_prefix, show_slug | default('show'), capture_source_site) }}
+            {% endif %}
+
             {#- Per-episode feedback surface (Phase 4 of May 2026 audit).
                 The strategic review found NO per-episode listener-voice
                 affordance — no thumbs-up, no comments, no community.
