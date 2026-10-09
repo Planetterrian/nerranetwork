@@ -714,6 +714,16 @@ class TestMultilingualDecoupled:
             encoding="utf-8")
         assert "HEAD_COMMIT_MESSAGE" in text
         assert "Auto-generated:" in text
+        # Oct 9 2026: the head commit never named the show on a scheduled run
+        # (the episode commit is made DURING the run), so the fallback swept
+        # all seven shows on every successful run — 92 Multilingual commits
+        # on Oct 7. The step reads the triggering run's jobs ("run (<show>)")
+        # and needs actions: read for it; the head-commit match stays as the
+        # fallback behind an API failure.
+        assert "TRIGGER_RUN_ID: ${{ github.event.workflow_run.id }}" in text
+        assert '/actions/runs/{run_id}/jobs' in text
+        assert 'r"run \\((\\S+)\\)"' in text
+        assert "actions: read" in text
 
     def test_push_exhaustion_preserves_commit_via_recovery_pr(self):
         # RU-dub uploads' only dedupe record (youtube_videos.ru.json) lives in
