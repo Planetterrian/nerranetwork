@@ -130,3 +130,45 @@ def test_ru_post_has_no_personal_offer():
     assert ru, "expected at least one Russian-language show"
     html = _render(ru[0])
     assert 'id="soft-personal-post"' not in html
+
+
+def test_fr_gate_matches_page_lang_and_is_live_noop():
+    """FR Soft exclusion: same page_lang detection as RU; currently a no-op.
+
+    Blog posts take ``page_lang`` from ``engine.show_lang.page_lang`` (YAML
+    ``tts.language_code`` / registry ``page_lang``). That module returns only
+    ``en`` or ``ru`` for every registered show today — there is no French
+    show page and no separate FR blog HTML — so a live render never hits
+    ``_is_fr``. The template still gates Soft on ``not _is_fr`` so a future
+    ``page_lang: fr`` show stays Soft-free without inventing a second flag.
+    """
+    import re
+
+    import engine.blog as B
+    from generate_html import NETWORK_SHOWS
+
+    tpl = (ROOT / "templates" / "blog_post.html.j2").read_text(encoding="utf-8")
+    scrubbed = re.sub(r"\{#.*?#\}", "", tpl, flags=re.S)
+    assert "_is_fr = (page_lang | default('en')) == 'fr'" in scrubbed
+    assert "not _is_ru and not _is_fr" in scrubbed
+
+    langs = {B._show_lang.page_lang(s) for s in NETWORK_SHOWS}
+    assert langs <= {"en", "ru"}
+    assert "fr" not in langs
+
+    # Force page_lang=fr through the real render path to prove the gate.
+    real = B._show_lang.page_lang
+
+    def _fr_for_spacex(slug):
+        if slug == "spacex":
+            return "fr"
+        return real(slug)
+
+    B._show_lang._reset_cache()
+    try:
+        B._show_lang.page_lang = _fr_for_spacex  # type: ignore[method-assign]
+        html = _render("spacex")
+    finally:
+        B._show_lang.page_lang = real  # type: ignore[method-assign]
+        B._show_lang._reset_cache()
+    assert 'id="soft-personal-post"' not in html

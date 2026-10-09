@@ -1021,9 +1021,13 @@
     </style>
 {% endblock %}
 
-{# Page-language flag — Russian shows render localized chrome
-   (Phase 1 audit + Phase 4 retention surfaces). #}
+{# Page-language flags — Russian shows render localized chrome
+   (Phase 1 audit + Phase 4 retention surfaces). Soft Personal is EN
+   only: gate RU and FR the same way (page_lang). Today engine.show_lang
+   only returns en/ru, so the FR branch is dormant until a show declares
+   page_lang/tts.language_code fr. #}
 {%- set _is_ru = (page_lang | default('en')) == 'ru' -%}
+{%- set _is_fr = (page_lang | default('en')) == 'fr' -%}
 
 {% block content %}
     {% from "_macros.html.j2" import ai_badge %}
@@ -1483,8 +1487,10 @@
 
             {#- Soft Personal ask on episode posts (Oct 2026, plan item E1).
                 English posts only: no Personal offer on RU/FR surfaces
-                until Patrick decides (brand-voice-nerra). -#}
-            {% if not _is_ru %}
+                until Patrick decides (brand-voice-nerra). FR uses the
+                same page_lang == 'fr' detection as _is_ru; no show
+                returns fr today (engine.show_lang is en/ru only). -#}
+            {% if not _is_ru and not _is_fr %}
             {% from "_macros.html.j2" import soft_personal_post_band %}
             {{ soft_personal_post_band(path_prefix, show_slug | default('show'), capture_source_site) }}
             {% endif %}
