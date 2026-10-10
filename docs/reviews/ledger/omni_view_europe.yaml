@@ -73,3 +73,101 @@ reviews:
         baseline: "1/1 (Ep1)"
         expected: "0/7"
         verdict: pending
+  - date: '2026-10-10'
+    pr: null
+    doc: docs/reviews/omni_view_europe_review_2026_10_10.md
+    generated_by: grok-4.5
+    summary: 'First post-launch quality pass: format guardrails mostly hold on ep9–18, but every recent script is under the 1300-word floor, Progress Watch still narrates empty days, and coverage swings as low as 51%—fix via digest/coverage substrate and empty-section omission, not podcast word-pressure.'
+    scored_prior_predictions:
+    - metric: episodes (first 7) with an item whose subject is outside Europe and carries no stated consequence inside it
+      verdict: hit
+      evidence: ep9–18 leads/ATR are Europe-primary or state in-region consequence; no clear off-desk lead in the sampled window
+    - metric: Mira claims a body, a home, a trip or an event witnessed (transcript read)
+      verdict: hit
+      evidence: ep9–18 only AI-host self-ID + closing synthesis disclaimer; no body/home/witness claims
+    - metric: Both Sides states or implies which side is stronger, or picks a party, government or people
+      verdict: hit
+      evidence: ep10–18 Both Sides segments keep dual strongest-form framing without an endorsed winner
+    - metric: Progress Watch carries a promise or announcement of intent instead of a measured result
+      verdict: partial
+      evidence: measured beats exist (ep9 inspections, ep12 Lloyds test, ep15 facility payout, ep17 IP +5.8%) but empty days are still narrated and some Progress lines stay one-sentence thin
+    - metric: Across the Region episodes (first 7) carrying an Also Today section on days with >= 8 qualifying articles
+      verdict: hit
+      evidence: ep9–18 transcripts/chapters routinely include an Also Today block when the rundown has short items
+    - metric: episodes with a Lead sourced only to x.com
+      verdict: hit
+      evidence: sampled leads credit France 24/Euronews/Guardian/Al Jazeera etc.; no x.com-only lead heard in ep9–18
+    - metric: digest_lints_fired_after_retry non-empty
+      verdict: partial
+      evidence: no lint telemetry in snapshot; clean chapters + stable section shape, but not mechanically proven ≤1/7
+    - metric: desk digest words vs min_digest_words on days with >= 12 full-text articles
+      verdict: miss
+      evidence: 10/10 podcast scripts still under 1300 words; ep16 coverage 51% shows digest/utilization not meeting launch length expectation
+    - metric: leads credited to a syndication carrier rather than the wire
+      verdict: hit
+      evidence: ep9–18 leads name primary outlets/wires; Mighty-790-style carrier credit not observed in this window
+    shipped: []
+    deferred:
+    - Desk-specific music theme (still on OmniView.mp3 bed) — operator commission
+    - Second Nerra Daily edition assembled from regional desks — operator audience gate
+    - Re-grade Europe feed list from a Actions runner via check_feeds.py
+    - YouTube enable for Omni View Europe — plan §7 data decision
+    - Directory/submission and cross-promo weighting while OP3 first-week median is 0
+    - Podcast-side expand-below-target or higher min_podcast_words prompt pressure — network length do_not_retry class
+    - 'Phonetic respellings for TTS/Whisper name garble — landmine #17'
+    predictions:
+    - metric: episodes (next 10) whose _tts/transcript contains an empty-Progress narration (“does not appear in today's reporting” / “nothing … qualifies as a sign of progress” / “the day had none”)
+      baseline: 3/10 in ep9–18 (ep11, ep14, ep18)
+      expected: 0/10 after empty-section omission ships
+      verdict: pending
+      evidence: null
+    - metric: script coverage median (snapshot density audit, last 10)
+      baseline: median roughly ~64% (range 51–92% on ep9–18)
+      expected: median ≥75% with no episode <55% on days with a full digest
+      verdict: pending
+      evidence: null
+    - metric: podcast scripts below min_podcast_words 1300 (last 10) — scored only as digest/coverage side effect, not a prompt length lever
+      baseline: 10/10 below 1300
+      expected: ≤4/10 below 1300 if digest floor + coverage obligation ship; else miss and escalate to operator digest-supply decision
+      verdict: pending
+      evidence: null
+    - metric: Both Sides cold-open sentence states an in-Europe stake before any exogenous capital
+      baseline: ep9 diesel segment opens on Washington/US prices
+      expected: ≥9/10 next Both Sides open on the Europe hinge first
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/_shared/omni_desk_podcast_body.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: ep11/14/18 narrate empty Progress and still burn a chapter span; honesty is keeping silence, not performing the absence (P1.2).
+    - file: shows/prompts/_shared/omni_desk_digest_body.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Keeps digest→podcast aligned so the podcast has nothing to apologize for; pairs with existing progress_watch_thin lint.
+    - file: shows/prompts/_shared/omni_desk_podcast_body.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: ep16 coverage 51% and ep10 hook cov 22% show under-utilization of digest substrate while scripts still miss 1300 — fix coverage, not podcast expand (P1.1/P1.3).
+    - file: shows/prompts/_shared/omni_desk_podcast_body.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: ep9 diesel Both Sides ran as a US price story with Europe as afterthought — region rule says consequence-inside-Europe first (P1.4).
+    - file: shows/omni_view_europe.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: 'Length category rule: digest-substrate only. Scripts are 10/10 under 1300; confirm digests before touching podcast knobs (P1.1).'
+    - file: tests/test_omni_view_europe_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Every behavioral fix needs a drift-guard; tolerate today’s in-flight episode shape (Sep 2026 guard lesson).
+    - file: engine/chapters or desk chapter post-process (wherever Lead headline chapters are assigned for omni desks)
+      kind: code
+      ab_listen_required: false
+      rationale: P1.5 scrubber consistency; chapters-only — no audio rewrite if markers already align to speech.
+    agent_cost_usd: 0.0958
+do_not_retry:
+  - idea: 'Any podcast-side length lever (word-floor nag, podcast_expand_below_target, ‘write 10–12 minutes’ pressure) for omni_view_europe — network meta-review: length misses re-diagnose to digest ceiling/utilization'
+    evidence: flagged 2026-10-10 (Grok review)
+  - idea: 'Phonetic respellings or programmatic speech-tag injection for Mira/ara on this desk — landmine #17 100% regression class'
+    evidence: flagged 2026-10-10 (Grok review)
