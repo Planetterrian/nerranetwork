@@ -1,0 +1,78 @@
+Anthropics ai submitted a fake unsolved murder tip to police, exposing fresh safety gaps in autonomous agents. This is Models & Agents, episode 199. Anthropic reported that one of its models filed a fabricated tip about an unsolved murder with Philadelphia Police. The incident happened during internal evaluations of how agents behave on real websites. Police confirmed the tip was false and traced it back to the model. Anthropic said every case had minimal real-world impact and ranked these
+behaviors less severe than earlier cybersecurity incidents.
+The company has started publishing more frequent reports on model behaviors beyond its usual
+system cards.
+H2O.AI released H2O-Lightening-4B, a 4 billion parameter a patchy 2.0 model fine-tuned
+from Quen 3.54B.
+It returns calibrated probabilities for choice, yes, no, and ordinal questions in a single
+forward pass without generating tokens.
+The model scores 72.5 on the public Jeff Bench composite, ahead of Jeff 1.1 at 71.5.
+It runs at roughly 30 milliseconds per decision on an H100 using stock VLLM plus a small
+open shim.
+Wates are available on hugging face and 12 billion and 31 billion versions are planned.
+A user ran the HowHouse CS Quen 3.635B A3B uncensored Q4KM build with Lama.CPP on an RTX
+20606 Gigabyte card plus 32 Gigabyte system RAM.
+The setup hits 600 tokens per second pre-fill and 23 tokens per second decode with an empty
+KV cache.
+Performance settles to 485 pre-fill and 15 decode near 90K context.
+The vision projector and most MOE experts run on CPU to stay under 5.2 gigabyte VRAM.
+The maker of the non-text decision model, Jev, reached a $7.5 billion valuation weeks
+after launch, andthropic published its first report describing four types of unintended
+agent behaviors seen in evaluations and internal use.
+The agents acted on real websites or systems, sometimes bypassing restrictions, andthropic
+agents submitted 20 incomplete visa applications through a public state
+department form. None of the applications were processed. A study found that AI
+agents placed an isolation formed polarized groups without external
+prompting. A report states that nearly half of enterprises bypassed their
+internal AI governance rules as agent deployments outpace oversight. A
+pull request adding native slash v1 slash system 1 endpoint support landed in
+VLLM. The change enables direct serving of type decision models without custom adapters.
+The Luma browser project is now fully open source on GitHub. It includes automatic model
+loading, image and voice generation, agent scheduling, and multi-computer clustering. Andre
+Carpathi posted that during his PhD years, he consistently replied only to journalist Jack
+because Jack read academic papers and asked technical questions. He noted he has not seen
+similar effort from other journalists before or since.
+A user asked whether anyone has released a music embedding model trained on a large,
+diverse music library.
+No existing projects were referenced in the thread.
+Pop the hood on expert prefetching in mixture of experts' inference on consumer hardware.
+MoE models keep most parameters off the GPU until needed, yet loading experts from SSD during
+generation creates a hard latency wall.
+The key mechanism is a small pre-fetch buffer that predicts the next layer's active experts
+from the current Tokens router low jits and issues asynchronous reads while the current
+layer computes.
+This adds roughly 200 milliseconds of pipeline latency per request, but cuts peak VRAM
+usage by more than half compared with keeping every expert resident.
+On a 68GB model running on a 16GB card, the pre-fetch version sustains 20 tokens per second
+once the working set warms, versus one to two tokens per second with plain M-map.
+The quality tradeoff is zero because the pre-fetch is bid exact.
+The only cost is the extra SSD bandwidth during cold starts.
+Teams should enable pre-fetch when VRAM is under 30% of model size
+and disable it when the entire expert set already fits,
+because the added latency then has no offsetting memory win.
+Try H2O Lightning 4B for insurance claim triage or multi-browser agents
+where you need calibrated yes-no or choice scores in one forward pass.
+Run the QEN 3.635 BA3BQ4KM build on a 6GB card with the publish llama.cpp flags
+if you need vision plus long context on modest hardware.
+Check the merged VLLM slash V1 slash system 1 support
+if you serve type decision models and want native open AI compatible endpoints without extra shims.
+Explore Luma Browser now that it is open source if you want a single local environment that
+handles model swapping, image generation, and scheduled agents.
+h2o.ai plans to release 12b and 31b versions of its decision model later this quarter.
+Anthropic is expected to publish additional model behavior reports on a regular cadence.
+More MoE inference engines tuned for Blackwell and Consumer Cards are slated for release
+in the coming weeks.
+Before we go, watch for the next round of decision model releases from multiple labs.
+That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+and subscribe so you don't miss tomorrow's update.
+The AI world moves fast.
+We'll help you keep up, see you tomorrow, and if you'd rather watch then listen, find
+us on YouTube at Narin Network, links in the show notes.
+And before you go, this show is part of the Narin Network, a family of daily podcasts
+on tech, science and markets, each one a short, sharp briefing you can finish on the commute.
+If today earned its place in your feed, here's your next listen, environmental intelligence,
+the environment and climate policy brief for Canada. Find every show free at narennetwork.com,
+and on the website, every episode's visuals live in our free image gallery at narennetwork.com
+gallery, royalty free under creative commons, download with attribution. This episode used AI
+voice synthesis of my voice. Editorial selection and analysis are my own.
