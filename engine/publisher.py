@@ -1513,13 +1513,16 @@ def post_to_x(
     access_token: str,
     access_token_secret: str,
     in_reply_to_tweet_id: Optional[str] = None,
+    media_ids: Optional[list] = None,
 ) -> Optional[str]:
     """Post a tweet and return the tweet URL, or ``None`` on failure.
 
     Credentials are accepted as explicit parameters so the caller (or
     config system) decides which env vars to read. Pass
     *in_reply_to_tweet_id* to post the tweet as a reply (used by the
-    cross-promo follow-up under the daily teaser, June 2026).
+    cross-promo follow-up under the daily teaser, June 2026), and
+    *media_ids* (from :func:`engine.x_media.upload_media`) to attach a clip
+    or image (Oct 10 2026).
     """
     try:
         import tweepy
@@ -1530,12 +1533,12 @@ def post_to_x(
             access_token=access_token,
             access_token_secret=access_token_secret,
         )
+        kwargs: dict = {"text": text}
         if in_reply_to_tweet_id:
-            response = client.create_tweet(
-                text=text, in_reply_to_tweet_id=in_reply_to_tweet_id,
-            )
-        else:
-            response = client.create_tweet(text=text)
+            kwargs["in_reply_to_tweet_id"] = in_reply_to_tweet_id
+        if media_ids:
+            kwargs["media_ids"] = [str(m) for m in media_ids]
+        response = client.create_tweet(**kwargs)
         tweet_id = response.data["id"]
         tweet_url = f"https://x.com/i/status/{tweet_id}"
         logger.info("Tweet posted: %s", tweet_url)

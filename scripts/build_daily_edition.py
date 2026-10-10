@@ -609,17 +609,23 @@ def build_edition(
 
 
 def post_edition_to_x(spec: EditionSpec, episode_num: int, title: str):
-    """Post the edition's title and rundown link to X. ``(posted, reason)``."""
-    from engine.funnel import PLACEMENT_BODY, SOURCE_X, episode_link
-    from engine.x_post import post_teaser
+    """Post the edition to X: its title and cover art, no link.
 
-    page = f"https://nerranetwork.com/blog/{spec.slug}/ep{episode_num:03d}.html"
-    link = episode_link(page, spec.slug, episode_num, kind="episode",
-                        placement=PLACEMENT_BODY, source=SOURCE_X)
-    return post_teaser(
-        env_prefix=spec.x_env_prefix, title=title, link=link,
+    ``(posted, reason)``. Oct 10 2026: a post with a link costs $0.20 on X's
+    pay-per-use API and this one about $0.03; the @nerranetwork profile link
+    carries people to the rundown. Interview episodes keep their links.
+    """
+    from engine.x_post import clip_post_text, post_media
+
+    cover = ROOT / "assets" / "covers" / f"{spec.slug.replace('_', '-')}.jpg"
+    posted, reason, _url, _media = post_media(
+        env_prefix=spec.x_env_prefix,
+        text=clip_post_text(label=f"📻 {spec.name}", hook=title,
+                            episode_num=episode_num),
+        media_paths=[str(cover)],
         label=f"{spec.name} Ep{episode_num}",
     )
+    return posted, ("" if posted else reason)
 
 
 def main() -> int:

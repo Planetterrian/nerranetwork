@@ -372,6 +372,12 @@ class PublishingConfig:
     # gates the whole reply — false is a byte-for-byte no-op.
     x_handle: str = ""
     x_cross_promo: bool = False
+    # "link" (default): the teaser carries the episode link. "clip" (Oct 10
+    # 2026, @nerranetwork): the episode's first Short goes up as native
+    # video with the hook and no link, falling back to the show cover and
+    # then to text; no cross-promo reply. On X's pay-per-use API a post with
+    # a URL costs $0.20, a clip about $0.03 (upload + post).
+    x_post_format: str = "link"
     host_name: str = "Patrick"
     # "human" (default) or "ai". An AI host (Mira) must never be given the
     # human-host disclosure ("synthesis of MY voice — analysis my own",

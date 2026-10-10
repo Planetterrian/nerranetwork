@@ -493,10 +493,10 @@ class TestShowConfigs:
         config = load_config(config_path)
         assert config.slug == "models_agents"
         assert config.name == "Models & Agents"
-        # X posting enabled May 12 2026 — M&A shares the
-        # @teslashortstime account (AI/ML overlap with Tesla).
+        # X posting enabled May 12 2026 on @teslashortstime; since Oct 10
+        # 2026 every show except Tesla Shorts Time posts on @nerranetwork.
         assert config.publishing.x_enabled is True
-        assert config.publishing.x_env_prefix == "X_"
+        assert config.publishing.x_env_prefix == "NERRANETWORK_X_"
         assert config.newsletter.enabled is True
         assert config.newsletter.api_key_env == "BUTTONDOWN_API_KEY"
         assert len(config.sources) > 10  # Has many RSS feeds

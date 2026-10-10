@@ -4797,6 +4797,8 @@ def run(args: argparse.Namespace) -> None:
         extra_context["youtube_url"] = youtube_long_url
     if youtube_short_url:
         extra_context["youtube_short_url"] = youtube_short_url
+    if youtube_urls.get("x_clip_path"):
+        extra_context["x_clip_path"] = youtube_urls["x_clip_path"]
     # Record YouTube publishing outcomes (extracted to engine/pipeline.py
     # as the first step of the larger run_show.py phase extraction effort
     # identified in the May 2026 review).
@@ -5303,7 +5305,38 @@ def run(args: argparse.Namespace) -> None:
         access_token = os.getenv(f"{prefix}ACCESS_TOKEN", "")
         access_token_secret = os.getenv(f"{prefix}ACCESS_TOKEN_SECRET", "")
 
-        if all([consumer_key, consumer_secret, access_token, access_token_secret]):
+        _x_clip_mode = getattr(config.publishing, "x_post_format", "link") == "clip"
+        if _x_clip_mode and all([consumer_key, consumer_secret, access_token,
+                                 access_token_secret]):
+            # Oct 10 2026 (@nerranetwork): the episode's Short as native
+            # video with the hook and no link; the cover if there is no
+            # Short; text alone if neither uploads. A linked post costs
+            # $0.20 on X's API, this about $0.03. No cross-promo reply: its
+            # link would cost another $0.20.
+            from engine.x_post import clip_post_text, post_media
+            if "hook" not in extra_context and locals().get("hook"):
+                extra_context["hook"] = hook
+            _clip = str(extra_context.get("x_clip_path") or "")
+            _ok, _why, tweet_url, _media = post_media(
+                env_prefix=prefix,
+                text=clip_post_text(label=_x_label(config),
+                                    hook=extra_context.get("hook") or "",
+                                    episode_num=episode_num),
+                media_paths=[p for p in (_clip, _show_cover_path(config)) if p],
+                label=f"{config.name} ep{episode_num}",
+            )
+            if _ok:
+                _x_posted = True
+                record_x_post(tracker)
+                metrics.record("x_post_media",
+                               "clip" if _media and _media == _clip
+                               else ("image" if _media else "none"))
+            if _clip:
+                try:
+                    Path(_clip).unlink(missing_ok=True)
+                except OSError:
+                    pass
+        elif all([consumer_key, consumer_secret, access_token, access_token_secret]):
             # Surface the episode hook to the teaser builder (June 2026):
             # the hardcoded teasers carried no episode-specific content,
             # so every day's post read identically except the date.
@@ -8562,9 +8595,21 @@ def _publish_youtube(
                         )
 
                     # Best-effort cleanup of this Short's MP4 now
-                    # that YouTube has the canonical copy.
+                    # that YouTube has the canonical copy. Oct 10 2026: the
+                    # first Short is also the show's X post when
+                    # publishing.x_post_format is "clip", so it is kept for
+                    # step 13, which deletes it once posted.
+                    _keep_for_x = (
+                        short_idx == 0
+                        and config.publishing.x_enabled
+                        and getattr(config.publishing, "x_post_format", "link") == "clip"
+                    )
                     try:
-                        if this_short_video_path.exists():
+                        if _keep_for_x and this_short_video_path.exists():
+                            _x_clip = work_dir / f"{base_name}_x_clip.mp4"
+                            this_short_video_path.replace(_x_clip)
+                            result["x_clip_path"] = str(_x_clip)
+                        elif this_short_video_path.exists():
                             this_short_video_path.unlink()
                     except OSError:
                         pass
@@ -8707,6 +8752,38 @@ def _append_youtube_line(teaser: str, extra_context: dict) -> str:
     if yt_url in teaser:
         return teaser
     return f"{teaser}\n🎬 Watch on YouTube: {yt_url}"
+
+
+#: The first line of a show's X post on @nerranetwork (Oct 10 2026), so a
+#: follower can tell the shows apart in one feed. Shows not listed get the
+#: microphone and their name.
+_X_LABELS = {
+    "omni_view": "📰⚖️ Omni View",
+    "fascinating_frontiers": "🚀🌌 Fascinating Frontiers",
+    "planetterrian": "🌍🧬 Planetterrian Daily",
+    "modern_investing": "📈💰 Modern Investing Techniques",
+    "spacex": "🚀 SpaceX Daily",
+    "models_agents": "🤖 Models & Agents",
+    "unintended_consequences": "🔀 Unintended Consequences",
+}
+
+
+def _x_label(config) -> str:
+    return _X_LABELS.get(config.slug) or f"🎙️ {config.name}"
+
+
+def _show_cover_path(config) -> str:
+    """The show's cover under assets/covers/, the same lookup the YouTube
+    stage uses, or "" when there is none."""
+    candidates = [
+        PROJECT_ROOT / "assets" / "covers" / f"{config.slug.replace('_', '-')}.jpg",
+        PROJECT_ROOT / "assets" / "covers" / f"{config.slug}.jpg",
+    ]
+    rss_image = getattr(config.publishing, "rss_image", "") or ""
+    basename = rss_image.rstrip("/").rsplit("/", 1)[-1]
+    if basename:
+        candidates.append(PROJECT_ROOT / "assets" / "covers" / basename)
+    return next((str(c) for c in candidates if c.exists()), "")
 
 
 def _build_teaser(config, episode_num: int, today_str: str, extra_context: dict) -> str:

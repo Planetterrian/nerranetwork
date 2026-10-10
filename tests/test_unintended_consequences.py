@@ -56,7 +56,8 @@ class TestShowYaml:
         # account (Option B from pipeline-streamline plan). UC has no
         # ``x_accounts`` configured so the X-fetch path stays empty.
         assert cfg["publishing"]["x_enabled"] is True
-        assert cfg["publishing"]["x_env_prefix"] == "PLANETTERRIAN_X_"
+        # Oct 10 2026: @nerranetwork (was @planetterrian).
+        assert cfg["publishing"]["x_env_prefix"] == "NERRANETWORK_X_"
 
     def test_resolves_to_default_voice(self):
         """Inheritance from ``_defaults.yaml`` should give it the

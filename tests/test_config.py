@@ -482,7 +482,8 @@ class TestLoadConfigRealFiles:
         # (was 10 s of music alone first).
         assert cfg.audio.voice_intro_delay == 0.0
         assert cfg.publishing.rss_category == "Science"
-        assert cfg.publishing.x_env_prefix == "PLANETTERRIAN_X_"
+        # Oct 10 2026: posts on @nerranetwork (was @planetterrian).
+        assert cfg.publishing.x_env_prefix == "NERRANETWORK_X_"
         assert cfg.episode.prefix == "Fascinating_Frontiers"
 
     def test_planetterrian_show(self):

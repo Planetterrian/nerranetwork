@@ -12,15 +12,16 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Tuple
+from pathlib import Path
+from typing import Optional, Sequence, Tuple
 
 from engine.titles import X_TEASER_TEXT_MAX, clip_words
 
 logger = logging.getLogger(__name__)
 
-#: The network account (@nerranetwork) posts by hand today; these are the
-#: secret names that turn the two bypass publishers on. Deliberately not
-#: ``X_`` (that app is @teslashortstime) or ``PLANETTERRIAN_X_``.
+#: The network account (@nerranetwork). Since Oct 10 2026 every show except
+#: Tesla Shorts Time posts here; ``X_`` stays @teslashortstime (Tesla only)
+#: and ``PLANETTERRIAN_X_`` is no longer used by any show.
 NETWORK_X_ENV_PREFIX = "NERRANETWORK_X_"
 
 _SUFFIXES = ("CONSUMER_KEY", "CONSUMER_SECRET", "ACCESS_TOKEN", "ACCESS_TOKEN_SECRET")
@@ -31,6 +32,69 @@ def x_credentials(env_prefix: str) -> dict:
     prefix = env_prefix or ""
     values = {k.lower(): os.getenv(f"{prefix}{k}", "").strip() for k in _SUFFIXES}
     return values if all(values.values()) else {}
+
+
+#: The last line of a no-link post (Oct 10 2026). No URL and no bare
+#: domain: X links either, and a linked post costs $0.20 instead of $0.015.
+CLIP_CLOSER = "Full episode: link in bio, or search Nerra Network in your podcast app."
+#: X counts emoji as two characters; stay clear of the 280 limit.
+CLIP_TEXT_MAX = 270
+
+
+def clip_post_text(*, label: str, hook: str, episode_num: Optional[int] = None,
+                   closer: str = CLIP_CLOSER, limit: int = CLIP_TEXT_MAX) -> str:
+    """``<label> · Ep N`` / the episode hook / the closer, with no link.
+
+    The hook is what makes each post different from yesterday's; X's
+    automation rules forbid near-identical posts, and its spam policy calls
+    out accounts that mostly post links without commentary.
+    """
+    from engine.x_media import strip_links
+    head = " ".join((label or "").split())
+    if episode_num:
+        head = f"{head} · Ep {int(episode_num)}"
+    body = " ".join(strip_links(hook).split())
+    budget = limit - len(head) - len(closer) - 4
+    if body and budget > 20:
+        body = clip_words(body, budget)
+    elif budget <= 20:
+        body = ""
+    return "\n\n".join(p for p in (head, body, closer) if p)
+
+
+def post_media(*, env_prefix: str, text: str, media_paths: Sequence,
+               label: str) -> Tuple[bool, str, str, str]:
+    """Post *text* with the first of *media_paths* that uploads.
+
+    Returns ``(posted, reason, url, media_path)``. ``reason`` is ``""`` when
+    the post carried media (``media_path`` says which), ``no_media`` when
+    every upload failed and the text went alone, ``no_credentials`` or
+    ``post_failed`` when nothing posted.
+    """
+    creds = x_credentials(env_prefix)
+    if not creds:
+        logger.warning("X post skipped for %s: no %s* credentials in the "
+                       "environment", label, env_prefix or "<empty prefix>")
+        return False, "no_credentials", "", ""
+    from engine.x_media import upload_media
+    media_id, used = None, ""
+    for path in media_paths or ():
+        if path and Path(path).is_file():
+            media_id = upload_media(path, creds)
+            if media_id:
+                used = str(path)
+                break
+    try:
+        from engine.publisher import post_to_x
+        url = post_to_x(text, media_ids=[media_id] if media_id else None, **creds)
+    except Exception as exc:  # noqa: BLE001 — the episode is already published
+        logger.warning("X post failed for %s (non-fatal): %s", label, exc)
+        return False, "post_failed", "", ""
+    if not url:
+        return False, "post_failed", "", ""
+    logger.info("Posted %s to X%s: %s", label,
+                f" with {Path(used).name}" if used else " (text only)", url)
+    return True, ("" if media_id else "no_media"), url, used
 
 
 def teaser_text(title: str, link: str) -> str:

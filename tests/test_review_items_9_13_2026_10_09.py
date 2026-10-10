@@ -198,11 +198,12 @@ class TestXAccountRotation:
 
 # --------------------------------------------------------------- item 13 --
 class TestXOutcome:
-    def test_spacex_posts_from_the_x_app(self):
+    def test_spacex_posts_from_the_network_account(self):
+        # Oct 10 2026: moved from @teslashortstime to @nerranetwork.
         cfg = load_config(ROOT / "shows" / "spacex.yaml")
         assert cfg.publishing.x_enabled is True
-        assert cfg.publishing.x_env_prefix == "X_"
-        assert cfg.publishing.x_handle == "@teslashortstime"
+        assert cfg.publishing.x_env_prefix == "NERRANETWORK_X_"
+        assert cfg.publishing.x_handle == "@nerranetwork"
 
     def test_age_of_ai_posts_from_the_network_account(self):
         cfg = load_config(ROOT / "shows" / "age_of_ai.yaml")
