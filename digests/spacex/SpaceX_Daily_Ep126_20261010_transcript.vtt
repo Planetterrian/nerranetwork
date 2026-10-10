@@ -1,0 +1,319 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.360
+Three payloads on transporter 18 flew laser power and ai chips to test orbital data centers. This is SpaceX Daily, episode 126. They lifted off October 1st from vandenberg, carrying cowboy spaces reason 1, Google's project suncatcher, and starcatcher's protostar, Suara Gerute reports. Reason 1 is set to beam 30-100 watts by laser to a station on the ground. That is about what a household bulb draws, and it is a first hop, not a power plant.
+
+00:00:29.360 --> 00:00:36.200
+The follow-on, Reason 2, is planned for 2027 and would carry H-200 graphics processors.
+
+00:00:36.740 --> 00:00:41.800
+Project Suncatcher flies 4 trillion tensor processing units, or TPUs.
+
+00:00:42.160 --> 00:00:47.580
+They draw roughly 1 kilowatt of solar power, about a portable heater to run short Gemini
+
+00:00:47.580 --> 00:00:48.020
+queries.
+
+00:00:48.840 --> 00:00:52.980
+Starcatcher's protostar will demonstrate wireless power transfer between spacecraft.
+
+00:00:53.560 --> 00:00:58.880
+It deploys a cube-sat, a small cube-shaped satellite, and sends measurable energy to solar
+
+00:00:58.880 --> 00:01:01.800
+panels to validate commercial in-space power delivery.
+
+00:01:02.480 --> 00:01:07.240
+Cowboy Space began as Ether flux before shifting toward orbital data centers and rockets.
+
+00:01:07.960 --> 00:01:11.980
+Joseph Yaffe, the company's chief operating officer and chief legal officer,
+
+00:01:12.420 --> 00:01:17.420
+described the broader goal as combining energy delivery, computing, and laser-based connections.
+
+00:01:18.020 --> 00:01:23.420
+Cowboy Space's longer-term target is a one-megawatt upper-stage data center slated for December
+
+00:01:23.420 --> 00:01:28.980
+December 2028. Star Cloud and EtherO are among StarCatcher's publicized customers.
+
+00:01:29.520 --> 00:01:34.040
+Worth keeping an eye on is that Google's testing found the TPUs survived a radiation
+
+00:01:34.040 --> 00:01:39.660
+dose equivalent to five years in orbit. Occasional silent errors occurred at about one per three
+
+00:01:39.660 --> 00:01:45.560
+million queries. Current systems require shutdown periods every 15 to 20 minutes for heat management.
+
+00:01:46.180 --> 00:01:50.580
+Resolving heat rejection and error mitigation at scale remains an open engineering step
+
+00:01:50.580 --> 00:01:53.200
+before larger clusters can operate continuously.
+
+00:01:53.740 --> 00:01:57.580
+The physics behind today's engineering deep dive is simple and unforgiving.
+
+00:01:58.060 --> 00:02:02.900
+A satellite cluster must generate condition and route kilowatts while rejecting every
+
+00:02:02.900 --> 00:02:06.400
+watt of waste heat in vacuum, where only radiation works.
+
+00:02:07.040 --> 00:02:08.920
+Convection needs air, and there is none.
+
+00:02:09.420 --> 00:02:12.220
+So the Stefan Boltzmann law is the whole cooling system.
+
+00:02:12.840 --> 00:02:16.900
+Radiated power equals emissivity times area times temperature to the fourth.
+
+00:02:16.900 --> 00:02:23.380
+Earth. At 320 Kelvin, a near black panel sheds about 610 watts per square meter. Raise
+
+00:02:23.380 --> 00:02:29.500
+it to 350 Kelvin and you get about 850 watts per square meter, which is why hot radiators
+
+00:02:29.500 --> 00:02:35.440
+save mass. A 20% rise in temperature nearly doubles the dump rate, because 1.2 to the
+
+00:02:35.440 --> 00:02:41.180
+4th is about 2. That is the entire lever short of adding more area, and area is metal you
+
+00:02:41.180 --> 00:02:41.720
+have to launch.
+
+00:02:41.720 --> 00:02:47.480
+Future clusters described in Google's research paper target 50 to 100 kilowatts per satellite
+
+00:02:47.480 --> 00:02:47.920
+group.
+
+00:02:48.220 --> 00:02:53.680
+At 600 watts per square meter, that is still roughly 80 to 170 square meters of radiator
+
+00:02:53.680 --> 00:02:58.160
+per group, before view factor losses in the warm bus sitting behind the panel.
+
+00:02:58.740 --> 00:03:03.300
+Double the compute and you roughly double that area unless the chips get more efficient, or
+
+00:03:03.300 --> 00:03:04.560
+the radiators run hotter.
+
+00:03:05.080 --> 00:03:11.380
+A typical radiator might mass around 3 kilograms per square meter, so 170 square meters is already
+
+00:03:11.380 --> 00:03:17.440
+about 500 kg of thermal hardware on a single group. Two-sided panels help if both faces
+
+00:03:17.440 --> 00:03:22.920
+see cold sky, but in low-earth orbit one face often looks at the planet. Earth shines
+
+00:03:22.920 --> 00:03:28.440
+infrared back at you on the order of 200 watts per square meter, so some of the radiators
+
+00:03:28.440 --> 00:03:33.500
+budget is spent fighting the ground instead of dumping chip heat. Sunlight at Earth orbit
+
+00:03:33.500 --> 00:03:40.420
+delivers about 1,360 watts per square meter. With cells around 25% efficient, you need about
+
+00:03:40.420 --> 00:03:46.180
+4 square meters of array per delivered kilowatt, so 100 kilowatt group is already about 400
+
+00:03:46.180 --> 00:03:51.080
+square meters of collector plus structure. The cells that do not convert sunlight also
+
+00:03:51.080 --> 00:03:56.220
+get hot, so the power system is a heat source too. Conditioning and conversion nibble
+
+00:03:56.220 --> 00:04:00.700
+and other slice, often several percent, and that loss becomes heat on the spacecraft
+
+00:04:00.700 --> 00:04:06.940
+as well. Continuous compute is a radiator sizing problem, not a battery sizing problem. The
+
+00:04:06.940 --> 00:04:10.160
+The bus can soak heat for a while, the way a frying pan soaks a burner.
+
+00:04:10.680 --> 00:04:14.760
+Then you have to stop and let the panels glow it away, which is why cycling appears
+
+00:04:14.760 --> 00:04:18.060
+before the arrays and radiators are built to match average load.
+
+00:04:18.660 --> 00:04:23.420
+Laser and wireless links try to move those kilowatts without copper between free-flying buses.
+
+00:04:23.960 --> 00:04:26.040
+Because cabling is mass, you cannot afford.
+
+00:04:26.600 --> 00:04:31.840
+Even a 50% end-to-end beam still dumps the other half as heat at the transmitter and the receiver.
+
+00:04:32.360 --> 00:04:34.360
+So beaming does not erase the thermal bill.
+
+00:04:34.860 --> 00:04:35.880
+It relocates it.
+
+00:04:35.880 --> 00:04:37.900
+But radiation is the second tax.
+
+00:04:38.380 --> 00:04:42.680
+Flying commercial silicon instead of rad hardened parts keeps mass and costs down.
+
+00:04:43.300 --> 00:04:47.960
+Then retry logic and shielding have to carry the reliability burden if you want long inference
+
+00:04:47.960 --> 00:04:49.660
+runs rather than short queries.
+
+00:04:50.320 --> 00:04:54.420
+The magic wand number is the raw silicon, sheet metal, and solar cells.
+
+00:04:54.920 --> 00:04:58.020
+The idiot index is finished satellite mass over those inputs.
+
+00:04:58.680 --> 00:05:01.900
+And for a typical bus that ratio still sits around 10-30.
+
+00:05:01.900 --> 00:05:06.580
+because structure, pointing, and thermal hardware dwarf the chips that do the work.
+
+00:05:07.020 --> 00:05:13.120
+Closing that gap through tighter integration of compute, power, and thermal systems is the same first principle's path
+
+00:05:13.120 --> 00:05:19.220
+Falcon 9 took when it collapsed launch cost by reusing the entire booster rather than discarding it.
+
+00:05:19.740 --> 00:05:25.100
+Mass-efficient thermal design is what decides whether those 50-100 kilowatt groups are viable.
+
+00:05:25.660 --> 00:05:31.020
+The Venezuelan government has granted SpaceX permission to provide starlink service inside the country.
+
+00:05:31.020 --> 00:05:37.720
+The market screener reports, the authorization lets the company begin regulatory steps toward offering service there.
+
+00:05:38.200 --> 00:05:48.820
+Ship 42, the Starship Upper Stage assigned to Flight 15, returned to the Massey's test site stand for further cryogenic proof testing, according to an unverified post on X.
+
+00:05:49.460 --> 00:05:52.640
+Cryogenic proof testing is cold pressure cycling of the tanks.
+
+00:05:53.160 --> 00:05:59.040
+The upper stage is going through repeated pressure cycles to verify tank integrity ahead of upcoming flight preparations.
+
+00:05:59.040 --> 00:06:05.020
+A new Federal Aviation Administration, or FAA, slide from an online planning conference
+
+00:06:05.020 --> 00:06:08.680
+lists revised target windows for Starship Flight's 15 and 16.
+
+00:06:09.400 --> 00:06:14.020
+The updated dates reflect ongoing coordination between SpaceX and air traffic authorities
+
+00:06:14.020 --> 00:06:14.800
+for those missions.
+
+00:06:15.540 --> 00:06:21.300
+SpaceX's deal for grain management's 800 MHz radio spectrum portfolio prompted sharp
+
+00:06:21.300 --> 00:06:24.780
+declines across major U.S. wireless carriers, as at reports.
+
+00:06:24.780 --> 00:06:30.060
+reports. The move triggered a $50 billion telecom sell-off, a slide in carrier value on
+
+00:06:30.060 --> 00:06:35.000
+the announcement. The transaction supports SpaceX plans to build a stand-alone Starlink
+
+00:06:35.000 --> 00:06:41.480
+mobile network. Xiaomi shares jumped more than 9% as the broader Chinese ADR group, American
+
+00:06:41.480 --> 00:06:47.220
+depository receipts advanced, according to Big O Finance. Digital Optimus now plays roughly
+
+00:06:47.220 --> 00:06:52.920
+halfway through the Diablo campaign using only screen input, matching human-style play according
+
+00:06:52.920 --> 00:06:58.660
+to a post on X. Performance and Counter-Strike and other fast-paced titles is described as solid.
+
+00:06:59.220 --> 00:07:04.340
+League of Legends is also in training. The stated goal is generalization across all games.
+
+00:07:04.940 --> 00:07:09.900
+Elon Musk likened SpaceX to the spacing guild in a post that offered no further elaboration
+
+00:07:09.900 --> 00:07:15.340
+on operational parallels. The comparison drew attention to SpaceX's role in orbital transport.
+
+00:07:15.860 --> 00:07:20.720
+Community members shared footage of robot cars appearing to negotiate right-of-way at an intersection.
+
+00:07:20.720 --> 00:07:24.900
+section. The vehicles look to be managing that traffic without intervention, according
+
+00:07:24.900 --> 00:07:29.720
+to unverified posts on X. Shares finished higher by a little over 1%.
+
+00:07:29.720 --> 00:07:35.620
+Before we go, reason 1 still has to close its laser link to the ground, and ship 42 is
+
+00:07:35.620 --> 00:07:40.680
+in the stand for more tank cycles ahead of flight 15. That's the day at SpaceX. That's
+
+00:07:40.680 --> 00:07:40.960
+a wrap.
+
+00:07:41.600 --> 00:07:50.260
+SPC X closed at $162.57, up 1.2%. I'm Patrick and Vancouver. Thanks for being here, and
+
+00:07:50.260 --> 00:07:51.000
+and I'll see you tomorrow.
+
+00:07:51.600 --> 00:07:54.360
+If SpaceX daily helps you stay curious without the noise,
+
+00:07:54.880 --> 00:07:56.460
+a quick rating on Apple podcasts
+
+00:07:56.460 --> 00:07:58.580
+or Spotify helps other people find it.
+
+00:07:59.080 --> 00:08:01.580
+No pressure, the show stays free either way.
+
+00:08:02.080 --> 00:08:04.860
+And before you go, this show is part of the Narin Network,
+
+00:08:05.160 --> 00:08:08.340
+a family of daily podcasts on tech, science, and markets.
+
+00:08:08.860 --> 00:08:11.840
+Each one, a short, sharp briefing you can finish on the commute.
+
+00:08:12.340 --> 00:08:15.360
+If today earned its place in your feed, here's your next listen.
+
+00:08:15.880 --> 00:08:19.040
+Unintended consequences, true stories of good intentions
+
+00:08:19.040 --> 00:08:23.460
+that backfired. Find every show free at narennetwork.com.
+
+00:08:23.860 --> 00:08:29.540
+New to the network? Narennetwork.com start here, picks the right daily briefing for you in about two minutes.
+
+00:08:30.100 --> 00:08:32.980
+This episode used AI voice synthesis of my voice.
+
+00:08:33.440 --> 00:08:35.760
+Editorial selection and analysis are my own.
