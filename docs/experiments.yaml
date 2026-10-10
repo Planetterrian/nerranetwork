@@ -3876,3 +3876,45 @@ experiments:
       Operator: create the @nerranetwork X app and set the four
       NERRANETWORK_X_* secrets. Metadata only — outside landmine #17.
 
+
+  - id: listener-noise-2026-10-10
+    title: "No engagement counts, no price tape, ceilings not quotas, and the slate review's shape fixes"
+    area: quality
+    shipped: 2026-10-10
+    readout: 2026-10-24
+    status: reading
+    baseline: >
+      Sep 10 - Oct 10: a post's view/like/reply count aired 11 times (Tesla 8,
+      M&A 1, SpaceX 2); MAG 7 read all seven closing prices on 3 of 18
+      episodes. FF ran exactly 15 items 9/9 October days, Planetterrian 15 on
+      7/10, Tesla 17 every day. Oct 10 script-to-digest verbatim: PT 77%, UC
+      71%, FPD 69%, MIT 59%.
+    target: >
+      Over 14 days: script_listener_noise_removed and script_price_tape_removed
+      read 0 on >= 90% of episodes (the prompts now ask for it; the filter is
+      the backstop, and a non-zero count is the model breaking the rule);
+      digest_listener_noise_removed falling; FF and PT digests at 8-12 items;
+      no spoken "the day had none" line on any desk; the operator's
+      A/B-listen of the first episode of Tesla, FF, PT, MIT, a desk, UC and FPD
+      does not reject them.
+    criteria: >
+      Hit = no engagement count or price tape in any shipped script (the filter
+      guarantees it) AND the operator's listen accepts the shape changes. The
+      item ceilings shorten FF/PT/Tesla digests; a shorter, denser episode is
+      the intended trade, not a miss (CLAUDE.md: under-length is a digest
+      ceiling, accepted).
+    notes: >
+      engine/listener_noise.py (strip_engagement_noise, strip_price_tape,
+      strip_reader_only_sections), wired in run_show at the digest (before the
+      source-integrity gate), script and podcast-digest stages and in
+      engine.fetcher._x_post_entry. Prompt changes (AUDIO, landmine #17):
+      content_discipline, interesting_first, FF/PT digest + podcast, Tesla and
+      SpaceX digests, SpaceX podcast hedge, desk + Top World Progress Watch and
+      Both Sides, Prediction Markets Board, MIT Action/pro-tip/tone, M&A
+      benchmarks + gloss, UC/FPD story spine, intros cold-open stakes. Two of
+      the shows touched (Tesla/FF arm, M&A/MIT control) are in the Sep 22
+      spoken-open experiment: these are body rules, not hook rules, and land
+      in the last three days of its window. Config: Collingwood digest
+      expansion off. Pronunciation: LEO/GEO case-sensitive. Review:
+      docs/reviews/slate_review_2026_10_10.md. Guards:
+      tests/test_listener_noise_2026_10_10.py.

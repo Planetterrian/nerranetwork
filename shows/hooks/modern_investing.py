@@ -723,7 +723,7 @@ def _tone_from_portfolio(tracker: dict) -> str:
     if cum_pnl > 50:
         return "portfolio doing well — upbeat but measured, credit the process not luck"
     if cum_pnl < -30:
-        return "drawdown mode — humble and educational, remind listeners this is learning"
+        return "drawdown mode — plain and educational: state the record as it is and what the rules test next; never explain the losses away"
     return "steady progress — balanced and conversational"
 
 

@@ -235,7 +235,10 @@ class TestPromptBoilerplateBans:
     def test_digest_prompt_enforces_takeover_overlap_check(self):
         text = (_ROOT / "shows/prompts/tesla_digest.txt").read_text(
             encoding="utf-8")
-        assert "ENFORCEMENT" in text and "re-read your 5 Takeover items" in text
+        # Oct 10 2026: the Takeover is "up to 5" (a filler item is dropped,
+        # never kept to reach a count); the overlap check still binds.
+        assert "ENFORCEMENT" in text and "re-read your Takeover items" in text
+        assert "up to 5 fresh items" in text
 
     def test_digest_prompt_has_attribution_tiers(self):
         text = (_ROOT / "shows/prompts/tesla_digest.txt").read_text(

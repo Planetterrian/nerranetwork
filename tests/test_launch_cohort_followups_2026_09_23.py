@@ -110,11 +110,19 @@ class TestResourceScript:
             assert not x_only_lead_items(text), (slug, p.name)
             remaining += text.count("Source: [x.com]")
         assert remaining <= X_ONLY_LINES_LEFT_AFTER_RESOURCE, remaining
+        import datetime as _dt
+        import re as _re
         for slug in COHORT:
             p = _latest_digest(slug)
             assert p is not None, slug
             urls = _extract_source_urls(p.read_text(encoding="utf-8"))
-            assert len(urls) >= 3, (slug, p.name, urls)
+            # Top World's Saturday edition is ONE story by design (the hook's
+            # edition_note; omni_world_validation_config(saturday=True)), so
+            # one publisher is the whole record that day (Ep018, 2026-10-10).
+            m = _re.search(r"_(\d{8})\.md$", p.name)
+            saturday_single = (slug == "omni_view_world" and m is not None and
+                               _dt.datetime.strptime(m.group(1), "%Y%m%d").weekday() == 5)
+            assert len(urls) >= (1 if saturday_single else 3), (slug, p.name, urls)
 
     def test_africa_ep1_names_its_publishers(self):
         p = ROOT / "digests/omni_view_africa_mideast/Omni_View_Africa_Mideast_Ep001_20260923.md"

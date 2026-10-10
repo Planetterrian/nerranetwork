@@ -2808,6 +2808,21 @@ def run(args: argparse.Namespace) -> None:
             from shows.hooks.tesla import scrub_unavailable_tsla_from_digest
             x_thread = scrub_unavailable_tsla_from_digest(x_thread)
 
+        # Listener noise (Oct 10 2026, operator listen): engagement counts
+        # ("…with 47 views"), the minute a post went up, and sentences that
+        # say only that a post was made on X. Not information, and a number
+        # the model can only copy from search metadata. Network-wide, before
+        # the source-integrity gate so the ledger checks the shipped text.
+        try:
+            from engine.listener_noise import strip_engagement_noise
+            x_thread, _noise_n = strip_engagement_noise(x_thread)
+            if _noise_n:
+                logger.info("Removed %d engagement-count / post-metadata "
+                            "sentence(s) from the digest", _noise_n)
+            metrics.record("digest_listener_noise_removed", _noise_n)
+        except Exception as _noise_exc:  # noqa: BLE001
+            logger.warning("Listener-noise filter failed (non-fatal): %s", _noise_exc)
+
         # Absence sentences ("No energization date was stated.") — the
         # four Sep 2026 new shows' Ep1 digests carried them despite an
         # explicit prompt ban. Removed BEFORE the source-integrity gate so
@@ -3674,6 +3689,26 @@ def run(args: argparse.Namespace) -> None:
             # lines BEFORE pronunciation — FP Ep059 voiced "Сорс MoneySense…"
             # because a digest "Source:" line reached TTS.
             podcast_script = _strip_source_scaffold_lines(podcast_script)
+
+            # Listener noise (Oct 10 2026): engagement counts and post
+            # metadata, plus a closing-price TAPE read aloud — two or more
+            # consecutive closes for different companies (MAG 7 read all
+            # seven on 3 of 18 episodes despite "never read The Tape"). One
+            # price inside a story is untouched. Network-wide.
+            try:
+                from engine.listener_noise import (
+                    strip_engagement_noise, strip_price_tape)
+                podcast_script, _noise_s = strip_engagement_noise(podcast_script)
+                podcast_script, _tape_s = strip_price_tape(podcast_script)
+                if _noise_s or _tape_s:
+                    logger.info("Removed %d engagement/post-metadata and %d "
+                                "price-tape sentence(s) from the script",
+                                _noise_s, _tape_s)
+                metrics.record("script_listener_noise_removed", _noise_s)
+                metrics.record("script_price_tape_removed", _tape_s)
+            except Exception as _noise_exc:  # noqa: BLE001
+                logger.warning("Script listener-noise filter failed "
+                               "(non-fatal): %s", _noise_exc)
 
             # Same absence-sentence filter as the digest (opt-in): the
             # script stage writes its own ("Current reporting supplies no
@@ -5660,6 +5695,12 @@ def _clean_digest_for_podcast(digest: str) -> str:
     is preserved.
     """
     import re
+
+    # Oct 10 2026: reader-only sections ("### The Tape" — seven closing
+    # prices) never reach the script stage. The prompt said never read it;
+    # MAG 7 Ep015 read all seven.
+    from engine.listener_noise import strip_reader_only_sections
+    digest = strip_reader_only_sections(digest)
 
     lines: list[str] = []
     for line in digest.splitlines():
