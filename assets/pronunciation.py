@@ -1664,6 +1664,9 @@ def apply_pronunciation_fixes(
         # Pacific, Europe and Top World desks, and "un-American" read
         # "U N American" — the United Nations is always written "UN".
         "UN",
+        # Oct 10 2026: "Pope Leo XIV" aired as "Pope Elio XIV" on the North
+        # America desk — "Leo" matched the LEO (low Earth orbit) acronym.
+        "LEO", "GEO",
     }
     for acronym, spelled in acronyms.items():
         if acronym in _CASE_SENSITIVE_ACRONYMS:

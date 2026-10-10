@@ -858,6 +858,9 @@ def fetch_x_posts(
             f"or insults — a post must carry a concrete fact, claim, "
             f"announcement, or observation worth quoting in a news digest\n"
             f"- If no recent posts, return exactly: NO_RECENT_POSTS\n"
+            f"- POST_TEXT is the post's own words only: never its view, like, "
+            f"repost or reply counts, the author's follower count, or the time "
+            f"of day it was posted\n"
             f"- No commentary — just the structured list\n"
         )
 
@@ -1040,6 +1043,13 @@ def _x_post_entry(
         )
         link = ""
     when = _parse_date_token(post_date)
+    # Oct 10 2026: engagement counts are search metadata, not the post —
+    # Tesla Ep629 aired "with eighteen views" three times. Removed here so
+    # no prompt ever sees them (engine.listener_noise also guards the text
+    # that ships).
+    from engine.listener_noise import strip_engagement_noise
+    title = strip_engagement_noise(title or "")[0].strip()
+    desc = strip_engagement_noise(desc or "")[0].strip()
     return {
         "title": title or desc[:100],
         "description": desc,
