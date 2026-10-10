@@ -115,6 +115,8 @@ wanted three on every cohort digest).
    operator's call. A wording that stays true: *"This episode was written and
    voiced with AI, using my voice; I choose the sources and set the rules it
    follows."*
+   **Operator decision, 2026-10-10: keep the existing line for now.** The
+   proposed wording stays on record here; nothing was changed.
 2. **The closing block** runs 100–200 words (8–17% of an episode) with four to
    six asks, and the sibling plug is a date rotation with no topical fit (Tesla
    plugged the Central & South America desk; the North America desk plugged

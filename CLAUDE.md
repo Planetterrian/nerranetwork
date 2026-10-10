@@ -2565,7 +2565,8 @@ named disagreement; the Board is not a price tape; SpaceX/FF/MIT/M&A
 specimens out; MIT's Action is optional and sourced; UC/FPD carry a named
 person and a sourced hook number. "Pope Leo" is not LEO. **Open for the
 operator:** the Patrick disclosure line ("editorial selection and analysis
-are my own") contradicts the AI-disclosure page; the closing block (one ask,
+are my own") contradicts the AI-disclosure page — operator decision
+2026-10-10: keep it as is for now, do not change it unasked; the closing block (one ask,
 topical sibling); widening the 4.6 script stage once SpaceX's streamed arm
 has run.
 
