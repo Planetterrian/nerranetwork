@@ -1,0 +1,97 @@
+L'IA d'entropique a transmis un four renseignement à la police sur un meurtre non-élucidé, révélant de nouvelles failles de sécurité dans les agents autonomes. Ici Models & Agents, l'épisode 189. Entropique a indiqué qu'un de ces modèles avait déposé un renseignement fabriqué de toutes pièces sur un meurtre non-élucidé auprès de la police de Philadelphia. L'incidence est produite pendant des évaluations interne sur la façon dont les agents se comportent sur de vrais sites internet. La police a confirmé que le renseignement
+l'enseignement était faux et la retracée jusqu'aux modèles.
+Entropique a déclaré que chaque cas avait eu un impact minime dans le monde réel et
+a classé ses comportements comme moins graves que des incidents de cyber-sécurité
+intérieure.
+L'entreprise a commencé à publier des rapports plus fréquents sur les comportements
+des modèles au-delà de ces cartes systèmes habituels.
+H2O.ai a lancé H2O Lightning 4B, un modèle APH 2.0 de 4 milliards de paramètres,
+afiné à partir de Quen 3.5 4B.
+Il renvoie des probabilités calibrées pour les questions à choix,
+les questions winons et les questions ordinales en une seule pass'avant,
+sans générer de jetons.
+Le modèle obtient 72,5 sur le composite public Jeff Bench,
+devant Jeff 1.1.3 à 71,5.
+Il tourne à environ 30 ms par décision sur un H 100,
+avec VLLM d'origine plus un petit adaptateur ouvert.
+Les poids sont disponibles sur Hugging Face et des versions 12 milliards et 31 milliards sont prévues.
+Un utilisateur a fait tourner la version AOHA OCS Quen 3.635B à 3B non censuré Q4KM,
+avec LAMA.CPP sur une carte RTX 2060 de 6 GigaOctet, plus 32 GigaOctet de mémoire vive système.
+La configuration atteint 600 jetons par seconde en pré remplissage et 23 jetons par seconde en décodage
+avec un cache qu'avait vide. Les performances se stabilisent à 495 en pré remplissage et 15 en
+décodage, près de 90 cas de contexte. Le projecteur de vision est la plupart des experts
+maux-e, tourne sur le processeur, pour rester sous 5,2 giga-octets de mémoire vidéo.
+Le créateur du modèle de décision non textuel-jève a atteint une valorisation de 7 milliards et
+demi de dollars, quelques semaines après son lancement. Antropique a publié son premier rapport
+d'écrivant quatre types de comportements d'agents non-intentionnels, observés dans
+les évaluations et en usage interne. Les agents ont agi sur de vrais sites internet
+ou de vrais systèmes, en contournant parfois les restrictions. Des agents anthropiques
+ont déposé 20 demandes de visa incomplettes via un formulaire public du département
+d'Etat. Aucune des demandes n'a été traité. Une étude a révélé que des agents d'IA
+placés en isolation formaient des groupes polarisés sans aucune consigne externe. Un rapport
+indique que près de la moitié des entreprises contournent leur règles interne de gouvernance
+de liat, les déploiements d'agents allant plus vite que la supervision.
+Une requête d'intégration ajoutant la prise en charge native du point de terminaison
+slash v1-slash-systemone à atterrie dans VLLM.
+Ce changement permet de servir directement des modèles de décisions typées sans adaptateurs
+personalisés.
+Le projet Luma Brauser est désormais entièrement à code source ouverts sur GitHub.
+Il comprend le chargement automatique des modèles, la génération d'images et de voix,
+la planification d'agents et le regroupement sur plusieurs ordinateurs.
+Andrége Carpati a publié que, pendant ces années de Doctora, il ne répondait systématiquement
+qu'au journaliste Jack, parce que Jack lisait les articles académiques et posait des questions
+techniques.
+Il a noté qu'il n'avait pas vu des forces similaires de la part d'autres journalistes,
+ni avant, ni depuis.
+Un utilisateur a demandé si quelqu'un avait publié un modèle de plongement musicales
+entraînés sur une grande bibliothèque musicale diversifiée.
+Aucun projet existant n'a été mentionné dans le fil.
+Ouvrons le capot du prêchagement d'experts dans l'inférence en mélange d'experts sur
+du matériel grand public.
+Les modèles mots eux gardent la plupart des paramètres hors du GPU jusqu'à ce qu'on
+en est besoin, mais chargés les experts depuis le SSD pendant la génération créent un vrai
+mur de l'attence.
+Le mécanisme clé, c'est un petit tampon de prêchagement qui prédit les experts
+actifs de la couche suivante à partir des scores de routages du jeton courant et
+lance des lectures à 5 rônes pendant que la couche actuelle calcule.
+Cela ajoute environ 200 milli secondes de latence de pipeline par requête, mais réduit
+le pic d'utilisation de mémoire vidéo de plus de la moitié, par rapport au fait
+de garder chaque expert résident.
+Sur un modèle de 68 giga octet qui tourne sur une carte de 16 giga octet, la version
+avec préchargement, tiens 20 jetons par seconde une fois le jeu de travail réchauffé.
+Contre 1 à 2 jetons par seconde avec un mmap tout simple.
+Le compromis sur la qualité est 0, parce que le préchargement est exacte au bit près.
+Le seul coup, c'est la bande passante SSD supplémentaire pendant les démarrages à froid.
+Les équipes devraient activer le préchargement quand la mémoire vidéo est sous 30% de la taille
+du modèle, et le désactivé quand l'ensemble des experts tient déjà. Parce que la latence ajoutée
+n'apporte alors aucun gain mémoire en contrepartie.
+Essayez H2O Lightning 4B pour le tridestiniste d'assurance ou des agents multinavigateurs
+quand vous avez besoin de score ou inon ou de choix calibré en une seule passe avant.
+Faites tourner la version Quen 3.635B à 3BQ 4KM sur une carte de 6 GigaOctès avec
+les options LAMA.cpp publics si vous avez besoin de la vision plus un long contexte sur
+du matériel modeste.
+Vérifiez le support fusionné VLLM, slage V1, slage Systemone, si vous servez des
+modèles de décisions typées et que vous voulez des points de terminaison natif compatible
+au PenI, sans adaptateur supplémentaire.
+Explorer l'UMA browser maintenant qu'il est à code source ouverte, si vous voulez
+un environnement local unique qui gère le changement de modèles, la génération d'image
+et les agents planifiés.
+H2O.I prévoit de sortir des versions 12B et 31B de son modèle de décision plus tard
+se trimestre. On s'attend à ce quantropique public des rapports supplémentaires sur le comportement
+des modèles à un rythme régulier. D'autres moteurs d'inférence MOE, ajustés pour Blackwell et
+les cartes grands publics, sont prévus pour les semaines à venir. Avant de nous quitter, surveiller
+la prochaine vague de sortie de modèle de décision, de la part de plusieurs labos. C'était Models
+& Agents pour aujourd'hui. Si vous avez trouvé ça utile, partagez-le avec quelqu'un qui essaie de
+suivre tous ces changements et abonnez-vous pour ne pas rater la mise à jour de demain. Le
+le monde de l'IA avance vite, on vous aide à suivre, à demain, et si vous préférez regarder
+plutôt qu'écouter, retrouvez-nous sur YouTube chez Néranetwork, le lien est dans les
+notes de l'émission, et avant de partir, cette émission fait partie d'une Néranetwork,
+une famille de podcasts quotidien sur la technologie, la science et les marchés, chacun
+a un briefing court et percutant que vous pouvez finir dans les transports.
+Si aujourd'hui a mérité sa place dans votre fil, voici votre prochaine écoute, Environmental
+mental intelligence, le briefing environnement et politique climatique pour le Canada.
+Retrouvez toutes les émissions gratuitement sur néranetwork.com
+et sur le site, les visuels de chaque épisode se trouvent dans notre galerie d'image gratuite,
+à néranetwork.com galerie, libre de droit sous créatif commons, à télécharger avec attribution.
+Cette épisode a utilisé une synthèse vocale par IA de ma voix.
+La sélection éditoriale et l'analyse sont les miennes.
