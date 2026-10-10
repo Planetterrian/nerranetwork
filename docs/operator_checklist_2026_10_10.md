@@ -8,15 +8,14 @@ stays as it is (operator, 2026-10-10).
 
 ## Tier 1 — minutes each, every episode or every new listener
 
-### 1. Merge the listener-noise pull request
+### 1. Listen to the first episodes after the listener-noise merge
 
-- **Why:** removes engagement counts, the minute a post went up and the
-  closing-price tape from every show, and caps the filler quotas. It affects
-  every episode from the next run.
-- **How:** open Planetterrian/nerranetwork#1403, click "Ready for review",
-  then merge. CI is green and it merges cleanly.
-- **Then:** A/B-listen the first MAG 7, Tesla, Fascinating Frontiers and
-  Planetterrian episodes after the merge (landmine #17).
+- **Why:** Planetterrian/nerranetwork#1403 was merged on 2026-10-10. It
+  removes engagement counts, the minute a post went up and the closing-price
+  tape from every show, and caps the filler quotas, from the next run on.
+- **How:** A/B-listen the first MAG 7, Tesla, Fascinating Frontiers and
+  Planetterrian episodes after the merge (landmine #17). Revert by git if one
+  sounds worse.
 
 ### 2. Finish the directory listings (the only lever that reaches people who have never heard of the network)
 
