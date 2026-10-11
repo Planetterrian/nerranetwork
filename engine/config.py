@@ -133,6 +133,12 @@ class LLMConfig:
     # (~15k tokens/ep). Setting this changes shipped audio — per-show
     # A/B-listen required (landmine #17).
     podcast_model: str = ""
+    # Reasoning effort for the SCRIPT call when ``podcast_model`` is set
+    # (Oct 11 2026). Empty = the show's ``reasoning_effort`` (byte-identical).
+    # A grok-4.7 script arm on a 4.3 show needs ``low`` — the 4.7 cohort runs
+    # there, and a default-effort 4.7 call is the slow shape that fell back
+    # in September — without moving the digest's effort with it.
+    podcast_reasoning_effort: str = ""
     # Synthesizer (weekly newsletter, monthly report, cross-show briefing)
     # defaults. Empty synth_model means "use model". grok-4.6 since the
     # 2026-08-18 staged trial (staged-grok-46-trial) — mirrors

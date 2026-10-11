@@ -2624,6 +2624,23 @@ calibrated on Cyrillic); `pipelines/voices/backfill_videos.py` (Actions
 AI's past episodes their video; Prediction Markets' Friday Week's Board parses
 the prose Board again (it was empty on 10-02 and 10-09).
 
+**Oct 11 2026, evening — script-stage models (operator-directed)** (register
+`narrative-script-grok47-2026-10-11`, `planetterrian-script-grok46-2026-10-11`;
+guards `tests/test_script_models_2026_10_11.py`). Unintended Consequences and
+First Principles write their SCRIPT on grok-4.7 at low effort; Planetterrian
+on grok-4.6; every digest stays grok-4.3 and every arm streams. **The script
+call has its own effort** (`llm.podcast_reasoning_effort`, used only while the
+call runs `podcast_model`; a fallback to the digest model runs at that model's
+own effort), and every follow-up script call — truncation retry, expansion
+retry, publication-floor re-roll, anti-repetition retries — now carries the
+same effort and stream as the first (they had sent the arm's model at default
+effort, non-streamed: the shape that dropped in September). Measured before:
+4.6 script calls take 190-700 s against 20-60 s on 4.3, so a pinned script
+arm costs a run 3-12 min; the narrative shows and Planetterrian finish in
+5-10 min of the 50-min budget, Tesla already reaches ~32 min and waits for
+the 10-23 SpaceX gate with Fascinating Frontiers. ⚠️ AUDIO on all three —
+A/B-listen Ep1.
+
 ### Anthology books — ebook + audiobook from the narrative shows (Aug 2026)
 
 Product B6 (operator-directed): a SERIES machine, not one-off books.

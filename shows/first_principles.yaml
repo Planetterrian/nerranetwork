@@ -54,6 +54,20 @@ llm:
   # lever below (min_digest_words + digest_expand_below_target). Do not
   # re-pin 4.6 here without a fresh staged trial per
   # docs/model_upgrade_playbook.md.
+  # Oct 11 2026 (operator-directed; experiment
+  # narrative-script-grok47-2026-10-11): the SCRIPT stage runs grok-4.7 at
+  # low effort and the digest stays on grok-4.3. This is not the withdrawn
+  # Aug-27 arm above: that pinned the whole show (digest included) on a
+  # non-streaming request; this moves only the script call, streams it
+  # (playbook rule 7), and any failure falls back to 4.3 for that episode
+  # (llm_script_model_fallback). Measured before the switch: 4.3 scripts
+  # here copy 64-87% of the written episode verbatim; the 4.7 cohort writes
+  # at 2-17%. The runs finish in ~5-10 min of a 50-min budget, so the
+  # slower script call fits. Read the arm from the credit file's
+  # podcast_script_generation.model, never from this line.
+  podcast_model: grok-4.7
+  podcast_reasoning_effort: low
+  stream: true
   system_prompt_file: shows/prompts/first_principles_system.txt
   digest_prompt_file: shows/prompts/first_principles_episode.txt
   podcast_prompt_file: shows/prompts/first_principles_podcast.txt

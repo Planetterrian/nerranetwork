@@ -269,6 +269,16 @@ multilingual:
 
 llm:
   provider: xai
+  # Oct 11 2026 (operator-directed; experiment
+  # planetterrian-script-grok46-2026-10-11): the SCRIPT stage runs grok-4.6
+  # and the digest stays on grok-4.3, the shape SpaceX and Omni View run.
+  # Before: 4.3 scripts copied 62-77% of the digest verbatim (Ep205-210);
+  # SpaceX's 4.6 arm copies 4-7%. A podcast_model override runs two-pass by
+  # code. The call streams (playbook rule 7 — the non-streaming 4.6 arms
+  # dropped at 444-660 s); a failure falls back to 4.3 for that episode.
+  # Runs here take ~5-7 min, so the 4.6 call's 3-12 min fits the budget.
+  podcast_model: grok-4.6
+  stream: true
   system_prompt_file: shows/prompts/planetterrian_system.txt
   digest_prompt_file: shows/prompts/planetterrian_digest.txt
   podcast_prompt_file: shows/prompts/planetterrian_podcast.txt
