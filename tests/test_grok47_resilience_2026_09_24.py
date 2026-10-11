@@ -448,8 +448,8 @@ class TestConfig:
                 # non-streaming call (444 s drop, 660 s timeout, fell back).
                 continue
             assert "stream" not in llm, p.name
-        # A show with no pinned arm never streams (modern_investing has none).
-        assert load_config(ROOT / "shows" / "modern_investing.yaml").llm.stream is False
+        # A show with no pinned arm never streams (models_agents has none).
+        assert load_config(ROOT / "shows" / "models_agents.yaml").llm.stream is False
 
     @pytest.mark.parametrize("slug", DESKS)
     def test_progress_watch_is_exempt_from_the_overlap_dedup(self, slug):

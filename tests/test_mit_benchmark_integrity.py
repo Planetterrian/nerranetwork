@@ -1785,8 +1785,11 @@ class TestScriptStageModelOverride:
         y = _yaml.safe_load((_ROOT / "shows/modern_investing.yaml").read_text())
         # Absorbed into the network default 2026-08-18 — re-adding a
         # per-show podcast_model/model pin needs a new experiments.yaml
-        # entry, not a leftover.
-        assert "podcast_model" not in y["llm"]
+        # entry, not a leftover. Oct 11 2026: the script-stage pin came back
+        # WITH its entry (mit-script-grok46-2026-10-11).
+        assert y["llm"].get("podcast_model") == "grok-4.6"
+        reg = _yaml.safe_load((_ROOT / "docs/experiments.yaml").read_text())
+        assert "mit-script-grok46-2026-10-11" in {e["id"] for e in reg["experiments"]}
         assert "model" not in y["llm"]
         assert "fallback_model" not in y["llm"]
 

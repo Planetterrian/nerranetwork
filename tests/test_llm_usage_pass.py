@@ -369,7 +369,10 @@ class TestGrok46Wave2Scripts:
             assert cfg.llm.model == "grok-4.3", (
                 f"{slug}: the DIGEST must stay on the 4.3 network default")
 
-    def test_mit_stays_fully_on_43(self):
+    def test_mit_digest_stays_on_43(self):
+        # Oct 11 2026 (operator-directed, experiment
+        # mit-script-grok46-2026-10-11): MIT's SCRIPT stage moved to
+        # grok-4.6; the digest stays on the network default.
         cfg = self._load("modern_investing")
         assert cfg.llm.model == "grok-4.3"
-        assert not getattr(cfg.llm, "podcast_model", "")
+        assert cfg.llm.podcast_model == "grok-4.6"

@@ -163,6 +163,19 @@ llm:
   max_tokens: 4000
   podcast_max_tokens: 8000
   min_podcast_words: 1800
+  # Oct 11 2026 (operator-directed; experiment
+  # mit-script-grok46-2026-10-11): the SCRIPT stage runs grok-4.6 and the
+  # digest stays on grok-4.3, the shape SpaceX, Tesla and FF run. Before: the
+  # combined-path scripts copied 49-62% of the digest verbatim (Ep192-197) at
+  # 88-100% coverage. A podcast_model override runs two-pass by code. The call
+  # streams (playbook rule 7); a failure falls back to 4.3 for that episode.
+  # MIT runs 23-30 min of a 50-min budget and the 4.6 call adds 3-12 min, so
+  # the long-form render may lean on the budget gate. MIT is a CONTROL show of
+  # the Sep 22 spoken-open experiment (readout 10-13): name this change when
+  # that readout is scored. Read the arm from the credit file's
+  # podcast_script_generation.model, never from this line.
+  podcast_model: grok-4.6
+  stream: true
   # 2026-08-18: the mit-script-model-46 A/B's explicit podcast_model pin
   # was absorbed by the operator-directed NETWORK grok-4.6 upgrade, which
   # was itself REVERTED the same day for latency (MIT's own digest was one
