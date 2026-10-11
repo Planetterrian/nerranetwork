@@ -36,8 +36,9 @@ class TestChainedShowsAreEligible:
         # spacex left this list on Oct 9 2026: its script stage runs grok-4.6
         # (a podcast_model override is two-pass by code, like omni_view).
         # planetterrian, tesla and fascinating_frontiers followed on Oct 11
-        # 2026 (grok-4.6 script stage).
-        for slug in ("modern_investing",):
+        # 2026 (grok-4.6 script stage), modern_investing the same evening.
+        # mag7 is the chained show left on the combined path.
+        for slug in ("mag7",):
             cfg = load_config(str(ROOT / "shows" / f"{slug}.yaml"))
             assert cfg.llm.podcast_chain is True, slug
             assert gen.combined_generation_enabled(cfg, {"episode_num": 200}), slug
@@ -47,7 +48,8 @@ class TestChainedShowsAreEligible:
             cfg = load_config(str(ROOT / "shows" / f"{slug}.yaml"))
             assert not gen.combined_generation_enabled(cfg, {"episode_num": 200}), slug
         for slug in ("omni_view", "models_agents_beginners", "dp_pod", "spacex",
-                     "planetterrian", "tesla", "fascinating_frontiers"):  # grok-4.6 script stage / dialogue
+                     "planetterrian", "tesla", "fascinating_frontiers",
+                     "modern_investing"):  # grok-4.6 script stage / dialogue
             cfg = load_config(str(ROOT / "shows" / f"{slug}.yaml"))
             assert not gen.combined_generation_enabled(cfg, {"episode_num": 200}), slug
 

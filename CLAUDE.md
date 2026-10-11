@@ -2638,12 +2638,14 @@ effort, non-streamed: the shape that dropped in September). Measured before:
 4.6 script calls take 190-700 s against 20-60 s on 4.3, so a pinned script
 arm costs a run 3-12 min; the narrative shows and Planetterrian finish in
 5-10 min of the 50-min budget. **Same evening, Tesla and Fascinating
-Frontiers moved to the grok-4.6 script stage too** (operator call, ahead of
-the 10-23 SpaceX gate; register `flagship-script-grok46-2026-10-11`): Tesla
+Frontiers moved to the grok-4.6 script stage too, then Modern Investing**
+(operator call, ahead of the 10-23 SpaceX gate; register
+`flagship-script-grok46-2026-10-11`, `mit-script-grok46-2026-10-11`; MIT is a
+CONTROL show of the Oct 13 readout, so that readout names it as a confound): Tesla
 leaves combined generation (a `podcast_model` override is two-pass), its runs
 already reach ~32 min so the long-form render now leans on the budget gate,
-and both are ARM shows of the Oct 13 spoken-open readout — read that readout
-with this change named as a confound. ⚠️ AUDIO on all five — A/B-listen Ep1.
+and Tesla and FF are ARM shows of the Oct 13 spoken-open readout — read that readout
+with this change named as a confound. ⚠️ AUDIO on all six — A/B-listen Ep1.
 
 ### Anthology books — ebook + audiobook from the narrative shows (Aug 2026)
 
