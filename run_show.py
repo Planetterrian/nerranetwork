@@ -5836,6 +5836,35 @@ def _extract_hook(digest: str) -> str | None:
             hook = m.group(1).strip()
             if hook:
                 return hook
+
+    # Fallback 2 (Oct 11 2026, SpaceX Ep125 and Ep127): the hook written as
+    # the first plain line, with neither the label nor the blockquote. That
+    # is the line engine.newsletter_body.promote_hook_to_blockquote turns
+    # into ``> **hook**`` a few steps later, so the blog and the newsletter
+    # showed the hook while the podcast title and the X post went generic
+    # ("SpaceX Daily - Episode 127 - October 11, 2026"). Same skips as that
+    # promotion (title heading, bold-label metadata, decorative subtitles),
+    # but it never looks past the first ### heading, where a first line is
+    # narration rather than a hook. It is the ONLY reader of a bare first
+    # line: two Oct 11 changes each removed one of the two readers relying
+    # on the other, and for a while neither existed. Keep this one.
+    for line in digest.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith("###"):
+            break
+        if stripped.startswith("#") or re.match(r"^\*\*[^*]+:\*\*", stripped):
+            continue
+        fully_bold = re.fullmatch(r"\*\*([^*]+)\*\*", stripped)
+        if re.search(r"\*\*[^*]+\*\*", stripped) and not fully_bold:
+            continue  # decorative subtitle ("🌍 **Planetterrian Daily** - ...")
+        if stripped.startswith((">", "|", "<", "```", "---")) or re.match(r"^(?:[-*]|\d+\.)\s", stripped):
+            return None
+        text = (fully_bold.group(1) if fully_bold else stripped).strip()
+        if len(text.split()) >= 5 and 20 <= len(text) <= 300:
+            return text
+        return None
     return None
 
 
