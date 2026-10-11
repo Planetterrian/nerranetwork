@@ -2642,8 +2642,8 @@ Frontiers moved to the grok-4.6 script stage too, then Modern Investing and
 Models & Agents** (operator call, ahead of the 10-23 SpaceX gate; register
 `flagship-script-grok46-2026-10-11`, `mit-script-grok46-2026-10-11`,
 `models-agents-script-grok46-2026-10-11`; MIT and M&A are CONTROL shows of
-the Oct 13 readout, so that readout names them as a confound); Models & Agents for Beginners, on the 4.6 script stage since Sep 1,
-now streams that call too: Tesla
+the Oct 13 readout, so that readout names them as a confound); Models & Agents for Beginners and The DP Pod, on the 4.6 script stage
+since Sep 1 and Aug 18, now stream that call too: Tesla
 leaves combined generation (a `podcast_model` override is two-pass), its runs
 already reach ~32 min so the long-form render now leans on the budget gate,
 and Tesla and FF are ARM shows of the Oct 13 spoken-open readout — read that readout
