@@ -2285,6 +2285,8 @@ def _get_jinja_env():
     # editorial page said one address and the FAQ/contact pages another).
     from engine.brand import CONTACT_EMAIL as _contact_email
     env.globals["contact_email"] = _contact_email
+    from engine.brand import sponsor_policy as _sponsor_policy
+    env.globals["sponsor_policy"] = _sponsor_policy()
     # The Mira claim, its basis and its correction invitation. Registered as a
     # global rather than threaded through each generator's context so that
     # every surface renders the same three paragraphs from engine/brand.py —
@@ -3676,7 +3678,7 @@ def generate_network_page(*, dry_run=False):
     context = {
         "path_prefix": "",
         "page_title": "Nerra Network — Independent Podcast Network",
-        "meta_description": "Daily podcasts keeping you informed. Tesla, world news, space, science, environment, AI, modern investing, first-principles thinking, narrative case studies, Russian finance, and language learning. Independent, ad-free, always free.",
+        "meta_description": "Daily podcasts keeping you informed. Tesla, world news, space, science, environment, AI, modern investing, first-principles thinking, narrative case studies, Russian finance, and language learning. Independent, always free.",
         "meta_keywords": "podcast network, daily podcasts, Nerra Network, Tesla, space, science, AI, environment, history, unintended consequences",
         "theme_color": "#6B47FF",
         "og_image": f"{GITHUB_RAW}/assets/og-preview.png",
@@ -4562,7 +4564,7 @@ def generate_explore_page(*, dry_run=False, output_dir=None):
     description = (
         "Browse all of the Nerra Network's shows by subject and language — AI, "
         "space, markets, science, climate, world news, language learning and "
-        "more. Every show is ad-free and independently produced."
+        "more. Every show is free and independently produced."
     )
 
     context = {
@@ -4684,7 +4686,7 @@ def generate_topic_hub_pages(*, dry_run=False, output_dir=None):
 
     description = (
         "Every Nerra Network show grouped by subject: AI, space, markets, "
-        "Tesla, science, health, climate, world news and more. Free, ad-free, "
+        "Tesla, science, health, climate, world news and more. Free, "
         "with sources named."
     )
     index_html = env.get_template("topics_index.html.j2").render(
@@ -4740,13 +4742,15 @@ def generate_llms_txt(*, dry_run=False):
     shows = _build_all_shows_list()
     base = "https://nerranetwork.com"
 
+    from engine.brand import SPONSOR_POLICY_SUMMARY as _SPONSOR_POLICY_SUMMARY
+
     lines = [
         "# Nerra Network",
         "",
         # Count only shows a listener can actually play (Sep 2026): a
         # pre-launch show has a page but no feed, and an answer engine
         # quoting this count should say something true.
-        f"> An independent, ad-free podcast network of "
+        f"> An independent podcast network of "
         f"{sum(1 for s in shows if s.get('has_feed', True))} shows, "
         "produced in Vancouver, Canada. Every episode is written, narrated and "
         "illustrated by AI under human editorial ownership, and every episode "
@@ -4754,8 +4758,9 @@ def generate_llms_txt(*, dry_run=False):
         "",
         "## What to know",
         "",
-        "- Free: every episode, every show, no ads and no sponsors. Nerra "
+        "- Free: every episode, every show. Nerra "
         f"Personal ({base}/join.html) is an optional paid membership.",
+        f"- Sponsors: {_SPONSOR_POLICY_SUMMARY} Policy: {base}/sponsor.html",
         f"- {MIRA_SHORT_DESCRIPTION}",
         f"- {MIRA_FIRST_CLAIM} {MIRA_FIRST_CLAIM_BASIS}",
         "- How it is made, and what a human does and does not check, is stated "
@@ -4937,7 +4942,7 @@ def generate_sitemap(*, dry_run=False, out=None):
                   "about.html", "how-to-listen.html", "faq.html",
                   "mira.html", "explore.html", "age-of-ai-apply.html",
                   "nerra-voices-apply.html",
-                  "press.html", "contact.html", "editorial.html",
+                  "press.html", "sponsor.html", "contact.html", "editorial.html",
                   "gallery.html", "books.html", "player.html", "data.html",
                   "join.html", "support.html", "personal-interest.html",
                   "modern-investing-performance.html",
@@ -5750,7 +5755,7 @@ def generate_personal_interest_page(*, dry_run=False):
     ctx = _member_page_context(
         "Personal tips by email, no charge, no card | Nerra Network",
         "Every Nerra show stays free. Leave your email for occasional "
-        "Personal tips. No ads. Curiosity only.",
+        "Personal tips. Curiosity only.",
         "https://nerranetwork.com/personal-interest.html")
     # Soft page must never carry episode totals (frozen / no FOMO).
     ctx.pop("total_episodes", None)
@@ -5874,8 +5879,8 @@ def generate_support_page(*, dry_run=False, output_dir=None):
     env = _get_jinja_env()
     ctx = _member_page_context(
         "Support the Nerra Network",
-        f"{len(_published_show_ids())} shows, most of them daily, all free "
-        "and ad-free. See what the network actually costs to run, and chip "
+        f"{len(_published_show_ids())} shows, most of them daily, all free. "
+        "See what the network actually costs to run, and chip "
         "in if you want it to keep existing.",
         "https://nerranetwork.com/support.html")
     # Computed, never typed (Oct 7 2026: "four listening languages" and the
@@ -5900,13 +5905,13 @@ def generate_about_page(*, dry_run=False, output_dir=None):
     context = {
         "path_prefix": "",
         "page_title": "About — Nerra Network",
-        "page_description": "Meet the independent podcast network producing ad-free daily shows on AI, Tesla, investing, space, science, and environmental policy. Based in Vancouver, Canada.",
+        "page_description": "Meet the independent podcast network producing free daily shows on AI, Tesla, investing, space, science, and environmental policy. Based in Vancouver, Canada.",
         # "N daily shows" was not true: six of the eighteen are weekly,
         # alternate-day, or published when an interview is ready. The Sep 3
         # pass corrected the visible copy to "most shows daily" and missed the
         # meta description, which is the line Google actually prints.
-        "meta_description": f"About Nerra Network — an independent, ad-free podcast network of {len(NETWORK_SHOWS)} shows, most of them daily, covering AI, Tesla, investing, space, science, and environmental policy. Founded by Patrick Novak.",
-        "meta_keywords": "about Nerra Network, Patrick Novak, independent podcast network, Vancouver podcasts, ad-free podcasts",
+        "meta_description": f"About Nerra Network — an independent podcast network of {len(NETWORK_SHOWS)} shows, most of them daily, covering AI, Tesla, investing, space, science, and environmental policy. Founded by Patrick Novak.",
+        "meta_keywords": "about Nerra Network, Patrick Novak, independent podcast network, Vancouver podcasts, free podcasts",
         "theme_color": "#6B47FF",
         "og_image": "",
         "canonical_url": "https://nerranetwork.com/about.html",
@@ -5963,6 +5968,80 @@ def generate_press_page(*, dry_run=False):
         print(f"[dry-run] Would write {out_path}")
         return None
 
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
+
+
+def _sponsor_audience(max_rows: int = 12) -> dict:
+    """Audience figures for ``sponsor.html`` from the committed
+    ``api/audience_headline.json`` — the same file the dashboard's first
+    tile reads. An unmeasured figure is a dash, never 0; a show appears only
+    when at least one of its figures is measured, ordered by 30-day
+    downloads."""
+    def fmt(v):
+        return "—" if v is None else f"{int(v):,}"
+
+    try:
+        data = json.loads((ROOT / "api" / "audience_headline.json").read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001 — the page renders without numbers
+        data = {}
+    net = data.get("network") or {}
+    names = {s["slug"]: s for s in _build_all_shows_list()}
+    rows = []
+    for slug, s in (data.get("shows") or {}).items():
+        meta = names.get(slug)
+        if not meta or not meta.get("has_feed", True):
+            continue
+        dl = s.get("downloads_30d")
+        yt = (s.get("youtube") or {}).get("views")
+        if dl is None and not yt:
+            continue
+        rows.append({
+            "name": meta["name"], "page": meta.get("show_page") or "",
+            "sort": dl or 0,
+            "downloads_30d": fmt(dl),
+            "youtube_views": fmt(yt) if yt else "—",
+        })
+    rows.sort(key=lambda r: -r["sort"])
+    return {
+        "as_of": data.get("as_of") or "—",
+        "downloads_30d": fmt(net.get("downloads_30d")),
+        "downloads_7d": fmt(net.get("downloads_7d")),
+        "youtube_views": fmt((net.get("youtube") or {}).get("views")),
+        "shows": rows[:max_rows],
+    }
+
+
+def generate_sponsor_page(*, dry_run=False, output_dir=None):
+    """Generate ``sponsor.html`` (Oct 11 2026) — the audience, the ways to
+    sponsor and the rules a sponsor accepts. Numbers from
+    ``_sponsor_audience``; rules from ``engine.brand`` via the
+    ``sponsor_policy`` global."""
+    env = _get_jinja_env()
+    template = env.get_template("sponsor_page.html.j2")
+    context = {
+        "path_prefix": "",
+        "page_title": "Sponsor the Nerra Network",
+        "page_description": "Sponsor independent shows on AI, SpaceX, Tesla, markets, science and world news. Measured audience, labelled sponsor messages, no say over coverage.",
+        "meta_description": "Sponsor the Nerra Network: measured downloads and YouTube views by show, the ways to sponsor, and the rules every sponsor accepts.",
+        "meta_keywords": "sponsor podcast, podcast sponsorship, Nerra Network sponsor, AI podcast sponsor, SpaceX podcast sponsor",
+        "theme_color": "#6B47FF",
+        "og_image": "",
+        "canonical_url": "https://nerranetwork.com/sponsor.html",
+        "show_color": "",
+        "show_color_dark": "",
+        "all_shows": _build_all_shows_list(),
+        "published_show_count": len(_published_show_ids()),
+        "listening_language_count": len(_listening_languages()),
+        "total_episodes": f"{_count_total_episodes():,}",
+        "audience": _sponsor_audience(),
+    }
+    html = template.render(**context)
+    out_path = (Path(output_dir) if output_dir else ROOT) / "sponsor.html"
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
     out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
     print(f"Wrote {out_path}")
     return out_path
@@ -6246,6 +6325,7 @@ def generate_static_pages(*, dry_run=False):
     generate_faq_page(dry_run=dry_run)
     generate_how_to_listen_page(dry_run=dry_run)
     generate_press_page(dry_run=dry_run)
+    generate_sponsor_page(dry_run=dry_run)
     generate_contact_page(dry_run=dry_run)
     generate_editorial_page(dry_run=dry_run)
     generate_legal_pages(dry_run=dry_run)

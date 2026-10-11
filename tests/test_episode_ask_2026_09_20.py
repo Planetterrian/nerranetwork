@@ -21,10 +21,10 @@ REPO = Path(__file__).resolve().parents[1]
 _ASK_B_P1 = (
     "Enjoyed this episode? A rating or short review on Apple Podcasts or "
     "Spotify helps SpaceX Daily reach the next listener who wants the same "
-    "thing: sourced updates, zero ads, no outrage diet."
+    "thing: sourced updates, no outrage diet."
 )
 _ASK_B_P2 = (
-    "SpaceX Daily is part of Nerra Network — 18 ad-free shows, most of them daily."
+    "SpaceX Daily is part of Nerra Network — 18 free shows, most of them daily."
 )
 
 

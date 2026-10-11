@@ -1,0 +1,71 @@
+# One-off (Oct 11 2026): render and upload the YouTube video for interview
+# episodes published before the publisher could render its own. Dry run by
+# default; tick "apply" to upload. Re-runs skip episodes already in
+# digests/<show>/youtube_videos.json, so it never double-posts.
+name: Nerra Voices — backfill YouTube videos
+
+on:
+  workflow_dispatch:
+    inputs:
+      show:
+        description: 'Interview show slug'
+        required: true
+        default: age_of_ai
+        type: string
+      episodes:
+        description: 'Comma-separated episode numbers (blank = every episode without a video)'
+        required: false
+        default: ''
+        type: string
+      apply:
+        description: 'Upload (unticked = dry run that prints the plan)'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: nerra-voices-publish
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  backfill:
+    runs-on: ubuntu-26.04
+    # ~10-15 min of 720p render per 45-minute interview, sequential.
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.14'
+          requirements-file: 'pipelines/requirements.txt'
+          skip-checkout: 'true'
+      - uses: ./.github/actions/setup-ffmpeg
+      - name: Render and upload
+        env:
+          SHOW: ${{ github.event.inputs.show }}
+          EPISODES: ${{ github.event.inputs.episodes }}
+          APPLY: ${{ github.event.inputs.apply }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN_EN: ${{ secrets.YOUTUBE_REFRESH_TOKEN_EN }}
+        run: |
+          args=(--show "$SHOW")
+          if [ -n "$EPISODES" ]; then args+=(--episodes "$EPISODES"); fi
+          if [ "$APPLY" = "true" ]; then args+=(--apply); fi
+          python pipelines/voices/backfill_videos.py "${args[@]}"
+      - name: Commit the YouTube index
+        if: ${{ always() && github.event.inputs.apply == 'true' }}
+        uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            digests/age_of_ai/youtube_videos.json
+            digests/nerra_voices/youtube_videos.json
+          commit-message: "Backfill: interview episode YouTube videos"
+          recovery-on-failure: "true"
+          recovery-show: "age_of_ai"

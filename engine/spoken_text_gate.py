@@ -80,6 +80,14 @@ MAX_LOOP_REPEATS = 3
 
 GATE_MODES = ("enforce", "shadow", "off")
 
+#: Transcript languages the thresholds are calibrated for (Oct 11 2026).
+#: French joined English after the dub shadow readout: 1 failure in 101
+#: tracks over Sep 22 – Oct 11, a figure-dense passage Whisper wrote as
+#: digits while the script spelled the numbers out. Russian stays in shadow
+#: (3 of 65 failed the opening on Whisper's Cyrillic spellings of the English
+#: show names) and Chinese is uncalibrated (the matcher splits on spaces).
+CALIBRATED_LANGUAGES = ("en", "fr")
+
 _TAG_RE = re.compile(r"<[^>]+>|\[[^\]]+\]")
 _NON_WORD_RE = re.compile(r"[^\w\s']", flags=re.UNICODE)
 
@@ -355,7 +363,7 @@ def resolve_gate_mode(configured: str, transcript_language: str) -> str:
             "spoken_text_gate: unknown mode %r — running in shadow", configured,
         )
         mode = "shadow"
-    if mode == "enforce" and (transcript_language or "en").lower() != "en":
+    if mode == "enforce" and (transcript_language or "en").lower() not in CALIBRATED_LANGUAGES:
         logger.info(
             "spoken_text_gate: transcript language %r is not calibrated — "
             "enforce downgraded to shadow", transcript_language,

@@ -3085,7 +3085,7 @@ def build_benchmarks_section(
         "industry_structure": bm.get("industry_structure") or {},
     }
 
-    # Monetization capacity — illustrative only (the network runs no ads).
+    # Monetization capacity — illustrative only (no sponsor revenue is booked yet).
     cpm = bm.get("podcast_cpm_usd") or {}
     prog = cpm.get("programmatic") or [None, None]
     host = cpm.get("host_read_midtier") or [None, None]
@@ -3114,7 +3114,7 @@ def build_benchmarks_section(
                             "youtube_rpm": rpm},
         "note": (
             "Illustrative capacity if inventory were sold at 2026 industry "
-            "rates — the network currently runs ZERO ads by design. Podcast "
+            "rates — no sponsorship is booked yet. Podcast "
             "range = 1 programmatic slot at the low CPM to 2 host-read "
             "slots at the high CPM."
         ),
@@ -3313,7 +3313,7 @@ def build_investor_section(
                 ("Revenue capacity = monthly downloads × 12 ÷ 1,000 × CPM × "
                  f"slots (low: 1 programmatic slot at ${prog_lo:.0f} CPM; "
                  f"high: 2 host-read slots at ${host_hi:.0f} CPM). The "
-                 "network currently sells zero ads."),
+                 "network has no sponsor revenue booked yet."),
                 (f"Implied EV applies the {ma_multiple[0]}–{ma_multiple[1]}x "
                  "revenue multiple observed across 2020-24 podcast M&A to "
                  "that capacity IF it were realized."),

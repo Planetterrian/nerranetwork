@@ -143,7 +143,7 @@ class TestDebutIntroduction:
         low = " ".join(p.lower().split())
         assert "why it exists" in low
         assert "nerra network" in low
-        assert "ad-free" in low
+        assert "independent network" in low
         assert "nerranetwork.com" in low or "nerra network dot com" in low
         for segment in (
             "The Canadian Boat",

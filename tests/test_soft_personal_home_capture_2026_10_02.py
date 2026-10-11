@@ -25,7 +25,7 @@ SOFT_PRIVACY_NOTE = (
 )
 SOFT_META_DESCRIPTION = (
     "Every Nerra show stays free. Leave your email for occasional "
-    "Personal tips. No ads. Curiosity only."
+    "Personal tips. Curiosity only."
 )
 
 
@@ -198,7 +198,7 @@ class TestPersonalInterestNoNumericShowCount:
         start = gen.index("def generate_personal_interest_page")
         body = gen[start : start + 1200]
         assert "Leave your email for occasional" in body
-        assert "Personal tips. No ads. Curiosity only." in body
+        assert "Personal tips. Curiosity only." in body
         assert "reminder" not in body.lower()
 
 

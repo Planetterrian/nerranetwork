@@ -179,6 +179,20 @@
         if (!success) {
           throw new Error('fail');
         }
+        // Oct 11 2026: a real signup is a GA4 conversion. Until now no
+        // first-party form fired one, so the funnel's "0 signups" meant
+        // unmeasured. Sent as a beacon so the join page's redirect cannot
+        // drop it. Read by scripts/fetch_ga4_stats.py CONVERSION_EVENTS.
+        if (!soft) {
+          fireGa('newsletter_signup', {
+            list: list,
+            source: source || 'direct',
+            show_tags: tags.join(','),
+            page_path: window.location.pathname || '',
+            already_subscribed: !!(r.data && r.data.alreadySubscribed),
+            transport_type: 'beacon',
+          });
+        }
         if (redirect) {
           window.location = redirect;
           return;

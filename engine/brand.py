@@ -43,6 +43,50 @@ CONTACT_EMAIL = "hello@nerranetwork.com"
 
 # The three shows Mira hosts, in the order they should be introduced:
 # the free daily anchor, then the two interview shows.
+# --- Sponsorship (Oct 11 2026) -------------------------------------------
+#
+# The network used to promise "ad-free" on every surface — the homepage, the
+# FAQ, About, the press kit, every meta description, llms.txt and three
+# spoken lines. The operator retired that promise on 2026-10-11 so the network
+# can carry sponsors. What replaces it is a promise the network can keep with
+# sponsors on the air: what a sponsor can and cannot do. Every page that
+# talks about sponsors renders it from here (the ``sponsor_policy`` Jinja
+# global); a template that types its own version fails
+# ``tests/test_sponsor_ready_2026_10_11.py``.
+
+#: Where sponsor enquiries go. One address for now; split it out when there
+#: is a second person to read it.
+SPONSOR_EMAIL = CONTACT_EMAIL
+
+#: One sentence, for the places that have room for one (FAQ answers, cards,
+#: the press kit).
+SPONSOR_POLICY_SUMMARY = (
+    "Every episode is free. Sponsors may support the shows; a sponsored "
+    "message is always labelled as one, and no sponsor chooses, reviews or "
+    "changes what a show covers."
+)
+
+#: The rules in full, for the sponsor page and the editorial standards.
+SPONSOR_POLICY_RULES = (
+    ("Labelled, every time",
+     "A sponsored message says it is sponsored, in the audio and in the show "
+     "notes. It is never written to sound like the news around it."),
+    ("Kept apart from the reporting",
+     "A sponsor read sits in its own slot, never inside a story, and a "
+     "sponsor's own news is reported the same way as anyone else's or not at "
+     "all."),
+    ("No say over coverage",
+     "Sponsors do not choose, review, preview or change what a show covers. "
+     "A sponsor that is in the news is covered like anyone else."),
+    ("The same sourcing rules",
+     "Claims in a sponsored message must be the sponsor's own and must not "
+     "be presented as the show's reporting or its fact-checked claims."),
+    ("Every episode stays free",
+     "Sponsorship pays for the network; it never puts an episode behind a "
+     "paywall."),
+)
+
+
 MIRA_SHOW_SLUGS = ("nerra_daily", "age_of_ai", "nerra_voices")
 
 #: The news shows Mira reads (Sep 2026 launch cohort). Deliberately NOT in
@@ -548,3 +592,12 @@ def claims_status_meaning(status: str) -> str:
 def claims_process_steps() -> list:
     """The steps as ``[(title, text), ...]`` in reading order."""
     return list(CLAIMS_PROCESS_STEPS)
+
+
+def sponsor_policy() -> dict:
+    """The sponsorship rules for templates (``sponsor_policy`` Jinja global)."""
+    return {
+        "summary": SPONSOR_POLICY_SUMMARY,
+        "rules": [{"title": t, "body": b} for t, b in SPONSOR_POLICY_RULES],
+        "email": SPONSOR_EMAIL,
+    }

@@ -54,7 +54,10 @@ SCOPES = ["https://www.googleapis.com/auth/analytics.readonly"]
 # ``build_funnel._captures()`` sums every row of ``conversions`` into
 # ``signup_events_total``, so an engagement event in that list would silently
 # inflate the number of people who subscribed.
-CONVERSION_EVENTS = ["newsletter_signup", "generate_lead"]
+# Oct 11 2026: gallery_subscribe added — the gallery's email gate has fired
+# it since Phase 3 and nothing read it. footer-subscribe.js now fires
+# newsletter_signup on every first-party form's success.
+CONVERSION_EVENTS = ["newsletter_signup", "generate_lead", "gallery_subscribe"]
 # Soft Personal interest submit is INTENT toward tips/reminder (no charge),
 # never a newsletter conversion — keep it out of CONVERSION_EVENTS so
 # build_funnel._captures() does not count Soft as a subscriber signup.

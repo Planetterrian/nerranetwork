@@ -238,7 +238,7 @@ class TestWiring:
             'id="investor-hero"', "view-investor",
             "data.benchmarks", "data.investor",
             # Honesty labels must survive future edits.
-            "scenarios, not forecasts", "ZERO ads",
+            "scenarios, not forecasts", "no sponsor revenue booked yet",
         ):
             assert needle in src, needle
 
