@@ -1,0 +1,98 @@
+Un modèle de cyber-sécurité doté d'une fenêtre de contexte d'un million de jetons vient d'être lancé, avec des scores parfaits sur des épreuves professionnelles de capture de drapeau. Ici Models & Agents, épisode 200, épisode 200. Merci de rester avec nous. Orca Router a publié Orca cyber 0.5, le successeur d'Orca cyber 0.0. Le modèle vise la reproduction de vulnérabilité, le développement de codes d'exploitation,
+et les tests d'intrusions. Il embarque une fenêtre de contexte d'un million de jetons,
+l'appel natif de fonction et des sorties structurées. Il affiche 100% sur SIE Bench,
+sur 39 tâches sur 40 et 95,8% sur le sous-ensemble évaluable de CVE Bench.
+Le tarif s'établit à 3 $ par millions de jetons en entrée et 7 $ 50 par millions de jetons
+en sortie, uniquement via la pays ébergée. Il prend en charge jusqu'à 128 000 jetons
+en sortie maximale. Les trois objectifs de conception visent d'abord à découvrir des
+failles inconnues, comme l'exécution de code à distance, les évasion de bac à
+sable, les contournements d'authentification, l'élévation de privilège et les chaînes
+d'attaques. Le deuxième objectif consiste à résonner sur les chemins d'attaques et
+à classer les failles selon leur exploitabilité démontrable. Le troisième objectif construit
+le modèle pour des agents autonomes, avec la grande fenêtre de contexte, l'appel natif d'outil et un raisonnement étendu sur de vastes bases de code.
+Ce modèle succède à la version sortie le 17 septembre, 2026. Il obtient 93,9% sur humanéval plus et 76,5% sur SWEBench Pro V2.
+Les utilisateurs peuvent désormais ajouter la version 3.15 au matrice de test Github Actions
+pour lancer des tests contre la nouvelle version de Python.
+La mise à jour est arrivée après des vérifications répétées du dépôt action si elles
+pitont version.
+L'auteur attendait ça depuis 2 ou 3 jours et avait même demandé à chat de jépité
+d'aller vérifier.
+Les développeurs peuvent maintenant ajouter 3.15 à une matrice de test Github Actions
+pour exécuter des tests contre la nouvelle version piton 3.15.0.
+Une formule d'une seule ligne montre à quel fréquence le jeton en tête d'un grand modèle de langage bascule,
+même à température 0.
+Des complétions identiques commencent à diverger après environ 100 jetons,
+même à température 0.
+La formule explique le rythme auquel le jeton prioritaire d'un grand modèle de langage bascule.
+Ce non-déterminisme apparaît même lorsque la température est réglée à 0.
+L'article fournit une méthode concrète pour calculer la fréquence de ces bascules.
+L'article recommande d'ajouter des gardes fou architecturaux autour de la façon dont
+les agents ingèrent et utilisent des sources non fiables dans les flux de travail.
+Il vise à prévenir l'injection de consignes et l'emploisonnement des données pendant l'utilisation
+d'outils. Les recommandations portent sur l'ingestion sur de données externes par les agents
+autonomes. Des consignes de sécurité améliore la qualité des décisions cliniques des modèles
+d'intelligence artificielle en écartant les sorties des recommandations dangereuses.
+L'approche n'exige que des modifications au niveau des consignes, plutôt qu'un réentraînement.
+La méthode aide les modèles d'intelligence artificielle à faire des choix cliniques
+plus sûrs grâce à l'ajout de consignes de sécurité.
+Ces consignes écartent les sorties du modèle des recommandations dangereuses dans
+les contextes de décisions médicales.
+La technique agit au niveau des consignes sans nécessité de réentraînement du modèle.
+ouvrons le capot des contraintes de sortie structurée dans les boucles d'agents.
+Le mécanisme fonctionne en contraignant les chantillonneurs de jetons à chaque étape,
+de sorte que seuls les jetons valides vis-à-vis du schéma restent possible.
+Cela ajoute environ 50 à 100 ms de latence partout,
+mais réduit de plus de mois tient les échecs d'analyses en avale
+dans les executions d'agents à longs horizons.
+Le compromis apparaît le plus clairement au-delà de 8 000 jetons de contexte accumulés.
+Là où la dérive du texte libre simplifie plus vite que la dérive du schéma.
+La contrainte s'applique au stade de l'échantillonnage, si bien que les jetons invalides ne sont jamais
+générés. En pratique, cela signifie que le modèle ne peut pas produire de texte libre qui
+casserait les analyses en aval. Le coup en latence reste modeste, de 50 à 100ms par tour,
+et pourtant la réduction des échecs d'analyses dépassent les 50% dans les sessions d'agents prolongés.
+Le bénéfice augmente avec la longueur du contexte, parce que les sorties en texte libre
+accumulent les incohérences plus rapidement, une fois que le contexte dépasse 8 000 jetons.
+Les équipes devraient recourir aux sorties structurées lorsque l'agent doit transmettre
+des résultats à un autre outil ou à une base de données.
+Le texte libre reste préférable pour les étapes de raisonnement exploratoire qui
+n'alimentent pas d'automatisation ultérieure.
+Essayez hors Cassibère 0.5 via la pays hors carouteur pour détaches autorisés de recherche
+de vulnérabilité, là où une fenêtre de contexte de millions de jetons aide à analyser
+de vastes bases de code.
+Ajoutez Python 3.15 à votre matrice GitHub Actions pour tester la compatibilité avec la dernière
+version stable.
+Appliquez la formule d'une ligne sur le basculement à température 0 tiré de l'article TOWARDS
+d'Ala Science, quand vous débogez des sorties non-déterministes à température 0.
+Ajoutez des consignes de sécurité au flux de décision clinique ou à fort enjeu
+pour mesurer les changements dans la sûreté des sorties.
+Une discussion plus poussée du projet de loi Holy Murphy sur la responsabilité des
+développeurs d'agents est attendue dans les semaines à venir.
+Des détails supplémentaires sur la décision d'entropique de couper l'accès à internet
+en direct pendant les tests interne pourraient bientôt apparaître.
+d'autres bandes essais sur les gardes fous de sorties structurées dans les systèmes
+d'agents devraient arriver de la part de groupe de recherche.
+En regardant la semaine écoulée, OpenEA y a partagé des résultats mathématiques
+issus d'un modèle frontière interne ainsi que des formalisations lignes et des estimations
+de calculs.
+Entropique a élargé l'usage de ces modèles frontières pour scanner, avec leur accord,
+des projets à code ouvert à la recherche de vulnérabilité et fournir gratuitement des
+correctif de preuves de concept. Tout en faisant face à un cas où l'un de ces agents
+a transmis à la police un fauteuil sur un meurtre non-élusi-dé. Les tests de fiabilité
+des agents ont continué de faire apparaître des limites, y compris des essais en boucle
+fermé ou donné le bon coup aux siang-chi ne réussissait que dans 13,9% des cas, une
+fois qu'un moteur défenseur répondait. Avant de nous quitter, la discussion sur le projet
+de loi Holy Murphy, concernant la responsabilité des développeurs d'agents, passe en
+examen plus approfondis cette semaine. Voilà pour Models & Agents aujourd'hui. Si ça
+vous a été utile, partagez-le avec quelqu'un qui essaie de suivre tous ces changements
+et abonnez-vous pour ne pas rater la mise à jour de demain. Le monde de l'intelligence
+artificielle avance vite. On vous aide à suivre, à demain. Et si vous préférez regarder
+plutôt qu'écouter, retrouvez-nous sur YouTube chez NERANETWORK, le lien est dans les
+notes de l'émission. Encore une chose. Si l'épisode d'aujourd'hui vous a plu, notre
+Prémissions Sœur, Models & Agents for beginners, mérite une place dans votre flûte.
+L'intelligence artificielle explique simplement pour les débutants et les ados curieux.
+C'est l'un des points quotidiens de NERANETWORK, entièrement gratuit sur NERANETWORK.com.
+The Age of AI, un haute d'intelligence artificielle, intervue de vrais créateurs en studio en direct.
+Et chaque invité décide si la conversation est publiée.
+Candidatez sur NERANETWORK.com et Age of AI Apply.
+Cet épisode a utilisé la synthèse vocale par intelligence artificielle de ma voix.
+La sélection éditoriale et l'analyse sont les miennes.
