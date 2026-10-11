@@ -44,11 +44,19 @@ class TestArms:
         assert cfg.llm.stream is True
         assert cfg.llm.model == "grok-4.3"
 
+    @pytest.mark.parametrize("slug", ["tesla", "fascinating_frontiers"])
+    def test_flagship_scripts_on_46(self, slug):
+        cfg = load_config(ROOT / "shows" / f"{slug}.yaml")
+        assert cfg.llm.podcast_model == "grok-4.6"
+        assert cfg.llm.stream is True
+        assert cfg.llm.model == "grok-4.3"
+
     def test_registered(self):
         reg = yaml.safe_load((ROOT / "docs" / "experiments.yaml").read_text(encoding="utf-8"))
         ids = {e["id"] for e in reg["experiments"]}
         assert {"narrative-script-grok47-2026-10-11",
-                "planetterrian-script-grok46-2026-10-11"} <= ids
+                "planetterrian-script-grok46-2026-10-11",
+                "flagship-script-grok46-2026-10-11"} <= ids
 
 
 class TestScriptEffort:

@@ -472,7 +472,7 @@ class TestPodcastModelOverride:
     def test_empty_default_uses_llm_model(self):
         from engine.config import load_config
         root = Path(__file__).resolve().parent.parent
-        cfg = load_config(root / "shows" / "tesla.yaml")
+        cfg = load_config(root / "shows" / "modern_investing.yaml")
         assert cfg.llm.podcast_model == ""
 
     def test_script_stage_honors_the_override(self, monkeypatch):

@@ -33,11 +33,14 @@ class TestSpaceXScriptArm:
         assert cfg.llm.podcast_model == "grok-4.6"
         assert cfg.llm.model == "grok-4.3", "the digest never follows the script arm"
 
-    def test_tesla_waits_for_the_gate(self):
-        """Tesla joins only on a GATE: PASS from the SpaceX arm
-        (docs/model_upgrade_playbook.md) — never by accident."""
+    def test_tesla_joined_by_operator_decision(self):
+        """Tesla was to wait for the 10-23 gate; the operator moved it on
+        Oct 11 2026 (experiment flagship-script-grok46-2026-10-11). Same
+        shape as SpaceX: script on 4.6, digest on 4.3, streamed."""
         cfg = load_config(ROOT / "shows" / "tesla.yaml")
-        assert not getattr(cfg.llm, "podcast_model", "")
+        assert cfg.llm.podcast_model == "grok-4.6"
+        assert cfg.llm.model == "grok-4.3"
+        assert cfg.llm.stream is True
 
     def test_registered(self):
         reg = yaml.safe_load((ROOT / "docs" / "experiments.yaml").read_text(encoding="utf-8"))

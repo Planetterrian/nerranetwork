@@ -243,6 +243,18 @@ multilingual:
   zh_approved: false
 llm:
   provider: xai
+  # Oct 11 2026 (operator-directed; experiment
+  # flagship-script-grok46-2026-10-11): the SCRIPT stage runs grok-4.6 and the
+  # digest stays on grok-4.3, the shape SpaceX and Omni View run. Moved ahead
+  # of the 10-23 SpaceX gate at the operator's call. Before: 4.3 scripts
+  # copied 47-68% on most days (Ep214-219) of the digest verbatim; SpaceX's streamed 4.6 arm copies
+  # 4-7%. A podcast_model override runs two-pass by code. The call streams
+  # (playbook rule 7); a failure falls back to 4.3 for that episode. The 4.6
+  # call adds 3-12 min to a run (FF runs 21-32 min of a 50-min budget); the long-form render is limited by
+  # the remaining pipeline budget. Read the arm from the credit file's
+  # podcast_script_generation.model, never from this line.
+  podcast_model: grok-4.6
+  stream: true
   system_prompt_file: shows/prompts/fascinating_frontiers_system.txt
   digest_prompt_file: shows/prompts/fascinating_frontiers_digest.txt
   podcast_prompt_file: shows/prompts/fascinating_frontiers_podcast.txt

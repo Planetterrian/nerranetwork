@@ -2637,9 +2637,13 @@ same effort and stream as the first (they had sent the arm's model at default
 effort, non-streamed: the shape that dropped in September). Measured before:
 4.6 script calls take 190-700 s against 20-60 s on 4.3, so a pinned script
 arm costs a run 3-12 min; the narrative shows and Planetterrian finish in
-5-10 min of the 50-min budget, Tesla already reaches ~32 min and waits for
-the 10-23 SpaceX gate with Fascinating Frontiers. ⚠️ AUDIO on all three —
-A/B-listen Ep1.
+5-10 min of the 50-min budget. **Same evening, Tesla and Fascinating
+Frontiers moved to the grok-4.6 script stage too** (operator call, ahead of
+the 10-23 SpaceX gate; register `flagship-script-grok46-2026-10-11`): Tesla
+leaves combined generation (a `podcast_model` override is two-pass), its runs
+already reach ~32 min so the long-form render now leans on the budget gate,
+and both are ARM shows of the Oct 13 spoken-open readout — read that readout
+with this change named as a confound. ⚠️ AUDIO on all five — A/B-listen Ep1.
 
 ### Anthology books — ebook + audiobook from the narrative shows (Aug 2026)
 
