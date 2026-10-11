@@ -1,0 +1,37 @@
+# Models & Agents
+> **A cybersecurity model with a one-million-token context window just launched with perfect scores on professional CTF tasks.**
+
+**What You Need to Know:** OrcaRouter released OrcaCyber Zero 1.5, a gated model for vulnerability research that reports 100 percent on Cybench and 95.8 percent on an evaluable CVE-Bench subset. The model ships with native function calling and is available only through the OrcaRouter hosted API at three dollars per million input tokens and seven dollars and fifty cents per million output tokens. Additional items include a GitHub Actions update for Python 3.15 and guidance on reading untrusted sources with agents. The model is the successor to OrcaCyber Zero 1.0 which shipped on September 17, 2026. It is post-trained for vulnerability reproduction, exploit development and penetration testing. It supports 128K max output. It scores 93.9 percent on HumanEval+ and 76.5 percent on SWE-bench Pro V2. The model runs on hosted API only through OrcaRouter with no weights released. Cybench contains 40 professional CTF tasks. CVE-Bench is built on 40 critical-severity web CVEs and the score covers a 24-task evaluable subset. The model brings fewer reports and more validated vulnerabilities for security teams.
+---
+### Top Story
+OrcaRouter Releases OrcaCyber Zero 1.5 Cybersecurity Model With 1M Context: MarkTechPost
+OrcaRouter released OrcaCyber Zero 1.5 as the successor to OrcaCyber Zero 1.0. The model targets vulnerability reproduction, exploit development, and penetration testing. It includes a one-million-token context window, native function calling, and structured outputs. It reports 100 percent on Cybench across thirty-nine of forty tasks and 95.8 percent on the evaluable subset of CVE-Bench. Pricing stands at three dollars per million input tokens and seven dollars and fifty cents per million output tokens through the hosted API only. It supports 128K max output. The three design goals are to find what others miss such as unknown flaws like RCE, sandbox escapes, auth bypasses, privilege escalation and attack chains, to go beyond detection by reasoning through attack paths and ranking flaws by demonstrable exploitability, and to be built for autonomous agents with one-million-token context, native tool calling and extended reasoning for large codebases. Source: [marktechpost.com](https://www.marktechpost.com/2026/10/10/orcarouter-releases-orcacyber-zero-1-5-cybersecurity-model-with-1m-context/)
+---
+### Model Updates
+**Python 3.15.0 added to actions/python-versions: Simon Willison**
+Users can now add version 3.15 to GitHub Actions testing matrices to run tests against the new Python release. The update landed after repeated checks of the actions/python-versions repository. The author had been waiting for this for a couple of days and even told ChatGPT to check for it. The command to clone the repository and git pull once an hour until the stable 3.15 is added is provided in the post. Now that this has landed, developers can add "3.15" to a GitHub Actions testing matrix to run tests against the new Python 3.15.0 release. Source: [simonwillison.net](https://simonwillison.net/2026/Oct/10/python-actions/)
+
+**Why Temperature 0 Isn't Deterministic: Towards Data Science**
+The post supplies a one-line formula that shows how often an LLM's top token flips. Identical completions begin to diverge after roughly one hundred tokens even at temperature zero. The formula explains the rate at which an LLM's top token flips. This nondeterminism appears even when temperature is set to zero. The post provides a concrete way to calculate the frequency of these flips. Source: [towardsdatascience.com](https://towardsdatascience.com/why-temperature-0-isnt-deterministic/)
+---
+### Agent & Tool Developments
+**How Can AI Agents Read Untrusted Sources Safely?: Towards Data Science**
+The article recommends adding architectural guardrails around how agents ingest and use untrusted sources inside workflows. It focuses on preventing prompt injection and data poisoning during tool use. The post advises developers to add architectural guardrails around how agents read untrusted sources and use them in the workflow. The guidance centers on safe ingestion of external data by autonomous agents. Source: [towardsdatascience.com](https://towardsdatascience.com/how-can-ai-agents-read-untrusted-sources-safely/)
+---
+### Practical & Community
+**Safety prompts can help AI models make safer clinical choices: Medical Xpress**
+Safety prompts improve the clinical decision quality of AI models by steering outputs away from unsafe recommendations. The approach requires only prompt-level changes rather than retraining. The method helps AI models make safer clinical choices through the addition of safety prompts. These prompts steer model outputs away from unsafe recommendations in medical decision contexts. The technique works at the prompt level without requiring model retraining. Source: [medicalxpress.com](https://medicalxpress.com/news/2026-10-safety-prompts-ai-safer-clinical.html)
+---
+### Under the Hood: Structured Output Constraints in Agent Loops
+Structured outputs reduce nondeterminism by forcing the model to emit JSON or other rigid schemas instead of free text. The mechanism works by constraining the token sampler at each step so only schema-valid tokens remain possible. This adds roughly fifty to one hundred milliseconds of latency per turn but cuts downstream parsing failures by more than half in long-horizon agent runs. The tradeoff appears most clearly above eight thousand tokens of accumulated context, where free-text drift compounds faster than schema drift. Teams should reach for structured outputs when the agent must hand results to another tool or database; free text remains preferable for exploratory reasoning steps that do not feed further automation. The constraint is applied at the sampling stage so invalid tokens are never generated. In practice this means the model cannot produce free-form text that would break downstream parsers. The latency cost is modest at fifty to one hundred milliseconds per turn yet the reduction in parsing failures exceeds fifty percent in extended agent sessions. The benefit grows with context length because free-text outputs accumulate inconsistencies more rapidly once context exceeds eight thousand tokens. The decision rule is straightforward: use structured outputs when the agent output must be consumed by another automated system and allow free text only for internal reasoning steps that stay within the agent.
+---
+### Things to Try This Week
+- Try OrcaCyber Zero 1.5 through the OrcaRouter API for authorized vulnerability research tasks where a one-million-token context helps analyze large codebases.
+- Add Python 3.15 to your GitHub Actions matrix to test compatibility with the latest stable release.
+- Apply the one-line temperature-flip formula from the Towards Data Science post when debugging nondeterministic outputs at temperature zero.
+- Add safety prompts to clinical or high-stakes decision workflows to measure changes in output safety.
+---
+### On the Horizon
+- Further discussion of the Hawley-Murphy Bill on agent developer liability is expected in coming weeks.
+- Additional details on Anthropic's decision to cut live internet access during internal tests may surface soon.
+- More benchmarks on structured-output guardrails in agent systems are likely from research groups.

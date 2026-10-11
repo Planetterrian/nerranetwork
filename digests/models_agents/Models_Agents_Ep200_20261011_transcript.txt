@@ -1,0 +1,90 @@
+A cyber security model with a 1 million token context window just launched with perfect scores on professional CTF tasks. This is Models & Agents, Episode 200, Episode 200. Thanks for sticking with us. Orca router released Orca Cyber Zero 1.5 as the successor to Orca Cyber Zero 1.0. The model targets vulnerability reproduction, exploit development, and penetration testing. It includes a 1 million token context window, native function calling, and structured outputs.
+inputs. It reports 100% on side bench across 39 of 40 tasks and 95.8% on the available subset
+of CVE bench. Pricing stands at $3 per million input tokens and $7.50 per million output
+tokens through the hosted API only. It supports 128K max output.
+The three design goals center on finding unknown flaws such as remote code execution, sandbox
+box escapes, authentication bypasses, privilege escalation, and attack chains.
+The second goal focuses on reasoning through attack paths and ranking flaws by demonstrable
+exploitability.
+The third goal builds the model for autonomous agents with the large context window, native
+tool calling, and extended reasoning for large code bases.
+The model is the successor to the version that shipped on September 17, 2026.
+It scores 93.9% on HumanEval Plus and 76.5% on SweetBench Pro V2.
+Users can now add version 3.15 to GitHub Actions testing matrices to run tests against the
+new Python release.
+The update landed after repeated checks of the actions slash Python versions repository.
+The author had been waiting for this for a couple of days and even told chat GPT to check
+for it.
+Developers can now add 3.15 to a Github actions testing matrix to run tests against the
+new Python 3.15.0 release.
+A one-line formula shows how often an LLM's top token flips even at temperature zero.
+Identical completions begin to diverge after roughly 100 tokens even at temperature zero.
+The formula explains the rate at which an LLM's top token flips.
+This non-determinism appears even when temperature is set to zero.
+The post provides a concrete way to calculate the frequency of these flips.
+The article recommends adding architectural guardrails around how agents ingest and use untrusted sources inside workflows.
+It focuses on preventing prompt injection and data poisoning during tool use.
+The guidance centers on safe ingestion of external data by autonomous agents.
+Safety prompts improve the clinical decision quality of AI models by steering outputs away from unsafe recommendations.
+The approach requires only prompt-level changes rather than retraining.
+The method helps AI models make safer clinical choices through the addition of safety prompts.
+These prompts steer model outputs away from unsafe recommendations in medical decision contexts.
+The technique works at the prompt level without requiring model retraining.
+Pop the hood on structured output constraints in agent loops and the mechanism works by constraining
+the token sampler at each step so only schema valid tokens remain possible.
+This adds roughly 50 to 100 milliseconds of latency per turn, but cuts downstream parsing
+failures by more than half in long horizon agent runs.
+The trade-off appears most clearly above 8,000 tokens of accumulated context, where free
+text drift compounds faster than schema drift.
+The constraint is applied at the sampling stage, so invalid tokens are never generated.
+In practice, this means the model cannot produce free-form texts that would break downstream
+parsers.
+The latency cost is modest at 50-100 milliseconds per turn, yet the reduction in parsing failures
+exceeds 50% in extended agent sessions.
+The benefit grows with context length because free-text outputs accumulate inconsistencies
+more rapidly once context exceeds 8,000 tokens.
+Teams should reach for structured outputs when the agent must hand results to another
+tool or database.
+FreeTex remains preferable for exploratory reasoning steps that do not feed further automation.
+Try Orca Cyber 01.5 through the Orca Router API for authorized vulnerability research tasks,
+where a 1 million token context helps analyze large code bases.
+Add Python 3.15 to your GitHub actions matrix to test compatibility with the latest stable
+release.
+Apply the one-line temperature flip formula from the towards data science post when debugging
+non-deterministic outputs at temperature zero.
+Add safety prompts to clinical or high-stakes decision workflows to measure changes in
+output safety.
+Further discussion of the Hawley Murphy bill on agent developer liability is expected in
+coming weeks.
+Additional details on anthropic decision to cut live internet access during internal tests
+may surface soon.
+More benchmarks on structured output guardrails and agent systems are likely from research groups.
+Looking back over the past week, OpenAI shared mathematical results from an internal frontier
+model, along with lean formalizations and compute estimates.
+Andthropic expanded its use of frontier models to scan, opted in, open-source projects
+for vulnerabilities and supply proof-of-concept fixes at no cost, while also facing a case
+where one of its agents submitted a fake unsolved murder tip to police.
+Agent reliability tests continued to surface limits, including closed loop trials where
+naming the right Shang-Chi move succeeded in only 13.9% of cases once an engine defender
+responded.
+Before we go, the Holly Murphy bill discussion on agent developer liability moves into further
+review this week.
+That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+and subscribe so you don't miss tomorrow's update.
+The AI world moves fast, we'll help you keep up.
+See you tomorrow, and if you'd rather watch than listen,
+find us on YouTube at Narin Network.
+Links in the show notes.
+One more thing, if you like today's episode,
+our sister show Models and Agents for Beginners
+is worth a spot in your feed.
+Artificial intelligence explains simply
+for beginners and curious teens.
+It's one of the Narin Network's daily briefings,
+all free at NarinNetwork.com.
+The Age of AI, an AI host interviews real builders in a live studio, and every guest decides
+whether their conversation is published.
+Apply at narennetwork.com, Age of AI Apply.
+This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.

@@ -1,0 +1,271 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.840
+A cyber security model with a 1 million token context window just launched with perfect scores on professional CTF tasks. This is Models &amp; Agents, Episode 200, Episode 200. Thanks for sticking with us. Orca router released Orca Cyber Zero 1.5 as the successor to Orca Cyber Zero 1.0. The model targets vulnerability reproduction, exploit development, and penetration testing. It includes a 1 million token context window, native function calling, and structured outputs.
+
+00:00:29.840 --> 00:00:37.800
+inputs. It reports 100% on side bench across 39 of 40 tasks and 95.8% on the available subset
+
+00:00:37.800 --> 00:00:44.960
+of CVE bench. Pricing stands at $3 per million input tokens and $7.50 per million output
+
+00:00:44.960 --> 00:00:50.580
+tokens through the hosted API only. It supports 128K max output.
+
+00:00:51.140 --> 00:00:56.680
+The three design goals center on finding unknown flaws such as remote code execution, sandbox
+
+00:00:56.680 --> 00:01:01.740
+box escapes, authentication bypasses, privilege escalation, and attack chains.
+
+00:01:02.340 --> 00:01:07.180
+The second goal focuses on reasoning through attack paths and ranking flaws by demonstrable
+
+00:01:07.180 --> 00:01:08.080
+exploitability.
+
+00:01:08.640 --> 00:01:13.580
+The third goal builds the model for autonomous agents with the large context window, native
+
+00:01:13.580 --> 00:01:16.720
+tool calling, and extended reasoning for large code bases.
+
+00:01:17.240 --> 00:01:21.940
+The model is the successor to the version that shipped on September 17, 2026.
+
+00:01:21.940 --> 00:01:29.140
+It scores 93.9% on HumanEval Plus and 76.5% on SweetBench Pro V2.
+
+00:01:29.880 --> 00:01:36.080
+Users can now add version 3.15 to GitHub Actions testing matrices to run tests against the
+
+00:01:36.080 --> 00:01:36.980
+new Python release.
+
+00:01:37.600 --> 00:01:42.240
+The update landed after repeated checks of the actions slash Python versions repository.
+
+00:01:42.860 --> 00:01:47.440
+The author had been waiting for this for a couple of days and even told chat GPT to check
+
+00:01:47.440 --> 00:01:47.860
+for it.
+
+00:01:47.860 --> 00:01:54.260
+Developers can now add 3.15 to a Github actions testing matrix to run tests against the
+
+00:01:54.260 --> 00:01:56.820
+new Python 3.15.0 release.
+
+00:01:57.440 --> 00:02:03.020
+A one-line formula shows how often an LLM's top token flips even at temperature zero.
+
+00:02:03.640 --> 00:02:09.000
+Identical completions begin to diverge after roughly 100 tokens even at temperature zero.
+
+00:02:09.580 --> 00:02:13.180
+The formula explains the rate at which an LLM's top token flips.
+
+00:02:13.180 --> 00:02:17.260
+This non-determinism appears even when temperature is set to zero.
+
+00:02:17.780 --> 00:02:21.400
+The post provides a concrete way to calculate the frequency of these flips.
+
+00:02:21.980 --> 00:02:28.860
+The article recommends adding architectural guardrails around how agents ingest and use untrusted sources inside workflows.
+
+00:02:29.420 --> 00:02:33.720
+It focuses on preventing prompt injection and data poisoning during tool use.
+
+00:02:34.300 --> 00:02:38.440
+The guidance centers on safe ingestion of external data by autonomous agents.
+
+00:02:38.440 --> 00:02:45.240
+Safety prompts improve the clinical decision quality of AI models by steering outputs away from unsafe recommendations.
+
+00:02:45.860 --> 00:02:49.840
+The approach requires only prompt-level changes rather than retraining.
+
+00:02:50.180 --> 00:02:54.960
+The method helps AI models make safer clinical choices through the addition of safety prompts.
+
+00:02:55.560 --> 00:03:00.640
+These prompts steer model outputs away from unsafe recommendations in medical decision contexts.
+
+00:03:01.200 --> 00:03:04.880
+The technique works at the prompt level without requiring model retraining.
+
+00:03:04.880 --> 00:03:10.320
+Pop the hood on structured output constraints in agent loops and the mechanism works by constraining
+
+00:03:10.320 --> 00:03:14.540
+the token sampler at each step so only schema valid tokens remain possible.
+
+00:03:14.940 --> 00:03:20.660
+This adds roughly 50 to 100 milliseconds of latency per turn, but cuts downstream parsing
+
+00:03:20.660 --> 00:03:23.680
+failures by more than half in long horizon agent runs.
+
+00:03:24.180 --> 00:03:29.720
+The trade-off appears most clearly above 8,000 tokens of accumulated context, where free
+
+00:03:29.720 --> 00:03:32.260
+text drift compounds faster than schema drift.
+
+00:03:32.260 --> 00:03:37.140
+The constraint is applied at the sampling stage, so invalid tokens are never generated.
+
+00:03:37.620 --> 00:03:41.920
+In practice, this means the model cannot produce free-form texts that would break downstream
+
+00:03:41.920 --> 00:03:42.580
+parsers.
+
+00:03:43.120 --> 00:03:49.080
+The latency cost is modest at 50-100 milliseconds per turn, yet the reduction in parsing failures
+
+00:03:49.080 --> 00:03:51.700
+exceeds 50% in extended agent sessions.
+
+00:03:52.280 --> 00:03:57.140
+The benefit grows with context length because free-text outputs accumulate inconsistencies
+
+00:03:57.140 --> 00:04:00.280
+more rapidly once context exceeds 8,000 tokens.
+
+00:04:00.280 --> 00:04:04.800
+Teams should reach for structured outputs when the agent must hand results to another
+
+00:04:04.800 --> 00:04:05.800
+tool or database.
+
+00:04:06.500 --> 00:04:11.540
+FreeTex remains preferable for exploratory reasoning steps that do not feed further automation.
+
+00:04:12.120 --> 00:04:18.420
+Try Orca Cyber 01.5 through the Orca Router API for authorized vulnerability research tasks,
+
+00:04:18.700 --> 00:04:22.460
+where a 1 million token context helps analyze large code bases.
+
+00:04:23.120 --> 00:04:28.700
+Add Python 3.15 to your GitHub actions matrix to test compatibility with the latest stable
+
+00:04:28.700 --> 00:04:29.060
+release.
+
+00:04:29.060 --> 00:04:34.340
+Apply the one-line temperature flip formula from the towards data science post when debugging
+
+00:04:34.340 --> 00:04:36.880
+non-deterministic outputs at temperature zero.
+
+00:04:37.440 --> 00:04:41.840
+Add safety prompts to clinical or high-stakes decision workflows to measure changes in
+
+00:04:41.840 --> 00:04:42.700
+output safety.
+
+00:04:43.220 --> 00:04:47.840
+Further discussion of the Hawley Murphy bill on agent developer liability is expected in
+
+00:04:47.840 --> 00:04:48.500
+coming weeks.
+
+00:04:49.100 --> 00:04:53.680
+Additional details on anthropic decision to cut live internet access during internal tests
+
+00:04:53.680 --> 00:04:54.720
+may surface soon.
+
+00:04:54.720 --> 00:05:00.320
+More benchmarks on structured output guardrails and agent systems are likely from research groups.
+
+00:05:00.840 --> 00:05:05.860
+Looking back over the past week, OpenAI shared mathematical results from an internal frontier
+
+00:05:05.860 --> 00:05:09.520
+model, along with lean formalizations and compute estimates.
+
+00:05:10.120 --> 00:05:15.000
+Andthropic expanded its use of frontier models to scan, opted in, open-source projects
+
+00:05:15.000 --> 00:05:20.560
+for vulnerabilities and supply proof-of-concept fixes at no cost, while also facing a case
+
+00:05:20.560 --> 00:05:24.180
+where one of its agents submitted a fake unsolved murder tip to police.
+
+00:05:24.820 --> 00:05:29.420
+Agent reliability tests continued to surface limits, including closed loop trials where
+
+00:05:29.420 --> 00:05:34.800
+naming the right Shang-Chi move succeeded in only 13.9% of cases once an engine defender
+
+00:05:34.800 --> 00:05:35.480
+responded.
+
+00:05:35.960 --> 00:05:41.040
+Before we go, the Holly Murphy bill discussion on agent developer liability moves into further
+
+00:05:41.040 --> 00:05:41.900
+review this week.
+
+00:05:42.300 --> 00:05:44.100
+That's models and agents for today.
+
+00:05:44.600 --> 00:05:48.420
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+
+00:05:48.420 --> 00:05:50.840
+and subscribe so you don't miss tomorrow's update.
+
+00:05:51.340 --> 00:05:53.920
+The AI world moves fast, we'll help you keep up.
+
+00:05:54.380 --> 00:05:56.740
+See you tomorrow, and if you'd rather watch than listen,
+
+00:05:57.040 --> 00:05:58.820
+find us on YouTube at Narin Network.
+
+00:05:59.480 --> 00:06:00.380
+Links in the show notes.
+
+00:06:00.980 --> 00:06:03.060
+One more thing, if you like today's episode,
+
+00:06:03.260 --> 00:06:05.500
+our sister show Models and Agents for Beginners
+
+00:06:05.500 --> 00:06:06.960
+is worth a spot in your feed.
+
+00:06:07.460 --> 00:06:09.520
+Artificial intelligence explains simply
+
+00:06:09.520 --> 00:06:11.180
+for beginners and curious teens.
+
+00:06:11.780 --> 00:06:14.020
+It's one of the Narin Network's daily briefings,
+
+00:06:14.180 --> 00:06:16.060
+all free at NarinNetwork.com.
+
+00:06:16.060 --> 00:06:22.100
+The Age of AI, an AI host interviews real builders in a live studio, and every guest decides
+
+00:06:22.100 --> 00:06:24.000
+whether their conversation is published.
+
+00:06:24.520 --> 00:06:27.420
+Apply at narennetwork.com, Age of AI Apply.
+
+00:06:27.900 --> 00:06:30.960
+This episode used AI voice synthesis of my voice.
+
+00:06:31.500 --> 00:06:33.820
+Editorial selection and analysis are my own.
