@@ -4316,3 +4316,26 @@ experiments:
     target: >
       Over 14 days: 4.6 served on >= 80% of episodes; overlap median <= 20
       with coverage median >= 70; no episode lost to the script stage.
+  - id: flagship-script-grok46-2026-10-11
+    title: "Tesla and Fascinating Frontiers write their script on grok-4.6 (streamed), ahead of the SpaceX gate"
+    area: quality
+    shipped: 2026-10-11
+    readout: 2026-10-25
+    status: reading
+    baseline: >
+      Tesla on the 4.3 combined path, Ep626-631: script_digest_overlap_pct
+      2.5-72 (4 of 6 under 13), coverage 39-95%, runs 1,120-1,930 s. FF on
+      4.3, Ep214-219: overlap 4-68 (4 of 6 at 47-68), coverage 65-93%, runs
+      1,280-1,910 s. SpaceX's streamed 4.6 arm: 4-7% verbatim, 58-74%
+      coverage, script call 400-700 s.
+    notes: >
+      Operator-directed on Oct 11, ahead of the 10-23 SpaceX gate.
+      llm.podcast_model grok-4.6 + llm.stream true; the digests stay grok-4.3;
+      a podcast_model override is two-pass, so Tesla leaves combined
+      generation. Both shows are ARM shows of the Sep 22 spoken-open
+      experiment (readout 10-13): read their long_open_hold_5pct after
+      10-12 with this change named as a confound. AUDIO — A/B-listen Ep1.
+    target: >
+      Over 14 days on each: 4.6 served on >= 80% of episodes; overlap median
+      <= 20 with coverage median >= 70; no episode lost; wall_duration_s p95
+      under 2,700 s.

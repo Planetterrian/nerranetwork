@@ -5787,16 +5787,10 @@ def _extract_hook(digest: str) -> str | None:
     # blockquotes that appear AFTER a section heading are scene-setting
     # narration, not the title.
     #
-    # Oct 11 2026: the hook is read BEFORE transform_daily_body promotes the
-    # model's bare first prose line into that blockquote, so a digest whose
-    # hook arrived unlabelled had no hook at runtime while the committed .md
-    # did. SpaceX Ep125/127 shipped "Ep N highlight #Shorts" and a generic RSS
-    # title that way. Promote first (idempotent; conservative by design).
-    try:
-        from engine.newsletter_body import promote_hook_to_blockquote
-        digest = promote_hook_to_blockquote(digest)
-    except Exception:  # noqa: BLE001 — a title must never crash the run
-        pass
+    # An unlabelled hook written as a bare first line (SpaceX Ep125/127) is
+    # read by Fallback 2 below, which carries a five-word floor. Promoting
+    # that line to a blockquote here first (as an earlier Oct 11 fix did)
+    # let a two-word show-name line through this fallback as the "hook".
     for line in digest.splitlines():
         if line.lstrip().startswith("###"):
             break
