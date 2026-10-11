@@ -167,6 +167,12 @@ def _strip_title_label(title: str) -> str:
     return _TITLE_LABEL_RE.sub("", title).strip()
 
 
+#: A line spoken by a named host in a dialogue script ("DAN: Ten",
+#: "PATRICK: I'll take the hit on that"). Oct 11 2026: The DP Pod shipped
+#: these as chapter titles on six of ten episodes (Ep070–077) — a host's
+#: reaction is a turn in a conversation, never the name of a segment.
+_SPEAKER_LABEL_RE = re.compile(r"^[A-Z]{2,15}:\s")
+
 #: A sentence that opens on one of these continues the one before it — it is
 #: never a chapter title on its own.
 _CONTINUATION_OPENER_RE = re.compile(
@@ -193,7 +199,7 @@ def _first_sentence_as_title(text: str, max_chars: int = 60) -> str:
     # Trim leading whitespace/markdown fragments and pick the first
     # non-blank line so headers/blank gaps don't poison the title.
     cleaned = text.lstrip().lstrip("*_-•> ").lstrip()
-    if not cleaned:
+    if not cleaned or _SPEAKER_LABEL_RE.match(cleaned):
         return ""
     # First sentence — anything up to the first . ! ? … plus space.
     match = _SENTENCE_END_RE.split(cleaned, maxsplit=1)

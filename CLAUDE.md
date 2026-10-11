@@ -2653,7 +2653,14 @@ Env Intel, Финансы Просто, Привет, Русский! and Offsho
 run_show shows on the non-streaming call. Same model and request; transport
 only, and no show may opt back out (`TestConfig::test_every_show_streams`).
 The interview shows ignore the flag — the Voices pipeline never calls
-`engine.generator`.
+`engine.generator`. **Four Grok review PRs triaged the same evening**
+(register `review-triage-2026-10-11`; guards
+`tests/test_review_triage_2026_10_11.py`): a speaker-labelled line ("DAN:
+Ten") is never a chapter title, DP Pod's Cold Open marker matches the spoken
+"This is The DP Pod", and its prompts say weekly (⚠️ AUDIO). Checked and not
+acted on: SpaceX "Patrick and Vancouver" is Whisper reading a script that says
+"in"; on the 4.6 script SpaceX's AI section was empty and the price is spoken
+once, at the close.
 
 ### Anthology books — ebook + audiobook from the narrative shows (Aug 2026)
 
