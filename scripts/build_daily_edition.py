@@ -26,6 +26,7 @@ Exit codes: 0 = published, already published, or cleanly waiting
 from __future__ import annotations
 
 import argparse
+import re
 import datetime as dt
 import json
 import logging
@@ -629,9 +630,12 @@ def post_edition_to_x(spec: EditionSpec, episode_num: int, title: str):
     from engine.x_post import clip_post_text, post_media
 
     cover = ROOT / "assets" / "covers" / f"{spec.slug.replace('_', '-')}.jpg"
+    # The title opens "Ep 52: ..." and the label already says "Ep 52"
+    # (Oct 11 2026, the first post read "Nerra Daily · Ep 52 / Ep 52: ...").
+    hook = re.sub(r"^\s*Ep(?:isode)?\.?\s*\d+\s*[:\-–—]\s*", "", title or "")
     posted, reason, _url, _media = post_media(
         env_prefix=spec.x_env_prefix,
-        text=clip_post_text(label=f"📻 {spec.name}", hook=title,
+        text=clip_post_text(label=f"📻 {spec.name}", hook=hook,
                             episode_num=episode_num),
         media_paths=[str(cover)],
         label=f"{spec.name} Ep{episode_num}",

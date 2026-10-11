@@ -5805,6 +5805,33 @@ def _extract_hook(digest: str) -> str | None:
             hook = m.group(1).strip()
             if hook:
                 return hook
+
+    # Fallback 2 (Oct 11 2026, SpaceX Ep125 and Ep127): the hook written as
+    # the first plain line, with neither the label nor the blockquote. That
+    # is the line engine.newsletter_body.promote_hook_to_blockquote turns
+    # into ``> **hook**`` a few steps later, so the blog and the newsletter
+    # showed the hook while the podcast title and the X post went generic
+    # ("SpaceX Daily - Episode 127 - October 11, 2026"). Same skips as that
+    # promotion (title heading, bold-label metadata, decorative subtitles),
+    # but it never looks past the first ### heading, where a first line is
+    # narration rather than a hook.
+    for line in digest.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith("###"):
+            break
+        if stripped.startswith("#") or re.match(r"^\*\*[^*]+:\*\*", stripped):
+            continue
+        fully_bold = re.fullmatch(r"\*\*([^*]+)\*\*", stripped)
+        if re.search(r"\*\*[^*]+\*\*", stripped) and not fully_bold:
+            continue  # decorative subtitle ("🌍 **Planetterrian Daily** - ...")
+        if stripped.startswith((">", "|", "<", "```", "---")) or re.match(r"^(?:[-*]|\d+\.)\s", stripped):
+            return None
+        text = (fully_bold.group(1) if fully_bold else stripped).strip()
+        if len(text.split()) >= 5 and 20 <= len(text) <= 300:
+            return text
+        return None
     return None
 
 
@@ -7942,6 +7969,20 @@ def _publish_youtube(
         logger.info("%s: YouTube policy: dead-Shorts tier, no Short today "
                     "(%s)", config.slug, _yt_plan.get("reason", ""))
         result["yt_policy_shorts_skipped"] = True
+        # Oct 11 2026: the YouTube policy reads YouTube's numbers, not X's.
+        # Planetterrian, Modern Investing and Unintended Consequences went
+        # to X with their cover on the first night because their tier had
+        # no Short. X still gets a clip: rendered here, never uploaded to
+        # YouTube, posted and deleted by step 13.
+        if (config.publishing.x_enabled
+                and getattr(config.publishing, "x_post_format", "link") == "clip"):
+            _x_only = _render_x_only_clip(
+                config, final_mp3=final_mp3, cover_path=cover_path,
+                work_dir=work_dir, base_name=base_name, hook=hook or "",
+                transcript_path=transcript_path,
+            )
+            if _x_only:
+                result["x_clip_path"] = _x_only
     elif config.youtube.publish_shorts and should_upload_shorts_today(
         config, episode_num=episode_num,
     ):
@@ -8899,6 +8940,53 @@ _X_LABELS = {
 
 def _x_label(config) -> str:
     return _X_LABELS.get(config.slug) or f"🎙️ {config.name}"
+
+
+def _render_x_only_clip(config, *, final_mp3, cover_path, work_dir, base_name,
+                        hook: str = "", transcript_path=None) -> str:
+    """Render the episode's opening as a vertical clip for X alone.
+
+    Used when the YouTube policy gives a show no Short today. Same opening
+    the hook-first Short uses (the episode opens on its hook at
+    ``voice_intro_delay``), the show cover as the background, burned-in
+    captions when the transcript has them (X autoplays muted), and no
+    "SUBSCRIBE" end card, which is a YouTube call to action. Returns the
+    path, or "" when anything fails.
+    """
+    try:
+        from engine.video import build_short_video
+        start = float(getattr(config.audio, "voice_intro_delay", 0.0) or 0.0)
+        duration = float(getattr(config.youtube, "short_duration_seconds", 0) or 35.0)
+        work_dir = Path(work_dir)
+        work_dir.mkdir(parents=True, exist_ok=True)
+        captions = None
+        if transcript_path is not None:
+            try:
+                from engine.captions import transcript_to_ass_window
+                ass = work_dir / f"{base_name}_x_clip.ass"
+                transcript_to_ass_window(
+                    transcript_path, ass,
+                    window_start_seconds=start,
+                    window_duration_seconds=duration,
+                    audio_offset_seconds=start,
+                )
+                if ass.exists() and "Dialogue:" in ass.read_text(
+                        encoding="utf-8", errors="replace"):
+                    captions = ass
+            except Exception as exc:  # noqa: BLE001 — captions are a bonus
+                logger.info("X clip captions skipped: %s", exc)
+        out = work_dir / f"{base_name}_x_clip.mp4"
+        build_short_video(
+            Path(final_mp3), Path(cover_path), out,
+            start_offset=start, duration=duration, hook=hook or None,
+            show_name=config.name, subtitles_path=captions, end_card=False,
+        )
+        if out.exists() and out.stat().st_size > 0:
+            logger.info("Rendered an X-only clip (%.0fs): %s", duration, out.name)
+            return str(out)
+    except Exception as exc:  # noqa: BLE001 — X falls back to the cover
+        logger.warning("X-only clip render failed (cover goes instead): %s", exc)
+    return ""
 
 
 def _show_cover_path(config) -> str:

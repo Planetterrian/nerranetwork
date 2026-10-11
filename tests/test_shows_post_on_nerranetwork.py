@@ -201,3 +201,85 @@ def test_nerra_daily_posts_its_cover_without_a_link():
     fn = src[src.index("def post_edition_to_x("):src.index("def main(")]
     assert "post_media(" in fn and "post_teaser(" not in fn and "episode_link(" not in fn
     assert (ROOT / "assets" / "covers" / "nerra-daily.jpg").exists()
+
+
+# ------------------------------------------- first night (Oct 11 2026) --
+def _fn(name):
+    src = RUN_SHOW
+    i = src.index(f"def {name}(")
+    j = src.index("\ndef ", i + 10)
+    ns: dict = {"re": re, "Path": Path, "logger": __import__("logging").getLogger("t")}
+    exec(src[i:j], ns)
+    return ns[name]
+
+
+class TestTheHookIsFoundWithoutItsLabel:
+    """SpaceX Ep125 and Ep127 wrote the hook as a plain first line; the
+    podcast title went generic and the X post had no hook."""
+
+    def test_plain_bold_first_line(self):
+        f = _fn("_extract_hook")
+        digest = ("**SpaceX targets Tuesday for its 35th Dragon cargo flight to the ISS "
+                  "while Grok gains direct shopping tools.**\n\n### Top News\n1. x")
+        assert f(digest).startswith("SpaceX targets Tuesday")
+
+    def test_plain_line_after_the_title(self):
+        f = _fn("_extract_hook")
+        digest = ("# SpaceX Daily\n\nSpaceX spectrum purchase opens indoor phone coverage "
+                  "for Starlink Mobile against carriers.\n\n### Top News")
+        assert f(digest).startswith("SpaceX spectrum purchase")
+
+    def test_never_past_the_first_section(self):
+        f = _fn("_extract_hook")
+        assert f("### Segment 1\nIn the narrow lanes of colonial Delhi, a bounty went wrong.") is None
+        assert f("# Tesla Shorts Time\n**Date:** Feb 24\n\n### Top 10\n1. Headline") is None
+        assert f("# X\n\nSpaceX Daily\n\n### Top") is None
+
+    def test_decorative_subtitle_is_skipped(self):
+        f = _fn("_extract_hook")
+        digest = ("🌍 **Planetterrian Daily** - Science, Longevity & Health\n\n"
+                  "A new drainage pathway in the eye carries waste into the lymph system.\n\n### Top")
+        assert f(digest).startswith("A new drainage pathway")
+
+
+class TestXGetsAClipWhenYouTubeDoesNot:
+    """Planetterrian, Modern Investing and Unintended Consequences posted their
+    cover: the YouTube policy gave them no Short."""
+
+    def test_the_policy_skip_renders_an_x_only_clip(self):
+        i = RUN_SHOW.index('result["yt_policy_shorts_skipped"] = True')
+        branch = RUN_SHOW[i:RUN_SHOW.index("elif config.youtube.publish_shorts", i)]
+        assert "_render_x_only_clip(" in branch
+        assert 'result["x_clip_path"] = _x_only' in branch
+
+    def test_the_render(self, tmp_path, monkeypatch):
+        import engine.video as video
+        seen = {}
+
+        def fake(audio, cover, out, **kw):
+            seen.update(kw)
+            Path(out).write_bytes(b"mp4")
+            return out
+        monkeypatch.setattr(video, "build_short_video", fake)
+        f = _fn("_render_x_only_clip")
+        cfg = _cfg("planetterrian")
+        out = f(cfg, final_mp3=tmp_path / "a.mp3", cover_path=tmp_path / "c.jpg",
+                work_dir=tmp_path / "w", base_name="P_Ep210", hook="A hook line")
+        assert out.endswith("P_Ep210_x_clip.mp4")
+        assert seen["end_card"] is False and seen["start_offset"] == float(cfg.audio.voice_intro_delay or 0)
+
+    def test_a_failed_render_falls_back_to_the_cover(self, tmp_path, monkeypatch):
+        import engine.video as video
+        monkeypatch.setattr(video, "build_short_video",
+                            lambda *a, **k: (_ for _ in ()).throw(RuntimeError("ffmpeg")))
+        f = _fn("_render_x_only_clip")
+        assert f(_cfg("planetterrian"), final_mp3="a.mp3", cover_path="c.jpg",
+                 work_dir=tmp_path, base_name="b") == ""
+
+
+def test_nerra_daily_does_not_say_its_episode_twice():
+    src = (ROOT / "scripts" / "build_daily_edition.py").read_text(encoding="utf-8")
+    fn = src[src.index("def post_edition_to_x("):src.index("def main(")]
+    pattern = re.search(r're\.sub\(r"(.+?)", ""', fn).group(1)
+    assert re.sub(pattern, "", "Ep 52: Sunday edition, Dragon cargo") == "Sunday edition, Dragon cargo"
+    assert re.sub(pattern, "", "Episode 7 — A title") == "A title"
