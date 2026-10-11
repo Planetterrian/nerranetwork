@@ -143,6 +143,43 @@ def vouched_chapters(pkg: dict) -> list:
                               (pkg.get("transcript_cleaned") or "").strip())
 
 
+def notes_lede(notes: str) -> str:
+    """The first line of the episode notes that says something.
+
+    The notes pass sometimes opens on a bare heading ("Episode Summary",
+    "## Summary"), and the post printed it as the episode's one-line
+    summary (Oct 2026). Headings, label-only lines and blanks are skipped.
+    """
+    for line in (notes or "").splitlines():
+        s = line.strip().lstrip("#").strip().strip("*").strip()
+        if not s:
+            continue
+        if len(s.split()) <= 3 and not re.search(r"[.!?]$", s):
+            continue  # a heading or a label, not a sentence
+        return s
+    return ""
+
+
+def interview_episode_title(episode_num: int, guest: str, thesis: str) -> str:
+    """``Ep<n>: <guest> — <thesis>``, guaranteed to fit the feed's title cap.
+
+    The thesis is a full sentence and Ep5–Ep11 shipped 220–254-character
+    titles that Apple, Spotify and YouTube (which ingests the feed) each
+    cut mid-word. The label and the guest's name are kept whole; only the
+    thesis is clipped, at a word boundary, by ``engine.titles``.
+    """
+    from engine.titles import PODCAST_EPISODE_TITLE_MAX, clip_words
+
+    label = f"Ep{episode_num}: {(guest or '').strip()}"
+    thesis = (thesis or "").strip()
+    if not thesis:
+        return clip_words(label, PODCAST_EPISODE_TITLE_MAX)
+    room = PODCAST_EPISODE_TITLE_MAX - len(label) - len(" — ")
+    if room < 20:
+        return clip_words(label, PODCAST_EPISODE_TITLE_MAX)
+    return f"{label} — {clip_words(thesis, room)}"
+
+
 def write_episode_digest(show, episode_num: int, when: dt.date, title: str,
                          interview: dict, app: dict, pkg: dict,
                          audio_url: str) -> Path:
@@ -167,8 +204,9 @@ def write_episode_digest(show, episode_num: int, when: dt.date, title: str,
     if thesis:
         parts.append(f"> **{thesis}**")
     parts.append(f"*Episode {episode_num} · {when:%B %-d, %Y}*")
-    if notes:
-        parts.append(f"**What You Need to Know:** {notes.splitlines()[0]}")
+    lede = notes_lede(notes)
+    if lede:
+        parts.append(f"**What You Need to Know:** {lede}")
     parts.append("---")
 
     parts.append("### Listen")
@@ -347,7 +385,8 @@ def publish_one(interview_id: str) -> int:
 
     episode_num = _next_episode_number(show)
     today = dt.date.today()
-    title = f"Ep{episode_num}: {app['name']} — {interview.get('episode_thesis') or show.name}"
+    title = interview_episode_title(episode_num, app["name"],
+                                    interview.get("episode_thesis") or show.name)
     description = pkg.get("episode_notes") or interview.get("episode_thesis") or ""
     # The guest gave us an hour; the least the episode owes them is a working
     # link. The notes pass is asked for this block too, so only add it here if
@@ -600,6 +639,36 @@ def waveform_video_url(audio_url: str) -> str:
     return f"{head}/video/{filename[:-4]}.mp4"
 
 
+def render_episode_video(show: VoiceShow, audio_url: str, out: Path,
+                         guest_name: str) -> "Path | None":
+    """Download the published MP3 and render the waveform MP4 beside it.
+
+    Same renderer and cover the produce step uses
+    (``audio.waveform_video.render``). Best-effort: any failure logs a
+    ``::warning::`` and returns None, so YouTube is skipped and the episode
+    — already in the feed — is untouched.
+    """
+    try:
+        from audio.waveform_video import render as render_waveform
+
+        mp3 = out.with_suffix(".mp3")
+        with requests.get(audio_url, stream=True, timeout=1800) as resp:
+            resp.raise_for_status()
+            with mp3.open("wb") as fh:
+                for chunk in resp.iter_content(1 << 16):
+                    fh.write(chunk)
+        cover = show.cover_path
+        return render_waveform(
+            mp3, out,
+            cover_image=cover if cover.exists() else None,
+            title=f"{guest_name} — {show.name}",
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("::warning::YouTube skipped for %s: waveform render "
+                       "failed (%s)", show.slug, exc)
+        return None
+
+
 def maybe_publish_youtube(show: VoiceShow, cfg, episode_num: int, when: dt.date,
                           title: str, description: str, audio_url: str,
                           guest_name: str) -> None:
@@ -617,21 +686,24 @@ def maybe_publish_youtube(show: VoiceShow, cfg, episode_num: int, when: dt.date,
         return
     yt = cfg.youtube
     video_url = waveform_video_url(audio_url)
-    if not video_url:
-        logger.warning("::warning::YouTube skipped for %s Ep%d: cannot derive a "
-                       "video URL from %s", show.slug, episode_num, audio_url)
-        return
-    try:
-        probe = requests.head(video_url, timeout=60, allow_redirects=True)
-        if probe.status_code != 200:
-            logger.warning("::warning::YouTube skipped for %s Ep%d: no waveform "
-                           "video at %s (HTTP %s)", show.slug, episode_num,
-                           video_url, probe.status_code)
-            return
-    except Exception:  # noqa: BLE001
-        logger.exception("YouTube skipped for %s Ep%d: HEAD %s failed",
-                         show.slug, episode_num, video_url)
-        return
+    # Oct 11 2026: render here when the produce step left no video. The
+    # edit path (assemble_edit — every ``_edit_`` episode, Ep5 onward)
+    # never renders one, so the derived URL 404'd on every publish and the
+    # show had uploaded NOTHING since YouTube was switched on (Sep 20): no
+    # digests/age_of_ai/youtube_videos.json exists.
+    render_locally = not video_url
+    if video_url:
+        try:
+            probe = requests.head(video_url, timeout=60, allow_redirects=True)
+            if probe.status_code != 200:
+                logger.warning("No waveform video at %s (HTTP %s) — rendering "
+                               "one from the episode audio", video_url,
+                               probe.status_code)
+                render_locally = True
+        except Exception:  # noqa: BLE001
+            logger.warning("HEAD %s failed — rendering the waveform video "
+                           "from the episode audio", video_url)
+            render_locally = True
 
     try:
         from engine.funnel import PLACEMENT_DESCRIPTION, episode_link
@@ -666,11 +738,16 @@ def maybe_publish_youtube(show: VoiceShow, cfg, episode_num: int, when: dt.date,
 
         with tempfile.TemporaryDirectory(prefix=f"{show.slug}_yt_") as tmp:
             local = Path(tmp) / f"{show.episode_prefix}_Ep{episode_num:03d}.mp4"
-            with requests.get(video_url, stream=True, timeout=1800) as resp:
-                resp.raise_for_status()
-                with local.open("wb") as fh:
-                    for chunk in resp.iter_content(1 << 16):
-                        fh.write(chunk)
+            if render_locally:
+                local = render_episode_video(show, audio_url, local, guest_name)
+                if local is None:
+                    return
+            else:
+                with requests.get(video_url, stream=True, timeout=1800) as resp:
+                    resp.raise_for_status()
+                    with local.open("wb") as fh:
+                        for chunk in resp.iter_content(1 << 16):
+                            fh.write(chunk)
             result = upload_video(
                 local,
                 credentials=credentials,

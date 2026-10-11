@@ -51,7 +51,9 @@ def _clean_title(line: str) -> str:
     """Strip the formatting noise an LLM tends to wrap a title line in."""
     t = line.strip()
     # Drop leading list markers / numbering: "1.", "1)", "-", "*", "•".
-    t = re.sub(r"^\s*(?:\d+[.)]|[-*•])\s*", "", t)
+    # Never a decimal: "7.7 Quake Hits Panama" lost its "7." and shipped as
+    # "7 QUAKE HITS PANAMA" (Omni View Ep202, Oct 11 2026).
+    t = re.sub(r"^\s*(?:\d+[.)](?!\d)|[-*•])\s*", "", t)
     # Strip surrounding quotes/backticks.
     t = t.strip().strip('"“”‘’`').strip()
     # Drop a leading "Title:" label if the model added one.

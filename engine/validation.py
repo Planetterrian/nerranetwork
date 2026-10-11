@@ -1041,7 +1041,7 @@ def omni_desk_validation_config() -> ValidationConfig:
     """The Omni View regional desks (Sep 2026, Phase 3; format v2 Sep 23):
     Lead is one item, Across the Region two developed items, Also Today the
     rest as one-liners (optional — story count follows supply), The Region
-    and the World optional, Both Sides required. Progress Watch's floor is
+    and the World optional, Both Sides optional (Oct 11 2026). Progress Watch's floor is
     the ``progress_watch_thin`` digest lint."""
     return ValidationConfig(
         section_pairs=[],
@@ -1053,12 +1053,15 @@ def omni_desk_validation_config() -> ValidationConfig:
                 min_chars=250,
             ),
             _items_rule("Across the Region", "Across the Region",
-                        r"### Also Today|## Also Today|### The Region and the World|## The Region and the World|### Both Sides|## Both Sides", 2),
+                        r"### Also Today|## Also Today|### The Region and the World|## The Region and the World|### Both Sides|## Both Sides|### Progress Watch|## Progress Watch", 2),
             SectionRule(
                 name="Both Sides",
                 pattern=r"(?:### Both Sides|## Both Sides)(.*?)(?=### Progress Watch|## Progress Watch|$)",
                 min_items=0,
                 min_chars=400,
+                # Oct 11 2026: run only on a named disagreement (prompt).
+                # Absent is fine; a present section still needs its body.
+                optional=True,
             ),
         ],
         forbidden_patterns=[r"https?://\S+"],
@@ -1108,12 +1111,12 @@ def omni_world_validation_config(saturday: "bool | None" = None) -> ValidationCo
     if saturday:
         ten_rule = SectionRule(
             name="The Ten",
-            pattern=r"(?:### The Ten|## The Ten)(.*?)(?=### Both Sides|## Both Sides|$)",
+            pattern=r"(?:### The Ten|## The Ten)(.*?)(?=### Both Sides|## Both Sides|### Progress Watch|## Progress Watch|$)",
             min_items=0,
             min_chars=1800,
         )
     else:
-        ten_rule = _items_rule("The Ten", "The Ten", r"### Both Sides|## Both Sides", 8)
+        ten_rule = _items_rule("The Ten", "The Ten", r"### Both Sides|## Both Sides|### Progress Watch|## Progress Watch", 8)
     return ValidationConfig(
         section_pairs=[],
         sections=[
@@ -1123,6 +1126,9 @@ def omni_world_validation_config(saturday: "bool | None" = None) -> ValidationCo
                 pattern=r"(?:### Both Sides|## Both Sides)(.*?)(?=### Progress Watch|## Progress Watch|$)",
                 min_items=0,
                 min_chars=400,
+                # Oct 11 2026: run only on a named disagreement (prompt).
+                # Absent is fine; a present section still needs its body.
+                optional=True,
             ),
         ],
         forbidden_patterns=[r"https?://\S+"],

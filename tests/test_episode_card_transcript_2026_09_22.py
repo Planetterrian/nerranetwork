@@ -210,7 +210,13 @@ class TestTheRenderedTranscriptBox:
         # four days over a test fixture, not a defect. Take the longest
         # lines the transcript actually has; a transcript with no line of
         # sixty characters is not an interview.
-        lines = sorted((ln for ln in text.splitlines() if ln.strip()), key=len)
+        # Oct 11 2026: speaker turns only. Ep011's guest spoke in short
+        # turns, so the longest line was the publisher's boilerplate
+        # preface ("The conversation as it was recorded…"), which the page
+        # legitimately prints twice — main went red on a fixture again.
+        lines = sorted((ln for ln in text.splitlines()
+                        if re.match(r"^\[\d+:\d+\]\s+\S", ln.strip())),
+                       key=len)
         assert lines and len(lines[-1]) >= 60, "no line long enough to be unmistakable"
         sample = lines[-1]
         assert interview_post.count(sample) == 1

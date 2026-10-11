@@ -43,7 +43,10 @@ jobs:
   publish:
     runs-on: ubuntu-26.04
     # ffmpeg + network calls; the 6h GitHub default is not a real guard.
-    timeout-minutes: 45
+    # 90 (Oct 11 2026): the publisher now renders the waveform video itself
+    # when the edit path left none (720p of a 45-minute interview), and a
+    # cancelled job would also lose the feed commit that follows.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v7
         with:

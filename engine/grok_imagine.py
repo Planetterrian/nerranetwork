@@ -287,6 +287,11 @@ NO_TEXT_HINT = (
     "captions, logos, watermarks, or typography of any kind in the frame"
 )
 
+# Smallest image set an episode with story briefs is topped up to with the
+# show's static image_queries (Oct 11 2026; see build_image_prompts).
+MIN_STORY_SET = 4
+
+
 def build_image_prompts(
     *,
     hook: str,
@@ -366,10 +371,18 @@ def build_image_prompts(
         return prompts
     if not image_queries:
         return prompts
+    # Oct 11 2026: when the stories supplied briefs, the static
+    # image_queries only top the set up to MIN_STORY_SET, never to *count*.
+    # SpaceX Ep127 (two numbered items) filled 9 of 15 prompts with
+    # "Raptor engine static fire" / "booster tower catch" on a day about a
+    # Dragon cargo launch — off-story pictures with the worst AI artifacts
+    # of the day. Scene cycling already keeps a short set from holding long.
+    if prompts:
+        count = min(count, max(len(prompts), MIN_STORY_SET))
 
     # First pass: one image per query, up to count.
-    for i, raw_query in enumerate(image_queries):
-        if i >= count:
+    for raw_query in image_queries:
+        if len(prompts) >= count:
             break
         q = (raw_query or "").strip()
         if not q:

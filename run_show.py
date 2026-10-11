@@ -951,6 +951,7 @@ def run(args: argparse.Namespace) -> None:
         x_posts = []
         rss_fetch_failed = False
         narrative_topic: dict = {}
+        _prefetched_research = None
 
         # Narrative-mode shows (Unintended Consequences) bypass RSS fetch +
         # slow-news fallback entirely — their input is a curated topic
@@ -972,6 +973,64 @@ def run(args: argparse.Namespace) -> None:
                 "Narrative mode: picked topic %r (%s)",
                 narrative_topic.get("id"), narrative_topic.get("title"),
             )
+            # Oct 11 2026 — the research floor. A narrative topic is written
+            # only when its one web search finds at least
+            # ``narrative_research_min`` sources; otherwise the topic is
+            # recorded as a gate block (two defer it) and the next one is
+            # tried. UC Ep139 aired an invented premise from a brief with 0
+            # sources. Never more than three searches per run.
+            _research_floor = int(getattr(config, "narrative_research_min", 0) or 0)
+            _research_cap = int(getattr(config, "narrative_research", 0) or 0)
+            if _research_floor > 0 and _research_cap > 0:
+                from engine.fetcher import fetch_topic_research_articles
+                from engine.hook_articles import normalize_hook_articles
+                from engine.topic_queue import record_gate_block
+                _tried: set = set()
+                _found: list = []
+                for _attempt in range(3):
+                    with metrics.stage("narrative_research"):
+                        _raw = fetch_topic_research_articles(
+                            narrative_topic.get("title", ""),
+                            narrative_topic.get("brief", ""),
+                            max_results=_research_cap,
+                        )
+                    _found = normalize_hook_articles(_raw, slug=config.slug)
+                    if len(_found) >= _research_floor:
+                        break
+                    logger.warning(
+                        "::warning::Narrative research found %d source(s) for %r "
+                        "(floor %d) — not writing it from memory; trying the next topic",
+                        len(_found), narrative_topic.get("id"), _research_floor)
+                    _tried.add(narrative_topic.get("id"))
+                    # Annotate only a search that WORKED and came back thin:
+                    # an outage also returns [] and must never defer good
+                    # topics (two annotations defer one for the operator).
+                    if _found:
+                        try:
+                            record_gate_block(queue_path, narrative_topic.get("id"),
+                                              today.isoformat())
+                        except Exception as _gb_exc:  # noqa: BLE001
+                            logger.warning("record_gate_block failed: %s", _gb_exc)
+                    _next = pick_next_topic(queue_path, exclude_ids=_tried) or {}
+                    if not _next:
+                        break
+                    narrative_topic = _next
+                    _found = []
+                metrics.record("narrative_research_topics_tried", len(_tried) + 1)
+                if len(_found) < _research_floor:
+                    _skip_episode(
+                        "narrative_research_thin",
+                        f"No topic among {len(_tried) + 1} tried found "
+                        f"{_research_floor}+ research sources; the show does not "
+                        f"write a case from memory.",
+                    )
+                    return
+                for _ra in _found:  # the gate must know these are the search model's
+                    _ra["source_kind"] = "research"
+                _prefetched_research = _found
+                logger.info(
+                    "Narrative mode: writing topic %r with %d research source(s)",
+                    narrative_topic.get("id"), len(_found))
             metrics.record("narrative_mode", True)
             metrics.record("narrative_topic_id", narrative_topic.get("id", ""))
             # Skip the fetch threadpool entirely — articles stays [].
@@ -1220,12 +1279,15 @@ def run(args: argparse.Namespace) -> None:
         if narrative_topic and _research_max > 0:
             from engine.fetcher import fetch_topic_research_articles
             from engine.hook_articles import normalize_hook_articles
-            with metrics.stage("narrative_research"):
-                _research_raw = fetch_topic_research_articles(
-                    narrative_topic.get("title", ""), narrative_topic.get("brief", ""),
-                    max_results=_research_max,
-                )
-            _research = normalize_hook_articles(_research_raw, slug=config.slug)
+            if _prefetched_research is not None:  # the research floor ran it
+                _research = list(_prefetched_research)
+            else:
+                with metrics.stage("narrative_research"):
+                    _research_raw = fetch_topic_research_articles(
+                        narrative_topic.get("title", ""), narrative_topic.get("brief", ""),
+                        max_results=_research_max,
+                    )
+                _research = normalize_hook_articles(_research_raw, slug=config.slug)
             for _ra in _research:  # the gate must know these are the search model's
                 _ra["source_kind"] = "research"
             articles, _n_research = merge_hook_articles(articles, _research)
@@ -5693,6 +5755,17 @@ def _extract_hook(digest: str) -> str | None:
     # Matches `> **<text>**` on its own line. Only the first one wins;
     # blockquotes that appear AFTER a section heading are scene-setting
     # narration, not the title.
+    #
+    # Oct 11 2026: the hook is read BEFORE transform_daily_body promotes the
+    # model's bare first prose line into that blockquote, so a digest whose
+    # hook arrived unlabelled had no hook at runtime while the committed .md
+    # did. SpaceX Ep125/127 shipped "Ep N highlight #Shorts" and a generic RSS
+    # title that way. Promote first (idempotent; conservative by design).
+    try:
+        from engine.newsletter_body import promote_hook_to_blockquote
+        digest = promote_hook_to_blockquote(digest)
+    except Exception:  # noqa: BLE001 — a title must never crash the run
+        pass
     for line in digest.splitlines():
         if line.lstrip().startswith("###"):
             break
@@ -6835,6 +6908,14 @@ def _publish_youtube(
     try:
         from engine.grok_imagine import extract_story_headlines as _extract_headlines
         _scene_contexts = _extract_headlines(digest_text or "", max_count=12)
+        # Oct 11 2026: essay sections (deep dives, AI & Compute) are
+        # stories too; without them a two-item day padded its image set
+        # with the show's static keywords. engine.scene_briefs.
+        if len(_scene_contexts) < 6:
+            from engine.scene_briefs import essay_section_leads
+            for _lead in essay_section_leads(digest_text or "", max_n=4):
+                if _lead not in _scene_contexts:
+                    _scene_contexts.append(_lead)
     except Exception:  # pragma: no cover — best-effort
         _scene_contexts = []
 
@@ -8429,6 +8510,12 @@ def _publish_youtube(
                                 this_hook, "en", max_chars=70) or None
                         except Exception:  # noqa: BLE001
                             _opt_short_title = None
+                    # Oct 11 2026: with no hook and no bundle title, the
+                    # Short shipped "Ep 127 highlight #Shorts" while the
+                    # long-form title ("Falcon 9 Targets Tuesday for
+                    # Dragon CRS-35 to ISS") existed. Use it first.
+                    if not _opt_short_title and not (this_hook or "").strip():
+                        _opt_short_title = (yt_title or "").strip() or None
                     meta = build_short_metadata(
                         config,
                         episode_num=episode_num,

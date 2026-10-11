@@ -49,11 +49,13 @@ on:
         default: false
         type: boolean
 
-# Serialize multilingual runs so two sweeps never fight over the same
-# summaries files / git push.
-concurrency:
-  group: multilingual
-  cancel-in-progress: false
+# Concurrency is per SHOW, on the translate job (Oct 11 2026). A
+# workflow-level group keeps only ONE pending run: when four shows finished
+# inside one translate window, GitHub cancelled the middle runs as
+# superseded and those shows waited for the 14:07/18:07 catch-alls (or, on a
+# late cron, missed the day's dubs). Two runs for the same show still
+# serialize; different shows no longer cancel each other, and push
+# contention is absorbed by the retry loop below.
 
 permissions:
   contents: write
@@ -168,6 +170,27 @@ jobs:
                       # passes of this workflow remain the catch-all.
                       shows = [s for s in published if s in enabled]
                       print("Triggering run published:", published)
+                      # Oct 11 2026: a run that SKIPPED its episode still
+                      # ends "success". FF's 10-11 skip swept the show and
+                      # rewrote 188 pages with nothing new to translate. A
+                      # skip marker for today with no digest dated today
+                      # means nothing published; the cron passes still run.
+                      import datetime as _dt
+                      from pathlib import Path as _P
+                      stamp = _dt.datetime.now(_dt.timezone.utc).strftime("%Y%m%d")
+
+                      def _skipped_today(slug):
+                          try:
+                              out = _P(load_config(f"shows/{slug}.yaml").episode.output_dir)
+                          except Exception:
+                              return False
+                          return ((out / f".skip_{stamp}.json").exists()
+                                  and not any(out.glob(f"*_{stamp}.md")))
+
+                      skipped = [s for s in shows if _skipped_today(s)]
+                      if skipped:
+                          print("Skipped their episode today:", skipped)
+                      shows = [s for s in shows if s not in skipped]
                   except Exception as exc:  # noqa: BLE001 — fall through
                       print(f"::warning::could not read run {run_id} jobs: {exc}")
               if shows is None:
@@ -191,6 +214,9 @@ jobs:
     if: ${{ needs.resolve.outputs.shows != '' && needs.resolve.outputs.shows != '[]' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 120
+    concurrency:
+      group: multilingual-${{ matrix.show }}
+      cancel-in-progress: false
     strategy:
       fail-fast: false
       # Cap parallelism: bounds Grok TTS concurrency (rate limits) and

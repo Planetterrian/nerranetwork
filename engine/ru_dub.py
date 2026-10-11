@@ -666,6 +666,15 @@ def publish_ru_dub(
         # under a shorts-only policy — the long render they feed won't run.
         long_scenes = (_download_images(long_urls, tmp)
                        if (long_urls and publish_long) else [])
+        # Oct 11 2026: the thumbnail base is the episode's own 16:9 scene,
+        # never the square cover centre-cropped to 16:9 (it sliced the
+        # cover's own wordmark in half on @NerraRU and drew the title over
+        # the cover's baked-in show name on @NerraFR). Under a shorts-only
+        # policy one scene is fetched for it — the Short's end card reuses
+        # this thumbnail. Cover stays the fallback.
+        _thumb_scenes = (long_scenes or (
+            _download_images(long_urls[:1], tmp) if long_urls else []))
+        thumb_base = _thumb_scenes[0] if _thumb_scenes else cover
 
         # --- Long-form thumbnail ---
         # Generated even under a shorts-only policy: the Short's end-card
@@ -674,7 +683,7 @@ def publish_ru_dub(
             from engine.publisher import generate_episode_thumbnail
             thumb = tmp / "ru_thumb.jpg"
             generate_episode_thumbnail(
-                cover, episode_num, date_str, thumb,
+                thumb_base, episode_num, date_str, thumb,
                 hook=ru_title, show_name=config.name)
             thumb_path = thumb if thumb.exists() else None
         except Exception as exc:  # noqa: BLE001

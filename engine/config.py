@@ -1369,6 +1369,14 @@ class ShowConfig:
     # as {research_sources}; the claims gate verifies against the pages.
     # 0 = off (the pre-Oct-9 brief-only run).
     narrative_research: int = 0
+    # Oct 11 2026: the fewest research sources a narrative topic needs to be
+    # written at all. 0 = legacy (an empty search wrote from the brief). UC
+    # Ep139 aired an invented premise — "the Argentine government issued
+    # licences off South Georgia", a British territory — from a restock
+    # brief with 0 research sources and 0 claims, and the gate passed. A
+    # topic under the floor is skipped for today (recorded as a gate block,
+    # so it defers after two) and the next one is tried.
+    narrative_research_min: int = 0
     # Oct 9 2026: read at most this many of ``x_accounts`` per run, on a
     # date-seeded rotation so the whole list is still read over the week.
     # Every X account is ONE xAI search call (~$0.02 + tokens); the
@@ -1616,6 +1624,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         narrative_mode=bool(data.get("narrative_mode", False)),
         topic_queue_file=str(data.get("topic_queue_file", "") or ""),
         narrative_research=int(data.get("narrative_research", 0) or 0),
+        narrative_research_min=int(data.get("narrative_research_min", 0) or 0),
         x_accounts_per_run=int(data.get("x_accounts_per_run", 0) or 0),
         deep_dive=_build_nested(DeepDiveConfig, data.get("deep_dive")),
         memory_enabled=bool(data.get("memory_enabled", False)),
