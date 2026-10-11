@@ -412,6 +412,20 @@ class StorageConfig:
 
 
 @dataclass
+class GrokLeadsConfig:
+    """@grok on X as a research desk for the deep dive (Oct 11 2026; see
+    ``engine.grok_leads``). Leads are angles, never sources: each one is
+    kept only when ``min_sources`` primary pages were fetched for it."""
+    enabled: bool = False
+    #: What the x_search asks Grok's replies to be about (the show's beat).
+    topics: str = ""
+    max_leads: int = 2
+    min_sources: int = 2
+    research_max: int = 4
+    lookback_hours: int = 48
+
+
+@dataclass
 class MultilingualConfig:
     """Opt-in multilingual *audio* settings for a show (June 2026).
 
@@ -1344,6 +1358,7 @@ class ShowConfig:
     content_freshness: ContentFreshnessConfig = field(default_factory=ContentFreshnessConfig)
     youtube: YouTubeConfig = field(default_factory=YouTubeConfig)
     multilingual: MultilingualConfig = field(default_factory=MultilingualConfig)
+    grok_leads: GrokLeadsConfig = field(default_factory=GrokLeadsConfig)
     video_podcast: VideoPodcastConfig = field(default_factory=VideoPodcastConfig)
     funnel: FunnelConfig = field(default_factory=FunnelConfig)
     # Weekly-summary segment (July 2026). When ``true`` and the runner
@@ -1612,6 +1627,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         content_freshness=_build_nested(ContentFreshnessConfig, data.get("content_freshness")),
         youtube=_build_nested(YouTubeConfig, data.get("youtube")),
         multilingual=_build_nested(MultilingualConfig, data.get("multilingual")),
+        grok_leads=_build_nested(GrokLeadsConfig, data.get("grok_leads")),
         video_podcast=_build_nested(VideoPodcastConfig, data.get("video_podcast")),
         funnel=_build_nested(FunnelConfig, data.get("funnel")),
         # Accept the legacy ``weekly_recap_on_sunday`` key as a fallback so any

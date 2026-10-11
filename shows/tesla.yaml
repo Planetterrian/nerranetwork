@@ -627,3 +627,14 @@ apple_show_ids:
   video: 6795235986
   fr: 6794047703
   ru: 1896938334
+
+# Grok leads (Oct 11 2026; engine/grok_leads.py). Questions people asked
+# @grok on X about this beat become ANGLES for the deep dive, each kept only
+# when two primary pages were fetched for it. Grok's answer is never a
+# source or a Source line; the claims gate reads only the fetched pages.
+# ~1 x_search + up to 2 web searches a run. Off = delete the block.
+grok_leads:
+  enabled: true
+  topics: "Tesla engineering and economics — batteries and cells, vehicle manufacturing, FSD and robotaxi technology, Optimus, Megapack and grid storage, Supercharging, AI training compute"
+  max_leads: 2
+  min_sources: 2

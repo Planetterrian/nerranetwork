@@ -38,9 +38,17 @@ had generated.
 
 ### Sources and provenance
 
-- **SpaceX read @grok as an X source.** The account's posts are chatbot
-  replies to users, and one seeded Ep126's deep dive. Removed. A guard fails
-  any show that adds it back.
+- **@grok moved from source to research desk** (operator direction, same
+  day). As an X source it was read with no topic ("most recent posts", two a
+  run), and the claims gate verifies an X post against its own text, so a
+  @grok reply "verified" only that Grok had said it; SpaceX Ep127's deep
+  dive took its Saturn V and SLS dates from one, unchecked. Now
+  `engine/grok_leads.py` asks x_search for @grok's EXPLANATORY replies on
+  each show's beat, finds and fetches primary pages for each, drops any lead
+  with fewer than two, and hands the survivors to the deep dive as
+  writer-only angles (`{deep_dive_leads}`) whose facts must come from those
+  pages. On for SpaceX, Tesla, Models & Agents and AI Chips; register
+  `grok-leads-2026-10-11`. ⚠️ AUDIO.
 - **SpaceX's deep dive was told it could use its own knowledge, and also
   that it needed five numbers not yet spoken.** Together those invite
   invented figures. Every number must now come from the digest, be a

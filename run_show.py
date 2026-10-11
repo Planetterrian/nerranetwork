@@ -952,6 +952,9 @@ def run(args: argparse.Namespace) -> None:
         rss_fetch_failed = False
         narrative_topic: dict = {}
         _prefetched_research = None
+        # Oct 11 2026 — @grok as a research desk (engine.grok_leads).
+        _grok_lead_sources: list = []
+        deep_dive_leads_block = ""
 
         # Narrative-mode shows (Unintended Consequences) bypass RSS fetch +
         # slow-news fallback entirely — their input is a curated topic
@@ -1294,6 +1297,32 @@ def run(args: argparse.Namespace) -> None:
             metrics.record("narrative_research_articles", _n_research)
             logger.info("Narrative research: %d source(s) for topic %r",
                         _n_research, narrative_topic.get("title", "")[:80])
+        # Grok leads (Oct 11 2026): questions people asked @grok on X about
+        # the show's beat, each grounded in primary pages fetched for it,
+        # rendered as a writer-only angle for the deep dive. Grok's answer
+        # is never an article or a source; only the fetched pages reach the
+        # claims gate. No leads, or any failure, = the episode as before.
+        _gl_cfg = getattr(config, "grok_leads", None)
+        if _gl_cfg is not None and getattr(_gl_cfg, "enabled", False) and not narrative_topic:
+            try:
+                from engine.grok_leads import fetch_grok_leads, ground_leads, render_leads_block
+                with metrics.stage("grok_leads"):
+                    _gl_raw = fetch_grok_leads(
+                        _gl_cfg.topics, max_leads=int(_gl_cfg.max_leads or 2),
+                        lookback_hours=int(_gl_cfg.lookback_hours or 48))
+                    _gl_kept, _grok_lead_sources = ground_leads(
+                        _gl_raw, max_leads=int(_gl_cfg.max_leads or 2),
+                        min_sources=int(_gl_cfg.min_sources or 2),
+                        research_max=int(_gl_cfg.research_max or 4), slug=config.slug)
+                deep_dive_leads_block = render_leads_block(_gl_kept)
+                metrics.record("grok_leads_found", len(_gl_raw))
+                metrics.record("grok_leads_kept", len(_gl_kept))
+                metrics.record("grok_lead_sources", len(_grok_lead_sources))
+                logger.info("Grok leads: %d found, %d kept with %d fetched source(s)",
+                            len(_gl_raw), len(_gl_kept), len(_grok_lead_sources))
+            except Exception as _gl_exc:  # noqa: BLE001 — leads are optional
+                logger.warning("Grok leads unavailable: %s", _gl_exc)
+                deep_dive_leads_block, _grok_lead_sources = "", []
         logger.info("After fetch + dedup: %d articles (incl. %d X posts)", len(articles), len(x_posts))
 
         # 5a2. Web search fallback — if articles below quality threshold, try Grok web_search
@@ -2037,6 +2066,7 @@ def run(args: argparse.Namespace) -> None:
         # pre_fetch hook. Default it to empty so a hook-load failure (or a show
         # without memory) can never KeyError in prompt substitution.
         template_vars.setdefault("narrative_memory_section", "")
+        template_vars.setdefault("deep_dive_leads", deep_dive_leads_block if "deep_dive_leads_block" in locals() else "")
         # Offshore North (Sep 19 2026): the computed CAMPAIGN STATUS block
         # from shows/hooks/offshore_north.py. Same defaulting contract.
         template_vars.setdefault("campaign_status", "")
@@ -2963,7 +2993,8 @@ def run(args: argparse.Namespace) -> None:
                 # true sentences a day to exactly that).
                 try:
                     _si_local_texts = _si_mod.build_local_texts(
-                        articles if 'articles' in locals() else [])
+                        (articles if 'articles' in locals() else [])
+                        + list(_grok_lead_sources if '_grok_lead_sources' in locals() else []))
                 except Exception as _lt_exc:  # noqa: BLE001
                     logger.warning("fetched-copy corpus unavailable: %s", _lt_exc)
                     _si_local_texts = {}
