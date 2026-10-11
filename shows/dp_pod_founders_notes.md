@@ -94,6 +94,5 @@ verbatim as yours and must never embellish beyond them.
 ## SHARED (real)
 
 - Novak + Perra = Nerra: the network's name is literally the two of them.
-- The Nerra Network is independent and ad-free — no ad reads, no sponsor
-  segments, no paywalls — produced end-to-end by the two of them with an
+- The Nerra Network is independent and free to listen — no paywalls — produced end-to-end by the two of them with an
   AI-enhanced pipeline they built.

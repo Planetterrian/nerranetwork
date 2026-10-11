@@ -35,7 +35,7 @@
   "@type": "Organization",
   "name": "Nerra Network",
   "url": "https://nerranetwork.com",
-  "description": "Independent podcast network featuring daily ad-free shows covering AI, Tesla, investing, space, science, environmental policy, and more. Produced in Vancouver, Canada.",
+  "description": "Independent podcast network featuring free daily shows covering AI, Tesla, investing, space, science, environmental policy, and more. Produced in Vancouver, Canada.",
   "logo": "https://nerranetwork.com/assets/nerra-logo-icon.svg",
   "hasPart": [
     {% for s in all_shows %}
@@ -73,7 +73,7 @@
             <div class="hero-badge">Independent Podcast Network</div>
             <h1><span class="gradient-text">Nerra</span> Network</h1>
             <p class="network-hero-tagline">Feed your curiosity. Not your anxiety.</p>
-            <p class="hero-subtitle">{{ all_shows|length }} ad-free shows on Tesla, SpaceX, AI, markets, space, science, world news, first-principles thinking and more — most of them new every day, in {{ listening_language_count | default(4) }} listening languages. Independently produced in Vancouver, Canada.</p>
+            <p class="hero-subtitle">{{ all_shows|length }} free shows on Tesla, SpaceX, AI, markets, space, science, world news, first-principles thinking and more — most of them new every day, in {{ listening_language_count | default(4) }} listening languages. Independently produced in Vancouver, Canada.</p>
             {#- Most-listened first (generate_html._rank_shows_by_audience): a
                 phone shows the first nine icons, so the order decides which. -#}
             {%- set _ranked = ranked_shows | default(all_shows) -%}
@@ -215,7 +215,7 @@
                             <li>✓ One feed, your lineup, your order — in any podcast app</li>
                             <li>✓ Mira anchors it and greets you by name</li>
                             <li>✓ Free account: newsletter, gallery downloads, book discounts</li>
-                            <li>✓ $4.99/mo · cancel any time · no ads, ever</li>
+                            <li>✓ $4.99/mo · cancel any time</li>
                         </ul>
                         <p style="margin:0;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;">
                             <a class="nn-btn nn-btn-primary" href="{{ path_prefix }}join.html">Build your show →</a>
@@ -307,8 +307,8 @@
                 </div>
                 <div class="feature-card glass-card">
                     <div class="feature-icon">&#127911;</div>
-                    <h3>Zero Ads. Zero Sponsors.</h3>
-                    <p>No ad reads, no sponsor segments, no clickbait. Every episode on every show is free; <a href="{{ path_prefix }}join.html">Nerra Personal</a> is the optional upgrade for people who want one custom feed.</p>
+                    <h3>Free, and Independent</h3>
+                    <p>{{ sponsor_policy.summary }} <a href="{{ path_prefix }}join.html">Nerra Personal</a> is the optional upgrade for people who want one custom feed.</p>
                 </div>
                 <div class="feature-card glass-card">
                     <div class="feature-icon">&#127758;</div>
@@ -346,7 +346,7 @@
             <div class="nn-section-header">
                 <div class="section-label">Our Shows</div>
                 <h2>Daily intelligence on the topics that matter</h2>
-                <p>Every show is ad-free and independently produced; most publish every day. Pick one, or let <a href="{{ path_prefix }}nerra-daily.html">Nerra Daily</a> hand you the whole network in one episode. Three of them are hosted by <a href="{{ path_prefix }}mira.html">Mira</a>, who also does the network's interviews herself.</p>
+                <p>Every show is free and independently produced; most publish every day. Pick one, or let <a href="{{ path_prefix }}nerra-daily.html">Nerra Daily</a> hand you the whole network in one episode. Three of them are hosted by <a href="{{ path_prefix }}mira.html">Mira</a>, who also does the network's interviews herself.</p>
             </div>
             <div class="show-showcase" id="show-showcase-grid">
                 {% for s in ranked_shows | default(all_shows) %}
@@ -369,7 +369,7 @@
                 <h2>About Nerra Network</h2>
             </div>
             <div class="about-section-text">
-                <p><strong>Ad-free shows on the ideas shaping tomorrow.</strong></p>
+                <p><strong>Free shows on the ideas shaping tomorrow.</strong></p>
                 <p>Nerra Network is an independent podcast network of {{ all_shows|length }} shows covering Tesla, SpaceX, AI for experts and beginners, modern investing, balanced world news, space and astronomy, science and longevity, environmental policy, first-principles thinking, the unintended consequences of big decisions, good news with something you can do about it (The DP Pod), Canada's offshore energy story (Offshore North), live AI-hosted interviews (The Age of AI), and financial literacy and language learning in Russian &mdash; plus Nerra Daily, the whole network in one daily edition. All produced in Vancouver, Canada by Patrick Novak, with AI doing the writing and narration and a human owning the standards. <a href="{{ path_prefix }}ai-disclosure.html">How we use AI</a>.</p>
                 <p>Our mission: stimulating conversation, supporting positive developments that benefit all, and providing unbiased coverage with varying perspectives.</p>
             </div>

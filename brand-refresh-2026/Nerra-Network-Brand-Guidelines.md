@@ -151,16 +151,16 @@ Energetic, plain-spoken, trustworthy. Nerra is the daily habit that leaves you *
 
 - *Every day. Every angle. One signal.* — banners, YouTube
 - *The whole world, every morning.* — app store, newsletter
-- *Independent, daily, ad-free intelligence.* — About, press
+- *Independent, daily, sourced intelligence.* — About, press
 - *Smarter in fifteen minutes.* — social, Shorts
 
 ### Boilerplate (one line)
 
-> Nerra Network is an independent, ad-free daily podcast network — Tesla, world news, space, science, AI, investing and more — produced in Vancouver, in English, French, Russian and Chinese. Feed your curiosity, not your anxiety.
+> Nerra Network is an independent daily podcast network — Tesla, world news, space, science, AI, investing and more — produced in Vancouver, in English, French, Russian and Chinese. Feed your curiosity, not your anxiety.
 
 ### Boilerplate (paragraph)
 
-> Nerra Network is an independent daily podcast network spanning Tesla and EV markets, balanced world news, space and astronomy, science and longevity, AI, modern investing, environmental policy, first-principles thinking, narrative case studies, and Russian-language finance and language learning. Every show is produced daily in Vancouver, Canada, is completely ad-free, and is available free in English, French, Russian and Chinese. The mission: stimulate curiosity, support developments that benefit everyone, and cover the world from every angle — so you can decide for yourself.
+> Nerra Network is an independent daily podcast network spanning Tesla and EV markets, balanced world news, space and astronomy, science and longevity, AI, modern investing, environmental policy, first-principles thinking, narrative case studies, and Russian-language finance and language learning. Every show is produced daily in Vancouver, Canada, is available free in English, French, Russian and Chinese. The mission: stimulate curiosity, support developments that benefit everyone, and cover the world from every angle — so you can decide for yourself.
 
 ### Sounds like / never sounds like
 

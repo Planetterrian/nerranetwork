@@ -196,7 +196,8 @@ def _gate_dub_track(config, lang: str, local_mp3: Path, script_text: str,
         )
         payload.update({
             "passed": bool(report.passed),
-            "gate": "pass" if report.passed else "fail_shadow",
+            "gate": "pass" if report.passed else (
+                "fail_enforce" if mode == "enforce" else "fail_shadow"),
             "reasons": list(report.reasons),
             "opening_match": round(float(report.opening_match), 4),
             "longest_unmatched_run": int(report.longest_unmatched_run),
@@ -210,7 +211,12 @@ def _gate_dub_track(config, lang: str, local_mp3: Path, script_text: str,
             "whisper_language": getattr(tr, "language", None),
             "whisper_language_probability": getattr(tr, "language_probability", None),
         })
-        if not report.passed:
+        if not report.passed and mode == "enforce":
+            logger.error(
+                "::error::%s Ep%s [%s]: spoken-text gate FAILED (%s) — the track "
+                "is NOT uploaded; the next sweep re-synthesizes it.",
+                getattr(config, "slug", "?"), episode_num, lang, report.summary())
+        elif not report.passed:
             logger.warning(
                 "::warning::%s Ep%s [%s]: spoken-text gate FAILED in shadow mode "
                 "(%s) — the track ships; listen before trusting it.",
@@ -343,6 +349,21 @@ def generate_for_episode(
         # the verdict exists for every track the feeds and the dubs ship.
         gate = _gate_dub_track(config, lang, local_mp3, translated, output_dir,
                                tts_file.stem.replace('_tts', ''), episode_num)
+        if gate.get("gate") == "fail_enforce":
+            # Oct 11 2026 (French): a track the gate refuses never reaches R2
+            # or the feed. Recorded as a rejection so the existing retry cap
+            # (_MAX_TRANSLATION_ATTEMPTS) re-synthesizes it once on the next
+            # sweep and then stops — the defect class does not repeat.
+            results[lang] = "gate_rejected"
+            if not dry_run:
+                upsert_translation(summaries_path, episode_num, lang, {
+                    "status": "rejected",
+                    "attempts": int(prior.get("attempts") or 0) + 1,
+                    "error": "spoken_text_gate: " + "; ".join(gate.get("reasons") or [])[:280],
+                    "spoken_text_gate": "fail_enforce",
+                    "generated_at": datetime.now(timezone.utc).isoformat(),
+                })
+            continue
 
         en_dur = ffprobe_duration(english_url)
         if en_dur and dur:

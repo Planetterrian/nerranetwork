@@ -19,11 +19,11 @@ SHOW_EPISODE_ASKS: dict[str, dict[str, Any]] = {
             (
                 "Enjoyed this episode? A rating or short review on Apple "
                 "Podcasts or Spotify helps SpaceX Daily reach the next "
-                "listener who wants the same thing: sourced updates, zero "
-                "ads, no outrage diet."
+                "listener who wants the same thing: sourced updates, no outrage "
+                "diet."
             ),
             (
-                "SpaceX Daily is part of Nerra Network — 18 ad-free shows, "
+                "SpaceX Daily is part of Nerra Network — 18 free shows, "
                 "most of them daily."
             ),
         ],

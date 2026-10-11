@@ -211,6 +211,49 @@ def validate_and_dedupe(
     return accepted
 
 
+#: A brief joins the queue only when this many sources were found for it
+#: (Oct 11 2026). Matches the shows' ``narrative_research_min``: a topic the
+#: episode's own research floor would refuse is not worth a queue slot.
+MIN_RESTOCK_SOURCES = 2
+
+
+def ground_candidates(entries: list[dict], needed: int, *, research=None,
+                      min_sources: int = MIN_RESTOCK_SOURCES) -> list[dict]:
+    """Keep candidates whose premise a web search can source.
+
+    The restock model writes briefs from memory, and on 2026-10-11 an audit
+    of the two narrative queues found 16 of 34 Unintended Consequences
+    briefs and 3 of 27 First Principles briefs resting on premises no source
+    supports — the shape that put an invented case on air (UC Ep139). Each
+    candidate gets the same one-search research the episode runs
+    (``engine.fetcher.fetch_topic_research_articles``); fewer than
+    *min_sources* non-social results drops it, and the URLs found are kept
+    on the entry as ``sources`` for the operator. A search failure drops
+    the candidate (an unverified brief never enters the queue)."""
+    if research is None:
+        from engine.fetcher import fetch_topic_research_articles as research
+    kept: list[dict] = []
+    for entry in entries:
+        if len(kept) >= needed:
+            break
+        try:
+            found = research(entry["title"], entry["brief"], max_results=6) or []
+        except Exception as exc:  # noqa: BLE001 — unverified means dropped
+            logger.info("Rejecting candidate (research failed: %s): %r", exc, entry["title"][:60])
+            continue
+        urls = []
+        for art in found:
+            url = str((art or {}).get("url") or "").strip()
+            if url.startswith("http") and "x.com/" not in url and "twitter.com/" not in url \
+                    and url not in urls:
+                urls.append(url)
+        if len(urls) < min_sources:
+            logger.info("Rejecting candidate (%d source(s) found): %r", len(urls), entry["title"][:60])
+            continue
+        kept.append({**entry, "sources": urls[:4]})
+    return kept
+
+
 def interleave_by_category(entries: list[dict], seed_prev: str | None = None) -> list[dict]:
     """Order *entries* so no two adjacent share a category (greedy).
 
@@ -380,7 +423,11 @@ def restock_show(cfg: RestockConfig, *, dry_run: bool, force: bool) -> dict:
     prompt = build_prompt(cfg, queue, needed + max(4, needed // 3))
     candidates, model_used = generate_candidates(prompt)
     result["model"] = model_used
-    accepted = validate_and_dedupe(candidates, queue, cfg, needed)
+    # Oct 11 2026: validate every candidate, then keep only those a web
+    # search can source (ground_candidates) until `needed` are found.
+    valid = validate_and_dedupe(candidates, queue, cfg, len(candidates))
+    accepted = ground_candidates(valid, needed)
+    result["ungrounded"] = len(valid) - len(accepted) if len(accepted) < needed else 0
     result["added"] = len(accepted)
 
     if not accepted:

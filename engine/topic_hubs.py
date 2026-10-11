@@ -94,7 +94,7 @@ TOPIC_HUBS: Tuple[Dict[str, Any], ...] = (
         "meta_description": (
             "Daily AI podcasts from Nerra Network: model and agent releases, "
             "the same news explained for beginners, and interviews conducted "
-            "by an AI host. Free, ad-free, sources named."
+            "by an AI host. Free, sources named."
         ),
         "keywords": "AI podcast, artificial intelligence podcast, LLM podcast, AI agents, AI news daily",
     },
@@ -117,7 +117,7 @@ TOPIC_HUBS: Tuple[Dict[str, Any], ...] = (
         "meta_description": (
             "Space podcasts from Nerra Network: a daily SpaceX engineering "
             "brief and a daily show on astronomy and the wider frontier. Free "
-            "and ad-free."
+            "to listen."
         ),
         "keywords": "space podcast, SpaceX podcast, Starship, Starlink, astronomy podcast, space news daily",
     },
@@ -165,7 +165,7 @@ TOPIC_HUBS: Tuple[Dict[str, Any], ...] = (
         "meta_description": (
             "A daily Tesla podcast from Nerra Network: software releases, "
             "factory ramps, hardware revisions and filings, with the ongoing "
-            "programs tracked across months. Free and ad-free."
+            "programs tracked across months. Free to listen."
         ),
         "keywords": "Tesla podcast, Tesla daily news, Cybertruck, Optimus, EV podcast, TSLA",
     },
@@ -254,7 +254,7 @@ TOPIC_HUBS: Tuple[Dict[str, Any], ...] = (
         "meta_description": (
             "A daily world news podcast from Nerra Network that argues every "
             "side at its strongest — you should not be able to tell which one "
-            "it favours. Free and ad-free."
+            "it favours. Free to listen."
         ),
         "keywords": "world news podcast, balanced news podcast, daily news briefing, steel man",
     },
@@ -461,7 +461,7 @@ TOPIC_HUBS: Tuple[Dict[str, Any], ...] = (
         "meta_description": (
             "A bilingual Russian language podcast from Nerra Network for "
             "English speakers: vocabulary-first lessons on everyday themes, "
-            "free and ad-free."
+            "free to listen."
         ),
         "keywords": "Russian podcast, learn Russian, Russian for English speakers, bilingual podcast, vocabulary",
     },

@@ -28,6 +28,17 @@ _LINE_RE = re.compile(
     r"^(?P<question>[^:\n]{8,}?):\s*(?P<prob>\d{1,3}(?:\.\d+)?)%\s*implied probability"
     r"(?P<rest>.*)$", re.IGNORECASE)
 _VENUE_RE = re.compile(r"\b(Polymarket|Kalshi|Manifold)\b")
+# Oct 11 2026: the committed digests write the Board as prose — "Which party
+# wins the U.S. Senate: Democrats at a 62 percent implied probability, …;
+# Kalshi; …" or "Will one party sweep both chambers…? On Kalshi, a
+# Democratic sweep was priced at 61 cents, a 61 percent implied probability"
+# — and _LINE_RE (``Question: NN% implied probability``) matched none of it,
+# so the Friday Week's Board was empty on 10-02 and 10-09. The question is
+# the text up to the first colon or question mark; the reading is the FIRST
+# "NN% / NN percent implied probability" on the line (the leading outcome).
+_DIGEST_QUESTION_RE = re.compile(r"^(?P<question>[^:?\n]{8,}?)[:?]")
+_DIGEST_PROB_RE = re.compile(
+    r"(?P<prob>\d{1,3}(?:\.\d+)?)\s*(?:%|percent)\s+implied probability", re.IGNORECASE)
 _DATE_IN_NAME_RE = re.compile(r"_(\d{8})\.md$")
 
 #: How many committed days feed the Friday block (Mon–Thu of the same week
@@ -47,12 +58,18 @@ def board_lines(digest_md: str) -> List[Dict[str, object]]:
     for raw in body.splitlines():
         line = raw.strip().lstrip("-*• ").strip()
         lm = _LINE_RE.match(line)
-        if not lm:
-            continue
-        vm = _VENUE_RE.search(lm.group("rest"))
+        if lm:
+            question, prob, rest_text = lm.group("question"), lm.group("prob"), lm.group("rest")
+        else:
+            qm = _DIGEST_QUESTION_RE.match(line)
+            pm = _DIGEST_PROB_RE.search(line)
+            if not (qm and pm):
+                continue
+            question, prob, rest_text = qm.group("question"), pm.group("prob"), line
+        vm = _VENUE_RE.search(rest_text)
         out.append({
-            "question": lm.group("question").strip(),
-            "prob": float(lm.group("prob")),
+            "question": question.strip(),
+            "prob": float(prob),
             "venue": vm.group(1) if vm else "",
         })
     return out

@@ -831,16 +831,22 @@ class TestDubSpokenTextGate:
         multilingual.generate_for_episode(cfg, 5, ["fr"], voice_id="vid", api_key="k", force=True)
         assert "whisper" not in [c[0] for c in calls]
 
-    def test_dub_gate_can_never_enforce_until_calibrated(self, tmp_path, monkeypatch):
+    def test_dub_gate_enforces_only_where_calibrated(self, tmp_path, monkeypatch):
+        """Oct 11 2026 readout: French is calibrated (1 failure in 101) and
+        a failing French track is refused; Russian, Spanish and Chinese stay
+        in shadow until their thresholds are."""
         from engine import multilingual
         from engine.spoken_text_gate import resolve_gate_mode
         assert resolve_gate_mode("enforce", "ru") == "shadow"
-        assert resolve_gate_mode("enforce", "fr") == "shadow"
+        assert resolve_gate_mode("enforce", "zh") == "shadow"
+        assert resolve_gate_mode("enforce", "es") == "shadow"
+        assert resolve_gate_mode("enforce", "fr") == "enforce"
         cfg = self._arm(tmp_path, monkeypatch, transcript_text="Autre chose entièrement. " * 20)
         cfg.multilingual.spoken_text_gate = "enforce"
-        assert multilingual.generate_for_episode(cfg, 5, ["fr"], voice_id="vid", api_key="k") == {"fr": "done"}
+        assert multilingual.generate_for_episode(cfg, 5, ["fr"], voice_id="vid", api_key="k") == {"fr": "gate_rejected"}
         side = json.loads((tmp_path / "spoken_text_gate.fr.json").read_text(encoding="utf-8"))
-        assert side["episodes"]["5"]["mode"] == "shadow"
+        assert side["episodes"]["5"]["mode"] == "enforce"
+        assert side["episodes"]["5"]["gate"] == "fail_enforce"
 
     def test_track_transcript_path_is_reused_by_the_dub_engines(self, tmp_path):
         from engine import multilingual
@@ -869,4 +875,4 @@ class TestDubSpokenTextGate:
         import yaml as _yaml
         assert MultilingualConfig().spoken_text_gate == "shadow"
         d = _yaml.safe_load((PROJECT_ROOT / "shows" / "_defaults.yaml").read_text(encoding="utf-8"))
-        assert d["multilingual"]["spoken_text_gate"] == "shadow"
+        assert d["multilingual"]["spoken_text_gate"] == "enforce"  # Oct 11 2026 readout

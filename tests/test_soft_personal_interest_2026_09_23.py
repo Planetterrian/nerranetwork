@@ -38,7 +38,7 @@ class TestSoftPersonalInterestPage:
         assert "Every Nerra show stays free. Personal is optional" in src
         assert "SpaceX Daily included" in src
         assert "Want occasional Personal tips by email?" in src
-        assert "No ads. No outrage diet. Curiosity only." in src
+        assert "No outrage diet. Curiosity only." in src
         assert "You’re on the list. Shows stay free either way." in src
         assert "We’ll only email you about Nerra Personal" in src
         assert "privacy-policy.html" in src

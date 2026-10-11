@@ -45,7 +45,7 @@ and the blog all read them — and add ONE new section directly after the
 **### What This Show Covers** (200-300 words, first episode only)
 - Open on the subject, not the show: the physical layer of AI in three layers — the chips, the systems they sit in, and the sites and power that house them — and the one quantity the show will keep returning to: gigawatts of AI capacity announced versus under construction versus energized.
 - The boundary, as a listener promise: models and software are the sister show Models and Agents; this show is the hardware, the buildings, the power and the money.
-- The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
+- The network, in two sentences: {show_name} is part of the Nerra Network, an independent network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
 
 Then run the normal sections. Debut discipline: the STRONGEST stories only,
 jargon defined on first use, no reference to earlier episodes, and every
@@ -62,7 +62,7 @@ and the blog all read them — and add ONE new section directly after the
 **### What This Show Covers** (200-300 words, first episode only)
 - Open on the subject, not the show: seven companies — Alphabet, Amazon, Apple, Meta, Microsoft, NVIDIA and Tesla — treated as one desk because between them they ship the phones, the clouds, the models and the chips most people use, and they share suppliers, regulators and bets; the daily shape: what they shipped, discovered and were allowed to do, and one thread that runs across several of them.
 - The boundaries, as a listener promise: Tesla's products and self-driving are Tesla Shorts Time; stock picks are Modern Investing Techniques; this is not a stock show — it never gives advice and never predicts a price.
-- The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
+- The network, in two sentences: {show_name} is part of the Nerra Network, an independent network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
 
 Then run the normal sections. Debut discipline: the STRONGEST stories only,
 jargon defined on first use, no reference to earlier episodes, and every
@@ -79,7 +79,7 @@ and the blog all read them — and add ONE new section directly after the
 **### What This Show Covers** (200-300 words, first episode only)
 - Open on the subject, not the show: what a peptide is, why the word now covers everything from insulin to unregulated online vials, and how the show reads evidence — cell, animal, human trial, regulator — using this week's spotlight as the first worked example. Name that subject in one sentence and stop: never list its parts or pre-tell its evidence here — the spotlight section does that, and Longevity Ep1 listed all twelve hallmarks in both places.
 - The posture, stated once and plainly: education and awareness, never dosing, sourcing or protocols, never medical advice, and every compound's regulatory status named.
-- The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
+- The network, in two sentences: {show_name} is part of the Nerra Network, an independent network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
 
 Then run the normal sections. Debut discipline: the STRONGEST stories only,
 jargon defined on first use, no reference to earlier episodes, and every
@@ -96,7 +96,7 @@ and the blog all read them — and add ONE new section directly after the
 **### What This Show Covers** (200-300 words, first episode only)
 - Open on the subject, not the show: the science of aging as a field that is real, fast-moving and heavily marketed, and how the show reads it — the hallmarks framework as the map, evidence levels as the ruler — using this week's mechanism as the first worked example. Name that subject in one sentence and stop: never list its parts or pre-tell its evidence here — the spotlight section does that, and Longevity Ep1 listed all twelve hallmarks in both places.
 - The posture, stated once and plainly: education, never medical advice, and every finding carries its evidence level; a mouse result is never presented as a human one.
-- The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
+- The network, in two sentences: {show_name} is part of the Nerra Network, an independent network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
 
 Then run the normal sections. Debut discipline: the STRONGEST stories only,
 jargon defined on first use, no reference to earlier episodes, and every
@@ -113,7 +113,7 @@ and the blog all read them — and add ONE new section directly after the
 **### What This Show Covers** (200-300 words, first episode only)
 - Open on the subject, not the show: a prediction market lets people trade on whether something will happen, and the price can be read as the crowd's probability; the daily shape: the regulators, courts and venues building and contesting the field, a short board of the day's most traded questions, and one explainer on how these markets work.
 - The one thing this show will not do, as a listener promise: tell anyone what to trade — it reports and explains, it never recommends. The law differs by country, province and state and is changing, and the show says whose rules a story is about.
-- The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
+- The network, in two sentences: {show_name} is part of the Nerra Network, an independent network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
 
 Then run the normal sections. Debut discipline: the STRONGEST stories only,
 jargon defined on first use, no reference to earlier episodes, and every
@@ -130,7 +130,7 @@ and the blog all read them — and add ONE new section directly after the
 **### What This Show Covers** (180-260 words, first episode only)
 - Open on the listener, not the show: a short morning brief for people who live in Metro Vancouver — what council and the province decided, what it means for getting around today, how the local teams did, what is on, and one contested local issue with the strongest case on each side.
 - The host, stated plainly: the brief is read by Mira, the network's AI host. The stories are chosen and written by software from named local newsrooms and public data (DriveBC, Environment Canada), and every item names its source. The one thing it will not do: speculate about people — no guesses about anyone's motives, guilt, health or private life, and no endorsements at election time.
-- The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
+- The network, in two sentences: {show_name} is part of the Nerra Network, an independent network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
 
 Then run the normal sections. Debut discipline: the STRONGEST stories only,
 no reference to earlier episodes, and every factual claim held to the normal
@@ -146,7 +146,7 @@ the **What You Need to Know** paragraph:
 **### What This Show Covers** (180-260 words, first episode only)
 - Open on the listener, not the show: every Friday morning, the week in Collingwood and the south Georgian Bay towns — Wasaga Beach, Clearview, The Blue Mountains — what the councils and counties decided, the roads and weather for the weekend ahead, local sport, what is on, and one contested local issue with the strongest case on each side.
 - The host, stated plainly: the round-up is read by Mira, the network's AI host. The stories are chosen and written by software from named local newsrooms and public data (Ontario 511, Environment Canada), and every item names its source. The one thing it will not do: speculate about people — no guesses about anyone's motives, guilt, health or private life.
-- The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
+- The network, in two sentences: {show_name} is part of the Nerra Network, an independent network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
 
 Then run the normal sections. Debut discipline: the STRONGEST stories only,
 no reference to earlier episodes, and every factual claim held to the normal
@@ -185,10 +185,10 @@ blog both read them — and add ONE new section directly after the hook:
   will. No sailing knowledge is required and none is assumed; whatever
   needs explaining gets explained, one clean sentence at a time.
 - The network, in two or three sentences: Offshore North is part of the
-  Nerra Network, an independent, ad-free network of daily shows built by
+  Nerra Network, an independent network of daily shows built by
   two friends (Novak plus Perra equals Nerra) covering technology, science,
   markets, world news and language learning in several languages, free with
-  no ads and no paywall, at nerranetwork.com. An invitation, not a
+  no paywall, at nerranetwork.com. An invitation, not a
   commercial — no superlatives, no growth numbers, no counts of shows or
   listeners.
 
@@ -211,7 +211,7 @@ Papers news-item format entirely and structure the brief as:
    exists: most media profits from making people feel powerless; this club
    starts from the conviction that individuals are not powerless. The Nerra
    Network story: two friends (an airline pilot and a physical-chemist
-   novelist, Novak + Perra = Nerra) built an independent, ad-free network of
+   novelist, Novak + Perra = Nerra) built an independent network of
    daily shows, and this is the show where they step in front of the
    microphone themselves. Who it's for: builders, creators, contributors —
    people who try to make a difference and people who want to start. The
@@ -413,10 +413,10 @@ Order and shape:
      show", never "we", "us", or "our" — Ep001's debut said "we follow
      their attempt" on a solo show.
    - **WHAT THE NERRA NETWORK IS.** Offshore North is part of it, so say
-     what it is: an independent, ad-free network of daily shows built by
+     what it is: an independent network of daily shows built by
      two friends — Novak plus Perra equals Nerra — covering technology,
      science, markets, world news and language learning, in several
-     languages, free with no ads and no paywall. Point at "nerra network
+     languages, free with no paywall. Point at "nerra network
      dot com" once, said naturally. This is an invitation, not a
      commercial: no superlatives, no growth numbers, no claims about how
      many shows or listeners there are. Break it into TWO OR THREE SHORT
@@ -478,7 +478,7 @@ This is a designed founding episode, not a news day. Total target stays
    - WHY: the feeds are engineered to make people feel powerless and they
      got tired of it — this show is the opposite bet: individuals are not
      powerless, and ten minutes a day can prove it.
-   - THE NERRA NETWORK STORY: two friends built an independent, ad-free
+   - THE NERRA NETWORK STORY: two friends built an independent
      network of daily shows together (Novak plus Perra equals Nerra); this
      is the show where they finally step in front of the microphone
      themselves.
@@ -554,7 +554,7 @@ and the blog all read them — and add ONE new section directly after the
 - The region rule, as a promise: which countries this desk covers, and that a story from elsewhere is here only for its consequence inside the region.
 - The host, stated plainly: the brief is read by Mira, the network's AI host. The stories are chosen and written by software from named newsrooms, and every item names its source. The one thing it will not do: take a side — every claim is attributed, and no party, government or people is praised or mocked.
 - ONE sentence that the other Omni View desks and Omni View Top World News exist — never a list of them.
-- The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
+- The network, in two sentences: {show_name} is part of the Nerra Network, an independent network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
 
 Then run the normal sections. Debut discipline: the STRONGEST stories only,
 names and places explained on first use, no reference to earlier episodes,
@@ -591,7 +591,7 @@ and the blog all read them — and add ONE new section directly after the
 - Open on the listener, not the show: the ten stories that matter most anywhere in the world today, ranked by how many people they change something for, then one contested question with the strongest case on each side and one measurable sign of progress.
 - How the ranking is made, plainly: from the world's newsrooms and the network's five regional desks, which publish earlier each morning — ONE sentence, never a list of the desks.
 - The host, stated plainly: the brief is read by Mira, the network's AI host. The stories are chosen and written by software from named newsrooms, and every item names its source. The one thing it will not do: take a side — every claim is attributed.
-- The network, in two sentences: {show_name} is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
+- The network, in two sentences: {show_name} is part of the Nerra Network, an independent network of shows at nerranetwork.com. An invitation, not a commercial — no superlatives, no counts of shows or listeners.
 
 Then run the normal sections. Debut discipline: the STRONGEST stories only,
 names and places explained on first use, no reference to earlier episodes,

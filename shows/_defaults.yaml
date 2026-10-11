@@ -272,7 +272,10 @@ multilingual:
   # text normalisation read aloud) had no check at all on the RU/FR
   # tracks — @NerraRU is the network's highest-reach surface. Enforce
   # after the 14-day readout (register dub-spoken-text-gate-shadow-2026-09-22).
-  spoken_text_gate: shadow
+  # Oct 11 2026 readout: ENFORCE. engine.spoken_text_gate.CALIBRATED_LANGUAGES
+  # decides which tracks it can block — French (1 failure in 101) does; RU,
+  # ES and ZH stay in shadow until their thresholds are calibrated.
+  spoken_text_gate: enforce
   # Optional override: name of an env var holding a DIFFERENT cloned voice ID
   # for the translations. Unset → the show's tts.voice_id is used.
   cloned_voice_env: GROK_CLONED_VOICE_ID

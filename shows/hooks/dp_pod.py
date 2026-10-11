@@ -592,7 +592,7 @@ def _recent_network_picks(max_digests: int = 6) -> str:
 def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
     catalog = "\n".join(f"- {name} — {pitch}" for _dir, name, pitch in _NETWORK_SHOWS)
     sections = [
-        "THE NERRA NETWORK (your sibling shows — the network is ad-free and "
+        "THE NERRA NETWORK (your sibling shows — the network is free to listen and "
         "these are the club's library; describe them with these pitches, "
         "never read this list aloud):",
         catalog,

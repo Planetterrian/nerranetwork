@@ -1,0 +1,119 @@
+{% extends "base.html.j2" %}
+{#- Sponsor page (Oct 11 2026). Every number comes from the committed
+    api/audience_headline.json through generate_sponsor_page(); an unmeasured
+    figure renders as a dash, never a zero. The rules come from
+    engine.brand.SPONSOR_POLICY_RULES (the ``sponsor_policy`` global) — do not
+    type a rule here. -#}
+
+{% block head_extra %}
+    <style>
+        .sp-hero { padding: calc(var(--nav-height) + var(--sp-16)) var(--sp-6) var(--sp-8); text-align: center; }
+        .sp-hero h1 { font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 2.8rem); font-weight: 700; color: var(--nn-white); margin: 0 0 var(--sp-3); }
+        .sp-hero p { font-family: var(--font-body); font-size: 1.1rem; color: var(--nn-text-muted); max-width: 640px; margin: 0 auto; line-height: 1.6; }
+        .sp-section { max-width: 900px; margin: 0 auto; padding: var(--sp-8) var(--sp-6); }
+        .sp-section h2 { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: var(--nn-white); margin: 0 0 var(--sp-3); }
+        .sp-section h3 { font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600; color: var(--nn-white); margin: 0 0 var(--sp-2); }
+        .sp-section p, .sp-section li { font-family: var(--font-body); color: var(--nn-text); line-height: 1.7; }
+        .sp-note { font-size: 0.85rem; color: var(--nn-text-muted); }
+        .sp-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--sp-3); margin: var(--sp-4) 0; }
+        .sp-stat { background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 14px; padding: var(--sp-4); }
+        .sp-stat-value { font-family: var(--font-heading); font-size: 1.8rem; font-weight: 700; color: var(--nn-white); }
+        .sp-stat-label { font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); margin-top: 2px; }
+        .sp-table-wrap { overflow-x: auto; }
+        .sp-table { width: 100%; border-collapse: collapse; font-family: var(--font-ui); font-size: 0.9rem; }
+        .sp-table th, .sp-table td { text-align: left; padding: var(--sp-2) var(--sp-3); border-bottom: 1px solid var(--nn-border); color: var(--nn-text); }
+        .sp-table th { color: var(--nn-text-muted); font-weight: 600; }
+        .sp-table td.num, .sp-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+        .sp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--sp-3); margin: var(--sp-4) 0; }
+        .sp-card { background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 14px; padding: var(--sp-4); }
+        .sp-card p { margin: 0; font-size: 0.95rem; }
+        .sp-cta { display: inline-block; margin-top: var(--sp-3); padding: var(--sp-3) var(--sp-6); border-radius: 100px; background: var(--nn-purple); color: #fff; text-decoration: none; font-family: var(--font-ui); font-weight: 600; }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="page-main">
+        <section class="sp-hero">
+            <h1>Sponsor the Nerra Network</h1>
+            <p>{{ published_show_count }} independent shows on AI, SpaceX, Tesla, markets,
+            science and world news, most of them daily, in {{ listening_language_count }}
+            listening languages. Every episode is free; sponsors help keep it that way.</p>
+        </section>
+
+        <section class="sp-section" aria-labelledby="sp-audience">
+            <h2 id="sp-audience">The audience, measured</h2>
+            <div class="sp-stats">
+                <div class="sp-stat"><div class="sp-stat-value">{{ audience.downloads_30d }}</div><div class="sp-stat-label">Podcast downloads, last 30 days</div></div>
+                <div class="sp-stat"><div class="sp-stat-value">{{ audience.downloads_7d }}</div><div class="sp-stat-label">Podcast downloads, last 7 days</div></div>
+                <div class="sp-stat"><div class="sp-stat-value">{{ audience.youtube_views }}</div><div class="sp-stat-label">YouTube views on videos from the last 28 days</div></div>
+                <div class="sp-stat"><div class="sp-stat-value">{{ total_episodes }}</div><div class="sp-stat-label">Episodes published</div></div>
+            </div>
+            <p class="sp-note">Downloads are counted by <a href="https://op3.dev">OP3</a>, an
+            open podcast analytics service, on every feed it has indexed; YouTube figures come
+            from the YouTube Analytics API. Figures as of {{ audience.as_of }}. Live numbers:
+            <a href="{{ path_prefix }}management.html?view=sponsor">the sponsor view of Mission Control</a>.</p>
+
+            {% if audience.shows %}
+            <h3>By show</h3>
+            <div class="sp-table-wrap">
+                <table class="sp-table">
+                    <thead><tr>
+                        <th scope="col">Show</th>
+                        <th scope="col" class="num">Downloads, 30 days</th>
+                        <th scope="col" class="num">YouTube views, 28 days</th>
+                    </tr></thead>
+                    <tbody>
+                    {% for row in audience.shows %}
+                        <tr>
+                            <td><a href="{{ path_prefix }}{{ row.page }}">{{ row.name }}</a></td>
+                            <td class="num">{{ row.downloads_30d }}</td>
+                            <td class="num">{{ row.youtube_views }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="sp-note">A dash means the figure is not measured yet, not zero.</p>
+            {% endif %}
+        </section>
+
+        <section class="sp-section" aria-labelledby="sp-formats">
+            <h2 id="sp-formats">Ways to sponsor</h2>
+            <div class="sp-grid">
+                <div class="sp-card"><h3>A show, by the episode or the month</h3>
+                    <p>A labelled sponsor message in the episode, read in the show's own
+                    voice, plus a sponsor line and link in the show notes and the episode's
+                    article. The hosts are AI voices, and every episode says so.</p></div>
+                <div class="sp-card"><h3>A subject across the network</h3>
+                    <p>Every show on one subject at once: AI, space, markets, science,
+                    world news. The <a href="{{ path_prefix }}topics/index.html">topic pages</a>
+                    list which shows each one covers.</p></div>
+                <div class="sp-card"><h3>Nerra Daily</h3>
+                    <p>The network's combined daily edition: every English show of the day in
+                    one feed, anchored by Mira. One placement reaches listeners of every show.</p></div>
+                <div class="sp-card"><h3>The newsletters</h3>
+                    <p>A sponsor line in a show's daily email, kept apart from the stories and
+                    marked as sponsored.</p></div>
+            </div>
+            <p>Rates are set per show from the downloads above. Tell us which shows or
+            subjects you want to reach and we will reply with a quote.</p>
+        </section>
+
+        <section class="sp-section" aria-labelledby="sp-rules">
+            <h2 id="sp-rules">What a sponsor can and cannot do</h2>
+            <div class="sp-grid">
+            {% for rule in sponsor_policy.rules %}
+                <div class="sp-card"><h3>{{ rule.title }}</h3><p>{{ rule.body }}</p></div>
+            {% endfor %}
+            </div>
+            <p>These rules are part of our <a href="{{ path_prefix }}editorial.html#sponsors">editorial
+            standards</a>. A sponsor that wants something they rule out is not a fit.</p>
+        </section>
+
+        <section class="sp-section" aria-labelledby="sp-contact">
+            <h2 id="sp-contact">Get in touch</h2>
+            <p>Write to us with the shows or subjects you have in mind and your dates.</p>
+            <a class="sp-cta" href="mailto:{{ sponsor_policy.email }}?subject=Sponsoring%20Nerra%20Network">{{ sponsor_policy.email }}</a>
+        </section>
+    </div>
+{% endblock %}

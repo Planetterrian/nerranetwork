@@ -737,7 +737,22 @@ experiments:
     area: quality
     shipped: 2026-09-21
     readout: 2026-09-25
-    status: reading
+    status: done
+    outcome: >
+      READ 2026-10-11: MISS — the gate never passed and the script arm never
+      ran. Credit files (podcast_script_generation.model): omni_view's script
+      was served by grok-4.3 on 10 of 14 runs 09-28..10-11 and by grok-4.6 on 4
+      after the 10-05 restore; no established show's credit file records a
+      grok-4.7 script call. model_trial_report --since 2026-09-25
+      --timeout-seconds 600 over the 13 cohort shows: GATE: FAIL,
+      generate_digest p95 over 300 s on 10 of 13 (ai_chips 368, mag7 456,
+      peptides 643, vancouver 418, prediction_markets 814, omni_view_world 567,
+      europe 378, asia_pacific 340, africa_mideast 383, latam 334 s; under:
+      north_america 297, collingwood 288, longevity 256), streamed TTFT p50
+      157-264 s. The reviewer arm kept the daily audit completing (20 episodes
+      reviewed 10-10) but its served model is in no committed file — unverified,
+      not a pass. Nothing widened. A re-trial is a fresh staged start on a
+      streamed script call.
     update_2026_10_05: >
       CORRECTION — the omni_view SCRIPT arm never ran. The credit files
       (services.grok_api.podcast_script_generation.model) show grok-4.3
@@ -910,7 +925,18 @@ experiments:
     area: quality
     shipped: 2026-08-20
     readout: 2026-10-01
-    status: reading
+    status: done
+    outcome: >
+      READ 2026-10-11: HIT. 6 distinct rule sets across 32 era picks (target >=
+      4 within 20); 25 closed era trades with alpha. Four rules carry >= 5
+      trades on BOTH arms (LL-002 19/6, LL-028 19/6, LL-066 20/5, LL-067 19/6);
+      LL-041 is 21/4, still unmeasured. _build_rule_scoreboard (run offline on
+      the committed tracker) scores four rules: LL-028 is a RETIREMENT CANDIDATE
+      (-2.06% with vs +3.60% without); _proven_rule_ids pins LL-002 / LL-066 /
+      LL-067 (each beats its without-arm, all three still negative in absolute
+      alpha: -0.41 / -0.12 / -0.34%). Caveats: arms of 5-6 trades, and with
+      three pinned only the fourth slot (LL-028 vs LL-041) still rotates.
+      Operator item: the LL-028 retirement call.
     baseline: "2 rule sets across 15 stamped trades, differing by one rule, arising by accident — 0 rules scoreable, ever"
     target: >
       >=4 distinct rule sets within 20 era trades, every rule carrying
@@ -931,7 +957,16 @@ experiments:
     area: quality
     shipped: 2026-08-20
     readout: 2026-10-01
-    status: reading
+    status: done
+    outcome: >
+      READ 2026-10-11: HIT. 31 of 31 picks since 08-20 carry an explicit
+      strategy_family in investment_tracker.json (target >= 90%).
+      Verified-window family record (_build_strategy_family_performance,
+      offline): catalyst_event 14 trades (-0.26% mean alpha), valuation 11
+      (-0.72%), earnings_surprise 5 (-0.21%), dividend_income 4, merger_arb /
+      momentum under 3. Three families pass the 5-trade bar; none has a positive
+      record yet. Gap: api/mit_trade_ledger.json carries no family column, so
+      the public ledger cannot show the grouping.
     baseline: "61 trades, 61 unique free-text strategy strings, 0 groupable"
     target: >
       >=90% of new picks carry an explicit family, and at least one family
@@ -1102,7 +1137,18 @@ experiments:
     area: reach
     shipped: 2026-09-02
     readout: 2026-10-02
-    status: reading
+    status: done
+    outcome: >
+      READ 2026-10-11: PARTIAL, channel part INCONCLUSIVE (shipped 09-02, read
+      against the 09-13/16 distribution drop). FF-RU is still the only member
+      (16 four-Short episodes since 09-02; spacex-RU, tesla-RU and every FR show
+      0). FF-RU views at age 5 (youtube_early_reach.json): hook median 607.5
+      (n=32), 2nd 181 (29), 3rd 197 (30), 4th 360.5 (n=14) — 4th/hook 59%
+      unpaired, paired per-episode median 0.50 (n=14), against the 60% target
+      and short of the n >= 20 asked for. No abort condition fired: the 4th sits
+      far above the ~100 floor and the 3rd rose (75 pre-band to 197).
+      ru_short_vpd_max 55.17 -> 37.83 tracks the drop, not the band. Keep the
+      band: the 4th out-earns the 2nd and 3rd.
     update_2026_09_18: >
       Read 2026-09-18 (two days late), FF-RU is the only member that reached the
       band (13 episodes with four Shorts; spacex-RU 24.7 vpd and tesla-RU 18.4
@@ -1534,7 +1580,18 @@ experiments:
     area: reach
     shipped: 2026-09-22
     readout: 2026-10-06
-    status: reading
+    status: done
+    outcome: >
+      READ 2026-10-11: HIT on the number, attribution shared.
+      short_reach_d3_median_en_7d 42 on the 10-10 file (baseline 10, target >=
+      15); EN hook-Short daily age-3 medians 8-10 on 09-17..22, 22.5-101 on
+      09-26..10-05 (one low day, 10-06 at 8). EN net subscribers +23 (09-22 ->
+      09-29) and +18 (09-29 -> 10-06) against +14 — not down. The cap held: 0 of
+      189 YouTube-enabled EN episodes since 09-23 uploaded more than one Short
+      (118 x1, 71 x0 probe/skip). The hook-Short motion open shipped the same
+      day and RU/FR recovered too (channel_views_wow_ru +28.5), so most of the
+      recovery is distribution; the cap stays for the upload saving and because
+      the hook Short carries the subscribers.
     metric: short_reach_d3_median_en_7d
     baseline: 10
     target: >
@@ -1594,7 +1651,28 @@ experiments:
     area: quality
     shipped: 2026-09-22
     readout: 2026-10-06
-    status: reading
+    status: done
+    outcome: >
+      READ 2026-10-11: PARTIAL — RU/FR clean, the headline metric is not.
+      Committed digests/*/spoken_text_gate.<lang>.json, 09-22..10-11: FR 101
+      tracks checked, 1 fail; RU 65 checked, 3 fail; ZH 39 checked, 39 fail; ES
+      0 tracks (no ES track is enabled); 29 no_transcript (13 on 09-30, 16 on
+      10-08 — the PyAV outages). Readout window 09-23..10-06: RU+FR 3 of 128
+      (0.023, under the 0.05 target); dub_gate_fail_share_14d reads 0.207 only
+      because ZH is in it. Every RU/FR failure is instrument noise: the three RU
+      fails are opening_mismatch at 0.43-0.47 with runs of 11-18 words (Whisper
+      writing the English show name as 'space x daily' / 'модерн инвестик
+      текникс'), and FR M&A Ep187 (run 143, foreign_passage) is a number-dense
+      passage where Whisper writes digits against spelled-out French — its
+      transcript reads the script sentence by sentence. ZH fails 39/39 at
+      opening 0.00-0.40 on transcripts that follow the script: the matcher is
+      word-based and Chinese has no spaces, and Whisper mixes traditional and
+      simplified script; the ZH track was switched off 10-09. Recommendation
+      (not applied): enforce FR now; enforce RU after either a 0.40 RU opening
+      floor or normalising transliterated brand names (as is, enforce would have
+      blocked 3 of 65 good RU tracks); ES stays shadow (no data); ZH needs a
+      character-level matcher before any mode but off. no_transcript must keep
+      never blocking.
     metric: dub_gate_fail_share_14d
     baseline: null
     target: >
@@ -1627,7 +1705,17 @@ experiments:
     area: reach
     shipped: 2026-09-22
     readout: 2026-10-06
-    status: reading
+    status: done
+    outcome: >
+      READ 2026-10-11: HIT. traffic_day_series holds 29 days per channel
+      (09-10..10-08) — four complete weeks on all three. Read (daily means): RU
+      SHORTS 2,410 (09-10..12) -> 1,846 -> 1,022 -> 665 (09-27..10-03) -> 968
+      (10-04..08) while SUBSCRIBER 4-19 and YT_SEARCH 57-101 stayed flat — the
+      RU drop was the Shorts feed. FR the same shape: SHORTS 381 -> 366 -> 218
+      -> 122 -> 256, search 21-48. EN fell on two surfaces: SHORTS 468 -> 283 ->
+      183 -> 441 -> 287 and SUBSCRIBER 978 -> 557 -> 468 -> 609 -> 982, search
+      314-564; both have come back. Caveat: only three pre-drop days in the
+      series. shorts_feed_share_7d_en 0.246.
     metric: shorts_feed_share_7d_en
     baseline: null
     target: >
@@ -1801,7 +1889,21 @@ experiments:
     area: quality
     shipped: 2026-09-12
     readout: 2026-09-26
-    status: reading
+    status: done
+    outcome: >
+      RE-READ 2026-10-11 (10-01..10-11): PARTIAL. Combined on 145 of 226
+      run_show episodes (64%); 145 of 180 (81%) excluding the shows two-pass by
+      code (UC, FPD, MAB and omni_view on podcast_model, dp_pod, the RU pair) —
+      share HIT. Density MISS: overlap <= 25 AND coverage >= 70 on the same
+      episode Tesla 2/10, SpaceX 4/11, M&A 0/11 (median overlap 35 / 47 / 44%,
+      coverage 82 / 80 / 82%). Entity retention 79 / 85 / 70: PARTIAL.
+      script_repeated_facts median 2.5 / 5 / 4 against 2 / 4.5 / 3.5 on
+      09-20..29 — the second-telling strip did not move it. Three
+      podcast_script_too_thin skips (FF 10-02 and 10-11, Top World 10-03); the
+      skip marker does not record the generation path, so 'no episode lost' is
+      unmeasured. The same combined path on the grok-4.7 cohort reads 7.1%
+      median overlap at 77.8% coverage: the copying belongs to the 4.3 writing
+      model, not to the combined design. Keep combined on.
     update_2026_09_30: >
       Read 2026-09-30. combined on 120/244 news episodes (49%) against 80%: 
       MISS on share (two_pass on the podcast_model shows and the retry days). 
@@ -1885,7 +1987,21 @@ experiments:
     area: growth
     shipped: 2026-09-12
     readout: 2026-10-10
-    status: reading
+    status: done
+    outcome: >
+      READ 2026-10-11: instrument HIT, contract MISS. Three reviews scored
+      prompt passes without an audience number (network_review_2026_10_05,
+      slate_review_2026_10_10, slate_review_2026_10_11).
+      api/audience_headline.json as of 10-10: network 30-day downloads 6,857 ->
+      9,091 (+33%), complete weeks 1,563 / 1,751 / 2,802 (last WoW +60%),
+      newsletter subscribers 5 -> 12; flagship complete weeks Tesla 239 / 229 /
+      393, SpaceX 620 / 798 / 1,084, M&A 234 / 170 / 342; first-week medians
+      SpaceX 114, Tesla 27, M&A 19 on 2 episodes each (too thin to score). A
+      +60% week that beats every earlier complete week is the catalogue-sweep
+      shape the 10-09 review warns about, and several changes shipped in the
+      window, so the September passes cannot be credited with it. Keep the
+      headline first on every surface; the next review that scores a prompt must
+      open on it.
     baseline: "6,857 RSS downloads/30d, 5 newsletter subscribers, YouTube Shorts retention ~69% / long ~14% (Sep 12); the September script passes were scored on 99 pipeline metrics and no audience number"
     target: >
       Every review from Sep 12 opens on the audience headline (the
@@ -1968,7 +2084,18 @@ experiments:
     area: quality
     shipped: 2026-09-18
     readout: 2026-10-02
-    status: reading
+    status: done
+    outcome: >
+      READ 2026-10-11: PARTIAL. caption_track_refusals_14d 0; 156 of 156
+      long-forms that attempted a track since 09-18 uploaded it and
+      caption_track_error was never set — the retry and the record work. But 11
+      long-forms in the 14 days to 10-11 shipped with NO track and NO record: 7
+      on 09-30 and 4 on 10-08, the two PyAV transcript outages (spoken_text_gate
+      no_transcript). No transcript means no upload attempt and no
+      caption_track_uploaded key, so the refusal metric cannot see them. 'Zero
+      captionless long-forms' missed for a cause outside this change; a
+      long-form with no transcript should record caption_track_uploaded false
+      with a no_transcript reason.
     metric: caption_track_refusals_14d
     baseline: null
     target: >
@@ -1989,7 +2116,15 @@ experiments:
     area: quality
     shipped: 2026-09-18
     readout: 2026-10-02
-    status: reading
+    status: done
+    outcome: >
+      READ 2026-10-11: HIT. mit_new_trade_share_10ep 0.9 (target >= 0.8,
+      baseline 0.1); trade signals Ep182-197 are 14 new_trade and 2 no_trade. 9
+      era trades closed between 09-18 and 10-02 (target >= 8), 15 by 10-11. No
+      revert trigger fired: 0 picks without an invalidation level and 0 options
+      structures since 09-18. Open: confidence reads Medium on 19 of 19 picks
+      since 09-18, so the calibration block is the next item, as the target
+      said.
     metric: mit_new_trade_share_10ep
     baseline: 0.1
     target: >
@@ -2791,7 +2926,19 @@ experiments:
     area: quality
     shipped: 2026-09-23
     readout: 2026-10-07
-    status: reading
+    status: done
+    outcome: >
+      READ 2026-10-11: PARTIAL — quality HIT, latency trigger FIRED. The arm
+      ran: 172 of 175 cohort digest calls since 09-25 were served by grok-4.7
+      (credit files; 3 fell back to 4.3, all pre-flight pings, none since
+      10-01). The playbook revert trigger fired: generate_digest p95 over 300 s
+      on 10 of 13 shows (see grok-47-staged-migration; peptides 643 s,
+      prediction_markets 814 s). No run came near the 3,000 s budget (max wall
+      1,641 s, prediction_markets 10-01); one skip (Top World 10-03, script too
+      thin). Quality against the established shows over the same days: claims
+      median 16 (15 verified) vs 3, script digest overlap 7.1% vs 49.4%,
+      coverage 77.8% vs 83.3%, script commas 5.9 vs 2.2 per 100 words. Pins stay
+      by operator direction; no digest stage widens to 4.7 on this latency.
     baseline: >
       The four Phase 1 shows (ai_chips, mag7, peptides, longevity) produced
       their Episode 1s on the grok-4.3 network default, digest and script in
@@ -2847,7 +2994,17 @@ experiments:
     area: quality
     shipped: 2026-09-24
     readout: 2026-10-08
-    status: reading
+    status: done
+    outcome: >
+      READ 2026-10-11: PARTIAL. Fallback HIT: llm_pinned_fallback_share_7d 0.0
+      over 93 pinned episodes with llm_pinned_recovered_7d 2 (target < 0.10 and
+      > 0, from 0.38); 3 fallbacks since 09-25, all pre-flight pings on
+      09-28/09-30, none since 10-01, and no structural retry moved an episode
+      off its arm. No cohort run hit the 3,000 s budget (max 1,641 s). Latency
+      MISS: generate_digest p95 over 300 s on 10 of 13 cohort shows
+      (model_trial_report --since 2026-09-25); streamed TTFT p50 157-264 s stays
+      under it. Truncated completions are not recorded, so that revert trigger
+      is unmeasured. Keep both levers.
     metric: llm_pinned_fallback_share_7d
     baseline: 0.38
     target: >
@@ -2944,7 +3101,21 @@ experiments:
     area: quality
     shipped: 2026-09-23
     readout: 2026-10-07
-    status: reading
+    status: done
+    outcome: >
+      READ 2026-10-11 (Ep2+, 186 cohort episodes 09-24..10-11): PARTIAL.
+      Fallback rate 3/175 since 09-25 (well under 30%). digest_lints_fired did
+      NOT fall: 22 episodes fired in each show's first half, 31 in the second
+      (wyntk_hook_match 35, progress_watch_thin 13); after the retry 22/186
+      (12%) still fired — empty on most. MISS condition met for one lint:
+      Peptides spotlight_card fired after the retry on 3 of 3 episodes (the rule
+      belongs in code). Africa & ME: items_without_source 0 on every episode,
+      x_posts_dropped_unlinked 1-8 per episode. Desk digests >= min_digest_words
+      (1,100) on 46 of 70 days with >= 12 full texts. Prediction Markets: The
+      Week's Board on the first Friday (Ep003, 5 rows) but ABSENT on 10-02 and
+      10-09 (week_board_rows unrecorded both days) — open defect. Top World
+      Saturday single-story edition 3/3 (450-603 words). Item coverage on the
+      two measured 4.3-fallback episodes 22.2 / 40.0 (< 50).
     baseline: >
       Fourteen Episode 1s (2026-09-22/23). Two of fourteen reached their
       script-length target; every desk digest written on grok-4.7 came in
@@ -3040,7 +3211,20 @@ experiments:
     area: quality
     shipped: 2026-09-24
     readout: 2026-10-08
-    status: reading
+    status: done
+    outcome: >
+      READ 2026-10-11 (09-25..10-08 vs 09-10..23): PARTIAL. Claims ledger
+      medians (committed *_claims.json) moved off zero on every show — Tesla 0
+      -> 2, SpaceX 0 -> 3.5, M&A 0 -> 3, FF 0 -> 3, PT 0 -> 2.5, OV 0 -> 2, MIT
+      0 -> 2, MAB 0 -> 1.5 — but stay under the >= 4 flagship target.
+      Flagged/stripped sentences did not rise (median 0). articles_full_text >=
+      8 on 12/13 Tesla, 12/14 SpaceX, 13/14 M&A, 14/14 PT / OV / MIT, 8/14 MAB.
+      articles_preferred_in_prompt >= 1 on 12+ of 13-14 for Tesla / SpaceX / M&A
+      / FF / OV, but 7/14 on PT and MIT and 9/14 on MAB (target 5/7).
+      show_notes_sources on every item except one Tesla episode. Lints fired on
+      2 of 128 episodes. Env Intel and Финансы Просто have 2 episodes each —
+      unread. Personal picks unmeasured (api/member_metrics.json configured:
+      false).
     baseline: >
       Every established news show fetched headline + teaser only
       (fetch_full_text 0 on 14 of 15 shows; Offshore North's Sep 14 review
@@ -3131,7 +3315,16 @@ experiments:
     area: quality
     shipped: 2026-09-30
     readout: 2026-10-07
-    status: reading
+    status: done
+    outcome: >
+      READ 2026-10-11: PARTIAL. spoken_text_gate no_transcript on 0 episodes
+      every day 10-01..10-07 (143 episodes) — the pin worked while it existed;
+      21 of 21 on 10-08 after Dependabot #1365 rewrote the pin and was merged on
+      a red Run Tests; 0 on 10-09..10-11 (61 episodes) once
+      engine.transcripts.load_whisper_audio stopped decoding through PyAV. The
+      defence that holds is the ffmpeg decoder, not the pin. The ::error::
+      annotation half lives in Actions logs and cannot be read from committed
+      data.
     baseline: "23/23 episodes of 2026-09-30 with no transcript (spoken_text_gate: no_transcript), av-19.0.0 on every runner; 0-1 per day before"
     target: >
       spoken_text_gate == no_transcript on 0 episodes per day after the
@@ -3381,7 +3574,13 @@ experiments:
     area: quality
     shipped: 2026-10-03
     readout: 2026-10-10
-    status: reading
+    status: done
+    outcome: >
+      READ 2026-10-11: HIT. Spoken scripts (*_tts.txt) 10-04..10-11: 17 sibling
+      plugs featuring a weekly show in frames 2/4, all 'weekly', 0 'daily'; 65
+      daily-show plugs all still 'daily'. 09-20..10-03: 27 weekly-show plugs had
+      said 'daily'. Frame 1's 'a family of daily podcasts' describes the
+      network, not the featured show, and is unchanged.
     target: >
       ~49 airings since 09-20 called Offshore North, Env Intel, DP Pod,
       Peptides or Collingwood Weekly "one of the Nerra Network's daily
@@ -3996,3 +4195,78 @@ experiments:
       digest prompts (AUDIO via the deep dive, landmine #17). Cost ~1 x_search
       + up to 2 web searches per run. Off = delete the grok_leads block.
       Guards: tests/test_grok_leads_2026_10_11.py.
+  - id: sponsor-ready-2026-10-11
+    title: "No more ad-free promise; a sponsor page with measured numbers and published rules"
+    area: growth
+    shipped: 2026-10-11
+    readout: 2026-11-08
+    status: reading
+    baseline: >
+      Oct 11: "ad-free" / "no ads" / "zero ads" on the homepage, about, FAQ,
+      press, join, support, explore, topics, llms.txt, the newsletter footer,
+      SpaceX's spoken show-notes ask and DP Pod's prompt, while the operator
+      plans sponsorship. No sponsor page; no published rule for what a
+      sponsor may do; 0 sponsor enquiries recorded.
+    notes: >
+      Every promise removed (the episode stays free, which is true). The
+      policy has ONE owner, engine.brand.SPONSOR_POLICY_* (labelled, kept
+      apart from the reporting, no say over coverage, same sourcing rules,
+      every episode free), rendered on sponsor.html, editorial.html#sponsors,
+      the FAQ and the press kit. sponsor.html reads api/audience_headline.json
+      (dash = unmeasured, never 0) and is in --static-pages, the sitemap and
+      the footer. No ad is placed anywhere yet. Guards:
+      tests/test_sponsor_ready_2026_10_11.py.
+    target: >
+      Infrastructure, not a metric mover: score it by whether the first
+      sponsor enquiry by 11-08 can be answered from sponsor.html alone.
+  - id: signup-measurement-2026-10-11
+    title: "First-party signup forms fire a GA4 conversion"
+    area: growth
+    shipped: 2026-10-11
+    readout: 2026-10-25
+    status: reading
+    baseline: >
+      No first-party signup surface fired a GA4 event, so capture.signup_events_total
+      read 0 and "0 signups" meant unmeasured (Oct 9 review). gallery_subscribe
+      fired and was filtered out by the fetcher.
+    notes: >
+      footer-subscribe.js (every footer, /join.html, the homepage form) fires
+      newsletter_signup on a successful subscribe with list, source and tags
+      (beacon); CONVERSION_EVENTS gains gallery_subscribe.
+    target: >
+      signup_events_total in api/ga4_stats.json is non-null and within ±2 of
+      the Buttondown subscriber delta over the same 14 days.
+  - id: narrative-queue-source-audit-2026-10-11
+    title: "UC and FPD queues audited for sources; restock briefs must be searchable"
+    area: quality
+    shipped: 2026-10-11
+    readout: 2026-10-25
+    status: reading
+    baseline: >
+      Audit of every unproduced brief: UC keep 5 / fix 13 / cut 16; FPD keep 5 /
+      fix 19 / cut 3 — the restock model wrote premises from memory (the UC
+      Ep139 shape).
+    notes: >
+      Cut entries removed; fixed briefs carry a dated SOURCE AUDIT note and
+      every audited entry its sources; scripts/restock_topic_queues.py keeps a
+      generated brief only when one web search finds >= 2 non-social sources
+      (ground_candidates); restock prompts ban figures and invented facts.
+    target: >
+      narrative_research_thin skips on UC + FPD <= 1 in 14 days, and no
+      correction filed against either show.
+  - id: fr-dub-gate-enforce-2026-10-11
+    title: "Spoken-text gate enforced on the French tracks"
+    area: quality
+    shipped: 2026-10-11
+    readout: 2026-10-25
+    status: reading
+    baseline: >
+      Shadow readout: FR 1 failure in 101 tracks; RU 3/65 (opening match on
+      Cyrillic spellings — not calibrated); ZH noise; ES no data.
+    notes: >
+      engine.spoken_text_gate.CALIBRATED_LANGUAGES = (en, fr); a failed FR
+      track records the translation as rejected (no R2 upload, one retry on
+      the next sweep). RU/ES/ZH stay shadow.
+    target: >
+      FR gate rejections <= 2 in 14 days and every rejected track recovers
+      on its retry.
