@@ -76,7 +76,7 @@ def test_enqueue_hosts_the_clip_and_takes_a_slot(monkeypatch, tmp_path):
     sent = {}
     monkeypatch.setattr(x_queue, "configured", lambda: True)
     monkeypatch.setattr(x_queue, "_taken", lambda now: [])
-    monkeypatch.setattr(x_queue, "_host", lambda path, slug: f"https://g.example/x_queue/{slug}/{path.name}")
+    monkeypatch.setattr(x_queue, "_host", lambda path, slug: f"{x_queue.R2_PUBLIC_BASE}/x_queue/{slug}/{path.name}")
     monkeypatch.setattr(x_queue, "_rest", lambda method, path, **kw: sent.update(kw) or [{"id": "1"}])
     ok, due = x_queue.enqueue(show_slug="spacex", episode_num=128, env_prefix="NERRANETWORK_X_",
                               text="t", media_path=str(clip), media_kind="clip",
@@ -163,7 +163,7 @@ def test_worker_dispatches_the_queue_on_pacific_half_hours():
 def test_the_queue_workflow_carries_what_it_needs():
     wf = (ROOT / ".github" / "workflows" / "x-queue.yml").read_text(encoding="utf-8")
     for k in ("X_QUEUE_SUPABASE_URL", "X_QUEUE_SUPABASE_KEY", "NERRANETWORK_X_CONSUMER_KEY",
-              "NERRANETWORK_X_ACCESS_TOKEN_SECRET", "R2_GALLERY_PUBLIC_BASE_URL"):
+              "NERRANETWORK_X_ACCESS_TOKEN_SECRET", "R2_SECRET_ACCESS_KEY"):
         assert f"{k}:" in wf
     assert "python scripts/post_x_queue.py" in wf and "workflow_dispatch" in wf
     rs = (ROOT / ".github" / "workflows" / "run-show.yml").read_text(encoding="utf-8")

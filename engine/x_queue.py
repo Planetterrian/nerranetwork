@@ -6,9 +6,10 @@ show's post now waits in a queue (Supabase ``x_post_queue``) for a slot on a
 half-hour grid between 6:30 AM and 7:00 PM Pacific, one post per slot, and
 ``scripts/post_x_queue.py`` posts what is due. The scheduler Worker
 dispatches that script every half hour; the workflow keeps a slower GitHub
-cron as a fallback. The clip or image waits on the gallery R2 bucket.
+cron as a fallback. The clip or image waits on the audio R2 bucket (served
+at audio.nerranetwork.com) under ``x_queue/`` and is deleted once posted.
 
-A queue that is not configured (no ``X_QUEUE_SUPABASE_*`` or no gallery R2)
+A queue that is not configured (no ``X_QUEUE_SUPABASE_*`` or no R2 keys)
 returns ``(False, reason)`` from :func:`enqueue`, and the caller posts at
 once, exactly as before.
 """
@@ -33,6 +34,10 @@ SPACING = dt.timedelta(minutes=30)
 LEAD = dt.timedelta(minutes=5)
 TABLE = "x_post_queue"
 R2_PREFIX = "x_queue"
+# The audio bucket and its public domain (shows/_defaults.yaml storage:),
+# the one R2 host the network already serves media from.
+R2_BUCKET = os.getenv("X_QUEUE_R2_BUCKET", "podcast-audio")
+R2_PUBLIC_BASE = os.getenv("X_QUEUE_R2_PUBLIC_BASE", "https://audio.nerranetwork.com").rstrip("/")
 MAX_ATTEMPTS = 3
 
 
@@ -60,18 +65,15 @@ def _db() -> Tuple[str, str]:
             os.getenv("X_QUEUE_SUPABASE_KEY", "").strip())
 
 
-def _r2():
-    from engine.gallery_uploader import gallery_config_from_env
-    return gallery_config_from_env()
+def _r2() -> Tuple[str, str, str]:
+    return (os.getenv("R2_ENDPOINT_URL", "").strip(),
+            os.getenv("R2_ACCESS_KEY_ID", "").strip(),
+            os.getenv("R2_SECRET_ACCESS_KEY", "").strip())
 
 
 def configured() -> bool:
     url, key = _db()
-    if not (url and key):
-        return False
-    cfg = _r2()
-    return bool(cfg.endpoint_url and cfg.access_key and cfg.secret_key
-                and cfg.bucket and cfg.public_base_url)
+    return bool(url and key and all(_r2()))
 
 
 def _rest(method: str, path: str, *, params=None, json=None, prefer: str = "return=representation"):
@@ -103,11 +105,11 @@ def _taken(now: dt.datetime) -> List[dt.datetime]:
 
 def _host(path: Path, show_slug: str) -> str:
     from engine.storage import upload_to_r2
-    cfg = _r2()
+    endpoint, access, secret = _r2()
     return upload_to_r2(
-        path, f"{R2_PREFIX}/{show_slug}/{path.name}", bucket=cfg.bucket,
-        endpoint_url=cfg.endpoint_url, access_key=cfg.access_key,
-        secret_key=cfg.secret_key, public_base_url=cfg.public_base_url,
+        path, f"{R2_PREFIX}/{show_slug}/{path.name}", bucket=R2_BUCKET,
+        endpoint_url=endpoint, access_key=access, secret_key=secret,
+        public_base_url=R2_PUBLIC_BASE,
         content_type=mimetypes.guess_type(path.name)[0] or "application/octet-stream")
 
 
@@ -149,8 +151,10 @@ def _download(url: str, folder: Path) -> str:
     import requests
     name = url.rsplit("/", 1)[-1].split("?", 1)[0] or "media"
     dest = folder / name
+    # Cloudflare in front of audio.nerranetwork.com turns away the default
+    # Python user agents (Sep 2026), so name ourselves like a browser would.
     with requests.get(url, stream=True, timeout=120,
-                      headers={"User-Agent": "nerra-x-queue/1.0"}) as r:
+                      headers={"User-Agent": "Mozilla/5.0 (compatible; nerra-x-queue/1.0)"}) as r:
         r.raise_for_status()
         with dest.open("wb") as fh:
             for chunk in r.iter_content(1 << 20):
@@ -161,14 +165,17 @@ def _download(url: str, folder: Path) -> str:
 def _forget_media(url: str) -> None:
     """Delete the hosted copy once X has it (best-effort)."""
     try:
-        cfg = _r2()
-        key = url.split(cfg.public_base_url.rstrip("/") + "/", 1)[-1]
+        if not url.startswith(R2_PUBLIC_BASE + "/"):
+            return
+        key = url[len(R2_PUBLIC_BASE) + 1:]
         if not key.startswith(R2_PREFIX + "/"):
             return
+        endpoint, access, secret = _r2()
+        if not all((endpoint, access, secret)):
+            return
         import boto3
-        boto3.client("s3", endpoint_url=cfg.endpoint_url, aws_access_key_id=cfg.access_key,
-                     aws_secret_access_key=cfg.secret_key).delete_object(
-            Bucket=cfg.bucket, Key=key)
+        boto3.client("s3", endpoint_url=endpoint, aws_access_key_id=access,
+                     aws_secret_access_key=secret).delete_object(Bucket=R2_BUCKET, Key=key)
     except Exception as exc:  # noqa: BLE001
         logger.info("Could not delete hosted X media %s: %s", url, exc)
 
