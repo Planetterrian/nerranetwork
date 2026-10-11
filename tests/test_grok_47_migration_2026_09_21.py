@@ -196,24 +196,28 @@ class TestStagingIsStaged:
         register = (ROOT / "docs" / "experiments.yaml").read_text(encoding="utf-8")
         assert "id: new-shows-grok-47-2026-09-23" in register
 
-    def test_the_script_trial_covers_one_show_at_most_per_model(self):
-        """A script-stage trial is per-show by design. If a single
-        non-default model appears on most of the network, the trial has
-        quietly become a rollout."""
+    def test_every_script_model_pin_is_registered(self):
+        """A script-stage pin is never quiet. This guard used to cap a
+        non-default script model at a quarter of the network so a trial
+        could not drift into a rollout unnoticed. On Oct 11 2026 the
+        operator moved the script stage to grok-4.6 show by show, past
+        that cap, each with its own register entry — so the rule is now
+        the thing the cap stood in for: every show that pins a script
+        model names a registered experiment in its YAML."""
+        import yaml as _yaml
         from engine.config import load_config
 
-        counts: dict = {}
-        total = 0
+        reg = _yaml.safe_load(
+            (ROOT / "docs" / "experiments.yaml").read_text(encoding="utf-8"))
+        ids = {e["id"] for e in reg["experiments"]}
         for slug, _raw in _show_yamls():
             cfg = load_config(str(ROOT / "shows" / f"{slug}.yaml"))
-            total += 1
-            if cfg.llm.podcast_model:
-                counts[str(cfg.llm.podcast_model)] = counts.get(
-                    str(cfg.llm.podcast_model), 0) + 1
-        for model, n in counts.items():
-            assert n <= max(3, total // 4), (
-                f"{model} is the script model on {n} of {total} shows — "
-                "that is a rollout, not a staged trial")
+            if not cfg.llm.podcast_model:
+                continue
+            text = (ROOT / "shows" / f"{slug}.yaml").read_text(encoding="utf-8")
+            assert any(i in text for i in ids), (
+                f"{slug} pins its script to {cfg.llm.podcast_model} with no "
+                "registered experiment named in its YAML")
 
 
 class TestTheTrialReportIsUsable:

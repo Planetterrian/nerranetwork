@@ -44,7 +44,7 @@ class TestArms:
         assert cfg.llm.stream is True
         assert cfg.llm.model == "grok-4.3"
 
-    @pytest.mark.parametrize("slug", ["tesla", "fascinating_frontiers", "modern_investing"])
+    @pytest.mark.parametrize("slug", ["tesla", "fascinating_frontiers", "modern_investing", "models_agents"])
     def test_flagship_scripts_on_46(self, slug):
         cfg = load_config(ROOT / "shows" / f"{slug}.yaml")
         assert cfg.llm.podcast_model == "grok-4.6"
@@ -57,7 +57,8 @@ class TestArms:
         assert {"narrative-script-grok47-2026-10-11",
                 "planetterrian-script-grok46-2026-10-11",
                 "flagship-script-grok46-2026-10-11",
-                "mit-script-grok46-2026-10-11"} <= ids
+                "mit-script-grok46-2026-10-11",
+                "models-agents-script-grok46-2026-10-11"} <= ids
 
 
 class TestScriptEffort:
