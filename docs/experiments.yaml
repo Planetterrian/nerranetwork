@@ -4379,3 +4379,35 @@ experiments:
       Over 14 days: 4.6 served on >= 80% of episodes; overlap median <= 20
       with coverage median >= 70; no episode lost; wall_duration_s p95 under
       2,700 s.
+  - id: review-triage-2026-10-11
+    title: "Four Grok review PRs triaged; DP Pod chapter map and cadence copy fixed"
+    area: quality
+    shipped: 2026-10-11
+    readout: 2026-10-26
+    status: reading
+    baseline: >
+      DP Pod Ep069-078: 0/10 episodes carried a Cold Open chapter; 6/10
+      carried at least one chapter titled with a host's spoken line and its
+      speaker label ("DAN: Ten", "PATRICK: I'll take the hit on that").
+    notes: >
+      Triage of #1381 (dp_pod), #1391 (spacex), #1402 (collingwood) and
+      #1406 (omni_view_europe), each claim checked against the committed
+      files. Fixed here: engine.chapters never takes a speaker-labelled line
+      as a chapter title (only dp_pod scripts carry labels, so no other show
+      changes); dp_pod's Cold Open marker matches the spoken "This is The DP
+      Pod"; the dp_pod writer prompts say weekly, and the empty-mailbag line
+      is allowed once a month (it was once a week, which on a weekly show is
+      every episode). Not acted on, with reasons: SpaceX "Patrick and
+      Vancouver" is Whisper's reading of a script that says "in" (a listen,
+      not a code fix); SpaceX's missing AI/Market Watch chapters on the 4.6
+      script are correct (empty AI section, price spoken once at the close);
+      Collingwood's "0 gusting to 0" is the snapshot's digit normalisation
+      (the scripts carry real numbers) and its slow-news library fires only
+      below three articles by design; Omni View Europe's spoken empty
+      Progress Watch was fixed in the Oct 10 desk prompt, and its short
+      Introduction is the Oct 8 lead-story chapter split. AUDIO — dp_pod
+      prompt wording changed; A/B-listen the Oct 12 episode.
+    target: >
+      DP Pod Oct 12 and Oct 19: Cold Open chapter present and no chapter
+      title carries a speaker label; no spoken "daily" for the show's
+      cadence.
