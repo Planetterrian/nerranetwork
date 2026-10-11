@@ -413,3 +413,14 @@ apple_show_ids:
   # Video edition (a separate Apple show)
   video: 6795239039
   ru: 1896938205
+
+# Grok leads (Oct 11 2026; engine/grok_leads.py). Questions people asked
+# @grok on X about this beat become ANGLES for the deep dive, each kept only
+# when two primary pages were fetched for it. Grok's answer is never a
+# source or a Source line; the claims gate reads only the fetched pages.
+# ~1 x_search + up to 2 web searches a run. Off = delete the block.
+grok_leads:
+  enabled: true
+  topics: "how AI models and agents work — model architecture, training and inference, benchmarks and evaluation, context windows, tool use and agent frameworks, open-weight models"
+  max_leads: 2
+  min_sources: 2

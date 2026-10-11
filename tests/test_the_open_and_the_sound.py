@@ -129,8 +129,11 @@ class TestWhatSheSaysAtTheTop:
     def test_she_says_how_the_hour_will_go(self):
         flat = _flat(PROMPT)
         assert "roughly {{planned_minutes}} minutes" in flat
-        assert "approve the episode before anyone else does" in flat
         assert "nothing is live" in flat
+        # Oct 11 2026: the guest's terms as built (gate 2 auto-approves after
+        # seven days), never "approve the episode before anyone else does".
+        assert "a week to approve it, cut from it or refuse it" in flat
+        assert "approve the episode before anyone else does" not in flat
 
     def test_the_co_host_is_introduced_only_when_there_is_one(self):
         assert "{{cohost_intro_step}}" in PROMPT

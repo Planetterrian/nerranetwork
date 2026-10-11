@@ -412,6 +412,20 @@ class StorageConfig:
 
 
 @dataclass
+class GrokLeadsConfig:
+    """@grok on X as a research desk for the deep dive (Oct 11 2026; see
+    ``engine.grok_leads``). Leads are angles, never sources: each one is
+    kept only when ``min_sources`` primary pages were fetched for it."""
+    enabled: bool = False
+    #: What the x_search asks Grok's replies to be about (the show's beat).
+    topics: str = ""
+    max_leads: int = 2
+    min_sources: int = 2
+    research_max: int = 4
+    lookback_hours: int = 48
+
+
+@dataclass
 class MultilingualConfig:
     """Opt-in multilingual *audio* settings for a show (June 2026).
 
@@ -1344,6 +1358,7 @@ class ShowConfig:
     content_freshness: ContentFreshnessConfig = field(default_factory=ContentFreshnessConfig)
     youtube: YouTubeConfig = field(default_factory=YouTubeConfig)
     multilingual: MultilingualConfig = field(default_factory=MultilingualConfig)
+    grok_leads: GrokLeadsConfig = field(default_factory=GrokLeadsConfig)
     video_podcast: VideoPodcastConfig = field(default_factory=VideoPodcastConfig)
     funnel: FunnelConfig = field(default_factory=FunnelConfig)
     # Weekly-summary segment (July 2026). When ``true`` and the runner
@@ -1369,6 +1384,14 @@ class ShowConfig:
     # as {research_sources}; the claims gate verifies against the pages.
     # 0 = off (the pre-Oct-9 brief-only run).
     narrative_research: int = 0
+    # Oct 11 2026: the fewest research sources a narrative topic needs to be
+    # written at all. 0 = legacy (an empty search wrote from the brief). UC
+    # Ep139 aired an invented premise — "the Argentine government issued
+    # licences off South Georgia", a British territory — from a restock
+    # brief with 0 research sources and 0 claims, and the gate passed. A
+    # topic under the floor is skipped for today (recorded as a gate block,
+    # so it defers after two) and the next one is tried.
+    narrative_research_min: int = 0
     # Oct 9 2026: read at most this many of ``x_accounts`` per run, on a
     # date-seeded rotation so the whole list is still read over the week.
     # Every X account is ONE xAI search call (~$0.02 + tokens); the
@@ -1604,6 +1627,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         content_freshness=_build_nested(ContentFreshnessConfig, data.get("content_freshness")),
         youtube=_build_nested(YouTubeConfig, data.get("youtube")),
         multilingual=_build_nested(MultilingualConfig, data.get("multilingual")),
+        grok_leads=_build_nested(GrokLeadsConfig, data.get("grok_leads")),
         video_podcast=_build_nested(VideoPodcastConfig, data.get("video_podcast")),
         funnel=_build_nested(FunnelConfig, data.get("funnel")),
         # Accept the legacy ``weekly_recap_on_sunday`` key as a fallback so any
@@ -1616,6 +1640,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         narrative_mode=bool(data.get("narrative_mode", False)),
         topic_queue_file=str(data.get("topic_queue_file", "") or ""),
         narrative_research=int(data.get("narrative_research", 0) or 0),
+        narrative_research_min=int(data.get("narrative_research_min", 0) or 0),
         x_accounts_per_run=int(data.get("x_accounts_per_run", 0) or 0),
         deep_dive=_build_nested(DeepDiveConfig, data.get("deep_dive")),
         memory_enabled=bool(data.get("memory_enabled", False)),

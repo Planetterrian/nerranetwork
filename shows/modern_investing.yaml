@@ -256,7 +256,12 @@ chapters:
     title: Strategy Spotlight
   - pattern: investor education|deep dive|how.*works
     title: Investor Education
-  - pattern: practice investment|AI pick|today's pick|trade of the day|simulated trade
+  # Oct 11 2026: the disclaimer ("The Practice Investment of the Day uses
+  # simulated trades with no real money.") opened this chapter at 0:18 on
+  # every episode, so it swallowed the market news. The disclaimer's own
+  # wording is excluded.
+  - pattern: practice investment(?! of the day uses)|AI pick|today's pick|trade
+      of the day|simulated trade(?!s with no real money)
     title: Practice Investment of the Day
   - pattern: yesterday's trade|trade review|how did .* pick|weekly hold|last week's
       hold|mid-week update

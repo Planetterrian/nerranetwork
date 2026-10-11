@@ -599,8 +599,11 @@ class TestComprehensiveCoverageAndAISection:
     def test_ai_x_accounts_present(self):
         cfg = yaml.safe_load((_ROOT / "shows/spacex.yaml").read_text(encoding="utf-8"))
         handles = {a["handle"].lower() for a in cfg["x_accounts"]}
-        assert "xai" in handles and "grok" in handles
-        assert "cursor_ai" in handles
+        assert "xai" in handles and "cursor_ai" in handles
+        # Oct 11 2026: @grok reads as a grounded deep-dive LEAD, never an X
+        # source (a reply verified against its own text proves nothing).
+        assert "grok" not in handles
+        assert cfg["grok_leads"]["enabled"] is True
 
     def test_cursor_and_xai_feeds_and_searches(self):
         cfg = yaml.safe_load((_ROOT / "shows/spacex.yaml").read_text(encoding="utf-8"))

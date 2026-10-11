@@ -1020,6 +1020,33 @@ def build_links_prompt(
     )
 
 
+def links_reply_problem(text: str, handoff_count: int) -> str:
+    """Why :func:`parse_links_json` refused a reply, in a few words.
+
+    Ep051 (2026-10-11) shipped the fallback and the log said only "unusable
+    shape"; a truncated reply, a missing field and a short handoff list
+    each need a different fix, so the warning names which one it was.
+    """
+    if not (text or "").strip():
+        return "empty reply"
+    m = re.search(r"\{.*\}", text, re.DOTALL)
+    if not m:
+        return "no JSON object in the reply (truncated?)"
+    try:
+        data = json.loads(m.group(0))
+    except json.JSONDecodeError as exc:
+        return f"invalid JSON ({exc.msg} at char {exc.pos})"
+    if not isinstance(data, dict):
+        return "JSON is not an object"
+    missing = [k for k in ("intro", "signoff") if not str(data.get(k, "")).strip()]
+    if missing:
+        return "missing " + " and ".join(missing)
+    got = len([h for h in data.get("handoffs", []) or [] if str(h).strip()])
+    if got < handoff_count:
+        return f"{got} handoffs for {handoff_count} segments"
+    return ""
+
+
 def parse_links_json(text: str, handoff_count: int) -> Optional[dict]:
     """Extract ``{"intro", "handoffs", "signoff"}`` from an LLM reply.
     Returns None on any shape problem (caller falls back)."""
@@ -1080,6 +1107,30 @@ def validate_edition_title(text: str) -> str:
     return title
 
 
+def spoken_hook(seg: "Segment") -> str:
+    """The segment's hook as a complete sentence, for the spoken fallback.
+
+    ``seg.hook`` comes from the feed title, which ``engine.titles`` clips
+    to 100 characters with an ellipsis; Ep051 read eleven of them aloud
+    ending mid-phrase. The full hook is the digest's opening blockquote,
+    carried in the summaries ``content``. When it cannot be found the
+    clipped tail is dropped at the last clause boundary instead.
+    """
+    hook = (seg.hook or seg.episode_title or "").strip()
+    if not hook.endswith("…"):
+        return hook
+    stem = hook[:-1].rstrip()
+    probe = re.sub(r"\W+", " ", stem).strip().lower()
+    for line in (seg.content or "").splitlines():
+        plain = _WS_RE.sub(" ", _MD_NOISE_RE.sub("", line.lstrip("> "))).strip()
+        if plain and re.sub(r"\W+", " ", plain).strip().lower().startswith(probe):
+            return plain
+    for sep in (", ", "; ", " — ", " – ", ": "):
+        if sep in stem:
+            return stem.rsplit(sep, 1)[0].rstrip(" ,;:—–") + "."
+    return stem.rstrip(" ,;:—–") + "."
+
+
 def fallback_links(
     spec: EditionSpec, segments: List[Segment], target_date: _dt.date
 ) -> dict:
@@ -1092,11 +1143,11 @@ def fallback_links(
         f"This is {spec.name} for {date_spoken}. I'm {spec.host}, and this "
         f"is every English show the Nerra Network published today, in one "
         f"listen: {names}, and {segments[-1].show_name}. First up, "
-        f"{segments[0].show_name}: {segments[0].hook or segments[0].episode_title}"
+        f"{segments[0].show_name}: {spoken_hook(segments[0])}"
     )
     handoffs = [
         f"Next on {spec.name}: {seg.show_name}. Today — "
-        f"{seg.hook or seg.episode_title}"
+        f"{spoken_hook(seg)}"
         for seg in segments[1:]
     ]
     signoff = (

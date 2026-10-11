@@ -3918,3 +3918,81 @@ experiments:
       expansion off. Pronunciation: LEO/GEO case-sensitive. Review:
       docs/reviews/slate_review_2026_10_10.md. Guards:
       tests/test_listener_noise_2026_10_10.py.
+
+  - id: slate-2026-10-11
+    title: "Oct 11 slate: a narrative show writes only from sources, and the visuals follow the stories"
+    area: quality
+    shipped: 2026-10-11
+    readout: 2026-10-25
+    status: reading
+    baseline: >
+      Oct 11: UC Ep139 aired a fabricated case with 0 research sources
+      (Argentina licensing toothfish off South Georgia; correction filed);
+      SpaceX Ep127 filled 9 of 15 image prompts with static keywords and
+      Ep126's deep dive carried figures sourced to @grok replies; MIT's
+      "Practice Investment" chapter opened at 0:18 on the disclaimer (every
+      episode); MIT opened Market Mechanics with "Imagine you…" 12/12; 12
+      Sunday segments opened "Looking back over the past week" over two
+      Sundays; Nerra Daily Ep051 shipped the fallback links reading nine
+      clipped "…" titles aloud; The Age of AI has uploaded 0 videos since
+      YouTube was enabled (Sep 20); FF skipped at 1,013 words against a
+      1,020 floor (fixed in #1407).
+    target: >
+      Over 14 days: no narrative episode ships with fewer than 2 research
+      sources (metric narrative_research_topics_tried recorded on every UC/FPD
+      run; a skip reads narrative_research_thin); scene_library/static-query
+      fill on story days <= 4 images; MIT chapters place the pick after the
+      market news; Nerra Daily links_source "llm" on >= 13 of 14 editions;
+      digests/age_of_ai/youtube_videos.json exists after the next AOAI publish.
+    criteria: >
+      Hit = no fabricated-premise correction on UC/FPD in the window AND the
+      AOAI video uploads AND the operator's A/B listen accepts the prompt
+      changes. A UC/FPD skip for thin research is the intended outcome, not
+      a miss; two in a week means the queue needs a restock audit.
+    notes: >
+      run_show narrative research floor (narrative_research_min: 2 on UC and
+      FPD; up to three topics, a thin topic is annotated only when the search
+      worked); engine.topic_queue.pick_next_topic(exclude_ids); SpaceX x_accounts
+      drop @grok; Mira's live prompt states the guest's built terms; AOAI title
+      cap, notes lede, local waveform render; multilingual per-show concurrency
+      and skipped-show filter; Nerra Daily retry + reason + full hooks; visual
+      fixes (decimal titles, hookless Short titles, dub thumbnails from a scene,
+      MIN_STORY_SET, brief dedupe, essay-section scene contexts). Prompt changes
+      (AUDIO, landmine #17): Mira live prompt, FF/PT Top 12 text, Tesla X
+      Takeover "up to 5", MIT Market Mechanics opener (a body rule; MIT's hook
+      prompt is untouched for the Oct 13 control readout), SpaceX deep-dive
+      provenance, desk/Top World Both Sides optional, Sunday segment de-seed,
+      AI Chips/MAG 7 teasers. Review: docs/reviews/slate_review_2026_10_11.md.
+      Guards: tests/test_slate_2026_10_11.py.
+
+  - id: grok-leads-2026-10-11
+    title: "@grok on X as a research desk for the deep dives (angles, never sources)"
+    area: quality
+    shipped: 2026-10-11
+    readout: 2026-10-25
+    status: reading
+    baseline: >
+      @grok was an X source on SpaceX from Oct 9 (2 posts/run, "most recent
+      posts", no topic): one reply reached a digest (Ep127 Community Buzz) and
+      its Saturn V/SLS dates fed the Engineering Deep Dive with nothing
+      verifying them (the ledger held one claim). Deep dives on SpaceX, Tesla,
+      M&A and AI Chips are the sections most often written from model memory.
+    target: >
+      Over 14 days on the four shows: grok_leads_kept >= 1 on >= 60% of runs;
+      on days a lead is used, the deep-dive section carries >= 2 verified
+      claims citing a lead source; no digest cites x.com/grok; no correction
+      traced to a lead.
+    criteria: >
+      Hit = the target holds AND the operator's A/B listen finds the lead-angled
+      deep dives at least as good as the usual ones. Leads kept on < 30% of
+      runs = the x_search topic filter is too narrow; widen topics before
+      judging the idea.
+    notes: >
+      engine/grok_leads.py (fetch_grok_leads: one x_search restricted to
+      @grok; ground_leads: one web search per lead, page fetch, >= min_sources
+      pages or the lead is dropped; render_leads_block). run_show: after the
+      fetch merge, never on a narrative topic; sources join the claims gate's
+      local texts. Prompts: {deep_dive_leads} after {news_section} in the four
+      digest prompts (AUDIO via the deep dive, landmine #17). Cost ~1 x_search
+      + up to 2 web searches per run. Off = delete the grok_leads block.
+      Guards: tests/test_grok_leads_2026_10_11.py.

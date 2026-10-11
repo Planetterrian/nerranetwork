@@ -173,7 +173,12 @@ def _generate_links(
     ``"fallback"`` — recorded in the edition metrics so a quietly failing
     LLM (every day on announcer lines) is visible, not just logged."""
     handoff_count = max(0, len(segments) - 1)
-    if not skip_llm:
+    # Oct 11 2026: two attempts. Ep051 lost every handoff to one unusable
+    # reply; the fallback reads the shows' titles back, which is a much
+    # weaker edition than a second call costs (~$0.01).
+    for attempt in (1, 2):
+        if skip_llm:
+            break
         try:
             from digests.xai_grok import grok_generate_text
 
@@ -200,11 +205,17 @@ def _generate_links(
                 links = _enforce_handoff_variety(
                     links, prompt, segments, handoff_count, tracker)
                 return links, "llm"
-            _annotate("warning", "Nerra Daily link generation returned an "
-                                 "unusable shape — using the deterministic fallback")
+            from engine.daily_edition import links_reply_problem
+            _annotate("warning", f"Nerra Daily link generation attempt {attempt} "
+                                 f"returned an unusable reply: "
+                                 f"{links_reply_problem(text, handoff_count) or 'unknown'}")
         except Exception as exc:  # noqa: BLE001 — links must never sink the edition
-            _annotate("warning", f"Nerra Daily link generation failed ({exc}) "
-                                 "— using the deterministic fallback")
+            _annotate("warning", f"Nerra Daily link generation attempt {attempt} "
+                                 f"failed ({exc})")
+            if "timeout" in type(exc).__name__.lower() or "timed out" in str(exc).lower():
+                break  # a second 600 s wait would push the 8am release
+    if not skip_llm:
+        _annotate("warning", "Nerra Daily links — using the deterministic fallback")
     return fallback_links(spec, segments, target_date), "fallback"
 
 

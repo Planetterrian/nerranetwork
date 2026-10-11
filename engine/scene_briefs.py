@@ -56,6 +56,78 @@ def _brief_ok(t: str) -> bool:
     return _MIN_WORDS <= n <= _MAX_WORDS and not _TEXTY.search(t)
 
 
+def _brief_tokens(text: str) -> set:
+    return {w for w in re.findall(r"[a-z0-9]+", (text or "").lower()) if len(w) > 2}
+
+
+def dedupe_briefs(briefs: Sequence[str], *, threshold: float = 0.8) -> List[str]:
+    """Drop a brief that repeats an earlier one (exact, or >= *threshold*
+    token overlap of the shorter brief).
+
+    Oct 11 2026: Omni View Ep202 rendered "Collapsed concrete apartment
+    blocks…" twice per aspect and Tesla Ep631 three near-identical rows of
+    humanoid robots — two stories about one event become two copies of one
+    picture. Order is kept; the first telling wins.
+    """
+    out: List[str] = []
+    kept: List[set] = []
+    for raw in briefs or []:
+        t = (raw or "").strip()
+        if not t:
+            continue
+        toks = _brief_tokens(t)
+        dup = False
+        for k in kept:
+            small = min(len(toks), len(k)) or 1
+            if toks == k or len(toks & k) / small >= threshold:
+                dup = True
+                break
+        if not dup:
+            out.append(t)
+            kept.append(toks)
+    return out
+
+
+_SECTION_RE = re.compile(r"^#{2,3}\s+(.+?)\s*$")
+_SKIP_SECTIONS = re.compile(
+    r"\b(closing|teaser|sources?|what you need to know|wyntk|before we go|"
+    r"quick hits|also today|on the (horizon|calendar)|the tape|market watch|"
+    r"portfolio|week in review|listener)\b", re.I)
+
+
+def essay_section_leads(digest_text: str, *, max_n: int = 4) -> List[str]:
+    """First prose sentence of each essay-shaped digest section.
+
+    Story headlines come only from numbered items, so a digest carrying two
+    items and three essays (SpaceX Ep127: Engineering Deep Dive, AI &
+    Compute, Community Buzz) produced two briefs and the image set was
+    padded with static keywords. A section whose body opens on prose — not
+    a numbered or bulleted list — contributes its first sentence.
+    """
+    leads: List[str] = []
+    lines = (digest_text or "").splitlines()
+    i = 0
+    while i < len(lines) and len(leads) < max_n:
+        m = _SECTION_RE.match(lines[i].strip())
+        i += 1
+        if not m or _SKIP_SECTIONS.search(m.group(1)):
+            continue
+        while i < len(lines) and not lines[i].strip():
+            i += 1
+        if i >= len(lines):
+            break
+        body = lines[i].strip()
+        if (not body or body.startswith(("#", "-", "*", ">", "|"))
+                or re.match(r"^\d+[.)]\s", body)):
+            continue
+        body = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", body)
+        body = re.sub(r"[*_`]", "", body)
+        first = re.split(r"(?<=[.!?])\s", body, maxsplit=1)[0].strip()
+        if 6 <= len(first.split()) <= 40:
+            leads.append(first)
+    return leads
+
+
 def deterministic_briefs(
     headlines: Sequence[str], *, hook: str = "", max_n: int = _MAX_BRIEFS,
 ) -> List[str]:
@@ -150,7 +222,7 @@ def generate_scene_briefs(
         return []
     fallback = deterministic_briefs(stories, max_n=len(stories))
     if not enabled:
-        return fallback
+        return dedupe_briefs(fallback)
 
     numbered = "\n".join(f"{i + 1}. {s}" for i, s in enumerate(stories))
     prompt = (
@@ -196,10 +268,11 @@ def generate_scene_briefs(
             briefs.append(fallback[len(briefs)])
         if len(briefs) < max(2, len(stories) // 2):
             raise ValueError("too few usable briefs")
+        briefs = dedupe_briefs(briefs)
         logger.info("scene briefs: %d model-written for %s", len(briefs),
                     show_name or "show")
         return briefs
     except Exception as exc:  # noqa: BLE001 — briefs are best-effort
         logger.warning("scene briefs: model path failed (%s) — "
                        "deterministic fallback (%d)", exc, len(fallback))
-        return fallback
+        return dedupe_briefs(fallback)

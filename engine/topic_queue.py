@@ -59,9 +59,14 @@ def _load_queue(queue_path: Path) -> Dict[str, Any]:
     return data
 
 
-def pick_next_topic(queue_path: Path) -> Optional[Dict[str, Any]]:
+def pick_next_topic(queue_path: Path,
+                    exclude_ids: Optional[set] = None) -> Optional[Dict[str, Any]]:
     """Return the first ``produced: false`` topic in the queue, or
     ``None`` if every topic has been produced (or the file is empty).
+
+    *exclude_ids* (Oct 11 2026): topics already tried in this run — the
+    narrative research floor moves on to the next topic when one finds too
+    few sources.
 
     The returned dict is a shallow copy — mutating it does NOT update
     the file. Use ``mark_topic_produced`` to record completion.
@@ -73,6 +78,8 @@ def pick_next_topic(queue_path: Path) -> Optional[Dict[str, Any]]:
         if not isinstance(entry, dict):
             continue
         if entry.get("produced") is True:
+            continue
+        if exclude_ids and entry.get("id") in exclude_ids:
             continue
         if int(entry.get("gate_blocks") or 0) >= GATE_BLOCK_DEFER_THRESHOLD:
             # Loop-breaker: the source-integrity gate has blocked this

@@ -157,9 +157,9 @@ x_accounts:
   - handle: xai
     label: xAI
     max_posts: 3
-  - handle: grok
-    label: Grok
-    max_posts: 2
+  # @grok is not an X SOURCE (Oct 11 2026): its posts are replies to users
+  # and a fact verified against Grok saying it proves nothing. It feeds the
+  # deep dive as a grounded LEAD instead — see grok_leads below.
   - handle: cursor_ai
     label: Cursor
     max_posts: 2
@@ -651,3 +651,14 @@ apple_show_ids:
   video: 6795236224
   fr: 6794048213
   ru: 6794048451
+
+# Grok leads (Oct 11 2026; engine/grok_leads.py). Questions people asked
+# @grok on X about this beat become ANGLES for the deep dive, each kept only
+# when two primary pages were fetched for it. Grok's answer is never a
+# source or a Source line; the claims gate reads only the fetched pages.
+# ~1 x_search + up to 2 web searches a run. Off = delete the block.
+grok_leads:
+  enabled: true
+  topics: "SpaceX engineering and history — Starship, Super Heavy, Raptor, Falcon 9 and Falcon Heavy, Dragon, Starlink, launch economics and reusability, and xAI compute infrastructure"
+  max_leads: 2
+  min_sources: 2
