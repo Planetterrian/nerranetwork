@@ -51,10 +51,11 @@ class TestArms:
         assert cfg.llm.stream is True
         assert cfg.llm.model == "grok-4.3"
 
-    def test_beginners_script_arm_streams(self):
-        # MAB's grok-4.6 script pin dates from Sep 1; it streams from Oct 11
-        # like every arm moved since (operator-directed).
-        cfg = load_config(ROOT / "shows" / "models_agents_beginners.yaml")
+    @pytest.mark.parametrize("slug", ["models_agents_beginners", "dp_pod"])
+    def test_older_script_arms_stream(self, slug):
+        # MAB's and DP Pod's grok-4.6 script pins predate Oct 11; both
+        # stream from Oct 11 like every arm moved since (operator-directed).
+        cfg = load_config(ROOT / "shows" / f"{slug}.yaml")
         assert cfg.llm.podcast_model == "grok-4.6"
         assert cfg.llm.stream is True
         assert cfg.llm.model == "grok-4.3"
