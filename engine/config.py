@@ -86,6 +86,13 @@ class LLMConfig:
     # output being "broken" — set their floor lower so a thin-but-
     # legitimate episode ships instead of being skipped.
     min_podcast_word_floor: int = 600
+    # Oct 11 2026: the word count below which the runner SKIPS an episode
+    # as too thin. 0 = the network rule, 60 % of ``min_podcast_words``
+    # (engine.generator.publication_floor owns it). Set it when a show's
+    # target and its story ceiling disagree: Fascinating Frontiers' 12-item
+    # ceiling (Oct 10) left a 1,700-word target whose 1,020 floor a dense
+    # Sunday could not clear, and the day was lost at 1,013 words.
+    min_podcast_publish_words: int = 0
     # June 2026 (Tesla quality pass): when true, the one-shot expansion
     # retry in generate_podcast_script fires whenever the script lands
     # under the FULL min_podcast_words target instead of only near the

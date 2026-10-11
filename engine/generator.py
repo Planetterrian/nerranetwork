@@ -1440,14 +1440,38 @@ def _retry_word_count_ok(orig_words: int, retry_words: int,
     return retry_words >= threshold
 
 
+def publication_floor(min_words: int, publish_words: int = 0) -> int:
+    """The word count below which run_show skips an episode as too thin.
+
+    ONE owner for the rule every retry band below reads (Oct 11 2026:
+    the 60 % line existed as six copies). ``publish_words`` is the show's
+    ``llm.min_podcast_publish_words``; 0 keeps the network rule of 60 %
+    of ``min_podcast_words``. Fascinating Frontiers set it after the
+    Oct 10 12-item ceiling: its 1,700-word target stayed for the prompt's
+    retry bands, and a 1,013-word Sunday was skipped against a 1,020
+    floor that the capped digest could no longer clear.
+    """
+    if publish_words and int(publish_words) > 0:
+        return int(publish_words)
+    return int(int(min_words) * 0.6)
+
+
+def _publication_floor_for(config, min_words: int) -> int:
+    return publication_floor(
+        min_words,
+        int(getattr(getattr(config, "llm", None), "min_podcast_publish_words", 0) or 0),
+    )
+
+
 def _podcast_expansion_retry_threshold(
-    min_words: int, *, expand_below_target: bool = False,
+    min_words: int, *, expand_below_target: bool = False, publish_floor: int = 0,
 ) -> int:
     """Word count below which ``generate_podcast_script`` triggers a
     one-shot expansion retry.
 
     This MUST stay at or above ``run_show.py``'s publication soft floor
-    (``int(min_words * 0.6)``) so the two checks can't open a dead band:
+    (``publication_floor`` — 60 % of the target unless the show sets
+    ``llm.min_podcast_publish_words``) so the two checks can't open a dead band:
     a script that clears this bar but falls under the soft floor would be
     accepted here and then silently skipped by the runner, never getting
     an expansion attempt (Tesla Ep493, 2026-05-30 — 874 words cleared the
@@ -1468,7 +1492,7 @@ def _podcast_expansion_retry_threshold(
     """
     if expand_below_target:
         return max(600, int(min_words))
-    soft_floor = int(min_words * 0.6)
+    soft_floor = publication_floor(min_words, publish_floor)
     return max(600, int(soft_floor * 1.1))
 
 
@@ -2187,7 +2211,7 @@ def _finish_combined_script(script: Optional[str], digest_text: str, config: Any
         # run_show skips anything under 60 % of target; the two-pass path
         # has a publication-floor re-roll for that band, so a short PART 2
         # hands over to it instead of shipping thin.
-        pub_band = max(600, int(int(min_words * 0.6) * 1.1))
+        pub_band = max(600, int(_publication_floor_for(config, min_words) * 1.1))
         if words < pub_band:
             logger.warning(
                 "Combined script for '%s' is %d words (< %d publication band) — "
@@ -3291,6 +3315,7 @@ def generate_podcast_script(
         expand_below_target=bool(
             getattr(config.llm, "podcast_expand_below_target", False)
         ),
+        publish_floor=int(getattr(config.llm, "min_podcast_publish_words", 0) or 0),
     )
     if word_count < _retry_threshold:
         logger.warning(
@@ -3394,7 +3419,7 @@ def generate_podcast_script(
     # "the day is lost". Costs one extra LLM call, only on would-be-skipped
     # days. The longer candidate wins; a shorter or refused re-roll keeps
     # the original (and the runner's skip gate still has the final say).
-    _pub_band = max(600, int(int(min_words * 0.6) * 1.1))
+    _pub_band = max(600, int(_publication_floor_for(config, min_words) * 1.1))
     _current_words = len(text.split())
     if _current_words < _pub_band:
         logger.warning(
@@ -3496,7 +3521,7 @@ def generate_podcast_script(
                 )
                 # Mirror run_show.py's publication soft floor (int(target*0.6))
                 # so the retry can't shorten a publishable script below it.
-                pub_floor = int(min_words * 0.6)
+                pub_floor = _publication_floor_for(config, min_words)
                 if not _retry_word_count_ok(orig_words, retry_words, show_floor,
                                             publication_floor=pub_floor,
                                             target_floor=min_words):
@@ -3576,7 +3601,7 @@ def generate_podcast_script(
                 show_floor = (
                     getattr(config.llm, "min_podcast_word_floor", 600) or 600
                 )
-                pub_floor = int(min_words * 0.6)
+                pub_floor = _publication_floor_for(config, min_words)
                 # See ``_retry_word_count_ok`` for the OV Ep059 +
                 # Tesla Ep500 incidents this guard protects against
                 # (anti-rep retry replaced 883-word original with
