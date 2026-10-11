@@ -42,6 +42,16 @@ EXPECTED_HUB_SHOWS = {
     "good-news": {"dp_pod"},
 }
 
+#: Hubs that were below ``MIN_EPISODES_FOR_HUB`` at the snapshot and turn
+#: themselves on when their shows' archive is deep enough (CLAUDE.md, Sep 20
+#: topic hubs). Absent is fine; once live, the members are pinned exactly.
+#: Oct 11 2026: ``interviews`` crossed the floor with Age of AI Ep011 and
+#: turned main red on a data commit.
+FLOOR_GATED_HUBS = {
+    "interviews": {"age_of_ai", "nerra_voices"},
+    "sailing": {"offshore_north"},
+}
+
 #: Shows launched after the snapshot (new-shows plan, Sep 2026). Each joins
 #: its hubs when its first episode publishes; see the test below.
 LAUNCHED_AFTER_SNAPSHOT = ("ai_chips", "mag7", "peptides", "longevity",
@@ -86,6 +96,9 @@ class TestTopicHubsDidNotSilentlyShrink:
             assert got[hub] and got[hub] <= launched_later, (
                 f"{hub} is live with members outside the launch set: {got[hub]}")
             del pinned[hub]
+        for hub, members in FLOOR_GATED_HUBS.items():
+            if hub in pinned:
+                assert pinned.pop(hub) == members, f"{hub} membership changed"
         assert pinned == EXPECTED_HUB_SHOWS
         has_feed = {s["slug"]: s.get("has_feed", True) for s in shows}
         tags = {s["slug"]: {str(x).lower() for x in ((s.get("picker_tags") or {}).get("topics") or [])}
