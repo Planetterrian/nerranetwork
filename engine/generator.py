@@ -703,6 +703,18 @@ def _llm_reasoning_effort(config: Any) -> Optional[str]:
     return effort if effort in ("low", "medium", "high") else None
 
 
+def _script_reasoning_effort(config: Any, model_id: str) -> Optional[str]:
+    """Effort for the SCRIPT call: ``llm.podcast_reasoning_effort`` while the
+    call runs the ``podcast_model`` override, else the show's own effort (so
+    a fallback to the digest model runs exactly as that model always has)."""
+    llm = getattr(config, "llm", None)
+    override = (getattr(llm, "podcast_model", "") or "")
+    effort = (getattr(llm, "podcast_reasoning_effort", "") or "").strip().lower()
+    if override and model_id == override and effort in ("low", "medium", "high"):
+        return effort
+    return _llm_reasoning_effort(config)
+
+
 def _detect_story_duplication(text: str, show_name: str) -> int:
     """Detect when the same news story is told more than once in a script.
 
@@ -3103,7 +3115,7 @@ def generate_podcast_script(
             temperature=config.llm.podcast_temperature,
             max_tokens=podcast_tokens,
             cache_key=_show_cache_key(config),
-            reasoning_effort=_llm_reasoning_effort(config),
+            reasoning_effort=_script_reasoning_effort(config, model_id),
             stream=_llm_stream(config),
         )
 
@@ -3175,7 +3187,10 @@ def generate_podcast_script(
             temperature=config.llm.podcast_temperature,
             max_tokens=bumped_tokens,
             cache_key=_show_cache_key(config),
-            reasoning_effort=_llm_reasoning_effort(config),
+            reasoning_effort=_script_reasoning_effort(config, script_model),
+            # The retry streams like the first call: a pinned script arm
+            # only completes on a stream (playbook rule 7).
+            stream=_llm_stream(config),
         )
         if meta.get("finish_reason") == "length":
             logger.warning(
@@ -3233,7 +3248,8 @@ def generate_podcast_script(
             temperature=lower_temp,
             max_tokens=podcast_tokens_for_retry,
             cache_key=_show_cache_key(config),
-            reasoning_effort=_llm_reasoning_effort(config),
+            reasoning_effort=_script_reasoning_effort(config, script_model),
+            stream=_llm_stream(config),
         )
         if tracker and "usage" in meta_r1:
             try:
@@ -3350,7 +3366,8 @@ def generate_podcast_script(
             temperature=config.llm.podcast_temperature,
             max_tokens=podcast_tokens,
             cache_key=_show_cache_key(config),
-            reasoning_effort=_llm_reasoning_effort(config),
+            reasoning_effort=_script_reasoning_effort(config, script_model),
+            stream=_llm_stream(config),
         )
 
         if tracker and "usage" in meta2:
@@ -3436,7 +3453,8 @@ def generate_podcast_script(
                 temperature=config.llm.podcast_temperature,
                 max_tokens=podcast_tokens,
                 cache_key=_show_cache_key(config),
-                reasoning_effort=_llm_reasoning_effort(config),
+                reasoning_effort=_script_reasoning_effort(config, script_model),
+                stream=_llm_stream(config),
             )
             if tracker and "usage" in meta_fresh:
                 try:
@@ -3504,7 +3522,8 @@ def generate_podcast_script(
                 temperature=lower_temp,
                 max_tokens=podcast_tokens,
                 cache_key=_show_cache_key(config),
-                reasoning_effort=_llm_reasoning_effort(config),
+                reasoning_effort=_script_reasoning_effort(config, script_model),
+                stream=_llm_stream(config),
             )
             _rep_retry = _validate_llm_output(
                 text_retry, stage="podcast_script", show_name=config.name,
@@ -3580,7 +3599,8 @@ def generate_podcast_script(
                     temperature=config.llm.podcast_temperature,
                     max_tokens=podcast_tokens,
                     cache_key=_show_cache_key(config),
-                    reasoning_effort=_llm_reasoning_effort(config),
+                    reasoning_effort=_script_reasoning_effort(config, script_model),
+                    stream=_llm_stream(config),
                 )
                 if tracker and "usage" in meta_rr:
                     try:

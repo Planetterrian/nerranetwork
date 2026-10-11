@@ -4270,3 +4270,49 @@ experiments:
     target: >
       FR gate rejections <= 2 in 14 days and every rejected track recovers
       on its retry.
+  - id: narrative-script-grok47-2026-10-11
+    title: "Unintended Consequences and First Principles write their script on grok-4.7 (low effort, streamed)"
+    area: quality
+    shipped: 2026-10-11
+    readout: 2026-10-25
+    status: reading
+    baseline: >
+      Script stage on grok-4.3 (Oct 5-11): UC 64-80% of the script copied
+      verbatim from the written episode (Ep134-139), FPD 69-87% (Ep122-127),
+      coverage 84-100%; script call 19-40 s; whole runs 265-600 s of a
+      3,000 s budget. The 4.7 cohort writes at 2-17% verbatim with 13-27
+      verified claims, but its streamed DIGEST stage failed the latency gate
+      (p95 433-814 s); a 4.7 script stage had never completed anywhere.
+    notes: >
+      llm.podcast_model grok-4.7 + llm.podcast_reasoning_effort low (new
+      field: effort for the script call only; the digest keeps grok-4.3 at
+      its default effort) + llm.stream true. Any failure falls back to 4.3
+      for that episode (llm_script_model_fallback). Read the arm from the
+      credit file's podcast_script_generation.model. AUDIO — A/B-listen the
+      first episode of each show. Guards:
+      tests/test_script_models_2026_10_11.py.
+    target: >
+      Over 14 days on each show: the 4.7 script is served on >= 80% of
+      episodes; script_digest_overlap_pct median <= 20 with
+      script_digest_coverage_pct median >= 70; script stage p95 under 600 s;
+      no episode lost to the script stage.
+  - id: planetterrian-script-grok46-2026-10-11
+    title: "Planetterrian writes its script on grok-4.6 (streamed), the SpaceX shape"
+    area: quality
+    shipped: 2026-10-11
+    readout: 2026-10-25
+    status: reading
+    baseline: >
+      Planetterrian on grok-4.3, Ep205-210: script_digest_overlap_pct
+      62-77%, coverage 76-91%, script call 27-63 s, runs 300-445 s. SpaceX's
+      streamed 4.6 arm (Ep126-127): 4-7% verbatim, 58-74% coverage, script
+      call 400-700 s; Omni View's 4-23% at 63-89% coverage.
+    notes: >
+      llm.podcast_model grok-4.6 + llm.stream true; the digest stays
+      grok-4.3. AUDIO — A/B-listen Ep1. Tesla and Fascinating Frontiers
+      wait for the SpaceX gate on 10-23 (both are arm shows of the Oct 13
+      spoken-open readout, and Tesla's runs already reach 1,900 s of the
+      3,000 s budget).
+    target: >
+      Over 14 days: 4.6 served on >= 80% of episodes; overlap median <= 20
+      with coverage median >= 70; no episode lost to the script stage.
