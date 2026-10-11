@@ -157,7 +157,9 @@ class TestTheClockAgreesEverywhere:
             for cron in triggers:
                 minutes, hours = cron.split()[0], cron.split()[1]
                 mins = {int(x) for x in minutes.split(",")}
-                if "-" in hours:
+                if hours == "*":  # Oct 11 2026: every hour (X queue)
+                    hrs = set(range(24))
+                elif "-" in hours:
                     lo, hi = (int(x) for x in hours.split("-"))
                     hrs = set(range(lo, hi + 1))
                 else:

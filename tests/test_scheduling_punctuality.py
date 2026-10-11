@@ -88,7 +88,8 @@ def test_worker_trigger_covers_all_slots():
     # five cron triggers per account refused a second one at deploy. The
     # edition clock itself is pinned in
     # tests/test_nerra_daily_8am_pacific_2026_10_08.py.
-    assert '"1,7,16,31,37,46,50 6-17 * * *"' in toml
+    # Oct 11 2026: every hour, for the daytime X queue (x-queue.yml).
+    assert '"1,7,16,31,37,46,50 * * * *"' in toml
 
 
 def test_gate_has_duplicate_guard():
@@ -202,7 +203,7 @@ def test_edition_dispatch_slot():
     assert crons and crons[0].count('"') == 2, (
         "the scheduler must hold exactly one cron trigger (Workers Free "
         "allows five per account and Voices holds three)")
-    assert crons[0] == '"1,7,16,31,37,46,50 6-17 * * *"', crons
+    assert crons[0] == '"1,7,16,31,37,46,50 * * * *"', crons
     slot_hours = {int(h) for h, _m, _s, _f in re.findall(
         r'^\s*\[(\d+),\s*(\d+),\s*"([\w-]+)",\s*(null|"[a-z_]+")\]', _TS, re.M)}
     assert slot_hours and max(slot_hours) <= 12, slot_hours

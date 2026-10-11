@@ -107,8 +107,9 @@ class TestReplyText:
         assert text.startswith("Follow @teslashortstime")
 
     def test_follow_line_omitted_when_no_handle(self):
-        # Oct 10 2026: Omni View gained @nerranetwork; AI Chips has no handle.
-        cfg = load_config("shows/ai_chips.yaml")
+        # Oct 10-11 2026: Omni View and AI Chips gained @nerranetwork;
+        # Models & Agents for Beginners has no handle.
+        cfg = load_config("shows/models_agents_beginners.yaml")
         text = run_show._build_cross_promo_reply(
             cfg, datetime.date(2026, 6, 11))
         assert "Follow @" not in text

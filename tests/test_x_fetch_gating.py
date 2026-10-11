@@ -64,8 +64,13 @@ def test_other_non_posting_shows_stay_dormant():
 
     for slug in ("env_intel", "finansy_prosto", "privet_russian"):
         cfg = load_config(f"shows/{slug}.yaml")
-        assert cfg.publishing.x_enabled is False
-        # Not opted in → inherits x_enabled=False → no fetch.
+        # Oct 11 2026: env_intel posts from Oct 24, so its sourcing is
+        # pinned off explicitly instead of riding on x_enabled.
+        if slug == "env_intel":
+            assert cfg.x_fetch_enabled is False
+        else:
+            assert cfg.publishing.x_enabled is False
+        # Not opted in → no fetch.
         assert x_fetch_allowed(
             cfg.x_accounts, cfg.publishing.x_enabled,
             getattr(cfg, "x_fetch_enabled", None),

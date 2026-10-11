@@ -391,6 +391,10 @@ class PublishingConfig:
     # then to text; no cross-promo reply. On X's pay-per-use API a post with
     # a URL costs $0.20, a clip about $0.03 (upload + post).
     x_post_format: str = "link"
+    # ISO date of the show's first X post (Oct 11 2026): the second wave of
+    # shows was switched on in config with a start date, so it begins
+    # without another deploy. Empty = no hold.
+    x_start_date: str = ""
     host_name: str = "Patrick"
     # "human" (default) or "ai". An AI host (Mira) must never be given the
     # human-host disclosure ("synthesis of MY voice — analysis my own",

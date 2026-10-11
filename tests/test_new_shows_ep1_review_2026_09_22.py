@@ -236,7 +236,13 @@ class TestXSourcing:
         cfg = load_config(ROOT / "shows" / f"{slug}.yaml")
         assert cfg.x_fetch_enabled is True
         assert len(cfg.x_accounts) >= 5
-        assert cfg.publishing.x_enabled is False
+        # Oct 11 2026: reading these accounts never depended on posting;
+        # the second wave posts on @nerranetwork (never to these accounts)
+        # from Oct 24.
+        # Oct 11 2026: the second wave posts on @nerranetwork from Oct 24.
+        if cfg.publishing.x_enabled:
+            assert cfg.publishing.x_env_prefix == "NERRANETWORK_X_"
+            assert cfg.publishing.x_start_date == "2026-10-24"
         handles = [a.handle.lower() for a in cfg.x_accounts]
         assert len(handles) == len(set(handles))
         assert all(not h.startswith("@") for h in handles)

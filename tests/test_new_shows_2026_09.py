@@ -301,7 +301,10 @@ class TestPhase1ShowWiring:
         # Oct 1 2026: the newsletter is ON for the launch cohort (the show
         # page offered the signup since launch; the Worker keeps the tag now).
         assert c.youtube.enabled is False and c.newsletter.enabled is True
-        assert c.publishing.x_enabled is False
+        # Oct 11 2026: the second wave posts on @nerranetwork from Oct 24.
+        if c.publishing.x_enabled:
+            assert c.publishing.x_env_prefix == "NERRANETWORK_X_"
+            assert c.publishing.x_start_date == "2026-10-24"
 
     def test_prompts_exist_and_share_content_discipline(self, slug):
         for kind in ("system", "digest", "podcast", "weekly"):

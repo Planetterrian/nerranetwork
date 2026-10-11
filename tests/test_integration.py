@@ -477,7 +477,9 @@ class TestShowConfigs:
 
         config = load_config(config_path)
         assert config.slug == "env_intel"
-        assert config.publishing.x_enabled is False
+        # Oct 11 2026: second wave on @nerranetwork, held until Oct 24.
+        assert config.publishing.x_enabled is True
+        assert config.publishing.x_start_date == "2026-10-24"
         assert config.newsletter.enabled is True
         # EI got its own dedicated theme in May 2026 (replaced tesla_shorts_time.mp3).
         assert config.audio.music_file == "assets/music/EnvIntel.mp3"

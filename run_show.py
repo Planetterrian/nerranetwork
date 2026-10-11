@@ -5399,7 +5399,10 @@ def run(args: argparse.Namespace) -> None:
     # x_posted: True = the teaser posted; False = enabled and did not.
     _x_posted = False
     _x_skip_reason = ""
-    if episode_published and config.publishing.x_enabled and not args.skip_x:
+    # Oct 11 2026: publishing.x_start_date holds a show's first X post (the
+    # second wave of shows starts Oct 24 without another deploy).
+    _x_live = _x_on(config, today)
+    if episode_published and _x_live and not args.skip_x:
         from engine.publisher import post_to_x
         from engine.tracking import record_x_post
 
@@ -5417,24 +5420,58 @@ def run(args: argparse.Namespace) -> None:
             # Short; text alone if neither uploads. A linked post costs
             # $0.20 on X's API, this about $0.03. No cross-promo reply: its
             # link would cost another $0.20.
+            from engine import x_queue
             from engine.x_post import clip_post_text, post_media
             if "hook" not in extra_context and locals().get("hook"):
                 extra_context["hook"] = hook
             _clip = str(extra_context.get("x_clip_path") or "")
-            _ok, _why, tweet_url, _media = post_media(
-                env_prefix=prefix,
-                text=clip_post_text(label=_x_label(config),
-                                    hook=extra_context.get("hook") or "",
-                                    episode_num=episode_num),
-                media_paths=[p for p in (_clip, _show_cover_path(config)) if p],
-                label=f"{config.name} ep{episode_num}",
-            )
-            if _ok:
+            if not (_clip and Path(_clip).is_file()) and final_mp3 and final_mp3.exists():
+                # Oct 11 2026: no Short today (the YouTube policy skipped it,
+                # or the show is not on YouTube). X still gets a clip.
+                try:
+                    from engine.captions import find_transcript_for_episode
+                    _tx = find_transcript_for_episode(
+                        digests_dir, config.episode.prefix, episode_num,
+                        f"{today:%Y%m%d}")
+                except Exception:  # noqa: BLE001 — captions are a bonus
+                    _tx = None
+                _cover = _show_cover_path(config)
+                if _cover:
+                    _clip = _render_x_only_clip(
+                        config, final_mp3=final_mp3, cover_path=_cover,
+                        work_dir=digests_dir / "x_tmp", base_name=final_mp3.stem,
+                        hook=extra_context.get("hook") or "", transcript_path=_tx)
+                    if _clip:
+                        metrics.record("x_clip_rendered_for_x", True)
+            _x_text = clip_post_text(label=_x_label(config),
+                                     hook=extra_context.get("hook") or "",
+                                     episode_num=episode_num)
+            _media_for_x = _clip if (_clip and Path(_clip).is_file()) else _show_cover_path(config)
+            _kind = "clip" if _media_for_x and _media_for_x == _clip else (
+                "image" if _media_for_x else "none")
+            # Oct 11 2026: daytime posting. The post waits for a half-hour
+            # slot between 6:30 AM and 7 PM Pacific (engine/x_queue.py);
+            # an unconfigured or unreachable queue posts now, as before.
+            _queued, _due = x_queue.enqueue(
+                show_slug=config.slug, episode_num=episode_num, env_prefix=prefix,
+                text=_x_text, media_path=_media_for_x, media_kind=_kind)
+            if _queued:
                 _x_posted = True
                 record_x_post(tracker)
-                metrics.record("x_post_media",
-                               "clip" if _media and _media == _clip
-                               else ("image" if _media else "none"))
+                metrics.record("x_post_queued_for", _due)
+                metrics.record("x_post_media", _kind)
+            else:
+                _ok, _why, tweet_url, _media = post_media(
+                    env_prefix=prefix, text=_x_text,
+                    media_paths=[p for p in (_clip, _show_cover_path(config)) if p],
+                    label=f"{config.name} ep{episode_num}",
+                )
+                if _ok:
+                    _x_posted = True
+                    record_x_post(tracker)
+                    metrics.record("x_post_media",
+                                   "clip" if _media and _media == _clip
+                                   else ("image" if _media else "none"))
             if _clip:
                 try:
                     Path(_clip).unlink(missing_ok=True)
@@ -5485,12 +5522,12 @@ def run(args: argparse.Namespace) -> None:
         else:
             _x_skip_reason = "no_credentials"
             logger.warning("X credentials missing (prefix=%s). Skipping X post.", prefix)
-    elif config.publishing.x_enabled and args.skip_x:
+    elif _x_live and args.skip_x:
         _x_skip_reason = "skip_x"
-    elif config.publishing.x_enabled:
+    elif _x_live:
         _x_skip_reason = "not_published"
 
-    if config.publishing.x_enabled:
+    if _x_live:
         metrics.record("x_post_duration_s", round(time.monotonic() - _t_x, 2))
         metrics.record("x_posted", _x_posted)
         if not _x_posted:
@@ -5799,33 +5836,6 @@ def _extract_hook(digest: str) -> str | None:
             hook = m.group(1).strip()
             if hook:
                 return hook
-
-    # Fallback 2 (Oct 11 2026, SpaceX Ep125 and Ep127): the hook written as
-    # the first plain line, with neither the label nor the blockquote. That
-    # is the line engine.newsletter_body.promote_hook_to_blockquote turns
-    # into ``> **hook**`` a few steps later, so the blog and the newsletter
-    # showed the hook while the podcast title and the X post went generic
-    # ("SpaceX Daily - Episode 127 - October 11, 2026"). Same skips as that
-    # promotion (title heading, bold-label metadata, decorative subtitles),
-    # but it never looks past the first ### heading, where a first line is
-    # narration rather than a hook.
-    for line in digest.splitlines():
-        stripped = line.strip()
-        if not stripped:
-            continue
-        if stripped.startswith("###"):
-            break
-        if stripped.startswith("#") or re.match(r"^\*\*[^*]+:\*\*", stripped):
-            continue
-        fully_bold = re.fullmatch(r"\*\*([^*]+)\*\*", stripped)
-        if re.search(r"\*\*[^*]+\*\*", stripped) and not fully_bold:
-            continue  # decorative subtitle ("🌍 **Planetterrian Daily** - ...")
-        if stripped.startswith((">", "|", "<", "```", "---")) or re.match(r"^(?:[-*]|\d+\.)\s", stripped):
-            return None
-        text = (fully_bold.group(1) if fully_bold else stripped).strip()
-        if len(text.split()) >= 5 and 20 <= len(text) <= 300:
-            return text
-        return None
     return None
 
 
@@ -7963,20 +7973,6 @@ def _publish_youtube(
         logger.info("%s: YouTube policy: dead-Shorts tier, no Short today "
                     "(%s)", config.slug, _yt_plan.get("reason", ""))
         result["yt_policy_shorts_skipped"] = True
-        # Oct 11 2026: the YouTube policy reads YouTube's numbers, not X's.
-        # Planetterrian, Modern Investing and Unintended Consequences went
-        # to X with their cover on the first night because their tier had
-        # no Short. X still gets a clip: rendered here, never uploaded to
-        # YouTube, posted and deleted by step 13.
-        if (config.publishing.x_enabled
-                and getattr(config.publishing, "x_post_format", "link") == "clip"):
-            _x_only = _render_x_only_clip(
-                config, final_mp3=final_mp3, cover_path=cover_path,
-                work_dir=work_dir, base_name=base_name, hook=hook or "",
-                transcript_path=transcript_path,
-            )
-            if _x_only:
-                result["x_clip_path"] = _x_only
     elif config.youtube.publish_shorts and should_upload_shorts_today(
         config, episode_num=episode_num,
     ):
@@ -8765,7 +8761,7 @@ def _publish_youtube(
                     # step 13, which deletes it once posted.
                     _keep_for_x = (
                         short_idx == 0
-                        and config.publishing.x_enabled
+                        and _x_on(config, today)
                         and getattr(config.publishing, "x_post_format", "link") == "clip"
                     )
                     try:
@@ -8930,6 +8926,16 @@ _X_LABELS = {
     "models_agents": "🤖 Models & Agents",
     "unintended_consequences": "🔀 Unintended Consequences",
 }
+
+
+def _x_on(config, today) -> bool:
+    """Whether the show posts to X today: ``publishing.x_enabled`` and, when
+    set, on or after ``publishing.x_start_date`` (ISO date)."""
+    pub = config.publishing
+    if not getattr(pub, "x_enabled", False):
+        return False
+    start = str(getattr(pub, "x_start_date", "") or "").strip()
+    return not start or today.isoformat() >= start
 
 
 def _x_label(config) -> str:

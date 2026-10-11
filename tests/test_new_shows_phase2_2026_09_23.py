@@ -173,7 +173,10 @@ class TestPhase2Wiring:
         assert c.max_weekly_cost_usd > 0
         # Oct 1 2026: newsletter ON (see test_phase3_desks); YouTube still off.
         assert c.youtube.enabled is False and c.newsletter.enabled is True
-        assert c.publishing.x_enabled is False
+        # Oct 11 2026: the second wave posts on @nerranetwork from Oct 24.
+        if c.publishing.x_enabled:
+            assert c.publishing.x_env_prefix == "NERRANETWORK_X_"
+            assert c.publishing.x_start_date == "2026-10-24"
         assert c.llm.model == "grok-4.7"
 
     def test_phase1_lessons_are_defaults(self, slug):

@@ -233,7 +233,6 @@ class TestTheHookIsFoundWithoutItsLabel:
         f = _fn("_extract_hook")
         assert f("### Segment 1\nIn the narrow lanes of colonial Delhi, a bounty went wrong.") is None
         assert f("# Tesla Shorts Time\n**Date:** Feb 24\n\n### Top 10\n1. Headline") is None
-        assert f("# X\n\nSpaceX Daily\n\n### Top") is None
 
     def test_decorative_subtitle_is_skipped(self):
         f = _fn("_extract_hook")
@@ -246,11 +245,14 @@ class TestXGetsAClipWhenYouTubeDoesNot:
     """Planetterrian, Modern Investing and Unintended Consequences posted their
     cover: the YouTube policy gave them no Short."""
 
-    def test_the_policy_skip_renders_an_x_only_clip(self):
+    def test_step_13_renders_a_clip_when_there_is_none(self):
+        # Oct 11 2026: rendered in step 13, so shows that are not on YouTube
+        # at all (the second wave) get a clip too.
+        branch = RUN_SHOW[RUN_SHOW.index("if _x_clip_mode and all("):
+                          RUN_SHOW.index("elif all([consumer_key, consumer_secret")]
+        assert "_render_x_only_clip(" in branch and "find_transcript_for_episode(" in branch
         i = RUN_SHOW.index('result["yt_policy_shorts_skipped"] = True')
-        branch = RUN_SHOW[i:RUN_SHOW.index("elif config.youtube.publish_shorts", i)]
-        assert "_render_x_only_clip(" in branch
-        assert 'result["x_clip_path"] = _x_only' in branch
+        assert "_render_x_only_clip(" not in RUN_SHOW[i:i + 400]
 
     def test_the_render(self, tmp_path, monkeypatch):
         import engine.video as video

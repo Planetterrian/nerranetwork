@@ -32,6 +32,24 @@ const EDITION_DISPATCH = {
   workflow: "nerra-daily.yml",
 };
 
+// Daytime X posting for @nerranetwork (Oct 11 2026). Shows queue their
+// post into a half-hour slot between 6:30 AM and 7:00 PM Pacific
+// (engine/x_queue.py); x-queue.yml posts whatever is due. Dispatched at :01
+// and :31 Pacific from 6:31 AM to 7:31 PM, a minute after each slot.
+// Deliberately an OBJECT, not a SLOTS row (those parse as shows).
+const X_QUEUE_DISPATCH = {
+  workflow: "x-queue.yml",
+  firstHour: 6,
+  lastHour: 19,
+  minutes: [1, 31],
+};
+
+function xQueueDue(ph: number, pm: number): boolean {
+  if (!X_QUEUE_DISPATCH.minutes.includes(pm)) return false;
+  if (ph < X_QUEUE_DISPATCH.firstHour || ph > X_QUEUE_DISPATCH.lastHour) return false;
+  return !(ph === X_QUEUE_DISPATCH.firstHour && pm < 31);
+}
+
 /** Hour and minute of *d* on the edition's wall clock. */
 function pacificHourMinute(d: Date): [number, number] {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -238,9 +256,10 @@ export default {
     const base = {
       worker: "nerra-scheduler",
       now: now.toISOString(),
-      cron: "1,7,16,31,37,46,50 6-17 * * * (UTC)",
+      cron: "1,7,16,31,37,46,50 * * * * (UTC)",
       next_slot: nextSlot(now),
       edition_dispatch: EDITION_DISPATCH,
+      x_queue_dispatch: X_QUEUE_DISPATCH,
       slots: SLOTS.map(([h, m, show, f]) => ({
         at: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}Z`, show, filter: f,
       })),
@@ -258,6 +277,15 @@ export default {
   async scheduled(controller: ScheduledController, env: Env): Promise<void> {
     const now = new Date(controller.scheduledTime);
     const [ph, pm] = pacificHourMinute(now);
+    // Oct 11 2026: the X queue shares minutes with the edition (9:01 PT),
+    // so each dispatch is independent and one failing never skips another.
+    if (xQueueDue(ph, pm)) {
+      try {
+        await dispatchWorkflow(env, X_QUEUE_DISPATCH.workflow, {}, "x-queue");
+      } catch (e) {
+        console.log(`x-queue dispatch failed: ${(e as Error).message}`);
+      }
+    }
     if (EDITION_DISPATCH.times.some(([h, m]) => h === ph && m === pm)) {
       // The edition workflow's own gate decides whether there is anything
       // to build (already-published days no-op on the fast gate).

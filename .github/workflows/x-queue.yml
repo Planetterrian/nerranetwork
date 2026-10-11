@@ -1,0 +1,43 @@
+name: Post queued X posts
+# Oct 11 2026: @nerranetwork posts in daytime. Shows queue their post into a
+# half-hour slot between 6:30 AM and 7:00 PM Pacific (engine/x_queue.py);
+# this posts what is due. The scheduler Worker dispatches it at :01 and :31
+# Pacific; the cron below is the slow fallback if the Worker is down
+# (GitHub crons run late, and a late run simply posts what is due).
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 13-23,0-3 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: x-queue
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+      - run: pip install tweepy requests boto3 tenacity
+      - run: python scripts/post_x_queue.py
+        env:
+          X_QUEUE_SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          X_QUEUE_SUPABASE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          NERRANETWORK_X_CONSUMER_KEY: ${{ secrets.NERRANETWORK_X_CONSUMER_KEY }}
+          NERRANETWORK_X_CONSUMER_SECRET: ${{ secrets.NERRANETWORK_X_CONSUMER_SECRET }}
+          NERRANETWORK_X_ACCESS_TOKEN: ${{ secrets.NERRANETWORK_X_ACCESS_TOKEN }}
+          NERRANETWORK_X_ACCESS_TOKEN_SECRET: ${{ secrets.NERRANETWORK_X_ACCESS_TOKEN_SECRET }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_GALLERY_BUCKET: ${{ secrets.R2_GALLERY_BUCKET }}
+          R2_GALLERY_PUBLIC_BASE_URL: ${{ secrets.R2_GALLERY_PUBLIC_BASE_URL }}

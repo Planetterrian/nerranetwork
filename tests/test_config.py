@@ -558,7 +558,9 @@ class TestLoadConfigRealFiles:
         # EI got its own dedicated theme in May 2026
         # (replaced the shared tesla_shorts_time.mp3).
         assert cfg.audio.music_file == "assets/music/EnvIntel.mp3"
-        assert cfg.publishing.x_enabled is False
+        # Oct 11 2026: second wave on @nerranetwork from Oct 24.
+        assert cfg.publishing.x_enabled is True
+        assert cfg.publishing.x_start_date == "2026-10-24"
         assert cfg.episode.prefix == "Env_Intel"
         assert cfg.episode.output_dir == "digests/env_intel"
         assert cfg.newsletter.enabled is True
