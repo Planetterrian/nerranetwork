@@ -3529,7 +3529,18 @@ def run(args: argparse.Namespace) -> None:
             # instead of being treated as broken output.
             _FLOOR_FIELD = getattr(config.llm, "min_podcast_word_floor", 600) or 600
             _HARD_FLOOR = max(_FLOOR_FIELD, int(_TARGET_WORDS * 0.4))
-            _SOFT_FLOOR = int(_TARGET_WORDS * 0.6)  # Below this we skip rather than publish a clearly thin episode
+            # Below this we skip rather than publish a clearly thin episode.
+            # engine.generator.publication_floor owns the rule (60 % of the
+            # target unless the show sets llm.min_podcast_publish_words),
+            # so this gate and the generator's retry bands cannot drift.
+            from engine.generator import publication_floor as _publication_floor
+            _SOFT_FLOOR = max(
+                _HARD_FLOOR,
+                _publication_floor(
+                    _TARGET_WORDS,
+                    int(getattr(config.llm, "min_podcast_publish_words", 0) or 0),
+                ),
+            )
             _script_word_count = len(podcast_script.split())
             if _script_word_count < _HARD_FLOOR:
                 logger.warning(
@@ -3577,7 +3588,7 @@ def run(args: argparse.Namespace) -> None:
                         "show_name": config.name,
                         "reason": "podcast_script_too_thin",
                         "detail": (
-                            f"Script only {_script_word_count} words (soft floor {_SOFT_FLOOR} = 60% of target). "
+                            f"Script only {_script_word_count} words (publication floor {_SOFT_FLOOR}). "
                             f"Episode would have been too thin/rushed to publish."
                         ),
                         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
