@@ -435,21 +435,30 @@ class TestConfig:
         assert cfg.llm.stream is True and cfg.llm.model == "grok-4.7"
         assert cfg.llm.reasoning_effort == "low"
 
-    def test_no_established_show_streams(self):
+    def test_every_show_streams(self):
+        # Oct 11 2026 (operator-directed): streaming is the network
+        # default. It had been the cohort and the pinned script arms only
+        # (playbook rule 7 — SpaceX's and Omni View's grok-4.6 arms never
+        # ran on the non-streaming call: 444 s drop, 660 s timeout); the
+        # last four run_show shows (env_intel, the two Russian shows,
+        # offshore_north) now stream too. No show may opt back out.
         from engine.config import load_config
+        assert yaml.safe_load((ROOT / "shows" / "_defaults.yaml").read_text(
+            encoding="utf-8"))["llm"]["stream"] is True
+        checked = 0
         for p in sorted((ROOT / "shows").glob("*.yaml")):
-            if p.name.startswith("_") or p.stem in COHORT:
+            if p.name.startswith("_"):
                 continue
             raw = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
-            llm = raw.get("llm") or {}
-            if llm.get("podcast_model"):
-                # Oct 9 2026: a pinned script arm streams (playbook rule 7)
-                # — SpaceX's and Omni View's grok-4.6 arms never ran on the
-                # non-streaming call (444 s drop, 660 s timeout, fell back).
-                continue
-            assert "stream" not in llm, p.name
-        # A show with no pinned arm never streams (env_intel has none).
-        assert load_config(ROOT / "shows" / "env_intel.yaml").llm.stream is False
+            if "llm" not in raw:
+                continue  # registry / pronunciation / queue files
+            assert raw["llm"].get("stream", True) is True, p.name
+            assert load_config(p).llm.stream is True, p.name
+            checked += 1
+        assert checked >= 25
+        for slug in ("env_intel", "finansy_prosto", "privet_russian", "offshore_north"):
+            cfg = load_config(ROOT / "shows" / f"{slug}.yaml")
+            assert cfg.llm.stream is True and cfg.llm.model == "grok-4.3"
 
     @pytest.mark.parametrize("slug", DESKS)
     def test_progress_watch_is_exempt_from_the_overlap_dedup(self, slug):

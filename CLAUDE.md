@@ -2648,6 +2648,12 @@ leaves combined generation (a `podcast_model` override is two-pass), its runs
 already reach ~32 min so the long-form render now leans on the budget gate,
 and Tesla and FF are ARM shows of the Oct 13 spoken-open readout — read that readout
 with this change named as a confound. ⚠️ AUDIO on all seven — A/B-listen Ep1.
+**Streaming is the network default** (`llm.stream: true` in `_defaults.yaml`):
+Env Intel, Финансы Просто, Привет, Русский! and Offshore North were the last
+run_show shows on the non-streaming call. Same model and request; transport
+only, and no show may opt back out (`TestConfig::test_every_show_streams`).
+The interview shows ignore the flag — the Voices pipeline never calls
+`engine.generator`.
 
 ### Anthology books — ebook + audiobook from the narrative shows (Aug 2026)
 
