@@ -973,8 +973,16 @@ class TestKnownSectionsOnlyChapters:
             if ep < 77:
                 continue
             data = json.loads(path.read_text(encoding="utf-8"))
+            # Oct 12 2026: a story chapter is allowed when its title is one
+            # of that episode's digest headlines WHOLE (never clipped).
+            allowed = set(self.KNOWN_TITLES)
+            digest = list((_ROOT / "digests/spacex").glob(f"*Ep{ep:03d}_*.md"))
+            if digest:
+                from engine.grok_imagine import extract_story_headlines
+                allowed |= set(extract_story_headlines(
+                    digest[0].read_text(encoding="utf-8"), max_count=12))
             bad = [c["title"] for c in data.get("chapters", [])
-                   if c.get("title") not in self.KNOWN_TITLES]
+                   if c.get("title") not in allowed]
             if bad:
                 offenders[path.name] = bad
         assert not offenders, (
@@ -984,8 +992,10 @@ class TestKnownSectionsOnlyChapters:
 
     def test_parse_chapters_does_not_invent_titles(self):
         # A long head span used to trigger auto-segmentation with digest
-        # headlines as titles; with known_sections_only the marker chapters
-        # stand as-is.
+        # headlines as titles. Oct 12 2026: with known_sections_only the
+        # only titles added are digest headlines used WHOLE — never the
+        # fixed-interval fallback, never a first-sentence title, never a
+        # clipped headline.
         body = " ".join(
             f"filler sentence number {i} about natural gas trading and pads."
             for i in range(120)
@@ -1005,7 +1015,22 @@ class TestKnownSectionsOnlyChapters:
             story_headlines=headlines, known_sections_only=True,
         )
         titles = {c.title for c in chapters}
-        assert titles <= self.KNOWN_TITLES, titles
+        assert titles <= self.KNOWN_TITLES | set(headlines), titles
+        assert not any(t.endswith("…") for t in titles)
+
+    def test_a_headline_too_long_to_fit_whole_gets_no_chapter(self):
+        from engine.titles import HEADLINE_CHAPTER_TITLE_MAX
+        long_h = ("SpaceX is hiring for natural gas trading to support energy "
+                  "needs at the Starbase launch site in South Texas this year")
+        assert len(long_h) > HEADLINE_CHAPTER_TITLE_MAX
+        body = " ".join(
+            f"filler sentence number {i} about natural gas trading and pads."
+            for i in range(120))
+        script = ("Welcome to SpaceX Daily, episode seventy-seven.\n\n" + body
+                  + "\n\nThat's a wrap on today's SpaceX developments.")
+        chapters = parse_chapters(script, _spacex_markers(), show_name="SpaceX Daily",
+                                  story_headlines=["x", long_h], known_sections_only=True)
+        assert {c.title for c in chapters} <= self.KNOWN_TITLES
 
 
 # ---------------------------------------------------------------------------

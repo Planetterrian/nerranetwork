@@ -100,10 +100,14 @@ class TestTheLeadHasAChapter:
             assert script[c.char_start:].lstrip().startswith("Tesla applied"), (
                 "a lead chapter must start where the lead story is told")
 
-    def test_known_sections_only_shows_keep_their_section_set(self):
+    def test_known_sections_only_shows_add_only_whole_headlines(self):
+        # Oct 12 2026: a known_sections_only show (spacex) gains story
+        # chapters, but only digest headlines used whole.
         ch = parse_chapters(_script(), MARKERS, story_headlines=HEADLINES,
                             min_chapters=2, known_sections_only=True)
-        assert _titles(ch) == ["Introduction", "Closing"]
+        titles = _titles(ch)
+        assert titles[0] == "Introduction" and titles[-1] == "Closing"
+        assert set(titles[1:-1]) <= set(HEADLINES)
 
     def test_a_lead_with_no_headline_and_a_long_hook_gets_no_title(self):
         # Oct 12 2026: a word-clipped hook is a fragment ("Sixteen people
