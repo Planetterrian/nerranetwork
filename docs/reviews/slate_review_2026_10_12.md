@@ -139,7 +139,12 @@ both scripts are longer than their digests. Not a script-side lever
 ## 5. Open — not fixed here
 
 - **SpaceX FR/RU for 10-12**: re-run "Multilingual" for spacex once this
-  merges (the old client could hang again).
+  merges (the old client could hang again). *Re-run 15:01 UTC (run
+  38266848550): no hang — the bounded call failed in 13.6 min instead of
+  120 — but the non-streaming FR call was reset by the server on every
+  attempt (`APIConnectionError`, 10,068 chars on grok-4.6), so still no
+  track. The translation call now streams through `engine.generator.
+  _call_grok` (playbook rule 7); re-run after that merges.*
 - **Content errors to correct** (corrections.yaml is the operator's): UC
   Ep140 dates sodbuster/swampbuster after the CRP (both 1985) and
   misreads Uchida's 14%/25%; Env Intel Ep072 says SARA protection attaches

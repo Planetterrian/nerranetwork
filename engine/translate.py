@@ -283,11 +283,19 @@ def _generate(prompt: str, model: str, max_tokens: int) -> str:
 
     Retries only the API call; output validation happens by the caller, so a
     deterministic refusal isn't retried 3× (it returns text, not an exception).
+
+    The call STREAMS (Oct 12 2026, playbook rule 7): the SpaceX re-run's
+    10,000-character FR translation on grok-4.6 had its non-streaming
+    connection reset by the server on every attempt (13 min, no track) —
+    the drop the launch cohort hit in September. Streaming keeps bytes on
+    the wire, a stall is caught by silence, and the request timeout stays
+    a wall between chunks. ``_call_grok`` makes exactly one HTTP request
+    (SDK retries off), so this tenacity loop is the only retry.
     """
-    from digests.xai_grok import grok_generate_text
-    text, _meta = grok_generate_text(
-        prompt=prompt, model=model, temperature=0.4, max_tokens=max_tokens,
-        timeout_seconds=_translation_timeout_seconds(), max_retries=0,
+    from engine.generator import _call_grok
+    text, _meta = _call_grok(
+        prompt, model=model, temperature=0.4, max_tokens=max_tokens,
+        timeout=_translation_timeout_seconds(), stream=True,
     )
     return (text or "").strip()
 
