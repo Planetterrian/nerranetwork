@@ -316,3 +316,65 @@ class TestRhumWithdrawal:
         out = campaign_status_from_files(now=dt.datetime(2026, 10, 19, 9, tzinfo=dt.timezone.utc))
         assert "Next milestone on record: Route du Rhum" not in out
         assert "will not start" in out
+
+
+# --------------------------------------- SpaceX story chapters (later) --
+class TestSpaceXStoryChapters:
+    def _parse(self, ep):
+        from engine.chapters import parse_chapters
+        from engine.config import load_config
+        from engine.grok_imagine import extract_story_headlines
+        cfg = load_config(ROOT / "shows" / "spacex.yaml")
+        md = next(p for p in glob.glob(str(ROOT / "digests" / "spacex" / f"*Ep{ep:03d}_*.md")))
+        tts = next(p for p in glob.glob(str(ROOT / "digests" / "spacex" / f"*Ep{ep:03d}_*_tts.txt")))
+        d = Path(md).read_text(encoding="utf-8")
+        heads = extract_story_headlines(d, 12)
+        return heads, parse_chapters(
+            Path(tts).read_text(encoding="utf-8"), cfg.chapters.section_markers,
+            show_name="spacex", story_headlines=heads, digest_text=d,
+            known_sections_only=cfg.chapters.known_sections_only)
+
+    def test_ep128_news_has_story_chapters(self):
+        heads, chapters = self._parse(128)
+        stories = [c.title for c in chapters if c.title in heads]
+        assert len(stories) >= 3, [c.title for c in chapters]
+
+    def test_ep126_stories_after_the_deep_dive_get_chapters(self):
+        heads, chapters = self._parse(126)
+        titles = [c.title for c in chapters]
+        after = titles[titles.index("The Engineering Angle") + 1:]
+        assert any(t in heads for t in after), titles
+
+    def test_story_titles_are_whole_headlines(self):
+        from engine.titles import HEADLINE_CHAPTER_TITLE_MAX
+        for ep in (122, 124, 126, 128):
+            heads, chapters = self._parse(ep)
+            for c in chapters:
+                if c.title in heads:
+                    assert len(c.title) <= HEADLINE_CHAPTER_TITLE_MAX
+                    assert not c.title.endswith("…")
+
+    def test_prompt_states_segment_order(self):
+        text = (ROOT / "shows" / "prompts" / "spacex_podcast.txt").read_text(encoding="utf-8")
+        assert "SEGMENT ORDER" in text
+
+
+# ------------------------------------------------ @grok leads (later) --
+class TestGrokLeadSearchesEachSubject:
+    def test_subjects_split_from_the_beat(self):
+        from engine.grok_leads import lead_subjects
+        assert lead_subjects("Tesla engineering — batteries and cells, Optimus, and FSD") == [
+            "batteries and cells", "Optimus", "FSD"]
+        assert lead_subjects("one subject only") == ["one subject only"]
+
+    def test_prompt_lists_every_subject_and_asks_for_one_search_each(self):
+        import yaml
+        from engine.grok_leads import build_lead_prompt, lead_subjects
+        for slug in ("spacex", "tesla", "models_agents", "ai_chips"):
+            topics = yaml.safe_load((ROOT / "shows" / f"{slug}.yaml").read_text(
+                encoding="utf-8"))["grok_leads"]["topics"]
+            prompt = build_lead_prompt(topics, 2, 48)
+            assert "SEPARATE search for each subject" in prompt
+            for s in lead_subjects(topics):
+                assert f"- {s}" in prompt
+            assert len(lead_subjects(topics)) >= 4

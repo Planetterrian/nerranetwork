@@ -4521,3 +4521,27 @@ experiments:
       Collingwood Both Sides; UC/FPD one-telling rule; the shared
       content-discipline teaser and outlet-name lines (17 shows); Prediction
       Markets legal-step rule; four cross-promo cadence words.
+
+  - id: spacex-story-chapters-and-grok-leads-2026-10-12
+    title: "SpaceX gets a chapter per story; @grok leads search subject by subject"
+    area: quality
+    shipped: 2026-10-12
+    readout: 2026-10-26
+    status: reading
+    baseline: >
+      SpaceX Ep118-128: news stories sat inside "Introduction" on every
+      episode (known_sections_only allowed no story chapter). grok_leads
+      found 0 leads on all four shows on 10-12 (one x_search, ~7 s).
+    target: >
+      SpaceX: >= 3 story chapters on 5 of the next 7 episodes, every story
+      title a whole digest headline (<= 80 chars). grok_leads_found >= 2 and
+      grok_leads_kept >= 1 on at least half the runs of SpaceX, Tesla, M&A
+      and AI Chips.
+    notes: >
+      Probe (scripts/probe_x_search.py, Actions "Probe x_search"): every
+      x_search tool shape behaves alike, so the request was never the
+      problem; the old prompt made 1-4 searches and kept 0-2 leads, the
+      per-subject prompt 11-14 searches and 2-4 leads on all four shows.
+      @SpaceX returned 0 posts in every variant, including with no handle
+      filter - xAI's index, not our request. SpaceX's podcast prompt now
+      states the segment order (A/B-listen).

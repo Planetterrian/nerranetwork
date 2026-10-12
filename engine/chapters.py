@@ -403,6 +403,7 @@ def _lead_story_split(
     head: "Chapter",
     story_headlines: List[str],
     max_chars: int = 60,
+    whole_only: bool = False,
 ) -> Optional[tuple]:
     """Where the lead story starts inside the opening chapter.
 
@@ -459,6 +460,10 @@ def _lead_story_split(
         return None
     body = [p for p in _paragraphs(lines)
             if head.word_start < p[0] < head.word_end]
+    if whole_only:
+        whole = _strip_title_label(re.sub(r"[*_`]+", "", title).strip())
+        if len(whole) > max_chars:
+            return None
     for w, c, tokens in body[:LEAD_SEARCH_PARAGRAPHS]:
         if len(tokens & lead_tokens) >= 2:
             return w, c, _clip_title(title, max_chars)
@@ -472,6 +477,8 @@ def _headline_anchored_insertions(
     story_headlines: List[str],
     min_segment_words: int = 60,
     max_chars: int = 60,
+    whole_titles_max: Optional[int] = None,
+    min_results: int = 2,
 ) -> list:
     """Anchor auto-segment boundaries where each digest story BEGINS.
 
@@ -487,8 +494,12 @@ def _headline_anchored_insertions(
     and start a chapter (bearing that headline) at that paragraph. Titles
     and boundaries then agree by construction. Returns
     ``[(word_idx, char_offset, title), ...]`` sorted by position, or
-    ``[]`` when fewer than two headlines anchor confidently — callers
-    fall back to the legacy fixed-interval segmentation.
+    ``[]`` when fewer than ``min_results`` headlines anchor confidently —
+    callers fall back to the legacy fixed-interval segmentation.
+
+    ``whole_titles_max`` (Oct 12 2026, known_sections_only shows): a
+    headline longer than this is not a candidate at all, and the ones that
+    fit are used whole — never clipped.
     """
     if not story_headlines or len(story_headlines) < 2:
         return []
@@ -510,6 +521,9 @@ def _headline_anchored_insertions(
             # from Russia, China, India and Iran meet in Central…" reached
             # listeners). Real headlines between max_chars and twice that
             # stay eligible and are shortened cleanly (see _clip_title).
+            continue
+        if whole_titles_max is not None and len(
+                _strip_title_label(re.sub(r"[*_`]+", "", h).strip())) > whole_titles_max:
             continue
         h_tokens = _tokenize_for_match(h)
         if not h_tokens:
@@ -533,9 +547,12 @@ def _headline_anchored_insertions(
         w, c, _tokens = in_head[i]
         if w - last_w < min_segment_words:
             continue  # too close to the previous boundary — merge forward
-        result.append((w, c, _clip_title(anchors[i][1], max_chars)))
+        title = (_strip_title_label(re.sub(r"[*_`]+", "", anchors[i][1]).strip())
+                 if whole_titles_max is not None
+                 else _clip_title(anchors[i][1], max_chars))
+        result.append((w, c, title))
         last_w = w
-    return result if len(result) >= 2 else []
+    return result if len(result) >= min_results else []
 
 
 def parse_chapters(
@@ -781,11 +798,51 @@ def parse_chapters(
     # chapter UI ("SpaceX is hiring for natural gas trading to support
     # energy…" between Introduction and Counterpoint). For those shows the
     # matched markers ARE the navigation.
-    if known_sections_only and (len(chapters) < min_chapters or head_spans_most):
+    #
+    # Oct 12 2026: that left SpaceX with eight news stories inside one
+    # "Introduction" chapter on every episode. Such a show now gets ONE kind
+    # of inserted chapter: a digest headline, anchored where that story
+    # begins, used whole and only when it fits HEADLINE_CHAPTER_TITLE_MAX —
+    # never the fixed-interval fallback, never a first-sentence title, never
+    # a clipped headline (the three shapes the Aug 27 decision was about).
+    if known_sections_only:
+        from engine.titles import HEADLINE_CHAPTER_TITLE_MAX
+        anchored = []
+        if chapters and story_headlines:
+            # The body runs to the teaser / closing. A 4.6-written script may
+            # air the Counterpoint and the deep dive straight after the lead
+            # and the rest of the news after them (SpaceX Ep126), so a story
+            # can sit inside ANY body chapter, not only the opening one.
+            _tail_titles = ("closing", "sign-off", "tomorrow teaser", "teaser")
+            body_end = next((c.word_start for c in chapters
+                             if c.title.strip().lower() in _tail_titles),
+                            chapters[-1].word_end)
+            starts = [c.word_start for c in chapters]
+            have = {c.title for c in chapters}
+            anchored = [
+                (w, c, t) for w, c, t in _headline_anchored_insertions(
+                    lines, chapters[0].word_start, body_end, story_headlines,
+                    whole_titles_max=HEADLINE_CHAPTER_TITLE_MAX, min_results=1,
+                )
+                # never on top of (or just after) a section's own start
+                if t not in have and not any(0 <= w - s0 < 60 for s0 in starts)
+            ]
+        if anchored:
+            last_end_w = chapters[-1].word_end
+            last_end_c = chapters[-1].char_end
+            bounds = sorted(
+                [(c.word_start, c.char_start, c.title) for c in chapters] + anchored
+            )
+            chapters = [
+                Chapter(title=t, word_start=w, char_start=c,
+                        word_end=(bounds[i + 1][0] if i + 1 < len(bounds) else last_end_w),
+                        char_end=(bounds[i + 1][1] if i + 1 < len(bounds) else last_end_c))
+                for i, (w, c, t) in enumerate(bounds)
+            ]
         logger.info(
-            "known_sections_only: skipping auto-segmentation for %s "
-            "(%d marker chapters stand as-is)",
-            show_name or "show", len(chapters),
+            "known_sections_only: %d whole-headline story chapter(s) for %s "
+            "(no other auto-segmentation)",
+            len(anchored), show_name or "show",
         )
     elif (len(chapters) < min_chapters or head_spans_most) and total_words > 0:
         words_per_segment = max(
@@ -881,12 +938,19 @@ def parse_chapters(
                 )
 
     # The lead story gets its own chapter (Oct 8 2026). It sat inside the
-    # opening chapter on 19 of 21 episodes. Skipped for known_sections_only
-    # shows, whose chapters are their fixed section set by decision (spacex,
-    # Aug 27 2026), and when a chapter already carries the lead's title.
-    if chapters and not known_sections_only:
+    # opening chapter on 19 of 21 episodes. Skipped when a chapter already
+    # carries the lead's title. On a known_sections_only show (spacex) the
+    # lead's title must fit HEADLINE_CHAPTER_TITLE_MAX whole (Oct 12 2026 —
+    # the Aug 27 decision was against clipped titles, not story chapters).
+    if chapters:
         head = chapters[0]
-        found = _lead_story_split(lines, head, story_headlines or [])
+        if known_sections_only:
+            from engine.titles import HEADLINE_CHAPTER_TITLE_MAX
+            found = _lead_story_split(lines, head, story_headlines or [],
+                                      max_chars=HEADLINE_CHAPTER_TITLE_MAX,
+                                      whole_only=True)
+        else:
+            found = _lead_story_split(lines, head, story_headlines or [])
         if found and found[2] not in {c.title for c in chapters}:
             w, c, title = found
             chapters = [

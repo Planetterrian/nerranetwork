@@ -1,0 +1,27 @@
+# Read-only probe of xAI's x_search tool shapes (Oct 12 2026) — see
+# scripts/probe_x_search.py. Prints to the log only; writes nothing. Runs on a
+# push that changes the probe (so a session branch can run it before merge)
+# and on demand.
+name: Probe x_search
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['claude/**']
+    paths:
+      - scripts/probe_x_search.py
+      - .github/workflows/probe-x-search.yml
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Probe x_search tool shapes
+        env:
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        run: python3 scripts/probe_x_search.py

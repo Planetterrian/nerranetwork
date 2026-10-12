@@ -66,6 +66,14 @@ NEWSLETTER_SUBJECT_MAX = 78
 #: clip loses nothing.
 BOOK_CHAPTER_TITLE_MAX = 72
 
+#: A digest headline used as a podcast chapter title on a show whose chapters
+#: are otherwise its fixed section set (``chapters.known_sections_only``;
+#: SpaceX, Oct 12 2026). A FIT gate, never a clip: a headline longer than
+#: this gets no chapter, because the Aug 27 2026 truncated headline chapters
+#: ("SpaceX is hiring for natural gas trading to support energy…") are why
+#: that show had turned headline chapters off.
+HEADLINE_CHAPTER_TITLE_MAX = 80
+
 # On-screen chapter title card on long-form video (Sep 2026,
 # ``engine.video._long_form_chapter_cards_stage``). A card is a FIT
 # gate, not a clip: a title longer than this is not shown at all,

@@ -41,14 +41,38 @@ LEADS_HEADING = "DEEP-DIVE LEADS (writer-only input — never print this heading
 _FIELD_RE = re.compile(r"^LEAD_(QUESTION|ANSWER|URL|DATE):\s*(.*)$")
 
 
+#: Most x_search calls one lead request may make (one per subject).
+MAX_SEARCHES = 8
+
+
+def lead_subjects(topics: str) -> List[str]:
+    """The show's beat as separate subjects: the part after a dash, split on
+    commas ("Tesla engineering — batteries, Optimus, FSD" -> three). A topic
+    string with no list stays one subject."""
+    head, sep, tail = (topics or "").partition("—")
+    items = [t.strip(" .;") for t in (tail if sep else head).split(",")]
+    items = [re.sub(r"^and\s+", "", t).strip() for t in items if t.strip(" .;")]
+    return items[:MAX_SEARCHES] or ([topics.strip()] if topics.strip() else [])
+
+
 def build_lead_prompt(topics: str, max_leads: int, lookback_hours: int) -> str:
+    # Oct 12 2026: one search over the whole beat came back NO_LEADS on all
+    # four shows in ~7 s; a probe the same day found leads when the model
+    # searched subject by subject (x_search over @grok's posts, 2-5 calls).
+    # Grok answers thousands of narrow questions; a search for the whole
+    # list matches none of them.
+    subjects = lead_subjects(topics)
+    subject_lines = "\n".join(f"- {s}" for s in subjects)
     return (
         f"Search X for replies posted by @grok in the last {lookback_hours} hours "
-        f"in which Grok answers a question about: {topics}.\n\n"
+        f"in which Grok answers someone's question. The show's beat is: {topics}.\n\n"
+        "Run a SEPARATE search for each subject below, using its own key "
+        "terms — one search per subject, not one search for the whole list:\n"
+        f"{subject_lines}\n\n"
         "Choose EXPLANATIONS only — how or why something works, its history, "
         "the engineering, physics or economics behind it, or a comparison of "
         "two programs. Skip price or date predictions, jokes, opinions about a "
-        "person, roleplay, image requests, and anything off the topics above.\n\n"
+        "person, roleplay, image requests, and anything off the subjects above.\n\n"
         "Return ONLY a structured list, one block per reply, separated by blank "
         "lines:\n\n"
         "LEAD_QUESTION: [the question Grok was answering, in one plain sentence]\n"
@@ -56,7 +80,7 @@ def build_lead_prompt(topics: str, max_leads: int, lookback_hours: int) -> str:
         "LEAD_URL: [https://x.com/grok/status/...]\n"
         "LEAD_DATE: [YYYY-MM-DD]\n\n"
         f"Up to {max_leads} replies, the most substantive first. If none "
-        "qualify, return exactly: NO_LEADS\n"
+        "qualify after searching every subject, return exactly: NO_LEADS\n"
     )
 
 
@@ -100,7 +124,7 @@ def fetch_grok_leads(topics: str, *, max_leads: int = 2,
             from digests.xai_grok import grok_generate_text as generate
         text, _meta = generate(
             prompt=build_lead_prompt(topics, max_leads * 2, lookback_hours),
-            enable_x_search=True, x_handles=["grok"], max_turns=5,
+            enable_x_search=True, x_handles=["grok"], max_turns=MAX_SEARCHES,
             cache_key="nerra-grok-leads",
         )
     except Exception as exc:  # noqa: BLE001 — leads are optional
