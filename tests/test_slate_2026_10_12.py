@@ -58,18 +58,27 @@ class TestModelSpecialTokens:
 
 # ------------------------------------------------------ translation hang --
 class TestTranslationTimeout:
-    def test_translate_bounds_the_call_and_disables_sdk_retries(self, monkeypatch):
-        import digests.xai_grok as xg
+    def test_translate_streams_with_a_bounded_timeout(self, monkeypatch):
+        # Oct 12 re-run: the non-streaming FR call was reset by the server on
+        # every attempt. The translation streams through _call_grok, whose
+        # client makes one request (SDK retries off).
+        import engine.generator as gen
         from engine import translate
         seen = {}
 
-        def fake(**kw):
+        def fake(prompt, **kw):
             seen.update(kw)
             return "bonjour", {}
-        monkeypatch.setattr(xg, "grok_generate_text", fake)
+        monkeypatch.setattr(gen, "_call_grok", fake)
         monkeypatch.delenv("NERRA_TRANSLATION_TIMEOUT_SECONDS", raising=False)
         assert translate._generate.__wrapped__("p", "grok-4.6", 100) == "bonjour"
-        assert seen["timeout_seconds"] == 600.0 and seen["max_retries"] == 0
+        assert seen["timeout"] == 600.0 and seen["stream"] is True
+        assert seen["model"] == "grok-4.6" and seen["max_tokens"] == 100
+
+    def test_call_grok_client_never_retries_inside_the_sdk(self):
+        import inspect
+        import engine.generator as gen
+        assert "max_retries=0" in inspect.getsource(gen._call_grok)
 
     def test_timeout_env_override(self, monkeypatch):
         from engine import translate
