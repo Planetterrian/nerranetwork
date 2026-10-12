@@ -191,12 +191,15 @@ class TestRecordAndStatus:
         for p in ("2026-09-04", "2026-09-17", "2026-10-04"):
             assert dated[p]["url"] == "https://my.yb.tl/emira4"
 
-    def test_rhum_entry_is_aiming_to_start(self):
+    def test_rhum_entry_is_not_starting(self):
+        # Oct 12 2026: "aiming to start" held until the team's own dated
+        # post (8 Oct) said he will not start; the record follows it.
         d = _curated()
-        assert d["rhum_entry"]["status"] == "aiming_to_start"
+        assert d["rhum_entry"]["status"] == "not_starting"
+        assert d["rhum_entry"]["as_of"] == "2026-10-08" and d["rhum_entry"]["url"]
         rdr = next(c for c in d["countdowns"] if c["id"] == "rdr_start")
-        assert rdr["emira_entered"] is None and "aiming to start" in rdr["emira_entry_text"]
-        assert "aiming to start" in rdr["sub"]
+        assert rdr["emira_entered"] is False and "will not start" in rdr["emira_entry_text"]
+        assert "will not start" in rdr["sub"]
         can = next(e for e in d["rdr_imoca_entries"]["entries"] if e.get("canada"))
         assert can["official"] is False
         assert not any("EMIRA IV entered" in c.get("label", "") for c in d["calendar"])
@@ -210,7 +213,7 @@ class TestRecordAndStatus:
         assert "LAST KNOWN POSITION — YB TRACKER, newest fix 2026-10-04" in fresh
         assert "alongside in Gosport" in fresh and "https://my.yb.tl/emira4" in fresh
         assert "OUTINGS ON THE TRACKER" in fresh and "training solo in Europe" in fresh
-        assert "AIMING TO START" in fresh and "IS on the list" not in fresh
+        assert "will not start" in fresh and "IS on the list" not in fresh
         stale = build_campaign_status(_curated(), tracker=s,
                                       now=dt.datetime(2026, 10, 20, tzinfo=UTC))
         assert 'say "last seen 4 October 2026"' in stale
@@ -244,7 +247,7 @@ class TestEditorialRules:
         assert "NOT in Brittany and NOT in Lorient" in f
         assert '"last seen [date]"' in f and "my.yb.tl/emira4" in f
         assert "Never say Scott is \"training solo in Europe\"" in f
-        assert "AIMING TO START" in f and "Entry CONFIRMED" not in f
+        assert "WILL NOT START" in f and "Entry CONFIRMED" not in f
         assert "French base is NOT confirmed" not in f
 
     def test_digest_and_podcast_rules(self):
@@ -254,9 +257,9 @@ class TestEditorialRules:
         assert '"last seen"' in d and "seven days" in d and "Gosport" in d
         assert '"last seen"' in p and "never described as training" in p
 
-    def test_field_guide_says_aiming_to_start(self):
+    def test_field_guide_says_not_starting(self):
         g = _read("shows/prompts/offshore_north_field_guide.txt")
-        assert "Scott Shawyer is aiming to start" in g and "Scott Shawyer is entered" not in g
+        assert "Scott Shawyer will not start" in g and "Scott Shawyer is entered" not in g
 
     def test_dashboard_reads_the_tracker_and_embeds_on_request(self):
         t = _read("templates/offshore_north_dashboard.html.j2")

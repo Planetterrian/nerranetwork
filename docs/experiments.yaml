@@ -1621,7 +1621,7 @@ experiments:
     area: reach
     shipped: 2026-09-22
     readout: 2026-10-13
-    status: reading
+    status: done
     metric: short_reach_d3_median_en_7d
     baseline: 10
     target: >
@@ -1645,6 +1645,13 @@ experiments:
       yt_policy_shorts_skipped on a no-Short day. dp_pod enrolled in
       SEED_TIERS (C) so the tier can reach it. A missing reach file holds
       every show's state. Revert = SHORTS_PROBE_CHANNELS = ().
+    outcome: >
+      READ 2026-10-12: HIT. Enrolled shows' probe Shorts median 7 views
+      at age 3 (n=13) against 8 for their earlier daily Shorts (n=113),
+      so the weekly probe loses nothing the daily Shorts were earning;
+      the EN hook median held (21 to 23) while EN uploads fell from 13.9
+      to 5.9 a day (shared with en-one-short), and omni_view climbed
+      back out on its probes. Keep.
 
   - id: dub-spoken-text-gate-shadow-2026-09-22
     title: "Spoken-text gate on the RU/FR/ES/ZH tracks — shadow first"
@@ -2055,7 +2062,7 @@ experiments:
     area: quality
     shipped: 2026-09-14
     readout: 2026-10-12
-    status: reading
+    status: done
     baseline: >
       Ep002-005: position "unconfirmed" 4/4, Dan references 0/5, Canadian
       Boat ~22% of the episode and shortest, Plain Sailing a same-episode
@@ -2078,6 +2085,14 @@ experiments:
       banned, background block deleted, race-state check, Plain Sailing
       300-word cap / one point once / never the lead's subject, official
       class names. Same readout date.
+    outcome: >
+      READ 2026-10-12: PARTIAL. Ep006-009: 'unconfirmed' 0/4 and the
+      Canadian Boat first 4/4 (hits); one Dan reference only 2/4,
+      articles_full_text >= 8 only 1/4 (7, 7, 7, 8). Ep008 aired the
+      banned 'no new posts in the past seven days' and Ep007-009 re-read
+      the same team post. Ep009 also named the Route du Rhum village as
+      the campaign's next milestone after the team's 8 Oct withdrawal;
+      the record and the status block are fixed (slate-2026-10-12).
 
   - id: caption-track-retry-2026-09-18
     title: "Long-form caption track: retry the transient, record the refusal"
@@ -2689,7 +2704,7 @@ experiments:
     area: retention
     shipped: 2026-09-22
     readout: 2026-10-13
-    status: reading
+    status: done
     metric: long_form_median_avp_en_14d
     baseline: 15.8
     target: >
@@ -2706,12 +2721,20 @@ experiments:
       gallery_blend_max_short 6->2 in engine/config.py + _defaults.yaml; the
       visual_reuse getattr fallbacks now equal the dataclass. Guard:
       tests/test_visual_reuse.py::test_getattr_fallbacks_equal_the_dataclass.
+    outcome: >
+      READ 2026-10-12: INCONCLUSIVE, not a MISS. EN long-form 14-day
+      median AVP 15.8 to 11.8 (n=91; average view 85 to 64 s at flat
+      length) with images per episode 27 to 18 and the cap applied as
+      designed. But the RU and FR long-forms, whose images the blend
+      never touched, fell by the same share or more (23.6 to 15.1, 11.6
+      to 7.1), so the drop has a common cause the blend cannot explain.
+      Kept; not reverted on this read.
 
   - id: long-form-speech-cuts-2026-09-22
     title: "Long-form scene cuts snap to sentence ends"
     area: retention
     shipped: 2026-09-22
-    readout: 2026-10-13
+    readout: 2026-10-27
     status: reading
     metric: long_form_median_avp_en_14d
     baseline: 15.8
@@ -2730,6 +2753,11 @@ experiments:
       max by the tolerance, never under the min); long_form_visual_plan shifts
       the Whisper words by the music-intro delay; knob long_form_sentence_cuts
       (on). Guards: tests/test_scene_scheduler.py::TestLongFormSentenceSnap.
+    outcome: >
+      READ 2026-10-12: INCONCLUSIVE on the shared AVP metric (15.8 to
+      11.8, n=91), which fell on the RU/FR long-forms too; the 'majority
+      of cuts snapped' log was never recorded. Re-read 10-27 with the
+      per-channel drop named as the confound.
 
   - id: gallery-retention-per-kind-2026-09-22
     title: "Gallery-retention flywheel repaired: per-kind read, prompt-text prior, style feedback"
@@ -2768,7 +2796,7 @@ experiments:
     area: retention
     shipped: 2026-09-22
     readout: 2026-10-13
-    status: reading
+    status: done
     metric: short_avp_en_14d
     baseline: 62.5
     target: >
@@ -2786,13 +2814,20 @@ experiments:
       _short_form_fact_cards_stage (96 px cyan figure at ~62% frame height);
       knob shorts_fact_cards; metric shorts_fact_cards_rendered. Guards:
       tests/test_fact_cards.py::{TestWindow,TestShortRenderStage,TestShortWiring}.
+    outcome: >
+      READ 2026-10-12: INCONCLUSIVE. short_avp_en_14d 62.5 to 56.2
+      (n=74) is breakout weighting plus the mix change (EN one-Short
+      cap, dead-Shorts tier); per-video hook medians on the arm went
+      54.5 to 57.2 with the dubs flat, and Shorts with cards 60.3
+      against 56.9 without (n=21/27, not randomised). Confounded with
+      the punch frame and the motion clip on the same Shorts. Kept.
 
   - id: shorts-punch-frame-2026-09-22
     title: "The thumbnail punch text opens the hook Short as a 1.4 s title"
     area: retention
     shipped: 2026-09-22
     readout: 2026-10-13
-    status: reading
+    status: done
     metric: short_avp_en_14d
     baseline: 62.5
     target: >
@@ -2808,13 +2843,17 @@ experiments:
       1.2-4.25 s under a punch; an unfit punch is skipped, never ellipsised;
       knob shorts_punch_frame; metric shorts_punch_frame_rendered. Guards:
       tests/test_video_commands.py::TestShortsPunchFrame.
+    outcome: >
+      READ 2026-10-12: INCONCLUSIVE. Arm 57.4 against the other EN
+      shows' 52.1 (n=37 each): neither the >= 65 HIT nor the under-the-
+      others MISS; rendered on 56 of 58 episodes. Kept.
 
   - id: hook-short-motion-2026-09-22
     title: "Bounded real-motion retry: one 4 s clip opens the hook Short"
     area: retention
     shipped: 2026-09-22
     readout: 2026-10-13
-    status: reading
+    status: done
     metric: hook_short_motion_share_14d
     baseline: null
     target: >
@@ -2835,12 +2874,18 @@ experiments:
       cycling after the clip; variant on the video index and in the
       early-reach file; metrics hook_short_motion / _cost_usd / _reason.
       Guards: tests/test_hook_short_motion.py.
+    outcome: >
+      READ 2026-10-12: PARTIAL. The clip landed on 56 of 58 hook Shorts
+      (share 0.97) at about $0.27 each (~$24/mo); the motion-against-
+      stills reach comparison cannot be scored (hook_stills n=1 against
+      n >= 10). Kept; a stills holdout is needed if reach is to be
+      scored.
 
   - id: spoken-open-shape-2026-09-22
     title: "The spoken open has a shape — one sentence, quantity first, stake in the same breath (tesla / spacex / FF)"
     area: retention
     shipped: 2026-09-22
-    readout: 2026-10-13
+    readout: 2026-10-27
     status: reading
     metric: long_open_hold_5pct_arm
     baseline: 0.49
@@ -2865,6 +2910,15 @@ experiments:
       was never gated); build_cold_open_spec gained one shape bullet. Metric
       digest_hook_over_length. Guards: tests/test_spoken_open_shape_2026_09_22.py,
       tests/test_dashboard_growth.py::TestSpokenOpenArmSplit.
+    outcome: >
+      READ 2026-10-12: INSUFFICIENT. Retention curves are fetched for
+      the top five EN longs a night only, so post-ship n=1 per arm (arm
+      0.38, control 0.32). Confound: on 10-11 Tesla and FF (arm) and MIT
+      and M&A (control) moved to the grok-4.6 script stage. The hook
+      gate itself works: over-length hooks 1/61 on the arm against 35/66
+      on the control. Re-read 10-27; the control shows' include waits
+      for that readout.
+
   - id: ai-chips-launch-2026-09
     title: AI Chips & Data Centres Daily launch
     area: reach
@@ -3174,7 +3228,7 @@ experiments:
     area: reach
     shipped: 2026-09-23
     readout: 2026-10-14
-    status: reading
+    status: done
     baseline: >
       Vancouver, Collingwood, Prediction Markets, the five Omni View desks and
       Top World each had one hand-dispatched Episode 1 (two for Collingwood
@@ -3205,6 +3259,11 @@ experiments:
       Operator step after merge: `wrangler deploy` in workers/scheduler.
       Guards: tests/test_launch_cohort_schedule_2026_09_23.py. The nine stay
       out of the Nerra Daily lineup on purpose (tests/test_daily_edition.py).
+    outcome: >
+      READ 2026-10-12: PARTIAL. One missed slot day in two weeks (North
+      America 10-02, no skip marker); Top World read 5 live desks on 17
+      of 19 days; about 0.64 of 146 established outros plugged a new
+      show (upper bound). First-week downloads are still null. Kept.
 
   - id: network-sourcing-pass-2026-09-24
     title: "Network sourcing pass: the launch cohort's sourcing floor on every news show, a Sources line in the show notes, the cohort in Nerra Personal"
@@ -3288,6 +3347,13 @@ experiments:
       owns the date; date_probe_max (default 12, YAML) bounds the page
       opens; digests/xai_grok.py never answers a search from memory. A/B:
       the digest INPUT changed on the 12 shows.
+    outcome: >
+      READ 2026-10-12 (early): PARTIAL. Undated articles in the prompt
+      median 0 (max 8), page-probe dated median 5, the stale gate fired
+      on 44 of 205 episodes (68 dropped), 0 same-URL recurrences in 811
+      Source URLs; one Source more than 3 days old shipped
+      (Planetterrian 10-07 cited a BMJ online-first page of 09-18).
+
   - id: frame-memory-2026-09-30
     title: "Rotation memory for sentence frames on 17 shows"
     area: quality
@@ -3310,6 +3376,14 @@ experiments:
       proper noun) never listed; MIT off until it can see its ledger
       lines. Rendered through {recent_frames_block} in
       _shared/content_discipline.txt and _shared/omni_desk_podcast_body.txt.
+    outcome: >
+      READ 2026-10-12 (early): PARTIAL. Omni View 3/12 and MAB 2/12 meet
+      the target; FF 6/11 and Planetterrian 5/12 miss; the desks and
+      Vancouver read 9-12/12 because their recurring frames are required
+      chapter anchors ('the case on both sides', FF's 'Keep an eye on')
+      that frame_memory exempts by design, so the target is unmeetable
+      there and needs rescoping.
+
   - id: whisper-av-pin-2026-09-30
     title: "PyAV pinned below 19 after the 09-30 transcript outage"
     area: quality
@@ -4411,3 +4485,39 @@ experiments:
       DP Pod Oct 12 and Oct 19: Cold Open chapter present and no chapter
       title carries a speaker label; no spoken "daily" for the show's
       cadence.
+
+  - id: slate-2026-10-12
+    title: "Oct 12 slate: stop tokens, translation hang, cadence copy, lead titles, shared-URL dedupe, Russian PR close"
+    area: quality
+    shipped: 2026-10-12
+    readout: 2026-10-26
+    status: reading
+    baseline: >
+      2026-10-12: one <|eos|> plus a doubled closing sentence (MIT Ep198);
+      one spoken "Source: [domain]" (FP Ep087); 5 desk lead chapters titled
+      with a clipped hook; 2 dropped digest items aired (Africa & Middle
+      East Ep020); 11 self-narration sentences on LatAm; MAG 7 On the
+      Calendar chapter 0/3 episodes; SpaceX FR/RU tracks lost to a 118-min
+      translation hang; "daily" said of a weekly show on UC and DP Pod.
+    target: >
+      Over the next two weeks: 0 special tokens in any committed _tts.txt or
+      translated track; 0 spoken Source tags; no lead chapter whose title is
+      a strict prefix of the hook; MAG 7 On the Calendar on >= 5 of 7
+      episodes; no multilingual translate step over 45 minutes; 0 "daily"
+      said of a weekly show in a cross-promo or network plug.
+    notes: >
+      docs/reviews/slate_review_2026_10_12.md. Code: strip_model_special_tokens
+      (generator + digests/xai_grok), trim_partial_closing before the
+      missing-closing guard, translation timeout 600 s with SDK retries off
+      (NERRA_TRANSLATION_TIMEOUT_SECONDS), _SOURCE_INLINE_BRACKET_RE,
+      network_promo frames read the speaking show's cadence, tailed bold
+      headlines may run to 110 chars and a hook titles a lead chapter only
+      whole, a shared URL dedupes only with a shared story, three
+      self-narration patterns, Env Intel's science marker is the section
+      label, Offshore North's Rhum record follows the team's 8 Oct
+      withdrawal and a race EMIRA IV is not in is never the next milestone.
+      AUDIO (A/B-listen the first episode of each): Привет, Русский! closes
+      in Russian (operator-directed); MAG 7 calendar anchor; Vancouver and
+      Collingwood Both Sides; UC/FPD one-telling rule; the shared
+      content-discipline teaser and outlet-name lines (17 shows); Prediction
+      Markets legal-step rule; four cross-promo cadence words.

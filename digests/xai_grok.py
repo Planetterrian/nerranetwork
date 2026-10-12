@@ -9,6 +9,7 @@ generation. The deprecated gRPC SearchParameters path has been removed.
 from __future__ import annotations
 
 import os
+import re
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -62,6 +63,17 @@ def _responses_create(client, **create_kwargs):
 @_capacity_retry
 def _chat_create(client, **create_kwargs):
     return client.chat.completions.create(**create_kwargs)
+
+
+def _strip_special_tokens(text: str) -> str:
+    # Same rule as engine.utils.strip_model_special_tokens; inlined so this
+    # module keeps no import on the engine package (Oct 12 2026: "<|eos|>"
+    # reached five translated tracks).
+    return re.sub(r"<\|[A-Za-z_][A-Za-z0-9_]{0,30}\|>", "", text or "")
+
+
+def _client_retry_kwargs(max_retries: Optional[int]) -> Dict[str, Any]:
+    return {} if max_retries is None else {"max_retries": int(max_retries)}
 
 
 def _get_xai_api_key() -> str:
@@ -149,6 +161,7 @@ def grok_generate_text(
     x_handles: Optional[List[str]] = None,
     max_turns: Optional[int] = None,
     cache_key: Optional[str] = None,
+    max_retries: Optional[int] = None,
 ) -> Tuple[str, Dict[str, Any]]:
     """Generate text from Grok.
 
@@ -158,6 +171,13 @@ def grok_generate_text(
 
     *cache_key* (optional) sticky-routes for prompt-cache reuse: Chat
     Completions via ``x-grok-conv-id``, Responses via ``prompt_cache_key``.
+
+    *max_retries* (optional) sets the SDK's own retry count; ``None`` keeps
+    the SDK default (2). A caller with its own retry loop passes ``0`` —
+    otherwise one silent connection costs ``timeout_seconds`` three times
+    over before the caller's loop even sees it (Oct 12 2026: a SpaceX
+    translation hung 60 min, the SDK retried, and the multilingual job hit
+    its 120-minute limit).
 
     Returns ``(text, meta)``.
     """
@@ -173,6 +193,7 @@ def grok_generate_text(
             api_key=api_key,
             base_url="https://api.x.ai/v1",
             timeout=timeout_seconds,
+            **_client_retry_kwargs(max_retries),
         )
 
         tools: List[Dict[str, Any]] = []
@@ -208,7 +229,7 @@ def grok_generate_text(
             except Exception:  # pragma: no cover — accounting is never fatal
                 logger.debug("search usage accounting failed", exc_info=True)
             text = getattr(resp, "output_text", "") or ""
-            text = text.strip()
+            text = _strip_special_tokens(text).strip()
             logging.info(
                 "Responses API: got %d chars from %s (first 300: %s)",
                 len(text), model, text[:300].replace("\n", " "),
@@ -241,6 +262,7 @@ def grok_generate_text(
         api_key=api_key,
         base_url="https://api.x.ai/v1",
         timeout=timeout_seconds,
+        **_client_retry_kwargs(max_retries),
     )
     create_kwargs = {
         "model": model,
@@ -251,5 +273,5 @@ def grok_generate_text(
     if cache_key:
         create_kwargs["extra_headers"] = {"x-grok-conv-id": str(cache_key)}
     resp = _chat_create(client, **create_kwargs)
-    text = (resp.choices[0].message.content or "").strip()
+    text = _strip_special_tokens(resp.choices[0].message.content or "").strip()
     return text, {"provider": "openai_compat", "model": model, "usage": getattr(resp, "usage", None)}

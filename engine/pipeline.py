@@ -137,6 +137,32 @@ def closing_block_present(
     return False
 
 
+def trim_partial_closing(podcast_script: str, closing_block: str,
+                         *, min_tokens: int = 3) -> str:
+    """Drop a final line that is only the OPENING of the supplied closing.
+
+    Oct 12 2026 (MIT Ep198): the model wrote the closing's first sentence,
+    emitted a stop token and ended. The presence check (correctly) found
+    no closing, the guard appended the whole block, and "That's Modern
+    Investing Techniques for today." aired twice. A last line whose
+    normalized tokens are a prefix of the closing's is that half-written
+    closing; it goes, and the caller appends the block once.
+    """
+    if not podcast_script or not closing_block:
+        return podcast_script
+    closing = re.sub(r"^\s*\w+:\s*", "", closing_block.strip())
+    closing_tokens = _normalize_closing_text(closing).split()
+    body = podcast_script.rstrip()
+    head, sep, last = body.rpartition("\n")
+    last_tokens = _normalize_closing_text(
+        re.sub(r"^\s*\w+:\s*", "", last)).split()
+    if (len(last_tokens) >= min_tokens
+            and len(last_tokens) < len(closing_tokens)
+            and closing_tokens[:len(last_tokens)] == last_tokens):
+        return head.rstrip() if sep else ""
+    return podcast_script
+
+
 def record_youtube_outcomes(
     metrics: Any,
     youtube_urls: Dict[str, Any],
@@ -880,6 +906,7 @@ def run_generation_phase(
                 "appending it verbatim (script ended: %r)",
                 podcast_script.rstrip()[-80:],
             )
+            podcast_script = trim_partial_closing(podcast_script, _closing)
             podcast_script = podcast_script.rstrip() + "\n\n" + _closing
 
     # Chapter parsing (if enabled for the show)

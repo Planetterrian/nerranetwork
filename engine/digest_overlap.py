@@ -62,6 +62,15 @@ TITLE_SIMILARITY_THRESHOLD = 0.72
 # at <=0.3 for unrelated items (160-digest sweep, Aug-Sep 2026).
 BODY_OVERLAP_THRESHOLD = 0.5
 BODY_MIN_SHARED_TOKENS = 8
+# Oct 12 2026: a shared Source URL is a duplicate only when the two items
+# also share some of the story. Africa & Middle East Ep020 cited one
+# multi-story podcast page (The National) for three different stories —
+# a Riyadh airport strike, 139 migrants dead off Djibouti, an Australian
+# leaving Iraq — and the URL rule dropped two of them from the digest
+# while the combined script had already told them, so they aired with no
+# ledger entry. Re-tellings of one story share far more than this.
+URL_MATCH_MIN_OVERLAP = 0.2
+URL_MATCH_MIN_TOKENS = 6
 MIN_ITEM_CHARS = 40
 
 
@@ -144,6 +153,20 @@ def _same_story(title_a: str, title_b: str) -> Optional[str]:
     if sim >= TITLE_SIMILARITY_THRESHOLD:
         return f"headline {sim:.0%} similar"
     return None
+
+
+def _url_match_is_same_story(prior: tuple, title: Optional[str],
+                             tokens: frozenset) -> bool:
+    """A shared URL counts only when the items also share the story."""
+    _section, prior_title, prior_tokens = prior
+    if title and prior_title and (
+            _same_story(prior_title, title)
+            or len(_salient_tokens(prior_title) & _salient_tokens(title)) >= 2):
+        return True  # a new angle on the same story still names its subject
+    if min(len(prior_tokens), len(tokens)) < URL_MATCH_MIN_TOKENS:
+        return True  # too little text to tell stories apart — legacy rule
+    shared = len(prior_tokens & tokens)
+    return shared / min(len(prior_tokens), len(tokens)) >= URL_MATCH_MIN_OVERLAP
 
 
 def _same_body(tokens_a: frozenset, tokens_b: frozenset) -> Optional[str]:
@@ -294,8 +317,10 @@ def dedupe_cross_section_items(
 
         reason = None
         kept_section = ""
+        body_tokens = _body_tokens(stripped)
         for url in urls:
-            if url in seen_urls:
+            if url in seen_urls and _url_match_is_same_story(
+                    seen_urls[url], title, body_tokens):
                 kept_section = seen_urls[url][0]
                 reason = "same source URL"
                 break
@@ -305,7 +330,6 @@ def dedupe_cross_section_items(
                 if why:
                     kept_section, reason = prior_section, why
                     break
-        body_tokens = _body_tokens(stripped)
         if reason is None:
             for prior_section, prior_title, prior_tokens in seen_bodies:
                 why = _same_body(prior_tokens, body_tokens)
@@ -325,7 +349,7 @@ def dedupe_cross_section_items(
             continue
 
         for url in urls:
-            seen_urls.setdefault(url, (section, title or ""))
+            seen_urls.setdefault(url, (section, title or "", body_tokens))
         if title:
             seen_titles.append((section, title))
         seen_bodies.append((section, title or "", body_tokens))

@@ -564,24 +564,27 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
         # June 10 2026: rotation added — every episode had ended with the
         # identical single closing (the daily-show tic the network bans
         # everywhere else). Each variant must match the YAML Closing
-        # chapter pattern (molodets|well done|poka|see you) — guarded in
+        # chapter pattern (Молодец|Пока|molodets|poka|…) — guarded in
         # tests/test_russian_shows_quality_pass.py.
+        # Oct 12 2026 (operator-directed): the close is spoken in RUSSIAN.
+        # The lesson stays English-taught; the last fifteen seconds are a
+        # short, slow goodbye in the language the listener is learning,
+        # built from words a beginner meets in the first lessons. No
+        # English gloss after each phrase — the identity line already
+        # frames the show for an English speaker.
         "closings": [
             (
-                "Molodets! That means, well done! Remember, every expert started as a "
-                "beginner. Practice saying today's words out loud, even just once, and "
-                "you'll be amazed how fast you learn. See you next time! Poka! "
-                "That's Russian for, bye!"
+                "Молодец! Сегодня вы выучили новые слова. Скажите их вслух ещё "
+                "раз — медленно и спокойно. До встречи в следующем уроке. Пока!"
             ),
             (
-                "And that's our lesson for today — molodets for sticking with it! "
-                "Try using today's words in one real sentence before the next episode. "
-                "Little steps, big progress. Poka, friends — that's, bye!"
+                "Вот и всё на сегодня. Молодец, что учите русский язык! "
+                "Маленькие шаги — большой результат. Пока, друзья!"
             ),
             (
-                "You did great today — say today's words out loud one more time and "
-                "they're yours. Share the show with a friend who wants to learn "
-                "Russian, and I'll see you next time. Poka!"
+                "Молодец! Повторите сегодняшние слова один раз вслух — и они "
+                "ваши. Расскажите о нашем шоу другу, который тоже учит русский. "
+                "До встречи! Пока!"
             ),
         ],
     },
@@ -1433,7 +1436,7 @@ def build_closing_block(
     if date is None:
         date = datetime.date.today()
 
-    _is_ru = show_slug in _RUSSIAN_SPOKEN_SHOWS
+    _is_ru = show_slug in _RUSSIAN_CLOSING_SHOWS
     personality = _SHOW_PERSONALITIES.get(show_slug)
     if not personality:
         logger.warning("No closing personality for show '%s' — using generic.", show_slug)
@@ -1513,8 +1516,15 @@ def _maybe_append_platform_ask(closing: str, show_slug: str,
 # localized for them (an English sentence on the Olya voice is the same wart
 # class as the spoken AI disclosure that was localized in June 2026).
 # Привет, Русский! is *taught in English* (the host narrates in English),
-# so it keeps the English call-out.
+# so its cold open and milestone notes stay English.
 _RUSSIAN_SPOKEN_SHOWS = frozenset({"finansy_prosto"})
+
+# Shows whose CLOSING is spoken in Russian (Oct 12 2026, operator-directed):
+# the two above plus Привет, Русский!, whose close is a short Russian
+# goodbye. The YouTube call-out and the platform ask that ride on the
+# closing follow its language, or the Olya voice switches to English for
+# the last sentence of a Russian close.
+_RUSSIAN_CLOSING_SHOWS = _RUSSIAN_SPOKEN_SHOWS | frozenset({"privet_russian"})
 
 
 def _maybe_append_youtube_cta(closing: str, handle: str, is_ru: bool = False) -> str:

@@ -444,9 +444,13 @@ def _lead_story_split(
             title, lead_tokens = best[0], best[1] | hook_tokens
         else:
             lead_tokens = hook_tokens
-            clipped = _clip_title(hook, max_chars)
-            if not clipped.endswith("…"):
-                title = clipped
+            # Oct 12 2026: the hook is a spoken sentence, and a spoken
+            # sentence is a title only when it fits whole (the Oct 8 rule).
+            # A word-clipped hook ("Sixteen people drowned in Bihar while
+            # collecting festival") shipped as the lead chapter on five
+            # desks; no title means no lead chapter, never a fragment.
+            if len(_strip_title_label(re.sub(r"[*_`]+", "", hook).strip())) <= max_chars:
+                title = _clip_title(hook, max_chars)
     elif candidates:
         title, lead_tokens = candidates[0]
     else:

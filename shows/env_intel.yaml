@@ -386,8 +386,14 @@ chapters:
     # longevity", "…news from space and science.") or "geotechnical"
     # mid-story (Ep047/Ep050 false chapters). The real spoken section label
     # ("In Science and Technical, …") still matches on "Science and".
-    - pattern: "\\b(?:science|technical)\\b(?![,.])"
+    # Oct 12 2026: the bare topic word fired on "The science here is…"
+    # inside the lead story (Ep072, a chapter over an EMPTY section) —
+    # the M&A open.source class. The marker is the spoken section label
+    # only; the digest heading is the fallback, and an empty section has
+    # no words of its own to anchor on, so it gets no chapter.
+    - pattern: "\\bscience (?:and|&) tech(?:nical)?\\b|\\bon the science side\\b"
       title: "Science & Technical"
+      digest_section: "Science & Technical"
     # "industry" never appears in practice; bare "practice" was matching
     # the closing's "useful to your practice" and stealing the final
     # segment's title (Ep040). Exclude that phrase with a lookbehind.

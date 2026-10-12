@@ -451,7 +451,8 @@ def _call_grok(
         text = (resp.choices[0].message.content or "")
         finish_reason = getattr(resp.choices[0], "finish_reason", None)
         usage = resp.usage if hasattr(resp, "usage") else None
-    text = text.strip()
+    from engine.utils import strip_model_special_tokens
+    text = strip_model_special_tokens(text).strip()
     _elapsed = time.monotonic() - _started
     # Latency canary (model-upgrade early warning): a completion that
     # takes most of its timeout budget is one capacity dip away from a

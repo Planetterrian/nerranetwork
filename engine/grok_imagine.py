@@ -244,8 +244,15 @@ def extract_story_headlines(digest_text: str, max_count: int = 12) -> List[str]:
                     # ("Read more (sources):", "STEEL-MAN THE
                     # DISAGREEMENT:"), never a story title.
                     continue
-                raw = _strip_bold_line_source_tail(raw)
-                if len(raw.split()) < 3 or len(raw) > 70:
+                _untailed = _strip_bold_line_source_tail(raw)
+                # Oct 12 2026: a line that carried a ``: Outlet`` tail is a
+                # headline by construction (the bold hook has no outlet),
+                # so it may run longer. The desks' lead titles run 70-100
+                # chars and every one was dropped, so their lead chapter
+                # fell back to a clipped HOOK on 5 of 6 desks.
+                _max = 110 if _untailed != raw else 70
+                raw = _untailed
+                if len(raw.split()) < 3 or len(raw) > _max:
                     # Too short = section label. Too long = the digest's
                     # bold HOOK line — a full lead sentence. Omni View
                     # Ep160 (2026-08-30): the 130-char hook won a

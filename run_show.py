@@ -6235,6 +6235,15 @@ _SOURCE_INLINE_RU_DASH_RE = re.compile(
     r"[\w][\w.-]*\.(?:com|org|net|io|ai|ca|gov|edu|co|ru)\b\.?"
 )
 
+# Fifth shape (Oct 12 2026, FP Ep087): the label followed by a markdown
+# BRACKET — "Source: [kalkine.ca]" or "Source: [Outlet](url)" — aired on
+# the Olya voice. None of the shapes above starts on "[". A source label
+# immediately followed by a bracket is link scaffold, never prose.
+_SOURCE_INLINE_BRACKET_RE = re.compile(
+    r"\s*(?:\*\*|__)?(?:Sources?|Источники?)(?:\*\*|__)?\s*:?\s*"
+    r"\[[^\]\n]{1,80}\](?:\([^)\s]*\))?\.?"
+)
+
 
 def _dedupe_digest_sections(x_thread, config, metrics):
     """Drop later digest items that repeat an earlier item (URL / headline /
@@ -6374,7 +6383,8 @@ def _strip_source_scaffold_lines(text: str) -> str:
     cleaned = []
     for ln in kept:
         new_ln, n = _SOURCE_INLINE_RE.subn("", ln)
-        for extra_re in (_SOURCE_INLINE_OUTLET_RE, _SOURCE_INLINE_RU_DASH_RE):
+        for extra_re in (_SOURCE_INLINE_OUTLET_RE, _SOURCE_INLINE_RU_DASH_RE,
+                         _SOURCE_INLINE_BRACKET_RE):
             new_ln, n2 = extra_re.subn("", new_ln)
             n += n2
         inline_hits += n

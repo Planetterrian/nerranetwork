@@ -105,12 +105,21 @@ class TestTheLeadHasAChapter:
                             min_chapters=2, known_sections_only=True)
         assert _titles(ch) == ["Introduction", "Closing"]
 
-    def test_a_lead_with_no_headline_takes_the_hook_cut_cleanly(self):
+    def test_a_lead_with_no_headline_and_a_long_hook_gets_no_title(self):
+        # Oct 12 2026: a word-clipped hook is a fragment ("Sixteen people
+        # drowned in Bihar while collecting festival" on five desks), and a
+        # spoken sentence is a title only when it fits whole. No lead
+        # chapter is better than a fragment.
+        assert len(HOOK) > 60
         ch = parse_chapters(_script(), MARKERS, story_headlines=[HOOK],
                             min_chapters=2)
-        title = _titles(ch)[1]
-        assert HOOK.startswith(title) and not title.endswith("…")
-        assert len(title) <= 60
+        assert not any(HOOK.startswith(t) for t in _titles(ch))
+
+    def test_a_lead_with_no_headline_and_a_short_hook_takes_it_whole(self):
+        short = "Tesla plans sixteen new Superchargers in Somerset"
+        script = _script().replace(HOOK, short)
+        ch = parse_chapters(script, MARKERS, story_headlines=[short], min_chapters=2)
+        assert short in _titles(ch)
 
 
 class TestTitlesAreNeverFragments:

@@ -80,11 +80,12 @@ class TestCampaignStatusBlock:
         assert "2026-10-04" not in pos_line  # the clock's future fix is skipped
         assert "Défi Azimut-Lorient Agglomération (15 September 2026): FINISHED" in out
         assert "EMIRA IV not entered / did not sail" in out
-        assert "Route du Rhum – Destination Guadeloupe start (1 November 2026): NOT STARTED — 41 days to go. Scott Shawyer is aiming to start — not on the official entry list as of 4 October 2026." in out
+        # Oct 12 2026: the record now carries the team's 8 Oct withdrawal.
+        assert "Route du Rhum – Destination Guadeloupe start (1 November 2026): NOT STARTED — 41 days to go. Scott Shawyer will not start the 2026 Route du Rhum" in out
         assert "EMIRA IV ENTERED" not in out
         assert "783 days to the Vendée Globe start (12 November 2028)" in out
         assert "RESULTS ON RECORD" in out and "Sam Goodchild" in out and "United by the Ocean" in out
-        assert "22 registered" in out and "Scott Shawyer is NOT on the official entry list" in out and "AIMING TO START" in out
+        assert "22 registered" in out and "Scott Shawyer is NOT on the official entry list" in out and "will not start" in out
         assert "unconfirmed" in out  # only inside the "never 'unconfirmed'" instruction
         assert "position unconfirmed" not in out.lower()
 
