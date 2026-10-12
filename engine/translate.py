@@ -19,8 +19,13 @@ Design notes
   has its own pins (grok-4.3; the 2026-08-18 network-wide 4.6 upgrade was
   reverted the same day for latency, but THIS pin deliberately stays on
   4.6: it froze what ``grok-latest`` was already serving, translation
-  chunks are small enough that 4.6 latency never tripped a timeout, and
-  moving it would change shipped dub audio — a listen-check edit).
+  moving it would change shipped dub audio — a listen-check edit). The
+  call carries its own timeout (``NERRA_TRANSLATION_TIMEOUT_SECONDS``,
+  default 600) with the SDK's retries off: on 2026-10-12 a 10k-char
+  SpaceX script translation went silent, the client's 3600 s default and
+  two SDK retries outlived the multilingual job's 120-minute limit, and
+  the show lost its FR and RU tracks for the day. The tenacity loop below
+  is the only retry.
 - Proper nouns / tickers are preserved; a per-language phonetic overrides
   map (``shows/translation_overrides.yaml``) is injected into the prompt as
   guidance AND applied as a post-process safety net (mirrors
@@ -263,6 +268,13 @@ def validate_translation(text: str, lang: str, english_script: str = "") -> str:
     return t
 
 
+def _translation_timeout_seconds() -> float:
+    try:
+        return float(os.getenv("NERRA_TRANSLATION_TIMEOUT_SECONDS") or 600)
+    except ValueError:
+        return 600.0
+
+
 @retry(stop=stop_after_attempt(3),
        wait=wait_exponential(multiplier=2, min=4, max=30),
        reraise=True)
@@ -275,6 +287,7 @@ def _generate(prompt: str, model: str, max_tokens: int) -> str:
     from digests.xai_grok import grok_generate_text
     text, _meta = grok_generate_text(
         prompt=prompt, model=model, temperature=0.4, max_tokens=max_tokens,
+        timeout_seconds=_translation_timeout_seconds(), max_retries=0,
     )
     return (text or "").strip()
 

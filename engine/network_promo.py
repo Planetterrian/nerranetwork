@@ -488,6 +488,18 @@ def build_network_promo(
     except Exception:  # noqa: BLE001 — a promo never fails an episode
         _cad = "daily"
     cad_word = f"{_cad} " if _cad in ("daily", "weekly") else ""
+    # Oct 12 2026: frame 1 called the network "a family of daily podcasts"
+    # on The DP Pod (weekly) and frame 4 offered First Principles listeners
+    # "another sharp weekly briefing" — "another" claims the SPEAKING show
+    # shares the featured show's cadence. Both now read the speaking show's
+    # own schedule; a daily show plugging a daily show is byte-identical.
+    try:
+        _own_sched = schedule_for_slug(show_slug)
+        _own_cad = cadence_adjective(_own_sched) if _own_sched else "daily"
+    except Exception:  # noqa: BLE001
+        _own_cad = "daily"
+    family_word = "daily " if _own_cad == "daily" else ""
+    another = "another" if _own_cad == _cad else "a"
     # July 16 2026 — outro-fatigue fix: the single ~40-word promo frame was
     # verbatim in 146 of 176 in-window episodes, so a multi-show listener
     # heard the identical minute several times a day (only the sibling name
@@ -498,7 +510,7 @@ def build_network_promo(
     frames = (
         (
             "And before you go: this show is part of the Nerra Network — a "
-            "family of daily podcasts on tech, science, and markets, each "
+            f"family of {family_word}podcasts on tech, science, and markets, each "
             "one a short, sharp briefing you can finish on the commute. "
             f"If today earned its place in your feed, here's your next "
             f"listen — {name}, {tagline}. "
@@ -516,7 +528,7 @@ def build_network_promo(
         ),
         (
             f"This show comes to you from the Nerra Network. If you want "
-            f"another sharp {cad_word}briefing, {name} has you covered — "
+            f"{another} sharp {cad_word}briefing, {name} has you covered — "
             f"{tagline}. All our shows are free at nerranetwork.com."
         ),
     )

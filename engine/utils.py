@@ -782,3 +782,19 @@ def fix_phonetic_garbles(text: str) -> str:
     return _PHONETIC_GARBLE_RE.sub(
         lambda m: _PHONETIC_GARBLES[m.group(1).lower()], text,
     )
+
+
+# Model control tokens (Oct 12 2026). grok-4.6 occasionally ends a
+# completion with its own end-of-sequence marker written into the text:
+# "<|eos|>" reached the spoken script and the published blog on Modern
+# Investing Ep198 and DP Pod Ep055/Ep075, and five translated tracks
+# since June. The shape is ``<|name|>`` — never prose, never markup a
+# show uses — so it is removed wherever model text comes back.
+_MODEL_SPECIAL_TOKEN_RE = re.compile(r"<\|[A-Za-z_][A-Za-z0-9_]{0,30}\|>")
+
+
+def strip_model_special_tokens(text: str) -> str:
+    """Remove ``<|eos|>``-shaped control tokens from model output."""
+    if not text or "<|" not in text:
+        return text
+    return _MODEL_SPECIAL_TOKEN_RE.sub("", text)

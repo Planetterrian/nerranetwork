@@ -53,7 +53,12 @@ class TestPromoCadenceWord:
                 assert "the Nerra Network's daily briefings" in txt, txt
             if "This show comes to you from" in txt:
                 found = True
-                assert "another sharp daily briefing" in txt, txt
+                # Oct 12 2026: "another" only when the SPEAKING show is
+                # daily too (a weekly show offered "another sharp weekly
+                # briefing" of a different cadence than its own).
+                own = cadence_adjective(schedule_for_slug(slug))
+                word = "another" if own == "daily" else "a"
+                assert f"{word} sharp daily briefing" in txt, txt
         assert found
 
 

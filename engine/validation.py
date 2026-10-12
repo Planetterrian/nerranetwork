@@ -1010,6 +1010,10 @@ def vancouver_validation_config() -> ValidationConfig:
                 pattern=r"(?:### Both Sides|## Both Sides)(.*?)$",
                 min_items=0,
                 min_chars=400,
+                # Oct 12 2026: the desks' Oct 11 rule, ported. Vancouver
+                # Ep020 ran Both Sides on a newspaper assessment with no
+                # second side because the section was required.
+                optional=True,
             ),
         ],
         forbidden_patterns=[r"https?://\S+"],

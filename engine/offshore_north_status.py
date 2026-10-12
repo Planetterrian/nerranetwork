@@ -218,7 +218,11 @@ def build_campaign_status(curated: Dict[str, Any], *, live: Optional[Dict[str, A
         if state == "NOT STARTED":
             togo = (when.date() - today).days
             detail = f"{_days_word(togo)} to go"
-            if next_ms is None:
+            # Oct 12 2026: Ep009 named "the Route du Rhum race village
+            # opening in eight days" as the campaign's next milestone four
+            # days after the team announced Scott would not start. A race
+            # EMIRA IV is not in is never her next milestone.
+            if next_ms is None and c.get("emira_entered") is not False:
                 next_ms = {"label": c.get("label", ""), "days": togo, "date": when.date()}
         elif state == "RUNNING":
             detail = f"started {_days_word((today - when.date()).days)} ago"
@@ -276,7 +280,7 @@ def build_campaign_status(curated: Dict[str, Any], *, live: Optional[Dict[str, A
     lines.append(
         f"COUNTDOWN: {_days_word((vg - today).days)} to the Vendée Globe start ({_fmt(vg)})."
         + (f" Next milestone on record: {next_ms['label']} in {_days_word(next_ms['days'])} "
-           f"({_fmt(next_ms['date'])})." if next_ms else "")
+           f"({_fmt(next_ms['date'])})." if next_ms and next_ms["date"] != vg else "")
     )
     return "\n".join(lines)
 

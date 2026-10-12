@@ -161,6 +161,23 @@ _SELF_NARRATION = [
                r"|\btoday's pile\b", re.IGNORECASE),
     re.compile(r"\ball I (?:will|can) say\b|\binventing details\b|\bpadding\b"
                r"|\bword (?:count|target)\b", re.IGNORECASE),
+    # Oct 12 2026 slate: the source as a DOCUMENT the script stage reads
+    # from — LatAm Ep020 narrated its sources eleven times ("The published
+    # note gives the job figure…", "that is the paper's characterization",
+    # "What the report establishes on the page…", "On the progress file…"),
+    # Prediction Markets read its own checklist ("…in the material here.").
+    # Swept against every committed script: "on the page", "in that text"
+    # and "the written note" are prose elsewhere and are NOT matched.
+    re.compile(r"\bthe published (?:account|note|report|piece|text|item)\b"
+               r"|\bwhat the (?:report|article|piece|note|account) establishes\b"
+               r"|\bthe paper(?:'|’)?s characteri[sz]ation\b"
+               r"|\bthe progress file\b|\bheads the item\b", re.IGNORECASE),
+    re.compile(r"\bin the (?:material|text) here\b"
+               r"|\b(?:text|material) given for this\b", re.IGNORECASE),
+    # A segment label spoken as a lead-in ("Progress Watch: the day had
+    # none.") — the Oct 10 rule skips the section; this is its echo.
+    re.compile(r"^(?:Progress Watch|Both Sides|Also Today|The Board|"
+               r"How It Works|Counterpoint)\s*:", re.IGNORECASE),
 ]
 
 
