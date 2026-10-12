@@ -105,11 +105,22 @@
     },
     "image": "https://nerranetwork.com/assets/covers/models-agents.jpg",
     "transcript": "https://nerranetwork.com/blog/models_agents/ep201.html#transcript",
-    "associatedMedia": {
-      "@type": "MediaObject",
-      "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep201_20261012.mp3",
-      "inLanguage": "en"
-    }
+    "associatedMedia": [
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep201_20261012.mp3",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep201_20261012.fr.mp3",
+        "inLanguage": "fr"
+      }
+    ],
+    "availableLanguage": [
+      "en",
+      "fr"
+    ]
   }
 ]
     </script>
@@ -1874,21 +1885,27 @@
     
 
     
-    
-    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-i18n" id="listen" aria-label="Listen in another language">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    Listen to this episode
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    Listen in
                 </span>
+                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="fr" aria-pressed="false">Français</button>
+                
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep201_20261012.mp3">
-                <a href="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep201_20261012.mp3">Download the audio</a>
-            </audio>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep201_20261012.mp3"></audio>
         </div>
+        <script type="application/json" id="nn-i18n-tracks">
+{
+  "en": {"url": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep201_20261012.mp3", "title": "Self-scaling coding benchmarks just arrived, with difficulty now set by the agents themselves rather than fixed tasks.", "desc": "Self-scaling coding benchmarks just arrived, with difficulty now set by the agents themselves rather than fixed tasks."},
+  "fr": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep201_20261012.fr.mp3", "title": "Ep 201 : Les benchmarks de coding auto-évolutifs viennent d’arriver, la difficulté est désormais définie par les agents…", "desc": "Les benchmarks de coding auto-évolutifs viennent d’arriver, la difficulté étant désormais définie par les agents eux-mêmes plutôt que par des tâches fixes."}
+}
+        </script>
     </section>
-    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1981,6 +1998,85 @@
 <li>Web-agent robustness benchmarks will expand beyond chart deception to other forms of misleading visual evidence.
 </li>
 </ul>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="fr" hidden>
+                <p class="blog-translated-note">Français — AI-translated from the English episode.</p>
+                <p>Les bancs d&#x27;essai de code à difficulté auto-ajustée viennent d&#x27;arriver, et désormais, ce sont les agents eux-mêmes qui fixent la difficulté, plutôt que des tâches figées.</p>
+<p>Ici Models and Agents, épisode deux cent un.</p>
+<p>SWE-Duel, dans un article sur arXiv, oppose deux agents de code l&#x27;un à l&#x27;autre, sur des tours miroirs Rouge-Bleu, sur de vrais dépôts.</p>
+<p>À chaque tour, l&#x27;agent Rouge propose une fonctionnalité, l&#x27;implémente avec des tests, puis y glisse un bogue subtil, accompagné de tests déclencheurs scellés.</p>
+<p>La demande de fusion n&#x27;est acceptée que si elle passe les tests de la fonctionnalité et les tests existants, tout en échouant exactement aux tests du bogue, et qu&#x27;une session neuve du même agent peut réparer ce bogue à l&#x27;aveugle.</p>
+<p>L&#x27;agent Bleu relit le code sans savoir qu&#x27;un bogue existe, et il ne gagne que si sa révision passe les trois suites de tests.</p>
+<p>Un tournoi a fait s&#x27;affronter onze paires modèle-harnais, sur quinze dépôts, dans cinq langages, pendant mille cinq cents tours.</p>
+<p>G P T cinq virgule cinq avec Codex CLI a réparé quatre-vingt-dix-huit virgule trois pour cent des défauts, en tant que meilleur solveur, Claude Opus quatre virgule huit avec mini-swe-agent a mené comme auteur de tâches, avec un taux de victoire Rouge de vingt-sept virgule trois pour cent, et les versions plus récentes au sein d&#x27;une même famille ont produit des tâches plus difficiles.</p>
+<p>Elastic Latent Recurrence, aussi sur arXiv, supprime la taxe d&#x27;une boucle pour les modèles de langage en boucle, qui réutilisent les mêmes couches au lieu d&#x27;en empiler de nouvelles.</p>
+<p>Une mise à jour d&#x27;état à porte, avec une taille de pas apprise, plus un conditionnement sur l&#x27;indice de boucle, permet à un seul point de contrôle d&#x27;égaler la précision d&#x27;un modèle non récurrent dès une boucle, et chaque boucle ajoutée rapporte davantage de précision.</p>
+<p>Des profondeurs mixtes introduites tard dans le préentraînement, avec un conditionnement initialisé à zéro, réduisent le surcoût d&#x27;entraînement.</p>
+<p>Réutiliser les routes d&#x27;experts de la première boucle dans les modèles à mélange d&#x27;experts réduit le temps de mise à jour à profondeur mixte de onze virgule sept pour cent.</p>
+<p>Sur des hybrides denses de quatre milliards et des mélanges d&#x27;experts A trois B de trente milliards, quatre boucles ajoutent sept virgule vingt-cinq et quatre virgule soixante-quinze points sur une moyenne de dix tâches.</p>
+<p>Le post-entraînement donne Koi-four B, qui obtient un score estimé de dix-huit sur l&#x27;Artificial Analysis Intelligence Index, à une boucle.</p>
+<p>La modélisation de récompense multimodale non supervisée, sur arXiv, entraîne une tête linéaire sur une couche intermédiaire d&#x27;un modèle de base Qwen trois VL figé, pour noter une légende web au-dessus d&#x27;une version perturbée de la même légende.</p>
+<p>Les données étiquetées ne servent qu&#x27;à choisir la couche.</p>
+<p>La couche choisie vaut cinq virgule huit points de plus que la dernière couche.</p>
+<p>Une recette transférée sans réajustement bat ou égale G P T quatre o sur trois bancs d&#x27;essai, à l&#x27;échelle de trente-deux milliards, et mène VL-RewardBench de six virgule six points.</p>
+<p>Les perturbations enseignent à la tête figée trois à cinq points de plus que des paires RLAIF-V soigneusement sélectionnées, à budget égal, et l&#x27;objectif est convexe parce que le modèle de base reste figé.</p>
+<p>Neurograf version un, sur arXiv, est une famille de modèles de langage d&#x27;abord roumains, qui entraîne cinq modèles uniquement décodeur, de cent soixante millions à six milliards de paramètres, sur cent trente et un milliards de jetons issus d&#x27;un corpus roumain de six cent trente-cinq gigaoctets.</p>
+<p>La publication inclut aussi des assistants ajustés aux instructions et des plongements entraînés par contraste.</p>
+<p>Neurograf six B atteint soixante-neuf virgule quatre-vingt-neuf pour cent sur les questions en contexte roumain, dans le banc d&#x27;essai WWTBM de mille questions.</p>
+<p>Neurograf trois virgule deux B atteint soixante-sept virgule trente-huit pour cent.</p>
+<p>Une analyse optimale en calcul donne un exposant de mise à l&#x27;échelle des paramètres d&#x27;environ zéro virgule quatre cent vingt-trois.</p>
+<p>Chez G P T deux Small, Gemma deux deux B, et Llama trois virgule un huit B, une étude séparée sur arXiv trouve des têtes d&#x27;attention, des neurones de perceptron multicouche, et des caractéristiques d&#x27;autoencodeur creux qui corrèlent avec la narrativité.</p>
+<p>L&#x27;ablation d&#x27;ensembles sélectionnés augmente davantage la perte du jeton suivant sur les textes à haute narrativité, et réduit la narrativité des générations à fin ouverte.</p>
+<p>Les plus grands effets en aval portent sur la complétion d&#x27;histoires et le question-réponse narratif.</p>
+<p>Les bancs d&#x27;essai de créativité, rapporte un autre article arXiv, se situent plus loin dans la queue des distributions d&#x27;entrée-sortie de référence que les bancs d&#x27;essai standard.</p>
+<p>Les classements de modèles issus de sous-ensembles plus loin dans la queue s&#x27;alignent plus étroitement avec les jugements humains dans LM-Arena.</p>
+<p>Un nouveau diagnostic q à Tail alpha mesure la qualité moyenne des tâches sur la fraction de queue d&#x27;un banc d&#x27;essai existant, et montre une marge substantielle pour améliorer la créativité des grands modèles de langage grâce à de meilleures performances en queue.</p>
+<p>MisVisAgentBench, sur arXiv, contient deux cent quatre-vingts instances de tâches, en paires appariées propres-trompeuses, qui ne diffèrent que par les preuves des graphiques.</p>
+<p>Remplacer les graphiques propres par leurs homologues trompeurs réduit le taux de succès moyen des tâches de plus de trente-quatre points de pourcentage, sur treize agents web vision-langage.</p>
+<p>Les échecs suivent principalement la branche d&#x27;action trompeuse ciblée.</p>
+<p>SEEDS ajoute une admission de preuves guidée par aperçu aux agents de recherche, en exposant des aperçus légers des candidats récupérés, et en laissant l&#x27;agent décider conjointement quels candidats inspecter en entier, et combien, conditionné par son état de raisonnement actuel.</p>
+<p>Sur neuf bancs d&#x27;essai de questions-réponses intensives en connaissances, à la fois sur un corpus local et une recherche web en direct, SEEDS améliore l&#x27;efficacité de la recherche tout en réduisant substantiellement la consommation de preuves complètes.</p>
+<p>SOAR, sur arXiv, apporte l&#x27;apprentissage par renforcement conscient de la source aux agents de recherche, en démêlant les connaissances externes et internes en flux observables parallèles, via un flux de travail conscient de la source, puis en ajoutant une récompense cohérente avec la source.</p>
+<p>Sur des modèles de base de trois milliards et de sept milliards, il surpasse les références de sept virgule trois pour cent et cinq virgule quatre pour cent.</p>
+<p>Il réduit aussi la fabrication de preuves de soixante-quatorze virgule huit pour cent.</p>
+<p>CoBe teste l&#x27;édition de texte contrefactuelle sans exemple dans des agents conversationnels, avec deux mille questions, dans la santé, la science, les affaires, et des scénarios du quotidien.</p>
+<p>Les modèles de frontière atteignent un score moyen de cinquante-huit virgule zéro cinq pour cent, en basculant souvent vers une génération associationnelle plutôt que de préserver la structure causale du scénario d&#x27;origine.</p>
+<p>AutoIndexer, avec du code sur arXiv, entraîne des modèles causaux sur des chaînes d&#x27;éditions, pour l&#x27;édition de contexte après génération.</p>
+<p>Le modèle prédit des jetons marqueurs pour ouvrir et fermer les éditions tout en déplaçant un curseur, entraîné en perturbant les étiquettes de vérité terrain avec des opérations d&#x27;édition chaînées inverses.</p>
+<p>Il démontre l&#x27;insertion, la substitution et la suppression après génération, que la plupart des modèles autorégressifs et de diffusion n&#x27;ont pas, sans compromettre les bancs d&#x27;essai standard des grands modèles de langage.</p>
+<p>KV-Repurpose est un système basé sur vLLM qui permet la réutilisation du cache clé-valeur par segments, au-delà des préfixes exacts.</p>
+<p>Il combine un ordonnancement de segments conscient du cache, avec la construction d&#x27;invites et la gestion de capacité.</p>
+<p>Sous une charge de génération augmentée par récupération zipfienne, où vingt pour cent des requêtes partagent un préfixe fixe, il atteint un taux de succès de cache au niveau des jetons de soixante-trois virgule neuf pour cent, à trente gigaoctets de capacité, contre trois virgule trois pour cent pour le cache de préfixe.</p>
+<p>CliQ-RRG génère des comptes rendus de radiologie de style question-réponse, avec un alignement conscient des maladies.</p>
+<p>L&#x27;étape un aligne les représentations image et texte en utilisant des plongements de maladies prédits, renforcés par un module d&#x27;attention guidé par le prior.</p>
+<p>L&#x27;étape deux utilise une récupération guidée par GraphRAG et un grand modèle de langage pour restructurer le résultat en paires question-réponse concises, et le cadre surpasse les méthodes antérieures sur deux bancs d&#x27;essai publics de radiographies thoraciques, sur les métriques lexicales et cliniques.</p>
+<p>Un article finlandais sur l&#x27;apprentissage auto-supervisé de la parole part de deux virgule un millions d&#x27;heures d&#x27;audio brut de diffusion, et utilise la confiance de la reconnaissance automatique de la parole comme indicateur de la qualité des données de préentraînement.</p>
+<p>Ce filtre de confiance donne des améliorations relatives du taux d&#x27;erreur de mots de trois à sept pour cent par rapport au filtrage basé sur l&#x27;identification de langue, malgré un ensemble d&#x27;entraînement plus petit.</p>
+<p>Les modèles de base Transformer, Macaron-Net, Conformer et E-Branchformer sont comparés à budgets de paramètres appariés, avec les gains les plus grands à l&#x27;échelle Base et hors domaine.</p>
+<p>Lancez le harnais de tournoi SWE-Duel sur votre propre agent de code, et notez-le à la fois comme solveur et comme auteur de tâches, contre G P T cinq virgule cinq et Claude Opus quatre virgule huit.</p>
+<p>Clonez le dépôt AutoIndexer et posez-le sur une tâche de correction de code qui a besoin d&#x27;insertion, de substitution ou de suppression après la première génération.</p>
+<p>Comparez Neurograf six B à Qwen trois virgule cinq quatre B, sur des questions factuelles en contexte roumain, dans le banc d&#x27;essai WWTBM.</p>
+<p>Mettez SEEDS sur une charge de questions-réponses intensive en connaissances, et mesurez de combien la consommation de preuves complètes baisse, à qualité de réponse égale.</p>
+<p>On s&#x27;attend à davantage de bancs d&#x27;essai d&#x27;agents à difficulté auto-ajustée, à mesure que les suites statiques saturent.</p>
+<p>D&#x27;autres familles à poids ouverts publieront des points de contrôle en boucle ou à profondeur récurrente, qui échangent du calcul d&#x27;inférence contre de la précision au moment du service.</p>
+<p>Les bancs d&#x27;essai de robustesse des agents web s&#x27;étendront au-delà de la tromperie graphique, vers d&#x27;autres formes de preuves visuelles trompeuses.</p>
+<p>Le rappel à temps constant par étape, c&#x27;est là qu&#x27;on ouvre le capot d&#x27;une mémoire que ni l&#x27;état caché compressé d&#x27;un LSTM, ni l&#x27;état à dimension fixe de Mamba, ne vous donnent vraiment.</p>
+<p>Les systèmes à retard pour la modélisation de séquences remplacent cet état compressé unique par un retard explicite, adressable par le contenu, estimé à la volée.</p>
+<p>Le mécanisme central est un estimateur de décalage sémantique différentiable.</p>
+<p>Il produit des poids d&#x27;attention doux sur l&#x27;historique, à partir de la similarité entre l&#x27;entrée actuelle et les jetons passés.</p>
+<p>Chaque étape produit à la fois un vecteur de contexte historique pondéré et un score de similarité scalaire.</p>
+<p>Une formulation d&#x27;espace d&#x27;état diagonale résout ensuite la somme cumulative sous forme fermée.</p>
+<p>Ça donne une complexité d&#x27;ordre un par étape, sans boucles séquentielles à l&#x27;intérieur de la récurrence.</p>
+<p>Une couche de modulation sémantique floue apprend des règles dépendantes du contexte, qui décident combien de poids donner à l&#x27;entrée instantanée face à l&#x27;historique rappelé.</p>
+<p>Les centres de règles correspondent à des contextes sémantiques prototypiques, donc la politique reste interprétable.</p>
+<p>En classification et génération de texte, l&#x27;approche surpasse l&#x27;état de l&#x27;art antérieur.</p>
+<p>Le gain de qualité se réduit une fois que les modèles dépassent à peu près soixante-dix milliards de paramètres, parce que les plus grands modèles encodent déjà les dépendances à longue portée dans leurs couches d&#x27;attention.</p>
+<p>Utilisez cette technique quand vous avez besoin d&#x27;un rappel explicite et auditable d&#x27;événements passés spécifiques, sous des budgets de calcul serrés ; l&#x27;estimateur de décalage doit être entraîné sur des contextes sémantiques suffisamment divers, sinon il s&#x27;effondre et favorise toujours le jeton actuel.</p>
+<p>Avant de partir, les points de contrôle à poids ouverts en boucle, qui dépensent du calcul d&#x27;inférence supplémentaire pour la précision, sont le prochain compromis au moment du service à atterrir.</p>
+<p>C&#x27;était Models and Agents pour aujourd&#x27;hui. Si vous avez trouvé ça utile, partagez-le avec quelqu&#x27;un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain. Le monde de l&#x27;I A avance vite. On vous aide à suivre. À demain. Et si vous préférez regarder plutôt qu&#x27;écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l&#x27;émission.</p>
+<p>Conseil rapide du réseau : essayez Modern Investing Techniques ensuite — des stratégies modernes pour les investisseurs canadiens et américains. Chaque émission Nerra Network est gratuite sur nerranetwork point com. Si vous suivez plus d&#x27;une de nos émissions, Nerra Daily assemble tout le réseau en une écoute du matin — gratuit, avec des chapitres, sur nerranetwork point com nerra daily.</p>
+<p>Cet épisode a utilisé une synthèse vocale I A de ma voix — la sélection éditoriale et l&#x27;analyse sont les miennes.</p>
             </div>
             
 
@@ -2535,24 +2631,24 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 <h2>You Might Also Like</h2>
                 <div class="blog-related-grid">
                     
-                    <a href="../../blog/models_agents_beginners/ep193.html" class="blog-related-card" style="--card-show-color: #C2410C">
+                    <a href="../../blog/models_agents_beginners/ep194.html" class="blog-related-card" style="--card-show-color: #C2410C">
                         
                         <span class="blog-related-show" style="color: color-mix(in srgb, #C2410C, white 35%)">Models & Agents for Beginners</span>
-                        <h3>A new free AI tool lets you type a sentence and instantly explore a whole interactive world.</h3>
+                        <h3>ChatGPT just talked a company into waiving a big cancellation fee during a support chat.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/unintended_consequences/ep139.html" class="blog-related-card" style="--card-show-color: #B45309">
+                    <a href="../../blog/fascinating_frontiers/ep219.html" class="blog-related-card" style="--card-show-color: #6B47FF">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Unintended Consequences</span>
-                        <h3>South Georgia toothfish licenses meant to stop illegal fishing instead cut local orca calf survival.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #6B47FF, white 35%)">Fascinating Frontiers</span>
+                        <h3>Astronomers have fresh clues about the irregular dimming of Tabby's Star that once hinted at alien structures.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/modern_investing/ep197.html" class="blog-related-card" style="--card-show-color: #047857">
+                    <a href="../../blog/omni_view/ep202.html" class="blog-related-card" style="--card-show-color: #0B6FD6">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #047857, white 35%)">Modern Investing Techniques</span>
-                        <h3>Canadian investors may find valuation resets in retail as Aritzia lifts guidance after strong Q2 sales and tariff refunds.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #0B6FD6, white 35%)">Omni View</span>
+                        <h3>Panama declares a state of emergency after two major earthquakes damage buildings across every province.</h3>
                         
                     </a>
                     

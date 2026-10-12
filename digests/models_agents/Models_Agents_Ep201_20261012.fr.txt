@@ -1,0 +1,149 @@
+Les bancs d'essai de code à difficulté auto-ajustée viennent d'arriver, et désormais, ce sont les agents eux-mêmes qui fixent la difficulté, plutôt que des tâches figées.
+
+Ici Models and Agents, épisode deux cent un.
+
+SWE-Duel, dans un article sur arXiv, oppose deux agents de code l'un à l'autre, sur des tours miroirs Rouge-Bleu, sur de vrais dépôts.
+
+À chaque tour, l'agent Rouge propose une fonctionnalité, l'implémente avec des tests, puis y glisse un bogue subtil, accompagné de tests déclencheurs scellés.
+
+La demande de fusion n'est acceptée que si elle passe les tests de la fonctionnalité et les tests existants, tout en échouant exactement aux tests du bogue, et qu'une session neuve du même agent peut réparer ce bogue à l'aveugle.
+
+L'agent Bleu relit le code sans savoir qu'un bogue existe, et il ne gagne que si sa révision passe les trois suites de tests.
+
+Un tournoi a fait s'affronter onze paires modèle-harnais, sur quinze dépôts, dans cinq langages, pendant mille cinq cents tours.
+
+G P T cinq virgule cinq avec Codex CLI a réparé quatre-vingt-dix-huit virgule trois pour cent des défauts, en tant que meilleur solveur, Claude Opus quatre virgule huit avec mini-swe-agent a mené comme auteur de tâches, avec un taux de victoire Rouge de vingt-sept virgule trois pour cent, et les versions plus récentes au sein d'une même famille ont produit des tâches plus difficiles.
+
+Elastic Latent Recurrence, aussi sur arXiv, supprime la taxe d'une boucle pour les modèles de langage en boucle, qui réutilisent les mêmes couches au lieu d'en empiler de nouvelles.
+
+Une mise à jour d'état à porte, avec une taille de pas apprise, plus un conditionnement sur l'indice de boucle, permet à un seul point de contrôle d'égaler la précision d'un modèle non récurrent dès une boucle, et chaque boucle ajoutée rapporte davantage de précision.
+
+Des profondeurs mixtes introduites tard dans le préentraînement, avec un conditionnement initialisé à zéro, réduisent le surcoût d'entraînement.
+
+Réutiliser les routes d'experts de la première boucle dans les modèles à mélange d'experts réduit le temps de mise à jour à profondeur mixte de onze virgule sept pour cent.
+
+Sur des hybrides denses de quatre milliards et des mélanges d'experts A trois B de trente milliards, quatre boucles ajoutent sept virgule vingt-cinq et quatre virgule soixante-quinze points sur une moyenne de dix tâches.
+
+Le post-entraînement donne Koi-four B, qui obtient un score estimé de dix-huit sur l'Artificial Analysis Intelligence Index, à une boucle.
+
+La modélisation de récompense multimodale non supervisée, sur arXiv, entraîne une tête linéaire sur une couche intermédiaire d'un modèle de base Qwen trois VL figé, pour noter une légende web au-dessus d'une version perturbée de la même légende.
+
+Les données étiquetées ne servent qu'à choisir la couche.
+
+La couche choisie vaut cinq virgule huit points de plus que la dernière couche.
+
+Une recette transférée sans réajustement bat ou égale G P T quatre o sur trois bancs d'essai, à l'échelle de trente-deux milliards, et mène VL-RewardBench de six virgule six points.
+
+Les perturbations enseignent à la tête figée trois à cinq points de plus que des paires RLAIF-V soigneusement sélectionnées, à budget égal, et l'objectif est convexe parce que le modèle de base reste figé.
+
+Neurograf version un, sur arXiv, est une famille de modèles de langage d'abord roumains, qui entraîne cinq modèles uniquement décodeur, de cent soixante millions à six milliards de paramètres, sur cent trente et un milliards de jetons issus d'un corpus roumain de six cent trente-cinq gigaoctets.
+
+La publication inclut aussi des assistants ajustés aux instructions et des plongements entraînés par contraste.
+
+Neurograf six B atteint soixante-neuf virgule quatre-vingt-neuf pour cent sur les questions en contexte roumain, dans le banc d'essai WWTBM de mille questions.
+
+Neurograf trois virgule deux B atteint soixante-sept virgule trente-huit pour cent.
+
+Une analyse optimale en calcul donne un exposant de mise à l'échelle des paramètres d'environ zéro virgule quatre cent vingt-trois.
+
+Chez G P T deux Small, Gemma deux deux B, et Llama trois virgule un huit B, une étude séparée sur arXiv trouve des têtes d'attention, des neurones de perceptron multicouche, et des caractéristiques d'autoencodeur creux qui corrèlent avec la narrativité.
+
+L'ablation d'ensembles sélectionnés augmente davantage la perte du jeton suivant sur les textes à haute narrativité, et réduit la narrativité des générations à fin ouverte.
+
+Les plus grands effets en aval portent sur la complétion d'histoires et le question-réponse narratif.
+
+Les bancs d'essai de créativité, rapporte un autre article arXiv, se situent plus loin dans la queue des distributions d'entrée-sortie de référence que les bancs d'essai standard.
+
+Les classements de modèles issus de sous-ensembles plus loin dans la queue s'alignent plus étroitement avec les jugements humains dans LM-Arena.
+
+Un nouveau diagnostic q à Tail alpha mesure la qualité moyenne des tâches sur la fraction de queue d'un banc d'essai existant, et montre une marge substantielle pour améliorer la créativité des grands modèles de langage grâce à de meilleures performances en queue.
+
+MisVisAgentBench, sur arXiv, contient deux cent quatre-vingts instances de tâches, en paires appariées propres-trompeuses, qui ne diffèrent que par les preuves des graphiques.
+
+Remplacer les graphiques propres par leurs homologues trompeurs réduit le taux de succès moyen des tâches de plus de trente-quatre points de pourcentage, sur treize agents web vision-langage.
+
+Les échecs suivent principalement la branche d'action trompeuse ciblée.
+
+SEEDS ajoute une admission de preuves guidée par aperçu aux agents de recherche, en exposant des aperçus légers des candidats récupérés, et en laissant l'agent décider conjointement quels candidats inspecter en entier, et combien, conditionné par son état de raisonnement actuel.
+
+Sur neuf bancs d'essai de questions-réponses intensives en connaissances, à la fois sur un corpus local et une recherche web en direct, SEEDS améliore l'efficacité de la recherche tout en réduisant substantiellement la consommation de preuves complètes.
+
+SOAR, sur arXiv, apporte l'apprentissage par renforcement conscient de la source aux agents de recherche, en démêlant les connaissances externes et internes en flux observables parallèles, via un flux de travail conscient de la source, puis en ajoutant une récompense cohérente avec la source.
+
+Sur des modèles de base de trois milliards et de sept milliards, il surpasse les références de sept virgule trois pour cent et cinq virgule quatre pour cent.
+
+Il réduit aussi la fabrication de preuves de soixante-quatorze virgule huit pour cent.
+
+CoBe teste l'édition de texte contrefactuelle sans exemple dans des agents conversationnels, avec deux mille questions, dans la santé, la science, les affaires, et des scénarios du quotidien.
+
+Les modèles de frontière atteignent un score moyen de cinquante-huit virgule zéro cinq pour cent, en basculant souvent vers une génération associationnelle plutôt que de préserver la structure causale du scénario d'origine.
+
+AutoIndexer, avec du code sur arXiv, entraîne des modèles causaux sur des chaînes d'éditions, pour l'édition de contexte après génération.
+
+Le modèle prédit des jetons marqueurs pour ouvrir et fermer les éditions tout en déplaçant un curseur, entraîné en perturbant les étiquettes de vérité terrain avec des opérations d'édition chaînées inverses.
+
+Il démontre l'insertion, la substitution et la suppression après génération, que la plupart des modèles autorégressifs et de diffusion n'ont pas, sans compromettre les bancs d'essai standard des grands modèles de langage.
+
+KV-Repurpose est un système basé sur vLLM qui permet la réutilisation du cache clé-valeur par segments, au-delà des préfixes exacts.
+
+Il combine un ordonnancement de segments conscient du cache, avec la construction d'invites et la gestion de capacité.
+
+Sous une charge de génération augmentée par récupération zipfienne, où vingt pour cent des requêtes partagent un préfixe fixe, il atteint un taux de succès de cache au niveau des jetons de soixante-trois virgule neuf pour cent, à trente gigaoctets de capacité, contre trois virgule trois pour cent pour le cache de préfixe.
+
+CliQ-RRG génère des comptes rendus de radiologie de style question-réponse, avec un alignement conscient des maladies.
+
+L'étape un aligne les représentations image et texte en utilisant des plongements de maladies prédits, renforcés par un module d'attention guidé par le prior.
+
+L'étape deux utilise une récupération guidée par GraphRAG et un grand modèle de langage pour restructurer le résultat en paires question-réponse concises, et le cadre surpasse les méthodes antérieures sur deux bancs d'essai publics de radiographies thoraciques, sur les métriques lexicales et cliniques.
+
+Un article finlandais sur l'apprentissage auto-supervisé de la parole part de deux virgule un millions d'heures d'audio brut de diffusion, et utilise la confiance de la reconnaissance automatique de la parole comme indicateur de la qualité des données de préentraînement.
+
+Ce filtre de confiance donne des améliorations relatives du taux d'erreur de mots de trois à sept pour cent par rapport au filtrage basé sur l'identification de langue, malgré un ensemble d'entraînement plus petit.
+
+Les modèles de base Transformer, Macaron-Net, Conformer et E-Branchformer sont comparés à budgets de paramètres appariés, avec les gains les plus grands à l'échelle Base et hors domaine.
+
+Lancez le harnais de tournoi SWE-Duel sur votre propre agent de code, et notez-le à la fois comme solveur et comme auteur de tâches, contre G P T cinq virgule cinq et Claude Opus quatre virgule huit.
+
+Clonez le dépôt AutoIndexer et posez-le sur une tâche de correction de code qui a besoin d'insertion, de substitution ou de suppression après la première génération.
+
+Comparez Neurograf six B à Qwen trois virgule cinq quatre B, sur des questions factuelles en contexte roumain, dans le banc d'essai WWTBM.
+
+Mettez SEEDS sur une charge de questions-réponses intensive en connaissances, et mesurez de combien la consommation de preuves complètes baisse, à qualité de réponse égale.
+
+On s'attend à davantage de bancs d'essai d'agents à difficulté auto-ajustée, à mesure que les suites statiques saturent.
+
+D'autres familles à poids ouverts publieront des points de contrôle en boucle ou à profondeur récurrente, qui échangent du calcul d'inférence contre de la précision au moment du service.
+
+Les bancs d'essai de robustesse des agents web s'étendront au-delà de la tromperie graphique, vers d'autres formes de preuves visuelles trompeuses.
+
+Le rappel à temps constant par étape, c'est là qu'on ouvre le capot d'une mémoire que ni l'état caché compressé d'un LSTM, ni l'état à dimension fixe de Mamba, ne vous donnent vraiment.
+
+Les systèmes à retard pour la modélisation de séquences remplacent cet état compressé unique par un retard explicite, adressable par le contenu, estimé à la volée.
+
+Le mécanisme central est un estimateur de décalage sémantique différentiable.
+
+Il produit des poids d'attention doux sur l'historique, à partir de la similarité entre l'entrée actuelle et les jetons passés.
+
+Chaque étape produit à la fois un vecteur de contexte historique pondéré et un score de similarité scalaire.
+
+Une formulation d'espace d'état diagonale résout ensuite la somme cumulative sous forme fermée.
+
+Ça donne une complexité d'ordre un par étape, sans boucles séquentielles à l'intérieur de la récurrence.
+
+Une couche de modulation sémantique floue apprend des règles dépendantes du contexte, qui décident combien de poids donner à l'entrée instantanée face à l'historique rappelé.
+
+Les centres de règles correspondent à des contextes sémantiques prototypiques, donc la politique reste interprétable.
+
+En classification et génération de texte, l'approche surpasse l'état de l'art antérieur.
+
+Le gain de qualité se réduit une fois que les modèles dépassent à peu près soixante-dix milliards de paramètres, parce que les plus grands modèles encodent déjà les dépendances à longue portée dans leurs couches d'attention.
+
+Utilisez cette technique quand vous avez besoin d'un rappel explicite et auditable d'événements passés spécifiques, sous des budgets de calcul serrés ; l'estimateur de décalage doit être entraîné sur des contextes sémantiques suffisamment divers, sinon il s'effondre et favorise toujours le jeton actuel.
+
+Avant de partir, les points de contrôle à poids ouverts en boucle, qui dépensent du calcul d'inférence supplémentaire pour la précision, sont le prochain compromis au moment du service à atterrir.
+
+C'était Models and Agents pour aujourd'hui. Si vous avez trouvé ça utile, partagez-le avec quelqu'un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain. Le monde de l'I A avance vite. On vous aide à suivre. À demain. Et si vous préférez regarder plutôt qu'écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l'émission.
+
+Conseil rapide du réseau : essayez Modern Investing Techniques ensuite — des stratégies modernes pour les investisseurs canadiens et américains. Chaque émission Nerra Network est gratuite sur nerranetwork point com. Si vous suivez plus d'une de nos émissions, Nerra Daily assemble tout le réseau en une écoute du matin — gratuit, avec des chapitres, sur nerranetwork point com nerra daily.
+
+Cet épisode a utilisé une synthèse vocale I A de ma voix — la sélection éditoriale et l'analyse sont les miennes.
