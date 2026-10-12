@@ -86,6 +86,63 @@ def _summarise(status, data) -> str:
             f"{len(text)} chars | {text[:160]!r}")
 
 
+OLD_LEAD_PROMPT = (  # the Oct 11 prompt, verbatim shape, for comparison
+    "Search X for replies posted by @grok in the last {h} hours "
+    "in which Grok answers a question about: {topics}.\n\n"
+    "Choose EXPLANATIONS only — how or why something works, its history, "
+    "the engineering, physics or economics behind it, or a comparison of "
+    "two programs. Skip price or date predictions, jokes, opinions about a "
+    "person, roleplay, image requests, and anything off the topics above.\n\n"
+    "Return ONLY a structured list, one block per reply, separated by blank "
+    "lines:\n\nLEAD_QUESTION: [the question Grok was answering, in one plain sentence]\n"
+    "LEAD_ANSWER: [Grok's reply text]\nLEAD_URL: [https://x.com/grok/status/...]\n"
+    "LEAD_DATE: [YYYY-MM-DD]\n\nUp to 4 replies, the most substantive first. "
+    "If none qualify, return exactly: NO_LEADS\n"
+)
+
+
+def _text_and_usage(data) -> tuple:
+    text = ""
+    for i in (data.get("output") or []):
+        for c in i.get("content") or []:
+            if c.get("type") in ("output_text", "text"):
+                text += c.get("text", "")
+    u = (data.get("usage") or {}).get("server_side_tool_usage_details") or {}
+    return text, u.get("x_search_calls"), u.get("x_posts_fetched")
+
+
+def compare_lead_prompts(key: str) -> None:
+    """Old single-search prompt vs the per-subject prompt, on every show
+    with grok_leads on. Counts what parse_leads would keep."""
+    import time
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from engine.grok_leads import build_lead_prompt, parse_leads
+    shows = {}
+    for slug in ("spacex", "tesla", "models_agents", "ai_chips"):
+        raw = open(f"shows/{slug}.yaml", encoding="utf-8").read()
+        m = re.search(r'^grok_leads:\n(?:  .*\n)*?  topics: "([^"]+)"', raw, re.M)
+        if m:
+            shows[slug] = m.group(1)
+    print("\n=== grok leads: old prompt vs per-subject prompt ===")
+    for slug, topics in shows.items():
+        for label, prompt in (
+                ("old", OLD_LEAD_PROMPT.format(h=48, topics=topics)),
+                ("new", build_lead_prompt(topics, 4, 48))):
+            t0 = time.time()
+            status, data = _post(key, {
+                "model": MODEL,
+                "tools": [{"type": "x_search", "filters": {"allowed_x_handles": ["grok"]}}],
+                "input": [{"role": "user", "content": prompt}]})
+            if status != 200 or not isinstance(data, dict):
+                print(f"{slug:14s} {label}: HTTP {status} {str(data)[:200]}")
+                continue
+            text, calls, posts = _text_and_usage(data)
+            leads = parse_leads(text)
+            print(f"{slug:14s} {label}: {time.time() - t0:5.1f}s | x_search calls {calls} | "
+                  f"posts read {posts} | leads kept by parser {len(leads)} | "
+                  + "; ".join(lead.get("question", "")[:70] for lead in leads))
+
+
 def main() -> int:
     key = (os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY") or "").strip()
     if not key:
@@ -100,6 +157,7 @@ def main() -> int:
             status, data = _post(key, {"model": MODEL, "tools": [tool],
                                        "input": [{"role": "user", "content": prompt}]})
             print(f"{label:24s} {_summarise(status, data)}")
+    compare_lead_prompts(key)
     return 0
 
 
