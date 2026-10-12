@@ -1,0 +1,36 @@
+# Omni View Asia Pacific
+> **Sixteen people drowned in Bihar while collecting festival river water, and police say more may die.**
+
+**What You Need to Know:** Sixteen people drowned in Bihar while collecting festival river water, and police say more may die. Police link the Sunday deaths to high water after recent flooding, on the first day of Dussehra. Two children under fifteen died by electrocution in West Champaran on the way to a river.
+
+### Lead
+**16 people drowned to death in Bihar on the first day of Dussehra festival: The Hindu**
+At least 16 people are feared to have drowned in Bihar on Sunday, October 11, the first day of the 10-day Dussehra festival, while collecting river water for Kalash Sthapana, a ceremonial pot installed for prayers to Durga. A senior police official at Patna police headquarters, who asked not to be named, told The Hindu on Monday that recent flooding had raised river levels and that people had gone into deep water. He said 16 deaths occurred across the state on Sunday and that the toll may rise. Police officials said most drowning reports came from Muzaffarpur, Darbhanga and Sitamarhi; the official said three death incidents were reported from those districts and one death each in Samastipur, Sheohar, Bhojpur, Saran, Begusarai, Nawada and Rohtas. In Bagaha, under Ramnagar police station in West Champaran, two children, Sarvesh Kumar and Neeraj Kumar, both under 15, died by electrocution on their way to a river to collect the water. The festival runs until Vijayadashami on Tuesday, October 20. Source: [thehindu.com](https://www.thehindu.com/news/national/bihar/16-people-drowned-to-death-in-bihar-on-the-first-day-of-dussehra-festival/article71573726.ece)
+
+### Across the Region
+**Naga group seeks return of man's severed head after fresh Manipur violence, issues 48-hr ultimatum: The Hindu**
+The Joint Tribes Council Manipur on Sunday issued what it called a non-negotiable 48-hour ultimatum for the return of the severed head of Ajinbou R., 52, allegedly killed in a suspected militant attack on Makui Ashang village in Kangpokpi district on Saturday. His headless body was brought to Jawaharlal Nehru Institute of Medical Sciences in Imphal on Sunday night for post-mortem. A video purportedly showing his head among heavily armed militants in camouflage spread on Saturday. The council said the post-mortem will not be conducted until the head is returned for a dignified burial, that it will not allow state machinery to mutilate the remains further while militants treat the head as a trophy, and that it holds the state and central governments directly responsible, warning of the "most stringent measures" if the head is not located and returned. Chief Minister Y. Khemchand Singh condemned the killings and asked authorities to take immediate steps to restore peace and protect citizens. Source: [thehindu.com](https://www.thehindu.com/news/national/manipur/naga-group-seeks-return-of-mans-severed-head-after-fresh-manipur-violence-issues-48-hr-ultimatum/article71573905.ece)
+
+**Sydney private school made students share bed with teachers, inquiry hears: Sydney Morning Herald**
+A New South Wales parliamentary inquiry has heard that Redeemer Baptist School in Sydney made students share beds with teachers on mandatory camps, and that principal Jonathan Cannon walked naked in front of a child during a homestay. Former student Emma Hughes, who was not a member of the church, wrote that in 1998 a student often had to share a bed with a teacher because cabin space ran out, and she told the inquiry her teacher made students rotate each night. She wrote that nothing untoward happened to her, but that the practice was clearly inappropriate and unsafe. Former student Edward Garth said he was 12 in June 2015, living in a school homestay with a 14-year-old student and a 15-year-old international student, when he saw Cannon walk naked from a bathroom through a living room Cannon knew he was sharing with students; Garth said he reported it to Cannon's brother, an elder and school-board director, and was scolded. A Redeemer spokesperson said there was no record the suggested incident with Cannon occurred. Source: [smh.com.au](https://www.smh.com.au/national/nsw/sydney-private-school-made-students-share-bed-with-teachers-inquiry-hears-20261012-p6149c.html?ref=rss&utm_medium=rss&utm_source=rss_national)
+
+### Also Today
+**Magnitude 5.5 Earthquake Strikes Tonga in Pacific Ocean: Qatar news agency**
+A magnitude 5.5 earthquake struck Tonga on Monday, the US Geological Survey said, with the epicenter 123 kilometers west of Neiafu at a depth of 164.8 kilometers. Source: [qna.org.qa](https://qna.org.qa/en/News-Area/News/2026-10/12/magnitude-55-earthquake-strikes-tonga-in-pacific-ocean)
+
+**Football meme sparks boycott calls in Malaysia; Indonesian grooming brand apologises: CNA Asia**
+Indonesian men's grooming brand Kahf apologised after posting a meme following Indonesia's win in the inaugural FIFA ASEAN Cup, which critics said appeared to belittle Malaysia and other countries. Source: [channelnewsasia.com](https://www.channelnewsasia.com/asia/indonesia-brand-kahf-malaysia-boycott-6452076)
+
+**Boyfriend of murdered backpacker sues police over arrest: ABC News Australia**
+Tobias Moran has filed civil proceedings against NSW Police for malicious prosecution over his arrest in relation to the 2005 death of his girlfriend, Simone Strobel, in Lismore. Source: [abc.net.au](https://www.abc.net.au/news/2026-10-12/tobias-moran-sues-nsw-police-over-arrest/107256230)
+
+**Breaking: Police pursuit ends in serious crash in Perth's south: ABC News Australia**
+A police pursuit through Perth's southern suburbs ended in a serious crash, with one person taken to hospital and another in custody. Source: [abc.net.au](https://www.abc.net.au/news/2026-10-12/police-respond-to-serious-crash-in-leeming/107256838)
+
+### The Region and the World
+**Australian man rejects UAE links to Flydubai cockpit attack: ‘false accusations’: South China Morning Post Asia**
+A Melbourne man who leads an Islamic community centre has rejected what he called false accusations after prosecutors in the United Arab Emirates linked his organisation to an Omani Flydubai co-pilot accused of attacking the jet's captain. The centre chief decried claims that the co-pilot was radicalised at the Melbourne organisation. The co-pilot is now in custody in the UAE. Emirati prosecutors' findings, published by state media last week, said he drew inspiration from al-Qaeda's September 11, 2001 attacks and carried out the attempt with the aim of causing the greatest possible loss of life. Source: [scmp.com](https://www.scmp.com/news/asia/australasia/article/3370552/australian-man-rejects-uae-links-flydubai-cockpit-attack?utm_source=rss_feed)
+
+### Progress Watch
+**INS Mangrol, anti-submarine warfare shallow water craft, inducted into Navy: The Hindu**
+The Indian Navy has inducted INS Mangrol, an anti-submarine warfare shallow-water craft built with over 80 percent indigenous content, presented as a measure of India's warship construction and of fitting indigenous weapons and sensors. Source: [thehindu.com](https://www.thehindu.com/news/national/ins-mangrol-anti-submarine-warfare-shallow-water-craft-inducted-into-navy/article71573861.ece)
