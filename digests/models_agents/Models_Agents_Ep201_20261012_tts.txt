@@ -1,0 +1,149 @@
+Self-scaling coding benchmarks just arrived, with difficulty now set by the agents themselves rather than fixed tasks.
+
+This is Models and Agents, episode two hundred one.
+
+SWE-Duel, in a paper on arXiv, pits two coding agents against each other over mirrored Red-Blue turns on real repositories.
+
+In each turn the Red agent proposes a feature, implements it with tests, then embeds a subtle bug with sealed trigger tests.
+
+The pull request is admitted only if it passes the feature tests and the existing tests while failing exactly the bug tests, and a fresh session of the same agent can repair that bug blind.
+
+The Blue agent reviews without knowing a bug exists, and it wins only if its revision passes all three suites.
+
+A tournament ran eleven model-harness pairs on fifteen repositories in five languages for one thousand five hundred turns.
+
+G P T five point five with Codex CLI repaired ninety-eight point three percent of defects as the strongest solver, Claude Opus four point eight with mini-swe-agent led as task author at a twenty-seven point three percent Red win rate, and newer versions within a family produced harder tasks.
+
+Elastic Latent Recurrence, also on arXiv, removes the one-loop tax for looped language models, which reuse the same layers instead of stacking new ones.
+
+A gated state update with a learned step size, plus conditioning on the loop index, lets a single checkpoint match non-recurrent accuracy at one loop, and each added loop buys more accuracy.
+
+Mixed depths introduced late in pretraining with zero-initialized conditioning cut the added training cost.
+
+Reusing first-loop expert routes in mixture of experts models trims mixed-depth update time by eleven point seven percent.
+
+On four billion dense and thirty billion A three B mixture of experts hybrids, four loops add seven point two five and four point seven five points on a ten-task average.
+
+Post-training yields Koi-four B scoring an estimated eighteen on the Artificial Analysis Intelligence Index at one loop.
+
+Unsupervised multimodal reward modeling on arXiv trains a linear head on an intermediate layer of a frozen Qwen three VL backbone to score a web caption above a perturbed version of the same caption.
+
+Labeled data is used only to select the layer.
+
+The chosen layer is worth five point eight points over the last layer.
+
+One recipe transferred without re-tuning beats or matches G P T four o on three benchmarks at thirty-two billion scale and leads VL-RewardBench by six point six points.
+
+Perturbations teach the frozen head three to five points more than curated RLAIF-V pairs at equal budget, and the objective is convex because the backbone stays frozen.
+
+Neurograf version one, on arXiv, is a Romanian-first language-model family that trains five decoder-only models from one hundred sixty million to six billion parameters on one hundred thirty-one billion tokens from a six hundred thirty-five gigabyte Romanian corpus.
+
+The release also includes instruction-tuned assistants and contrastively trained embeddings.
+
+Neurograf six B reaches sixty-nine point eight nine percent on Romanian-context questions in the one thousand question WWTBM benchmark.
+
+Neurograf three point two B reaches sixty-seven point three eight percent.
+
+Compute-optimal analysis gives a parameter-scaling exponent of approximately zero point four two three.
+
+Across G P T two Small, Gemma two two B, and Llama three point one eight B, a separate arXiv study finds attention heads, multilayer perceptron neurons, and sparse autoencoder features that correlate with narrativity.
+
+Ablating selected sets increases next-token loss more on high-narrativity text and reduces the narrativity of open-ended generations.
+
+The largest downstream effects land on story completion and narrative question answering.
+
+Creativity benchmarks, another arXiv paper reports, lie further in the tail of reference input-output distributions than standard benchmarks.
+
+Model rankings from higher-tail subsets align more closely with human judgments in LM-Arena.
+
+A new q at Tail alpha diagnostic measures mean task quality on the tail fraction of an existing benchmark and shows substantial room to improve large language model creativity through stronger tail performance.
+
+MisVisAgentBench, on arXiv, contains two hundred eighty task instances in matched clean-misleading pairs that differ only in chart evidence.
+
+Replacing clean charts with misleading counterparts reduces average task success rate by more than thirty-four percentage points across thirteen vision-language web agents.
+
+Failures predominantly follow the targeted misleading action branch.
+
+SEEDS adds preview-guided evidence admission to search agents, exposing lightweight previews of retrieved candidates and letting the agent jointly decide which candidates and how many to inspect fully, conditioned on its current reasoning state.
+
+Across nine knowledge-intensive question-answering benchmarks under both a local corpus and live web search, SEEDS improves search effectiveness while substantially reducing full-evidence consumption.
+
+SOAR, on arXiv, brings source-aware reinforcement learning to search agents by disentangling external and internal knowledge into parallel observable streams through a Source-Aware Workflow, then adding a Source-Consistent Reward.
+
+On three billion and seven billion backbones it outperforms baselines by seven point three percent and five point four percent.
+
+It also reduces evidence fabrication by seventy-four point eight percent.
+
+CoBe tests zero-shot counterfactual text editing in conversational agents with two thousand questions across healthcare, science, business, and everyday scenarios.
+
+Frontier models achieve an average score of fifty-eight point zero five percent, frequently defaulting to associational generation rather than preserving the causal structure of the original scenario.
+
+AutoIndexer, with code on arXiv, trains causal models on chains of edits for post-generation context editing.
+
+The model predicts marker tokens for opening and closing edits while moving a cursor, trained by perturbing ground-truth labels with inverse chained edit operations.
+
+It demonstrates post-generation insertion, substitution, and deletion that most autoregressive and diffusion models lack, without compromising standard large language model benchmarks.
+
+KV-Repurpose is a vLLM-based system that enables segment-wise key-value cache reuse beyond exact prefixes.
+
+It combines cache-aware segment scheduling with prompt construction and capacity management.
+
+Under a Zipfian retrieval-augmented generation workload, where twenty percent of requests share a fixed prefix, it reaches a sixty-three point nine percent token-level cache hit rate at thirty gigabytes of capacity versus three point three percent for prefix caching.
+
+CliQ-RRG generates question-answer style radiology reports with disease-aware alignment.
+
+Stage one aligns image and text representations using predicted disease embeddings reinforced by a Prior-Guided Attention Module.
+
+Stage two uses GraphRAG-guided retrieval and a large language model to restructure the result into concise question-answer pairs, and the framework outperforms prior methods on two public chest X-ray benchmarks across lexical and clinical metrics.
+
+A Finnish speech self-supervised learning paper starts from two point one million hours of raw broadcast audio and uses automatic speech recognition confidence as a proxy for pretraining data quality.
+
+That confidence filter yields three to seven percent relative word error rate improvements over language-identification-based filtering despite a smaller training set.
+
+Transformer, Macaron-Net, Conformer, and E-Branchformer backbones are compared at matched parameter budgets, with gains largest at Base scale and out of domain.
+
+Run the SWE-Duel tournament harness on your own coding agent and score it as both solver and task author against G P T five point five and Claude Opus four point eight.
+
+Clone the AutoIndexer repo and drop it on a code-correction task that needs insertion, substitution, or deletion after the first generation.
+
+Compare Neurograf six B against Qwen three point five four B on Romanian-context factual questions in the WWTBM benchmark.
+
+Put SEEDS on a knowledge-intensive question-answering workload and measure how much full-evidence consumption drops at matched answer quality.
+
+More self-scaling agent benchmarks are expected as static suites saturate.
+
+Additional open-weight families will release looped or recurrent-depth checkpoints that trade inference compute for accuracy at serving time.
+
+Web-agent robustness benchmarks will expand beyond chart deception to other forms of misleading visual evidence.
+
+Constant-time per-step recall is where we pop the hood on a memory that neither the compressed hidden state of an LSTM nor the fixed-dimensional state of Mamba actually gives you.
+
+Time-delay systems for sequence modeling replace that single compressed state with an explicit, content-addressable delay that is estimated on the fly.
+
+The core mechanism is a differentiable semantic lag estimator.
+
+It produces soft attention weights over history from similarity between the current input and past tokens.
+
+Each step yields both a weighted historical context vector and a scalar similarity score.
+
+A diagonal state-space formulation then solves the cumulative sum in closed form.
+
+That delivers order-one per-step complexity, with no sequential loops inside the recurrence.
+
+A fuzzy semantic modulation layer learns context-dependent rules that decide how much weight to give the instantaneous input versus the recalled history.
+
+Rule centers correspond to prototypical semantic contexts, so the policy stays interpretable.
+
+On text classification and generation the approach outperforms prior state of the art.
+
+The quality gain shrinks once models exceed roughly seventy billion parameters, because larger models already encode long-range dependencies inside their attention layers.
+
+Use this technique when you need explicit, auditable recall of specific past events under tight compute budgets; the lag estimator must be trained on sufficiently diverse semantic contexts or it collapses to always favoring the current token.
+
+Before we go, looped open-weight checkpoints that spend extra inference compute for accuracy are the next serving-time trade to land.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+Quick tip from the network: try Modern Investing Techniques next — modern strategies for Canadian and U.S. investors. Every Nerra Network show is free at nerranetwork dot com. If you follow more than one of our shows, Nerra Daily stitches the whole network into one morning listen — free, with chapters, at nerranetwork dot com nerra daily.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

@@ -1,0 +1,406 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.920
+Self-scaling coding benchmarks just arrived, with difficulty now set by the agents themselves rather than fixed tasks. This is Models &amp; Agents Episode 201. Sweet dual in a paper on RxIV, pits two coding agents against each other over mirrored red-blue turns on real repositories. In each turn, the red agent proposes a feature, implements it with tests, then embeds a subtle bug with sealed trigger tests. The pull request is admitted only if it passes the feature tests and the existing tests while failing
+
+00:00:29.920 --> 00:00:34.960
+exactly the bug tests, and a fresh session of the same agent can repair that bug blind.
+
+00:00:35.540 --> 00:00:40.100
+The blue agent reviews without knowing a bug exists, and it wins only if its revision
+
+00:00:40.100 --> 00:00:41.520
+passes all three suites.
+
+00:00:42.000 --> 00:00:48.220
+A tournament ran, 11 model harness pairs on 15 repositories in five languages for 1,500
+
+00:00:48.220 --> 00:00:48.680
+turns.
+
+00:00:49.220 --> 00:00:55.680
+GPT 5.5 with Codex CLI repaired 98.3% of defects as the strongest solver.
+
+00:00:55.680 --> 00:01:02.600
+Clawed Opus 4.8 with mini-swee agent led as task author at a 27.3% red win rate.
+
+00:01:03.080 --> 00:01:05.900
+And newer versions within a family produced harder tasks.
+
+00:01:06.440 --> 00:01:12.340
+Elastic latent recurrence, also on RXIV, removes the one-loop tax for loop language models,
+
+00:01:12.720 --> 00:01:15.540
+which reuse the same layers instead of stacking new ones.
+
+00:01:16.020 --> 00:01:20.880
+A gated state update with a learned step size, plus conditioning on the loop index lets
+
+00:01:20.880 --> 00:01:25.480
+That's a single checkpoint match, non-recurrent accuracy at one loop, and each added loop
+
+00:01:25.480 --> 00:01:26.600
+buys more accuracy.
+
+00:01:27.340 --> 00:01:31.560
+Mixed depths introduce late in pre-training with zero initialized conditioning, cut the
+
+00:01:31.560 --> 00:01:32.580
+added training cost.
+
+00:01:33.180 --> 00:01:37.980
+Reusing first-loop expert routes in mixture of experts models, trims mixed depth update
+
+00:01:37.980 --> 00:01:40.160
+time by 11.7%.
+
+00:01:40.460 --> 00:01:47.680
+On 4 billion dense and 30 billion A3B mixture of experts hybrids, four loops add 7.25 and
+
+00:01:47.680 --> 00:01:50.320
+4.75 points on a 10-task average.
+
+00:01:50.820 --> 00:01:56.780
+Post-training yields Koi-4B scoring an estimated 18 on the artificial analysis intelligence index
+
+00:01:56.780 --> 00:01:57.540
+at one loop.
+
+00:01:58.160 --> 00:02:03.520
+Unsupervised multimodal reward modeling on RX-IV trains a linear head on an intermediate
+
+00:02:03.520 --> 00:02:09.180
+layer of a frozen Quinn-3-VL backbone to score a web caption above a perturbed version
+
+00:02:09.180 --> 00:02:10.160
+of the same caption.
+
+00:02:10.840 --> 00:02:13.180
+Label data is used only to select the layer.
+
+00:02:13.700 --> 00:02:16.940
+The chosen layer is worth 5.8 points over the last layer.
+
+00:02:16.940 --> 00:02:22.140
+one recipe transferred without retuning beats or matches GPT-40 on three
+
+00:02:22.140 --> 00:02:27.760
+benchmarks at 32 billion scale and leads VL reward bench by 6.6 points.
+
+00:02:28.120 --> 00:02:31.800
+Perturbations teach the frozen head three to five points more than curated
+
+00:02:31.800 --> 00:02:37.200
+RLIF V pairs at equal budget, and the objective is convex because the backbone
+
+00:02:37.200 --> 00:02:43.460
+stays frozen. Neurograph version one on RXIV is a Romanian first language model
+
+00:02:43.460 --> 00:02:49.160
+family that trains five decoder-only models from 160 million to 6 billion parameters on
+
+00:02:49.160 --> 00:02:56.820
+131 billion tokens from a 635 gigabyte Romanian corpus. The release also includes instruction
+
+00:02:56.820 --> 00:03:04.260
+tune assistance and contrastively trained embeddings. Neurograph 6B reaches 69.89% on Romanian
+
+00:03:04.260 --> 00:03:08.720
+in context questions in the 1000-question W-W-T-B-M benchmark.
+
+00:03:09.480 --> 00:03:13.360
+Neurograph 3.2-B reaches 67.38 percent.
+
+00:03:13.920 --> 00:03:19.540
+Compute optimal analysis gives a parameter scaling exponent of approximately 0.423
+
+00:03:20.100 --> 00:03:25.200
+across GPT-2 small, Gemma-2-2-B, and Lama-3.18-B.
+
+00:03:25.600 --> 00:03:30.280
+A separate RX-IV study finds attention heads, multi-layer perceptron neurons,
+
+00:03:30.280 --> 00:03:33.840
+and sparse autoencoder features that correlate with narrativity.
+
+00:03:34.460 --> 00:03:39.200
+Oblating selected sets increases next token loss more on high narrativity text
+
+00:03:39.200 --> 00:03:42.340
+and reduces the narrativity of open-ended generations.
+
+00:03:42.900 --> 00:03:47.460
+The largest downstream effects land on story completion and narrative question answering.
+
+00:03:48.220 --> 00:03:51.380
+Creativity benchmarks, another RXIV paper reports,
+
+00:03:51.900 --> 00:03:56.280
+lie further in the tale of reference input output distributions than standard benchmarks.
+
+00:03:56.280 --> 00:03:56.520
+Marks.
+
+00:03:57.060 --> 00:04:02.100
+Model rankings from higher-tail subsets align more closely with human judgments in LM Arena.
+
+00:04:02.760 --> 00:04:07.800
+A new QAT-Tail Alpha Diagnostic measures mean task quality on the tail fraction of an
+
+00:04:07.800 --> 00:04:12.720
+existing benchmark, and shows substantial room to improve large language model creativity
+
+00:04:12.720 --> 00:04:14.380
+through stronger tail performance.
+
+00:04:15.080 --> 00:04:21.960
+Misvis agent bench on RXIV contains 280 task instances in matched clean misleading pairs
+
+00:04:21.960 --> 00:04:27.240
+that differ only in chart evidence. Replacing clean charts with misleading counterparts reduces
+
+00:04:27.240 --> 00:04:32.980
+average task success rate by more than 34 percentage points across 13 vision-language web agents.
+
+00:04:33.680 --> 00:04:37.040
+Failures predominantly follow the targeted misleading action branch.
+
+00:04:37.920 --> 00:04:42.320
+Seeds adds preview-guided evidence admission to search agents, exposing lightweight
+
+00:04:42.320 --> 00:04:47.240
+previews of retrieved candidates and letting the agent jointly decide which candidates and how
+
+00:04:47.240 --> 00:04:53.000
+many to inspect fully, conditioned on its current reasoning state. Across nine knowledge-intensive
+
+00:04:53.000 --> 00:04:58.100
+question-answering benchmarks under both a local corpus and live web search, seeds
+
+00:04:58.100 --> 00:05:02.160
+improve search effectiveness while substantially reducing full evidence consumption.
+
+00:05:02.880 --> 00:05:08.400
+SOAR on RxIV brings source-aware reinforcement learning to search agents by disentangling
+
+00:05:08.400 --> 00:05:14.060
+external and internal knowledge into parallel observable streams through a source-aware workflow,
+
+00:05:14.060 --> 00:05:19.680
+then adding a source consistent reward. On 3 billion and 7 billion backbones it
+
+00:05:19.680 --> 00:05:26.820
+outperforms baselines by 7.3% and 5.4%. It also reduces evidence fabrication by
+
+00:05:26.820 --> 00:05:32.960
+74.8%. Coby tests zero-shot counterfactual text editing in conversational
+
+00:05:32.960 --> 00:05:37.380
+agents with 2,000 questions across healthcare, science, business, and everyday
+
+00:05:37.380 --> 00:05:43.700
+scenarios. Frontier models achieve an average score of 58.05%. Frequently
+
+00:05:43.700 --> 00:05:48.140
+defaulting to associational generation rather than preserving the causal structure of
+
+00:05:48.140 --> 00:05:49.220
+the original scenario.
+
+00:05:49.960 --> 00:05:55.320
+Auto-indexer with code on RXIV trains causal models on chains of edits for post-generation
+
+00:05:55.320 --> 00:05:56.520
+context editing.
+
+00:05:57.020 --> 00:06:02.260
+The model predicts marker tokens for opening and closing edits while moving a cursor, trained
+
+00:06:02.260 --> 00:06:06.020
+by perturbing ground-truth labels with inverse-chained edit operations.
+
+00:06:06.660 --> 00:06:12.440
+It demonstrates post-generation insertion, substitution, and deletion that most auto-regressive and diffusion
+
+00:06:12.440 --> 00:06:16.900
+model's lack, without compromising standard large language model benchmarks.
+
+00:06:17.600 --> 00:06:24.940
+KV repurposes a VLLM-based system that enables segment-wise key-value cache reuse beyond exact prefixes.
+
+00:06:25.540 --> 00:06:30.320
+It combines cache-aware segment scheduling with prompt construction and capacity management.
+
+00:06:30.920 --> 00:06:37.160
+Under a Zipfian retrieval augmented-generation workload, where 20% of requests share a fixed prefix,
+
+00:06:37.160 --> 00:06:45.640
+It reaches a 63.9% token level cash hit rate at 30GB of capacity, versus 3.3% for prefix
+
+00:06:45.640 --> 00:06:46.180
+caching.
+
+00:06:46.820 --> 00:06:52.120
+Click URRG generates question-answer-style radiology reports with disease-aware alignment.
+
+00:06:52.740 --> 00:06:57.800
+Stage 1 aligns image and text representations using predicted disease embeddings reinforced
+
+00:06:57.800 --> 00:06:59.860
+by a prior guided attention module.
+
+00:07:00.560 --> 00:07:05.820
+Stage 2 uses graph RAG guided retrieval and a large language model to restructure the
+
+00:07:05.820 --> 00:07:10.700
+result into concise question answer pairs, and the framework outperforms prior methods
+
+00:07:10.700 --> 00:07:15.040
+on two public chest X-ray benchmarks across lexical and clinical metrics.
+
+00:07:15.600 --> 00:07:20.820
+A finished speech self-supervised learning paper starts from 2.1 million hours of raw broadcast
+
+00:07:20.820 --> 00:07:26.740
+audio, and uses automatic speech recognition confidence as a proxy for pre-training data quality.
+
+00:07:27.160 --> 00:07:33.200
+That confidence filter yields 3-7% relative word error rate improvements over language identification
+
+00:07:33.200 --> 00:07:39.700
+based filtering, despite a smaller training set. Transformer, macaronnet, conformer, and e-branch
+
+00:07:39.700 --> 00:07:45.400
+former backbones are compared at matched parameter budgets, with gains largest at base scale and out
+
+00:07:45.400 --> 00:07:50.500
+of domain. Run the sweet dual tournament harness on your own coding agent and score it as both
+
+00:07:50.500 --> 00:07:58.740
+solver and task author against GPT 5.5 and Claude Opus 4.8. Clone the auto indexer repo and drop it on
+
+00:07:58.740 --> 00:08:03.920
+a code correction task that needs insertion, substitution, or deletion after the first generation.
+
+00:08:04.560 --> 00:08:10.960
+Compare neurograph 6B against Quinn 3.54B on Romanian context factual questions in the
+
+00:08:10.960 --> 00:08:17.300
+WWTBM benchmark. Put seeds on a knowledge-intensive question answering workload and measure how
+
+00:08:17.300 --> 00:08:22.880
+much full evidence consumption drops at matched answer quality. More self-scaling agent benchmarks
+
+00:08:22.880 --> 00:08:28.220
+are expected as static suite saturate. Additional open-weight families will release looped
+
+00:08:28.220 --> 00:08:32.660
+or recurrent depth checkpoints that trade inference compute for accuracy at serving time.
+
+00:08:33.360 --> 00:08:38.180
+Web agent robustness benchmarks will expand beyond chart deception to other forms of misleading
+
+00:08:38.180 --> 00:08:39.100
+visual evidence.
+
+00:08:39.780 --> 00:08:44.220
+Constant time per step recall is where we pop the hood on a memory that neither the compressed
+
+00:08:44.220 --> 00:08:49.260
+hidden state of an LSTM nor the fixed dimensional state of Mamba actually gives you.
+
+00:08:49.740 --> 00:08:54.440
+Time delay systems for sequence modeling replace that single compressed state with an explicit,
+
+00:08:54.440 --> 00:08:57.720
+it, content-addressable delay that is estimated on the fly.
+
+00:08:58.300 --> 00:09:01.820
+The core mechanism is a differentiable semantic lag estimator.
+
+00:09:02.320 --> 00:09:06.660
+It produces soft attention weights over history from similarity between the current input
+
+00:09:06.660 --> 00:09:07.620
+and past tokens.
+
+00:09:08.260 --> 00:09:12.960
+Each step yields both a weighted historical context vector and a scalar similarity score.
+
+00:09:13.560 --> 00:09:18.140
+A diagonal state space formulation then solves the cumulative sum in closed form.
+
+00:09:18.600 --> 00:09:23.560
+That delivers order one per step complexity with no sequential loops inside the recurrence.
+
+00:09:23.560 --> 00:09:28.960
+A fuzzy semantic modulation layer learns context-dependent rules that decide how much weight
+
+00:09:28.960 --> 00:09:32.080
+to give the instantaneous input versus the recalled history.
+
+00:09:32.760 --> 00:09:38.180
+Rule centers correspond to prototypical semantic contexts, so the policy stays interpretable.
+
+00:09:38.680 --> 00:09:43.100
+On text classification and generation, the approach outperforms prior state of the art.
+
+00:09:43.680 --> 00:09:48.780
+The quality gains shrinks once models exceed roughly 70 billion parameters, because larger
+
+00:09:48.780 --> 00:09:52.660
+Motor models already encode long-range dependencies inside their attention layers.
+
+00:09:53.280 --> 00:09:57.980
+Use this technique when you need explicit, auditable recall of specific past events under
+
+00:09:57.980 --> 00:09:59.020
+tight compute budgets.
+
+00:09:59.680 --> 00:10:04.760
+The lag estimator must be trained on sufficiently diverse semantic contexts, or it collapses
+
+00:10:04.760 --> 00:10:06.540
+to always favoring the current token.
+
+00:10:07.160 --> 00:10:11.940
+Before we go, looped open-weight checkpoints that spend extra inference compute for accuracy
+
+00:10:11.940 --> 00:10:14.000
+are the next serving-time trade to land.
+
+00:10:14.640 --> 00:10:16.300
+That's models and agents for today.
+
+00:10:16.300 --> 00:10:20.620
+If you found this useful, share it with someone who is trying to keep up with all these changes,
+
+00:10:21.040 --> 00:10:23.300
+and subscribe so you don't miss tomorrow's update.
+
+00:10:23.820 --> 00:10:28.500
+The AI world moves fast, we'll help you keep up, see you tomorrow, and if you'd rather
+
+00:10:28.500 --> 00:10:33.140
+watch than listen, find us on YouTube at Narin Network, links in the show notes.
+
+00:10:33.660 --> 00:10:38.920
+Quick tip from the network, try modern investing techniques next, modern strategies for Canadian
+
+00:10:38.920 --> 00:10:40.080
+and US investors.
+
+00:10:40.600 --> 00:10:43.860
+Every Narin Network show is free at NarinNetwork.com.
+
+00:10:43.860 --> 00:10:48.360
+If you follow more than one of our shows, Narra Daily stitches the whole network into
+
+00:10:48.360 --> 00:10:53.420
+one morning listen, free with chapters at narennetwork.com, Narra Daily.
+
+00:10:53.960 --> 00:10:59.480
+This episode used AI voice synthesis of my voice, editorial selection, and analysis are my
+
+00:10:59.480 --> 00:10:59.700
+own.

@@ -1,0 +1,135 @@
+Self-scaling coding benchmarks just arrived, with difficulty now set by the agents themselves rather than fixed tasks. This is Models & Agents Episode 201. Sweet dual in a paper on RxIV, pits two coding agents against each other over mirrored red-blue turns on real repositories. In each turn, the red agent proposes a feature, implements it with tests, then embeds a subtle bug with sealed trigger tests. The pull request is admitted only if it passes the feature tests and the existing tests while failing
+exactly the bug tests, and a fresh session of the same agent can repair that bug blind.
+The blue agent reviews without knowing a bug exists, and it wins only if its revision
+passes all three suites.
+A tournament ran, 11 model harness pairs on 15 repositories in five languages for 1,500
+turns.
+GPT 5.5 with Codex CLI repaired 98.3% of defects as the strongest solver.
+Clawed Opus 4.8 with mini-swee agent led as task author at a 27.3% red win rate.
+And newer versions within a family produced harder tasks.
+Elastic latent recurrence, also on RXIV, removes the one-loop tax for loop language models,
+which reuse the same layers instead of stacking new ones.
+A gated state update with a learned step size, plus conditioning on the loop index lets
+That's a single checkpoint match, non-recurrent accuracy at one loop, and each added loop
+buys more accuracy.
+Mixed depths introduce late in pre-training with zero initialized conditioning, cut the
+added training cost.
+Reusing first-loop expert routes in mixture of experts models, trims mixed depth update
+time by 11.7%.
+On 4 billion dense and 30 billion A3B mixture of experts hybrids, four loops add 7.25 and
+4.75 points on a 10-task average.
+Post-training yields Koi-4B scoring an estimated 18 on the artificial analysis intelligence index
+at one loop.
+Unsupervised multimodal reward modeling on RX-IV trains a linear head on an intermediate
+layer of a frozen Quinn-3-VL backbone to score a web caption above a perturbed version
+of the same caption.
+Label data is used only to select the layer.
+The chosen layer is worth 5.8 points over the last layer.
+one recipe transferred without retuning beats or matches GPT-40 on three
+benchmarks at 32 billion scale and leads VL reward bench by 6.6 points.
+Perturbations teach the frozen head three to five points more than curated
+RLIF V pairs at equal budget, and the objective is convex because the backbone
+stays frozen. Neurograph version one on RXIV is a Romanian first language model
+family that trains five decoder-only models from 160 million to 6 billion parameters on
+131 billion tokens from a 635 gigabyte Romanian corpus. The release also includes instruction
+tune assistance and contrastively trained embeddings. Neurograph 6B reaches 69.89% on Romanian
+in context questions in the 1000-question W-W-T-B-M benchmark.
+Neurograph 3.2-B reaches 67.38 percent.
+Compute optimal analysis gives a parameter scaling exponent of approximately 0.423
+across GPT-2 small, Gemma-2-2-B, and Lama-3.18-B.
+A separate RX-IV study finds attention heads, multi-layer perceptron neurons,
+and sparse autoencoder features that correlate with narrativity.
+Oblating selected sets increases next token loss more on high narrativity text
+and reduces the narrativity of open-ended generations.
+The largest downstream effects land on story completion and narrative question answering.
+Creativity benchmarks, another RXIV paper reports,
+lie further in the tale of reference input output distributions than standard benchmarks.
+Marks.
+Model rankings from higher-tail subsets align more closely with human judgments in LM Arena.
+A new QAT-Tail Alpha Diagnostic measures mean task quality on the tail fraction of an
+existing benchmark, and shows substantial room to improve large language model creativity
+through stronger tail performance.
+Misvis agent bench on RXIV contains 280 task instances in matched clean misleading pairs
+that differ only in chart evidence. Replacing clean charts with misleading counterparts reduces
+average task success rate by more than 34 percentage points across 13 vision-language web agents.
+Failures predominantly follow the targeted misleading action branch.
+Seeds adds preview-guided evidence admission to search agents, exposing lightweight
+previews of retrieved candidates and letting the agent jointly decide which candidates and how
+many to inspect fully, conditioned on its current reasoning state. Across nine knowledge-intensive
+question-answering benchmarks under both a local corpus and live web search, seeds
+improve search effectiveness while substantially reducing full evidence consumption.
+SOAR on RxIV brings source-aware reinforcement learning to search agents by disentangling
+external and internal knowledge into parallel observable streams through a source-aware workflow,
+then adding a source consistent reward. On 3 billion and 7 billion backbones it
+outperforms baselines by 7.3% and 5.4%. It also reduces evidence fabrication by
+74.8%. Coby tests zero-shot counterfactual text editing in conversational
+agents with 2,000 questions across healthcare, science, business, and everyday
+scenarios. Frontier models achieve an average score of 58.05%. Frequently
+defaulting to associational generation rather than preserving the causal structure of
+the original scenario.
+Auto-indexer with code on RXIV trains causal models on chains of edits for post-generation
+context editing.
+The model predicts marker tokens for opening and closing edits while moving a cursor, trained
+by perturbing ground-truth labels with inverse-chained edit operations.
+It demonstrates post-generation insertion, substitution, and deletion that most auto-regressive and diffusion
+model's lack, without compromising standard large language model benchmarks.
+KV repurposes a VLLM-based system that enables segment-wise key-value cache reuse beyond exact prefixes.
+It combines cache-aware segment scheduling with prompt construction and capacity management.
+Under a Zipfian retrieval augmented-generation workload, where 20% of requests share a fixed prefix,
+It reaches a 63.9% token level cash hit rate at 30GB of capacity, versus 3.3% for prefix
+caching.
+Click URRG generates question-answer-style radiology reports with disease-aware alignment.
+Stage 1 aligns image and text representations using predicted disease embeddings reinforced
+by a prior guided attention module.
+Stage 2 uses graph RAG guided retrieval and a large language model to restructure the
+result into concise question answer pairs, and the framework outperforms prior methods
+on two public chest X-ray benchmarks across lexical and clinical metrics.
+A finished speech self-supervised learning paper starts from 2.1 million hours of raw broadcast
+audio, and uses automatic speech recognition confidence as a proxy for pre-training data quality.
+That confidence filter yields 3-7% relative word error rate improvements over language identification
+based filtering, despite a smaller training set. Transformer, macaronnet, conformer, and e-branch
+former backbones are compared at matched parameter budgets, with gains largest at base scale and out
+of domain. Run the sweet dual tournament harness on your own coding agent and score it as both
+solver and task author against GPT 5.5 and Claude Opus 4.8. Clone the auto indexer repo and drop it on
+a code correction task that needs insertion, substitution, or deletion after the first generation.
+Compare neurograph 6B against Quinn 3.54B on Romanian context factual questions in the
+WWTBM benchmark. Put seeds on a knowledge-intensive question answering workload and measure how
+much full evidence consumption drops at matched answer quality. More self-scaling agent benchmarks
+are expected as static suite saturate. Additional open-weight families will release looped
+or recurrent depth checkpoints that trade inference compute for accuracy at serving time.
+Web agent robustness benchmarks will expand beyond chart deception to other forms of misleading
+visual evidence.
+Constant time per step recall is where we pop the hood on a memory that neither the compressed
+hidden state of an LSTM nor the fixed dimensional state of Mamba actually gives you.
+Time delay systems for sequence modeling replace that single compressed state with an explicit,
+it, content-addressable delay that is estimated on the fly.
+The core mechanism is a differentiable semantic lag estimator.
+It produces soft attention weights over history from similarity between the current input
+and past tokens.
+Each step yields both a weighted historical context vector and a scalar similarity score.
+A diagonal state space formulation then solves the cumulative sum in closed form.
+That delivers order one per step complexity with no sequential loops inside the recurrence.
+A fuzzy semantic modulation layer learns context-dependent rules that decide how much weight
+to give the instantaneous input versus the recalled history.
+Rule centers correspond to prototypical semantic contexts, so the policy stays interpretable.
+On text classification and generation, the approach outperforms prior state of the art.
+The quality gains shrinks once models exceed roughly 70 billion parameters, because larger
+Motor models already encode long-range dependencies inside their attention layers.
+Use this technique when you need explicit, auditable recall of specific past events under
+tight compute budgets.
+The lag estimator must be trained on sufficiently diverse semantic contexts, or it collapses
+to always favoring the current token.
+Before we go, looped open-weight checkpoints that spend extra inference compute for accuracy
+are the next serving-time trade to land.
+That's models and agents for today.
+If you found this useful, share it with someone who is trying to keep up with all these changes,
+and subscribe so you don't miss tomorrow's update.
+The AI world moves fast, we'll help you keep up, see you tomorrow, and if you'd rather
+watch than listen, find us on YouTube at Narin Network, links in the show notes.
+Quick tip from the network, try modern investing techniques next, modern strategies for Canadian
+and US investors.
+Every Narin Network show is free at NarinNetwork.com.
+If you follow more than one of our shows, Narra Daily stitches the whole network into
+one morning listen, free with chapters at narennetwork.com, Narra Daily.
+This episode used AI voice synthesis of my voice, editorial selection, and analysis are my
+own.
