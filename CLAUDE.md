@@ -1801,6 +1801,27 @@ the operator provisions KV + the `nerra-personal` bucket + secrets
 guards: `tests/test_nerra_personal.py`,
 `workers/gallery/test/personal.test.ts`.
 
+### Gated shows — members-only and public-weekly (Oct 13 2026)
+
+Operator-directed: some shows will publish only for Nerra Personal members
+who carry them, some publicly one weekday with the daily episodes for
+members. **`engine/access.py` owns the decision; `access:` in the show
+YAML is the setting (`public` default — every show is public today and a
+guard says so).** Rules that bind: the demand gate runs before any spend
+and skips `no_member_demand` at zero, but UNKNOWN demand produces (a paying
+member may be waiting); an unknown `access.mode` RAISES, never publishes;
+a members episode stops between the rehearsal stop and the publish phase —
+audio to the private bucket, text to `digests/<dir>/members/`, the ledger
+`members/episodes.json` (also a numbering source) — so no public surface
+needs a filter: they all read the show directory's top level. **A new
+consumer that globs a show's digests recursively must skip `members/`.**
+Nerra Daily reports a members day as skipped (`members_only`); the
+Personal builder alone passes `include_members=True`. Text stays in this
+public repo by operator choice; only audio is private. Doc:
+[`docs/nerra_personal.md`](docs/nerra_personal.md) "Gated shows". Guards:
+`tests/test_personal_gating_2026_10_13.py`,
+`workers/gallery/test/personal.test.ts` ("show demand").
+
 ### Cost-efficiency pass (July 29 2026)
 
 Six changes that cut spend without touching what a listener gets. The

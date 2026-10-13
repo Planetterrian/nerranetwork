@@ -28,7 +28,10 @@ def main() -> None:
     output_dir = pathlib.Path(sys.argv[1])
     today = sys.argv[2] if len(sys.argv) > 2 else datetime.now().strftime("%Y%m%d")
 
-    md_files = sorted(output_dir.glob(f"*{today}*.md"))
+    # A members-only episode (engine.access) lands in members/ — validated
+    # like any other; it reaches paying members.
+    md_files = sorted(output_dir.glob(f"*{today}*.md")) + sorted(
+        (output_dir / "members").glob(f"*{today}*.md"))
     if not md_files:
         # No digest for today is already warned about earlier in the step; not a hard failure here
         print(f"No digest markdown found for {today} in {output_dir}")

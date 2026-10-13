@@ -121,6 +121,10 @@ jobs:
                   except Exception:
                       continue
                   ml = getattr(cfg, "multilingual", None)
+                  # A members-only show (engine.access) has no public
+                  # episodes to translate.
+                  if getattr(getattr(cfg, "access", None), "mode", "public") == "members_only":
+                      continue
                   if ml and ml.enabled and getattr(ml, "auto", False):
                       shows.append(slug)
               return shows
@@ -181,9 +185,18 @@ jobs:
 
                       def _skipped_today(slug):
                           try:
-                              out = _P(load_config(f"shows/{slug}.yaml").episode.output_dir)
+                              cfg = load_config(f"shows/{slug}.yaml")
+                              out = _P(cfg.episode.output_dir)
                           except Exception:
                               return False
+                          # A members-only day (engine.access) published
+                          # nothing public: nothing to translate or dub.
+                          try:
+                              from engine.access import is_public_on
+                              if not is_public_on(cfg, _dt.datetime.now(_dt.timezone.utc).date()):
+                                  return True
+                          except Exception:
+                              pass
                           return ((out / f".skip_{stamp}.json").exists()
                                   and not any(out.glob(f"*_{stamp}.md")))
 

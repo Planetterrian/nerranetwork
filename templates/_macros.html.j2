@@ -156,6 +156,8 @@
                 hosts are the network's most differentiated and
                 display_order scatters them through this grid. #}
             {% if s.strand == 'mira' or s.host == 'mira' %}<span class="show-card-badge show-card-badge--strand">Hosted by Mira</span>{% endif %}
+            {#- Oct 13 2026: a gated show (engine.access) says so on its card. -#}
+            {% if s.access and s.access != 'public' %}<span class="show-card-badge show-card-badge--members">{{ 'Members only' if s.access == 'members_only' else 'Daily for members' }}</span>{% endif %}
             {% if s.schedule %}<span class="show-card-badge">{{ s.schedule }}</span>{% endif %}
             {% if s.episode_length %}<span class="show-card-badge">{{ s.episode_length }}</span>{% endif %}
             {% if s.picker_tags and s.picker_tags.language and 'russian' in s.picker_tags.language %}<span class="show-card-badge">In Russian</span>{% endif %}

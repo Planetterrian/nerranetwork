@@ -61,6 +61,7 @@ from typing import Dict, List, Optional, Tuple
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from engine.access import parse_private_ref  # noqa: E402
 from engine.daily_edition import (  # noqa: E402
     EDITIONS,
     Segment,
@@ -214,11 +215,18 @@ def build_segment_cache(
             continue
         raw = cache_dir / f"{slug}.raw.mp3"
         try:
-            with requests.get(seg.audio_url, stream=True, timeout=600) as resp:
-                resp.raise_for_status()
-                with raw.open("wb") as fh:
-                    for chunk in resp.iter_content(1 << 16):
-                        fh.write(chunk)
+            private = parse_private_ref(seg.audio_url)
+            if private:
+                # A members-only episode has no public address: read it
+                # from the private bucket with the builder's R2 credentials.
+                bucket, key = private
+                _r2_client().download_file(bucket, key, str(raw))
+            else:
+                with requests.get(seg.audio_url, stream=True, timeout=600) as resp:
+                    resp.raise_for_status()
+                    with raw.open("wb") as fh:
+                        for chunk in resp.iter_content(1 << 16):
+                            fh.write(chunk)
             cut = None
             if seg.transcript_path:
                 transcript = load_transcript(seg.transcript_path)
@@ -681,8 +689,10 @@ def main() -> int:
     # lineup (engine.personal_edition.PERSONAL_EXTRA_SHOW_SLUGS), so the
     # discovery runs on the widened spec; the Daily's own spec is unchanged.
     from engine.personal_edition import personal_edition_spec
+    # Oct 13 2026: members-only episodes (engine.access) are discovered too
+    # — they exist for exactly these editions.
     all_segments, _missing = discover_segments(
-        personal_edition_spec(), ROOT, target_date)
+        personal_edition_spec(), ROOT, target_date, include_members=True)
     segments_by_slug = {s.slug: s for s in all_segments}
     needed = sorted({slug for spec in specs for slug in spec.shows})
     cache_root = Path(tempfile.gettempdir()) / f"np_cache_{target_date:%Y%m%d}"

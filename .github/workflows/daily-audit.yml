@@ -217,6 +217,22 @@ jobs:
               # entry only for CRON_MAP-scheduled shows.
           }
 
+          # Gated shows (engine.access, Oct 13 2026): a members-only show's
+          # public feed never updates, and a public-weekly show's updates
+          # once a week. Unreadable config keeps the limits above.
+          try:
+              sys.path.insert(0, os.getcwd())
+              from engine.access import feed_age_overrides
+              for rss_file, limit in feed_age_overrides().items():
+                  if rss_file in FEEDS:
+                      if limit is None:
+                          print(f"{FEEDS[rss_file][0]}: members-only — public feed not checked")
+                          FEEDS.pop(rss_file)
+                      else:
+                          FEEDS[rss_file] = (FEEDS[rss_file][0], max(limit, FEEDS[rss_file][1]))
+          except Exception as e:
+              print(f"access overrides unavailable ({e}) — using the fixed limits")
+
           now = datetime.now(timezone.utc)
           stale = []
           for rss_file, (name, max_hours) in FEEDS.items():

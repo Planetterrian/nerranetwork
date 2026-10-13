@@ -2107,12 +2107,29 @@ def _build_all_shows_list():
             "apply_page": cfg.get("apply_page", ""),
             "blog_page": f"blog/{cfg['slug']}/index.html",
             "newsletter_tag": _newsletter_tag_for_slug(cfg["slug"], cfg["name"]),
+            # Oct 13 2026, Nerra Personal gating: "public" | "members_only" |
+            # "public_weekly", read from the show YAML (engine.access) so the
+            # badge can never disagree with what the pipeline publishes.
+            **_access_card_fields(cfg["slug"]),
             "_order": cfg.get("display_order", 99),
         }
         for cfg in NETWORK_SHOWS.values()
     ]
     shows.sort(key=lambda s: s["_order"])
     return shows
+
+
+def _access_card_fields(slug):
+    """``access`` / ``access_label`` for one show's card and page."""
+    try:
+        from engine.access import _config_for, describe, mode_for_slug
+
+        mode = mode_for_slug(slug, ROOT)
+        cfg = _config_for(slug, str(ROOT))
+        label = describe(cfg) if (cfg is not None and mode != "public") else ""
+    except Exception:  # noqa: BLE001 — an unreadable mode is never "public"
+        mode, label = "members_only", "Members only"
+    return {"access": mode, "access_label": label}
 
 
 def _url_encode_image(image_path):
@@ -3352,6 +3369,9 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         # A show registered before its first episode has a feed NAME but no
         # feed FILE; linking it 404s (Nerra Voices).
         "has_feed": (ROOT / cfg["rss_file"]).exists(),
+        # Oct 13 2026: a gated show (engine.access) says what it is and how
+        # to hear it — a Nerra Personal membership.
+        **_access_card_fields(cfg["slug"]),
         # Sep 23 2026 (launch-cohort PR C): a show whose first CRON run is
         # still ahead says so with the DATE, read from the registry's
         # ``first_run`` — never typed into a template or a description.

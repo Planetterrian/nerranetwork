@@ -343,8 +343,16 @@ def discover_lineup(
     target_date: _dt.date,
     *,
     config_loader=None,
+    include_members: bool = False,
 ) -> Lineup:
     """Find every lineup show with an episode dated *target_date*.
+
+    *include_members* (Oct 13 2026, ``engine.access``): the Nerra Personal
+    builder passes True and a members-only episode (``members/episodes.json``,
+    audio in the private bucket) becomes a segment like any other. Nerra
+    Daily — a public feed — passes nothing and NEVER splices one; a show
+    whose day was members-only is reported under ``skipped`` (reason
+    ``members_only``) so the ready gate does not wait for it.
 
     ``missing`` covers only shows *expected* that day (weekday-aware) — a
     Monday-only show absent on a Wednesday is not missing, but its episode
@@ -374,6 +382,22 @@ def discover_lineup(
             (e for e in _summaries_entries(summaries_path) if e.get("date") == date_str),
             None,
         )
+        members_entry = None
+        if entry is None or not entry.get("audio_url"):
+            from engine import access as _access  # noqa: PLC0415
+
+            members_entry = _access.members_entry_for(summaries_path.parent,
+                                                      target_date)
+            try:
+                gated_today = not _access.is_public_on(cfg, target_date)
+            except ValueError:
+                gated_today = True  # an unreadable mode is never public
+            if include_members and members_entry and members_entry.get("audio_url"):
+                entry = members_entry
+            elif members_entry or gated_today:
+                if slug in expected:
+                    skipped.append({"slug": slug, "reason": "members_only"})
+                continue
         if entry is None or not entry.get("audio_url"):
             if slug in expected:
                 marker = read_skip_marker(summaries_path.parent, target_date)
@@ -386,6 +410,10 @@ def discover_lineup(
                     missing.append(slug)
             continue
         digest_dir = summaries_path.parent
+        if entry is members_entry:
+            from engine.access import members_dir as _members_dir  # noqa: PLC0415
+
+            digest_dir = _members_dir(digest_dir)
         audio_url = strip_op3(str(entry["audio_url"]))
         title = str(entry.get("episode_title") or "")
         segments.append(
@@ -421,12 +449,14 @@ def discover_segments(
     target_date: _dt.date,
     *,
     config_loader=None,
+    include_members: bool = False,
 ) -> Tuple[List[Segment], List[str]]:
     """``(segments_in_lineup_order, missing_slugs)`` — the original
     two-tuple shape (``build_personal_feeds`` and the tests unpack it).
     ``missing`` excludes shows with a committed skip marker for the date;
     use :func:`discover_lineup` when the skipped list is needed."""
-    lineup = discover_lineup(spec, root, target_date, config_loader=config_loader)
+    lineup = discover_lineup(spec, root, target_date, config_loader=config_loader,
+                             include_members=include_members)
     return lineup.segments, lineup.missing
 
 

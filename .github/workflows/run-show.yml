@@ -633,6 +633,12 @@ jobs:
           R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          # Oct 13 2026, Nerra Personal gating (engine/access.py): a members-
+          # only day reads paying-member demand per show (counts only) and
+          # uploads its audio to the private bucket. Unset token = demand
+          # unknown, and the members episode is produced anyway.
+          PERSONAL_DEMAND_TOKEN: ${{ secrets.PERSONAL_DEMAND_TOKEN }}
+          PERSONAL_R2_BUCKET: ${{ vars.PERSONAL_R2_BUCKET || 'nerra-personal' }}
           # YouTube OAuth — refresh tokens are minted once via
           # scripts/youtube_oauth_bootstrap.py, then stored as secrets.
           # Missing values cause the YouTube stage to skip cleanly.

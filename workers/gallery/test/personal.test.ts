@@ -17,6 +17,7 @@ import {
   handlePortal,
   handlePreferences,
   handleRebuild,
+  handleShowDemand,
   handleStripeWebhook,
   verifyStripeSignature,
 } from "../src/personal";
@@ -311,6 +312,71 @@ describe("admin specs export", () => {
   });
 });
 
+
+describe("show demand (Oct 13 2026 gating)", () => {
+  function seed(env: Env) {
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    kv.store.set("member:a@example.com", JSON.stringify({
+      shows: ["tesla", "spacex"], first_name: "Ann", city: "Vancouver",
+      tier: "personal", status: "active", feed_token: "a".repeat(32), updated_at: "",
+    }));
+    kv.store.set("member:b@example.com", JSON.stringify({
+      shows: ["tesla", "mag7"], first_name: "Bo", city: "",
+      tier: "personal_local", status: "active", feed_token: "b".repeat(32), updated_at: "",
+    }));
+    kv.store.set("member:c@example.com", JSON.stringify({
+      shows: ["mag7", "ai_chips"], first_name: "Cy", city: "",
+      tier: "personal", status: "canceled", feed_token: "", updated_at: "",
+    }));
+    kv.store.set("member:d@example.com", JSON.stringify({
+      shows: [], first_name: "", city: "",
+      tier: "personal", status: "active", feed_token: "d".repeat(32), updated_at: "",
+    }));
+  }
+
+  it("counts active paying members per show, starter lineup included", async () => {
+    const env = envWith({ PERSONAL_DEMAND_TOKEN: "demand-token" });
+    seed(env);
+    const res = await handleShowDemand(
+      new Request("https://api.example.com/api/admin/show-demand", {
+        headers: { Authorization: "Bearer demand-token" },
+      }), env);
+    expect(res.status).toBe(200);
+    const body = await res.json() as { members: number; demand: Record<string, number> };
+    expect(body.members).toBe(3);
+    // a + b + the starter lineup (d)
+    expect(body.demand.tesla).toBe(3);
+    expect(body.demand.mag7).toBe(1);  // the cancelled member does not count
+    expect(body.demand.ai_chips).toBeUndefined();
+    expect(body.demand.dp_pod).toBe(1);
+  });
+
+  it("is bearer-gated and carries counts only — no names, cities, emails or tokens", async () => {
+    const env = envWith({ PERSONAL_DEMAND_TOKEN: "demand-token" });
+    seed(env);
+    const denied = await handleShowDemand(
+      new Request("https://api.example.com/api/admin/show-demand"), env);
+    expect(denied.status).toBe(401);
+    const res = await handleShowDemand(
+      new Request("https://api.example.com/api/admin/show-demand", {
+        headers: { Authorization: "Bearer admin-token" },
+      }), env);
+    expect(res.status).toBe(200);
+    const text = await res.text();
+    for (const leak of ["Ann", "Vancouver", "example.com", "a".repeat(32)]) {
+      expect(text).not.toContain(leak);
+    }
+  });
+
+  it("the demand token does not open the full spec export", async () => {
+    const env = envWith({ PERSONAL_DEMAND_TOKEN: "demand-token" });
+    const res = await handleAdminSpecs(
+      new Request("https://api.example.com/api/admin/personal-specs", {
+        headers: { Authorization: "Bearer demand-token" },
+      }), env);
+    expect(res.status).toBe(401);
+  });
+});
 
 describe("add-ons (Aug 30 2026)", () => {
   it("admin specs carry a member's saved addons, absent when never saved", async () => {
