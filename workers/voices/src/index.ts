@@ -2090,8 +2090,12 @@ async function fireTickDue(env: Env): Promise<boolean> {
     const due = await sb(env, "GET",
       `interviews?status=in.(scheduled,briefed,in_progress)&scheduled_at=gte.${lo}&scheduled_at=lte.${hi}&select=id&limit=1`);
     if (due?.length) return true;
+    // Bounded like the no-show sweep: on Oct 13 2026 the table held two
+    // awaiting_guest rows from September and a staged row from the day
+    // before, none of which the fire script acts on, and an unbounded read
+    // would have held the gate open forever.
     const runs = await sb(env, "GET",
-      `interview_runs?status=in.(staged,awaiting_guest,fired)&select=id&limit=1`);
+      `interview_runs?status=in.(staged,awaiting_guest,fired)&created_at=gte.${lo}&select=id&limit=1`);
     return !!runs?.length;
   } catch (err: any) {
     console.error("fire-tick gate failed (dispatching anyway):", err?.message ?? err);
