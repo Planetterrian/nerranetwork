@@ -97,14 +97,19 @@ class TestEditionSpec:
         }
 
     def test_lineup_operator_order(self):
-        # Operator-set rundown (2026-08-21, after hearing Ep1): SpaceX ->
-        # Tesla -> FF -> M&A -> Planetterrian -> Omni View lead; the
-        # good-news show stays the deliberate warm close.
-        assert SPEC.lineup[:6] == (
-            "spacex", "tesla", "fascinating_frontiers", "models_agents",
-            "planetterrian", "omni_view",
+        # Operator-set rundown (2026-10-13): the whole order is the
+        # operator's, so the whole order is pinned.
+        assert SPEC.lineup == (
+            "spacex", "tesla", "planetterrian", "models_agents",
+            "fascinating_frontiers", "omni_view_world", "mag7",
+            "modern_investing", "vancouver", "longevity", "peptides",
+            "offshore_north", "ai_chips", "first_principles",
+            "unintended_consequences", "prediction_markets",
+            "models_agents_beginners", "collingwood", "env_intel", "dp_pod",
+            "omni_view", "omni_view_north_america", "omni_view_europe",
+            "omni_view_asia_pacific", "omni_view_africa_mideast",
+            "omni_view_latam",
         )
-        assert SPEC.lineup[-1] == "dp_pod"
 
     def test_no_russian_shows(self):
         assert not {"finansy_prosto", "privet_russian"} & set(SPEC.lineup)

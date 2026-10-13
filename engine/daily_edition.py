@@ -109,11 +109,8 @@ class EditionSpec:
     host: str
     language: str
     voice_id: str
-    #: Fixed rundown order. Operator-set (2026-08-21, after hearing Ep1):
-    #: SpaceX -> Tesla -> Fascinating Frontiers -> Models & Agents ->
-    #: Planetterrian -> Omni View, then the rest by editorial judgment
-    #: (markets, the narrative shows, the beginner track, the Monday
-    #: weeklies) with The DP Pod's good news as the deliberate warm close.
+    #: Fixed rundown order, operator-set. Current order 2026-10-13 (see the
+    #: EDITIONS entry); the first was set 2026-08-21 after hearing Ep1.
     lineup: Tuple[str, ...]
     #: Lineup members that only publish on Mondays. Discovery is purely
     #: date-driven (a late Monday episode found on Tuesday still splices);
@@ -161,38 +158,39 @@ EDITIONS: Dict[str, EditionSpec] = {
         language="en",
         voice_id=MIRA_VOICE_ID,
         lineup=(
-            # The operator's lead six (2026-08-21), unchanged.
+            # Operator-set rundown (2026-10-13), replacing the Aug 21 lead
+            # six and the Oct 2 cohort placement: the flagships, Top World,
+            # the markets pair, the local and health shows, Offshore North,
+            # AI Chips, the narrative and explainer shows, the weeklies with
+            # DP Pod among them, then Omni View and the five regional desks
+            # to close. Shows absent on a given day (Monday-only and
+            # single-weekday shows, skips) simply drop out of the order.
             "spacex",
             "tesla",
-            "fascinating_frontiers",
-            "models_agents",
             "planetterrian",
-            "omni_view",
-            # Oct 2 2026 (operator: "all new English shows are added"):
-            # the world desks follow Omni View, ranked first, then by
-            # region; the money desks follow Modern Investing; the local
-            # and health weeklies sit after the narrative shows; the
-            # Monday weeklies and DP Pod's good-news close stay last.
+            "models_agents",
+            "fascinating_frontiers",
             "omni_view_world",
+            "mag7",
+            "modern_investing",
+            "vancouver",
+            "longevity",
+            "peptides",
+            "offshore_north",
+            "ai_chips",
+            "first_principles",
+            "unintended_consequences",
+            "prediction_markets",
+            "models_agents_beginners",
+            "collingwood",
+            "env_intel",
+            "dp_pod",
+            "omni_view",
             "omni_view_north_america",
             "omni_view_europe",
             "omni_view_asia_pacific",
             "omni_view_africa_mideast",
             "omni_view_latam",
-            "modern_investing",
-            "mag7",
-            "ai_chips",
-            "prediction_markets",
-            "unintended_consequences",
-            "first_principles",
-            "models_agents_beginners",
-            "vancouver",
-            "collingwood",
-            "longevity",
-            "peptides",
-            "env_intel",
-            "offshore_north",
-            "dp_pod",
         ),
         monday_only=frozenset({"env_intel", "offshore_north", "dp_pod"}),
         weekday_only={"longevity": 2, "peptides": 3, "collingwood": 4},
@@ -207,7 +205,7 @@ EDITIONS: Dict[str, EditionSpec] = {
             "The whole Nerra Network in one daily listen. Mira — the AI "
             "documentarian who hosts The Age of AI — anchors every English "
             "show the network published today: Tesla, SpaceX, AI, markets, "
-            "world news, science, big ideas, and a good-news close. Each "
+            "world news, science, big ideas and good news. Each "
             "segment is the full episode; Mira adds the through-line."
         ),
         channel_keywords=(
