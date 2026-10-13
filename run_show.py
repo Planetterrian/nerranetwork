@@ -2716,18 +2716,23 @@ def run(args: argparse.Namespace) -> None:
                                int(_hr_match.get("times", 0)) if _hr_match else 0)
             except Exception as _hr_exc:  # noqa: BLE001 — never block a run
                 logger.warning("Hook recurrence check failed (non-fatal): %s", _hr_exc)
-        if (_val_factory or _hook_too_long or _hook_recurrence or _lint_findings) and not is_deep_dive:
+        if _hook_recurrence:
+            # Rides the lint findings so the corrective regeneration names it
+            # like any other structural defect.
+            from engine.digest_lint import LintFinding as _LintFinding
+            _lint_findings = list(_lint_findings) + [_LintFinding(
+                "hook_recurrence",
+                f"the **HOOK:** leads with a story this show already told on "
+                f"{_hook_recurrence['times']} recent days (most recently "
+                f"{_hook_recurrence['date']}: “{_hook_recurrence['headline'][:60]}”) "
+                f"— lead with today's NEW development; that story is at most a "
+                f"one-clause update later in the digest",
+                {},
+            )]
+        if (_val_factory or _hook_too_long or _lint_findings) and not is_deep_dive:
             _struct_defects: list = []
             for _lf in _lint_findings:
                 _struct_defects.append(_lf.note)
-            if _hook_recurrence:
-                _struct_defects.append(
-                    f"the **HOOK:** leads with a story this show already told on "
-                    f"{_hook_recurrence['times']} recent days (most recently "
-                    f"{_hook_recurrence['date']}: “{_hook_recurrence['headline'][:60]}”) "
-                    f"— lead with today's NEW development; that story is at most a "
-                    f"one-clause update later in the digest"
-                )
             if not _hook_now:
                 _struct_defects.append("the **HOOK:** line is missing")
             elif _hook_too_long:

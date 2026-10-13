@@ -127,7 +127,7 @@ class TestHookRecurrence:
 
     def test_the_gate_is_wired_as_a_structural_defect(self):
         assert "HOOK_RECURRENCE_MIN_DAYS = 2" in self.SRC
-        assert "_hook_recurrence or _lint_findings) and not is_deep_dive" in self.SRC
+        assert '_LintFinding(\n                "hook_recurrence",' in self.SRC
         assert 'metrics.record("hook_recurrence_days"' in self.SRC
         assert "lead with today's NEW development" in self.SRC
 
