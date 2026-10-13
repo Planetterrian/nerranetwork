@@ -20,12 +20,15 @@ rationale lives in the `engine/daily_edition.py` module docstring, and
   review rotation (`tests/test_review_agent.py` derives from
   `shows/*.yaml`), multilingual auto-discovery, and every other
   shows-glob consumer. Do not add one.
-- **Fixed, consistent rundown** (operator-set 2026-08-21, revised after
-  hearing Ep1): spacex, tesla, fascinating_frontiers, models_agents,
-  planetterrian, omni_view, then modern_investing,
-  unintended_consequences, first_principles, models_agents_beginners,
-  the Monday weeklies (env_intel, offshore_north), and dp_pod as the
-  deliberate good-news close. Shows that skipped their day are simply
+- **Fixed, consistent rundown** (operator-set; current order 2026-10-13):
+  spacex, tesla, planetterrian, models_agents, fascinating_frontiers,
+  omni_view_world, mag7, modern_investing, vancouver, longevity, peptides,
+  offshore_north, ai_chips, first_principles, unintended_consequences,
+  prediction_markets, models_agents_beginners, collingwood, env_intel,
+  dp_pod, then omni_view and the five regional desks (North America,
+  Europe, Asia Pacific, Africa & Middle East, Central & South America)
+  to close. `engine/daily_edition.py` `EDITIONS["en"].lineup` is the
+  source of truth. Shows that skipped their day are simply
   absent; Mira's rundown adapts. Every English show is included (MAB
   too — completeness over the M&A overlap, operator's call). Age of AI
   is **plugged, never spliced** (interviews run 40+ min).

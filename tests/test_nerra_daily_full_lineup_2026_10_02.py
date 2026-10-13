@@ -30,18 +30,20 @@ SPEC = D.EDITIONS["en"]
 
 
 class TestLineup:
-    def test_the_cohort_is_in_and_the_lead_six_and_close_are_untouched(self):
-        assert SPEC.lineup[:6] == ("spacex", "tesla", "fascinating_frontiers",
-                                   "models_agents", "planetterrian", "omni_view")
-        assert SPEC.lineup[-1] == "dp_pod"
+    def test_the_cohort_is_in_once_each(self):
+        # Order is the operator's (re-set 2026-10-13, pinned in
+        # tests/test_daily_edition.py); this guard checks membership.
+        assert len(SPEC.lineup) == len(set(SPEC.lineup)) == 26
         for slug in ("omni_view_world", "mag7", "ai_chips", "prediction_markets",
                      "vancouver", "collingwood", "longevity", "peptides"):
             assert slug in SPEC.lineup, slug
 
-    def test_top_world_leads_the_desks_right_after_omni_view(self):
+    def test_the_regional_desks_follow_omni_view(self):
+        # 2026-10-13: Top World moved up to sixth (operator); Omni View and
+        # the five regional desks close the edition in region order.
         i = SPEC.lineup.index("omni_view")
-        assert SPEC.lineup[i + 1] == "omni_view_world"
-        assert SPEC.lineup[i + 2:i + 7] == (
+        assert SPEC.lineup.index("omni_view_world") < i
+        assert SPEC.lineup[i + 1:i + 6] == (
             "omni_view_north_america", "omni_view_europe", "omni_view_asia_pacific",
             "omni_view_africa_mideast", "omni_view_latam")
 

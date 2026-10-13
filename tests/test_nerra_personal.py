@@ -87,7 +87,6 @@ class TestSpecValidation:
         assert PERSONAL_SHOW_SLUGS == EDITIONS["en"].lineup + PERSONAL_EXTRA_SHOW_SLUGS
         assert not set(PERSONAL_EXTRA_SHOW_SLUGS) & set(EDITIONS["en"].lineup)
         assert personal_edition_spec().lineup == PERSONAL_SHOW_SLUGS
-        assert EDITIONS["en"].lineup[-1] == "dp_pod"  # the Daily still closes on DP Pod
 
     def test_worker_vocabulary_stays_in_sync(self):
         # The Worker validates preferences against its own copy of the
