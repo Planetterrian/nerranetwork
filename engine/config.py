@@ -331,6 +331,11 @@ class AudioConfig:
     # _voice_norm_full_cmd docstring). Per-show opt-out:
     # ``audio.voice_denoise: false`` restores the pre-July-16 chain.
     voice_denoise: bool = True
+    # Oct 13 2026 (engine/story_breaks.py): seconds of silence spliced into
+    # the voice track where a new story starts, before the music mix. 0 =
+    # off (the dataclass default — the exact pre-change audio); the network
+    # value lives in shows/_defaults.yaml. Dialogue shows never get it.
+    story_break_seconds: float = 0.0
 
 
 @dataclass

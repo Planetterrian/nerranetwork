@@ -4545,3 +4545,34 @@ experiments:
       @SpaceX returned 0 posts in every variant, including with no handle
       filter - xAI's index, not our request. SpaceX's podcast prompt now
       states the segment order (A/B-listen).
+
+  - id: story-breaks-2026-10-13
+    title: "A beat between stories: story-change silence + an orienting first sentence"
+    area: quality
+    shipped: 2026-10-13
+    readout: 2026-10-27
+    status: reading
+    baseline: >
+      Operator listen 2026-10-13: stories ran straight into each other. Measured
+      on 4 episodes each of 11 news shows: the gap at a story change (median
+      0.51-0.58 s) equalled the gap between two sentences of one story
+      (0.44-0.54 s); the shared content-discipline rule told every script to
+      "move between stories with the next story's first fact", and five show
+      prompts plus the desk/cohort prompts repeated it.
+    target: >
+      From the first post-merge slate: story_breaks_inserted >= 5 on every
+      English news episode with story_breaks_unplaced <= 25% of
+      story_breaks_found; no break inside an essay section (spot-check 5
+      episodes); in 10 sampled scripts, >= 8 of 10 story changes open on a
+      sentence naming the new subject before any figure. Outcome read: EN
+      long-form averageViewPercentage and OP3 per-episode completion vs the
+      two weeks before, with the Oct 11 script-model moves named as a
+      confound. AUDIO — A/B-listen the first episode of three shows.
+    notes: >
+      engine/story_breaks.py (story starts from the digest, cuts in the voice
+      track's own silence, lossless splice, transcript shifted);
+      run_show 9a-breaks before the mix; audio.story_break_seconds 1.2 in
+      shows/_defaults.yaml (0 = off; dialogue shows never). Prompt:
+      content_discipline "The listener hears every story change" + the
+      matching lines in tesla/spacex/ff/planetterrian/omni_view and nine
+      cohort/desk prompts. Guards tests/test_story_breaks_2026_10_13.py.
