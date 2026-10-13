@@ -245,6 +245,12 @@ audio:
   # per show to restore the pre-July-16 chain. Landmine #17:
   # A/B-listen the first episode after any change here.
   voice_denoise: true
+  # Oct 13 2026 (engine/story_breaks.py): seconds of silence added where a
+  # new story starts — the beat a listener needs to file one story before
+  # the next. Grok leaves ~0.55 s after every sentence, story change or
+  # not; this takes a story change to ~1.7 s. Located from the digest and
+  # the voice track's own silences; 0 = off. AUDIO — A/B-listen.
+  story_break_seconds: 1.2
 
 storage:
   provider: r2

@@ -4629,6 +4629,48 @@ def run(args: argparse.Namespace) -> None:
                         + (_gate_report.summary() if _gate_report else ""),
                     )
 
+                # 9a-breaks. A beat between stories (Oct 13 2026,
+                # engine/story_breaks.py). Every sentence of a script left
+                # the same ~0.55 s gap, story change or not, so stories ran
+                # straight into each other. Story starts come from the
+                # digest; each cut sits in the voice track's own silence;
+                # the spliced voice is lossless WAV for the mix, and the
+                # committed transcript moves with it so captions, Shorts
+                # and the Nerra Daily cut stay aligned. Any failure ships
+                # the voice exactly as synthesized.
+                voice_for_mix = raw_mp3
+                _break_s = float(getattr(config.audio, "story_break_seconds", 0.0) or 0.0)
+                if _break_s > 0 and not config.tts.dialogue_mode and raw_mp3.exists():
+                    try:
+                        import subprocess as _sp
+                        from engine import story_breaks as _sb
+
+                        _tx_path = digests_dir / f"{_ep_prefix}_transcript.json"
+                        _lines = _sb.story_boundary_lines(podcast_script, x_thread or "")
+                        _cuts: list = []
+                        _unmatched = _unplaced = 0
+                        if _lines and _tx_path.exists():
+                            _anchors, _unmatched = _sb.boundary_anchors(
+                                podcast_script, _lines, json.loads(_tx_path.read_text(encoding="utf-8")))
+                            _cuts, _unplaced = _sb.choose_cuts(
+                                _anchors, _sb.detect_silences(raw_mp3))
+                        if _cuts:
+                            _breaks_wav = raw_mp3.with_name(raw_mp3.stem + "_breaks.wav")
+                            _sp.run(_sb.insert_silences_cmd(raw_mp3, _breaks_wav, _cuts, _break_s),
+                                    check=True, timeout=900)
+                            _sb.rewrite_transcript_files(digests_dir, _ep_prefix, _cuts, _break_s)
+                            voice_for_mix = _breaks_wav
+                        metrics.record("story_breaks_found", len(_lines))
+                        metrics.record("story_breaks_inserted", len(_cuts))
+                        metrics.record("story_breaks_unplaced", _unmatched + _unplaced)
+                        metrics.record("story_break_seconds", _break_s)
+                        logger.info("Story breaks: %d story starts, %d breaks of %.1fs inserted "
+                                    "(%d not located)", len(_lines), len(_cuts), _break_s,
+                                    _unmatched + _unplaced)
+                    except Exception as exc:
+                        logger.warning("Story breaks skipped (non-fatal): %s", exc)
+                        voice_for_mix = raw_mp3
+
                 # 9b. Post-TTS transcription validation (opt-in). Reuses the
                 # transcript text from 9a when available so Whisper only
                 # runs once per episode. Falls back to its own transcribe
@@ -4734,7 +4776,7 @@ def run(args: argparse.Namespace) -> None:
                             bg_music_path = PROJECT_ROOT / config.audio.background_music_file
 
                         mix_with_music(
-                            raw_mp3, music_path, final_mp3,
+                            voice_for_mix, music_path, final_mp3,
                             intro_duration=int(config.audio.intro_duration),
                             overlap_duration=int(config.audio.overlap_duration),
                             fade_duration=int(config.audio.fade_duration),
@@ -4753,11 +4795,13 @@ def run(args: argparse.Namespace) -> None:
                         )
                     else:
                         logger.warning("Music file not found: %s — using voice only", music_path)
-                        normalize_voice(raw_mp3, final_mp3,
+                        normalize_voice(voice_for_mix, final_mp3,
                                         denoise=config.audio.voice_denoise)
                 else:
-                    normalize_voice(raw_mp3, final_mp3,
+                    normalize_voice(voice_for_mix, final_mp3,
                                     denoise=config.audio.voice_denoise)
+                if voice_for_mix != raw_mp3:
+                    Path(voice_for_mix).unlink(missing_ok=True)
 
                 _mix_duration = time.monotonic() - t0
                 logger.info("Audio mixing took %.1fs", _mix_duration)
