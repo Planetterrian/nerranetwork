@@ -1,0 +1,197 @@
+Multi-agent orchestration now delivers measurable gains in long-horizon reliability by letting sub-agents request harness changes on the fly.
+
+This is Models and Agents, episode 202.
+
+A new arXiv paper calls that system POrchestra.
+
+Sub-agents can ask the orchestrator for a harness retune at any logical step.
+
+Local execution keeps going while the request is handled.
+
+Across three long-horizon benchmarks, task success rose nine point one percent over the strongest baseline.
+
+Pair that with On-Policy Orchestration Distillation, a training method for the controller, and small-orchestrator success rose ten percent over earlier training baselines.
+
+The paper also reports a more favorable cost-performance trade-off.
+
+Meta released new AI models that the company says match the industry's best, TechGig reports.
+
+Those models will power its Muse agent.
+
+They aim at competitive performance in agentic settings.
+
+In those settings, orchestration and tool use matter more than raw scale alone.
+
+They give another closed-weight option to benchmark against the Claude and GPT families.
+
+Wider availability, and the integration details that come with it, is still ahead.
+
+A preregistered arXiv study ran three prompt optimizers — GEPA, MIPRO v two, and TextGrad — on HotpotQA, SQuAD two point zero, and IFEval.
+
+All three produced regressions on unscored requirements such as citation validity and output format.
+
+Those breaks appeared when the output token cap stayed at two hundred.
+
+Lifting the cap to one thousand twenty-four tokens removed extraction failures.
+
+Content regression stayed below one point, and exact match improved further.
+
+Prompt optimization can raise accuracy while silently violating explicit output contracts.
+
+A separate arXiv paper uses a label-free procedure that rewrites only the most contested rubric clauses.
+
+Inter-judge Krippendorff's alpha, a consensus score, rose zero point zero six nine on SummEval.
+
+The same edits produced no detectable change in agreement with expert human ratings.
+
+The effect did not meet pre-registered criteria on HealthBench or USR Topical-Chat.
+
+Raising judge consensus does not automatically improve alignment with human annotators.
+
+An arXiv paper on host-aware crawling finds that roughly half the variation in document-quality classifier scores sits between hosts rather than within them.
+
+Pull a handful of pages from each host, then crawl deeper on the hosts that score well, and you gather several times more high-quality pages than uniform-depth crawls or centrality-based allocation.
+
+Common Crawl's observed per-host coverage showed little correlation with evaluated quality signals.
+
+The authors estimate tens of millions of high-quality pages remain among known but uncrawled URLs.
+
+MoPrO-SD, also on arXiv, splits prompts into functional semantic modules.
+
+It refines those modules with class-conditioned large language model, or LLM, feedback.
+
+On SemEval twenty sixteen, class-conditioned feedback beat pooled feedback for four of five backbones.
+
+The framework introduces VaccineStance, a new human-annotated benchmark for vaccine stance detection.
+
+Both reasoning-based refinement strategies stayed competitive with recent prompt optimization methods.
+
+That held across four datasets.
+
+BASIS-Bench, on arXiv, evaluates eight recent speech LLMs on demographic robustness, stereotypical bias, and explicit personalization.
+
+Most models recognized demographic cues.
+
+They did not turn those cues into appropriate personalization.
+
+Explicit demographic labels improved personalization.
+
+Those labels also amplified stereotypical associations already present in the textual backbones.
+
+The benchmark separates beneficial personalization from unprompted stereotypical behavior.
+
+Nasscom notes that single-agent systems lack work decomposition, failure tolerance, and real-time coordination once tasks become layered or unpredictable.
+
+Multi-agent setups run tasks in parallel.
+
+They tolerate individual failures.
+
+They retune coordination as conditions change.
+
+The payoff comes from better orchestration rather than larger individual models.
+
+Mashreq deployed AI agents that cut integration time by up to seventy percent, PYMNTS reports.
+
+The agents take on repetitive coordination work that previously needed manual effort across systems.
+
+The deployment shows measurable efficiency gains in a regulated financial environment.
+
+Anthropic presented dynamic workflow patterns at AI Engineer New York, according to Latent Space.
+
+The approach borrows Unix and Linux lessons for managing agent coordination.
+
+It lets agents take on larger projects without flooding developers with every intermediate state.
+
+It favors adaptive orchestration over static agent graphs.
+
+Python three point fifteen adds explicit lazy imports via PEP eight ten, Simon Willison notes.
+
+The release includes a new sampling profiler called Tachyon.
+
+It also adds unpacking syntax in comprehensions.
+
+Willison walked through upgrading via uv and dropping Python three point ten, which is no longer maintained.
+
+The release enables cleaner plugin architectures.
+
+It also lowers startup costs for LLM command-line tools.
+
+The GitHub Blog shows how to add custom instructions, skills, and Model Context Protocol, or MCP, server connections to a repository.
+
+That setup helps Copilot understand project-specific patterns.
+
+The configuration lives at repository level and persists across sessions.
+
+Developers new to Copilot can follow the steps to cut generic suggestions on their own codebases.
+
+The guidance stays on practical setup rather than model internals.
+
+Drylab AI closed a three million dollar seed round, The Business Times reports.
+
+Vertex Ventures and PatSnap led the round.
+
+The platform focuses on agentic workflows for enterprise use cases.
+
+An arXiv survey of natural language processing, or NLP, for Tibetan languages reviewed one hundred forty publications from two thousand four to twenty twenty-six.
+
+Eighty-four percent of that work appeared since twenty eighteen.
+
+The papers covered all twenty-five represented NLP research areas.
+
+Researchers based in China first-authored eighty-seven percent of the work.
+
+Only twenty-nine percent of publications released data, code, or models.
+
+The authors flag gaps in dialect coverage, native evaluation, and responsible NLP practices for this low-resource setting.
+
+Point the prompt-optimizer study code at your own question-answering tasks and log whether citations and output format still hold.
+
+Upgrade a personal LLM command-line project to Python three point fifteen with uv, and switch on explicit lazy imports plus the Tachyon profiler.
+
+Add repository-level custom instructions to a GitHub Copilot workspace and time how fast the generic suggestions drop off.
+
+More labs are expected to release agent orchestration frameworks that support on-the-fly harness adjustments.
+
+Additional speech LLM benchmarks will likely appear that separate personalization from stereotypical bias.
+
+Open-weight Tibetan NLP resources are projected to grow as the surveyed community adopts shared standards.
+
+Cheap episode keys are the piece I want to pop the hood on in T two Mem, a test-time memory system from a new arXiv paper.
+
+The system refuses to pre-build a full memory for every possible question.
+
+Offline, it stores only lightweight episode-level metadata and keeps pointers back to the original interactions.
+
+Those records are episode keys, temporal links, and raw interaction pointers sitting ready for later reconstruction.
+
+At inference, the model pulls a small set of those metadata items first.
+
+It then fetches and organizes the underlying turns only as reasoning moves forward.
+
+Query-specific memory grows along the reasoning process instead of arriving as a finished blob.
+
+Construction adapts dynamically to each query's information needs.
+
+Experiments on LoCoMo and LongMemEval show consistent gains across backbone LLMs.
+
+Memory-construction overhead is substantially lower than building everything up front.
+
+You pay a modest increase in per-query latency.
+
+You get a large cut in the always-on memory footprint.
+
+The quality gain is largest when the evidence you need sits in distant sessions.
+
+Once the context window already holds the entire history, that advantage shrinks.
+
+The failure mode that shows up first is retrieving too few metadata items for reconstruction to be reliable.
+
+Use test-time construction when average session length exceeds what fits comfortably in context and queries are sparse, and stick with offline memory when queries are frequent and latency budgets are tight.
+
+Before we go, prompt-optimization tools that check output contracts they were never scored on are the next ones due to surface.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes. This show comes to you from the Nerra Network.
+
+If you want another sharp daily briefing, Unintended Consequences has you covered — true stories of good intentions that backfired. All our shows are free at nerranetwork.com. And if you would rather hear only your shows, in your order, Nerra Personal builds you a private daily edition — the details are at nerranetwork.com/join.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
