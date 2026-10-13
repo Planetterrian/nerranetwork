@@ -79,6 +79,57 @@ cron or a private repo's Actions) — never in this public repo's
 workflows, whose logs are world-readable. Recommended cron:
 `30 12 * * *` UTC (after the English slate + Nerra Daily).
 
+## Gated shows — members-only and public-weekly (Oct 13 2026)
+
+A show can now publish only for paying members, or publicly one weekday
+with its daily episodes for members. `engine/access.py` owns the decision;
+the setting is one block in the show's YAML:
+
+```yaml
+access:
+  mode: members_only     # public (default) | members_only | public_weekly
+  public_weekday: 0      # public_weekly only: 0 = Monday … 6 = Sunday
+  min_members: 1         # produce a members day only with >= this many members; 0 = always
+```
+
+What a members day does:
+
+| Step | What happens |
+|---|---|
+| Demand | Before any spend, the run asks the Worker (`GET /api/admin/show-demand`, counts only) how many paying members carry the show. Below `min_members` it skips with `no_member_demand` (a normal skip marker — the audit warns, Nerra Daily does not wait). Demand unreadable = the episode is produced anyway, with a warning. |
+| Production | Fetch, digest, script, TTS, mix and chapters run unchanged. |
+| Audio | Uploaded to the private bucket (`PERSONAL_R2_BUCKET`, default `nerra-personal`), key `shows/<slug>/<file>.mp3`. Never the public audio bucket. |
+| Text | The episode's digest, script, transcript, claims and chapters move to `digests/<dir>/members/` (the operator chose to keep text in this public repo; only the audio is private). Every public surface reads the top level of the show directory, so the blog, show page, claims pages, search index, content lake and sibling reads never see it. |
+| Ledger | `digests/<dir>/members/episodes.json` records it; episode numbers continue across public and members episodes (a public-weekly feed has gaps). |
+| Not reached | RSS, summaries JSON, YouTube, X, newsletter, directory pings, Nerra Daily, the multilingual sweep, the on-air sibling plug. |
+| Delivery | The Personal builder discovers it from the ledger (`discover_segments(include_members=True)`) and downloads it from the private bucket; members hear it inside their edition, in their order. |
+
+On the site a gated show keeps its page and card: the card carries a
+"Members only" / "Daily for members" badge and the page a band with an
+"Add it to Nerra Personal" button. Its back catalogue stays public.
+
+**Flipping a show** is the YAML block plus the guard
+`tests/test_personal_gating_2026_10_13.py::TestTheSetting::test_default_is_public_and_every_show_is_public_today`
+(it fails on purpose until the change names the show). Then: turn the
+show's `youtube.enabled`, `newsletter.enabled`, `publishing.x_enabled`
+and `multilingual` off for a members-only show (a members day never
+reaches them; the public weekday of a public-weekly show still does).
+**A new members-only show** is scaffolded as usual, given the block, and
+added to the member vocabulary (`PERSONAL_EXTRA_SHOW_SLUGS` in
+`engine/personal_edition.py` and `PERSONAL_SHOWS` in
+`workers/gallery/src/personal.ts`, drift-guarded) — otherwise nobody can
+select it and its demand is always zero.
+
+One-time setup:
+1. A random token: `wrangler secret put PERSONAL_DEMAND_TOKEN` in
+   `workers/gallery/`, then `wrangler deploy` (the endpoint is new).
+2. The same value as the GitHub Actions secret `PERSONAL_DEMAND_TOKEN` in
+   this repo. It reads counts only — no name, city, email or feed token —
+   which is why the public repo's show runs may hold it. Without it every
+   members day is produced (demand unknown).
+3. Nothing else: the show run already has the R2 credentials, and the
+   private bucket and batch builder exist.
+
 ## Add-ons (Aug 30 2026)
 
 Members customize what Mira researches for their edition from the

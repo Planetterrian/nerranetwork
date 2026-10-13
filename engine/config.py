@@ -595,6 +595,31 @@ class FunnelConfig:
 
 
 @dataclass
+class AccessConfig:
+    """Who a show publishes for (Oct 13 2026, Nerra Personal gating; read
+    through :mod:`engine.access`).
+
+    ``mode``:
+      - ``public`` (default): every episode publishes everywhere — the
+        pre-gating behaviour, byte-identical.
+      - ``members_only``: no episode is ever public. The show runs only on
+        a day at least ``min_members`` paying Nerra Personal members have
+        it in their lineup; the audio goes to the private bucket and the
+        episode reaches members inside their Personal edition.
+      - ``public_weekly``: the ``public_weekday`` episode publishes
+        everywhere as normal; every other day is members-only, as above.
+
+    ``public_weekday`` is 0 = Monday … 6 = Sunday. ``min_members: 0``
+    produces every scheduled day whatever the demand (the operator's
+    override to keep a gated show running while it has no members).
+    """
+
+    mode: str = "public"
+    public_weekday: int = 0
+    min_members: int = 1
+
+
+@dataclass
 class SectionMarker:
     pattern: str = ""
     title: str = ""
@@ -1371,6 +1396,7 @@ class ShowConfig:
     grok_leads: GrokLeadsConfig = field(default_factory=GrokLeadsConfig)
     video_podcast: VideoPodcastConfig = field(default_factory=VideoPodcastConfig)
     funnel: FunnelConfig = field(default_factory=FunnelConfig)
+    access: AccessConfig = field(default_factory=AccessConfig)
     # Weekly-summary segment (July 2026). When ``true`` and the runner
     # ticks on a Sunday, the show runs a NORMAL daily episode AND weaves
     # in one short "week in review" segment synthesised from the past 7
@@ -1640,6 +1666,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         grok_leads=_build_nested(GrokLeadsConfig, data.get("grok_leads")),
         video_podcast=_build_nested(VideoPodcastConfig, data.get("video_podcast")),
         funnel=_build_nested(FunnelConfig, data.get("funnel")),
+        access=_build_nested(AccessConfig, data.get("access")),
         # Accept the legacy ``weekly_recap_on_sunday`` key as a fallback so any
         # unmigrated YAML keeps working (the field was renamed July 2026 when
         # the full Sunday-recap mode became a small in-episode segment).

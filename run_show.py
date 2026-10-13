@@ -712,6 +712,15 @@ def run(args: argparse.Namespace) -> None:
     episode_num = get_next_episode_number(
         rss_path, digests_dir, mp3_glob_pattern=config.episode.mp3_glob,
     )
+    # Members-only episodes (engine.access, Oct 13 2026) are not in the
+    # public feed, so the members ledger is a second numbering source —
+    # a number is never reused, and a public-weekly feed simply has gaps.
+    from engine import access as _access
+    _members_max = _access.max_members_episode(digests_dir)
+    if _members_max >= episode_num:
+        logger.info("Episode number: %d -> %d (members ledger reaches Ep%d)",
+                    episode_num, _members_max + 1, _members_max)
+        episode_num = _members_max + 1
     logger.info("Episode number: %d", episode_num)
     metrics.episode_num = episode_num
 
@@ -786,6 +795,39 @@ def run(args: argparse.Namespace) -> None:
             "(skipping fetch/TTS; YouTube skipped to avoid duplicate uploads).",
             expected_mp3.name,
         )
+
+    # 2c. Access (Oct 13 2026, Nerra Personal gating — engine/access.py).
+    # A members-only day runs only when paying members carry the show; the
+    # check comes before any fetch or model spend. Test, rehearsal and
+    # resume runs skip the demand read (the operator asked for them).
+    access_today = _access.todays_access(config, today)
+    metrics.record("access_today", access_today)
+    if access_today == _access.MEMBERS:
+        logger.info("Access: %s — today's episode is for Nerra Personal "
+                    "members only and publishes nowhere public",
+                    _access.describe(config))
+        if not (args.test or args.dry_run or getattr(args, "rehearse", False)
+                or resume_publish):
+            _demand = _access.fetch_show_demand()
+            _decision = _access.demand_decision(
+                config.slug, _demand, _access.min_members(config))
+            metrics.record("access_members", _decision.members)
+            metrics.record("access_demand", _decision.reason)
+            logger.info("Access: demand %s (%s members)", _decision.reason,
+                        "unknown" if _decision.members is None else _decision.members)
+            if _decision.reason == "demand_unknown":
+                logger.warning(
+                    "::warning::%s: member demand could not be read — producing "
+                    "today's members episode anyway (a paying member may be "
+                    "waiting; set PERSONAL_DEMAND_TOKEN to gate on demand)",
+                    config.slug)
+            if not _decision.run:
+                _skip_episode(
+                    "no_member_demand",
+                    f"{config.name} is {_access.describe(config).lower()}; "
+                    f"{_decision.members} paying member(s) carry it, below "
+                    f"access.min_members={_access.min_members(config)}.",
+                )
 
     # 3. Tracker
     from engine.tracking import create_tracker, save_usage as _save_usage_raw
@@ -4816,6 +4858,65 @@ def run(args: argparse.Namespace) -> None:
             "Listen to the rehearsal_*.mp3, tune prompts/config, re-run "
             "with --rehearse, and drop the flag when it's the one."
         )
+        logger.info("=" * 60)
+        return
+
+    # === Members stop (engine.access, Oct 13 2026) ===
+    # A members-only day publishes to nobody: the audio goes to the private
+    # Nerra Personal bucket, the episode's text artifacts move into
+    # members/ (every public surface reads the show directory's top level
+    # only), the ledger records it for the Personal builder, and the run
+    # ends here — before the RSS, summaries, blog, YouTube, X, newsletter
+    # and directory pings below.
+    if access_today == _access.MEMBERS:
+        if args.test or args.dry_run:
+            logger.info("Members episode (test/dry run) — nothing uploaded, "
+                        "nothing published.")
+            return
+        if not (final_mp3 and final_mp3.exists()):
+            logger.error("::error::%s: members episode has no final MP3 — it "
+                         "reached nobody", config.slug)
+            sys.exit(1)
+        _private_ref = _access.upload_private_audio(final_mp3, config)
+        if not _private_ref:
+            logger.error("::error::%s: members episode audio did not reach the "
+                         "private bucket — it reached nobody", config.slug)
+            sys.exit(1)
+        _mp3_bytes = final_mp3.stat().st_size
+        _moved = _access.move_episode_artifacts(
+            digests_dir, config.episode.prefix, episode_num, today)
+        from engine import titles as _titles
+        _ledger = _access.record_members_episode(digests_dir, {
+            "episode_num": episode_num,
+            "date": today.isoformat(),
+            "episode_title": _titles.episode_title(
+                title_hook, episode_num,
+                fallback=f"{config.name} - Episode {episode_num} - {today_str}"),
+            "audio_url": _private_ref,
+            "filename": final_mp3.name,
+            "duration_seconds": round(float(audio_duration or 0.0), 1),
+            "bytes": _mp3_bytes,
+            "content": x_thread or "",
+        })
+        save_usage(tracker, digests_dir)
+        try:
+            metrics.record("access_published", "members")
+            metrics.record("audio_duration_s", audio_duration)
+            metrics.save(digests_dir)
+        except Exception as exc:
+            logger.warning("Metrics save failed (non-fatal): %s", exc)
+        write_publish_complete_marker(
+            publish_marker, show_slug=config.slug, episode_num=episode_num,
+            date_iso=today.isoformat(),
+        )
+        _raw_mp3 = _access.members_dir(digests_dir) / (
+            f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_raw.mp3")
+        _raw_mp3.unlink(missing_ok=True)
+        logger.info("=" * 60)
+        logger.info("MEMBERS EPISODE PUBLISHED — Ep%d is in the private bucket "
+                    "(%s) and the ledger (%s); %d artifact(s) in members/. "
+                    "Nothing was published publicly.",
+                    episode_num, _private_ref, _ledger.name, len(_moved))
         logger.info("=" * 60)
         return
 

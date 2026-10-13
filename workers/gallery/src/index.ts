@@ -32,6 +32,7 @@ import {
   handleCheckoutRef,
   handlePortal,
   handleAdminSpecs,
+  handleShowDemand,
   handlePersonalFeed,
   handlePreferences,
   handleRebuild,
@@ -94,6 +95,8 @@ export default {
           return await handleStripeWebhook(request, env);
         case "GET /api/admin/personal-specs":
           return await handleAdminSpecs(request, env);
+        case "GET /api/admin/show-demand":
+          return await handleShowDemand(request, env);
         case "GET /api/health":
           return jsonResponse(request, 200, { ok: true });
         default:

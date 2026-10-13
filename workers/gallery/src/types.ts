@@ -29,6 +29,7 @@ export interface Env {
                                        // /api/books — Sep 2026)
   STRIPE_WEBHOOK_SECRET?: string;      // wrangler secret put
   PERSONAL_ADMIN_TOKEN?: string;       // wrangler secret put (batch builder)
+  PERSONAL_DEMAND_TOKEN?: string;      // wrangler secret put (show-demand counts only)
   MEMBER_BOOK_CODE?: string;           // member perks: book discount code
 
   // --- Plan switching (Sep 2026). A restricted Stripe key (billing

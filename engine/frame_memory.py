@@ -98,7 +98,12 @@ def script_paths(output_dir: Path, window: int = DEFAULT_WINDOW,
     """The show's most recent ``*_tts.txt`` scripts, oldest first. A rerun
     of today's episode passes its own ``Ep123_`` tag so it never reads
     itself as history."""
-    paths = sorted(Path(output_dir).glob("*_tts.txt"))
+    # A members-only episode's script sits in members/ (engine.access); it
+    # is still this show's own history, so the frames it used count.
+    paths = sorted(
+        list(Path(output_dir).glob("*_tts.txt"))
+        + list((Path(output_dir) / "members").glob("*_tts.txt")),
+        key=lambda p: p.name)
     if exclude_contains:
         paths = [p for p in paths if exclude_contains not in p.name]
     return paths[-window:]

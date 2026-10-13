@@ -111,7 +111,7 @@ const CITIES_MAX = 3;
 const TOPICS_MAX = 5;
 const TOPIC_MAX = 60;
 
-interface MemberRecord {
+export interface MemberRecord {
   shows: string[];
   addons?: string[];   // validated subset of PERSONAL_ADDONS; absent = defaults
   first_name: string;
@@ -888,4 +888,62 @@ export async function handleAdminSpecs(
     cursor = page.list_complete ? undefined : page.cursor;
   } while (cursor);
   return jsonResponse(request, 200, { ok: true, specs });
+}
+
+// ---------------------------------------------------------------------------
+// GET /api/admin/show-demand
+// ---------------------------------------------------------------------------
+//
+// Oct 13 2026, Nerra Personal gating (engine/access.py): a members-only show
+// runs only on a day paying members carry it. This answers "how many active
+// paying members have each show in their lineup" — COUNTS ONLY, never a
+// name, city, email or feed token, so the public repo's show runs can hold
+// the token that reads it. A member with fewer than two chosen shows counts
+// toward the starter lineup, exactly as the feed builder will build them.
+// Accepts PERSONAL_DEMAND_TOKEN (this endpoint only) or the full admin token.
+
+export function countShowDemand(records: MemberRecord[]): Record<string, number> {
+  const demand: Record<string, number> = {};
+  for (const rec of records) {
+    if (rec.status !== "active" || !rec.feed_token) continue;
+    const chosen = (rec.shows?.length ?? 0) >= 2 ? rec.shows : [...DEFAULT_LINEUP];
+    for (const slug of new Set(chosen)) {
+      demand[slug] = (demand[slug] || 0) + 1;
+    }
+  }
+  return demand;
+}
+
+export async function handleShowDemand(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  if (!env.RATE_LIMIT_KV || !(env.PERSONAL_DEMAND_TOKEN || env.PERSONAL_ADMIN_TOKEN)) {
+    return notConfigured(request);
+  }
+  const auth = request.headers.get("Authorization") || "";
+  const allowed = [env.PERSONAL_DEMAND_TOKEN, env.PERSONAL_ADMIN_TOKEN]
+    .filter((t): t is string => !!t)
+    .map((t) => `Bearer ${t}`);
+  if (!allowed.includes(auth)) {
+    return jsonResponse(request, 401, { ok: false, error: "auth required" });
+  }
+  const records: MemberRecord[] = [];
+  let cursor: string | undefined;
+  do {
+    const page = await env.RATE_LIMIT_KV.list({ prefix: "member:", cursor });
+    for (const key of page.keys) {
+      const raw = await env.RATE_LIMIT_KV.get(key.name);
+      if (!raw) continue;
+      try {
+        records.push(JSON.parse(raw));
+      } catch {
+        continue;
+      }
+    }
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor);
+  const demand = countShowDemand(records);
+  const members = records.filter((r) => r.status === "active" && r.feed_token).length;
+  return jsonResponse(request, 200, { ok: true, members, demand });
 }

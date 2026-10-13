@@ -561,6 +561,11 @@ def _read_skip_marker(output_dir: str, target_date: datetime.date) -> Optional[d
         return None
 
 
+def _members_episode_exists(output_dir: str, target_date: datetime.date) -> bool:
+    members = PROJECT_ROOT / output_dir / "members"
+    return any(members.glob(f"*{target_date.strftime('%Y%m%d')}.md"))
+
+
 def check_missed_episodes(
     target_date: datetime.date,
     found_episodes: List[EpisodeReview],
@@ -583,6 +588,10 @@ def check_missed_episodes(
         if not _scheduled_on(info, target_date):
             continue
         if slug in found_slugs:
+            continue
+        # A members-only episode (engine.access) lands in members/ — it was
+        # produced, for Nerra Personal members; never a missed episode.
+        if _members_episode_exists(info["output_dir"], target_date):
             continue
 
         # Check for a skip marker — pipeline ran but intentionally skipped
@@ -2098,7 +2107,8 @@ def close_resolved_missed_episode_issues(today: datetime.date) -> int:
                 all_replayed = False
                 break
             output_dir = PROJECT_ROOT / info["output_dir"]
-            if not list(output_dir.glob(f"*{date_str}.md")):
+            if not (list(output_dir.glob(f"*{date_str}.md"))
+                    or list((output_dir / "members").glob(f"*{date_str}.md"))):
                 all_replayed = False
                 break
 

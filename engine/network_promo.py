@@ -390,6 +390,18 @@ def _weighted_surface_pool() -> list[dict[str, str]]:
     return pool or list(NETWORK_SURFACES)
 
 
+def _members_only(slug: str) -> bool:
+    """A members-only show (engine.access) has no public feed to point a
+    listener at, so it is never the sibling plugged on air. While no show
+    is members-only the candidate list — and the rotation — is unchanged."""
+    try:
+        from engine.access import mode_for_slug
+
+        return mode_for_slug(slug) == "members_only"
+    except Exception:  # noqa: BLE001 — never let config break a closing
+        return False
+
+
 def pick_featured_show(show_slug: str, date: _dt.date) -> Optional[str]:
     """Return the sibling English show to feature in *show_slug*'s closing on
     *date*, or ``None`` if there is no eligible sibling / the show is not an
@@ -403,7 +415,8 @@ def pick_featured_show(show_slug: str, date: _dt.date) -> Optional[str]:
     """
     if show_slug not in ENGLISH_SHOWS:
         return None
-    candidates = [s for s in ENGLISH_ORDER if s != show_slug]
+    candidates = [s for s in ENGLISH_ORDER
+                  if s != show_slug and not _members_only(s)]
     if not candidates:
         return None
     offset = ENGLISH_ORDER.index(show_slug)
