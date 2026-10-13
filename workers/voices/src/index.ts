@@ -2071,6 +2071,34 @@ async function reminderFallback(env: Env): Promise<number> {
   return sent;
 }
 
+/** Oct 13 2026: the five-minute fire-tick dispatched a GitHub job 288
+ *  times a day (GitHub's own five-minute cron delivered 4), ~75 s of runner each,
+ *  and almost every one found nothing to do — fire_interviews.py acts only
+ *  on interviews at status briefed/scheduled inside [T-30 min, T+135 min]
+ *  (the T-2h reminder is its earliest action) plus the browser no-show
+ *  sweep (two days back) and live runs. The Worker reads the same table,
+ *  so it asks first. FAIL-OPEN: a Supabase error dispatches, and the
+ *  :00/:30 ticks always dispatch, so a row this query cannot see waits at
+ *  most thirty minutes — never a guest in a locked studio. */
+const FIRE_TICK_LOOKBACK_MS = 48 * 3600000;   // sweep_browser_no_shows window
+const FIRE_TICK_LOOKAHEAD_MS = 140 * 60000;   // REMINDER_AHEAD upper bound + drift
+
+async function fireTickDue(env: Env): Promise<boolean> {
+  try {
+    const lo = new Date(Date.now() - FIRE_TICK_LOOKBACK_MS).toISOString();
+    const hi = new Date(Date.now() + FIRE_TICK_LOOKAHEAD_MS).toISOString();
+    const due = await sb(env, "GET",
+      `interviews?status=in.(scheduled,briefed,in_progress)&scheduled_at=gte.${lo}&scheduled_at=lte.${hi}&select=id&limit=1`);
+    if (due?.length) return true;
+    const runs = await sb(env, "GET",
+      `interview_runs?status=in.(staged,awaiting_guest,fired)&select=id&limit=1`);
+    return !!runs?.length;
+  } catch (err: any) {
+    console.error("fire-tick gate failed (dispatching anyway):", err?.message ?? err);
+    return true;
+  }
+}
+
 async function interviewIsLive(env: Env): Promise<boolean> {
   const lo = new Date(Date.now() - 60 * 60000).toISOString();
   const hi = new Date(Date.now() + 15 * 60000).toISOString();
@@ -3386,7 +3414,11 @@ export default {
     const gate2Hour = fired.getUTCHours() === 17 && minute === 0;
     {
       try {
-        await dispatch(env, "fire-tick", { source: "voices-worker-cron" });
+        // Oct 13 2026: gated on the schedule (fireTickDue); the half-hour
+        // ticks dispatch unconditionally as the catch-all.
+        if (halfHour || await fireTickDue(env)) {
+          await dispatch(env, "fire-tick", { source: "voices-worker-cron" });
+        }
       } catch (err: any) {
         console.error("fire-tick dispatch failed:", err?.message ?? err);
       }

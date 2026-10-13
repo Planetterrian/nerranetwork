@@ -2695,6 +2695,40 @@ def run(args: argparse.Namespace) -> None:
             for _lk, _lv in _lint_metrics.items():
                 metrics.record(_lk, _lv)
             metrics.record("digest_lints_fired", [f.lint for f in _lint_findings])
+        # Oct 13 2026: the hook led with a story the show had already told
+        # on three recent days (Tesla Ep632 — Solar Roof, an August event,
+        # hook + essay for a third of the episode) with the ALREADY-COVERED
+        # note under the article saying "do not make it the hook again".
+        # An instruction the model breaks is enforced in code: a hook that
+        # matches the recurrence window on two or more prior days is a
+        # structural defect and spends the one-shot regeneration. Replayed
+        # on Tesla's last 16 hooks: fires once (10-12); a story covered once
+        # before (10-04/05/06) is a legitimate update and passes.
+        _hook_recurrence = None
+        if _recurrence_index is not None and not is_deep_dive:
+            try:
+                from engine.digest_lint import hook_line as _hook_line_of
+                _hr_hook = _hook_line_of(x_thread or "") or ""
+                _hr_match = _recurrence_index.match(_hr_hook) if _hr_hook else None
+                if _hr_match and int(_hr_match.get("times", 1)) >= HOOK_RECURRENCE_MIN_DAYS:
+                    _hook_recurrence = _hr_match
+                metrics.record("hook_recurrence_days",
+                               int(_hr_match.get("times", 0)) if _hr_match else 0)
+            except Exception as _hr_exc:  # noqa: BLE001 — never block a run
+                logger.warning("Hook recurrence check failed (non-fatal): %s", _hr_exc)
+        if _hook_recurrence:
+            # Rides the lint findings so the corrective regeneration names it
+            # like any other structural defect.
+            from engine.digest_lint import LintFinding as _LintFinding
+            _lint_findings = list(_lint_findings) + [_LintFinding(
+                "hook_recurrence",
+                f"the **HOOK:** leads with a story this show already told on "
+                f"{_hook_recurrence['times']} recent days (most recently "
+                f"{_hook_recurrence['date']}: “{_hook_recurrence['headline'][:60]}”) "
+                f"— lead with today's NEW development; that story is at most a "
+                f"one-clause update later in the digest",
+                {},
+            )]
         if (_val_factory or _hook_too_long or _lint_findings) and not is_deep_dive:
             _struct_defects: list = []
             for _lf in _lint_findings:
@@ -6347,6 +6381,11 @@ _SOURCE_SCAFFOLD_RE = re.compile(
     r"^\s*(?:[-*•>]\s*)*(?:\*\*|__)?\s*(?:sources?|источники?)\s*:",
     re.IGNORECASE,
 )
+
+# Oct 13 2026: a hook that matches the story-recurrence window on this
+# many prior days is a structural defect (Tesla Ep632 led with Solar Roof,
+# told on three recent days). One prior day is an update and passes.
+HOOK_RECURRENCE_MIN_DAYS = 2
 
 # Mid-line / sentence-final attribution: "… within a human lifetime.
 # Source goodnewsnetwork.org." (colon-less) and "… measured. Source:

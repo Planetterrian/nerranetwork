@@ -657,6 +657,9 @@ def build_podcast_template_vars(
     pod_vars.setdefault("vocab_review_section", "")
     # Offshore North (Sep 19 2026): {campaign_status} in both prompts.
     pod_vars.setdefault("campaign_status", "")
+    # Modern Investing (Oct 13 2026): {nasdaq_benchmark_line} in the
+    # podcast prompt's Market Pulse; empty when the hook did not run.
+    pod_vars.setdefault("nasdaq_benchmark_line", "")
     # Tesla's bespoke memory module injects three placeholders of its own
     # (the generalized shows share {narrative_memory_section} above). A
     # tesla hook-load failure would KeyError the podcast prompt exactly

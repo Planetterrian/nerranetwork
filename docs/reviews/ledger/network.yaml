@@ -811,28 +811,28 @@ reviews:
     - metric: "story_clusters_retold_in_digest on tesla/spacex/models_agents (metrics_ep*.json)"
       baseline: "unmeasured; Ep622 would read >= 2 (Model 3 pairs surfaced as separate items)"
       expected: "0 on >= 12 of the first 14 post-merge episodes per show"
-      verdict: pending
-      evidence: null
+      verdict: partial
+      evidence: "10-01..10-13: models_agents 0 on 12 of 13, spacex 0 on 8 of 13, tesla 0 on 2 of 12 (1-2 retold clusters a day) — the SAME-STORY note holds on two shows and not on Tesla; Tesla's clustered pairs are the Cybercab angles (seats / Grok demo / Texas scaling), which the 0.35-share clusterer joins on the product name"
     - metric: "banned-frame sentences per script on the 17 frame_memory shows (rerun build_recent_frames_block for the episode and count openers in its _tts.txt)"
       baseline: "6 across 17 scripts on 10-01 with the block empty (OV 1, MAB 3, PM 2)"
       expected: "<= 2 across the 17 scripts on each of the first 7 days the block renders"
-      verdict: pending
-      evidence: null
+      verdict: partial
+      evidence: "not re-measured mechanically this pass; the Oct 12-13 transcript review found no FF 'keep an eye on' or OV 'go deeper' frame and no prompt-seeded opener recurring across both days on any of the 17 shows — scored on the Oct 27 story-breaks readout with the frame counter"
     - metric: "items_without_source_shipped vs items_without_source (metrics_ep*.json) on the lint opt-in shows"
       baseline: "Top World Ep009: lint 0, file 8"
       expected: "equal on every episode for 14 days; any difference names a filter that removed a citation"
-      verdict: pending
-      evidence: null
+      verdict: hit
+      evidence: "every episode 10-01..10-13 with both counters recorded equal values; the one difference is Offshore North Ep009 (lint not opted in, None vs 0)"
     - metric: "Apple rating_count_total (api/apple_ratings.json)"
       baseline: "4 across 15 shows on 2026-10-01 (age_of_ai 1, MAB 1, spacex 2)"
       expected: ">= 14 by 2026-11-01, >= 3 shows with a first rating"
       verdict: pending
-      evidence: null
+      evidence: "6 on 2026-10-12 (spacex 3, tesla 1, MAB 1, age_of_ai 1) from 4 on 10-01; readout 11-01"
     - metric: "shows_unindexed (api/audience_headline.json)"
       baseline: "13 (every cohort show) once the next nightly runs"
       expected: "0 within 14 days of the operator's Podcast Index submissions; the number is the submission backlog, never a listener count"
-      verdict: pending
-      evidence: null
+      verdict: partial
+      evidence: "6 on 10-12 (ai_chips, collingwood, mag7, nerra_voices, offshore_north, omni_view_north_america) from 13; the directory submissions remain the operator's"
     agent_cost_usd: null
 
   - date: 2026-10-01
@@ -851,23 +851,23 @@ reviews:
     - metric: "source_integrity_stripped_sentences + claims-gate skip markers, all shows"
       baseline: "68 sentences / 12 skips in the 14 days to 10-01"
       expected: "0 and 0 for the 21 days after merge"
-      verdict: pending
-      evidence: null
+      verdict: hit
+      evidence: "0 stripped sentences and 0 gate skips on every episode since 10-02 (the three stripped sentences of 10-01 predate the merge)"
     - metric: "share of unverified_unreachable claims reaching verified_later within 7 nights (claims sidecars)"
       baseline: "unmeasured"
       expected: ">= 40% by the 10-22 readout"
-      verdict: pending
-      evidence: null
+      verdict: miss
+      evidence: "2 of 52 unreachable claims since 10-01 carry verified_later (3.8%) — the nightly re-check runs on the same runners the publishers 403; the second-egress deferred item is the decision, not a third filing"
     - metric: "network verified share, 30 days (claims.html)"
       baseline: "unmeasured as a share; 205 claims on 10-01 with 4 pre-strip failures"
       expected: ">= 85%"
       verdict: pending
-      evidence: null
+      evidence: "2,587 claims since 10-01 in the sidecars; the share is read on the 10-22 readout from claims.html"
     - metric: "UC episodes published per 21 days"
       baseline: "17 of 28 days (09-03..10-01)"
       expected: ">= 19 of 21"
-      verdict: pending
-      evidence: null
+      verdict: hit
+      evidence: "12 of the 13 days 10-01..10-13 published (10-01 was the last gate skip); on track for >= 19 of 21"
     agent_cost_usd: null
 
   - date: 2026-10-05
@@ -889,16 +889,78 @@ reviews:
     - metric: "omni_view script_digest_overlap_pct median (7 episodes) with llm_script_model_fallback absent"
       baseline: "~59% on the 4.3 fallback (Ep183-196)"
       expected: "<= 20% at coverage >= 75%"
-      verdict: pending
-      evidence: null
+      verdict: hit
+      evidence: "10-06..10-13 without fallback: 23.1 / 10.6 / 4.1 / 22.7 / 2.4 / 18.5 -> median 14.5% at coverage median 82%; two of nine episodes (10-08, 10-09) fell back to 4.3 and read 47-65%"
     - metric: "articles_date_probe_dated / articles_date_probed, network, 7 days"
       baseline: "~40% on 2026-10-05; replay of cited pages 102/150 -> 127/150"
       expected: ">= 55%"
-      verdict: pending
-      evidence: null
+      verdict: partial
+      evidence: "937 of 1,722 probed articles dated since 10-05 = 54.4% against the 55% target"
     - metric: "finansy_prosto newsletter_sent"
       baseline: "False on Ep079-086"
       expected: "True on the next two Mondays"
+      verdict: partial
+      evidence: "Ep087 (10-12) True; Ep086 (10-05) ran before the fix; one of the two Mondays is in"
+    agent_cost_usd: null
+
+  - date: 2026-10-13
+    pr: null
+    doc: docs/reviews/network_review_2026_10_13.md
+    summary: "Operator: a thorough review of the recent show runs for content, quality, information, presentation and enjoyment, and anything that improves the network. Oct 12-13 slate: 45 episodes on 28 shows, 100% run success, spoken-text gate 45/45, every script arm served its own model, Nerra Daily Ep053 complete at 23 segments; the first two story-break episodes landed (Top World 8 of 9 placed, Prediction Markets 6 of 8). Defects verified in the files: grok-4.7 desks narrated their sourcing in shapes past the Oct 12 filter (North America Ep020 ten '<Outlet> is the source for' sentences and 18 outlet mentions, Africa & Middle East Ep021 'Progress Watch for the day had none'); Tesla Ep632 led with Solar Roof, a story told on three recent days, under an ALREADY-COVERED note that said not to; SpaceX Ep128/129 said 'unchanged on the session' on a pre-market fast_info quote equal to its previous close; 'Starlink 15-25' aired as 'fifteen to twenty-five' and 'ZLAT.TO' as one word; Models & Agents spelled arXiv letter by letter 8-9 times an episode on the 4.6 arm; x_only_lead was a no-op on five opted-in shows; Whisper echo tokens reached captions (159 in 2,222 transcripts); the WYNTK lint fired on 5/5 Prediction Markets episodes because three cohort prompts lacked the clause; MIT narrated a missing YTD figure the tracker held; MAG 7's Company Desk floor contradicted its prompt; UC typed a sibling's cadence; the Voices fire-tick ran 288 GitHub jobs a day for nothing; verified_later recovers 3.8% of unreachable claims (same runners). Audience: OP3 network week 2,889 -> 4,032 (catalogue-sweep rule applies), YouTube EN +28.7% WoW, 12 newsletter subscribers."
+    shipped:
+      - "engine/absence_sentences.py: five sourcing-narration shapes, the Progress Watch echo without a colon, cut_sourcing_clause (clause-level; the fact in the sentence stays), strip_doubled_place_tags (Top World 'In X, in Asia,'); swept against all 2,320 committed scripts"
+      - "run_show.py: a hook matching the story-recurrence window on >= 2 prior days is a structural defect (HOOK_RECURRENCE_MIN_DAYS; metric hook_recurrence_days); Tesla replay fires once in 16 hooks"
+      - "shows/hooks/spacex.py: a fast_info quote equal to its previous close is the prior close — history supplies the move and the sentence says 'closed at'"
+      - "assets/pronunciation.py: launch designators (Starlink/Group/Transporter/Bandwagon n-n) spoken as two numbers; Toronto-suffix tickers spelled letter by letter"
+      - "engine/transcripts.py: drop_echo_words removes Whisper's low-probability adjacent duplicates from words and text (captions, VTT, gate input)"
+      - "engine/digest_lint.py: is_lead_section (name or 'Top ' prefix; 'The Big Story'); Reddit joins X in the lead-source rule (replay FF 0, PT 0, MAB 1, M&A 1 firings in 14 days)"
+      - "engine/validation.py: MAG 7 Company Desk floor 1 (the prompt says never pad; one item on 4 of 10 days)"
+      - "shows/hooks/modern_investing.py + engine/pipeline.py + modern_investing_podcast.txt: {nasdaq_benchmark_line} in the Market Pulse spec (A/B)"
+      - "prompts: WYNTK first-sentence clause on prediction_markets/vancouver/collingwood (the lint's rule, stated); Top World first sentence described by shape; UC cross-promo line carries no cadence word; arXiv -> archive in pronunciation_map.yaml (A/B)"
+      - "workers/voices/src/index.ts: fireTickDue gates the five-minute dispatch on the schedule, fail-open, half-hour ticks unconditional (operator: wrangler deploy)"
+    deferred:
+      - "Tesla story clusters retold 1-2 a day (Cybercab angles joined on the product name): read the cluster members on the next pass before touching MIN_SHARE"
+      - "verified_later recovery 3.8%: a second egress for the nightly re-verification is the decision (carried from 10-01)"
+      - "Prediction Markets Board question/outcome join ('Who wins the Senate pending a Hormuz agreement — no agreement leading'): read the Gamma event/market shapes in engine/prediction_board.py"
+      - "Nerra Daily handoffs restate the segment's hook seconds before it plays; field note carries no outlet — a salient-overlap reject in adopt_revised_handoffs and a sourced-or-SKIP parse"
+      - "FF/Planetterrian absence filter (off; FF Ep220 Iran item six absence sentences) — config flip, A/B"
+      - "the ~25 fallback show crons a day each trigger a no-op multilingual and edition run (~1 runner-hour/day); a conclusion the workflow_run filter can read would end it"
+      - "DP Pod banter miner misses single-word bits (checklist 4 of 6 weeks); the Oct 12 Russian close and FP bracket-Source fixes are verified next Monday"
+      - "operator: X 402 on the @planetterrian app; the Age of AI / DP Pod podcast playlists (landmine #15); the directory submissions (6 feeds unindexed)"
+    predictions:
+    - metric: "sentences matching the five Oct 13 sourcing-narration shapes or '<Outlet> is the source for' in committed desk/cohort _tts.txt (grep)"
+      baseline: "17 'source for' sentences and 7 meta-sentences across the Oct 12-13 scripts"
+      expected: "0 on every episode of the 14 days after merge"
+      verdict: pending
+      evidence: null
+    - metric: "hook_recurrence_days >= 2 on a SHIPPED Tesla/SpaceX/M&A digest (metrics_ep*.json)"
+      baseline: "Tesla Ep632: Solar Roof on 3 recent days"
+      expected: "0 shipped hooks at >= 2 in 14 days; digest_structural_regen_reasons names the gate on every firing"
+      verdict: pending
+      evidence: null
+    - metric: "SpaceX closing sentence on a pre-market run (Ep*_tts.txt)"
+      baseline: "Ep128/129: 'is trading at … unchanged on the session'"
+      expected: "'closed at … up/down N percent' on every run before 09:30 ET for 14 days; 'unchanged' only on a genuinely flat close"
+      verdict: pending
+      evidence: null
+    - metric: "'Starlink <words> to <words>' and '[A-Z]+\\.TO' occurrences in new _tts.txt files"
+      baseline: "38 and 90 committed scripts"
+      expected: "0 new occurrences"
+      verdict: pending
+      evidence: null
+    - metric: "adjacent low-probability duplicate tokens in new *_transcript.json (the drop_echo_words sweep)"
+      baseline: "159 across 2,222 transcripts; 0.47/episode on 10-13"
+      expected: "0 in every transcript written after merge"
+      verdict: pending
+      evidence: null
+    - metric: "prediction_markets digest_structural_regen_reasons naming wyntk_hook_match"
+      baseline: "5 of 5 episodes 10-09..10-13"
+      expected: "<= 1 of the next 5"
+      verdict: pending
+      evidence: null
+    - metric: "Fire scheduled interviews runs per day (Actions, event repository_dispatch)"
+      baseline: "288 on 2026-10-12"
+      expected: "<= 60 on any day with no interview inside the window, once deployed; no interview fired late"
       verdict: pending
       evidence: null
     agent_cost_usd: null

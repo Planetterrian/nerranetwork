@@ -178,7 +178,85 @@ _SELF_NARRATION = [
     # none.") — the Oct 10 rule skips the section; this is its echo.
     re.compile(r"^(?:Progress Watch|Both Sides|Also Today|The Board|"
                r"How It Works|Counterpoint)\s*:", re.IGNORECASE),
+    # Oct 13 2026: the same echo without the colon — Africa & Middle East
+    # Ep021 spoke "Progress Watch for the day had none." past the line above.
+    re.compile(r"^Progress Watch\b[^.!?]{0,40}\b(?:had none|none today|was empty)\b",
+               re.IGNORECASE),
+    # Oct 13 2026 slate (North America Ep020, Africa & Middle East Ep021,
+    # MAG 7 Ep021): grok-4.7 narrated its sourcing discipline in shapes the
+    # Oct 12 sweep had not seen — "…are the facts The National reports on
+    # the decision", "which is the limit of what Premium Times reports on
+    # the point", "What is on the record, then, is…", "not a finding by
+    # this show", "the four names The Hill attaches to that opposition",
+    # "not another retelling of the race". Swept against all 2,320
+    # committed scripts: every match is narration; "The facts on confirmed
+    # cases are consistent across reports" (prose, Omni View) is not
+    # matched because the outlet must follow "the facts".
+    re.compile(r"\bnot a finding by this show\b"
+               r"|\bthis show(?:'s|’s) own (?:finding|reading|judgement|judgment)\b"
+               r"|\bare the facts [A-Z][^.!?]{0,50}? reports (?:on|about|for)\b"
+               r"|\bthe limit of what [^.!?]{0,40}? (?:reports|carried|carries|says)\b"
+               r"|\bon the record, then\b|\bnot another retelling\b"
+               r"|\b(?:names?|figures?) [^.!?]{0,40}? attaches to\b", re.IGNORECASE),
 ]
+
+# "<Outlet> is the source for <list>" — North America Ep020 (2026-10-13)
+# carried ten of them and the shape names an outlet on every story, so
+# it is not an absence sentence but a sourcing clause. It is cut as a
+# CLAUSE, never a sentence: Collingwood Ep3 wrote "Environment Canada is
+# the source for those figures, and the current reading given is eleven
+# point zero degrees." — the temperature stays. A sentence that is only
+# the clause goes.
+_SOURCE_FOR_HEAD_RE = re.compile(
+    r"^(?:The |the )?[A-Z][\w&'’.-]*(?:\s+[A-Z][\w&'’.-]*){0,5}\s+"
+    r"(?:is|are|was|were) the sources? for\b")
+_SOURCE_FOR_TAIL_RE = re.compile(
+    r",?\s*(?:and|but|while)\s+(?:The |the )?[A-Z][\w&'’.-]*(?:\s+[A-Z][\w&'’.-]*){0,5}\s+"
+    r"(?:is|are|was|were) the sources? for\b[^.;!?]*")
+# The clause ends where a second CLAUSE begins — ", and the current reading
+# given is eleven…" — never at a comma inside the list it introduces ("the
+# pledge, the size claim, and the Miami campus plan").
+_NEXT_CLAUSE_RE = re.compile(
+    r",\s*(?:and|but|while)\s+(?=(?:[\w'’-]+\s+){0,4}(?:is|are|was|were|has|have|had|"
+    r"said|says|will|did|does|do)\b)")
+
+
+def cut_sourcing_clause(sentence: str) -> str:
+    """Remove an "<Outlet> is the source for …" clause; '' when nothing
+    else was in the sentence. Any other sentence is returned unchanged."""
+    s = sentence.strip()
+    m = _SOURCE_FOR_HEAD_RE.match(s)
+    if m:
+        n = _NEXT_CLAUSE_RE.search(s, m.end())
+        rest = s[n.end():].strip() if n else ""
+        if len(rest.split()) < 5:
+            return ""
+        return rest[0].upper() + rest[1:]
+    m = _SOURCE_FOR_TAIL_RE.search(s)
+    if m:
+        head = s[:m.start()].rstrip(" ,;")
+        if len(head.split()) < 5:
+            return ""
+        return head + ("." if s.endswith(".") else "")
+    return s
+
+
+# Top World Ep020 (2026-10-12) opened 7 of 10 items on a doubled place
+# tag — "In Pakistan, in Asia, President Zardari…", "In Haiti, in the
+# Americas, the electoral body…" (18 across the committed scripts, all
+# Top World). The prompt asks for the country and the region; the country
+# carries the region. Only the second tag goes.
+_PLACE_TAG_RE = re.compile(
+    r"^(In [^,\n]{2,40}), in (?:Europe|Asia|Africa|the Americas|North America|"
+    r"South America|Latin America|the Middle East|the Pacific|Oceania|"
+    r"Central America|the Caribbean|the Gulf),", re.MULTILINE)
+
+
+def strip_doubled_place_tags(text: str) -> Tuple[str, int]:
+    """``In X, in <continent>,`` -> ``In X,``. Returns (text, count)."""
+    if not text:
+        return text, 0
+    return _PLACE_TAG_RE.subn(r"\1,", text)
 
 
 def is_self_narration_sentence(sentence: str) -> bool:
@@ -203,6 +281,7 @@ def strip_absence_sentences(text: str) -> Tuple[str, int]:
     """
     if not text:
         return text, 0
+    text, _tags = strip_doubled_place_tags(text)
     out = []
     removed = 0
     in_fence = False
@@ -228,6 +307,17 @@ def strip_absence_sentences(text: str) -> Tuple[str, int]:
             continue
         parts = _SENT_SPLIT.split(body)
         keep = [p for p in parts if not is_absence_sentence(p)]
+        # Sourcing clauses are cut inside the sentence (a cut counts as
+        # one removal); a sentence the cut empties is dropped and counted
+        # with the absence sentences below.
+        cut = []
+        for p in keep:
+            q = cut_sourcing_clause(p)
+            if q:
+                if q != p:
+                    removed += 1
+                cut.append(q)
+        keep = cut
         prose_kept = [p for p in keep if not p.lower().startswith("source:")]
         if not prose_kept:
             # Every sentence was an absence sentence. A one-sentence line

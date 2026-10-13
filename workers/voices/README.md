@@ -76,7 +76,7 @@ the operator later prefers Vercel. Routing: the gallery worker owns
 | `GET /voices/host-link?interview=…&token=…` | Admin: Patrick's co-host studio link (`…&role=host` — no token on the link itself since the room model) |
 | `GET /voices/episode-lookup` · `GET /voices/guest-brief` · `POST /voices/fact-check` | Mira's three in-call tools (spec §3.2) |
 | `scheduled` (daily 17:00 UTC) | Gate-2 housekeeping: day-4 guest reminder, day-7 auto-approve |
-| `scheduled` (every 5 min) | Punctual fire-tick → `repository_dispatch: fire-tick` (GitHub's own 5-minute cron arrives hours late under load) |
+| `scheduled` (every 5 min) | Punctual fire-tick → `repository_dispatch: fire-tick` (GitHub's own 5-minute cron arrives hours late under load). Oct 13 2026: gated on the schedule — `fireTickDue` reads Supabase for an interview at briefed/scheduled/in_progress inside [now-48h, now+140min] or a live run and dispatches only then; any Supabase error dispatches (fail-open) and the :00/:30 ticks always dispatch. 288 no-op jobs a day → ~50. |
 | `GET /voices/health` | Deploy verification: which secrets are set (never values — includes `vox_host_password` and the `voices_r2` binding), cron config, and a live read-only GitHub auth probe — `github_status: 401` means the stored token is bad (expired, or pasted with a trailing newline); `repository_dispatch` needs **Contents: Read and write** |
 
 ## Deploy

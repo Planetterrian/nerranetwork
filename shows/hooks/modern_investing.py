@@ -299,6 +299,15 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     except Exception as exc:
         logger.warning("Benchmark state refresh failed: %s", exc)
     context["benchmark_state"] = _build_benchmark_block(tracker)
+    # Oct 13 2026: the script stage read the YTD move from the DIGEST, and
+    # when the digest's Market Pulse dropped it (Ep198, Ep199) the podcast
+    # prompt's "if unavailable, say so" clause aired "today's snapshot does
+    # not include a year-to-date figure" two days running while the
+    # tracker held +17.26%. The podcast prompt now reads the NASDAQ line
+    # itself — the first line of the block, never the scoreboard, which
+    # belongs to Portfolio Performance alone.
+    context["nasdaq_benchmark_line"] = (
+        context["benchmark_state"].split("\n", 1)[0].strip())
 
     # Every block below is ANALYSIS of the record, not the record itself.
     # One of them failing must cost that block, never the episode (Oct 6
