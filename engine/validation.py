@@ -900,8 +900,14 @@ def mag7_validation_config() -> ValidationConfig:
         section_pairs=[],
         sections=[
             _items_rule("Top News", "Top News", r"### Company Desk|## Company Desk", 2),
+            # Oct 13 2026: the prompt says a company with no genuine news is
+            # omitted and never padded, and the committed Company Desk ran
+            # one item on 4 of the last 10 days — a floor of two contradicts
+            # the prompt (an under-floor section is logged, never regenerated,
+            # so it only ever read as a daily validation failure). One is
+            # the floor; zero is the structural defect.
             _items_rule("Company Desk", "Company Desk",
-                        r"### The Counterpoint|## The Counterpoint", 2),
+                        r"### The Counterpoint|## The Counterpoint", 1),
             # Sep 24 2026: Ep2 shipped with no Counterpoint at all (the
             # overlap dedup had removed it, header included) and nothing
             # regenerated — a missing section is a structural defect, same

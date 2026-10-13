@@ -4576,3 +4576,61 @@ experiments:
       content_discipline "The listener hears every story change" + the
       matching lines in tesla/spacex/ff/planetterrian/omni_view and nine
       cohort/desk prompts. Guards tests/test_story_breaks_2026_10_13.py.
+
+  - id: network-review-2026-10-13
+    title: "Network review Oct 13: sourcing narration cut in code, hook recurrence gate, SpaceX pre-market quote, Whisper echo tokens, lead lint coverage, Voices tick gate"
+    area: quality
+    shipped: 2026-10-13
+    readout: 2026-10-27
+    status: reading
+    baseline: >
+      Oct 12-13 slate (45 episodes, 28 shows): 100% run success, spoken-text
+      gate 45/45, every script arm served its own model. Defects verified in
+      the files: grok-4.7 desks narrated their sourcing in shapes past the
+      Oct 12 filter (North America Ep020 ten "<Outlet> is the source for"
+      sentences, Africa & Middle East Ep021 "Progress Watch for the day had
+      none" and four meta-sentences); Tesla Ep632 led with Solar Roof, told
+      on three recent days, under an ALREADY-COVERED note; SpaceX Ep128/129
+      said "unchanged on the session" on a pre-market fast_info quote that
+      equalled its previous close; "Starlink 15-25" aired as "fifteen to
+      twenty-five" (38 scripts) and "ZLAT.TO" as one word (90 scripts);
+      Models & Agents spelled arXiv letter by letter 8-9 times an episode on
+      the 4.6 arm; x_only_lead was a no-op on five opted-in shows (lead
+      header not in LEAD_SECTIONS); Whisper echo tokens ("Texas. Texas.",
+      159 across 2,222 transcripts) reached captions; the WYNTK lint fired on
+      5/5 Prediction Markets episodes because its prompt lacked the clause
+      the lint checks; MIT aired "no year-to-date figure" two days running
+      with +17.26% in the tracker; the Voices fire-tick ran 288 GitHub jobs a
+      day for nothing (GitHub's own cron delivered 4); the multilingual and
+      edition workflows each ran ~25 no-op jobs a day behind the fallback
+      show crons. Audience: OP3 network week 2,889 -> 4,032 (read with the
+      catalogue-sweep rule).
+    target: >
+      14 days after merge: script_absence_sentences_removed carries the new
+      shapes on the desks and no "<Outlet> is the source for" sentence ships
+      (grep every _tts.txt); hook_recurrence_days >= 2 regenerates on every
+      firing and Tesla's hook is never a story told on 2+ recent days;
+      SpaceX closings say "closed at" with the prior session's move before
+      pre-market prints; no "Starlink <n> to <n>" or ".TO" in any _tts.txt;
+      Whisper transcripts carry 0 adjacent low-probability duplicates;
+      Prediction Markets' wyntk_hook_match regen share falls from 5/5 to
+      <= 1/5; MIT's Market Pulse states the YTD figure on 5 of 5 weekdays;
+      fire-tick dispatches <= 60/day with no interview fired late (operator:
+      wrangler deploy workers/voices). AUDIO (A/B-listen, landmine #17): the
+      arXiv pronunciation on Models & Agents, the desks' filtered scripts,
+      MIT's Market Pulse, the UC cross-promo line, Top World's first
+      sentences.
+    notes: >
+      engine/absence_sentences.py (+5 shapes, cut_sourcing_clause,
+      strip_doubled_place_tags), run_show.py (HOOK_RECURRENCE_MIN_DAYS,
+      hook_recurrence_days metric), shows/hooks/spacex.py (_no_trade_yet),
+      assets/pronunciation.py (replace_mission_designators,
+      spell_exchange_suffix_tickers), engine/transcripts.py
+      (drop_echo_words), engine/digest_lint.py (is_lead_section, Reddit in
+      the lead rule), engine/validation.py (MAG 7 Company Desk floor 1),
+      shows/hooks/modern_investing.py + engine/pipeline.py
+      ({nasdaq_benchmark_line}), workers/voices/src/index.ts (fireTickDue),
+      prompts: prediction_markets/vancouver/collingwood WYNTK clause, Top
+      World first sentence, UC cross-promo, MIT Market Pulse, arXiv in
+      pronunciation_map.yaml. Guards tests/test_network_review_2026_10_13.py.
+      Review docs/reviews/network_review_2026_10_13.md.

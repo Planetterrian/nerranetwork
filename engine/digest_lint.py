@@ -44,14 +44,31 @@ _HOOK_RE = re.compile(r"\*\*HOOK:\*\*\s*(.+)|^>\s*\*\*(.+?)\*\*\s*$", re.MULTILI
 _WYNTK_RE = re.compile(r"\*\*What You Need to Know:\*\*\s*(.+)")
 _SENT_SPLIT = re.compile(r"(?<=[.!?])\s+")
 _URL_RE = re.compile(r"https?://[^\s)\]>]+")
-_X_HOST_RE = re.compile(r"^https?://(?:www\.|mobile\.)?(?:x\.com|twitter\.com)/", re.IGNORECASE)
+# Oct 13 2026: a Reddit thread is the same defect as an X post when it is a
+# lead's ONLY source (Planetterrian Ep212 led its menopause story on
+# r/science and never named the paper). Replayed on the last 14 digests of
+# every opted-in show: FF 0, Planetterrian 0, MAB 1, M&A 1 firings.
+_X_HOST_RE = re.compile(
+    r"^https?://(?:www\.|mobile\.|old\.)?(?:x\.com|twitter\.com|reddit\.com)/",
+    re.IGNORECASE)
 _ITEM_HEAD_RE = re.compile(r"^\s*(?:\d+\.\s*)?\*\*.+\*\*|^\s*(?:\d+\.\s*)?[A-Z][^\n]{8,}?:\s+[^\n]{2,60}$")
 
 #: Section titles whose FIRST item is the episode's lead story.
 LEAD_SECTIONS = (
     "Lead", "Top Story", "Top News", "Top Stories", "The Week's Stories",
     "The Ten", "The Week in Peptides", "The Week in Longevity",
+    "The Big Story",
 )
+
+
+def is_lead_section(title: str) -> bool:
+    """Oct 13 2026: ``x_only_lead`` had been a no-op on five of the shows
+    that opted in — Models & Agents for Beginners leads with "The Big
+    Story", Fascinating Frontiers and Planetterrian with "Top 12 … Stories"
+    — because the lead was matched by exact name. A header that starts
+    with "Top " is a lead section wherever it appears."""
+    t = (title or "").strip()
+    return t in LEAD_SECTIONS or t.startswith("Top ")
 
 
 def sections(digest: str) -> List[Tuple[str, str]]:
@@ -172,10 +189,11 @@ def lint_wyntk_hook_match(digest: str) -> Optional[LintFinding]:
 # --- x_only_lead ------------------------------------------------------------
 
 def x_only_lead_items(digest: str) -> List[str]:
-    """Titles of lead items whose every source URL is an X post."""
+    """Titles of lead items whose every source URL is a social post (X or
+    Reddit)."""
     bad: List[str] = []
     for title, body in sections(digest):
-        if title not in LEAD_SECTIONS:
+        if not is_lead_section(title):
             continue
         its = items(body)
         if not its:
@@ -193,10 +211,11 @@ def lint_x_only_lead(digest: str) -> Optional[LintFinding]:
     if bad:
         return LintFinding(
             "x_only_lead",
-            "the lead item's only source is a post on X — a lead item is "
-            "sourced to a named newsroom's own article (the post's linked "
-            "article, or another supplied article on the same story); an X "
-            "post may be a secondary source, never the only one",
+            "the lead item's only source is a social post (X or Reddit) — a "
+            "lead item is sourced to a named newsroom's own article or the "
+            "paper itself (the post's linked article, or another supplied "
+            "article on the same story); a post may be a secondary source, "
+            "never the only one",
             metrics,
         )
     return LintFinding("x_only_lead", "", metrics)

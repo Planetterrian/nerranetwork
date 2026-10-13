@@ -166,6 +166,24 @@ def _fetch_spcx_quote() -> tuple[float, str, str]:
         if not result:
             continue
         price, prev_close = result
+        if source_name == "yfinance_fast_info" and _no_trade_yet(price, prev_close):
+            # Oct 13 2026: Ep128 and Ep129 both said "is trading at …
+            # unchanged on the session" while the stock moved +0.5% between
+            # the runs. The show lands ~05:20 ET, inside the pre-market
+            # window, and before the first pre-market print
+            # ``fast_info.last_price`` IS ``previous_close`` — a bar, not a
+            # trade. The prior session's move comes from history's
+            # second-last close and the sentence says "closed at".
+            try:
+                hist = _quote_from_history()
+            except Exception as exc:  # noqa: BLE001 — fall back to fast_info
+                logger.info("SPCX history fallback failed: %s", exc)
+                hist = None
+            if hist and abs(hist[0] - price) < 0.005 and hist[1]:
+                prev_close = hist[1]
+                source_name = "yfinance_history"
+                logger.info("SPCX fast_info quote equals its previous close — "
+                            "no trade yet; speaking the last close from history")
         if not _validate(price):
             logger.warning(
                 "SPCX source %s returned %s — failed validation, trying next",
@@ -185,6 +203,13 @@ def _fetch_spcx_quote() -> tuple[float, str, str]:
         _persist(price, prev_close, change_str, source_name)
         return price, change_str, source_name
     return 0.0, "", ""
+
+
+def _no_trade_yet(price: float, prev_close) -> bool:
+    """A ``fast_info`` last trade that equals its previous close is the
+    prior close itself (Yahoo answers that before the first pre-market
+    print), never a trade on the session."""
+    return bool(prev_close) and abs(float(price) - float(prev_close)) < 0.005
 
 
 def _quote_from_history():

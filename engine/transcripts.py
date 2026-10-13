@@ -333,6 +333,66 @@ def correct_brand_words(
     return out
 
 
+#: A Whisper echo token: the same word again, abutting the real one, at a
+#: probability no real word gets. Calibrated on every committed transcript
+#: (Oct 13 2026): the 34 adjacent duplicates under 0.1 are all of the
+#: "Texas. Texas." / "tomorrow. Tomorrow." shape (the real word reads 0.5-
+#: 0.999, the echo 0.016-0.022); the 149 adjacent duplicates ABOVE 0.1 are
+#: real repeats ("that that", "had had", "-S -S") and are left alone.
+ECHO_MAX_PROBABILITY = 0.1
+ECHO_MAX_GAP_SECONDS = 0.05
+_ECHO_WORD_RE = re.compile(r"[^\w]", re.UNICODE)
+
+
+def drop_echo_words(segments: Sequence[dict]) -> tuple[list[dict], int]:
+    """Remove Whisper's sentence-boundary echo tokens from the word lists
+    AND the segment text, so captions never flash a word twice. Returns
+    ``(segments, dropped)``; the input is not mutated."""
+    out: list[dict] = []
+    dropped = 0
+    # The echo usually OPENS the next segment ("…in Texas." | "Texas. The
+    # company…"), so the previous word is tracked across segments.
+    prev: Optional[dict] = None
+    prev_seg_idx: Optional[int] = None
+    for seg in segments:
+        words = list(seg.get("words") or [])
+        kept: list[dict] = []
+        text = seg.get("text") or ""
+        for w in words:
+            cur = _ECHO_WORD_RE.sub("", str(w.get("word", ""))).lower()
+            if (prev is not None and cur
+                    and cur == _ECHO_WORD_RE.sub("", str(prev.get("word", ""))).lower()
+                    and float(w.get("probability", 1.0)) < ECHO_MAX_PROBABILITY
+                    and float(w.get("start", 0.0)) - float(prev.get("end", 0.0)) <= ECHO_MAX_GAP_SECONDS):
+                dropped += 1
+                # Extend the real word over the echo's time so the words
+                # stay contiguous, and take the echo out of the text once.
+                prev = {**prev, "end": max(float(prev.get("end", 0.0)), float(w.get("end", 0.0)))}
+                if kept:
+                    kept[-1] = prev
+                elif prev_seg_idx is not None and out[prev_seg_idx].get("words"):
+                    pw = list(out[prev_seg_idx]["words"])
+                    pw[-1] = prev
+                    out[prev_seg_idx] = {**out[prev_seg_idx], "words": pw}
+                token = str(w.get("word", "")).strip()
+                if token:
+                    text = re.sub(r"(?:(?<=\S)\s+|^\s*)" + re.escape(token) + r"(?=\s|$)",
+                                  "", text, count=1).strip()
+                continue
+            kept.append(w)
+            prev = w
+        if len(kept) == len(words):
+            out.append(seg)
+        elif kept or text:
+            out.append({**seg, "words": kept, "text": text})
+        else:
+            # The segment was the echo alone: nothing to keep.
+            continue
+        if kept:
+            prev_seg_idx = len(out) - 1
+    return out, dropped
+
+
 def correct_brand_segments(segments: Sequence[dict]) -> list[dict]:
     """Repair a whole segment list, including brands split across segments.
 
@@ -676,6 +736,11 @@ def generate_transcript(
         # (Whisper ends a segment on "NARA" and opens the next with
         # "Network" — neither half has enough context alone).
         transcript_segments = correct_brand_segments(transcript_segments)
+        # Third pass: drop Whisper's sentence-boundary echo tokens
+        # ("Texas. Texas.", "tomorrow. Tomorrow.") — see drop_echo_words.
+        transcript_segments, _echoes = drop_echo_words(transcript_segments)
+        if _echoes:
+            logger.info("Dropped %d Whisper echo token(s) from the transcript", _echoes)
         full_text_parts = [s["text"] for s in transcript_segments]
 
         # Write JSON transcript (timestamped segments + word-level data)

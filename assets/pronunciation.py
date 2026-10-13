@@ -1548,6 +1548,26 @@ def replace_scientific_designations(text: str) -> str:
     return text
 
 
+_MISSION_DESIGNATOR_RE = re.compile(
+    r"\b(Starlink|Group|Transporter|Bandwagon|Crew|CRS|Cargo Dragon|Falcon)"
+    r"\s+(\d{1,3})\s*[-–]\s*(\d{1,3})\b(?!\s*%)")
+_EXCHANGE_TICKER_RE = re.compile(r"\b([A-Z]{1,5})\.(?:TO|V|CN|NE)\b")
+
+
+def replace_mission_designators(text: str) -> str:
+    """``Starlink 6-87`` -> ``Starlink six eighty-seven``; never a range."""
+    def _desig(m: re.Match) -> str:
+        return (f"{m.group(1)} {number_to_words(int(m.group(2)))} "
+                f"{number_to_words(int(m.group(3)))}")
+    return _MISSION_DESIGNATOR_RE.sub(_desig, text)
+
+
+def spell_exchange_suffix_tickers(text: str) -> str:
+    """``ZLAT.TO`` -> ``Z L A T``. The suffix is a data-vendor convention
+    the digest keeps; the listener hears the letters."""
+    return _EXCHANGE_TICKER_RE.sub(lambda m: " ".join(m.group(1)), text)
+
+
 def replace_number_ranges(text: str) -> str:
     """Convert plain number ranges to spoken form.
 
@@ -1575,6 +1595,16 @@ def replace_number_ranges(text: str) -> str:
         except ValueError:
             pass
         return m.group(0)
+
+    # A launch designator is never a range: SpaceX Ep129 (2026-10-13)
+    # aired "Starlink fifteen to twenty-five mission" for Starlink 15-25,
+    # and "Group 6-87" had been "six to eighty-seven" on 38 committed
+    # scripts. The group and the flight are spoken as two numbers.
+    text = replace_mission_designators(text)
+    # A Toronto-listed ticker ("ZLAT.TO", "IAG.TO") is spelled letter by
+    # letter and loses its exchange suffix: Modern Investing Ep199 opened
+    # on "ZLAT.TO" read as one word (90 committed scripts carry the form).
+    text = spell_exchange_suffix_tickers(text)
 
     # Match digit-hyphen-digit ranges that aren't preceded by a currency
     # symbol (those are handled by replace_price_ranges). A digit glued
