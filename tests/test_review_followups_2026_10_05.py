@@ -320,7 +320,10 @@ class TestDeSeeds:
 
     def test_ai_chips_teardown_keeps_its_anchor_and_bans_reading_the_title(self):
         text = (PROMPTS / "ai_chips_podcast.txt").read_text(encoding="utf-8")
-        assert 'the phrase "take it apart" once' in text
+        # Oct 14 2026: the phrase is allowed, never required, and never the
+        # "take it apart at the X, not at the Y" frame (Ep019-021).
+        assert '"take it apart" may sit inside it' in text
+        assert 'never in a "take it apart at the X, not at the Y" frame' in text
         assert "never read its title out" in text
 
     def test_tesla_has_one_length_target(self):

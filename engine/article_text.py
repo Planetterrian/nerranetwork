@@ -381,7 +381,16 @@ def enrich_articles_with_full_text(
         # Oct 9 2026: a narrative research article (source_kind research) is
         # the same case — its page is the only text the claims gate may use.
         first = src in prio or art.get("source_kind") in ("hook", "research")
-        return (0 if first else 1, idx)
+        if first:
+            return (0, idx)
+        # Oct 14 2026: then the stories the digest is likeliest to tell at
+        # length — a story two or more outlets carry (story_clusters) or a
+        # preferred primary publisher — before the newest stray item. The
+        # desks' Leads ran four sentences because the fetch slots went to
+        # whatever was newest, not to the story the model chose.
+        if int(art.get("story_cluster_size") or 0) >= 2 or art.get("preferred_source"):
+            return (1, idx)
+        return (2, idx)
 
     ordered = sorted(enumerate(articles), key=_rank)
     chosen = [art for _, art in ordered[:max_articles]]

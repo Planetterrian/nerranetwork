@@ -5,7 +5,9 @@ name: Planetterrian Daily
 # prompt saw headline + teaser only until now), primary publishers marked
 # [preferred primary source], X posts ranked after every article where set,
 # and the X-only-lead lint riding the one-shot structural regeneration.
-fetch_full_text: 12
+fetch_full_text: 16
+# Oct 14 2026: the deep dive is now built from fetched text.
+fetch_full_text_chars: 5000
 # Sep 30 2026 (network review): nothing older than three days is news.
 # The page-date probe (engine/article_dates.py, date_probe_max) dates the
 # articles nothing trustworthy dated, and this gate drops what it finds
@@ -294,7 +296,8 @@ llm:
   # the podcast LLM with nothing to expand. 5000 matches Tesla; MIT and
   # Omni View sit at 4000. Re-tune downward only with evidence that the
   # full digest fits in fewer tokens than grok-4.3 burns on reasoning.
-  max_tokens: 5000
+  # Oct 14 2026: the deep dive doubled; room for it plus the claims ledger.
+  max_tokens: 6500
   podcast_max_tokens: 10000
   # May 2026 substance-boost: target bumped 950 → 1250 to match the new
   # "12-14 stories × 5-7 sentences" podcast structure (was "9-11 × 4-6").

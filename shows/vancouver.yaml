@@ -24,7 +24,9 @@ description: The morning brief for Metro Vancouver — the day's civic and
   argued fairly both ways. Hosted by Mira, the Nerra Network's AI host.
 
 # Local wire copy is short; the digest reads full article text.
-fetch_full_text: 12
+# Oct 14 2026: the deep dive / Closer Look is written from fetched text.
+fetch_full_text: 20
+fetch_full_text_chars: 5000
 absence_sentence_filter: true
 # Digest lints + X-source policy (Sep 23 2026 launch-cohort review; engine/digest_lint.py).
 digest_lints:
@@ -285,9 +287,12 @@ llm:
   podcast_max_tokens: 9000
   # A 8-9 minute commute brief. The skip floor is 60% of this (720 words);
   # set to what a local digest supports (the Phase 1 lesson, plan §9a).
-  min_podcast_words: 1200
+  # Oct 14 2026: sized from the promised minutes and this host's measured
+  # spoken rate (was 1200). The skip floor stays at the old 60% line.
+  min_podcast_words: 1450
+  min_podcast_publish_words: 720
   podcast_expand_below_target: false
-  min_digest_words: 1200
+  min_digest_words: 1300
   digest_expand_below_target: true
 
 tts:
@@ -358,6 +363,10 @@ chapters:
   - pattern: This is Vancouver Daily|first episode of|Vancouver Daily, episode
     title: Introduction
     where: start
+  - pattern: a closer look|the longer story
+    title: The Closer Look
+    where: body
+    digest_section: The Closer Look
   - pattern: getting around
     title: Getting Around
     where: body

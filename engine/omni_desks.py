@@ -335,7 +335,8 @@ _ITEM_HEAD_RE = re.compile(
 )
 _SOURCE_URL_RE = re.compile(r"Source:\s*(?:\[[^\]]*\]\()?(?P<url>https?://[^\s)\]]+)")
 #: Sections of a desk digest that carry ranked news items.
-DESK_ITEM_SECTIONS = ("Lead", "Across the Region", "Also Today", "The Region and the World")
+DESK_ITEM_SECTIONS = ("Lead", "Across the Region", "The Closer Look", "Also Today",
+                      "The Region and the World")
 
 
 def desk_items(digest_md: str) -> List[Dict[str, str]]:

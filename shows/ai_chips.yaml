@@ -170,7 +170,9 @@ x_accounts:
 # Full article text for the top articles (engine/article_text.py): Ep1's
 # items were written from feed teasers and ended in "no figures were
 # disclosed" eight times out of ten. The digest now reads the articles.
-fetch_full_text: 16
+# Oct 14 2026: the deep dive / Closer Look is written from fetched text.
+fetch_full_text: 20
+fetch_full_text_chars: 6000
 # Sep 30 2026 (network review): nothing older than three days is news.
 # The page-date probe (engine/article_dates.py, date_probe_max) dates the
 # articles nothing trustworthy dated, and this gate drops what it finds
@@ -239,7 +241,10 @@ llm:
   # Sep 23 2026: targets set to what the format's digest supports. The
   # skip floor is 60% of this; Ep1 runs produced 912 words against 1,500 (61% — one bad day from a skip). Length is still
   # a digest-side lever (CLAUDE.md) — this is the target, not a retry.
-  min_podcast_words: 1300
+  # Oct 14 2026: sized from the promised minutes and this host's measured
+  # spoken rate (was 1300). The skip floor stays at the old 60% line.
+  min_podcast_words: 1400
+  min_podcast_publish_words: 780
   # Length levers are digest-side only (CLAUDE.md live constraints).
   podcast_expand_below_target: false
   min_digest_words: 1300

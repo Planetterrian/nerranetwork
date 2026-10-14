@@ -37,7 +37,8 @@ def _cfg(slug):
 class TestSourcingFloorOnTheNewsShows:
     def test_full_text_depth(self):
         for slug, depth in NEWS_SHOWS.items():
-            assert _cfg(slug).get("fetch_full_text") == depth, slug
+            # Oct 14 2026: FF and Planetterrian rose to 16 (deep dives from fetched text).
+            assert _cfg(slug).get("fetch_full_text") >= depth, slug
 
     def test_preferred_domains_are_primary_publishers(self):
         for slug in NEWS_SHOWS:
@@ -98,7 +99,9 @@ class TestSourcingFloorOnTheNewsShows:
         from engine.config import load_config
         for slug, depth in NEWS_SHOWS.items():
             c = load_config(ROOT / "shows" / f"{slug}.yaml")
-            assert c.fetch_full_text == depth
+            # Oct 14 2026: FF and Planetterrian rose to 16 (their deep dives
+            # are built from fetched text); the Sep 24 depth is the floor.
+            assert c.fetch_full_text >= depth
             assert c.preferred_domains and all(d == d.lower() for d in c.preferred_domains)
 
 

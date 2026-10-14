@@ -99,7 +99,8 @@ class TestLowEffortOnNewShows:
 def test_collingwood_floor_matches_its_length_target():
     """The spoken target and the show's own length target move together
     (1,000 at launch; 900 since 2026-10-03, when Ep002 stretched a thin
-    week by telling a quarter of its sentences twice)."""
+    week by telling a quarter of its sentences twice; 1,150 since
+    2026-10-14, when The Closer Look gave the week one sourced long story)."""
     import yaml
     cfg = load_config("shows/collingwood.yaml")
     raw = yaml.safe_load(open("shows/collingwood.yaml", encoding="utf-8"))

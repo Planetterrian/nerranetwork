@@ -20,6 +20,8 @@ description: 'The ten stories that matter most anywhere in the world today, rank
 # The desks' leading items arrive with no text of their own; their pages
 # are fetched first (engine.article_text ranks text-less hook articles first).
 fetch_full_text: 24
+# Oct 14 2026: items 1-3 are now developed from the publisher text.
+fetch_full_text_chars: 4000
 absence_sentence_filter: true
 # Digest lints + X-source policy (Sep 23 2026 launch-cohort review; engine/digest_lint.py).
 digest_lints:
@@ -138,9 +140,12 @@ llm:
   # the format carries (items 6-10 are one sentence each): ten episodes ran
   # 906-1,321 words (median ~1,040), and 10-03 was skipped at 821 against
   # an 840 floor. Set to what the format produces; floor 690.
-  min_podcast_words: 1150
+  # Oct 14 2026: sized from the promised minutes and this host's measured
+  # spoken rate (was 1150). The skip floor stays at the old 60% line.
+  min_podcast_words: 1750
+  min_podcast_publish_words: 690
   podcast_expand_below_target: false
-  min_digest_words: 1200
+  min_digest_words: 1600
   digest_expand_below_target: true
 
 tts:

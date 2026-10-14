@@ -32,7 +32,9 @@ description: The prediction-market ecosystem in Canada, the United States and
   traded questions, and the economics of reading a price as a forecast.
   Journalism and education, never a bet.
 
-fetch_full_text: 12
+# Oct 14 2026: the deep dive / Closer Look is written from fetched text.
+fetch_full_text: 16
+fetch_full_text_chars: 5000
 absence_sentence_filter: true
 # Digest lints + X-source policy (Sep 23 2026 launch-cohort review; engine/digest_lint.py).
 digest_lints:
@@ -192,9 +194,12 @@ llm:
   podcast_max_tokens: 9000
   # About nine minutes. Set to what the format's digest supports (plan §9a);
   # the skip floor is 60% of this.
-  min_podcast_words: 1100
+  # Oct 14 2026: sized from the promised minutes and this host's measured
+  # spoken rate (was 1100). The skip floor stays at the old 60% line.
+  min_podcast_words: 1400
+  min_podcast_publish_words: 660
   podcast_expand_below_target: false
-  min_digest_words: 1200
+  min_digest_words: 1250
   digest_expand_below_target: true
 
 tts: {}
@@ -269,8 +274,10 @@ chapters:
     where: start
   - pattern: on the board today
     title: The Board
+    digest_section: The Board
   - pattern: how (it|this|that) works
     title: How It Works
+    digest_section: How It Works
   - pattern: That's Prediction Markets Daily|see you tomorrow
     title: Closing
     where: end

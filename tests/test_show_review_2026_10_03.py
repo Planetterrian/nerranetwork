@@ -170,10 +170,19 @@ class TestLengthTargetsFitTheFormat:
     def test_top_world_floor_clears_its_own_median(self):
         from engine.config import load_config
         cfg = load_config(ROOT / "shows/omni_view_world.yaml")
+        from engine.generator import publication_floor
         # Ten episodes ran 906-1,321 words; 10-03 was skipped at 821 < 840.
-        assert int(cfg.llm.min_podcast_words * 0.6) <= 821
+        # Oct 14 2026: the target rose with the longer format (operator:
+        # reach the time goals); the SKIP floor is pinned separately and
+        # must still clear that day.
+        assert publication_floor(cfg.llm.min_podcast_words,
+                                 cfg.llm.min_podcast_publish_words) <= 821
 
     def test_collingwood_asks_for_what_a_week_carries(self):
         from engine.config import load_config
+        from engine.generator import publication_floor
         cfg = load_config(ROOT / "shows/collingwood.yaml")
-        assert cfg.llm.min_podcast_words <= 900
+        # Oct 14 2026: the target grew with The Closer Look; a thin week
+        # still publishes at the old floor (60% of 900).
+        assert publication_floor(cfg.llm.min_podcast_words,
+                                 cfg.llm.min_podcast_publish_words) <= 540

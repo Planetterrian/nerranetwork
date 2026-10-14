@@ -1716,6 +1716,23 @@ def _carry_claims_ledger(draft: str, expanded: str, show_name: str) -> str:
     return cleaned.rstrip() + "\n\n```claims\n" + block + "\n```\n"
 
 
+_URL_WORD_RE = re.compile(r"\(?https?://\S+\)?")
+_SOURCE_LINE_RE = re.compile(r"(?im)^\s*[*_]*\s*(?:sources?|read more)\b[^\n]*$")
+
+
+def digest_prose_word_count(text: str) -> int:
+    """Words a listener could hear from *text*: the fenced claims ledger,
+    Source / Read-more lines and bare URLs removed. The digest-length
+    floor (``llm.min_digest_words``) is measured with this."""
+    from engine.claims import _CLAIMS_FENCE_RE, _UNCLOSED_TAIL_FENCE_RE
+
+    body = _CLAIMS_FENCE_RE.sub(" ", text or "")
+    body = _UNCLOSED_TAIL_FENCE_RE.sub(" ", body)
+    body = _SOURCE_LINE_RE.sub(" ", body)
+    body = _URL_WORD_RE.sub(" ", body)
+    return len(body.split())
+
+
 def _build_digest_expansion_retry_prompt(
     word_count: int,
     min_words: int,
@@ -1768,10 +1785,13 @@ def _build_digest_expansion_retry_prompt(
         f"- For every kept item, extract EVERY concrete fact the source text "
         f"actually provides (numbers, names, quotes, dates, mechanisms). "
         f"High-level restatement without those facts is a failure.\n"
-        f"- Where the digest has a licensed deep-dive / first-principles / "
-        f"essay section, LENGTHEN THAT SECTION first — it is allowed to use "
-        f"your own domain knowledge. Do not pad news items with significance "
-        f"sentences ('this matters because…').\n"
+        f"- Where the digest has a deep-dive / explainer / first-principles / "
+        f"closer-look section, LENGTHEN THAT SECTION first, from the material "
+        f"supplied above (the fetched article text, research abstracts, "
+        f"curriculum sources). It may explain a mechanism in general terms, "
+        f"but every figure, date, name and quote it adds comes from that "
+        f"material — never from memory. Do not pad news items with "
+        f"significance sentences ('this matters because…').\n"
         f"- If a narrative-memory / tracked-program block was provided, weave "
         f"at most ONE continuity sentence in the whole digest for items that "
         f"touch those programs (prefer the date / 'yesterday'; never write "
@@ -2729,7 +2749,12 @@ def generate_digest(
         and getattr(config.llm, "min_digest_words", 0) > 0
     ):
         min_digest_words = int(config.llm.min_digest_words)
-        word_count = len(text.split())
+        # Oct 14 2026: count the PROSE. The fenced claims ledger is split
+        # off only at the end of this function, and on a grok-4.7 run it
+        # is 480-1,100 words — so a 720-word Africa & Middle East digest
+        # read as ~1,400 against its 1,100 floor and this retry had not
+        # fired on the cohort's daily shows since their first week.
+        word_count = digest_prose_word_count(text)
         if word_count < min_digest_words:
             logger.info(
                 "Digest for '%s' is %d words (< %d target) — firing one-shot "

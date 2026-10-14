@@ -73,12 +73,12 @@ def edition_note(date: _dt.date) -> str:
     if date.weekday() == 5:
         return ("### EDITION (instruction — do not include in output)\n"
                 "Today is Saturday: the single-story edition. Under `### The Ten` write "
-                "ONE story — the week's most consequential — in 350-500 words with the "
+                "ONE story — the week's most consequential — in 900-1,150 words with the "
                 "week's context from the articles above, then Both Sides and Progress "
                 "Watch as usual. No list of ten today.")
     return ("### EDITION (instruction — do not include in output)\n"
-            "Today is a weekday edition: The Ten, ranked, items one to five developed "
-            "and six to ten one sentence each.")
+            "Today is a weekday edition: The Ten, ranked, items one to three developed "
+            "at length, four and five shorter, six to ten one sentence each.")
 
 
 def build_payload(root: Path, date: _dt.date) -> Dict[str, object]:

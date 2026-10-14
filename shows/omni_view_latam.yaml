@@ -16,7 +16,29 @@ story_recurrence: true
 story_clusters: true
 description: 'The day across Central and South America and the Caribbean, one region deep: Brazil, Mexico, Argentina, Colombia, Venezuela, the Andes, Central America and the islands — decisions, economies, security and elections, with one contested question argued fairly both ways and one sign of progress. Read by Mira, the Nerra Network''s AI host; every story from named newsrooms.'
 
-fetch_full_text: 16
+# Oct 14 2026 (desk format v3): full text for twenty articles at up to
+# 5,000 characters — the Closer Look and the longer Lead are written from
+# it, and at 16 x 2,500 the Leads ran four sentences.
+fetch_full_text: 20
+fetch_full_text_chars: 5000
+# Oct 14 2026: the desks had no keywords and no preferred publishers, so
+# every article scored 0 and the 40-article prompt cap was a newest-first
+# slice of 250-500 fetched (live blogs, a Perth police chase, a Moto3
+# result). The wires and the region's papers of record now get the
+# relevance bonus (engine/preferred_sources.py).
+preferred_domains:
+- reuters.com
+- apnews.com
+- mercopress.com
+- batimes.com.ar
+- elpais.com
+- infobae.com
+- folha.uol.com.br
+- oglobo.globo.com
+- lanacion.com.ar
+- mexiconewsdaily.com
+- bbc.co.uk
+- bbc.com
 absence_sentence_filter: true
 # Digest lints + X-source policy (Sep 23 2026 launch-cohort review; engine/digest_lint.py).
 digest_lints:
@@ -158,9 +180,12 @@ llm:
   max_tokens: 8000
   podcast_max_tokens: 9500
   # A 10-12 minute brief. The skip floor is 60% of this.
-  min_podcast_words: 1300
+  min_podcast_words: 1650
+  # Oct 14 2026: 1,300 words read in ~8.2 min at the desks' measured
+  # ~171 spoken wpm against a 10-12 minute promise; 1,650 is ~10.2 min. The skip floor stays where 60% of 1,300 put it.
+  min_podcast_publish_words: 780
   podcast_expand_below_target: false
-  min_digest_words: 1100
+  min_digest_words: 1500
   digest_expand_below_target: true
 
 tts:
@@ -227,21 +252,34 @@ chapters:
   - pattern: This is Omni View Central and South America|first episode of|Omni View Central and South America, episode
     title: Introduction
     where: start
-  - pattern: across the region
+  # Oct 14 2026: the spoken phrases are no longer required (they opened
+  # 24 of 25 desk scripts as one formula). Each segment's chapter is found
+  # by its phrase when spoken, else where its digest section's own words
+  # begin in the script (engine.chapters._digest_section_anchor).
+  - pattern: across the region|elsewhere in the region|around the region
     title: Across the Region
     where: body
+    digest_section: Across the Region
+  - pattern: a closer look|the longer story
+    title: The Closer Look
+    where: body
+    digest_section: The Closer Look
   - pattern: also today
     title: Also Today
     where: body
+    digest_section: Also Today
   - pattern: the wider world
     title: The Region and the World
     where: body
-  - pattern: case on both sides
+    digest_section: The Region and the World
+  - pattern: case on both sides|both sides of
     title: Both Sides
     where: body
+    digest_section: Both Sides
   - pattern: a sign of progress
     title: Progress Watch
     where: body
+    digest_section: Progress Watch
   - pattern: That's Omni View Central and South America|see you tomorrow
     title: Closing
     where: end

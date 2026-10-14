@@ -887,6 +887,15 @@ def ai_chips_validation_config() -> ValidationConfig:
                         r"### Supply Chain|## Supply Chain", 2),
             _items_rule("Supply Chain & Policy", "Supply Chain & Policy",
                         r"### The Teardown|## The Teardown", 1, optional=True),
+            # Oct 14 2026: the Teardown is the show's deep dive (450-600
+            # words, built from one fetched article). A missing one is a
+            # structural defect; a thin one is logged.
+            SectionRule(
+                name="The Teardown",
+                pattern=r"(?:### The Teardown|## The Teardown)(.*?)(?=### On the Horizon|## On the Horizon|$)",
+                min_items=0,
+                min_chars=2200,
+            ),
         ],
         forbidden_patterns=[r"https?://\S+"],
     )
@@ -920,6 +929,14 @@ def mag7_validation_config() -> ValidationConfig:
                          r"## On the Calendar|### The Tape|## The Tape|$)"),
                 min_items=0,
                 min_chars=200,
+            ),
+            # Oct 14 2026: The Thread is the deep dive (400-550 words).
+            SectionRule(
+                name="The Thread",
+                pattern=(r"(?:### The Thread|## The Thread)(.*?)"
+                         r"(?=### On the Calendar|## On the Calendar|### The Tape|## The Tape|$)"),
+                min_items=0,
+                min_chars=2000,
             ),
         ],
         forbidden_patterns=[r"https?://\S+"],
@@ -989,7 +1006,8 @@ def prediction_markets_validation_config() -> ValidationConfig:
                 name="How It Works",
                 pattern=r"(?:### How It Works|## How It Works)(.*?)$",
                 min_items=0,
-                min_chars=800,
+                # Oct 14 2026: 450-600 words (was 220-320, floor 800).
+                min_chars=2400,
             ),
         ],
         forbidden_patterns=[r"https?://\S+"],
@@ -1003,7 +1021,16 @@ def vancouver_validation_config() -> ValidationConfig:
         sections=[
             _items_rule("Top Stories", "Top Stories", r"### City & Province|## City & Province", 2),
             _items_rule("City & Province", "City & Province",
-                        r"### Getting Around|## Getting Around", 1),
+                        r"### The Closer Look|## The Closer Look|### Getting Around|## Getting Around", 1),
+            # Oct 14 2026: one local story told at length when the day has
+            # the material (omitted otherwise).
+            SectionRule(
+                name="The Closer Look",
+                pattern=r"(?:### The Closer Look|## The Closer Look)(.*?)(?=### Getting Around|## Getting Around|$)",
+                min_items=0,
+                min_chars=1500,
+                optional=True,
+            ),
             SectionRule(
                 name="Getting Around",
                 pattern=(r"(?:### Getting Around|## Getting Around)(.*?)"
@@ -1033,7 +1060,14 @@ def collingwood_validation_config() -> ValidationConfig:
         section_pairs=[],
         sections=[
             _items_rule("The Week's Stories", "The Week's Stories",
-                        r"### Council|## Council|### Roads|## Roads", 2),
+                        r"### Council|## Council|### The Closer Look|## The Closer Look|### Roads|## Roads", 2),
+            SectionRule(
+                name="The Closer Look",
+                pattern=r"(?:### The Closer Look|## The Closer Look)(.*?)(?=### Roads|## Roads|$)",
+                min_items=0,
+                min_chars=1500,
+                optional=True,
+            ),
             SectionRule(
                 name="Roads & Weather Ahead",
                 pattern=(r"(?:### Roads & Weather Ahead|## Roads & Weather Ahead)(.*?)"
@@ -1048,11 +1082,16 @@ def collingwood_validation_config() -> ValidationConfig:
 
 
 def omni_desk_validation_config() -> ValidationConfig:
-    """The Omni View regional desks (Sep 2026, Phase 3; format v2 Sep 23):
-    Lead is one item, Across the Region two developed items, Also Today the
-    rest as one-liners (optional — story count follows supply), The Region
-    and the World optional, Both Sides optional (Oct 11 2026). Progress Watch's floor is
-    the ``progress_watch_thin`` digest lint."""
+    """The Omni View regional desks (Sep 2026, Phase 3; format v2 Sep 23;
+    v3 Oct 14): Lead is one item, Across the Region two or three developed
+    items, The Closer Look one long sourced story (optional — omitted on a
+    day without the material), Also Today the rest as one-liners (optional
+    — story count follows supply), The Region and the World optional, Both
+    Sides optional (Oct 11 2026). Progress Watch's floor is the
+    ``progress_watch_thin`` digest lint.
+
+    Oct 14 2026: the Lead floor rose from 250 to 600 characters — LatAm
+    Ep019 shipped a 57-word Lead that passed it."""
     return ValidationConfig(
         section_pairs=[],
         sections=[
@@ -1060,10 +1099,19 @@ def omni_desk_validation_config() -> ValidationConfig:
                 name="Lead",
                 pattern=r"(?:### Lead|## Lead)(.*?)(?=### Across the Region|## Across the Region|$)",
                 min_items=0,
-                min_chars=250,
+                min_chars=600,
             ),
             _items_rule("Across the Region", "Across the Region",
-                        r"### Also Today|## Also Today|### The Region and the World|## The Region and the World|### Both Sides|## Both Sides|### Progress Watch|## Progress Watch", 2),
+                        r"### The Closer Look|## The Closer Look|### Also Today|## Also Today|### The Region and the World|## The Region and the World|### Both Sides|## Both Sides|### Progress Watch|## Progress Watch", 2),
+            SectionRule(
+                name="The Closer Look",
+                pattern=r"(?:### The Closer Look|## The Closer Look)(.*?)(?=### Also Today|## Also Today|### The Region and the World|## The Region and the World|### Both Sides|## Both Sides|### Progress Watch|## Progress Watch|$)",
+                min_items=0,
+                min_chars=1500,
+                # Present only when the day has the material (prompt). A
+                # present section still needs its body (~250 words).
+                optional=True,
+            ),
             SectionRule(
                 name="Both Sides",
                 pattern=r"(?:### Both Sides|## Both Sides)(.*?)(?=### Progress Watch|## Progress Watch|$)",
@@ -1123,7 +1171,9 @@ def omni_world_validation_config(saturday: "bool | None" = None) -> ValidationCo
             name="The Ten",
             pattern=r"(?:### The Ten|## The Ten)(.*?)(?=### Both Sides|## Both Sides|### Progress Watch|## Progress Watch|$)",
             min_items=0,
-            min_chars=1800,
+            # Oct 14 2026: the Saturday story is 900-1,150 words (was 350-500;
+            # Saturday Ep018 ran 5.8 minutes of a 10-12 minute show).
+            min_chars=4500,
         )
     else:
         ten_rule = _items_rule("The Ten", "The Ten", r"### Both Sides|## Both Sides|### Progress Watch|## Progress Watch", 8)

@@ -43,7 +43,7 @@ ARXIV_URL = "https://export.arxiv.org/api/query"
 #: Abstracts shorter than this carry no mechanism worth citing.
 MIN_ABSTRACT_CHARS = 250
 #: Journal papers kept per subject (highest-cited first), then arXiv papers.
-MAX_CROSSREF, MAX_ARXIV = 4, 2
+MAX_CROSSREF, MAX_ARXIV = 5, 3
 #: Crossref rows read before the title check; most are off-subject.
 CROSSREF_ROWS = 40
 

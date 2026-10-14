@@ -354,7 +354,10 @@ def test_daily_new_shows_carry_a_coverage_shape_without_a_specimen(slug):
     assert "EXAMPLE OF IDEAL STORY COVERAGE" not in p
 
 
-@pytest.mark.parametrize("slug,target", [("mag7", 1100), ("ai_chips", 1300),
+# Oct 14 2026: MAG 7 1,250 and AI Chips 1,400 — sized from the promised
+# minutes (7-9 and 8-10) and the measured ~160 spoken wpm, with the deep
+# dives (The Thread, The Teardown) doubled to carry it.
+@pytest.mark.parametrize("slug,target", [("mag7", 1250), ("ai_chips", 1400),
                                          ("peptides", 1200), ("longevity", 1200)])
 def test_length_targets_match_what_the_format_supports(slug, target):
     from engine.config import load_config

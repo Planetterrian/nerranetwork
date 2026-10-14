@@ -41,8 +41,12 @@ class TestDeskFormatV2:
     def test_shared_body_has_lead_two_developed_and_also_today(self):
         body = _prompt("_shared/omni_desk_digest_body.txt")
         assert "### Lead\n**1 item**" in body
-        assert "### Across the Region\n**2 items**, developed" in body
-        assert "### Also Today\n**2 to 4 items, one sentence each**" in body
+        # Oct 14 2026 (format v3): 2 or 3 developed items, a sourced Closer
+        # Look, and 3 to 5 one-liners — the desks ran ~6 minutes of a
+        # 10-12 minute promise.
+        assert "### Across the Region\n**2 or 3 items**, developed" in body
+        assert "### The Closer Look\n**1 story, 300-420 words**" in body
+        assert "### Also Today\n**3 to 5 items, one sentence each**" in body
         assert "omitted when fewer than two" in body
         # Consequence-first opening when the actor is outside the region.
         assert "opens on the consequence INSIDE the region" in body
@@ -55,7 +59,9 @@ class TestDeskFormatV2:
     def test_podcast_body_speaks_also_today_only_when_present(self):
         pod = _prompt("_shared/omni_desk_podcast_body.txt")
         assert '[Also Today] Only when the briefing has the section' in pod
-        assert '"also today" once' in pod
+        # Oct 14 2026: the phrase is allowed, never required, never the
+        # opening words (it opened 25 of 25 desk scripts).
+        assert '"also today" may sit inside' in pod
 
     def test_validator_floor_is_two_and_stops_at_also_today(self):
         from engine.validation import omni_desk_validation_config
@@ -68,9 +74,13 @@ class TestDeskFormatV2:
         for slug in DESKS:
             markers = _yaml(slug)["chapters"]["section_markers"]
             titles = [m["title"] for m in markers]
-            assert titles.index("Also Today") == titles.index("Across the Region") + 1, slug
+            # Oct 14 2026: The Closer Look sits between them, and every
+            # segment chapter falls back to its digest section.
+            assert titles.index("Also Today") == titles.index("The Closer Look") + 1, slug
+            assert titles.index("The Closer Look") == titles.index("Across the Region") + 1, slug
             m = next(m for m in markers if m["title"] == "Also Today")
             assert m["where"] == "body" and m["pattern"] == "also today"
+            assert m["digest_section"] == "Also Today"
 
     def test_desk_items_reads_also_today(self):
         from engine.omni_desks import DESK_ITEM_SECTIONS, desk_items
@@ -82,7 +92,9 @@ class TestDeskFormatV2:
 
     def test_desks_and_ai_chips_fetch_sixteen_full_texts(self):
         for slug in DESKS + ("ai_chips",):
-            assert _yaml(slug)["fetch_full_text"] == 16, slug
+            # Oct 14 2026: raised to 20 (the Closer Look / Teardown are
+            # written from fetched text); 16 is the floor.
+            assert _yaml(slug)["fetch_full_text"] >= 16, slug
 
 
 class TestNorthAmericaFloorAndRotation:
@@ -218,7 +230,9 @@ class TestCalendarClose:
         assert "strongest factual case against the LEAD story" in d
         p = _prompt("mag7_podcast.txt")
         assert "[On the Calendar] Only when the briefing has the section: it is read LAST" in p
-        assert '"top of the tape" once' in p
+        # Oct 14 2026: "At the top of the tape," opened 7 of 7 bodies; the
+        # phrase is allowed, never required, never a fixed opener.
+        assert '"top of the tape" may sit inside it only when they read naturally' in p
         titles = [m["title"] for m in _yaml("mag7")["chapters"]["section_markers"]]
         assert "Top News" in titles and "On the Calendar" in titles
 

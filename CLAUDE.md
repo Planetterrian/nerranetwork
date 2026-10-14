@@ -1821,6 +1821,38 @@ rule became "The listener hears every story change": a new story's first
 sentence names its subject before any figure. ⚠️ AUDIO — A/B-listen. Register
 `story-breaks-2026-10-13`; guards `tests/test_story_breaks_2026_10_13.py`.
 
+### Natural transitions, and shows that reach their length (Oct 14 2026)
+
+Operator listen: the Oct 13 beat "sounds forced and unnatural", and many
+shows ran short (review:
+[`docs/reviews/transitions_and_length_2026_10_14.md`](docs/reviews/transitions_and_length_2026_10_14.md);
+register `story-transitions-natural-2026-10-14`,
+`shows-reach-their-length-2026-10-14`; guards
+`tests/test_transitions_and_length_2026_10_14.py`). The Oct 13 value was ADDED
+to the voice's ~0.45 s pause and mid-episode there is no music: 1.6-1.7 s of
+dead air against a 0.35 s sentence gap. **`audio.story_break_seconds` is now
+the TOTAL pause (1.0)** — `plan_breaks` splices only the difference — and
+**`audio.story_break_cue` lays a soft swell of the show's own theme under each
+pause on the music track** (`engine.audio.breather_offsets`, steady bars, a
+different one per break, ~12 dB under the voice, skipped inside the opening
+bed and on shows without music). No beat within 20 s of the last; a line
+opening on a pronoun or connective never starts a story; short items under one
+heading are one block. **The digest length floor counts PROSE**
+(`engine.generator.digest_prose_word_count`): it had counted the fenced claims
+ledger (480-1,100 words), so the digest expansion never fired on the cohort's
+daily shows; the retry takes every figure from the supplied material. Length
+is digest-side: desk format v3 (**The Closer Look**, 300-420 sourced words;
+Across 2-3; Also Today 3-5; Lead 5-8 sentences; preferred publishers; full
+text ranks cluster members first), doubled deep dives (AI Chips Teardown, MAG 7
+Thread, PM How It Works, FF/PT deep dives, Tesla's essay — each built from a
+fetched article), a Closer Look on Vancouver and Collingwood, a longer Top
+World. Targets come from the promised minutes and each host's measured spoken
+rate; **every skip floor stays at its old 60% line**
+(`min_podcast_publish_words`) — never raise a target without pinning it. Fixed
+segment openers ("Across the region,", "At the top of the tape,", "On the
+board today,") are optional now, with `digest_section` chapter fallbacks.
+⚠️ AUDIO — A/B-listen.
+
 ### Gated shows — members-only and public-weekly (Oct 13 2026)
 
 Operator-directed: some shows will publish only for Nerra Personal members
