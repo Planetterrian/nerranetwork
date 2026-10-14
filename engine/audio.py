@@ -743,7 +743,7 @@ def _final_mix_cmd(
 BREATHER_SECONDS = 2.6
 BREATHER_FADE_IN = 0.35
 BREATHER_FADE_OUT = 1.7
-BREATHER_VOLUME = 0.22
+BREATHER_VOLUME = 0.09  # Oct 14 2026 evening: 0.22 played ~4.7 dB under the voice on the shipped mixes (loudnorm lifts an exposed gap); 0.09 measures ~12 dB under on a real voice through _final_mix_cmd
 #: The cue starts this long before the pause so its fade-in is already
 #: under way when the last word ends (the sidechain holds it down until
 #: then).

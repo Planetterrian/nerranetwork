@@ -1853,6 +1853,32 @@ segment openers ("Across the region,", "At the top of the tape,", "On the
 board today,") are optional now, with `digest_section` chapter fallbacks.
 ⚠️ AUDIO — A/B-listen.
 
+**Oct 14 2026, evening — the first slate, scored** (§5 of the review doc;
+register `slate-readout-2026-10-14`; guards
+`tests/test_slate_readout_2026_10_14.py`). The desks went to 9.3-12.6
+minutes and AI Chips / PM / MAG 7 / Vancouver landed inside their promises;
+the breaks sat in the voice's own silence (0.99-1.19 s on Vancouver). Four
+corrections: **the cue is `BREATHER_VOLUME` 0.09** — 0.22 played 2-5 dB
+under the voice on the shipped mixes because loudnorm lifts an exposed gap;
+calibrate a cue level on a REAL voice through `_final_mix_cmd`, never on a
+preview by ear (0.22 → 4.7 dB under, 0.12 → 10, 0.08 → 13.4). **The digest
+expansion is judged in prose** — it had compared prose to prose-plus-ledger
+and accepted Tesla's +80-word pass as +630; the retry prompt names each
+section's prose length against the format's own specs, and
+`llm.digest_expansion_attempts: 2` (Tesla, FF, MIT, OV) allows a second pass
+only under 90% of the floor. **A sourced item under the hook is a story**
+(`story_breaks.story_units`; a `---` rule splits paragraphs) and FF's
+validator accepts an unnumbered bold list — Ep222 got one beat and burned
+its structural retry on a header. **Market-research press releases never
+reach a prompt**: `engine.utils.NETWORK_EXCLUDE_TITLE_PATTERNS`
+("… Market Forecast to 2035: 11% CAGR") at all three fetch sites, after 19
+aired as headlines on eight shows in 40 episodes. Top World's floor is
+1,900 with items 1-5 at 7-10 sentences (Mira speaks a developed item in
+~80% of its words). **Prediction Markets' Sep 23 curriculum restock had
+re-added eleven subjects the show had already taught** (same titles) —
+pruned, thirteen new subjects added; a restock checks PRODUCED titles.
+⚠️ AUDIO — A/B-listen one music show for the cue.
+
 ### Gated shows — members-only and public-weekly (Oct 13 2026)
 
 Operator-directed: some shows will publish only for Nerra Personal members

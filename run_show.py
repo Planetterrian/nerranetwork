@@ -1240,7 +1240,8 @@ def run(args: argparse.Namespace) -> None:
             # digests (Tesla Ep566 cold-opened on "Deutsche Bank Boosts
             # Tesla Stake by $623M: TSLAming (X)"). Same filter, same
             # patterns, third call site.
-            _x_excl = getattr(config, "exclude_title_patterns", None) or []
+            from engine.utils import exclude_title_patterns_for as _patterns_x
+            _x_excl = _patterns_x(config)
             if _x_excl:
                 from engine.utils import drop_excluded_titles as _drop_x
                 x_posts, _x_dropped = _drop_x(x_posts, _x_excl)
@@ -1454,9 +1455,8 @@ def run(args: argparse.Namespace) -> None:
                     # path) — PT Ep116's pure-astronomy exoplanet story
                     # arrived via web search despite \bexoplanets?\b being
                     # excluded. Apply the same filter here.
-                    _excl_web = list(
-                        getattr(config, "exclude_title_patterns", []) or []
-                    )
+                    from engine.utils import exclude_title_patterns_for as _patterns_web
+                    _excl_web = _patterns_web(config)
                     if _excl_web:
                         from engine.utils import drop_excluded_titles
                         web_articles, _n_web_excl = drop_excluded_titles(
@@ -5836,7 +5836,10 @@ def _fetch_with_expansion(
         # visibility roundups, "this day in history") that feeds republish
         # across episodes. Per-show ``exclude_title_patterns``; no-op when
         # unset, so every other show is unchanged.
-        _excl = list(getattr(config, "exclude_title_patterns", []) or []) if config else []
+        # Oct 14 2026: plus the network list (market-research press
+        # releases) — see ``engine.utils.NETWORK_EXCLUDE_TITLE_PATTERNS``.
+        from engine.utils import exclude_title_patterns_for
+        _excl = exclude_title_patterns_for(config)
         if _excl:
             from engine.utils import drop_excluded_titles
             articles, _n_excluded = drop_excluded_titles(articles, _excl)

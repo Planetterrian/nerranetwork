@@ -499,9 +499,13 @@ def ff_validation_config() -> ValidationConfig:
                 # retry on it). The list IS the section; the header is
                 # furniture no surface renders. The second alternative
                 # starts the section at a numbered bold item that directly
-                # follows the hook's ``---`` rule.
+                # follows the hook's ``---`` rule. Oct 14 2026: or at a
+                # bold item with no number — Ep222 wrote ``**Title** —
+                # Outlet`` items under the hook on both generations, the
+                # rule matched neither, and the day's one structural retry
+                # was spent on a header no surface renders.
                 pattern=(
-                    r"(?:### Top 15 Space|### Top \d+ Space|(?<=\n---\n)(?=1\. \*\*))"
+                    r"(?:### Top 15 Space|### Top \d+ Space|(?<=\n---\n)(?=(?:1[.)] )?\*\*))"
                     r"(.*?)"
                     r"(?=━━|### Cosmic Spotlight|$)"
                 ),

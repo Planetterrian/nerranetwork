@@ -97,6 +97,7 @@ class StoryUnit:
     tokens: frozenset
     sentences: int
     section: str = ""
+    words: int = 0
 
 
 def story_units(digest_md: str) -> List[StoryUnit]:
@@ -123,9 +124,12 @@ def story_units(digest_md: str) -> List[StoryUnit]:
         if len(toks) >= 6:
             n = len([s for s in _SENT_SPLIT_RE.split(text.strip()) if s.strip()])
             units.append(StoryUnit(label=label, tokens=toks, sentences=max(1, n),
-                                   section=section[0]))
+                                   section=section[0], words=len(text.split())))
 
-    for para in re.split(r"\n[ \t]*\n", digest_md or ""):
+    # A horizontal rule is a paragraph break too: Fascinating Frontiers
+    # writes ``> **hook**\n---\n**first item**`` with no blank line, and
+    # the first item used to vanish inside the skipped hook block.
+    for para in re.split(r"\n[ \t]*\n|\n(?:-{3,}|━{3,})[ \t]*\n", digest_md or ""):
         lines = [ln for ln in para.split("\n") if ln.strip()]
         if not lines:
             continue
@@ -152,10 +156,18 @@ def story_units(digest_md: str) -> List[StoryUnit]:
                 m = _HEADER_RE.match(block[0])
                 section[0] = (m.group(1) if m else "").strip().lower()
                 continue
-            if not in_sections:
-                continue
             text = "\n".join(block)
             if text.lstrip().startswith((">", "|")):
+                continue
+            # Oct 14 2026: a sourced or numbered item under the hook, before
+            # any ``##`` header, is a story. Fascinating Frontiers Ep222
+            # wrote its six news items straight under the hook rule and
+            # the whole block was skipped as front matter — one beat in
+            # the episode. The title, date and price lines carry no
+            # Source line and no number, so they still never count.
+            if not in_sections and not (
+                _NUMBERED_RE.match(block[0]) or _SOURCE_RE.search(text)
+            ):
                 continue
             if _NUMBERED_RE.match(block[0]) or _URL_RE.search(text) or _SOURCE_RE.search(text):
                 flush_essay()
@@ -197,6 +209,15 @@ _CONTINUATION_RE = re.compile(
     r"the plan|the bill|the court|the report|the study)\b",
     re.IGNORECASE,
 )
+
+
+#: A digest item this short is a list entry (an "Also Today" line, a roads
+#: list, a Top World one-liner), told with its neighbours as one block.
+SHORT_ITEM_MAX_WORDS = 40
+
+
+def _is_short_item(unit: "StoryUnit") -> bool:
+    return unit.sentences <= 2 and unit.words <= SHORT_ITEM_MAX_WORDS
 
 
 def opens_as_continuation(line: str) -> bool:
@@ -249,8 +270,11 @@ def story_boundary_lines(script: str, digest_md: str) -> List[int]:
         # Short items under the same section heading (a weather reading
         # and its forecast, a roads list, the Top World one-liners) are
         # told as one block: a beat before the block and after it.
+        # Oct 14 2026: a short item is short in WORDS too. Fascinating
+        # Frontiers Ep222 wrote six two-sentence stories of 40-60 words
+        # under one heading and the whole news block got one beat.
         if (units[unit].section and units[unit].section == units[current].section
-                and units[unit].sentences <= 2 and units[current].sentences <= 2):
+                and _is_short_item(units[unit]) and _is_short_item(units[current])):
             current, run = unit, 1
             continue
         # Between two one-line items (a market-pulse list, a run of launch

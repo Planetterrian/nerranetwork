@@ -12,7 +12,7 @@ import os
 import re
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from tenacity import (
     before_sleep_log,
@@ -1733,12 +1733,36 @@ def digest_prose_word_count(text: str) -> int:
     return len(body.split())
 
 
+def digest_section_word_counts(text: str) -> List[Tuple[str, int]]:
+    """``(header, prose words)`` for each ``##``/``###`` section of a digest.
+
+    Oct 14 2026: the expansion retry names the draft's sections with their
+    lengths so the model lengthens the thin ones against the specs the
+    prompt above already states — Tesla Ep634's essay shipped 294 words on
+    a 400-500 spec after a retry that was told only "at least 1,600".
+    """
+    from engine.claims import _CLAIMS_FENCE_RE
+    body = _CLAIMS_FENCE_RE.split(text or "", maxsplit=1)[0]
+    parts = re.split(r"^(#{2,3} .+)$", body, flags=re.MULTILINE)
+    out: List[Tuple[str, int]] = []
+    for i in range(1, len(parts) - 1, 2):
+        header = parts[i].lstrip("# ").strip()
+        out.append((header, digest_prose_word_count(parts[i + 1])))
+    return out
+
+
+#: A second expansion pass runs only while the digest is still under this
+#: share of its floor after the first (Oct 14 2026).
+DIGEST_EXPANSION_SECOND_PASS_SHARE = 0.9
+
+
 def _build_digest_expansion_retry_prompt(
     word_count: int,
     min_words: int,
     draft: str,
     *,
     narrative: bool = False,
+    sections: Optional[List[Tuple[str, int]]] = None,
 ) -> str:
     """Build the one-shot expansion-retry prompt for a too-short digest/brief.
 
@@ -1771,13 +1795,24 @@ def _build_digest_expansion_retry_prompt(
             f"repeat any sentence verbatim — go deeper, never pad with repetition\n\n"
             f"Here is your short brief to expand:\n\n{draft}"
         )
+    section_lines = ""
+    if sections:
+        section_lines = (
+            "Your draft's sections and their lengths (prose words, the claims "
+            "ledger not counted):\n"
+            + "".join(f"- {h}: {n} words\n" for h, n in sections)
+            + "Where the format above gives a section its own length, meet it; "
+            "lengthen the sections furthest below their own spec first.\n"
+        )
     return (
         f"\n\n---\n"
-        f"The digest you just wrote is only {word_count} words — it under-covers "
-        f"the day. Rewrite it to at least {min_words} words by developing each "
+        f"The digest you just wrote is only {word_count} words of prose — it "
+        f"under-covers the day. Rewrite it to at least {min_words} words of "
+        f"prose (the claims ledger does not count) by developing each "
         f"item to full depth (more fact-bearing sentences: numbers, names, "
         f"sources) without inventing facts or repeating any sentence verbatim. "
         f"Keep the same structure and headline set.\n"
+        f"{section_lines}"
         f"DEPTH RULES (news digests):\n"
         f"- Prefer FEWER items at FULL depth over many thin high-level summaries. "
         f"If an item only has a title + one sentence of source material, either "
@@ -2754,17 +2789,32 @@ def generate_digest(
         # is 480-1,100 words — so a 720-word Africa & Middle East digest
         # read as ~1,400 against its 1,100 floor and this retry had not
         # fired on the cohort's daily shows since their first week.
-        word_count = digest_prose_word_count(text)
-        if word_count < min_digest_words:
+        # Same evening: the RESULT is judged on prose too (the ledger the
+        # retry grows never counts as growth), and a show may allow a
+        # second pass while the digest sits under 90% of its floor.
+        _attempts = max(1, int(getattr(config.llm, "digest_expansion_attempts", 1) or 1))
+        for _attempt in range(1, _attempts + 1):
+            word_count = digest_prose_word_count(text)
+            if word_count >= min_digest_words:
+                break
+            if _attempt > 1 and word_count >= min_digest_words * DIGEST_EXPANSION_SECOND_PASS_SHARE:
+                logger.info(
+                    "Digest for '%s' is %d words after expansion (>= %d%% of %d) — "
+                    "no second pass", config.name, word_count,
+                    int(DIGEST_EXPANSION_SECOND_PASS_SHARE * 100), min_digest_words,
+                )
+                break
             logger.info(
-                "Digest for '%s' is %d words (< %d target) — firing one-shot "
-                "expansion retry", config.name, word_count, min_digest_words,
+                "Digest for '%s' is %d words (< %d target) — firing expansion "
+                "retry %d/%d", config.name, word_count, min_digest_words,
+                _attempt, _attempts,
             )
             expansion_prompt = prompt + _build_digest_expansion_retry_prompt(
                 word_count,
                 min_digest_words,
                 text,
                 narrative=bool(getattr(config, "narrative_mode", False)),
+                sections=digest_section_word_counts(text),
             )
             try:
                 expanded, meta_exp = _digest_call(
@@ -2798,10 +2848,10 @@ def generate_digest(
                     )
                 if _si_enabled:
                     expanded = _carry_claims_ledger(text, expanded, config.name)
-                expanded_wc = len(expanded.split())
+                expanded_wc = digest_prose_word_count(expanded)
                 if expanded_wc > word_count:
                     logger.info(
-                        "Digest expansion retry improved '%s' (%d -> %d words)",
+                        "Digest expansion retry improved '%s' (%d -> %d prose words)",
                         config.name, word_count, expanded_wc,
                     )
                     text = expanded
@@ -2821,14 +2871,16 @@ def generate_digest(
                 else:
                     logger.warning(
                         "Digest expansion retry for '%s' did not lengthen "
-                        "(%d -> %d words) — keeping original",
+                        "(%d -> %d prose words) — keeping original",
                         config.name, word_count, expanded_wc,
                     )
+                    break
             except (LLMRefusalError, Exception) as exc:
                 logger.warning(
                     "Digest expansion retry failed for '%s' (%s) — keeping original",
                     config.name, exc,
                 )
+                break
 
     # Combined generation: the script paired with the digest that won the
     # retries above (None when that call carried no marker).
