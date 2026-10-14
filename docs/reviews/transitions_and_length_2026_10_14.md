@@ -248,6 +248,13 @@ correlated markets, wallet attribution, replication markets, epidemic
 markets, tax, Canada, betting exchanges, partisan bias, speed of reaction);
 22 unproduced. A restock checks the PRODUCED titles, not only the ids.
 
+**A narrative pick now re-interleaves the queue.** UC Ep142's head topic
+(the U.S. CAFE credit) returned no research sources, the picker took the
+classic behind it, and the two policy briefs either side were left adjacent
+— `test_uc_unproduced_interleaved_not_clustered` went red on main with
+nothing wrong in the data the restock wrote. `resequence_unproduced` lives
+in `engine.topic_queue` and `mark_topic_produced` calls it after every pick.
+
 **Noted, not changed.** Unintended Consequences ran 11.9 min (2,024 words,
 0% filler, 7.5% verbatim) from a 1,154-word brief — the grok-4.7 script arm
 writes well past the brief; its prompt's "15-18 minutes" and its 1,300-word
