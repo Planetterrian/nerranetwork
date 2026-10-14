@@ -127,7 +127,9 @@ class TestTheCue:
         graph = cmd[cmd.index("-filter_complex") + 1]
         assert "normalize=0" in graph and graph.count("afade=t=in") == 2
         assert "adelay=delays=59850:all=1" in graph
-        assert 0.1 <= BREATHER_VOLUME <= 0.3
+        # Oct 14 evening: 0.22 played ~4.7 dB under the voice on the shipped
+        # mixes; 0.09 measures ~12 dB under on a real voice (slate readout).
+        assert 0.06 <= BREATHER_VOLUME <= 0.12
 
     def test_mix_lays_a_cue_in_the_pause_and_none_in_the_opening_bed(self, tmp_path):
         from engine.audio import mix_with_music
@@ -271,7 +273,8 @@ class TestTargetsFromTheMinutes:
         for slug in ("vancouver", "collingwood"):
             assert "### The Closer Look" in (PROMPTS / f"{slug}_digest.txt").read_text(encoding="utf-8")
         world = (PROMPTS / "omni_view_world_digest.txt").read_text(encoding="utf-8")
-        assert "Items one to three: sentence count follows fact count, six to nine" in world
+        # Oct 14 evening: items one to FIVE at seven to ten (the slate readout).
+        assert "Items one to five: sentence count follows fact count, seven to ten" in world
         assert "900-1,150 words" in world
 
     def test_established_short_shows(self):

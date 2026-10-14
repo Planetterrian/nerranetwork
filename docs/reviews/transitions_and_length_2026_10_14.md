@@ -150,3 +150,113 @@ sources are the lever there.
 
 ⚠️ AUDIO — A/B-listen one desk, AI Chips, Vancouver, Fascinating Frontiers and
 Tesla on the first post-merge slate.
+
+## 5. The first slate (2026-10-14, 21 episodes) — readout and corrections
+
+Scored the evening of the merge on every episode of the day. Register
+`slate-readout-2026-10-14`; guards `tests/test_slate_readout_2026_10_14.py`.
+
+**What moved.**
+
+| Show | Minutes (prev 7 → today) | Script / target |
+|---|---|---|
+| LatAm | 5.9 → 12.6 | 132% |
+| Asia Pacific | 6.3 → 11.1 | 115% |
+| North America | 6.1 → 10.4 | 108% |
+| Africa & Middle East | 6.9 → 10.0 | 101% |
+| Europe | 6.8 → 9.3 | 94% |
+| AI Chips | 7.8 → 10.3 | 101% |
+| Prediction Markets | 7.1 → 9.8 | 109% |
+| MAG 7 | 6.7 → 8.5 | 97% |
+| Vancouver | 6.5 → 8.1 | 97% |
+| Planetterrian | 8.4 → 10.0 | 85% |
+| Top World | 7.8 → 8.1 | 77% |
+| Tesla | 8.1 → 7.5 | 79% |
+| Fascinating Frontiers | 7.9 → 7.1 | 61% |
+
+Breaks: 4-13 per episode, a cue on every one past the opening bed on every
+show with a theme (Vancouver, Collingwood and UC have none), none closer
+than 20 s. On the shipped Vancouver mix (no music) the five story changes
+measure 0.99-1.19 s against 0.56 s sentence gaps; on Europe and AI Chips
+the gaps are 0.92-1.17 s in the transcript and the cue fills them. The
+fixed openers ("Across the region," "At the top of the tape," "On the board
+today,") are gone on 21 of 21 scripts; the ", X reports." tail runs 0-3 per
+script except Tesla (7, one per story — the "named once" rule). The claims
+ledgers grew with the digests (desks 16-22 claims). The digest expansion
+fired on 11 shows — it had fired on none of the cohort's dailies since
+their first week. Spoken-text gate 21/21. Nerra Daily Ep050 built on the
+shifted transcripts: 20 segments, every cut on a frame anchor.
+
+**The cue was too loud.** Measured in the gaps of the shipped mixes: Europe
+−20.9 dB RMS against a −19 dB voice, AI Chips −19 to −26 — the intro bed's
+own exposed level, not the ~12 dB under it was set for. The preview that
+set 0.22 was judged by ear on one render; the production chain's loudnorm
+lifts an exposed gap. Calibrated on a real voice (the shipped Vancouver
+track) through `mix_with_music` and `_final_mix_cmd`: 0.22 → 4.7 dB under
+the voice, 0.12 → 10.0, 0.08 → 13.4, 0.05 → 17.4. `BREATHER_VOLUME` is
+0.09 (≈12 dB under). ⚠️ AUDIO — A/B-listen one music show.
+
+**The expansion was judged in the wrong units.** `word_count` was the
+prose count and `expanded_wc` was `len(expanded.split())` with the ledger
+the retry grew — Tesla Ep634's pass added 80 prose words (1,154 → 1,231 on
+a 1,600 floor) and logged "improved (1154 → 1785)"; FF's 712 → 1,159 logged
+1,342. Now the result is measured in prose, the retry prompt names each
+section's prose length and says to meet the specs the format already
+states (the essay / deep dive first), and `llm.digest_expansion_attempts`
+allows a second pass only while the digest is under 90% of its floor —
+set to 2 on Tesla, FF, Modern Investing and Omni View, the four a pass left
+4-23% under; the cohort and the narrative shows keep one.
+
+**Fascinating Frontiers, three defects in one episode.** The deep-dive
+framework line still said "6-8 sentences (aim ~180-220 words)" under the
+450-550 spec (the model wrote 277); both generations wrote `**Title** —
+Outlet` items under the hook with no number and no header, so the validator
+spent the one structural retry on a header no surface renders (the rule
+accepts a bold item now); and the break planner skipped the whole news
+block as front matter — the items sat under the hook before any `##`
+header, and the hook's `---` rule glued the first item into the skipped
+hook block — so the episode had ONE beat. A sourced or numbered item is a
+story wherever it sits, and a rule line splits paragraphs.
+
+**Top World.** The digest landed on its 1,600 floor and Mira told it in
+1,345 words: she speaks a developed item in about four-fifths of its words
+(0.74-0.83 coverage on items one to five), and items four and five were
+3-5 sentences. Floor 1,900; items one to five at seven to ten sentences.
+
+**Market-research press releases had been airing.** "Transfection
+Reagents Market Forecast to 2035: 11% CAGR…" and its kind — openPR,
+indexbox, GlobeNewswire paid placements — were digest headlines 19 times
+across eight shows in the last 40 episodes (Planetterrian 8, AI Chips 3,
+M&A 2, LatAm's "Carbon Credit Market Size to Reach USD 824.52 Billion by
+2034 at 33.06% CAGR", Tesla's "Copper Rigid Tubing Market Forecast to
+2035"). Planetterrian led with one on six recent days until the Oct 13
+hook-recurrence gate caught it and spent a regeneration on it.
+`engine.utils.NETWORK_EXCLUDE_TITLE_PATTERNS` drops them at every fetch
+site on every show; calibrated against every committed tracker headline so
+MIT's "Market Outlook: Canadian dollar…" and Tesla's "26.3% market share"
+pass.
+
+**Prediction Markets' curriculum had been restocked with repeats.** The
+runway guard went red on main at 20 unproduced subjects, and eleven of
+those twenty were the Sep 23 restock re-adding subjects the show had
+already taught under the same titles ("How an Automated Market Maker Sets
+a Price", "Prediction Markets Inside Companies", Brier scores, polls against
+markets, arbitrage, futarchy …) — the show would have re-taught them in
+order. Removed; thirteen new subjects added (order books, why race prices
+do not sum to one, the time value in a 95-cent contract, custody,
+correlated markets, wallet attribution, replication markets, epidemic
+markets, tax, Canada, betting exchanges, partisan bias, speed of reaction);
+22 unproduced. A restock checks the PRODUCED titles, not only the ids.
+
+**Noted, not changed.** Unintended Consequences ran 11.9 min (2,024 words,
+0% filler, 7.5% verbatim) from a 1,154-word brief — the grok-4.7 script arm
+writes well past the brief; its prompt's "15-18 minutes" and its 1,300-word
+YAML target disagree with each other and with the show, and the digest is
+the ceiling. Longevity ran 12.2 min on an "8-10 minute" prompt because the
+Mechanism of the Week came in at 1,170 words on a 550-700 spec
+(`script_repeated_facts` 8). The NA desk opened nine sentences on an
+outlet's name ("The Globe says the how is still loose") against the shared
+rule; Top World five, Europe four. Hook recurrence regenerated four digests
+(PM, PT, MAB, MIT) — the gate working; the press-release filter removes
+PT's cause. M&A's 176-character hook waits on the Oct 13 control readout.
+

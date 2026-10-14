@@ -345,6 +345,31 @@ def extract_primary_entity(title: str, description: str = "") -> str:
     return max(filtered_runs, key=len)
 
 
+#: Oct 14 2026: paid-placement market-research releases ("Transfection
+#: Reagents Market Forecast to 2035: 11% CAGR…", openPR / indexbox /
+#: GlobeNewswire) are not news on any show, and 19 of them AIRED as digest
+#: headlines across eight shows in the last 40 episodes — Planetterrian led
+#: with one on six recent days until the hook-recurrence gate caught it.
+#: Matched on every show beside the per-show list. Calibrated on every
+#: committed tracker headline: MIT's "Market Outlook: Canadian dollar…"
+#: and "Labor Market Report…" lines, Tesla's "26.3% market share" and
+#: Samsung's "HBM market share jumps" never match.
+NETWORK_EXCLUDE_TITLE_PATTERNS = (
+    r"\bmarket\b.*?(?:\bCAGR\b"
+    r"|\b(?:forecast|projected|expected|poised|set|estimated|anticipated)\s+to\s+"
+    r"(?:reach|expand|grow|hit|surpass|exceed)\b"
+    r"|\b(?:forecast|outlook|report|analysis|size|trends?)\b.*?"
+    r"(?:\b(?:to|by|through)\s+20[3-4]\d\b|\b20[12]\d\s*[-–]\s*20[3-4]\d\b))",
+    r"\bCAGR\b",
+)
+
+
+def exclude_title_patterns_for(config) -> list:
+    """The per-show ``exclude_title_patterns`` plus the network list."""
+    own = list(getattr(config, "exclude_title_patterns", None) or []) if config else []
+    return own + list(NETWORK_EXCLUDE_TITLE_PATTERNS)
+
+
 def drop_excluded_titles(articles: list, patterns: list) -> tuple:
     """Drop articles whose title matches any of *patterns*.
 

@@ -4690,3 +4690,37 @@ experiments:
       Look, 2-3 Across, 3-5 Also Today, 5-8 sentence Lead); Teardown /
       Thread / How It Works 450-600; FF/PT deep dives 450-550 from fetched
       text; Tesla essay 400-500 and the six-sentence spoken cap removed.
+
+  - id: slate-readout-2026-10-14
+    title: "First slate after #1430: cue 0.22 -> 0.09, expansion judged on prose, FF/Top World floors, press-release filter"
+    area: quality
+    shipped: 2026-10-14
+    readout: 2026-10-21
+    status: reading
+    baseline: >
+      2026-10-14 slate: desks 9.3-12.6 min (from 5.9-6.9), AI Chips / PM /
+      MAG 7 / Vancouver inside their promises; FF 61% and Tesla 79% of target
+      after an expansion that added 80 prose words and was logged as +630
+      (prose vs prose-plus-ledger); Top World 77% on a digest at its floor;
+      the story cue measured ~2-5 dB under the voice on the shipped mixes
+      (Europe -20.9 dB RMS in the gap, voice -19); 19 market-research press
+      releases aired as headlines across eight shows in 40 episodes.
+    target: >
+      Next 7 episodes: FF and Tesla median script words >= 85% of target
+      with digest prose >= 90% of the floor after at most two passes; Top
+      World >= 90%; the cue measures 10-14 dB under the voice in the gap on
+      a shipped mix; zero market-report headlines in any digest
+      (NETWORK_EXCLUDE_TITLE_PATTERNS); FF story_breaks_inserted >= 4.
+      AUDIO — A/B-listen one music show for the cue level.
+    notes: >
+      engine.audio.BREATHER_VOLUME 0.09 (calibrated on a real voice through
+      _final_mix_cmd: 0.22 -> 4.7 dB under, 0.12 -> 10.0, 0.08 -> 13.4);
+      engine.generator.digest_section_word_counts + llm.digest_expansion_attempts
+      (2 on tesla / FF / MIT / OV, gate DIGEST_EXPANSION_SECOND_PASS_SHARE 0.9);
+      FF validator accepts an unnumbered bold list, story_breaks counts a
+      sourced item under the hook and splits on a rule line; Top World
+      min_digest_words 1900, items 1-5 at 7-10 sentences;
+      engine.utils.NETWORK_EXCLUDE_TITLE_PATTERNS at all three fetch sites.
+      Guards tests/test_slate_readout_2026_10_14.py; readout §5 of
+      docs/reviews/transitions_and_length_2026_10_14.md.
+

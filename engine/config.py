@@ -117,6 +117,14 @@ class LLMConfig:
     # rescues genuinely-thin briefs without fighting the ceiling.
     min_digest_words: int = 0
     digest_expand_below_target: bool = False
+    # Oct 14 2026 (slate readout): how many expansion passes a digest may
+    # get. The pass is judged on PROSE (the ledger never counts) and a
+    # second pass runs only when the first left the digest under
+    # ``DIGEST_EXPANSION_SECOND_PASS_SHARE`` of the floor — Tesla's one
+    # pass added 80 prose words (1,154 -> 1,231 against 1,600) and was
+    # logged as +630 because the old check counted the ledger it grew.
+    # 1 = the one-shot retry every other show has had since June.
+    digest_expansion_attempts: int = 1
     podcast_chain: bool = False  # Two-stage generation: outline then expand
     # Model used when the primary refuses after educational retry. A
     # different model (or different variant of the same family) often
