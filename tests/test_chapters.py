@@ -14,7 +14,7 @@ from engine.chapters import (
     split_script_at_chapters,
     write_chapters_json,
 )
-from engine.config import ChaptersConfig, SectionMarker, load_config
+from engine.config import SectionMarker, load_config
 
 # ---- Repo root for real show YAML files ----------------------------------
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -979,9 +979,10 @@ class TestHookNeverBecomesChapterTitle:
             self._script(), self._markers(), show_name="test",
             story_headlines=headlines,
         )
+        from engine.chapters import HEADLINE_TITLE_MAX
         for ch in chapters:
             assert not ch.title.endswith("…"), ch.title
-            assert len(ch.title) <= 60, ch.title
+            assert len(ch.title) <= HEADLINE_TITLE_MAX, ch.title
         # The lead segment overlaps the hook most, but must take the
         # real (title-length) headline instead.
         assert any("Central Asia economy summit" in c.title for c in chapters), (
@@ -1009,8 +1010,13 @@ class TestLongHeadlinesStillTitleChapters:
                "matter. The foreign minister called the Chinese actions at the "
                "Pacific Islands forum bullying, and the criticism landed.")
         title = _best_headline_for_segment(seg, [self.HOOK, self.TAIWAN], set())
-        assert title == "Taiwan foreign minister criticizes Chinese actions"
-        assert len(title) <= 60 and not title.endswith("…")
+        # Oct 14 2026: the budget is HEADLINE_TITLE_MAX (80) — a 76-char
+        # headline ships whole; at 60 it had shipped as "…criticizes Chinese
+        # actions", one of the clipped titles the Oct 13 review named.
+        assert title == self.TAIWAN
+        assert not title.endswith("…")
+        assert _best_headline_for_segment(seg, [self.HOOK, self.TAIWAN], set(), max_chars=60) == (
+            "Taiwan foreign minister criticizes Chinese actions")
 
     def test_hook_length_candidates_stay_excluded(self):
         from engine.chapters import _best_headline_for_segment
@@ -1021,7 +1027,11 @@ class TestLongHeadlinesStillTitleChapters:
 
     def test_clip_title_drops_dangling_function_words(self):
         from engine.chapters import _clip_title
-        assert _clip_title(self.NIGERIA) == "Nigerian forces report killing over 1,000 militants"
+        # Oct 14 2026: the default budget is 80 (HEADLINE_TITLE_MAX); the 60
+        # case is pinned explicitly.
+        assert _clip_title(self.NIGERIA) == (
+            "Nigerian forces report killing over 1,000 militants and rescuing hundreds")
+        assert _clip_title(self.NIGERIA, 60) == "Nigerian forces report killing over 1,000 militants"
         assert _clip_title("Short headline stays") == "Short headline stays"
         # A clean cut that would lose more than half the headline keeps
         # the legacy ellipsis clip rather than collapsing to two words.
@@ -1046,7 +1056,8 @@ class TestLongHeadlinesStillTitleChapters:
         titles = [c.title for c in parse_chapters(
             tts.read_text(encoding="utf-8"), markers, show_name="Omni View",
             story_headlines=heads)]
-        assert not [t for t in titles if t.endswith("…") or len(t) > 60], titles
+        from engine.chapters import HEADLINE_TITLE_MAX
+        assert not [t for t in titles if t.endswith("…") or len(t) > HEADLINE_TITLE_MAX], titles
         assert any(t.startswith("Taiwan foreign minister") for t in titles), titles
 
 

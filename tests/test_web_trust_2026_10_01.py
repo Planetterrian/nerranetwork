@@ -234,7 +234,8 @@ class TestCorrectionsRecord:
         assert [r["episode"] for r in rows] == [110, 117]  # oldest filing first
         assert C.corrections_for(tmp_path, 117) == [{
             "episode": 117, "date": "2026-10-01",
-            "text": "The booster flew its 23rd mission, not its 32nd.", "where": "both"}]
+            "text": "The booster flew its 23rd mission, not its 32nd.", "where": "both",
+            "amend_headline": False}]  # Oct 14 2026: the headline switch, default off
         assert C.corrections_for(tmp_path, 5) == []
 
     def test_a_yaml_date_is_accepted(self, tmp_path):

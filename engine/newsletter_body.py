@@ -377,6 +377,39 @@ def promote_hook_to_blockquote(body: str) -> str:
 # Public combined transform
 # ---------------------------------------------------------------------------
 
+# Oct 14 2026: a line that is nothing but a URL. The desks and Prediction
+# Markets write a second or third source under an item as a bare URL line
+# (49 lines in the last seven days; Top World, Africa & Middle East and the
+# Board most often), which the blog printed as a naked link, the show notes
+# never listed and the source lint did not count as a Source: line.
+_BARE_URL_LINE_RE = re.compile(r"^(?P<indent>[ \t]*)<?(?P<url>https?://[^\s<>]+)>?[ \t]*$", re.MULTILINE)
+
+
+def linkify_bare_url_lines(body: str) -> str:
+    """``https://example.org/a`` on a line of its own -> ``Source: [example.org](https://example.org/a)``.
+
+    Only a line that is exactly a URL changes; a URL inside a sentence, a
+    markdown link, a bullet or a Source: line is left to the other passes.
+    Lines inside a fenced block (the claims ledger) are untouched.
+    """
+    if not body or "http" not in body:
+        return body
+    out = []
+    fenced = False
+    for line in body.split("\n"):
+        if line.strip().startswith("```"):
+            fenced = not fenced
+            out.append(line)
+            continue
+        m = None if fenced else _BARE_URL_LINE_RE.fullmatch(line)
+        if m:
+            url = m.group("url").rstrip(".,;)")
+            out.append(f"{m.group('indent')}Source: [{_domain_label_for(url)}]({url})")
+        else:
+            out.append(line)
+    return "\n".join(out)
+
+
 def transform_daily_body(body: str, *, slug: str = "") -> str:
     """Canonical-stage transforms (markdown-safe; no inline HTML).
 
@@ -387,6 +420,7 @@ def transform_daily_body(body: str, *, slug: str = "") -> str:
       1. Box-drawing rules → markdown ``---``
       2. Hook line → markdown blockquote
       3. Shorten Google News tracking URLs in "Source: …" lines
+      3b. A line that is only a URL becomes a "Source: [domain](url)" line
       4. Linkify trailing X/Twitter @handles
       5. Dedup Omni View "Read more" duplicate URLs
 
@@ -396,6 +430,7 @@ def transform_daily_body(body: str, *, slug: str = "") -> str:
     body = replace_box_rules_with_md_hr(body)
     body = promote_hook_to_blockquote(body)
     body = shorten_source_urls(body)
+    body = linkify_bare_url_lines(body)
     body = linkify_x_handles(body)
     if slug == "omni_view":
         body = dedup_read_more_sources(body)

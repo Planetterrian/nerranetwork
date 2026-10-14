@@ -289,8 +289,14 @@ def strip_price_tape(script: str) -> Tuple[str, int]:
 # --------------------------------------------------- reader-only sections --
 #: Digest sections written for readers that the script stage must never see.
 READER_ONLY_SECTIONS = ("The Tape",)
+#: Headings that are reader-only when they are the WHOLE heading (Oct 14
+#: 2026): a trailing Sources list is for the blog card and the show notes,
+#: never the script — Offshore North Ep001 read one aloud. Matched exactly
+#: so a story heading such as "Sources of funding" is still spoken.
+READER_ONLY_EXACT_SECTIONS = ("Sources", "References", "Read more", "Read more (sources)")
 _READER_ONLY_RE = re.compile(
-    r"^#{1,6}\s*(?:" + "|".join(re.escape(t) for t in READER_ONLY_SECTIONS) + r")\b.*$",
+    r"^#{1,6}\s*(?:(?:" + "|".join(re.escape(t) for t in READER_ONLY_SECTIONS) + r")\b.*"
+    r"|(?:" + "|".join(re.escape(t) for t in READER_ONLY_EXACT_SECTIONS) + r")\s*:?\s*\**)$",
     re.IGNORECASE)
 _ANY_HEADER = re.compile(r"^\s*#{1,6}\s")
 _RULE = re.compile(r"^[\s━─═\-=]{4,}$")

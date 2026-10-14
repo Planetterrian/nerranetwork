@@ -25,6 +25,7 @@ from typing import Optional
 from urllib.parse import quote, urlparse
 
 from engine.corrections import corrections_for
+
 from engine.episode_ask import episode_ask_for
 from engine.interviews import (
     guest_name_for, interview_body_markdown, interview_context,
@@ -34,6 +35,17 @@ from engine import show_lang as _show_lang
 from engine import brand as _brand
 
 logger = logging.getLogger(__name__)
+
+#: The headline prefix an amending correction adds (engine.corrections
+#: ``amend_headline``), per page language.
+CORRECTED_TITLE_PREFIX = {"en": "Corrected: ", "ru": "Исправлено: "}
+
+
+def corrected_title(title: str, *, is_ru: bool = False) -> str:
+    """``title`` with the Corrected prefix, applied once."""
+    prefix = CORRECTED_TITLE_PREFIX["ru" if is_ru else "en"]
+    title = (title or "").strip()
+    return title if title.startswith(prefix) else prefix + title
 
 #: How much of a transcript is shown before a reader asks for the rest.
 #: Roughly the first three or four lines — enough to tell what the recording
@@ -1730,6 +1742,11 @@ def generate_blog_post_html(
         corrections_for(Path(_md_path_for_corrections).parent, ep_num)
         if _md_path_for_corrections else []
     )
+    # A correction that amends the headline (Oct 14 2026): the title the
+    # page, the <title> and the social card carry says so up front.
+    if any(c.get("amend_headline") for c in corrections) and metadata.get("title"):
+        metadata = dict(metadata)
+        metadata["title"] = corrected_title(metadata["title"], is_ru=_show_lang.is_russian(show_slug))
 
     # Interview shows (Sep 21 2026). The Age of AI and Nerra Voices commit a
     # digest with a named guest, a one-line identifier and their own links,

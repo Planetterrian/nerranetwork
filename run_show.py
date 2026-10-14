@@ -2305,6 +2305,7 @@ def run(args: argparse.Namespace) -> None:
         #     validator sees the text; re-applied after any regeneration.
         if not is_deep_dive:
             x_thread = _dedupe_digest_sections(x_thread, config, metrics)
+            x_thread = _promote_hook_item(x_thread, config, metrics)
             _lint_digest_placeholders(x_thread, config, metrics)
 
         if _val_factory and not is_deep_dive:
@@ -2810,6 +2811,7 @@ def run(args: argparse.Namespace) -> None:
                         and (not _hook_too_long or len(_retry_hook) <= _HOOK_MAX)
                     ):
                         _candidate = _dedupe_digest_sections(_x_struct, config, metrics)
+                        _candidate = _promote_hook_item(_candidate, config, metrics)
                         _new_lints: list = []
                         if _lint_names:
                             from engine.digest_lint import run_digest_lints as _rdl
@@ -2937,6 +2939,21 @@ def run(args: argparse.Namespace) -> None:
         x_thread = scrub_scaffold(x_thread)
         x_thread = transform_daily_body(x_thread, slug=getattr(config, "slug", ""))
         x_thread = fix_phonetic_garbles(x_thread)
+        # Oct 14 2026: the narrative shows' research pages reach the reader.
+        # They were the episode's only sources and no surface listed them
+        # (UC Ep141 / FPD Ep129 published with an empty Sources card). A
+        # trailing "### Sources" section is what the blog card and the show
+        # notes already read; the podcast copy strips it, so none is spoken.
+        if _n_research:
+            try:
+                from engine.research_sources import append_research_sources
+                _before_rs = x_thread
+                x_thread = append_research_sources(x_thread, locals().get("articles") or [])
+                metrics.record("research_sources_listed",
+                               x_thread.count("\n- [") - _before_rs.count("\n- [")
+                               if x_thread != _before_rs else 0)
+            except Exception as _rs_exc:  # noqa: BLE001 — the digest ships without the list
+                logger.warning("Research sources block failed (non-fatal): %s", _rs_exc)
 
         # Name the outlet that actually reported each aggregated story.
         # The digest cites them as "[Google News](news.google.com/...)",
@@ -6446,6 +6463,25 @@ _SOURCE_INLINE_BRACKET_RE = re.compile(
     r"\s*(?:\*\*|__)?(?:Sources?|Источники?)(?:\*\*|__)?\s*:?\s*"
     r"\[[^\]\n]{1,80}\](?:\([^)\s]*\))?\.?"
 )
+
+
+def _promote_hook_item(x_thread, config, metrics):
+    """Move the numbered item the hook was written from to the top of its
+    section (Oct 14 2026, engine.hook_item; opt-in ``hook_item_first``).
+    Records ``hook_item_promoted_from`` (the item's old position, 0 when
+    nothing moved). Never raises."""
+    if not x_thread or not getattr(config, "hook_item_first", False):
+        return x_thread
+    try:
+        from engine.hook_item import promote_hook_item
+        out, moved_from = promote_hook_item(x_thread)
+    except Exception as exc:  # noqa: BLE001 — a reorder must never break a run
+        logger.warning("Hook item promotion failed (non-fatal): %s", exc)
+        return x_thread
+    metrics.record("hook_item_promoted_from", moved_from)
+    if moved_from:
+        logger.info("Hook item: moved item %d to the top of its section", moved_from)
+    return out
 
 
 def _dedupe_digest_sections(x_thread, config, metrics):

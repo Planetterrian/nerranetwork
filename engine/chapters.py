@@ -19,7 +19,16 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
 
+from engine.titles import HEADLINE_CHAPTER_TITLE_MAX
+
 logger = logging.getLogger(__name__)
+
+#: One budget for every headline-derived chapter title (Oct 14 2026). The
+#: Oct 8 clip ran at 60 and shipped "...halts the number" fragments on the
+#: Oct 13 slate while most desk lead headlines run 60-80; a headline that
+#: fits ``engine.titles.HEADLINE_CHAPTER_TITLE_MAX`` ships whole now and a
+#: longer one is clipped at a clause boundary inside it.
+HEADLINE_TITLE_MAX = HEADLINE_CHAPTER_TITLE_MAX
 
 
 @dataclass
@@ -244,7 +253,7 @@ def _tokenize_for_match(text: str) -> set:
 
 def _best_headline_for_segment(
     seg_text: str, headlines: List[str], used: set,
-    max_chars: int = 60,
+    max_chars: int = HEADLINE_TITLE_MAX,
 ) -> str:
     """Pick the unused digest *headline* that best overlaps *seg_text*.
 
@@ -333,7 +342,58 @@ _CLAUSE_BREAKS = (", ", "; ", " — ", " – ", " - ", " on ", " in ", " at ",
                   " amid ", " while ", " over ", " by ", " of ")
 
 
-def _clip_title(raw: str, max_chars: int = 60) -> str:
+#: Digest lead headings that name the lead story's SLOT, not the story —
+#: the chapter is still titled with them when the hook is too long to be a
+#: title and no headline matches, because a listener can jump to "Lead"
+#: and cannot jump to nothing. Longer, sentence-shaped headings never are.
+_LEAD_HEADING_MAX_CHARS = 40
+_LEAD_HEADING_RE = re.compile(r"^\s*#{2,6}\s+(.+?)\s*$", re.MULTILINE)
+_LEAD_HEADING_COUNT_RE = re.compile(r"\s*\(\d+\)\s*$")
+
+
+def lead_block_tokens(digest_text: str) -> set:
+    """Content words of the digest's LEAD TEXT: the first paragraph (or first
+    numbered item) under its first section heading. Mira's desks tell the
+    lead in short paragraphs that name the actor once and then say "he" —
+    Asia Pacific Ep021's first body paragraphs shared one word with the hook
+    and none with the matched headline, so the lead had no chapter even
+    though the digest's Lead section carried every word of them (Yonhap,
+    Tuesday, Cabinet, Seoul). Empty when the digest has no section heading."""
+    text = digest_text or ""
+    m = _LEAD_HEADING_RE.search(text)
+    if not m:
+        return set()
+    rest = text[m.end():]
+    nxt = _LEAD_HEADING_RE.search(rest)
+    section = rest[: nxt.start()] if nxt else rest
+    for block in re.split(r"\n[ \t]*\n", section):
+        block = re.sub(r"^\s*\d+[.)]\s*", "", block.strip())
+        block = re.sub(r"(?im)^\s*Source(?:/Post)?\s*:.*$", "", block)
+        block = re.sub(r"https?://\S+", " ", block)
+        toks = _tokenize_for_match(re.sub(r"[*_`#>]+", " ", block))
+        if len(toks) >= 4:
+            return toks
+    return set()
+
+
+def lead_section_name(digest_text: str) -> str:
+    """The digest's own name for its first section ("Lead", "Top Story",
+    "Top News", "Today's lead story"), or ``""`` when the first heading is a
+    story title rather than a label (Omni View's ``### 1) <headline>``, a
+    heading with sentence punctuation, or one over the label length)."""
+    for line in (digest_text or "").split("\n"):
+        m = _LEAD_HEADING_RE.match(line)
+        if not m:
+            continue
+        name = _LEAD_HEADING_COUNT_RE.sub("", re.sub(r"[*_`]+", "", m.group(1))).strip()
+        if (not name or len(name) > _LEAD_HEADING_MAX_CHARS
+                or re.match(r"^\d+[.)]", name) or re.search(r"[.!?:—]", name)):
+            return ""
+        return name
+    return ""
+
+
+def _clip_title(raw: str, max_chars: int = HEADLINE_TITLE_MAX) -> str:
     """Fit a real digest headline into *max_chars* WITHOUT an ellipsis.
 
     A headline is a title, so a trailing "…" is wrong on every surface
@@ -396,14 +456,19 @@ def _paragraphs(lines: List[str]) -> list:
 #: The lead story must begin within this many paragraphs of the opening
 #: chapter's start, or it is not where the episode put its lead.
 LEAD_SEARCH_PARAGRAPHS = 4
+#: Content words a script paragraph must share with the digest's lead text
+#: (``lead_block_tokens``) to be the lead paragraph.
+LEAD_TEXT_MIN_SHARED = 3
 
 
 def _lead_story_split(
     lines: List[str],
     head: "Chapter",
     story_headlines: List[str],
-    max_chars: int = 60,
+    max_chars: int = HEADLINE_TITLE_MAX,
     whole_only: bool = False,
+    fallback_title: str = "",
+    lead_text_tokens: Optional[set] = None,
 ) -> Optional[tuple]:
     """Where the lead story starts inside the opening chapter.
 
@@ -424,6 +489,16 @@ def _lead_story_split(
     cut cleanly at a word boundary. A body that does not open on the
     hook's story gets no lead chapter — never a guess. Returns
     ``(word_idx, char_offset, title)`` or None.
+
+    Oct 14 2026: the budget is ``HEADLINE_TITLE_MAX`` (80) on every show —
+    at 60 the lead chapter on the Oct 13 slate read "...halts the number"
+    on 9 of 20 episodes and was missing on the rest, because a hook over
+    60 characters (every one of them) and a headline over 60 (most desk
+    leads) left nothing to title it with. When the hook is longer than the
+    budget and no headline matches it, *fallback_title* — the digest's own
+    name for its lead section ("Lead", "Top Story") — titles the chapter,
+    so a listener can jump to the lead on a desk whose lead is written
+    under a bare heading, as every desk's is.
     """
     if not story_headlines:
         return None
@@ -452,6 +527,8 @@ def _lead_story_split(
             # desks; no title means no lead chapter, never a fragment.
             if len(_strip_title_label(re.sub(r"[*_`]+", "", hook).strip())) <= max_chars:
                 title = _clip_title(hook, max_chars)
+            elif fallback_title:
+                title = fallback_title
     elif candidates:
         title, lead_tokens = candidates[0]
     else:
@@ -464,8 +541,12 @@ def _lead_story_split(
         whole = _strip_title_label(re.sub(r"[*_`]+", "", title).strip())
         if len(whole) > max_chars:
             return None
+    text_tokens = lead_text_tokens or set()
     for w, c, tokens in body[:LEAD_SEARCH_PARAGRAPHS]:
-        if len(tokens & lead_tokens) >= 2:
+        # The paragraph tells the hook's story: it shares the hook's or the
+        # headline's words, or (Oct 14 2026) three of the digest's own lead
+        # text — the desks' short, pronoun-led paragraphs match that way.
+        if len(tokens & lead_tokens) >= 2 or len(tokens & text_tokens) >= LEAD_TEXT_MIN_SHARED:
             return w, c, _clip_title(title, max_chars)
     return None
 
@@ -476,7 +557,7 @@ def _headline_anchored_insertions(
     head_word_end: int,
     story_headlines: List[str],
     min_segment_words: int = 60,
-    max_chars: int = 60,
+    max_chars: int = HEADLINE_TITLE_MAX,
     whole_titles_max: Optional[int] = None,
     min_results: int = 2,
 ) -> list:
@@ -944,13 +1025,17 @@ def parse_chapters(
     # the Aug 27 decision was against clipped titles, not story chapters).
     if chapters:
         head = chapters[0]
+        _lead_name = lead_section_name(digest_text)
+        _lead_toks = lead_block_tokens(digest_text)
         if known_sections_only:
-            from engine.titles import HEADLINE_CHAPTER_TITLE_MAX
             found = _lead_story_split(lines, head, story_headlines or [],
-                                      max_chars=HEADLINE_CHAPTER_TITLE_MAX,
-                                      whole_only=True)
+                                      max_chars=HEADLINE_TITLE_MAX,
+                                      whole_only=True, fallback_title=_lead_name,
+                                      lead_text_tokens=_lead_toks)
         else:
-            found = _lead_story_split(lines, head, story_headlines or [])
+            found = _lead_story_split(lines, head, story_headlines or [],
+                                      fallback_title=_lead_name,
+                                      lead_text_tokens=_lead_toks)
         if found and found[2] not in {c.title for c in chapters}:
             w, c, title = found
             chapters = [
