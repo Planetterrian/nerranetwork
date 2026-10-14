@@ -336,6 +336,12 @@ class AudioConfig:
     # off (the dataclass default — the exact pre-change audio); the network
     # value lives in shows/_defaults.yaml. Dialogue shows never get it.
     story_break_seconds: float = 0.0
+    # Oct 14 2026: story_break_seconds is the TOTAL pause at a story change
+    # (the voice's own pause is measured and only the difference spliced),
+    # and when this is on, a soft swell of the show's theme is laid under
+    # each pause in the music mix (engine.audio.breather_offsets). Shows
+    # with no music file get the pause alone.
+    story_break_cue: bool = False
 
 
 @dataclass

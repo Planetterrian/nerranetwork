@@ -198,6 +198,24 @@ _SELF_NARRATION = [
                r"|\bthe limit of what [^.!?]{0,40}? (?:reports|carried|carries|says)\b"
                r"|\bon the record, then\b|\bnot another retelling\b"
                r"|\b(?:names?|figures?) [^.!?]{0,40}? attaches to\b", re.IGNORECASE),
+    # Oct 14 2026 (review of the cohort's Oct 7-13 scripts): absences and
+    # rule-narration the shapes above did not reach — "A sign of progress
+    # … is not in today's reporting.", "The day had none.", "Today's text
+    # does not carry a named lawmaker's speech…", "None of the markets in
+    # today's set opened…", "No human outcome … is in the report.", "None
+    # of those accounts says which way the vote will go." Swept against
+    # all 2,321 committed scripts: 20 matches, every one narration.
+    re.compile(r"\b(?:is|are|was|were) not in today(?:'s|’s) (?:reporting|reports|articles|"
+               r"text|coverage|briefing)\b"
+               r"|\bno sign of progress\b|^The day had none\b"
+               r"|\btoday(?:'s|’s) (?:text|reporting|articles|coverage|set) (?:does not|doesn't|"
+               r"doesn’t|did not|do not|don't) (?:carry|include|name|say|give|show)\b"
+               r"|\bin today(?:'s|’s) set\b"
+               r"|\bnone of (?:those|these|the) (?:accounts|reports|articles|sources|outlets|"
+               r"stories) (?:says?|names?|gives?|reports?|states?)\b", re.IGNORECASE),
+    re.compile(r"^(?:No|None of)\b[^.!?]{0,120}\b(?:is|are|was|were) (?:in|given in|named in) "
+               r"(?:the|today(?:'s|’s)) (?:report|reporting|text|post|article|account)s?\b",
+               re.IGNORECASE),
 ]
 
 # "<Outlet> is the source for <list>" — North America Ep020 (2026-10-13)

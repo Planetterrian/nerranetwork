@@ -4634,3 +4634,59 @@ experiments:
       World first sentence, UC cross-promo, MIT Market Pulse, arXiv in
       pronunciation_map.yaml. Guards tests/test_network_review_2026_10_13.py.
       Review docs/reviews/network_review_2026_10_13.md.
+
+  - id: story-transitions-natural-2026-10-14
+    title: "Story transitions: a 1.0 s total pause, a soft theme cue, smarter beat placement"
+    area: quality
+    shipped: 2026-10-14
+    readout: 2026-10-28
+    status: reading
+    baseline: >
+      Operator listen 2026-10-14: the Oct 13 break "sounds forced and
+      unnatural". Measured on the shipped Vancouver Ep021: every story change
+      was 1.6-1.7 s of digital silence against a 0.35 s median sentence gap
+      (a fixed 1.2 s added on top of the voice's pause; no music mid-episode),
+      two beats 7 s apart, one before "He asked Albertans…" (same story).
+    target: >
+      From the first post-merge slate: story_breaks_inserted >= 4 per English
+      news episode, story_break_cues equal to the breaks past the opening bed
+      on every show with a theme, no two beats under 20 s apart, and the
+      measured story-change pause 0.9-1.1 s. Outcome: the operator's listen,
+      then EN long-form averageViewPercentage vs the two weeks before.
+      AUDIO — previews sent 2026-10-14 (Top World Ep021, Prediction Markets
+      Ep021); A/B-listen the first episode of three shows.
+    notes: >
+      engine/story_breaks.py plan_breaks / breather_starts, engine/audio.py
+      breather_offsets / _breather_overlay_cmd, audio.story_break_seconds
+      1.0 (now the total) + audio.story_break_cue. Guards:
+      tests/test_transitions_and_length_2026_10_14.py.
+
+  - id: shows-reach-their-length-2026-10-14
+    title: "Deep dives and targets sized from the promised minutes (13 new shows + FF/PT/Tesla)"
+    area: quality
+    shipped: 2026-10-14
+    readout: 2026-10-28
+    status: reading
+    baseline: >
+      Last 7 episodes, script words vs target: LatAm 66%, Asia Pacific 72%,
+      North America 72%, Africa & Middle East 79%, Europe 84%, MAG 7 89%,
+      Prediction Markets 87%, AI Chips 91%, Vancouver 86%, Collingwood 72%,
+      Planetterrian 68%, Fascinating Frontiers 69%, Tesla 78%. Desks ran
+      ~6 min of a 10-12 minute promise. The digest length check counted the
+      hidden claims ledger, so its expansion had not fired on the cohort's
+      daily shows since their first week.
+    target: >
+      Over the first 7 post-merge episodes of each show: median script words
+      >= 90% of the new min_podcast_words (desks 1,650; AI Chips 1,400;
+      PM 1,400; MAG 7 1,250; Vancouver 1,450; Collingwood 1,150; Top World
+      1,750) with zero spoken_text_gate or skip regressions; The Closer Look
+      present on >= 4 of 7 desk episodes; script_digest_overlap_pct not
+      above its pre-change median (no paraphrase padding); claims verified
+      per episode not lower. AUDIO — A/B-listen one desk, AI Chips and
+      Vancouver.
+    notes: >
+      Skip floors pinned at the old 60% lines via min_podcast_publish_words.
+      engine.generator.digest_prose_word_count; desk format v3 (The Closer
+      Look, 2-3 Across, 3-5 Also Today, 5-8 sentence Lead); Teardown /
+      Thread / How It Works 450-600; FF/PT deep dives 450-550 from fetched
+      text; Tesla essay 400-500 and the six-sentence spoken cap removed.

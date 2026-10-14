@@ -1836,6 +1836,13 @@ def run(args: argparse.Namespace) -> None:
                     articles, window_headlines=_window_heads)
                 _cluster_notes = _cluster_annotate(
                     articles, window_headlines=_window_heads)
+                # Oct 14 2026: a story two outlets carry is the likeliest
+                # Lead or Closer Look, so the full-text fetch below reads
+                # its members before the newest stray item.
+                for _grp in _article_clusters:
+                    for _gi in _grp:
+                        if 0 <= _gi < len(articles):
+                            articles[_gi]["story_cluster_size"] = len(_grp)
                 if _article_clusters:
                     logger.info(
                         "Story clusters: %d cluster(s) covering %d of %d articles "
@@ -4673,6 +4680,7 @@ def run(args: argparse.Namespace) -> None:
                 # and the Nerra Daily cut stay aligned. Any failure ships
                 # the voice exactly as synthesized.
                 voice_for_mix = raw_mp3
+                story_cue_starts: list = []
                 _break_s = float(getattr(config.audio, "story_break_seconds", 0.0) or 0.0)
                 if _break_s > 0 and not config.tts.dialogue_mode and raw_mp3.exists():
                     try:
@@ -4681,29 +4689,35 @@ def run(args: argparse.Namespace) -> None:
 
                         _tx_path = digests_dir / f"{_ep_prefix}_transcript.json"
                         _lines = _sb.story_boundary_lines(podcast_script, x_thread or "")
-                        _cuts: list = []
+                        _breaks: list = []
                         _unmatched = _unplaced = 0
                         if _lines and _tx_path.exists():
                             _anchors, _unmatched = _sb.boundary_anchors(
                                 podcast_script, _lines, json.loads(_tx_path.read_text(encoding="utf-8")))
-                            _cuts, _unplaced = _sb.choose_cuts(
-                                _anchors, _sb.detect_silences(raw_mp3))
+                            _breaks, _unplaced = _sb.plan_breaks(
+                                _anchors, _sb.detect_silences(raw_mp3), gap_seconds=_break_s)
+                        _cuts = [b.cut for b in _breaks if b.insert > 0]
+                        _lens = [b.insert for b in _breaks if b.insert > 0]
                         if _cuts:
                             _breaks_wav = raw_mp3.with_name(raw_mp3.stem + "_breaks.wav")
-                            _sp.run(_sb.insert_silences_cmd(raw_mp3, _breaks_wav, _cuts, _break_s),
+                            _sp.run(_sb.insert_silences_cmd(raw_mp3, _breaks_wav, _cuts, _lens),
                                     check=True, timeout=900)
-                            _sb.rewrite_transcript_files(digests_dir, _ep_prefix, _cuts, _break_s)
+                            _sb.rewrite_transcript_files(digests_dir, _ep_prefix, _cuts, _lens)
                             voice_for_mix = _breaks_wav
+                        if _breaks and getattr(config.audio, "story_break_cue", False):
+                            story_cue_starts = _sb.breather_starts(_breaks)
                         metrics.record("story_breaks_found", len(_lines))
-                        metrics.record("story_breaks_inserted", len(_cuts))
+                        metrics.record("story_breaks_inserted", len(_breaks))
                         metrics.record("story_breaks_unplaced", _unmatched + _unplaced)
                         metrics.record("story_break_seconds", _break_s)
-                        logger.info("Story breaks: %d story starts, %d breaks of %.1fs inserted "
-                                    "(%d not located)", len(_lines), len(_cuts), _break_s,
-                                    _unmatched + _unplaced)
+                        metrics.record("story_break_spliced_s", round(sum(_lens), 2))
+                        logger.info("Story breaks: %d story starts, %d beats to %.1fs total pause "
+                                    "(%.1fs spliced, %d not located)", len(_lines), len(_breaks),
+                                    _break_s, sum(_lens), _unmatched + _unplaced)
                     except Exception as exc:
                         logger.warning("Story breaks skipped (non-fatal): %s", exc)
                         voice_for_mix = raw_mp3
+                        story_cue_starts = []
 
                 # 9b. Post-TTS transcription validation (opt-in). Reuses the
                 # transcript text from 9a when available so Whisper only
@@ -4826,7 +4840,9 @@ def run(args: argparse.Namespace) -> None:
                                 config.audio, "outro_fade_out_duration", 6.0,
                             ),
                             denoise=config.audio.voice_denoise,
+                            breathers=story_cue_starts or None,
                         )
+                        metrics.record("story_break_cues", len(story_cue_starts))
                     else:
                         logger.warning("Music file not found: %s — using voice only", music_path)
                         normalize_voice(voice_for_mix, final_mp3,

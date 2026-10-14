@@ -186,7 +186,9 @@ x_accounts:
 
 # Full article text (engine/article_text.py): Ep1's Company Desk was three
 # teaser-length items padded with "no release date was given".
-fetch_full_text: 12
+# Oct 14 2026: the deep dive / Closer Look is written from fetched text.
+fetch_full_text: 16
+fetch_full_text_chars: 5000
 # Sep 30 2026 (network review): nothing older than three days is news.
 # The page-date probe (engine/article_dates.py, date_probe_max) dates the
 # articles nothing trustworthy dated, and this gate drops what it finds
@@ -251,9 +253,12 @@ llm:
   # Sep 23 2026: targets set to what the format's digest supports. The
   # skip floor is 60% of this; Ep1 runs produced 883, 701 and 661 words against 1,300. Length is still
   # a digest-side lever (CLAUDE.md) — this is the target, not a retry.
-  min_podcast_words: 1100
+  # Oct 14 2026: sized from the promised minutes and this host's measured
+  # spoken rate (was 1100). The skip floor stays at the old 60% line.
+  min_podcast_words: 1250
+  min_podcast_publish_words: 660
   podcast_expand_below_target: false
-  min_digest_words: 1300
+  min_digest_words: 1150
   digest_expand_below_target: true
   podcast_chain: true
 
@@ -329,6 +334,7 @@ chapters:
     where: body
   - pattern: across the seven|runs through (several|more than one) of (them|these companies)
     title: The Thread
+    digest_section: The Thread
   # Oct 12 2026: no episode Ep018-020 said "on the calendar", so the
   # chapter never existed and The Thread ran on over the calendar read.
   # The podcast prompt now requires the phrase in the calendar's first

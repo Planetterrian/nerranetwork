@@ -25,7 +25,9 @@ description: The week in Collingwood and the south Georgian Bay towns —
   local issue argued fairly both ways. Every Friday, hosted by Mira, the Nerra
   Network's AI host.
 
-fetch_full_text: 12
+# Oct 14 2026: the deep dive / Closer Look is written from fetched text.
+fetch_full_text: 16
+fetch_full_text_chars: 5000
 absence_sentence_filter: true
 # Digest lints + X-source policy (Sep 23 2026 launch-cohort review; engine/digest_lint.py).
 digest_lints:
@@ -203,9 +205,12 @@ llm:
   # telling ~a quarter of its sentences twice in a row (the damage, the six
   # candidates, the weather, Beachwood Road). The ask moves to the bottom of
   # the new-show band (900-1,300, tests/test_new_shows_phase2); floor 540.
-  min_podcast_words: 900
+  # Oct 14 2026: sized from the promised minutes and this host's measured
+  # spoken rate (was 900). The skip floor stays at the old 60% line.
+  min_podcast_words: 1150
+  min_podcast_publish_words: 540
   podcast_expand_below_target: false
-  min_digest_words: 1000
+  min_digest_words: 1150
   # Oct 10 2026: off — the expansion padded the digest with restated facts
   # ("That figure is the area total, not one club's count."); a short
   # week is a short episode.
@@ -273,6 +278,10 @@ chapters:
   - pattern: at the council table
     title: Council & County
     where: body
+  - pattern: a closer look|the longer story
+    title: The Closer Look
+    where: body
+    digest_section: The Closer Look
   - pattern: roads and (the )?weather ahead
     title: Roads & Weather Ahead
     where: body
@@ -304,7 +313,7 @@ newsletter:
   emoji: ⛰️
   newsletter_start_date: '2026-10-16'
   requires_financial_disclaimer: false
-  length_target_words: 900
+  length_target_words: 1150
 
 content_tracking:
   section_patterns: {}

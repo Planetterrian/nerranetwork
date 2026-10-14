@@ -965,6 +965,46 @@ reviews:
       evidence: null
     agent_cost_usd: null
 
+  - date: 2026-10-14
+    pr: null
+    doc: docs/reviews/transitions_and_length_2026_10_14.md
+    summary: "Operator: review and improve the new shows significantly; the new story pause sounds forced and unnatural; many shows are short of their time targets — add deep dives or expanded content. Measured: Vancouver Ep021's story changes were 1.6-1.7 s of digital silence against a 0.35 s median sentence gap (the Oct 13 1.2 s was ADDED to the voice's ~0.45 s pause; no music mid-episode), with two beats 7 s apart and one splitting a premier from his own quote. Length, last 7 episodes: desks 66-84% of target and ~6 min of a 10-12 minute promise, AI Chips 91%, MAG 7 89%, Prediction Markets 87%, Vancouver 86%, Collingwood 72%, FF 69%, PT 68%, Tesla 78%. Root cause found by three independent reviews and confirmed in code: generate_digest counted the fenced claims ledger (480-1,100 words) toward min_digest_words, so the digest-side expansion had not fired on the cohort's daily shows since their first week; and the formats themselves capped the digests (desks 2 Across + 2-4 one-liners; deep dives 220-320 words; Tesla's spoken essay capped at six sentences)."
+    shipped:
+      - "engine/story_breaks.py: story_break_seconds is the TOTAL pause (plan_breaks splices only the difference); beats closer than 20 s dropped; a line opening on a pronoun/connective never starts a story; short items under one heading are one block"
+      - "engine/audio.py: a soft swell of the show's own theme under each story-change pause, laid on the music track so the sidechain shapes it (breather_offsets picks steady bars, different per break); audio.story_break_cue network-wide; skipped inside the opening bed and on shows without music"
+      - "engine/generator.py: digest_prose_word_count (ledger, Source lines, URLs excluded) drives the digest expansion; the retry may explain mechanisms but takes every figure from the supplied material, never memory"
+      - "desks format v3: The Closer Look (300-420 words, one sourced story told at length), Across 2-3, Also Today 3-5, Lead 5-8 sentences; anchor phrases optional with digest_section chapter fallbacks; preferred_domains (wires + papers of record); full text 20 x 5,000; full text ranks cluster members and preferred publishers first"
+      - "deep dives doubled and sourced: AI Chips Teardown, MAG 7 Thread, PM How It Works (450-600 / 400-550, worked example from a fetched article), with validator rules; Vancouver/Collingwood Closer Look; Top World items 1-3 at 6-9 sentences and a 900-1,150-word Saturday story; FF/PT deep dives 450-550 from fetched text; Tesla essay 400-500 and the six-sentence spoken cap removed; Offshore North's contradictory 'lengthen Plain Sailing' line resolved"
+      - "targets sized from promised minutes and measured spoken wpm (desks 1,650, Top World 1,750, AI Chips 1,400, PM 1,400, MAG 7 1,250, Vancouver 1,450, Collingwood 1,150) with every skip floor pinned at its old 60% line (min_podcast_publish_words)"
+      - "absence filter: six narration shapes (20 matches across 2,321 scripts, all narration); shared rule de-seeded of its quotable attribution specimen; MAG 7 / PM / weeklies / AI Chips fixed openers made optional"
+    predictions:
+    - metric: "measured pause at story changes in new EN episodes (silencedetect -50 dB on the final mix, gaps past 50 s)"
+      baseline: "1.6-1.7 s (Vancouver Ep021, Top World Ep021)"
+      expected: "0.9-1.2 s; story_break_cues > 0 on every show with a music file; no two beats < 20 s apart"
+      verdict: pending
+      evidence: null
+    - metric: "median podcast_script_word_count / new target over the first 7 post-merge episodes per show"
+      baseline: "desks 66-84%, AI Chips 91%, MAG 7 89%, PM 87%, Vancouver 86%, Collingwood 72%, FF 69%, PT 68%, Tesla 78% (of the OLD targets)"
+      expected: ">= 90% of the NEW targets on the desks, AI Chips, PM, MAG 7 and Vancouver; FF/PT/Tesla >= 85% of theirs"
+      verdict: pending
+      evidence: null
+    - metric: "x_thread_generation_expansion calls in credit files (cohort daily shows)"
+      baseline: "0 since AI Chips Ep007 / MAG 7 Ep008 / PM Ep002"
+      expected: "fires on the thin days only (<= 3 of 7 per show), never on a digest already over its floor"
+      verdict: pending
+      evidence: null
+    - metric: "episodes skipped for length (publication floor) on the shows whose targets rose"
+      baseline: "0 in the 14 days to 10-13 on these shows except Top World 10-03"
+      expected: "0 (the skip floors did not move)"
+      verdict: pending
+      evidence: null
+    - metric: "sentence-initial 'Across the region,' / 'At the top of the tape,' / 'On the board today,' per script"
+      baseline: "24/25 desk scripts; MAG 7 7/7; PM 6/7"
+      expected: "<= 1 in 7 per show; segment chapters still present on >= 80% of episodes (digest_section fallback)"
+      verdict: pending
+      evidence: null
+    agent_cost_usd: null
+
 do_not_retry:
   - idea: podcast-side length levers (word floors, expand-retries, prompt
       pressure on the podcast stage) for ANY show

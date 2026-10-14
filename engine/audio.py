@@ -20,7 +20,7 @@ import subprocess
 import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Sequence
 
 logger = logging.getLogger(__name__)
 
@@ -725,6 +725,120 @@ def _final_mix_cmd(
 # Full music mixing pipeline
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Story-change cues (Oct 14 2026)
+# ---------------------------------------------------------------------------
+#
+# The Oct 13 story break was a fixed 1.2 s of digital silence on top of the
+# voice's own ~0.45 s pause. Mid-episode there is no music under the voice
+# (the opening bed fades out by ~48 s), so every story change was 1.6-1.7 s
+# of dead air against a 0.35 s median sentence gap, and the operator heard
+# it as forced. A produced news show marks a story change with a short
+# breath of its own music; this is that cue. Each one is a different bar of
+# the show's theme (taken from its steady body, not a quiet passage),
+# faded in and out so it never starts or stops on a hard edge.
+
+#: Length of one cue, its fades, and how loud it sits (same scale as the
+#: ``*_volume`` knobs — the opening bed's tail runs at 0.3).
+BREATHER_SECONDS = 2.6
+BREATHER_FADE_IN = 0.35
+BREATHER_FADE_OUT = 1.7
+BREATHER_VOLUME = 0.22
+#: The cue starts this long before the pause so its fade-in is already
+#: under way when the last word ends (the sidechain holds it down until
+#: then).
+BREATHER_LEAD = 0.15
+
+
+def _theme_loudness(music_path: Path, window: float = 0.5) -> List[float]:
+    """Per-window RMS (dBFS) of *music_path*, mono 8 kHz — pure Python, no
+    numpy: the music mix must not grow a dependency for a cue."""
+    import array
+    import math
+
+    proc = subprocess.run(
+        ["ffmpeg", "-v", "error", "-i", str(music_path), "-ac", "1", "-ar", "8000",
+         "-f", "s16le", "-"],
+        capture_output=True, timeout=120,
+    )
+    samples = array.array("h")
+    samples.frombytes(proc.stdout[: len(proc.stdout) // 2 * 2])
+    hop = int(8000 * window)
+    out: List[float] = []
+    for i in range(0, len(samples) - hop + 1, hop):
+        chunk = samples[i:i + hop]
+        ms = sum(v * v for v in chunk) / hop
+        out.append(20 * math.log10(math.sqrt(ms) / 32768 + 1e-9))
+    return out
+
+
+def breather_offsets(music_path: Path, count: int, *,
+                     duration: float = BREATHER_SECONDS,
+                     skip_seconds: float = 8.0) -> List[float]:
+    """Source offsets (seconds into the theme) for *count* cues.
+
+    Candidate windows are the ones whose loudness stays within 4 dB of the
+    theme's median across the whole cue — the body of the track, never its
+    build-up, a breakdown or the tail. Cues are spread evenly over those
+    candidates so consecutive story changes play different bars;
+    deterministic for a given file.
+    """
+    window = 0.5
+    levels = _theme_loudness(music_path, window)
+    if not levels or count <= 0:
+        return [skip_seconds] * max(count, 0)
+    span = max(1, int(round(duration / window)))
+    ordered = sorted(levels)
+    median = ordered[len(ordered) // 2]
+    start_i = int(skip_seconds / window)
+    candidates = [
+        i * window for i in range(start_i, len(levels) - span - 2)
+        if all(abs(levels[j] - median) <= 4.0 for j in range(i, i + span))
+    ]
+    if not candidates:
+        candidates = [skip_seconds]
+    if count == 1:
+        return [candidates[len(candidates) // 2]]
+    step = (len(candidates) - 1) / (count - 1) if len(candidates) > 1 else 0
+    return [candidates[int(round(k * step))] for k in range(count)]
+
+
+def _breather_overlay_cmd(music_full: str, theme: str, out: str,
+                          starts: Sequence[float], offsets: Sequence[float], *,
+                          volume: float = BREATHER_VOLUME,
+                          duration: float = BREATHER_SECONDS) -> list:
+    """ffmpeg command laying one faded slice of *theme* into *music_full* at
+    each of *starts* (seconds), written lossless for the final mix."""
+    n = len(starts)
+    fo_start = max(duration - BREATHER_FADE_OUT, 0.0)
+    graph = [f"[1:a]asplit={n}" + "".join(f"[t{i}]" for i in range(n)) if n > 1
+             else "[1:a]anull[t0]"]
+    labels = []
+    for i, (at, src) in enumerate(zip(starts, offsets)):
+        delay_ms = max(0, int(round((float(at) - BREATHER_LEAD) * 1000)))
+        graph.append(
+            f"[t{i}]atrim=start={float(src):.3f}:duration={duration:.3f},"
+            "asetpts=PTS-STARTPTS,"
+            "aformat=sample_rates=44100:channel_layouts=stereo,"
+            f"volume={volume:.3f},"
+            f"afade=t=in:st=0:d={BREATHER_FADE_IN:.3f}:curve=qsin,"
+            f"afade=t=out:st={fo_start:.3f}:d={BREATHER_FADE_OUT:.3f}:curve=qsin,"
+            f"adelay=delays={delay_ms}:all=1[b{i}]"
+        )
+        labels.append(f"[b{i}]")
+    graph.append(
+        "[0:a]aformat=sample_rates=44100:channel_layouts=stereo[bed];"
+        "[bed]" + "".join(labels)
+        + f"amix=inputs={n + 1}:duration=first:dropout_transition=0:normalize=0[out]"
+    )
+    return [
+        "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+        "-i", music_full, "-i", theme,
+        "-filter_complex", ";".join(graph),
+        "-map", "[out]", "-ar", "44100", "-ac", "2", "-c:a", "pcm_s16le", out,
+    ]
+
+
 def mix_with_music(
     voice_path: Path,
     music_path: Path,
@@ -743,6 +857,8 @@ def mix_with_music(
     outro_crossfade: float = 0.0,
     outro_fade_out_duration: float = 6.0,
     denoise: bool = True,
+    breathers: Optional[Sequence[float]] = None,
+    breather_volume: float = BREATHER_VOLUME,
 ) -> Path:
     """Full music mixing pipeline supporting three modes.
 
@@ -1006,6 +1122,34 @@ def mix_with_music(
             music_full_out=str(music_full),
         )
         subprocess.run(cmd, check=True, capture_output=True)
+
+        # --- Story-change cues (Oct 14 2026) ---
+        # A soft swell of the theme under each pause between stories. It
+        # rides the music track, so the sidechain shapes it like the rest
+        # of the bed: it blooms as the last word ends and tucks under the
+        # first words of the next story. Cues inside the opening bed (the
+        # music is already there) are skipped. Any failure keeps the
+        # music track exactly as built.
+        if breathers:
+            music_bed_end = intro_duration + overlap_duration + fade_duration
+            _starts = [float(t) + float(voice_intro_delay) for t in breathers]
+            _starts = [t for t in _starts
+                       if t >= music_bed_end
+                       and t + BREATHER_SECONDS < effective_voice_duration]
+            if _starts:
+                try:
+                    _offsets = breather_offsets(music_path, len(_starts))
+                    music_cued = tmp_dir / "music_cued.wav"
+                    subprocess.run(
+                        _breather_overlay_cmd(
+                            str(music_full), str(music_path), str(music_cued),
+                            _starts, _offsets, volume=breather_volume),
+                        check=True, capture_output=True, timeout=timeout_seconds,
+                    )
+                    music_full = music_cued
+                    logger.info("Story-change cues: %d laid under the music track", len(_starts))
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("Story-change cues skipped (non-fatal): %s", exc)
 
         # --- Final mix: voice + music ---
         # Pad voice with trailing silence equal to ``outro_duration`` so

@@ -21,10 +21,15 @@ read aloud:
    raw voice track, and :func:`choose_cuts` puts each cut in the middle of
    the audio's own silence at that hand-over (:func:`detect_silences`) —
    never inside a word; no silence there means no cut.
-3. :func:`insert_silences_cmd` splices ``story_break_seconds`` of silence at
-   each cut into a lossless WAV that the music mix then reads — no extra
-   lossy encode. In the mix the sidechain lets the bed come up a little in
-   the gap, which is the radio cue for "next story".
+3. :func:`plan_breaks` measures the voice's own pause at each cut and
+   :func:`insert_silences_cmd` splices only the difference to
+   ``story_break_seconds`` — the TOTAL pause — into a lossless WAV that the
+   music mix then reads (no extra lossy encode). Oct 14 2026: the first
+   version added a fixed 1.2 s to a ~0.45 s pause, 1.6-1.7 s of dead air
+   (the music bed is gone after ~48 s, so nothing came up in the gap) and
+   the operator heard it as forced. With ``story_break_cue`` the mix lays a
+   soft swell of the show's theme under each pause
+   (:func:`breather_starts` -> ``engine.audio.mix_with_music(breathers=)``).
 4. :func:`shift_transcript` moves every later Whisper timestamp by the
    silence already inserted, so captions, Shorts windows, the Nerra Daily
    promo cut and chapters stay aligned with the audio they describe.
@@ -55,6 +60,10 @@ SILENCE_NOISE_DB = -45.0
 SILENCE_MIN_SECONDS = 0.15
 #: How far either side of the Whisper hand-over a silence may sit.
 ANCHOR_WINDOW = 0.6
+#: A beat closer than this to the previous one is dropped: a story told in
+#: under twenty seconds is a brief, and beats every few seconds read as a
+#: stutter (Vancouver Ep021 had two 7 s apart).
+MIN_STORY_SECONDS = 20.0
 
 _STOP = frozenset(
     "the a an and or of to in on for with at by from is are was were be been "
@@ -87,6 +96,7 @@ class StoryUnit:
     label: str
     tokens: frozenset
     sentences: int
+    section: str = ""
 
 
 def story_units(digest_md: str) -> List[StoryUnit]:
@@ -101,6 +111,7 @@ def story_units(digest_md: str) -> List[StoryUnit]:
     units: List[StoryUnit] = []
     in_sections = False
     essay: List[str] = []
+    section = [""]
 
     def flush_essay():
         if essay:
@@ -111,7 +122,8 @@ def story_units(digest_md: str) -> List[StoryUnit]:
         toks = _tokens(text)
         if len(toks) >= 6:
             n = len([s for s in _SENT_SPLIT_RE.split(text.strip()) if s.strip()])
-            units.append(StoryUnit(label=label, tokens=toks, sentences=max(1, n)))
+            units.append(StoryUnit(label=label, tokens=toks, sentences=max(1, n),
+                                   section=section[0]))
 
     for para in re.split(r"\n[ \t]*\n", digest_md or ""):
         lines = [ln for ln in para.split("\n") if ln.strip()]
@@ -137,6 +149,8 @@ def story_units(digest_md: str) -> List[StoryUnit]:
             if kind == "header":
                 in_sections = in_sections or block[0].lstrip().startswith("##")
                 flush_essay()
+                m = _HEADER_RE.match(block[0])
+                section[0] = (m.group(1) if m else "").strip().lower()
                 continue
             if not in_sections:
                 continue
@@ -171,6 +185,22 @@ def _assign(lines: Sequence[str], units: Sequence[StoryUnit]) -> List[Tuple[int,
                 best, best_score = i, score
         out.append((best, best_score))
     return out
+
+
+#: Openings that continue the story already being told: a pronoun, a
+#: demonstrative or a connective. A new story names its subject first (the
+#: shared prompt rule), so a line that opens like this is never a new story.
+_CONTINUATION_RE = re.compile(
+    r"^\W*(?:he|she|it|its|they|their|them|his|her|this|that|these|those|"
+    r"there|here|and|but|so|also|still|both|neither|"
+    r"the same|the company|the firm|the agency|the group|the move|the deal|"
+    r"the plan|the bill|the court|the report|the study)\b",
+    re.IGNORECASE,
+)
+
+
+def opens_as_continuation(line: str) -> bool:
+    return bool(_CONTINUATION_RE.match(line or ""))
 
 
 def script_lines(script: str) -> List[str]:
@@ -208,6 +238,20 @@ def story_boundary_lines(script: str, digest_md: str) -> List[int]:
         # A one-line detour that returns to the story being told (A B A) is
         # a passing reference, not a new story.
         if nxt == current:
+            continue
+        # A line that opens on a pronoun or a connective is still talking
+        # about something already introduced — Vancouver Ep021 put a beat
+        # before "He asked Albertans to vote…", splitting the premier from
+        # his own quote. The story moves on without a beat.
+        if opens_as_continuation(lines[idx]):
+            current, run = unit, 1
+            continue
+        # Short items under the same section heading (a weather reading
+        # and its forecast, a roads list, the Top World one-liners) are
+        # told as one block: a beat before the block and after it.
+        if (units[unit].section and units[unit].section == units[current].section
+                and units[unit].sentences <= 2 and units[current].sentences <= 2):
+            current, run = unit, 1
             continue
         # Between two one-line items (a market-pulse list, a run of launch
         # notices, a quick-summary block) there is no beat: the list is told
@@ -348,18 +392,83 @@ def choose_cuts(anchors: Sequence[Tuple[float, float]],
     return sorted(set(cuts)), unplaced
 
 
+@dataclass(frozen=True)
+class Break:
+    """One story change in the raw voice track.
+
+    ``cut`` is where extra silence is spliced (the middle of the voice's
+    own pause), ``insert`` how much, and ``gap_start``/``gap_end`` the
+    pause the voice already left there.
+    """
+
+    cut: float
+    insert: float
+    gap_start: float
+    gap_end: float
+
+
+def plan_breaks(anchors: Sequence[Tuple[float, float]],
+                silences: Sequence[Tuple[float, float]], *,
+                gap_seconds: float,
+                min_spacing: float = MIN_STORY_SECONDS) -> Tuple[List[Break], int]:
+    """``(breaks, unplaced)``: one :class:`Break` per located story change.
+
+    ``gap_seconds`` is the TOTAL pause a listener hears at a story change —
+    the voice's own pause is measured and only the difference is spliced,
+    so every story change sounds the same length whatever Grok left there.
+    Oct 13 2026 added a fixed 1.2 s on top of a pause that was already
+    ~0.45 s: 1.6–1.7 s of dead air, almost five times the 0.35 s median
+    gap between sentences, and the operator heard it as forced. A beat
+    within ``min_spacing`` of the previous one is dropped.
+    """
+    breaks: List[Break] = []
+    unplaced = 0
+    for prev_end, start in anchors:
+        lo, hi = prev_end - ANCHOR_WINDOW, start + ANCHOR_WINDOW
+        mid = (prev_end + start) / 2.0
+        best: Optional[Tuple[float, float]] = None
+        for s0, s1 in silences:
+            if s1 < lo or s0 > hi:
+                continue
+            if best is None or abs((s0 + s1) / 2 - mid) < abs((best[0] + best[1]) / 2 - mid):
+                best = (s0, s1)
+        if best is None:
+            unplaced += 1
+            continue
+        s0, s1 = best
+        cut = round((s0 + s1) / 2.0, 3)
+        if breaks and cut - breaks[-1].cut < min_spacing:
+            continue
+        insert = round(max(0.0, gap_seconds - (s1 - s0)), 3)
+        breaks.append(Break(cut=cut, insert=insert, gap_start=round(s0, 3), gap_end=round(s1, 3)))
+    return sorted(breaks, key=lambda b: b.cut), unplaced
+
+
+def _per_cut(cut_times: Sequence[float], seconds) -> List[Tuple[float, float]]:
+    """``[(cut, seconds_spliced), ...]`` sorted; *seconds* is one number for
+    every cut or one per cut."""
+    if isinstance(seconds, (int, float)):
+        pairs = [(float(c), float(seconds)) for c in cut_times]
+    else:
+        pairs = [(float(c), float(d)) for c, d in zip(cut_times, seconds)]
+    return sorted(p for p in pairs if p[0] > 0)
+
+
 def insert_silences_cmd(src: Path, dst: Path, cut_times: Sequence[float],
-                        seconds: float) -> List[str]:
-    """ffmpeg command: *src* with *seconds* of silence spliced at every cut,
-    written as 48 kHz PCM WAV (lossless — the music mix re-encodes once)."""
-    cuts = sorted(t for t in cut_times if t > 0)
+                        seconds) -> List[str]:
+    """ffmpeg command: *src* with silence spliced at every cut (*seconds*:
+    one length for all, or one per cut), written as 48 kHz PCM WAV
+    (lossless — the music mix re-encodes once)."""
+    pairs = _per_cut(cut_times, seconds)
+    cuts = [c for c, _ in pairs]
     parts: List[str] = []
     labels: List[str] = []
     edges = [0.0, *cuts]
     for i, start in enumerate(edges):
         end = cuts[i] if i < len(cuts) else None
         trim = f"atrim=start={start:.3f}" + (f":end={end:.3f}" if end is not None else "")
-        pad = f",apad=pad_dur={seconds:.3f}" if end is not None else ""
+        pad = (f",apad=pad_dur={pairs[i][1]:.3f}"
+               if end is not None and pairs[i][1] > 0 else "")
         parts.append(f"[0:a]{trim},asetpts=PTS-STARTPTS{pad}[s{i}]")
         labels.append(f"[s{i}]")
     graph = ";".join(parts) + ";" + "".join(labels) + f"concat=n={len(labels)}:v=0:a=1[out]"
@@ -368,30 +477,42 @@ def insert_silences_cmd(src: Path, dst: Path, cut_times: Sequence[float],
             "-ar", "48000", "-c:a", "pcm_s16le", str(dst)]
 
 
-def shift_time(t: float, cut_times: Sequence[float], seconds: float) -> float:
-    return t + seconds * sum(1 for c in cut_times if c <= t)
+def shift_time(t: float, cut_times: Sequence[float], seconds) -> float:
+    return t + sum(d for c, d in _per_cut(cut_times, seconds) if c <= t)
 
 
-def shift_transcript(transcript: dict, cut_times: Sequence[float], seconds: float) -> dict:
+def shift_transcript(transcript: dict, cut_times: Sequence[float], seconds) -> dict:
     """A copy of a Whisper transcript with every timestamp after each cut
-    moved by the silence inserted there."""
-    cuts = sorted(cut_times)
+    moved by the silence inserted there (*seconds*: one length or one per
+    cut)."""
+    pairs = _per_cut(cut_times, seconds)
+    cuts = [c for c, _ in pairs]
+    lens = [d for _, d in pairs]
     out = json.loads(json.dumps(transcript))
     for seg in out.get("segments") or []:
         for key in ("start", "end"):
             if key in seg:
-                seg[key] = round(shift_time(float(seg[key]), cuts, seconds), 3)
+                seg[key] = round(shift_time(float(seg[key]), cuts, lens), 3)
         for w in seg.get("words") or []:
             for key in ("start", "end"):
                 if key in w:
-                    w[key] = round(shift_time(float(w[key]), cuts, seconds), 3)
+                    w[key] = round(shift_time(float(w[key]), cuts, lens), 3)
     if "duration" in out and out["duration"]:
-        out["duration"] = round(float(out["duration"]) + seconds * len(cuts), 3)
+        out["duration"] = round(float(out["duration"]) + sum(lens), 3)
     return out
 
 
+def breather_starts(breaks: Sequence[Break]) -> List[float]:
+    """Where each story change's pause begins in the SPLICED voice track —
+    the moment the last word of a story ends — for the music cue the mix
+    lays under it."""
+    cuts = [b.cut for b in breaks]
+    lens = [b.insert for b in breaks]
+    return [round(shift_time(b.gap_start, cuts, lens), 3) for b in breaks]
+
+
 def rewrite_transcript_files(output_dir: Path, episode_prefix: str,
-                             cut_times: Sequence[float], seconds: float) -> bool:
+                             cut_times: Sequence[float], seconds) -> bool:
     """Shift the committed ``<prefix>_transcript.json`` and re-render its
     ``.vtt`` from the shifted segments. The ``.txt`` carries no times."""
     from engine.transcripts import segments_to_vtt

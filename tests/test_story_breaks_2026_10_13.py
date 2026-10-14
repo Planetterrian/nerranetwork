@@ -149,7 +149,8 @@ class TestWiring:
         from engine.config import AudioConfig, load_config
 
         assert AudioConfig().story_break_seconds == 0.0
-        assert load_config(ROOT / "shows" / "spacex.yaml").audio.story_break_seconds == 1.2
+        # Oct 14 2026: the value is now the TOTAL pause (was 1.2 s added).
+        assert load_config(ROOT / "shows" / "spacex.yaml").audio.story_break_seconds == 1.0
 
 
 class TestThePromptRule:

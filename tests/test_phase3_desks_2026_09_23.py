@@ -129,11 +129,18 @@ class TestDeskConfig:
         assert "<<include" not in dig and "<<include" not in pod
         name = load_config(f"shows/{slug}.yaml").name
         assert f"# {name}" in dig
-        for phrase in ("the case on both sides", "a sign of progress"):
-            assert phrase in pod
-        if slug != WORLD_SLUG:
+        if slug == WORLD_SLUG:
+            for phrase in ("the case on both sides", "a sign of progress"):
+                assert phrase in pod
+        else:
+            # Oct 14 2026: the desk anchor phrases are allowed, never
+            # required; each chapter falls back to its digest section.
             assert "REGION RULE" in dig and "REGION RULE" in pod
             assert "across the region" in pod and "the wider world" in pod
+            markers = load_config(f"shows/{slug}.yaml").chapters.section_markers
+            for title in ("Across the Region", "Both Sides", "Progress Watch"):
+                m = next(m for m in markers if m.title == title)
+                assert m.digest_section == title
 
     def test_pages_covers_and_launched(self, slug):
         page = slug.replace("_", "-")

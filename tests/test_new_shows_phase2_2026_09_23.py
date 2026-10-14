@@ -184,7 +184,9 @@ class TestPhase2Wiring:
         c = _cfg(slug)
         assert c.absence_sentence_filter is True
         assert c.fetch_full_text >= 10
-        assert 900 <= c.llm.min_podcast_words <= 1300
+        # Oct 14 2026: targets sized from the promised minutes (Vancouver
+        # 1,450 for 8-9 min at Mira's measured ~185 spoken wpm).
+        assert 900 <= c.llm.min_podcast_words <= 1800
         assert c.llm.podcast_expand_below_target is False
         starts = [m for m in c.chapters.section_markers if m.where == "start"]
         assert starts and "first episode of" in starts[0].pattern
