@@ -564,8 +564,10 @@ class TestEp001V4Fixes:
         # duplicate wall; the retry output now runs the same near-duplicate
         # sentence strip the podcast-side retry got in the July net-pass.
         src = (PROJECT_ROOT / "engine" / "generator.py").read_text(encoding="utf-8")
-        digest_retry = src.split("firing one-shot ", 1)[1]
-        assert "_dedup_expansion_sentences(expanded)" in digest_retry[:3000], (
+        # Oct 14 2026: the log line reads "firing expansion retry N/M" since
+        # the slate readout gave the retry a bounded second pass.
+        digest_retry = src.split("firing expansion ", 1)[1]
+        assert "_dedup_expansion_sentences(expanded)" in digest_retry[:4500], (
             "the digest expansion retry must strip near-duplicate sentences "
             "(Ep001 v4 shipped a paraphrase-duplicated founding brief)"
         )
