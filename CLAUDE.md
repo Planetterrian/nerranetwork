@@ -1877,6 +1877,11 @@ aired as headlines on eight shows in 40 episodes. Top World's floor is
 ~80% of its words). **Prediction Markets' Sep 23 curriculum restock had
 re-added eleven subjects the show had already taught** (same titles) —
 pruned, thirteen new subjects added; a restock checks PRODUCED titles.
+**A narrative pick re-interleaves the queue** (`engine.topic_queue.
+resequence_unproduced`, now called by `mark_topic_produced`): the Oct 11
+thin-research skip takes the topic BEHIND the head and leaves two
+same-category briefs adjacent (UC Ep142 — the runway guard went red on
+main with nothing wrong in the restock's data).
 ⚠️ AUDIO — A/B-listen one music show for the cue.
 
 ### Gated shows — members-only and public-weekly (Oct 13 2026)

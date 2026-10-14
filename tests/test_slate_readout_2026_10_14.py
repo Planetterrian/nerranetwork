@@ -198,3 +198,41 @@ class TestTheRecord:
         reg = yaml.safe_load((ROOT / "docs/experiments.yaml").read_text())
         ids = {e.get("id") for e in reg.get("experiments", reg) if isinstance(e, dict)}
         assert "slate-readout-2026-10-14" in ids
+
+
+# ---------------------------------------------------------------------------
+# A pick re-interleaves the queue (same evening)
+# ---------------------------------------------------------------------------
+
+class TestAPickKeepsTheQueueInterleaved:
+    """UC Ep142: the head topic's research came back thin, the picker took
+    the classic behind it, and the two policies either side of it were
+    left adjacent — the runway guard went red on main with nothing wrong
+    in the data the restock had written."""
+
+    def test_mark_topic_produced_resequences_the_pickable_tail(self, tmp_path):
+        from engine.topic_queue import mark_topic_produced
+        q = [
+            {"id": "p0", "category": "policy", "produced": True, "episode_number": 1},
+            {"id": "p1", "category": "policy", "produced": False},
+            {"id": "c1", "category": "classic", "produced": False},
+            {"id": "p2", "category": "policy", "produced": False},
+            {"id": "i1", "category": "infrastructure", "produced": False},
+            {"id": "p3", "category": "policy", "produced": False},
+        ]
+        path = tmp_path / "q.yaml"
+        path.write_text(yaml.safe_dump({"queue": q}, sort_keys=False), encoding="utf-8")
+        # The picker skipped p1 (thin research) and produced c1.
+        assert mark_topic_produced(path, "c1", 2, "2026-10-14")
+        out = yaml.safe_load(path.read_text(encoding="utf-8"))["queue"]
+        seq = [e["category"] for e in out if not e.get("produced")]
+        assert all(a != b for a, b in zip(seq, seq[1:])) or seq[-2:] == ["policy", "policy"], seq
+        assert seq[0] != "policy" or seq[1] != "policy", seq
+        # Produced entries keep their places.
+        assert [e["id"] for e in out if e.get("produced")] == ["p0", "c1"]
+
+    def test_one_home_for_the_resequencer(self):
+        import engine.topic_queue as tq
+        import scripts.restock_topic_queues as rq
+        assert rq.resequence_unproduced is tq.resequence_unproduced
+        assert rq.interleave_by_category is tq.interleave_by_category

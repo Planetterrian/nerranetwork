@@ -174,6 +174,71 @@ def pick_deep_dive_topic(
     return None
 
 
+def interleave_by_category(entries: list[dict], seed_prev: str | None = None) -> list[dict]:
+    """Order *entries* so no two adjacent share a category (greedy).
+
+    Repeatedly picks from the category with the most remaining entries,
+    excluding the previous pick's category; when only the previous
+    category remains, its overflow trails at the end (the unavoidable
+    tail the drift guards allow). ``seed_prev`` — the category of the
+    most recently produced episode — prevents a same-category seam at
+    the produced/unproduced boundary. Stable within each category.
+    """
+    from collections import OrderedDict
+    buckets: OrderedDict[str, list[dict]] = OrderedDict()
+    for e in entries:
+        buckets.setdefault(e.get("category") or "?", []).append(e)
+    out: list[dict] = []
+    prev = seed_prev
+    while any(buckets.values()):
+        candidates = sorted(
+            (cat for cat, items in buckets.items() if items and cat != prev),
+            key=lambda cat: (-len(buckets[cat]), cat),
+        )
+        cat = candidates[0] if candidates else prev  # only prev left: overflow tail
+        out.append(buckets[cat].pop(0))
+        prev = cat
+    return out
+
+
+def resequence_unproduced(queue: list[dict]) -> None:
+    """Re-interleave the unproduced tail IN PLACE (produced entries fixed).
+
+    The queue drift guards (July 2 2026 hygiene pass) require the
+    unproduced sequence to be category-interleaved — FPD's alternation
+    continues from the produced tail, UC has no adjacent same-category
+    pair before the dominant category's unavoidable overflow. A restock
+    appends in model order, so the whole unproduced set is re-sequenced
+    afterward: unproduced entries are re-placed into the SAME list
+    positions in interleaved order, leaving produced entries (and the
+    file layout) untouched. Reordering unproduced entries is safe — only
+    their relative consumption order changes, which is the point.
+
+    Sep 17 2026: a GATE-DEFERRED entry (``gate_blocks`` at or above
+    ``engine.topic_queue.GATE_BLOCK_DEFER_THRESHOLD``) is skipped by the
+    picker and parked for the operator, and the drift guard measures the
+    sequence the picker will actually AIR — deferred entries filtered
+    out. Interleaving them as if they were pickable put two same-category
+    pickable entries either side of a parked one, the guard read them as
+    adjacent, and the restock workflow died in its own validator after
+    the model had answered (run 58, 15:42 UTC: "clustered head: classic,
+    policy, policy"). Deferred entries now stay exactly where they are
+    and only the pickable entries are interleaved, so the resequencer and
+    the guard describe the same sequence.
+    """
+    def _deferred(e: dict) -> bool:
+        return int(e.get("gate_blocks") or 0) >= GATE_BLOCK_DEFER_THRESHOLD
+
+    idxs = [i for i, e in enumerate(queue)
+            if isinstance(e, dict) and not e.get("produced") and not _deferred(e)]
+    produced_cats = [e.get("category") for e in queue
+                     if isinstance(e, dict) and e.get("produced")]
+    seed = produced_cats[-1] if produced_cats else None
+    ordered = interleave_by_category([queue[i] for i in idxs], seed_prev=seed)
+    for i, entry in zip(idxs, ordered):
+        queue[i] = entry
+
+
 def mark_topic_produced(
     queue_path: Path,
     topic_id: str,
@@ -212,6 +277,13 @@ def mark_topic_produced(
             topic_id, queue_path,
         )
         return False
+
+    # Oct 14 2026: a pick can come from behind the head (a topic whose
+    # research came back thin is skipped for the next one), which leaves
+    # two same-category entries adjacent; the pickable tail is
+    # re-interleaved after every pick so the queue the next run reads is
+    # the sequence the drift guards describe.
+    resequence_unproduced(queue)
 
     # Re-write the file. ``allow_unicode=True`` so Cyrillic / emoji
     # in titles or briefs don't get \u-escaped. ``sort_keys=False``
