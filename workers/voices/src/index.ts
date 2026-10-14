@@ -1299,7 +1299,8 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
      it: the studio opens ten minutes before we start, and there is nothing to install.</p>
      ${GUEST_AUDIO_HTML}
      <p>You can run the <a href="${setupTest}">30-second setup test</a> any time before
-     the day. It confirms I'll hear you clearly. Camera is optional.</p>
+     the day. It confirms I'll hear you clearly. This is an audio conversation: I'm a voice,
+     with nothing on screen, and your camera is optional.</p>
      ${studioStepsHtml(studio)}
      <p>We have about ${plannedMinutes} minutes${apps[0].desired_minutes ? ", which is what you asked for" : ""}. I pace the
      conversation to that and start wrapping up near the end rather than cutting you off.</p>

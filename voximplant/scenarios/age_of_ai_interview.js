@@ -913,10 +913,14 @@ async function createAgent(note) {
   if (Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStopped) {
     agent.addEventListener(Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStopped, function () {
       inboundSpeaking = false;
+      noteGuestSpoke(Date.now() - inboundSpokeAt);
     });
   }
   agent.addEventListener(Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStarted, function () {
     inboundSpeaking = true; inboundSpokeAt = Date.now();
+    // Without a stopped event there is no length to measure; speech after
+    // the last-word question is then taken as the answer when it starts.
+    if (!Grok.VoiceAgentAPIEvents.InputAudioBufferSpeechStopped) noteGuestSpoke(LAST_WORD_MIN_SPEECH_MS);
     speechEvents++;
     if (!anyoneHeard) trace("grok", "first inbound speech heard (via room mix)");
     else if (speechEvents <= 6) trace("grok", "speech heard #" + speechEvents + " (via room mix)");
@@ -1572,6 +1576,23 @@ function noteLastWordAsk(text) {
   lastWordAskedAt = Date.now();
   lastWordAnswered = false;
   trace("close", "asked for the guest's last word; waiting");
+}
+
+// Oct 13 2026, Piper Martz. remember() only hears the guest when the voice
+// API sends a transcription of what they said, and this room does not get
+// one: she answered "Do you have any parting thoughts?" with "Nope, thank you
+// so much", the room still believed the question was open, and the rescue
+// below sent Mira back in twice. She said "You can hang up now" three times.
+// The room does hear the guest speak, transcribed or not, so speech that
+// starts after the question and lasts half a second is the answer.
+const LAST_WORD_MIN_SPEECH_MS = 500;
+
+function noteGuestSpoke(ms) {
+  if (!lastWordAskedAt || lastWordAnswered) return;
+  if (inboundSpokeAt <= lastWordAskedAt || ms < LAST_WORD_MIN_SPEECH_MS) return;
+  lastWordAnswered = true;
+  trace("close", "the guest answered the last-word question (" +
+        (Math.round(ms / 100) / 10) + "s of speech)");
 }
 
 /**

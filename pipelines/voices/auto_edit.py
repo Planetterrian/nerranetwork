@@ -422,6 +422,87 @@ CLOSING_STARTS = re.compile(
     r"|where we left off|pick (it|that|things) (up|back up)|picking up where)", re.I)
 CLOSING_MARK = "[Closing session]"
 
+# Oct 14 2026 (Piper Martz). Where a closing session's piece of the episode
+# ends. Her splice ran to the end of the room, so the episode carried her
+# suggestion for what we could improve, which she had prefaced with "I
+# wouldn't include this in the formal interview", and then Mira saying "You
+# can hang up now" three times. The improvement question is asked for the
+# learning loop, which reads the closing session's own transcript, not the
+# episode; the sign-off is never content. The piece ends before whichever of
+# them comes first.
+CLOSING_ENDS = re.compile(
+    r"(thing (we|i) could improve|could (we|i) improve|(be|could be) improved"
+    r"|suggestion for (what|how)|end of the recording|you can hang up"
+    r"|that'?s a wrap)", re.I)
+# A reply that only says "go on" is not the guest picking the thread up.
+_ACKNOWLEDGEMENT = re.compile(
+    r"^(sounds good|sure|great|okay|ok|yes|yeah|yep|perfect|absolutely|of course"
+    r"|let'?s do it|happy to|ready)[\s.!,]*(thanks|thank you)?[\s.!,]*$", re.I)
+
+
+def _closing_span(rows: list) -> tuple:
+    """``(begin, end)`` on the transcript's clock for a closing session's
+    piece of the episode, from ``[(t, who, text)]``.
+
+    It begins on the Mira turn the guest's first real answer follows, not on
+    the first line that mentions the lightning round. Piper's session (Oct 13)
+    went: "We left off right in the middle of your book recommendation, so
+    let's pick that thread back up...", "Sounds good", "You're back in the
+    quick lightning round... go ahead and finish that thought", and then her
+    answer. The first of those is Mira explaining the session, and it put a
+    break the listener never heard into the middle of the episode.
+
+    It ends before the improvement question or the sign-off, whichever comes
+    first (``CLOSING_ENDS``), taking the whole Mira turn that question sits in.
+    ``end`` is ``None`` when neither was reached.
+    """
+    is_mira = [who.strip().lower() == "mira" for _t, who, _x in rows]
+    first = next((i for i, (_t, _w, text) in enumerate(rows)
+                  if is_mira[i] and CLOSING_STARTS.search(text)), None)
+    if first is None:
+        # She opened the round in words this does not know: keep everything
+        # after her welcome back rather than lose any of it.
+        mira_at = [i for i, m in enumerate(is_mira) if m]
+        first = mira_at[1] if len(mira_at) > 1 else (mira_at[0] if mira_at else 0)
+    begin_i = first
+    def _real_answer(text: str) -> bool:
+        text = text.strip()
+        return not _ACKNOWLEDGEMENT.match(text) and len(text.split()) > 5
+
+    answer = next((i for i in range(first + 1, len(rows))
+                   if not is_mira[i] and _real_answer(rows[i][2])), None)
+    if answer is not None:
+        # The turn of hers that the answer follows, from its first line.
+        j = answer - 1
+        while j > first and is_mira[j - 1]:
+            j -= 1
+        if is_mira[j]:
+            begin_i = max(first, j)
+    begin = rows[begin_i][0] if rows else 0.0
+    end = None
+    for i in range(begin_i + 1, len(rows)):
+        if is_mira[i] and CLOSING_ENDS.search(rows[i][2]):
+            k = i
+            while k > begin_i + 1 and is_mira[k - 1]:
+                k -= 1
+            end = rows[k][0]
+            break
+    return begin, end
+
+
+def _closing_text_between(text: str, begin: float, end: float | None) -> str:
+    """The lines of a closing session's transcript that the episode keeps."""
+    kept, keep = [], False
+    for line in (text or "").splitlines():
+        m = _LINE.match(line.strip())
+        if m:
+            h_or_m, mm, ss = m.group(1), m.group(2), m.group(3)
+            t = (int(h_or_m) * 3600 + int(mm) * 60 + int(ss)) if ss else (int(h_or_m) * 60 + int(mm))
+            keep = t >= begin and (end is None or t < end)
+        if keep:
+            kept.append(line)
+    return "\n".join(kept).strip()
+
 
 def splice_closing(ctx: dict) -> dict:
     """A closing session is not an episode. Its closing round goes onto the
@@ -453,24 +534,27 @@ def splice_closing(ctx: dict) -> dict:
         h_or_m, mm, ss, who, text = m.groups()
         t = (int(h_or_m) * 3600 + int(mm) * 60 + int(ss)) if ss else (int(h_or_m) * 60 + int(mm))
         rows.append((float(t), who.strip(), text))
-    mira = [(t, text) for t, who, text in rows if who.lower() == "mira"]
-    begin = next((t for t, text in mira if CLOSING_STARTS.search(text)), None)
-    if begin is None:
-        # She opened the round in words this does not know: keep everything
-        # after her welcome back rather than lose any of it.
-        begin = mira[1][0] if len(mira) > 1 else (mira[0][0] if mira else 0.0)
+    begin, stop = _closing_span(rows)
     try:
         room_end = float(run.get("duration_sec") or 0.0) or None
     except (TypeError, ValueError):
         room_end = None
     last = rows[-1][0] + 8.0 if rows else (room_end or begin + 600.0)
+    # Before the improvement question or the sign-off; the end of the room
+    # only when the session never reached either.
+    last = stop if stop is not None else last
     end = min(last, room_end) if room_end else last
     piece = {"from": "mix:clean", "run_id": run["id"],
              "start": round(max(0.0, begin - offset - 0.4), 1),
              "end": round(max(0.0, end - offset), 1),
              "note": (f"{CLOSING_MARK} recorded {str(run.get('created_at') or '')[:10]}: the "
-                      "rest of the closing round and the guest's last word, after the "
-                      "room's old time cap cut the first session off.")}
+                      "rest of the closing round, after the room's old time cap cut the "
+                      "first session off. It starts on the question the guest's first "
+                      "real answer follows" + (
+                          ", and ends before Mira asks what could be improved or "
+                          "signs off." if stop is not None else
+                          "; the session never reached the improvement question or a "
+                          "sign-off, so it runs to the end of the room."))}
 
     # An earlier splice (its piece and its gap) comes out first; then the new
     # one goes in before the produced close, keeping the breath before it.
@@ -504,8 +588,13 @@ def splice_closing(ctx: dict) -> dict:
     pkgs = sb_select("editorial_packages",
                      f"interview_id=eq.{parent_id}&status=neq.killed"
                      "&select=id,transcript_cleaned&order=created_at.desc&limit=1")
-    closing_text = ((ctx.get("package") or {}).get("transcript_cleaned")
-                    or transcript_of(ctx) or "").strip()
+    # Only the lines the episode keeps (Oct 14 2026): the transcript the guest
+    # approves is the one that is published, and Piper's carried the feedback
+    # she had asked to keep out of the interview.
+    closing_text = _closing_text_between(
+        ((ctx.get("package") or {}).get("transcript_cleaned")
+         or transcript_of(ctx) or ""),
+        begin, stop)
     if pkgs and closing_text:
         base = (pkgs[0].get("transcript_cleaned") or "").split("\n\n" + CLOSING_MARK)[0]
         sb_update("editorial_packages", f"id=eq.{pkgs[0]['id']}",

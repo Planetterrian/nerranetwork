@@ -21,6 +21,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import os
+import re
 
 from common import (  # noqa: E402
     OPERATOR_EMAIL, ROOT, carry_the_show_block, cohost_name, load_prompt, logger,
@@ -318,7 +319,96 @@ def compile_closing_prompt(interview: dict, app: dict) -> str:
         guest_address_rule=address_rule(app),
         closing_question=show.closing_question,
         where_we_left_off=where_we_left_off(interview),
+        already_answered=already_answered(interview, show.closing_question),
     )
+
+
+# Oct 14 2026 (Piper Martz). Her first session had reached the lightning
+# round, so she had already answered the show's own question ("the one bet
+# you're making"), and the closing session asked it again: she made the same
+# bet and told the same IKEA story a second time, and the episode had to cut
+# it. The closing round is a fixed list, so what the first recording already
+# covered is worked out from its transcript and handed to Mira as a list of
+# questions she must not ask.
+CLOSING_ROUND = (
+    ("A book they would recommend, and why",
+     re.compile(r"book (you'?d|you would|you) (recommend|suggest)|recommend a book", re.I)),
+    ("One person they think you should interview next",
+     re.compile(r"interview next|should (i|we) (interview|talk to|speak (to|with)) next", re.I)),
+    ("The best piece of advice they were ever given",
+     re.compile(r"best (piece of )?advice", re.I)),
+    ("The person who has inspired them most",
+     re.compile(r"inspired you (the )?most|who inspires you|(person|people) who('?s| has| have) inspired",
+                re.I)),
+    ("Whether they would like to be interviewed by you again",
+     re.compile(r"interviewed by me again|(do|doing) this again", re.I)),
+    ("How the experience of being interviewed by an AI was",
+     re.compile(r"experience of being interviewed|being interviewed by an ai", re.I)),
+    ("One specific suggestion for what could be improved",
+     re.compile(r"(thing|suggestion).{0,40}improve|could (we|i|be) improve", re.I)),
+)
+_ROW = re.compile(r"^\[(\d{1,2}):(\d{2})(?::(\d{2}))?\]\s*([^:]+):\s*(.*)$")
+_COMMON = {"what", "what's", "that", "your", "with", "have", "this", "about", "more",
+           "from", "they", "their", "there", "which", "would", "could", "you're",
+           "when", "were", "been", "into", "than", "then", "them", "these", "those",
+           "think", "really", "just"}
+
+
+def _content_words(text: str) -> set:
+    return {w for w in re.findall(r"[a-z']+", (text or "").lower())
+            if len(w) >= 4 and w not in _COMMON}
+
+
+def _asks_show_question(line: str, question: str) -> bool:
+    """She rarely reads the show's question word for word ("12 months" for
+    "twelve months"), so it counts as asked when most of its words are there."""
+    want = _content_words(question)
+    if not want:
+        return False
+    return len(want & _content_words(line)) >= max(2, round(0.6 * len(want)))
+
+
+def covered_in_transcript(transcript: str, closing_question: str) -> list:
+    """The closing-round questions asked AND answered in ``transcript``, in
+    the order asked. Answered means the guest spoke after the question and
+    Mira spoke again after that: the question the room cut off in the middle
+    of is not finished, and stays on her list."""
+    rows = []
+    for line in (transcript or "").split("\n\n[Closing session]")[0].splitlines():
+        m = _ROW.match(line.strip())
+        if m:
+            rows.append((m.group(4).strip().lower() == "mira", m.group(5)))
+    checks = [(f'The show\'s own question: "{closing_question}"',
+               lambda text: _asks_show_question(text, closing_question))]
+    checks += [(label, rx.search) for label, rx in CLOSING_ROUND]
+    covered = []
+    for label, asks in checks:
+        at = next((i for i, (mira, text) in enumerate(rows) if mira and asks(text)), None)
+        if at is None:
+            continue
+        guest = next((i for i in range(at + 1, len(rows)) if not rows[i][0]), None)
+        if guest is not None and any(rows[i][0] for i in range(guest + 1, len(rows))):
+            covered.append((at, label))
+    return [label for _at, label in sorted(covered)]
+
+
+def already_answered(interview: dict, closing_question: str) -> str:
+    """The ALREADY ANSWERED block of a closing session's prompt."""
+    prev = interview.get("continues_interview_id")
+    covered = []
+    if prev:
+        try:
+            rows = sb_select("editorial_packages",
+                             f"interview_id=eq.{prev}&order=created_at.desc&limit=1"
+                             "&select=transcript_raw,transcript_cleaned")
+            text = ((rows[0].get("transcript_raw") or rows[0].get("transcript_cleaned") or "")
+                    if rows else "")
+            covered = covered_in_transcript(text, closing_question)
+        except Exception:  # noqa: BLE001 — the session still runs
+            logger.exception("could not read what the first recording covered for %s", prev)
+    if not covered:
+        return "None of the closing round was finished in the first recording."
+    return "\n".join(f"- {label}" for label in covered)
 
 
 def where_we_left_off(interview: dict) -> str:
