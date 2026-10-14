@@ -141,8 +141,11 @@ class TestTitlesAreNeverFragments:
             "Regulators disclosed the Semi battery sizes"
 
     def test_a_clipped_headline_ends_on_a_clause_boundary(self):
-        out = _clip_title("Tesla applies for sixteen Supercharger stalls on former motorhome site in Somerset")
-        assert out == "Tesla applies for sixteen Supercharger stalls"
+        h = "Tesla applies for sixteen Supercharger stalls on former motorhome site in Somerset"
+        # Oct 14 2026: the budget is 80, so the clause cut lands one clause
+        # later; at the Oct 8 budget of 60 it is the shorter form.
+        assert _clip_title(h) == "Tesla applies for sixteen Supercharger stalls on former motorhome site"
+        assert _clip_title(h, 60) == "Tesla applies for sixteen Supercharger stalls"
 
     def test_no_placeholder_and_no_ellipsis_titles_from_the_fallback(self):
         para = " ".join(["This paragraph runs on for a long while without a break."] * 8)

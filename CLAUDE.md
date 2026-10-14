@@ -1884,6 +1884,32 @@ same-category briefs adjacent (UC Ep142 — the runway guard went red on
 main with nothing wrong in the restock's data).
 ⚠️ AUDIO — A/B-listen one music show for the cue.
 
+**Oct 14 2026, night — an outside review of the Oct 13 slate, checked**
+(register `external-review-2026-10-14`; guards
+`tests/test_external_review_2026_10_14.py`). True and fixed: **one budget
+for every headline-derived chapter title** — `engine.chapters.HEADLINE_TITLE_MAX`
+is `engine.titles.HEADLINE_CHAPTER_TITLE_MAX` (80); the Oct 8 clip ran at 60
+and shipped "…halts the number" while most desk lead headlines run 60-80, and
+every hook runs over 60, so the lead chapter existed on 9 of 20 episodes; when
+the hook is too long for a title and no headline matches, the lead chapter
+takes the digest's own section name (`lead_section_name`: "Lead", "Top
+Story" — a story heading never is). **A line that is only a URL becomes a
+`Source: [domain](url)` line** (`engine.newsletter_body.linkify_bare_url_lines`,
+in `transform_daily_body`; 49 such lines in seven days on the desks and the
+Board). **The hook's item leads its list** (`engine/hook_item.py`,
+`hook_item_first: true` on FF / Planetterrian / Tesla; the item sharing ≥ 3
+salient words with the hook and beating item one by 2 moves to the top and the
+section renumbers; metric `hook_item_promoted_from`; the replay moved nothing
+on SpaceX, M&A, the desks or MAG 7). **The narrative shows list their research
+pages** (`engine/research_sources.py` appends a `### Sources` section the blog
+card and show notes already read; `READER_ONLY_EXACT_SECTIONS` keeps it out of
+the script). **The correction box renders above the headline**, and a
+correction may carry `amend_headline: true` (the page title gains "Corrected:";
+feed title and audio untouched) — UC Ep139's switch is the operator's. Not
+true, not acted on: Top World's Both Sides is a named disagreement, never the
+lead's counterpoint; Vancouver's source says 20 per cent; Nerra Daily's rundown
+links each show's post.
+
 ### Gated shows — members-only and public-weekly (Oct 13 2026)
 
 Operator-directed: some shows will publish only for Nerra Personal members

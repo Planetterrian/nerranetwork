@@ -32,6 +32,7 @@ It is a plain list:
 | `text` | What was wrong and what is right, in one or two sentences. Written for a listener; it is printed verbatim. |
 | `where` | `digest` — the article / show notes were wrong and the audio did not carry it; `audio` — the spoken episode was wrong; `both`. Defaults to `digest`. |
 | `noted_in` | Optional. Pin the episode whose show notes carry the next-episode line, instead of deriving it from the dates. |
+| `amend_headline` | Optional, default `false`. When the correction retracts the episode's premise and the headline itself asserts it, `true` prefixes the episode page's title (the `<h1>`, `<title>` and social card) with "Corrected:" and the correction box renders above it. The feed title and the audio are untouched. |
 
 Entries are validated on read (`engine/corrections.py`): a bad entry is logged
 and skipped, never raised, because a build or a feed update must not fail
@@ -40,8 +41,10 @@ nightly regeneration picks it up.
 
 ## Where a correction reaches
 
-1. **The episode's page** (`engine.blog`): a dated "Correction" box at the top
-   of the article, before the reader meets the sentence that was wrong,
+1. **The episode's page** (`engine.blog`): a dated "Correction" box above the
+   headline (since Oct 14 2026 — it sat below the `<h1>`, so a headline that
+   itself asserted the retracted premise was read first), before the reader
+   meets the sentence that was wrong,
    saying whether the audio carried the error. Rendered on the next blog
    regeneration (`generate_html.py --show <slug> --blogs`, or the nightly).
 2. **The corrected episode's show notes** (`engine.show_notes.corrections_footer`):

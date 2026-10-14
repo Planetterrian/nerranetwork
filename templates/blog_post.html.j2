@@ -1147,6 +1147,22 @@
                 its pill below; the sub-line prints only when it says
                 something the <h1> does not — on most posts the title IS the
                 hook, and the page used to open on the same sentence twice. -#}
+            {#- Corrections (Oct 1 2026, engine.corrections): a dated box ABOVE
+                the headline of the affected post (Oct 14 2026 — it sat below the
+                h1, so a headline that itself asserted the retracted premise
+                was read first), where the policy pages promise
+                one. ``where`` says whether the audio carried the error; the
+                audio itself is never silently edited (docs/corrections.md). -#}
+            {% if corrections %}
+            <aside class="nn-correction" role="note" aria-label="Correction">
+                <p class="nn-correction-label">{% if _is_ru %}Исправление{% else %}Correction{% endif %}</p>
+                {% for c in corrections %}
+                <p><strong>{{ c.date }}</strong> — {{ c.text }}
+                    <span class="nn-correction-where">({% if c.where == 'audio' %}{% if _is_ru %}ошибка прозвучала в аудио{% else %}the spoken episode carried this error{% endif %}{% elif c.where == 'both' %}{% if _is_ru %}ошибка была в тексте и в аудио{% else %}the article and the spoken episode both carried this error{% endif %}{% else %}{% if _is_ru %}ошибка была в тексте; аудио не затронуто{% else %}the article carried this error; the audio did not{% endif %}{% endif %})</span>
+                </p>
+                {% endfor %}
+            </aside>
+            {% endif %}
             <h1><span class="nn-i18n-title">{{ episode_title }}</span></h1>
             {% if hook and hook | trim != episode_title | trim %}
             <p class="blog-hero-hook">{{ hook }}</p>
@@ -1262,20 +1278,6 @@
                translated bodies (reused from the episode's translated audio
                script) are hidden until the language switcher selects them.
                Sources + transcript below stay shared. #}
-            {#- Corrections (Oct 1 2026, engine.corrections): a dated box at
-                the top of the affected post, where the policy pages promise
-                one. ``where`` says whether the audio carried the error; the
-                audio itself is never silently edited (docs/corrections.md). -#}
-            {% if corrections %}
-            <aside class="nn-correction" role="note" aria-label="Correction">
-                <p class="nn-correction-label">{% if _is_ru %}Исправление{% else %}Correction{% endif %}</p>
-                {% for c in corrections %}
-                <p><strong>{{ c.date }}</strong> — {{ c.text }}
-                    <span class="nn-correction-where">({% if c.where == 'audio' %}{% if _is_ru %}ошибка прозвучала в аудио{% else %}the spoken episode carried this error{% endif %}{% elif c.where == 'both' %}{% if _is_ru %}ошибка была в тексте и в аудио{% else %}the article and the spoken episode both carried this error{% endif %}{% else %}{% if _is_ru %}ошибка была в тексте; аудио не затронуто{% else %}the article carried this error; the audio did not{% endif %}{% endif %})</span>
-                </p>
-                {% endfor %}
-            </aside>
-            {% endif %}
             <div class="blog-body-lang" data-lang="en">
             {{ blog_body }}
             </div>

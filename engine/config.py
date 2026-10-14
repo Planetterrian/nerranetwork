@@ -1331,6 +1331,12 @@ class ShowConfig:
     # carried the Model 3 refresh as eight items and spoke it five times.
     # Default False; the news shows opt in per-YAML.
     story_clusters: bool = False
+    # The hook's story is item one (Oct 14 2026, engine/hook_item.py): the
+    # numbered item that shares the most salient words with the hook moves
+    # to the top of its section after the overlap dedupe, so the script's
+    # body opens on the story the cold open sold. Data-side, opt-in on the
+    # shows whose hook is written from a numbered list.
+    hook_item_first: bool = False
     web_search_queries: List[str] = field(default_factory=list)
     # Run web_search_queries on EVERY episode, not only when the on-topic
     # article count falls below min_articles. For shows whose key sources
@@ -1637,6 +1643,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         entity_dedup_ignore=[str(w) for w in (data.get("entity_dedup_ignore") or [])],
         story_recurrence=bool(data.get("story_recurrence", False)),
         story_clusters=bool(data.get("story_clusters", False)),
+        hook_item_first=bool(data.get("hook_item_first", False)),
         web_search_queries=data.get("web_search_queries", []),
         web_search_always=bool(data.get("web_search_always", False)),
         fetch_full_text=int(data.get("fetch_full_text", 0) or 0),

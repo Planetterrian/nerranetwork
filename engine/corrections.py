@@ -95,6 +95,11 @@ def _normalise(entry: dict, *, origin: str) -> Optional[Dict]:
                        origin, episode, where)
         where = "digest"
     out = {"episode": episode, "date": date_str, "text": text, "where": where}
+    # Oct 14 2026: a correction that retracts the episode's PREMISE (UC
+    # Ep139 — the headline itself asserts the unsupported case) may amend
+    # the headline: the page title gains a "Corrected:" prefix and the box
+    # renders above it. The audio and the feed title are untouched.
+    out["amend_headline"] = bool(entry.get("amend_headline", False))
     # Optional explicit pin: the episode whose show notes carried the
     # "Correction to episode N" line. Normally derived from the digest dates.
     if entry.get("noted_in") is not None:

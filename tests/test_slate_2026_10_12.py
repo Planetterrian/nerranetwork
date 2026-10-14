@@ -224,7 +224,9 @@ class TestLeadChapterTitles:
                 show_name=cfg.name, story_headlines=extract_story_headlines(d, 12),
                 digest_text=d)]
             for t in titles:
-                assert not (hook.startswith(t) and len(t) < len(hook)), (show, t)
+                # A hook used WHOLE (minus its full stop) is a title (Oct 14
+                # 2026, the 80-char budget); a clipped one never is.
+                assert not (hook.startswith(t) and len(t) < len(hook.rstrip(".!?"))), (show, t)
 
     def test_env_intel_science_is_not_a_topic_word(self):
         from engine.chapters import parse_chapters
