@@ -144,9 +144,13 @@ class TestRealScriptChapters:
             if digest_md.exists():
                 headlines = extract_story_headlines(
                     digest_md.read_text(encoding="utf-8"), max_count=12)
+            # Oct 14 2026: the headline title budget is HEADLINE_TITLE_MAX
+            # (80, shared with engine.titles); a 61-80 char headline used
+            # whole is a title, not a fragment.
+            from engine.chapters import HEADLINE_TITLE_MAX
             for c in parse_chapters(script, markers, show_name="Omni View",
                                     story_headlines=headlines):
-                if c.title.endswith("…") or len(c.title) > 60:
+                if c.title.endswith("…") or len(c.title) > HEADLINE_TITLE_MAX:
                     bad.append((Path(f).name, c.title))
         assert not bad, f"garbage sentence-fragment chapter titles: {bad}"
 
@@ -157,7 +161,7 @@ class TestRealScriptChapters:
             for c in json.loads(Path(f).read_text(encoding="utf-8")).get(
                     "chapters", []):
                 title = c.get("title", "")
-                if title.endswith("…") or len(title) > 60:
+                if title.endswith("…") or len(title) > HEADLINE_TITLE_MAX:
                     shipped_bad.append((Path(f).name, title))
         assert not shipped_bad, (
             f"fragment titles SHIPPED to listeners: {shipped_bad}")
