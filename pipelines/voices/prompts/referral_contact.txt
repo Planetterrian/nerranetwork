@@ -1,0 +1,24 @@
+Find a way to email {{name}}{{organization_part}} with an invitation to be interviewed on a podcast.
+
+What the guest who recommended them said: {{why}}
+Their role, as far as we know: {{role}}
+
+Search the web. Return ONLY this JSON, nothing else:
+{
+  "email": "",
+  "source_url": "",
+  "via": "",
+  "route": "",
+  "identity": "",
+  "topic": "",
+  "confidence": "high"
+}
+
+- "email": an address printed on a public web page. Never construct one from a naming pattern, never guess, and never take one from a data broker or "email finder" site.
+- "source_url": the exact page that address is printed on.
+- "via": "" when the address is the person's own or their company's; otherwise who it belongs to, for example "University of Toronto Media Relations" or "their booking agent".
+- Prefer, in order: their own professional address; their company's general or press address; the office that handles interview requests for them.
+- "route": when there is no address, their contact form or public profile URL, else "".
+- "identity": one sentence on why this is the person the guest meant.
+- "topic": one sentence on what an interview with them would be about, from their public work.
+- "confidence": "high" only when you are sure of both the person and the address; otherwise "medium" or "low".

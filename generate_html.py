@@ -4963,7 +4963,7 @@ def generate_sitemap(*, dry_run=False, out=None):
                   "mira.html", "explore.html", "age-of-ai-apply.html",
                   "nerra-voices-apply.html",
                   "press.html", "sponsor.html", "contact.html", "editorial.html",
-                  "gallery.html", "books.html", "player.html", "data.html",
+                  "gallery.html", "books.html", "guest-picks.html", "player.html", "data.html",
                   "join.html", "support.html", "personal-interest.html",
                   "modern-investing-performance.html",
                   "spacex-dashboard.html", "tesla-dashboard.html",
@@ -6067,6 +6067,116 @@ def generate_sponsor_page(*, dry_run=False, output_dir=None):
     return out_path
 
 
+GUEST_PICKS_SHOWS = ("age_of_ai", "nerra_voices")
+GUEST_PICKS_HEADINGS = {
+    "age_of_ai": "The bets they can't prove yet",
+    "nerra_voices": "What they wish more people understood",
+}
+
+
+def guest_picks_context(data):
+    """Template context for ``guest-picks.html`` from the JSON that
+    ``pipelines/voices/referrals.py`` writes (see its export_page_data)."""
+    from pipelines.voices.shows import get_show
+    shows = []
+    meta = {}
+    for slug in GUEST_PICKS_SHOWS:
+        s = get_show(slug)
+        meta[slug] = {"slug": slug, "name": s.name, "color": s.brand_color, "page": s.page,
+                      "apply_page": s.apply_page, "question": s.closing_question}
+        shows.append(meta[slug])
+    data = data if isinstance(data, dict) else {}
+    episodes = [e for e in (data.get("episodes") or [])
+                if isinstance(e, dict) and e.get("show") in meta and isinstance(e.get("picks"), dict)]
+
+    def item(e, **fields):
+        return {"show": e["show"], "show_name": meta[e["show"]]["name"],
+                "color": meta[e["show"]]["color"], "guest": e.get("guest") or "",
+                "episode": e.get("episode"), "url": e.get("url") or "", **fields}
+
+    books, advice, inspiration = [], [], []
+    closing = {slug: [] for slug in GUEST_PICKS_SHOWS}
+    for e in episodes:
+        p = e["picks"]
+        b = p.get("book") or {}
+        if b.get("title"):
+            books.append(item(e, title=b["title"], author=b.get("author") or "", why=b.get("why") or ""))
+        a = p.get("advice") or {}
+        if a.get("text"):
+            advice.append(item(e, text=a["text"], source=a.get("source") or ""))
+        i = p.get("inspiration") or {}
+        if i.get("who"):
+            inspiration.append(item(e, who=i["who"], why=i.get("why") or ""))
+        if p.get("bet"):
+            closing[e["show"]].append(item(e, text=p["bet"]))
+    referrals = []
+    for r in data.get("referrals") or []:
+        if isinstance(r, dict) and r.get("show") in meta and r.get("name"):
+            referrals.append({**r, "color": meta[r["show"]]["color"]})
+    return {
+        "shows": shows,
+        "episodes": episodes,
+        "books": books,
+        "advice": advice,
+        "inspiration": inspiration,
+        "closing": [{"slug": slug, "show_name": meta[slug]["name"], "question": meta[slug]["question"],
+                     "heading": GUEST_PICKS_HEADINGS[slug], "answers": closing[slug]}
+                    for slug in GUEST_PICKS_SHOWS],
+        "referrals": referrals,
+        "updated": data.get("updated") or "",
+    }
+
+
+def generate_guest_picks_page(*, dry_run=False, output_dir=None, data_path=None):
+    """Generate ``guest-picks.html`` (Oct 15 2026): the books, advice,
+    inspirations and closing answers of every Age of AI and Nerra Voices
+    guest, and the people they recommended Mira interview next. Reads
+    ``site/data/guest_picks.json`` (pipelines/voices/referrals.py, daily);
+    a missing file renders the empty state."""
+    import json as _json
+    path = Path(data_path) if data_path else ROOT / "site" / "data" / "guest_picks.json"
+    data = {}
+    try:
+        if path.exists():
+            data = _json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:  # noqa: BLE001
+        print(f"Warning: could not load {path.name}: {exc}")
+    env = _get_jinja_env()
+    template = env.get_template("guest_picks.html.j2")
+    context = {
+        "path_prefix": "",
+        "page_title": "Guest Picks: books, advice and who to interview next | Nerra Network",
+        "page_description": (
+            "The books, best advice, inspirations and bets of every guest on The Age of AI "
+            "and Nerra Voices, and the people they would have Mira interview next."
+        ),
+        "meta_description": (
+            "Every guest on The Age of AI and Nerra Voices names a book, the best advice "
+            "they were ever given, who inspires them, and who Mira should interview next. "
+            "Here are all their answers."
+        ),
+        "meta_keywords": (
+            "The Age of AI podcast, Nerra Voices, guest book recommendations, best advice, "
+            "podcast guest picks, Mira AI host"
+        ),
+        "theme_color": "#7C3AED",
+        "og_image": "",
+        "canonical_url": f"{GITHUB_RAW}/guest-picks.html",
+        "show_color": "",
+        "show_color_dark": "",
+        "all_shows": _build_all_shows_list(),
+        **guest_picks_context(data),
+    }
+    html = template.render(**context)
+    out_path = (Path(output_dir) if output_dir else ROOT) / "guest-picks.html"
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
+
+
 def generate_editorial_page(*, dry_run=False, output_dir=None):
     """Generate ``editorial.html`` — the methodology / editorial-process
     page added in Phase 5 of the May 2026 strategic audit. It's the
@@ -6346,6 +6456,7 @@ def generate_static_pages(*, dry_run=False):
     generate_how_to_listen_page(dry_run=dry_run)
     generate_press_page(dry_run=dry_run)
     generate_sponsor_page(dry_run=dry_run)
+    generate_guest_picks_page(dry_run=dry_run)
     generate_contact_page(dry_run=dry_run)
     generate_editorial_page(dry_run=dry_run)
     generate_legal_pages(dry_run=dry_run)
@@ -6857,6 +6968,11 @@ def main():
         help="Generate the Books page from books/catalog.json",
     )
     parser.add_argument(
+        "--guest-picks",
+        action="store_true",
+        help="Generate guest-picks.html from site/data/guest_picks.json",
+    )
+    parser.add_argument(
         "--legal",
         action="store_true",
         help="Generate the AI disclosure, privacy policy and terms pages",
@@ -6907,7 +7023,7 @@ def main():
         or args.blogs or args.sitemap or args.player or args.how_to_listen
         or args.start_here or args.faq or args.about or args.blog_aggregates
         or args.books or args.legal or args.static_pages or args.redirects
-        or args.mira or args.topics or args.explore
+        or args.mira or args.topics or args.explore or args.guest_picks
     )
     if not _any_flag:
         args.all = True
@@ -6995,6 +7111,7 @@ def main():
         generate_about_page(dry_run=args.dry_run)
         generate_gallery_page(dry_run=args.dry_run)
         generate_books_page(dry_run=args.dry_run)
+        generate_guest_picks_page(dry_run=args.dry_run)
         generate_spacex_dashboard(dry_run=args.dry_run)
         generate_tesla_dashboard(dry_run=args.dry_run)
         generate_offshore_north_dashboard(dry_run=args.dry_run)
@@ -7087,6 +7204,8 @@ def main():
         generate_about_page(dry_run=args.dry_run)
     if args.books:
         generate_books_page(dry_run=args.dry_run)
+    if args.guest_picks:
+        generate_guest_picks_page(dry_run=args.dry_run)
     if args.legal:
         generate_legal_pages(dry_run=args.dry_run)
     if args.static_pages:

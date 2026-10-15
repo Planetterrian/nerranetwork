@@ -1,0 +1,209 @@
+{% extends "base.html.j2" %}
+{#- Guest Picks (Oct 15 2026, Patrick). Every Age of AI and Nerra Voices
+    interview ends with the same closing round; this page keeps the answers.
+    Data: site/data/guest_picks.json, written by
+    pipelines/voices/referrals.py from each published episode's transcript
+    and refreshed by the daily "Guest picks and referrals" workflow. The
+    environment does not autoescape, so every value from a guest goes
+    through |e. Recommended guests show only whether they have booked or
+    been interviewed; an invitation is never shown. -#}
+
+{% block head_extra %}
+    <style>
+        .gp-hero { padding: calc(var(--nav-height) + var(--sp-16)) var(--sp-6) var(--sp-6); text-align: center; }
+        .gp-hero h1 { font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 2.8rem); font-weight: 700; color: var(--nn-white); margin: 0 0 var(--sp-3); }
+        .gp-hero p { font-family: var(--font-body); font-size: 1.05rem; color: var(--nn-text-muted); max-width: 680px; margin: 0 auto; line-height: 1.65; }
+        .gp-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-3); margin: var(--sp-6) auto 0; max-width: 760px; }
+        .gp-stat { background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 14px; padding: var(--sp-3) var(--sp-4); min-width: 120px; }
+        .gp-stat-value { font-family: var(--font-heading); font-size: 1.6rem; font-weight: 700; color: var(--nn-white); }
+        .gp-stat-label { font-family: var(--font-ui); font-size: 0.78rem; color: var(--nn-text-muted); }
+        .gp-filter { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-2); margin: var(--sp-6) var(--sp-4) 0; }
+        .gp-chip { font-family: var(--font-ui); font-size: 0.9rem; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--nn-border); background: var(--nn-card); color: var(--nn-text); cursor: pointer; }
+        .gp-chip[aria-pressed="true"] { background: var(--chip-color, var(--nn-purple)); border-color: var(--chip-color, var(--nn-purple)); color: #fff; }
+        .gp-section { max-width: 1080px; margin: 0 auto; padding: var(--sp-8) var(--sp-4) 0; }
+        .gp-section h2 { font-family: var(--font-heading); font-size: 1.45rem; font-weight: 700; color: var(--nn-white); margin: 0 0 var(--sp-2); }
+        .gp-section > p { font-family: var(--font-body); color: var(--nn-text-muted); margin: 0 0 var(--sp-4); line-height: 1.6; max-width: 760px; }
+        .gp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: var(--sp-3); }
+        .gp-card { background: var(--nn-card); border: 1px solid var(--nn-border); border-left: 4px solid var(--accent, var(--nn-purple)); border-radius: 14px; padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
+        .gp-card h3 { font-family: var(--font-heading); font-size: 1.08rem; font-weight: 700; color: var(--nn-white); margin: 0; overflow-wrap: anywhere; }
+        .gp-sub { font-family: var(--font-ui); font-size: 0.85rem; color: var(--nn-text-muted); }
+        .gp-quote { font-family: var(--font-body); color: var(--nn-text); line-height: 1.6; margin: 0; overflow-wrap: anywhere; }
+        .gp-quote.big { font-size: 1.12rem; font-style: italic; }
+        .gp-by { font-family: var(--font-ui); font-size: 0.85rem; color: var(--nn-text-muted); margin-top: auto; padding-top: var(--sp-2); }
+        .gp-by a { color: var(--accent, var(--nn-purple-text)); text-decoration: none; font-weight: 600; }
+        .gp-by a:hover { text-decoration: underline; }
+        .gp-question { font-family: var(--font-body); font-style: italic; color: var(--nn-text-muted); margin: 0 0 var(--sp-3); }
+        .gp-badge { display: inline-block; font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 100px; background: var(--accent, var(--nn-purple)); color: #fff; vertical-align: middle; }
+        .gp-empty { font-family: var(--font-body); color: var(--nn-text-muted); text-align: center; padding: var(--sp-10) var(--sp-4); }
+        .gp-cta { max-width: 760px; margin: var(--sp-10) auto var(--sp-12); padding: var(--sp-6) var(--sp-4); text-align: center; background: var(--nn-card); border: 1px solid var(--nn-border); border-radius: 18px; }
+        .gp-cta h2 { font-family: var(--font-heading); color: var(--nn-white); font-size: 1.35rem; margin: 0 0 var(--sp-2); }
+        .gp-cta p { font-family: var(--font-body); color: var(--nn-text-muted); margin: 0 0 var(--sp-4); line-height: 1.6; }
+        .gp-cta-links { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-2); }
+        .gp-updated { font-family: var(--font-ui); font-size: 0.8rem; color: var(--nn-text-muted); text-align: center; margin: 0 0 var(--sp-8); }
+        [hidden] { display: none !important; }
+    </style>
+{% endblock %}
+
+{% macro by(item) -%}
+    <div class="gp-by">{{ item.guest|e }}, <a href="{{ item.url|e }}">{{ item.show_name|e }} Ep{{ item.episode }}</a></div>
+{%- endmacro %}
+
+{% block content %}
+    <div class="page-main">
+        <section class="gp-hero">
+            <h1>Guest Picks</h1>
+            <p>Every interview on {% for s in shows %}{% if not loop.first %} and {% endif %}<a href="{{ path_prefix }}{{ s.page }}" style="color:{{ s.color }}">{{ s.name|e }}</a>{% endfor %}
+            ends the same way. Mira asks for a book worth reading, the best advice the guest
+            was ever given, who has inspired them most, the show's own closing question, and
+            who she should interview next. These are their answers, in their words.</p>
+            {% if episodes %}
+            <div class="gp-stats" aria-label="At a glance">
+                <div class="gp-stat"><div class="gp-stat-value">{{ episodes|length }}</div><div class="gp-stat-label">Guests</div></div>
+                <div class="gp-stat"><div class="gp-stat-value">{{ books|length }}</div><div class="gp-stat-label">Books</div></div>
+                <div class="gp-stat"><div class="gp-stat-value">{{ advice|length }}</div><div class="gp-stat-label">Pieces of advice</div></div>
+                <div class="gp-stat"><div class="gp-stat-value">{{ referrals|length }}</div><div class="gp-stat-label">People to interview next</div></div>
+            </div>
+            <div class="gp-filter" role="group" aria-label="Show">
+                <button type="button" class="gp-chip" data-filter="all" aria-pressed="true">Both shows</button>
+                {% for s in shows %}
+                <button type="button" class="gp-chip" data-filter="{{ s.slug }}" aria-pressed="false" style="--chip-color:{{ s.color }}">{{ s.name|e }}</button>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </section>
+
+        {% if not episodes %}
+        <p class="gp-empty">The first guests' picks will appear here soon.</p>
+        {% else %}
+
+        {% if books %}
+        <section class="gp-section" id="books" aria-labelledby="gp-books">
+            <h2 id="gp-books">The bookshelf</h2>
+            <p>The one book each guest would put in your hands.</p>
+            <div class="gp-grid">
+                {% for b in books %}
+                <article class="gp-card" data-show="{{ b.show }}" style="--accent:{{ b.color }}">
+                    <h3>{{ b.title|e }}</h3>
+                    {% if b.author %}<div class="gp-sub">{{ b.author|e }}</div>{% endif %}
+                    {% if b.why %}<p class="gp-quote">{{ b.why|e }}</p>{% endif %}
+                    {{ by(b) }}
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {% if advice %}
+        <section class="gp-section" id="advice" aria-labelledby="gp-advice">
+            <h2 id="gp-advice">The best advice they were ever given</h2>
+            <div class="gp-grid">
+                {% for a in advice %}
+                <article class="gp-card" data-show="{{ a.show }}" style="--accent:{{ a.color }}">
+                    <p class="gp-quote big">&ldquo;{{ a.text|e }}&rdquo;</p>
+                    {% if a.source %}<div class="gp-sub">From {{ a.source|e }}</div>{% endif %}
+                    {{ by(a) }}
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {% if inspiration %}
+        <section class="gp-section" id="inspiration" aria-labelledby="gp-inspiration">
+            <h2 id="gp-inspiration">Who inspires them</h2>
+            <div class="gp-grid">
+                {% for i in inspiration %}
+                <article class="gp-card" data-show="{{ i.show }}" style="--accent:{{ i.color }}">
+                    <h3>{{ i.who|e }}</h3>
+                    {% if i.why %}<p class="gp-quote">{{ i.why|e }}</p>{% endif %}
+                    {{ by(i) }}
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {% for group in closing %}
+        {% if group.answers %}
+        <section class="gp-section" id="closing-{{ group.slug }}" data-show="{{ group.slug }}" aria-labelledby="gp-closing-{{ group.slug }}">
+            <h2 id="gp-closing-{{ group.slug }}">{{ group.heading|e }}</h2>
+            <p class="gp-question">{{ group.show_name|e }} asks every guest: &ldquo;{{ group.question|e }}&rdquo;</p>
+            <div class="gp-grid">
+                {% for c in group.answers %}
+                <article class="gp-card" data-show="{{ c.show }}" style="--accent:{{ c.color }}">
+                    <p class="gp-quote">{{ c.text|e }}</p>
+                    {{ by(c) }}
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+        {% endfor %}
+
+        {% if referrals %}
+        <section class="gp-section" id="next" aria-labelledby="gp-next">
+            <h2 id="gp-next">Who they would have Mira interview next</h2>
+            <p>Every guest names someone. Those names are how Mira finds her next guests.</p>
+            <div class="gp-grid">
+                {% for r in referrals %}
+                <article class="gp-card" data-show="{{ r.show }}" style="--accent:{{ r.color }}">
+                    <h3>{{ r.name|e }}{% if r.status == 'interviewed' %} <span class="gp-badge">Interviewed</span>{% elif r.status == 'booked' %} <span class="gp-badge">Booked</span>{% endif %}</h3>
+                    {% if r.organization %}<div class="gp-sub">{{ r.organization|e }}</div>{% endif %}
+                    {% if r.why %}<p class="gp-quote">{{ r.why|e }}</p>{% endif %}
+                    <div class="gp-by">Recommended by {{ r.recommended_by|e }}, <a href="{{ r.episode_url|e }}">{{ r.show_name|e }} Ep{{ r.episode }}</a></div>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {% endif %}
+
+        <section class="gp-cta" aria-labelledby="gp-cta">
+            <h2 id="gp-cta">Should Mira interview you, or someone you know?</h2>
+            <p>One live, unscripted conversation of about 45 minutes, from your browser. You see
+            the transcript before anything is published.</p>
+            <div class="gp-cta-links">
+                {% for s in shows %}
+                <a href="{{ path_prefix }}{{ s.apply_page }}" class="nn-btn nn-btn-primary" style="background:{{ s.color }}">Apply to {{ s.name|e }}</a>
+                {% endfor %}
+            </div>
+        </section>
+        {% if updated %}<p class="gp-updated">Updated {{ updated }}.</p>{% endif %}
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+    (function () {
+        var chips = document.querySelectorAll('.gp-chip');
+        if (!chips.length) return;
+        function apply(show) {
+            chips.forEach(function (c) { c.setAttribute('aria-pressed', String(c.dataset.filter === show)); });
+            document.querySelectorAll('[data-show]').forEach(function (el) {
+                el.hidden = show !== 'all' && el.dataset.show !== show;
+            });
+            document.querySelectorAll('.gp-section').forEach(function (sec) {
+                if (sec.dataset.show) return;
+                var cards = sec.querySelectorAll('.gp-card');
+                var shown = Array.prototype.some.call(cards, function (c) { return !c.hidden; });
+                sec.hidden = cards.length > 0 && !shown;
+            });
+        }
+        chips.forEach(function (c) {
+            c.addEventListener('click', function () {
+                apply(c.dataset.filter);
+                try {
+                    var url = new URL(window.location.href);
+                    if (c.dataset.filter === 'all') url.searchParams.delete('show');
+                    else url.searchParams.set('show', c.dataset.filter);
+                    history.replaceState(null, '', url);
+                } catch (e) { /* the filter still works */ }
+            });
+        });
+        var wanted = null;
+        try { wanted = new URLSearchParams(window.location.search).get('show'); } catch (e) {}
+        if (wanted && document.querySelector('.gp-chip[data-filter="' + wanted + '"]')) apply(wanted);
+    })();
+    </script>
+{% endblock %}

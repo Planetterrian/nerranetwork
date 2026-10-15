@@ -1,0 +1,30 @@
+You are reading the end of an interview from {{show_name}}, a podcast hosted by Mira, an AI. The guest is {{guest_name}}.
+
+Every interview ends with a closing round. Pull out what the guest actually said in it, in their own words, and nothing they did not say. The questions, in whatever words Mira used:
+- the show's own question: "{{closing_question}}"
+- a book they would recommend, and why
+- one person Mira should interview next
+- the best piece of advice they were ever given
+- the person who has inspired them most
+
+The transcript was made by speech recognition. Lines can be out of order, an answer can sit a line or two before the question it answers, and names can be misheard ("Jeffrey Henson" for Geoffrey Hinton). Correct a name only when you are sure who was meant (search the web if you need to check); otherwise keep it as heard and say so in "note".
+
+Return ONLY this JSON, nothing else:
+{
+  "book": {"title": "", "author": "", "why": ""},
+  "advice": {"text": "", "source": ""},
+  "inspiration": {"who": "", "why": ""},
+  "bet": "",
+  "interview_next": [{"name": "", "organization": "", "role": "", "why": "", "note": ""}],
+  "note": ""
+}
+
+Rules:
+- "why", "text" and "bet" are short, faithful quotes or paraphrases of the guest, one or two sentences that read well on a web page. Never invent, never improve on what they meant.
+- "bet" is their answer to the show's own question.
+- "source" is who gave them the advice ("my grandfather", "Winston Churchill"), or "".
+- "interview_next" lists only real, identifiable people the guest named for Mira to interview, with what the guest said about each. Leave out the guest themself, their family, Patrick Novak and Dan Perra (who run the show), and answers that name nobody ("senior recruiters at big companies"). An empty list is a fine answer.
+- Use null for anything the guest did not answer, or was not asked.
+
+TRANSCRIPT (the end of the interview):
+{{transcript}}

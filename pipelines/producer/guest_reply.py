@@ -38,7 +38,8 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import quote
 
 from pipelines.voices.common import (
-    OPERATOR_EMAIL, mira_signature_text, sb_select, sb_update, send_email,
+    GUEST_CC, OPERATOR_CC, OPERATOR_EMAIL, mira_signature_text, sb_select, sb_update,
+    send_email,
 )
 from pipelines.voices.shows import get_show
 from pipelines.producer import classify as _classify
@@ -46,9 +47,9 @@ from pipelines.producer import classify as _classify
 logger = logging.getLogger("nerra_producer.guest_reply")
 
 PROMPT_PATH = os.path.join(os.path.dirname(__file__), "prompts", "guest_reply.txt")
-INTENTS = ("interview_input", "question", "reschedule", "cancel", "thanks",
-           "auto_reply", "needs_patrick")
-REPLY_INTENTS = ("interview_input", "question", "reschedule", "cancel")
+INTENTS = ("interview_input", "question", "reschedule", "cancel", "introduction",
+           "thanks", "auto_reply", "needs_patrick")
+REPLY_INTENTS = ("interview_input", "question", "reschedule", "cancel", "introduction")
 MIN_CONFIDENCE = 0.7
 MAX_REPLY_CHARS = 1400
 MAX_MIRA_REPLIES_PER_THREAD = 3
@@ -441,6 +442,68 @@ def own_words(body: str) -> str:
     return (body[:m.start()] if m else (body or ""))[:800]
 
 
+_ADDRESS = re.compile(r"[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")
+HOUSE_DOMAINS = ("nerranetwork.com", "planetterrian.com")
+
+
+def _addresses(text: str) -> List[str]:
+    out: List[str] = []
+    for a in _ADDRESS.findall(text or ""):
+        a = a.strip(".").lower()
+        if a not in out:
+            out.append(a)
+    return out
+
+
+def introductions(app: Dict[str, Any], inbound: Dict[str, Any], *,
+                  dry_run: bool = False) -> List[str]:
+    """Oct 15 2026: when Mira can't find an address for someone a guest
+    recommended on air, she asks the guest for an introduction
+    (pipelines/voices/referrals.py). The guest's answer comes back here. An
+    address in their reply, or a person they copied in, becomes that
+    referral's contact, and the referrals job sends the invitation, credited
+    to the guest, on its next run. Returns the names introduced."""
+    if not app or not app.get("id"):
+        return []
+    ivs = sb_select("interviews", f"application_id=eq.{app['id']}&select=id")
+    if not ivs:
+        return []
+    ids = ",".join(i["id"] for i in ivs)
+    waiting = sb_select("guest_referrals", f"recommender_interview_id=in.({ids})"
+                        "&status=in.(asked_recommender,no_contact)&contact_email=is.null"
+                        "&select=id,name")
+    if not waiting:
+        return []
+    ours = {(app.get("email") or "").lower(), (app.get("publicist_email") or "").lower(),
+            OPERATOR_EMAIL.lower(), *(a.lower() for a in OPERATOR_CC),
+            *(a.lower() for a in GUEST_CC), *_classify._own_set("")}
+    found = [a for a in _addresses(own_words(inbound.get("body") or ""))
+             + _addresses(inbound.get("cc") or "") + _addresses(inbound.get("to") or "")
+             if a not in ours and not a.endswith(HOUSE_DOMAINS)]
+    if not found:
+        return []
+    pairs: List[tuple] = []
+    if len(waiting) == 1:
+        pairs = [(waiting[0], found[0])]
+    else:
+        # Several people asked about: an address goes to the one whose name
+        # it carries, and only when that is unambiguous.
+        for ref in waiting:
+            parts = [w for w in re.split(r"[^a-z]+", (ref.get("name") or "").lower()) if len(w) >= 3]
+            hits = [a for a in found if any(w in a.split("@")[0] for w in parts)]
+            if len(hits) == 1:
+                pairs.append((ref, hits[0]))
+    now = _now()
+    for ref, addr in pairs:
+        if not dry_run:
+            sb_update("guest_referrals", f"id=eq.{ref['id']}", {
+                "contact_email": addr, "contact_via": None,
+                "contact_source": f"introduced by {app.get('name') or 'the guest'}",
+                "updated_at": now})
+        logger.info("%s introduced %s (%s)", app.get("name"), ref.get("name"), addr)
+    return [ref.get("name") or "" for ref, _ in pairs]
+
+
 def live_trouble_reply(app: Dict[str, Any], iv: Dict[str, Any], show: Any) -> str:
     studio = f"{show.studio_url(iv['id'])}&role=guest"
     if (iv.get("call_mode") or "webrtc") != "webrtc":
@@ -490,6 +553,16 @@ def handle_guest_reply(*, thread: Dict[str, Any], inbound: Dict[str, Any],
     facts = facts_for(guest)
     show = facts["show"]
     line.update(guest_name=app.get("name"), application_id=app.get("id"), show=show.slug)
+    try:
+        introduced = introductions(app, inbound, dry_run=dry_run)
+    except Exception as exc:  # noqa: BLE001 — the reply is still answered
+        logger.warning("reading an introduction failed: %s", exc)
+        introduced = []
+    if introduced:
+        line["introduced"] = introduced
+        facts["facts"] += ("\n- In this message they introduced you to "
+                           + " and ".join(introduced)
+                           + ". You will write to them today and say who suggested it.")
 
     live = live_interview(guest)
     if (live and policy.mode == "auto"
