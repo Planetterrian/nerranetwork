@@ -50,13 +50,18 @@ def test_promo_varies_by_day():
 
 def test_full_coverage_over_rotation():
     """Over enough days, every show features every English sibling — no
-    sibling is permanently left unadvertised."""
+    sibling is permanently left unadvertised. A members-only sibling is the
+    exception by design (Oct 15 2026, the Omni View desks): it has no public
+    feed for a listener to follow, so no show plugs it on air."""
+    from engine.access import gated_shows
+
+    members_only = {s for s, m in gated_shows().items() if m == "members_only"}
     for slug in ENGLISH_ORDER:
         seen = {
             pick_featured_show(slug, _DAY + dt.timedelta(days=i))
             for i in range(40)
         }
-        assert seen == set(ENGLISH_ORDER) - {slug}
+        assert seen == set(ENGLISH_ORDER) - {slug} - members_only
 
 
 def test_promo_text_mentions_network_and_featured_show():

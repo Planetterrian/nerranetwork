@@ -103,8 +103,12 @@ class TestNewsletterRetention:
 
     @pytest.mark.parametrize("slug", COHORT)
     def test_the_launch_cohort_newsletter_is_enabled(self, slug):
+        """Oct 15 2026: except a members-only show (the five Omni View
+        desks) — a members day never reaches the newsletter."""
+        from engine.access import access_mode
         from engine.config import load_config
-        assert load_config(ROOT / "shows" / f"{slug}.yaml").newsletter.enabled is True
+        cfg = load_config(ROOT / "shows" / f"{slug}.yaml")
+        assert cfg.newsletter.enabled is (access_mode(cfg) != "members_only")
 
 
 class TestCadenceWords:

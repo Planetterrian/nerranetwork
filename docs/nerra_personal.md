@@ -90,7 +90,18 @@ access:
   mode: members_only     # public (default) | members_only | public_weekly
   public_weekday: 0      # public_weekly only: 0 = Monday … 6 = Sunday
   min_members: 1         # produce a members day only with >= this many members; 0 = always
+  unknown_demand: produce  # when the counts cannot be read: produce (default) | skip
 ```
+
+**Gated today (Oct 15 2026):** the five Omni View regional desks — Europe,
+Asia Pacific, Africa & Middle East, Central & South America, North America —
+are `members_only` with `unknown_demand: skip`. They are made only on a day a
+paying member carries them; a day with no member is a `no_member_demand` skip
+the audit does not report, and a day the counts cannot be read is a
+`member_demand_unknown` skip it warns about. Top World News stays public and
+still reads the desks from `members/` (headlines and publisher links only). The
+desks' public feeds, blogs and show pages keep their back catalogue; the pages
+carry the "Members only" badge from the next nightly.
 
 What a members day does:
 
@@ -120,7 +131,8 @@ added to the member vocabulary (`PERSONAL_EXTRA_SHOW_SLUGS` in
 `workers/gallery/src/personal.ts`, drift-guarded) — otherwise nobody can
 select it and its demand is always zero.
 
-One-time setup:
+One-time setup (until step 1 is done, a show with `unknown_demand: skip` —
+the desks — is not made at all, and one with the default is made every day):
 1. A random token: `wrangler secret put PERSONAL_DEMAND_TOKEN` in
    `workers/gallery/`, then `wrangler deploy` (the endpoint is new).
 2. The same value as the GitHub Actions secret `PERSONAL_DEMAND_TOKEN` in

@@ -64,7 +64,12 @@ class TestReplyText:
         text = run_show._build_cross_promo_reply(cfg, day, 604)
         assert "More from the Nerra Network:" in text
         assert f"utm_campaign=nn-{cfg.slug}-en-post-ep604-sibling_" in text
-        assert cfg.name not in text.split("More from the Nerra Network:")[1], (
+        # The campaign's variant names the plugged show. Oct 15 2026: read it
+        # there, not by the show's NAME, because Omni View's plug can now be
+        # "Omni View Top World News" (the desks are members-only and leave
+        # the rotation) — a real sibling whose name contains its own.
+        plugged = re.search(r"sibling_([a-z0-9_]+)", text).group(1)
+        assert plugged != cfg.slug, (
             "the plug must feature a SIBLING show, not the show itself"
         )
 
@@ -81,7 +86,6 @@ class TestReplyText:
     def test_every_reply_campaign_is_parseable(self, slug):
         """The whole point: a campaign the funnel cannot parse is a click the
         funnel report drops."""
-        import re
 
         from engine.funnel import parse_campaign_id
         cfg = load_config(f"shows/{slug}.yaml")
