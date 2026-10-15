@@ -34,7 +34,8 @@ concurrency:
 jobs:
   picks:
     runs-on: ubuntu-26.04
-    timeout-minutes: 40
+    # The first run reads every episode (about two minutes each with search).
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v7
         with:

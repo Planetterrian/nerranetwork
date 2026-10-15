@@ -19,6 +19,7 @@ create table if not exists public.guest_referrals (
   organization text,
   role text,
   why text,                      -- the recommending guest's own words
+  relationship text,             -- how the guest knows them ("my co-founder", "I read his book")
   note text,                     -- e.g. the name was hard to make out in the recording
   status text not null default 'new' check (status in (
     'new',                 -- extracted, not looked at yet
@@ -49,3 +50,4 @@ alter table public.guest_referrals enable row level security;
 alter table public.guest_referrals add column if not exists note text;
 alter table public.guest_referrals add column if not exists topic text,
   add column if not exists searched_at timestamptz;
+alter table public.guest_referrals add column if not exists relationship text;

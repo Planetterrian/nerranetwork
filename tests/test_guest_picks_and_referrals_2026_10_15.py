@@ -224,6 +224,19 @@ class TestPicks:
         assert R.unsure({"note": "Name was hard to make out in the recording."})
         assert not R.unsure({"note": "Heard as 'Jeffrey Henson'; corrected."})
 
+    def test_dashes_read_as_commas(self):
+        out = R.normalize_picks({"bet": "We charge merchants nothing\u2014no fees at all.",
+                                 "advice": {"text": "Keep going \u2014 always.", "source": ""}})
+        assert out["bet"] == "We charge merchants nothing, no fees at all."
+        assert out["advice"]["text"] == "Keep going, always."
+        assert R._clean("2020\u20132024") == "2020\u20132024"   # a range keeps its dash
+
+    def test_how_the_guest_knows_them_is_kept(self):
+        out = R.normalize_picks({"interview_next": [{"name": "Tim Martinez", "relationship": "my co-founder"}]})
+        assert out["interview_next"][0]["relationship"] == "my co-founder"
+        prompt = (ROOT / "pipelines/voices/prompts/guest_picks.txt").read_text()
+        assert '"relationship"' in prompt
+
     def test_the_prompt_forbids_invention(self):
         prompt = (ROOT / "pipelines/voices/prompts/guest_picks.txt").read_text()
         assert "Never invent" in prompt and "Patrick Novak and Dan Perra" in prompt
@@ -328,6 +341,27 @@ class TestMessages:
 # The run
 # ---------------------------------------------------------------------------
 
+class TestWhoIsAskedForAnIntroduction:
+    MATT = {"name": "Matt Davis", "email": "matt@criticalpropulsion.com", "organization": "Critical Propulsion"}
+    VINCENT = {"name": "Vincent Rylan", "email": "vincent.r.rylan.writer@gmail.com"}
+    SCOTT = {"name": "Scott Pulcini", "email": "scott@scottpulcinitrader.com", "organization": "Futures trader"}
+
+    def test_a_colleague_at_the_same_company(self):
+        assert R.can_ask({"name": "Jerry Duff", "organization": "Critical Propulsion"}, self.MATT)
+
+    def test_someone_they_say_they_know(self):
+        assert R.can_ask({"name": "Tim Martinez", "relationship": "my co-founder"}, self.VINCENT)
+
+    def test_a_name_that_needs_checking(self):
+        assert R.can_ask({"name": "To Martinez", "note": "Name was hard to make out."}, self.VINCENT)
+
+    def test_not_a_public_figure_they_only_admire(self):
+        assert not R.can_ask({"name": "Geoffrey Hinton", "organization": "University of Toronto"}, self.VINCENT)
+        assert not R.can_ask({"name": "Brian Shannon", "organization": "AlphaTrends",
+                              "relationship": "I read his book"}, self.SCOTT)
+        assert not R.can_ask({"name": "Ana Gmail", "organization": "Gmail"}, self.VINCENT)
+
+
 class TestRun:
     def test_a_preview_sends_nothing_to_anyone_but_patrick(self, world):
         R.run(dry_run=True)
@@ -400,6 +434,25 @@ class TestRun:
         world["sent"].clear()
         R.run()
         assert _guest_mail(world["sent"]) == []
+
+    def test_no_address_and_a_stranger_goes_to_patrick_not_the_guest(self, world, monkeypatch):
+        monkeypatch.setattr(R, "find_contact", lambda ref: (world["searched"].append(ref["name"]) or
+                            {"email": "", "via": "", "source": "",
+                             "route": "https://www.cs.toronto.edu/~hinton/", "topic": ""}))
+        R.run()
+        hinton = next(r for r in world["db"].referrals if r["name"] == "Geoffrey Hinton")
+        assert hinton["status"] == "no_contact"       # told to Patrick the same day
+        report = _report(world["sent"])[-1]["html"]
+        assert "doesn't know them" in report and "cs.toronto.edu/~hinton" in report
+        for r in world["db"].referrals:
+            r["created_at"] = _ago(30)
+        world["sent"].clear()
+        R.run()
+        assert "vincent@example.com" not in [m["to"] for m in world["sent"]]
+        hinton["contact_email"] = "media.relations@utoronto.ca"   # Patrick finds one
+        world["sent"].clear()
+        R.run()
+        assert "media.relations@utoronto.ca" in [m["to"] for m in world["sent"]]
 
     def test_producer_mode_off_sends_nothing(self, world, monkeypatch):
         monkeypatch.setenv("PRODUCER_MODE", "off")

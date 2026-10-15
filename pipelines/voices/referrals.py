@@ -153,7 +153,10 @@ def closing_part(transcript: str, limit: int = 24000) -> str:
 
 
 def _clean(value: Any, limit: int = 400) -> str:
-    return " ".join(str(value or "").split())[:limit]
+    """One line of text. Dashes the model puts in read as commas, the way
+    every other piece of Nerra copy is written."""
+    text = re.sub(r"\s*\u2014\s*|\s+\u2013\s+", ", ", str(value or ""))
+    return " ".join(text.split())[:limit]
 
 
 def normalize_picks(raw: Any) -> Dict[str, Any]:
@@ -172,7 +175,8 @@ def normalize_picks(raw: Any) -> Dict[str, Any]:
     for p in raw.get("interview_next") or []:
         if not isinstance(p, dict) or not _clean(p.get("name")):
             continue
-        person = {f: _clean(p.get(f)) for f in ("name", "organization", "role", "why", "note")}
+        person = {f: _clean(p.get(f)) for f in ("name", "organization", "role", "why",
+                                                "relationship", "note")}
         if person["name"].lower() in HOUSE_NAMES:
             continue
         people.append(person)
@@ -298,6 +302,45 @@ def unsure(ref: Dict[str, Any]) -> bool:
     return bool(_UNSURE.search(ref.get("note") or ""))
 
 
+_KNOWS = re.compile(r"\b(co-?founder|partner|colleague|co-?worker|friend|business partner|"
+                    r"cousin|brother|sister|mentor|boss|manager|employee|client|teammate|"
+                    r"works? (?:with|for) (?:me|us)|worked (?:with|for)|we work|my team|our team)\b", re.I)
+_ADMIRES = re.compile(r"\b(never met|don't know|do not know|read (?:his|her|their)|follow|admire|"
+                      r"watch|listen to|heard (?:him|her|them))\b", re.I)
+FREE_MAIL = ("gmail.com", "googlemail.com", "outlook.com", "hotmail.com", "yahoo.com",
+             "icloud.com", "me.com", "aol.com", "proton.me", "protonmail.com", "live.com")
+
+
+def _squash(text: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", (text or "").lower())
+
+
+def knows_them(ref: Dict[str, Any], app: Dict[str, Any]) -> bool:
+    """Whether the guest who named this person knows them: what they said
+    about them, or the same organisation (Jerry Duff works with Matt Davis at
+    Critical Propulsion). Only then is the guest asked for an introduction;
+    asking Vincent Rylan to introduce Mira to Geoffrey Hinton, whose
+    interviews he watches, would be a strange thing to ask."""
+    rel = ref.get("relationship") or ""
+    if _ADMIRES.search(rel):
+        return False
+    if _KNOWS.search(rel):
+        return True
+    org = _squash(ref.get("organization") or "")
+    if len(org) < 4:
+        return False
+    domain = (app.get("email") or "").rsplit("@", 1)[-1].lower()
+    if domain and domain not in FREE_MAIL and org in _squash(domain.rsplit(".", 1)[0]):
+        return True
+    return org in _squash(app.get("organization") or "")
+
+
+def can_ask(ref: Dict[str, Any], app: Dict[str, Any]) -> bool:
+    """The guest is asked when the name needs checking, or when they know
+    the person; anyone else with no public address is for Patrick."""
+    return unsure(ref) or knows_them(ref, app)
+
+
 def new_referrals(interview: Dict[str, Any], app: Dict[str, Any],
                   picks: Dict[str, Any], *, dry_run: bool = False) -> List[Dict[str, Any]]:
     """A row per person the guest named, once. In a dry run the rows are
@@ -318,6 +361,7 @@ def new_referrals(interview: Dict[str, Any], app: Dict[str, Any],
             "organization": person.get("organization") or None,
             "role": person.get("role") or None,
             "why": person.get("why") or None,
+            "relationship": person.get("relationship") or None,
             "note": person.get("note") or None,
             "status": "known" if known_person(person["name"]) else "new",
         }
@@ -646,11 +690,15 @@ def report(outbox: List[Dict[str, Any]], manual: List[Dict[str, Any]], *, dry_ru
                      "guest_referrals.</p>")
         parts.extend(_message_html(m) for m in upcoming)
     if manual:
-        parts.append("<hr><p><strong>No address and no one to ask</strong>; these need you:</p><ul>"
+        parts.append("<hr><p><strong>No public address, and the guest doesn't know them "
+                     "personally</strong>. These need you; give me an address and Mira "
+                     "invites them on the next run:</p><ul>"
                      + "".join(f"<li>{_html.escape(r['name'])} (recommended by "
                                f"{_html.escape(r.get('recommender_name') or '')})"
                                + (f": {_html.escape(r['contact_route'])}" if r.get("contact_route") else "")
                                + "</li>" for r in manual) + "</ul>")
+    if outbox or upcoming:
+        parts.append("<hr><p>That's everything for today.</p>")
     parts.append(mira_signature_html())
     tail = f", {len(upcoming)} going out tomorrow" if upcoming else ""
     subject = (f"{'Preview: ' if dry_run else ''}Guest picks and referrals: "
@@ -774,6 +822,14 @@ def run(*, dry_run: bool = False, limit: int = MAX_INVITES_PER_RUN) -> Dict[str,
         if ref.get("status") != "new":
             continue
         ref["contact_route"] = contact.get("route") or ref.get("contact_route") or ""
+        if not can_ask(ref, iv.get("app") or {}):
+            # No address, and the guest doesn't know them: Patrick's call.
+            manual.append(ref)
+            if not dry_run and ref.get("id"):
+                sb_update("guest_referrals", f"id=eq.{ref['id']}", {
+                    "status": "no_contact", "contact_route": ref["contact_route"] or None,
+                    "updated_at": dt.datetime.now(dt.timezone.utc).isoformat()})
+            continue
         (asks if due else later_asks).setdefault(ref["recommender_interview_id"], []).append(ref)
 
     for iv_id, refs in later_asks.items():
