@@ -1,0 +1,382 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.980
+A 9 billion parameter model now follows unseen legal procedures at 93-100% after one training run. This is Models &amp; Agents, Episode 204. FlowSpec, described in an archive paper, generated 2,506 conversations from 297 randomized procedures for a tie outbound call agent. The machine readable specification writes the instructions, gates the tools, supplies the supervision, and defines the tests. The agent may speak only from an
+
+00:00:29.980 --> 00:00:36.420
+approved sentence catalog, documented checks had sat at 67 to 71 percent, while grounded
+
+00:00:36.420 --> 00:00:40.240
+checks already passed at 97 to 100 percent before training.
+
+00:00:40.900 --> 00:00:47.600
+Scenario pass rate moved from 15 to 43 to 40 to 43 across four held outflows, three
+
+00:00:47.600 --> 00:00:52.260
+of them debt collection procedures from a withheld lineage, and one non debt procedure.
+
+00:00:52.780 --> 00:00:57.960
+An audit of the shared specification found 11 defects, three of which the metric missed,
+
+00:00:57.960 --> 00:01:02.880
+and the small self-hosted policy transferred across creditor-specific revisions of the
+
+00:01:02.880 --> 00:01:07.040
+same legal rules with no extra fine-tuning on the target procedures.
+
+00:01:07.904 --> 00:01:14.324
+Training from scratch on approximately 12 trillion tokens produced LLMJP4 as an 8 billion
+
+00:01:14.324 --> 00:01:18.764
+dense model and a 32 billion A3B mixture of experts model.
+
+00:01:19.364 --> 00:01:24.404
+Explicit criteria for data, external models, and software selection appear in an archive
+
+00:01:24.404 --> 00:01:28.664
+technical report and the full development process is released for independent
+
+00:01:28.664 --> 00:01:33.664
+verification and reproduction. The new models post substantial gains over prior
+
+00:01:33.664 --> 00:01:38.644
+LLM JP releases and stay competitive with open-weight systems at comparable
+
+00:01:38.644 --> 00:01:45.204
+parameter counts. Attention layers in Lama 3.2 YB instruct get replaced by Titan
+
+00:01:45.204 --> 00:01:50.484
+Lama's hierarchical memory, a retrofit documented on archive. Full fidelity
+
+00:01:50.484 --> 00:01:56.224
+attention stays on recent tokens, and history is compressed into recurrent fixed-size neural memory
+
+00:01:56.224 --> 00:02:05.464
+modules behind a block-wise attention mask. Accuracy on quality rises from 23.87% to 40.51%,
+
+00:02:05.464 --> 00:02:16.004
+and on long-health from 14.50% to 40.75%. Pre-fill runs more than 20% faster, and decode runs 37% faster
+
+00:02:16.004 --> 00:02:20.804
+at medium-context lengths, with 24% lower steady-state memory usage.
+
+00:02:21.795 --> 00:02:26.835
+The SWAP happens after the original pre-training, so no new model has to be trained from scratch.
+
+00:02:27.415 --> 00:02:32.115
+Copy-paste language models add a lightweight copy-paste head beside the standard language
+
+00:02:32.115 --> 00:02:37.115
+modeling head, creating an alternative gradient path that eases the language modeling head
+
+00:02:37.115 --> 00:02:40.375
+bottleneck, according to an archive NLP paper.
+
+00:02:40.375 --> 00:02:46.555
+models from 135 million to 1.7 billion parameters improve across scales and
+
+00:02:46.555 --> 00:02:50.915
+backbones with negligible training and inference overhead. The extra head
+
+00:02:50.915 --> 00:02:55.015
+supplies a direct gradient route that bypasses the primary language modeling
+
+00:02:55.015 --> 00:03:00.315
+head during back propagation. Check-span multiple scales and different backbone
+
+00:03:00.315 --> 00:03:05.135
+architectures with gains in training efficiency, downstream performance, and
+
+00:03:05.135 --> 00:03:08.175
+operating points in long-context and retrieval settings.
+
+00:03:09.147 --> 00:03:15.787
+Baby LM's 2026 multilingual track received QuenFant, a Quen3-based model trained on concise
+
+00:03:15.787 --> 00:03:21.007
+parallel text that an archive paper says was produced by summarization and translation.
+
+00:03:21.747 --> 00:03:27.267
+A character-level vocabulary and a larger model size both reached through low-rank adaptation
+
+00:03:27.267 --> 00:03:31.047
+or Lora adapters were required for full performance.
+
+00:03:31.047 --> 00:03:35.287
+At submission time, Quinn Fant ranked first in the multilingual track.
+
+00:03:36.270 --> 00:03:42.310
+Hero learns reusable prompt updates from execution verified successes and failures, and validates
+
+00:03:42.310 --> 00:03:45.330
+revisions before adoption, per an archive report.
+
+00:03:45.870 --> 00:03:50.970
+At test time, it treats generated code as an instant specific harness refined by execution
+
+00:03:50.970 --> 00:03:51.570
+feedback.
+
+00:03:52.050 --> 00:03:58.610
+Across four text to SQL, text to cipher, a graph query language, and text to Python benchmarks,
+
+00:03:58.610 --> 00:04:02.310
+It improves pass at 1 by 7.6 points offline.
+
+00:04:02.870 --> 00:04:05.730
+Test time refinement adds another 2.0 points
+
+00:04:05.730 --> 00:04:07.690
+and improves execution efficiency.
+
+00:04:08.390 --> 00:04:10.810
+Prompt revisions are extracted only from cases
+
+00:04:10.810 --> 00:04:12.850
+where execution confirms correctness
+
+00:04:12.850 --> 00:04:14.470
+or exposes a clear failure.
+
+00:04:15.030 --> 00:04:17.490
+And the generated program itself becomes the harness
+
+00:04:17.490 --> 00:04:19.350
+for further execution-driven edits.
+
+00:04:20.396 --> 00:04:23.196
+User feedback gets decomposed into atomic rules
+
+00:04:23.196 --> 00:04:25.996
+by skill grain, which an archive paper says
+
+00:04:25.996 --> 00:04:31.116
+as predicts transferability and keeps only rules suited to future requests, using rubric
+
+00:04:31.116 --> 00:04:36.776
+guided rewards and fine-grained credit assignment. Across three base models on five personalized
+
+00:04:36.776 --> 00:04:42.456
+writing tasks, it posts the best overall average in both in-domain and out-of-domain settings.
+
+00:04:43.056 --> 00:04:47.776
+Each rule is scored for content quality and for the decision to retain or discard it.
+
+00:04:48.376 --> 00:04:53.036
+Reinforcement learning jointly optimizes skill induction and the skill condition generation
+
+00:04:53.036 --> 00:05:00.589
+step. Percy Valbench contains 403 multi-episode scenarios, testing nine controlled error subtypes
+
+00:05:00.589 --> 00:05:06.429
+across under, over, and misapplied state personalization. On the human-evaluated subset,
+
+00:05:06.769 --> 00:05:14.129
+the strongest-large language model, or LLM, evaluator recognizes 63.9% of under-personalization
+
+00:05:14.129 --> 00:05:20.409
+errors, while humans recognize 94.4%, according to the accompanying archive write-up.
+
+00:05:20.409 --> 00:05:24.229
+Highlighting relevant history raises recognition only slightly.
+
+00:05:24.769 --> 00:05:30.769
+Five LLM evaluators ran on the full set, human audits confirmed that generated errors match
+
+00:05:30.769 --> 00:05:35.469
+their intended types, and the largest gap sits on under-personalization cases.
+
+00:05:36.109 --> 00:05:43.569
+Napoli public-figured tweets feed any PCE, which keeps 3,189 sentences where two annotators
+
+00:05:43.569 --> 00:05:47.469
+agree on polarity, from 5,614 tweets.
+
+00:05:47.469 --> 00:05:55.769
+On the 3-class benchmark, NEP Burda reaches 0.877 macro F1, a balanced score across classes,
+
+00:05:56.029 --> 00:06:03.249
+and 3 commercial LLMs reach 0.882 to 0.8960 shot, as reported on archive.
+
+00:06:03.869 --> 00:06:12.149
+On the 5-point scale, Claude Opus 5.5 beats the best encoders by 0.10 to 0.12 macro F1.
+
+00:06:12.149 --> 00:06:23.129
+Put the non-spacing Devanigari Marks back and macro-F1 moves plus 0.084 or minus 0.095 depending on the tokenizer.
+
+00:06:24.169 --> 00:06:29.489
+766 five point sentences carry two adjacent labels that are both accepted during training.
+
+00:06:30.325 --> 00:06:40.725
+Topic Merge first oversegments documents into fine-grained microclusters, then runs an LLM guided iterative merge that uses local neighborhood context to consolidate topics.
+
+00:06:40.725 --> 00:06:45.925
+On the bills and wiki data sets, an archive evaluation says it reaches state-of-the-art
+
+00:06:45.925 --> 00:06:52.245
+clustering while cutting LLM calls by more than 92% versus methods that score whole documents.
+
+00:06:52.785 --> 00:06:57.665
+That first cut yields semantically pure microclusters with preliminary semantic labels.
+
+00:06:58.285 --> 00:07:02.905
+The merge stage then arbitrates candidate pairs with neighborhood contacts before any join
+
+00:07:02.905 --> 00:07:03.685
+is executed.
+
+00:07:03.685 --> 00:07:11.185
+Conventions centered on the United States make up 62.4% to 94.4% of matched signals across
+
+00:07:11.185 --> 00:07:17.385
+11 text benchmarks in an archive audit of 16 evaluation resources across seven dimensions.
+
+00:07:18.005 --> 00:07:23.565
+Geographic visibility in five image text resources correlates with national gross domestic product
+
+00:07:23.565 --> 00:07:32.305
+or GDP share, with a mean Pearson correlation of 0.780. All 16 resources operationalize source user
+
+00:07:32.305 --> 00:07:35.985
+context, but non-operationalized target user context.
+
+00:07:36.465 --> 00:07:41.305
+Pared scoring on drop and truthful QA shows how meaning-preserving answer variants move
+
+00:07:41.305 --> 00:07:47.225
+exact match and reference similarity scores, and the audit covers content, metadata, documentation,
+
+00:07:47.705 --> 00:07:53.237
+and scoring procedures. Generate synthetic procedures with the flow spec recipe on a regulated
+
+00:07:53.237 --> 00:07:59.837
+workflow you already run, then measure compliance lift on held out flows. Run the NEPC-3 class and
+
+00:07:59.837 --> 00:08:05.237
+five-point splits against a Napoli-capable model you already use, and watch how Devonigari
+
+00:08:05.237 --> 00:08:12.437
+Mark Restoration moves macro-F1. Swap the Titan Lama memory modules into a Lama 3.2-1B
+
+00:08:12.437 --> 00:08:19.397
+instruct checkpoint and score quality and long-health at 128K context. Score Perseval Benches
+
+00:08:19.397 --> 00:08:24.677
+multi-episode scenarios with your current LLM judge, and separate under-personalization
+
+00:08:24.677 --> 00:08:26.717
+errors from over-personalization errors.
+
+00:08:27.794 --> 00:08:33.674
+National labs are expected to ship more sovereign LLMs that follow the LLMJP4 transparency model.
+
+00:08:34.294 --> 00:08:38.654
+Execution verified harness updates of the Hero Kind are slated to land in further
+
+00:08:38.654 --> 00:08:39.494
+agent frameworks.
+
+00:08:40.174 --> 00:08:44.494
+Additional base model families are likely to get post-training memory retrofits of their
+
+00:08:44.494 --> 00:08:44.754
+own.
+
+00:08:45.314 --> 00:08:50.254
+If you pop the hood on layer-ablation studies, the early versus late comparison runs across
+
+00:08:50.254 --> 00:08:53.134
+two corpora that do not share a target token mix.
+
+00:08:53.134 --> 00:08:58.434
+A blading early layers is scored against a blading late layers, then the damage is compared
+
+00:08:58.434 --> 00:08:59.294
+on each corpus.
+
+00:08:59.914 --> 00:09:04.714
+A bigger early layer hit on one corpus gets read as proof that the task lives at a special
+
+00:09:04.714 --> 00:09:05.734
+depth in the network.
+
+00:09:06.374 --> 00:09:08.954
+That reading is the marketing of depth specialization.
+
+00:09:09.574 --> 00:09:13.954
+The engineering comparison is actually performed over different target token distributions.
+
+00:09:14.714 --> 00:09:19.034
+Math solutions contain far more white space and numbers than encyclopedia pros.
+
+00:09:19.034 --> 00:09:23.134
+those extra white space and number tokens change which predictions the
+
+00:09:23.134 --> 00:09:27.634
+ablation is being scored on. Break the pooled interaction apart by target token
+
+00:09:27.634 --> 00:09:31.854
+type and the positive early versus late interaction appears only on white
+
+00:09:31.854 --> 00:09:36.634
+space tokens. Drop white space from the score and the pooled effect flip sign in
+
+00:09:36.634 --> 00:09:41.194
+every one of the three fully decomposed model instances. Match the full target
+
+00:09:41.194 --> 00:09:45.554
+mixture across the two corpora and that flip still appears in two of the three
+
+00:09:45.554 --> 00:09:51.154
+instances. A tokenizer only screen puts each held out pair into the risk region that the label
+
+00:09:51.154 --> 00:09:57.214
+already predicts. Position matching and adversarial reassignment of token types both leave the diagnosis
+
+00:09:57.214 --> 00:10:03.234
+in place. Look one token ahead and a smaller content word effect tracks how many content targets
+
+00:10:03.234 --> 00:10:09.134
+the untouched model already predicts. Use a depth specialization claim only after the target token
+
+00:10:09.134 --> 00:10:15.074
+mixture is reported. The effect is split by token type, and the sign still survives mixture matching.
+
+00:10:15.734 --> 00:10:21.474
+Skip those three checks, and the result is an artifact of the evaluation corpora rather than model architecture.
+
+00:10:22.194 --> 00:10:28.794
+Before we go, expanded low resource language benchmarks are being built to test transfer from high resource pre-training.
+
+00:10:29.274 --> 00:10:35.574
+That's models and agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes,
+
+00:10:35.574 --> 00:10:38.414
+and subscribe so you don't miss tomorrow's update.
+
+00:10:38.974 --> 00:10:44.074
+The AI world moves fast, we'll help you keep up, see you tomorrow, and if you'd rather
+
+00:10:44.074 --> 00:10:48.674
+watch then listen, find us on YouTube at Narin Network, links in the show notes.
+
+00:10:49.254 --> 00:10:54.054
+One more thing, if you like today's episode, our sister show First Principles Daily is worth
+
+00:10:54.054 --> 00:10:59.834
+a spot in your feed, reasoning from raw materials, not analogy, on the breakthroughs that actually
+
+00:10:59.834 --> 00:11:05.374
+cut costs. It's one of the Narin Network's daily briefings, all free at NarinNetwork.com.
+
+00:11:05.594 --> 00:11:11.214
+Our interviews are hosted by Mira, the network's AI documentarian, and the guest decides whether
+
+00:11:11.214 --> 00:11:16.954
+the conversation is published at all. How that works is at NarinNetwork.com Mira. This
+
+00:11:16.954 --> 00:11:19.694
+This episode used AI voice synthesis of my voice.
+
+00:11:20.274 --> 00:11:22.554
+Editorial selection and analysis are my own.
