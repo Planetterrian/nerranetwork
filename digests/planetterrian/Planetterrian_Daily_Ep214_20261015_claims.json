@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "gate": {
+    "passed": false,
+    "ledger_present": true,
+    "claims_total": 7,
+    "claims_anchored": 4,
+    "claims_verified": 4,
+    "shape_errors": [
+      "2: missing claim",
+      "3: missing claim"
+    ],
+    "dropped_claims": [
+      {
+        "id": "1",
+        "claim": "A 47-year study tracked fitness and strength metrics and showed the downturn begins around age 35.",
+        "reason": "episode_span not found in final episode text"
+      }
+    ],
+    "failed_verifications": [],
+    "uncovered_shapes": [
+      {
+        "pattern": "(?i)\\b(?:researchers|scientists|analysts|officials) (?:found|noted|estimated|documented)\\b",
+        "match": "Researchers found",
+        "sentence": "Researchers found that this decline accelerates as people get older, but starting to exercise in adulthood can still improve physical performance."
+      },
+      {
+        "pattern": "(?i)\\b(?:researchers|scientists|analysts|officials) (?:found|noted|estimated|documented)\\b",
+        "match": "researchers documented",
+        "sentence": "McGill University researchers documented that city development reduces the usual increase in bird species richness toward the tropics."
+      },
+      {
+        "pattern": "(?i)\\baccording to (?:a|an|the) [a-z]",
+        "match": "according to the a",
+        "sentence": "Hydroxide oxidation becomes energetically favored under partial solvation conditions, according to the ab initio calculations reported in the study."
+      }
+    ],
+    "reviewer_notes": [],
+    "verified_from_fetched": 4,
+    "stripped_sentences": [],
+    "stripped_notes": [],
+    "removed_items": 0,
+    "covered_by_item_source": 1,
+    "repair_recovered": 0,
+    "pre_strip": null,
+    "policy_version": 2,
+    "mode": "flag",
+    "flagged_sentences": [
+      "McGill University researchers documented that city development reduces the usual increase in bird species richness toward the tropics.",
+      "Hydroxide oxidation becomes energetically favored under partial solvation conditions, according to the ab initio calculations reported in the study."
+    ],
+    "flagged_count": 4,
+    "verified_count": 4
+  },
+  "claims": [
+    {
+      "id": "2",
+      "source_url": "https://www.nature.com/articles/s41586-026-11141-y?error=cookies_not_supported&code=b0ecb827-28b7-40e9-a8d3-60ef01f3cd44",
+      "source_title": "Microplastics enable spontaneous OH generation in water",
+      "supporting_quote": "Here we show that commodity microplastics exhibit intrinsic physicochemical activity in water, manifested by the spontaneous generation of reactive oxygen species that increases with interfacial hydrophobicity and strongly correlates with interfacial electrostatics.",
+      "confidence": "high",
+      "status": "malformed"
+    },
+    {
+      "id": "3",
+      "source_url": "https://phys.org/news/2026-10-ascension-island-lush-cloud-forest.html",
+      "source_title": "Ascension Island: How a planting project created a lush cloud forest",
+      "supporting_quote": "To learn about conditions on Ascension, a team from the Complex Systems Laboratory made up of Maull and Nastassia Knödlseder, a postdoctoral researcher at UPF's SynBio Lab, spent a month on the island in collaboration with its Department of Conservation and government.",
+      "confidence": "high",
+      "status": "malformed"
+    },
+    {
+      "id": "cov4",
+      "claim": "Qualitative research from the EIT Food Consumer Observatory found many people remain curious about precision fermentation products but need specific answers before trying them.",
+      "episode_span": "Qualitative research from the EIT Food Consumer Observatory found many people remain curious about precision fermentation products but need specific answers before trying them.",
+      "source_url": "https://phys.org/news/2026-10-consumers-clearer-precision-fermentation.html",
+      "supporting_quote": "New qualitative research from the EIT Food Consumer Observatory",
+      "confidence": "medium",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "cov5",
+      "claim": "Cincinnati Children's doctors used a new gene therapy approach that enabled some children born deaf to regain hearing.",
+      "episode_span": "Cincinnati Children's doctors used a new gene therapy approach that enabled some children born deaf to regain hearing.",
+      "source_url": "https://www.wlwt.com/article/new-gene-therapy-cincinnati-childrens-restore-hearing-deaf/74139390",
+      "supporting_quote": "New gene therapy helps Cincinnati Children's doctors restore hearing for children born deaf",
+      "confidence": "medium",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "cov6",
+      "claim": "CSIRO identified a growing set of practical measures already available to Australian producers for lowering agricultural greenhouse gas output.",
+      "episode_span": "CSIRO identified a growing set of practical measures already available to Australian producers for lowering agricultural greenhouse gas output.",
+      "source_url": "https://phys.org/news/2026-10-investment-priorities-emissions-agriculture.html",
+      "supporting_quote": "growing suite of promising options already available to reduce on-farm emissions",
+      "confidence": "medium",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "cov7",
+      "claim": "Laboratory tests indicate fine particulate matter from aircraft combustion increases its ability to trigger oxidative stress after aging in the atmosphere.",
+      "episode_span": "Laboratory tests indicate fine particulate matter from aircraft combustion increases its ability to trigger oxidative stress after aging in the atmosphere.",
+      "source_url": "https://phys.org/news/2026-10-fine-particles-aircraft-exhaust-lab.html",
+      "supporting_quote": "Fine particles from aircraft exhaust become more harmful over time, lab tests suggest",
+      "confidence": "medium",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "u1",
+      "claim": "McGill University researchers documented that city development reduces the usual increase in bird species richness toward the tropics.",
+      "episode_span": "McGill University researchers documented that city development reduces the usual increase in bird species richness toward the tropics.",
+      "source_url": "",
+      "supporting_quote": "",
+      "status": "unverified_uncovered",
+      "status_reason": "citation shape 'researchers documented' with no covering verified claim"
+    },
+    {
+      "id": "u2",
+      "claim": "Hydroxide oxidation becomes energetically favored under partial solvation conditions, according to the ab initio calculations reported in the study.",
+      "episode_span": "Hydroxide oxidation becomes energetically favored under partial solvation conditions, according to the ab initio calculations reported in the study.",
+      "source_url": "",
+      "supporting_quote": "",
+      "status": "unverified_uncovered",
+      "status_reason": "citation shape 'according to the a' with no covering verified claim"
+    }
+  ]
+}
