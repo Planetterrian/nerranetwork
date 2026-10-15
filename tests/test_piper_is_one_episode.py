@@ -12,6 +12,10 @@ that said "You can hang up now" three times.
 The edit in the repo fixes all four. These tests pin it, so a re-run of the
 splice or a later hand edit cannot quietly put any of it back. Times are on
 each session's own room clock, measured from the processed tracks.
+
+Oct 15 2026, Patrick: both of her answers on the bet are good, so the second
+one is back, and the question in front of it is re-recorded as the follow-up
+it became instead of the show's question asked word for word a second time.
 """
 
 import json
@@ -52,11 +56,29 @@ class TestPiperIsOneEpisode:
         for c in _pieces(CLOSING):
             assert c["end"] <= 172.8 or c["start"] >= 174.9
 
-    def test_the_repeated_bet_is_out(self):
-        # Mira asks the bet a second time at 548.1, and her "That's the bet
-        # that matters most" after the answer ends at 674.1.
+    def test_the_show_s_question_is_never_heard_twice(self):
+        # Mira asks the bet a second time, word for word, 548.1 to 552.2, and
+        # Piper starts "The one that I'm making is" at 555.1; "I really
+        # believe" starts at 557.3.
         for c in _pieces(CLOSING):
-            assert c["end"] <= 548.1 or c["start"] >= 674.1
+            assert c["end"] <= 548.1 or c["start"] >= 557.25
+
+    def test_her_second_answer_on_the_bet_is_kept(self):
+        # "...through the transition of AI" ends at 668.3.
+        assert any(c["start"] <= 557.3 and c["end"] >= 668.3 for c in _pieces(CLOSING))
+
+    def test_a_re_recorded_follow_up_comes_in_front_of_it(self):
+        cuts = EDL["cuts"]
+        (answer,) = [i for i, c in enumerate(cuts)
+                     if c.get("run_id") == CLOSING and c.get("start") == 557.28]
+        before = [c for c in cuts[:answer] if "from" in c][-1]
+        assert before["from"].endswith("/narration/piper_martz_2026_10_05_bet/bet_followup.mp3")
+        assert before.get("voice_match") and before.get("closing")
+        spec = json.loads((ROOT / "pipelines" / "voices" / "narration"
+                           / "piper_martz_2026_10_05_bet.json").read_text(encoding="utf-8"))
+        (seg,) = spec["segments"]
+        assert seg["id"] == "bet_followup"
+        assert "bet" in seg["text"] and "next twelve months" not in seg["text"]
 
     def test_her_feedback_and_the_sign_off_are_out(self):
         # Mira's "The absence of body language..." starts at 737.1, and

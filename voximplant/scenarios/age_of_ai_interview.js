@@ -798,6 +798,8 @@ function remember(who, text) {
     catch (err) { Logger.write("[aoa " + runId + "] sign-off check failed: " + err.message); }
     try { catchEarlyClosingRound(text); }
     catch (err) { Logger.write("[aoa " + runId + "] closing-round check failed: " + err.message); }
+    try { noteRoundQuestion(text); }
+    catch (err) { Logger.write("[aoa " + runId + "] round-question check failed: " + err.message); }
   } else {
     lastWordAnswered = true;
   }
@@ -814,6 +816,10 @@ function handoverNote() {
     "the premise of the show, and do NOT repeat questions already asked. " +
     "There was a brief technical pause; if anything, say something short and " +
     "natural like \"sorry, go on\" and carry straight on.\n" +
+    (Object.keys(roundAsked).length
+      ? "Closing questions already asked and answered in this interview, never" +
+        " to be asked again: " + Object.keys(roundAsked).join("; ") + ".\n"
+      : "") +
     (said ? "Here is the conversation so far:\n" + said + "\n" : "") +
     "=== END HANDOVER ===\n";
 }
@@ -1671,6 +1677,56 @@ function catchClosingWithoutTheAnswer(text) {
     Logger.write("[aoa " + runId + "] closing rescue failed: " + err.message);
   }
   return true;
+}
+
+// Oct 15 2026 (Patrick, after Piper Martz): Mira must never ask the same
+// question twice. Piper was asked her bet twice, word for word, and answered
+// it twice. The closing questions are a fixed list, so the room keeps its own
+// record of which ones she has asked, tells her after each one what is done,
+// and carries that list through a reconnect (handoverNote). If she asks one
+// again anyway, she is told at once, so she treats what follows as more on
+// the same subject and does not ask it a third time.
+const ROUND_QUESTIONS = [
+  ["the show's own question", /(one bet you'?re making|bet you'?re making for the next|cannot prove yet|wish more people understood)/i],
+  ["a book they would recommend", /book (you'?d|you would|you) (recommend|suggest)|recommend a book/i],
+  ["who you should interview next", /interview next|should (i|we) (interview|talk to|speak (to|with)) next/i],
+  ["the best advice they were ever given", /best (piece of )?advice/i],
+  ["who has inspired them most", /inspired you (the )?most|who inspires you/i],
+  ["whether they would be interviewed again", /interviewed by me again/i],
+  ["how being interviewed by an AI was", /experience of being interviewed|being interviewed by an ai/i],
+  ["what could be improved", /(thing|suggestion).{0,40}improve|could (we|i|be) improve/i],
+];
+const roundAsked = {};          // label -> minute it was first asked
+let roundRepeats = 0;
+
+function noteRoundQuestion(text) {
+  if (roomEnded || !grokAgent || !text) return;
+  ROUND_QUESTIONS.forEach(function (q) {
+    const label = q[0];
+    if (!q[1].test(text)) return;
+    if (roundAsked[label] !== undefined) {
+      roundRepeats += 1;
+      trace("round", "asked again: " + label + " (first at " + roundAsked[label] + " min)");
+      if (roundRepeats > 3) return;            // never nag
+      grokAgent.conversationItemCreate({
+        item: { type: "message", role: "system", content: [{ type: "input_text", text:
+          "[ROOM — system note, do not read aloud] You have just asked " + label +
+          " a second time. You asked it at minute " + roundAsked[label] + " and they" +
+          " answered. If they are answering again, let them finish and treat it as" +
+          " more on the same subject; do not ask it a third time, and move to a" +
+          " question you have not asked." }] },
+      });
+      return;
+    }
+    roundAsked[label] = elapsedMin();
+    trace("round", "asked: " + label);
+    grokAgent.conversationItemCreate({
+      item: { type: "message", role: "system", content: [{ type: "input_text", text:
+        "[ROUND — system note, do not read aloud] Closing questions asked so far" +
+        " in this interview: " + Object.keys(roundAsked).join("; ") + ". Never ask" +
+        " any of these again, in any wording." }] },
+    });
+  });
 }
 
 // The closing round itself, recognised from Mira's own words: the lightning
