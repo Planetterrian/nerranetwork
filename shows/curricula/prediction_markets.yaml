@@ -1,8 +1,3 @@
-# Oct 14 2026: eleven subjects added on Sep 23 duplicated ones the show had
-# already produced (same titles: the automated market maker, prediction
-# markets inside companies, Brier scores, polls against markets …) and
-# were removed before the show re-taught them; thirteen new subjects were
-# added. A restock checks the PRODUCED titles, not only the unproduced ids.
 queue:
 - id: price-as-probability
   title: Why a Price Can Be Read as a Probability
@@ -269,18 +264,9 @@ queue:
   arxiv: ti:forecast AND abs:"language model" AND abs:"prediction market"
   require:
   - forecast
-  produced: false
-- id: event-contracts-vs-gambling-law
-  title: Event Contract or Bet? The Legal Line
-  brief: Why the same contract can be a regulated derivative in one jurisdiction and unlicensed gambling in another; the federal-versus-state contest in the US, the provincial regime in Canada, and how other countries draw the line. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: regulation
-  search: event contracts gambling law jurisdiction
-  require:
-  - gambling|gaming|jurisdiction
-  exclude:
-  - cortical
-  arxiv: abs:"prediction market" AND (abs:gambling OR abs:regulation)
-  produced: false
+  produced: true
+  episode_number: 23
+  produced_date: '2026-10-15'
 - id: fees-and-house-take
   title: Fees, Spreads and the House Take
   brief: Where the venue's revenue comes from — trading fees, settlement fees, the spread, interest on deposits — how the take varies by venue, and why a price of 50 cents on both sides does not mean a fair coin. Education only; never a recommendation, a pick or a view on which side is mispriced.
@@ -292,16 +278,17 @@ queue:
   - cortical
   arxiv: abs:"prediction market" AND abs:fee
   produced: false
-- id: play-money-vs-real-money
-  title: Play Money, Real Money and Reputation
-  brief: What the research says about accuracy on play-money and reputation markets against real-money venues, why play-money forecasts can be surprisingly good, and where they fail. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: research
-  search: play money prediction market accuracy
+- id: reading-a-wallet
+  title: 'Reading a Wallet: How a Large Trade Gets Traced'
+  brief: How public blockchains let reporters and researchers attribute trades to a single wallet, what a cluster of wallets can and cannot prove about one person, the 2024 election whale as a case, and the limits of inference from on-chain data. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: evidence
+  search: Polymarket whale wallet traced on-chain analysis election
   require:
-  - play money|real money|reputation
+  - wallet|on-chain|blockchain|whale
+  - Polymarket|prediction market
   exclude:
   - cortical
-  arxiv: abs:"prediction market" AND abs:"play money"
+  arxiv: abs:"prediction market" AND abs:blockchain
   produced: false
 - id: long-shot-election-contracts
   title: Reading a 3% Contract
@@ -314,6 +301,17 @@ queue:
   - cortical
   arxiv: abs:"prediction market" AND abs:"low probability"
   produced: false
+- id: play-money-vs-real-money
+  title: Play Money, Real Money and Reputation
+  brief: What the research says about accuracy on play-money and reputation markets against real-money venues, why play-money forecasts can be surprisingly good, and where they fail. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: research
+  search: play money prediction market accuracy
+  require:
+  - play money|real money|reputation
+  exclude:
+  - cortical
+  arxiv: abs:"prediction market" AND abs:"play money"
+  produced: false
 - id: liquidity-provision-incentives
   title: Who Provides Liquidity and Why
   brief: Market makers, liquidity rewards programs, and why a venue pays traders to quote; what a reward program does to spreads and to the meaning of volume. Education only; never a recommendation, a pick or a view on which side is mispriced.
@@ -325,6 +323,18 @@ queue:
   - cortical
   arxiv: abs:"prediction market" AND abs:liquidity
   produced: false
+- id: partisan-bias
+  title: Do Traders Bet Their Hopes?
+  brief: The evidence on whether traders' own politics move the prices they pay, how researchers separate wishful trading from information, what happens to a biased price when other traders can take the other side, and the venues where the bias has been measured. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: evidence
+  search: partisan bias prediction markets wishful thinking traders politics
+  require:
+  - partisan|wishful|bias
+  - prediction market|betting market
+  exclude:
+  - cortical
+  arxiv: abs:"prediction market" AND abs:partisan
+  produced: false
 - id: volume-as-signal
   title: What Volume Does and Does Not Tell You
   brief: Why 24-hour volume matters for reading a price, how volume can be inflated by wash trading or rewards, and why a $200 million market on an election and a $5,000 market on a court date should be read differently. Education only; never a recommendation, a pick or a view on which side is mispriced.
@@ -335,17 +345,6 @@ queue:
   exclude:
   - cortical
   arxiv: abs:"prediction market" AND abs:volume
-  produced: false
-- id: media-and-markets-odds-on-air
-  title: 'Odds on the News: When Broadcasters Show Market Prices'
-  brief: How news organisations have started displaying market prices, the commercial arrangements behind some of them, the newsroom ethics guidance on reporting a price as a forecast, and the difference between a price and a poll for a viewer. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: people
-  search: news media prediction market prices journalism ethics
-  require:
-  - media|journalis|news
-  exclude:
-  - cortical
-  arxiv: abs:"prediction market" AND abs:media
   produced: false
 - id: history-iowa-electronic-markets
   title: 'A Short History: From Iowa to Today'
@@ -359,8 +358,8 @@ queue:
   arxiv: abs:"Iowa Electronic Markets"
   produced: false
 - id: order-books
-  title: "The Order Book: How Two Traders Find a Price"
-  brief: "How a central limit order book matches a buyer at 61 cents with a seller at 61 cents, what the best bid and best ask are, why the last trade and the midpoint can differ, and how an order book differs from an automated market maker in who carries the risk between trades. Education only; never a recommendation, a pick or a view on which side is mispriced."
+  title: 'The Order Book: How Two Traders Find a Price'
+  brief: How a central limit order book matches a buyer at 61 cents with a seller at 61 cents, what the best bid and best ask are, why the last trade and the midpoint can differ, and how an order book differs from an automated market maker in who carries the risk between trades. Education only; never a recommendation, a pick or a view on which side is mispriced.
   category: mechanism
   search: prediction market order book bid ask event contract exchange
   require:
@@ -368,71 +367,22 @@ queue:
   - prediction|event contract|exchange
   exclude:
   - cortical
-  arxiv: "ti:\"order book\" AND abs:\"prediction market\""
+  arxiv: ti:"order book" AND abs:"prediction market"
   produced: false
-- id: multi-outcome-sums
-  title: "Why the Prices in a Race Do Not Add Up to One"
-  brief: "A market with five candidates whose yes prices sum to 104 or to 97 cents: how fees, the spread, thin books and separate contracts per outcome let the total drift from one dollar, what a negative-risk or combined order does about it, and what a listener should read into the gap. Education only; never a recommendation, a pick or a view on which side is mispriced."
-  category: mechanism
-  search: prediction market multiple outcomes prices sum negative risk
+- id: event-contracts-vs-gambling-law
+  title: Event Contract or Bet? The Legal Line
+  brief: Why the same contract can be a regulated derivative in one jurisdiction and unlicensed gambling in another; the federal-versus-state contest in the US, the provincial regime in Canada, and how other countries draw the line. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: regulation
+  search: event contracts gambling law jurisdiction
   require:
-  - prediction|event contract|Polymarket|Kalshi
-  - sum|add up|negative risk|multi
+  - gambling|gaming|jurisdiction
   exclude:
   - cortical
-  arxiv: "abs:\"prediction market\" AND abs:\"multiple outcomes\""
-  produced: false
-- id: why-a-sure-thing-pays-less
-  title: "Why a 95-Cent Contract Is Not Free Money"
-  brief: "The time value of money locked in a contract that resolves in a year, what a five-cent return over twelve months means against a savings rate, why long-dated contracts price below the probability a trader actually holds, and how venues that pay interest on collateral change the arithmetic. Education only; never a recommendation, a pick or a view on which side is mispriced."
-  category: theory
-  search: prediction market long-dated contracts interest time value collateral
-  require:
-  - prediction|event contract|Kalshi|Polymarket
-  - interest|time value|long-dated|collateral|yield
-  exclude:
-  - cortical
-  arxiv: "abs:\"prediction market\" AND abs:discount"
-  produced: false
-- id: where-the-money-sits
-  title: "Where the Money Sits: Collateral, Custody and Payout"
-  brief: "What happens to the dollar a trader commits: segregated accounts at a regulated exchange, stablecoin collateral in a smart contract, who holds it between the trade and the resolution, what is insured and what is not, and how a payout is actually settled. Education only; never a recommendation, a pick or a view on which side is mispriced."
-  category: risk
-  search: prediction market collateral custody stablecoin segregated funds payout
-  require:
-  - custod|collateral|segregat|stablecoin|settle
-  - prediction|event contract|Polymarket|Kalshi
-  exclude:
-  - cortical
-  arxiv: "abs:\"prediction market\" AND abs:collateral"
-  produced: false
-- id: correlated-markets
-  title: "One Question Inside Another: Correlated and Combinatorial Markets"
-  brief: "How a market on a rate cut relates to a market on inflation, why separate contracts on linked events can carry prices that cannot all be right at once, what a combinatorial market is and why they are hard to run, and what the research says about pricing joint events. Education only; never a recommendation, a pick or a view on which side is mispriced."
-  category: theory
-  search: combinatorial prediction markets correlated contracts
-  require:
-  - combinatorial|correlat|joint|conditional
-  - prediction|market
-  exclude:
-  - cortical
-  arxiv: "ti:\"combinatorial prediction market\""
-  produced: false
-- id: reading-a-wallet
-  title: "Reading a Wallet: How a Large Trade Gets Traced"
-  brief: "How public blockchains let reporters and researchers attribute trades to a single wallet, what a cluster of wallets can and cannot prove about one person, the 2024 election whale as a case, and the limits of inference from on-chain data. Education only; never a recommendation, a pick or a view on which side is mispriced."
-  category: evidence
-  search: Polymarket whale wallet traced on-chain analysis election
-  require:
-  - wallet|on-chain|blockchain|whale
-  - Polymarket|prediction market
-  exclude:
-  - cortical
-  arxiv: "abs:\"prediction market\" AND abs:blockchain"
+  arxiv: abs:"prediction market" AND (abs:gambling OR abs:regulation)
   produced: false
 - id: replication-markets
-  title: "Betting on Science: Replication Markets"
-  brief: "The experiments that asked traders to price whether a published finding would replicate, how well the prices did against the replication attempts, the DARPA SCORE programme, and what it suggests about peer review. Education only; never a recommendation, a pick or a view on which side is mispriced."
+  title: 'Betting on Science: Replication Markets'
+  brief: The experiments that asked traders to price whether a published finding would replicate, how well the prices did against the replication attempts, the DARPA SCORE programme, and what it suggests about peer review. Education only; never a recommendation, a pick or a view on which side is mispriced.
   category: research
   search: replication markets prediction market science reproducibility
   require:
@@ -440,71 +390,23 @@ queue:
   - prediction market|betting market
   exclude:
   - cortical
-  arxiv: "ti:\"replication\" AND abs:\"prediction market\""
+  arxiv: ti:"replication" AND abs:"prediction market"
   produced: false
-- id: epidemic-forecasting-markets
-  title: "Forecasting an Outbreak With a Market"
-  brief: "The influenza and COVID forecasting markets run with health professionals, how their prices compared with statistical models and official forecasts, who was allowed to trade and why, and what public-health forecasters took from them. Education only; never a recommendation, a pick or a view on which side is mispriced."
-  category: research
-  search: influenza prediction market forecasting outbreak health professionals
+- id: why-a-sure-thing-pays-less
+  title: Why a 95-Cent Contract Is Not Free Money
+  brief: The time value of money locked in a contract that resolves in a year, what a five-cent return over twelve months means against a savings rate, why long-dated contracts price below the probability a trader actually holds, and how venues that pay interest on collateral change the arithmetic. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: theory
+  search: prediction market long-dated contracts interest time value collateral
   require:
-  - influenza|flu|epidemic|outbreak|COVID|pandemic
-  - prediction market|forecast
+  - prediction|event contract|Kalshi|Polymarket
+  - interest|time value|long-dated|collateral|yield
   exclude:
   - cortical
-  arxiv: "abs:\"prediction market\" AND (abs:influenza OR abs:epidemic)"
-  produced: false
-- id: taxes-on-event-contracts
-  title: "The Tax Line: How a Payout Is Taxed"
-  brief: "How the United States and Canada treat a payout from an event contract (capital gain, gambling winnings or ordinary income), what the venue reports, why the regulatory label of the contract decides the tax treatment, and the difference between a regulated exchange and an offshore venue for a filer. Education only; never a recommendation, a pick or a view on which side is mispriced."
-  category: law
-  search: event contracts tax treatment Kalshi 1099 capital gains Canada
-  require:
-  - tax|1099|capital gain|CRA|IRS
-  - event contract|prediction market|Kalshi
-  exclude:
-  - cortical
-  arxiv: "abs:\"prediction market\" AND abs:tax"
-  produced: false
-- id: canada-event-contracts
-  title: "Event Contracts in Canada"
-  brief: "Where a Canadian stands: provincial gambling regulators, the securities regulators' view of event contracts, which venues accept Canadian traders and under what rules, and how the Criminal Code's betting provisions apply. Education only; never a recommendation, a pick or a view on which side is mispriced."
-  category: regulation
-  search: Canada prediction markets event contracts legal provincial regulator
-  require:
-  - Canad|Ontario|Quebec|British Columbia|AGCO|OSC
-  - prediction market|event contract|Polymarket|Kalshi
-  exclude:
-  - cortical
-  arxiv: "abs:\"prediction market\" AND abs:Canada"
-  produced: false
-- id: betting-exchanges
-  title: "The Exchange Model: Betfair and the Lay Bet"
-  brief: "How a betting exchange matches backers against layers with no bookmaker in between, why its prices behave like a prediction market, how the UK regulates it as gambling, and what twenty-five years of exchange prices have taught researchers about market accuracy. Education only; never a recommendation, a pick or a view on which side is mispriced."
-  category: history
-  search: Betfair betting exchange lay bet prediction market accuracy
-  require:
-  - Betfair|betting exchange|lay
-  - market|odds
-  exclude:
-  - cortical
-  arxiv: "abs:\"betting exchange\""
-  produced: false
-- id: partisan-bias
-  title: "Do Traders Bet Their Hopes?"
-  brief: "The evidence on whether traders' own politics move the prices they pay, how researchers separate wishful trading from information, what happens to a biased price when other traders can take the other side, and the venues where the bias has been measured. Education only; never a recommendation, a pick or a view on which side is mispriced."
-  category: evidence
-  search: partisan bias prediction markets wishful thinking traders politics
-  require:
-  - partisan|wishful|bias
-  - prediction market|betting market
-  exclude:
-  - cortical
-  arxiv: "abs:\"prediction market\" AND abs:partisan"
+  arxiv: abs:"prediction market" AND abs:discount
   produced: false
 - id: how-fast-a-price-moves
-  title: "How Fast a Price Moves: Markets Against the Clock"
-  brief: "Studies that timed a market's reaction to a debate, a verdict or a data release in minutes, what a price does in the first seconds against the first hour, how an exchange's halt rules and a thin book shape the path, and why a fast first move is not always the right one. Education only; never a recommendation, a pick or a view on which side is mispriced."
+  title: 'How Fast a Price Moves: Markets Against the Clock'
+  brief: Studies that timed a market's reaction to a debate, a verdict or a data release in minutes, what a price does in the first seconds against the first hour, how an exchange's halt rules and a thin book shape the path, and why a fast first move is not always the right one. Education only; never a recommendation, a pick or a view on which side is mispriced.
   category: evidence
   search: prediction market price reaction news minutes real-time study
   require:
@@ -512,5 +414,100 @@ queue:
   - prediction market|event contract
   exclude:
   - cortical
-  arxiv: "abs:\"prediction market\" AND abs:\"real-time\""
+  arxiv: abs:"prediction market" AND abs:"real-time"
+  produced: false
+- id: betting-exchanges
+  title: 'The Exchange Model: Betfair and the Lay Bet'
+  brief: How a betting exchange matches backers against layers with no bookmaker in between, why its prices behave like a prediction market, how the UK regulates it as gambling, and what twenty-five years of exchange prices have taught researchers about market accuracy. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: history
+  search: Betfair betting exchange lay bet prediction market accuracy
+  require:
+  - Betfair|betting exchange|lay
+  - market|odds
+  exclude:
+  - cortical
+  arxiv: abs:"betting exchange"
+  produced: false
+- id: taxes-on-event-contracts
+  title: 'The Tax Line: How a Payout Is Taxed'
+  brief: How the United States and Canada treat a payout from an event contract (capital gain, gambling winnings or ordinary income), what the venue reports, why the regulatory label of the contract decides the tax treatment, and the difference between a regulated exchange and an offshore venue for a filer. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: law
+  search: event contracts tax treatment Kalshi 1099 capital gains Canada
+  require:
+  - tax|1099|capital gain|CRA|IRS
+  - event contract|prediction market|Kalshi
+  exclude:
+  - cortical
+  arxiv: abs:"prediction market" AND abs:tax
+  produced: false
+- id: multi-outcome-sums
+  title: Why the Prices in a Race Do Not Add Up to One
+  brief: 'A market with five candidates whose yes prices sum to 104 or to 97 cents: how fees, the spread, thin books and separate contracts per outcome let the total drift from one dollar, what a negative-risk or combined order does about it, and what a listener should read into the gap. Education only; never a recommendation, a pick or a view on which side is mispriced.'
+  category: mechanism
+  search: prediction market multiple outcomes prices sum negative risk
+  require:
+  - prediction|event contract|Polymarket|Kalshi
+  - sum|add up|negative risk|multi
+  exclude:
+  - cortical
+  arxiv: abs:"prediction market" AND abs:"multiple outcomes"
+  produced: false
+- id: media-and-markets-odds-on-air
+  title: 'Odds on the News: When Broadcasters Show Market Prices'
+  brief: How news organisations have started displaying market prices, the commercial arrangements behind some of them, the newsroom ethics guidance on reporting a price as a forecast, and the difference between a price and a poll for a viewer. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: people
+  search: news media prediction market prices journalism ethics
+  require:
+  - media|journalis|news
+  exclude:
+  - cortical
+  arxiv: abs:"prediction market" AND abs:media
+  produced: false
+- id: canada-event-contracts
+  title: Event Contracts in Canada
+  brief: 'Where a Canadian stands: provincial gambling regulators, the securities regulators'' view of event contracts, which venues accept Canadian traders and under what rules, and how the Criminal Code''s betting provisions apply. Education only; never a recommendation, a pick or a view on which side is mispriced.'
+  category: regulation
+  search: Canada prediction markets event contracts legal provincial regulator
+  require:
+  - Canad|Ontario|Quebec|British Columbia|AGCO|OSC
+  - prediction market|event contract|Polymarket|Kalshi
+  exclude:
+  - cortical
+  arxiv: abs:"prediction market" AND abs:Canada
+  produced: false
+- id: epidemic-forecasting-markets
+  title: Forecasting an Outbreak With a Market
+  brief: The influenza and COVID forecasting markets run with health professionals, how their prices compared with statistical models and official forecasts, who was allowed to trade and why, and what public-health forecasters took from them. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: research
+  search: influenza prediction market forecasting outbreak health professionals
+  require:
+  - influenza|flu|epidemic|outbreak|COVID|pandemic
+  - prediction market|forecast
+  exclude:
+  - cortical
+  arxiv: abs:"prediction market" AND (abs:influenza OR abs:epidemic)
+  produced: false
+- id: where-the-money-sits
+  title: 'Where the Money Sits: Collateral, Custody and Payout'
+  brief: 'What happens to the dollar a trader commits: segregated accounts at a regulated exchange, stablecoin collateral in a smart contract, who holds it between the trade and the resolution, what is insured and what is not, and how a payout is actually settled. Education only; never a recommendation, a pick or a view on which side is mispriced.'
+  category: risk
+  search: prediction market collateral custody stablecoin segregated funds payout
+  require:
+  - custod|collateral|segregat|stablecoin|settle
+  - prediction|event contract|Polymarket|Kalshi
+  exclude:
+  - cortical
+  arxiv: abs:"prediction market" AND abs:collateral
+  produced: false
+- id: correlated-markets
+  title: 'One Question Inside Another: Correlated and Combinatorial Markets'
+  brief: How a market on a rate cut relates to a market on inflation, why separate contracts on linked events can carry prices that cannot all be right at once, what a combinatorial market is and why they are hard to run, and what the research says about pricing joint events. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: theory
+  search: combinatorial prediction markets correlated contracts
+  require:
+  - combinatorial|correlat|joint|conditional
+  - prediction|market
+  exclude:
+  - cortical
+  arxiv: ti:"combinatorial prediction market"
   produced: false
