@@ -4777,3 +4777,49 @@ experiments:
       Guards tests/test_slate_readout_2026_10_14.py; readout §5 of
       docs/reviews/transitions_and_length_2026_10_14.md.
 
+  - id: x-follow-ask-2026-10-15
+    title: "@nerranetwork asks for a follow on about one post in four, and the closer rotates"
+    area: distribution
+    shipped: 2026-10-15
+    readout: 2026-11-12
+    status: reading
+    baseline: >
+      Oct 14-15 2026: 14 queued posts from seven shows plus Nerra Daily's
+      daily post, every one ending on the same line ("Full episode: link in
+      bio, or search Nerra Network in your podcast app."), none asking for a
+      follow. Nothing in the repo reads the account's follower count.
+    target: >
+      Four weeks on: the follower count read in X analytics grows faster per
+      week than in the four weeks before Oct 15, with no rise in unfollows
+      or mutes on the posts that carry the ask; x_post_follow_ask is True on
+      about a quarter of network posts, and no hook is clipped that the old
+      closer let through whole.
+    notes: >
+      engine.x_post.post_closers / FOLLOW_ASK_ROSTER / FOLLOW_ASK_CLOSERS;
+      run_show records x_post_follow_ask; Nerra Daily uses the edition date.
+      A daily show asks once every four days and posting neighbours never ask
+      on the same day. Copy only, no audio. Guards
+      tests/test_x_follow_ask_2026_10_15.py. The follower count is read by
+      hand: an API read would cost X credits.
+  - id: long-form-render-budget-2026-10-15
+    title: "The long-form render is budgeted at 2.1x the audio, not a fixed 600 s"
+    area: youtube
+    shipped: 2026-10-15
+    readout: 2026-10-29
+    status: reading
+    baseline: >
+      Models & Agents Ep204 (Oct 15) began a 1,493 s render with 1,189 s
+      left after the commit reserve, uploaded the long-form to YouTube and
+      died on the pipeline alarm before committing; GitHub's fallback cron
+      published the episode five hours later and YouTube kept both
+      long-forms. Renders Oct 8-15: median 962 s, p90 1,317 s; 1.91x the
+      audio at the median, 2.05x at p90.
+    target: >
+      Two weeks on: zero PIPELINE TIMEOUT failures inside the YouTube stage;
+      long_form_skipped_budget on no more than 3% of episodes.
+    notes: >
+      engine.video.estimate_long_form_render_seconds; env
+      LONG_FORM_RENDER_SECONDS_PER_AUDIO_SECOND (2.1) and the existing
+      LONG_FORM_RENDER_BUDGET_SECONDS floor; metric long_form_render_need_s.
+      Replayed on 253 committed episodes, about 4 would have skipped a render
+      that finished, each within minutes of the line.

@@ -587,7 +587,8 @@ def build_edition(
         # feed, summaries and digest are already written, so a failed or
         # unconfigured post costs nothing but the post; the outcome is in
         # the metrics either way.
-        x_posted, x_post_skipped = post_edition_to_x(spec, episode_num, title)
+        x_posted, x_post_skipped = post_edition_to_x(spec, episode_num, title,
+                                                     day=target_date)
 
         metrics = build_edition_metrics(
             episode_num, target_date, duration, segments,
@@ -620,14 +621,15 @@ def build_edition(
         shutil.rmtree(workdir, ignore_errors=True)
 
 
-def post_edition_to_x(spec: EditionSpec, episode_num: int, title: str):
+def post_edition_to_x(spec: EditionSpec, episode_num: int, title: str,
+                      day: "dt.date | None" = None):
     """Post the edition to X: its title and cover art, no link.
 
     ``(posted, reason)``. Oct 10 2026: a post with a link costs $0.20 on X's
     pay-per-use API and this one about $0.03; the @nerranetwork profile link
     carries people to the rundown. Interview episodes keep their links.
     """
-    from engine.x_post import clip_post_text, post_media
+    from engine.x_post import clip_post_text, post_closers, post_media
 
     cover = ROOT / "assets" / "covers" / f"{spec.slug.replace('_', '-')}.jpg"
     # The title opens "Ep 52: ..." and the label already says "Ep 52"
@@ -636,7 +638,10 @@ def post_edition_to_x(spec: EditionSpec, episode_num: int, title: str):
     posted, reason, _url, _media = post_media(
         env_prefix=spec.x_env_prefix,
         text=clip_post_text(label=f"📻 {spec.name}", hook=hook,
-                            episode_num=episode_num),
+                            episode_num=episode_num,
+                            closers=post_closers(
+                                spec.slug,
+                                day or dt.datetime.now(dt.timezone.utc).date())),
         media_paths=[str(cover)],
         label=f"{spec.name} Ep{episode_num}",
     )

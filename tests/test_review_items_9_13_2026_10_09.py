@@ -262,7 +262,7 @@ class TestXOutcome:
 
     def test_edition_builder_posts_after_publish(self):
         src = (ROOT / "scripts" / "build_daily_edition.py").read_text(encoding="utf-8")
-        assert src.index("_append_summary(spec, target_date, digest_md") < src.index("post_edition_to_x(spec, episode_num, title)") < src.index("x_posted=x_posted,")
+        assert src.index("_append_summary(spec, target_date, digest_md") < src.index("post_edition_to_x(spec, episode_num, title") < src.index("x_posted=x_posted,")
 
     def test_voices_publisher_posts_and_the_workflows_carry_the_secrets(self):
         src = (ROOT / "pipelines" / "voices" / "publish_episode.py").read_text(encoding="utf-8")

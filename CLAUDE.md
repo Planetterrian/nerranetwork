@@ -1934,6 +1934,27 @@ true, not acted on: Top World's Both Sides is a named disagreement, never the
 lead's counterpoint; Vancouver's source says 20 per cent; Nerra Daily's rundown
 links each show's post.
 
+### The follow ask on @nerranetwork, and a render budget sized from the audio (Oct 15 2026)
+
+Operator-directed (register `x-follow-ask-2026-10-15`,
+`long-form-render-budget-2026-10-15`; guards
+`tests/test_x_follow_ask_2026_10_15.py`). **Every @nerranetwork post had ended
+on one identical closer and none asked for a follow.** `engine.x_post.post_closers`
+now rotates the closer and, on about one post in four, swaps in a one-sentence
+follow ask (`FOLLOW_ASK_CLOSERS`): decided by the calendar and the show's place
+in `FOLLOW_ASK_ROSTER` (posting order; weekly shows carry their weekday), so a
+daily show asks every fourth day and posting neighbours never ask together. The
+ask is used only when the hook fits whole, and every list ends on the old
+closer, so no hook is clipped that was not clipped before. **A show that posts
+to the network account must be on the roster** (CI fails otherwise). run_show
+records `x_post_follow_ask`; Nerra Daily asks by its edition date. The follower
+count is read in X analytics by hand. **The long-form render is budgeted at
+2.1x the audio** (`engine.video.estimate_long_form_render_seconds`, measured
+median 1.91x / p90 2.05x over 60 renders; the 600 s stays as the floor):
+Models & Agents Ep204 started a 1,493 s render with 1,189 s left, uploaded the
+long-form, died on the alarm before committing, and the fallback cron uploaded
+a second long-form five hours later. Metric `long_form_render_need_s`.
+
 ### Gated shows — members-only and public-weekly (Oct 13 2026)
 
 Operator-directed: some shows will publish only for Nerra Personal members
