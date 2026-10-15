@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "gate": {
+    "passed": false,
+    "ledger_present": true,
+    "claims_total": 4,
+    "claims_anchored": 2,
+    "claims_verified": 0,
+    "shape_errors": [],
+    "dropped_claims": [
+      {
+        "id": "2",
+        "claim": "Over 20 million flex-fuel vehicles had been produced by 2014, with nearly half of major automakers' output being flex-fuel.",
+        "reason": "episode_span not found in final episode text"
+      },
+      {
+        "id": "3",
+        "claim": "As of 2022 there were over 21 million FFVs on U.S. roads and roughly 4,100 E85 stations.",
+        "reason": "episode_span not found in final episode text"
+      }
+    ],
+    "failed_verifications": [
+      {
+        "id": "1",
+        "url": "https://www.govinfo.gov/content/pkg/STATUTE-102/pdf/STATUTE-102-Pg2441.pdf",
+        "resolved": false,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": false,
+        "reason": "empty or non-text body",
+        "via": "http"
+      },
+      {
+        "id": "u2",
+        "url": "https://www.governorsbiofuelscoalition.org/flex-fuel-vehicles/",
+        "resolved": false,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": true,
+        "reason": "HTTP 403",
+        "via": "http"
+      }
+    ],
+    "uncovered_shapes": [
+      {
+        "pattern": "(?i)\\b(?:researchers|scientists|analysts|officials) (?:found|noted|estimated|documented)\\b",
+        "match": "analysts noted",
+        "sentence": "A few analysts noted that E85 pumps were still concentrated in only a handful of states, but the credits kept flowing regardless of actual fuel use."
+      },
+      {
+        "pattern": "(?i)\\baccording to (?:a|an|the) [a-z]",
+        "match": "according to the G",
+        "sentence": "By 2014 the fleet had passed twenty million flex-fuel vehicles, according to the Governors’ Biofuels Coalition."
+      }
+    ],
+    "reviewer_notes": [],
+    "verified_from_fetched": 0,
+    "stripped_sentences": [],
+    "stripped_notes": [],
+    "removed_items": 0,
+    "covered_by_item_source": 0,
+    "repair_recovered": 0,
+    "pre_strip": null,
+    "policy_version": 2,
+    "mode": "flag",
+    "flagged_sentences": [
+      "By 2014 the fleet had passed twenty million flex-fuel vehicles, according to the Governors’ Biofuels Coalition.",
+      "A few analysts noted that E85 pumps were still concentrated in only a handful of states, but the credits kept flowing regardless of actual fuel use."
+    ],
+    "flagged_count": 4,
+    "verified_count": 0
+  },
+  "claims": [
+    {
+      "id": "1",
+      "claim": "The Alternative Motor Fuels Act of 1988 created CAFE credits for dual-fueled vehicles using a 0.15 divisor with a 1.2 mpg cap.",
+      "episode_span": "",
+      "source_url": "https://www.govinfo.gov/content/pkg/STATUTE-102/pdf/STATUTE-102-Pg2441.pdf",
+      "supporting_quote": "alternative fuel ... divided by 0.15 ... credit ... not to exceed 1.2 miles per gallon",
+      "status": "unverified_not_found",
+      "status_reason": "empty or non-text body"
+    },
+    {
+      "id": "u2",
+      "claim": "By 2014 the fleet had passed twenty million flex-fuel vehicles, according to the Governors’ Biofuels Coalition.",
+      "episode_span": "By 2014 the fleet had passed twenty million flex-fuel vehicles, according to the Governors’ Biofuels Coalition.",
+      "source_url": "https://www.governorsbiofuelscoalition.org/flex-fuel-vehicles/",
+      "supporting_quote": "more than 20 million flex-fuel vehicles on U.S. roads by 2014",
+      "confidence": "medium",
+      "status": "unverified_unreachable",
+      "status_reason": "HTTP 403"
+    },
+    {
+      "id": "u1",
+      "claim": "A few analysts noted that E85 pumps were still concentrated in only a handful of states, but the credits kept flowing regardless of actual fuel use.",
+      "episode_span": "A few analysts noted that E85 pumps were still concentrated in only a handful of states, but the credits kept flowing regardless of actual fuel use.",
+      "source_url": "",
+      "supporting_quote": "",
+      "status": "unverified_uncovered",
+      "status_reason": "citation shape 'analysts noted' with no covering verified claim"
+    },
+    {
+      "id": "u2",
+      "claim": "By 2014 the fleet had passed twenty million flex-fuel vehicles, according to the Governors’ Biofuels Coalition.",
+      "episode_span": "By 2014 the fleet had passed twenty million flex-fuel vehicles, according to the Governors’ Biofuels Coalition.",
+      "source_url": "",
+      "supporting_quote": "",
+      "status": "unverified_uncovered",
+      "status_reason": "citation shape 'according to the G' with no covering verified claim"
+    }
+  ]
+}
