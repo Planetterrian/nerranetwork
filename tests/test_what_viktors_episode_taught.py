@@ -424,7 +424,8 @@ class TestEachShowHasItsOwnRoomClips:
 
 class TestTheRoomNeverPlaysAMissingClip:
     def test_the_run_row_takes_the_shows_clips(self):
-        insert = FIRE[FIRE.index('run = sb_insert("interview_runs", {'):]
+        # Oct 15 2026: the insert goes through insert_interview_run (same row).
+        insert = FIRE[FIRE.index('run = insert_interview_run({'):]
         insert = insert[:insert.index("})")]
         assert "**room_clips(show)," in insert
 

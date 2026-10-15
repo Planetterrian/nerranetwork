@@ -120,6 +120,10 @@ idempotency check.
    4. Apply `supabase/migrations/20260906_cohost_conference.sql`
       (idempotent; adds `host_mode`, `host_user`, per-leg recording URLs,
       local-recording manifest keys, join/leave timestamps).
+      Oct 15 2026: `supabase/migrations/20261015_interview_runs_keyterms.sql`
+      adds `interview_runs.keyterms` (Grok Voice 3.0 transcription key terms;
+      applied via the Supabase connector on Oct 15 2026 — the fire step
+      falls back to a row without it if a database lacks the column).
    5. Three dry runs with Patrick as host and a friend as guest: check the
       host page auto-answers, both local uploads complete (manifest
       `missing: []`), post-production picks `local` for both humans

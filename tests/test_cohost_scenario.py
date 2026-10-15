@@ -358,7 +358,8 @@ def test_voice_agent_model_is_explicit_and_deployed():
     WebSocket 1011 and Mira never spoke. The model must always be explicit."""
     js = SCENARIO.read_text(encoding="utf-8")
     assert "model: GROK_MODEL," in js, "createVoiceAgentAPIClient must send a model"
-    assert '"__GROK_VOICE_MODEL__"' in js and '"grok-voice-latest"' in js
+    # Oct 15 2026: pinned to grok-voice-3.0 (never the floating alias).
+    assert '"__GROK_VOICE_MODEL__"' in js and '"grok-voice-3.0"' in js
     assert "grok-voice-fast-1.0" not in js.split("DEPRECATED")[-1].split("const GROK_MODEL")[0] or True
     assert 'trace("grok", "agent created (model " + GROK_MODEL + ")")' in js
     # An immediate close is reported as xAI refusing the session.
@@ -366,7 +367,7 @@ def test_voice_agent_model_is_explicit_and_deployed():
     assert "xAI refused the session" in drop and "agentStartedAt" in drop
 
     vc = _load_client()
-    assert vc.DEFAULT_GROK_VOICE_MODEL == "grok-voice-latest"
+    assert vc.DEFAULT_GROK_VOICE_MODEL == "grok-voice-3.0"
     src = CLIENT.read_text(encoding="utf-8")
     assert 'source.replace("__GROK_VOICE_MODEL__", voice_model)' in src
 

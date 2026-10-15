@@ -1371,8 +1371,10 @@ class TestTheGuestKnowsWhenItIsOver:
         assert '"you can hang up now"' in self.PROMPT
 
     def test_and_then_says_nothing(self):
+        # Oct 15 2026: the prompt follows xAI's section order for Grok Voice
+        # 3.0; the block that follows HOW IT ENDS is INVITE PEOPLE IN now.
         block = self.PROMPT[self.PROMPT.index("HOW IT ENDS, FOR THE GUEST"):]
-        block = block[:block.index("WHAT YOU ARE")]
+        block = block[:block.index("INVITE PEOPLE IN")]
         assert "nothing at all once they have left the room" in block
 
     def test_the_page_tells_them_before_they_start(self):

@@ -998,6 +998,30 @@ today's work, not just explain yesterday's):
   (`waveform_video_url` — `<prefix>/video/<name>.mp4`) and HEAD-checked,
   because the produce step only ever put it in an email. Any new show that
   bypasses run_show inherits this hole; wire its distribution explicitly.
+  **Oct 15 2026 — Grok Voice 3.0 (register `grok-voice-3-2026-10-15`;
+  guards `tests/test_grok_voice_3_2026_10_15.py`).** 3.0 is the
+  speech-to-speech model behind the Voice Agent API — Mira's live room — and
+  NOT the `/v1/tts` endpoint the shows synthesise through, which has no model
+  id (the shows are untouched). The `grok-voice-latest` alias moved to 3.0 on
+  Oct 14 and 2.0 is deprecated, so Mira was upgraded by the alias before any
+  change here; **the model is PINNED now** (`grok-voice-3.0` in
+  `voximplant_client.DEFAULT_GROK_VOICE_MODEL` and the scenario fallback;
+  `GROK_VOICE_MODEL` overrides) — xAI's production guidance and the network's
+  floating-alias rule; the next version is adopted after a rehearsal. From the
+  3.0 docs: the scripted narration read runs `reasoning.effort: "none"`, the
+  live interview pins `"high"`; the fire step writes `interview_runs.keyterms`
+  (guest, organisation, title, show, network, hosts; migration
+  `20261015_interview_runs_keyterms.sql`, applied Oct 15) and the scenario
+  sends them as `audio.input.transcription.keyterms` — an insert on a database
+  without the column retries without it; Mira's prompt is reorganised under
+  xAI's recommended H2 order (Role & Persona / Objective / Conversation Flow /
+  Guardrails & Escalation / Voice & Communication Style / CRITICAL
+  INSTRUCTIONS) with every earlier paragraph kept verbatim (⚠️ AUDIO — the
+  first interview is the listen; the guide's trim to a shorter prompt is the
+  next A/B, not this one). `idle_timeout_ms` and `resumption` were read and
+  NOT adopted: the first conflicts with the hold-the-silence rule, the second
+  needs the Voximplant connector to pass `conversation_id`. Operator: run the
+  scenario deploy workflow so the pin and the session settings go live.
 - **NDaily** (Nerra Daily) — the network's **combined daily edition**
   (Aug 2026): one ~2 h episode/day that SPLICES the day's already-published
   English episode MP3s (pulled back from R2) with short Mira host links
