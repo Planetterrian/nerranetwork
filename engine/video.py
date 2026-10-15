@@ -51,6 +51,35 @@ logger = logging.getLogger(__name__)
 RENDER_LOOK_VERSION = 2
 
 
+# The long-form slideshow render takes about TWICE the episode's audio length
+# on the runners. Measured Oct 8-15 2026 over 60 committed renders
+# (`long_form_render_duration_s` / `audio_duration_s`): median 1.91, p90 2.05,
+# max 2.71; median 962 s, p90 1,317 s, max 1,494 s. run_show used to skip the
+# render only when fewer than a FIXED 600 s were left, under the median of
+# every show, so Models & Agents Ep204 (Oct 15) started a render with 1,189 s
+# available, rendered for 1,493 s, uploaded the long-form to YouTube and died
+# on the pipeline alarm before the commit. The episode reached the feed five
+# hours later from GitHub's fallback cron, and YouTube kept both long-forms.
+LONG_FORM_RENDER_SECONDS_PER_AUDIO_SECOND = 2.1
+
+
+def estimate_long_form_render_seconds(
+    audio_seconds: float,
+    *,
+    floor_seconds: float = 600.0,
+    seconds_per_audio_second: float = LONG_FORM_RENDER_SECONDS_PER_AUDIO_SECOND,
+) -> float:
+    """Seconds a long-form render of ``audio_seconds`` of audio should be
+    budgeted. Never below ``floor_seconds``; an unknown duration (0 / None /
+    negative) falls back to the floor alone."""
+    try:
+        audio = float(audio_seconds or 0.0)
+    except (TypeError, ValueError):
+        audio = 0.0
+    need = audio * float(seconds_per_audio_second) if audio > 0 else 0.0
+    return max(float(floor_seconds), need)
+
+
 def _run_ffmpeg(cmd: List[str], *, label: str) -> None:
     """Run ffmpeg and attach stderr to the raised error for CI debugging."""
     try:

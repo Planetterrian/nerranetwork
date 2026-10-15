@@ -204,8 +204,22 @@ class TestFollowups:
                 assert "delete + re-upload" not in note
 
     def test_apple_video_and_daily_edition_are_named(self, ep605, tesla_config):
+        """The Apple video note follows the record: it is named while the
+        summaries (which the video feed is rebuilt from) still carry the
+        episode's video, and not after the episode ages out of them.
+
+        Oct 15 2026: Tesla's summaries keep the latest 30 episodes, and Ep635
+        pushed Ep605 out, so its video left the Apple feed too. This guard had
+        pinned the note unconditionally and went red that morning."""
+        import json
         notes = " ".join(self._notes(ep605, tesla_config))
-        assert "Apple video feed" in notes
+        has_video = False
+        for path in sorted(ep605.digests_dir.glob("summaries_*.json")):
+            data = json.loads(path.read_text(encoding="utf-8"))
+            has_video = has_video or any(
+                str(e.get("episode_num")) == "605" and e.get("video")
+                for e in (data.get("summaries") or []))
+        assert ("Apple video feed" in notes) is has_video
         assert "Nerra Daily" in notes
 
 

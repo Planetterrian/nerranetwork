@@ -57,6 +57,12 @@ _PIPELINE_COMMIT_RESERVE_S = int(os.environ.get("PIPELINE_COMMIT_RESERVE_SECONDS
 _LONG_FORM_RENDER_BUDGET_S = int(
     os.environ.get("LONG_FORM_RENDER_BUDGET_SECONDS", 600)
 )
+# Oct 15 2026: the 600 s above is now only the FLOOR. The render takes about
+# twice the audio (engine.video.estimate_long_form_render_seconds holds the
+# measurement), so the guard budgets audio x this ratio when that is larger.
+_LONG_FORM_RENDER_PER_AUDIO_S = float(
+    os.environ.get("LONG_FORM_RENDER_SECONDS_PER_AUDIO_SECOND", 2.1)
+)
 
 
 # The fetch futures run inside a ``with ThreadPoolExecutor`` block, whose exit
@@ -5633,7 +5639,8 @@ def run(args: argparse.Namespace) -> None:
             # $0.20 on X's API, this about $0.03. No cross-promo reply: its
             # link would cost another $0.20.
             from engine import x_queue
-            from engine.x_post import clip_post_text, post_media
+            from engine.x_post import (
+                clip_post_text, has_follow_ask, post_closers, post_media)
             if "hook" not in extra_context and locals().get("hook"):
                 extra_context["hook"] = hook
             _clip = str(extra_context.get("x_clip_path") or "")
@@ -5655,9 +5662,14 @@ def run(args: argparse.Namespace) -> None:
                         hook=extra_context.get("hook") or "", transcript_path=_tx)
                     if _clip:
                         metrics.record("x_clip_rendered_for_x", True)
+            # Oct 15 2026: the closer rotates, and about one post in four
+            # asks for a follow (engine.x_post.post_closers). The ask never
+            # costs the hook a word: it is used only when the hook fits whole.
             _x_text = clip_post_text(label=_x_label(config),
                                      hook=extra_context.get("hook") or "",
-                                     episode_num=episode_num)
+                                     episode_num=episode_num,
+                                     closers=post_closers(config.slug, today))
+            metrics.record("x_post_follow_ask", has_follow_ask(_x_text))
             _media_for_x = _clip if (_clip and Path(_clip).is_file()) else _show_cover_path(config)
             _kind = "clip" if _media_for_x and _media_for_x == _clip else (
                 "image" if _media_for_x else "none")
@@ -7900,13 +7912,21 @@ def _publish_youtube(
         _long_render_budget = (
             _pipeline_budget_remaining() - _PIPELINE_COMMIT_RESERVE_S
         )
-        if _long_render_budget < _LONG_FORM_RENDER_BUDGET_S:
+        from engine.video import estimate_long_form_render_seconds
+        _long_render_need = estimate_long_form_render_seconds(
+            _ep_duration,
+            floor_seconds=_LONG_FORM_RENDER_BUDGET_S,
+            seconds_per_audio_second=_LONG_FORM_RENDER_PER_AUDIO_S,
+        )
+        result["long_form_render_need_s"] = round(_long_render_need, 1)
+        if _long_render_budget < _long_render_need:
             logger.warning(
                 "::warning::%s: skipping the long-form render — %.0fs left "
-                "after the %ds commit reserve, under the %ds a render needs. "
-                "Shorts and the audio episode still publish.",
+                "after the %ds commit reserve, under the %.0fs a render of "
+                "%.0fs of audio needs. Shorts and the audio episode still "
+                "publish.",
                 config.slug, _long_render_budget, _PIPELINE_COMMIT_RESERVE_S,
-                _LONG_FORM_RENDER_BUDGET_S,
+                _long_render_need, _ep_duration,
             )
             _render_long = False
             _policy_publish_long = False

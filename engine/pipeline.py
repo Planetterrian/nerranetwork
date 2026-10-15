@@ -221,6 +221,12 @@ def record_youtube_outcomes(
         if youtube_urls.get("long_form_render_duration_s") is not None:
             metrics.record("long_form_render_duration_s",
                            float(youtube_urls["long_form_render_duration_s"]))
+        # Oct 15 2026: the time the guard estimated the render would need
+        # (audio x the measured ratio, never under the floor), recorded on
+        # every episode that reached the guard so the ratio stays measurable.
+        if youtube_urls.get("long_form_render_need_s") is not None:
+            metrics.record("long_form_render_need_s",
+                           float(youtube_urls["long_form_render_need_s"]))
         if youtube_urls.get("long_form_skipped_budget"):
             metrics.record("long_form_skipped_budget", True)
             metrics.record("long_form_render_budget_s",

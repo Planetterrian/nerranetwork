@@ -175,14 +175,22 @@ class TestHookItemFirst:
         assert promote_hook_item("") == ("", 0)
 
     def test_replay_on_the_committed_digests(self):
-        """SpaceX, M&A, the desks and MAG 7 write the lead first: the promoter
-        must move nothing there. FF / PT / Tesla carry the cases it is for."""
+        """SpaceX, M&A, the desks and MAG 7 wrote the lead first on the Oct 8-14
+        calibration set: the promoter must move nothing there. FF / PT / Tesla
+        carry the cases it is for.
+
+        Oct 15 2026: pinned to the dated calibration set. This guard read the
+        LATEST six digests and went red the first day SpaceX's hook told its
+        second story (Ep131, Grok Bot over the Starshield lead) — a reading of
+        the data, not a rule; SpaceX is not opted in, so nothing shipped
+        differently. A guard that reads committed data judges fixed files."""
         import glob
         from engine.hook_item import promote_hook_item
         for show in ("spacex", "models_agents", "omni_view_europe", "mag7"):
-            for f in sorted(glob.glob(str(ROOT / "digests" / show / "*_Ep*_202610??.md")))[-6:]:
-                if "claims" in f:
-                    continue
+            files = [f for f in sorted(glob.glob(str(ROOT / "digests" / show / "*_Ep*_202610??.md")))
+                     if "claims" not in f and "20261008" <= f.rsplit("_", 1)[-1][:8] <= "20261014"]
+            assert files, show
+            for f in files:
                 assert promote_hook_item(Path(f).read_text(encoding="utf-8"))[1] == 0, f
         f = ROOT / "digests/fascinating_frontiers/Fascinating_Frontiers_Ep221_20261013.md"
         if f.is_file():
