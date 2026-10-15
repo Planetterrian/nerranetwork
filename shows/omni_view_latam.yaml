@@ -66,6 +66,16 @@ frame_memory: true
 # No `keywords:` list on purpose: these feeds are regional by construction,
 # and a title keyword filter would drop on-region stories whose titles name
 # no country. The REGION RULE in the prompt decides what qualifies.
+# Oct 15 2026 (operator-directed, the first shows gated): members only. An
+# episode is made only on a day a paying Nerra Personal member carries this
+# desk, and unreadable demand skips rather than producing for nobody. The
+# audio goes to the private bucket and reaches members inside their Personal
+# edition; nothing publishes publicly (engine/access.py, docs/nerra_personal.md).
+access:
+  mode: members_only
+  min_members: 1
+  unknown_demand: skip
+
 sources:
 - url: https://feeds.bbci.co.uk/news/world/latin_america/rss.xml
   label: BBC Latin America
@@ -288,7 +298,7 @@ slow_news:
   enabled: false
 
 newsletter:
-  enabled: true  # Oct 1 2026: the show page already offered this signup; the Worker now keeps the tag
+  enabled: false  # Oct 15 2026: members only — a members day never reaches the newsletter
   platform: buttondown
   api_key_env: BUTTONDOWN_API_KEY
   status: about_to_send

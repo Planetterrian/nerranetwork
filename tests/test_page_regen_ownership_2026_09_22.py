@@ -123,7 +123,14 @@ class TestTheDerivationIsReal:
             f"{sorted(slugs - set(G.NETWORK_SHOWS))}")
 
     def test_a_scheduled_show_is_never_called_unowned(self):
-        assert not (set(unowned_slugs()) & run_show_slugs())
+        """A scheduled PUBLIC show. Oct 15 2026: a members-only show is
+        scheduled but its run never writes its page, so it is unowned by
+        design (the Omni View desks)."""
+        from engine.access import gated_shows
+
+        members_only = {s for s, m in gated_shows().items() if m == "members_only"}
+        assert not (set(unowned_slugs()) & (run_show_slugs() - members_only))
+        assert members_only <= set(unowned_slugs())
 
     def test_nerra_daily_counts_as_owned_because_its_build_rebuilds_it(self):
         """Not an exception for its own sake: build_daily_edition runs the

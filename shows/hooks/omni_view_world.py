@@ -35,14 +35,22 @@ ARTICLES_PER_DESK = 2
 
 
 def todays_desk_digests(root: Path, date: _dt.date) -> List[Tuple[object, str]]:
-    """(desk, digest text) for every desk that published on *date*."""
+    """(desk, digest text) for every desk that produced an episode on *date*.
+
+    Oct 15 2026: the desks are members-only (engine.access), so a desk's
+    episode lives in ``members/`` — the text stays in this repository by the
+    operator's choice; only the audio is private. Top World reads it from
+    either place. What it takes is unchanged: headlines and the ORIGINAL
+    publisher URLs as hook articles, and the summaries as a ranking note the
+    claims gate never reads. No desk prose reaches a public episode."""
     stamp = date.strftime("%Y%m%d")
     out = []
     for d in DESKS:
         ddir = root / "digests" / d.slug
         if (ddir / f".skip_{stamp}.json").exists():
             continue
-        hits = sorted(ddir.glob(f"{d.prefix}_Ep*_{stamp}.md"))
+        pattern = f"{d.prefix}_Ep*_{stamp}.md"
+        hits = sorted(ddir.glob(pattern)) or sorted((ddir / "members").glob(pattern))
         if not hits:
             continue
         try:
@@ -59,7 +67,7 @@ def intake_line(desks_live: int, desks_total: int) -> str:
     (plan §3.9 "intake honesty"): the reader is told how many, in the
     show's own words, and the number is the count of desk digests read."""
     if desks_live <= 0:
-        return "This edition was drawn from the world feeds alone; no regional desk had published by press time."
+        return "This edition was drawn from the world feeds alone; no regional desk had filed by press time."
     if desks_live >= desks_total:
         return f"This edition draws on all {desks_total} Omni View regional desks."
     return (f"This edition draws on {desks_live} of the {desks_total} Omni View regional desks "

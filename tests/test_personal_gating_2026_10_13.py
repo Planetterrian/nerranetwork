@@ -38,13 +38,23 @@ def _cfg(mode="public", weekday=0, minimum=1, slug="mag7"):
 
 
 class TestTheSetting:
+    #: Oct 15 2026, operator-directed: the five Omni View regional desks are
+    #: the first shows gated. Every other show is public.
+    GATED_TODAY = {
+        "omni_view_europe": "members_only",
+        "omni_view_asia_pacific": "members_only",
+        "omni_view_africa_mideast": "members_only",
+        "omni_view_latam": "members_only",
+        "omni_view_north_america": "members_only",
+    }
+
     def test_default_is_public_and_every_show_is_public_today(self):
         from engine.config import discover_show_slugs, load_config
 
         for slug in discover_show_slugs(ROOT / "shows"):
             cfg = load_config(ROOT / "shows" / f"{slug}.yaml")
-            assert A.access_mode(cfg) == "public", (
-                f"{slug} is gated — flipping a show is the operator's call; "
+            assert A.access_mode(cfg) == self.GATED_TODAY.get(slug, "public"), (
+                f"{slug} changed access — flipping a show is the operator's call; "
                 "update this guard in the same change")
 
     def test_an_unknown_mode_stops_the_run(self):

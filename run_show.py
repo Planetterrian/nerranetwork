@@ -816,7 +816,8 @@ def run(args: argparse.Namespace) -> None:
                 or resume_publish):
             _demand = _access.fetch_show_demand()
             _decision = _access.demand_decision(
-                config.slug, _demand, _access.min_members(config))
+                config.slug, _demand, _access.min_members(config),
+                unknown=_access.unknown_demand(config))
             metrics.record("access_members", _decision.members)
             metrics.record("access_demand", _decision.reason)
             logger.info("Access: demand %s (%s members)", _decision.reason,
@@ -827,6 +828,16 @@ def run(args: argparse.Namespace) -> None:
                     "today's members episode anyway (a paying member may be "
                     "waiting; set PERSONAL_DEMAND_TOKEN to gate on demand)",
                     config.slug)
+            if _decision.reason == "demand_unknown_skip":
+                # Oct 15 2026: a show set to skip on unknown demand (the
+                # Omni View desks) is made only for a member we can count.
+                _skip_episode(
+                    "member_demand_unknown",
+                    f"{config.name} is {_access.describe(config).lower()} and "
+                    "is made only when a paying member is known to carry it; "
+                    "member demand could not be read (set PERSONAL_DEMAND_TOKEN "
+                    "and deploy the gallery Worker).",
+                )
             if not _decision.run:
                 _skip_episode(
                     "no_member_demand",

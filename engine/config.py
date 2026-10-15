@@ -631,11 +631,14 @@ class AccessConfig:
     ``public_weekday`` is 0 = Monday … 6 = Sunday. ``min_members: 0``
     produces every scheduled day whatever the demand (the operator's
     override to keep a gated show running while it has no members).
+    ``unknown_demand`` (Oct 15 2026) is what a members day does when the
+    member counts cannot be read: ``produce`` (default) or ``skip``.
     """
 
     mode: str = "public"
     public_weekday: int = 0
     min_members: int = 1
+    unknown_demand: str = "produce"
 
 
 @dataclass

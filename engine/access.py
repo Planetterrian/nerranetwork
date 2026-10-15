@@ -122,6 +122,31 @@ def min_members(config: Any) -> int:
     return max(0, int(getattr(access, "min_members", 1) or 0))
 
 
+#: What a members day does when demand cannot be read (Oct 15 2026).
+#: ``produce`` is the Oct 13 default: a paying member may be waiting, so the
+#: episode is made anyway. ``skip`` is for a show the operator wants made ONLY
+#: when someone is known to carry it — the Omni View regional desks, the first
+#: shows gated: "they only publish if a person has them in their personal
+#: subscription". An unreadable demand then skips with
+#: ``member_demand_unknown``, a warning the audit keeps until the counts-only
+#: endpoint answers.
+UNKNOWN_DEMAND_MODES = ("produce", "skip")
+
+
+def unknown_demand(config: Any) -> str:
+    """The show's validated ``access.unknown_demand``.
+
+    An unknown value RAISES, like an unknown mode: a typo must never decide
+    by itself whether a gated episode is made."""
+    access = getattr(config, "access", None)
+    value = str(getattr(access, "unknown_demand", "produce") or "produce").strip()
+    if value not in UNKNOWN_DEMAND_MODES:
+        raise ValueError(
+            f"{getattr(config, 'slug', '?')}: access.unknown_demand {value!r} is not "
+            f"one of {', '.join(UNKNOWN_DEMAND_MODES)}")
+    return value
+
+
 def is_gated(config: Any) -> bool:
     """True when some or all of the show's episodes are for members."""
     return access_mode(config) != "public"
@@ -208,17 +233,20 @@ def fetch_show_demand(*, timeout: float = 20.0) -> Optional[Dict[str, int]]:
 
 
 def demand_decision(slug: str, demand: Optional[Dict[str, int]],
-                    minimum: int) -> DemandDecision:
+                    minimum: int, unknown: str = "produce") -> DemandDecision:
     """Whether a members-only day should be produced.
 
     ``minimum <= 0`` always produces (operator override). Unknown demand
-    produces (fail open — see the module docstring). Otherwise the show
+    produces (fail open — see the module docstring) unless *unknown* is
+    ``skip``, which skips it (``demand_unknown_skip``). Otherwise the show
     runs when at least *minimum* paying members carry it.
     """
     if minimum <= 0:
         count = None if demand is None else demand.get(slug, 0)
         return DemandDecision(True, count, "min_members_0")
     if demand is None:
+        if unknown == "skip":
+            return DemandDecision(False, None, "demand_unknown_skip")
         return DemandDecision(True, None, "demand_unknown")
     count = demand.get(slug, 0)
     if count >= minimum:

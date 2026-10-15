@@ -4823,3 +4823,27 @@ experiments:
       LONG_FORM_RENDER_BUDGET_SECONDS floor; metric long_form_render_need_s.
       Replayed on 253 committed episodes, about 4 would have skipped a render
       that finished, each within minutes of the line.
+  - id: desks-members-only-2026-10-15
+    title: "The five Omni View regional desks publish only for Nerra Personal members who carry them"
+    area: members
+    shipped: 2026-10-15
+    readout: 2026-11-12
+    status: reading
+    baseline: >
+      Oct 2026: the five desks published daily to public feeds, blogs and
+      newsletters (Mira, ~10-12 min each). No show was gated. The gallery
+      Worker answered 404 on /api/admin/show-demand, so member demand could
+      not be read, and api/member_metrics.json reported membership unmeasured.
+    target: >
+      After PERSONAL_DEMAND_TOKEN is set and the gallery Worker redeployed: a
+      desk is produced on exactly the days a paying member carries it, every
+      produced episode reaches that member's Personal edition, no desk episode
+      appears on any public surface, and Top World News keeps reading the
+      desks that ran (desks_live_at_publish matches the desks produced).
+    notes: >
+      access.mode members_only, min_members 1, unknown_demand skip (new knob,
+      default produce) on the five desk YAMLs; newsletter off. Until the
+      demand endpoint answers, every desk day skips with
+      member_demand_unknown (the audit warns). Top World reads members/
+      digests; no_member_demand is not an audit issue; members-only pages are
+      refreshed nightly. Guards tests/test_desks_members_only_2026_10_15.py.

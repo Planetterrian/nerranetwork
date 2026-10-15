@@ -596,6 +596,13 @@ def check_missed_episodes(
 
         # Check for a skip marker — pipeline ran but intentionally skipped
         marker = _read_skip_marker(info["output_dir"], target_date)
+        # Oct 15 2026: a members-only show that no paying member carries is
+        # not made, by design (the Omni View desks, five a day). That is the
+        # gate working, not a missed or skipped episode; an UNREADABLE demand
+        # (member_demand_unknown) still warns below, because it is an
+        # operator item.
+        if marker and marker.get("reason") == "no_member_demand":
+            continue
         if marker:
             reason = marker.get("reason", "unknown")
             detail = marker.get("detail", "No detail provided.")

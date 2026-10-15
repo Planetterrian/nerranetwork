@@ -66,8 +66,19 @@ def run_show_slugs() -> set:
 
 
 def scheduled_owners() -> dict:
-    """slug -> the file whose scheduled job re-renders that show's page."""
-    owners = {slug: ".github/workflows/run-show.yml" for slug in run_show_slugs()}
+    """slug -> the file whose scheduled job re-renders that show's page.
+
+    Oct 15 2026: a members-only show (engine.access) is scheduled by
+    run-show.yml but its run never writes its page — a members day stops
+    before the publish phase — so run-show does not own it. The Omni View
+    desks are the first: without this their pages would never show the
+    members-only badge or the "Add it to Nerra Personal" band."""
+    from engine.access import gated_shows
+
+    members_only = {s for s, mode in gated_shows(REPO_ROOT).items()
+                    if mode == "members_only"}
+    owners = {slug: ".github/workflows/run-show.yml" for slug in run_show_slugs()
+              if slug not in members_only}
     owners.update(_OTHER_SCHEDULED_OWNERS)
     return owners
 
