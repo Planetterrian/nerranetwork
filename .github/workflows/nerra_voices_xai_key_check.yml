@@ -43,8 +43,11 @@ jobs:
           # endpoint directly whether the model the scenario deploys with is
           # served: a deprecated id is what killed every interview on
           # Sept 10 2026 (bare WebSocket close 1011).
-          for model in [os.environ.get("GROK_VOICE_MODEL", "").strip() or "grok-voice-latest",
-                        "grok-voice-fast-1.0", "grok-voice-think-fast-1.0", "grok-voice-think-fast-2.0"]:
+          # Oct 15 2026: the pinned model, the alias it should equal, and the
+          # deprecated 2.0 — a refusal on 2.0 is expected once xAI retires it
+          # and says nothing about the pin; a refusal on 3.0 is the Sept 10 shape.
+          for model in [os.environ.get("GROK_VOICE_MODEL", "").strip() or "grok-voice-3.0",
+                        "grok-voice-latest", "grok-voice-2.0"]:
               req = urllib.request.Request(
                   f"https://api.x.ai/v1/realtime?model={model}",
                   headers={"Authorization": "Bearer " + key.strip(),

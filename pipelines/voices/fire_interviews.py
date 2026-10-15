@@ -23,6 +23,8 @@ import json
 import os
 import re
 
+import requests
+
 from common import (  # noqa: E402
     OPERATOR_EMAIL, ROOT, carry_the_show_block, cohost_name, load_prompt, logger,
     mira_signature_html, guest_notes_block, guest_agenda_block, pacific_time,
@@ -444,6 +446,57 @@ def turn_detection() -> dict:
     return {"silence_duration_ms": max(600, min(2500, ms))}
 
 
+#: Grok Voice 3.0 transcription key terms: at most this many, each this long
+#: (xAI: max 100 terms of up to 50 characters, updatable mid-session).
+KEYTERMS_MAX = 100
+KEYTERM_MAX_CHARS = 50
+
+
+def keyterms_for(app: dict, show, cohost: str = "") -> list:
+    """The proper nouns the live transcription should get right (Oct 15 2026,
+    Grok Voice 3.0 ``audio.input.transcription.keyterms``): the guest's name
+    and its parts, their organisation and title, the show, the network, the
+    host and the co-host. Deduplicated, in that order, trimmed to the API's
+    limits. The words Mira hears — and the fact-check tool reads — spell a
+    guest's name the way the guest does, instead of the nearest common word."""
+    raw = [
+        app.get("name") or "",
+        *str(app.get("name") or "").split(),
+        app.get("organization") or "",
+        app.get("title") or "",
+        getattr(show, "name", "") or "",
+        "Nerra Network", "Mira",
+        cohost or "",
+        *str(cohost or "").split(),
+    ]
+    out: list = []
+    for term in raw:
+        t = " ".join(str(term).split())[:KEYTERM_MAX_CHARS]
+        if len(t) >= 2 and t.lower() not in {o.lower() for o in out}:
+            out.append(t)
+        if len(out) >= KEYTERMS_MAX:
+            break
+    return out
+
+
+def insert_interview_run(row: dict) -> dict:
+    """``sb_insert("interview_runs", row)`` that survives the Oct 15 2026
+    ``keyterms`` column not being applied yet: PostgREST refuses a row naming
+    a column the table lacks, and a refused insert would cost the interview.
+    Retries once without the column and names the migration to apply."""
+    try:
+        return sb_insert("interview_runs", row)
+    except requests.HTTPError as exc:
+        body = (getattr(exc.response, "text", "") or "")[:400]
+        if "keyterms" in row and exc.response is not None and exc.response.status_code in (400, 404) \
+                and "keyterms" in body:
+            logger.warning(
+                "interview_runs has no keyterms column (apply supabase/migrations/"
+                "20261015_interview_runs_keyterms.sql); firing without key terms: %s", body)
+            return sb_insert("interview_runs", {k: v for k, v in row.items() if k != "keyterms"})
+        raise
+
+
 def compile_mira_prompt(interview: dict, app: dict, brief: dict) -> str:
     """Mira's system prompt for this interview, branded for its show.
 
@@ -775,7 +828,7 @@ def fire_due_interviews() -> int:
 
             call_mode = (interview.get("call_mode") or "webrtc").strip()
             host_mode = host_mode_enabled(interview)
-            run = sb_insert("interview_runs", {
+            run = insert_interview_run({
                 "interview_id": interview["id"],
                 "mira_system_prompt": (compile_closing_prompt(interview, app)
                                        if is_closing_session(interview)
@@ -790,6 +843,10 @@ def fire_due_interviews() -> int:
                 # default. About ten interruptions an hour at 1.1 s, and Scott
                 # Pulcini felt hurried; 1.3 s waits out a breath between clauses.
                 "turn_detection": turn_detection(),
+                # Oct 15 2026 (Grok Voice 3.0): the proper nouns the live
+                # transcription should spell right. Read by the scenario into
+                # audio.input.transcription.keyterms; [] sends nothing.
+                "keyterms": keyterms_for(app, show, cohost_name()),
                 "tools": MIRA_TOOLS,
                 "guest_phone": phone,
                 "caller_id": caller_id,

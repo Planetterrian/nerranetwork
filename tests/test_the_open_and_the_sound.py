@@ -97,7 +97,10 @@ class TestHowSheSounds:
         assert "if (!rate) return null" in body, "default must change nothing"
 
     def test_both_the_room_and_the_narration_can_use_it(self):
-        assert "const outFormat = audioOutputFormat();" in SCENARIO
+        # Oct 15 2026: the room's audio block is built by sessionAudioConfig
+        # (output format + Grok Voice 3.0 key terms) on top of the same rate.
+        assert "const audio = audioOutputFormat() || {};" in SCENARIO
+        assert "const audioCfg = sessionAudioConfig();" in SCENARIO
         assert "audioOutputFormat(custom.audio_rate)" in SCENARIO
 
     def test_no_object_spread_in_the_scenario(self):

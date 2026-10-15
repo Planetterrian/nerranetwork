@@ -114,8 +114,11 @@ const ROLES = { guest: true, host: true };
 // Mira never spoke. Always send an explicit model. Substituted at deploy
 // time from the GROK_VOICE_MODEL env/var (see upload_scenario); the
 // literal below is the fallback if substitution did not run.
+// Oct 15 2026: pinned to grok-voice-3.0 (xAI: pin a versioned name in
+// production; the `grok-voice-latest` alias moved to 3.0 on Oct 14 and 2.0
+// is deprecated). A version is adopted here after a rehearsal, never by alias.
 const GROK_MODEL = ("__GROK_VOICE_MODEL__".indexOf("__") === 0)
-  ? "grok-voice-latest" : "__GROK_VOICE_MODEL__";
+  ? "grok-voice-3.0" : "__GROK_VOICE_MODEL__";
 // SESSION RELAY (Sept 10 2026). xAI caps ONE Voice Agent session at
 // GROK_SESSION_MAX_MIN (30 on Tier 3, and the ceiling is a Voice Agent API
 // limit rather than a tier perk). Interviews are booked for 45 minutes, so
@@ -266,6 +269,10 @@ async function narrationSession(custom) {
     const narrationSessionCfg = {
       voice: preset,
       turn_detection: null,       // nobody is talking to her; this is a read
+      // Oct 15 2026 (Grok Voice 3.0): a word-for-word read of a supplied
+      // script needs no reasoning; "none" is xAI's setting for scripted
+      // flows and takes the thinking latency off every pickup take.
+      reasoning: { effort: "none" },
       instructions:
           "You are Mira, the host of this show, recording a scripted segment " +
           "in the studio. The user message contains your script. Read it " +
@@ -825,6 +832,27 @@ function audioOutputFormat(rateOverride) {
   return { output: { format: { type: "audio/pcm", rate: rate } } };
 }
 
+/**
+ * The session's `audio` block: the output format (when a run asks for one)
+ * plus, Oct 15 2026 (Grok Voice 3.0), the transcription KEYTERMS the fire
+ * step wrote on the run row — the guest's name, their organisation, the
+ * show, the network, the co-host — so the words Mira hears (and the
+ * fact-check tool's input) spell a guest's name the way the guest does.
+ * `audio.input.transcription.keyterms`: max 100 terms of up to 50 chars;
+ * the fire step enforces both. No keyterms and no rate = null (nothing sent).
+ */
+function sessionAudioConfig() {
+  const audio = audioOutputFormat() || {};
+  const terms = (config && Array.isArray(config.keyterms)) ? config.keyterms : [];
+  const clean = [];
+  for (let i = 0; i < terms.length && clean.length < 100; i++) {
+    const t = String(terms[i] || "").trim().slice(0, 50);
+    if (t && clean.indexOf(t) < 0) clean.push(t);
+  }
+  if (clean.length) audio.input = { transcription: { keyterms: clean } };
+  return Object.keys(audio).length ? audio : null;
+}
+
 /** End-of-turn detection. Longer silence = she interrupts less. */
 function turnDetection() {
   const tuned = (config && config.turn_detection) || {};
@@ -870,11 +898,16 @@ async function createAgent(note) {
         // longer than that before taking the turn. Tunable per run without a
         // scenario deploy: interview_runs.turn_detection.
         turn_detection: turnDetection(),
+        // Oct 15 2026 (Grok Voice 3.0): reasoning stays on for the live
+        // interview — xAI's "high" is for nuanced tone and ambiguous turns,
+        // which is the whole job — and is pinned so a default change cannot
+        // move it. The narration read runs at "none" (see narrationSession).
+        reasoning: { effort: "high" },
         instructions: config.mira_system_prompt + (note || ""),
         tools: config.tools || [],
     };
-    const outFormat = audioOutputFormat();
-    if (outFormat) sessionCfg.audio = outFormat;
+    const audioCfg = sessionAudioConfig();
+    if (audioCfg) sessionCfg.audio = audioCfg;
     agent.sessionUpdate({ session: sessionCfg });
   });
 

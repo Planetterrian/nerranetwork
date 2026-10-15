@@ -34,12 +34,16 @@ API_BASE = "https://api.voximplant.com/platform_api"
 APPLICATION_NAME = os.environ.get("VOXIMPLANT_APP_NAME", "nerra-voices")
 RULE_NAME = os.environ.get("VOXIMPLANT_RULE_NAME", "age-of-ai-interview")
 SCENARIO_NAME = "age_of_ai_interview"
-# xAI Voice Agent model for Mira. `grok-voice-latest` follows xAI's current
-# recommended realtime voice model (Patrick's standing rule: reference the
-# latest alias so the codebase does not need editing as versions ship).
-# Pin a version here or in the GROK_VOICE_MODEL repo variable if needed.
+# xAI Voice Agent model for Mira. Oct 15 2026: pinned to `grok-voice-3.0`
+# (released Oct 14 2026; the `grok-voice-latest` alias moved to it the same
+# day and `grok-voice-2.0` is deprecated). xAI's own guidance is to pin a
+# versioned name in production, and the network's rule since the Aug 18
+# translation incident is that a published stage never rides a floating
+# alias — the alias is how a vendor release changes shipped audio unseen.
+# The next version is adopted here, after a rehearsal, never by the alias.
+# Override with the GROK_VOICE_MODEL repo variable.
 DEFAULT_GROK_VOICE_MODEL = os.environ.get(
-    "GROK_VOICE_MODEL", "").strip() or "grok-voice-latest"
+    "GROK_VOICE_MODEL", "").strip() or "grok-voice-3.0"
 # xAI Voice Agent max session duration, minutes (console → Realtime API →
 # Rate limits). The scenario hands over to a fresh session before this.
 DEFAULT_GROK_SESSION_MAX_MIN = "30"
