@@ -34,10 +34,19 @@ _VIRTUAL_OR_INTERVIEW = frozenset({
     "age_of_ai", "nerra_voices", "nerra_daily",
 })
 
+#: Oct 16 2026 (same day): a lesson show teaches from a theme, not from
+#: articles, and has no Sources list by design — Привет, Русский! Ep072 and
+#: Ep073 would both have been stopped, after the feed was already updated.
+_NO_SOURCES_BY_DESIGN = frozenset({"privet_russian"})
+
 _FRAGMENT_ELLIPSIS_RE = re.compile(r"…\s*$")
+#: Openers that lean on a sentence before them. Oct 16 2026 (same day): the
+#: first list also held "also", "who", "whose", "that", "for" and "still",
+#: which named every desk's "Also Today" section, a "WHO warns…" headline and
+#: a paper titled "Whose Data, Whose Benchmark?" as fragments — 98 of the 334
+#: October episodes would have been stopped, none of them for a cut title.
 _CONTINUATION_OPENER_RE = re.compile(
-    r"^(?:yet|but|and|so|or|nor|for|because|which|who|whom|whose|that|"
-    r"however|therefore|meanwhile|still|also)\b",
+    r"^(?:but|and|so|or|nor|because|which|however|therefore)\b",
     re.I,
 )
 
@@ -78,7 +87,7 @@ _STOPWORDS = frozenset({
 def show_requires_rendered_sources(config) -> bool:
     """True for news shows whose blog Sources panel must not be empty."""
     slug = str(getattr(config, "slug", "") or "")
-    if slug in _VIRTUAL_OR_INTERVIEW:
+    if slug in _VIRTUAL_OR_INTERVIEW or slug in _NO_SOURCES_BY_DESIGN:
         return False
     if bool(getattr(config, "narrative_mode", False)):
         return False

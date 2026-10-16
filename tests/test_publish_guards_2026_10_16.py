@@ -286,3 +286,41 @@ class TestMarketingCopyHonesty:
         src = (ROOT / "templates" / "editorial.html.j2").read_text()
         assert "every sourced item must be covered by a\n                verified claim" not in src
         assert "publish-and-mark" in src
+
+
+class TestTheGuardsNeverCostAPublishedEpisode:
+    """Same-day correction. Replayed over the 334 October episodes, the
+    first version stopped 98 — every desk's "Also Today" section, a "WHO
+    warns…" headline, a paper titled "Whose Data, Whose Benchmark?", and
+    Привет, Русский! (a lesson show with no Sources by design) after its
+    feed was already updated."""
+
+    @pytest.mark.parametrize("title", [
+        "Also Today", "WHO warns of consequences from delayed medical aid into Gaza",
+        "Whose Data, Whose Benchmark? A User-Centric Framework",
+        "Still no deal on the port strike", "For the record",
+    ])
+    def test_whole_titles_are_not_fragments(self, title):
+        assert not chapter_title_is_fragment(title)
+
+    def test_a_connective_opener_still_is(self):
+        assert chapter_title_is_fragment("And the regulator said it would wait")
+
+    def test_the_lesson_show_has_no_sources_by_design(self):
+        assert show_requires_rendered_sources(_cfg(slug="privet_russian")) is False
+
+    def test_run_show_stops_only_before_synthesis_and_only_as_a_skip(self):
+        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
+        tts = src.index("# 9. TTS")
+        guard = src.index("from engine.publish_guards import check_publish_guards")
+        assert guard < tts
+        early = src[guard:tts]
+        assert '_skip_episode("publish_guard_no_sources"' in early
+        assert "sys.exit(1)" not in early
+        # After the feed is updated, a guard may only warn.
+        blog = src.index("# 12a. Generate blog post")
+        late = src[blog:src.index("# 12a-pre. Post-run validation")]
+        assert src.index("# 11. Update RSS feed") < blog
+        assert "check_publish_guards(" in late
+        assert "sys.exit" not in late
+        assert "_skip_episode(" not in late

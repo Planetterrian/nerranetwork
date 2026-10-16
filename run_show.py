@@ -4201,10 +4201,14 @@ def run(args: argparse.Namespace) -> None:
                     config.chapters, "known_sections_only", False),
             ) if config.chapters.enabled and config.chapters.section_markers else []
 
-            # Oct 16 2026 publish-time guards (claims audit): fragment
-            # chapter titles and a missing lead chapter block the run for
-            # news shows. Sources emptiness is checked again just before
-            # the blog write (digest may still be amended below).
+            # Oct 16 2026 publish-time guards (claims audit). Same-day
+            # correction: a guard stops a run only HERE, before anything is
+            # synthesised or published, and only as a clean skip. A news
+            # episode with no Sources at all is skipped; a chapter problem
+            # is recorded and warned — chapters are metadata and never cost
+            # an episode (Oct 8 2026). The first version also exited at the
+            # blog step, after the R2 upload, the feed and YouTube, which
+            # leaves a published episode that nothing commits.
             from engine.publish_guards import check_publish_guards
             _hook_for_guard = ""
             try:
@@ -4234,19 +4238,18 @@ def run(args: argparse.Namespace) -> None:
                 hook=_hook_for_guard,
                 previous_digest_md=_prev_digest_md,
             )
-            # Defer the empty-Sources failure until blog time — a later
-            # strip/amend can still add a Source line. Chapter failures
-            # are final here.
-            _guard_fails = [
-                f for f in _guard_fails
-                if "no Sources" not in f
-            ]
-            if _guard_fails:
-                for _gf in _guard_fails:
+            _src_guard = [f for f in _guard_fails if "no Sources" in f]
+            _chapter_guard = [f for f in _guard_fails if "no Sources" not in f]
+            if _chapter_guard:
+                for _gf in _chapter_guard:
+                    logger.warning("::warning::Publish guard (chapters): %s", _gf)
+                metrics.record("publish_guard_chapter_warnings", _chapter_guard)
+            if _src_guard:
+                for _gf in _src_guard:
                     logger.error("Publish guard: %s", _gf)
-                metrics.record("publish_guard_blocked", 1)
+                metrics.record("publish_guard_blocked_no_sources", 1)
                 save_usage(tracker, digests_dir)
-                sys.exit(1)
+                _skip_episode("publish_guard_no_sources", _src_guard[0])
 
             # Final defense-in-depth: strip any speaker prefixes that survived
             # all prior cleaning passes.  This catches edge cases where the LLM
@@ -5547,19 +5550,18 @@ def run(args: argparse.Namespace) -> None:
         from generate_html import generate_blog_index, _get_jinja_env, NETWORK_SHOWS as _NS
         from engine.publish_guards import check_publish_guards
 
-        # News shows: an episode page with no rendered Sources is blocked.
+        # News shows: the no-Sources check ran before synthesis (where a
+        # stop costs nothing published). By here the audio, the feed and
+        # YouTube are out, so a page that lost its Sources is warned, never
+        # a failed run that leaves the episode uncommitted.
         _src_fails = [
             f for f in check_publish_guards(
                 config=config, digest_md=x_thread or "", chapters=None,
             )
             if "no Sources" in f
         ]
-        if _src_fails:
-            for _sf in _src_fails:
-                logger.error("Publish guard: %s", _sf)
-            metrics.record("publish_guard_blocked_no_sources", 1)
-            save_usage(tracker, digests_dir)
-            sys.exit(1)
+        for _sf in _src_fails:
+            logger.warning("::warning::Publish guard (after publish): %s", _sf)
 
         if config.slug in _NS:
             _blog_env = _get_jinja_env()
