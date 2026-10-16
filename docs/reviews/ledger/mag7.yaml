@@ -178,4 +178,105 @@ reviews:
       ab_listen_required: false
       rationale: Same digit/word split on closing lines; keep broad 'for today' alt and explicit digit forms until scripts are all Mag Seven.
     agent_cost_usd: 0.0865
+  - date: '2026-10-13'
+    pr: null
+    doc: docs/reviews/mag7_review_2026_10_13.md
+    generated_by: grok-4.5
+    summary: 'Prior Sep 27 proposals never shipped: digit show-name/ASR “mag 0”, week-in-review memory leaks, and “nearest date on the sheet” teasers still dominate, while new P0 tape-block reads (Ep12/Ep15) and chronic sub-1100 scripts (7/10; median ~946) remain digest-substrate problems—not podcast expand levers.'
+    scored_prior_predictions:
+    - metric: Tesla vehicle/product/FSD/energy/Semi stories as Top News, Company Desk, or Thread (next 7 eps)
+      verdict: hit
+      evidence: 'Ep012–021: no Semi/FSD/vehicle-product Thread; Ep015 SpaceX–Nvidia financing is not TST product beat.'
+    - metric: Whisper/transcript show-name form 'mag 0' or digit 'MAG 7' in identity/closing (next 7)
+      verdict: miss
+      evidence: 10/10 snapshot ASR 'mag 0 daily'; every Ep012–021 identity still 'This is MAG 7 Daily' (Sep 27 Mag Seven change never shipped).
+    - metric: episodes whose script contains a week-in-review / 'look back over the past week' recap
+      verdict: miss
+      evidence: Ep012 'stepped away over the past week'; Ep019 'Looking back over this past week' — memory still unfenced.
+    - metric: teaser opening continuation matching shape 'the nearest date on …'
+      verdict: miss
+      evidence: Ep014–018 still 'nearest date/day on the list/sheet' or 'next date on the list' after Before we go.
+    - metric: script word count median (next 7 _tts.txt)
+      verdict: miss
+      evidence: Last-10 median ≈946 words; 7/10 under 1100 (803/784/878/1060/1014/854/784 among misses).
+    shipped: []
+    deferred:
+    - Live-prune x_accounts after per-handle fetch counts (ledger carry).
+    - Network-wide absence-sentence filter default (still opt-in on mag7).
+    - Dedicated music_file (still assets/music/ModernInvesting.mp3).
+    - Hard drop of Tesla product URLs in hooks/mag7.py pre_fetch — only if boundary misses again after digest reject-list ships (operator decision).
+    - 'OPERATOR DECISION — length (second miss): measure raw digest words vs min_digest_words 1300 on Ep012–021; if scripts stay chronically under 1100 after Tape/memory fixes, raise digest section substance / full-text yield only — do NOT file podcast_expand or higher min_podcast_words.'
+    - YouTube enable decision (currently false).
+    - OP3/audience rows once directory distribution is on; verify @nerranetwork clip posts after x_start_date 2026-10-24.
+    - Successor-tic watch after teaser de-seed (third-generation convergence on a new fixed Before-we-go shape).
+    - Sticky cross-promo weighting toward AI Chips / Modern Investing / TST once identity audio is stable.
+    - On-the-calendar spoken anchor still flaky on thin days (yaml Oct 12 requirement); re-check Ep022+ chapter files before further prompt pressure.
+    predictions:
+    - metric: episodes whose _tts.txt contains a multi-company regular-session close board or 'regular session closes on the tape' price list (next 7)
+      baseline: 2/10 sampled (Ep012, Ep015)
+      expected: 0/7 after Tape strip + ban ships
+      verdict: pending
+      evidence: null
+    - metric: identity/closing lines using digit form 'MAG 7' / ASR 'mag 0' (next 7)
+      baseline: 10/10 identity digit MAG 7; 10/10 snapshot mag 0
+      expected: ≤2/7 once spoken form is Mag Seven (ASR may lag one ep)
+      verdict: pending
+      evidence: null
+    - metric: scripts with week-in-review / past-week recap / 'stepped away over the past week' blocks
+      baseline: 2/10 (Ep012, Ep019)
+      expected: 0/7 after memory non-speech fence
+      verdict: pending
+      evidence: null
+    - metric: teaser matching shape nearest/next date on the (list|sheet|book)
+      baseline: ≥5/10 in Ep014–018 window
+      expected: 0/7 after shape ban (watch successor tic)
+      verdict: pending
+      evidence: null
+    - metric: script_repeated_facts median (facts×2) next 7
+      baseline: last-10 facts×2 median 1
+      expected: median ≤4 (hold; Tape strip should not regress Thread number reuse)
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: engine/generator.py
+      kind: code
+      ab_listen_required: false
+      rationale: 'Ep012 and Ep015 spoke full close lists despite an existing prompt ban; prompt-only failed in-sample. Code strip is deterministic and does not touch TTS fields (landmine #17).'
+    - file: shows/prompts/mag7_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Closes the Ep012/Ep015 Tape reads and Ep012/Ep019 memory recaps; adds podcast-side skip if digest boundary fails on TST product copy.
+    - file: shows/prompts/mag7_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: 'Sep 27 convergence never shipped; 10/10 still digit MAG 7 with ASR mag 0. Words-only identity matches chapter anchors and reduces digit garble—no phonetic respellings of other tokens (landmine #17).'
+    - file: shows/prompts/mag7_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Ep014–018 kept the Sep 27 tic; de-seed by shape + verbatim ban, no specimen replacement (ledger meta-rule on example→tic).
+    - file: shows/prompts/mag7_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Same injection site that produced Ep005/Ep012/Ep019 spoken memory recaps; fence must be adjacent to the variable.
+    - file: shows/prompts/mag7_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Ep004 Thread was a Semi product debut; boundary held in Ep012–021 but Sep 27 explicit reject list never landed—selection still lacks the reject class.
+    - file: shows/prompts/mag7_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Pins Ep004 failure mode at the section contract so Thread cannot launder TST product beat as 'across the seven'.
+    - file: shows/mag7.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Shipped audio still says MAG 7 while markers key Mag Seven; broaden matcher during prompt convergence (chapters/metadata only — no TTS field changes).
+    - file: shows/mag7.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Same digit/word split on closings; keep broad for-today alt and explicit digit forms until scripts are all Mag Seven.
+    - file: tests/test_mag7_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Every behavioral fix needs a drift-guard; score Tape/memory/teaser mechanically next pass.
+    agent_cost_usd: 0.1244
 do_not_retry: []
