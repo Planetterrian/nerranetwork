@@ -33,7 +33,8 @@ _BASIC_LEAD = "Nothing is sent to Google until you choose."
 _YOUR_CHOICES_ADVANCED = (
     "Before you choose, and if you reject, Google's tag sends only limited "
     "cookie-free signals, such as that a page loaded, so we can estimate "
-    "overall traffic. These don't set cookies or include identifiers."
+    "overall traffic. These don't set cookies or include identifiers, "
+    "though like any web request your browser shares its IP address."
 )
 
 _PRIVACY_CONTACT = (
