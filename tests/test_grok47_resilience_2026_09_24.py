@@ -463,8 +463,10 @@ class TestConfig:
     @pytest.mark.parametrize("slug", DESKS)
     def test_progress_watch_is_exempt_from_the_overlap_dedup(self, slug):
         from engine.config import load_config
-        assert _yaml(slug)["digest_overlap_exempt_sections"] == ["Progress Watch"]
-        assert load_config(ROOT / "shows" / f"{slug}.yaml").digest_overlap_exempt_sections == ["Progress Watch"]
+        # Oct 16 2026: Top World also exempts Both Sides; Progress Watch
+        # stays on every desk.
+        assert "Progress Watch" in _yaml(slug)["digest_overlap_exempt_sections"]
+        assert "Progress Watch" in load_config(ROOT / "shows" / f"{slug}.yaml").digest_overlap_exempt_sections
 
     def test_the_ping_runs_at_the_shows_effort_with_two_attempts_on_a_pin(self):
         src = (ROOT / "run_show.py").read_text(encoding="utf-8")

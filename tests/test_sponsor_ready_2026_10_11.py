@@ -231,4 +231,9 @@ class TestWeekBoard:
         from engine.board_week import week_board_block
         out = week_board_block(ROOT / "digests" / "prediction_markets",
                                dt.date.fromisoformat(friday), [])
-        assert out.count("\n- ") >= 4
+        # Oct 16 2026: a question read once is counted in one line, not
+        # listed as a row (Ep024 spoke eighteen "one reading" lines running).
+        import re
+        once = re.search(r"do not list or price them\): (\d+)", out)
+        tracked = out.split("Tracked this week:")[1].split("Read once")[0].count("\n- ")
+        assert tracked + (int(once.group(1)) if once else 0) >= 4

@@ -954,6 +954,27 @@ def recent_field_note_topics(spec: EditionSpec, root: Path,
     return topics
 
 
+#: Recent editions whose lineup headlines the field note must also avoid.
+RECENT_LINEUP_EDITIONS = 3
+
+
+def recent_lineup_hooks(spec: EditionSpec, root: Path,
+                        limit: int = RECENT_LINEUP_EDITIONS) -> List[str]:
+    """The segment headlines of the last few editions.
+
+    Oct 16 2026: Ep057's field note was the Perseverance distance record —
+    Fascinating Frontiers' hook the day before, and Ep056's own sign-off.
+    The find prompt excluded only TODAY's lineup and Mira's own past notes,
+    so yesterday's lead was still a "find"."""
+    hooks: List[str] = []
+    for text in _recent_rundowns(spec, root, limit):
+        for m in re.finditer(r"^### [^\n—]+—\s*(.+)$", text, re.MULTILINE):
+            hook = m.group(1).strip().rstrip("…").strip()
+            if hook and hook not in hooks:
+                hooks.append(hook)
+    return hooks
+
+
 def sanitize_spoken(text: str) -> str:
     """Make LLM output safe to hand to TTS: strip markdown residue, URLs
     (the spoken form 'nerranetwork.com' survives; bracketed link syntax
@@ -1200,6 +1221,14 @@ def build_find_prompt(
             "Your recent field notes covered these items — today's find must "
             "overlap with none of them (a different subject, not the same "
             "story re-angled):\n" + "\n".join(f"- {t}" for t in topics)
+        )
+    lineup = recent_lineup_hooks(spec, root)
+    if lineup:
+        recent_notes += (
+            ("\n\n" if recent_notes else "")
+            + "The network ran these stories in its last few editions — today's "
+            "find must not be any of them, re-angled or not:\n"
+            + "\n".join(f"- {h}" for h in lineup)
         )
     closers = recent_field_note_closers(spec, root)
     if closers:
@@ -1483,6 +1512,94 @@ def adopt_revised_handoffs(first: dict, revised: Optional[dict],
     return out
 
 
+#: Words that name no story: a handoff's furniture, not its subject.
+_HANDOFF_STOP = frozenset(
+    "that this with from have will their they them were been into than then "
+    "also about after over more most when what which while there here these "
+    "those just only some such each other first next today episode show "
+    "daily news report reports said says year years story stories edition "
+    "segment listen network nerra".split()
+)
+
+
+def _handoff_tokens(text: str) -> set:
+    out = set()
+    for w in re.findall(r"[a-z][a-z'\-]{3,}", (text or "").lower()):
+        w = w.strip("'-")
+        if w.endswith("s") and len(w) > 4:
+            w = w[:-1]
+        if len(w) >= 4 and w not in _HANDOFF_STOP:
+            out.add(w)
+    return out
+
+
+def _segment_tokens(seg: "Segment") -> set:
+    return _handoff_tokens(" ".join(
+        (seg.show_name or "", seg.hook or "", seg.episode_title or "",
+         digest_excerpt(seg.content or ""))))
+
+
+def realign_handoffs(links: dict, segments: List["Segment"]) -> dict:
+    """Give every segment a handoff about THAT segment.
+
+    ``handoffs[i]`` is spoken before ``segments[i + 1]``. Oct 16 2026: in
+    Ep049, Ep055 and Ep057 the model wrote one handoff too few somewhere in
+    the middle (Ep057 skipped Models & Agents) and padded the end (an "Age
+    of AI did not air" line), so every later handoff introduced the show
+    BEFORE the one that followed it — 39 wrong introductions on air in
+    three editions, while the count check passed.
+
+    A handoff that shares no subject word with its own segment but at least
+    two with another segment's is misplaced. Each segment then takes the
+    handoff that matches it best (its own when its own matches at all); a
+    segment that no handoff matches gets the deterministic fallback line for
+    that one segment, so a bad draft costs one plain handoff, never a wrong
+    one. Returns ``links`` with ``_handoffs_realigned`` (the count repaired).
+    """
+    handoffs = list(links.get("handoffs") or [])
+    out = dict(links)
+    out["_handoffs_realigned"] = 0
+    targets = segments[1:]
+    if not handoffs or len(handoffs) < len(targets):
+        return out
+    seg_toks = [_segment_tokens(s) for s in segments]
+    hand_toks = [_handoff_tokens(h) for h in handoffs]
+
+    def score(h: int, k: int) -> int:
+        return len(hand_toks[h] & seg_toks[k])
+
+    misplaced = 0
+    for i in range(len(targets)):
+        own = score(i, i + 1)
+        rival = max((score(i, k) for k in range(len(segments)) if k != i + 1), default=0)
+        if own == 0 and rival >= 2:
+            misplaced += 1
+    if not misplaced:
+        return out
+    used: set = set()
+    new: List[str] = []
+    repaired = 0
+    for i, seg in enumerate(targets):
+        k = i + 1
+        if i < len(handoffs) and score(i, k) > 0 and i not in used:
+            new.append(handoffs[i])
+            used.add(i)
+            continue
+        best = max(((score(h, k), -abs(h - i), h) for h in range(len(handoffs))
+                    if h not in used), default=(0, 0, -1))
+        if best[0] >= 2:
+            new.append(handoffs[best[2]])
+            used.add(best[2])
+        else:
+            new.append(f"Next: {seg.show_name}. Today — {spoken_hook(seg)}")
+        repaired += 1
+    out["handoffs"] = new
+    out["_handoffs_realigned"] = repaired
+    logger.warning("Nerra Daily: %d handoff(s) did not introduce their own segment "
+                   "and were realigned", repaired)
+    return out
+
+
 def build_edition_metrics(
     episode_num: int,
     target_date: _dt.date,
@@ -1545,6 +1662,9 @@ def build_edition_metrics(
         # revision replaced the handoffs (adopt_revised_handoffs).
         "handoffs_show_name_led_first_draft": (links or {}).get("_name_led_first_draft"),
         "handoffs_revised": bool((links or {}).get("_handoffs_revised")),
+        # Oct 16 2026: handoffs moved or replaced because they introduced a
+        # different segment than the one they preceded (realign_handoffs).
+        "handoffs_realigned": int((links or {}).get("_handoffs_realigned") or 0),
         "handoff_count": len((links or {}).get("handoffs") or []),
         "edition_title_source": "llm" if (links or {}).get("title") else "lead_hook",
         # Oct 9 2026: the X outcome (None = the build did not try, e.g. a

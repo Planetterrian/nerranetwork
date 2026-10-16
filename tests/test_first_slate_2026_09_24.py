@@ -38,7 +38,11 @@ EXEMPTIONS = {
     "omni_view_africa_mideast": {"Progress Watch"},
     "omni_view_latam": {"Progress Watch"},
     "omni_view_north_america": {"Progress Watch"},
-    "omni_view_world": {"Progress Watch"},
+    # Oct 16 2026: Both Sides is the case on a story already told (Vancouver
+    # Ep024's Massey crossing was deduped to an empty heading after airing).
+    "omni_view_world": {"Progress Watch", "Both Sides"},
+    "vancouver": {"Both Sides"},
+    "collingwood": {"Both Sides"},
 }
 
 _INCLUDE_RE = re.compile(r"<<include:\s*([^>\s]+)\s*>>")

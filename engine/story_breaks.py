@@ -42,7 +42,9 @@ from __future__ import annotations
 import json
 import math
 import re
+import unicodedata
 from dataclasses import dataclass
+from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
@@ -113,10 +115,11 @@ def story_units(digest_md: str) -> List[StoryUnit]:
     in_sections = False
     essay: List[str] = []
     section = [""]
+    story_section = [False]
 
     def flush_essay():
         if essay:
-            _add(" ".join(essay), "essay")
+            _add(" ".join(essay), "item" if story_section[0] else "essay")
             essay.clear()
 
     def _add(text: str, label: str):
@@ -155,9 +158,19 @@ def story_units(digest_md: str) -> List[StoryUnit]:
                 flush_essay()
                 m = _HEADER_RE.match(block[0])
                 section[0] = (m.group(1) if m else "").strip().lower()
+                story_section[0] = bool(_NUMBERED_RE.match(section[0]))
                 continue
             text = "\n".join(block)
             if text.lstrip().startswith((">", "|")):
+                continue
+            # Oct 16 2026: a numbered HEADING is a story title, so its whole
+            # section is one story. Omni View writes "### 1) <title>" over a
+            # "What happened" paragraph, a "Context" paragraph and a
+            # "Read more (sources)" list; the list was its own unit and the
+            # script's sentence about the second source got a beat in the
+            # middle of the lead story.
+            if story_section[0]:
+                essay.append(text)
                 continue
             # Oct 14 2026: a sourced or numbered item under the hook, before
             # any ``##`` header, is a story. Fascinating Frontiers Ep222
@@ -165,8 +178,13 @@ def story_units(digest_md: str) -> List[StoryUnit]:
             # the whole block was skipped as front matter — one beat in
             # the episode. The title, date and price lines carry no
             # Source line and no number, so they still never count.
+            # Oct 16 2026: FF Ep224 wrote the same block with each item's
+            # ``Source: [domain](url)`` at the END of its paragraph, which
+            # the line-start Source pattern never sees — one beat for seven
+            # stories again. A link in the paragraph counts as its source.
             if not in_sections and not (
                 _NUMBERED_RE.match(block[0]) or _SOURCE_RE.search(text)
+                or _URL_RE.search(text)
             ):
                 continue
             if _NUMBERED_RE.match(block[0]) or _URL_RE.search(text) or _SOURCE_RE.search(text):
@@ -283,7 +301,78 @@ def story_boundary_lines(script: str, digest_md: str) -> List[int]:
         if run >= 2 or nxt == unit:
             breaks.append(idx)
         current, run = unit, 1
-    return breaks
+    return _settle_adjacent(breaks, lines, units, assigned)
+
+
+def _unit_score(line: str, units: Sequence[StoryUnit], unit: int) -> float:
+    df: Dict[str, int] = {}
+    for u in units:
+        for w in u.tokens:
+            df[w] = df.get(w, 0) + 1
+    n = max(1, len(units))
+    return round(sum(math.log(1 + n / df[w]) for w in sorted(_tokens(line) & units[unit].tokens)), 6)
+
+
+def _settle_adjacent(breaks: List[int], lines: Sequence[str], units: Sequence[StoryUnit],
+                     assigned: Sequence[Tuple[int, float]]) -> List[int]:
+    """Two beats on consecutive lines are one story change: keep one.
+
+    Oct 16 2026: the audio keeps only the first beat of a pair (the second
+    falls inside ``MIN_STORY_SECONDS``), so the pause landed wherever the
+    first line was — Omni View Ep207 paused before the G7 story's LAST
+    sentence (a line the deep dive also covers) instead of before Rubio.
+    The line between the two stories goes with whichever it reads like
+    more: the story before it (keep the later beat) or the story after it
+    (keep the earlier one — Fascinating Frontiers Ep224's green-star line,
+    which opens that story).
+    """
+    out = list(breaks)
+    k = 0
+    while k + 1 < len(out):
+        i, j = out[k], out[k + 1]
+        if j != i + 1:
+            k += 1
+            continue
+        prev_unit = next((assigned[x][0] for x in range(i - 1, -1, -1)
+                          if assigned[x][0] >= 0 and assigned[x][1] >= MIN_ASSIGN_SCORE), -1)
+        next_unit = assigned[j][0]
+        opens_i, opens_j = _opens_on_section(lines[i], units), _opens_on_section(lines[j], units)
+        if opens_j and not opens_i:
+            del out[k]       # the later line names the segment it opens
+        elif opens_i and not opens_j:
+            del out[k + 1]
+        elif prev_unit >= 0 and next_unit >= 0 and (
+                _unit_score(lines[i], units, prev_unit) > _unit_score(lines[i], units, next_unit)):
+            del out[k]       # the line closes the story before it
+        else:
+            del out[k + 1]   # the line opens the story after it
+        k += 1
+    return out
+
+
+#: Words a section heading shares with almost every show, which name no
+#: segment in particular.
+_SECTION_GENERIC = frozenset({
+    "today", "todays", "news", "top", "stories", "story", "items", "item",
+    "major", "world", "daily", "network", "lead", "notes", "note", "more",
+    "other", "quick", "segment", "what", "this", "week", "weekly",
+})
+
+
+def _opens_on_section(line: str, units: Sequence[StoryUnit]) -> bool:
+    """Whether *line*'s opening words name one of the digest's sections
+    (a segment opener such as the what's-on list, the Both Sides case, the
+    progress item, the Board or the deep dive), so it, not the line beside
+    it, is where the listener hears the segment change."""
+    opening = set(re.findall(r"[a-z']+", " ".join((line or "").lower().split()[:10])))
+    opening = {w.replace("'", "") for w in opening}
+    for name in {u.section for u in units if u.section}:
+        words = {w.replace("'", "") for w in re.findall(r"[a-z']+", name)}
+        salient = {w for w in words if len(w) >= 4 and w not in _SECTION_GENERIC
+                   and w not in _STOP}
+        if salient & opening:
+            return True
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -291,11 +380,59 @@ def story_boundary_lines(script: str, digest_md: str) -> List[int]:
 # ---------------------------------------------------------------------------
 
 def _norm(word: str) -> str:
-    return re.sub(r"[^a-z0-9]", "", (word or "").lower())
+    # Accents fold to their letters: "Nación" and Whisper's "Nacion" are
+    # the same word, where dropping the "ó" left "nacin" on one side only.
+    folded = unicodedata.normalize("NFKD", word or "").encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"[^a-z0-9]", "", folded.lower())
+
+
+def _two_digits(n: int) -> str:
+    from engine.utils import number_to_words
+
+    return number_to_words(n)
+
+
+def _year_words(year: int) -> str:
+    """A year the way the scripts say it: 1977 "nineteen seventy-seven",
+    1900 "nineteen hundred", 2001 "two thousand one", 2026 "twenty
+    twenty-six"."""
+    hi, lo = divmod(year, 100)
+    if 2000 <= year <= 2009:
+        return "two thousand" + (f" {_two_digits(lo)}" if lo else "")
+    head = _two_digits(hi)
+    if lo == 0:
+        return f"{head} hundred"
+    return f"{head} {'oh ' if lo < 10 else ''}{_two_digits(lo)}"
+
+
+def _decade_words(year: int) -> str:
+    """1990s "nineteen nineties", 2000s "two thousands"."""
+    if year == 2000:
+        return "two thousands"
+    hi, lo = divmod(year, 100)
+    tens = _two_digits(lo)
+    plural = tens[:-1] + "ies" if tens.endswith("y") else tens + "s"
+    return f"{_two_digits(hi)} {plural}"
 
 
 def _spoken(token: str) -> str:
-    """Whisper writes numbers as digits; the script spells them out."""
+    """Whisper writes numbers as digits; the script spells them out.
+
+    Oct 16 2026: a 4-digit year and a decade are spoken as years ("1977",
+    "the 1990s", "the early 2000s"), which the cardinal "one thousand nine
+    hundred seventy-seven" never matched — Unintended Consequences opens a
+    segment on a date most days, and those beats never reached the audio."""
+    m = re.fullmatch(r"(1[1-9]\d\d|20\d\d)(s?)", token or "")
+    if m:
+        try:
+            year = int(m.group(1))
+            if m.group(2):
+                if year % 10 == 0:
+                    return _norm(_decade_words(year))
+            else:
+                return _norm(_year_words(year))
+        except Exception:  # noqa: BLE001
+            return token
     if token.isdigit() and len(token) <= 9:
         try:
             from engine.utils import number_to_words
@@ -340,7 +477,9 @@ def boundary_anchors(script: str, boundary_idx: Sequence[int],
     unmatched = 0
     pos_char = len(words[0][0]) if words else 0
     for idx in boundary_idx:
-        toks = [t for t in (_norm(x) for x in lines[idx].split()) if t]
+        # Both sides go through the same number speech: a script line that
+        # kept "1980s" as digits must still meet Whisper's "1980s".
+        toks = [t for t in (_spoken(_norm(x)) for x in lines[idx].split()) if t]
         hit = None
         # From the first word; then from the second or third when the line
         # opens on something Whisper spells differently (a station's call
@@ -353,12 +492,59 @@ def boundary_anchors(script: str, boundary_idx: Sequence[int],
             if at >= 0:
                 hit = max(0, owner[at] - skip)
                 break
+        if hit is None:
+            hit = _fuzzy_hit(toks, words, owner[pos_char] if pos_char < len(owner) else len(words),
+                             _expected_word(lines, idx, len(words)))
         if hit is None or hit == 0:
             unmatched += 1
             continue
         anchors.append((words[hit - 1][2], words[hit][1]))
         pos_char = first_char[hit] + 1
     return anchors, unmatched
+
+
+#: Oct 16 2026 — the fallback when a line's opening is not in the
+#: transcript letter for letter. Whisper writes "the early 2000s" for "the
+#: early two thousands", "1,500 kilometres" for "fifteen hundred", and its
+#: own spelling of a name ("Columbia's main city", "Helisco", "La
+#: Nassion"); on the Oct 15-16 slate that left 4 of 8 story changes on
+#: Unintended Consequences and 5 of 8 on the Asia Pacific desk with no
+#: pause at all. The fallback compares the opening's letters with every
+#: transcript position near where the line should be (its share of the
+#: script's words) and takes the closest one, only when it is close.
+FUZZY_WORDS = 8
+FUZZY_MIN_RATIO = 0.72
+FUZZY_WINDOW_WORDS = 150
+
+
+def _expected_word(lines: Sequence[str], idx: int, n_words: int) -> int:
+    before = sum(len(ln.split()) for ln in lines[:idx])
+    total = max(1, sum(len(ln.split()) for ln in lines))
+    return int(round(before * n_words / total))
+
+
+def _fuzzy_hit(toks: Sequence[str], words: Sequence[Tuple[str, float, float]],
+               start_word: int, expected: int) -> Optional[int]:
+    target = "".join(toks[:FUZZY_WORDS])
+    if len(target) < CHAR_PROBE:
+        return None
+    lo = max(1, start_word, expected - FUZZY_WINDOW_WORDS)
+    hi = min(len(words) - 1, expected + FUZZY_WINDOW_WORDS)
+    best: Optional[Tuple[float, int]] = None
+    for h in range(lo, hi + 1):
+        cand = "".join(w[0] for w in words[h:h + FUZZY_WORDS + 4])[:len(target)]
+        # A story opening is said as written: its first letter survives
+        # Whisper even when the rest of a name does not ("Columbia's" for
+        # "Colombia's"), and requiring it keeps the match off a
+        # neighbouring word.
+        if not cand or cand[0] != target[0]:
+            continue
+        ratio = round(SequenceMatcher(None, target, cand, autojunk=False).ratio(), 4)
+        if best is None or (ratio, -abs(h - expected)) > (best[0], -abs(best[1] - expected)):
+            best = (ratio, h)
+    if best is None or best[0] < FUZZY_MIN_RATIO:
+        return None
+    return best[1]
 
 
 def detect_silences(audio: Path, *, noise_db: float = SILENCE_NOISE_DB,

@@ -4847,3 +4847,49 @@ experiments:
       member_demand_unknown (the audit warns). Top World reads members/
       digests; no_member_demand is not an audit issue; members-only pages are
       refreshed nightly. Guards tests/test_desks_members_only_2026_10_15.py.
+  - id: story-breaks-reach-the-audio-2026-10-16
+    title: "Story breaks land on every story change the script makes"
+    area: audio
+    shipped: 2026-10-16
+    readout: 2026-10-30
+    status: reading
+    baseline: >
+      Oct 1-16 2026, 2,721 detected story changes: 362 (13%) never reached
+      the audio because the line's opening was not found in the Whisper words
+      (spoken years and decades, Whisper's own spelling of names, accented
+      letters). Fascinating Frontiers got one beat for seven stories on Ep222
+      and Ep224 (each item's Source sat at the end of its paragraph); Omni View
+      split its numbered stories at the Read-more list (a beat inside the lead
+      on Ep207); two beats on adjacent lines played only the first, sometimes
+      a sentence early.
+    target: >
+      story_breaks_unplaced at or under 2% of story_breaks_found network-wide
+      (replay: 32 of 2,721); FF and Omni View beats equal to their story
+      count; no two beats on adjacent lines.
+    notes: >
+      engine/story_breaks.py: inline-link items count before the first
+      section; a numbered heading is one story; adjacent beats settle on the
+      segment opener or the story start; accent folding, year/decade speech on
+      both sides, and a fuzzy anchor fallback (first letter must match, 0.72
+      ratio, +/-150 words of the expected position). Replay: 304 of 362
+      recovered, all on the line's first word; no exact anchor moved except
+      four that had landed one word early. ⚠️ AUDIO — A/B-listen one FF and one
+      Omni View episode. Guards tests/test_slate_2026_10_16.py.
+  - id: nerra-daily-handoffs-aligned-2026-10-16
+    title: "Every Nerra Daily handoff introduces the segment that follows it"
+    area: nerra_daily
+    shipped: 2026-10-16
+    readout: 2026-10-30
+    status: reading
+    baseline: >
+      Three editions in two weeks (Ep049, Ep055, Ep057) shipped handoffs
+      shifted by one from mid-edition: 39 handoffs on air introduced the
+      wrong show. The count check passed because the model padded the end.
+    target: >
+      handoffs_realigned recorded on every edition; zero misaligned handoffs
+      on a replay of the shipped rundowns over the readout window.
+    notes: >
+      engine.daily_edition.realign_handoffs after the variety revision;
+      unmatched segments get the deterministic one-line handoff. The field
+      note now also avoids the last three editions' lineup headlines
+      (recent_lineup_hooks). ⚠️ AUDIO on the realigned days only.
