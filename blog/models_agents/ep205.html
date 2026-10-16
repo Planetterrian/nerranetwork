@@ -105,11 +105,22 @@
     },
     "image": "https://nerranetwork.com/assets/covers/models-agents.jpg",
     "transcript": "https://nerranetwork.com/blog/models_agents/ep205.html#transcript",
-    "associatedMedia": {
-      "@type": "MediaObject",
-      "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep205_20261016.mp3",
-      "inLanguage": "en"
-    }
+    "associatedMedia": [
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep205_20261016.mp3",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep205_20261016.fr.mp3",
+        "inLanguage": "fr"
+      }
+    ],
+    "availableLanguage": [
+      "en",
+      "fr"
+    ]
   }
 ]
     </script>
@@ -1875,21 +1886,27 @@
     
 
     
-    
-    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-i18n" id="listen" aria-label="Listen in another language">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    Listen to this episode
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    Listen in
                 </span>
+                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="fr" aria-pressed="false">Français</button>
+                
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep205_20261016.mp3">
-                <a href="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep205_20261016.mp3">Download the audio</a>
-            </audio>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep205_20261016.mp3"></audio>
         </div>
+        <script type="application/json" id="nn-i18n-tracks">
+{
+  "en": {"url": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep205_20261016.mp3", "title": "Pause-token KV compression shrinks cache 3.5x and speeds H100 inference 3.2x on long math problems.", "desc": "Pause-token KV compression shrinks cache 3.5x and speeds H100 inference 3.2x on long math problems."},
+  "fr": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep205_20261016.fr.mp3", "title": "Ép. 205 : La compression KV pause-token réduit le cache de 3,5× et accélère l’inférence H100 de 3,2× sur de longs problèmes de maths…", "desc": "La compression KV pause-token réduit le cache de 3,5× et accélère l’inférence H100 de 3,2× sur de longs problèmes de maths."}
+}
+        </script>
     </section>
-    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1982,6 +1999,89 @@
 <li>CoTranslator will be evaluated on additional STEM subjects and larger student models to quantify compute savings at scale.
 </li>
 </ul>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="fr" hidden>
+                <p class="blog-translated-note">Français — AI-translated from the English episode.</p>
+                <p>La compression clé-valeur par jetons de pause réduit le cache d’un facteur trois virgule cinq et accélère l’inférence sur H cent d’un facteur trois virgule deux, sur les longs problèmes de maths.</p>
+<p>Ici Models and Agents, épisode deux cent cinq.</p>
+<p>AbridgeKV entraîne un modèle à compresser chaque bloc terminé de chaîne de pensée générée dans les entrées du cache clé-valeur de quelques jetons de pause appris qui ne produisent aucune sortie, selon un article sur arXiv.</p>
+<p>Ces jetons de pause reçoivent des positions à l’intérieur du bloc remplacé, le budget de cache est alloué selon la valeur mesurée de chaque couche, et la compression s’applique à des blocs relativement grands.</p>
+<p>Sur quatre cent quarante-six problèmes tirés de AIME, HMMT, AMC et de concours similaires, avec des générations de trente-deux mille jetons, garder un quart du cache égale un modèle clé-valeur complet entraîné de façon identique, à la fois en précision et en longueur de sortie.</p>
+<p>La plus forte référence d’éviction publiée, au même budget, produit des sorties bien plus longues.</p>
+<p>Une référence de compresseur réentraîné perd dix points de précision.</p>
+<p>Servi dans vLLM, ce compresseur à jetons de pause s’exécute par séquence sur une H cent saturée.</p>
+<p>CoTS utilise la compétition de probabilités entre les deux jetons les plus probables pour allouer un poids continu entre l’engagement discret et l’exploration douce à chaque étape, et ça ne demande aucun entraînement supplémentaire.</p>
+<p>Un article arXiv indique que le second candidat représente la plus forte alternative, donc un écart plus large signale la stabilité et maintient la représentation proche du jeton échantillonné.</p>
+<p>Un écart plus petit augmente la contribution douce pour retenir les alternatives.</p>
+<p>La méthode n’exige ni passes avant supplémentaires, ni seuils calibrés.</p>
+<p>Des expériences sur six bancs d’essai de raisonnement montrent des gains constants par rapport à la chaîne de pensée standard et aux méthodes latentes antérieures sans entraînement.</p>
+<p>Le wolof, une langue parlée par vingt-trois millions de personnes, principalement au Sénégal, dispose désormais de modèles à poids ouverts, de zéro virgule six milliard à quatorze milliards de paramètres.</p>
+<p>La publication arXiv affine par instructions, aligne sur les préférences et fusionne ces poids, et après la chaîne complète, les variantes de huit milliards et de quatorze milliards restent compétitives face à des systèmes commerciaux bien plus gros, sur soixante-trois tâches publiques et internes, tout en préservant les performances interlingues.</p>
+<p>Les modèles sont déjà en pilotes internes de relation client et disponibles sur Hugging Face.</p>
+<p>Verdict-MQ est un encodeur de trois cent quatre-vingt-quinze millions de paramètres qui lit un dossier une seule fois et répond à chaque question typée à son sujet grâce à un masque d’attention structuré qui maintient l’encodage d’état indépendant des questions.</p>
+<p>Sur le banc d’essai des décisions typées, il colle mieux aux étiquettes d’or souples que le spécialiste Laya publié, de quatre cent vingt-et-un millions de paramètres, sur cinq graines, selon arXiv, tout en préservant les avantages de mise à l’échelle de température par système.</p>
+<p>APRiL fournit deux mille cent quatre-vingt-seize instances réparties en six catégories, avec des grilles spécifiques à chaque instance pour deux tâches, l’analyse de scénarios sociaux et la réponse socialement consciente.</p>
+<p>Le banc d’essai arXiv vise la conscience sociale chinoise dans les grands modèles de langage.</p>
+<p>Des expériences sur douze modèles issus de six familles révèlent un écart constant entre la compréhension et la qualité des réponses, les analyses de meilleure qualité améliorant les réponses en aval.</p>
+<p>Les données et le code sont publiés.</p>
+<p>CoTranslator apprend à traduire des justifications de chaîne de pensée inverse, moins chères, vers la distribution des réponses avant vérifiées, à partir d’un petit ensemble apparié.</p>
+<p>Sur six modèles étudiants et six bancs d’essai de maths, la méthode arXiv améliore la précision moyenne par rapport à la suppression sémantique, jusqu’à cinq virgule quatre-vingt-deux points.</p>
+<p>Elle conserve quatre-vingt-quinze pour cent de la précision de l’échantillonnage par rejet, pour trente-cinq virgule neuf pour cent du calcul, sur des étudiants de quatre milliards de paramètres.</p>
+<p>Le traducteur se transfère sans réentraînement vers de nouveaux jeux de données, de nouveaux enseignants et de nouveaux problèmes scientifiques et techniques.</p>
+<p>DeepUnfolding Agent est un service FastAPI piloté par schémas qui enregistre des stratégies d’optimisation, accepte des diagnostics au niveau de chaque tour, renvoie des actions de contrôle bornées et des mises à jour à partir du retour de l’exécuteur.</p>
+<p>Un article arXiv indique qu’il prend en charge les voies classiques, conscientes du quantique, hybrides, Qiskit Aer et IBM Quantum, via un registre de stratégies, un garde-fou de sécurité et un déploiement Docker.</p>
+<p>La validation couvre les tests unitaires, de schéma, d’A P I, de sécurité, d’orchestration et adossés au matériel, dans la finance, la santé, la génomique et la simulation quantique bruitée.</p>
+<p>PRISM récupère des signaux de préférence par requête à partir de corpus de graphes vérifiés à l’exécution, en entraînant un étudiant à imiter un enseignant qui voit un graphe de solution frère, indisponible au déploiement.</p>
+<p>La branche privilégiée de rang faible, décrite sur arXiv, fournit le signal de classement manquant que l’affinage supervisé standard n’a pas.</p>
+<p>Sur six bancs d’essai diversifiés, la méthode surpasse toutes les références antérieures de conception de topologie.</p>
+<p>Le code est publié.</p>
+<p>MeddeX affine LLaMA-three huit milliards avec QLoRA, une méthode d’adaptation de rang faible quantifiée, puis ajoute la génération augmentée par récupération et une couche Gemini Vision.</p>
+<p>Le système arXiv traite les PDF texte, les PDF scannés et les images radiologiques via une chaîne d’extraction hybride avec détection de texte poubelle, et il ajoute une récupération limitée au compte-rendu, une comparaison longitudinale et une chaîne de rattrapage auto-réparatrice.</p>
+<p>Face au LLaMA-three Med quarante-deux huit milliards de base, il enregistre ROUGE-un plus neuf virgule deux pour cent, ROUGE-deux plus dix virgule zéro pour cent, ROUGE-L plus onze virgule huit pour cent, BLEU plus soixante-et-onze virgule quatre pour cent et BERTScore plus zéro virgule huit pour cent.</p>
+<p>ReviewPilot est un système conversationnel multi-agents qui automatise le flux de revue systématique PRISMA, du criblage à l’extraction, tout en enregistrant les motifs d’exclusion et les emplacements sources pour chaque valeur.</p>
+<p>Sur des revues d’experts en épidémiologie, selon arXiv, il surpasse les grands modèles de langage à consigne unique et AgentSLR, sur trois grands modèles de langage, avec un F un macro de criblage de zéro virgule sept sept six et un F un d’extraction de zéro virgule sept huit huit.</p>
+<p>Le code est publié.</p>
+<p>Jev est un modèle de décision non génératif qui renvoie des valeurs typées et des probabilités natives, sans texte, conçu pour la vérification d’affirmations en génération augmentée par récupération.</p>
+<p>Sur quatre cent quatre-vingt-quinze affirmations annotées par des humains, un article arXiv indique qu’il égale un grand modèle de langage de frontière à zéro virgule cinquante-six point près, pour un coût cent quatre-vingt-sept fois plus bas, tout en divergeant sur quinze virgule deux pour cent des éléments.</p>
+<p>Une cascade à seuil de confiance atteint soixante-quatorze virgule dix, à deux dollars et quatre-vingt-douze cents pour mille affirmations, contre soixante-treize virgule quatre-vingt-trois à huit dollars et quatre-vingt-treize cents pour le modèle de frontière seul.</p>
+<p>Toutes les prédictions, les consignes, les tarifs et le code sont publiés.</p>
+<p>SHIP projette les requêtes analytiques sur des attributs, construit une taxonomie hybride hiérarchique et publie une table synthétique à confidentialité différentielle.</p>
+<p>La méthode arXiv surpasse les références antérieures d’analyses privées, en performance de questions-réponses et en fidélité structurée, tout en faisant remonter les requêtes qui restent difficiles pour les représentations structurées.</p>
+<p>PremiseCheck réécrit chaque commentaire de relecture en prémisses explicites avec un grand modèle de langage, puis vérifie chaque prémisse par rapport à l’article, à l’aide d’un modèle de décision peu coûteux.</p>
+<p>Quand chaque commentaire est vérifié indépendamment, selon arXiv, il égale la précision de G P T cinq virgule cinq, en traitement automatique des langues, en apprentissage automatique et en sciences naturelles, pour à peu près la moitié du coût.</p>
+<p>Sur les relectures en traitement automatique des langues, il atteint cette précision pour un quart du coût et moins de la moitié de la latence.</p>
+<p>ToolBottleneckBench maintient les tâches fixes tout en faisant varier une pression à la fois : le catalogue d’outils, le menu visible, le flux certifié ou l’encodage des enregistrements.</p>
+<p>Sur vingt-et-une configurations de modèles et d’environnements de test, un article arXiv constate que le menu visible produit la seule pénalité importante, qui suit la troncature au plafond de complétion.</p>
+<p>Multiplier le plafond par seize élimine l’essentiel de la pénalité, et le banc d’essai ainsi que le correcteur sont publiés.</p>
+<p>PEDBench fournit deux mille six cent cinq enregistrements qui couvrent des erreurs de parole d’enfants, des erreurs jouées et de la synthèse vocale synthétique conditionnée par phonème, le tout doublement annoté par des auditeurs formés en phonétique.</p>
+<p>Treize modèles de parole à l’état de l’art n’arrivent pas à détecter les erreurs de façon fiable, même dans des conditions contrôlées, selon arXiv, et affichent une faible précision sur les phonèmes correctement prononcés.</p>
+<p>Les modèles parole-langage affinés sur la portion synthétique surpassent les références commerciales et à code ouvert en détection au niveau du mot, même si un écart simulation-réel demeure.</p>
+<p>Si vous servez de longues chaînes de pensée en maths ou en code, branchez AbridgeKV dans ce déploiement vLLM dès cette semaine.</p>
+<p>Téléchargez les modèles wolof de huit milliards ou de quatorze milliards depuis la collection Orange sur Hugging Face, et testez-les sur des dialogues de relation client mixtes wolof-anglais.</p>
+<p>Lancez le générateur de topologie PRISM sur votre propre corpus de tâches multi-agents pour obtenir des graphes de collaboration classés, plutôt que biaisés par la fréquence.</p>
+<p>Pointez PremiseCheck sur un lot de relectures par les pairs récentes, et laissez la chaîne réécriture des prémisses plus modèle de décision faire la vérification.</p>
+<p>Les modèles adaptés au wolof passent des pilotes internes à une publication publique plus large, avec des conditions de licence commerciale documentées.</p>
+<p>La mémoire de projet de ReviewPilot et l’édition de schémas pilotée par le dialogue seront étendues à d’autres domaines de revues systématiques, au-delà de l’épidémiologie.</p>
+<p>Les jeux de données joués et synthétiques de PEDBench, plus les recettes d’affinage, seront publiés pour refermer l’écart simulation-réel qui reste en détection d’erreurs phonétiques.</p>
+<p>Une seule direction du flux résiduel des couches tardives, c’est là qu’on ouvre le capot des modèles parlants en duplex intégral qui doivent décider, à chaque trame, s’ils parlent.</p>
+<p>L’écart est brutal : chaque jeu de poids a l’air de figer un style conversationnel, alors que l’ingénierie dit que ce style est une direction qu’on peut mettre à l’échelle au moment de la génération.</p>
+<p>Duplex intégral, ici, ça veut dire que l’écoute et la parole peuvent se chevaucher, donc le modèle a besoin d’un appel parler-ou-rester-silencieux à chaque trame.</p>
+<p>Cette quantité décisive peut se lire sans entraînement ni annotation, puis se mettre à l’échelle pendant la génération.</p>
+<p>Décaler cette direction fait passer le ratio de parole de la plage non dirigée de vingt-et-un à trente pour cent, n’importe où entre six à douze pour cent et quarante-deux à soixante-et-un pour cent.</p>
+<p>Le décalage reste cohérent d’une conversation à l’autre, d’un jeu de poids à l’autre et d’un corpus à l’autre.</p>
+<p>Un court enregistrement de référence d’un locuteur cible suffit pour extraire la direction correspondante et transférer le style de prise de tour de ce locuteur.</p>
+<p>Brancher une référence différente dégrade la correspondance dans quatre-vingt-treize à quatre-vingt-dix-huit pour cent des cas.</p>
+<p>La même direction anticipe aussi les attaques jusqu’à huit cents millisecondes à l’avance.</p>
+<p>Ce signal précoce, c’est ce que les systèmes en aval peuvent utiliser pour une gestion plus fluide des interruptions.</p>
+<p>La personnalité conversationnelle n’est pas figée dans les poids ; elle vit dans une direction orientable qu’on peut calibrer par utilisateur au moment de l’inférence, pour un surcoût négligeable, et les poids seuls ne tiendront pas plus d’un style figé.</p>
+<p>Avant de partir, CoTranslator sera évalué sur d’autres matières scientifiques et techniques et sur de plus gros modèles étudiants, pour quantifier les économies de calcul à l’échelle.</p>
+<p>Voilà pour Models and Agents aujourd’hui. Si vous avez trouvé ça utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain.</p>
+<p>Le monde de l’I A avance vite. On vous aide à suivre.</p>
+<p>À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l’épisode.</p>
+<p>Petit conseil du réseau : essayez The Do Positive Pod ensuite — des bonnes nouvelles en science et techno, plus une action concrète que vous pouvez mener.</p>
+<p>Chaque émission Nerra Network est gratuite sur nerranetwork point com. Et si vous préférez parcourir par sujet plutôt que par émission, chaque sujet couvert par le réseau a sa propre page sur nerranetwork point com topics.</p>
+<p>Cet épisode a utilisé une synthèse vocale I A de ma voix — la sélection éditoriale et l’analyse sont les miennes.</p>
             </div>
             
 

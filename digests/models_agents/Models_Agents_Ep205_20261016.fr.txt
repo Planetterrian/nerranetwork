@@ -1,0 +1,157 @@
+La compression clé-valeur par jetons de pause réduit le cache d’un facteur trois virgule cinq et accélère l’inférence sur H cent d’un facteur trois virgule deux, sur les longs problèmes de maths.
+
+Ici Models and Agents, épisode deux cent cinq.
+
+AbridgeKV entraîne un modèle à compresser chaque bloc terminé de chaîne de pensée générée dans les entrées du cache clé-valeur de quelques jetons de pause appris qui ne produisent aucune sortie, selon un article sur arXiv.
+
+Ces jetons de pause reçoivent des positions à l’intérieur du bloc remplacé, le budget de cache est alloué selon la valeur mesurée de chaque couche, et la compression s’applique à des blocs relativement grands.
+
+Sur quatre cent quarante-six problèmes tirés de AIME, HMMT, AMC et de concours similaires, avec des générations de trente-deux mille jetons, garder un quart du cache égale un modèle clé-valeur complet entraîné de façon identique, à la fois en précision et en longueur de sortie.
+
+La plus forte référence d’éviction publiée, au même budget, produit des sorties bien plus longues.
+
+Une référence de compresseur réentraîné perd dix points de précision.
+
+Servi dans vLLM, ce compresseur à jetons de pause s’exécute par séquence sur une H cent saturée.
+
+CoTS utilise la compétition de probabilités entre les deux jetons les plus probables pour allouer un poids continu entre l’engagement discret et l’exploration douce à chaque étape, et ça ne demande aucun entraînement supplémentaire.
+
+Un article arXiv indique que le second candidat représente la plus forte alternative, donc un écart plus large signale la stabilité et maintient la représentation proche du jeton échantillonné.
+
+Un écart plus petit augmente la contribution douce pour retenir les alternatives.
+
+La méthode n’exige ni passes avant supplémentaires, ni seuils calibrés.
+
+Des expériences sur six bancs d’essai de raisonnement montrent des gains constants par rapport à la chaîne de pensée standard et aux méthodes latentes antérieures sans entraînement.
+
+Le wolof, une langue parlée par vingt-trois millions de personnes, principalement au Sénégal, dispose désormais de modèles à poids ouverts, de zéro virgule six milliard à quatorze milliards de paramètres.
+
+La publication arXiv affine par instructions, aligne sur les préférences et fusionne ces poids, et après la chaîne complète, les variantes de huit milliards et de quatorze milliards restent compétitives face à des systèmes commerciaux bien plus gros, sur soixante-trois tâches publiques et internes, tout en préservant les performances interlingues.
+
+Les modèles sont déjà en pilotes internes de relation client et disponibles sur Hugging Face.
+
+Verdict-MQ est un encodeur de trois cent quatre-vingt-quinze millions de paramètres qui lit un dossier une seule fois et répond à chaque question typée à son sujet grâce à un masque d’attention structuré qui maintient l’encodage d’état indépendant des questions.
+
+Sur le banc d’essai des décisions typées, il colle mieux aux étiquettes d’or souples que le spécialiste Laya publié, de quatre cent vingt-et-un millions de paramètres, sur cinq graines, selon arXiv, tout en préservant les avantages de mise à l’échelle de température par système.
+
+APRiL fournit deux mille cent quatre-vingt-seize instances réparties en six catégories, avec des grilles spécifiques à chaque instance pour deux tâches, l’analyse de scénarios sociaux et la réponse socialement consciente.
+
+Le banc d’essai arXiv vise la conscience sociale chinoise dans les grands modèles de langage.
+
+Des expériences sur douze modèles issus de six familles révèlent un écart constant entre la compréhension et la qualité des réponses, les analyses de meilleure qualité améliorant les réponses en aval.
+
+Les données et le code sont publiés.
+
+CoTranslator apprend à traduire des justifications de chaîne de pensée inverse, moins chères, vers la distribution des réponses avant vérifiées, à partir d’un petit ensemble apparié.
+
+Sur six modèles étudiants et six bancs d’essai de maths, la méthode arXiv améliore la précision moyenne par rapport à la suppression sémantique, jusqu’à cinq virgule quatre-vingt-deux points.
+
+Elle conserve quatre-vingt-quinze pour cent de la précision de l’échantillonnage par rejet, pour trente-cinq virgule neuf pour cent du calcul, sur des étudiants de quatre milliards de paramètres.
+
+Le traducteur se transfère sans réentraînement vers de nouveaux jeux de données, de nouveaux enseignants et de nouveaux problèmes scientifiques et techniques.
+
+DeepUnfolding Agent est un service FastAPI piloté par schémas qui enregistre des stratégies d’optimisation, accepte des diagnostics au niveau de chaque tour, renvoie des actions de contrôle bornées et des mises à jour à partir du retour de l’exécuteur.
+
+Un article arXiv indique qu’il prend en charge les voies classiques, conscientes du quantique, hybrides, Qiskit Aer et IBM Quantum, via un registre de stratégies, un garde-fou de sécurité et un déploiement Docker.
+
+La validation couvre les tests unitaires, de schéma, d’A P I, de sécurité, d’orchestration et adossés au matériel, dans la finance, la santé, la génomique et la simulation quantique bruitée.
+
+PRISM récupère des signaux de préférence par requête à partir de corpus de graphes vérifiés à l’exécution, en entraînant un étudiant à imiter un enseignant qui voit un graphe de solution frère, indisponible au déploiement.
+
+La branche privilégiée de rang faible, décrite sur arXiv, fournit le signal de classement manquant que l’affinage supervisé standard n’a pas.
+
+Sur six bancs d’essai diversifiés, la méthode surpasse toutes les références antérieures de conception de topologie.
+
+Le code est publié.
+
+MeddeX affine LLaMA-three huit milliards avec QLoRA, une méthode d’adaptation de rang faible quantifiée, puis ajoute la génération augmentée par récupération et une couche Gemini Vision.
+
+Le système arXiv traite les PDF texte, les PDF scannés et les images radiologiques via une chaîne d’extraction hybride avec détection de texte poubelle, et il ajoute une récupération limitée au compte-rendu, une comparaison longitudinale et une chaîne de rattrapage auto-réparatrice.
+
+Face au LLaMA-three Med quarante-deux huit milliards de base, il enregistre ROUGE-un plus neuf virgule deux pour cent, ROUGE-deux plus dix virgule zéro pour cent, ROUGE-L plus onze virgule huit pour cent, BLEU plus soixante-et-onze virgule quatre pour cent et BERTScore plus zéro virgule huit pour cent.
+
+ReviewPilot est un système conversationnel multi-agents qui automatise le flux de revue systématique PRISMA, du criblage à l’extraction, tout en enregistrant les motifs d’exclusion et les emplacements sources pour chaque valeur.
+
+Sur des revues d’experts en épidémiologie, selon arXiv, il surpasse les grands modèles de langage à consigne unique et AgentSLR, sur trois grands modèles de langage, avec un F un macro de criblage de zéro virgule sept sept six et un F un d’extraction de zéro virgule sept huit huit.
+
+Le code est publié.
+
+Jev est un modèle de décision non génératif qui renvoie des valeurs typées et des probabilités natives, sans texte, conçu pour la vérification d’affirmations en génération augmentée par récupération.
+
+Sur quatre cent quatre-vingt-quinze affirmations annotées par des humains, un article arXiv indique qu’il égale un grand modèle de langage de frontière à zéro virgule cinquante-six point près, pour un coût cent quatre-vingt-sept fois plus bas, tout en divergeant sur quinze virgule deux pour cent des éléments.
+
+Une cascade à seuil de confiance atteint soixante-quatorze virgule dix, à deux dollars et quatre-vingt-douze cents pour mille affirmations, contre soixante-treize virgule quatre-vingt-trois à huit dollars et quatre-vingt-treize cents pour le modèle de frontière seul.
+
+Toutes les prédictions, les consignes, les tarifs et le code sont publiés.
+
+SHIP projette les requêtes analytiques sur des attributs, construit une taxonomie hybride hiérarchique et publie une table synthétique à confidentialité différentielle.
+
+La méthode arXiv surpasse les références antérieures d’analyses privées, en performance de questions-réponses et en fidélité structurée, tout en faisant remonter les requêtes qui restent difficiles pour les représentations structurées.
+
+PremiseCheck réécrit chaque commentaire de relecture en prémisses explicites avec un grand modèle de langage, puis vérifie chaque prémisse par rapport à l’article, à l’aide d’un modèle de décision peu coûteux.
+
+Quand chaque commentaire est vérifié indépendamment, selon arXiv, il égale la précision de G P T cinq virgule cinq, en traitement automatique des langues, en apprentissage automatique et en sciences naturelles, pour à peu près la moitié du coût.
+
+Sur les relectures en traitement automatique des langues, il atteint cette précision pour un quart du coût et moins de la moitié de la latence.
+
+ToolBottleneckBench maintient les tâches fixes tout en faisant varier une pression à la fois : le catalogue d’outils, le menu visible, le flux certifié ou l’encodage des enregistrements.
+
+Sur vingt-et-une configurations de modèles et d’environnements de test, un article arXiv constate que le menu visible produit la seule pénalité importante, qui suit la troncature au plafond de complétion.
+
+Multiplier le plafond par seize élimine l’essentiel de la pénalité, et le banc d’essai ainsi que le correcteur sont publiés.
+
+PEDBench fournit deux mille six cent cinq enregistrements qui couvrent des erreurs de parole d’enfants, des erreurs jouées et de la synthèse vocale synthétique conditionnée par phonème, le tout doublement annoté par des auditeurs formés en phonétique.
+
+Treize modèles de parole à l’état de l’art n’arrivent pas à détecter les erreurs de façon fiable, même dans des conditions contrôlées, selon arXiv, et affichent une faible précision sur les phonèmes correctement prononcés.
+
+Les modèles parole-langage affinés sur la portion synthétique surpassent les références commerciales et à code ouvert en détection au niveau du mot, même si un écart simulation-réel demeure.
+
+Si vous servez de longues chaînes de pensée en maths ou en code, branchez AbridgeKV dans ce déploiement vLLM dès cette semaine.
+
+Téléchargez les modèles wolof de huit milliards ou de quatorze milliards depuis la collection Orange sur Hugging Face, et testez-les sur des dialogues de relation client mixtes wolof-anglais.
+
+Lancez le générateur de topologie PRISM sur votre propre corpus de tâches multi-agents pour obtenir des graphes de collaboration classés, plutôt que biaisés par la fréquence.
+
+Pointez PremiseCheck sur un lot de relectures par les pairs récentes, et laissez la chaîne réécriture des prémisses plus modèle de décision faire la vérification.
+
+Les modèles adaptés au wolof passent des pilotes internes à une publication publique plus large, avec des conditions de licence commerciale documentées.
+
+La mémoire de projet de ReviewPilot et l’édition de schémas pilotée par le dialogue seront étendues à d’autres domaines de revues systématiques, au-delà de l’épidémiologie.
+
+Les jeux de données joués et synthétiques de PEDBench, plus les recettes d’affinage, seront publiés pour refermer l’écart simulation-réel qui reste en détection d’erreurs phonétiques.
+
+Une seule direction du flux résiduel des couches tardives, c’est là qu’on ouvre le capot des modèles parlants en duplex intégral qui doivent décider, à chaque trame, s’ils parlent.
+
+L’écart est brutal : chaque jeu de poids a l’air de figer un style conversationnel, alors que l’ingénierie dit que ce style est une direction qu’on peut mettre à l’échelle au moment de la génération.
+
+Duplex intégral, ici, ça veut dire que l’écoute et la parole peuvent se chevaucher, donc le modèle a besoin d’un appel parler-ou-rester-silencieux à chaque trame.
+
+Cette quantité décisive peut se lire sans entraînement ni annotation, puis se mettre à l’échelle pendant la génération.
+
+Décaler cette direction fait passer le ratio de parole de la plage non dirigée de vingt-et-un à trente pour cent, n’importe où entre six à douze pour cent et quarante-deux à soixante-et-un pour cent.
+
+Le décalage reste cohérent d’une conversation à l’autre, d’un jeu de poids à l’autre et d’un corpus à l’autre.
+
+Un court enregistrement de référence d’un locuteur cible suffit pour extraire la direction correspondante et transférer le style de prise de tour de ce locuteur.
+
+Brancher une référence différente dégrade la correspondance dans quatre-vingt-treize à quatre-vingt-dix-huit pour cent des cas.
+
+La même direction anticipe aussi les attaques jusqu’à huit cents millisecondes à l’avance.
+
+Ce signal précoce, c’est ce que les systèmes en aval peuvent utiliser pour une gestion plus fluide des interruptions.
+
+La personnalité conversationnelle n’est pas figée dans les poids ; elle vit dans une direction orientable qu’on peut calibrer par utilisateur au moment de l’inférence, pour un surcoût négligeable, et les poids seuls ne tiendront pas plus d’un style figé.
+
+Avant de partir, CoTranslator sera évalué sur d’autres matières scientifiques et techniques et sur de plus gros modèles étudiants, pour quantifier les économies de calcul à l’échelle.
+
+Voilà pour Models and Agents aujourd’hui. Si vous avez trouvé ça utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain.
+
+Le monde de l’I A avance vite. On vous aide à suivre.
+
+À demain. Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube chez Nerra Network — le lien est dans les notes de l’épisode.
+
+Petit conseil du réseau : essayez The Do Positive Pod ensuite — des bonnes nouvelles en science et techno, plus une action concrète que vous pouvez mener.
+
+Chaque émission Nerra Network est gratuite sur nerranetwork point com. Et si vous préférez parcourir par sujet plutôt que par émission, chaque sujet couvert par le réseau a sa propre page sur nerranetwork point com topics.
+
+Cet épisode a utilisé une synthèse vocale I A de ma voix — la sélection éditoriale et l’analyse sont les miennes.

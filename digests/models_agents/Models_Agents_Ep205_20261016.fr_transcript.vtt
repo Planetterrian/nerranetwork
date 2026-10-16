@@ -1,0 +1,508 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:28.220
+La compression clé valeur par jetons de pause réduit le cache d'un facteur 3,5 et accélère l'inférence sur H-sente d'un facteur 3,2 sur les longs problèmes de mat. Ici, Models &amp; Agents, épisode 205. Abridge KV entraîne un modèle à compresser chaque bloc terminé de chaînes de pensées générées dans les entrées du cache clé valeur de quelques jetons de pause à prix qui ne produisent aucune sortie, selon un article sur Archive.
+
+00:00:28.220 --> 00:00:32.240
+Ces jetons de pose reçoivent des positions à l'intérieur du blog grand-placé.
+
+00:00:32.720 --> 00:00:37.480
+Le budget de cache est alloué selon la valeur mesurée de chaque couche et la compression
+
+00:00:37.480 --> 00:00:39.420
+s'applique à des blogs relativement grands.
+
+00:00:40.020 --> 00:00:47.720
+Sur 446 problèmes tirés de IMM, AMT, AMC et de concours similaires, avec des générations
+
+00:00:47.720 --> 00:00:53.080
+de 32 000 jetons, garder un quart du cache égal à un modèle clé-valor complet entraîné
+
+00:00:53.080 --> 00:00:57.040
+de façon identique à la fois en précision et en longueur de sortie.
+
+00:00:57.040 --> 00:01:03.020
+La plus forte référence des victions publiées, au même budget, produit des sorties bien plus longues.
+
+00:01:03.360 --> 00:01:06.920
+Une référence de compresseur réentraînée perd 10 points de précision.
+
+00:01:07.540 --> 00:01:13.300
+Servis d'en VLLM, ce compresseur à jetons de pause s'exécute par séquence sur une hache-sente saturée.
+
+00:01:14.060 --> 00:01:19.820
+Côté S utilise la compétition de probabilité entre les deux jetons les plus probable pour allouer un poids continu,
+
+00:01:20.420 --> 00:01:26.460
+entre l'engagement discret et l'exploration douce à chaque étape, et ça ne demande aucun entraînement supplémentaire.
+
+00:01:26.460 --> 00:01:31.300
+Un article archiv indique que le second candidat représente la plus forte alternative,
+
+00:01:31.800 --> 00:01:36.820
+donc un écart plus large signal à stabilité et maintient la représentation proche du jeton
+
+00:01:36.820 --> 00:01:37.520
+échantillonné.
+
+00:01:38.120 --> 00:01:42.100
+Un écart plus petit augmente la contribution douce pour retenir les alternatives.
+
+00:01:42.860 --> 00:01:46.460
+La méthode n'exige ni passe à supplémentaire, ni seules qualibrées.
+
+00:01:47.000 --> 00:01:50.720
+Des expériences sur six bancs d'essai de raisonnement montrent des gains constant
+
+00:01:50.720 --> 00:01:55.040
+par rapport à la chaîne de pensées standards et aux méthodes latentes antérieures sans
+
+00:01:55.040 --> 00:01:55.560
+entraînement.
+
+00:01:55.560 --> 00:02:01.040
+Le Wall-Off, une langue parlée par 23 millions de personnes, principalement au Sénégal,
+
+00:02:01.480 --> 00:02:07.040
+dispose désormais de modèles à poids ouverts, de 0,6 milliards à 14 milliards de paramètres.
+
+00:02:07.660 --> 00:02:12.740
+La publication archive, affine par instruction, aligne sur les préférences et fusionne ses
+
+00:02:12.740 --> 00:02:17.460
+poids, et après la chaîne complète, les variants de 8 milliards et de 14 milliards
+
+00:02:17.460 --> 00:02:22.360
+restent compétitives face à des systèmes commerciaux bien plus gros, sur 63 tâches
+
+00:02:22.360 --> 00:02:26.260
+public et interne, tout en préservant les performances interlingues.
+
+00:02:26.720 --> 00:02:31.040
+Les modèles sont déjà en pilote interne de relations clients et disponibles sur Hugging
+
+00:02:31.040 --> 00:02:31.340
+Face.
+
+00:02:32.500 --> 00:02:38.120
+VerdictMQ est un encodeur de 395 millions de paramètres qui lient un dossier une seule
+
+00:02:38.120 --> 00:02:42.800
+fois et répond à chaque question-tipée à son sujet grâce à un masque d'attention
+
+00:02:42.800 --> 00:02:46.600
+structurée qui maintient l'encodage d'état indépendant des questions.
+
+00:02:47.200 --> 00:02:51.380
+Sur le band décès des décisions-tipées, il colle mieux aux étiquettes d'or souples
+
+00:02:51.380 --> 00:02:57.300
+que le spécialiste laïa publié, de 421 millions de paramètres, sur 5 graines, selon
+
+00:02:57.300 --> 00:03:01.600
+Archive, tout en préservant les avantages de mise à l'échelle de température par
+
+00:03:01.600 --> 00:03:02.000
+système.
+
+00:03:02.760 --> 00:03:08.840
+Aprile, fourni 2196 instances répartient en 6 catégories, avec des gris spécifiques
+
+00:03:08.840 --> 00:03:13.860
+à chaque instance pour deux tâches, l'analyse de scénarios sociaux et la réponse socialement
+
+00:03:13.860 --> 00:03:14.480
+consciente.
+
+00:03:15.020 --> 00:03:19.000
+Le banc des scéarchives vise la conscience sociale chinoise dans les grands modèles
+
+00:03:19.000 --> 00:03:19.680
+de langage.
+
+00:03:19.680 --> 00:03:25.080
+Des expériences sur 12 modèles issus de 6 familles révèlent un écart constant entre
+
+00:03:25.080 --> 00:03:29.860
+la compréhension et la qualité des réponses, les analyses de meilleures qualités améliorant
+
+00:03:29.860 --> 00:03:33.120
+les réponses en avale, les données et le code sont publiées.
+
+00:03:33.700 --> 00:03:38.380
+Co-translateur apprend à traduire des justifications de chaînes de pensées inverses, moins
+
+00:03:38.380 --> 00:03:43.020
+cher vers la distribution des réponses avant vérifier, à partir d'un petit ensemble
+
+00:03:43.020 --> 00:03:43.640
+à parier.
+
+00:03:44.120 --> 00:03:49.500
+Sur 6 modèles étudiants et 6 bandes et 7 maths, la méthode archive améliore la précision
+
+00:03:49.500 --> 00:03:54.300
+moyenne par rapport à la suppression sémantique, jusqu'à 5,82 points.
+
+00:03:54.820 --> 00:04:02.520
+Elle conserve 95% de la précision de l'échantillonnage par rejet, pour 35,9% du calcul sur des étudiants
+
+00:04:02.520 --> 00:04:07.360
+de 4 milliards de paramètres. Le traducteur se transfère sans réentraînement vers de nouveaux
+
+00:04:07.360 --> 00:04:11.560
+jeux de données, de nouveaux enseignants et de nouveaux problèmes scientifiques et techniques.
+
+00:04:12.380 --> 00:04:17.940
+Deep Unfolding Agent est un service fast API piloté par Schema qui enregistre des stratégies
+
+00:04:17.940 --> 00:04:22.960
+d'optimisation, accepte des diagnostics au niveau de chaque tour, renvoie des actions
+
+00:04:22.960 --> 00:04:26.820
+de contrôle borné et des mises à jour à partir du retour de l'exécuteur.
+
+00:04:27.300 --> 00:04:31.540
+Un article archiv indique qu'il prend en charge les voix classiques, conscient du
+
+00:04:31.540 --> 00:04:36.900
+quantique hybride, qu'ils quittent à héros et IBM Quantum, vient un registre de
+
+00:04:36.900 --> 00:04:40.880
+stratégie, un garde-fou de sécurité et un déploiement d'occurre.
+
+00:04:41.340 --> 00:04:47.040
+La validation couvre les tests unitaires de Schema, d'API, de sécurité, d'orchestration,
+
+00:04:47.040 --> 00:04:53.360
+et adossé au matériel, dans la finance, la santé, la génomique et la simulation quantique bruitée.
+
+00:04:53.980 --> 00:04:58.380
+Prisme récupère des signaux de préférences par requête à partir de corpus de graph
+
+00:04:58.380 --> 00:05:03.220
+vérifié à l'exécution en entraînant un étudiant à imiter un enseignant qui voit un
+
+00:05:03.220 --> 00:05:08.840
+grave de solutions frères, indisponible au déploiement. La branche privilégie de rang faible,
+
+00:05:09.300 --> 00:05:14.880
+décrite sur archive, fournie le signal de classement manquant que la finage supervisée standard n'a pas.
+
+00:05:14.880 --> 00:05:20.140
+Sur 6 bandes et 7 diversifiées, la méthode surpasse toutes les références intérieures
+
+00:05:20.140 --> 00:05:21.500
+de conception de topologie.
+
+00:05:22.120 --> 00:05:28.360
+Le code est publié, MedEX affine la matrouille 8 milliards avec Kulora, une méthode d'adaptation
+
+00:05:28.360 --> 00:05:33.560
+de renfable quantifié, puis ajoute la génération augmentée par récupération et une couche
+
+00:05:33.560 --> 00:05:34.400
+Gemina et Vision.
+
+00:05:35.060 --> 00:05:40.460
+Le système archif traite les PDF textes, les PDF scannées et les images radiologiques via
+
+00:05:40.460 --> 00:05:45.620
+une chaîne d'extraction hybride avec détection de textes poubelles et il ajoute une récupération
+
+00:05:45.620 --> 00:05:51.460
+limitée au contre-endu, une comparaison longitudinal et une chaîne de rattrapage auto-réparatrice.
+
+00:05:52.020 --> 00:06:01.200
+Face au la matruit MED 42 milliards de bases, il enregistre rouge 1 plus 9,2% rouge 2 plus 10,0%
+
+00:06:01.200 --> 00:06:09.940
+Rouges L, plus 11,8%, bleu, plus 71,4% et BERT score, plus 0,8%.
+
+00:06:09.940 --> 00:06:15.300
+Review Pilot est un système conversationnel multi-agent qui automatise le flux de revue
+
+00:06:15.300 --> 00:06:20.880
+systématique prisma du criblage à l'extraction, tout en enregistrant les motifs d'exclusion
+
+00:06:20.880 --> 00:06:23.020
+et les emplacements sources pour chaque valeur.
+
+00:06:23.680 --> 00:06:28.200
+Sur des revues d'experts en épidémiologie, selon Archive, il surpasse les grands
+
+00:06:28.200 --> 00:06:33.480
+modèle de langage à consignes unique et agentes SLR, sur trois grands modèles de langage
+
+00:06:33.480 --> 00:06:41.420
+avec un F un macro de criblage de 0,766 et un F un d'extraction de 0,788, le code
+
+00:06:41.420 --> 00:06:42.020
+est publié.
+
+00:06:42.760 --> 00:06:47.580
+Jeff est un modèle de décision non-générative qui renvoie des valeurs TIP et des probabilités
+
+00:06:47.580 --> 00:06:53.880
+natives sans texte, conçu pour la vérification d'affirmation en génération augmentée par récupération.
+
+00:06:53.880 --> 00:07:00.220
+Sur 495 affirmations anotées par des humains, un article archiv indique qu'il égale
+
+00:07:00.220 --> 00:07:06.420
+un grand modèle de langage de frontières à 0,56 points prêts pour un coup 187 fois
+
+00:07:06.420 --> 00:07:10.060
+plus bas, tout en divergent sur 15,2% des éléments.
+
+00:07:10.660 --> 00:07:18.100
+Une cascade à soie de confiance atteint 64,10 à $2,92 pour 1000 affirmations contre
+
+00:07:18.100 --> 00:07:23.740
+entre 73,83 à 8 $ et 93 cents pour le modèle de frontière-sol.
+
+00:07:24.440 --> 00:07:28.180
+Toutes les prédictions, les consignes, les tarifs et le code sont publiés.
+
+00:07:28.880 --> 00:07:31.400
+Chipe projette les requêtes analytiques sur des attributs,
+
+00:07:31.760 --> 00:07:34.060
+construit une taxonomie hybride hierarchique
+
+00:07:34.060 --> 00:07:37.680
+et publie une table synthétique à confidentialité différencielle.
+
+00:07:38.240 --> 00:07:41.860
+La méthode archive surpasse les références antérieures d'analyse privé
+
+00:07:41.860 --> 00:07:45.480
+en performance de questions réponses et en fidélité structurée,
+
+00:07:45.480 --> 00:07:50.140
+tout en faisant remonter les requêtes qui restent difficiles pour les représentations structurées.
+
+00:07:50.780 --> 00:07:55.440
+Prémice Check réécrit chaque commentaire de relecture en prémices explicites avec
+
+00:07:55.440 --> 00:08:00.220
+un grand modèle de langage, puis vérifie chaque prémice par rapport à l'article à l'aide
+
+00:08:00.220 --> 00:08:04.720
+d'un modèle de décision peu coûteux. Quand chaque commentaire est vérifié indépendamment,
+
+00:08:04.960 --> 00:08:11.160
+selon Archive, il égale la précision de GPT-5,5 en traitement automatique des langues en
+
+00:08:11.160 --> 00:08:15.500
+on apprentissage automatique et en sciences naturelles pour à peu près la moitié du coup.
+
+00:08:16.180 --> 00:08:20.240
+Sur les relectures en traitement automatique des langues, il atteint cette précision pour
+
+00:08:20.240 --> 00:08:23.080
+un quart du coup et moins de la moitié de la latence.
+
+00:08:23.720 --> 00:08:27.800
+Tout le bottleneckbench maintient les tâches fixes tout en faisant varier une pression
+
+00:08:27.800 --> 00:08:33.240
+à la fois, le catalogue d'outils, le menu visible, le flux certifié ou l'encodage des
+
+00:08:33.240 --> 00:08:33.960
+enregistrements.
+
+00:08:34.520 --> 00:08:39.820
+Sur 21 configuration de modèles et d'environnement de tests, un article archif constate que
+
+00:08:39.820 --> 00:08:44.480
+le menu visible produit la seule pénalité importante, qui suit la troncature au plafond
+
+00:08:44.480 --> 00:08:45.220
+de complétions.
+
+00:08:45.900 --> 00:08:51.220
+Multiplier le plafond par 16 élimine l'essentiel de la pénalité, et le banc d'essai ainsi
+
+00:08:51.220 --> 00:08:52.780
+que le correcteur sont publié.
+
+00:08:53.560 --> 00:08:58.820
+P.A. de Bench fournit 2605 enregistrement, qui couvre des erreurs de parole d'enfants,
+
+00:08:59.320 --> 00:09:03.860
+des erreurs jouées et de la synthèse vocale synthétique conditionnée par phonème, le
+
+00:09:03.860 --> 00:09:06.860
+tout doublement anoté par des auditeurs formés en phonétique.
+
+00:09:06.860 --> 00:09:12.080
+Très modèle de parole à l'état de l'art n'arrive pas à détecter les erreurs de façon fiable,
+
+00:09:12.520 --> 00:09:17.160
+même dans des conditions contrôlées, selon Archive, et affiche une faible précision
+
+00:09:17.160 --> 00:09:21.500
+sur les phonèmes correctement prononcés. Les modèles paroles langages affinaient
+
+00:09:21.500 --> 00:09:25.860
+sur la portion synthétique, surpassent les références commerciales et à code ouvert
+
+00:09:25.860 --> 00:09:30.440
+en détection au niveau du mot, même si un écart simulation réel demeure.
+
+00:09:30.880 --> 00:09:33.900
+Si vous servez de longues chaînes de pensées en mat ou en code,
+
+00:09:33.900 --> 00:09:38.120
+brancher à Bridge KV dans ce déploiement VLLM dès cette semaine.
+
+00:09:38.720 --> 00:09:42.240
+Télécharger les modèles Wallof de 8 milliards ou de 14 milliards
+
+00:09:42.240 --> 00:09:47.480
+depuis la collection orange sur Roggingface et tester les sur des dialogues de relations
+
+00:09:47.480 --> 00:09:53.020
+clients mixed Wallof anglais. Lancer le générateur de topologie prisme sur votre propre
+
+00:09:53.020 --> 00:09:57.620
+corps puce de tâche multiagent pour obtenir des graves de collaborations classées
+
+00:09:57.620 --> 00:09:59.820
+plutôt que biaisées par la fréquence.
+
+00:09:59.820 --> 00:10:05.020
+Pointez Prémis Check sur un l'eau de relecture par les pares récentes et laissez la chaîne
+
+00:10:05.020 --> 00:10:08.680
+réécriture des prémices plus modèles de décisions faire la vérification.
+
+00:10:09.140 --> 00:10:13.460
+Les modèles adaptés au Wall-Off passent des pilotes internes à une publication publique
+
+00:10:13.460 --> 00:10:17.060
+plus large, avec des conditions de licence commerciale documentées.
+
+00:10:17.620 --> 00:10:21.900
+La mémoire de projet de review pilot et l'édition de schéma pilotée par le dialogue
+
+00:10:21.900 --> 00:10:26.940
+seront étendue à d'autres domaines de revues systématiques au-delà de l'épidémiology.
+
+00:10:26.940 --> 00:10:32.180
+Les jeux de données joués et synthétiques de PET Bench, plus les recettes d'affinage,
+
+00:10:32.540 --> 00:10:36.440
+seront publiées pour refermer les cas à simulation réelles qui restent en détection
+
+00:10:36.440 --> 00:10:37.460
+d'erreurs phonétiques.
+
+00:10:37.940 --> 00:10:42.020
+Une seule direction du flux résiduel des couches tardives, c'est là qu'on ouvre le
+
+00:10:42.020 --> 00:10:46.880
+capot des modèles parlants en duplex intégral, qui doivent décider à chaque tram, s'ils
+
+00:10:46.880 --> 00:10:47.320
+parlent.
+
+00:10:47.700 --> 00:10:48.640
+Les cas est brutal.
+
+00:10:49.200 --> 00:10:53.700
+Chaque jeu de poids a l'air de figer un style conversationnel, alors que l'ingénierie
+
+00:10:53.700 --> 00:10:57.900
+dit que ce style est une direction qu'on peut mettre à l'échelle au moment de la génération.
+
+00:10:58.800 --> 00:11:03.060
+Duplex intégral, ici, ça veut dire que l'écoute et la parole peuvent se chevocher,
+
+00:11:03.540 --> 00:11:07.660
+donc le modèle a besoin d'un appel parlé ou restez silencieux à chaque tram.
+
+00:11:08.340 --> 00:11:11.940
+Cette quantité décisive peut se lire sans entraînement ni à notation,
+
+00:11:12.440 --> 00:11:16.360
+puis se mettre à l'échelle pendant la génération. Décaler cette direction
+
+00:11:16.360 --> 00:11:23.540
+fait passer le ratio de parole de la plage non dirigée de 21 à 30%, n'importe où entre 6 à 12%
+
+00:11:23.540 --> 00:11:30.040
+et 42 à 71%. Le décalage reste cohérent d'une conversation à l'autre, d'un jeu de
+
+00:11:30.040 --> 00:11:34.260
+poids à l'autre, et d'un corps puce à l'autre. Un cours enregistrement de référence
+
+00:11:34.260 --> 00:11:39.240
+d'un locuteur cible suffit pour extraire la direction correspondente et transférer le
+
+00:11:39.240 --> 00:11:44.040
+style de prise de tour de ce locuteur. Branchez une référence différente, dégrade
+
+00:11:44.040 --> 00:11:50.520
+la correspondance dans 93 à 98% des cas. La même direction anticipe aussi les attaques
+
+00:11:50.520 --> 00:11:56.220
+jusqu'à 800ms à l'avance. Ce signal précoce, c'est ce que les systèmes en aval peuvent
+
+00:11:56.220 --> 00:12:01.160
+utiliser pour une gestion plus fluide des interruptions. La personnalité conversationnelle
+
+00:12:01.160 --> 00:12:05.680
+n'est pas figée dans les poids. Elle vit dans une direction orientable qu'on peut calibrer
+
+00:12:05.680 --> 00:12:10.560
+par utilisateur au moment de l'inférence, pour un surcout négligeable, et les poids
+
+00:12:10.560 --> 00:12:15.880
+seules ne tiendront pas plus d'un style figé. Avant de partir, côte-insleteur sera évalué
+
+00:12:15.880 --> 00:12:20.260
+sur d'autres matières scientifiques et techniques, et sur de plus gros modèles étudiants
+
+00:12:20.260 --> 00:12:22.960
+pour quantifier les économies de calcul à l'échelle.
+
+00:12:23.480 --> 00:12:25.540
+Voilà pour Modors &amp; Agents aujourd'hui.
+
+00:12:25.940 --> 00:12:29.860
+Si vous avez trouvé ça utile, partagez-le avec quelqu'un qui essaie de suivre tous
+
+00:12:29.860 --> 00:12:33.480
+ses changements, et abonnez-vous pour ne pas rater la mise à jour de demain.
+
+00:12:34.080 --> 00:12:37.560
+Le monde de l'IA avance vite, on vous aide à suivre, à demain.
+
+00:12:38.140 --> 00:12:42.940
+Et si vous préférez regarder plutôt qu'écouter, retrouvez-nous sur YouTube chez Nairanetwork,
+
+00:12:43.300 --> 00:12:44.900
+le lien est dans les notes de l'épisode.
+
+00:12:44.900 --> 00:12:48.880
+Petit conseil du réseau, essayez de doux positives pods ensuite.
+
+00:12:49.460 --> 00:12:53.200
+Des bonnes nouvelles en science et techno, plus une action concrète que vous pouvez mener.
+
+00:12:53.720 --> 00:12:57.460
+Chaque émission NERANETWORK est gratuite sur NERANETWORK.com.
+
+00:12:57.980 --> 00:13:01.020
+Et si vous préférez parcourir par sujet plutôt que par émission,
+
+00:13:01.560 --> 00:13:06.400
+chaque sujet couvert par le réseau à sa propre page sur NERANETWORK.com TopX.
+
+00:13:06.680 --> 00:13:10.180
+Cette épisode a utilisé une synthèse vocale IA de ma voix.
+
+00:13:10.500 --> 00:13:13.300
+La sélection éditoriale et l'analyse sont les miennes.
