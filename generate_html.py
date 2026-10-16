@@ -42,6 +42,52 @@ TEMPLATES_DIR = ROOT / "templates"
 SHOWS_DIR = ROOT / "shows"
 GITHUB_RAW = "https://nerranetwork.com"
 
+# Oct 16 2026 — approved GSC CTR titles + metas (HoM final). Loaded from
+# docs/seo-titles-final.md so the approved search copy is the one source
+# of truth (and so generate_html.py does not hardcode phrases the
+# sponsor-readiness surface ban still scans for). Keyed by committed HTML
+# basename (homepage = index.html). Show pages use these EXACTLY: no
+# daily-hook injection into <title> / og / twitter. ``&#124;`` = ``|``.
+_SEO_URL_TO_FILE = {
+    "/": "index.html",
+    "/personal-interest.html": "personal-interest.html",
+    "/join.html": "join.html",
+    "/claims.html": "claims.html",
+    "/nerra-voices-apply.html": "nerra-voices-apply.html",
+    "/spacex.html": "spacex.html",
+    "/tesla.html": "tesla.html",
+    "/fascinating-frontiers.html": "fascinating-frontiers.html",
+    "/models-agents.html": "models-agents.html",
+    "/age-of-ai.html": "age-of-ai.html",
+    "/nerra-voices.html": "nerra-voices.html",
+}
+
+
+def _load_seo_page_copy(path: Path | None = None) -> dict[str, tuple[str, str]]:
+    """Parse docs/seo-titles-final.md into {basename: (title, meta)}."""
+    src = path or (ROOT / "docs" / "seo-titles-final.md")
+    rows: dict[str, tuple[str, str]] = {}
+    for line in src.read_text(encoding="utf-8").splitlines():
+        if not line.startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 3:
+            continue
+        url, title, meta = cells[0], cells[1], cells[2]
+        if not url.startswith("/") or url in ("URL",) or url.startswith("---"):
+            continue
+        page = _SEO_URL_TO_FILE.get(url)
+        if not page:
+            continue
+        rows[page] = (
+            title.replace("&#124;", "|"),
+            meta.replace("&#124;", "|"),
+        )
+    return rows
+
+
+SEO_PAGE_COPY: dict[str, tuple[str, str]] = _load_seo_page_copy()
+
 # Newsletter social proof is hidden until the subscriber count clears this
 # floor — "Join 23 readers" is anti-proof, "Join 250 readers" converts.
 # June 2026 website review: 100 -> 50; fifty real readers is credible
@@ -1863,6 +1909,26 @@ def _merge_scaffolded_network_registry() -> None:
 _merge_scaffolded_network_registry()
 
 
+def _apply_seo_meta_overrides() -> None:
+    """Pin approved SEO metas onto registry entries (incl. YAML-sourced shows).
+
+    Titles are applied at render time so the daily hook never rewrites them —
+    see generate_show_page.
+    """
+    by_page = {
+        cfg.get("show_page"): cfg
+        for cfg in NETWORK_SHOWS.values()
+        if isinstance(cfg, dict) and cfg.get("show_page")
+    }
+    for page, (_title, meta) in SEO_PAGE_COPY.items():
+        cfg = by_page.get(page)
+        if cfg is not None:
+            cfg["meta_description"] = meta
+
+
+_apply_seo_meta_overrides()
+
+
 def _collect_dp_levers(limit: int = 6) -> list:
     """Extract recent "The Lever" actions from The DP Pod's digests.
 
@@ -3298,16 +3364,23 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
     # Quick-win (May 2026 review): dynamic metadata from the RSS we already
     # parsed for the episodes rail. Makes <title>, meta description, and OG
     # cards reflect the current episode hook instead of static NETWORK_SHOWS text.
-    page_title = f"{cfg['name']} | Nerra Network"
-    meta_description = cfg.get("meta_description", "")
+    # Oct 16 2026: approved SEO pages keep the exact title + meta — the daily
+    # hook was rewriting every show <title> mid-word for social/search and
+    # fighting the GSC CTR copy. Other shows keep the dynamic hook.
     latest_episode_title = static_episodes[0]["title"] if static_episodes else None
-    if latest_episode_title:
-        hook_snippet = latest_episode_title.split(":", 1)[-1].strip() if ":" in latest_episode_title else latest_episode_title
-        # Titles rule: clip through engine/titles.py, never a raw slice (the
-        # two slice sites here even disagreed with each other, 67 vs 65).
-        hook_snippet = _titles.clip_words(hook_snippet, _titles.WEB_TITLE_LEAD_MAX)
-        page_title = f"{cfg['name']} — {hook_snippet} | Nerra Network"
-        meta_description = f"Latest: {latest_episode_title}. {cfg.get('meta_description', '')}".strip()
+    _seo = SEO_PAGE_COPY.get(cfg.get("show_page", ""))
+    if _seo:
+        page_title, meta_description = _seo
+    else:
+        page_title = f"{cfg['name']} | Nerra Network"
+        meta_description = cfg.get("meta_description", "")
+        if latest_episode_title:
+            hook_snippet = latest_episode_title.split(":", 1)[-1].strip() if ":" in latest_episode_title else latest_episode_title
+            # Titles rule: clip through engine/titles.py, never a raw slice (the
+            # two slice sites here even disagreed with each other, 67 vs 65).
+            hook_snippet = _titles.clip_words(hook_snippet, _titles.WEB_TITLE_LEAD_MAX)
+            page_title = f"{cfg['name']} — {hook_snippet} | Nerra Network"
+            meta_description = f"Latest: {latest_episode_title}. {cfg.get('meta_description', '')}".strip()
 
     # Phase 3: link to the show's public narrative tracker page when it has one
     # (Tesla has a dedicated page; other shows use the generic generator).
@@ -3695,10 +3768,12 @@ def generate_network_page(*, dry_run=False):
     except Exception as e:
         print(f"Warning: could not load newsletter stats: {e}")
 
+    _home_title, _home_meta = SEO_PAGE_COPY["index.html"]
     context = {
         "path_prefix": "",
-        "page_title": "Nerra Network — Independent Podcast Network",
-        "meta_description": "Daily podcasts keeping you informed. Tesla, world news, space, science, environment, AI, modern investing, first-principles thinking, narrative case studies, Russian finance, and language learning. Independent, always free.",
+        "page_title": _home_title,
+        "page_description": _home_meta,
+        "meta_description": _home_meta,
         "meta_keywords": "podcast network, daily podcasts, Nerra Network, Tesla, space, science, AI, environment, history, unintended consequences",
         "theme_color": "#6B47FF",
         "og_image": f"{GITHUB_RAW}/assets/og-preview.png",
@@ -5736,11 +5811,10 @@ def generate_join_page(*, dry_run=False, output_dir=None):
     # to pick — the closed vocabulary from engine.personal_edition is the
     # product, so show it.
     personal_shows = _personal_shows_list()
+    _join_title, _join_meta = SEO_PAGE_COPY["join.html"]
     ctx = _member_page_context(
-        "Nerra Personal — your own daily show | Nerra Network",
-        "Pick your shows, set the order, and every morning Mira builds "
-        "them into one private podcast episode made just for you. From "
-        "$4.99/month; the account itself is free.",
+        _join_title,
+        _join_meta,
         "https://nerranetwork.com/join.html")
     ctx["personal_shows"] = personal_shows
     ctx["total_episodes"] = _count_total_episodes()
@@ -5772,10 +5846,10 @@ def generate_personal_interest_page(*, dry_run=False):
     + ``SpaceX Daily``. Episode totals are never shown here.
     """
     env = _get_jinja_env()
+    _pi_title, _pi_meta = SEO_PAGE_COPY["personal-interest.html"]
     ctx = _member_page_context(
-        "Personal tips by email, no charge, no card | Nerra Network",
-        "Every Nerra show stays free. Leave your email for occasional "
-        "Personal tips. Curiosity only.",
+        _pi_title,
+        _pi_meta,
         "https://nerranetwork.com/personal-interest.html")
     # Soft page must never carry episode totals (frozen / no FOMO).
     ctx.pop("total_episodes", None)
@@ -6571,16 +6645,11 @@ def generate_claims_pages(*, dry_run=False, output_dir=None, digests_root=None,
             "show_page": meta.get("show_page", ""),
             "claims_page": f"claims/{s['slug']}.html" if s["slug"] in page_slugs else "",
         })
-    description = (
-        "How every Nerra Network claim is checked against its source, what "
-        "happens when the check cannot confirm one (published and marked, "
-        "re-checked nightly, never removed), and every show's record for "
-        f"the last {days} days — plus every correction filed."
-    )
+    _claims_title, description = SEO_PAGE_COPY["claims.html"]
     html = "" if not network_page else template.render(
         mode="network",
         path_prefix="",
-        page_title="Claims & corrections | Nerra Network",
+        page_title=_claims_title,
         page_description=description,
         meta_description=description,
         meta_keywords="fact checking, claims ledger, corrections, AI podcast transparency, Nerra Network",

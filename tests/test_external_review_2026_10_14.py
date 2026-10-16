@@ -281,10 +281,13 @@ class TestCorrectionHeadline:
         assert box < h1
         assert tpl.count('<aside class="nn-correction"') == 1
 
-    def test_uc_139_is_the_operators_switch(self):
-        """The mechanism exists; flipping UC Ep139's headline is the operator's
-        call (docs/corrections.md). The entry is still filed either way."""
+    def test_uc_139_amends_headline_and_body(self):
+        """Oct 16 2026: UC Ep139 carries a real amend (headline + replacements),
+        not only a note box above the false claim."""
         from engine import corrections as C
         rows = C.corrections_for(ROOT / "digests/unintended_consequences", 139)
         assert rows and rows[0]["where"] == "both"
-        assert "amend_headline" in rows[0]
+        assert rows[0]["amend_headline"] is True
+        assert C.has_text_amendments(rows[0])
+        assert rows[0].get("headline")
+        assert rows[0].get("replacements")
