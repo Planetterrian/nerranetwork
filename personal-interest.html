@@ -34,19 +34,12 @@
 
     
     
-    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
-    <script src="assets/js/consent.js"></script>
-    <!-- gtag.js — covers both GA4 and Google Ads -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      
-      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
-      
-      
-    </script>
+    <!-- Cookie consent (Google Consent Mode v2). consent.js owns gtag load. -->
+    <script src="assets/js/consent.js"
+            data-nn-path-prefix=""
+            data-nn-ga4-id="G-6PWJCVQQ7B"
+            data-nn-ads-id=""
+            data-nn-ads-signup-label=""></script>
     
     
     
@@ -1073,14 +1066,29 @@
       // Soft Personal north-star event — distinct from newsletter_signup /
       // gallery subscribe / join CTA. Soft path must never report as
       // newsletter_signup (conflates Soft with newsletter in GA4).
+      // Enhanced conversions: consent-gated SHA-256 email via
+      // NNSubscribe.fireSoftPersonalInterestSubmit (footer-subscribe.js)
+      // immediately before the event; skip silently without consent.
       if (typeof window.gtag === "function") {
         if (interested) {
-          window.gtag("event", "soft_personal_interest_submit", {
+          var softPayload = {
             form_id: "personal-interest",
             page_path: "/personal-interest.html",
             list: list,
             source: SOURCE || "direct"
-          });
+          };
+          // Prefer the shared helper (consent-gated enhanced conversions).
+          // Flat if/if (!…) — not nested else — so Soft vs newsletter
+          // branch finding in tests stays unambiguous.
+          var fireShared = window.NNSubscribe &&
+            typeof window.NNSubscribe.fireSoftPersonalInterestSubmit === "function";
+          if (fireShared) {
+            window.NNSubscribe.fireSoftPersonalInterestSubmit(
+              email, company, softPayload);
+          }
+          if (!fireShared) {
+            window.gtag("event", "soft_personal_interest_submit", softPayload);
+          }
         } else {
           // Newsletter-only path (Soft interest unchecked on this page).
           window.gtag("event", "newsletter_signup", {

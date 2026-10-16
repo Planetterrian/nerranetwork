@@ -102,9 +102,13 @@ class TestSubscribeJsSourceMapping:
         js = _read("assets/js/footer-subscribe.js")
         assert "soft_personal_interest_submit" in js
         assert "data.ok === true" in js or "r.data.ok === true" in js
-        # Soft event must sit after the success gate, not before fetch.
+        # Soft event call site must sit after the success gate, not before
+        # fetch. (The event name also appears earlier in helper definitions
+        # / fireGa wrappers — index the submit-handler call specifically.)
         success_idx = js.index("r.data.ok === true") if "r.data.ok === true" in js else js.index("data.ok === true")
-        ga_idx = js.index("soft_personal_interest_submit")
+        call_token = "fireSoftPersonalInterestSubmit(email, company, {"
+        assert call_token in js
+        ga_idx = js.index(call_token)
         assert ga_idx > success_idx
 
     def test_soft_personal_posts_personal_interest_list(self):
@@ -127,6 +131,7 @@ class TestSoftPersonalPageUsesSharedSourceResolver:
     def test_still_fires_soft_event_only_on_ok_true(self):
         src = _read("templates/personal_interest_page.html.j2")
         assert 'r.data.ok !== true' in src or "r.data.ok !== true" in src
+        assert "fireSoftPersonalInterestSubmit" in src
         assert 'gtag("event", "soft_personal_interest_submit"' in src
 
 
