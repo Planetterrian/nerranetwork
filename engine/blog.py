@@ -1089,7 +1089,7 @@ def _md_inline(text: str) -> str:
     text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
     # Italic
     text = re.sub(r"\*(.+?)\*", r"<em>\1</em>", text)
-    # Links — strip referral / gift-link query params before they become hrefs.
+    # Links — strip referral / affiliate / gift-link query params before they become hrefs.
     text = re.sub(
         r"\[([^\]]+)\]\(([^)]+)\)",
         lambda m: (
