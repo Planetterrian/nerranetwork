@@ -115,11 +115,15 @@ class TestHomepageSoftOnly:
 
 class TestBannedWhenYoureReady:
     def test_personal_interest_title_and_h1(self):
+        import generate_html as G
+
+        assert G.SEO_PAGE_COPY["personal-interest.html"][0] == TITLE_EXACT
         gen = _read("generate_html.py")
         start = gen.index("def generate_personal_interest_page")
         body = gen[start : start + 900]
-        assert f'"{TITLE_EXACT}"' in body
+        assert 'SEO_PAGE_COPY["personal-interest.html"]' in body
         assert BANNED_READY.search(body) is None
+        assert BANNED_READY.search(TITLE_EXACT) is None
 
         tpl = _read("templates/personal_interest_page.html.j2")
         assert f'id="spi-title">{H1_EXACT}</h1>' in tpl

@@ -24,8 +24,8 @@ SOFT_PRIVACY_NOTE = (
     "We’ll only email you about Nerra Personal. Unsubscribe anytime."
 )
 SOFT_META_DESCRIPTION = (
-    "Every Nerra show stays free. Leave your email for occasional "
-    "Personal tips. Curiosity only."
+    "Get occasional Personal tips by email, no charge, no card. Every "
+    "Nerra show stays free. No ads. No outrage diet. Curiosity only."
 )
 
 
@@ -149,13 +149,16 @@ class TestSoftPersonalHomeAndAgeOfAi:
 
 class TestPersonalInterestNoNumericShowCount:
     def test_template_and_meta_have_no_numeric_show_count(self):
+        import generate_html as G
+
         tpl = _read("templates/personal_interest_page.html.j2")
-        gen = _read("generate_html.py")
         # Body + meta description must use the non-numeric phrasing.
         assert "Every Nerra show stays free" in tpl
         assert "All 18 Nerra shows stay free" not in tpl
-        assert "Every Nerra show stays free" in gen
-        assert "All 18 Nerra shows stay free" not in gen
+        # Meta lives in SEO_PAGE_COPY (loaded from docs/seo-titles-final.md).
+        _title, meta = G.SEO_PAGE_COPY["personal-interest.html"]
+        assert "Every Nerra show stays free" in meta
+        assert "All 18 Nerra shows stay free" not in meta
         # No "N shows" / "all N" count patterns in the Soft page template body.
         body_start = tpl.index("{% block content %}")
         body = tpl[body_start:]
@@ -194,12 +197,16 @@ class TestPersonalInterestNoNumericShowCount:
         )
 
     def test_meta_description_is_tips_only(self):
+        import generate_html as G
+
+        _title, meta = G.SEO_PAGE_COPY["personal-interest.html"]
+        assert meta == SOFT_META_DESCRIPTION
+        assert "reminder" not in meta.lower()
+        assert "Get occasional Personal tips" in meta
         gen = _read("generate_html.py")
         start = gen.index("def generate_personal_interest_page")
         body = gen[start : start + 1200]
-        assert "Leave your email for occasional" in body
-        assert "Personal tips. Curiosity only." in body
-        assert "reminder" not in body.lower()
+        assert 'SEO_PAGE_COPY["personal-interest.html"]' in body
 
 
 class TestUtmSourceMappingUnchanged:
