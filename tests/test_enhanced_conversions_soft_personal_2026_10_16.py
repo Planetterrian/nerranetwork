@@ -36,8 +36,10 @@ class TestEnhancedConversionWiring:
         js = _read("assets/js/consent.js")
         assert "function isAdUserDataGranted" in js
         assert "NNConsent.isAdUserDataGranted" in js
-        assert "'ad_user_data': grant" in js or '"ad_user_data": grant' in js
+        # Ad measurement maps to ad_user_data (and ad_storage / ad_personalization).
+        assert "'ad_user_data': ads" in js or '"ad_user_data": ads' in js
         assert "nn_consent_v1" in js
+        assert "var CONSENT_MODE = 'advanced'" in js
 
     def test_footer_subscribe_sets_user_data_before_soft_event(self):
         js = _read("assets/js/footer-subscribe.js")
@@ -113,17 +115,23 @@ global.window = global;
 global.document = {
   readyState: 'complete',
   getElementById() { return null; },
+  querySelector() { return null; },
   querySelectorAll() { return []; },
   createElement() {
     return {
       id: '',
+      async: false,
+      src: '',
       setAttribute() {},
-      querySelector() { return { addEventListener() {} }; },
+      getAttribute() { return null; },
+      querySelector() { return { addEventListener() {}, checked: false }; },
       style: {},
       classList: { add() {} },
       innerHTML: '',
+      addEventListener() {},
     };
   },
+  head: { appendChild() {} },
   body: { appendChild() {} },
   addEventListener() {},
   documentElement: { lang: 'en' },

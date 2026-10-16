@@ -1,78 +1,255 @@
 /**
- * Nerra Network — Cookie Consent Banner
+ * Nerra Network — Cookie Consent Banner (Consent Mode v2)
  *
- * Implements Google Consent Mode v2:
- *   - Default: all consent denied (analytics, ads, personalization)
- *   - User clicks Accept All → grant consent for analytics + ads
- *   - User clicks Reject All → deny remains, banner dismisses
- *   - Choice persists in localStorage for 365 days
+ * CONSENT_MODE:
+ *   'advanced' (default) — gtag loads with all storage denied; cookieless
+ *     signals only until the visitor chooses. url_passthrough=false and
+ *     ads_data_redaction=true while ad_storage is denied.
+ *   'basic' — gtag library is NOT loaded and no hits are sent until
+ *     Analytics or Ad measurement is granted.
  *
- * Place this BEFORE the gtag.js script tag so the defaults register
- * before any tracking calls fire.
+ * Choices (stored separately; both denied until chosen):
+ *   Analytics      → analytics_storage
+ *   Ad measurement → ad_storage + ad_user_data + ad_personalization
+ *
+ * Banner: Accept all / Reject all / Choose (equal weight). Choose reveals
+ * two independent toggles (off by default) + Save. Close ≡ Reject all.
+ * "Cookie settings" footer link reopens; withdrawing updates immediately.
+ *
+ * Legacy nn_consent_v1 `{state:'accepted'|'rejected'}` migrates to both
+ * granted / both denied.
+ *
+ * BANNER_COPY holds shared strings; mode-specific body sentences live in
+ * BODY_LEAD_BY_MODE so marketing can swap either without touching logic.
+ *
+ * Place this script BEFORE any gtag.js / gtag('config') so defaults win.
+ * In basic mode the template must NOT load gtag.js itself — this file
+ * injects it only after a grant (see ensureGtagLoaded).
  */
 (function () {
     'use strict';
 
+    // Flip to 'basic' to hold the gtag library until Accept / Save grants.
+    var CONSENT_MODE = 'advanced'; // 'basic' | 'advanced'
+
     var STORAGE_KEY = 'nn_consent_v1';
     var STORAGE_DAYS = 365;
 
-    // Initialize consent defaults BEFORE gtag.js loads
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { window.dataLayer.push(arguments); }
-    window.gtag = window.gtag || gtag;
+    // ---- Copy (easy to swap) ----------------------------------------
+    var BODY_LEAD_BY_MODE = {
+        advanced:
+            'Before you choose, Google gets only basic, cookie-free signals ' +
+            '(for example, that a page loaded), with no cookies or IDs that ' +
+            'identify you. ',
+        basic:
+            'Nothing is sent to Google until you choose. ',
+    };
 
-    // Read stored consent (if any)
+    var BANNER_COPY = {
+        label: 'Cookies on Nerra',
+        heading: 'Cookies on Nerra',
+        // Lead sentence is mode-specific (see bodyBeforePrivacy()).
+        bodyAfterLead:
+            'With your OK you can also turn on: Analytics, which uses Google ' +
+            'Analytics cookies to show us which pages and episodes are useful, ' +
+            'and Ad measurement, which uses Google Ads to measure sign-ups from ' +
+            'our ads. When you sign up for Personal tips, Ad measurement also ' +
+            'sends Google a coded (hashed) version of your email. Change your ' +
+            'mind any time from Cookie settings at the bottom of every page. ',
+        privacyLinkText: 'Privacy policy',
+        acceptAll: 'Accept all',
+        rejectAll: 'Reject all',
+        choose: 'Choose',
+        analyticsLabel: 'Analytics',
+        adsLabel: 'Ad measurement',
+        save: 'Save',
+        closeAria: 'Close',
+        cookieSettings: 'Cookie settings',
+    };
+
+    function bodyBeforePrivacy() {
+        var lead = BODY_LEAD_BY_MODE[CONSENT_MODE] || BODY_LEAD_BY_MODE.advanced;
+        return 'Some cookies keep the site working. ' + lead + BANNER_COPY.bodyAfterLead;
+    }
+
+    window.dataLayer = window.dataLayer || [];
+    if (typeof window.gtag !== 'function') {
+        window.gtag = function () { window.dataLayer.push(arguments); };
+    }
+    // Always route through window.gtag so a page (or test) stub sees every
+    // consent/default/update call — the local name is just a shorthand.
+    function gtag() { return window.gtag.apply(window, arguments); }
+
+    function pathPrefix() {
+        var script = document.currentScript;
+        if (!script) {
+            var nodes = document.querySelectorAll('script[src*="consent.js"]');
+            script = nodes.length ? nodes[nodes.length - 1] : null;
+        }
+        if (script) {
+            var attr = script.getAttribute('data-nn-path-prefix');
+            if (attr !== null && attr !== undefined) return attr;
+        }
+        return '';
+    }
+
+    function href(page) {
+        return pathPrefix() + page;
+    }
+
+    function scriptEl() {
+        var script = document.currentScript;
+        if (!script) {
+            var nodes = document.querySelectorAll('script[src*="consent.js"]');
+            script = nodes.length ? nodes[nodes.length - 1] : null;
+        }
+        return script;
+    }
+
+    function measurementIds() {
+        var s = scriptEl();
+        return {
+            ga4: (s && s.getAttribute('data-nn-ga4-id')) || '',
+            ads: (s && s.getAttribute('data-nn-ads-id')) || '',
+            adsLabel: (s && s.getAttribute('data-nn-ads-signup-label')) || '',
+        };
+    }
+
+    /** Normalize / migrate stored consent. Returns null when pending. */
+    function normalizeStored(parsed) {
+        if (!parsed || typeof parsed !== 'object') return null;
+        var ageMs = Date.now() - (parsed.timestamp || 0);
+        if (ageMs > STORAGE_DAYS * 24 * 60 * 60 * 1000) return null;
+
+        // Legacy: { state: 'accepted' | 'rejected' }
+        if (parsed.state === 'accepted') {
+            return { analytics: 'granted', ads: 'granted', timestamp: parsed.timestamp || Date.now() };
+        }
+        if (parsed.state === 'rejected') {
+            return { analytics: 'denied', ads: 'denied', timestamp: parsed.timestamp || Date.now() };
+        }
+
+        if (parsed.analytics === 'granted' || parsed.analytics === 'denied' ||
+            parsed.ads === 'granted' || parsed.ads === 'denied') {
+            return {
+                analytics: parsed.analytics === 'granted' ? 'granted' : 'denied',
+                ads: parsed.ads === 'granted' ? 'granted' : 'denied',
+                timestamp: parsed.timestamp || Date.now(),
+            };
+        }
+        return null;
+    }
+
     function readStored() {
         try {
             var raw = localStorage.getItem(STORAGE_KEY);
             if (!raw) return null;
-            var parsed = JSON.parse(raw);
-            // Expire after STORAGE_DAYS
-            var ageMs = Date.now() - (parsed.timestamp || 0);
-            if (ageMs > STORAGE_DAYS * 24 * 60 * 60 * 1000) return null;
-            return parsed;
+            return normalizeStored(JSON.parse(raw));
         } catch (e) { return null; }
     }
 
-    function writeStored(state) {
+    function writeStored(choices) {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                state: state,
+                analytics: choices.analytics === 'granted' ? 'granted' : 'denied',
+                ads: choices.ads === 'granted' ? 'granted' : 'denied',
                 timestamp: Date.now(),
             }));
         } catch (e) { /* localStorage unavailable */ }
     }
 
-    function applyConsent(state) {
-        var grant = state === 'accepted' ? 'granted' : 'denied';
-        gtag('consent', 'update', {
-            'ad_storage': grant,
-            'ad_user_data': grant,
-            'ad_personalization': grant,
-            'analytics_storage': grant,
-        });
+    var _gtagLoaded = false;
+
+    function configTags() {
+        var ids = measurementIds();
+        if (ids.ga4) {
+            gtag('config', ids.ga4, { 'anonymize_ip': true });
+        }
+        if (ids.ads) {
+            gtag('config', ids.ads);
+            if (ids.adsLabel) {
+                window._GOOGLE_ADS_SIGNUP_TARGET = ids.ads + '/' + ids.adsLabel;
+            }
+        }
     }
 
     /**
-     * True when the visitor accepted the cookie banner (ad_user_data /
-     * ads granted). Used by Soft Personal enhanced conversions before
-     * gtag('set','user_data',...). Pending / rejected / missing → false.
-     * Never logs or stores the email — callers hash client-side only.
+     * Load gtag.js + config. Advanced: called at boot (denied defaults
+     * already set). Basic: called only after Analytics or Ads is granted.
      */
-    function isAdUserDataGranted() {
-        var s = readStored();
-        return !!(s && s.state === 'accepted');
+    function ensureGtagLoaded() {
+        if (_gtagLoaded) return;
+        var ids = measurementIds();
+        var primary = ids.ga4 || ids.ads;
+        if (!primary) {
+            // No IDs configured (local / test) — still mark loaded so
+            // consent updates are recorded on the stub gtag.
+            _gtagLoaded = true;
+            gtag('js', new Date());
+            return;
+        }
+        if (document.querySelector('script[src*="googletagmanager.com/gtag/js"]')) {
+            _gtagLoaded = true;
+            gtag('js', new Date());
+            configTags();
+            return;
+        }
+        _gtagLoaded = true;
+        gtag('js', new Date());
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(primary);
+        s.onload = function () { configTags(); };
+        // If DOM not ready yet, queue the insert.
+        if (document.head) document.head.appendChild(s);
+        else {
+            document.addEventListener('DOMContentLoaded', function () {
+                document.head.appendChild(s);
+            });
+        }
+        // Config can queue before the library arrives (dataLayer).
+        configTags();
     }
 
-    // Public: Soft Personal (and any capture form) gates hashed email
-    // enhanced conversions on this flag — same key consent Mode v2 uses.
-    window.NNConsent = window.NNConsent || {};
-    window.NNConsent.STORAGE_KEY = STORAGE_KEY;
-    window.NNConsent.isAdUserDataGranted = isAdUserDataGranted;
+    /**
+     * Push Consent Mode update. While ad_storage is denied: url_passthrough
+     * false + ads_data_redaction true (Advanced cookieless / ID-free pings).
+     */
+    function applyConsent(choices) {
+        var analytics = choices.analytics === 'granted' ? 'granted' : 'denied';
+        var ads = choices.ads === 'granted' ? 'granted' : 'denied';
+        gtag('consent', 'update', {
+            'analytics_storage': analytics,
+            'ad_storage': ads,
+            'ad_user_data': ads,
+            'ad_personalization': ads,
+        });
+        gtag('set', 'url_passthrough', ads === 'granted');
+        gtag('set', 'ads_data_redaction', ads !== 'granted');
 
-    // Set defaults: deny everything until user chooses
-    var stored = readStored();
-    var initialState = (stored && stored.state) || 'pending';
+        if (CONSENT_MODE === 'basic') {
+            if (analytics === 'granted' || ads === 'granted') {
+                ensureGtagLoaded();
+            }
+        }
+    }
+
+    /** True ONLY when Ad measurement is granted (gates hashed user_data). */
+    function isAdUserDataGranted() {
+        var s = readStored();
+        return !!(s && s.ads === 'granted');
+    }
+
+    function isAnalyticsGranted() {
+        var s = readStored();
+        return !!(s && s.analytics === 'granted');
+    }
+
+    function hasChosen() {
+        return readStored() !== null;
+    }
+
+    // Defaults BEFORE any gtag('config', …).
     gtag('consent', 'default', {
         'ad_storage': 'denied',
         'ad_user_data': 'denied',
@@ -80,74 +257,210 @@
         'analytics_storage': 'denied',
         'wait_for_update': 500,
     });
-    // Consent Mode v2 cookieless measurement (June 2026 marketing-
-    // readiness review): with denied defaults, these two flags let
-    // Google Ads attribute conversions via URL passthrough + send
-    // redacted cookieless pings instead of losing every non-consenting
-    // visitor's conversion entirely.
-    gtag('set', 'url_passthrough', true);
+    gtag('set', 'url_passthrough', false);
     gtag('set', 'ads_data_redaction', true);
-    if (stored && stored.state === 'accepted') {
-        applyConsent('accepted');
+
+    var stored = readStored();
+    if (stored) {
+        writeStored(stored); // rewrite legacy {state:…} once
+        applyConsent(stored);
     }
 
-    // Don't show banner if user already chose
-    if (initialState !== 'pending') return;
+    if (CONSENT_MODE === 'advanced') {
+        // Advanced: load the library under denied defaults (cookieless pings).
+        ensureGtagLoaded();
+    } else if (stored && (stored.analytics === 'granted' || stored.ads === 'granted')) {
+        // Basic return visit with a prior grant.
+        ensureGtagLoaded();
+    }
 
-    // Show the banner once DOM is ready
-    function showBanner() {
-        if (document.getElementById('nn-consent-banner')) return;
+    function hideBanner(banner) {
+        if (!banner) return;
+        banner.style.display = 'none';
+        banner.setAttribute('hidden', '');
+    }
+
+    function saveChoices(choices, banner) {
+        writeStored(choices);
+        applyConsent(choices);
+        hideBanner(banner || document.getElementById('nn-consent-banner'));
+    }
+
+    function rejectAll(banner) {
+        saveChoices({ analytics: 'denied', ads: 'denied' }, banner);
+    }
+
+    function acceptAll(banner) {
+        saveChoices({ analytics: 'granted', ads: 'granted' }, banner);
+    }
+
+    function renderBanner() {
+        var existing = document.getElementById('nn-consent-banner');
+        if (existing) {
+            existing.style.display = '';
+            existing.removeAttribute('hidden');
+            var panel = existing.querySelector('[data-nn-consent-panel]');
+            if (panel) panel.hidden = true;
+            var current = readStored() || { analytics: 'denied', ads: 'denied' };
+            var aToggle = existing.querySelector('[data-nn-toggle="analytics"]');
+            var dToggle = existing.querySelector('[data-nn-toggle="ads"]');
+            if (aToggle) aToggle.checked = current.analytics === 'granted';
+            if (dToggle) dToggle.checked = current.ads === 'granted';
+            // Refresh body if mode/copy changed between opens (tests).
+            var text = existing.querySelector('.nn-consent-text');
+            if (text) {
+                text.innerHTML = bodyBeforePrivacy() +
+                    '<a class="nn-consent-privacy" href="' + href('privacy-policy.html') + '">' +
+                    BANNER_COPY.privacyLinkText + '</a>.';
+            }
+            return existing;
+        }
+
+        var t = BANNER_COPY;
         var banner = document.createElement('div');
         banner.id = 'nn-consent-banner';
         banner.setAttribute('role', 'dialog');
-        // Localised from the page's own <html lang> (July 2026). The
-        // banner is the most prominent element on the screen when it
-        // shows, so an English one on a Russian page — including the RU
-        // funnel landing pages, whose single job is to convert Russian
-        // speakers — is the first thing a visitor is asked to trust.
-        var isRu = (document.documentElement.lang || 'en')
-            .toLowerCase().indexOf('ru') === 0;
-        var t = isRu ? {
-            label: 'Согласие на использование cookie',
-            text: 'Мы используем cookie, чтобы понимать, как слушатели ' +
-                  'находят Nerra Network, и оценивать эффективность. ',
-            privacy: 'Политика конфиденциальности',
-            reject: 'Отклонить',
-            accept: 'Принять'
-        } : {
-            label: 'Cookie consent',
-            text: 'We use cookies to understand how listeners find ' +
-                  'Nerra Network and to measure our marketing. ',
-            privacy: 'Privacy Policy',
-            reject: 'Reject',
-            accept: 'Accept'
-        };
+        banner.setAttribute('aria-modal', 'true');
         banner.setAttribute('aria-label', t.label);
         banner.innerHTML = '' +
-            '<div class="nn-consent-text">' +
-                t.text +
-                '<a href="/privacy-policy.html">' + t.privacy + '</a>.' +
-            '</div>' +
-            '<div class="nn-consent-actions">' +
-                '<button type="button" class="nn-consent-btn nn-consent-reject">' +
-                    t.reject + '</button>' +
-                '<button type="button" class="nn-consent-btn nn-consent-accept">' +
-                    t.accept + '</button>' +
+            '<div class="nn-consent-inner">' +
+                '<button type="button" class="nn-consent-close" aria-label="' +
+                    t.closeAria + '">&times;</button>' +
+                '<h2 class="nn-consent-heading">' + t.heading + '</h2>' +
+                '<div class="nn-consent-text">' +
+                    bodyBeforePrivacy() +
+                    '<a class="nn-consent-privacy" href="' + href('privacy-policy.html') + '">' +
+                        t.privacyLinkText + '</a>.' +
+                '</div>' +
+                '<div class="nn-consent-actions">' +
+                    '<button type="button" class="nn-consent-btn" data-nn-consent="accept-all">' +
+                        t.acceptAll + '</button>' +
+                    '<button type="button" class="nn-consent-btn" data-nn-consent="reject-all">' +
+                        t.rejectAll + '</button>' +
+                    '<button type="button" class="nn-consent-btn" data-nn-consent="choose">' +
+                        t.choose + '</button>' +
+                '</div>' +
+                '<div class="nn-consent-panel" data-nn-consent-panel hidden>' +
+                    '<label class="nn-consent-toggle">' +
+                        '<input type="checkbox" data-nn-toggle="analytics">' +
+                        '<span>' + t.analyticsLabel + '</span>' +
+                    '</label>' +
+                    '<label class="nn-consent-toggle">' +
+                        '<input type="checkbox" data-nn-toggle="ads">' +
+                        '<span>' + t.adsLabel + '</span>' +
+                    '</label>' +
+                    '<button type="button" class="nn-consent-btn" data-nn-consent="save">' +
+                        t.save + '</button>' +
+                '</div>' +
             '</div>';
         document.body.appendChild(banner);
 
-        function dismiss(state) {
-            writeStored(state);
-            applyConsent(state);
-            banner.style.display = 'none';
-        }
-        banner.querySelector('.nn-consent-accept').addEventListener('click', function () { dismiss('accepted'); });
-        banner.querySelector('.nn-consent-reject').addEventListener('click', function () { dismiss('rejected'); });
+        banner.querySelector('[data-nn-consent="accept-all"]').addEventListener('click', function () {
+            acceptAll(banner);
+        });
+        banner.querySelector('[data-nn-consent="reject-all"]').addEventListener('click', function () {
+            rejectAll(banner);
+        });
+        banner.querySelector('[data-nn-consent="choose"]').addEventListener('click', function () {
+            var panel = banner.querySelector('[data-nn-consent-panel]');
+            panel.hidden = !panel.hidden;
+        });
+        banner.querySelector('[data-nn-consent="save"]').addEventListener('click', function () {
+            var analyticsOn = banner.querySelector('[data-nn-toggle="analytics"]').checked;
+            var adsOn = banner.querySelector('[data-nn-toggle="ads"]').checked;
+            saveChoices({
+                analytics: analyticsOn ? 'granted' : 'denied',
+                ads: adsOn ? 'granted' : 'denied',
+            }, banner);
+        });
+        banner.querySelector('.nn-consent-close').addEventListener('click', function () {
+            rejectAll(banner);
+        });
+        return banner;
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', showBanner);
-    } else {
+    function showBanner() {
+        if (!document.body) return;
+        renderBanner();
+    }
+
+    function reopenBanner() {
         showBanner();
     }
+
+    function ensureCookieSettingsLink() {
+        var label = BANNER_COPY.cookieSettings;
+        var links = document.querySelectorAll('[data-nn-cookie-settings]');
+        if (!links.length) {
+            var legal = document.querySelector('.nn-footer-legal > div');
+            if (!legal) legal = document.querySelector('.nn-footer-legal');
+            if (legal) {
+                var a = document.createElement('a');
+                a.href = '#';
+                a.setAttribute('data-nn-cookie-settings', '1');
+                a.textContent = label;
+                var sep = document.createElement('span');
+                sep.setAttribute('aria-hidden', 'true');
+                sep.textContent = ' · ';
+                var privacy = legal.querySelector('a[href*="privacy-policy"]');
+                if (privacy && privacy.parentNode === legal) {
+                    privacy.insertAdjacentElement('afterend', sep);
+                    sep.insertAdjacentElement('afterend', a);
+                } else {
+                    legal.appendChild(sep);
+                    legal.appendChild(a);
+                }
+                links = document.querySelectorAll('[data-nn-cookie-settings]');
+            }
+        }
+        Array.prototype.forEach.call(links, function (el) {
+            if (el.getAttribute('data-nn-cookie-settings-bound') === '1') return;
+            el.setAttribute('data-nn-cookie-settings-bound', '1');
+            el.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                reopenBanner();
+            });
+        });
+    }
+
+    function onReady(fn) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', fn);
+        } else {
+            fn();
+        }
+    }
+
+    document.addEventListener('keydown', function (ev) {
+        if (ev.key !== 'Escape') return;
+        var banner = document.getElementById('nn-consent-banner');
+        if (!banner || banner.style.display === 'none' || banner.hasAttribute('hidden')) return;
+        rejectAll(banner);
+    });
+
+    window.NNConsent = window.NNConsent || {};
+    window.NNConsent.CONSENT_MODE = CONSENT_MODE;
+    window.NNConsent.STORAGE_KEY = STORAGE_KEY;
+    window.NNConsent.BANNER_COPY = BANNER_COPY;
+    window.NNConsent.BODY_LEAD_BY_MODE = BODY_LEAD_BY_MODE;
+    window.NNConsent.bodyBeforePrivacy = bodyBeforePrivacy;
+    window.NNConsent.isAdUserDataGranted = isAdUserDataGranted;
+    window.NNConsent.isAnalyticsGranted = isAnalyticsGranted;
+    window.NNConsent.hasChosen = hasChosen;
+    window.NNConsent.readStored = readStored;
+    window.NNConsent.normalizeStored = normalizeStored;
+    window.NNConsent.applyConsent = applyConsent;
+    window.NNConsent.saveChoices = saveChoices;
+    window.NNConsent.acceptAll = acceptAll;
+    window.NNConsent.rejectAll = rejectAll;
+    window.NNConsent.reopen = reopenBanner;
+    window.NNConsent.showBanner = showBanner;
+    window.NNConsent.ensureGtagLoaded = ensureGtagLoaded;
+
+    onReady(function () {
+        ensureCookieSettingsLink();
+        if (!hasChosen()) {
+            showBanner();
+        }
+    });
 })();

@@ -139,12 +139,14 @@
     if (window.NNConsent && typeof window.NNConsent.isAdUserDataGranted === 'function') {
       return !!window.NNConsent.isAdUserDataGranted();
     }
-    // Fallback if consent.js has not attached yet: same localStorage key.
+    // Fallback if consent.js has not attached yet: Ad measurement only
+    // (v2 Advanced shape), with legacy `{state:'accepted'}` migration.
     try {
       var raw = localStorage.getItem('nn_consent_v1');
       if (!raw) return false;
       var parsed = JSON.parse(raw);
-      return !!(parsed && parsed.state === 'accepted');
+      if (parsed && parsed.state === 'accepted') return true;
+      return !!(parsed && parsed.ads === 'granted');
     } catch (e) {
       return false;
     }

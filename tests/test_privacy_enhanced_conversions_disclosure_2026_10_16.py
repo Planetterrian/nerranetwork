@@ -31,7 +31,7 @@ class TestPrivacyEnhancedConversionsDisclosure:
         src = _read("templates/privacy_policy.html.j2")
         assert _NEW_SNIPPET in src
         assert "Google calls this enhanced conversions" in src
-        assert "If you decline cookies, nothing is sent" in src
+        assert "If you don't allow Ad measurement, your email hash is never sent." in src
         assert "we never sell your email" in src
         assert _GOOGLE_PRIVACY_HREF in src
         assert _OLD_SNIPPET not in src

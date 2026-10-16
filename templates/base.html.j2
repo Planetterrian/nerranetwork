@@ -78,24 +78,16 @@
        Set via env vars in generate_html.py — all empty by default.
        --------------------------------------------------------------- #}
     {% if marketing.ga4_measurement_id or marketing.google_ads_id %}
-    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
-    <script src="{{ path_prefix }}assets/js/consent.js"></script>
-    <!-- gtag.js — covers both GA4 and Google Ads -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id={{ marketing.ga4_measurement_id or marketing.google_ads_id }}"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      {% if marketing.ga4_measurement_id %}
-      gtag('config', '{{ marketing.ga4_measurement_id }}', { 'anonymize_ip': true });
-      {% endif %}
-      {% if marketing.google_ads_id %}
-      gtag('config', '{{ marketing.google_ads_id }}');
-      {% if marketing.google_ads_signup_label %}
-      window._GOOGLE_ADS_SIGNUP_TARGET = '{{ marketing.google_ads_id }}/{{ marketing.google_ads_signup_label }}';
-      {% endif %}
-      {% endif %}
-    </script>
+    {#- Consent Mode v2: consent.js owns gtag load + config.
+        Advanced (default): loads under denied defaults (cookieless pings).
+        Basic (CONSENT_MODE in consent.js): holds the library until grant.
+        Do NOT add a second googletagmanager <script> here — that would
+        force hits before choice in basic mode. -#}
+    <script src="{{ path_prefix }}assets/js/consent.js"
+            data-nn-path-prefix="{{ path_prefix }}"
+            data-nn-ga4-id="{{ marketing.ga4_measurement_id or '' }}"
+            data-nn-ads-id="{{ marketing.google_ads_id or '' }}"
+            data-nn-ads-signup-label="{{ marketing.google_ads_signup_label or '' }}"></script>
     {% endif %}
     {% if marketing.plausible_domain %}
     <script defer data-domain="{{ marketing.plausible_domain }}" src="https://plausible.io/js/script.js"></script>
@@ -186,6 +178,7 @@
         'footer_press': 'Пресс-кит' if _is_ru else 'Press Kit',
         'footer_sponsor': 'Спонсорам' if _is_ru else 'Sponsor',
         'footer_privacy': 'Конфиденциальность' if _is_ru else 'Privacy',
+        'footer_cookie_settings': 'Cookie settings',
         'footer_terms': 'Условия' if _is_ru else 'Terms',
         'footer_privacy_policy': 'Политика конфиденциальности' if _is_ru else 'Privacy Policy',
         'footer_terms_of_service': 'Условия использования' if _is_ru else 'Terms of Service',
@@ -647,6 +640,7 @@
                 <div>
                     <a href="{{ path_prefix }}support.html">Support the network</a> &middot;
                     <a href="{{ path_prefix }}privacy-policy.html">{{ t.footer_privacy }}</a> &middot;
+                    <a href="#" data-nn-cookie-settings="1">{{ t.footer_cookie_settings }}</a> &middot;
                     <a href="{{ path_prefix }}terms-of-service.html">{{ t.footer_terms }}</a> &middot;
                     <a href="{{ path_prefix }}ai-disclosure.html">{{ t.footer_ai_disclosure }}</a>
                     <span style="opacity:0.5;">&middot;</span>
