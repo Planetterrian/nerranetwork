@@ -988,6 +988,137 @@ reviews:
     ab_listen_required: true
     rationale: 'P0 listener-facing on FR feed: verified Ep186 FR=196 and Ep191 FR=181. Deterministic pin beats prompt hope. A/B-listen FR audio only.'
   agent_cost_usd: 0.1759
+- date: '2026-10-11'
+  pr: null
+  doc: docs/reviews/models_agents_review_2026_10_11.md
+  generated_by: grok-4.5
+  summary: UTH chapters and pop-the-hood anchors recovered to 10/10, but 8/10 scripts stay under 1500w, names-kept still only ~3–4/10 ≥75%, digest-verbatim median ~43% with section-header paste, and sparse/auto-titled chapters dominate—length/entity/overlap stay escalated operator decisions after repeated unshipped identical proposals; propose digest_section wiring for non-UTH sections only.
+  scored_prior_predictions:
+  - metric: FR dub identity line episode number matches EN episode number, last 10 FR transcripts
+    verdict: hit
+    evidence: 'do_not_retry 2026-10-05: .fr.txt correct; Whisper mishears French compounds — not a dub/identity bug'
+  - metric: episodes with Under the Hood chapter when deep-dive body present, last 10
+    verdict: hit
+    evidence: 10/10 ep191–200 chapters_ep*.json include Under the Hood (was ~7/10 at Oct-2)
+  - metric: '"Pop the hood" (or exact required anchor) as first sentence of deep-dive body, last 10'
+    verdict: hit
+    evidence: ep195–200 all open UTH with pop-the-hood / let-me-pop-the-hood
+  - metric: script_entity_retention_pct (names kept) ≥75%, last 10
+    verdict: miss
+    evidence: only ~3–4/10 ≥75% (range 54–86%; ep191/194=54, ep199=58)
+  - metric: digest-verbatim median last 10 + copied section-header count
+    verdict: miss
+    evidence: median ~43% verbatim; section headers still copied on ep191–194/198/200
+  - metric: Under the Hood concrete numerals when UTH present, last 5
+    verdict: hit
+    evidence: ep195/198/199/200 UTH sections carry ≥4 concrete numerals when present
+  - metric: 'successor UTH-opener tic: any single new non-pop-the-hood opener in ≥6/10 deep-dives'
+    verdict: hit
+    evidence: 0 non-anchor openers at ≥6/10; pop-the-hood remains the opener
+  - metric: episodes below min_podcast_words (1500), last 10
+    verdict: miss
+    evidence: 8/10 under 1500w; operator A/B/C still open (lever not shipped)
+  - metric: '"Everyone talks/treats/thinks about" or "Most people assume" as UTH opener, last 10'
+    verdict: hit
+    evidence: 0/10 contrast-cliché UTH openers in ep191–200 EN
+  - metric: '"keep an eye on" as teaser opener (regression watch)'
+    verdict: hit
+    evidence: 0 keep-an-eye teaser openers in sampled ep195–200 teasers
+  - metric: chapters_ep*.json titles containing "](" or "http", or early Practical & Community
+    verdict: hit
+    evidence: 0 link titles and 0 early P&C mis-fires in ep191–200
+  - metric: advisory filler shape per episode (script_audit)
+    verdict: hit
+    evidence: filler 1–8% last 10; mostly ≤4% (ep191 8% outlier only)
+  - metric: model-number or dataset-name mangles per episode (Ep166 class), last 5
+    verdict: hit
+    evidence: 0 Nutrition5k/RTX-5090-class mangles in ep195–200 EN
+  - metric: source_integrity_claims median (Sep-24 sourcing)
+    verdict: partial
+    evidence: fetch_full_text:12 + preferred_domains + x_only_lead live; snapshot has no integrity score field
+  - metric: sources on x.com per episode (Sep-24 sourcing)
+    verdict: partial
+    evidence: x_posts_as_sources secondary + lint live; per-ep x.com counts not in snapshot
+  shipped: []
+  deferred:
+  - 'OPERATOR DECISION (length — escalated after July-19 + Aug-2 misses + continued 8/10 under): (A) min_digest_words=1600, (B) UTH digest licensed-knowledge/fact floor, or (C) lower min_podcast_words to ~1200–1400 natural length. Never re-enable podcast_expand_below_target; never silent-third-file 1600.'
+  - 'OPERATOR DECISION (entity retention — three identical podcast-prompt filings Sep-8/Sep-13/Oct-2 all shipped:[] / missed): pick a different lever (data-side name list, rewrite-gate on dropped entities) or accept names-kept <75% on half the window; do not re-file the same keep-exact-names paragraph a fourth time.'
+  - 'OPERATOR DECISION (digest-verbatim / section-header paste): wait for grok-4.6 script-stage readout (experiment models-agents-script-grok46-2026-10-11) before another content_discipline paragraph; median still ~43%.'
+  - Digest-driven / position-aware mid-item chapter titles (network-wide; digest_section helps section rows only).
+  - RSS title truncation ownership (hook under 120 vs 100-char title cap vs title-bundle optimized title).
+  - Same-day double publish Ep155+Ep156 prune (operator; renumbering unsafe).
+  - podcast:transcript from pre-pronunciation text or Whisper post-correct (network-wide LoRA/RAG/Quinn class).
+  - July-2 selection rebalance A/B (lab product/feature announcements outrank preprints; arXiv items ≤40%).
+  - 'Narrative tracker: advance last_mentioned only on headline mentions; seed-only last_major_update nulls (data-side).'
+  - 'MAB sibling: Big Story / Deep Dive / Cool Stuff / Quick Bits required-anchor treatment.'
+  - Sunday weekly_summary_segment must synthesize, not splice dailies’ sentences.
+  - Brand anchors pop the hood / Before we go / pinned closing — do_not_retry de-seed or multi-variant closing re-expand.
+  - UTH distinct-subject residual (ep195 Falcon-H1 family news+UTH; ep197 emotion-steering news+UTH) — tied to option B fact/distinct floor if operator picks it.
+  - OP3 first-week ~20 dl/ep and YT long retention ~12% — watch; no enclosure/path bug found this pass.
+  predictions:
+  - metric: episodes with Model Updates chapter row when digest has Model Updates, last 10
+    baseline: 'sparse: ep197/199/200 lack separate Model Updates/Agent/Practical rows (mega-blob or auto titles)'
+    expected: ≥8/10 distinct Model Updates (or equivalent news) chapter after digest_section wiring merges
+    verdict: pending
+    evidence: null
+  - metric: chapters with raw mid-sentence auto-titles (ellipsis or >40 chars lowercase start), last 10
+    baseline: ep193/196 ellipsis autos present; several sparse shapes
+    expected: ≤2/10 after non-UTH digest_section wiring; durable zero still needs digest-driven titles (deferred)
+    verdict: pending
+    evidence: null
+  - metric: Under the Hood chapter when deep-dive present, last 10 (regression watch)
+    baseline: 10/10 ep191–200
+    expected: ≥9/10 sustained
+    verdict: pending
+    evidence: null
+  - metric: EN identity line speaks episode number exactly once, last 10
+    baseline: ep200 doubled "Episode 200, Episode 200"
+    expected: 10/10 single episode-number identity after prompt belt; 0 doubles
+    verdict: pending
+    evidence: null
+  - metric: same-episode verbatim restated fact-blocks (≥2 near-duplicate sentence pairs on one item), last 5
+    baseline: ep200 Python 3.15 / temp-flip / safety-prompt each restated 2–3×
+    expected: ≤1/5 episodes with ≥2 restated pairs post identity/restatement belt + grok-4.6 settle
+    verdict: pending
+    evidence: null
+  - metric: digest-verbatim median last 10 under podcast_model grok-4.6
+    baseline: ~43% (ep191–200 mixed pre/post 4.6)
+    expected: read from credit_usage podcast_script_generation.model; median ≤35% on 4.6-only cohort or document miss for experiment readout
+    verdict: pending
+    evidence: null
+  - metric: episodes below min_podcast_words (1500), last 10
+    baseline: 8/10
+    expected: n/a-lever-not-shipped unless operator picks A/B/C; do not score a silent 1600 hope
+    verdict: pending
+    evidence: null
+  - metric: script_entity_retention_pct ≥75%, last 10
+    baseline: 3–4/10 ≥75%
+    expected: n/a-lever-not-shipped on fourth identical podcast entity prompt; rescore only if operator picks a new lever
+    verdict: pending
+    evidence: null
+  - metric: '"Everyone talks/Most people" UTH opener + keep-an-eye teaser (regression)'
+    baseline: 0/10 both
+    expected: ≤1/10 each sustained
+    verdict: pending
+    evidence: null
+  proposed_changes_in_pr:
+  - file: shows/models_agents.yaml
+    kind: config
+    ab_listen_required: false
+    rationale: UTH recovered to 10/10 after Oct-5 digest_section fallback; ep197/199/200 still ship sparse mega-blobs because the host never speaks Model Updates/Agent/Practical labels (prompt forbids spoken section titles). Mirror digest_section on those markers so chapter boundaries track the digest without changing audio. Does not replace deferred digest-driven mid-item titles; keep Under the Hood block as-is.
+  - file: shows/prompts/models_agents_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: Ep200 EN shipped “Episode 200, Episode 200” plus “Thanks for sticking with us” (`Models_Agents_Ep200_20261011_transcript.txt`). Belt-and-suspenders on the injected identity line so milestone/stutter doubles cannot return. A/B-listen.
+  - file: shows/prompts/models_agents_podcast.txt
+    kind: prompt
+    ab_listen_required: true
+    rationale: Ep200 same-episode paraphrase triples are listener-facing padding under the new grok-4.6 script stage. Shape ban + verbatim “no second opening fact” with no replacement menu (meta-rule). Narrower than a fourth full content_discipline rewrite. A/B-listen.
+  - file: tests/test_models_agents_quality_pass.py
+    kind: code
+    ab_listen_required: false
+    rationale: 'Playbook: every behavioral fix gets a drift-guard; wiring guards must load real YAML via load_config (not stand-ins). Day-old tolerance avoids false red on in-flight runs.'
+  agent_cost_usd: 0.1844
 do_not_retry:
 - idea: De-seed or rotate the 'Before we go' Tomorrow Teaser opener — Sep-4 closed it as a brand chapter anchor (same class as Tesla/SpaceX); residual keep-an-eye is already cleared
   evidence: flagged 2026-09-08 (Grok review)
@@ -999,3 +1130,7 @@ do_not_retry:
   evidence: flagged 2026-09-08 (Grok review)
 - idea: Treat a French transcript's episode-number mismatch (épisode 196 for Ep186, épisodes 181 for Ep191) as a dub or identity-line bug
   evidence: corrected 2026-10-05 — the French TTS text (Models_Agents_Ep*.fr.txt) says the right number on all 15 of Ep180-194; the mismatch is Whisper mishearing French compound numbers. Check the .fr.txt before filing a dub P0.
+- idea: 'Engine or prompt ''fix'' for French dub identity-line episode numbers (Oct-2 P0 path) — superseded 2026-10-05: Models_Agents_Ep*.fr.txt carries the correct number; Whisper mishears French compound numbers. Check .fr.txt before any dub P0.'
+  evidence: flagged 2026-10-11 (Grok review)
+- idea: Fourth identical podcast-prompt entity-keep / names-kept filing without a new data-side lever — three prior passes (Sep-8, Sep-13, Oct-2) shipped:[] and missed the same metric.
+  evidence: flagged 2026-10-11 (Grok review)
