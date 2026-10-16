@@ -1,0 +1,418 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:29.720
+Pause token KV compression shrinks cache 3.5 times and speeds H100 inference 3.2 times on long math problems. This is Models &amp; Agents Episode 205. A bridge KV trains a model to compress each completed block of generated chain of thought into the key value cache entries of a few learned pause tokens that produce no output, according to a paper on archive. Those pause tokens receive positions inside the replace block. Cash budget is allocated by measured layer value.
+
+00:00:29.720 --> 00:00:38.060
+and compression runs on relatively large blocks. On 446 problems from AM, AMT, AMC and similar
+
+00:00:38.060 --> 00:00:44.120
+contests with 32,000 token generations, keeping one quarter of the cash matches and identically
+
+00:00:44.120 --> 00:00:47.880
+trained full key value model in both accuracy and output length.
+
+00:00:48.540 --> 00:00:53.220
+The strongest published eviction baseline at the same budget produces far longer outputs.
+
+00:00:53.220 --> 00:00:57.280
+A retrained compressor baseline loses 10 accuracy points.
+
+00:00:57.740 --> 00:01:03.560
+Served in VLLM, that pause token compressor runs per sequence on a saturated H100.
+
+00:01:04.548 --> 00:01:10.148
+CoteS uses probability competition between the two most likely tokens to allocate continuous weight
+
+00:01:10.148 --> 00:01:13.448
+between discrete commitment and soft exploration at each step,
+
+00:01:13.948 --> 00:01:15.468
+and it needs no extra training.
+
+00:01:16.088 --> 00:01:19.788
+An archive paper says the second candidate represents the strongest alternative,
+
+00:01:19.788 --> 00:01:24.528
+so larger separation signals stability and keeps the representation close
+
+00:01:24.528 --> 00:01:25.628
+to the sampled token.
+
+00:01:26.248 --> 00:01:30.128
+Smaller separation increases the soft contribution to retain alternatives.
+
+00:01:30.688 --> 00:01:34.568
+The method requires no extra forward passes or tuned thresholds.
+
+00:01:34.828 --> 00:01:39.408
+Experiments across six reasoning benchmarks show consistent gains over standard chain of
+
+00:01:39.408 --> 00:01:42.208
+thought and prior training-free latent methods.
+
+00:01:43.119 --> 00:01:48.719
+Woolhoff, a language spoken by 23 million people, mainly in Senegal, now has open-weight
+
+00:01:48.719 --> 00:01:52.179
+models from 0.6 billion to 14 billion parameters.
+
+00:01:52.639 --> 00:01:57.099
+The archive release instruction tunes, preference aligns, and merges those weights.
+
+00:01:57.579 --> 00:02:01.979
+And after the full pipeline, the 8 billion and 14 billion variants remain competitive
+
+00:02:01.979 --> 00:02:07.319
+with much larger commercial systems on 63 public and internal tasks while preserving
+
+00:02:07.319 --> 00:02:08.619
+cross-lingual performance.
+
+00:02:09.259 --> 00:02:13.579
+The models are already an internal customer care pilots and available on hugging face.
+
+00:02:13.579 --> 00:02:20.578
+Verticked MQ is a 395 million parameter encoder that reads a case once and answers every
+
+00:02:20.578 --> 00:02:25.418
+typed question about it through a structured attention mask that keeps state encoding independent
+
+00:02:25.418 --> 00:02:26.378
+of the questions.
+
+00:02:26.938 --> 00:02:32.418
+On the type decisions benchmark, it matches soft gold labels better than the released 421
+
+00:02:32.418 --> 00:02:38.098
+million parameter lia specialist across five seeds, according to archive, while preserving
+
+00:02:38.098 --> 00:02:45.798
+During per-system temperature scaling advantages, APRIL supplies 2,196 instances across six categories
+
+00:02:45.798 --> 00:02:51.258
+with instant-specific rubrics for two tasks, social scenario analysis and socially-aware
+
+00:02:51.258 --> 00:02:51.738
+response.
+
+00:02:52.318 --> 00:02:56.498
+The archive benchmark targets Chinese social awareness in large language models.
+
+00:02:57.078 --> 00:03:01.878
+Experiments on 12 models from six families reveal a consistent gap between understanding
+
+00:03:01.878 --> 00:03:06.658
+and response quality, with higher-quality analyses improving downstream responses.
+
+00:03:06.658 --> 00:03:08.618
+Data and code are released.
+
+00:03:09.726 --> 00:03:13.946
+Code Translator learns to translate cheaper reverse chain of thought rationales into the
+
+00:03:13.946 --> 00:03:17.766
+distribution of verified forward responses using a small paired set.
+
+00:03:18.346 --> 00:03:23.826
+Across six student models on six math benchmarks, the archive method improves average accuracy
+
+00:03:23.826 --> 00:03:27.106
+over semantic suppression by up to 5.82 points.
+
+00:03:27.726 --> 00:03:34.506
+It retains 95% of rejection sampling accuracy at 35.9% of the compute for 4 billion parameter
+
+00:03:34.506 --> 00:03:34.986
+students.
+
+00:03:34.986 --> 00:03:40.506
+The translator transfers without retraining to new data sets, teachers and STEM problems.
+
+00:03:41.474 --> 00:03:47.054
+Deep unfolding agent is a schema-driven, fast API service that registers optimization strategies,
+
+00:03:47.474 --> 00:03:52.934
+accepts round-level diagnostics, returns bounded control actions and updates from executor
+
+00:03:52.934 --> 00:03:53.314
+feedback.
+
+00:03:53.874 --> 00:03:59.814
+An archive paper says it supports classical, quantum aware, hybrid, biscuit arrow and IBM
+
+00:03:59.814 --> 00:04:04.614
+quantum pathways through a strategy registry, safety guard, and docker deployment.
+
+00:04:05.414 --> 00:04:11.154
+Validation covers unit, schema, API, safety, orchestration, and hardware back tests across
+
+00:04:11.154 --> 00:04:14.914
+finance, healthcare, genomics, and noisy quantum simulation.
+
+00:04:15.887 --> 00:04:21.567
+Prism recovers per query preference signals from execution verified graph corpora by training
+
+00:04:21.567 --> 00:04:26.067
+a student to match a teacher that sees a sibling solution graph unavailable at deployment.
+
+00:04:26.067 --> 00:04:31.707
+The privileged low-rank branch described on Archive supplies the missing ranking signal
+
+00:04:31.707 --> 00:04:33.927
+that standard supervised fine-tuning lacks.
+
+00:04:34.507 --> 00:04:39.607
+Across six diverse benchmarks, the method improves over every prior topology design baseline.
+
+00:04:40.307 --> 00:04:41.027
+Code is released.
+
+00:04:41.727 --> 00:04:47.727
+MetaX fine-tunes Lama-38 billion with Q-Lora, a quantized low-rank adaptation method,
+
+00:04:48.187 --> 00:04:51.827
+then adds retrieval augmented generation and a Gemini vision layer.
+
+00:04:51.827 --> 00:04:57.967
+The archive system handles text PDFs, scan PDFs, and radiological images through a hybrid
+
+00:04:57.967 --> 00:05:04.027
+extraction pipeline, with garbage text detection, and it adds report-scoped retrieval, longitudinal
+
+00:05:04.027 --> 00:05:06.927
+comparison, and a self-healing backfill pipeline.
+
+00:05:07.527 --> 00:05:15.907
+Against the base Lama 3 Med 42 8 billion, it records Rouge 1 plus 9.2%, Rouge 2 plus 10.0
+
+00:05:15.907 --> 00:05:25.007
+percent, Rouge L plus 11.8 percent, BLU plus 71.4 percent, and BERT score plus 0.8 percent.
+
+00:05:25.904 --> 00:05:30.884
+Review Pilot is a conversational multi-agent system that automates the Prisma Systematic
+
+00:05:30.884 --> 00:05:36.064
+Review workflow from screening to extraction while recording exclusion reasons and source
+
+00:05:36.064 --> 00:05:37.524
+locations for every value.
+
+00:05:38.004 --> 00:05:43.204
+On epidemiological expert reviews, according to Archive, it outperforms single prompt
+
+00:05:43.204 --> 00:05:48.804
+large language models and agent SLR across three large language models, reaching screening
+
+00:05:48.804 --> 00:05:55.284
+macro F1 of 0.776 and extraction F1 of 0.7888.
+
+00:05:55.284 --> 00:06:01.288
+Coda's released, Jev is a non-generative decision model that returns typed values and native
+
+00:06:01.288 --> 00:06:06.388
+probabilities without text, built for retrieval augmented generation claim verification.
+
+00:06:06.888 --> 00:06:13.228
+On 495 human labeled claims, an archive paper reports it matches a frontier large language
+
+00:06:13.228 --> 00:06:21.228
+model within 0.56 points at 187 fold lower cost, while disagreeing on 15.2% of items.
+
+00:06:21.788 --> 00:06:30.488
+A confidence gated cascade reaches 74.10 at $2.92 per thousand claims, versus 73.83
+
+00:06:30.488 --> 00:06:33.748
+at $8.93 for the frontier model alone.
+
+00:06:34.408 --> 00:06:37.148
+All predictions, prompts, pricing, and code are released.
+
+00:06:38.439 --> 00:06:43.519
+Shipmaps analytical queries to attributes builds a hierarchical hybrid taxonomy and
+
+00:06:43.519 --> 00:06:46.119
+releases a differentially private synthetic table.
+
+00:06:46.639 --> 00:06:51.779
+The archive method outperforms prior private inside baselines on question answering performance
+
+00:06:51.779 --> 00:06:57.119
+and structured fidelity, while surfacing queries that remain difficult for structured representations.
+
+00:06:57.919 --> 00:07:02.519
+Premise check rewrites each review comment into explicit premises with a large language
+
+00:07:02.519 --> 00:07:06.979
+model, then checks every premise against the paper using a cheap decision model.
+
+00:07:06.979 --> 00:07:13.639
+When each comment is checked independently, according to Archive, it matches GPT 5.5 accuracy
+
+00:07:13.639 --> 00:07:18.739
+across NLP, machine learning, and natural sciences at roughly half the cost.
+
+00:07:19.299 --> 00:07:24.139
+On NLP reviews, it hits that accuracy at one quarter of the cost and less than half the
+
+00:07:24.139 --> 00:07:24.539
+latency.
+
+00:07:25.812 --> 00:07:29.852
+Toolbottleneck bench holds tasks fixed while varying one pressure at a time.
+
+00:07:30.432 --> 00:07:34.432
+Tool catalog, visible menu, certified workflow, or record encoding.
+
+00:07:34.432 --> 00:07:40.312
+across 21 model and harness configurations, an archive paper finds the visible menu
+
+00:07:40.312 --> 00:07:44.952
+produces the only large penalty, which tracks truncation at the completion cap.
+
+00:07:45.632 --> 00:07:50.132
+Raising the cap, 16 fold removes most of the penalty, and the benchmark and
+
+00:07:50.132 --> 00:07:55.952
+greater are released. PED bench supplies 2,605 recordings spanning child
+
+00:07:55.952 --> 00:08:01.092
+speech errors, acted errors and synthetic phone condition text-to-speech, all
+
+00:08:01.092 --> 00:08:03.572
+double annotated by phonetically trained listeners.
+
+00:08:04.152 --> 00:08:09.072
+Thirteen state-of-the-art speech models fail to reliably detect errors even under controlled
+
+00:08:09.072 --> 00:08:14.452
+conditions, according to Archive, and show low precision on correctly pronounced phonemes.
+
+00:08:14.892 --> 00:08:19.892
+Speech-language models fine-tuned on the synthetic portion outperform commercial and open-source
+
+00:08:19.892 --> 00:08:24.112
+baselines on word-level detection, though a sim-to-real gap remains.
+
+00:08:25.267 --> 00:08:31.367
+If you serve long chain-of-thought math or coding, wire a bridge KV into that VLM deployment
+
+00:08:31.367 --> 00:08:36.887
+this week. Download the wool-off 8 billion or 14 billion models from the orange collection on
+
+00:08:36.887 --> 00:08:42.527
+hugging face and test them on mixed wool-off English customer care dialogues. Run the prism
+
+00:08:42.527 --> 00:08:47.747
+topology generator on your own multi-agent task corpus to obtain ranked collaboration graphs
+
+00:08:47.747 --> 00:08:53.487
+instead of frequency biased ones. Point premise check at a batch of recent peer reviews and let
+
+00:08:53.487 --> 00:08:59.614
+the premise rewrite plus decision model pipeline do the checking. Wool-off adapted models move from
+
+00:08:59.614 --> 00:09:04.134
+internal pilots to broader public release with documented commercial licensing terms.
+
+00:09:04.754 --> 00:09:09.594
+Review pilots' project memory and dialogue-driven schema editing will be extended to additional
+
+00:09:09.594 --> 00:09:12.494
+systematic review domains beyond epidemiology.
+
+00:09:13.234 --> 00:09:18.414
+PED bench-acted and synthetic datasets plus fine-tuning recipes will be published to close
+
+00:09:18.414 --> 00:09:21.394
+the remaining SIM-to-real gap for phonetic error detection.
+
+00:09:22.437 --> 00:09:26.917
+A single late-layer residual stream direction is where we pop the hood on full duplex
+
+00:09:26.917 --> 00:09:30.097
+spoken models that must decide at every frame whether to speak.
+
+00:09:30.797 --> 00:09:31.677
+The gap is blunt.
+
+00:09:32.317 --> 00:09:36.717
+Each set of weights looks like it freezes one conversational style, while the engineering
+
+00:09:36.717 --> 00:09:40.237
+says that style is a direction you can scale at generation time.
+
+00:09:40.857 --> 00:09:45.497
+Full duplex here means listen and speak can overlap so the model needs a speak or stay
+
+00:09:45.497 --> 00:09:47.137
+silent call on every frame.
+
+00:09:47.657 --> 00:09:52.717
+That decisive quantity can be read without training or annotation and then scaled during generation.
+
+00:09:52.717 --> 00:09:58.777
+Shifting this direction moves the speech ratio from the unsteered 21-30% range to anywhere
+
+00:09:58.777 --> 00:10:02.737
+between 6-12% and 42-61%.
+
+00:10:02.737 --> 00:10:07.437
+The shift remains consistent across conversations, model weights, and corpora.
+
+00:10:07.957 --> 00:10:11.817
+A short reference recording from a target speaker is enough to extract the matching
+
+00:10:11.817 --> 00:10:14.657
+direction and transfer that speaker's turn-taking style.
+
+00:10:15.237 --> 00:10:19.817
+Swapping in a different reference worsens the match in 93-98% of cases.
+
+00:10:19.817 --> 00:10:24.637
+The same direction also anticipates on-sets up to 800 milliseconds ahead.
+
+00:10:25.157 --> 00:10:29.377
+That early signal is what downstream systems can use for smoother margin handling.
+
+00:10:30.477 --> 00:10:32.737
+Conversational personality is not frozen into weights.
+
+00:10:33.317 --> 00:10:37.757
+It lives in a steerable direction that can be calibrated per user at inference time with
+
+00:10:37.757 --> 00:10:42.657
+negligible extra cost, and the weights alone will not hold more than one frozen style.
+
+00:10:43.600 --> 00:10:48.680
+Before we go, co-translator will be evaluated on additional STEM subjects and larger student
+
+00:10:48.680 --> 00:10:54.140
+models to quantify compute savings at scale. That's models and agents for today. If you
+
+00:10:54.140 --> 00:10:57.700
+found this useful, share it with someone who's trying to keep up with all these changes,
+
+00:10:58.180 --> 00:11:03.320
+and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help
+
+00:11:03.320 --> 00:11:08.180
+you keep up. See you tomorrow, and if you'd rather watch than listen, find us on YouTube at
+
+00:11:08.180 --> 00:11:13.880
+Narin Network, links in the show notes. Quick tip from the network. Try the due positive pod next.
+
+00:11:13.880 --> 00:11:17.940
+good news and science and tech, plus one concrete action you can take.
+
+00:11:18.360 --> 00:11:24.000
+Every Narin Network show is free at NarinNetwork.com, and if you would rather browse by subject
+
+00:11:24.000 --> 00:11:29.660
+than by show, every subject the network covers has its own page at NarinNetwork.com topics.
+
+00:11:29.660 --> 00:11:33.320
+This episode used AI voice synthesis of my voice.
+
+00:11:33.820 --> 00:11:36.200
+Editorial selection and analysis are my own.

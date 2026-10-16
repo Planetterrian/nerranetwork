@@ -1,0 +1,139 @@
+Pause token KV compression shrinks cache 3.5 times and speeds H100 inference 3.2 times on long math problems. This is Models & Agents Episode 205. A bridge KV trains a model to compress each completed block of generated chain of thought into the key value cache entries of a few learned pause tokens that produce no output, according to a paper on archive. Those pause tokens receive positions inside the replace block. Cash budget is allocated by measured layer value.
+and compression runs on relatively large blocks. On 446 problems from AM, AMT, AMC and similar
+contests with 32,000 token generations, keeping one quarter of the cash matches and identically
+trained full key value model in both accuracy and output length.
+The strongest published eviction baseline at the same budget produces far longer outputs.
+A retrained compressor baseline loses 10 accuracy points.
+Served in VLLM, that pause token compressor runs per sequence on a saturated H100.
+CoteS uses probability competition between the two most likely tokens to allocate continuous weight
+between discrete commitment and soft exploration at each step,
+and it needs no extra training.
+An archive paper says the second candidate represents the strongest alternative,
+so larger separation signals stability and keeps the representation close
+to the sampled token.
+Smaller separation increases the soft contribution to retain alternatives.
+The method requires no extra forward passes or tuned thresholds.
+Experiments across six reasoning benchmarks show consistent gains over standard chain of
+thought and prior training-free latent methods.
+Woolhoff, a language spoken by 23 million people, mainly in Senegal, now has open-weight
+models from 0.6 billion to 14 billion parameters.
+The archive release instruction tunes, preference aligns, and merges those weights.
+And after the full pipeline, the 8 billion and 14 billion variants remain competitive
+with much larger commercial systems on 63 public and internal tasks while preserving
+cross-lingual performance.
+The models are already an internal customer care pilots and available on hugging face.
+Verticked MQ is a 395 million parameter encoder that reads a case once and answers every
+typed question about it through a structured attention mask that keeps state encoding independent
+of the questions.
+On the type decisions benchmark, it matches soft gold labels better than the released 421
+million parameter lia specialist across five seeds, according to archive, while preserving
+During per-system temperature scaling advantages, APRIL supplies 2,196 instances across six categories
+with instant-specific rubrics for two tasks, social scenario analysis and socially-aware
+response.
+The archive benchmark targets Chinese social awareness in large language models.
+Experiments on 12 models from six families reveal a consistent gap between understanding
+and response quality, with higher-quality analyses improving downstream responses.
+Data and code are released.
+Code Translator learns to translate cheaper reverse chain of thought rationales into the
+distribution of verified forward responses using a small paired set.
+Across six student models on six math benchmarks, the archive method improves average accuracy
+over semantic suppression by up to 5.82 points.
+It retains 95% of rejection sampling accuracy at 35.9% of the compute for 4 billion parameter
+students.
+The translator transfers without retraining to new data sets, teachers and STEM problems.
+Deep unfolding agent is a schema-driven, fast API service that registers optimization strategies,
+accepts round-level diagnostics, returns bounded control actions and updates from executor
+feedback.
+An archive paper says it supports classical, quantum aware, hybrid, biscuit arrow and IBM
+quantum pathways through a strategy registry, safety guard, and docker deployment.
+Validation covers unit, schema, API, safety, orchestration, and hardware back tests across
+finance, healthcare, genomics, and noisy quantum simulation.
+Prism recovers per query preference signals from execution verified graph corpora by training
+a student to match a teacher that sees a sibling solution graph unavailable at deployment.
+The privileged low-rank branch described on Archive supplies the missing ranking signal
+that standard supervised fine-tuning lacks.
+Across six diverse benchmarks, the method improves over every prior topology design baseline.
+Code is released.
+MetaX fine-tunes Lama-38 billion with Q-Lora, a quantized low-rank adaptation method,
+then adds retrieval augmented generation and a Gemini vision layer.
+The archive system handles text PDFs, scan PDFs, and radiological images through a hybrid
+extraction pipeline, with garbage text detection, and it adds report-scoped retrieval, longitudinal
+comparison, and a self-healing backfill pipeline.
+Against the base Lama 3 Med 42 8 billion, it records Rouge 1 plus 9.2%, Rouge 2 plus 10.0
+percent, Rouge L plus 11.8 percent, BLU plus 71.4 percent, and BERT score plus 0.8 percent.
+Review Pilot is a conversational multi-agent system that automates the Prisma Systematic
+Review workflow from screening to extraction while recording exclusion reasons and source
+locations for every value.
+On epidemiological expert reviews, according to Archive, it outperforms single prompt
+large language models and agent SLR across three large language models, reaching screening
+macro F1 of 0.776 and extraction F1 of 0.7888.
+Coda's released, Jev is a non-generative decision model that returns typed values and native
+probabilities without text, built for retrieval augmented generation claim verification.
+On 495 human labeled claims, an archive paper reports it matches a frontier large language
+model within 0.56 points at 187 fold lower cost, while disagreeing on 15.2% of items.
+A confidence gated cascade reaches 74.10 at $2.92 per thousand claims, versus 73.83
+at $8.93 for the frontier model alone.
+All predictions, prompts, pricing, and code are released.
+Shipmaps analytical queries to attributes builds a hierarchical hybrid taxonomy and
+releases a differentially private synthetic table.
+The archive method outperforms prior private inside baselines on question answering performance
+and structured fidelity, while surfacing queries that remain difficult for structured representations.
+Premise check rewrites each review comment into explicit premises with a large language
+model, then checks every premise against the paper using a cheap decision model.
+When each comment is checked independently, according to Archive, it matches GPT 5.5 accuracy
+across NLP, machine learning, and natural sciences at roughly half the cost.
+On NLP reviews, it hits that accuracy at one quarter of the cost and less than half the
+latency.
+Toolbottleneck bench holds tasks fixed while varying one pressure at a time.
+Tool catalog, visible menu, certified workflow, or record encoding.
+across 21 model and harness configurations, an archive paper finds the visible menu
+produces the only large penalty, which tracks truncation at the completion cap.
+Raising the cap, 16 fold removes most of the penalty, and the benchmark and
+greater are released. PED bench supplies 2,605 recordings spanning child
+speech errors, acted errors and synthetic phone condition text-to-speech, all
+double annotated by phonetically trained listeners.
+Thirteen state-of-the-art speech models fail to reliably detect errors even under controlled
+conditions, according to Archive, and show low precision on correctly pronounced phonemes.
+Speech-language models fine-tuned on the synthetic portion outperform commercial and open-source
+baselines on word-level detection, though a sim-to-real gap remains.
+If you serve long chain-of-thought math or coding, wire a bridge KV into that VLM deployment
+this week. Download the wool-off 8 billion or 14 billion models from the orange collection on
+hugging face and test them on mixed wool-off English customer care dialogues. Run the prism
+topology generator on your own multi-agent task corpus to obtain ranked collaboration graphs
+instead of frequency biased ones. Point premise check at a batch of recent peer reviews and let
+the premise rewrite plus decision model pipeline do the checking. Wool-off adapted models move from
+internal pilots to broader public release with documented commercial licensing terms.
+Review pilots' project memory and dialogue-driven schema editing will be extended to additional
+systematic review domains beyond epidemiology.
+PED bench-acted and synthetic datasets plus fine-tuning recipes will be published to close
+the remaining SIM-to-real gap for phonetic error detection.
+A single late-layer residual stream direction is where we pop the hood on full duplex
+spoken models that must decide at every frame whether to speak.
+The gap is blunt.
+Each set of weights looks like it freezes one conversational style, while the engineering
+says that style is a direction you can scale at generation time.
+Full duplex here means listen and speak can overlap so the model needs a speak or stay
+silent call on every frame.
+That decisive quantity can be read without training or annotation and then scaled during generation.
+Shifting this direction moves the speech ratio from the unsteered 21-30% range to anywhere
+between 6-12% and 42-61%.
+The shift remains consistent across conversations, model weights, and corpora.
+A short reference recording from a target speaker is enough to extract the matching
+direction and transfer that speaker's turn-taking style.
+Swapping in a different reference worsens the match in 93-98% of cases.
+The same direction also anticipates on-sets up to 800 milliseconds ahead.
+That early signal is what downstream systems can use for smoother margin handling.
+Conversational personality is not frozen into weights.
+It lives in a steerable direction that can be calibrated per user at inference time with
+negligible extra cost, and the weights alone will not hold more than one frozen style.
+Before we go, co-translator will be evaluated on additional STEM subjects and larger student
+models to quantify compute savings at scale. That's models and agents for today. If you
+found this useful, share it with someone who's trying to keep up with all these changes,
+and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help
+you keep up. See you tomorrow, and if you'd rather watch than listen, find us on YouTube at
+Narin Network, links in the show notes. Quick tip from the network. Try the due positive pod next.
+good news and science and tech, plus one concrete action you can take.
+Every Narin Network show is free at NarinNetwork.com, and if you would rather browse by subject
+than by show, every subject the network covers has its own page at NarinNetwork.com topics.
+This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.
