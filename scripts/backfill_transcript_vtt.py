@@ -78,12 +78,20 @@ def render_vtt(json_path: Path) -> Optional[str]:
     return segments_to_vtt(segments)
 
 
+# Byte-copy aliases (``publishing.rss_aliases`` — Tesla's
+# ``tesla_podcast.rss`` beside ``podcast.rss``). Same content as the
+# canonical feed; including them would double-count one show.
+_ALIAS_FEEDS = frozenset({"tesla_podcast.rss"})
+
+
 def root_audio_feeds(root: Path) -> List[Path]:
     """``podcast.rss`` + ``*_podcast.rss`` at the repo root — the audio
     feeds the shows publish; no language, video or blog feeds."""
     feeds = []
     for p in sorted(root.glob("*.rss")):
         if _NON_AUDIO_FEED_RE.search(p.name):
+            continue
+        if p.name in _ALIAS_FEEDS:
             continue
         if p.name == "podcast.rss" or p.name.endswith("_podcast.rss"):
             feeds.append(p)
