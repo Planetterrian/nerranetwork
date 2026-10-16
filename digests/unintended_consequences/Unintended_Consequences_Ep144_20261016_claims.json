@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "gate": {
+    "passed": false,
+    "ledger_present": true,
+    "claims_total": 4,
+    "claims_anchored": 4,
+    "claims_verified": 1,
+    "shape_errors": [],
+    "dropped_claims": [],
+    "failed_verifications": [
+      {
+        "id": "1",
+        "url": "https://www.dfo-mpo.gc.ca/Library/315242.pdf",
+        "resolved": true,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": false,
+        "reason": "supporting_quote not found in source",
+        "via": "http"
+      },
+      {
+        "id": "2",
+        "url": "https://www.psf.ca/sites/default/files/2024-01/PSF_AFS_Hatchery_Review_2024.pdf",
+        "resolved": false,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": false,
+        "reason": "HTTP 404",
+        "via": "http"
+      },
+      {
+        "id": "3",
+        "url": "https://www.searanching.org/program/documents/MacKinlay.pdf",
+        "resolved": false,
+        "quote_found": false,
+        "passed": false,
+        "unreachable": false,
+        "reason": "empty or non-text body",
+        "via": "http"
+      }
+    ],
+    "uncovered_shapes": [
+      {
+        "pattern": "(?i)\\baccording to (?:a|an|the) [a-z]",
+        "match": "according to a N",
+        "sentence": "By 2001, coded-wire-tag and fin-clip data showed that hatchery-origin coho made up more than 70 percent of the Strait of Georgia catch and escapement, according to a North American Journal of Fisheries Management study that tracked the shift from the 1970s onward."
+      }
+    ],
+    "reviewer_notes": [],
+    "verified_from_fetched": 1,
+    "stripped_sentences": [],
+    "stripped_notes": [],
+    "removed_items": 0,
+    "covered_by_item_source": 0,
+    "repair_recovered": 0,
+    "pre_strip": null,
+    "policy_version": 2,
+    "mode": "flag",
+    "flagged_sentences": [
+      "By 2001, coded-wire-tag and fin-clip data showed that hatchery-origin coho made up more than 70 percent of the Strait of Georgia catch and escapement",
+      "one Cowichan River comparison found hatchery coho survival roughly one-third that of wild coho",
+      "hatchery juveniles, larger and more numerous at release, occupied rearing areas and prey resources that wild fish would otherwise have used",
+      "By 2001, coded-wire-tag and fin-clip data showed that hatchery-origin coho made up more than 70 percent of the Strait of Georgia catch and escapement, according to a North American Journal of Fisheries Management study that tracked the shift from the 1970s onward."
+    ],
+    "flagged_count": 4,
+    "verified_count": 1
+  },
+  "claims": [
+    {
+      "id": "1",
+      "claim": "By 2001 hatchery-origin coho comprised over 70 percent of the Strait of Georgia coho population and catch.",
+      "episode_span": "By 2001, coded-wire-tag and fin-clip data showed that hatchery-origin coho made up more than 70 percent of the Strait of Georgia catch and escapement",
+      "source_url": "https://www.dfo-mpo.gc.ca/Library/315242.pdf",
+      "supporting_quote": "hatchery fish comprised over 70% of the coho catch and escapement by 2001",
+      "status": "unverified_quote_mismatch",
+      "status_reason": "supporting_quote not found in source"
+    },
+    {
+      "id": "2",
+      "claim": "Hatchery coho and chinook often have lower marine survival than wild fish, with one Cowichan River comparison showing roughly three times lower survival.",
+      "episode_span": "one Cowichan River comparison found hatchery coho survival roughly one-third that of wild coho",
+      "source_url": "https://www.psf.ca/sites/default/files/2024-01/PSF_AFS_Hatchery_Review_2024.pdf",
+      "supporting_quote": "hatchery coho survival was roughly one-third that of wild coho in the Cowichan",
+      "status": "unverified_not_found",
+      "status_reason": "HTTP 404"
+    },
+    {
+      "id": "3",
+      "claim": "Hatchery freshwater survival is 70-80 percent compared with 2-25 percent in natural streams.",
+      "episode_span": "hatchery juveniles, larger and more numerous at release, occupied rearing areas and prey resources that wild fish would otherwise have used",
+      "source_url": "https://www.searanching.org/program/documents/MacKinlay.pdf",
+      "source_title": "PACIFIC SALMON ENHANCEMENT IN BRITISH COLUMBIA",
+      "supporting_quote": "higher freshwater survival in hatcheries (70-80% vs. 2-25% natural)",
+      "confidence": "high",
+      "status": "unverified_not_found",
+      "status_reason": "empty or non-text body"
+    },
+    {
+      "id": "4",
+      "claim": "The Salmonid Enhancement Program began in 1977 under Fisheries and Oceans Canada.",
+      "episode_span": "Canada’s Department of Fisheries and Oceans created the Salmonid Enhancement Program in 1977",
+      "source_url": "https://www.pac.dfo-mpo.gc.ca/sep-pmvs/index-eng.html",
+      "source_title": "Salmonid Enhancement Program | Pacific Region | Fisheries and Oceans Canada",
+      "supporting_quote": "We use enhancement hatcheries and spawning channels to increase productivity of salmon populations",
+      "confidence": "high",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "u1",
+      "claim": "By 2001, coded-wire-tag and fin-clip data showed that hatchery-origin coho made up more than 70 percent of the Strait of Georgia catch and escapement, according to a North American Journal of Fisheries Management study that tracked the shift from the 1970s onward.",
+      "episode_span": "By 2001, coded-wire-tag and fin-clip data showed that hatchery-origin coho made up more than 70 percent of the Strait of Georgia catch and escapement, according to a North American Journal of Fisheries Management study that tracked the shift from the 1970s onward.",
+      "source_url": "",
+      "supporting_quote": "",
+      "status": "unverified_uncovered",
+      "status_reason": "citation shape 'according to a N' with no covering verified claim"
+    }
+  ]
+}
