@@ -29,7 +29,7 @@ from engine.publish_guards import (  # noqa: E402
     show_requires_rendered_sources,
 )
 from engine.url_utils import strip_tracking  # noqa: E402
-from engine.publisher import write_rss_aliases  # noqa: E402
+from engine.publisher import update_rss_feed, write_rss_aliases  # noqa: E402
 
 
 def _cfg(**kwargs):
@@ -131,24 +131,67 @@ class TestStripTracking:
 
 
 class TestTeslaRssAlias:
-    def test_alias_is_byte_copy_with_canonical_self(self, tmp_path: Path):
+    def test_generator_step_writes_canonical_and_alias(self, tmp_path: Path):
+        """run_show's RSS step: update_rss_feed then write_rss_aliases.
+
+        Both files must exist and be byte-identical; atom:link rel=self
+        stays on podcast.rss so directories do not fork the feed.
+        """
+        import datetime as _dt
+
         canonical = tmp_path / "podcast.rss"
-        body = (
-            b"<?xml version='1.0'?><rss><channel>"
-            b'<atom:link href="https://nerranetwork.com/podcast.rss" rel="self" />'
-            b"</channel></rss>"
+        mp3 = tmp_path / "seed.mp3"
+        mp3.write_bytes(b"ID3" + b"\x00" * 128)
+        update_rss_feed(
+            canonical,
+            1,
+            "Ep 1: Seed",
+            "Seed episode for alias test",
+            _dt.date(2024, 1, 1),
+            "seed.mp3",
+            60.0,
+            mp3,
+            audio_url="https://audio.nerranetwork.com/digests/seed.mp3",
+            channel_title="Tesla Shorts Time",
+            channel_description="Daily Tesla news",
+            channel_link="https://nerranetwork.com/tesla.html",
+            channel_author="Patrick",
+            channel_email="contact@nerranetwork.com",
+            base_url="https://nerranetwork.com",
         )
-        canonical.write_bytes(body)
         written = write_rss_aliases(canonical, ["tesla_podcast.rss"])
-        assert len(written) == 1
         alias = tmp_path / "tesla_podcast.rss"
-        assert alias.read_bytes() == body
-        assert b"podcast.rss" in alias.read_bytes()
+        assert written == [alias]
+        assert canonical.exists() and alias.exists()
+        assert canonical.read_bytes() == alias.read_bytes()
+        body = alias.read_bytes()
+        assert b'href="https://nerranetwork.com/podcast.rss"' in body
+        assert b'tesla_podcast.rss" rel="self"' not in body
 
     def test_tesla_yaml_declares_alias(self):
         import yaml
         raw = yaml.safe_load((ROOT / "shows" / "tesla.yaml").read_text())
         assert "tesla_podcast.rss" in (raw.get("publishing") or {}).get("rss_aliases", [])
+
+    def test_alias_not_double_listed_in_audit_or_rss_tests(self):
+        """Canonical podcast.rss is the only Tesla entry in feed audits."""
+        audit = (ROOT / ".github" / "workflows" / "daily-audit.yml").read_text()
+        assert '"podcast.rss": ("Tesla Shorts Time"' in audit
+        assert "tesla_podcast.rss" not in audit
+        rss_tests = (ROOT / "tests" / "test_rss.py").read_text()
+        assert 'PROJECT_ROOT / "podcast.rss"' in rss_tests
+        assert "tesla_podcast.rss" not in rss_tests
+        # VTT backfill globs *_podcast.rss — aliases must stay out.
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "backfill_transcript_vtt",
+            ROOT / "scripts" / "backfill_transcript_vtt.py",
+        )
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        names = {p.name for p in mod.root_audio_feeds(ROOT)}
+        assert "podcast.rss" in names
+        assert "tesla_podcast.rss" not in names
 
 
 class TestUrlSlugChapterTitles:
