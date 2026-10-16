@@ -309,12 +309,24 @@ def _publisher_labels_by_url(md_text: str) -> dict[str, str]:
     return labels
 
 
+#: Nerra Daily rundown links each segment show's episode page
+#: (``[Full episode notes](/blog/spacex/ep131.html)``). Those ARE the
+#: edition's sources — without this, every Nerra Daily page said
+#: "No sources listed for this episode".
+_RUNDOWN_EP_LINK_RE = re.compile(
+    r"\]\((https?://(?:www\.)?nerranetwork\.com)?(/blog/[a-z0-9_/-]+/ep\d+\.html)\)",
+    re.IGNORECASE,
+)
+_SITE_ORIGIN = "https://nerranetwork.com"
+
+
 def _extract_source_urls(md_text: str) -> list[str]:
     """Collect every source URL from a digest, deduped, in document order.
 
     Captures both the inline ``Source:`` form and the trailing ``## Sources``
     (markdown-link or bare) list, so the blog "Sources" section is consistent
     across all shows regardless of which format the show's prompt emits.
+    Also collects Nerra Daily-style rundown links to sibling episode pages.
     """
     seen: set[str] = set()
     out: list[str] = []
@@ -341,6 +353,11 @@ def _extract_source_urls(md_text: str) -> list[str]:
                 continue
             for mm in _URL_IN_LINE_RE.finditer(line):
                 add(mm.group(1) or mm.group(2))
+
+    # 3. Rundown / edition links to sibling episode pages (Nerra Daily).
+    for m in _RUNDOWN_EP_LINK_RE.finditer(md_text or ""):
+        origin = (m.group(1) or "").rstrip("/") or _SITE_ORIGIN
+        add(origin + m.group(2))
     return out
 
 # Date string → datetime

@@ -23,6 +23,12 @@ It is a plain list:
     The booster flew its 23rd mission, not its 32nd as stated in the
     Launch Log item.
   where: digest             # digest | audio | both
+  # Optional — when set, the false claim is rewritten out of committed text:
+  # headline: The booster flew its 23rd mission, not its 32nd.
+  # amend_headline: true
+  # replacements:
+  #   - find: "32nd mission"
+  #     replace: "23rd mission"
 ```
 
 | Field | Meaning |
@@ -32,12 +38,30 @@ It is a plain list:
 | `text` | What was wrong and what is right, in one or two sentences. Written for a listener; it is printed verbatim. |
 | `where` | `digest` — the article / show notes were wrong and the audio did not carry it; `audio` — the spoken episode was wrong; `both`. Defaults to `digest`. |
 | `noted_in` | Optional. Pin the episode whose show notes carry the next-episode line, instead of deriving it from the dates. |
-| `amend_headline` | Optional, default `false`. When the correction retracts the episode's premise and the headline itself asserts it, `true` prefixes the episode page's title (the `<h1>`, `<title>` and social card) with "Corrected:" and the correction box renders above it. The feed title and the audio are untouched. |
+| `amend_headline` | Optional, default `false`. When true, the episode page's title (the `<h1>`, `<title>` and social card) is prefixed with "Corrected:" and the correction box renders above it. |
+| `headline` | Optional. New hook/headline text. With `replacements`, applied to the digest blockquote, feed titles, chapters and plain-text openers. |
+| `replacements` | Optional list of `{find, replace}` pairs. Applied in order to the digest, reader/TTS scripts, transcripts, chapters JSON, summaries and RSS item. |
 
 Entries are validated on read (`engine/corrections.py`): a bad entry is logged
 and skipped, never raised, because a build or a feed update must not fail
 over a trust annotation. Commit the file with the usual output commit; the
 nightly regeneration picks it up.
+
+## Applying text amendments
+
+A correction that only carries `text` adds the visible note and leaves the
+false claim in the body (the Oct 11 UC Ep139 shape — a box above an
+unchanged article). To **amend** the published text, add `headline` and/or
+`replacements` and run:
+
+```bash
+python scripts/apply_corrections.py --show unintended_consequences --episode 139 --apply --regen-blog
+```
+
+That rewrites every committed text surface for the episode and regenerates
+the blog page. Dry-run is the default (omit `--apply`). Audio is still never
+edited here — when `where` is `audio` or `both`, run
+`scripts/resynthesize_episode.py` afterwards so the spoken file matches.
 
 ## Where a correction reaches
 
