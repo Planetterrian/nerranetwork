@@ -60,3 +60,80 @@ reviews:
         baseline: "0/1 (Ep1, Wednesday)"
         expected: "4/4 from 2026-10-02"
         verdict: pending
+  - date: '2026-10-09'
+    pr: null
+    doc: docs/reviews/collingwood_review_2026_10_09.md
+    generated_by: grok-4.5
+    summary: After three episodes, Collingwood Weekly is on-cadence Fridays with clean region/weather sourcing, but runtime and Both Sides launch predictions have already missed, Ep2 shipped heavy same-fact restatement, Ep3 looks evergreen-free despite slow_news, and every transcript hears the town name as “calling wood.”
+    scored_prior_predictions:
+    - metric: skip rate on insufficient_articles over the first 4 scheduled Fridays
+      verdict: partial
+      evidence: 0 insufficient_articles skips across Ep2–Ep3 (2 of 4 scheduled Fridays); window still open
+    - metric: episodes (first 4) with an item outside the south Georgian Bay and no stated local consequence
+      verdict: partial
+      evidence: Ep1–3 rundowns stay bay/Simcoe/Grey-shaped in transcripts; 0 clear no-consequence off-region leads; window open
+    - metric: Roads & Weather Ahead sentences not supported by the Ontario 511 / Environment Canada hook articles
+      verdict: partial
+      evidence: Ep1–3 weather/roads passages match EC forecast + 511 closure shape; full first-4 window not closed
+    - metric: episode run time
+      verdict: miss
+      evidence: Chapter endTimes 267.6s / 441.6s / 214.1s — 0/3 ≥8:00; cannot reach 3/4
+    - metric: episodes carrying a labelled Both Sides
+      verdict: miss
+      evidence: Both Sides chapter only in chapters_ep002.json (1/3); Ep4 cannot reach ≥3/4
+    - metric: episodes published on a Friday (or a dated exception)
+      verdict: partial
+      evidence: Ep2 2026-10-02 and Ep3 2026-10-09 are Fridays (2/2 since schedule); 2 remain for 4/4
+    shipped: []
+    deferred:
+    - Local music theme (voice-only at launch; plan §5c) — carry
+    - Re-grade feed list from a runner (check_feeds.py collingwood) — carry
+    - Enable x_fetch only after verified local handles + first-run per-handle counts — carry
+    - 'Phonetic respelling or SSML for Collingwood/Wasaga/Simcoe — landmine #17; do not retry'
+    - 'Operator decision: keep honest short thin-week runtime vs bulk the evergreen library / max_segments — escalate after runtime prediction miss; no third podcast-side length filing'
+    - 'Operator decision: Both Sides hard weekly lint-floor vs explicit omit-OK and retire ≥3/4 KPI — escalate after Both Sides prediction miss'
+    - YouTube enable for Collingwood Weekly
+    - Confirm snapshot '0 km/h gusting to 0' against raw _tts.txt before any local_conditions change
+    predictions:
+    - metric: snapshot facts×2 count on next 3 collingwood episodes after anti-restatement prompt
+      baseline: ep1=1, ep2=3, ep3=0 (review_snapshot density audit)
+      expected: ≤1 on each of the next 3 episodes; no Ep2-style triple-pass crash/fire blocks in Whisper
+      verdict: pending
+      evidence: null
+    - metric: slow_news segments present in digest when podcast word count <900
+      baseline: Ep3 643 words / ~3:34 with no evergreen-shaped spoken segment visible in transcript
+      expected: 100% of under-floor episodes include ≥1 slow_news library section in the digest md
+      verdict: pending
+      evidence: null
+    - metric: Both Sides chapter rate after operator policy choice
+      baseline: 1/3 episodes (Ep2 only)
+      expected: 'if lint-floor chosen: ≥2 of next 3; if omit-OK chosen: prediction n/a-lever and KPI retired in ledger'
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/prompts/collingwood_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Ep2 Whisper shows multi-pass restatement of fire, impaired crashes, and Beachwood facts; Oct 3 only lowered the word target. Shape ban (no example phrase) attacks the pad-by-repeat path without a podcast length lever.
+    - file: shows/prompts/collingwood_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Stops multi-outlet local incidents from arriving as separate digest items that the script stage then double-walks (Ep2 pattern).
+    - file: tests/test_collingwood_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Every behavioral fix needs a drift-guard; wiring guards must use real load_config (frame-memory lesson). Restatement guard pins the Ep2 failure mode without asserting on today's unfinished Friday run.
+    - file: shows/collingwood.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Show is Friday weekly local, not daily; category2 already Places & Travel. Metadata-only, no audio.
+    - file: digests/collingwood/ (audit Ep003 digest + slow_news path)
+      kind: code
+      ab_listen_required: false
+      rationale: 'Length meta-rule: digest-substrate only. Ep3 under-floor with no spoken evergreen is the highest-yield length lever if wiring is dark.'
+    agent_cost_usd: 0.0728
+do_not_retry:
+  - idea: 'Phonetic respellings or programmatic speech-tag injection to fix ''calling wood'' / place names on Grok custom voice ara (landmine #17; network 100% regression class)'
+    evidence: flagged 2026-10-09 (Grok review)
+  - idea: Podcast-side length levers for Collingwood (raise min_podcast_words, podcast_expand_below_target, or prompt 'write longer') — network length rule; runtime miss re-diagnoses to digest/slow_news substrate
+    evidence: flagged 2026-10-09 (Grok review)
