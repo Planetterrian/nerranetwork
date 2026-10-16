@@ -99,8 +99,16 @@ class TestTheImageIsPinned:
 class TestRequirements:
     def test_floors_moved_and_the_pyav_ceiling_did_not(self):
         req = (ROOT / "requirements.txt").read_text(encoding="utf-8")
-        for line in ("openai>=3.26.1", "tenacity>=9.2.1", "websockets>=17.2",
-                     "google-auth>=2.61.0", "google-auth-oauthlib>=1.5.0",
-                     "google-api-python-client>=2.201.0"):
-            assert re.search(rf"^{re.escape(line)}\s*$", req, re.M), line
+        # Oct 16 2026: the grouped Dependabot PR moved openai to 3.28.0 and
+        # this pinned the exact Oct 9 line, so main went red on a floor that
+        # went UP. The guard is that no floor falls back below the Oct 9
+        # releases; a later floor is the point of the weekly bump.
+        def _v(text):
+            return tuple(int(x) for x in re.findall(r"\d+", text)[:3])
+        for name, floor in (("openai", "3.26.1"), ("tenacity", "9.2.1"), ("websockets", "17.2"),
+                            ("google-auth", "2.61.0"), ("google-auth-oauthlib", "1.5.0"),
+                            ("google-api-python-client", "2.201.0")):
+            m = re.search(rf"^{re.escape(name)}>=([\d.]+)\s*$", req, re.M)
+            assert m, name
+            assert _v(m.group(1)) >= _v(floor), (name, m.group(1))
         assert re.search(r"^av>=18\.1\.0,<19\s*$", req, re.M)

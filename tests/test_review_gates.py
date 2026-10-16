@@ -63,7 +63,9 @@ class TestPackageReviewToken:
 
     def test_worker_accepts_admin_token_or_the_package_token(self):
         body = _fn(WORKER, "async function requirePackageAccess(")
-        assert "supplied === env.ADMIN_TOKEN" in body
+        # Oct 16 2026: compared in constant time since the security pass.
+        assert "tokenEquals(supplied.trim(), expected)" in body
+        assert "(env.ADMIN_TOKEN || \"\").trim()" in body
         assert "await packageReviewToken(env, packageId)" in body
         assert '"unauthorized" }, 401' in body
 

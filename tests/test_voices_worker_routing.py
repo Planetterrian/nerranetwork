@@ -103,7 +103,11 @@ def test_worker_routes_triage_reassign():
     assert 'path === "/voices/triage-reassign"' in WORKER
     assert "handleTriageReassign" in WORKER
     body = WORKER.split("async function handleTriageReassign")[1].split("\nasync function")[0]
-    assert "requireAdmin(req, env)" in body, "reassign must be admin-gated"
+    # Oct 16 2026: the security pass moved triage to a scoped token (an
+    # HMAC of ADMIN_TOKEN) so the triage email no longer carries the raw
+    # admin token; reassign is a triage action and takes the same gate.
+    assert ("requireAdmin(req, env)" in body
+            or "requireTriageAccess(req, env)" in body), "reassign must be gated"
     assert "isShow(body.show)" in body
     assert "{ show: body.show }" in body
 

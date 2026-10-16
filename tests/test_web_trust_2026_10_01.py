@@ -464,8 +464,13 @@ class TestGateCopyTellsTheTruth:
             raise AssertionError(f"no copy exists for on_failure={gate_config['on_failure']!r}")
         # Still true in either mode: one repair pass, unreachable is never a
         # pass, item coverage, reviewer notes.
-        for phrase in ("repair pass", "cannot reach", "covered by a verified claim", "note"):
+        # Oct 16 2026: the claims-copy audit (#1445) reworded the coverage
+        # sentence ("tries to cover every sourced item with a verified
+        # claim"); the guard reads the fact, not one wording of it.
+        for phrase in ("repair pass", "cannot reach", "note"):
             assert phrase in flat, f"{name}: missing '{phrase}'"
+        assert ("covered by a verified claim" in flat
+                or "with a verified claim" in flat), f"{name}: missing the coverage floor"
         # And no more than that. The narrative shows no longer block (they
         # pin flag too since 2026-10-01), so the copy may not say they do.
         assert "narrative shows" not in flat, f"{name}: the narrative shows no longer block"
