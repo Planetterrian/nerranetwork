@@ -5,10 +5,9 @@ pipelines/voices/referrals.py reads each published interview's closing round
 (a book, the best advice, who inspires them, the show's own question, who to
 interview next), stores it on the episode's record, and turns every named
 person into a referral. Mira invites them, crediting the guest, when an
-address is printed on a public page; otherwise she asks the guest once for an
-introduction, and the Producer picks the guest's answer up. Nothing goes out
-the day a name first appears: Patrick sees every message in that day's report
-first. guest-picks.html shows the answers.
+address is printed on a public page. Oct 16 (Patrick): she never asks the guest
+for an introduction and never waits a day; no address means no invitation, and
+the name goes on Patrick's list. guest-picks.html shows the answers.
 """
 
 from __future__ import annotations
@@ -220,10 +219,6 @@ class TestPicks:
         assert R.first_name("Dr. Michael Brandt") == "Michael"
         assert R.name_key("Madonna") == ""
 
-    def test_a_name_the_recording_left_in_doubt_is_asked_about(self):
-        assert R.unsure({"note": "Name was hard to make out in the recording."})
-        assert not R.unsure({"note": "Heard as 'Jeffrey Henson'; corrected."})
-
     def test_dashes_read_as_commas(self):
         out = R.normalize_picks({"bet": "We charge merchants nothing\u2014no fees at all.",
                                  "advice": {"text": "Keep going \u2014 always.", "source": ""}})
@@ -300,8 +295,9 @@ class TestMessages:
         subject, html = R.render_invite(self.REF, {"via": "", "topic": "AI risk"}, self.IV)
         import html as _h
         html = _h.unescape(html)
-        assert subject == "Vincent Rylan suggested I interview you for The Age of AI"
-        for must in ("Hi Geoffrey,", "Vincent Rylan", "He understands the risk better than anyone.",
+        assert subject == "Vincent Rylan named you as my next guest on The Age of AI"
+        for must in ("Hi Geoffrey,", "I'm Mira, and I'm an AI.", "no script", "Vincent Rylan",
+                     "a different kind of interview", "the transcript comes first", "He understands the risk better than anyone.",
                      "https://nerranetwork.com/blog/age_of_ai/ep007.html",
                      "https://nerranetwork.com/age-of-ai.html",
                      "https://nerranetwork.com/nerra-voices.html",
@@ -320,19 +316,11 @@ class TestMessages:
         subject, html = R.render_invite(self.REF, {"via": "University of Toronto Media Relations"}, self.IV)
         assert "Hi There," in html and "pass this invitation on to Geoffrey Hinton" in html
         assert "Hi Geoffrey" not in html
-        assert subject == "Vincent Rylan suggested I interview Geoffrey Hinton for The Age of AI"
-
-    def test_the_guest_is_asked_for_an_introduction_by_first_name(self):
-        app = {"name": "Jason Fishman", "email": "jason@example.com"}
-        subject, html = R.render_ask(app, {"id": JASON_IV, "episode_number": 11, "show": "age_of_ai"},
-                                     [{"name": "Tim Martinez", "note": "hard to make out"}])
-        assert subject == "Could you introduce me to Tim?"
-        assert "Hi Jason," in html and "Tim Martinez" in html and "misheard a name" in html
-        assert "https://nerranetwork.com/blog/age_of_ai/ep011.html" in html
-        assert "no problem at all" in html
+        assert subject == "Vincent Rylan named Geoffrey Hinton as my next guest on The Age of AI"
+        assert "Geoffrey Hinton also gets" in html
 
     def test_no_template_uses_an_em_dash(self):
-        for name in ("referral_invite.j2", "voices_referral_ask.j2"):
+        for name in ("referral_invite.j2",):
             body = (ROOT / "templates" / "email" / name).read_text()
             assert "\u2014" not in body.split("#}", 1)[1], name
 
@@ -341,27 +329,6 @@ class TestMessages:
 # The run
 # ---------------------------------------------------------------------------
 
-class TestWhoIsAskedForAnIntroduction:
-    MATT = {"name": "Matt Davis", "email": "matt@criticalpropulsion.com", "organization": "Critical Propulsion"}
-    VINCENT = {"name": "Vincent Rylan", "email": "vincent.r.rylan.writer@gmail.com"}
-    SCOTT = {"name": "Scott Pulcini", "email": "scott@scottpulcinitrader.com", "organization": "Futures trader"}
-
-    def test_a_colleague_at_the_same_company(self):
-        assert R.can_ask({"name": "Jerry Duff", "organization": "Critical Propulsion"}, self.MATT)
-
-    def test_someone_they_say_they_know(self):
-        assert R.can_ask({"name": "Tim Martinez", "relationship": "my co-founder"}, self.VINCENT)
-
-    def test_a_name_that_needs_checking(self):
-        assert R.can_ask({"name": "To Martinez", "note": "Name was hard to make out."}, self.VINCENT)
-
-    def test_not_a_public_figure_they_only_admire(self):
-        assert not R.can_ask({"name": "Geoffrey Hinton", "organization": "University of Toronto"}, self.VINCENT)
-        assert not R.can_ask({"name": "Brian Shannon", "organization": "AlphaTrends",
-                              "relationship": "I read his book"}, self.SCOTT)
-        assert not R.can_ask({"name": "Ana Gmail", "organization": "Gmail"}, self.VINCENT)
-
-
 class TestRun:
     def test_a_preview_sends_nothing_to_anyone_but_patrick(self, world):
         R.run(dry_run=True)
@@ -369,46 +336,55 @@ class TestRun:
         report = _report(world["sent"])
         assert len(report) == 1 and report[0]["subject"].startswith("Preview:")
         html = report[0]["html"]
-        assert HINTON_MAIL in html and "Could you introduce me to Tim?" in html
+        assert HINTON_MAIL in html and "Tim Martinez" in html
         assert "The E-Myth" in html          # the picks, for Patrick to check
         assert world["db"].referrals == []   # no referral state from a preview
 
-    def test_a_new_name_is_announced_a_day_before_it_goes(self, world):
+    def test_an_invitation_goes_on_the_run_that_finds_the_address(self, world):
         R.run()
-        assert _guest_mail(world["sent"]) == []
-        report = _report(world["sent"])[0]
-        assert "Going out with tomorrow's run (2)" in report["html"]
-        hinton = next(r for r in world["db"].referrals if r["name"] == "Geoffrey Hinton")
-        assert hinton["status"] == "new" and hinton["contact_email"] == HINTON_MAIL
-        assert hinton["searched_at"] and hinton["topic"]
-
-    def test_the_next_day_it_goes_once(self, world):
-        R.run()
-        for r in world["db"].referrals:
-            r["created_at"] = _ago(30)
-        world["sent"].clear()
-        R.run()
-        guest_mail = _guest_mail(world["sent"])
-        invite = next(m for m in guest_mail if m["to"] == HINTON_MAIL)
+        invite = next(m for m in _guest_mail(world["sent"]) if m["to"] == HINTON_MAIL)
         assert invite["cc_operator"] is True
         assert "Why he left Google" in invite["html"]       # the topic was kept
-        ask = next(m for m in guest_mail if m["to"] == "jason@example.com")
-        assert "pr@example.com" in ask["cc"]
-        assert world["searched"].count("Geoffrey Hinton") == 1   # searched once, kept
-        assert "Tim Martinez" not in world["searched"]           # never searched: unsure
         app = next(a for a in world["db"].apps if a["name"] == "Geoffrey Hinton")
         assert app["status"] == "approved" and app["source"] == "referral"
         assert app["referrer"] == "Vincent Rylan" and app["publicist_email"] == HINTON_MAIL
         statuses = {r["name"]: r["status"] for r in world["db"].referrals}
-        assert statuses == {"Geoffrey Hinton": "invited", "Tim Martinez": "asked_recommender"}
+        assert statuses == {"Geoffrey Hinton": "invited", "Tim Martinez": "no_contact"}
         world["sent"].clear()
         R.run()
         assert _guest_mail(world["sent"]) == []
+        assert world["searched"].count("Geoffrey Hinton") == 1   # searched once, kept
+
+    def test_the_guest_who_named_them_is_never_asked(self, world):
+        R.run()
+        R.run()
+        to = [m["to"] for m in world["sent"]]
+        assert "jason@example.com" not in to and "vincent@example.com" not in to
+        assert "pr@example.com" not in str([m["cc"] for m in world["sent"]])
+        assert not (ROOT / "templates" / "email" / "voices_referral_ask.j2").exists()
+        assert not hasattr(R, "ask_recommender")
+
+    def test_an_uncertain_name_is_still_looked_up(self, world):
+        R.run()
+        assert "Tim Martinez" in world["searched"]
+
+    def test_no_address_means_no_invitation_and_a_line_for_patrick(self, world, monkeypatch):
+        monkeypatch.setattr(R, "find_contact", lambda ref: (world["searched"].append(ref["name"]) or
+                            {"email": "", "via": "", "source": "",
+                             "route": "https://www.cs.toronto.edu/~hinton/", "topic": ""}))
+        R.run()
+        hinton = next(r for r in world["db"].referrals if r["name"] == "Geoffrey Hinton")
+        assert hinton["status"] == "no_contact"
+        assert _guest_mail(world["sent"]) == []
+        report = _report(world["sent"])[-1]["html"]
+        assert "Not invited: no public address found" in report and "cs.toronto.edu/~hinton" in report
+        hinton["contact_email"] = HINTON_MAIL          # Patrick (or Claude) finds one
+        world["sent"].clear()
+        R.run()
+        assert HINTON_MAIL in [m["to"] for m in world["sent"]]
+        assert hinton["status"] == "invited"
 
     def test_it_is_marked_before_it_is_sent(self, world):
-        R.run()
-        for r in world["db"].referrals:
-            r["created_at"] = _ago(30)
         order = []
         real_update = world["db"].update
 
@@ -427,38 +403,16 @@ class TestRun:
         assert order.index("marked") < order.index(f"sent:{HINTON_MAIL}")
 
     def test_a_held_name_never_goes(self, world):
+        world["db"].referrals.append({
+            "id": "ref-held", "show": "age_of_ai", "recommender_interview_id": VINCENT_IV,
+            "recommender_name": "Vincent Rylan", "name": "Geoffrey Hinton", "status": "held",
+            "contact_email": HINTON_MAIL, "created_at": _ago(1), "attempts": 0})
         R.run()
-        for r in world["db"].referrals:
-            r["created_at"] = _ago(30)
-            r["status"] = "held"
-        world["sent"].clear()
-        R.run()
-        assert _guest_mail(world["sent"]) == []
-
-    def test_no_address_and_a_stranger_goes_to_patrick_not_the_guest(self, world, monkeypatch):
-        monkeypatch.setattr(R, "find_contact", lambda ref: (world["searched"].append(ref["name"]) or
-                            {"email": "", "via": "", "source": "",
-                             "route": "https://www.cs.toronto.edu/~hinton/", "topic": ""}))
-        R.run()
-        hinton = next(r for r in world["db"].referrals if r["name"] == "Geoffrey Hinton")
-        assert hinton["status"] == "no_contact"       # told to Patrick the same day
-        report = _report(world["sent"])[-1]["html"]
-        assert "doesn't know them" in report and "cs.toronto.edu/~hinton" in report
-        for r in world["db"].referrals:
-            r["created_at"] = _ago(30)
-        world["sent"].clear()
-        R.run()
-        assert "vincent@example.com" not in [m["to"] for m in world["sent"]]
-        hinton["contact_email"] = "media.relations@utoronto.ca"   # Patrick finds one
-        world["sent"].clear()
-        R.run()
-        assert "media.relations@utoronto.ca" in [m["to"] for m in world["sent"]]
+        assert HINTON_MAIL not in [m["to"] for m in world["sent"]]
 
     def test_producer_mode_off_sends_nothing(self, world, monkeypatch):
         monkeypatch.setenv("PRODUCER_MODE", "off")
         R.run()
-        for r in world["db"].referrals:
-            r["created_at"] = _ago(30)
         R.run()
         assert world["sent"] == []
 
@@ -476,27 +430,13 @@ class TestRun:
         R.run()
         assert world["sent"] == [] and world["db"].referrals == []
 
-    def test_an_introduction_goes_on_the_next_run(self, world):
-        R.run()
-        for r in world["db"].referrals:
-            r["created_at"] = _ago(30)
-        R.run()
-        tim = next(r for r in world["db"].referrals if r["name"] == "Tim Martinez")
-        tim.update({"contact_email": "tim@example.org", "contact_source": "introduced by Jason Fishman",
-                    "created_at": _ago(0)})
-        world["sent"].clear()
-        R.run()
-        invite = next(m for m in _guest_mail(world["sent"]) if m["to"] == "tim@example.org")
-        assert "Jason Fishman suggested I interview you" in invite["subject"]
-        assert tim["status"] == "invited"
-
     def test_picks_are_kept_and_feed_the_page(self, world, tmp_path):
         R.run()
         assert world["db"].records[0]["picks"]["advice"]["text"] == "Write every day."
         data = R.export_page_data(tmp_path / "guest_picks.json")
         assert {e["guest"] for e in data["episodes"]} == {"Vincent Rylan", "Jason Fishman"}
         statuses = {r["name"]: r["status"] for r in data["referrals"]}
-        assert statuses == {"Geoffrey Hinton": "recommended", "Tim Martinez": "recommended"}
+        assert statuses == {"Geoffrey Hinton": "recommended", "Tim Martinez": "recommended"}  # never "invited"
         assert json.loads((tmp_path / "guest_picks.json").read_text())["episodes"]
 
     def test_an_invitation_is_never_public(self, world, tmp_path):

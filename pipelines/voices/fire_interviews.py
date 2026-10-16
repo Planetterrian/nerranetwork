@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Interview firing cron (nerra_voices_fire_interview.yml, every 5 min).
 
-Two duties per tick:
+Duties per tick:
 
 1. **T-2h SMS reminder** — interviews ~2h out get one SMS from Mira's
    caller ID (``reminder_sent_at`` guards the once-only).
@@ -9,6 +9,11 @@ Two duties per tick:
    5-minute window: compile Mira's system prompt from the brief, create the
    ``interview_runs`` row, and start the Voximplant scenario with the run id
    as customData.
+3. **T-5 min** — the guest gets a text and an email: we start in five
+   minutes, here is the way in (``start_notice_at``).
+4. **T+5 min** — a guest who still hasn't opened the studio: Patrick gets a
+   text and an email with their number and a one-click "have Mira call
+   them" link (``late_alert_at``). Oct 16 2026, after Meridan Zerner.
 
 GitHub cron is best-effort (spec §5.2 note): the firing window is computed
 here as [now - grace, now + 5 min] so a delayed tick still fires anything
@@ -48,6 +53,17 @@ FIRE_GRACE_BEHIND_MIN = 30   # cron drift tolerance — never leave a guest
                              # room: a no-answer run resets the interview to
                              # briefed and later ticks in this window re-fire.
 REMINDER_AHEAD = (dt.timedelta(minutes=105), dt.timedelta(minutes=135))
+# Oct 16 2026 (Patrick, after Meridan Zerner never opened her studio and
+# nobody knew until the no-show email forty minutes later). The Worker
+# dispatches this job on its five-minute cron while an interview is near, so
+# a run lands a minute or so after :x0 and :x5. Starts sit on five-minute
+# marks: the tick five minutes before the start finds it 3 to 5 minutes out,
+# the one ten minutes before finds it 8 to 10 out, outside this window.
+START_NOTICE_AHEAD = (dt.timedelta(minutes=1), dt.timedelta(minutes=7))
+# ...and the tick five minutes after the start finds it 4 to 6 minutes late.
+# Twenty minutes at the far end covers a GitHub delay; after that the no-show
+# sweep (NO_SHOW_AFTER_MIN) has its own email.
+LATE_ALERT_AFTER = (dt.timedelta(minutes=4), dt.timedelta(minutes=20))
 # Oct 5 2026 (Jon Cheney): a GitHub Actions outage meant no runner picked up
 # the five-minute fire job for over an hour, so his studio never unlocked and
 # the page told him he was early until he gave up. A browser interview's run
@@ -926,6 +942,186 @@ def start_time_email(interview: dict) -> None:
         logger.exception("Start-time email failed for %s (non-fatal)", interview["id"])
 
 
+def _latest_run(interview_id: str) -> "dict | None":
+    runs = sb_select("interview_runs",
+                     f"interview_id=eq.{interview_id}&order=created_at.desc&limit=1")
+    return runs[0] if runs else None
+
+
+def _claim(interview_id: str, column: str) -> bool:
+    """Set ``column`` only if it is still empty: two ticks never both send."""
+    rows = sb_update("interviews", f"id=eq.{interview_id}&{column}=is.null",
+                     {column: _iso(_now())})
+    return bool(rows)
+
+
+def start_notice_email(interview: dict, app: dict, show) -> "tuple[str, str]":
+    """Five minutes before the start (Oct 16 2026, Patrick)."""
+    import html as _h
+    studio = show.studio_url(interview["id"]) + "&role=guest"
+    phone_mode = (interview.get("call_mode") or "webrtc") != "webrtc"
+    when = when_text(interview.get("scheduled_at", ""), interview.get("guest_timezone") or "")
+    what = "closing session" if is_closing_session(interview) else "interview"
+    first = _h.escape(first_name(app))
+    if phone_mode:
+        subject = f"I'll call you in about 5 minutes for {show.name}"
+        body = (f"<p>Hi {first},</p><p>Our {what} starts in about five minutes"
+                + (f" ({_h.escape(when)})" if when else "")
+                + ". I'll call the number you gave us, so find a quiet spot and answer "
+                "when it rings.</p>"
+                f'<p>If you can, joining from a computer with headphones sounds much better than '
+                f'a phone line: <a href="{studio}">your studio link</a> works right up to the start.</p>')
+    else:
+        subject = f"We start in 5 minutes: your {show.name} studio is open"
+        body = (f"<p>Hi {first},</p><p>Our {what} starts in about five minutes"
+                + (f" ({_h.escape(when)})" if when else "")
+                + ", and the studio is open. I'm ready when you are.</p>"
+                f'<p style="font-size:1.1em"><a href="{studio}"><strong>Join your interview here</strong></a></p>'
+                "<p>Headphones on, and from your computer for the best sound.</p>"
+                + str(studio_steps_html(studio)))
+    body += ("<p>If anything gets in the way, just reply to this email and I'll see it.</p>"
+             + mira_signature_html(show))
+    return subject, body
+
+
+def start_notice_sms(interview: dict, show, caller_id: str = "") -> str:
+    studio = show.studio_url(interview["id"])
+    what = "closing session" if is_closing_session(interview) else "interview"
+    if (interview.get("call_mode") or "webrtc") != "webrtc":
+        return (f"Mira here, from {show.name}. Our {what} starts in about 5 minutes. "
+                f"I'll call you from {'this number' if not caller_id else caller_id}, "
+                "so find a quiet spot. See you soon. Mira")
+    return (f"Mira here, from {show.name}. Our {what} starts in about 5 minutes and the "
+            f"studio is open: {studio} Headphones on, press Check my microphone, then "
+            "Join. See you there. Mira")
+
+
+def send_start_notices() -> int:
+    """T-5: a text and an email to every guest who isn't already in the room."""
+    lo, hi = _now() + START_NOTICE_AHEAD[0], _now() + START_NOTICE_AHEAD[1]
+    due = sb_select("interviews",
+                    "status=in.(briefed,scheduled)&start_notice_at=is.null"
+                    f"&scheduled_at=gte.{_iso(lo)}&scheduled_at=lte.{_iso(hi)}")
+    sent = 0
+    for interview in due:
+        try:
+            run = _latest_run(interview["id"])
+            if run and run.get("guest_joined_at"):
+                continue                       # already with Mira
+            if not _claim(interview["id"], "start_notice_at"):
+                continue
+            app_rows = sb_select("guest_applications", f"id=eq.{interview['application_id']}")
+            app = app_rows[0] if app_rows else {}
+            show = show_for(interview, app)
+            if app.get("email"):
+                subject, html = start_notice_email(interview, app, show)
+                try:
+                    # Like the studio-open nudge: between Mira and the guest.
+                    send_email(app["email"], subject, html)
+                except Exception:  # noqa: BLE001 — the text still goes
+                    logger.exception("T-5 email failed for %s", interview["id"])
+            phone = to_e164(app.get("phone"))
+            if phone:
+                from voximplant.api_clients.voximplant_client import send_sms
+                caller_id = interview.get("caller_id") or os.environ.get("VOXIMPLANT_CALLER_ID", "")
+                send_sms(phone, start_notice_sms(interview, show, caller_id),
+                         source_number=caller_id or None)
+            logger.info("T-5 notice for %s (%s)", interview["id"],
+                        "email and text" if phone else "email only, no usable phone")
+            sent += 1
+        except Exception:  # noqa: BLE001 — a notice never stops the firing
+            logger.exception("T-5 notice failed for %s", interview.get("id"))
+    return sent
+
+
+def call_guest_link(interview_id: str) -> str:
+    """Patrick's one-click "have Mira call them". Must match callGuestLink()
+    in workers/voices/src/index.ts: hex(HMAC_SHA256(ADMIN_TOKEN,
+    "call-guest:" + id))[:40]. "" without ADMIN_TOKEN."""
+    import hashlib
+    import hmac
+    token = os.environ.get("ADMIN_TOKEN", "").strip()
+    if not token:
+        return ""
+    sig = hmac.new(token.encode("utf-8"), f"call-guest:{interview_id}".encode("utf-8"),
+                   hashlib.sha256).hexdigest()[:40]
+    return f"https://api.nerranetwork.com/voices/admin/call-guest?interview={interview_id}&sig={sig}"
+
+
+def late_alert(interview: dict, app: dict, show, minutes: int) -> "tuple[str, str, str]":
+    """(subject, html, sms) for Patrick: the guest hasn't opened the studio."""
+    import html as _h
+    who = (app.get("name") or "The guest").strip()
+    when = pacific_time(interview.get("scheduled_at", ""))
+    phone = to_e164(app.get("phone")) or ""
+    studio = show.studio_url(interview["id"]) + "&role=guest"
+    call = call_guest_link(interview["id"]) if phone else ""
+    notice = "the five-minute text and email" if interview.get("start_notice_at") else "the reminders"
+    subject = f"{show.short_label}: {who} hasn't opened the studio, {minutes} minutes in"
+    parts = [f"<p>Hi Patrick,</p><p>{_h.escape(who)}'s interview was at {_h.escape(when)}. "
+             f"{minutes} minutes in, they still haven't opened their studio link, after "
+             f"{notice}.</p><p>What you can do now:</p><ul>"]
+    if phone:
+        parts.append(f'<li>Call or text them yourself: <a href="tel:{phone}">{_h.escape(phone)}</a></li>')
+    if call:
+        parts.append(f'<li><a href="{call}">Have Mira call them now</a> and do the interview by phone.</li>')
+    if app.get("email"):
+        parts.append(f"<li>Email them: {_h.escape(app['email'])}</li>")
+    parts.append(f'<li>Their studio link, to send on: <a href="{studio}">{studio}</a></li></ul>'
+                 f"<p>If nobody arrives, I'll send them the reschedule email {NO_SHOW_AFTER_MIN} "
+                 "minutes after the start.</p><p>Mira</p>")
+    sms = (f"{show.short_label}: {who} hasn't opened the studio, {minutes} min after the start."
+           + (f" Phone {phone}." if phone else " No phone on file.")
+           + (f" Have Mira call them: {call}" if call else ""))
+    return subject, "".join(parts), sms
+
+
+def send_late_alerts() -> int:
+    """T+5: Patrick hears at once about a guest who never opened the studio.
+    A guest who opened it and is stuck is the studio page's own alert
+    (setup_check.stuck_alerted_at), so it is not sent twice."""
+    now = _now()
+    lo, hi = now - LATE_ALERT_AFTER[1], now - LATE_ALERT_AFTER[0]
+    due = sb_select("interviews",
+                    "status=in.(briefed,scheduled)&call_mode=eq.webrtc&late_alert_at=is.null"
+                    f"&scheduled_at=gte.{_iso(lo)}&scheduled_at=lte.{_iso(hi)}")
+    sent = 0
+    for interview in due:
+        try:
+            run = _latest_run(interview["id"])
+            if run and (run.get("guest_joined_at")
+                        or run.get("status") not in ("staged", "awaiting_guest")):
+                continue
+            check = interview.get("setup_check") if isinstance(interview.get("setup_check"), dict) else {}
+            if check.get("stuck_alerted_at"):
+                continue                       # the page already told him
+            if run and run.get("status") == "awaiting_guest":
+                continue                       # the page is open: its own alert covers it
+            if not _claim(interview["id"], "late_alert_at"):
+                continue
+            app_rows = sb_select("guest_applications", f"id=eq.{interview['application_id']}")
+            app = app_rows[0] if app_rows else {}
+            show = show_for(interview, app)
+            start = _parse(interview.get("scheduled_at"))
+            minutes = max(1, round((now - start).total_seconds() / 60)) if start else 5
+            subject, html, sms = late_alert(interview, app, show, minutes)
+            try:
+                send_email(OPERATOR_EMAIL, subject, html, cc_guest_team=False)
+            except Exception:  # noqa: BLE001
+                logger.exception("late-guest email failed for %s", interview["id"])
+            phone = operator_phone()
+            if phone:
+                from voximplant.api_clients.voximplant_client import send_sms
+                send_sms(phone, sms, source_number=interview.get("caller_id")
+                         or os.environ.get("VOXIMPLANT_CALLER_ID", "") or None)
+            notify_operator(show.slack(f"{app.get('name') or 'guest'} hasn't opened the "
+                                       f"studio, {minutes} min after the start"))
+            sent += 1
+        except Exception:  # noqa: BLE001
+            logger.exception("late-guest alert failed for %s", interview.get("id"))
+    return sent
+
+
 NO_SHOW_AFTER_MIN = 40
 
 
@@ -981,7 +1177,14 @@ def main() -> int:
         sweep_browser_no_shows()
     except Exception:  # noqa: BLE001 — firing matters more
         logger.exception("no-show sweep failed")
-    return 1 if fire_due_interviews() else 0
+    failed = fire_due_interviews()
+    # After the fire, so a run that has just been created is the one checked.
+    for job in (send_start_notices, send_late_alerts):
+        try:
+            job()
+        except Exception:  # noqa: BLE001 — never fails the fire job
+            logger.exception("%s failed", job.__name__)
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

@@ -1,38 +1,45 @@
 {# Oct 15 2026 (Patrick): a guest named this person when Mira asked who she
    should interview next. Mira invites them, credits the guest, and points at
    the guest's episode and every interview show's page. A network template
-   (not voices_*): it names all the shows, from the registry. Sent by
-   pipelines/voices/referrals.py. #}
+   (not voices_*): it names all the shows, from the registry. Oct 16: the
+   opening says plainly what is different about being interviewed by Mira.
+   Sent by pipelines/voices/referrals.py. #}
+{% set them = name if via else 'you' %}
 <div style="font-family:system-ui,sans-serif;max-width:640px;margin:0 auto;color:#1a202c;line-height:1.6">
   {% if via %}
   <p>Hi There,</p>
-  <p>I'm writing to {{ via }} in the hope that you can pass this invitation on to {{ name }}.</p>
   {% else %}
   <p>Hi {{ first_name }},</p>
   {% endif %}
-  <p>I'm Mira, the AI host of {{ show_name }} on the Nerra Network. At the end of every
-  interview I ask my guest who I should talk to next. When I asked {{ recommender_name }},
-  the name {{ recommender_first }} gave me was {{ 'yours' if not via else name }}.{% if why %}
-  In {{ recommender_first }}'s words: "{{ why }}"{% endif %}</p>
+  <p>I'm Mira, and I'm an AI. I host {{ show_name }}{% if show_blurb %}, {{ show_blurb }}{% endif %},
+  on the Nerra Network. I research every guest before we meet, then we talk live for about
+  45 minutes: no script, no one feeding me questions, just a real conversation that goes where
+  {{ 'the guest takes' if via else 'you take' }} it.{% if via %} I'm writing to {{ via }} in the
+  hope that you can pass this invitation on to {{ name }}.{% endif %}</p>
+  <p>At the end of every interview I ask the same question: who should I talk to next? When I asked
+  {{ recommender_name }}, {{ recommender_first }} named {{ them }}.{% if why %} In {{ recommender_first }}'s
+  words: "{{ why }}"{% endif %}</p>
   {% if topic %}
   <p>What I'd like to talk about: {{ topic }}</p>
   {% endif %}
-  <p>You can hear {{ recommender_first }}'s episode here:
+  <p>It is a different kind of interview: a conversation with an interviewer that has done the
+  homework and asks real follow-up questions, for a show that is building a documentary record of
+  what this moment feels like from the inside. {{ name if via else 'You' }} also {{ 'gets' if via else 'get' }}
+  a say few shows offer: the transcript comes first, with a week to approve it, cut anything from it,
+  or decide not to publish at all.</p>
+  <p>You can hear {{ recommender_first }}'s conversation with me here:
   <a href="{{ recommender_episode_url }}" style="color:{{ brand_color }}">{{ recommender_episode_url }}</a></p>
   {% if shows %}
-  <p>I research, host and produce every episode of the network's interview shows, and the
-  person on the other side of the conversation is always real:</p>
+  <p>The network has two interview shows, and I host both:</p>
   <ul>
     {% for s in shows %}
     <li><a href="{{ s.url }}" style="color:{{ brand_color }}">{{ s.name }}</a>{% if s.blurb %}, {{ s.blurb }}{% endif %}.</li>
     {% endfor %}
   </ul>
   {% endif %}
-  <p>How it works: one live, unscripted conversation of about 45 minutes, from a computer
-  browser with headphones, with nothing to install. A short brief arrives the day before
-  with the themes I'd like to explore. Afterwards the guest gets the transcript first, with
-  a week to approve it, cut anything from it or say no before anything is published. There
-  is no fee in either direction, and every episode says plainly that the host is an AI.</p>
+  <p>How it works: one conversation, from a computer browser with headphones, with nothing to
+  install. A short brief arrives the day before with the themes I'd like to explore. There is no fee
+  in either direction, and every episode says plainly that the host is an AI.</p>
   {% if booking_url %}
   <p>If {{ 'they would' if via else "you'd" }} like to do it, {{ 'they' if via else 'you' }} can
   pick a time here: <a href="{{ booking_url }}" style="color:{{ brand_color }}">{{ booking_url }}</a></p>

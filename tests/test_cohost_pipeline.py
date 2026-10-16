@@ -682,8 +682,12 @@ class TestPhoneNormalisation:
 
     def test_fire_normalises_both_paths(self):
         src = (ROOT / "pipelines/voices/fire_interviews.py").read_text()
-        assert src.count("to_e164(app.get(\"phone\"))") == 2, \
-            "reminder SMS and the run row must both normalise the guest number"
+        # Oct 16 2026: the T-5 notice and the T+5 alert normalise it too.
+        for fn in ("def send_reminders()", "def fire_due_interviews()",
+                   "def send_start_notices()", "def late_alert("):
+            body = src.split(fn)[1].split("\ndef ")[0]
+            assert "to_e164(app.get(\"phone\"))" in body, \
+                f"{fn} must normalise the guest number"
 
     def test_reminder_is_claimed_before_it_can_throw(self):
         """A bad number must not re-send the co-host email every 5 minutes."""

@@ -22,20 +22,19 @@ Then, for referrals whose guest's episode is out:
    public page: the person's own, their company's, or the office that handles
    requests for them (a university media office). The address must appear on
    the page it was found on, which this job fetches and checks; anything
-   guessed, constructed or unverifiable is not used.
+   guessed, constructed or unverifiable is not used. Patrick or Claude may
+   also put a checked address on the row.
 4. **Invite.** Mira emails them, crediting the guest by name, with the
    guest's episode, both show pages and the booking link, copying Patrick
    and Dan. An approved application row (``source=referral``, ``referrer``
    = the guest) means a booking or a reply lands where the Worker and the
    Producer expect it.
-5. **Ask.** When no address can be found, or the name is unclear, Mira
-   writes once to the guest who named them and asks for an introduction.
 
-Nothing goes out the day a name first appears: the day's report shows
-Patrick each message, and it is sent by the next day's run unless he holds
-it (status ``held``). An introduction from the guest is sent on the next run.
-A guest who answers the request with an address is picked up by the
-Producer (pipelines/producer/guest_reply.introductions).
+Oct 16 2026 (Patrick): the guest who named someone is never asked for an
+introduction. Either Mira finds the person herself and invites them on the
+run that finds them, or she does not invite them at all; those land on
+Patrick's list in the day's report (status ``no_contact``) with the contact
+form or profile that was found instead. ``held`` stops one being sent.
 
 Statuses move on by themselves: a referral whose application books is
 ``booked``, and one whose episode is out is ``interviewed``.
@@ -77,9 +76,6 @@ from pipelines.voices.shows import all_shows  # noqa: E402  (the module common u
 #: version for this kind of work.
 MODEL = "grok-latest"
 MAX_INVITES_PER_RUN = int(os.environ.get("REFERRALS_MAX_INVITES", "6"))
-#: A new name is announced to Patrick in one day's report and goes out with
-#: the next day's run, so he can stop any of them without being asked first.
-NOTICE_HOURS = float(os.environ.get("REFERRALS_NOTICE_HOURS", "20"))
 PAGE_DATA = ROOT / "site" / "data" / "guest_picks.json"
 CLOSING_MARK = "[Closing session]"
 #: People who run the show. A guest naming them is kind, not a lead.
@@ -291,56 +287,6 @@ def known_person(name: str) -> bool:
     return any(name_key(r.get("name")) == key and r.get("status") != "withdrawn" for r in rows)
 
 
-_UNSURE = re.compile(r"\b(unclear|misheard|mis-heard|uncertain|unsure|not sure|as heard|"
-                     r"hard to (?:make out|hear)|inaudible|could not (?:confirm|identify)|"
-                     r"couldn't (?:confirm|identify)|possibly|may be|might be|unverified)\b", re.I)
-
-
-def unsure(ref: Dict[str, Any]) -> bool:
-    """The recording leaves who was meant in doubt: ask the guest, never
-    search for a stranger with the same name."""
-    return bool(_UNSURE.search(ref.get("note") or ""))
-
-
-_KNOWS = re.compile(r"\b(co-?founder|partner|colleague|co-?worker|friend|business partner|"
-                    r"cousin|brother|sister|mentor|boss|manager|employee|client|teammate|"
-                    r"works? (?:with|for) (?:me|us)|worked (?:with|for)|we work|my team|our team)\b", re.I)
-_ADMIRES = re.compile(r"\b(never met|don't know|do not know|read (?:his|her|their)|follow|admire|"
-                      r"watch|listen to|heard (?:him|her|them))\b", re.I)
-FREE_MAIL = ("gmail.com", "googlemail.com", "outlook.com", "hotmail.com", "yahoo.com",
-             "icloud.com", "me.com", "aol.com", "proton.me", "protonmail.com", "live.com")
-
-
-def _squash(text: str) -> str:
-    return re.sub(r"[^a-z0-9]", "", (text or "").lower())
-
-
-def knows_them(ref: Dict[str, Any], app: Dict[str, Any]) -> bool:
-    """Whether the guest who named this person knows them: what they said
-    about them, or the same organisation (Jerry Duff works with Matt Davis at
-    Critical Propulsion). Only then is the guest asked for an introduction;
-    asking Vincent Rylan to introduce Mira to Geoffrey Hinton, whose
-    interviews he watches, would be a strange thing to ask."""
-    rel = ref.get("relationship") or ""
-    if _ADMIRES.search(rel):
-        return False
-    if _KNOWS.search(rel):
-        return True
-    org = _squash(ref.get("organization") or "")
-    if len(org) < 4:
-        return False
-    domain = (app.get("email") or "").rsplit("@", 1)[-1].lower()
-    if domain and domain not in FREE_MAIL and org in _squash(domain.rsplit(".", 1)[0]):
-        return True
-    return org in _squash(app.get("organization") or "")
-
-
-def can_ask(ref: Dict[str, Any], app: Dict[str, Any]) -> bool:
-    """The guest is asked when the name needs checking, or when they know
-    the person; anyone else with no public address is for Patrick."""
-    return unsure(ref) or knows_them(ref, app)
-
-
 def new_referrals(interview: Dict[str, Any], app: Dict[str, Any],
                   picks: Dict[str, Any], *, dry_run: bool = False) -> List[Dict[str, Any]]:
     """A row per person the guest named, once. In a dry run the rows are
@@ -445,26 +391,13 @@ def render_invite(ref: Dict[str, Any], contact: Dict[str, Any], interview: Dict[
         recommender_name=recommender, recommender_first=first_name(recommender),
         why=ref.get("why") or "",
         recommender_episode_url=_episode_url(show, interview),
+        show_blurb=_blurbs().get(show.slug, ""),
         shows=network_shows(),
         booking_url=booking_url(show),
     )
-    subject = f"{recommender} suggested I interview {ref['name'] if contact.get('via') else 'you'} for {show.name}"
+    who = ref["name"] if contact.get("via") else "you"
+    subject = f"{recommender} named {who} as my next guest on {show.name}"
     return subject, html
-
-
-def render_ask(app: Dict[str, Any], interview: Dict[str, Any], refs: List[Dict[str, Any]]
-               ) -> Tuple[str, str]:
-    show = get_show(interview.get("show"))
-    people = [{"name": r["name"], "first_name": first_name(r["name"]),
-               "organization": r.get("organization") or ""} for r in refs]
-    html = render_email(
-        "voices_referral_ask.j2", show=show, first_name=first_name(app.get("name") or ""),
-        episode_url=_episode_url(show, interview), referrals=people,
-        unclear=any(unsure(r) or not r.get("organization") for r in refs),
-    )
-    firsts = [p["first_name"] for p in people]
-    who = firsts[0] if len(firsts) == 1 else ", ".join(firsts[:-1]) + " and " + firsts[-1]
-    return f"Could you introduce me to {who}?", html
 
 
 def _sending_allowed() -> bool:
@@ -510,25 +443,6 @@ def invite(ref: Dict[str, Any], contact: Dict[str, Any], interview: Dict[str, An
                   + (f" Contact: {contact['source']}." if contact.get("source") else "")).strip(),
     })
     sb_update("guest_referrals", f"id=eq.{ref['id']}", {"application_id": (app or {}).get("id")})
-
-
-def ask_recommender(interview: Dict[str, Any], app: Dict[str, Any], refs: List[Dict[str, Any]],
-                    *, dry_run: bool, outbox: List[Dict[str, Any]]) -> None:
-    if not refs or "@" not in (app.get("email") or ""):
-        return
-    subject, html = render_ask(app, interview, refs)
-    outbox.append({"kind": "ask", "to": app["email"], "subject": subject, "html": html,
-                   "name": ", ".join(r["name"] for r in refs), "via": "", "source": ""})
-    if dry_run:
-        return
-    now = dt.datetime.now(dt.timezone.utc).isoformat()
-    for r in refs:
-        sb_update("guest_referrals", f"id=eq.{r['id']}", {
-            "status": "asked_recommender", "asked_recommender_at": now, "updated_at": now,
-            "contact_route": r.get("contact_route") or None,
-            "attempts": int(r.get("attempts") or 0) + 1})
-    send_email(app["email"], subject, html, cc_operator=True,
-               cc=[str(app.get("publicist_email") or "")])
 
 
 def refresh_statuses() -> int:
@@ -656,53 +570,41 @@ def _picks_html(found: List[Dict[str, Any]]) -> str:
 
 
 def _message_html(m: Dict[str, Any]) -> str:
-    return (f"<hr><p><strong>{'Invite' if m['kind'] == 'invite' else 'Ask for an introduction'}"
-            f"</strong> to {_html.escape(m['to'])}"
+    return (f"<hr><p><strong>Invite</strong> to {_html.escape(m['to'])}"
             + (f" ({_html.escape(m['via'])})" if m.get("via") else "")
             + (f", address from {_html.escape(m['source'])}" if m.get("source") else "")
             + f"<br>Subject: {_html.escape(m['subject'])}</p>{m['html']}")
 
 
 def report(outbox: List[Dict[str, Any]], manual: List[Dict[str, Any]], *, dry_run: bool,
-           found: Optional[List[Dict[str, Any]]] = None,
-           upcoming: Optional[List[Dict[str, Any]]] = None) -> None:
+           found: Optional[List[Dict[str, Any]]] = None) -> None:
     found = found or []
-    upcoming = upcoming or []
-    if not outbox and not manual and not found and not upcoming:
+    if not outbox and not manual and not found:
         return
-    invites = sum(1 for m in outbox if m["kind"] == "invite")
-    asks = sum(1 for m in outbox if m["kind"] == "ask")
+    invites = len(outbox)
     if dry_run:
-        head = ("Preview: nothing was sent and the page is unchanged. These are the messages "
-                "the people guests recommended would get. On a real run each new name is "
-                "announced to you first and goes out with the next day's run.")
+        head = ("Preview: nothing was sent and the page is unchanged. These are the invitations "
+                "a real run would send now.")
     else:
-        head = f"Sent today: {invites} invitation(s) and {asks} introduction request(s)."
+        head = f"Sent today: {invites} invitation(s) to people your guests recommended."
     parts = [f"<p>Hi Patrick,</p><p>{_html.escape(head)}</p>"]
     if found:
         parts.append(f"<p><strong>Read from {len(found)} new episode(s)</strong>"
                      + (" (these go on guest-picks.html; tell me anything to correct)" if dry_run else "")
                      + f":</p>{_picks_html(found)}")
     parts.extend(_message_html(m) for m in outbox)
-    if upcoming:
-        parts.append(f"<hr><p><strong>Going out with tomorrow's run ({len(upcoming)})</strong>. "
-                     "To stop one, ask Claude to hold it, or set its status to held in "
-                     "guest_referrals.</p>")
-        parts.extend(_message_html(m) for m in upcoming)
     if manual:
-        parts.append("<hr><p><strong>No public address, and the guest doesn't know them "
-                     "personally</strong>. These need you; give me an address and Mira "
-                     "invites them on the next run:</p><ul>"
+        parts.append("<hr><p><strong>Not invited: no public address found</strong>. If you get "
+                     "one, give it to me and Mira invites them on the next run:</p><ul>"
                      + "".join(f"<li>{_html.escape(r['name'])} (recommended by "
                                f"{_html.escape(r.get('recommender_name') or '')})"
                                + (f": {_html.escape(r['contact_route'])}" if r.get("contact_route") else "")
                                + "</li>" for r in manual) + "</ul>")
-    if outbox or upcoming:
+    if outbox:
         parts.append("<hr><p>That's everything for today.</p>")
     parts.append(mira_signature_html())
-    tail = f", {len(upcoming)} going out tomorrow" if upcoming else ""
-    subject = (f"{'Preview: ' if dry_run else ''}Guest picks and referrals: "
-               f"{invites} invited, {asks} introductions asked{tail}")
+    subject = (f"{'Preview: ' if dry_run else ''}Guest referrals: {invites} invited"
+               + (f", {len(manual)} with no address" if manual else ""))
     send_email(OPERATOR_EMAIL, subject, "".join(parts), cc_operator=False,
                cc=list(OPERATOR_CC), cc_guest_team=False)
 
@@ -719,23 +621,11 @@ def _contact_on_file(ref: Dict[str, Any]) -> Dict[str, Any]:
             "topic": ref.get("topic") or ""}
 
 
-def _due(ref: Dict[str, Any], now: dt.datetime) -> bool:
-    """Announced to Patrick at least a day ago, or introduced by the guest
-    (who is waiting for the invitation to go)."""
-    if (ref.get("contact_source") or "").startswith("introduced by"):
-        return True
-    try:
-        created = dt.datetime.fromisoformat(str(ref.get("created_at")).replace("Z", "+00:00"))
-    except ValueError:
-        return False
-    return now - created >= dt.timedelta(hours=NOTICE_HOURS)
-
-
 def _look_up(ref: Dict[str, Any], *, dry_run: bool) -> Dict[str, Any]:
     """The referral's contact: on file, or searched for once and kept."""
     if ref.get("contact_email"):
         return _contact_on_file(ref)
-    if ref.get("searched_at") or unsure(ref):
+    if ref.get("searched_at"):
         return {"email": "", "route": ref.get("contact_route") or ""}
     contact = find_contact(ref)
     if not dry_run and ref.get("id"):
@@ -752,9 +642,8 @@ def _look_up(ref: Dict[str, Any], *, dry_run: bool) -> Dict[str, Any]:
 
 def run(*, dry_run: bool = False, limit: int = MAX_INVITES_PER_RUN) -> Dict[str, int]:
     outbox: List[Dict[str, Any]] = []
-    upcoming: List[Dict[str, Any]] = []
     manual: List[Dict[str, Any]] = []
-    counts = {"picks": 0, "referrals": 0, "invited": 0, "asked": 0, "moved": 0}
+    counts = {"picks": 0, "referrals": 0, "invited": 0, "no_contact": 0, "moved": 0}
     published = {iv["id"]: iv for iv in published_interviews()}
     fresh: List[Dict[str, Any]] = []
     found: List[Dict[str, Any]] = []
@@ -775,41 +664,30 @@ def run(*, dry_run: bool = False, limit: int = MAX_INVITES_PER_RUN) -> Dict[str,
             logger.exception("picks failed for %s", app.get("name"))
 
     if not _sending_allowed():
-        logger.info("PRODUCER_MODE=off: no invitations or introductions this run")
+        logger.info("PRODUCER_MODE=off: no invitations this run")
         if not dry_run:
             counts["moved"] = refresh_statuses()
         logger.info("referrals: %s", counts)
         return counts
 
-    # New leads, and any lead that has since been given an address (an
-    # introduction from the guest, or Patrick's own).
-    queue = sb_select("guest_referrals", "or=(status.eq.new,and(status.in.(asked_recommender,"
-                      "no_contact),contact_email.not.is.null,invited_at.is.null))"
+    # New leads, and any lead that has since been given an address.
+    queue = sb_select("guest_referrals", "or=(status.eq.new,and(status.eq.no_contact,"
+                      "contact_email.not.is.null,invited_at.is.null))"
                       "&order=created_at.asc&select=*")
     if dry_run:
         queue += [r for r in fresh if r["status"] == "new"]
-    now = dt.datetime.now(dt.timezone.utc)
-    asks: Dict[str, List[Dict[str, Any]]] = {}
-    later_asks: Dict[str, List[Dict[str, Any]]] = {}
     for ref in queue:
         iv = published.get(ref["recommender_interview_id"])
         if not iv:
             continue          # their guest's episode is not out yet
         if counts["invited"] >= limit:
             break
-        due = dry_run or _due(ref, now)
         try:
             contact = _look_up(ref, dry_run=dry_run)
         except Exception:  # noqa: BLE001
             logger.exception("contact lookup for %s failed", ref["name"])
             continue
         if contact.get("email"):
-            if not due:
-                subject, html = render_invite(ref, contact, iv)
-                upcoming.append({"kind": "invite", "to": contact["email"], "subject": subject,
-                                 "html": html, "name": ref["name"], "via": contact.get("via") or "",
-                                 "source": contact.get("source") or ""})
-                continue
             try:
                 invite(ref, contact, iv, dry_run=dry_run, outbox=outbox)
                 counts["invited"] += 1
@@ -821,50 +699,20 @@ def run(*, dry_run: bool = False, limit: int = MAX_INVITES_PER_RUN) -> Dict[str,
             continue
         if ref.get("status") != "new":
             continue
+        # No address Mira can stand behind: she does not invite them, and she
+        # never asks the guest who named them (Oct 16 2026, Patrick).
         ref["contact_route"] = contact.get("route") or ref.get("contact_route") or ""
-        if not can_ask(ref, iv.get("app") or {}):
-            # No address, and the guest doesn't know them: Patrick's call.
-            manual.append(ref)
-            if not dry_run and ref.get("id"):
-                sb_update("guest_referrals", f"id=eq.{ref['id']}", {
-                    "status": "no_contact", "contact_route": ref["contact_route"] or None,
-                    "updated_at": dt.datetime.now(dt.timezone.utc).isoformat()})
-            continue
-        (asks if due else later_asks).setdefault(ref["recommender_interview_id"], []).append(ref)
-
-    for iv_id, refs in later_asks.items():
-        iv = published[iv_id]
-        app = iv.get("app") or {}
-        if "@" in (app.get("email") or ""):
-            subject, html = render_ask(app, iv, refs)
-            upcoming.append({"kind": "ask", "to": app["email"], "subject": subject, "html": html,
-                             "name": ", ".join(r["name"] for r in refs), "via": "", "source": ""})
-
-    for iv_id, refs in asks.items():
-        iv = published[iv_id]
-        app = iv.get("app") or {}
-        asked_before = sb_select("guest_referrals", f"recommender_interview_id=eq.{iv_id}"
-                                 "&asked_recommender_at=not.is.null&select=id&limit=1")
-        if asked_before or "@" not in (app.get("email") or ""):
-            # One request per guest, ever. Anything after that is Patrick's.
-            manual.extend(refs)
-            if not dry_run:
-                for r in refs:
-                    if r.get("id"):
-                        sb_update("guest_referrals", f"id=eq.{r['id']}", {
-                            "status": "no_contact", "contact_route": r.get("contact_route") or None,
-                            "updated_at": dt.datetime.now(dt.timezone.utc).isoformat()})
-            continue
-        try:
-            ask_recommender(iv, app, refs, dry_run=dry_run, outbox=outbox)
-            counts["asked"] += len(refs)
-        except Exception:  # noqa: BLE001
-            logger.exception("asking %s for introductions failed", app.get("name"))
+        manual.append(ref)
+        counts["no_contact"] += 1
+        if not dry_run and ref.get("id"):
+            sb_update("guest_referrals", f"id=eq.{ref['id']}", {
+                "status": "no_contact", "contact_route": ref["contact_route"] or None,
+                "updated_at": dt.datetime.now(dt.timezone.utc).isoformat()})
 
     if not dry_run:
         counts["moved"] = refresh_statuses()
     try:
-        report(outbox, manual, dry_run=dry_run, found=found, upcoming=upcoming)
+        report(outbox, manual, dry_run=dry_run, found=found)
     except Exception:  # noqa: BLE001 — the work is done; the summary is a courtesy
         logger.exception("referral report not sent")
     logger.info("referrals: %s", counts)
