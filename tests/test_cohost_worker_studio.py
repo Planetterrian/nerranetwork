@@ -89,7 +89,8 @@ def test_studio_auth_issues_shared_guest_creds_for_every_role():
     assert 'studioUser(env, "guest")' in body
     assert "return json({ token, user, role })" in body
     ok = _fn("function adminTokenOk")
-    assert "t === expected" in ok and '(env.ADMIN_TOKEN || "").trim()' in ok
+    # Oct 16 2026: constant-time compare (tokenEquals) replaced bare ===.
+    assert "tokenEquals(t, expected)" in ok and '(env.ADMIN_TOKEN || "").trim()' in ok
 
 
 def test_studio_state_reports_presence_and_joinable_run_for_every_role():
