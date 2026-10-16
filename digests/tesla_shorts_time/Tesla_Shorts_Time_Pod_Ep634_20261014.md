@@ -1,7 +1,7 @@
 # Tesla Shorts Time
 **REAL-TIME TSLA price:** $375.23 ▼ $2.80 (0.7%)
 
-> **Model Y topped China's September sales charts while Tesla's China sales dropped 12 percent year over year.**
+> **Model Y topped China's September sales charts while Tesla's China sales dropped 9.35 percent year over year.**
 ---
 ### Top 12 News Items
 

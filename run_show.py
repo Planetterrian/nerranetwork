@@ -4212,11 +4212,27 @@ def run(args: argparse.Namespace) -> None:
                 _hook_for_guard = (_ebm(x_thread or "", config.slug, "") or {}).get("hook") or ""
             except Exception:
                 _hook_for_guard = ""
+            # Previous episode digest (for counterpoint-reuse guard). Best-effort.
+            _prev_digest_md = ""
+            try:
+                _prev_eps = sorted(
+                    digests_dir.glob("*_Ep*_*.md"),
+                    key=lambda p: p.name,
+                )
+                _prev_eps = [p for p in _prev_eps if "_claims" not in p.name]
+                for _pp in reversed(_prev_eps):
+                    _pm = re.search(r"_Ep(\d{1,4})_", _pp.name)
+                    if _pm and int(_pm.group(1)) < int(episode_num):
+                        _prev_digest_md = _pp.read_text(encoding="utf-8")
+                        break
+            except Exception:
+                _prev_digest_md = ""
             _guard_fails = check_publish_guards(
                 config=config,
                 digest_md=x_thread or "",
                 chapters=episode_chapters,
                 hook=_hook_for_guard,
+                previous_digest_md=_prev_digest_md,
             )
             # Defer the empty-Sources failure until blog time — a later
             # strip/amend can still add a Source line. Chapter failures
