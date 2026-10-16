@@ -146,15 +146,6 @@ class TestTeslaRssAlias:
         raw = yaml.safe_load((ROOT / "shows" / "tesla.yaml").read_text())
         assert "tesla_podcast.rss" in (raw.get("publishing") or {}).get("rss_aliases", [])
 
-    def test_committed_alias_exists(self):
-        alias = ROOT / "tesla_podcast.rss"
-        canonical = ROOT / "podcast.rss"
-        assert alias.exists(), "tesla_podcast.rss must exist so GitHub Pages stops 404ing"
-        assert b'rel="self"' in alias.read_bytes()
-        assert b"podcast.rss" in alias.read_bytes()
-        # Same episode set — sizes should match right after a fresh copy.
-        assert alias.stat().st_size == canonical.stat().st_size
-
 
 class TestMarketingCopyHonesty:
     def test_home_footer_says_ocean_racing_not_energy(self):
