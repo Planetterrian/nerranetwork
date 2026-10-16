@@ -205,6 +205,10 @@ def _generate_links(
             if links:
                 links = _enforce_handoff_variety(
                     links, prompt, segments, handoff_count, tracker)
+                # Oct 16 2026: a handoff must introduce the segment that
+                # follows it (Ep049/055/057 shifted by one from mid-edition).
+                from engine.daily_edition import realign_handoffs
+                links = realign_handoffs(links, segments)
                 return links, "llm"
             from engine.daily_edition import links_reply_problem
             _annotate("warning", f"Nerra Daily link generation attempt {attempt} "

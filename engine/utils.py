@@ -364,6 +364,18 @@ NETWORK_EXCLUDE_TITLE_PATTERNS = (
 )
 
 
+#: Oct 16 2026: paid placements are never news. AI Chips Ep025 aired a
+#: piping supplier's sponsored interview from a publisher's paid section
+#: ("the fastest piping connection on the market") as a data-centre story,
+#: against the network's own sponsor policy (labelled, kept apart from the
+#: reporting). Matched on the article URL's path, which names the paid
+#: section where the headline does not.
+NETWORK_EXCLUDE_URL_PATTERNS = (
+    r"datacenterdynamics\.com/[a-z]{2}/marketwatch/",
+    r"/(?:sponsored|sponsored-content|partner-content|paid-post|paidpost|brandvoice|brand-studio|advertorial)(?:/|-|$)",
+)
+
+
 def exclude_title_patterns_for(config) -> list:
     """The per-show ``exclude_title_patterns`` plus the network list."""
     own = list(getattr(config, "exclude_title_patterns", None) or []) if config else []
@@ -394,8 +406,7 @@ def drop_excluded_titles(articles: list, patterns: list) -> tuple:
             compiled.append(re.compile(p, re.IGNORECASE))
         except re.error as exc:
             logger.warning("Invalid exclude_title_pattern %r: %s", p, exc)
-    if not compiled:
-        return articles, 0
+    url_res = [re.compile(p, re.IGNORECASE) for p in NETWORK_EXCLUDE_URL_PATTERNS]
     kept = []
     dropped = 0
     for art in articles:
@@ -403,6 +414,11 @@ def drop_excluded_titles(articles: list, patterns: list) -> tuple:
         if any(c.search(title) for c in compiled):
             dropped += 1
             logger.debug("Excluded almanac/evergreen title: %s", title[:80])
+            continue
+        url = str(art.get("url") or art.get("link") or "")
+        if url and any(c.search(url) for c in url_res):
+            dropped += 1
+            logger.info("Excluded paid placement: %s", url[:120])
             continue
         kept.append(art)
     return kept, dropped

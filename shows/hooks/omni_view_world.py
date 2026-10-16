@@ -67,7 +67,11 @@ def intake_line(desks_live: int, desks_total: int) -> str:
     (plan §3.9 "intake honesty"): the reader is told how many, in the
     show's own words, and the number is the count of desk digests read."""
     if desks_live <= 0:
-        return "This edition was drawn from the world feeds alone; no regional desk had filed by press time."
+        # Oct 16 2026: since the desks became members-only (Oct 15) a day
+        # with no desk digest is usually a day no desk was made, and "had
+        # not filed by press time" told readers they were late.
+        return ("This edition was drawn from the world feeds directly; no Omni View "
+                "regional desk edition was available when it was assembled.")
     if desks_live >= desks_total:
         return f"This edition draws on all {desks_total} Omni View regional desks."
     return (f"This edition draws on {desks_live} of the {desks_total} Omni View regional desks "
@@ -85,8 +89,9 @@ def edition_note(date: _dt.date) -> str:
                 "week's context from the articles above, then Both Sides and Progress "
                 "Watch as usual. No list of ten today.")
     return ("### EDITION (instruction — do not include in output)\n"
-            "Today is a weekday edition: The Ten, ranked, items one to three developed "
-            "at length, four and five shorter, six to ten one sentence each.")
+            "Today is a weekday edition: The Ten, ranked, items one to five developed "
+            "(seven to ten sentences each, as the format says), six to ten one sentence "
+            "each.")
 
 
 def build_payload(root: Path, date: _dt.date) -> Dict[str, object]:

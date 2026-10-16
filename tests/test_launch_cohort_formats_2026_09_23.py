@@ -186,7 +186,9 @@ class TestPredictionMarkets:
         block = week_board_block(d, _dt.date(2026, 9, 25))
         assert "### The Week's Board" in block
         assert "40% on Monday → 55% on Wednesday (+15 points)" in block
-        assert "Will Y pass? (Kalshi): 70% on Monday; no later reading" in block
+        # Oct 16 2026: read once = counted, never priced row by row.
+        assert "do not list or price them): 1 — Will Y pass? (Kalshi)" in block
+        assert "Will Y pass? (Kalshi): 70%" not in block
         assert week_board_block(tmp_path / "empty", _dt.date(2026, 9, 25)) == ""
 
     def test_hook_wires_the_friday_block(self):

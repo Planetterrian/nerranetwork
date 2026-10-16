@@ -1697,6 +1697,13 @@ def apply_pronunciation_fixes(
         # Oct 10 2026: "Pope Leo XIV" aired as "Pope Elio XIV" on the North
         # America desk — "Leo" matched the LEO (low Earth orbit) acronym.
         "LEO", "GEO",
+        # Oct 16 2026: "MoM" matched "Mom" — Vancouver Ep024 aired "a month
+        # over month-and-pop buyer", and Привет, Русский! taught "моя мама"
+        # as "my month over month" (Ep054, 057, 064, 066). The ratio
+        # shorthands only ever mean themselves in their own case; "ROE"
+        # is also "Roe v. Wade" and salmon roe, "AR" sits inside "Sa'ar",
+        # "ML" is a millilitre.
+        "MoM", "YoY", "QoQ", "ROE", "ATH", "AR", "ML",
     }
     for acronym, spelled in acronyms.items():
         if acronym in _CASE_SENSITIVE_ACRONYMS:

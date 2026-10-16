@@ -3427,7 +3427,7 @@ def _build_benchmark_block(tracker: dict) -> str:
              f"exited on whatever day the evaluating run happened to look, "
              f"so they cannot answer whether these rules beat the index. "
              f"The earlier record remains published as history. "),
-            _sign)
+            _sign, since=_record_start_phrase(tracker))
     matched_alpha, matched_n = _sc["alpha"], _sc["n"]
     _port, _idx = _sc.get("portfolio"), _sc.get("index")
     _t, _sig, _n_label = _sc.get("t"), _sc.get("significant"), _sc["label"]
@@ -3508,11 +3508,28 @@ def _build_benchmark_block(tracker: dict) -> str:
             )
     return _compose_benchmark(close, bench_ytd, bench_itd, alpha_ytd,
                               alpha_itd, portfolio_ytd, portfolio_itd,
-                              matched_line, _sign)
+                              matched_line, _sign,
+                              since=_record_start_phrase(tracker))
+
+
+def _record_start_phrase(tracker: dict) -> str:
+    """"since the practice record began on March 16, 2026".
+
+    Oct 16 2026: Ep202 aired the NASDAQ as "up nineteen point three nine
+    percent since inception", which a listener hears as the index's own
+    history. The figure runs from the practice record's first day, so the
+    line names that day."""
+    raw = ((tracker or {}).get("metadata") or {}).get("inception_date") or ""
+    try:
+        d = datetime.date.fromisoformat(str(raw)[:10])
+    except ValueError:
+        return "since the practice record began"
+    return f"since the practice record began on {d.strftime('%B')} {d.day}, {d.year}"
 
 
 def _compose_benchmark(close, bench_ytd, bench_itd, alpha_ytd, alpha_itd,
-                       portfolio_ytd, portfolio_itd, matched_line, _sign):
+                       portfolio_ytd, portfolio_itd, matched_line, _sign,
+                       since="since inception"):
     """Render the scoreboard text once, for every caller path."""
     if close is None:
         # Live index quote failed (NaN/missing) — still speak the
@@ -3536,15 +3553,15 @@ def _compose_benchmark(close, bench_ytd, bench_itd, alpha_ytd, alpha_itd,
 
     return (
         f"NASDAQ Composite ^IXIC: {close:,.0f} "
-        f"(YTD {_sign(bench_ytd)}, since inception {_sign(bench_itd)}).\n"
+        f"(YTD {_sign(bench_ytd)}, {since} {_sign(bench_itd)}).\n"
         f"SCOREBOARD — two different measures; ALWAYS name the measure when "
         f"speaking a number, never mix them in one sentence:\n"
         f"{matched_line}\n"
         f"2) BUY-AND-HOLD GAP (context only; NOT capital-matched — the sim "
         f"holds one $1,000 position at a time while the index compounds "
-        f"fully invested): portfolio YTD {_sign(portfolio_ytd)} / since "
-        f"inception {_sign(portfolio_itd)}; gap vs NASDAQ YTD "
-        f"{_sign(alpha_ytd)} / since inception {_sign(alpha_itd)}."
+        f"fully invested): portfolio YTD {_sign(portfolio_ytd)} / "
+        f"{since} {_sign(portfolio_itd)}; gap vs NASDAQ YTD "
+        f"{_sign(alpha_ytd)} / {since} {_sign(alpha_itd)}."
     )
 
 
