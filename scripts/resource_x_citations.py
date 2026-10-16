@@ -38,12 +38,12 @@ import re
 import sys
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
-from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from engine.url_utils import sanitize_url  # noqa: E402
+from engine.url_utils import sanitize_url, strip_tracking  # noqa: E402
 
 logger = logging.getLogger("resource_x_citations")
 
@@ -60,27 +60,11 @@ X_SOURCE_RE = re.compile(
 )
 SYNDICATION_URL = "https://cdn.syndication.twimg.com/tweet-result?id={id}&token=a"
 _SELF_HOSTS = ("x.com", "twitter.com", "t.co")
-_TRACKING_PREFIXES = ("utm_", "at_")
-_TRACKING_KEYS = {"ito", "ref", "ref_src", "ref_url", "cmpid", "dgcid", "ns_mchannel",
-                  "ns_source", "ns_campaign", "ns_linkname", "ns_fee", "s", "fbclid", "gclid"}
 #: A resolved link that lands on a listing rather than an article is not a
 #: citation (Arab News's Gaza post resolved to backup.arabnews.com/tags/gaza-war).
 _LISTING_PATH_RE = re.compile(r"/(?:tags?|topics?|category|categories|search)(?:/|$)", re.I)
 _LISTING_HOST_PREFIXES = ("backup.",)
 USER_AGENT = "Mozilla/5.0 (compatible; NerraNetwork/1.0; +https://nerranetwork.com)"
-
-
-def strip_tracking(url: str) -> str:
-    """Drop utm_* / at_* / known tracking query keys; keep everything else."""
-    try:
-        parts = urlparse(url)
-    except Exception:  # noqa: BLE001
-        return url
-    kept = [
-        (k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True)
-        if not k.lower().startswith(_TRACKING_PREFIXES) and k.lower() not in _TRACKING_KEYS
-    ]
-    return urlunparse(parts._replace(query=urlencode(kept), fragment=""))
 
 
 def _host(url: str) -> str:

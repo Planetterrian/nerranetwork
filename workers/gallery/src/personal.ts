@@ -37,6 +37,17 @@ import { corsHeaders, jsonResponse } from "./cors";
 import { verifyJwt } from "./jwt";
 import type { Env } from "./types";
 
+/** Constant-time compare for Authorization bearer strings. */
+function bearerEquals(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const aa = enc.encode(a);
+  const bb = enc.encode(b);
+  if (aa.length !== bb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < aa.length; i++) diff |= aa[i] ^ bb[i];
+  return diff === 0;
+}
+
 // Closed show vocabulary — mirrors engine.personal_edition.PERSONAL_SHOW_SLUGS
 // (the EN edition lineup). Keep the two in sync; an unknown slug is dropped
 // server-side, never stored.
@@ -845,7 +856,9 @@ export async function handleAdminSpecs(
     return notConfigured(request);
   }
   const auth = request.headers.get("Authorization") || "";
-  if (auth !== `Bearer ${env.PERSONAL_ADMIN_TOKEN}`) {
+  const expected = `Bearer ${env.PERSONAL_ADMIN_TOKEN}`;
+  // Oct 16 2026: constant-time compare (same shape as JWT sig check).
+  if (!bearerEquals(auth, expected)) {
     return jsonResponse(request, 401, { ok: false, error: "auth required" });
   }
   const specs: object[] = [];
@@ -925,7 +938,7 @@ export async function handleShowDemand(
   const allowed = [env.PERSONAL_DEMAND_TOKEN, env.PERSONAL_ADMIN_TOKEN]
     .filter((t): t is string => !!t)
     .map((t) => `Bearer ${t}`);
-  if (!allowed.includes(auth)) {
+  if (!allowed.some((exp) => bearerEquals(auth, exp))) {
     return jsonResponse(request, 401, { ok: false, error: "auth required" });
   }
   const records: MemberRecord[] = [];

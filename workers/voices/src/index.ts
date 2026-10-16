@@ -391,14 +391,39 @@ a{color:${brand}}label{cursor:pointer}</style>
 <h1>${title}</h1>
 ${body}`;
 
+/** Constant-time string compare for bearer secrets (timingSafeEqual shape). */
+function tokenEquals(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const aa = enc.encode(a);
+  const bb = enc.encode(b);
+  if (aa.length !== bb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < aa.length; i++) diff |= aa[i] ^ bb[i];
+  return diff === 0;
+}
+
 function requireAdmin(req: Request, env: Env): Response | null {
   const auth = req.headers.get("Authorization") ?? "";
   const url = new URL(req.url);
   const token = auth.replace(/^Bearer\s+/i, "") || url.searchParams.get("token") || "";
-  if (!env.ADMIN_TOKEN || token !== env.ADMIN_TOKEN) {
+  const expected = (env.ADMIN_TOKEN || "").trim();
+  if (!expected || !tokenEquals(token.trim(), expected)) {
     return json({ error: "unauthorized" }, 401);
   }
   return null;
+}
+
+/** Admin bearer, or the triage-scoped HMAC (emails + triage POSTs). */
+async function requireTriageAccess(req: Request, env: Env): Promise<Response | null> {
+  const auth = req.headers.get("Authorization") ?? "";
+  const url = new URL(req.url);
+  const token = (auth.replace(/^Bearer\s+/i, "") || url.searchParams.get("token") || "").trim();
+  const expected = (env.ADMIN_TOKEN || "").trim();
+  if (expected && tokenEquals(token, expected)) return null;
+  try {
+    if (token && tokenEquals(token, await triageToken(env))) return null;
+  } catch { /* fall through */ }
+  return json({ error: "unauthorized" }, 401);
 }
 
 // Gate 1 used to be reachable only with the raw ADMIN_TOKEN, and the
@@ -426,10 +451,11 @@ async function requirePackageAccess(req: Request, env: Env, packageId: string):
   const url = new URL(req.url);
   const supplied = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "")
     || url.searchParams.get("token") || "";
-  if (env.ADMIN_TOKEN && supplied === env.ADMIN_TOKEN) return null;
+  const expected = (env.ADMIN_TOKEN || "").trim();
+  if (expected && tokenEquals(supplied.trim(), expected)) return null;
   if (supplied && packageId) {
     try {
-      if (supplied === await packageReviewToken(env, packageId)) return null;
+      if (tokenEquals(supplied.trim(), await packageReviewToken(env, packageId))) return null;
     } catch { /* fall through to 401 */ }
   }
   return json({ error: "unauthorized" }, 401);
@@ -608,7 +634,7 @@ async function handleApply(req: Request, env: Env): Promise<Response> {
          ${form.organization ? ` — ${esc(form.organization)}` : ""}<br>
          ${esc(String(form.bio ?? "").slice(0, 400))}</p>
          <p><em>Wants to talk about:</em> ${esc((Array.isArray(form.topics) ? form.topics : []).join(", "))}</p>
-         <p><a href="https://api.nerranetwork.com/voices/admin/triage?token=${env.ADMIN_TOKEN}">
+         <p><a href="https://api.nerranetwork.com/voices/admin/triage?token=${await triageToken(env)}">
          Review and approve or decline here</a>. If approved, I'll send them
          my booking link and take it from there — you'll be copied on
          everything I send them.</p>
@@ -1199,7 +1225,7 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
            ? `<p>So that nobody is left waiting for a call, I created an application
               from the booking and scheduled the interview. If this is someone we
               invited under another address, merge it into their real application
-              on the <a href="https://api.nerranetwork.com/voices/admin/triage?token=${env.ADMIN_TOKEN}">triage page</a>;
+              on the <a href="https://api.nerranetwork.com/voices/admin/triage?token=${await triageToken(env)}">triage page</a>;
               if it is not a guest we want, kill it there.</p>`
            : `<p>I could not create a placeholder either, so no interview exists and
               nobody will call them. Add it by hand.</p>`}
@@ -1316,7 +1342,7 @@ async function handleCalComBooked(req: Request, env: Env): Promise<Response> {
 }
 
 async function handleTriageDecision(req: Request, env: Env): Promise<Response> {
-  const denied = requireAdmin(req, env);
+  const denied = await requireTriageAccess(req, env);
   if (denied) return denied;
   const body = await req.json<any>().catch(() => null);
   if (!body?.application_id || !["approved", "declined"].includes(body.decision)) {
@@ -1375,7 +1401,7 @@ async function handleTriageDecision(req: Request, env: Env): Promise<Response> {
 // moves before approval, so the booking link, studio branding and the
 // pipeline's prompts all follow the corrected show.
 async function handleTriageReassign(req: Request, env: Env): Promise<Response> {
-  const denied = requireAdmin(req, env);
+  const denied = await requireTriageAccess(req, env);
   if (denied) return denied;
   const body = await req.json<any>().catch(() => null);
   if (!body?.application_id || !isShow(body.show)) {
@@ -1795,7 +1821,7 @@ async function handleGuestReviewSubmit(req: Request, env: Env, token: string): P
 // -- Admin UIs (lean, token-gated) ------------------------------------------
 
 async function handleAdminTriage(req: Request, env: Env): Promise<Response> {
-  const denied = requireAdmin(req, env);
+  const denied = await requireTriageAccess(req, env);
   if (denied) return denied;
   const apps = await sb(env, "GET",
     "guest_applications?status=eq.pending&order=created_at.asc&limit=100");
@@ -1892,6 +1918,12 @@ async function adminSig(env: Env, message: string): Promise<string> {
 
 async function archiveToken(env: Env): Promise<string> {
   return adminSig(env, "nerra-archive");
+}
+
+/** Oct 16 2026: triage emails used to embed the raw ADMIN_TOKEN. Same
+ *  HMAC pattern as archive / package-review tokens — opens triage only. */
+async function triageToken(env: Env): Promise<string> {
+  return adminSig(env, "nerra-triage");
 }
 
 /** Oct 1 2026: the "call their phone" link in Patrick's stuck-guest email.
@@ -2211,8 +2243,10 @@ async function archivePackage(env: Env, packageId: string, reason: string): Prom
 
 async function handleArchivePage(req: Request, env: Env, pathToken?: string): Promise<Response> {
   const url = new URL(req.url);
-  const given = pathToken || url.searchParams.get("token") || "";
-  if (!given || (given !== (env.ADMIN_TOKEN || "") && given !== await archiveToken(env))) {
+  const given = (pathToken || url.searchParams.get("token") || "").trim();
+  const expected = (env.ADMIN_TOKEN || "").trim();
+  const archived = await archiveToken(env);
+  if (!given || (!tokenEquals(given, expected) && !tokenEquals(given, archived))) {
     return html("<h1>Link not found</h1>", 404);
   }
   const pkgs = (await sb(env, "GET",
@@ -2242,8 +2276,11 @@ async function handleArchivePage(req: Request, env: Env, pathToken?: string): Pr
   return html(page("Archived episodes", body));
 }
 
-async function handleArchiveLink(env: Env): Promise<Response> {
-  // Emails the archive link to Patrick and only to him: safe to call from anywhere.
+async function handleArchiveLink(req: Request, env: Env): Promise<Response> {
+  // Oct 16 2026: used to be callable from anywhere — anyone could spam
+  // Patrick's inbox and force minting of the archive HMAC. Admin only now.
+  const denied = requireAdmin(req, env);
+  if (denied) return denied;
   const link = `https://api.nerranetwork.com/voices/admin/archive/${await archiveToken(env)}`;
   await email(env, operatorEmail(env), "The episode archive",
     `<p>Hi Patrick,</p><p>Here is the private archive: recordings that are kept but never
@@ -2531,7 +2568,7 @@ function adminTokenOk(env: Env, req: Request, bodyToken?: unknown): boolean {
   // secret put via a pipe, or GitHub's secret box) must not turn every
   // host link into "unauthorized" (Patrick, Sept 9 2026, 08:28).
   const expected = (env.ADMIN_TOKEN || "").trim();
-  return expected.length > 0 && t === expected;
+  return expected.length > 0 && tokenEquals(t, expected);
 }
 
 // GET /voices/studio-state?interview=<id>&show=&role=[&token=] — the studio
@@ -3359,7 +3396,7 @@ export default {
           : handleGuestReviewPage(env, review[1]);
       }
       if (req.method === "GET" && path === "/voices/admin/triage") return handleAdminTriage(req, env);
-      if (req.method === "GET" && path === "/voices/admin/archive-link") return handleArchiveLink(env);
+      if (req.method === "GET" && path === "/voices/admin/archive-link") return handleArchiveLink(req, env);
       if ((req.method === "GET" || req.method === "POST") && path === "/voices/admin/call-guest") return handleCallGuest(req, env);
       if ((req.method === "GET" || req.method === "POST") && path === "/voices/join") return handleJoin(req, env);
       const archive = path.match(/^\/voices\/admin\/archive(?:\/([0-9a-f]{40}))?$/);

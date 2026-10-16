@@ -243,7 +243,8 @@ class TestHomepageClaims:
 
     def test_hero_eager_images_capped(self):
         src = _read("templates/network_page.html.j2")
-        assert "{% if loop.index0 < 7 %} loading=\"eager\" fetchpriority=\"high\"" in src
+        # Oct 16 2026: cut 7 → 2 for LCP (security/perf pass).
+        assert "{% if loop.index0 < 2 %} loading=\"eager\" fetchpriority=\"high\"" in src
 
     def test_most_played_capped_per_show(self):
         import generate_html as g

@@ -7,6 +7,10 @@ yfinance>=1.7.0
 python-dotenv>=1.2.4
 tweepy>=4.17.0
 requests>=2.34.2
+# Oct 16 2026: requests pulls urllib3 unbound; OSV still flags ≤2.6.x.
+# Pin the floor so Dependabot / a fresh venv cannot land a vulnerable
+# transitive. Safe minor — requests 2.34 already needs urllib3 2.x.
+urllib3>=2.8.0
 tenacity>=9.2.1
 feedgen>=1.0.0
 beautifulsoup4>=4.15.0

@@ -83,10 +83,11 @@
                 <a href="{{ path_prefix }}{{ s.show_page }}" class="orbit-card" style="--i: {{ loop.index0 }};" title="{{ s.name }}">
                     <picture>
                         <source type="image/webp" srcset="{{ path_prefix }}{{ _pbase }}-400.webp 400w, {{ path_prefix }}{{ _pbase }}-800.webp 800w" sizes="120px">
-                        {#- Only the first row of covers competes for early bandwidth;
-                            17 `fetchpriority=high` images starved the hero text and
-                            font CSS (Sep 2026 review). -#}
-                        <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400"{% if loop.index0 < 7 %} loading="eager" fetchpriority="high"{% else %} loading="lazy"{% endif %} />
+                        {#- Only the first 1–2 covers compete for early bandwidth;
+                            seven `fetchpriority=high` images starved the hero text LCP
+                            (Oct 16 2026 security/perf pass; was 7 after Sep 2026 cut
+                            from 17). -#}
+                        <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400"{% if loop.index0 < 2 %} loading="eager" fetchpriority="high"{% else %} loading="lazy"{% endif %} />
                     </picture>
                 </a>
                 {% endfor %}

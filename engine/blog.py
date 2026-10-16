@@ -33,6 +33,7 @@ from engine.interviews import (
 )
 from engine import show_lang as _show_lang
 from engine import brand as _brand
+from engine.url_utils import strip_tracking
 
 logger = logging.getLogger(__name__)
 
@@ -319,7 +320,7 @@ def _extract_source_urls(md_text: str) -> list[str]:
     out: list[str] = []
 
     def add(url: str) -> None:
-        url = (url or "").rstrip(").,;")
+        url = strip_tracking((url or "").rstrip(").,;"))
         if url and url not in seen:
             seen.add(url)
             out.append(url)
@@ -1088,10 +1089,13 @@ def _md_inline(text: str) -> str:
     text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
     # Italic
     text = re.sub(r"\*(.+?)\*", r"<em>\1</em>", text)
-    # Links
+    # Links — strip referral / gift-link query params before they become hrefs.
     text = re.sub(
         r"\[([^\]]+)\]\(([^)]+)\)",
-        r'<a href="\2" target="_blank" rel="noopener">\1</a>',
+        lambda m: (
+            f'<a href="{strip_tracking(m.group(2))}" target="_blank" '
+            f'rel="noopener">{m.group(1)}</a>'
+        ),
         text,
     )
     # Bare URLs on Source: / Source/Post: lines — render as hover-card
@@ -1115,7 +1119,10 @@ def _md_inline(text: str) -> str:
     # inside an href or a tag, and leave trailing punctuation outside.
     text = re.sub(
         r'(?<![\w"\'=>/(])(https?://[^\s<>"\')\]]+?)([.,;:!?)\]]*)(?=\s|$|<)',
-        lambda m: f'<a href="{m.group(1)}" target="_blank" rel="noopener">{m.group(1)}</a>{m.group(2)}',
+        lambda m: (
+            f'<a href="{strip_tracking(m.group(1))}" target="_blank" '
+            f'rel="noopener">{strip_tracking(m.group(1))}</a>{m.group(2)}'
+        ),
         text,
     )
     return text
@@ -1184,6 +1191,7 @@ def _cite_html(url: str) -> str:
     ``aria-describedby`` ties the pill to the popover so screen readers
     announce the full URL when the pill receives focus.
     """
+    url = strip_tracking(url)
     domain = _domain_from_url(url)
     return (
         f'<span class="cite">'
