@@ -14,6 +14,11 @@
     <title>{% block title %}{{ page_title }}{% endblock %}</title>
     {% if theme_color %}<meta name="theme-color" content="{{ theme_color }}">{% endif %}
 
+    {#- Oct 16 2026: approved search titles/metas for the 11 GSC CTR pages
+        live in docs/seo-titles-final.md and are passed as page_title /
+        meta_description from generate_html.py (SEO_PAGE_COPY). Fallbacks
+        below are only for pages that forget to set them — never a second
+        copy of the approved search strings. -#}
     <!-- Open Graph -->
     <meta property="og:title" content="{{ page_title | default('Nerra Network — Independent Podcast Network') }}">
     <meta property="og:description" content="{{ page_description | default(meta_description | default('Free daily shows covering AI, Tesla, investing, space, science, environmental policy, and more. Produced in Vancouver, Canada.')) }}">

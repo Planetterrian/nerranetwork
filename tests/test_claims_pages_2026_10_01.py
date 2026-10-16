@@ -155,8 +155,12 @@ class TestPagesRender:
         assert 'href="claims/mag7.html"' in html
         assert "Not applicable" in html
         assert L.NOT_APPLICABLE["nerra_daily"][:40] in html
-        assert "<title>Claims &amp; corrections | Nerra Network</title>" in html \
-            or "<title>Claims & corrections | Nerra Network</title>" in html
+        assert (
+            "<title>Claims & Corrections: How Nerra Checks Its Sources | Nerra</title>"
+            in html
+            or "<title>Claims &amp; Corrections: How Nerra Checks Its Sources | Nerra</title>"
+            in html
+        )
 
     def test_the_voices_show_page_says_why_it_has_no_ledger(self, rendered):
         out, _ = rendered

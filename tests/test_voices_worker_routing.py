@@ -45,9 +45,9 @@ def test_apply_page_posts_show_to_worker(slug):
 
 def test_nerra_voices_apply_page_branding():
     page = APPLY_PAGES["nerra_voices"]
-    assert "<title>Apply to be a guest — Nerra Voices" in page
-    assert "Real people. Real work. AI host." in page
-    assert "Mira, an AI, asks the questions. Real people answer." in page
+    assert "<title>Be a Podcast Guest: Apply to Nerra Voices | Nerra</title>" in page
+    assert "Guest-approved transcripts." in page
+    assert "Nerra's AI host" in page
     assert "#0F766E" in page, "brand colour from shows/nerra_voices.yaml"
     assert 'href="nerra-voices.html"' in page
     assert "assets/covers/nerra-voices.jpg" in page
