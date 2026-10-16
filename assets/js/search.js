@@ -85,11 +85,36 @@
     return score;
   }
 
+  // Oct 16 2026: titles/hooks/URLs from search-index.json used to land in
+  // innerHTML unsanitized. A compromised or malformed index is stored XSS
+  // on every page that mounts search. Escape text first; only then wrap
+  // the already-escaped query match in <mark>.
+  function escapeHtml(s) {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function safeHref(url) {
+    const raw = String(url || '').trim();
+    if (!raw) return '#';
+    // Absolute http(s) or root-relative paths only — never javascript: /
+    // data: / protocol-relative surprises from a bad index row.
+    if (/^https?:\/\//i.test(raw) || (raw.startsWith('/') && !raw.startsWith('//'))) {
+      return raw;
+    }
+    return '#';
+  }
+
   function highlight(text, query) {
-    if (!text || !query) return text || '';
-    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const safe = escapeHtml(text || '');
+    if (!safe || !query) return safe;
+    const escaped = escapeHtml(query).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = new RegExp(`(${escaped})`, 'gi');
-    return text.replace(regex, '<mark>$1</mark>');
+    return safe.replace(regex, '<mark>$1</mark>');
   }
 
   const CACHE_KEY = 'nn_search_index_v1';
@@ -232,7 +257,7 @@
   }
 
   function showError(msg) {
-    resultsBox.innerHTML = `<div style="padding:8px 12px;color:#ef4444;">${msg}</div>`;
+    resultsBox.innerHTML = `<div style="padding:8px 12px;color:#ef4444;">${escapeHtml(msg)}</div>`;
     resultsBox.style.display = 'block';
     announce(msg);
   }
@@ -244,7 +269,7 @@
 
     if (!matches.length) {
       const emptyMsg = totalIndexed > 0
-        ? `No matches for “${query}”. Index covers ${totalIndexed} episodes — try a show name, topic, or fewer words.`
+        ? `No matches for “${escapeHtml(query)}”. Index covers ${totalIndexed} episodes — try a show name, topic, or fewer words.`
         : 'Search index is updating (refreshes after every episode). Try again shortly or browse shows directly.';
       resultsBox.innerHTML = `
         <div style="padding:10px 12px;color:var(--nn-text-muted);">
@@ -264,16 +289,17 @@
           ep,
           m.date || ''
         ].filter(Boolean);
-        const meta = metaParts.join(' · ');
+        const meta = escapeHtml(metaParts.join(' · '));
 
-        const entities = (m.entities || []).slice(0, 2).join(', ');
+        const entities = escapeHtml((m.entities || []).slice(0, 2).join(', '));
         const sub = (m.hook && m.hook.length > 12 ? m.hook : (m.summary || '')).substring(0, 110);
         const subLabel = sub ? highlight(sub, query) : '';
 
         const fullMeta = meta + (entities ? ` · ${entities}` : '');
+        const href = escapeHtml(safeHref(m.url));
 
         return `
-          <a href="${m.url || '#'}" 
+          <a href="${href}" 
              class="search-result" 
              data-index="${i}"
              role="option"

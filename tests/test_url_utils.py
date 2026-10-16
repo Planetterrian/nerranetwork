@@ -156,6 +156,35 @@ class TestShortenForEmail:
         assert out == url
 
 
+class TestStripTracking:
+    """Oct 16 2026: always strip referral / gift tokens from published hrefs."""
+
+    def test_strips_utm_even_when_short(self):
+        from engine.url_utils import strip_tracking
+        url = "https://example.com/a?utm_source=x&id=1"
+        out = strip_tracking(url)
+        assert "utm_source" not in out
+        assert "id=1" in out
+
+    def test_strips_publisher_gift_jwts(self):
+        from engine.url_utils import strip_tracking
+        url = (
+            "https://www.bloomberg.com/news/articles/2026-10-01/foo"
+            "?accessToken=eyJhbGciOi.fake.jwt&sref=abc"
+        )
+        out = strip_tracking(url)
+        assert "accessToken" not in out
+        assert "eyJ" not in out
+        assert "/foo" in out
+
+    def test_strips_wapo_pwapi_token(self):
+        from engine.url_utils import strip_tracking
+        url = "https://www.washingtonpost.com/a?pwapi_token=eyJ.x.y&tid=1"
+        out = strip_tracking(url)
+        assert "pwapi_token" not in out
+        assert "tid=1" in out
+
+
 # ---------------------------------------------------------------------------
 # repair_aggregator_urls — Aug 18 2026
 #

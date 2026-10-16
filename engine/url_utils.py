@@ -275,33 +275,51 @@ def resolve_google_news_url(
     return url
 
 
+# Tracking / referral / gift-link query keys stripped from published URLs.
+# Prefixes match scripts.resource_x_citations.strip_tracking; exact keys
+# cover gift JWTs (Bloomberg accessToken, WaPo pwapi_token) that were
+# landing in blog/claims HTML (Oct 16 2026 security pass).
+_TRACKING_PREFIXES = ("utm_", "at_")
+_TRACKING_KEYS = frozenset({
+    "ito", "ico", "ns_mchannel", "ns_source", "ns_campaign", "ns_linkname",
+    "ns_fee", "cmp", "cmpid", "dgcid", "fbclid", "gclid", "mc_cid", "mc_eid",
+    "_branch_match_id", "ref", "ref_src", "ref_url", "s",
+    # Publisher gift / share tokens — not ours, but must never ship publicly.
+    "accesstoken", "pwapi_token", "share_token", "gift_token",
+})
+
+
+def strip_tracking(url: str) -> str:
+    """Drop referral, affiliate, and gift-link query params from a URL.
+
+    Always strips (unlike :func:`shorten_for_email`, which only strips when
+    the URL is longer than *max_len*). Keeps article-id parameters. Best-
+    effort: returns *url* unchanged on parse failure.
+    """
+    if not url:
+        return url
+    try:
+        from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+        parts = urlparse(url)
+        kept = [
+            (k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True)
+            if not k.lower().startswith(_TRACKING_PREFIXES)
+            and k.lower() not in _TRACKING_KEYS
+        ]
+        return urlunparse(parts._replace(query=urlencode(kept), fragment=""))
+    except Exception:  # noqa: BLE001 — never fail on URL ops
+        return url
+
+
 def shorten_for_email(url: str, *, max_len: int = 200) -> str:
     """Strip noisy query parameters when the URL is dead-set on staying long.
 
-    Conservative: only strips known-noise tracking params
-    (``utm_source``, ``utm_medium``, ``utm_campaign``, ``utm_term``,
-    ``utm_content``, ``ito``, ``ico``, ``ns_mchannel``, ``CMP``,
-    ``fbclid``, ``gclid``, ``mc_cid``, ``mc_eid``). Doesn't touch
-    article-id parameters or anything we don't recognize. Returns the
-    URL unchanged if it's already under *max_len*.
+    Conservative: only strips known-noise tracking params when the URL is
+    longer than *max_len*. For unconditional stripping use :func:`strip_tracking`.
     """
     if not url or len(url) <= max_len:
         return url
-    try:
-        from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
-        parsed = urlparse(url)
-        params = parse_qsl(parsed.query, keep_blank_values=False)
-        noise = {
-            "utm_source", "utm_medium", "utm_campaign", "utm_term",
-            "utm_content", "ito", "ico", "ns_mchannel", "cmp",
-            "fbclid", "gclid", "mc_cid", "mc_eid", "_branch_match_id",
-            "ref", "ref_src",
-        }
-        kept = [(k, v) for k, v in params if k.lower() not in noise]
-        cleaned = urlunparse(parsed._replace(query=urlencode(kept)))
-        return cleaned if cleaned else url
-    except Exception:  # noqa: BLE001 — never fail on URL ops
-        return url
+    return strip_tracking(url) or url
 
 
 def relabel_aggregator_links(text: str, articles) -> tuple[str, int]:

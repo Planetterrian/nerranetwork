@@ -42,3 +42,22 @@ updates:
     labels:
       - "dependencies"
       - "python"
+
+  # Gallery Worker tooling (zero runtime npm deps — wrangler/vitest/tsc only).
+  # Oct 16 2026: pip + actions were covered; gallery's lockfile was drifting
+  # on known vitest/wrangler advisories with nobody watching.
+  - package-ecosystem: "npm"
+    directory: "/workers/gallery"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "07:00"
+    open-pull-requests-limit: 3
+    groups:
+      gallery-tooling:
+        patterns: ["*"]
+    commit-message:
+      prefix: "deps(gallery)"
+    labels:
+      - "dependencies"
+      - "javascript"
