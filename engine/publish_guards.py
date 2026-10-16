@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Iterable, List, Optional, Sequence
+from typing import List, Optional, Sequence
 
 logger = logging.getLogger(__name__)
 
