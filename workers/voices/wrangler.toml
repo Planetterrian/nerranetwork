@@ -13,6 +13,10 @@ name = "nerra-voices-api"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 account_id = ""  # intentionally blank in-repo (gallery worker convention)
+# Preserve any dashboard-set plain-text vars during CI deploys (e.g. CAL_API_KEY,
+# VOXIMPLANT_*, GUEST_CC, OPERATOR_CC, OPERATOR_EMAIL) so the first Workers Builds
+# deploy does not drop them.
+keep_vars = true
 
 # The gallery worker holds api.nerranetwork.com as a custom domain; this
 # worker claims only the /voices/* path via a zone route (more-specific
