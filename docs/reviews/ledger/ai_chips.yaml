@@ -348,6 +348,109 @@ reviews:
       ab_listen_required: false
       rationale: Every behavioral fix needs a drift-guard; show still lacks a quality-pass module covering Ep6 handset, Ep9 missing Teardown, and trade-off-flips tic.
     agent_cost_usd: 0.1259
+  - date: '2026-10-16'
+    pr: null
+    doc: docs/reviews/ai_chips_review_2026_10_16.md
+    generated_by: grok-4.5
+    summary: Ep16–25 cleared the handset and trade-off-flips predictions after Oct-5/earlier prompt+YAML fixes, but 9/10 scripts still sit under the 1400-word floor on a digest ceiling, the prompt-seeded teardown closer calcified into “stops being the right X when…”, and consumer desktop memory plus a models-flavored teardown still leak the beat.
+    scored_prior_predictions:
+    - metric: scripts/digests containing consumer handset or flagship-phone Silicon items (Snapdragon mobile / iPhone / Vivo / OriginOS class)
+      verdict: hit
+      evidence: 'Ep16–25: no flagship-phone SKU blocks; Oct-5 exclude_title_patterns for smartphones/handsets/Snapdragon Elite/Dimensity present in shows/ai_chips.yaml'
+    - metric: episodes whose chapters JSON lacks a 'The Teardown' chapter OR whose script lacks phrase 'take it apart'
+      verdict: hit
+      evidence: chapters_ep016–025 all include The Teardown at startTime continuity from 3.0s intros; take/apart forms present (widened marker)
+    - metric: Teardown subject entity overlap with same-episode Silicon/DC/Supply item headings
+      verdict: partial
+      evidence: No Ep7-style full restatement streak; Ep25 teardown walks same QFX5252/Tomahawk6/Helios tray as news; teardown_overlap still absent from digest_lints
+    - metric: scripts whose Teardown close uses the predicate family 'trade-off flips' / 'tradeoff flips'
+      verdict: hit
+      evidence: 0/10 ep16–25 transcripts; replaced by prompt-seeded 'stops being the right … when' (≥6/10)
+    - metric: podcast_script_word_count median Ep14–20
+      verdict: partial
+      evidence: Last-10 median ≈1205 (≥1100) but 9/10 still under live min_podcast_words 1400; only ep23 at 1460
+    - metric: digest_word_count median Ep14–20
+      verdict: miss
+      evidence: Scripts remain ceiling-bound with digest_expand already on; ep18/24 coverage 55–58%; second miss → escalate format arithmetic
+    shipped: []
+    deferred:
+    - Operator decision on digest format arithmetic after two digest-median ≥1250 misses (Ep4–13 and Ep14–20) — verify expand pre/post metrics; do not third-file site-mix prompt essays or any podcast-side length lever
+    - Data-side teardown-closer rotation memory (frame_memory or recent-closer injection) if 'stops being the right' successor remains after one prompt de-seed — ledger already flagged this path
+    - 'Prune x_accounts handles that log No recent posts (partially mitigated by x_accounts_per_run: 4)'
+    - Network-wide absence-sentence filter
+    - YouTube enable (launch policy — operator date)
+    - Dedicated audio theme (still assets/music/ModelsAgents.mp3 per plan §5c)
+    - Re-grade full RSS list with check_feeds.py ai_chips on a runner
+    - preferred_domains tightening if x.com Sources median stays elevated
+    - OP3 downloads None for this show — instrumentation/prefix investigation outside prompt edits
+    - Any podcast-side length lever (min_podcast_words raise, podcast_expand_below_target, write-longer pressure) — do_not_retry
+    - Re-proposing dc_items_unlabelled as the fix for zero DC sites — do_not_retry
+    - 'Phonetic respellings or programmatic speech-tag / <fast> injection — do_not_retry landmine #17'
+    predictions:
+    - metric: scripts/digests whose Silicon items are consumer desktop/creator PC memory modules or design awards (CQDIMM/UDIMM desktop DIMM class)
+      baseline: 1/10 in ep16–25 (Ep25 T-Create CQDIMM)
+      expected: 0/7 on next 7 after exclude_title_patterns + digest reject bullet
+      verdict: pending
+      evidence: null
+    - metric: scripts whose Teardown closing sentence matches stock predicates 'stops being the right' OR 'trade-off flips' OR 'tradeoff flips'
+      baseline: ≥6/10 'stops being the right' in ep16–25; 0 trade-off flips
+      expected: ≤1/7 after shape de-seed + verbatim ban + closer memory; record successor-tic family next pass
+      verdict: pending
+      evidence: null
+    - metric: scripts missing teaser opener 'Before we go' OR 'before we wrap'
+      baseline: 1/10 (Ep16 missing; chapters Horizon→Closing)
+      expected: 0/7 after drift-guard
+      verdict: pending
+      evidence: null
+    - metric: Teardown subject entity overlap with same-episode Silicon/DC/Supply headings (manual or lint)
+      baseline: partial; Ep25 tray overlap; lint unshipped
+      expected: 0/7 on next 7 if teardown_overlap lint ships; else n/a-lever-not-shipped
+      verdict: pending
+      evidence: null
+    - metric: podcast_script_word_count median next 7
+      baseline: median ≈1205; 9/10 under 1400
+      expected: ≥1100 only if digest_word_count median ≥1250 (digest-side only; else n/a-lever and operator format decision — never podcast expand)
+      verdict: pending
+      evidence: null
+    - metric: digest_word_count median next 7
+      baseline: effective ceiling keeping 9/10 scripts under 1400
+      expected: ≥1250 on ≥5/7 only after operator format-arithmetic decision or verified expand rewrite; if not, keep escalated — do not re-file mix prompt
+      verdict: pending
+      evidence: null
+    proposed_changes_in_pr:
+    - file: shows/ai_chips.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Ep25 admitted a desktop creator DDR5 CQDIMM design-award item. Fetch-side drop is highest-yield (garble/fetch class); handset patterns do not cover this class.
+    - file: shows/prompts/ai_chips_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: SELECTION-layer mirror of new excludes so the LLM does not re-admit desktop DIMM award copy that slips past RSS titles (Ep25).
+    - file: shows/prompts/ai_chips_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Prompt's own 'stops being the right one' became the ≥6/10 successor tic after trade-off flips was banned. De-seed by shape + verbatim ban; no new example sentence (meta-review de-seed rule).
+    - file: shows/prompts/ai_chips_podcast.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Shape ban alone missed three times in ep19–21; add verbatim ban without seeding a replacement opener.
+    - file: shows/prompts/ai_chips_digest.txt
+      kind: prompt
+      ab_listen_required: true
+      rationale: Ep24 Teardown spine was open-weight model hosting. Tighten Teardown beat boundary without seeding a specimen topic.
+    - file: shows/ai_chips.yaml
+      kind: config
+      ab_listen_required: false
+      rationale: Prompt-only teardown uniqueness missed Ep1/Ep2/Ep7 and Ep25 still deep-dives the same news object. Opt-in lint forces one-shot retry; requires matching engine/digest_lint.py implementation. Third proposal only because prior two never shipped.
+    - file: engine/digest_lint.py
+      kind: code
+      ab_listen_required: false
+      rationale: Mechanical enforcement after repeated prompt-only misses; garble/lint class is highest-yield per meta-review.
+    - file: tests/test_ai_chips_quality_pass.py
+      kind: code
+      ab_listen_required: false
+      rationale: Every behavioral fix needs a drift-guard; pin on committed episodes so main is not red on empty run days (Sep 2026 meta-review).
+    agent_cost_usd: 0.1387
 do_not_retry:
   - idea: Podcast-side script length levers for ai_chips (word floors, expand-retries, prompt pressure to hit min_podcast_words) — median 953 on 1300 with digest ~1034 is the digest ceiling; network meta-review length category misses generalize FF/FPD do_not_retry here.
     evidence: flagged 2026-09-24 (Grok review)
