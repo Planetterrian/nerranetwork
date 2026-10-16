@@ -278,14 +278,18 @@ def resolve_google_news_url(
 # Tracking / referral / gift-link query keys stripped from published URLs.
 # Prefixes match scripts.resource_x_citations.strip_tracking; exact keys
 # cover gift JWTs (Bloomberg accessToken, WaPo pwapi_token) that were
-# landing in blog/claims HTML (Oct 16 2026 security pass).
+# landing in blog/claims HTML (Oct 16 2026 security pass) plus affiliate
+# / partner referral params.
 _TRACKING_PREFIXES = ("utm_", "at_")
 _TRACKING_KEYS = frozenset({
     "ito", "ico", "ns_mchannel", "ns_source", "ns_campaign", "ns_linkname",
     "ns_fee", "cmp", "cmpid", "dgcid", "fbclid", "gclid", "mc_cid", "mc_eid",
     "_branch_match_id", "ref", "ref_src", "ref_url", "s",
-    # Publisher gift / share tokens — not ours, but must never ship publicly.
+    # Publisher gift / share tokens — never ship on public Source hrefs.
     "accesstoken", "pwapi_token", "share_token", "gift_token",
+    # Affiliate / partner referral params (not article ids).
+    "ascsubtag", "asc_campaign", "asc_refurl", "asc_source",
+    "affiliate_id", "aff_id", "partnerref", "partner_ref",
 })
 
 

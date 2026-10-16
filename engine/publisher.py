@@ -693,6 +693,34 @@ def update_rss_feed(
     return rss_path
 
 
+def write_rss_aliases(rss_path: Path, aliases: list) -> list:
+    """Copy *rss_path* to each alias filename beside it.
+
+    The canonical ``atom:link rel="self"`` inside the feed is left pointing
+    at *rss_path* so podcast directories that key on the self link do not
+    treat the alias as a second show. GitHub Pages cannot HTTP-redirect
+    ``.rss`` files; a byte copy is the safe 404 fix for guessed URLs
+    (Tesla ``tesla_podcast.rss`` → ``podcast.rss``, Oct 16 2026).
+    """
+    written = []
+    if not rss_path or not Path(rss_path).exists():
+        return written
+    root = Path(rss_path).resolve().parent
+    body = Path(rss_path).read_bytes()
+    for name in aliases or []:
+        name = str(name or "").strip()
+        if not name or name == Path(rss_path).name:
+            continue
+        if "/" in name or name.startswith("."):
+            logger.warning("RSS alias rejected (must be a bare filename): %s", name)
+            continue
+        dest = root / name
+        dest.write_bytes(body)
+        written.append(dest)
+        logger.info("RSS alias written: %s → %s", dest.name, Path(rss_path).name)
+    return written
+
+
 def _validate_injected_tags(
     rss_path: Path,
     new_guid: str,

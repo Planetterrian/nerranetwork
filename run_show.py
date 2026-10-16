@@ -4196,10 +4196,41 @@ def run(args: argparse.Namespace) -> None:
                 config.chapters.section_markers,
                 show_name=config.name,
                 story_headlines=_chapter_headlines,
-            digest_text=x_thread or "",
+                digest_text=x_thread or "",
                 known_sections_only=getattr(
                     config.chapters, "known_sections_only", False),
             ) if config.chapters.enabled and config.chapters.section_markers else []
+
+            # Oct 16 2026 publish-time guards (claims audit): fragment
+            # chapter titles and a missing lead chapter block the run for
+            # news shows. Sources emptiness is checked again just before
+            # the blog write (digest may still be amended below).
+            from engine.publish_guards import check_publish_guards
+            _hook_for_guard = ""
+            try:
+                from engine.blog import extract_blog_metadata as _ebm
+                _hook_for_guard = (_ebm(x_thread or "", config.slug, "") or {}).get("hook") or ""
+            except Exception:
+                _hook_for_guard = ""
+            _guard_fails = check_publish_guards(
+                config=config,
+                digest_md=x_thread or "",
+                chapters=episode_chapters,
+                hook=_hook_for_guard,
+            )
+            # Defer the empty-Sources failure until blog time — a later
+            # strip/amend can still add a Source line. Chapter failures
+            # are final here.
+            _guard_fails = [
+                f for f in _guard_fails
+                if "no Sources" not in f
+            ]
+            if _guard_fails:
+                for _gf in _guard_fails:
+                    logger.error("Publish guard: %s", _gf)
+                metrics.record("publish_guard_blocked", 1)
+                save_usage(tracker, digests_dir)
+                sys.exit(1)
 
             # Final defense-in-depth: strip any speaker prefixes that survived
             # all prior cleaning passes.  This catches edge cases where the LLM
@@ -5415,6 +5446,13 @@ def run(args: argparse.Namespace) -> None:
                 f"{config.publishing.base_url}/blog/{config.slug}/ep{episode_num:03d}.html"
             ),
         )
+        # Alias feeds (Tesla tesla_podcast.rss → podcast.rss): byte copy,
+        # self-link stays on the canonical file so directories do not split.
+        from engine.publisher import write_rss_aliases
+        write_rss_aliases(
+            rss_path,
+            getattr(config.publishing, "rss_aliases", None) or [],
+        )
 
         metrics.record("rss_update_duration_s", round(time.monotonic() - _t_rss, 2))
 
@@ -5491,6 +5529,21 @@ def run(args: argparse.Namespace) -> None:
     try:
         from engine.blog import extract_blog_metadata, generate_blog_post_html
         from generate_html import generate_blog_index, _get_jinja_env, NETWORK_SHOWS as _NS
+        from engine.publish_guards import check_publish_guards
+
+        # News shows: an episode page with no rendered Sources is blocked.
+        _src_fails = [
+            f for f in check_publish_guards(
+                config=config, digest_md=x_thread or "", chapters=None,
+            )
+            if "no Sources" in f
+        ]
+        if _src_fails:
+            for _sf in _src_fails:
+                logger.error("Publish guard: %s", _sf)
+            metrics.record("publish_guard_blocked_no_sources", 1)
+            save_usage(tracker, digests_dir)
+            sys.exit(1)
 
         if config.slug in _NS:
             _blog_env = _get_jinja_env()

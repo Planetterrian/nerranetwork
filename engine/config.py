@@ -355,6 +355,11 @@ class AudioConfig:
 @dataclass
 class PublishingConfig:
     rss_file: str = "podcast.rss"
+    # Optional extra feed filenames written as byte copies of rss_file after
+    # each update (atom:link rel=self stays on rss_file so directories do not
+    # split). Used for Tesla's legacy ``podcast.rss`` → ``tesla_podcast.rss``
+    # alias so the pattern other shows use does not 404.
+    rss_aliases: list = field(default_factory=list)
     rss_title: str = "Podcast"
     rss_description: str = ""
     rss_summary: str = ""

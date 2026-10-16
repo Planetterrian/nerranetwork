@@ -368,6 +368,11 @@ audio:
 
 publishing:
   rss_file: podcast.rss
+  # Oct 16 2026: other shows use <slug>_podcast.rss; reviewers and
+  # directories guess tesla_podcast.rss and get a 404. Alias is a byte
+  # copy; atom:link rel=self stays podcast.rss so directories do not split.
+  rss_aliases:
+    - tesla_podcast.rss
   # rss_title aligned to "Tesla Shorts Time" (May 2026 audit) so it
   # matches the Apple Podcasts listing + the website + every other
   # surface. The mismatched ``Daily`` suffix risked Apple's duplicate-
