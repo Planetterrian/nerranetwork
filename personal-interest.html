@@ -1073,14 +1073,29 @@
       // Soft Personal north-star event — distinct from newsletter_signup /
       // gallery subscribe / join CTA. Soft path must never report as
       // newsletter_signup (conflates Soft with newsletter in GA4).
+      // Enhanced conversions: consent-gated SHA-256 email via
+      // NNSubscribe.fireSoftPersonalInterestSubmit (footer-subscribe.js)
+      // immediately before the event; skip silently without consent.
       if (typeof window.gtag === "function") {
         if (interested) {
-          window.gtag("event", "soft_personal_interest_submit", {
+          var softPayload = {
             form_id: "personal-interest",
             page_path: "/personal-interest.html",
             list: list,
             source: SOURCE || "direct"
-          });
+          };
+          // Prefer the shared helper (consent-gated enhanced conversions).
+          // Flat if/if (!…) — not nested else — so Soft vs newsletter
+          // branch finding in tests stays unambiguous.
+          var fireShared = window.NNSubscribe &&
+            typeof window.NNSubscribe.fireSoftPersonalInterestSubmit === "function";
+          if (fireShared) {
+            window.NNSubscribe.fireSoftPersonalInterestSubmit(
+              email, company, softPayload);
+          }
+          if (!fireShared) {
+            window.gtag("event", "soft_personal_interest_submit", softPayload);
+          }
         } else {
           // Newsletter-only path (Soft interest unchecked on this page).
           window.gtag("event", "newsletter_signup", {

@@ -83,7 +83,11 @@ class TestSoftPersonalInterestPage:
     def test_soft_submit_fires_distinct_ga4_event(self):
         """Soft north star must not conflate with newsletter_signup."""
         src = _read("templates/personal_interest_page.html.j2")
-        assert 'gtag("event", "soft_personal_interest_submit"' in src
+        # Shared helper (preferred) or direct gtag fallback — both name the event.
+        assert (
+            "fireSoftPersonalInterestSubmit" in src
+            and 'gtag("event", "soft_personal_interest_submit"' in src
+        )
         assert 'form_id: "personal-interest"' in src
         assert 'page_path: "/personal-interest.html"' in src
         # Soft success path: interested branch fires Soft event only.
@@ -91,6 +95,7 @@ class TestSoftPersonalInterestPage:
         else_at = src.index("} else {", soft_start)
         soft_block = src[soft_start:else_at]
         assert "soft_personal_interest_submit" in soft_block
+        assert "fireSoftPersonalInterestSubmit" in soft_block
         assert "newsletter_signup" not in soft_block
         # Newsletter-only (Soft unchecked) may still use newsletter_signup.
         news_block = src[else_at:else_at + 350]

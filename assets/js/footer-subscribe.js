@@ -106,6 +106,90 @@
     window.gtag('event', eventName, payload || {});
   }
 
+  /** Trim + lowercase — Google Ads enhanced-conversions email normalize. */
+  function normalizeEmailForHash(email) {
+    return String(email || '').trim().toLowerCase();
+  }
+
+  /**
+   * SHA-256 hex via crypto.subtle. Resolves null when SubtleCrypto is
+   * unavailable. Never logs the input.
+   */
+  function sha256Hex(value) {
+    if (!window.crypto || !window.crypto.subtle || typeof TextEncoder === 'undefined') {
+      return Promise.resolve(null);
+    }
+    try {
+      var bytes = new TextEncoder().encode(value);
+      return window.crypto.subtle.digest('SHA-256', bytes).then(function (buf) {
+        var arr = new Uint8Array(buf);
+        var hex = '';
+        for (var i = 0; i < arr.length; i++) {
+          var h = arr[i].toString(16);
+          hex += h.length === 1 ? '0' + h : h;
+        }
+        return hex;
+      }).catch(function () { return null; });
+    } catch (e) {
+      return Promise.resolve(null);
+    }
+  }
+
+  function adsUserDataConsentGranted() {
+    if (window.NNConsent && typeof window.NNConsent.isAdUserDataGranted === 'function') {
+      return !!window.NNConsent.isAdUserDataGranted();
+    }
+    // Fallback if consent.js has not attached yet: same localStorage key.
+    try {
+      var raw = localStorage.getItem('nn_consent_v1');
+      if (!raw) return false;
+      var parsed = JSON.parse(raw);
+      return !!(parsed && parsed.state === 'accepted');
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * Google Ads enhanced conversions (via the Google tag): set hashed
+   * email on gtag user_data immediately before soft_personal_interest_submit.
+   *
+   * Only when: typed email present, honeypot (company) empty, and
+   * ad_user_data / ads consent granted. Skip silently otherwise. Never
+   * blocks the subscribe POST — callers chain this only around the GA
+   * event after a successful save. Never logs or stores the email.
+   *
+   * @returns {Promise<boolean>} true when user_data was set
+   */
+  function maybeSetEnhancedConversionUserData(email, company) {
+    var normalized = normalizeEmailForHash(email);
+    if (!normalized) return Promise.resolve(false);
+    if ((company || '').trim()) return Promise.resolve(false);
+    if (!adsUserDataConsentGranted()) return Promise.resolve(false);
+    if (typeof window.gtag !== 'function') return Promise.resolve(false);
+
+    return sha256Hex(normalized).then(function (hash) {
+      if (!hash) return false;
+      window.gtag('set', 'user_data', { sha256_email_address: hash });
+      return true;
+    }).catch(function () {
+      return false;
+    });
+  }
+
+  /**
+   * Fire soft_personal_interest_submit, setting enhanced-conversion
+   * user_data first when allowed. Always fires the event (hash/consent
+   * failures are silent). Does not touch the subscribe request.
+   */
+  function fireSoftPersonalInterestSubmit(email, company, payload) {
+    var eventPayload = payload || {};
+    function emit() {
+      fireGa('soft_personal_interest_submit', eventPayload);
+    }
+    maybeSetEnhancedConversionUserData(email, company).then(emit, emit);
+  }
+
   function bind(form) {
     if (form.getAttribute('data-nn-subscribe-bound') === '1') return;
     form.setAttribute('data-nn-subscribe-bound', '1');
@@ -210,7 +294,10 @@
           if (form.getAttribute('data-hide-on-success') === '1') {
             form.hidden = true;
           }
-          fireGa('soft_personal_interest_submit', {
+          // Enhanced conversions: consent-gated SHA-256 email on gtag
+          // user_data immediately before the north-star event. Skip
+          // silently when consent denied / honeypot filled / no email.
+          fireSoftPersonalInterestSubmit(email, company, {
             form_id: form.getAttribute('data-form-id') || 'personal-interest',
             page_path: window.location.pathname || '',
             list: list,
@@ -241,10 +328,17 @@
     document.querySelectorAll('form[data-nn-subscribe]').forEach(bind);
   }
 
-  // Public: Soft Personal page (and any inline handler) reuses the same map.
+  // Public: Soft Personal page (and any inline handler) reuses the same map
+  // + enhanced-conversion helpers (hashed email only; never the raw address).
   window.NNSubscribe = window.NNSubscribe || {};
   window.NNSubscribe.resolveSource = resolveSource;
   window.NNSubscribe.UTM_SOURCE_TAGS = UTM_SOURCE_TAGS;
+  window.NNSubscribe.normalizeEmailForHash = normalizeEmailForHash;
+  window.NNSubscribe.sha256Hex = sha256Hex;
+  window.NNSubscribe.maybeSetEnhancedConversionUserData =
+    maybeSetEnhancedConversionUserData;
+  window.NNSubscribe.fireSoftPersonalInterestSubmit =
+    fireSoftPersonalInterestSubmit;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

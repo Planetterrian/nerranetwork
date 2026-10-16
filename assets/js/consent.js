@@ -53,6 +53,23 @@
         });
     }
 
+    /**
+     * True when the visitor accepted the cookie banner (ad_user_data /
+     * ads granted). Used by Soft Personal enhanced conversions before
+     * gtag('set','user_data',...). Pending / rejected / missing → false.
+     * Never logs or stores the email — callers hash client-side only.
+     */
+    function isAdUserDataGranted() {
+        var s = readStored();
+        return !!(s && s.state === 'accepted');
+    }
+
+    // Public: Soft Personal (and any capture form) gates hashed email
+    // enhanced conversions on this flag — same key consent Mode v2 uses.
+    window.NNConsent = window.NNConsent || {};
+    window.NNConsent.STORAGE_KEY = STORAGE_KEY;
+    window.NNConsent.isAdUserDataGranted = isAdUserDataGranted;
+
     // Set defaults: deny everything until user chooses
     var stored = readStored();
     var initialState = (stored && stored.state) || 'pending';
