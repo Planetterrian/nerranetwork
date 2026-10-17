@@ -294,6 +294,10 @@ def record_youtube_outcomes(
         # recording; the never-written ``video_podcast_skipped`` is gone.
         if youtube_urls.get("video_podcast_render_only"):
             metrics.record("video_podcast_render_only", True)
+        # Oct 17 2026: an episode too long for X's 20-minute post limit
+        # gets no full-episode reply (x_long_form_reply is the outcome).
+        if youtube_urls.get("x_long_skipped"):
+            metrics.record("x_long_skipped", youtube_urls["x_long_skipped"])
 
         # Thumbnail + hook overlay autofit decisions (for drift monitoring)
         if "thumbnail_autofit_font_size" in youtube_urls:

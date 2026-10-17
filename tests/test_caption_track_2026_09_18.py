@@ -195,6 +195,7 @@ class TestPublishResultKeysAreMetricsOrExempt:
         "grok_video_cost_usd", "grok_video_failures",      # retired Grok Video pilot (June 2026)
         "video_clips_cost_usd", "video_clips_failures", "video_clips_generated",  # retired clip pilot
         "x_clip_path",                                     # a file handed to step 13 (x_post_media is the metric)
+        "x_long_url", "x_long_subtitles_url",              # hosted copies handed to step 13 (x_long_form_reply is the metric)
     }
 
     def test_every_result_key_is_recorded_or_exempt(self):
