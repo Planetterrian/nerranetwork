@@ -158,19 +158,22 @@ See `docs/env_var_inventory.md` for the complete list. Key variables:
 
 ### Analytics & Marketing (optional)
 
-These activate Google Analytics 4, Google Ads conversion tracking, or Plausible
-when set. All default to disabled — leaving them unset keeps the website
-analytics-free.
+These activate Google Analytics 4, Google Ads, or Plausible when set. GA4 and
+the Ads *tag* ID have committed in-repo defaults (public IDs); leaving the
+env vars unset uses those defaults. Plausible stays off until set.
 
-- `GA4_MEASUREMENT_ID` — Google Analytics 4 property ID (e.g. `G-XXXXXXX`)
-- `GOOGLE_ADS_ID` — Google Ads conversion ID (e.g. `AW-1234567890`)
-- `GOOGLE_ADS_SIGNUP_LABEL` — Conversion label fired on newsletter signup
+- `GA4_MEASUREMENT_ID` — Google Analytics 4 property ID (default `G-6PWJCVQQ7B`)
+- `GOOGLE_ADS_ID` — Google Ads **tag** ID (default `AW-949617778`). Must be the
+  tag ID, never the Ads customer ID (`AW-7411462618` is rejected).
 - `PLAUSIBLE_DOMAIN` — Plausible Analytics domain (e.g. `nerranetwork.com`)
+
+Conversions are imported from GA4 key events into Google Ads — there is no
+Ads `send_to` conversion label on the site.
 
 When any GA4/Ads ID is set:
 - gtag.js loads and Google Consent Mode v2 defaults all storage to `denied`
 - A cookie consent banner asks visitors before any tracking cookies are set
-- Newsletter form submits and Apple/Spotify clicks fire conversion events
+- Newsletter form submits and Apple/Spotify clicks fire GA4 events
 - All outbound subscription links carry UTM parameters for source attribution
 
 **Plausible one-step enable:** create the site at plausible.io, then set the

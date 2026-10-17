@@ -51,13 +51,8 @@
                     location: window.location.pathname,
                     transport_type: 'beacon',
                 });
-                // Fire Google Ads conversion if configured
-                if (window._GOOGLE_ADS_SIGNUP_TARGET) {
-                    track('conversion', {
-                        send_to: window._GOOGLE_ADS_SIGNUP_TARGET,
-                        transport_type: 'beacon',
-                    });
-                }
+                // No Ads send_to conversion labels — GA4 key events are
+                // imported into Google Ads as conversions.
             });
         });
     }

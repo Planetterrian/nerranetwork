@@ -25,7 +25,9 @@ Passed as step `env:` to the pipeline step (not in `.env` file):
 | `PEXELS_API_KEY` | Slideshow imagery |
 | `NOTIFICATION_WEBHOOK_URL` | Optional failure webhook |
 
-HTML generation / finalize also use: `GA4_MEASUREMENT_ID`, `GOOGLE_ADS_*`, `PLAUSIBLE_DOMAIN`, `GSC_VERIFICATION`.
+HTML generation / finalize also use: `GA4_MEASUREMENT_ID`, `GOOGLE_ADS_ID`
+(tag ID `AW-949617778` by default; never the customer ID), `PLAUSIBLE_DOMAIN`,
+`GSC_VERIFICATION`. Ads conversion labels are not used (GA4 key-event import).
 
 Nightly audience stats (June 2026; both optional — scripts no-op when unset):
 
