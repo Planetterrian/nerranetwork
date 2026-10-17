@@ -15,7 +15,6 @@ import http.server
 import json
 import socketserver
 import threading
-import time
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
