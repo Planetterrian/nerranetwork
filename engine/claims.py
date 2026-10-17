@@ -139,6 +139,17 @@ CITATION_SHAPE_PATTERNS: List[str] = [
     r"(?i)\bcontemporary\s+(?:accounts?|records?|reports?|sources?|"
     r"documentation)\s+(?:describe|record|show|indicate|note|suggest|"
     r"confirm)\b",
+    # ---- Oct 17 2026: the unsourced back-test. Modern Investing Ep203
+    # aired "Historical back-tests on TSX energy names from 2022 to 2025
+    # show that this two-step filter produced positive alpha in 58% of
+    # cases" inside an item sourced only to a PPI news page; its system
+    # prompt already forbids historical outperformance without the
+    # backtest's source. Calibrated on all 2,470 committed digests: four
+    # matches, every one an unsourced Modern Investing statistic. ----
+    r"(?i)\bback-?tests?\b[^.]{0,120}?\b(?:show|shows|showed|found|find|"
+    r"produced|produce|returned|delivered|suggest|suggested)\b",
+    r"(?i)\bhistorical(?:ly)?\b[^.]{0,80}?\b\d{1,3}(?:\.\d+)?\s*(?:%|percent)"
+    r"\s+of\s+(?:cases|the time|trades|instances|occasions|sessions|years)\b",
 ]
 
 # Case handling lives INSIDE each pattern ((?i) prefix or scoped (?i:...)

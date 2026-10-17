@@ -101,6 +101,16 @@ MUST_CATCH = [
         "believed would reduce the snake population.",
         id="uc-v1c1-invented-archival-record",
     ),
+    pytest.param(
+        "Historical back-tests on TSX energy names from 2022 to 2025 show "
+        "that this two-step filter produced positive alpha in 58% of cases.",
+        id="mit-ep203-unsourced-backtest",
+    ),
+    pytest.param(
+        "Ratios above 75% have historically preceded cuts in roughly 60% of "
+        "cases within two years.",
+        id="mit-ep026-unsourced-historical-rate",
+    ),
 ]
 
 # ---------------------------------------------------------------------------
@@ -125,6 +135,14 @@ MUST_NOT_CATCH = [
     pytest.param(
         "Filters became standard across the industry within a decade.",
         id="general-industry-trend",
+    ),
+    pytest.param(
+        "The stock fell 6% on Tuesday, its worst session since March.",
+        id="general-dated-move",
+    ),
+    pytest.param(
+        "The strategy is easy to back-test with a spreadsheet and free data.",
+        id="general-backtest-advice",
     ),
 ]
 
