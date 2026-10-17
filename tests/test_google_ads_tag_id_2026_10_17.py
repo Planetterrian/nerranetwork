@@ -70,16 +70,39 @@ class TestAdsTagDefault:
             importlib.reload(generate_html)
 
     def test_customer_id_secret_is_rejected(self, monkeypatch):
-        """A secret still holding the customer ID must not reach the page."""
+        """A secret still holding the customer ID must not reach the page.
+
+        run-show.yml / nightly-maintenance.yml still pass
+        ``GOOGLE_ADS_ID: ${{ secrets.GOOGLE_ADS_ID }}`` unchanged. If that
+        secret is the customer ID ``AW-7411462618``, this guard must fall
+        back to the real tag ``AW-949617778``.
+        """
         monkeypatch.setenv("GOOGLE_ADS_ID", ADS_CUSTOMER_WRONG)
         import generate_html
 
         importlib.reload(generate_html)
         try:
+            assert generate_html._resolve_google_ads_id() == ADS_TAG
             assert generate_html.MARKETING_CONFIG["google_ads_id"] == ADS_TAG
             assert ADS_CUSTOMER_WRONG not in generate_html.MARKETING_CONFIG["google_ads_id"]
+            assert ADS_CUSTOMER_WRONG in generate_html._ADS_REJECTED_IDS
         finally:
             monkeypatch.delenv("GOOGLE_ADS_ID", raising=False)
+            importlib.reload(generate_html)
+
+    def test_pipeline_env_pair_cannot_emit_wrong_tag_or_label(self, monkeypatch):
+        """Exact env pair the pipeline workflows still inject."""
+        monkeypatch.setenv("GOOGLE_ADS_ID", ADS_CUSTOMER_WRONG)
+        monkeypatch.setenv("GOOGLE_ADS_SIGNUP_LABEL", "AbCdEfGhIjKlMnOp")
+        import generate_html
+
+        importlib.reload(generate_html)
+        try:
+            assert generate_html.MARKETING_CONFIG["google_ads_id"] == ADS_TAG
+            assert generate_html.MARKETING_CONFIG["google_ads_signup_label"] == ""
+        finally:
+            monkeypatch.delenv("GOOGLE_ADS_ID", raising=False)
+            monkeypatch.delenv("GOOGLE_ADS_SIGNUP_LABEL", raising=False)
             importlib.reload(generate_html)
 
     def test_valid_override_still_works(self, monkeypatch):
@@ -129,14 +152,19 @@ class TestNoSendToConversionLabels:
             monkeypatch.delenv("GOOGLE_ADS_SIGNUP_LABEL", raising=False)
             importlib.reload(generate_html)
 
-    def test_workflows_drop_signup_label_secret(self):
+    def test_pipeline_workflows_still_pass_ads_env_unchanged(self):
+        """Patrick's pipelines are off-limits — still pass both secrets.
+
+        generate_html must tolerate whatever they inject (see
+        test_pipeline_env_pair_cannot_emit_wrong_tag_or_label).
+        """
         for rel in (
             ".github/workflows/nightly-maintenance.yml",
             ".github/workflows/run-show.yml",
         ):
             src = _read(rel)
-            assert "GOOGLE_ADS_SIGNUP_LABEL" not in src
-            assert "GOOGLE_ADS_ID" in src
+            assert "GOOGLE_ADS_ID: ${{ secrets.GOOGLE_ADS_ID }}" in src
+            assert "GOOGLE_ADS_SIGNUP_LABEL: ${{ secrets.GOOGLE_ADS_SIGNUP_LABEL }}" in src
 
 
 class TestWrongIdAbsentEverywhereScanned:
