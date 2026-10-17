@@ -102,7 +102,11 @@ def cluster_articles(
     if not pool and len(toks) >= MIN_POOL_FOR_BATCH_DF:
         pool = list(toks)
     common = common_tokens(pool) if pool else frozenset()
-    toks = [s - common for s in toks]
+    # Oct 17 2026: an article flagged ``recurrence_exempt`` (a Board market)
+    # never joins a cluster — Kalshi's and Polymarket's prices on one
+    # question are two readings, and the SAME-STORY note folded them away.
+    toks = [frozenset() if articles[i].get("recurrence_exempt") else s - common
+            for i, s in enumerate(toks)]
 
     parent = list(range(len(articles)))
 

@@ -5014,3 +5014,33 @@ experiments:
     notes: >
       engine/release_schedule.py; youtube.release_schedule_enabled per show
       reverts; youtube_long_publish_at / youtube_short_publish_at metrics.
+  - id: content-followups-2026-10-17
+    title: "Oct 17 follow-ups: Board venues, betting lines, hook support, Teardown source, sidebar teasers"
+    area: network
+    shipped: 2026-10-17
+    readout: 2026-10-31
+    status: reading
+    baseline: >
+      Prediction Markets Ep024/Ep025 shipped a one-market Board from one venue
+      while three venues supplied ten markets (story recurrence marked 9 of 10
+      "already covered"); Vancouver Ep025 aired a sportsbook moneyline; MIT
+      hook_supported replay fires 4 of 15 (Ep190 specimen hook, Ep203 US PPI
+      tied to Bank of Canada odds); AI Chips' Teardown cited an unread EE Times
+      page on Ep022 and Ep026; M&A Ep206 aired a sidebar teaser as reporting.
+    target: >
+      board_venues names two venues on every day board_venues_supplied names
+      two or more; articles_betting_lines_removed and no betting line on air;
+      hook_supported fires on fewer than 1 in 15 MIT digests after the
+      structural retry; deep_dive_source_read true on every AI Chips episode
+      with a Teardown.
+    notes: >
+      engine.prediction_board marks board articles recurrence_exempt (skipped
+      by story_recurrence and story_clusters) and board_venue;
+      digest_lint.board_venue_mix and deep_dive_fetched_source read the run's
+      articles (context lints); hook_supported checks figures and the
+      figure-to-consequence join, on in MIT and eight cohort shows;
+      exclude_betting_lines on Vancouver, Collingwood, Top World and the five
+      desks; engine.article_text drops suggested-article cards and link rails.
+      ⚠️ AUDIO: _shared/hook_supported.txt in ten digest prompts (Tesla, MIT —
+      a control show of the Sep 22 spoken-open read — and the cohort), the
+      Board's two-venue line, AI Chips' Teardown source rule.

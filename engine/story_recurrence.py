@@ -168,7 +168,9 @@ def annotate_articles(articles: List[dict],
         return notes
     for i, art in enumerate(articles):
         title = art.get("title") or ""
-        if not title:
+        if not title or art.get("recurrence_exempt"):
+            # Oct 17 2026: a live market reading (Prediction Markets' Board)
+            # is new every day even when its question is not.
             continue
         m = index.match(title)
         if m:

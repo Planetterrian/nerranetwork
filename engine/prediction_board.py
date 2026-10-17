@@ -198,8 +198,17 @@ def _article(*, title: str, url: str, source: str, lines: Sequence[str],
         "published_date": now.isoformat(),
         # A market opened last spring and trading hard today is today's news.
         "exempt_stale": True,
+        # Oct 17 2026: today's READING of a market is new even when the
+        # question was on yesterday's Board. Story-recurrence memory marked
+        # 9 of 10 board markets "already covered — pick a different story"
+        # on 10-17 (8 of 8 on 10-16) and the Board shipped one market; the
+        # same-story clusterer folded Kalshi's and Polymarket's copies of one
+        # question into one item. Both skip an article carrying this flag.
+        "recurrence_exempt": True,
         # Consumed by board_block() only; the pipeline ignores unknown keys.
         "board_new": new,
+        # The venue, for the Board's venue-mix lint and metric.
+        "board_venue": source,
     }
 
 
@@ -440,6 +449,34 @@ def gather_board(builders: Iterable[Callable[[], List[Dict[str, Any]]]]) -> List
     return out
 
 
+VENUES = ("Polymarket", "Kalshi", "Manifold")
+_VENUE_HOSTS = {"polymarket.com": "Polymarket", "kalshi.com": "Kalshi",
+                "manifold.markets": "Manifold"}
+
+
+def supplied_board_venues(articles: Iterable[Dict[str, Any]]) -> set:
+    """Venues that supplied at least one board market this run."""
+    return {str(a.get("board_venue")) for a in articles or [] if a.get("board_venue")}
+
+
+def board_venues_in(text: str) -> set:
+    """Venues a Board section cites: by Source URL host when it carries any
+    (the access line may name venues the Board does not use), else by name."""
+    import re
+
+    out = set()
+    low = (text or "").lower()
+    for host, venue in _VENUE_HOSTS.items():
+        if re.search(r"\b" + re.escape(host) + r"\b", low):
+            out.add(venue)
+    if out:
+        return out
+    for venue in VENUES:
+        if re.search(r"\b" + venue.lower() + r"\b", low):
+            out.add(venue)
+    return out
+
+
 def board_block(articles: Sequence[Dict[str, Any]]) -> str:
     """The digest instruction that goes with the board articles.
 
@@ -466,6 +503,12 @@ def board_block(articles: Sequence[Dict[str, Any]]) -> str:
         "a news article above says why; otherwise report the move and nothing more. "
         "Never add a market, a probability or a volume those articles do not carry.",
     ]
+    if len(venues) >= 2:
+        # Oct 17 2026: Ep024 and Ep025 shipped a one-market Board from one
+        # venue while three venues supplied ten markets.
+        lines.append("Today's markets come from more than one venue, so The Board "
+                     "carries at least one market from each of two venues. A market "
+                     "that was on an earlier Board is still today's reading.")
     if new:
         lines.append("Markets that opened in the last three days (candidates for New "
                      "and Notable): " + "; ".join(new) + ".")

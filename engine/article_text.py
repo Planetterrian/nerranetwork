@@ -56,9 +56,38 @@ _BOILERPLATE_TAGS = (
 #: rows, related-post rails, comment threads).
 _BOILERPLATE_HINTS = re.compile(
     r"(cookie|share|social|related|comment|sidebar|newsletter|subscribe|"
-    r"breadcrumb|menu|nav-|-nav|footer|promo|advert)",
+    r"breadcrumb|menu|nav-|-nav|footer|promo|advert|"
+    # Oct 17 2026 (Models & Agents Ep206): Startup Fortune drops a
+    # "sf-suggested-card" — another article's title and excerpt — inside the
+    # article body, and the show aired its August teaser ("three Claude agents
+    # … concluded it was under attack … Only … Mythos 5 reliably found a
+    # truce") as part of an MIT story it has nothing to do with.
+    r"suggested|recommend|read-?more|read-?next|also-?read|more-?stories|"
+    r"you-?may|outbrain|taboola|signin|sign-in)",
     re.IGNORECASE,
 )
+
+#: A paragraph that introduces OTHER articles, not this one: "Also read:",
+#: "Read more:", "Related:", "This article is posted in AI News, check it
+#: out for more related stories." Matched on the paragraph's opening words.
+_TEASER_PARAGRAPH_RE = re.compile(
+    r"^\s*(?:also read|read also|read more|read next|related(?: stories| articles| reading)?"
+    r"|recommended(?: reading)?|see also|more from|more stories|you may also like"
+    r"|you might also like|don't miss|trending now|this article is posted in"
+    r"|almost there\. sign in)\b",
+    re.IGNORECASE,
+)
+
+
+def _is_link_list(node) -> bool:
+    """A paragraph that is mostly links to two or more other pages (an
+    "Also read: A • B • C" rail written as an ordinary ``<p>``)."""
+    links = node.find_all("a") if hasattr(node, "find_all") else []
+    if len(links) < 2:
+        return False
+    text = _clean(node.get_text(" "))
+    linked = sum(len(_clean(a.get_text(" "))) for a in links)
+    return bool(text) and linked >= 0.6 * len(text)
 
 _WS_RE = re.compile(r"\s+")
 _SCRIPT_STYLE_RE = re.compile(r"<(script|style|noscript)\b.*?</\1\s*>", re.IGNORECASE | re.DOTALL)
@@ -106,7 +135,7 @@ def extract_article_text(html: str) -> str:
     # in "widget" / "header"-named divs, and the first cut of this function
     # decomposed the article itself down to "Skip to content".
     total = len(_clean(container.get_text(" "))) or 1
-    for tag in list(container.find_all(["div", "section", "ul", "ol", "aside"])):
+    for tag in list(container.find_all(["div", "section", "ul", "ol", "aside", "p"])):
         attrs = getattr(tag, "attrs", None)
         if not attrs:  # already decomposed inside a removed ancestor
             continue
@@ -120,6 +149,9 @@ def extract_article_text(html: str) -> str:
         text = _clean(node.get_text(" "))
         # Skip nav crumbs and captions — a real sentence has some length.
         if len(text) < 40 and not text.endswith((".", "!", "?")):
+            continue
+        # Pointers to other articles are not this article's reporting.
+        if _TEASER_PARAGRAPH_RE.match(text) or _is_link_list(node):
             continue
         paragraphs.append(text)
     if paragraphs:
