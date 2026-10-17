@@ -2014,7 +2014,10 @@ a paragraph makes it a story (FF Ep224 had one beat for seven); a numbered
 heading is ONE story (Omni View's Read-more list had split its lead); two beats
 on adjacent lines settle on the segment opener or the story start. **A Nerra
 Daily handoff must introduce the segment after it** (`realign_handoffs`, metric
-`handoffs_realigned` — Ep049/055/057 shifted by one, 39 wrong introductions).
+`handoffs_realigned` — Ep049/055/057 shifted by one, 39 wrong introductions;
+replayed on those three, 42 wrong → 1). **Nerra Personal runs the same repair**
+(`scripts/build_personal_feeds.py`, Oct 17 — it had only the count check that
+let those editions through) and the same links token budget.
 Also: ratio shorthands (MoM, YoY, QoQ, ROE, ATH, AR, ML) match only their own
 case ("mom-and-pop" aired "month over month"); paid placements are dropped by
 URL path (`NETWORK_EXCLUDE_URL_PATTERNS`); Both Sides is overlap-exempt on
