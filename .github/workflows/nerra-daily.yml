@@ -133,6 +133,12 @@ jobs:
           NERRANETWORK_X_CONSUMER_SECRET: ${{ secrets.NERRANETWORK_X_CONSUMER_SECRET }}
           NERRANETWORK_X_ACCESS_TOKEN: ${{ secrets.NERRANETWORK_X_ACCESS_TOKEN }}
           NERRANETWORK_X_ACCESS_TOKEN_SECRET: ${{ secrets.NERRANETWORK_X_ACCESS_TOKEN_SECRET }}
+          # Oct 17 2026: the edition queues its X post into the reserved
+          # 7:00 ET slot (engine/x_queue.py; the cover waits on the audio R2
+          # bucket, R2_* above). Same secrets as run-show.yml and x-queue.yml;
+          # unset = the edition posts directly, as before.
+          X_QUEUE_SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          X_QUEUE_SUPABASE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
         run: |
           ARGS="--edition en --when-ready"
           if [ -n "$EDITION_DATE" ]; then ARGS="$ARGS --date $EDITION_DATE"; fi

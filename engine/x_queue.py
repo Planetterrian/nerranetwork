@@ -6,9 +6,10 @@ waits in a queue (Supabase ``x_post_queue``) for a slot on a half-hour grid
 between 7:00 AM and 10:00 PM New York time, one post per slot, and
 ``scripts/post_x_queue.py`` posts what is due. Oct 17 2026: the network is
 timed to an East-coast morning (engine/release_schedule.py) — Nerra Daily
-holds 7:00 ET (it posts directly; no show is queued into it) and each show
-takes its own preferred slot from 7:30 ET in release order when that slot
-is free and not past, else the next free slot. The scheduler Worker
+holds 7:00 ET (no show is queued into it; the edition builder queues itself
+there with ``enqueue(slot=...)``) and each show takes its own preferred slot
+from 7:30 ET in release order when that slot is free and not past, else the
+next free slot. The scheduler Worker
 dispatches that script every half hour; the workflow keeps a slower GitHub
 cron as a fallback. The clip or image waits on the audio R2 bucket (served
 at audio.nerranetwork.com) under ``x_queue/`` and is deleted once posted.
@@ -157,19 +158,41 @@ def host_file(path, show_slug: str) -> str:
 
 
 # ---------------------------------------------------------------- enqueue --
+def slot_for(show_slug: str, taken: Iterable[dt.datetime], now: dt.datetime,
+             slot: Optional[dt.datetime] = None) -> dt.datetime:
+    """*slot* when one is given, free and at least five minutes out, else
+    :func:`choose_slot`. UTC.
+
+    The explicit slot is how a caller takes a RESERVED slot the grid never
+    hands out — Nerra Daily's 7:00 ET (Oct 17 2026). It is still one post
+    per slot: a taken or passed slot falls back to the grid.
+    """
+    taken = list(taken)
+    if slot is not None:
+        want = slot.astimezone(UTC).replace(second=0, microsecond=0)
+        busy = {t.astimezone(UTC).replace(second=0, microsecond=0) for t in taken}
+        if want >= now.astimezone(UTC) + LEAD and want not in busy:
+            return want
+    return choose_slot(show_slug, taken, now)
+
+
 def enqueue(*, show_slug: str, episode_num: int, env_prefix: str, text: str,
-            media_path: str = "", media_kind: str = "",
+            media_path: str = "", media_kind: str = "", media_url: str = "",
+            slot: Optional[dt.datetime] = None,
             now: Optional[dt.datetime] = None) -> Tuple[bool, str]:
     """Queue one post. ``(True, due_at_iso)`` when queued or already queued,
-    ``(False, reason)`` when the caller should post now instead."""
+    ``(False, reason)`` when the caller should post now instead.
+
+    *media_url* is a copy already hosted with :func:`host_file` (it wins over
+    *media_path*); *slot* asks for a specific due time (:func:`slot_for`).
+    """
     if not configured():
         return False, "queue_not_configured"
     now = now or dt.datetime.now(UTC)
     try:
-        media_url = ""
-        if media_path and Path(media_path).is_file():
+        if not media_url and media_path and Path(media_path).is_file():
             media_url = _host(Path(media_path), show_slug)
-        due = choose_slot(show_slug, _taken(now), now)
+        due = slot_for(show_slug, _taken(now), now, slot)
         rows = _rest("POST", TABLE, params={"on_conflict": "show_slug,episode_num"},
                      prefer="return=representation,resolution=ignore-duplicates",
                      json={"show_slug": show_slug, "episode_num": int(episode_num),

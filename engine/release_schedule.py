@@ -167,6 +167,20 @@ def x_slot(slug: str, now: dt.datetime, *,
     return _future(slot, now, X_MIN_LEAD)
 
 
+def x_posting_order(slugs: Iterable[str]) -> List[str]:
+    """*slugs* in the order their X posts go out: Nerra Daily (7:00 ET) first,
+    then each show by its :func:`x_slot` rank (the release order).
+
+    The rank is taken against the whole :data:`RELEASE_ORDER`, exactly as
+    ``engine.x_queue.choose_slot`` asks for the slot, so this is the order of
+    the preferred slots. engine.x_post phases the follow ask on it.
+    """
+    pool = list(dict.fromkeys(slugs))
+    head = [NERRA_DAILY_SLUG] if NERRA_DAILY_SLUG in pool else []
+    rest = [s for s in pool if s != NERRA_DAILY_SLUG]
+    return head + sorted(rest, key=lambda s: (release_rank(s), s))
+
+
 def x_reserved_slots(day: dt.date) -> List[dt.datetime]:
     """Slots no show may take on *day* (ET): Nerra Daily's 7:00."""
     return [_at(day, X_EDITION_SLOT, EASTERN).astimezone(UTC)]

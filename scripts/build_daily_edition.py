@@ -591,9 +591,10 @@ def build_edition(
         # Oct 9 2026: the edition posts to X from the network account. The
         # feed, summaries and digest are already written, so a failed or
         # unconfigured post costs nothing but the post; the outcome is in
-        # the metrics either way.
-        x_posted, x_post_skipped = post_edition_to_x(spec, episode_num, title,
-                                                     day=target_date)
+        # the metrics either way. Oct 17 2026: it queues into its reserved
+        # 7:00 ET slot (x_post_queued), falling back to a direct post.
+        x_posted, x_post_skipped, x_post_queued_for = \
+            post_edition_to_x(spec, episode_num, title, day=target_date)
 
         metrics = build_edition_metrics(
             episode_num, target_date, duration, segments,
@@ -605,6 +606,8 @@ def build_edition(
             skipped_today=skipped,
             x_posted=x_posted,
             x_post_skipped=x_post_skipped,
+            x_post_queued=bool(x_post_queued_for),
+            x_post_queued_for=x_post_queued_for,
         )
         (digest_dir / f"metrics_ep{episode_num:03d}.json").write_text(
             json.dumps(metrics, indent=2, ensure_ascii=False) + "\n",
@@ -627,30 +630,69 @@ def build_edition(
 
 
 def post_edition_to_x(spec: EditionSpec, episode_num: int, title: str,
-                      day: "dt.date | None" = None):
+                      day: "dt.date | None" = None,
+                      now: "dt.datetime | None" = None):
     """Post the edition to X: its title and cover art, no link.
 
-    ``(posted, reason)``. Oct 10 2026: a post with a link costs $0.20 on X's
-    pay-per-use API and this one about $0.03; the @nerranetwork profile link
-    carries people to the rundown. Interview episodes keep their links.
+    ``(posted, reason, queued_for)``. Oct 10 2026: a post with a link costs
+    $0.20 on X's pay-per-use API and this one about $0.03; the @nerranetwork
+    profile link carries people to the rundown. Interview episodes keep their
+    links.
+
+    Oct 17 2026: the edition QUEUES into its reserved 7:00 ET slot
+    (engine.release_schedule.x_slot; engine.x_queue never hands it to a show)
+    instead of posting at build time (~6:45 ET), with the cover hosted on R2
+    under a per-episode name. ``queued_for`` is the due time (ISO UTC) when it
+    queued — the x-queue run then posts it, and the edition NEVER also posts
+    directly. An unconfigured queue or a failed enqueue posts now, exactly as
+    before, and ``queued_for`` is ``""``.
     """
-    from engine.x_post import clip_post_text, post_closers, post_media
+    from engine import x_queue
+    from engine.release_schedule import NERRA_DAILY_SLUG, x_slot
+    from engine.x_post import clip_post_text, post_closers, post_media, x_credentials
 
     cover = ROOT / "assets" / "covers" / f"{spec.slug.replace('_', '-')}.jpg"
     # The title opens "Ep 52: ..." and the label already says "Ep 52"
     # (Oct 11 2026, the first post read "Nerra Daily · Ep 52 / Ep 52: ...").
     hook = re.sub(r"^\s*Ep(?:isode)?\.?\s*\d+\s*[:\-–—]\s*", "", title or "")
+    text = clip_post_text(label=f"📻 {spec.name}", hook=hook,
+                          episode_num=episode_num,
+                          closers=post_closers(
+                              spec.slug,
+                              day or dt.datetime.now(dt.timezone.utc).date()))
+    label = f"{spec.name} Ep{episode_num}"
+    if not x_credentials(spec.x_env_prefix):
+        # Same skip as a direct post: run_show also checks the keys before
+        # it queues, so an account with no credentials never queues a post.
+        logger.warning("X post skipped for %s: no %s* credentials in the "
+                       "environment", label, spec.x_env_prefix)
+        return False, "no_credentials", ""
+
+    now = now or dt.datetime.now(dt.timezone.utc)
+    if x_queue.configured():
+        media_url = ""
+        if cover.is_file():
+            # A per-episode name: the hosted copy is deleted once posted, and
+            # a fixed name would let a late post delete the next day's cover.
+            with tempfile.TemporaryDirectory() as tmp:
+                copy = Path(tmp) / f"{cover.stem}-ep{int(episode_num):03d}{cover.suffix}"
+                shutil.copyfile(cover, copy)
+                media_url = x_queue.host_file(copy, spec.slug)
+        reserved = x_slot(NERRA_DAILY_SLUG, now) if spec.slug == NERRA_DAILY_SLUG else None
+        queued, due = x_queue.enqueue(
+            show_slug=spec.slug, episode_num=episode_num, env_prefix=spec.x_env_prefix,
+            text=text, media_url=media_url, media_kind="image" if media_url else "",
+            slot=reserved, now=now)
+        if queued:
+            return True, "", due
+        if media_url:
+            x_queue.forget_media(media_url)
+        logger.warning("%s: X queue refused the edition (%s); posting now", label, due)
+
     posted, reason, _url, _media = post_media(
-        env_prefix=spec.x_env_prefix,
-        text=clip_post_text(label=f"📻 {spec.name}", hook=hook,
-                            episode_num=episode_num,
-                            closers=post_closers(
-                                spec.slug,
-                                day or dt.datetime.now(dt.timezone.utc).date())),
-        media_paths=[str(cover)],
-        label=f"{spec.name} Ep{episode_num}",
-    )
-    return posted, ("" if posted else reason)
+        env_prefix=spec.x_env_prefix, text=text,
+        media_paths=[str(cover)], label=label)
+    return posted, ("" if posted else reason), ""
 
 
 def main() -> int:

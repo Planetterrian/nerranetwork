@@ -12,9 +12,11 @@ from __future__ import annotations
 
 import logging
 import os
+from datetime import date as _date_type
 from pathlib import Path
 from typing import Optional, Sequence, Tuple
 
+from engine.release_schedule import x_posting_order
 from engine.titles import X_TEASER_TEXT_MAX, clip_words
 
 logger = logging.getLogger(__name__)
@@ -51,8 +53,12 @@ CLIP_TEXT_MAX = 270
 #   * it is never the reason a hook gets clipped: when the hook does not fit
 #     whole beside an ask, the post takes a plain closer that day;
 #   * which posts ask is decided by the calendar and the show's place in the
-#     posting order (FOLLOW_ASK_ROSTER), so two asks never sit next to each
-#     other in the feed and a daily show asks once every four days;
+#     X POSTING ORDER — its X slot rank in engine.release_schedule (Oct 17
+#     2026: the order had been a hand-kept roster, which stopped matching the
+#     posting order when the network moved to Eastern time). A daily show
+#     asks every FOLLOW_ASK_EVERY days; two posts next to each other in the
+#     day's feed never ask on the same day; a weekly show asks once in each
+#     block of four of its weekdays, on a day neither neighbour asks;
 #   * a plain day rotates the closer's wording but falls back to the old
 #     closer whenever the longer phrasing would clip the hook.
 # Each line says only what is true of the account: it posts one story from
@@ -72,55 +78,113 @@ FOLLOW_ASK_CLOSERS = (
 #: One post in this many carries the ask.
 FOLLOW_ASK_EVERY = 4
 
-#: Shows that post to @nerranetwork through the clip path, in the order their
-#: posts reach the queue (their run_show slot; Nerra Daily last). A weekly
-#: show names its weekday (Monday = 0) and only counts on that day. A show
-#: missing here never asks; tests/test_x_follow_ask_2026_10_15.py fails CI
-#: when a show posts to the network account and is not listed.
-FOLLOW_ASK_ROSTER = (
-    ("omni_view", None),
-    ("planetterrian", None),
-    ("fascinating_frontiers", None),
-    ("models_agents", None),
-    ("env_intel", 0),
-    ("modern_investing", None),
-    ("first_principles", None),
-    ("unintended_consequences", None),
-    ("spacex", None),
-    ("ai_chips", None),
-    ("offshore_north", 0),
-    ("collingwood", 4),
-    ("mag7", None),
-    ("longevity", 2),
-    ("peptides", 3),
-    ("prediction_markets", None),
-    ("vancouver", None),
-    ("nerra_daily", None),
-)
+#: Every show that posts to @nerranetwork through the clip path, plus Nerra
+#: Daily, with its cadence: ``None`` = daily, else the weekday it posts
+#: (Monday = 0, from run-show.yml's CRON_MAP). Membership and cadence only —
+#: the ORDER is the X slot order (engine.release_schedule.x_posting_order).
+#: A show missing here never asks; tests/test_x_follow_ask_2026_10_15.py
+#: fails CI when a show posts to the network account and is not listed.
+FOLLOW_ASK_CADENCE = {
+    "nerra_daily": None,
+    "spacex": None,
+    "mag7": None,
+    "modern_investing": None,
+    "omni_view": None,
+    "prediction_markets": None,
+    "models_agents": None,
+    "ai_chips": None,
+    "fascinating_frontiers": None,
+    "planetterrian": None,
+    "unintended_consequences": None,
+    "first_principles": None,
+    "env_intel": 0,
+    "offshore_north": 0,
+    "longevity": 2,
+    "peptides": 3,
+    "collingwood": 4,
+    "vancouver": None,
+}
+
+#: ``(slug, weekday)`` in X posting order — derived, never hand-ordered.
+FOLLOW_ASK_ROSTER = tuple(
+    (slug, FOLLOW_ASK_CADENCE[slug]) for slug in x_posting_order(FOLLOW_ASK_CADENCE))
 
 
 def _roster_slugs() -> list:
     return [slug for slug, _wd in FOLLOW_ASK_ROSTER]
 
 
+def _daily_slugs() -> list:
+    return [slug for slug, wd in FOLLOW_ASK_ROSTER if wd is None]
+
+
+def _posters_on(day) -> list:
+    """The roster shows that post on *day*, in posting order."""
+    return [slug for slug, wd in FOLLOW_ASK_ROSTER if wd is None or wd == day.weekday()]
+
+
+def _daily_asks(slug: str, day) -> bool:
+    """A daily show's phase is its rank among the daily posters: consecutive
+    daily posters are one phase apart, so they never ask on the same day."""
+    return (day.toordinal() + _daily_slugs().index(slug)) % FOLLOW_ASK_EVERY == 0
+
+
+def _weekly_ask_day(slug: str, day):
+    """The date in *day*'s block of four weeks on which weekly *slug* asks.
+
+    The first of its four weekdays in the block on which no posting
+    neighbour asks: a daily neighbour by its phase, an EARLIER weekly
+    neighbour by its own choice (a later one avoids this one). A daily
+    neighbour asks on one of the four days and an earlier weekly on one, so
+    a day is always left.
+    """
+    wd = FOLLOW_ASK_CADENCE[slug]
+    week = (day.toordinal() - 1) // 7          # ordinal 1 is a Monday
+    first = week - week % FOLLOW_ASK_EVERY
+    for w in range(first, first + FOLLOW_ASK_EVERY):
+        cand = _date_type.fromordinal(1 + 7 * w + wd)
+        posters = _posters_on(cand)
+        i = posters.index(slug)
+        blocked = False
+        for j in (i - 1, i + 1):
+            if not 0 <= j < len(posters):
+                continue
+            other = posters[j]
+            if FOLLOW_ASK_CADENCE[other] is None:
+                blocked = blocked or _daily_asks(other, cand)
+            elif j < i:
+                blocked = blocked or _weekly_ask_day(other, cand) == cand
+        if not blocked:
+            return cand
+    return None
+
+
+def asks_for_follow(show_slug: str, day) -> bool:
+    """True when *show_slug*'s post on *day* opens its closer list on an ask."""
+    if show_slug not in FOLLOW_ASK_CADENCE:
+        return False
+    wd = FOLLOW_ASK_CADENCE[show_slug]
+    if wd is None:
+        return _daily_asks(show_slug, day)
+    if day.weekday() != wd:
+        return False
+    return _weekly_ask_day(show_slug, day) == day
+
+
 def post_closers(show_slug: str, day) -> Tuple[str, ...]:
     """The closers for *show_slug*'s post on *day*, in preference order.
 
-    A show's place in the FULL roster (weekly shows included, whether or not
-    they post that day) fixes its phase, so a daily show asks every
-    ``FOLLOW_ASK_EVERY`` days and neighbours in the posting order never ask
-    on the same day. On an ask day the list opens with a follow ask; every
-    list ends on :data:`CLIP_CLOSER`, so a hook that fit before this change
-    still fits. :func:`clip_post_text` takes the first closer the whole hook
-    fits beside.
+    On an ask day (:func:`asks_for_follow`) the list opens with a follow
+    ask; every list ends on :data:`CLIP_CLOSER`, so a hook that fit before
+    this change still fits. :func:`clip_post_text` takes the first closer
+    the whole hook fits beside.
     """
-    ordinal = day.toordinal()
-    roster = _roster_slugs()
-    if show_slug not in roster:
+    if show_slug not in FOLLOW_ASK_CADENCE:
         return (CLIP_CLOSER,)
-    idx = roster.index(show_slug)
+    ordinal = day.toordinal()
+    idx = _roster_slugs().index(show_slug)
     plain = PLAIN_CLOSERS[(ordinal + idx) % len(PLAIN_CLOSERS)]
-    if (ordinal + idx) % FOLLOW_ASK_EVERY:
+    if not asks_for_follow(show_slug, day):
         return tuple(dict.fromkeys((plain, CLIP_CLOSER)))
     ask = FOLLOW_ASK_CLOSERS[(ordinal // FOLLOW_ASK_EVERY + idx) % len(FOLLOW_ASK_CLOSERS)]
     shortest = min(FOLLOW_ASK_CLOSERS, key=len)

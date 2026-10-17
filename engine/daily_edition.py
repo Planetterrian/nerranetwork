@@ -1621,6 +1621,8 @@ def build_edition_metrics(
     skipped_today: Optional[List[dict]] = None,
     x_posted: Optional[bool] = None,
     x_post_skipped: str = "",
+    x_post_queued: Optional[bool] = None,
+    x_post_queued_for: str = "",
 ) -> dict:
     """The committed ``metrics_ep*.json`` record for one edition build.
 
@@ -1678,4 +1680,11 @@ def build_edition_metrics(
         # dry run); x_post_skipped names why a False happened.
         "x_posted": x_posted,
         "x_post_skipped": x_post_skipped or "",
+        # Oct 17 2026: True when the post was HANDED to the X queue for the
+        # reserved 7:00 ET slot (x_posted is then True as in run_show: a
+        # hand-off, the x-queue run is the delivery record); False when it
+        # was not queued (a direct post when the queue is unconfigured or the
+        # enqueue failed, or a skip named in x_post_skipped); None = not tried.
+        "x_post_queued": x_post_queued,
+        "x_post_queued_for": x_post_queued_for or "",
     }
