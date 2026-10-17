@@ -341,7 +341,22 @@ def correct_brand_words(
 #: real repeats ("that that", "had had", "-S -S") and are left alone.
 ECHO_MAX_PROBABILITY = 0.1
 ECHO_MAX_GAP_SECONDS = 0.05
+#: The SUFFIX echo (Oct 17 2026): the tail of the word again, abutting it —
+#: "Friday. day.", "timeline line", "reports. ports.". Calibrated on every
+#: October transcript against its script: under 0.25, 70 of 71 such tokens
+#: are absent from the script (the one real word was "argon on"); from 0.3
+#: up, real bigrams ("this is", "land and") start to dominate.
+SUFFIX_ECHO_MAX_PROBABILITY = 0.25
 _ECHO_WORD_RE = re.compile(r"[^\w]", re.UNICODE)
+
+
+def _is_echo(cur: str, prev: str, probability: float) -> bool:
+    if not cur or not prev:
+        return False
+    if cur == prev:
+        return probability < ECHO_MAX_PROBABILITY
+    return (len(cur) >= 2 and len(cur) < len(prev) and prev.endswith(cur)
+            and probability < SUFFIX_ECHO_MAX_PROBABILITY)
 
 
 def drop_echo_words(segments: Sequence[dict]) -> tuple[list[dict], int]:
@@ -360,9 +375,9 @@ def drop_echo_words(segments: Sequence[dict]) -> tuple[list[dict], int]:
         text = seg.get("text") or ""
         for w in words:
             cur = _ECHO_WORD_RE.sub("", str(w.get("word", ""))).lower()
-            if (prev is not None and cur
-                    and cur == _ECHO_WORD_RE.sub("", str(prev.get("word", ""))).lower()
-                    and float(w.get("probability", 1.0)) < ECHO_MAX_PROBABILITY
+            if (prev is not None
+                    and _is_echo(cur, _ECHO_WORD_RE.sub("", str(prev.get("word", ""))).lower(),
+                                 float(w.get("probability", 1.0)))
                     and float(w.get("start", 0.0)) - float(prev.get("end", 0.0)) <= ECHO_MAX_GAP_SECONDS):
                 dropped += 1
                 # Extend the real word over the echo's time so the words
