@@ -105,6 +105,11 @@ SPOKEN_HOOK_MAX_CHARS = 150
 # and clipped with clip_words(); the link is never clipped.
 X_POST_MAX = 280
 X_TEASER_TEXT_MAX = 200
+# Oct 17 2026 — Modern Investing's X teaser carries TWO links (episode
+# post + performance page), so its hook budget is 20 characters smaller.
+# run_show._build_teaser had sliced hooks itself ([:199] / [:179]),
+# cutting mid-word; it now clips through clip_words() with these.
+X_TEASER_TWO_LINK_TEXT_MAX = 180
 
 ELLIPSIS = "…"
 

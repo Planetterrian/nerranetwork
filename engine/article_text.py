@@ -453,12 +453,30 @@ def render_full_text_block(article: Dict, indent: str = "   ") -> str:
 def article_age_days(article: Dict, now) -> Optional[float]:
     """Age in days of the article's most trustworthy date: the page's own
     publish date when the full-text fetch found one, else the feed date.
-    ``None`` when neither parses."""
+    ``None`` when neither parses.
+
+    A date the publisher wrote into the URL's words
+    (:func:`engine.article_dates.url_slug_date`) can only make the article
+    OLDER: when it predates the page/feed date, it wins (a story whose slug
+    says "update-october-10" was not new on Oct 17, whatever the feed said).
+    """
+    age: Optional[float] = None
     for key in ("page_published_date", "published_date"):
         parsed = _parse_iso_date(str(article.get(key) or ""))
         if parsed is not None:
-            return (now - parsed).total_seconds() / 86400.0
-    return None
+            age = (now - parsed).total_seconds() / 86400.0
+            break
+    try:
+        from engine.article_dates import url_slug_date
+
+        slug = url_slug_date(str(article.get("url") or ""))
+    except Exception:  # noqa: BLE001 — dating must never break a run
+        slug = None
+    if slug is not None:
+        slug_age = (now - slug).total_seconds() / 86400.0
+        if age is None or slug_age > age:
+            age = slug_age
+    return age
 
 
 def drop_stale_articles(

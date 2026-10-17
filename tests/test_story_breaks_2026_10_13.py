@@ -37,14 +37,16 @@ class TestStoryStartsOnARealEpisode:
         # SpaceX Ep128: the FCC licence, India pricing, the Crew Dragon
         # splashdown, Grok in Cybercab, the Cybertruck photo, Ship 40, the
         # Vandenberg launches (one beat for the pair), the Columbia clip,
-        # the Counterpoint, AI & Compute, the engineering essay.
+        # the Counterpoint, AI & Compute, the engineering essay, and (Oct 17
+        # 2026, once the sign-off stopped the scan) the "Before we go"
+        # teaser, which is a story change like any other.
         assert starts == [
             "The Federal Communic", "Elon Musk said Space",
             "Crew Dragon Freedom ", "Grok is now availabl",
             "Musk also posted a p", "Ship Forty, the Star",
             "KSBY has a Falcon Ni", "Musk shared a two-fo",
             "One thing worth watc", "On the A I front, Mu",
-            "Pull the engineering",
+            "Pull the engineering", "Before we go — weath",
         ]
 
     def test_the_hook_and_identity_line_never_break(self):

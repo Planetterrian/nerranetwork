@@ -1648,6 +1648,14 @@ def _dedup_expansion_sentences(
     (and never used as dedup anchors) — short rhetorical beats ("Right?",
     "Let's dig in.") are legitimate repeats.
 
+    Lines inside a fenced block (```` ``` ````) pass through untouched and
+    are never anchors. Oct 17 2026: the digest expansion runs this over a
+    digest whose fenced ``claims`` ledger copies prose sentences verbatim
+    by design ("claim" and "supporting_quote"), so every such JSON line
+    read as a repeat of the prose and was deleted. The JSON stayed valid
+    and the entry shipped ``malformed`` with no claim — 45 entries on 12
+    shows in the week to Oct 17 (Omni View Ep208: 6 of 9).
+
     Returns ``(deduped_script, removed_count)``.
     """
     from engine.utils import calculate_similarity
@@ -1658,8 +1666,13 @@ def _dedup_expansion_sentences(
     kept_anchors: list = []
     out_lines: list = []
     removed = 0
+    in_fence = False
     for line in script.split("\n"):
-        if not line.strip():
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            out_lines.append(line)
+            continue
+        if in_fence or not line.strip():
             out_lines.append(line)
             continue
         kept_sentences = []

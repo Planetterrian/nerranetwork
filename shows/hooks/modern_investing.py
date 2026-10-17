@@ -362,6 +362,10 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
         context["recent_strategies"] = "\n".join(lines)
     else:
         context["recent_strategies"] = "No previous trades yet — this may be the first episode."
+    # Oct 17 2026: the pick prompt saw CLOSED trades only, so Ep203 picked
+    # ENB.TO while the Ep201 ENB.TO position was still open — two open
+    # trades on one symbol, and Enbridge leading three episodes running.
+    context["recent_strategies"] += _open_positions_note(tracker)
 
     # Strategy-level performance analysis — tells the LLM which approaches
     # are producing alpha and which are underperforming, so it can refine
@@ -4247,6 +4251,29 @@ def _compute_sector_exposure(tracker: dict) -> dict:
         }
         for sector, n in counts.items()
     }
+
+
+def _open_positions_note(tracker: dict) -> str:
+    """The symbols the simulated portfolio already holds, for the pick prompt.
+
+    A pick on a symbol that is already open doubles one position and
+    re-tells the same company (Oct 17 2026: ENB.TO picked on Ep201 and
+    again on Ep203 while the first was open). Empty when nothing is open.
+    """
+    open_trades = [t for t in (tracker.get("trades") or []) if t.get("status") == "open"]
+    if not open_trades:
+        return ""
+    held = []
+    for t in open_trades:
+        sym = str(t.get("symbol") or "").strip()
+        if sym and sym not in held:
+            held.append(sym)
+    if not held:
+        return ""
+    return (
+        "\n\nOPEN POSITIONS (already held — today's Practice Investment must "
+        "be a different symbol): " + ", ".join(held)
+    )
 
 
 def _build_sector_warning_block(tracker: dict) -> str:
