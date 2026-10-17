@@ -189,7 +189,8 @@ class TestShippedMITDeepDive:
         """The run-show workflow MUST stage shows/deep_dives/ so a deep dive's
         mark-produced persists. Without it the entry stays ``when: next`` and
         re-fires (SpaceX Ep059 + Ep060 both re-queued before this fix)."""
-        wf = Path(".github/workflows/run-show.yml").read_text()
+        # The staging list lives in scripts/stage_show_artifacts.sh (Oct 17 2026).
+        wf = Path(".github/workflows/run-show.yml").read_text() + Path("scripts/stage_show_artifacts.sh").read_text()
         assert "git add -A shows/deep_dives/" in wf, (
             "run-show.yml must stage shows/deep_dives/ in the commit step, "
             "alongside shows/topic_queues/, or deep dives re-fire."

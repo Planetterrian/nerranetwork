@@ -195,6 +195,47 @@ def _spoken_disclosure(config, slug: str) -> str:
     return _AI_DISCLOSURE
 
 
+AUDIO_FIRST_ENV = "NERRA_AUDIO_FIRST_PUSH"
+AUDIO_FIRST_TIMEOUT_S = 300
+
+
+def _checkpoint_publish(args, metrics) -> bool:
+    """Push the audio episode before the video renders (Oct 17 2026).
+
+    Runs ``scripts/checkpoint_publish.sh`` only when the workflow asks for it
+    (``NERRA_AUDIO_FIRST_PUSH=1``) and never in ``--test``. The script stages
+    exactly what the workflow's final commit stages, commits
+    "Auto-generated: <show> <date> (audio)" (the same-day duplicate guard reads
+    that prefix) and pushes through ``push_show_artifacts.sh``. Any failure is
+    logged and left to the final commit step, which pushes everything.
+    """
+    if os.environ.get(AUDIO_FIRST_ENV) != "1" or getattr(args, "test", False):
+        return False
+    import subprocess
+    script = PROJECT_ROOT / "scripts" / "checkpoint_publish.sh"
+    try:
+        done = subprocess.run(
+            ["bash", str(script)], cwd=str(PROJECT_ROOT),
+            env={**os.environ, "SHOW": args.show},
+            timeout=AUDIO_FIRST_TIMEOUT_S, capture_output=True, text=True,
+        )
+        ok = done.returncode == 0
+        tail = (done.stdout + done.stderr).strip().splitlines()[-6:]
+        for line in tail:
+            logger.info("audio-first push: %s", line)
+    except Exception as exc:  # noqa: BLE001 — the final commit still runs
+        ok = False
+        logger.warning("audio-first push failed (non-fatal): %s", exc)
+    if not ok:
+        print("::warning::Audio-first push did not land; the episode goes out "
+              "with the run's final commit instead.", flush=True)
+    try:
+        metrics.record("audio_first_pushed", ok)
+    except Exception:  # noqa: BLE001
+        pass
+    return ok
+
+
 def _rss_disclosure_for(config, slug: str) -> str:
     if slug in _RUSSIAN_SHOWS:
         return _AI_DISCLOSURE_RSS_RU
@@ -5139,168 +5180,13 @@ def run(args: argparse.Namespace) -> None:
     r2_audio_url = publish_outcomes.get("r2_audio_url")
     rss_audio_url = publish_outcomes.get("rss_audio_url") or r2_audio_url
 
-    # YouTube results are still produced by the existing _publish_youtube
-    # for this iteration. Full move coming in follow-up PRs.
-    _t_yt = time.monotonic()
-    chapters_path_for_yt = digests_dir / f"chapters_ep{episode_num:03d}.json"
-    youtube_urls = _publish_youtube(
-        config,
-        episode_num=episode_num,
-        today=today,
-        today_str=today_str,
-        hook=hook or "",
-        digest_text=x_thread,
-        final_mp3=final_mp3,
-        audio_url=r2_audio_url or "",
-        chapters_path=chapters_path_for_yt,
-        digests_dir=digests_dir,
-        args=args,
-        tracker=tracker,
-    )
-    # Feed image spend back into the credit tracker. grok_imagine.py has
-    # always computed this cost and logged it, but nothing carried it
-    # into the episode summary — so the reported per-episode total left
-    # out the images entirely (July 28 2026).
-    try:
-        from engine.tracking import record_image_usage
-        _img_cost = float(youtube_urls.get("grok_image_cost_usd", 0.0) or 0.0)
-        _img_count = int(youtube_urls.get("grok_images_generated", 0) or 0)
-        if _img_cost or _img_count:
-            record_image_usage(
-                tracker, _img_count, _img_cost,
-                model=str(getattr(config.youtube, "grok_image_model", "") or ""),
-            )
-        # Hook-Short motion clip spend (Oct 2 2026). pipeline.record_youtube_
-        # outcomes has recorded this as a METRIC since Sep 22; a metric is
-        # not a cost line, and no credit file carried it. A billed request
-        # that landed no clip (variant != motion_open) still cost money.
-        from engine.tracking import record_motion_clip_usage
-        _motion_cost = float(youtube_urls.get("hook_short_motion_cost_usd", 0.0) or 0.0)
-        if _motion_cost:
-            record_motion_clip_usage(
-                tracker,
-                1 if youtube_urls.get("hook_short_motion") == "motion_open" else 0,
-                _motion_cost,
-            )
-        # The July 28 cost pass shipped record_render_seconds with no
-        # caller, so `render.video_seconds` was always 0.0 and the "video
-        # render: N min" line could never print. The video stage is the
-        # episode's largest wall-clock item (~20 min on Tesla) — the one
-        # number that says whether the single-pass render is worth having.
-        from engine.tracking import record_render_seconds
-        record_render_seconds(tracker, time.monotonic() - _t_yt)
-    except Exception as exc:  # never let accounting break a publish
-        logger.warning("Image cost accounting failed (non-fatal): %s", exc)
-
-    youtube_long_url = youtube_urls.get("long_url", "")
-    youtube_short_url = youtube_urls.get("short_url", "")
-    youtube_pexels_filtered = int(youtube_urls.get("pexels_photos_filtered", 0) or 0)
-    if youtube_long_url:
-        extra_context["youtube_url"] = youtube_long_url
-    if youtube_short_url:
-        extra_context["youtube_short_url"] = youtube_short_url
-    if youtube_urls.get("x_clip_path"):
-        extra_context["x_clip_path"] = youtube_urls["x_clip_path"]
-    for _k in ("x_long_url", "x_long_subtitles_url"):
-        if youtube_urls.get(_k):
-            extra_context[_k] = youtube_urls[_k]
-    # Record YouTube publishing outcomes (extracted to engine/pipeline.py
-    # as the first step of the larger run_show.py phase extraction effort
-    # identified in the May 2026 review).
-    from engine.pipeline import record_youtube_outcomes
-
-    try:
-        record_youtube_outcomes(
-            metrics,
-            youtube_urls,
-            time.monotonic() - _t_yt,
-            config=config,
-        )
-    except Exception:
-        # Never let metrics recording break a successful publish
-        logger.warning("post-publish metrics recording failed (non-fatal)", exc_info=True)
-
-    # Medium item: Record actual quota units consumed this episode for
-    # better live visibility (still here for now; will move in a follow-up).
-    try:
-        from engine.youtube_quota import estimate_episode_units
-
-        q = estimate_episode_units(
-            publish_long_form=bool(youtube_long_url),
-            publish_shorts=bool(youtube_short_url),
-            with_thumbnail=True,
-            with_playlist=True,
-            with_caption_track=bool(youtube_long_url),
-        )
-        metrics.record("youtube_quota_units_this_episode", q.units)
-        metrics.record("youtube_uploads_this_episode", q.uploads)
-    except Exception as exc:
-        logger.debug("Could not record YouTube quota metrics: %s", exc)
-
-    # NOTE (Aug 2026): everything below used to live INSIDE the except
-    # handler above, so it only ran when estimate_episode_units raised —
-    # i.e. never. The keys engine/pipeline.record_youtube_outcomes also
-    # records (smart-Shorts offsets/counters, gallery_skipped_reason)
-    # were deleted from here as duplicates; shorts_ab and the Grok
-    # degradation surface below are recorded NOWHERE else, and the
-    # Shorts A/B spend report has been reading an absent counter since
-    # the block broke.
-    try:
-        # Shorts motion A/B (July 2026). Recorded on every episode of an
-        # enrolled show, including all-stills days, so the report can tell
-        # "control only today" apart from "the experiment stopped running"
-        # — and so its real spend is read from metrics rather than assumed
-        # from the config's ceiling.
-        if youtube_urls.get("shorts_ab"):
-            metrics.record("shorts_ab", youtube_urls["shorts_ab"])
-        # Surface the first 5 Grok Imagine failure messages when the
-        # provider is grok / hybrid AND the run produced 0 images. Tells
-        # the operator WHY the slideshow fell back to the cover (bad
-        # API key, model identifier, request format, rate limit, etc.)
-        # instead of having to dig through GitHub Actions logs.
-        if youtube_urls.get("grok_image_failures"):
-            metrics.record(
-                "grok_image_failures",
-                youtube_urls["grok_image_failures"],
-            )
-        # Loud, actionable signal when a Grok-enabled show ships a DEGRADED
-        # slideshow — i.e. Grok Imagine produced fewer than 2 usable images so
-        # the video fell back to the static cover. With six shows now on Grok,
-        # a silent outage (bad key / model id / rate limit) would quietly
-        # degrade many uploads; this surfaces it as a GitHub annotation +
-        # metric instead of hiding in the per-episode JSON. Only fires for
-        # grok/hybrid shows that actually published video.
-        _img_provider = str(youtube_urls.get("image_provider") or "")
-        if _img_provider in ("grok", "hybrid"):
-            _imgs = int(youtube_urls.get("grok_images_generated", 0) or 0)
-            metrics.record("grok_slideshow_degraded", _imgs < 2)
-            if _imgs < 2:
-                _why = "; ".join(youtube_urls.get("grok_image_failures") or []) \
-                    or "no failure detail captured"
-                # Which degraded path actually shipped (June 2026): the
-                # gallery-library fallback rescues most degraded days now;
-                # the static cover is the last resort.
-                _fb = (
-                    "the show's gallery-library scenes"
-                    if youtube_urls.get("visual_fallback") == "library"
-                    else "the static cover"
-                )
-                print(
-                    f"::warning::Grok Imagine produced only {_imgs} image(s) "
-                    f"for {args.show} — the video shipped with {_fb} "
-                    f"as a fallback. Cause: {_why}",
-                    flush=True,
-                )
-                logger.warning(
-                    "Grok slideshow degraded for %s: %d images (fell back to "
-                    "%s). Cause: %s", args.show, _imgs, _fb, _why,
-                )
-    except Exception:
-        logger.warning("post-publish step failed (non-fatal)", exc_info=True)
-
-    # 11. Update RSS feed
-    _t_rss = time.monotonic()
-    if final_mp3 and final_mp3.exists():
+    # 11. Update RSS feed. A function since Oct 17 2026: it runs once before
+    # the video (audio first) and again after it when YouTube produced a
+    # watch link, on the same GUID so no app downloads the episode twice.
+    def _write_rss_feed(youtube_long_url: str = "", *, refresh: bool = False) -> None:
+        _t_rss = time.monotonic()
+        if not (final_mp3 and final_mp3.exists()):
+            return
         from engine.publisher import update_rss_feed
         from engine.audio import format_duration
 
@@ -5486,6 +5372,7 @@ def run(args: argparse.Namespace) -> None:
             episode_page_url=(
                 f"{config.publishing.base_url}/blog/{config.slug}/ep{episode_num:03d}.html"
             ),
+            keep_existing_guid=refresh,
         )
         # Alias feeds (Tesla tesla_podcast.rss → podcast.rss): byte copy,
         # self-link stays on the canonical file so directories do not split.
@@ -5495,6 +5382,8 @@ def run(args: argparse.Namespace) -> None:
             getattr(config.publishing, "rss_aliases", None) or [],
         )
 
+        if refresh:
+            return
         metrics.record("rss_update_duration_s", round(time.monotonic() - _t_rss, 2))
 
         # 11b. Notify podcast directories (best-effort, non-blocking).
@@ -5502,6 +5391,8 @@ def run(args: argparse.Namespace) -> None:
         from engine.publisher import notify_directories
         rss_url = f"{config.publishing.base_url}/{config.publishing.rss_file}"
         notify_directories(rss_url, show_name=config.publishing.rss_title)
+
+    _write_rss_feed()
 
     # 12. Save GitHub Pages summary
     from engine.publisher import save_summary_to_github_pages
@@ -5525,6 +5416,268 @@ def run(args: argparse.Namespace) -> None:
         audio_url=audio_url,
         rss_url=f"{config.publishing.base_url}/{config.publishing.rss_file}",
     )
+
+    # 11c. Multilingual audio (FR/RU/ES/ZH) is generated OUT OF BAND by a
+    # separate workflow (.github/workflows/multilingual.yml) running the
+    # idempotent driver scripts/generate_translations.py. It used to run
+    # inline here, but four sequential TTS renders (~16 min) pushed
+    # video-heavy shows (e.g. Tesla) past the 2400s pipeline timeout — the
+    # SIGALRM fired mid-render, run_show exited non-zero, and the episode's
+    # git commit step was skipped, leaving a partial publish (R2 + YouTube
+    # done, nothing committed). Decoupling keeps the episode pipeline fast +
+    # durable; translations land shortly after via the dedicated workflow.
+
+    # 12a. Generate blog post. Like the feed, written before the video and
+    # rewritten after it when YouTube links exist (Oct 17 2026).
+    def _write_blog_post(youtube_long_url: str = "", youtube_short_url: str = "",
+                         *, refresh: bool = False) -> None:
+        try:
+            from engine.blog import extract_blog_metadata, generate_blog_post_html
+            from generate_html import generate_blog_index, _get_jinja_env, NETWORK_SHOWS as _NS
+            from engine.publish_guards import check_publish_guards
+
+            # News shows: the no-Sources check ran before synthesis (where a
+            # stop costs nothing published). By here the audio and the feed
+            # are out, so a page that lost its Sources is warned, never
+            # a failed run that leaves the episode uncommitted.
+            _src_fails = [] if refresh else [
+                f for f in check_publish_guards(
+                    config=config, digest_md=x_thread or "", chapters=None,
+                )
+                if "no Sources" in f
+            ]
+            for _sf in _src_fails:
+                logger.warning("::warning::Publish guard (after publish): %s", _sf)
+
+            if config.slug in _NS:
+                _blog_env = _get_jinja_env()
+                _blog_meta = extract_blog_metadata(x_thread, config.slug, digest_md.name if digest_md else "", file_path=digest_md)
+                _blog_meta["episode_num"] = episode_num
+                # Merge any just-generated translation tracks so the switcher +
+                # badges render on today's post (the .md/x_thread carry neither).
+                try:
+                    from generate_html import _attach_translations
+                    _attach_translations(config.slug, _NS[config.slug], [_blog_meta])
+                except Exception:  # noqa: BLE001 — non-fatal SEO/UX enhancement
+                    pass
+                _blog_html = generate_blog_post_html(
+                    x_thread, _blog_meta, _NS[config.slug], _blog_env,
+                    youtube_url=youtube_long_url,
+                    youtube_short_url=youtube_short_url,
+                )
+                _blog_dir = PROJECT_ROOT / "blog" / config.slug
+                _blog_dir.mkdir(parents=True, exist_ok=True)
+                _blog_path = _blog_dir / f"ep{episode_num:03d}.html"
+                from engine.utils import strip_lone_surrogates as _scrub
+                _blog_path.write_text(_scrub(_blog_html), encoding="utf-8")
+                logger.info("Blog post written: %s", _blog_path)
+
+                # Regenerate blog index (per-show + network)
+                generate_blog_index(config.slug)
+                logger.info("Blog index regenerated for %s", config.slug)
+
+                from generate_html import generate_network_blog_index as _gen_net_blog
+                _gen_net_blog()
+                logger.info("Network blog index regenerated")
+
+                from engine.blog import regenerate_blog_rss_for_show_slug
+                _rss_blog = regenerate_blog_rss_for_show_slug(config.slug, PROJECT_ROOT)
+                if _rss_blog:
+                    logger.info("Blog RSS regenerated: %s", _rss_blog.name)
+            else:
+                logger.debug("Show %s not in NETWORK_SHOWS, skipping blog generation", config.slug)
+        except Exception as exc:
+            logger.warning("Blog post generation failed (non-fatal): %s", exc)
+
+    _write_blog_post()
+
+    # 12a-pre. Post-run validation (before newsletter/X so bad episodes
+    # don't email subscribers or tweet without audio).
+    from engine.post_run_validation import run_post_validation
+    validation_passed = run_post_validation(
+        mp3_path=final_mp3,
+        rss_path=rss_path,
+        digest_text=x_thread,
+        show_name=config.name,
+        episode_num=episode_num,
+    )
+    if not validation_passed:
+        logger.error("Post-run validation FAILED — exiting with error code")
+        save_usage(tracker, digests_dir)
+        sys.exit(1)
+
+    # 12c. Audio first (Oct 17 2026). The episode is complete without its
+    # video: audio on R2, feed, summaries, blog post, transcript. Push it now
+    # so Nerra Daily and listeners have it ~15 minutes into the run instead
+    # of ~35; the video renders and uploads after, and the workflow's commit
+    # step pushes what it adds. Best-effort: a failed push leaves everything
+    # for that final commit, exactly as before.
+    _checkpoint_publish(args, metrics)
+
+    # YouTube results are still produced by the existing _publish_youtube
+    # for this iteration. Full move coming in follow-up PRs.
+    _t_yt = time.monotonic()
+    chapters_path_for_yt = digests_dir / f"chapters_ep{episode_num:03d}.json"
+    youtube_urls = _publish_youtube(
+        config,
+        episode_num=episode_num,
+        today=today,
+        today_str=today_str,
+        hook=hook or "",
+        digest_text=x_thread,
+        final_mp3=final_mp3,
+        audio_url=r2_audio_url or "",
+        chapters_path=chapters_path_for_yt,
+        digests_dir=digests_dir,
+        args=args,
+        tracker=tracker,
+    )
+    # Feed image spend back into the credit tracker. grok_imagine.py has
+    # always computed this cost and logged it, but nothing carried it
+    # into the episode summary — so the reported per-episode total left
+    # out the images entirely (July 28 2026).
+    try:
+        from engine.tracking import record_image_usage
+        _img_cost = float(youtube_urls.get("grok_image_cost_usd", 0.0) or 0.0)
+        _img_count = int(youtube_urls.get("grok_images_generated", 0) or 0)
+        if _img_cost or _img_count:
+            record_image_usage(
+                tracker, _img_count, _img_cost,
+                model=str(getattr(config.youtube, "grok_image_model", "") or ""),
+            )
+        # Hook-Short motion clip spend (Oct 2 2026). pipeline.record_youtube_
+        # outcomes has recorded this as a METRIC since Sep 22; a metric is
+        # not a cost line, and no credit file carried it. A billed request
+        # that landed no clip (variant != motion_open) still cost money.
+        from engine.tracking import record_motion_clip_usage
+        _motion_cost = float(youtube_urls.get("hook_short_motion_cost_usd", 0.0) or 0.0)
+        if _motion_cost:
+            record_motion_clip_usage(
+                tracker,
+                1 if youtube_urls.get("hook_short_motion") == "motion_open" else 0,
+                _motion_cost,
+            )
+        # The July 28 cost pass shipped record_render_seconds with no
+        # caller, so `render.video_seconds` was always 0.0 and the "video
+        # render: N min" line could never print. The video stage is the
+        # episode's largest wall-clock item (~20 min on Tesla) — the one
+        # number that says whether the single-pass render is worth having.
+        from engine.tracking import record_render_seconds
+        record_render_seconds(tracker, time.monotonic() - _t_yt)
+    except Exception as exc:  # never let accounting break a publish
+        logger.warning("Image cost accounting failed (non-fatal): %s", exc)
+
+    youtube_long_url = youtube_urls.get("long_url", "")
+    youtube_short_url = youtube_urls.get("short_url", "")
+    youtube_pexels_filtered = int(youtube_urls.get("pexels_photos_filtered", 0) or 0)
+    if youtube_long_url:
+        extra_context["youtube_url"] = youtube_long_url
+    if youtube_short_url:
+        extra_context["youtube_short_url"] = youtube_short_url
+    if youtube_urls.get("x_clip_path"):
+        extra_context["x_clip_path"] = youtube_urls["x_clip_path"]
+    for _k in ("x_long_url", "x_long_subtitles_url"):
+        if youtube_urls.get(_k):
+            extra_context[_k] = youtube_urls[_k]
+    # Record YouTube publishing outcomes (extracted to engine/pipeline.py
+    # as the first step of the larger run_show.py phase extraction effort
+    # identified in the May 2026 review).
+    from engine.pipeline import record_youtube_outcomes
+
+    try:
+        record_youtube_outcomes(
+            metrics,
+            youtube_urls,
+            time.monotonic() - _t_yt,
+            config=config,
+        )
+    except Exception:
+        # Never let metrics recording break a successful publish
+        logger.warning("post-publish metrics recording failed (non-fatal)", exc_info=True)
+
+    # Medium item: Record actual quota units consumed this episode for
+    # better live visibility (still here for now; will move in a follow-up).
+    try:
+        from engine.youtube_quota import estimate_episode_units
+
+        q = estimate_episode_units(
+            publish_long_form=bool(youtube_long_url),
+            publish_shorts=bool(youtube_short_url),
+            with_thumbnail=True,
+            with_playlist=True,
+            with_caption_track=bool(youtube_long_url),
+        )
+        metrics.record("youtube_quota_units_this_episode", q.units)
+        metrics.record("youtube_uploads_this_episode", q.uploads)
+    except Exception as exc:
+        logger.debug("Could not record YouTube quota metrics: %s", exc)
+
+    # NOTE (Aug 2026): everything below used to live INSIDE the except
+    # handler above, so it only ran when estimate_episode_units raised —
+    # i.e. never. The keys engine/pipeline.record_youtube_outcomes also
+    # records (smart-Shorts offsets/counters, gallery_skipped_reason)
+    # were deleted from here as duplicates; shorts_ab and the Grok
+    # degradation surface below are recorded NOWHERE else, and the
+    # Shorts A/B spend report has been reading an absent counter since
+    # the block broke.
+    try:
+        # Shorts motion A/B (July 2026). Recorded on every episode of an
+        # enrolled show, including all-stills days, so the report can tell
+        # "control only today" apart from "the experiment stopped running"
+        # — and so its real spend is read from metrics rather than assumed
+        # from the config's ceiling.
+        if youtube_urls.get("shorts_ab"):
+            metrics.record("shorts_ab", youtube_urls["shorts_ab"])
+        # Surface the first 5 Grok Imagine failure messages when the
+        # provider is grok / hybrid AND the run produced 0 images. Tells
+        # the operator WHY the slideshow fell back to the cover (bad
+        # API key, model identifier, request format, rate limit, etc.)
+        # instead of having to dig through GitHub Actions logs.
+        if youtube_urls.get("grok_image_failures"):
+            metrics.record(
+                "grok_image_failures",
+                youtube_urls["grok_image_failures"],
+            )
+        # Loud, actionable signal when a Grok-enabled show ships a DEGRADED
+        # slideshow — i.e. Grok Imagine produced fewer than 2 usable images so
+        # the video fell back to the static cover. With six shows now on Grok,
+        # a silent outage (bad key / model id / rate limit) would quietly
+        # degrade many uploads; this surfaces it as a GitHub annotation +
+        # metric instead of hiding in the per-episode JSON. Only fires for
+        # grok/hybrid shows that actually published video.
+        _img_provider = str(youtube_urls.get("image_provider") or "")
+        if _img_provider in ("grok", "hybrid"):
+            _imgs = int(youtube_urls.get("grok_images_generated", 0) or 0)
+            metrics.record("grok_slideshow_degraded", _imgs < 2)
+            if _imgs < 2:
+                _why = "; ".join(youtube_urls.get("grok_image_failures") or []) \
+                    or "no failure detail captured"
+                # Which degraded path actually shipped (June 2026): the
+                # gallery-library fallback rescues most degraded days now;
+                # the static cover is the last resort.
+                _fb = (
+                    "the show's gallery-library scenes"
+                    if youtube_urls.get("visual_fallback") == "library"
+                    else "the static cover"
+                )
+                print(
+                    f"::warning::Grok Imagine produced only {_imgs} image(s) "
+                    f"for {args.show} — the video shipped with {_fb} "
+                    f"as a fallback. Cause: {_why}",
+                    flush=True,
+                )
+                logger.warning(
+                    "Grok slideshow degraded for %s: %d images (fell back to "
+                    "%s). Cause: %s", args.show, _imgs, _fb, _why,
+                )
+    except Exception:
+        logger.warning("post-publish step failed (non-fatal)", exc_info=True)
+
+    # 12d. The YouTube links reach the feed item and the blog post.
+    if youtube_long_url:
+        _write_rss_feed(youtube_long_url, refresh=True)
+    if youtube_long_url or youtube_short_url:
+        _write_blog_post(youtube_long_url, youtube_short_url, refresh=True)
 
     # 12b. Video podcast (July 2026 pilot). The episode's long-form MP4 was
     # uploaded to R2 during the YouTube stage; attach it to the summaries
@@ -5555,90 +5708,6 @@ def run(args: argparse.Namespace) -> None:
                             _vf[0].name, _vf[1])
         except Exception as exc:  # noqa: BLE001 — never block the publish
             logger.warning("Video podcast step failed (non-fatal): %s", exc)
-
-    # 11c. Multilingual audio (FR/RU/ES/ZH) is generated OUT OF BAND by a
-    # separate workflow (.github/workflows/multilingual.yml) running the
-    # idempotent driver scripts/generate_translations.py. It used to run
-    # inline here, but four sequential TTS renders (~16 min) pushed
-    # video-heavy shows (e.g. Tesla) past the 2400s pipeline timeout — the
-    # SIGALRM fired mid-render, run_show exited non-zero, and the episode's
-    # git commit step was skipped, leaving a partial publish (R2 + YouTube
-    # done, nothing committed). Decoupling keeps the episode pipeline fast +
-    # durable; translations land shortly after via the dedicated workflow.
-
-    # 12a. Generate blog post
-    try:
-        from engine.blog import extract_blog_metadata, generate_blog_post_html
-        from generate_html import generate_blog_index, _get_jinja_env, NETWORK_SHOWS as _NS
-        from engine.publish_guards import check_publish_guards
-
-        # News shows: the no-Sources check ran before synthesis (where a
-        # stop costs nothing published). By here the audio, the feed and
-        # YouTube are out, so a page that lost its Sources is warned, never
-        # a failed run that leaves the episode uncommitted.
-        _src_fails = [
-            f for f in check_publish_guards(
-                config=config, digest_md=x_thread or "", chapters=None,
-            )
-            if "no Sources" in f
-        ]
-        for _sf in _src_fails:
-            logger.warning("::warning::Publish guard (after publish): %s", _sf)
-
-        if config.slug in _NS:
-            _blog_env = _get_jinja_env()
-            _blog_meta = extract_blog_metadata(x_thread, config.slug, digest_md.name if digest_md else "", file_path=digest_md)
-            _blog_meta["episode_num"] = episode_num
-            # Merge any just-generated translation tracks so the switcher +
-            # badges render on today's post (the .md/x_thread carry neither).
-            try:
-                from generate_html import _attach_translations
-                _attach_translations(config.slug, _NS[config.slug], [_blog_meta])
-            except Exception:  # noqa: BLE001 — non-fatal SEO/UX enhancement
-                pass
-            _blog_html = generate_blog_post_html(
-                x_thread, _blog_meta, _NS[config.slug], _blog_env,
-                youtube_url=youtube_long_url,
-                youtube_short_url=youtube_short_url,
-            )
-            _blog_dir = PROJECT_ROOT / "blog" / config.slug
-            _blog_dir.mkdir(parents=True, exist_ok=True)
-            _blog_path = _blog_dir / f"ep{episode_num:03d}.html"
-            from engine.utils import strip_lone_surrogates as _scrub
-            _blog_path.write_text(_scrub(_blog_html), encoding="utf-8")
-            logger.info("Blog post written: %s", _blog_path)
-
-            # Regenerate blog index (per-show + network)
-            generate_blog_index(config.slug)
-            logger.info("Blog index regenerated for %s", config.slug)
-
-            from generate_html import generate_network_blog_index as _gen_net_blog
-            _gen_net_blog()
-            logger.info("Network blog index regenerated")
-
-            from engine.blog import regenerate_blog_rss_for_show_slug
-            _rss_blog = regenerate_blog_rss_for_show_slug(config.slug, PROJECT_ROOT)
-            if _rss_blog:
-                logger.info("Blog RSS regenerated: %s", _rss_blog.name)
-        else:
-            logger.debug("Show %s not in NETWORK_SHOWS, skipping blog generation", config.slug)
-    except Exception as exc:
-        logger.warning("Blog post generation failed (non-fatal): %s", exc)
-
-    # 12a-pre. Post-run validation (before newsletter/X so bad episodes
-    # don't email subscribers or tweet without audio).
-    from engine.post_run_validation import run_post_validation
-    validation_passed = run_post_validation(
-        mp3_path=final_mp3,
-        rss_path=rss_path,
-        digest_text=x_thread,
-        show_name=config.name,
-        episode_num=episode_num,
-    )
-    if not validation_passed:
-        logger.error("Post-run validation FAILED — exiting with error code")
-        save_usage(tracker, digests_dir)
-        sys.exit(1)
 
     episode_published = bool(final_mp3 and final_mp3.exists())
 

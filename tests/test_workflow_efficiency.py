@@ -37,8 +37,12 @@ class TestRunShowWorkflow:
         July 2026: the restore must also be PER-FILE — a single multi-path
         checkout is all-or-nothing (any one path missing from HEAD rejects
         the whole pathspec, the 2>/dev/null hides it, and the dirty tree
-        re-triggers the same stranding mode)."""
-        wf = _read("run-show.yml")
+        re-triggers the same stranding mode).
+
+        Oct 17 2026: the staging list moved to scripts/stage_show_artifacts.sh,
+        shared with the audio-first checkpoint."""
+        wf = _read("run-show.yml") + (_ROOT / "scripts" / "stage_show_artifacts.sh").read_text(
+            encoding="utf-8")
         assert "for aggregate in blog.rss network.rss blog/index.html" in wf
         assert 'git checkout HEAD -- "$aggregate" 2>/dev/null || true' in wf
         # The buggy all-or-nothing multi-path form must not come back.

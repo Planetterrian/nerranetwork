@@ -51,7 +51,8 @@ class TestHookCachesNeverShadowTheShowApi:
         from shows.hooks import mag7
 
         assert mag7.CACHE_PATH.name == "mag7_quotes.json"
-        wf = (ROOT / ".github/workflows/run-show.yml").read_text(encoding="utf-8")
+        wf = (ROOT / ".github/workflows/run-show.yml").read_text(encoding="utf-8") + (
+            ROOT / "scripts/stage_show_artifacts.sh").read_text(encoding="utf-8")
         assert "git add api/mag7_quotes.json" in wf
 
 
