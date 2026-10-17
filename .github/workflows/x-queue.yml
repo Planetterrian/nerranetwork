@@ -1,13 +1,16 @@
 name: Post queued X posts
 # Oct 11 2026: @nerranetwork posts in daytime. Shows queue their post into a
-# half-hour slot between 6:30 AM and 7:00 PM Pacific (engine/x_queue.py);
-# this posts what is due. The scheduler Worker dispatches it at :01 and :31
-# Pacific; the cron below is the slow fallback if the Worker is down
-# (GitHub crons run late, and a late run simply posts what is due).
+# half-hour slot between 7:00 AM and 10:00 PM Eastern (engine/x_queue.py;
+# Eastern since Oct 17 2026, was 6:30 AM - 7:00 PM Pacific); this posts what
+# is due. The scheduler Worker dispatches it at :05 and :35 Eastern, 7:05 AM
+# to 10:05 PM; the cron below is the slow fallback if the Worker is down
+# (GitHub crons run late, and a late run simply posts what is due). UTC
+# cannot follow daylight saving, so the hours cover both offsets: 11-02 UTC
+# under EDT, 12-03 UTC under EST.
 on:
   workflow_dispatch:
   schedule:
-    - cron: '41 13-23,0-3 * * *'
+    - cron: '41 11-23,0-3 * * *'
 
 permissions:
   contents: read
@@ -40,3 +43,25 @@ jobs:
           R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      # Oct 17 2026: long-forms are scheduled (YouTube publishAt) for 12:00
+      # and 18:00 ET and a private video takes no comment, so their funnel
+      # comment waits in digests/<slug>/scheduled_comments.json. This
+      # half-hourly run posts it within half an hour of the video going
+      # public (nightly alone would leave a 12:00 ET long-form bare until
+      # the next morning). This job does not commit, so --stateless: every
+      # entry is checked against the video before posting and kept when
+      # the check fails, and the committing sweeps (nightly, multilingual)
+      # clear the sidecar later. Same secret names as nightly-maintenance.
+      - name: Post comments on scheduled videos that went public
+        # Its own step: a failed X post above must not hold the comments.
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: |
+          pip install google-api-python-client google-auth google-auth-httplib2
+          python scripts/post_scheduled_short_comments.py --stateless
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN_EN: ${{ secrets.YOUTUBE_REFRESH_TOKEN_EN }}
+          YOUTUBE_REFRESH_TOKEN_RU: ${{ secrets.YOUTUBE_REFRESH_TOKEN_RU }}
+          YOUTUBE_REFRESH_TOKEN_FR: ${{ secrets.YOUTUBE_REFRESH_TOKEN_FR }}

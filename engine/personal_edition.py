@@ -53,14 +53,13 @@ from engine.daily_edition import (
 
 logger = logging.getLogger(__name__)
 
-#: Shows a member may choose beyond the Nerra Daily roster. Empty since
-#: Oct 2 2026: the launch cohort joined the Nerra Daily lineup itself
-#: (operator: every English show in the edition), so the vocabulary IS
-#: the roster. The seam stays for the next show that is pickable but not
-#: in the edition. Segments are discovered by the same per-show
-#: machinery, on the same dated episode files, via
-#: :func:`personal_edition_spec`.
-PERSONAL_EXTRA_SHOW_SLUGS: Tuple[str, ...] = ()
+#: Shows a member may choose beyond the Nerra Daily roster. Empty from
+#: Oct 2 2026 (the launch cohort joined the Nerra Daily lineup itself) until
+#: Oct 17 2026, when Vancouver Daily News left the 7:00 AM Eastern edition to
+#: keep its local 05:15 Pacific slot (operator) — it stays choosable here.
+#: Segments are discovered by the same per-show machinery, on the same dated
+#: episode files, via :func:`personal_edition_spec`.
+PERSONAL_EXTRA_SHOW_SLUGS: Tuple[str, ...] = ("vancouver",)
 
 #: The only shows a personal lineup may contain — the EN edition roster plus
 #: the extra shows above. The Worker mirrors this exact set

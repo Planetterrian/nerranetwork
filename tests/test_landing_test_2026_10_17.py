@@ -97,10 +97,16 @@ class TestLinks:
         assert not [p for p in posts if p in stubs]
 
     def test_no_utm_on_internal_links(self, rendered):
-        bad = [
-            h for h in _HREF_RE.findall(rendered)
-            if "utm_" in h and (_internal(h) or "nerranetwork.com" in h)
-        ]
+        # v2 (Oct 17 2026): an EXTERNAL share intent (x.com, linkedin, …)
+        # carries the shared article's funnel-tagged URL as a parameter —
+        # that is the blog share row's own pattern, not an internal link. A
+        # link is internal when it is relative or its HOST is ours.
+        from urllib.parse import urlparse
+
+        def _ours(h):
+            return _internal(h) or (urlparse(h).hostname or "").endswith("nerranetwork.com")
+
+        bad = [h for h in _HREF_RE.findall(rendered) if "utm_" in h and _ours(h)]
         assert not bad, bad
 
 

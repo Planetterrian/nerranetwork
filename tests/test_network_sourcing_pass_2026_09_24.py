@@ -185,15 +185,16 @@ class TestPersonalVocabularyWidened:
 
     def test_cohort_is_choosable(self):
         # 2026-10-02: the cohort joined the Nerra Daily lineup itself
-        # (operator: every English show in the edition), so the extras are
-        # empty and the vocabulary is the roster — every cohort show is
-        # still choosable, which is what this guard protects.
+        # (operator: every English show in the edition), so the extras were
+        # empty. 2026-10-17: Vancouver left the 7 AM Eastern edition (local
+        # Pacific slot) and is the one extra — every cohort show is still
+        # choosable, which is what this guard protects.
         from engine.daily_edition import EDITIONS
         from engine.personal_edition import (
             PERSONAL_EXTRA_SHOW_SLUGS, PERSONAL_SHOW_SLUGS, personal_edition_spec,
         )
-        assert PERSONAL_EXTRA_SHOW_SLUGS == ()
-        assert self.COHORT <= set(EDITIONS["en"].lineup)
+        assert PERSONAL_EXTRA_SHOW_SLUGS == ("vancouver",)
+        assert self.COHORT - {"vancouver"} <= set(EDITIONS["en"].lineup)
         assert self.COHORT <= set(PERSONAL_SHOW_SLUGS)
         spec = personal_edition_spec()
         assert spec.lineup == PERSONAL_SHOW_SLUGS and spec.slug == EDITIONS["en"].slug

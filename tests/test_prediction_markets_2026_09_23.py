@@ -326,7 +326,8 @@ class TestWiring:
         assert reg["brand_color"] != "#4338CA"
 
     def test_launched_and_on_the_clock(self):
-        # Launch-cohort PR C (2026-09-23): daily at 11:16 UTC.
+        # Launch-cohort PR C (2026-09-23): daily; since Oct 17 2026 at 06:05
+        # Eastern (fallback cron 11:05 UTC, the EST equivalent).
         from review_episodes import PRELAUNCH_SLUGS, SHOW_REGISTRY
         assert SLUG not in PRELAUNCH_SLUGS and SHOW_REGISTRY[SLUG]["schedule"] == "daily"
         wf = (ROOT / ".github" / "workflows" / "run-show.yml").read_text(encoding="utf-8")

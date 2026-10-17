@@ -204,6 +204,7 @@ def post_due_comments(
     now: Optional[_dt.datetime] = None,
     *,
     show_dir: Optional[str] = None,
+    stateless: bool = False,
 ) -> Dict[str, int]:
     """Post every queued comment whose Short has gone public. Sweep entry
     point for ``scripts/post_scheduled_short_comments.py``.
@@ -216,21 +217,28 @@ def post_due_comments(
     comments on the same Short. Matrix jobs pass their own show; only
     single-job sweeps (nightly) run the full glob.
 
+    Oct 17 2026: every due entry is first checked against the video
+    (``engine.youtube.video_has_comment``) — the half-hourly X-queue job
+    now runs this sweep too, so a scheduled long-form's comment goes up
+    within half an hour of the video, and that job cannot commit the
+    sidecar back. An entry whose comment is already on the video is
+    removed as ``already_posted`` instead of posted twice. *stateless*
+    (the X-queue run) also KEEPS an entry when that check fails, since a
+    run that cannot record what it posted must never post blind; the
+    committing sweeps (nightly, multilingual) post as before.
+
     Returns counters: posted / kept (not yet due) / dropped (too old or
-    repeatedly failing). Missing credentials for a channel keep its
+    repeatedly failing) / already_posted. Missing credentials for a channel keep its
     entries queued for the next sweep; an entry that fails 3 attempts is
     dropped early (a 403 comments-disabled channel used to be retried
     every sweep for 7 days at real quota cost).
     """
-    from engine.youtube import (
-        get_channel_credentials_from_env,
-        post_video_comment,
-    )
+    from engine import youtube as _yt
 
     now = now or _dt.datetime.now(_dt.timezone.utc)
     if now.tzinfo is None:
         now = now.replace(tzinfo=_dt.timezone.utc)
-    stats = {"posted": 0, "kept": 0, "dropped": 0}
+    stats = {"posted": 0, "kept": 0, "dropped": 0, "already_posted": 0}
     creds_cache: Dict[str, object] = {}
 
     pattern = (f"digests/{show_dir}/{_SIDECAR_NAME}"
@@ -270,14 +278,25 @@ def post_due_comments(
                 continue
             ch = entry.get("channel", "en")
             if ch not in creds_cache:
-                creds_cache[ch] = get_channel_credentials_from_env(ch)
+                creds_cache[ch] = _yt.get_channel_credentials_from_env(ch)
             creds = creds_cache[ch]
             if creds is None:
                 keep.append(entry)  # no token in this environment — retry later
                 stats["kept"] += 1
                 continue
+            seen = _yt.video_has_comment(
+                credentials=creds, video_id=entry.get("video_id", ""),
+                text=entry.get("text", ""))
+            if seen is True:
+                stats["already_posted"] += 1
+                changed = True
+                continue
+            if seen is None and stateless:
+                keep.append(entry)  # cannot confirm absence; never post blind
+                stats["kept"] += 1
+                continue
             try:
-                cid = post_video_comment(
+                cid = _yt.post_video_comment(
                     credentials=creds,
                     video_id=entry["video_id"],
                     text=entry["text"],

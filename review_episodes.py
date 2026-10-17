@@ -157,7 +157,7 @@ SHOW_REGISTRY = {
         "max_audio_s": 1500,
         "required_sections": [],
         # July 21 2026: aligned to the production CRON_MAP in
-        # .github/workflows/run-show.yml ("7 8 * * 1" = Monday-only).
+        # .github/workflows/run-show.yml ("15 9 * * 1" = Monday-only).
         # The stale "odd_weekday" belief made the audit flag a phantom
         # "missed episode" on every non-Monday odd weekday AND dispatch an
         # off-schedule episode via the retry path (the July 18 network
@@ -264,7 +264,7 @@ SHOW_REGISTRY = {
         "max_audio_s": 1200,
         "required_sections": [],
         "narrative": True,   # topic-queue show — fetches no articles by design
-        # DAILY, not weekday. The cron is "1 9 * * *" with no day gate and
+        # DAILY, not weekday. The cron is "0 9 * * *" with no day gate and
         # the show ships all seven days (3 Saturdays + 3 Sundays in the
         # last 21 episodes). While this said "weekday" the audit treated
         # UC as not-due at weekends, so a MISSED Saturday or Sunday

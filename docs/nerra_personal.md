@@ -334,8 +334,14 @@ Batch host:
    ~5:40am Pacific). The edition workflow (`nerra-daily.yml`, step "Wake
    the Nerra Personal build") now dispatches the batch build the moment
    the edition publishes, gated on the edition having been published by
-   that very run (since Oct 8 2026 the edition goes out at ~8:00 AM
-   Pacific, so the Personal build follows it then). It needs one secret in THIS repo:
+   that very run (since Oct 17 2026 the edition goes out by 7:00 AM
+   Eastern / 4:00 AM Pacific, so the Personal build follows it then; it was
+   ~8:00 AM Pacific from Oct 8). **Vancouver Daily News is choosable here but
+   is not in the edition** and publishes after it (08:15 ET slot); the wake
+   at edition time is too early for it, and the builder skips members
+   already built for the date, so today a member who carries Vancouver gets
+   a feed without that day's Vancouver segment (open operator item: a second
+   wake after Vancouver lands, or a per-member re-make). It needs one secret in THIS repo:
    `PERSONAL_BATCH_DISPATCH_TOKEN` = a fine-grained PAT (Settings →
    Developer settings → Personal access tokens → Fine-grained), repository
    access **only `nerra-personal-batch`**, permission **Actions: Read and

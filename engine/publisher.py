@@ -330,6 +330,7 @@ def update_rss_feed(
     person_url: str = "",
     person_img: str = "",
     episode_page_url: str = "",
+    keep_existing_guid: bool = False,
 ) -> Path:
     """Create or update an RSS feed with a new episode.
 
@@ -358,6 +359,11 @@ def update_rss_feed(
         RSS channel-level metadata.
     guid_prefix:
         Prefix for episode GUID strings.
+    keep_existing_guid:
+        Reuse the GUID the feed already carries for *episode_num* (Oct 17
+        2026). A run publishes its audio first and rewrites the item after
+        the video adds a YouTube link; a fresh GUID on that rewrite would
+        make every podcast app download the episode a second time.
     format_duration_func:
         Optional callable ``(float) -> str`` for formatting duration.
         If ``None``, a simple ``HH:MM:SS`` formatter is used.
@@ -578,6 +584,10 @@ def update_rss_feed(
     # --- Build new episode metadata ----------------------------------------
     current_time_str = datetime.datetime.now().strftime("%H%M%S%f")
     new_guid = f"{guid_prefix}-ep{episode_num:03d}-{episode_date:%Y%m%d}-{current_time_str}"
+    if keep_existing_guid:
+        _published = (episodes_by_number.get(episode_num) or {}).get("guid", "")
+        if _published:
+            new_guid = _published
 
     # --- Collect all episodes, then add in descending order ----------------
     # Podcast clients expect the newest episode first in the RSS feed.

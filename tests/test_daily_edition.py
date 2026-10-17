@@ -72,7 +72,9 @@ class TestEditionSpec:
             if lang != "en":
                 continue
             english.add(path.stem)
-        excluded = {"age_of_ai", "nerra_voices"}
+        # Oct 17 2026 (operator): Vancouver Daily News keeps its local 05:15
+        # Pacific slot (08:15 ET) and is NOT in the 7 AM Eastern edition.
+        excluded = {"age_of_ai", "nerra_voices", "vancouver"}
         # Not shows: the pronunciation map, translation overrides and the
         # scaffold queue live in the same directory.
         english = {s for s in english if (ROOT / "shows" / f"{s}.yaml").exists()
@@ -93,16 +95,19 @@ class TestEditionSpec:
             "omni_view_world", "omni_view_north_america", "omni_view_europe",
             "omni_view_asia_pacific", "omni_view_africa_mideast",
             "omni_view_latam", "mag7", "ai_chips", "prediction_markets",
-            "vancouver", "collingwood", "longevity", "peptides",
+            "collingwood", "longevity", "peptides",
+            # Oct 17 2026: Vancouver left the edition (local Pacific slot).
         }
+        assert "vancouver" not in SPEC.lineup
 
     def test_lineup_operator_order(self):
         # Operator-set rundown (2026-10-13): the whole order is the
-        # operator's, so the whole order is pinned.
+        # operator's, so the whole order is pinned. Oct 17 2026: Vancouver
+        # left the edition; the rest keep their order.
         assert SPEC.lineup == (
             "spacex", "tesla", "planetterrian", "models_agents",
             "fascinating_frontiers", "omni_view_world", "mag7",
-            "modern_investing", "vancouver", "longevity", "peptides",
+            "modern_investing", "longevity", "peptides",
             "offshore_north", "ai_chips", "first_principles",
             "unintended_consequences", "prediction_markets",
             "models_agents_beginners", "collingwood", "env_intel", "dp_pod",

@@ -10,6 +10,12 @@ placement after the description) to
 comment whose publish time has passed, using the channel's own
 credentials, and removes it from the sidecar.
 
+Oct 17 2026: scheduled LONG-FORMS queue their comment here too (the
+release schedule makes them public at 12:00 / 18:00 ET), and the
+half-hourly X-queue job runs this with ``--stateless`` so the comment goes
+up within half an hour of the video; every sweep checks the video for the
+comment before posting, because that job does not commit the sidecar.
+
 Wired into the multilingual sweep (14:07 / 18:07 UTC — right after the EN
 17:00 and RU 15:00/18:00 slots... the next run always covers a slot) and
 nightly maintenance (catches the late-evening slots). Safe to run any
@@ -45,6 +51,11 @@ def main() -> int:
              "run inside a parallel per-show matrix (multilingual.yml) — "
              "concurrent global sweeps each posted the same pending "
              "comments, shipping 2-3 identical bot comments per Short.")
+    ap.add_argument(
+        "--stateless", action="store_true",
+        help="This run cannot commit the sidecar back (the half-hourly "
+             "x-queue job): keep an entry whenever the already-posted check "
+             "fails, so a comment is never posted twice.")
     args = ap.parse_args()
 
     show_dir = None
@@ -65,10 +76,12 @@ def main() -> int:
             logger.info("--show %s: config resolve failed (%s) — using the "
                         "value as a directory name", slug, exc)
 
-    stats = post_due_comments(PROJECT_ROOT, show_dir=show_dir)
+    stats = post_due_comments(PROJECT_ROOT, show_dir=show_dir,
+                              stateless=args.stateless)
     logger.info(
-        "Scheduled-Short comments: %d posted, %d kept for a later sweep, "
-        "%d dropped.", stats["posted"], stats["kept"], stats["dropped"],
+        "Scheduled-video comments: %d posted, %d kept for a later sweep, "
+        "%d dropped, %d already on the video.", stats["posted"],
+        stats["kept"], stats["dropped"], stats.get("already_posted", 0),
     )
     return 0
 

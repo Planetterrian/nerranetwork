@@ -615,6 +615,44 @@ def post_video_comment(
         return None
 
 
+def video_has_comment(
+    *,
+    credentials,
+    video_id: str,
+    text: str,
+) -> Optional[bool]:
+    """Whether *video_id* already carries a top-level comment reading *text*.
+
+    Oct 17 2026: the deferred-comment sweep also runs from the half-hourly
+    X-queue job, which cannot commit ``scheduled_comments.json`` back, so
+    the sweep checks the video before posting rather than trusting the
+    sidecar alone. ``True`` / ``False``, or ``None`` when the check itself
+    failed (the caller decides). ~1 quota unit.
+    """
+    want = (text or "").strip()[:9500]
+    if not want or not video_id:
+        return None
+    try:
+        from googleapiclient.discovery import build
+        youtube = build(
+            "youtube", "v3", credentials=credentials, cache_discovery=False,
+        )
+        resp = youtube.commentThreads().list(
+            part="snippet", videoId=video_id, maxResults=100,
+            order="time", textFormat="plainText",
+        ).execute()
+        for item in (resp or {}).get("items", []):
+            top = (((item or {}).get("snippet") or {})
+                   .get("topLevelComment") or {}).get("snippet") or {}
+            got = (top.get("textOriginal") or top.get("textDisplay") or "").strip()
+            if got == want:
+                return True
+        return False
+    except Exception as exc:  # noqa: BLE001 — the caller decides
+        logger.info("comment check on %s failed: %s", video_id, exc)
+        return None
+
+
 # Caption-track failure classes (Sep 18 2026). The reason string is what
 # run_show records as ``caption_track_error`` so a refusal is countable
 # from the metrics files instead of only findable in an Actions log.

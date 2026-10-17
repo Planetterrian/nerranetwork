@@ -196,6 +196,12 @@ def record_youtube_outcomes(
         # Optimized title + its A/B candidates (June 2026). Persisted so the
         # operator's Studio "Test & Compare" variants survive past the
         # Actions log (previously they existed nowhere else).
+        # East-coast release schedule (Oct 17 2026): when the long-form and
+        # the hook Short go PUBLIC (UTC), absent = published at upload.
+        # engine/release_schedule.py owns the slots; these say what shipped.
+        for key in ("long_publish_at", "short_publish_at"):
+            if youtube_urls.get(key):
+                metrics.record(f"youtube_{key}", str(youtube_urls[key]))
         if youtube_urls.get("youtube_title"):
             metrics.record("youtube_title", str(youtube_urls["youtube_title"]))
         if youtube_urls.get("youtube_title_variants"):

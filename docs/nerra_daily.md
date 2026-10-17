@@ -22,7 +22,7 @@ rationale lives in the `engine/daily_edition.py` module docstring, and
   shows-glob consumer. Do not add one.
 - **Fixed, consistent rundown** (operator-set; current order 2026-10-13):
   spacex, tesla, planetterrian, models_agents, fascinating_frontiers,
-  omni_view_world, mag7, modern_investing, vancouver, longevity, peptides,
+  omni_view_world, mag7, modern_investing, longevity, peptides,
   offshore_north, ai_chips, first_principles, unintended_consequences,
   prediction_markets, models_agents_beginners, collingwood, env_intel,
   dp_pod, then omni_view and the five regional desks (North America,
@@ -30,7 +30,9 @@ rationale lives in the `engine/daily_edition.py` module docstring, and
   to close. `engine/daily_edition.py` `EDITIONS["en"].lineup` is the
   source of truth. Shows that skipped their day are simply
   absent; Mira's rundown adapts. Every English show is included (MAB
-  too — completeness over the M&A overlap, operator's call). Age of AI
+  too — completeness over the M&A overlap, operator's call) **except
+  Vancouver Daily News**, which keeps its local 05:15 Pacific slot and is
+  not in the 7:00 AM Eastern edition (Oct 17 2026, operator). Age of AI
   is **plugged, never spliced** (interviews run 40+ min).
 
 ## The outro trim
@@ -250,6 +252,28 @@ flight, three flagships went to recovery PRs (#1376-#1378) and the edition
 shipped without them. Register `nerra-daily-8am-pacific-2026-10-08`;
 guards `tests/test_nerra_daily_8am_pacific_2026_10_08.py`,
 `tests/test_push_show_artifacts.py::TestTheBlogCollision`.
+
+**Oct 17 2026 — the edition is out by 7:00 AM Eastern (4:00 AM Pacific)
+(operator-directed; supersedes the Oct 8 Pacific release above).** The whole
+schedule moved to EASTERN wall time: the scheduler Worker's `SLOTS` are
+Eastern (`SLOT_TZ = America/New_York`), every edition show starts between
+04:00 and 06:10 ET (Top World last, after the desks), and each show's audio
+lands ~15-20 minutes after its run starts. `ready_decision` waits until
+**06:35 ET** (`RELEASE_EASTERN`) whatever has landed, builds as soon as every
+expected show has published or skipped, holds for a straggler until
+**06:50 ET** (`HOLD_UNTIL_EASTERN`), then builds with whatever exists; a
+build takes 6-7 minutes. 06:35 ET is 10:35 UTC under EDT and 11:35 UTC under
+EST, so the 1 November change moves nothing. The Worker dispatches at 06:35
+and 06:50 ET from its one cron trigger, now `"*/5 * * * *"` (every slot, the
+edition and the X queue sit on multiples of five Eastern minutes, which are
+multiples of five UTC minutes under both offsets); GitHub sweeps at 10:40 /
+10:55 / 11:40 / 11:55 UTC are the late fallbacks for both offsets.
+**Vancouver Daily News is not in the edition** — it keeps its local 05:15
+Pacific slot (08:15 ET) and stays choosable in Nerra Personal
+(`PERSONAL_EXTRA_SHOW_SLUGS`). Guards:
+`tests/test_seven_am_eastern_2026_10_17.py`,
+`tests/test_nerra_daily_8am_pacific_2026_10_08.py` (renamed in substance:
+it now pins the Eastern clock).
 
 Before Oct 8 — the ready gate is a pure function, `engine.daily_edition.ready_decision`:
 build when every expected show has published or skipped; past the

@@ -543,6 +543,15 @@ youtube:
     en: [17, 21, 23]
     ru: [15, 18, 20]
     fr: [17, 19, 21]
+  # ---- East-coast release schedule (Oct 17 2026, operator-directed) ----
+  # The hook Short goes public at 7:00 ET + 15 min x the show's rank among
+  # the channel's YouTube shows (Vancouver: 7:00 Pacific), the long-form at
+  # 12:00 / 18:00 ET in two waves (engine/release_schedule.py). Both upload
+  # at run time, private with publishAt; a passed slot publishes now. Later
+  # staggered Shorts always follow Short #1. The long-form's funnel comment
+  # is queued to scheduled_comments.json and posted by the half-hourly
+  # x-queue sweep. false = publish everything the minute the run ends.
+  release_schedule_enabled: true
   # ---- Site-showcase video endings (Aug 2026, operator-directed) ----
   # Long-form videos fade in a 1920x1080 outro card over their last
   # outro_card_duration_seconds: framed screenshots of the show's

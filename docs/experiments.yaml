@@ -4941,3 +4941,76 @@ experiments:
       read by article_age_days; _open_positions_note in the MIT hook; Top
       World intake_line(0, n) == ""; _build_teaser clips via engine.titles.
       ⚠️ AUDIO: Prediction Markets teaser, MIT pick context.
+  - id: nerra-daily-7am-eastern-2026-10-17
+    title: "The schedule runs on Eastern time and Nerra Daily is out by 7am Eastern"
+    area: product
+    shipped: 2026-10-17
+    readout: 2026-11-07
+    status: reading
+    baseline: >
+      Oct 8-16: the edition released at 07:50 PT (14:50 UTC) after shows
+      that ran 06:01-12:16 UTC on a UTC Worker table; the slots moved an
+      hour against New York on every clock change. Vancouver Daily News was
+      the edition's last expected show.
+    target: >
+      Over 21 days spanning the 1 November change: the edition commit lands
+      by 07:00 Eastern on >= 19 days; missing_expected empty on >= 17 days;
+      every Worker dispatch fires at its Eastern minute on both sides of
+      1 November (scheduler logs / Actions run start times).
+    criteria: >
+      Hit = all three. An edition after 07:00 ET means a straggler held it
+      past 06:50: read missing_expected for the show and fix that show's
+      run (audio before video), never move the release earlier. Five-minute
+      slot spacing puts ~8 runs in flight at once; a push-contention
+      recovery PR on the morning slate is a reason to widen the spacing.
+    notes: >
+      workers/scheduler SLOTS on Eastern wall time (SLOT_TZ
+      America/New_York), one cron trigger "*/5 * * * *"; EDITION_DISPATCH
+      06:35/06:50 ET; X_QUEUE_DISPATCH :05/:35 from 07:05 to 22:05 ET.
+      run-show.yml fallbacks are the EST equivalents (ET + 5 h).
+      engine/daily_edition.py RELEASE_EASTERN (6, 35) / HOLD_UNTIL_EASTERN
+      (6, 50); Vancouver left the lineup (stays choosable in Nerra
+      Personal). Needs `wrangler deploy` in workers/scheduler. No audio or
+      prompt change — outside landmine #17. Guards
+      tests/test_seven_am_eastern_2026_10_17.py.
+  - id: audio-first-2026-10-17
+    title: "A run publishes its audio before it renders video"
+    area: reliability
+    shipped: 2026-10-17
+    readout: 2026-11-07
+    status: reading
+    baseline: >
+      Oct 2026: one commit at the end of each run; a flagship episode reached
+      main 34-40 minutes after its run started (video ~2/3 of it).
+    target: >
+      Median minutes from run start to the "(audio)" commit on main <= 18 for
+      the run_show slate; audio_first_pushed true on >= 95% of episodes; no
+      podcast app sees a second GUID for one episode.
+    criteria: >
+      Hit = all three. A false audio_first_pushed is not a lost episode (the
+      final commit carries it) but a recurring one means push contention on
+      the 5-minute slate.
+    notes: >
+      run_show _checkpoint_publish -> scripts/checkpoint_publish.sh;
+      update_rss_feed keep_existing_guid on the post-video rewrite.
+  - id: release-schedule-2026-10-17
+    title: "YouTube, X and newsletters released through the Eastern day"
+    area: growth
+    shipped: 2026-10-17
+    readout: 2026-11-14
+    status: reading
+    baseline: >
+      Oct 2026: every Short and long-form went public the minute it uploaded
+      (05:00-08:00 ET), the newsletter sent at run end, X posted from a
+      Pacific 6:30 AM - 7 PM grid.
+    target: >
+      Age-3 hook-Short median per channel (api/youtube_early_reach.json) and
+      long-form views per video at day 7 not below the four weeks before;
+      newsletter open rate not below baseline.
+    criteria: >
+      Read at a fixed age; compare the same channels. A scheduled video that
+      never went public, or a newsletter Buttondown left unsent, is a defect,
+      not a result.
+    notes: >
+      engine/release_schedule.py; youtube.release_schedule_enabled per show
+      reverts; youtube_long_publish_at / youtube_short_publish_at metrics.

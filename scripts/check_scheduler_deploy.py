@@ -9,7 +9,9 @@ watched for it, because every guard compared two files in the repo.
 
 This reads the Worker's ``GET /`` (set the repo variable ``SCHEDULER_STATUS_URL``
 to its ``*.workers.dev`` URL; see ``workers/scheduler/README.md``) and diffs its
-``slots`` against ``workers/scheduler/src/index.ts``. Loud but non-blocking:
+``slots`` against ``workers/scheduler/src/index.ts`` — both on Eastern wall
+time since Oct 17 2026 (a Worker still answering UTC ``"09:16Z"`` rows is
+named as deployed before the Eastern schedule). Loud but non-blocking:
 a drift prints a ``::warning::`` annotation naming each missing / extra /
 changed slot and says how to fix it (``git pull && npx wrangler deploy`` in
 ``workers/scheduler``). ``--strict`` exits non-zero instead. An unset variable
@@ -33,7 +35,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from engine.scheduler_slots import (  # noqa: E402
-    has_drift, slot_drift, slots_from_status, worker_slots,
+    SLOT_TZ, has_drift, slot_drift, slots_from_status, status_clocks, worker_slots,
 )
 
 ENV_VAR = "SCHEDULER_STATUS_URL"
@@ -48,7 +50,7 @@ def fetch_status(url: str, timeout: float = 20.0) -> dict:
 
 def _fmt(slot) -> str:
     h, m, f = slot
-    return f"{h:02d}:{m:02d}Z" + (f" ({f})" if f else "")
+    return f"{h:02d}:{m:02d} ET" + (f" ({f})" if f else "")
 
 
 def check(payload: dict, committed: Optional[dict] = None) -> tuple[bool, list[str]]:
@@ -57,7 +59,13 @@ def check(payload: dict, committed: Optional[dict] = None) -> tuple[bool, list[s
     live = slots_from_status(payload)
     lines: list[str] = []
     if not live:
-        lines.append("deployed Worker returned no slot table (old build, or not the status page)")
+        other = {k: v for k, v in status_clocks(payload).items() if k != SLOT_TZ}
+        if other:
+            clocks = ", ".join(f"{n} on {k}" for k, n in sorted(other.items()))
+            lines.append(f"deployed Worker reports its slots on another clock ({clocks}), "
+                         f"not {SLOT_TZ} — it predates the Eastern schedule; redeploy")
+        else:
+            lines.append("deployed Worker returned no slot table (old build, or not the status page)")
         return False, lines
     drift = slot_drift(committed, live)
     for show, slot in sorted(drift["missing_live"].items()):

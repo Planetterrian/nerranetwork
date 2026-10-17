@@ -165,6 +165,10 @@ EDITIONS: Dict[str, EditionSpec] = {
             # DP Pod among them, then Omni View and the five regional desks
             # to close. Shows absent on a given day (Monday-only and
             # single-weekday shows, skips) simply drop out of the order.
+            # Oct 17 2026 (operator): Vancouver Daily News keeps its local
+            # 05:15 Pacific slot (08:15 ET) and is NOT in the 7 AM Eastern
+            # edition; members can still choose it in Nerra Personal
+            # (engine.personal_edition.PERSONAL_EXTRA_SHOW_SLUGS).
             "spacex",
             "tesla",
             "planetterrian",
@@ -173,7 +177,6 @@ EDITIONS: Dict[str, EditionSpec] = {
             "omni_view_world",
             "mag7",
             "modern_investing",
-            "vancouver",
             "longevity",
             "peptides",
             "offshore_north",
@@ -326,7 +329,7 @@ class Lineup:
 
     segments: List[Segment]
     #: Expected today, not published, and NOT known to have skipped — the
-    #: ready gate waits for these (until the end of the 09:00 Pacific hold).
+    #: ready gate waits for these (until the end of the 06:50 Eastern hold).
     missing: List[str]
     #: Expected today, not published, and carrying a committed skip marker
     #: for the date: ``[{"slug", "reason"}]``. The gate does not wait for
@@ -476,29 +479,33 @@ def expected_slugs(spec: EditionSpec, target_date: _dt.date) -> List[str]:
     return out
 
 
-#: Release clock (Oct 8 2026, operator-directed): the edition goes out at
-#: 8:00 AM Pacific, after every show of the morning has finished. The gate
-#: opens at ``RELEASE_PACIFIC`` because a build takes 6-7 minutes (Oct 2026
-#: runs), so the episode is live by about 8:00. It reads Pacific wall time,
-#: never a UTC hour, so the release does not move an hour on 1 November and
-#: in March: 07:50 is 14:50 UTC under PDT and 15:50 UTC under PST.
+#: Release clock (Oct 17 2026, operator-directed): the edition is out by
+#: 7:00 AM Eastern (4:00 AM Pacific), after every edition show of the morning
+#: has finished. Oct 8 2026 had set 8:00 AM Pacific; the schedule now runs on
+#: Eastern wall time end to end (the scheduler Worker's SLOT_TZ), with Top
+#: World — the edition's last show — starting at 06:10 ET and landing its
+#: audio ~15-20 minutes later. The gate opens at ``RELEASE_EASTERN`` because a
+#: build takes 6-7 minutes (Oct 2026 runs). It reads Eastern wall time, never
+#: a UTC hour, so the release does not move an hour on 1 November and in
+#: March: 06:35 is 10:35 UTC under EDT and 11:35 UTC under EST.
 #:
 #: Before the release the gate always waits, even when the slate is
 #: complete — the old rule built the moment the last show landed (09:47 to
 #: 13:36 UTC across Sep 23 - Oct 7) and on Oct 7 shipped without Fascinating
 #: Frontiers, First Principles and SpaceX, whose pushes were still stuck.
 #: At the release it builds once every expected show has published or
-#: skipped. A show still missing is waited for until ``HOLD_UNTIL_PACIFIC``
+#: skipped. A show still missing is waited for until ``HOLD_UNTIL_EASTERN``
 #: (a straggler that lands in the hold triggers the build through the
 #: workflow_run event), and past that the edition builds with whatever
 #: exists: a run that failed outright leaves no marker, so without a limit
 #: it would hold the edition for the whole network forever.
-EDITION_TZ = "America/Los_Angeles"
-RELEASE_PACIFIC = (7, 50)
-HOLD_UNTIL_PACIFIC = (9, 0)
+EDITION_TZ = "America/New_York"
+RELEASE_EASTERN = (6, 35)
+HOLD_UNTIL_EASTERN = (6, 50)
 
 
-def _pacific(target_date: _dt.date, hm: Tuple[int, int]) -> _dt.datetime:
+def _edition_clock(target_date: _dt.date, hm: Tuple[int, int]) -> _dt.datetime:
+    """*hm* on *target_date*, on the edition's (Eastern) wall clock."""
     from zoneinfo import ZoneInfo
 
     return _dt.datetime.combine(
@@ -507,8 +514,8 @@ def _pacific(target_date: _dt.date, hm: Tuple[int, int]) -> _dt.datetime:
 
 def release_window(target_date: _dt.date) -> Tuple[_dt.datetime, _dt.datetime]:
     """(release, hold-until) for *target_date*, as aware UTC datetimes."""
-    return (_pacific(target_date, RELEASE_PACIFIC).astimezone(_dt.timezone.utc),
-            _pacific(target_date, HOLD_UNTIL_PACIFIC).astimezone(_dt.timezone.utc))
+    return (_edition_clock(target_date, RELEASE_EASTERN).astimezone(_dt.timezone.utc),
+            _edition_clock(target_date, HOLD_UNTIL_EASTERN).astimezone(_dt.timezone.utc))
 
 
 def ready_decision(
@@ -529,18 +536,18 @@ def ready_decision(
     release, hold_until = release_window(target_date)
     accounted = landed + skipped
     tally = f"{accounted}/{expected}"
-    rel = "%02d:%02d" % RELEASE_PACIFIC
-    hold = "%02d:%02d" % HOLD_UNTIL_PACIFIC
+    rel = "%02d:%02d" % RELEASE_EASTERN
+    hold = "%02d:%02d" % HOLD_UNTIL_EASTERN
     if now_utc < release:
-        return "wait", f"holding for the {rel} Pacific release ({tally} accounted so far)"
+        return "wait", f"holding for the {rel} Eastern release ({tally} accounted so far)"
     if expected and accounted >= expected:
         return "build", f"every expected show has published or skipped ({tally})"
     if now_utc >= hold_until:
         # build_edition still refuses an edition under spec.min_segments;
         # the gate's job is only to stop waiting.
-        return "build", f"hold ended at {hold} Pacific — building with {tally} accounted"
+        return "build", f"hold ended at {hold} Eastern — building with {tally} accounted"
     return "wait", (f"{tally} accounted — holding for the stragglers until "
-                    f"{hold} Pacific")
+                    f"{hold} Eastern")
 
 
 # ---------------------------------------------------------------------------
@@ -1614,6 +1621,8 @@ def build_edition_metrics(
     skipped_today: Optional[List[dict]] = None,
     x_posted: Optional[bool] = None,
     x_post_skipped: str = "",
+    x_post_queued: Optional[bool] = None,
+    x_post_queued_for: str = "",
 ) -> dict:
     """The committed ``metrics_ep*.json`` record for one edition build.
 
@@ -1671,4 +1680,11 @@ def build_edition_metrics(
         # dry run); x_post_skipped names why a False happened.
         "x_posted": x_posted,
         "x_post_skipped": x_post_skipped or "",
+        # Oct 17 2026: True when the post was HANDED to the X queue for the
+        # reserved 7:00 ET slot (x_posted is then True as in run_show: a
+        # hand-off, the x-queue run is the delivery record); False when it
+        # was not queued (a direct post when the queue is unconfigured or the
+        # enqueue failed, or a skip named in x_post_skipped); None = not tried.
+        "x_post_queued": x_post_queued,
+        "x_post_queued_for": x_post_queued_for or "",
     }

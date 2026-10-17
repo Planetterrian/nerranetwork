@@ -1,8 +1,12 @@
-"""Oct 11 2026 (Patrick: "make any improvements"). The shows publish between
-about 11 PM and 5 AM Pacific and their first X posts went out then, to an
-audience that was asleep. A post now waits for a half-hour slot between
-6:30 AM and 7 PM Pacific, one post per slot; the scheduler Worker dispatches
-x-queue.yml to post what is due. A second wave of shows turns on by date.
+"""Oct 11 2026 (Patrick: "make any improvements"). The shows publish in the
+early morning and their first X posts went out then, to an audience that was
+asleep. A post now waits for a half-hour slot, one post per slot; the
+scheduler Worker dispatches x-queue.yml to post what is due. A second wave of
+shows turns on by date.
+
+Oct 17 2026: the grid is New York time, 7:00 AM to 10:00 PM ET. Nerra Daily
+holds 7:00 ET; a show takes its own release slot (engine/release_schedule.py)
+when it is free and not past, else the next free slot.
 """
 from __future__ import annotations
 
@@ -19,40 +23,69 @@ sys.path.insert(0, str(ROOT))
 from engine import x_queue  # noqa: E402
 from engine.config import load_config  # noqa: E402
 
-P = x_queue.PACIFIC
+E = x_queue.EASTERN
 UTC = dt.timezone.utc
 RUN_SHOW = (ROOT / "run_show.py").read_text(encoding="utf-8")
 WORKER = (ROOT / "workers" / "scheduler" / "src" / "index.ts").read_text(encoding="utf-8")
 
 
-def pt(y, m, d, h, mi):
-    return dt.datetime(y, m, d, h, mi, tzinfo=P)
+def et(y, m, d, h, mi):
+    return dt.datetime(y, m, d, h, mi, tzinfo=E)
 
 
 # ------------------------------------------------------------------ slots --
 class TestSlots:
-    def test_a_night_post_waits_for_the_morning(self):
-        assert x_queue.next_slot([], pt(2026, 10, 12, 1, 15)) == pt(2026, 10, 12, 6, 30).astimezone(UTC)
+    def test_a_night_post_waits_for_the_morning_and_skips_the_edition_slot(self):
+        # 7:00 ET is Nerra Daily's; the first slot a show can get is 7:30.
+        assert x_queue.next_slot([], et(2026, 10, 12, 1, 15)) == et(2026, 10, 12, 7, 30).astimezone(UTC)
+
+    def test_the_edition_slot_is_only_reserved_for_shows(self):
+        assert x_queue.next_slot([], et(2026, 10, 12, 1, 15), reserve_edition=False) == \
+            et(2026, 10, 12, 7, 0).astimezone(UTC)
 
     def test_one_post_per_slot(self):
-        night = pt(2026, 10, 12, 2, 0)
+        night = et(2026, 10, 12, 2, 0)
         taken = []
         for _ in range(4):
             taken.append(x_queue.next_slot(taken, night))
-        assert [t.astimezone(P).strftime("%H:%M") for t in taken] == ["06:30", "07:00", "07:30", "08:00"]
+        assert [t.astimezone(E).strftime("%H:%M") for t in taken] == ["07:30", "08:00", "08:30", "09:00"]
 
     def test_daytime_posts_go_soon_and_on_the_grid(self):
-        assert x_queue.next_slot([], pt(2026, 10, 12, 9, 10)).astimezone(P) == pt(2026, 10, 12, 9, 30)
-        assert x_queue.next_slot([], pt(2026, 10, 12, 9, 26)).astimezone(P) == pt(2026, 10, 12, 10, 0)
+        assert x_queue.next_slot([], et(2026, 10, 12, 9, 10)).astimezone(E) == et(2026, 10, 12, 9, 30)
+        assert x_queue.next_slot([], et(2026, 10, 12, 9, 26)).astimezone(E) == et(2026, 10, 12, 10, 0)
 
-    def test_evening_rolls_to_tomorrow(self):
-        assert x_queue.next_slot([], pt(2026, 10, 12, 19, 10)).astimezone(P) == pt(2026, 10, 13, 6, 30)
+    def test_the_last_slot_is_ten_pm_and_later_rolls_to_tomorrow(self):
+        assert x_queue.next_slot([], et(2026, 10, 12, 21, 50)).astimezone(E) == et(2026, 10, 12, 22, 0)
+        assert x_queue.next_slot([], et(2026, 10, 12, 22, 10)).astimezone(E) == et(2026, 10, 13, 7, 30)
 
-    def test_slots_follow_pacific_across_the_clock_change(self):
-        # Nov 1 2026: PDT -> PST. 6:30 AM stays 6:30 AM on the wall clock.
-        slot = x_queue.next_slot([], pt(2026, 11, 1, 2, 30))
-        assert slot.astimezone(P).strftime("%H:%M") == "06:30"
-        assert slot == dt.datetime(2026, 11, 1, 14, 30, tzinfo=UTC)
+    def test_slots_follow_eastern_across_the_clock_change(self):
+        # Nov 1 2026: EDT -> EST. 7:30 AM stays 7:30 AM on the wall clock.
+        slot = x_queue.next_slot([], et(2026, 11, 1, 2, 30))
+        assert slot.astimezone(E).strftime("%H:%M") == "07:30"
+        assert slot == dt.datetime(2026, 11, 1, 12, 30, tzinfo=UTC)
+        before = x_queue.next_slot([], et(2026, 10, 31, 2, 30))
+        assert before == dt.datetime(2026, 10, 31, 11, 30, tzinfo=UTC)
+
+
+class TestPreferredSlot:
+    def test_a_show_takes_its_release_slot(self):
+        # spacex is second in the release order: 7:30 + 30 min = 8:00 ET.
+        due = x_queue.choose_slot("spacex", [], et(2026, 10, 12, 5, 0))
+        assert due.astimezone(E) == et(2026, 10, 12, 8, 0)
+
+    def test_a_taken_release_slot_falls_back_to_the_next_free_one(self):
+        taken = [et(2026, 10, 12, 8, 0).astimezone(UTC)]
+        due = x_queue.choose_slot("spacex", taken, et(2026, 10, 12, 5, 0))
+        assert due.astimezone(E) == et(2026, 10, 12, 7, 30)
+
+    def test_a_passed_release_slot_falls_back_to_the_next_free_one(self):
+        due = x_queue.choose_slot("omni_view_world", [], et(2026, 10, 12, 9, 10))
+        assert due.astimezone(E) == et(2026, 10, 12, 9, 30)
+
+    def test_a_show_never_lands_in_the_edition_slot(self):
+        taken = [et(2026, 10, 12, 7, 30).astimezone(UTC)]
+        due = x_queue.choose_slot("omni_view_world", taken, et(2026, 10, 12, 5, 0))
+        assert due.astimezone(E) != et(2026, 10, 12, 7, 0)
 
 
 # ---------------------------------------------------------------- enqueue --
@@ -80,8 +113,9 @@ def test_enqueue_hosts_the_clip_and_takes_a_slot(monkeypatch, tmp_path):
     monkeypatch.setattr(x_queue, "_rest", lambda method, path, **kw: sent.update(kw) or [{"id": "1"}])
     ok, due = x_queue.enqueue(show_slug="spacex", episode_num=128, env_prefix="NERRANETWORK_X_",
                               text="t", media_path=str(clip), media_kind="clip",
-                              now=pt(2026, 10, 12, 2, 56).astimezone(UTC))
-    assert ok and due == "2026-10-12T13:30:00Z"
+                              now=et(2026, 10, 12, 5, 56).astimezone(UTC))
+    # spacex's own release slot: 8:00 AM EDT.
+    assert ok and due == "2026-10-12T12:00:00Z"
     assert sent["json"]["media_url"].endswith("/x_queue/spacex/c.mp4")
     assert "ignore-duplicates" in sent["prefer"] and sent["params"]["on_conflict"] == "show_slug,episode_num"
 
@@ -153,11 +187,21 @@ def test_overlapping_shows_stay_off():
 
 
 # ------------------------------------------------------------ scheduling --
-def test_worker_dispatches_the_queue_on_pacific_half_hours():
-    assert 'workflow: "x-queue.yml"' in WORKER and "minutes: [1, 31]" in WORKER
-    assert "if (xQueueDue(ph, pm))" in WORKER
-    # The edition branch returns, so the queue must be dispatched before it.
-    assert WORKER.index("if (xQueueDue(ph, pm))") < WORKER.index("EDITION_DISPATCH.times.some(")
+def test_worker_dispatches_the_queue_on_eastern_half_hours():
+    # Oct 17 2026: the X slot grid is 7:00 AM - 10:00 PM Eastern and the
+    # Worker dispatches five minutes after each slot, :05 and :35 from
+    # 7:05 AM to 10:05 PM Eastern (it was :01/:31 Pacific, 6:31 AM-7:31 PM).
+    assert 'workflow: "x-queue.yml"' in WORKER and "minutes: [5, 35]" in WORKER
+    m = re.search(r'X_QUEUE_DISPATCH = \{.*?tz: "([^"]+)",\s*first: \[(\d+), (\d+)\].*?'
+                  r'last: \[(\d+), (\d+)\]', WORKER, re.S)
+    assert m, "X_QUEUE_DISPATCH reshaped"
+    assert m.group(1) == "America/New_York"
+    assert (int(m.group(2)), int(m.group(3))) == (7, 5)
+    assert (int(m.group(4)), int(m.group(5))) == (22, 5)
+    assert "if (xQueueDue(clock.hour, clock.minute))" in WORKER
+    # The queue is dispatched first and independently of the edition.
+    assert WORKER.index("if (xQueueDue(clock.hour, clock.minute))") < WORKER.index(
+        "EDITION_DISPATCH.times.some(")
 
 
 def test_the_queue_workflow_carries_what_it_needs():

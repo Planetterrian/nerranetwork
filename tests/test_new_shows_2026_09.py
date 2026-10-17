@@ -484,7 +484,8 @@ class TestHealthWeeklies:
 
     def test_curricula_live_outside_the_narrative_queues(self):
         assert not (ROOT / "shows/topic_queues/peptides.yaml").exists()
-        wf = (ROOT / ".github/workflows/run-show.yml").read_text(encoding="utf-8")
+        wf = (ROOT / ".github/workflows/run-show.yml").read_text(encoding="utf-8") + (
+            ROOT / "scripts/stage_show_artifacts.sh").read_text(encoding="utf-8")
         assert "git add -A shows/curricula/" in wf
 
     def test_closing_carries_the_posture_verbatim(self):

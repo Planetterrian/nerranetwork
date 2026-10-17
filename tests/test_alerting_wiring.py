@@ -76,7 +76,8 @@ class TestRunShowAlertWiring:
         """One `git checkout HEAD -- <file>` per aggregate: the multi-path
         form silently no-ops when any one path is absent from HEAD, leaving
         the tree dirty → the June 28 mass-stranding mode."""
-        wf = (WF / "run-show.yml").read_text(encoding="utf-8")
+        wf = (WF / "run-show.yml").read_text(encoding="utf-8") + (
+            WF.parent.parent / "scripts" / "stage_show_artifacts.sh").read_text(encoding="utf-8")
         assert "for aggregate in blog.rss network.rss blog/index.html" in wf
         assert 'git checkout HEAD -- "$aggregate" 2>/dev/null || true' in wf
         assert "git checkout HEAD -- blog.rss network.rss blog/index.html" not in wf

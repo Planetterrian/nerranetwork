@@ -1,10 +1,21 @@
 /**
  * Exact-time dispatcher for the Run Podcast Show workflow.
  *
- * Mirrors the CRON_MAP in .github/workflows/run-show.yml — keep the two
- * in sync (drift guard: tests/test_scheduling_punctuality.py parses both).
- * dayFilter semantics match the gate: "even"/"odd" = UTC day of month
- * parity, "weekday" = Mon-Fri, "odd_weekday" = both.
+ * Oct 17 2026 (operator-directed): the schedule is anchored to EASTERN wall
+ * time so Nerra Daily is live by 7:00 AM New York and the 1 November clock
+ * change does not move a single slot. SLOTS rows are [etHour, etMinute,
+ * show, dayFilter] on SLOT_TZ; the handler converts each firing to that
+ * clock and matches on it, and the day filters read the Eastern date and
+ * weekday. Every slot sits between 04:00 and 08:15 ET (08:00-13:15 UTC), so
+ * the Eastern and UTC calendar days always agree.
+ *
+ * Mirrors the CRON_MAP in .github/workflows/run-show.yml, whose GitHub
+ * fallback crons are UTC and cannot follow daylight saving: each is the
+ * slot's EST equivalent (ET + 5 h), so in summer the fallback fires an hour
+ * after the Worker and the gate's duplicate guard drops it. Drift guard:
+ * tests/test_scheduling_punctuality.py compares the two at the EST offset.
+ * dayFilter semantics match the gate: "even"/"odd" = day-of-month parity,
+ * "weekday" = Mon-Fri, "odd_weekday" = both, a weekday name = that day.
  */
 
 interface Env {
@@ -14,82 +25,114 @@ interface Env {
 const REPO = "Planetterrian/nerranetwork";
 const WORKFLOW = "run-show.yml";
 
-// Nerra Daily edition dispatch, on PACIFIC wall time (Oct 8 2026,
-// operator-directed: "publish only after all the shows have finished, at
-// 8am Pacific"). 07:50 opens the release — a build takes 6-7 minutes, so
-// the edition is live by ~8:00 — and 09:01 is the end of the straggler
-// hold, past which the gate builds with whatever landed
-// (engine/daily_edition.py RELEASE_PACIFIC / HOLD_UNTIL_PACIFIC). The
-// Worker reads Pacific time instead of a UTC hour so the release does not
-// move on the daylight-saving changes: 07:50 PT is 14:50 UTC under PDT and
-// 15:50 UTC under PST, and wrangler.toml's second trigger covers both. A straggler that
-// lands inside the hold triggers the build itself (nerra-daily.yml's
-// workflow_run). Deliberately an OBJECT, not a SLOTS row —
-// tests/test_scheduling_punctuality.py parses SLOTS rows as shows.
+/** The one wall clock every SLOTS row, the edition and the X queue read. */
+const SLOT_TZ = "America/New_York";
+
+// Nerra Daily edition dispatch, on EASTERN wall time (Oct 17 2026,
+// operator-directed: the edition is out by 7:00 AM New York). 06:35 opens
+// the release — the last edition show (Top World) starts at 06:10 and a
+// build takes 6-7 minutes — and 06:50 is the end of the straggler hold,
+// past which the gate builds with whatever landed
+// (engine/daily_edition.py RELEASE_EASTERN / HOLD_UNTIL_EASTERN). A
+// straggler that lands inside the hold triggers the build itself
+// (nerra-daily.yml's workflow_run). Deliberately an OBJECT, not a SLOTS row
+// — tests/test_scheduling_punctuality.py parses SLOTS rows as shows.
 const EDITION_DISPATCH = {
-  tz: "America/Los_Angeles",
-  times: [[7, 50], [9, 1]] as Array<[number, number]>,
+  tz: "America/New_York",
+  times: [[6, 35], [6, 50]] as Array<[number, number]>,
   workflow: "nerra-daily.yml",
 };
 
-// Daytime X posting for @nerranetwork (Oct 11 2026). Shows queue their
-// post into a half-hour slot between 6:30 AM and 7:00 PM Pacific
-// (engine/x_queue.py); x-queue.yml posts whatever is due. Dispatched at :01
-// and :31 Pacific from 6:31 AM to 7:31 PM, a minute after each slot.
-// Deliberately an OBJECT, not a SLOTS row (those parse as shows).
+// Daytime X posting for @nerranetwork (Oct 11 2026; Eastern since Oct 17).
+// Shows queue their post into a half-hour slot between 7:00 AM and
+// 10:00 PM Eastern (engine/x_queue.py); x-queue.yml posts whatever is due.
+// Dispatched at :05 and :35 Eastern from 7:05 AM to 10:05 PM, five minutes
+// after each slot. Deliberately an OBJECT, not a SLOTS row (those parse as
+// shows).
 const X_QUEUE_DISPATCH = {
   workflow: "x-queue.yml",
-  firstHour: 6,
-  lastHour: 19,
-  minutes: [1, 31],
+  tz: "America/New_York",
+  first: [7, 5] as [number, number],
+  last: [22, 5] as [number, number],
+  minutes: [5, 35],
 };
 
-function xQueueDue(ph: number, pm: number): boolean {
-  if (!X_QUEUE_DISPATCH.minutes.includes(pm)) return false;
-  if (ph < X_QUEUE_DISPATCH.firstHour || ph > X_QUEUE_DISPATCH.lastHour) return false;
-  return !(ph === X_QUEUE_DISPATCH.firstHour && pm < 31);
+function xQueueDue(eh: number, em: number): boolean {
+  if (!X_QUEUE_DISPATCH.minutes.includes(em)) return false;
+  const at = eh * 60 + em;
+  const [fh, fm] = X_QUEUE_DISPATCH.first;
+  const [lh, lm] = X_QUEUE_DISPATCH.last;
+  return at >= fh * 60 + fm && at <= lh * 60 + lm;
 }
 
-/** Hour and minute of *d* on the edition's wall clock. */
-function pacificHourMinute(d: Date): [number, number] {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: EDITION_DISPATCH.tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23",
-  }).formatToParts(d);
-  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
-  return [get("hour"), get("minute")];
+interface WallClock {
+  date: string; // YYYY-MM-DD on the zone's calendar
+  day: number; // day of month
+  weekday: number; // 0=Sun .. 6=Sat
+  hour: number;
+  minute: number;
 }
 
-// [utcHour, utcMinute, show, dayFilter]
+const WEEKDAY_INDEX: Record<string, number> = {
+  Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+};
+const FORMATTERS: Record<string, Intl.DateTimeFormat> = {};
+
+/** *d* on *tz*'s wall clock (date, weekday, hour, minute). The same
+ *  Intl.DateTimeFormat approach the Pacific edition clock used. */
+function wallClock(d: Date, tz: string = SLOT_TZ): WallClock {
+  const fmt = FORMATTERS[tz] ??= new Intl.DateTimeFormat("en-US", {
+    timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit",
+    weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  });
+  const parts = fmt.formatToParts(d);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return {
+    date: `${get("year")}-${get("month")}-${get("day")}`,
+    day: Number(get("day")),
+    weekday: WEEKDAY_INDEX[get("weekday")] ?? -1,
+    hour: Number(get("hour")),
+    minute: Number(get("minute")),
+  };
+}
+
+// [etHour, etMinute, show, dayFilter] — Eastern wall time (SLOT_TZ).
+// Oct 17 2026 timetable: the shows run as late as possible for freshness and
+// every Nerra Daily show starts by 06:10 ET (its audio lands ~15-20 minutes
+// later, before the 06:35 release). Minutes are unique: the handler takes
+// the FIRST row matching h:m.
 const SLOTS: Array<[number, number, string, string | null]> = [
-  [6, 7,  "privet_russian",          "monday"],
-  [7, 1,  "omni_view",                null],
-  [7, 16, "planetterrian",            null],
-  [7, 31, "fascinating_frontiers",    null],
-  [7, 46, "models_agents",            null],
-  [8, 7,  "env_intel",               "monday"],
-  [8, 1,  "models_agents_beginners",  null],
-  [8, 16, "modern_investing",         null],
-  [8, 31, "first_principles",         null],
-  [8, 46, "tesla",                    null],
-  [9, 1,  "unintended_consequences",  null],
-  [9, 16, "spacex",                   null],
-  [9, 37, "finansy_prosto",          "monday"],
-  [9, 46, "dp_pod",                   "monday"],
-  [10, 1, "offshore_north",          "monday"],
-  [9, 31, "ai_chips",                 null],
-  [10, 46, "mag7",                    null],
-  [11, 1, "longevity",               "wednesday"],
-  [11, 7, "peptides",                "thursday"],
-  // Launch-cohort PR C (2026-09-23): the nine hand-launched shows.
-  [6, 16, "omni_view_asia_pacific",   null],
-  [6, 31, "omni_view_africa_mideast", null],
-  [6, 46, "omni_view_europe",         null],
-  [10, 7, "collingwood",             "friday"],
-  [10, 16, "omni_view_north_america", null],
-  [10, 31, "omni_view_latam",         null],
-  [11, 16, "prediction_markets",      null],
-  [11, 31, "omni_view_world",         null],
-  [12, 16, "vancouver",               null],
+  [4, 0,  "unintended_consequences",  null],
+  [4, 5,  "first_principles",         null],
+  [4, 10, "privet_russian",          "monday"],
+  [4, 15, "env_intel",               "monday"],
+  [4, 20, "finansy_prosto",          "monday"],
+  [4, 25, "dp_pod",                  "monday"],
+  [4, 30, "omni_view_asia_pacific",   null],
+  [4, 35, "offshore_north",          "monday"],
+  [4, 40, "omni_view_africa_mideast", null],
+  [4, 45, "longevity",               "wednesday"],
+  [4, 50, "omni_view_europe",         null],
+  [4, 55, "peptides",                "thursday"],
+  [5, 0,  "planetterrian",            null],
+  [5, 5,  "omni_view_latam",          null],
+  [5, 10, "fascinating_frontiers",    null],
+  [5, 15, "omni_view_north_america",  null],
+  [5, 20, "ai_chips",                 null],
+  [5, 25, "models_agents",            null],
+  [5, 30, "models_agents_beginners",  null],
+  [5, 35, "collingwood",             "friday"],
+  [5, 40, "omni_view",                null],
+  [5, 45, "spacex",                   null],
+  [5, 50, "tesla",                    null],
+  [5, 55, "mag7",                     null],
+  [6, 0,  "modern_investing",         null],
+  [6, 5,  "prediction_markets",       null],
+  // After every desk's 50-minute budget: its intake reads their digests.
+  [6, 10, "omni_view_world",          null],
+  // Local Pacific morning slot (05:15 PT — ET minus PT is three hours all
+  // year); NOT in the 7 AM edition.
+  [8, 15, "vancouver",                null],
 ];
 
 // First scheduled run per show (Sep 2026 launch) — mirrors run-show.yml's
@@ -101,14 +144,14 @@ const FIRST_RUN: Record<string, string> = {
   collingwood: "2026-10-02",
 };
 
-function launched(show: string, now: Date): boolean {
+function launched(show: string, clock: WallClock): boolean {
   const first = FIRST_RUN[show];
-  return !first || now.toISOString().slice(0, 10) >= first;
+  return !first || clock.date >= first;
 }
 
-function dayFilterPasses(filter: string | null, now: Date): boolean {
-  const day = now.getUTCDate();
-  const weekday = now.getUTCDay(); // 0=Sun .. 6=Sat
+function dayFilterPasses(filter: string | null, clock: WallClock): boolean {
+  const day = clock.day;
+  const weekday = clock.weekday; // 0=Sun .. 6=Sat, Eastern calendar
   const isWeekday = weekday >= 1 && weekday <= 5;
   switch (filter) {
     case "even":
@@ -121,7 +164,7 @@ function dayFilterPasses(filter: string | null, now: Date): boolean {
       return day % 2 === 1 && isWeekday;
     case "monday":
       return weekday === 1;
-    // Named weekdays for weekly shows (Sep 2026). getUTCDay: 0=Sun .. 6=Sat.
+    // Named weekdays for weekly shows (Sep 2026). 0=Sun .. 6=Sat.
     case "tuesday":
       return weekday === 2;
     case "wednesday":
@@ -137,6 +180,10 @@ function dayFilterPasses(filter: string | null, now: Date): boolean {
     default:
       return true;
   }
+}
+
+function hhmm(h: number, m: number): string {
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
 /** Secrets pasted into `wrangler secret put` routinely carry a trailing
@@ -196,16 +243,20 @@ async function dispatch(env: Env, show: string): Promise<void> {
   await dispatchWorkflow(env, WORKFLOW, { show }, show);
 }
 
-function nextSlot(now: Date): { show: string; at: string; filter: string | null } | null {
+function nextSlot(now: Date): { show: string; at: string; et: string; filter: string | null } | null {
   // Walk forward minute-by-minute (bounded to 7 days) to the next SLOT
   // whose day filter passes — what the operator should expect to see fire.
   const t = new Date(now.getTime());
   t.setUTCSeconds(0, 0);
   for (let i = 0; i < 7 * 24 * 60; i++) {
     t.setUTCMinutes(t.getUTCMinutes() + 1);
-    const slot = SLOTS.find(([h, m]) => h === t.getUTCHours() && m === t.getUTCMinutes());
-    if (slot && dayFilterPasses(slot[3], t) && launched(slot[2], t)) {
-      return { show: slot[2], at: t.toISOString(), filter: slot[3] };
+    const clock = wallClock(t);
+    const slot = SLOTS.find(([h, m]) => h === clock.hour && m === clock.minute);
+    if (slot && dayFilterPasses(slot[3], clock) && launched(slot[2], clock)) {
+      return {
+        show: slot[2], at: t.toISOString(),
+        et: `${clock.date} ${hhmm(clock.hour, clock.minute)}`, filter: slot[3],
+      };
     }
   }
   return null;
@@ -256,12 +307,15 @@ export default {
     const base = {
       worker: "nerra-scheduler",
       now: now.toISOString(),
-      cron: "1,7,16,31,37,46,50 * * * * (UTC)",
+      cron: "*/5 * * * * (UTC)",
+      slot_tz: SLOT_TZ,
       next_slot: nextSlot(now),
       edition_dispatch: EDITION_DISPATCH,
       x_queue_dispatch: X_QUEUE_DISPATCH,
+      // Eastern wall time, e.g. {"at": "05:45", "tz": "America/New_York"} —
+      // engine/scheduler_slots.slots_from_status parses exactly this.
       slots: SLOTS.map(([h, m, show, f]) => ({
-        at: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}Z`, show, filter: f,
+        at: hhmm(h, m), tz: SLOT_TZ, show, filter: f,
       })),
     };
     if (url.pathname === "/health") {
@@ -276,31 +330,32 @@ export default {
 
   async scheduled(controller: ScheduledController, env: Env): Promise<void> {
     const now = new Date(controller.scheduledTime);
-    const [ph, pm] = pacificHourMinute(now);
-    // Oct 11 2026: the X queue shares minutes with the edition (9:01 PT),
-    // so each dispatch is independent and one failing never skips another.
-    if (xQueueDue(ph, pm)) {
+    const clock = wallClock(now);
+    // The X queue, the edition and the show slots are independent: one
+    // failing (or sharing a minute) never skips another.
+    if (xQueueDue(clock.hour, clock.minute)) {
       try {
         await dispatchWorkflow(env, X_QUEUE_DISPATCH.workflow, {}, "x-queue");
       } catch (e) {
         console.log(`x-queue dispatch failed: ${(e as Error).message}`);
       }
     }
-    if (EDITION_DISPATCH.times.some(([h, m]) => h === ph && m === pm)) {
+    if (EDITION_DISPATCH.times.some(([h, m]) => h === clock.hour && m === clock.minute)) {
       // The edition workflow's own gate decides whether there is anything
       // to build (already-published days no-op on the fast gate).
-      await dispatchWorkflow(env, EDITION_DISPATCH.workflow, {}, "nerra-daily");
-      return;
+      try {
+        await dispatchWorkflow(env, EDITION_DISPATCH.workflow, {}, "nerra-daily");
+      } catch (e) {
+        console.log(`nerra-daily dispatch failed: ${(e as Error).message}`);
+      }
     }
-    const slot = SLOTS.find(
-      ([h, m]) => h === now.getUTCHours() && m === now.getUTCMinutes(),
-    );
+    const slot = SLOTS.find(([h, m]) => h === clock.hour && m === clock.minute);
     if (!slot) {
-      console.log(`No slot for ${now.toISOString()} — nothing to dispatch.`);
+      console.log(`No slot for ${clock.date} ${hhmm(clock.hour, clock.minute)} ET — nothing to dispatch.`);
       return;
     }
     const [, , show, filter] = slot;
-    if (!dayFilterPasses(filter, now)) {
+    if (!dayFilterPasses(filter, clock)) {
       console.log(`${show}: day filter '${filter}' not satisfied today — no-op.`);
       return;
     }
@@ -309,7 +364,7 @@ export default {
     // 10-01 launch date, and a workflow_dispatch bypasses the workflow's
     // own FIRST_SCHEDULED_RUN gate by design (manual reruns stay possible).
     // The Worker owns "when"; the launch date is part of when.
-    if (!launched(show, now)) {
+    if (!launched(show, clock)) {
       console.log(`${show}: first scheduled run is ${FIRST_RUN[show]} — not launched yet, no-op.`);
       return;
     }

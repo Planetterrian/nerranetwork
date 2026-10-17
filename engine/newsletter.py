@@ -385,6 +385,21 @@ def tag_exists(tag: str, api_key: str) -> Optional[bool]:
     return False if _ALL_TAG_NAMES else None
 
 
+def _future_utc_iso(when) -> str:
+    """``when`` as ISO 8601 UTC (``...Z``) if it is in the future, else ``""``."""
+    if when is None:
+        return ""
+    try:
+        import datetime as _dt
+        if when.tzinfo is None:
+            when = when.replace(tzinfo=_dt.timezone.utc)
+        if when <= _dt.datetime.now(_dt.timezone.utc):
+            return ""
+        return when.astimezone(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    except Exception:  # noqa: BLE001 — a bad time sends now
+        return ""
+
+
 def send_newsletter(
     subject: str,
     body: str,
@@ -393,6 +408,7 @@ def send_newsletter(
     status: str = "about_to_send",
     tags: Optional[List[str]] = None,
     slug: Optional[str] = None,
+    publish_date: Optional["datetime.datetime"] = None,
 ) -> Optional[str]:
     """Send a newsletter issue via Buttondown API.
 
@@ -417,6 +433,13 @@ def send_newsletter(
         subjects (see spec §4.3). Pass an explicit transliterated slug
         like ``privet-russian-ep018-kosmos-9-russkikh-slov`` to force a
         clean shareable archive URL.
+    publish_date:
+        Optional aware datetime (Oct 17 2026, East-coast release schedule).
+        When it is in the future the email is created with
+        ``status: "scheduled"`` and ``publish_date`` (ISO 8601 UTC, per
+        https://docs.buttondown.com/scheduling-emails-via-the-api) and
+        Buttondown sends it then. ``None`` or a past time leaves *status*
+        as given (send now).
 
     Returns
     -------
@@ -439,6 +462,10 @@ def send_newsletter(
         "body": body,
         "status": status,
     }
+    scheduled_for = _future_utc_iso(publish_date)
+    if scheduled_for and status == "about_to_send":
+        data["status"] = status = "scheduled"
+        data["publish_date"] = scheduled_for
     if slug:
         # Buttondown rejects slugs with non-ASCII characters and
         # silently mangles them to escape-encoded form. Sanitize here
@@ -531,7 +558,15 @@ def send_newsletter(
         # Zero recipients when tag filters are set is a misconfiguration —
         # the email was accepted but nobody received it. Surface this as a
         # failure so the caller can alert/retry rather than logging "sent".
-        if tags and result.get("num_recipients", 1) == 0:
+        # A SCHEDULED email has not been addressed yet (Buttondown resolves
+        # recipients at send time), so a 0 there is not evidence of
+        # anything: the tag ids above were resolved, and returning None
+        # would report a failure for an email that will still go out.
+        if status == "scheduled" and tags and result.get("num_recipients", 1) == 0:
+            logger.info("Newsletter %s scheduled for %s; recipients are "
+                        "resolved at send time.", email_id,
+                        data.get("publish_date"))
+        elif tags and result.get("num_recipients", 1) == 0:
             logger.error(
                 "Newsletter %s was created but has 0 recipients — "
                 "tag filter %s matched no subscribers. Treating as failure.",
@@ -591,6 +626,7 @@ def send_show_newsletter(
     today_str: str,
     *,
     hook: str = "",
+    now: Optional["datetime.datetime"] = None,
 ) -> Optional[str]:
     """Send newsletter for a show if newsletter is configured.
 
@@ -613,6 +649,12 @@ def send_show_newsletter(
       - Same-day double-send guardrail (§4.5): tracks the last-send
         timestamp per show in ``digests/<slug>/_newsletter_lastsend.txt``
         and refuses to re-send within 20 hours.
+      - East-coast release schedule (Oct 17 2026): an episode newsletter
+        whose run finishes before 7:00 ET is scheduled for 7:00 ET
+        (Vancouver: 6:00 Pacific) through Buttondown's ``scheduled``
+        status (``engine.release_schedule.newsletter_send_time``); later it
+        sends now. The 20-hour guard keys on the CREATION time, which is
+        still once per run. *now* is for tests.
 
     Returns the email ID on success, ``None`` if not configured / sent
     too recently / blocked by a guard.
@@ -774,13 +816,29 @@ def send_show_newsletter(
         logger.error("Newsletter contrast issues (blocking send): %s", exc)
         return None
 
+    _send_kwargs = {}
+    _status = getattr(newsletter, "status", "about_to_send")
+    if episode_num and _status == "about_to_send":
+        try:
+            import datetime as _rdt
+            from engine.release_schedule import newsletter_send_time
+            _when = newsletter_send_time(
+                slug, now or _rdt.datetime.now(_rdt.timezone.utc))
+            if _when is not None:
+                _send_kwargs["publish_date"] = _when
+                logger.info("Newsletter for %s scheduled for %s", slug,
+                            _when.strftime("%Y-%m-%dT%H:%M:%SZ"))
+        except Exception as exc:  # noqa: BLE001 — a schedule problem sends now
+            logger.warning("Newsletter release time unavailable for %s "
+                           "(%s) — sending now", slug, exc)
     email_id = send_newsletter(
         subject=subject,
         body=branded_body,
         api_key=api_key,
-        status=getattr(newsletter, "status", "about_to_send"),
+        status=_status,
         tags=tags_list,
         slug=bd_slug,
+        **_send_kwargs,
     )
 
     if email_id:

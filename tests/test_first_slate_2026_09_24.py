@@ -67,47 +67,67 @@ def _digest_prompt_text(slug):
 
 
 class TestDeployDriftCheck:
-    COMMITTED = {"omni_view": (7, 1, None), "omni_view_asia_pacific": (6, 16, None),
-                 "collingwood": (10, 7, "friday")}
+    # Oct 17 2026: slots are EASTERN wall time; the status page labels each
+    # row with its clock ({"at": "05:40", "tz": "America/New_York"}).
+    ET = "America/New_York"
+    COMMITTED = {"omni_view": (5, 40, None), "omni_view_asia_pacific": (4, 30, None),
+                 "collingwood": (5, 35, "friday")}
 
     def test_status_payload_parses(self):
         from engine.scheduler_slots import slots_from_status
         live = slots_from_status({"slots": [
-            {"at": "07:01Z", "show": "omni_view", "filter": None},
-            {"at": "10:07Z", "show": "collingwood", "filter": "friday"},
-            {"at": "bad", "show": "x"}, "junk",
+            {"at": "05:40", "tz": self.ET, "show": "omni_view", "filter": None},
+            {"at": "05:35", "tz": self.ET, "show": "collingwood", "filter": "friday"},
+            {"at": "bad", "tz": self.ET, "show": "x"}, "junk",
         ]})
-        assert live == {"omni_view": (7, 1, None), "collingwood": (10, 7, "friday")}
+        assert live == {"omni_view": (5, 40, None), "collingwood": (5, 35, "friday")}
         assert slots_from_status({}) == {} and slots_from_status({"slots": None}) == {}
 
     def test_stale_table_is_named(self):
         from scripts.check_scheduler_deploy import check
         ok, lines = check({"slots": [
-            {"at": "07:01Z", "show": "omni_view", "filter": None},
-            {"at": "10:07Z", "show": "collingwood", "filter": "friday"},
+            {"at": "05:40", "tz": self.ET, "show": "omni_view", "filter": None},
+            {"at": "05:35", "tz": self.ET, "show": "collingwood", "filter": "friday"},
         ]}, self.COMMITTED)
         assert ok is False
-        assert any("missing on the live Worker: omni_view_asia_pacific @ 06:16Z" in ln for ln in lines)
+        assert any("missing on the live Worker: omni_view_asia_pacific @ 04:30 ET" in ln
+                   for ln in lines)
 
     def test_matching_table_is_quiet(self):
         from scripts.check_scheduler_deploy import check
         ok, lines = check({"slots": [
-            {"at": "07:01Z", "show": "omni_view", "filter": None},
-            {"at": "06:16Z", "show": "omni_view_asia_pacific", "filter": None},
-            {"at": "10:07Z", "show": "collingwood", "filter": "friday"},
+            {"at": "05:40", "tz": self.ET, "show": "omni_view", "filter": None},
+            {"at": "04:30", "tz": self.ET, "show": "omni_view_asia_pacific", "filter": None},
+            {"at": "05:35", "tz": self.ET, "show": "collingwood", "filter": "friday"},
         ]}, self.COMMITTED)
         assert ok is True and len(lines) == 1
 
     def test_changed_slot_and_no_table(self):
         from scripts.check_scheduler_deploy import check
         ok, lines = check({"slots": [
-            {"at": "07:31Z", "show": "omni_view", "filter": None},
-            {"at": "06:16Z", "show": "omni_view_asia_pacific"},
-            {"at": "10:07Z", "show": "collingwood", "filter": "friday"},
+            {"at": "05:45", "tz": self.ET, "show": "omni_view", "filter": None},
+            {"at": "04:30", "tz": self.ET, "show": "omni_view_asia_pacific"},
+            {"at": "05:35", "tz": self.ET, "show": "collingwood", "filter": "friday"},
         ]}, self.COMMITTED)
         assert ok is False and any(ln.startswith("changed: omni_view ") for ln in lines)
         ok, lines = check({"worker": "nerra-scheduler"}, self.COMMITTED)
         assert ok is False and "no slot table" in lines[0]
+
+    def test_a_worker_still_on_utc_is_named_not_read_as_eastern(self):
+        """A Worker deployed before Oct 17 answers "07:01Z" rows. Read as
+        Eastern they would look like a valid but wrong table; the check names
+        the clock instead and asks for a redeploy."""
+        from engine.scheduler_slots import slots_from_status, status_clocks
+        from scripts.check_scheduler_deploy import check
+        old = {"slots": [
+            {"at": "07:01Z", "show": "omni_view", "filter": None},
+            {"at": "06:16Z", "show": "omni_view_asia_pacific", "filter": None},
+            {"at": "10:07Z", "show": "collingwood", "filter": "friday"},
+        ]}
+        assert slots_from_status(old) == {}
+        assert status_clocks(old) == {"UTC": 3}
+        ok, lines = check(old, self.COMMITTED)
+        assert ok is False and "predates the Eastern schedule" in lines[0]
 
     def test_unset_variable_is_a_no_op(self, monkeypatch, capsys):
         from scripts.check_scheduler_deploy import main
@@ -118,8 +138,8 @@ class TestDeployDriftCheck:
     def test_committed_parser_reads_the_real_table(self):
         from engine.scheduler_slots import worker_slots
         slots = worker_slots()
-        assert slots["omni_view_asia_pacific"] == (6, 16, None)
-        assert slots["collingwood"] == (10, 7, "friday")
+        assert slots["omni_view_asia_pacific"] == (4, 30, None)
+        assert slots["collingwood"] == (5, 35, "friday")
         assert len(slots) >= 28
 
     def test_daily_audit_runs_it(self):

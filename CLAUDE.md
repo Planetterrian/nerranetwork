@@ -492,7 +492,7 @@ and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 | Omni View Asia Pacific | — | `shows/omni_view_asia_pacific.yaml` | Daily | — (X source only) | Grok TTS (Mira, `ara`) |
 | Omni View Africa & Middle East | — | `shows/omni_view_africa_mideast.yaml` | Daily | — (X source only) | Grok TTS (Mira, `ara`) |
 | Omni View Central & South America | — | `shows/omni_view_latam.yaml` | Daily | — (X source only) | Grok TTS (Mira, `ara`) |
-| Nerra Daily | — | registry-only (`shows/network_meta.yaml`; NOT run_show — assembled by `scripts/build_daily_edition.py`) | Daily, 8am Pacific, after the English slate | — (X disabled) | Splices published show audio + Mira links (Grok voice `ara`) |
+| Nerra Daily | — | registry-only (`shows/network_meta.yaml`; NOT run_show — assembled by `scripts/build_daily_edition.py`) | Daily, 7am Eastern, after the English slate (Vancouver excluded) | — (X disabled) | Splices published show audio + Mira links (Grok voice `ara`) |
 
 > Weekly-summary segment (July 2026): shows on a daily cadence with
 > `weekly_summary_segment: true` in their YAML run a NORMAL daily episode on
@@ -1825,6 +1825,56 @@ the operator provisions KV + the `nerra-personal` bucket + secrets
 guards: `tests/test_nerra_personal.py`,
 `workers/gallery/test/personal.test.ts`.
 
+### The schedule runs on Eastern time; Nerra Daily out by 7am Eastern (Oct 17 2026)
+
+Operator-directed (register `nerra-daily-7am-eastern-2026-10-17`; guards
+`tests/test_seven_am_eastern_2026_10_17.py`). **The scheduler Worker's
+`SLOTS` are EASTERN wall time** (`SLOT_TZ = "America/New_York"`; the handler
+converts each firing and the day filters read the Eastern date), so the clock
+changes move nothing. Shows run as late as they can: 04:00 ET (UC) to 06:10 ET
+(Top World, after every desk), five minutes apart; Vancouver keeps its local
+05:15 Pacific slot (08:15 ET) and **is not in the edition** (it stays
+choosable in Nerra Personal — `PERSONAL_EXTRA_SHOW_SLUGS`). The edition's
+gate is `RELEASE_EASTERN` 06:35 / `HOLD_UNTIL_EASTERN` 06:50
+(`engine/daily_edition.py`), dispatched by the Worker at those Eastern minutes;
+the X queue dispatches :05/:35, 7:05 AM-10:05 PM ET. **The one cron trigger is
+`*/5 * * * *`.** The run-show.yml fallback crons are UTC and cannot follow
+daylight saving: **each is the slot's EST equivalent (ET + 5 h)** — in summer
+it fires an hour after the Worker and the duplicate guard drops it — and
+`test_scheduling_punctuality.py` compares Worker and cron map at that offset.
+A new show is scaffolded with `--slot-et HH:MM` (multiple-of-five minute).
+`GET /` reports slots as `{"at": "05:45", "tz": "America/New_York"}`; a Worker
+still answering `"09:16Z"` predates this and the deploy check says so.
+Operator: `wrangler deploy` in `workers/scheduler`.
+
+### Audio first, and a release schedule for the day (Oct 17 2026)
+
+Same operator direction as the Eastern schedule above (register
+`audio-first-2026-10-17`, `release-schedule-2026-10-17`; guards
+`tests/test_audio_first_2026_10_17.py`, `tests/test_release_schedule_2026_10_17.py`).
+**A run publishes its audio before it renders video.** Video is two thirds of
+a flagship run (25 of 37 minutes on Tesla), so run_show now writes the feed,
+summaries, blog post and post-run validation first and pushes them through
+`scripts/checkpoint_publish.sh` ("Auto-generated: <show> <date> (audio)" — the
+duplicate guard's prefix; `NERRA_AUDIO_FIRST_PUSH=1` from the workflow, never
+in `--test`); the workflow's final commit pushes what the video half adds.
+`scripts/stage_show_artifacts.sh` is the ONE staging list both use — a new
+committed path goes there. A failed checkpoint push un-commits and leaves
+everything staged. **The feed item is rewritten after the video on the SAME
+GUID** (`update_rss_feed(keep_existing_guid=True)` — the GUID carries a
+timestamp, and a new one makes every app download the episode twice).
+**`engine/release_schedule.py` owns when each surface goes public**, in
+Eastern wall time, from one `RELEASE_ORDER` (news and markets first): hook
+Short 7:00 ET + 15 min per rank, long-form from noon and from 18:00, X
+preferred slot from 7:30 (7:00 reserved for Nerra Daily), daily newsletters
+scheduled for 7:00 through Buttondown (`status: "scheduled"`), Vancouver on
+Pacific mornings. A passed slot means now; a refused `publishAt` re-uploads
+public; `youtube.release_schedule_enabled` reverts per show. A scheduled
+long-form's comment is queued and posted by the half-hourly x-queue run
+(`post_scheduled_short_comments.py --stateless`, which checks the video for the
+comment first); the feed says when the long-form goes public. Render,
+metadata and timing only — outside landmine #17.
+
 ### A beat between stories (Oct 13 2026)
 
 Operator listen: stories ran into each other. Measured: the gap at a story
@@ -1993,13 +2043,23 @@ Operator-directed (register `x-follow-ask-2026-10-15`,
 on one identical closer and none asked for a follow.** `engine.x_post.post_closers`
 now rotates the closer and, on about one post in four, swaps in a one-sentence
 follow ask (`FOLLOW_ASK_CLOSERS`): decided by the calendar and the show's place
-in `FOLLOW_ASK_ROSTER` (posting order; weekly shows carry their weekday), so a
-daily show asks every fourth day and posting neighbours never ask together. The
+in the X POSTING ORDER, so a daily show asks every fourth day and posting
+neighbours never ask together. **Oct 17 2026: the order is derived, never
+typed** — `FOLLOW_ASK_CADENCE` holds membership and weekday only, and
+`FOLLOW_ASK_ROSTER` is sorted by the X slot rank
+(`engine.release_schedule.x_posting_order`, Nerra Daily first); a daily show's
+phase is its rank among the daily posters, and a weekly show asks once in each
+block of four of its weekdays, on a day neither neighbour asks. The
 ask is used only when the hook fits whole, and every list ends on the old
 closer, so no hook is clipped that was not clipped before. **A show that posts
 to the network account must be on the roster** (CI fails otherwise). run_show
 records `x_post_follow_ask`; Nerra Daily asks by its edition date. The follower
-count is read in X analytics by hand. **The long-form render is budgeted at
+count is read in X analytics by hand. **Nerra Daily's X post is QUEUED into its
+reserved 7:00 ET slot** (`x_queue.enqueue(slot=...)`, the cover hosted on R2
+per episode; `x_post_queued` / `x_post_queued_for` in the edition metrics) and
+never also posted directly; no queue or a failed enqueue posts at build time as
+before. nerra-daily.yml carries the queue's `VOICES_SUPABASE_*` secrets (guards
+`tests/test_x_edition_slot_and_follow_phase_2026_10_17.py`). **The long-form render is budgeted at
 2.1x the audio** (`engine.video.estimate_long_form_render_seconds`, measured
 median 1.91x / p90 2.05x over 60 renders; the 600 s stays as the floor):
 Models & Agents Ep204 started a 1,493 s render with 1,189 s left, uploaded the

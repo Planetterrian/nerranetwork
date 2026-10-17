@@ -195,6 +195,47 @@ def _spoken_disclosure(config, slug: str) -> str:
     return _AI_DISCLOSURE
 
 
+AUDIO_FIRST_ENV = "NERRA_AUDIO_FIRST_PUSH"
+AUDIO_FIRST_TIMEOUT_S = 300
+
+
+def _checkpoint_publish(args, metrics) -> bool:
+    """Push the audio episode before the video renders (Oct 17 2026).
+
+    Runs ``scripts/checkpoint_publish.sh`` only when the workflow asks for it
+    (``NERRA_AUDIO_FIRST_PUSH=1``) and never in ``--test``. The script stages
+    exactly what the workflow's final commit stages, commits
+    "Auto-generated: <show> <date> (audio)" (the same-day duplicate guard reads
+    that prefix) and pushes through ``push_show_artifacts.sh``. Any failure is
+    logged and left to the final commit step, which pushes everything.
+    """
+    if os.environ.get(AUDIO_FIRST_ENV) != "1" or getattr(args, "test", False):
+        return False
+    import subprocess
+    script = PROJECT_ROOT / "scripts" / "checkpoint_publish.sh"
+    try:
+        done = subprocess.run(
+            ["bash", str(script)], cwd=str(PROJECT_ROOT),
+            env={**os.environ, "SHOW": args.show},
+            timeout=AUDIO_FIRST_TIMEOUT_S, capture_output=True, text=True,
+        )
+        ok = done.returncode == 0
+        tail = (done.stdout + done.stderr).strip().splitlines()[-6:]
+        for line in tail:
+            logger.info("audio-first push: %s", line)
+    except Exception as exc:  # noqa: BLE001 — the final commit still runs
+        ok = False
+        logger.warning("audio-first push failed (non-fatal): %s", exc)
+    if not ok:
+        print("::warning::Audio-first push did not land; the episode goes out "
+              "with the run's final commit instead.", flush=True)
+    try:
+        metrics.record("audio_first_pushed", ok)
+    except Exception:  # noqa: BLE001
+        pass
+    return ok
+
+
 def _rss_disclosure_for(config, slug: str) -> str:
     if slug in _RUSSIAN_SHOWS:
         return _AI_DISCLOSURE_RSS_RU
@@ -5139,6 +5180,345 @@ def run(args: argparse.Namespace) -> None:
     r2_audio_url = publish_outcomes.get("r2_audio_url")
     rss_audio_url = publish_outcomes.get("rss_audio_url") or r2_audio_url
 
+    # 11. Update RSS feed. A function since Oct 17 2026: it runs once before
+    # the video (audio first) and again after it when YouTube produced a
+    # watch link, on the same GUID so no app downloads the episode twice.
+    def _write_rss_feed(youtube_long_url: str = "", *, refresh: bool = False,
+                        youtube_public_at: str = "") -> None:
+        _t_rss = time.monotonic()
+        if not (final_mp3 and final_mp3.exists()):
+            return
+        from engine.publisher import update_rss_feed
+        from engine.audio import format_duration
+
+        # Russian shows get a Russian episode-number prefix — the
+        # listing is read by Russian speakers ("Episode 49" looked
+        # foreign in an otherwise-Russian feed).
+        _ep_prefix = "Выпуск" if args.show in _RUSSIAN_SHOWS else "Ep"
+        _ep_word = "Выпуск" if args.show in _RUSSIAN_SHOWS else "Episode"
+        # Capped at 100 chars via engine.titles. YouTube ingests this feed
+        # directly and silently rewrites anything longer, cutting mid-word
+        # ("...how coral reef fis...") and emailing afterwards to say no
+        # action is required. 75% of items were over the cap before this.
+        from engine.titles import episode_title as _build_episode_title
+        episode_title = _build_episode_title(
+            title_hook,
+            episode_num,
+            prefix=_ep_prefix,
+            fallback=f"{config.name} - {_ep_word} {episode_num} - {today_str}",
+        )
+        # Use a short summary for the RSS description (first ~500 chars at sentence boundary)
+        # to avoid overwhelming podcast app UIs with the full digest.
+        _desc_limit = 500
+        if len(x_thread) > _desc_limit:
+            _cut = x_thread[:_desc_limit].rfind(". ")
+            episode_desc = x_thread[:_cut + 1] + " ..." if _cut > 100 else x_thread[:_desc_limit] + "..."
+        else:
+            episode_desc = x_thread
+        # Sources line (Sep 24 2026, engine.show_notes): the feed copy had
+        # every Source: line scrubbed, so a listener in Apple or Spotify saw
+        # no source at all while the blog post listed them. Publisher
+        # domains, each linked, publishers before social posts, at most
+        # eight. Read from the digest; never blocks the publish.
+        try:
+            from engine.show_notes import sources_footer as _sources_footer
+            _src_line = _sources_footer(
+                x_thread or "",
+                language=str(getattr(config.publishing, "rss_language", "en") or "en"),
+            )
+        except Exception as _src_exc:  # noqa: BLE001 — the notes ship without it
+            logger.warning("Sources line for show notes failed (non-fatal): %s", _src_exc)
+            _src_line = ""
+        if _src_line:
+            episode_desc = episode_desc.rstrip() + "\n\n" + _src_line
+            metrics.record("show_notes_sources", len(_src_line.split(" · ")))
+        # Corrections (Oct 1 2026, engine/corrections.py): the corrected
+        # episode's own note, and the "Correction to episode N" line the
+        # policy page promises on the NEXT episode. "" on an ordinary day.
+        try:
+            from engine.show_notes import append_show_notes_extras as _notes_extras
+            episode_desc = _notes_extras(
+                episode_desc, digests_dir, episode_num,
+                language=str(getattr(config.publishing, "rss_language", "en") or "en"),
+                episode_date=today.strftime("%Y-%m-%d"))
+        except Exception as _corr_exc:  # noqa: BLE001 — never block publish
+            logger.warning("Show-notes corrections failed (non-fatal): %s", _corr_exc)
+        _rss_disclosure = _rss_disclosure_for(config, args.show)
+        episode_desc = episode_desc.rstrip() + "\n\n" + _rss_disclosure
+        # If the episode landed on YouTube, surface the watch link in
+        # the RSS description so listeners on every podcast app can
+        # click through to the video version.
+        if youtube_long_url:
+            # A long-form scheduled for later in the day (engine/release_
+            # schedule.py, Oct 17 2026) says when it goes public, so the link
+            # never reads as broken in the hours before.
+            _when = f" (public from {youtube_public_at})" if youtube_public_at else ""
+            episode_desc += f"\n\n🎬 Watch on YouTube{_when}: {youtube_long_url}"
+
+        # Drive listeners from the podcast apps back to the website: link the
+        # network home page plus this episode's blog page (full show notes,
+        # transcript, and sources). The blog page only exists for shows in
+        # NETWORK_SHOWS, so gate the per-episode link on membership and fall
+        # back to the network home page otherwise. The footer is markdown;
+        # publisher._markdown_to_rss_html renders it to real <a> anchors.
+        try:
+            from generate_html import NETWORK_SHOWS as _NETWORK_SHOWS_RSS
+            _has_blog = config.slug in _NETWORK_SHOWS_RSS
+        except Exception:  # noqa: BLE001 — never let show-notes linking break RSS
+            _has_blog = False
+        from engine.publisher import build_show_notes_footer
+        _notes_footer = build_show_notes_footer(
+            config.publishing.base_url,
+            config.slug,
+            episode_num,
+            has_blog=_has_blog,
+        )
+        if _notes_footer:
+            episode_desc += "\n\n" + _notes_footer
+
+        # If no R2 URL but analytics is enabled, build URL and prefix it
+        feed_audio_url = rss_audio_url
+        if not feed_audio_url and config.analytics.enabled:
+            from engine.publisher import apply_op3_prefix
+            raw_url = f"{config.publishing.base_url}/{config.publishing.audio_subdir}/{final_mp3.name}"
+            feed_audio_url = apply_op3_prefix(raw_url, config.analytics.prefix_url)
+            logger.info("OP3 prefixed URL: %s", feed_audio_url)
+
+        # Build chapters URL for RSS if chapter JSON was written
+        chapters_url = None
+        chapters_json_ep = digests_dir / f"chapters_ep{episode_num:03d}.json"
+        if chapters_json_ep.exists():
+            chapters_url = (
+                f"{config.publishing.base_url}/{config.publishing.audio_subdir}"
+                f"/chapters_ep{episode_num:03d}.json"
+            )
+
+        # Build transcript URL for RSS if transcript JSON was written
+        transcript_url = None
+        _ep_prefix = f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}"
+        transcript_json = digests_dir / f"{_ep_prefix}_transcript.json"
+        if transcript_json.exists():
+            transcript_url = (
+                f"{config.publishing.base_url}/{config.publishing.audio_subdir}"
+                f"/{_ep_prefix}_transcript.json"
+            )
+        # Oct 1 2026: the WebVTT beside it is the transcript Apple Podcasts
+        # and the Podcasting 2.0 apps actually read (the JSON is a raw
+        # Whisper dump); same timebase, same directory, served by Pages.
+        transcript_vtt_url = None
+        transcript_vtt = digests_dir / f"{_ep_prefix}_transcript.vtt"
+        if transcript_vtt.exists():
+            transcript_vtt_url = (
+                f"{config.publishing.base_url}/{config.publishing.audio_subdir}"
+                f"/{_ep_prefix}_transcript.vtt"
+            )
+
+        # Channel description shape (May 2026 audit): Apple Podcasts /
+        # Spotify list pages truncate around 150 characters, so the
+        # FIRST sentence has to sell the show. Putting the AI disclosure
+        # ahead of (or inline with) the show pitch ate the entire
+        # truncation window. Now: show pitch first, AI disclosure
+        # appended in parentheses at the end. Apple's full-detail page
+        # still shows everything; the listing-card preview shows the
+        # punchy line.
+        channel_desc_with_disclosure = (
+            config.publishing.rss_description.rstrip()
+            + "\n\n"
+            + _rss_disclosure_for(config, args.show)
+        )
+
+        logger.info("Updating RSS feed: %s", config.publishing.rss_file)
+        update_rss_feed(
+            rss_path=rss_path,
+            episode_num=episode_num,
+            episode_title=episode_title,
+            episode_description=episode_desc,
+            episode_date=today,
+            mp3_filename=final_mp3.name,
+            mp3_duration=audio_duration,
+            mp3_path=final_mp3,
+            base_url=config.publishing.base_url,
+            audio_subdir=config.publishing.audio_subdir,
+            channel_title=config.publishing.rss_title,
+            channel_link=config.publishing.rss_link,
+            channel_description=channel_desc_with_disclosure,
+            channel_language=config.publishing.rss_language,
+            channel_author=config.publishing.rss_author,
+            channel_email=config.publishing.rss_email,
+            channel_image=config.publishing.rss_image,
+            channel_category=config.publishing.rss_category,
+            channel_subcategory=getattr(config.publishing, "rss_subcategory", ""),
+            channel_category2=getattr(config.publishing, "rss_category2", ""),
+            channel_subcategory2=getattr(config.publishing, "rss_subcategory2", ""),
+            channel_keywords=getattr(config.publishing, "rss_keywords", ""),
+            guid_prefix=config.publishing.guid_prefix,
+            format_duration_func=format_duration,
+            audio_url=feed_audio_url,  # Use R2/OP3-prefixed URL if available
+            chapters_url=chapters_url,
+            transcript_url=transcript_url,
+            transcript_vtt_url=transcript_vtt_url,
+            # Podcasting 2.0 channel tags. Aug 2026: funding now points at
+            # the support/donations page (the highest-intent surface a
+            # podcast app offers — Apple renders it as a "Support" button);
+            # the page itself cross-sells the free account + membership,
+            # so the old "subscribe" ask is still one tap away.
+            funding_url=f"{config.publishing.base_url}/support.html",
+            funding_label="Support the Nerra Network",
+            person_name=config.publishing.host_name or "Patrick",
+            # An AI host's person tag points at her own page, never at
+            # Patrick's About page (Sep 2026 §2b).
+            person_url=(
+                f"{config.publishing.base_url}/mira.html" if _is_ai_host(config)
+                else f"{config.publishing.base_url}/about.html"
+            ),
+            # Item <link> = the episode's blog post (player + notes +
+            # transcript), the page podcast apps open as "episode website".
+            # Was the MP3 (Sep 4 2026 flagship pass).
+            episode_page_url=(
+                f"{config.publishing.base_url}/blog/{config.slug}/ep{episode_num:03d}.html"
+            ),
+            keep_existing_guid=refresh,
+        )
+        # Alias feeds (Tesla tesla_podcast.rss → podcast.rss): byte copy,
+        # self-link stays on the canonical file so directories do not split.
+        from engine.publisher import write_rss_aliases
+        write_rss_aliases(
+            rss_path,
+            getattr(config.publishing, "rss_aliases", None) or [],
+        )
+
+        if refresh:
+            return
+        metrics.record("rss_update_duration_s", round(time.monotonic() - _t_rss, 2))
+
+        # 11b. Notify podcast directories (best-effort, non-blocking).
+        # CI no longer duplicates this ping after commit (May 2026 audit).
+        from engine.publisher import notify_directories
+        rss_url = f"{config.publishing.base_url}/{config.publishing.rss_file}"
+        notify_directories(rss_url, show_name=config.publishing.rss_title)
+
+    _write_rss_feed()
+
+    # 12. Save GitHub Pages summary
+    from engine.publisher import save_summary_to_github_pages
+
+    summaries_json = PROJECT_ROOT / config.publishing.summaries_json
+    audio_url = r2_audio_url  # Prefer R2 URL
+    if not audio_url and final_mp3 and final_mp3.exists():
+        audio_url = (
+            f"{config.publishing.base_url}/{config.publishing.audio_subdir}/{final_mp3.name}"
+        )
+
+    from engine import titles as _titles
+    save_summary_to_github_pages(
+        summary_text=x_thread,
+        summaries_json_path=summaries_json,
+        podcast_name=config.publishing.summaries_podcast_name or config.slug,
+        episode_num=episode_num,
+        episode_title=_titles.episode_title(
+            title_hook, episode_num,
+            fallback=f"{config.name} - Episode {episode_num} - {today_str}"),
+        audio_url=audio_url,
+        rss_url=f"{config.publishing.base_url}/{config.publishing.rss_file}",
+    )
+
+    # 11c. Multilingual audio (FR/RU/ES/ZH) is generated OUT OF BAND by a
+    # separate workflow (.github/workflows/multilingual.yml) running the
+    # idempotent driver scripts/generate_translations.py. It used to run
+    # inline here, but four sequential TTS renders (~16 min) pushed
+    # video-heavy shows (e.g. Tesla) past the 2400s pipeline timeout — the
+    # SIGALRM fired mid-render, run_show exited non-zero, and the episode's
+    # git commit step was skipped, leaving a partial publish (R2 + YouTube
+    # done, nothing committed). Decoupling keeps the episode pipeline fast +
+    # durable; translations land shortly after via the dedicated workflow.
+
+    # 12a. Generate blog post. Like the feed, written before the video and
+    # rewritten after it when YouTube links exist (Oct 17 2026).
+    def _write_blog_post(youtube_long_url: str = "", youtube_short_url: str = "",
+                         *, refresh: bool = False) -> None:
+        try:
+            from engine.blog import extract_blog_metadata, generate_blog_post_html
+            from generate_html import generate_blog_index, _get_jinja_env, NETWORK_SHOWS as _NS
+            from engine.publish_guards import check_publish_guards
+
+            # News shows: the no-Sources check ran before synthesis (where a
+            # stop costs nothing published). By here the audio and the feed
+            # are out, so a page that lost its Sources is warned, never
+            # a failed run that leaves the episode uncommitted.
+            _src_fails = [] if refresh else [
+                f for f in check_publish_guards(
+                    config=config, digest_md=x_thread or "", chapters=None,
+                )
+                if "no Sources" in f
+            ]
+            for _sf in _src_fails:
+                logger.warning("::warning::Publish guard (after publish): %s", _sf)
+
+            if config.slug in _NS:
+                _blog_env = _get_jinja_env()
+                _blog_meta = extract_blog_metadata(x_thread, config.slug, digest_md.name if digest_md else "", file_path=digest_md)
+                _blog_meta["episode_num"] = episode_num
+                # Merge any just-generated translation tracks so the switcher +
+                # badges render on today's post (the .md/x_thread carry neither).
+                try:
+                    from generate_html import _attach_translations
+                    _attach_translations(config.slug, _NS[config.slug], [_blog_meta])
+                except Exception:  # noqa: BLE001 — non-fatal SEO/UX enhancement
+                    pass
+                _blog_html = generate_blog_post_html(
+                    x_thread, _blog_meta, _NS[config.slug], _blog_env,
+                    youtube_url=youtube_long_url,
+                    youtube_short_url=youtube_short_url,
+                )
+                _blog_dir = PROJECT_ROOT / "blog" / config.slug
+                _blog_dir.mkdir(parents=True, exist_ok=True)
+                _blog_path = _blog_dir / f"ep{episode_num:03d}.html"
+                from engine.utils import strip_lone_surrogates as _scrub
+                _blog_path.write_text(_scrub(_blog_html), encoding="utf-8")
+                logger.info("Blog post written: %s", _blog_path)
+
+                # Regenerate blog index (per-show + network)
+                generate_blog_index(config.slug)
+                logger.info("Blog index regenerated for %s", config.slug)
+
+                from generate_html import generate_network_blog_index as _gen_net_blog
+                _gen_net_blog()
+                logger.info("Network blog index regenerated")
+
+                from engine.blog import regenerate_blog_rss_for_show_slug
+                _rss_blog = regenerate_blog_rss_for_show_slug(config.slug, PROJECT_ROOT)
+                if _rss_blog:
+                    logger.info("Blog RSS regenerated: %s", _rss_blog.name)
+            else:
+                logger.debug("Show %s not in NETWORK_SHOWS, skipping blog generation", config.slug)
+        except Exception as exc:
+            logger.warning("Blog post generation failed (non-fatal): %s", exc)
+
+    _write_blog_post()
+
+    # 12a-pre. Post-run validation (before newsletter/X so bad episodes
+    # don't email subscribers or tweet without audio).
+    from engine.post_run_validation import run_post_validation
+    validation_passed = run_post_validation(
+        mp3_path=final_mp3,
+        rss_path=rss_path,
+        digest_text=x_thread,
+        show_name=config.name,
+        episode_num=episode_num,
+    )
+    if not validation_passed:
+        logger.error("Post-run validation FAILED — exiting with error code")
+        save_usage(tracker, digests_dir)
+        sys.exit(1)
+
+    # 12c. Audio first (Oct 17 2026). The episode is complete without its
+    # video: audio on R2, feed, summaries, blog post, transcript. Push it now
+    # so Nerra Daily and listeners have it ~15 minutes into the run instead
+    # of ~35; the video renders and uploads after, and the workflow's commit
+    # step pushes what it adds. Best-effort: a failed push leaves everything
+    # for that final commit, exactly as before.
+    _checkpoint_publish(args, metrics)
+
     # YouTube results are still produced by the existing _publish_youtube
     # for this iteration. Full move coming in follow-up PRs.
     _t_yt = time.monotonic()
@@ -5298,233 +5678,14 @@ def run(args: argparse.Namespace) -> None:
     except Exception:
         logger.warning("post-publish step failed (non-fatal)", exc_info=True)
 
-    # 11. Update RSS feed
-    _t_rss = time.monotonic()
-    if final_mp3 and final_mp3.exists():
-        from engine.publisher import update_rss_feed
-        from engine.audio import format_duration
-
-        # Russian shows get a Russian episode-number prefix — the
-        # listing is read by Russian speakers ("Episode 49" looked
-        # foreign in an otherwise-Russian feed).
-        _ep_prefix = "Выпуск" if args.show in _RUSSIAN_SHOWS else "Ep"
-        _ep_word = "Выпуск" if args.show in _RUSSIAN_SHOWS else "Episode"
-        # Capped at 100 chars via engine.titles. YouTube ingests this feed
-        # directly and silently rewrites anything longer, cutting mid-word
-        # ("...how coral reef fis...") and emailing afterwards to say no
-        # action is required. 75% of items were over the cap before this.
-        from engine.titles import episode_title as _build_episode_title
-        episode_title = _build_episode_title(
-            title_hook,
-            episode_num,
-            prefix=_ep_prefix,
-            fallback=f"{config.name} - {_ep_word} {episode_num} - {today_str}",
-        )
-        # Use a short summary for the RSS description (first ~500 chars at sentence boundary)
-        # to avoid overwhelming podcast app UIs with the full digest.
-        _desc_limit = 500
-        if len(x_thread) > _desc_limit:
-            _cut = x_thread[:_desc_limit].rfind(". ")
-            episode_desc = x_thread[:_cut + 1] + " ..." if _cut > 100 else x_thread[:_desc_limit] + "..."
-        else:
-            episode_desc = x_thread
-        # Sources line (Sep 24 2026, engine.show_notes): the feed copy had
-        # every Source: line scrubbed, so a listener in Apple or Spotify saw
-        # no source at all while the blog post listed them. Publisher
-        # domains, each linked, publishers before social posts, at most
-        # eight. Read from the digest; never blocks the publish.
-        try:
-            from engine.show_notes import sources_footer as _sources_footer
-            _src_line = _sources_footer(
-                x_thread or "",
-                language=str(getattr(config.publishing, "rss_language", "en") or "en"),
-            )
-        except Exception as _src_exc:  # noqa: BLE001 — the notes ship without it
-            logger.warning("Sources line for show notes failed (non-fatal): %s", _src_exc)
-            _src_line = ""
-        if _src_line:
-            episode_desc = episode_desc.rstrip() + "\n\n" + _src_line
-            metrics.record("show_notes_sources", len(_src_line.split(" · ")))
-        # Corrections (Oct 1 2026, engine/corrections.py): the corrected
-        # episode's own note, and the "Correction to episode N" line the
-        # policy page promises on the NEXT episode. "" on an ordinary day.
-        try:
-            from engine.show_notes import append_show_notes_extras as _notes_extras
-            episode_desc = _notes_extras(
-                episode_desc, digests_dir, episode_num,
-                language=str(getattr(config.publishing, "rss_language", "en") or "en"),
-                episode_date=today.strftime("%Y-%m-%d"))
-        except Exception as _corr_exc:  # noqa: BLE001 — never block publish
-            logger.warning("Show-notes corrections failed (non-fatal): %s", _corr_exc)
-        _rss_disclosure = _rss_disclosure_for(config, args.show)
-        episode_desc = episode_desc.rstrip() + "\n\n" + _rss_disclosure
-        # If the episode landed on YouTube, surface the watch link in
-        # the RSS description so listeners on every podcast app can
-        # click through to the video version.
-        if youtube_long_url:
-            episode_desc += f"\n\n🎬 Watch on YouTube: {youtube_long_url}"
-
-        # Drive listeners from the podcast apps back to the website: link the
-        # network home page plus this episode's blog page (full show notes,
-        # transcript, and sources). The blog page only exists for shows in
-        # NETWORK_SHOWS, so gate the per-episode link on membership and fall
-        # back to the network home page otherwise. The footer is markdown;
-        # publisher._markdown_to_rss_html renders it to real <a> anchors.
-        try:
-            from generate_html import NETWORK_SHOWS as _NETWORK_SHOWS_RSS
-            _has_blog = config.slug in _NETWORK_SHOWS_RSS
-        except Exception:  # noqa: BLE001 — never let show-notes linking break RSS
-            _has_blog = False
-        from engine.publisher import build_show_notes_footer
-        _notes_footer = build_show_notes_footer(
-            config.publishing.base_url,
-            config.slug,
-            episode_num,
-            has_blog=_has_blog,
-        )
-        if _notes_footer:
-            episode_desc += "\n\n" + _notes_footer
-
-        # If no R2 URL but analytics is enabled, build URL and prefix it
-        feed_audio_url = rss_audio_url
-        if not feed_audio_url and config.analytics.enabled:
-            from engine.publisher import apply_op3_prefix
-            raw_url = f"{config.publishing.base_url}/{config.publishing.audio_subdir}/{final_mp3.name}"
-            feed_audio_url = apply_op3_prefix(raw_url, config.analytics.prefix_url)
-            logger.info("OP3 prefixed URL: %s", feed_audio_url)
-
-        # Build chapters URL for RSS if chapter JSON was written
-        chapters_url = None
-        chapters_json_ep = digests_dir / f"chapters_ep{episode_num:03d}.json"
-        if chapters_json_ep.exists():
-            chapters_url = (
-                f"{config.publishing.base_url}/{config.publishing.audio_subdir}"
-                f"/chapters_ep{episode_num:03d}.json"
-            )
-
-        # Build transcript URL for RSS if transcript JSON was written
-        transcript_url = None
-        _ep_prefix = f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}"
-        transcript_json = digests_dir / f"{_ep_prefix}_transcript.json"
-        if transcript_json.exists():
-            transcript_url = (
-                f"{config.publishing.base_url}/{config.publishing.audio_subdir}"
-                f"/{_ep_prefix}_transcript.json"
-            )
-        # Oct 1 2026: the WebVTT beside it is the transcript Apple Podcasts
-        # and the Podcasting 2.0 apps actually read (the JSON is a raw
-        # Whisper dump); same timebase, same directory, served by Pages.
-        transcript_vtt_url = None
-        transcript_vtt = digests_dir / f"{_ep_prefix}_transcript.vtt"
-        if transcript_vtt.exists():
-            transcript_vtt_url = (
-                f"{config.publishing.base_url}/{config.publishing.audio_subdir}"
-                f"/{_ep_prefix}_transcript.vtt"
-            )
-
-        # Channel description shape (May 2026 audit): Apple Podcasts /
-        # Spotify list pages truncate around 150 characters, so the
-        # FIRST sentence has to sell the show. Putting the AI disclosure
-        # ahead of (or inline with) the show pitch ate the entire
-        # truncation window. Now: show pitch first, AI disclosure
-        # appended in parentheses at the end. Apple's full-detail page
-        # still shows everything; the listing-card preview shows the
-        # punchy line.
-        channel_desc_with_disclosure = (
-            config.publishing.rss_description.rstrip()
-            + "\n\n"
-            + _rss_disclosure_for(config, args.show)
-        )
-
-        logger.info("Updating RSS feed: %s", config.publishing.rss_file)
-        update_rss_feed(
-            rss_path=rss_path,
-            episode_num=episode_num,
-            episode_title=episode_title,
-            episode_description=episode_desc,
-            episode_date=today,
-            mp3_filename=final_mp3.name,
-            mp3_duration=audio_duration,
-            mp3_path=final_mp3,
-            base_url=config.publishing.base_url,
-            audio_subdir=config.publishing.audio_subdir,
-            channel_title=config.publishing.rss_title,
-            channel_link=config.publishing.rss_link,
-            channel_description=channel_desc_with_disclosure,
-            channel_language=config.publishing.rss_language,
-            channel_author=config.publishing.rss_author,
-            channel_email=config.publishing.rss_email,
-            channel_image=config.publishing.rss_image,
-            channel_category=config.publishing.rss_category,
-            channel_subcategory=getattr(config.publishing, "rss_subcategory", ""),
-            channel_category2=getattr(config.publishing, "rss_category2", ""),
-            channel_subcategory2=getattr(config.publishing, "rss_subcategory2", ""),
-            channel_keywords=getattr(config.publishing, "rss_keywords", ""),
-            guid_prefix=config.publishing.guid_prefix,
-            format_duration_func=format_duration,
-            audio_url=feed_audio_url,  # Use R2/OP3-prefixed URL if available
-            chapters_url=chapters_url,
-            transcript_url=transcript_url,
-            transcript_vtt_url=transcript_vtt_url,
-            # Podcasting 2.0 channel tags. Aug 2026: funding now points at
-            # the support/donations page (the highest-intent surface a
-            # podcast app offers — Apple renders it as a "Support" button);
-            # the page itself cross-sells the free account + membership,
-            # so the old "subscribe" ask is still one tap away.
-            funding_url=f"{config.publishing.base_url}/support.html",
-            funding_label="Support the Nerra Network",
-            person_name=config.publishing.host_name or "Patrick",
-            # An AI host's person tag points at her own page, never at
-            # Patrick's About page (Sep 2026 §2b).
-            person_url=(
-                f"{config.publishing.base_url}/mira.html" if _is_ai_host(config)
-                else f"{config.publishing.base_url}/about.html"
-            ),
-            # Item <link> = the episode's blog post (player + notes +
-            # transcript), the page podcast apps open as "episode website".
-            # Was the MP3 (Sep 4 2026 flagship pass).
-            episode_page_url=(
-                f"{config.publishing.base_url}/blog/{config.slug}/ep{episode_num:03d}.html"
-            ),
-        )
-        # Alias feeds (Tesla tesla_podcast.rss → podcast.rss): byte copy,
-        # self-link stays on the canonical file so directories do not split.
-        from engine.publisher import write_rss_aliases
-        write_rss_aliases(
-            rss_path,
-            getattr(config.publishing, "rss_aliases", None) or [],
-        )
-
-        metrics.record("rss_update_duration_s", round(time.monotonic() - _t_rss, 2))
-
-        # 11b. Notify podcast directories (best-effort, non-blocking).
-        # CI no longer duplicates this ping after commit (May 2026 audit).
-        from engine.publisher import notify_directories
-        rss_url = f"{config.publishing.base_url}/{config.publishing.rss_file}"
-        notify_directories(rss_url, show_name=config.publishing.rss_title)
-
-    # 12. Save GitHub Pages summary
-    from engine.publisher import save_summary_to_github_pages
-
-    summaries_json = PROJECT_ROOT / config.publishing.summaries_json
-    audio_url = r2_audio_url  # Prefer R2 URL
-    if not audio_url and final_mp3 and final_mp3.exists():
-        audio_url = (
-            f"{config.publishing.base_url}/{config.publishing.audio_subdir}/{final_mp3.name}"
-        )
-
-    from engine import titles as _titles
-    save_summary_to_github_pages(
-        summary_text=x_thread,
-        summaries_json_path=summaries_json,
-        podcast_name=config.publishing.summaries_podcast_name or config.slug,
-        episode_num=episode_num,
-        episode_title=_titles.episode_title(
-            title_hook, episode_num,
-            fallback=f"{config.name} - Episode {episode_num} - {today_str}"),
-        audio_url=audio_url,
-        rss_url=f"{config.publishing.base_url}/{config.publishing.rss_file}",
-    )
+    # 12d. The YouTube links reach the feed item and the blog post.
+    if youtube_long_url:
+        from engine.release_schedule import describe_public_at as _describe_public_at
+        _write_rss_feed(youtube_long_url, refresh=True,
+                        youtube_public_at=_describe_public_at(
+                            youtube_urls.get("long_publish_at") or ""))
+    if youtube_long_url or youtube_short_url:
+        _write_blog_post(youtube_long_url, youtube_short_url, refresh=True)
 
     # 12b. Video podcast (July 2026 pilot). The episode's long-form MP4 was
     # uploaded to R2 during the YouTube stage; attach it to the summaries
@@ -5555,90 +5716,6 @@ def run(args: argparse.Namespace) -> None:
                             _vf[0].name, _vf[1])
         except Exception as exc:  # noqa: BLE001 — never block the publish
             logger.warning("Video podcast step failed (non-fatal): %s", exc)
-
-    # 11c. Multilingual audio (FR/RU/ES/ZH) is generated OUT OF BAND by a
-    # separate workflow (.github/workflows/multilingual.yml) running the
-    # idempotent driver scripts/generate_translations.py. It used to run
-    # inline here, but four sequential TTS renders (~16 min) pushed
-    # video-heavy shows (e.g. Tesla) past the 2400s pipeline timeout — the
-    # SIGALRM fired mid-render, run_show exited non-zero, and the episode's
-    # git commit step was skipped, leaving a partial publish (R2 + YouTube
-    # done, nothing committed). Decoupling keeps the episode pipeline fast +
-    # durable; translations land shortly after via the dedicated workflow.
-
-    # 12a. Generate blog post
-    try:
-        from engine.blog import extract_blog_metadata, generate_blog_post_html
-        from generate_html import generate_blog_index, _get_jinja_env, NETWORK_SHOWS as _NS
-        from engine.publish_guards import check_publish_guards
-
-        # News shows: the no-Sources check ran before synthesis (where a
-        # stop costs nothing published). By here the audio, the feed and
-        # YouTube are out, so a page that lost its Sources is warned, never
-        # a failed run that leaves the episode uncommitted.
-        _src_fails = [
-            f for f in check_publish_guards(
-                config=config, digest_md=x_thread or "", chapters=None,
-            )
-            if "no Sources" in f
-        ]
-        for _sf in _src_fails:
-            logger.warning("::warning::Publish guard (after publish): %s", _sf)
-
-        if config.slug in _NS:
-            _blog_env = _get_jinja_env()
-            _blog_meta = extract_blog_metadata(x_thread, config.slug, digest_md.name if digest_md else "", file_path=digest_md)
-            _blog_meta["episode_num"] = episode_num
-            # Merge any just-generated translation tracks so the switcher +
-            # badges render on today's post (the .md/x_thread carry neither).
-            try:
-                from generate_html import _attach_translations
-                _attach_translations(config.slug, _NS[config.slug], [_blog_meta])
-            except Exception:  # noqa: BLE001 — non-fatal SEO/UX enhancement
-                pass
-            _blog_html = generate_blog_post_html(
-                x_thread, _blog_meta, _NS[config.slug], _blog_env,
-                youtube_url=youtube_long_url,
-                youtube_short_url=youtube_short_url,
-            )
-            _blog_dir = PROJECT_ROOT / "blog" / config.slug
-            _blog_dir.mkdir(parents=True, exist_ok=True)
-            _blog_path = _blog_dir / f"ep{episode_num:03d}.html"
-            from engine.utils import strip_lone_surrogates as _scrub
-            _blog_path.write_text(_scrub(_blog_html), encoding="utf-8")
-            logger.info("Blog post written: %s", _blog_path)
-
-            # Regenerate blog index (per-show + network)
-            generate_blog_index(config.slug)
-            logger.info("Blog index regenerated for %s", config.slug)
-
-            from generate_html import generate_network_blog_index as _gen_net_blog
-            _gen_net_blog()
-            logger.info("Network blog index regenerated")
-
-            from engine.blog import regenerate_blog_rss_for_show_slug
-            _rss_blog = regenerate_blog_rss_for_show_slug(config.slug, PROJECT_ROOT)
-            if _rss_blog:
-                logger.info("Blog RSS regenerated: %s", _rss_blog.name)
-        else:
-            logger.debug("Show %s not in NETWORK_SHOWS, skipping blog generation", config.slug)
-    except Exception as exc:
-        logger.warning("Blog post generation failed (non-fatal): %s", exc)
-
-    # 12a-pre. Post-run validation (before newsletter/X so bad episodes
-    # don't email subscribers or tweet without audio).
-    from engine.post_run_validation import run_post_validation
-    validation_passed = run_post_validation(
-        mp3_path=final_mp3,
-        rss_path=rss_path,
-        digest_text=x_thread,
-        show_name=config.name,
-        episode_num=episode_num,
-    )
-    if not validation_passed:
-        logger.error("Post-run validation FAILED — exiting with error code")
-        save_usage(tracker, digests_dir)
-        sys.exit(1)
 
     episode_published = bool(final_mp3 and final_mp3.exists())
 
@@ -7031,6 +7108,63 @@ def _publish_youtube(
         )
         return result
 
+    # ---- East-coast release schedule (Oct 17 2026, operator-directed) ----
+    # The long-form and the hook Short upload now, private with publishAt
+    # at the show's slot in engine/release_schedule.py (hook Short 7:00 ET
+    # + 15 min x rank among this channel's YouTube shows; long-form 12:00 /
+    # 18:00 ET waves). Only a PUBLIC show is scheduled (publishAt would make
+    # an unlisted/private upload public). Best-effort by contract: any
+    # failure here, a passed slot, or YouTube refusing the publishAt means
+    # the video publishes now, exactly as before.
+    _release_on = bool(
+        getattr(config.youtube, "release_schedule_enabled", False)
+    ) and str(getattr(config.youtube, "privacy_status", "public")
+              or "public").lower() == "public"
+    _release_peers: "list[str] | None" = None
+    _long_publish_at = None   # set when the long-form is scheduled
+    _short1_at = None         # set when the hook Short is scheduled
+    if _release_on:
+        try:
+            import yaml as _rs_yaml
+            _rs_channel = (getattr(config.youtube, "channel", "en")
+                           or "en").lower()
+            _release_peers = []
+            for _rs_path in sorted((PROJECT_ROOT / "shows").glob("*.yaml")):
+                if _rs_path.name.startswith("_"):
+                    continue
+                try:
+                    _rs_doc = _rs_yaml.safe_load(
+                        _rs_path.read_text(encoding="utf-8")) or {}
+                except Exception:  # noqa: BLE001 — one bad file ranks nothing
+                    continue
+                if not isinstance(_rs_doc, dict):
+                    continue
+                _rs_yt = _rs_doc.get("youtube") or {}
+                if not isinstance(_rs_yt, dict) or not _rs_yt.get("enabled"):
+                    continue
+                if str(_rs_yt.get("channel") or "en").lower() != _rs_channel:
+                    continue
+                _release_peers.append(str(_rs_doc.get("slug") or _rs_path.stem))
+            if config.slug not in _release_peers:
+                _release_peers.append(config.slug)
+        except Exception as _rs_exc:  # noqa: BLE001 — rank against the tuple
+            logger.warning("release schedule: peer list unavailable (%s) — "
+                           "ranking against the full release order", _rs_exc)
+            _release_peers = None
+
+    def _long_hidden_from(t) -> bool:
+        """True when a video going public at *t* (``None`` = now) would
+        link a long-form that is still private (scheduled later)."""
+        if _long_publish_at is None or not long_url:
+            return False
+        return t is None or t < _long_publish_at
+
+    def _schedule_refused(exc: BaseException) -> bool:
+        """YouTube turned the publishAt down (HTTP 400 at insert): the
+        upload is retried once, published now."""
+        _st = getattr(getattr(exc, "resp", None), "status", None)
+        return str(_st) == "400" or "publishat" in str(exc).lower()
+
     # LLM-optimized YouTube title (click-tuned, separate from the spoken
     # hook). Used by the LONG-FORM upload only (Shorts titles come from
     # build_short_metadata's per-window headline); the extra candidates are
@@ -8247,8 +8381,19 @@ def _publish_youtube(
                     footage_attribution=_broll_credits,
                     optimized_title=yt_title,
                 )
-                upload = upload_video(
-                    long_video_path,
+                if _release_on:
+                    try:
+                        from engine.release_schedule import youtube_long_time
+                        _long_publish_at = youtube_long_time(
+                            config.slug,
+                            datetime.datetime.now(datetime.timezone.utc),
+                            peers=_release_peers,
+                        )
+                    except Exception as _rs_exc:  # noqa: BLE001
+                        logger.warning("release schedule (long-form) failed "
+                                       "— publishing now: %s", _rs_exc)
+                        _long_publish_at = None
+                _long_kw = dict(
                     credentials=credentials,
                     title=meta["title"],
                     description=meta["description"],
@@ -8258,8 +8403,26 @@ def _publish_youtube(
                     privacy_status=config.youtube.privacy_status,
                     thumbnail_path=thumbnail_path,
                 )
+                try:
+                    upload = upload_video(long_video_path,
+                                          publish_at=_long_publish_at,
+                                          **_long_kw)
+                except Exception as _sched_exc:
+                    if _long_publish_at is None or not _schedule_refused(_sched_exc):
+                        raise
+                    logger.warning(
+                        "::warning::YouTube refused the long-form publishAt "
+                        "%s (%s) — uploading it public now",
+                        _long_publish_at, _sched_exc)
+                    _long_publish_at = None
+                    upload = upload_video(long_video_path, **_long_kw)
                 long_url = upload.watch_url
                 result["long_url"] = long_url
+                if _long_publish_at is not None:
+                    result["long_publish_at"] = _long_publish_at.strftime(
+                        "%Y-%m-%dT%H:%M:%SZ")
+                    logger.info("Long-form scheduled: public at %s",
+                                result["long_publish_at"])
                 # Record in the network video→episode index so the YouTube
                 # analytics-feedback loop can attribute retention/CTR back to
                 # this show + episode (best-effort; never blocks publish).
@@ -8272,7 +8435,10 @@ def _publish_youtube(
                         kind="long",
                         title=meta.get("title", ""),
                         hook=hook,
-                        published=f"{today:%Y-%m-%d}",
+                        # A scheduled long-form's clock starts when it goes
+                        # PUBLIC (the Shorts-stagger rule).
+                        published=(f"{_long_publish_at:%Y-%m-%d}"
+                                   if _long_publish_at else f"{today:%Y-%m-%d}"),
                         watch_url=long_url,
                         channel=(getattr(config.youtube, "channel", "en") or "en"),
                         index_path=digests_dir / "youtube_videos.json",
@@ -8307,7 +8473,21 @@ def _publish_youtube(
                             rss_link=config.publishing.rss_link or "",
                             audio_url=audio_url or "",
                         )
-                        if _pin_text and post_video_comment(
+                        if _pin_text and _long_publish_at is not None:
+                            # A private (scheduled) video takes no comment:
+                            # queue it; the half-hourly x-queue sweep posts
+                            # it once the long-form is public.
+                            from engine.shorts_stagger import queue_comment
+                            if queue_comment(
+                                    digests_dir,
+                                    video_id=upload.video_id,
+                                    channel=(getattr(config.youtube, "channel",
+                                                     "en") or "en"),
+                                    text=_pin_text,
+                                    publish_at=_long_publish_at):
+                                result["yt_comments_queued"] = (
+                                    int(result.get("yt_comments_queued", 0)) + 1)
+                        elif _pin_text and post_video_comment(
                                 credentials=credentials,
                                 video_id=upload.video_id,
                                 text=_pin_text):
@@ -8631,6 +8811,27 @@ def _publish_youtube(
             # private with status.publishAt at the channel's next optimal
             # slots so they spread through the day (manual runs included).
             # Any failure here degrades to the legacy publish-all-now.
+            # Oct 17 2026: the hook Short (Short #1) takes the show's
+            # release slot; later Shorts are staggered from IT, so they
+            # always follow it.
+            _short1_at = None
+            if _release_on and shorts_plan:
+                try:
+                    from engine.release_schedule import youtube_short_time
+                    _short1_at = youtube_short_time(
+                        config.slug,
+                        datetime.datetime.now(datetime.timezone.utc),
+                        peers=_release_peers,
+                    )
+                except Exception as _rs_exc:  # noqa: BLE001
+                    logger.warning("release schedule (hook Short) failed — "
+                                   "publishing now: %s", _rs_exc)
+                    _short1_at = None
+            if _short1_at is not None:
+                result["short_publish_at"] = _short1_at.strftime(
+                    "%Y-%m-%dT%H:%M:%SZ")
+                logger.info("Hook Short scheduled: public at %s",
+                            result["short_publish_at"])
             _stagger_times: "list" = []
             if len(shorts_plan) > 1 and bool(
                 getattr(config.youtube, "shorts_stagger_enabled", False)
@@ -8641,7 +8842,9 @@ def _publish_youtube(
                         stagger_publish_times,
                     )
                     _stagger_times = stagger_publish_times(
-                        datetime.datetime.now(datetime.timezone.utc),
+                        max(datetime.datetime.now(datetime.timezone.utc),
+                            _short1_at or datetime.datetime.now(
+                                datetime.timezone.utc)),
                         len(shorts_plan) - 1,
                         slot_hours=resolve_slot_hours(
                             config.youtube, _yt_channel),
@@ -8651,8 +8854,9 @@ def _publish_youtube(
                         for t in _stagger_times
                     ]
                     logger.info(
-                        "Shorts stagger: #1 publishes now; %d later Short(s) "
+                        "Shorts stagger: #1 publishes %s; %d later Short(s) "
                         "scheduled at %s",
+                        (result.get("short_publish_at") or "now"),
                         len(_stagger_times),
                         ", ".join(result["shorts_scheduled_times"]),
                     )
@@ -9016,12 +9220,31 @@ def _publish_youtube(
                     # Dragon CRS-35 to ISS") existed. Use it first.
                     if not _opt_short_title and not (this_hook or "").strip():
                         _opt_short_title = (yt_title or "").strip() or None
+                    # Staggered publishing: Short #1 carries the release
+                    # slot (Oct 17 2026); later Shorts carry publishAt
+                    # (upload_video flips them to private + scheduled).
+                    _publish_at = (
+                        _stagger_times[short_idx - 1]
+                        if short_idx >= 1 and (short_idx - 1) < len(_stagger_times)
+                        else (_short1_at if short_idx == 0 else None)
+                    )
+                    if (short_idx == 0 and _publish_at is not None
+                            and _publish_at <= datetime.datetime.now(
+                                datetime.timezone.utc)
+                            + datetime.timedelta(minutes=5)):
+                        _publish_at = None  # the slot ran out during the render
+                        result.pop("short_publish_at", None)
                     meta = build_short_metadata(
                         config,
                         episode_num=episode_num,
                         today_str=today_str,
                         hook=this_hook,
-                        long_form_url=long_url,
+                        # A long-form still private when this Short goes
+                        # public would be a "Video unavailable" link: send
+                        # viewers to the episode page instead (the comment
+                        # below waits for the long-form).
+                        long_form_url=("" if _long_hidden_from(_publish_at)
+                                       else long_url),
                         optimized_title=_opt_short_title,
                         channel=_yt_channel,
                         variant=(_variant.variant if _ab_on else ""),
@@ -9035,16 +9258,7 @@ def _publish_youtube(
                         if this_short_thumb_path and Path(this_short_thumb_path).exists()
                         else thumbnail_path
                     )
-                    # Staggered publishing: Short #1 is immediate; later
-                    # Shorts carry publishAt (upload_video flips them to
-                    # private + scheduled).
-                    _publish_at = (
-                        _stagger_times[short_idx - 1]
-                        if short_idx >= 1 and (short_idx - 1) < len(_stagger_times)
-                        else None
-                    )
-                    this_upload = upload_video(
-                        this_short_video_path,
+                    _short_kw = dict(
                         credentials=credentials,
                         title=meta["title"],
                         description=meta["description"],
@@ -9053,8 +9267,25 @@ def _publish_youtube(
                         default_language=meta["default_language"],
                         privacy_status=config.youtube.privacy_status,
                         thumbnail_path=upload_thumb,
-                        publish_at=_publish_at,
                     )
+                    try:
+                        this_upload = upload_video(
+                            this_short_video_path,
+                            publish_at=_publish_at,
+                            **_short_kw,
+                        )
+                    except Exception as _sched_exc:
+                        if _publish_at is None or not _schedule_refused(_sched_exc):
+                            raise
+                        logger.warning(
+                            "::warning::YouTube refused Short #%d's publishAt "
+                            "%s (%s) — uploading it public now",
+                            short_idx + 1, _publish_at, _sched_exc)
+                        _publish_at = None
+                        if short_idx == 0:
+                            result.pop("short_publish_at", None)
+                        this_upload = upload_video(this_short_video_path,
+                                                   **_short_kw)
                     short_urls_out.append(this_upload.watch_url)
                     short_video_ids_out.append(this_upload.video_id)
                     try:
@@ -9138,7 +9369,17 @@ def _publish_youtube(
                                     + "\n\U0001f514 Subscribe for "
                                     + _cad(getattr(config, "slug", ""))
                                     ) if _cmt_target else ""
-                            if _cmt and _publish_at is not None:
+                            # Oct 17 2026: a Short that goes public before
+                            # the long-form waits for it too, so the link in
+                            # the comment always works.
+                            _cmt_at = max(
+                                [t for t in (
+                                    _publish_at,
+                                    _long_publish_at
+                                    if _long_hidden_from(_publish_at) else None,
+                                ) if t is not None],
+                                default=None)
+                            if _cmt and _cmt_at is not None:
                                 # Comments can't be posted on a private
                                 # (scheduled) video \u2014 queue it; the sweep
                                 # (scripts/post_scheduled_short_comments.py)
@@ -9149,7 +9390,7 @@ def _publish_youtube(
                                         video_id=this_upload.video_id,
                                         channel=_yt_channel,
                                         text=_cmt,
-                                        publish_at=_publish_at):
+                                        publish_at=_cmt_at):
                                     result["yt_comments_queued"] = (
                                         int(result.get(
                                             "yt_comments_queued", 0)) + 1)

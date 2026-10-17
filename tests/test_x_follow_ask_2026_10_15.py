@@ -5,7 +5,10 @@ Follow ask: every network post had ended on one identical closer and none
 asked anyone to follow. engine.x_post now rotates the closer and, on about
 one post in four, swaps in a one-sentence follow ask. The ask is decided by
 the calendar and the show's place in the posting order, never clips a hook,
-and every closer list ends on the closer the posts used before.
+and every closer list ends on the closer the posts used before. (Oct 17
+2026: the posting order is the X slot order from engine.release_schedule;
+tests/test_x_edition_slot_and_follow_phase_2026_10_17.py proves the
+guarantee over 60 days.)
 
 Render budget: Models & Agents Ep204 started a long-form render with 1,189 s
 left after the commit reserve, rendered for 1,493 s, uploaded the long-form
@@ -53,7 +56,8 @@ class TestRoster:
         missing = posters - set(x_post._roster_slugs())
         assert not missing, (
             f"{sorted(missing)} post to @nerranetwork but are not in "
-            "engine.x_post.FOLLOW_ASK_ROSTER — add each at its posting slot")
+            "engine.x_post.FOLLOW_ASK_CADENCE — add each with its cadence; its "
+            "place in the order comes from engine.release_schedule (Oct 17 2026)")
 
     def test_nerra_daily_is_on_the_roster(self):
         assert "nerra_daily" in x_post._roster_slugs()

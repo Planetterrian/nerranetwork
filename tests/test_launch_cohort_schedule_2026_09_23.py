@@ -17,26 +17,32 @@ WF = (ROOT / ".github" / "workflows" / "run-show.yml").read_text(encoding="utf-8
 TS = (ROOT / "workers" / "scheduler" / "src" / "index.ts").read_text(encoding="utf-8")
 AUDIT = (ROOT / ".github" / "workflows" / "daily-audit.yml").read_text(encoding="utf-8")
 
-#: Plan §6 slots (UTC hour, minute, day filter) for the nine.
+#: The nine's slots (EASTERN hour, minute, day filter). Plan §6 placed them
+#: on UTC; the Oct 17 2026 re-time (Nerra Daily out by 7:00 AM New York)
+#: moved every slot to Eastern wall time — the scheduler Worker's SLOT_TZ.
+#: The gate's GitHub fallback crons are their EST equivalents (ET + 5 h).
 SLOTS = {
-    "omni_view_asia_pacific": (6, 16, None),
-    "omni_view_africa_mideast": (6, 31, None),
-    "omni_view_europe": (6, 46, None),
-    "collingwood": (10, 7, "friday"),
-    "omni_view_north_america": (10, 16, None),
-    "omni_view_latam": (10, 31, None),
-    "prediction_markets": (11, 16, None),
-    "omni_view_world": (11, 31, None),
-    "vancouver": (12, 16, None),
+    "omni_view_asia_pacific": (4, 30, None),
+    "omni_view_africa_mideast": (4, 40, None),
+    "omni_view_europe": (4, 50, None),
+    "omni_view_latam": (5, 5, None),
+    "omni_view_north_america": (5, 15, None),
+    "collingwood": (5, 35, "friday"),
+    "prediction_markets": (6, 5, None),
+    "omni_view_world": (6, 10, None),
+    "vancouver": (8, 15, None),
 }
+EST_OFFSET_HOURS = 5
 COHORT = tuple(SLOTS) + ("ai_chips", "mag7", "peptides", "longevity")
 
 
 def _cron_map():
+    """CRON_MAP on the Eastern clock: the UTC fallback hour minus the EST
+    offset is the Worker's Eastern slot."""
     out = {}
     for m in re.finditer(r'"(\d+) (\d+) \* \* ([*\d])":\s*\("(\w+)",\s*(?:"(\w+)"|None)\)', WF):
         minute, hour, _dow, show, flt = m.groups()
-        out[show] = (int(hour), int(minute), flt)
+        out[show] = (int(hour) - EST_OFFSET_HOURS, int(minute), flt)
     return out
 
 
@@ -49,7 +55,7 @@ class TestTheNineAreScheduled:
     def test_each_slot_has_a_github_cron_line(self):
         for show, (h, m, flt) in SLOTS.items():
             dow = {"friday": "5"}.get(flt, "*")
-            assert f"- cron: '{m} {h} * * {dow}'" in WF, show
+            assert f"- cron: '{m} {h + EST_OFFSET_HOURS} * * {dow}'" in WF, show
 
     def test_worker_slots_mirror_the_gate(self):
         for show, (h, m, flt) in SLOTS.items():

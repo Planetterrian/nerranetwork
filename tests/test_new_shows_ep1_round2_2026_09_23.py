@@ -172,11 +172,13 @@ def test_health_evidence_mix_and_on_subject_spotlight(slug):
 # Phase 1 launch (B-PR): the four shows go on the schedule
 # ---------------------------------------------------------------------------
 
+# Oct 17 2026: the slots moved to Eastern wall time (05:20, 05:55, 04:45 and
+# 04:55 ET); these are the gate's GitHub fallback crons, the EST equivalents.
 LAUNCH = {
-    "ai_chips": ("31 9 * * *", None),
-    "mag7": ("46 10 * * *", None),
-    "longevity": ("1 11 * * 3", "wednesday"),
-    "peptides": ("7 11 * * 4", "thursday"),
+    "ai_chips": ("20 10 * * *", None),
+    "mag7": ("55 10 * * *", None),
+    "longevity": ("45 9 * * 3", "wednesday"),
+    "peptides": ("55 9 * * 4", "thursday"),
 }
 
 

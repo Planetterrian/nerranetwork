@@ -103,19 +103,22 @@ class TestCronConsistency:
             f"these don't: {missing}"
         )
 
-    def test_no_show_runs_before_06_utc_or_after_12_utc(self):
-        """Schedule window must be contained in 06:00–12:59 UTC so the
-        whole network finishes by the Eastern morning. Widened from 11
-        to 12 when SpaceX Daily took the 12:07 slot (June 2026). Also
-        catches accidental DST drift. Must stay in sync with the
-        scheduler Worker's cron window in workers/scheduler/wrangler.toml."""
+    def test_no_show_runs_before_09_utc_or_after_13_utc(self):
+        """Oct 17 2026: the slots are Eastern wall time, 04:00-08:15 ET, and
+        the GitHub fallback crons are their EST equivalents (ET + 5 h), so
+        every cron sits in 09:00-13:59 UTC — inside one calendar day in both
+        offsets, which keeps the gate's UTC weekday filter in step with the
+        Worker's Eastern one. (Was 06:00-12:59 UTC on the old UTC schedule.)
+        Also catches a cron written in EDT (ET + 4) by mistake for an early
+        slot. Must stay in sync with workers/scheduler SLOTS
+        (tests/test_scheduling_punctuality.py)."""
         cron_lines = _extract_cron_lines()
         for cron in cron_lines:
             minute, hour = cron.split()[:2]
             hour_int = int(hour)
-            assert 6 <= hour_int <= 12, (
-                f"Cron {cron!r} hour {hour_int} outside 06:00–12:59 UTC "
-                f"window."
+            assert 9 <= hour_int <= 13, (
+                f"Cron {cron!r} hour {hour_int} outside 09:00–13:59 UTC "
+                f"(04:00-08:59 EST) window."
             )
 
 
