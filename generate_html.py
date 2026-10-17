@@ -381,19 +381,33 @@ def _language_feed_is_stale(path, max_age_days: int = 45) -> bool:
 # ---------------------------------------------------------------------------
 # Marketing / Analytics configuration
 # ---------------------------------------------------------------------------
-# GA4 Measurement ID is committed to the repo (it's public — visible in
-# page source of any GA4-tracked site). Ads ID and conversion labels are
-# secrets set via GitHub Actions.
+# GA4 Measurement ID and the Google Ads *tag* ID are committed to the repo
+# (both are public — visible in page source). Conversion labels are NOT
+# used: GA4 key events are imported into Google Ads, so no Ads ``send_to``
+# labels are needed on the site.
 #
 # - GA4_MEASUREMENT_ID: Google Analytics 4 (default: Nerra Network property)
-# - GOOGLE_ADS_ID: Google Ads conversion ID (e.g. "AW-1234567890")
-# - GOOGLE_ADS_SIGNUP_LABEL: Conversion label for newsletter signup
+# - GOOGLE_ADS_ID: Google Ads tag ID (default: AW-949617778). Must be the
+#   tag ID (AW-XXXXXXXXX), never the Ads *customer* ID. AW-7411462618 is
+#   the customer ID and is rejected if a secret still carries it.
 # - PLAUSIBLE_DOMAIN: Plausible analytics domain (privacy-focused alternative)
 #
 # When any GA4/Ads ID is set, gtag.js loads and Google Consent Mode v2 defaults
 # to "denied" until the user accepts the cookie banner.
 
 _GA4_DEFAULT = "G-6PWJCVQQ7B"  # Nerra Network GA4 property (533581233)
+_ADS_DEFAULT = "AW-949617778"  # Google tag / Ads tag ID (public)
+# Customer ID mistaken for a tag ID — never emit on any surface.
+_ADS_REJECTED_IDS = frozenset({"AW-7411462618"})
+
+
+def _resolve_google_ads_id() -> str:
+    """Return the Google Ads tag ID, never the customer ID."""
+    raw = (os.environ.get("GOOGLE_ADS_ID") or "").strip()
+    if not raw or raw in _ADS_REJECTED_IDS:
+        return _ADS_DEFAULT
+    return raw
+
 
 MARKETING_CONFIG = {
     # NOTE: `or _GA4_DEFAULT`, not a .get() default — CI passes
@@ -405,8 +419,10 @@ MARKETING_CONFIG = {
     "ga4_measurement_id": (
         os.environ.get("GA4_MEASUREMENT_ID") or _GA4_DEFAULT
     ).strip(),
-    "google_ads_id": os.environ.get("GOOGLE_ADS_ID", "").strip(),
-    "google_ads_signup_label": os.environ.get("GOOGLE_ADS_SIGNUP_LABEL", "").strip(),
+    "google_ads_id": _resolve_google_ads_id(),
+    # Always empty: conversions are imported from GA4 key events. Kept as
+    # a key so templates that still read it render "" rather than KeyError.
+    "google_ads_signup_label": "",
     "plausible_domain": os.environ.get("PLAUSIBLE_DOMAIN", "").strip(),
     # Google Search Console verification token (set via GSC_VERIFICATION env var).
     # Obtain from Search Console → Settings → Ownership verification → HTML tag.
