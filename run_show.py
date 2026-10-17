@@ -4967,6 +4967,25 @@ def run(args: argparse.Namespace) -> None:
                         audio_duration,
                         music_intro_offset=music_intro_offset,
                     )
+                    # Oct 17 2026: each start moves to the time its line is
+                    # spoken in the committed (story-break-shifted) Whisper
+                    # transcript; the word-count estimate ran a median 8 s
+                    # and up to 30 s late. The voice sits voice_intro_delay
+                    # into the mix. No transcript = the estimate ships.
+                    try:
+                        _tx_ch = digests_dir / (
+                            f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}"
+                            "_transcript.json")
+                        if _tx_ch.exists():
+                            from engine.chapters import align_timestamps_to_transcript
+                            align_timestamps_to_transcript(
+                                episode_chapters, podcast_script,
+                                json.loads(_tx_ch.read_text(encoding="utf-8")),
+                                music_intro_offset=float(config.audio.voice_intro_delay or 0.0),
+                                total_duration=audio_duration,
+                            )
+                    except Exception as _align_exc:  # noqa: BLE001 — metadata only
+                        logger.warning("Chapter alignment skipped: %s", _align_exc)
 
                     ep_title = f"Ep {episode_num}: {title_hook}" if title_hook else f"{config.name} - Episode {episode_num}"
                     chapters_json_path = digests_dir / f"chapters_ep{episode_num:03d}.json"

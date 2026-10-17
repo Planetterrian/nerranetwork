@@ -44,6 +44,10 @@ class Chapter:
     # Character range within the script (used for text splitting)
     char_start: int = 0
     char_end: int = 0
+    # The opening words of the line the chapter starts on (Oct 17 2026), so
+    # the start can be found again in the spoken audio after later passes
+    # have edited the script around it (align_timestamps_to_transcript).
+    opening: str = ""
 
 
 # Sentence terminators that close a chapter title. ``…`` and Russian
@@ -176,6 +180,25 @@ def _strip_title_label(title: str) -> str:
     return _TITLE_LABEL_RE.sub("", title).strip()
 
 
+def _whole_title(raw: str) -> str:
+    """A headline as it would ship as a chapter title, never shortened.
+
+    Oct 17 2026: a headline is a chapter title WHOLE or not at all. Tesla
+    Ep637 shipped "Luxury estate in South Africa has off-grid home fitted"
+    and "History Says Tesla Stock Swings Hard on Earnings. It Has Moved 8%"
+    — word-clipped headlines from the lead split and the headline anchors,
+    the two paths that still called ``_clip_title``. Callers compare the
+    length of this against ``HEADLINE_TITLE_MAX`` and drop what does not fit.
+    """
+    title = _strip_title_label(re.sub(r"[*_`]+", "", raw or "").strip())
+    # An outlet's SEO tail is not part of the headline: a ticker in
+    # parentheses ("… Bottleneck (TSLA)") or a bracketed year ("… [2026]").
+    return _SEO_TAIL_RE.sub("", title).strip()
+
+
+_SEO_TAIL_RE = re.compile(r"\s*(?:\((?:NASDAQ|NYSE|TSX)?:?\s*[A-Z]{1,5}(?:\.[A-Z]{1,3})?\)|\[(?:19|20)\d\d\])$")
+
+
 #: A line spoken by a named host in a dialogue script ("DAN: Ten",
 #: "PATRICK: I'll take the hit on that"). Oct 11 2026: The DP Pod shipped
 #: these as chapter titles on six of ten episodes (Ep070–077) — a host's
@@ -254,6 +277,7 @@ def _tokenize_for_match(text: str) -> set:
 def _best_headline_for_segment(
     seg_text: str, headlines: List[str], used: set,
     max_chars: int = HEADLINE_TITLE_MAX,
+    whole_only: bool = False,
 ) -> str:
     """Pick the unused digest *headline* that best overlaps *seg_text*.
 
@@ -288,6 +312,9 @@ def _best_headline_for_segment(
             # candidates are skipped now; a long real headline competes
             # and is shortened cleanly by ``_clip_title``.
             continue
+        if whole_only and len(_whole_title(h)) > max_chars:
+            # Oct 17 2026: a headline is a chapter title whole or not at all.
+            continue
         h_tokens = _tokenize_for_match(h)
         if not h_tokens:
             continue
@@ -302,6 +329,8 @@ def _best_headline_for_segment(
     if not best_title:
         return ""
     used.add(best_title)  # claim the headline so the next segment can't reuse it
+    if whole_only:
+        return _whole_title(best_title)
     return _clip_title(best_title, max_chars)
 
 
@@ -453,6 +482,17 @@ def _paragraphs(lines: List[str]) -> list:
     return paras
 
 
+def _opens_as_continuation(text: str) -> bool:
+    """A paragraph opening on a pronoun, a demonstrative or a connective
+    continues the story before it (``engine.story_breaks`` owns the shape —
+    the same lines never get a story beat). "This is <show>…" is the
+    identity line, never a continuation."""
+    if re.match(r"^\W*this is\b", text or "", re.IGNORECASE):
+        return False
+    from engine.story_breaks import opens_as_continuation
+    return opens_as_continuation(text)
+
+
 #: The lead story must begin within this many paragraphs of the opening
 #: chapter's start, or it is not where the episode put its lead.
 LEAD_SEARCH_PARAGRAPHS = 4
@@ -469,6 +509,8 @@ def _lead_story_split(
     whole_only: bool = False,
     fallback_title: str = "",
     lead_text_tokens: Optional[set] = None,
+    exclude_titles: Optional[set] = None,
+    lead_story_words: Optional[set] = None,
 ) -> Optional[tuple]:
     """Where the lead story starts inside the opening chapter.
 
@@ -499,9 +541,21 @@ def _lead_story_split(
     name for its lead section ("Lead", "Top Story") — titles the chapter,
     so a listener can jump to the lead on a desk whose lead is written
     under a bare heading, as every desk's is.
+
+    Oct 17 2026: (1) with ``whole_only`` a headline that does not fit the
+    budget is never clipped — the lead then takes *fallback_title* or gets
+    no chapter (Tesla Ep637 shipped "Luxury estate in South Africa has
+    off-grid home fitted"). (2) *exclude_titles* are headlines known to
+    tell a DIFFERENT story than the hook: AI Chips Ep026's hook was TSMC's
+    "Second Arizona fab", and the two words it shared with "Samsung's second
+    Taylor fab…" titled the TSMC lead with the Samsung story. (3) The lead
+    starts on the first paragraph of its run: a paragraph that opens on a
+    pronoun or a demonstrative ("Those packs hold…") continues the story the
+    hook began, so the chapter backs up over it.
     """
     if not story_headlines:
         return None
+    exclude = exclude_titles or set()
     hook = ""
     candidates = []
     for idx, h in enumerate(story_headlines):
@@ -509,45 +563,57 @@ def _lead_story_split(
             if idx == 0:
                 hook = h
             continue
+        if h in exclude:
+            continue
         tokens = _tokenize_for_match(h)
         if tokens:
             candidates.append((h, tokens))
+
+    def _fits(t: str) -> bool:
+        return not whole_only or len(_whole_title(t)) <= max_chars
+
     hook_tokens = _tokenize_for_match(hook)
+    title = ""
     if hook_tokens:
-        title = ""
         best = max(candidates, key=lambda c: len(c[1] & hook_tokens), default=None)
         if best and len(best[1] & hook_tokens) >= 2:
-            title, lead_tokens = best[0], best[1] | hook_tokens
+            lead_tokens = best[1] | hook_tokens
+            if _fits(best[0]):
+                title = best[0]
         else:
             lead_tokens = hook_tokens
+        if not title:
             # Oct 12 2026: the hook is a spoken sentence, and a spoken
             # sentence is a title only when it fits whole (the Oct 8 rule).
             # A word-clipped hook ("Sixteen people drowned in Bihar while
             # collecting festival") shipped as the lead chapter on five
             # desks; no title means no lead chapter, never a fragment.
-            if len(_strip_title_label(re.sub(r"[*_`]+", "", hook).strip())) <= max_chars:
+            if len(_whole_title(hook)) <= max_chars:
                 title = _clip_title(hook, max_chars)
             elif fallback_title:
                 title = fallback_title
     elif candidates:
         title, lead_tokens = candidates[0]
+        if not _fits(title):
+            title = fallback_title
     else:
         return None
     if not title:
         return None
     body = [p for p in _paragraphs(lines)
             if head.word_start < p[0] < head.word_end]
-    if whole_only:
-        whole = _strip_title_label(re.sub(r"[*_`]+", "", title).strip())
-        if len(whole) > max_chars:
-            return None
+    text = "".join(lines)
     text_tokens = lead_text_tokens or set()
-    for w, c, tokens in body[:LEAD_SEARCH_PARAGRAPHS]:
+    for i, (w, c, tokens) in enumerate(body[:LEAD_SEARCH_PARAGRAPHS]):
         # The paragraph tells the hook's story: it shares the hook's or the
         # headline's words, or (Oct 14 2026) three of the digest's own lead
         # text — the desks' short, pronoun-led paragraphs match that way.
-        if len(tokens & lead_tokens) >= 2 or len(tokens & text_tokens) >= LEAD_TEXT_MIN_SHARED:
-            return w, c, _clip_title(title, max_chars)
+        if (len(tokens & lead_tokens) >= 2 or len(tokens & text_tokens) >= LEAD_TEXT_MIN_SHARED
+                or w in (lead_story_words or ())):
+            while i > 0 and _opens_as_continuation(text[body[i - 1][1]:body[i - 1][1] + 80]):
+                i -= 1
+            w, c = body[i][0], body[i][1]
+            return w, c, (_whole_title(title) if whole_only else _clip_title(title, max_chars))
     return None
 
 
@@ -636,6 +702,599 @@ def _headline_anchored_insertions(
     return result if len(result) >= min_results else []
 
 
+# ---------------------------------------------------------------------------
+# Story chapters from the story-change detector (Oct 17 2026)
+# ---------------------------------------------------------------------------
+
+#: A bold item heading at the start of a digest line: ``1. **Title** —
+#: Outlet``, ``**Title — Phys.org**``, ``**Title:** Outlet``,
+#: ``**[Title]: source**``. Group 1 is the number, 2 the bold span, 3 the rest.
+_ITEM_BOLD_RE = re.compile(r"^\s*(\d+[.)]\s+)?\*\*(.+?)\*\*(.*)$")
+_ITEM_H3_RE = re.compile(r"^\s*#{2,6}\s+\d+[.)]\s+(.+?)\s*$")
+_HEADING_RE = re.compile(r"^\s*(#{1,6})\s+(.+?)\s*$")
+#: An outlet tail after a bold title: short, no sentence inside it.
+_OUTLET_TAIL_RE = re.compile(r"^\s*[—–:\-|]\s*[^.!?]{1,60}$")
+
+
+def _digest_item_titles(digest_text: str) -> List[str]:
+    """Every story title the digest's own item headings carry, in order.
+
+    ``engine.grok_imagine.extract_story_headlines`` stops at twelve (the hook
+    included) and drops a bold line over 70 characters that carries its
+    outlet as ``— Phys.org`` rather than ``: Phys.org`` — so Fascinating
+    Frontiers Ep225 offered ONE title for nine stories. Chapters need every
+    item's title; this reads them straight from the item headings.
+    """
+    out: List[str] = []
+    seen: set = set()
+    for line in (digest_text or "").splitlines():
+        if line.lstrip().startswith(">"):
+            continue  # the hook: a sentence, never an item title
+        m = _ITEM_H3_RE.match(line)
+        if m:
+            raw = m.group(1)
+        else:
+            m = _ITEM_BOLD_RE.match(line)
+            if not m:
+                continue
+            numbered, bold, rest = m.group(1), m.group(2).strip(), m.group(3)
+            if bold.endswith(":"):
+                # ``**Title:** Outlet`` — a title only when the rest is an
+                # outlet name, never a label introducing a sentence.
+                tail = rest.strip()
+                if (not tail or len(tail.split()) > 6 or tail.endswith(".")
+                        or re.search(r"[$%€£¥▲▼]", tail)):
+                    continue
+                bold = bold[:-1]
+            elif rest.strip() and not numbered and not _OUTLET_TAIL_RE.match(rest):
+                continue  # a bold lead-in to a sentence, not a heading
+            raw = bold.strip("[]").replace("]:", ":").replace("] ", " ")
+        title = _clean_item_title(raw)
+        if not title or title.lower() in seen:
+            continue
+        seen.add(title.lower())
+        out.append(title)
+    return out
+
+
+#: A digest heading that numbers a slot ("Segment 2 — Why It Costs…",
+#: First Principles) is a placeholder, never a chapter title.
+_PLACEHOLDER_TITLE_RE = re.compile(r"^(?:segment|part|section|item|story)\s+\d+\b", re.IGNORECASE)
+
+
+def _clean_item_title(raw: str) -> str:
+    """An item heading as a chapter title: links flattened, the outlet tail
+    dropped, never shortened otherwise. ``""`` when it is not a title (under
+    three words, cut inside its own parenthesis — "iShares A.I. Innovation
+    and Tech ETF (TSX" on Modern Investing Ep201 — or a numbered slot)."""
+    try:
+        from engine.grok_imagine import (
+            _strip_bold_line_source_tail, _strip_source_suffix,
+        )
+    except Exception:  # noqa: BLE001 — chapters never raise
+        return ""
+    raw = _MD_LINK_RE.sub(lambda mm: mm.group(1), raw or "")
+    raw = raw.strip()
+    # A quoted tail after the colon is the headline's own subtitle ("…
+    # Cybertruck: 'People Prefer Car'"), never an outlet.
+    if not re.search(r":\s*['\"‘’“”]", raw):
+        raw = _strip_bold_line_source_tail(raw)
+    raw = _strip_source_suffix(raw)
+    # A longer outlet tail inside the bold ("…34 children: The Globe and
+    # Mail", Top World): at most five capitalised words after the LAST
+    # colon, no digit, no quote — a subtitle reads otherwise.
+    head, sep, tail = raw.rpartition(": ")
+    if (sep and len(head) >= 20 and 1 <= len(tail.split()) <= 5 and len(tail) <= 40
+            and re.match(r"^[A-Z]", tail) and not re.search(r"[\d'\"‘’“”?!]", tail)
+            and all(w[:1].isupper() or w.lower() in ("and", "of", "the", "de", "la", "le")
+                    for w in tail.split())):
+        raw = head
+    title = _whole_title(raw).rstrip(":.,;").strip()
+    if (len(title.split()) < 3
+            or title.count("(") != title.count(")")
+            or title.count("[") != title.count("]")
+            or _PLACEHOLDER_TITLE_RE.match(title)):
+        return ""
+    return title
+
+
+def _marker_field(marker, name: str) -> str:
+    if hasattr(marker, name):
+        return getattr(marker, name) or ""
+    if isinstance(marker, dict):
+        return marker.get(name, "") or ""
+    return ""
+
+
+def _norm_heading(text: str) -> str:
+    t = re.sub(r"[*_`#]+", "", text or "").strip().lower()
+    t = re.sub(r"\s*\(\d+\)\s*$", "", t)
+    return " ".join(t.replace("&", "and").split())
+
+
+def _section_marker_title(section: str, section_markers: list) -> str:
+    """The marker title that names the digest section *section*: a marker
+    whose ``digest_section`` or title the heading starts with ("Cosmic Deep
+    Dive: Self-Interacting Dark Matter" -> "Cosmic Deep Dive"). Opening and
+    closing markers never name a body section."""
+    head = _norm_heading(section)
+    if not head:
+        return ""
+    for marker in section_markers or []:
+        if _marker_field(marker, "where") in ("start", "end"):
+            continue
+        title = _marker_field(marker, "title")
+        for name in (_marker_field(marker, "digest_section"), title):
+            n = _norm_heading(name)
+            if n and (head == n or head.startswith(n + " ") or head.startswith(n + ":")):
+                return title
+    return ""
+
+
+def _story_units_context(lines: List[str], digest_text: str):
+    """``(units, assigned, boundaries, positions, kept)`` or None.
+
+    *kept* are the script's non-empty lines (the story-change detector's
+    line index) and *positions* their ``(word_idx, char_offset)`` in
+    parse_chapters' accounting.
+    """
+    from engine import story_breaks as sb
+    units = sb.story_units(digest_text)
+    if len(units) < 2:
+        return None
+    kept: List[str] = []
+    positions: List[tuple] = []
+    w = c = 0
+    for line in lines:
+        if line.strip():
+            kept.append(line.strip())
+            positions.append((w, c))
+        w += len(line.split())
+        c += len(line)
+    if not kept:
+        return None
+    assigned = sb._assign(kept, units)
+    boundaries = sb.story_boundary_lines("\n".join(kept), digest_text)
+    return units, assigned, boundaries, positions, kept
+
+
+def _confident(assigned_entry, line: str, unit) -> bool:
+    from engine import story_breaks as sb
+    u, score = assigned_entry
+    return (u >= 0 and score >= sb.MIN_ASSIGN_SCORE
+            and len(sb._tokens(line) & unit.tokens) >= sb.MIN_ASSIGN_TOKENS)
+
+
+def _unit_titles(units, candidates: List[str], max_chars: int) -> dict:
+    """``{unit_index: whole title or ""}`` for every item unit a title names.
+
+    A title belongs to the item unit that carries most of its words (the
+    item's own heading is part of the unit's text). A title over the budget
+    is still matched — so its unit is known to have one — and then left
+    empty: a headline is a chapter title whole or not at all.
+    """
+    from engine import story_breaks as sb
+    best_for_unit: dict = {}
+    for idx, title in enumerate(candidates):
+        if _is_hook_candidate(title, idx, max_chars):
+            continue
+        if title.count("(") != title.count(")") or title.count("[") != title.count("]"):
+            continue  # cut inside its own parenthesis ("… ETF (TSX"): not a title
+        toks = sb._tokens(title)
+        if len(toks) < 2:
+            continue
+        # Every unit competes: an unsourced item reads as an "essay" to the
+        # story detector (Modern Investing's Quick Hits), and a title that
+        # could only land on a sourced item went to the wrong one.
+        # A numbered story HEADING ("### 3) Aid groups warn…", Omni View) is
+        # the story's title and is not in its unit's text: it counts too.
+        scored = [(len(toks & (u.tokens | (sb._tokens(u.section)
+                                           if re.match(r"^\d+[.)]\s", u.section or "")
+                                           else frozenset()))), i)
+                  for i, u in enumerate(units)]
+        if not scored:
+            continue
+        # Ties go to the SMALLER story: a headline's words all sit in its own
+        # item and, now and then, in a long essay that mentions it (Modern
+        # Investing Ep198's Strategy Spotlight carried every word of the
+        # "US Treasury Sanctions ICC…" quick hit).
+        hit, _density, i = max(
+            ((h, h / max(1, len(units[j].tokens)), j) for h, j in scored),
+            key=lambda x: (x[0], x[1], -x[2]))
+        if hit < max(2, -(-len(toks) * 6 // 10)):
+            continue
+        cov = hit / len(toks)
+        if i not in best_for_unit or cov > best_for_unit[i][0]:
+            best_for_unit[i] = (cov, title)
+    out = {}
+    for i, (_cov, title) in best_for_unit.items():
+        whole = _whole_title(title)
+        out[i] = whole if len(whole) <= max_chars else ""
+    # A title on its own paragraph (Top World writes "**Title: Outlet**", a
+    # blank line, then the story) is a unit of its own to the story map; it
+    # names the story told in the unit right after it.
+    for i in sorted(out):
+        unit = units[i]
+        if (i + 1 < len(units) and i + 1 not in out
+                and unit.words <= len(_whole_title(best_for_unit[i][1]).split()) + 6
+                and units[i + 1].section == unit.section):
+            out[i + 1] = out[i]
+    return out
+
+
+def _title_candidates(story_headlines: List[str], digest_text: str) -> List[str]:
+    """``story_headlines`` (the hook first, untouched) cleaned like the
+    digest's own item headings, then every item heading they miss."""
+    heads = list(story_headlines or [])[:1]
+    for h in list(story_headlines or [])[1:]:
+        t = _clean_item_title(h)
+        if t and t.lower() not in {x.lower() for x in heads}:
+            heads.append(t)
+    have = {h.lower() for h in heads}
+    return heads + [t for t in _digest_item_titles(digest_text) if t.lower() not in have]
+
+
+def _story_break_insertions(
+    ctx, digest_text: str, section_markers: list, story_headlines: List[str],
+    lo_word: int, hi_word: int, max_chars: int = HEADLINE_TITLE_MAX,
+) -> list:
+    """Chapters where the episode's stories begin, titled by the story.
+
+    Oct 17 2026. Headline anchoring matched a headline to the paragraph that
+    shared the most words with it — often a story's second or third
+    sentence (Tesla Ep637's Q3 preview chapter opened on "The constraint is
+    laid out…"), merged any story told in under sixty words into the one
+    before it, and only ever split the OPENING chapter — so a show whose
+    markers matched (Planetterrian's deep dive, AI Chips' Teardown) shipped
+    eight news stories inside one deep-dive chapter. The network already
+    knows where every story starts: the story-change detector that places
+    the audio beat (``engine.story_breaks.story_boundary_lines``). Each beat
+    inside the body becomes a chapter when its story has a title — the
+    item's headline, whole, or for an essay section the marker that names the
+    section (else its heading, whole). No title, no chapter: the text stays
+    in the chapter before it. Returns ``[(word_idx, char_offset, title)]``.
+    """
+    if ctx is None:
+        return []
+    units, assigned, boundaries, positions, _kept = ctx
+    item_titles = _unit_titles(units, _title_candidates(story_headlines, digest_text),
+                               max_chars)
+    headings: dict = {}
+    first_heading = ""
+    for line in (digest_text or "").splitlines():
+        m = _HEADING_RE.match(line)
+        if m:
+            key = re.sub(r"[*_`]+", "", m.group(2)).strip().lower()
+            headings.setdefault(key, (len(m.group(1)), _whole_title(m.group(2))))
+            if not first_heading and len(m.group(1)) >= 2:
+                first_heading = key
+    # A story told twice (a one-line callback inside another segment, then
+    # its own telling) gets its chapter where it is TOLD: per story, the
+    # first beat that opens two or more of its lines (Modern Investing
+    # Ep203's Investor Education was named in one line of the trade review
+    # long before its own segment); a story only ever mentioned in single
+    # lines takes its first beat.
+    kept = ctx[4]
+    starts = set(boundaries) | set(_short_item_starts(ctx, section_markers))
+    usable = [k for k in sorted(starts) if k < len(positions)
+              and lo_word < positions[k][0] < hi_word and assigned[k][0] >= 0]
+    best: dict = {}
+    for n, k in enumerate(usable):
+        u = assigned[k][0]
+        stop = usable[n + 1] if n + 1 < len(usable) else len(kept)
+        run = sum(1 for j in range(k, stop)
+                  if assigned[j][0] == u and _confident(assigned[j], kept[j], units[u]))
+        if u not in best or (best[u][1] < 2 <= run):
+            best[u] = (k, run)
+    first_item_of_section: dict = {}
+    for i, unit in enumerate(units):
+        if unit.label == "item" and unit.section:
+            first_item_of_section.setdefault(unit.section, i)
+    out: list = []
+    used: set = set()
+    for k in usable:
+        u = assigned[k][0]
+        if best[u][0] != k:
+            continue
+        w, c = positions[k]
+        unit = units[u]
+        if u in item_titles:
+            title = item_titles[u]  # the story's own headline, whole, or none
+        elif unit.label == "item":
+            title = ""
+            if first_item_of_section.get(unit.section) == u:
+                # An untitled story that opens a section a marker names
+                # (Modern Investing's Strategy Spotlight is one sourced
+                # paragraph) is where that section starts.
+                title = _section_marker_title(unit.section, section_markers)
+        else:
+            title = _section_marker_title(unit.section, section_markers)
+            if not title:
+                level, heading = headings.get(unit.section, (0, ""))
+                if (level >= 2 and unit.section != first_heading
+                        and 4 <= len(heading) <= max_chars
+                        and not re.match(r"^\d+[.)]", heading)
+                        and not _PLACEHOLDER_TITLE_RE.match(heading)):
+                    title = heading
+        if not title or title in used:
+            continue
+        used.add(title)
+        out.append((w, c, title, None if u in item_titles else unit.section))
+    return [(w, c, t) for w, c, t, _s in _in_section_order(out, units)]
+
+
+def _short_item_starts(ctx, section_markers: list) -> List[int]:
+    """Lines that open a one- or two-sentence story the beat detector folds
+    into its neighbours.
+
+    The audio beat skips a run of short items under one heading (a pause
+    between one-liners reads as a stutter), so on Omni View Top World the
+    one-sentence items six to ten — five stories — sat in one chapter titled
+    with the first of them. A chapter is navigation, not a pause: each short
+    item opens its own, unless a marker already names the block they sit in
+    (the desks' "Also Today") — then the block's chapter is the navigation.
+    """
+    from engine import story_breaks as sb
+    units, assigned, _b, _p, kept = ctx
+    confident = [(k, assigned[k][0]) for k in range(len(kept))
+                 if assigned[k][0] >= 0
+                 and _confident(assigned[k], kept[k], units[assigned[k][0]])]
+    out: List[int] = []
+    for n in range(1, len(confident)):
+        k, u = confident[n]
+        prev = confident[n - 1][1]
+        if u == prev:
+            continue
+        nxt = confident[n + 1][1] if n + 1 < len(confident) else None
+        unit = units[u]
+        if (nxt == prev
+                or _section_marker_title(unit.section, section_markers)
+                or sb.opens_as_continuation(kept[k])):
+            continue
+        # A short item, or a one-line telling the map is sure of (Top World
+        # Ep024's one-liners carry 15-46 points of evidence; a stray market
+        # line on Modern Investing scores 4.5).
+        strong = (assigned[k][1] >= SHORT_STORY_MIN_SCORE
+                  and len(sb._tokens(kept[k]) & unit.tokens) >= 4)
+        if sb._is_short_item(unit) or strong:
+            out.append(k)
+    return out
+
+
+#: Evidence (the story map's weighted score) a single line needs to open a
+#: chapter the audio beat did not mark.
+SHORT_STORY_MIN_SCORE = 12.0
+
+
+def _in_section_order(entries: list, units) -> list:
+    """Drop section chapters that run against the digest's section order.
+
+    A narrative script tells its segments in the digest's order, but its
+    vocabulary crosses them: Unintended Consequences Ep143's story map put
+    "The Good Intention" (segment 2) at 750 s, after "The Aftermath"
+    (segment 5). Section-titled entries keep the longest run that follows
+    the digest order; story-titled entries (news items, told in any order)
+    are untouched.
+    """
+    # Only a digest that NUMBERS its segments ("Segment 2 — The Good
+    # Intention", the narrative shows) declares an order; Modern Investing
+    # airs its sections in a different order than it writes them.
+    order: dict = {}
+    for u in units:
+        if (u.section and u.section not in order
+                and _PLACEHOLDER_TITLE_RE.match(u.section)):
+            order[u.section] = len(order)
+    idx = [i for i, e in enumerate(entries) if e[3] is not None and e[3] in order]
+    if len(idx) < 2:
+        return entries
+    seq = [order[entries[i][3]] for i in idx]
+    # Longest strictly increasing subsequence (n is tiny).
+    best = [1] * len(seq)
+    prev = [-1] * len(seq)
+    for j in range(len(seq)):
+        for i in range(j):
+            if seq[i] < seq[j] and best[i] + 1 > best[j]:
+                best[j], prev[j] = best[i] + 1, i
+    j = max(range(len(seq)), key=lambda x: (best[x], -x))
+    keep = set()
+    while j >= 0:
+        keep.add(idx[j])
+        j = prev[j]
+    return [e for i, e in enumerate(entries) if e[3] is None or i in keep
+            or e[3] not in order]
+
+
+def _marker_section_misfires(ctx, matches: list, section_markers: list) -> set:
+    """Marker matches that fired inside ANOTHER section's content.
+
+    Oct 17 2026: Modern Investing Ep203 opened "Trade Review & Lessons" on
+    "Enbridge… is today's simulated weekly hold" (the pick) and "Practice
+    Investment of the Day" on the pick's closing disclaimer, where the trade
+    review began — the two labels swapped. A body marker whose line the
+    story detector confidently places in a digest section that a DIFFERENT
+    marker names is not where its own section starts; it is dropped, and the
+    section's own story chapter takes its place. Returns ``{(word, title)}``.
+    """
+    if ctx is None:
+        return set()
+    units, assigned, _boundaries, positions, kept = ctx
+    at_word = {}
+    for i, (w, _c) in enumerate(positions):
+        at_word.setdefault(w, i)
+    where = {_marker_field(m, "title"): _marker_field(m, "where")
+             for m in section_markers or []}
+    bad = set()
+    for w, _c, title in matches:
+        if where.get(title) in ("start", "end"):
+            continue
+        k = at_word.get(w)
+        if k is None:
+            continue
+        u = assigned[k][0]
+        if u < 0 or not _confident(assigned[k], kept[k], units[u]):
+            continue
+        other = _section_marker_title(units[u].section, section_markers)
+        if other and other != title:
+            bad.add((w, title))
+    return bad
+
+
+#: A story chapter this close to a chapter that already starts there is the
+#: same change (a section opener spoken on the line before the story).
+STORY_CHAPTER_MIN_GAP_WORDS = 25
+_TAIL_TITLES = ("closing", "sign-off", "tomorrow teaser", "teaser",
+                "завершение", "прощание")
+
+
+def _apply_story_chapters(
+    chapters: List["Chapter"], ctx, digest_text: str, section_markers: list,
+    story_headlines: List[str], total_words: int, total_chars: int,
+) -> tuple:
+    """``(chapters, placed)``: *chapters* with a chapter at every titled
+    story change in the body (``_story_break_insertions``). *placed* is True
+    when the detector found any titled story change, in which case its
+    chapters are the episode's segmentation.
+
+    A story chapter titled like a section marker that also matched LATER in
+    the same run moves the marker's chapter back to where the section's
+    content begins (nothing else may start between them); a marker that
+    matched earlier keeps its place — the spoken opener leads the content.
+    """
+    body_end = next((c.word_start for c in chapters
+                     if c.title.strip().lower() in _TAIL_TITLES), total_words)
+    inserts = _story_break_insertions(
+        ctx, digest_text, section_markers, story_headlines,
+        chapters[0].word_start, body_end)
+    if not inserts:
+        return chapters, False
+    bounds = [[c.word_start, c.char_start, c.title] for c in chapters]
+    all_starts = sorted({b[0] for b in bounds} | {w for w, _c, _t in inserts})
+    added: list = []
+    for w, c, t in inserts:
+        same = next((b for b in bounds if b[2] == t), None)
+        if same is not None:
+            if w < same[0] and not any(w < x < same[0] for x in all_starts):
+                same[0], same[1] = w, c
+            continue
+        if any(abs(w - b[0]) < STORY_CHAPTER_MIN_GAP_WORDS for b in bounds + added):
+            continue
+        added.append([w, c, t])
+    merged = sorted(bounds + added, key=lambda b: b[0])
+    out: List[Chapter] = []
+    for i, (w, c, t) in enumerate(merged):
+        nw = merged[i + 1][0] if i + 1 < len(merged) else total_words
+        nc = merged[i + 1][1] if i + 1 < len(merged) else total_chars
+        out.append(Chapter(title=t, word_start=w, word_end=nw, char_start=c, char_end=nc))
+    return out, True
+
+
+def _opening_paragraph(text: str, max_words: int = 80) -> str:
+    """The first paragraph of *text* (at most *max_words* words): what a
+    segment opens on. Oct 17 2026: a fixed-interval segment was titled with
+    whichever headline its whole text echoed most, so Fascinating Frontiers
+    Ep225's "NASA's Hubble spies spiral's edge" opened at 108 s inside the
+    deep dive while the Hubble story began at 183 s. A segment takes a
+    headline only when it OPENS on that story."""
+    for para in re.split(r"\n[ \t]*\n", text or ""):
+        if para.strip():
+            return " ".join(para.split()[:max_words])
+    return ""
+
+
+def _lead_section_for_hook(digest_text: str, story_headlines: List[str]) -> tuple:
+    """``(lead section name, lead text tokens)`` — both empty unless the
+    digest's first section holds the hook's story.
+
+    ``lead_section_name`` reads the digest's FIRST heading. On the desks
+    that heading is the lead's slot ("Lead", "Top Story"); on Fascinating
+    Frontiers the news items sit above any heading and the first heading is
+    the Cosmic Spotlight, a different story — so Ep224/225 titled the El
+    Gordo lead "Cosmic Spotlight" (Oct 17 2026). The section is the lead's
+    only when its first paragraph shares two words with the hook (or, with
+    no hook, with the first headline).
+    """
+    name = lead_section_name(digest_text)
+    toks = lead_block_tokens(digest_text)
+    if not story_headlines:
+        return name, toks
+    ref = _tokenize_for_match(story_headlines[0])
+    if len(ref & toks) >= 2:
+        return name, toks
+    return "", set()
+
+
+def _hook_unit(ctx, story_headlines: List[str]) -> int:
+    """The story-map unit the hook (the first, sentence-length headline)
+    tells, or -1 when there is no map, no hook, or no clear match."""
+    if ctx is None or not story_headlines:
+        return -1
+    if not _is_hook_candidate(story_headlines[0], 0, HEADLINE_TITLE_MAX):
+        return -1
+    from engine import story_breaks as sb
+    (hu, score), = sb._assign([story_headlines[0]], ctx[0])
+    if hu < 0 or score < sb.MIN_ASSIGN_SCORE:
+        return -1
+    return hu
+
+
+def _hook_story_words(ctx, story_headlines: List[str]) -> set:
+    """Word positions of the script lines the story map confidently places in
+    the hook's story. Fascinating Frontiers Ep225's lead resumed after the
+    identity line with "El Gordo, as the cluster is nicknamed, contains two
+    colliding regions…" — no word of the hook, every word of its item — and
+    the lead chapter opened two sentences late."""
+    hu = _hook_unit(ctx, story_headlines)
+    if hu < 0:
+        return set()
+    units, assigned, _b, positions, kept = ctx
+    return {positions[k][0] for k in range(len(kept))
+            if assigned[k][0] == hu and _confident(assigned[k], kept[k], units[hu])}
+
+
+def _headlines_off_hook(ctx, story_headlines: List[str], digest_text: str) -> set:
+    """Headlines the story map places in a different story than the hook.
+
+    AI Chips Ep026's hook ("Second Arizona fab volume production begins…")
+    shared "second" and "fab" with "Samsung's second Taylor fab is lined up
+    for an early-November start", which titled the TSMC lead with the
+    Samsung story (Oct 17 2026). The hook is matched to its digest story by
+    the story detector's weighted vocabulary, each headline to the item that
+    carries it; a headline whose item is not the hook's story is excluded.
+    Empty when there is no story map or the hook matches no story clearly.
+    """
+    hu = _hook_unit(ctx, story_headlines)
+    if hu < 0:
+        return set()
+    units = ctx[0]
+    titles = _unit_titles(units, story_headlines[1:], 10 ** 6)
+    by_title: dict = {}
+    for u, t in titles.items():
+        by_title[t] = u
+    from engine import story_breaks as sb
+    hook_best = sb._unit_score(story_headlines[0], units, hu)
+    # The hook lands in the digest's lead slot (its first section): every
+    # headline of another item is another story — Prediction Markets Ep025's
+    # CFTC lead had been titled with the SpaceX-IPO market. Elsewhere (a deep
+    # dive on the lead's subject can outscore the lead's own item, SpaceX
+    # Ep126) a headline is excluded only when the hook reads less than half
+    # as much like its item.
+    first_section = next((u.section for u in units if u.section), "")
+    in_lead_slot = bool(first_section) and units[hu].section == first_section
+    out = set()
+    for h in story_headlines[1:]:
+        u = by_title.get(_whole_title(h))
+        if u is None or u == hu:
+            continue
+        if in_lead_slot or (sb._unit_score(story_headlines[0], units, u)
+                            < OFF_HOOK_SCORE_SHARE * hook_best):
+            out.add(h)
+    return out
+
+
+#: See ``_headlines_off_hook``.
+OFF_HOOK_SCORE_SHARE = 0.5
+
+
 def parse_chapters(
     script: str,
     section_markers: list,
@@ -675,6 +1334,13 @@ def parse_chapters(
     if not section_markers:
         logger.info("No section markers configured — skipping chapter parsing")
         return []
+    # A headline cut inside its own parenthesis ("iShares A.I. Innovation and
+    # Tech ETF (TSX", Modern Investing Ep201) is not a title anywhere below.
+    # The first entry stays: it is the hook slot, whatever its shape.
+    story_headlines = [
+        h for i, h in enumerate(story_headlines or [])
+        if i == 0 or (h.count("(") == h.count(")") and h.count("[") == h.count("]"))
+    ]
 
     # Build compiled patterns
     compiled_markers = []
@@ -754,6 +1420,30 @@ def parse_chapters(
 
         word_idx += line_word_count
         char_offset += len(line)
+
+    # Where every story starts (Oct 17 2026): the story-change detector's
+    # map of the script onto the digest's stories. Used to drop a marker
+    # that fired inside another section's content, to put a chapter at
+    # every titled story change, and to keep the lead's title on the lead's
+    # own story. ``None`` (no digest, fewer than two stories, any error)
+    # leaves every path below exactly as it was.
+    story_ctx = None
+    if digest_text:
+        try:
+            story_ctx = _story_units_context(lines, digest_text)
+        except Exception as exc:  # noqa: BLE001 — chapters are metadata
+            logger.warning("Story map unavailable for chapters (%s): %s",
+                           show_name or "show", exc)
+            story_ctx = None
+    if story_ctx is not None and matches:
+        misfires = _marker_section_misfires(story_ctx, matches, section_markers)
+        if misfires:
+            logger.info(
+                "Dropping %d marker chapter(s) that fired inside another "
+                "section's content for %s: %s", len(misfires),
+                show_name or "show", sorted(t for _w, t in misfires))
+            matches = [m for m in matches if (m[0], m[2]) not in misfires]
+            matched_titles = {t for _w, _c, t in matches}
 
     # Digest-section fallback (Oct 5 2026): a marker that names its digest
     # heading still gets its chapter when the phrase was skipped. Body only
@@ -850,6 +1540,24 @@ def parse_chapters(
             char_end=c_end,
         ))
 
+    # Story chapters (Oct 17 2026): a chapter at every titled story change
+    # inside the body, from the same detector that places the audio beat.
+    # When it places any, it IS the segmentation — the headline anchoring
+    # and fixed-interval fallbacks below run only where it cannot.
+    story_done = False
+    if story_ctx is not None and chapters:
+        try:
+            chapters, story_done = _apply_story_chapters(
+                chapters, story_ctx, digest_text, section_markers,
+                story_headlines or [], total_words, total_chars)
+        except Exception as exc:  # noqa: BLE001 — chapters are metadata
+            logger.warning("Story chapters skipped for %s: %s",
+                           show_name or "show", exc)
+            story_done = False
+        if story_done:
+            logger.info("Story chapters for %s: %s", show_name or "show",
+                        [c.title for c in chapters])
+
     # ------------------------------------------------------------------
     # Auto-segmentation fallback. Operator caught (May 2026) that TST
     # episodes ship with only ``Introduction`` + ``Closing`` chapters
@@ -886,7 +1594,9 @@ def parse_chapters(
     # begins, used whole and only when it fits HEADLINE_CHAPTER_TITLE_MAX —
     # never the fixed-interval fallback, never a first-sentence title, never
     # a clipped headline (the three shapes the Aug 27 decision was about).
-    if known_sections_only:
+    if story_done:
+        pass  # the story chapters above are this episode's segmentation
+    elif known_sections_only:
         from engine.titles import HEADLINE_CHAPTER_TITLE_MAX
         anchored = []
         if chapters and story_headlines:
@@ -956,6 +1666,7 @@ def parse_chapters(
             # echo enough headline content to anchor confidently.
             anchored = _headline_anchored_insertions(
                 lines, head.word_start, head_w_end, story_headlines or [],
+                whole_titles_max=HEADLINE_TITLE_MAX,
             )
             _seg_mode = "headline_anchored" if anchored else "fixed_interval"
 
@@ -988,7 +1699,8 @@ def parse_chapters(
                     title = (
                         _pre
                         or _best_headline_for_segment(
-                            seg_text, story_headlines or [], _used_headlines)
+                            _opening_paragraph(seg_text), story_headlines or [],
+                            _used_headlines, whole_only=True)
                         or _first_sentence_as_title(seg_text)
                     )
                     if title:
@@ -1023,20 +1735,37 @@ def parse_chapters(
     # carries the lead's title. On a known_sections_only show (spacex) the
     # lead's title must fit HEADLINE_CHAPTER_TITLE_MAX whole (Oct 12 2026 —
     # the Aug 27 decision was against clipped titles, not story chapters).
+    #
+    # Oct 17 2026: the lead's title is used whole on EVERY show (Tesla Ep637
+    # shipped a clipped one); the digest's lead-section name is a fallback
+    # only when that section holds the hook's story (Fascinating Frontiers'
+    # first heading is its Cosmic Spotlight, a different story — Ep224/225
+    # titled the El Gordo lead "Cosmic Spotlight"); and a headline the story
+    # map places in another story never titles the lead (AI Chips Ep026).
     if chapters:
         head = chapters[0]
-        _lead_name = lead_section_name(digest_text)
-        _lead_toks = lead_block_tokens(digest_text)
-        if known_sections_only:
-            found = _lead_story_split(lines, head, story_headlines or [],
-                                      max_chars=HEADLINE_TITLE_MAX,
-                                      whole_only=True, fallback_title=_lead_name,
-                                      lead_text_tokens=_lead_toks)
-        else:
-            found = _lead_story_split(lines, head, story_headlines or [],
-                                      fallback_title=_lead_name,
-                                      lead_text_tokens=_lead_toks)
-        if found and found[2] not in {c.title for c in chapters}:
+        _lead_heads = _title_candidates(story_headlines or [], digest_text)
+        _lead_name, _lead_toks = _lead_section_for_hook(digest_text, _lead_heads)
+        _off_hook = _headlines_off_hook(story_ctx, _lead_heads, digest_text)
+        found = _lead_story_split(lines, head, _lead_heads,
+                                  max_chars=HEADLINE_TITLE_MAX,
+                                  whole_only=True, fallback_title=_lead_name,
+                                  lead_text_tokens=_lead_toks,
+                                  exclude_titles=_off_hook,
+                                  lead_story_words=_hook_story_words(story_ctx, _lead_heads))
+        if found and story_done:
+            # A story chapter may already carry the lead's title where the
+            # script came back to the lead story; the lead's own chapter is
+            # the first telling (Modern Investing's lead IS its Strategy
+            # Spotlight on most days: the section's chapter is the lead's).
+            for k in range(len(chapters) - 1, 0, -1):
+                if chapters[k].title == found[2] and chapters[k].word_start > found[0]:
+                    chapters[k - 1].word_end = chapters[k].word_end
+                    chapters[k - 1].char_end = chapters[k].char_end
+                    del chapters[k]
+            head = chapters[0]
+        if found and found[2] not in {c.title for c in chapters} \
+                and head.word_start < found[0] < head.word_end:
             w, c, title = found
             chapters = [
                 Chapter(title=head.title, word_start=head.word_start,
@@ -1055,6 +1784,9 @@ def parse_chapters(
             if ch.title != deduped[-1].title:
                 deduped.append(ch)
         chapters = deduped
+
+    for ch in chapters:
+        ch.opening = script[ch.char_start:ch.char_start + 120].strip().split("\n")[0]
 
     logger.info(
         "Parsed %d chapters for %s: %s",
@@ -1163,6 +1895,109 @@ def calculate_timestamps(
     if chapters:
         chapters[-1].endTime = round(total_duration, 1)
 
+    return chapters
+
+
+#: An aligned start further than this share of the episode from its
+#: word-count estimate is a wrong match, never a correction.
+ALIGN_MAX_SHIFT_SHARE = 0.15
+
+
+def align_timestamps_to_transcript(
+    chapters: List[Chapter],
+    script: str,
+    transcript: dict,
+    *,
+    music_intro_offset: float = 0.0,
+    total_duration: float = 0.0,
+) -> List[Chapter]:
+    """Move each chapter start onto the Whisper time its first line is spoken.
+
+    Oct 17 2026. ``calculate_timestamps`` spreads the voice evenly over the
+    script's words, so a chapter lands wherever the words before it would
+    end at an average pace — but a run of numbers is slower than a run of
+    names, and every story beat adds a pause the word count never sees.
+    Modern Investing Ep203's Portfolio Performance chapter opened 20 s
+    after the segment did. The committed transcript is the voice track's own
+    clock (shifted for the story-break pauses), so the start of the line a
+    chapter opens on is located there — with the same opening matcher the
+    story beats use (``engine.story_breaks.boundary_anchors``) — and placed
+    *music_intro_offset* later, where the voice sits in the mix.
+
+    Run AFTER ``calculate_timestamps``. A line that cannot be found, an
+    alignment that would reorder chapters, or one that moves a start by more
+    than ``ALIGN_MAX_SHIFT_SHARE`` of the episode keeps its word-count time.
+    Never raises: chapters are metadata.
+    """
+    try:
+        return _align_timestamps(chapters, script, transcript,
+                                 music_intro_offset, total_duration)
+    except Exception as exc:  # noqa: BLE001 — chapters are metadata
+        logger.warning("Chapter alignment to the transcript skipped: %s", exc)
+        return chapters
+
+
+def _opening_key(text: str) -> str:
+    return " ".join(re.sub(r"[^\w\s]", " ", (text or "").lower()).split()[:8])
+
+
+def _align_timestamps(chapters, script, transcript, offset, total_duration):
+    from engine import story_breaks as sb
+    if not chapters or not transcript or not script:
+        return chapters
+    # Non-empty lines with their character offsets, in script_lines order.
+    line_starts: List[int] = []
+    pos = 0
+    for raw in script.split("\n"):
+        if raw.strip():
+            line_starts.append(pos + (len(raw) - len(raw.lstrip())))
+        pos += len(raw) + 1
+    if not line_starts:
+        return chapters
+    lines = sb.script_lines(script)
+    targets: List[Optional[int]] = []
+    cursor = 0
+    for ch in chapters:
+        k = None
+        key = _opening_key(ch.opening)
+        if key:
+            k = next((i for i in range(cursor, len(lines))
+                      if _opening_key(lines[i]).startswith(key)), None)
+        if k is None and not ch.opening:
+            k = next((i for i, s in enumerate(line_starts) if s >= ch.char_start), None)
+        if k is not None:
+            cursor = k + 1
+        targets.append(k)
+    found: dict = {}
+    wanted: List[int] = []
+    for i, k in enumerate(targets):
+        if i == 0 or k is None or k == 0:
+            continue
+        anchors, _unmatched = sb.boundary_anchors(script, wanted + [k], transcript)
+        if len(anchors) > len(found):
+            found[i] = anchors[-1][1]
+            wanted.append(k)
+    if not found:
+        return chapters
+    duration = total_duration or (chapters[-1].endTime if chapters else 0.0)
+    limit = max(10.0, ALIGN_MAX_SHIFT_SHARE * duration) if duration else float("inf")
+    moved = 0
+    for i, t in found.items():
+        new = round(offset + t, 1)
+        prev_start = chapters[i - 1].startTime
+        nxt = chapters[i + 1].startTime if i + 1 < len(chapters) else (duration or float("inf"))
+        if i + 1 in found:
+            nxt = min(nxt, round(offset + found[i + 1], 1))
+        if abs(new - chapters[i].startTime) > limit or not (prev_start < new < nxt):
+            continue
+        chapters[i].startTime = new
+        moved += 1
+    for i in range(len(chapters) - 1):
+        chapters[i].endTime = chapters[i + 1].startTime
+    if duration:
+        chapters[-1].endTime = round(duration, 1)
+    logger.info("Chapters aligned to the transcript: %d of %d starts moved",
+                moved, len(chapters) - 1)
     return chapters
 
 

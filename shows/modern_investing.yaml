@@ -277,12 +277,21 @@ chapters:
   # simulated trades with no real money.") opened this chapter at 0:18 on
   # every episode, so it swallowed the market news. The disclaimer's own
   # wording is excluded.
+  # Oct 17 2026: the pick is spoken "<name>, ticker <X>, is today's
+  # simulated weekly hold" and the bare `weekly hold` alternate below sat in
+  # the TRADE REVIEW pattern — Ep201/202/203 opened "Trade Review & Lessons"
+  # on the pick and Ep203 opened this chapter on the pick's closing
+  # disclaimer, where the review began (labels swapped). The pick's own
+  # phrase is here now; a PRIOR/LAST weekly hold is the review's.
   - pattern: practice investment(?! of the day uses)|AI pick|today's pick|trade
-      of the day|simulated trade(?!s with no real money)
+      of the day|(?<!last )(?<!prior )(?<!previous )simulated weekly hold|simulated
+      trade(?!s with no real money)
     title: Practice Investment of the Day
-  - pattern: yesterday's trade|trade review|how did .* pick|weekly hold|last week's
-      hold|mid-week update
+  - pattern: yesterday's trade|trade review|how did .* pick|(?:prior|last|previous)
+      (?:simulated )?weekly hold|last week's hold|mid-week update|newly closed|already
+      been scored
     title: Trade Review & Lessons
+    digest_section: Yesterday's Trade Review
   - pattern: tools and techniques|tools & techniques|recommended tools|let's talk
       tools
     title: Tools & Techniques
