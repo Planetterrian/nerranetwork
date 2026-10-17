@@ -22,9 +22,12 @@ SHOW_EPISODE_ASKS: dict[str, dict[str, Any]] = {
                 "listener who wants the same thing: sourced updates, no outrage "
                 "diet."
             ),
+            # Oct 17 2026: the typed "18 free shows" went stale as the
+            # network grew past thirty; a count here is a claim nothing
+            # recomputes, so the line names the network and no number.
             (
-                "SpaceX Daily is part of Nerra Network — 18 free shows, "
-                "most of them daily."
+                "SpaceX Daily is part of Nerra Network, a family of free "
+                "shows, most of them daily."
             ),
         ],
     },

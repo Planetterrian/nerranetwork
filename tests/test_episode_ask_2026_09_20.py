@@ -24,7 +24,7 @@ _ASK_B_P1 = (
     "thing: sourced updates, no outrage diet."
 )
 _ASK_B_P2 = (
-    "SpaceX Daily is part of Nerra Network — 18 free shows, most of them daily."
+    "SpaceX Daily is part of Nerra Network, a family of free shows, most of them daily."
 )
 
 
@@ -84,7 +84,8 @@ class TestAskBInShowNotesFooter:
         rendered = _markdown_to_rss_html("Body.\n\n" + footer)
         assert _ASK_B_P1 in rendered
         assert _ASK_B_P2 in rendered
-        assert f'<a href="{self.BASE}/blog/spacex/ep099.html">' in rendered
+        # Oct 17 2026: the link carries the funnel's shownotes tags.
+        assert f'<a href="{self.BASE}/blog/spacex/ep099.html?utm_source=podcast' in rendered
 
 
 class TestAskBBlogTemplateWiring:
@@ -109,3 +110,13 @@ class TestAskBBlogTemplateWiring:
     def test_live_ep098_blog_has_no_ask(self):
         html = (REPO / "blog" / "spacex" / "ep098.html").read_text(encoding="utf-8")
         assert "outrage diet" not in html
+
+
+
+def test_the_ask_types_no_show_count():
+    """A count typed into copy goes stale (it said 18 when the network ran 31)."""
+    import re as _re
+    from engine.episode_ask import SHOW_EPISODE_ASKS
+    for cfg in SHOW_EPISODE_ASKS.values():
+        for para in cfg["paragraphs"]:
+            assert not _re.search(r"\b\d+\s+(?:free\s+)?shows\b", para), para

@@ -5289,6 +5289,7 @@ def run(args: argparse.Namespace) -> None:
             config.slug,
             episode_num,
             has_blog=_has_blog,
+            channel="ru" if args.show in _RUSSIAN_SHOWS else "en",
         )
         if _notes_footer:
             episode_desc += "\n\n" + _notes_footer

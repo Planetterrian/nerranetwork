@@ -127,6 +127,7 @@ def build_show_notes_footer(
     *,
     has_blog: bool,
     blog_path_prefix: str = "blog",
+    channel: str = "en",
 ) -> str:
     """Build the website + per-episode blog-post footer appended to an RSS
     episode description, so listeners on Apple / Spotify / Amazon / YouTube
@@ -157,13 +158,35 @@ def build_show_notes_footer(
 
     site = (base_url or "").rstrip("/")
     if site:
+        # Oct 17 2026: the feed's links go through engine.funnel (source
+        # podcast, medium episode, placement shownotes). Untagged, a visit
+        # from Apple or Spotify was indistinguishable from a direct one, on
+        # the surface that carries ~12,000 downloads a month.
+        from engine.funnel import (
+            PLACEMENT_SHOWNOTES, SOURCE_PODCAST, episode_link,
+        )
+
+        def _tagged(url: str, variant: str = "") -> str:
+            return episode_link(
+                url, show_slug or "network", episode_num, channel=channel,
+                kind="episode", placement=PLACEMENT_SHOWNOTES,
+                source=SOURCE_PODCAST, variant=variant,
+            )
+
         if has_blog and show_slug:
             blog_url = (
                 f"{site}/{blog_path_prefix.strip('/')}/{show_slug}/ep{episode_num:03d}.html"
             )
             parts.append(
                 "📝 Full show notes, transcript & sources: "
-                f"[read the episode page]({blog_url})"
+                f"[read the episode page]({_tagged(blog_url)})"
+            )
+            # One plain ask for the free account/newsletter, the network's
+            # capture surface (12 subscribers against ~12,000 monthly
+            # downloads on Oct 17 2026; no feed had ever asked).
+            parts.append(
+                "📬 Get the sources and notes by email, free: "
+                f"[join the newsletter]({_tagged(site + '/join.html', 'join')})"
             )
         domain = site.split("//", 1)[-1]
         parts.append(
