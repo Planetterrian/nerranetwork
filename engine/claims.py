@@ -584,6 +584,14 @@ def build_local_texts(articles: List[dict]) -> Dict[str, str]:
                     else ("title",))
         else:
             keys = ("title", "content_text", "description", "summary")
+            # Oct 17 2026: the PAGE this run fetched for the prompt
+            # (engine.article_text, its own request headers) is the
+            # publisher's own text too. The gate's HTTP check is a second,
+            # differently-headed request: France24 refused it on 12 claims
+            # in the week to Oct 17, and when the run's fetch had read the
+            # page, that copy now vouches before any second request.
+            if art.get("full_text_source") == "page":
+                keys = keys + ("full_text",)
         text = " ".join(
             str(art.get(k) or "").strip() for k in keys if art.get(k)
         ).strip()

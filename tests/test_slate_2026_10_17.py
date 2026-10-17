@@ -234,3 +234,19 @@ def test_dashboard_separates_queued_from_posted(tmp_path):
     out = gd._episode_counter_shares(tmp_path, dt.date(2026, 10, 17), days=7, min_n=1)
     assert out["x_posted_share_7d"] == 1.0
     assert out["x_queued_share_7d"] == 0.5
+
+
+# ------------------------------------------------- claims: fetched page --
+def test_a_fetched_page_vouches_for_an_ordinary_article():
+    from engine.claims import build_local_texts, normalize_source_url as n
+    page = "The ministry said 412 households were evacuated overnight along the river."
+    arts = [{"url": "https://www.france24.com/en/x", "title": "Floods",
+             "description": "Short teaser.", "full_text": page, "full_text_source": "page"}]
+    assert page in build_local_texts(arts)[n("https://www.france24.com/en/x")]
+
+
+def test_a_description_promoted_to_full_text_adds_nothing_new():
+    from engine.claims import build_local_texts, normalize_source_url as n
+    arts = [{"url": "https://a.example/y", "title": "T", "description": "Teaser body here today.",
+             "full_text": "SECRET", "full_text_source": "description"}]
+    assert "SECRET" not in build_local_texts(arts)[n("https://a.example/y")]
