@@ -1,7 +1,8 @@
 name: Daily Audit & Automated Remediation
 
 # Consolidated post-publish quality + health gate.
-# Runs after the last show (~12:15 UTC safety net + on successful run-show completion).
+# Runs once daily at 16:15 UTC, after the slate (the last show, Vancouver, starts
+# 08:15 ET = 12:15 UTC under EDT / 13:15 UTC under EST).
 #
 # Responsibilities:
 # - Episode quality review + AI scoring (hallucinations, repetition, short scripts)
@@ -27,9 +28,11 @@ name: Daily Audit & Automated Remediation
 on:
   schedule:
     # Missed-episode sweep + issue creation. Runs LATE enough that the day's
-    # slate has actually finished. The scheduled crons end at 11:30 UTC, but
-    # GitHub Actions routinely delivers scheduled events hours late (observed
-    # 3-6h in May-Jun 2026), so shows can finish as late as ~16:00 UTC. The
+    # slate has actually finished. The slots run 04:00-08:15 Eastern
+    # (08:00-13:15 UTC; Oct 17 2026 schedule) and the GitHub fallback crons
+    # end at 13:15 UTC, but GitHub Actions routinely delivers scheduled
+    # events hours late (observed 3-6h in May-Jun 2026), so a fallback-driven
+    # show can finish as late as ~16:00 UTC. The
     # old 12:15 slot ran *before* the tail and produced false "missed episode"
     # alarms + spurious auto-retries (e.g. 2026-06-02: audit at 12:15 flagged
     # MIT/Tesla/UC missed; they actually published at 14:21/14:59/15:51).
@@ -170,13 +173,13 @@ jobs:
               "fascinating_frontiers_podcast.rss": ("Fascinating Frontiers", 96),
               "planetterrian_podcast.rss": ("Planetterrian Daily", 96),
               # Monday-only since the Aug 2026 cadence alignment (CRON_MAP
-              # "7 8 * * 1") — a full week between episodes, so the daily/
+              # "15 9 * * 1") — a full week between episodes, so the daily/
               # alt-cadence limits below would page every Saturday. 240h =
               # one missed Monday + slack, same band as Offshore North.
               "env_intel_podcast.rss": ("Environmental Intelligence", 240),
               "models_agents_podcast.rss": ("Models & Agents", 96),
               "models_agents_beginners_podcast.rss": ("Models & Agents for Beginners", 96),
-              # Monday-only (CRON_MAP "37 9 * * 1" / "7 6 * * 1") — see
+              # Monday-only (CRON_MAP "20 9 * * 1" / "10 9 * * 1") — see
               # Environmental Intelligence note above.
               "finansy_prosto_podcast.rss": ("Finansy Prosto", 240),
               "privet_russian_podcast.rss": ("Privet Russian", 240),
@@ -197,7 +200,7 @@ jobs:
               "mag7_podcast.rss": ("MAG 7 Daily", 96),
               "peptides_podcast.rss": ("Peptides Weekly", 240),
               "longevity_podcast.rss": ("Longevity Weekly", 240),
-              # Launch-cohort PR C (2026-09-23). Vancouver's 12:16 UTC slot is
+              # Launch-cohort PR C (2026-09-23). Vancouver's 08:15 ET slot is
               # the day's last, so it gets the daily ceiling.
               "omni_view_asia_pacific_podcast.rss": ("Omni View Asia Pacific", 96),
               "omni_view_africa_mideast_podcast.rss": ("Omni View Africa & Middle East", 96),

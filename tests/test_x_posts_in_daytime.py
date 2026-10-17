@@ -153,11 +153,21 @@ def test_overlapping_shows_stay_off():
 
 
 # ------------------------------------------------------------ scheduling --
-def test_worker_dispatches_the_queue_on_pacific_half_hours():
-    assert 'workflow: "x-queue.yml"' in WORKER and "minutes: [1, 31]" in WORKER
-    assert "if (xQueueDue(ph, pm))" in WORKER
-    # The edition branch returns, so the queue must be dispatched before it.
-    assert WORKER.index("if (xQueueDue(ph, pm))") < WORKER.index("EDITION_DISPATCH.times.some(")
+def test_worker_dispatches_the_queue_on_eastern_half_hours():
+    # Oct 17 2026: the X slot grid is 7:00 AM - 10:00 PM Eastern and the
+    # Worker dispatches five minutes after each slot, :05 and :35 from
+    # 7:05 AM to 10:05 PM Eastern (it was :01/:31 Pacific, 6:31 AM-7:31 PM).
+    assert 'workflow: "x-queue.yml"' in WORKER and "minutes: [5, 35]" in WORKER
+    m = re.search(r'X_QUEUE_DISPATCH = \{.*?tz: "([^"]+)",\s*first: \[(\d+), (\d+)\].*?'
+                  r'last: \[(\d+), (\d+)\]', WORKER, re.S)
+    assert m, "X_QUEUE_DISPATCH reshaped"
+    assert m.group(1) == "America/New_York"
+    assert (int(m.group(2)), int(m.group(3))) == (7, 5)
+    assert (int(m.group(4)), int(m.group(5))) == (22, 5)
+    assert "if (xQueueDue(clock.hour, clock.minute))" in WORKER
+    # The queue is dispatched first and independently of the edition.
+    assert WORKER.index("if (xQueueDue(clock.hour, clock.minute))") < WORKER.index(
+        "EDITION_DISPATCH.times.some(")
 
 
 def test_the_queue_workflow_carries_what_it_needs():

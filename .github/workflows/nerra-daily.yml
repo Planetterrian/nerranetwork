@@ -7,20 +7,21 @@ name: Nerra Daily Edition
 # pages). No show content is regenerated — the cost per episode is one
 # small Grok call + a few thousand TTS characters + one R2 upload.
 #
-# Release (Oct 8 2026, operator-directed): the edition goes out at 8:00 AM
-# Pacific with every show of the morning in it. The ready gate in
-# scripts/build_daily_edition.py (engine/daily_edition.py ready_decision)
-# waits until 07:50 Pacific whatever has landed — a build takes 6-7
-# minutes — then builds once every expected show has published or
-# skipped. A show still missing is held for until 09:00 Pacific, and past
-# that the gate builds with whatever exists (a run that failed outright
-# leaves no marker to wait on). The gate reads Pacific wall time, so the
-# release does not move on the daylight-saving changes.
+# Release (Oct 17 2026, operator-directed; was 8:00 AM Pacific from Oct 8):
+# the edition is out by 7:00 AM Eastern (4:00 AM Pacific) with every edition
+# show of the morning in it. The ready gate in scripts/build_daily_edition.py
+# (engine/daily_edition.py ready_decision) waits until 06:35 Eastern whatever
+# has landed — a build takes 6-7 minutes — then builds once every expected
+# show has published or skipped. A show still missing is held for until
+# 06:50 Eastern, and past that the gate builds with whatever exists (a run
+# that failed outright leaves no marker to wait on). The gate reads Eastern
+# wall time, so the release does not move on the daylight-saving changes.
+# Vancouver Daily News keeps its local Pacific slot and is not in the edition.
 #
 # Triggers: the Cloudflare Worker (workers/scheduler EDITION_DISPATCH)
-# dispatches this workflow at 07:50 and 09:01 Pacific to the minute; a
+# dispatches this workflow at 06:35 and 06:50 Eastern to the minute; a
 # workflow_run after every "Run Podcast Show" completion lets a straggler
-# that lands inside the hold build the edition at once (before 07:50 the
+# that lands inside the hold build the edition at once (before 06:35 the
 # gate exits 0 quietly); the scheduled crons are late GitHub fallbacks
 # that cover both UTC offsets. Re-runs are free: the committed summaries
 # entry for the edition date is the idempotency key.
@@ -30,14 +31,16 @@ on:
     workflows: ["Run Podcast Show"]
     types: [completed]
   schedule:
-    # Fallbacks for the Worker's Pacific-clock dispatches (GitHub cron is
-    # often hours late — the gate decides). 14:55 / 16:05 UTC are 07:55 /
-    # 09:05 PDT; 15:55 / 17:05 UTC are the same Pacific times under PST.
-    # A sweep that lands before the release is a quiet wait.
-    - cron: '55 14 * * *'
-    - cron: '55 15 * * *'
-    - cron: '5 16 * * *'
-    - cron: '5 17 * * *'
+    # Fallbacks for the Worker's Eastern-clock dispatches (GitHub cron is
+    # UTC, cannot follow daylight saving and is often hours late — the gate
+    # decides). 10:40 / 10:55 UTC are 06:40 / 06:55 EDT, inside the release
+    # window and just past the hold, so a summer day still builds by about
+    # 7:05 ET if the Worker is down; 11:40 / 11:55 UTC are the same Eastern
+    # times under EST. A sweep that lands before the release is a quiet wait.
+    - cron: '40 10 * * *'
+    - cron: '55 10 * * *'
+    - cron: '40 11 * * *'
+    - cron: '55 11 * * *'
   workflow_dispatch:
     inputs:
       date:

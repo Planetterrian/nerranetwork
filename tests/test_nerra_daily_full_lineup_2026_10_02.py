@@ -33,10 +33,13 @@ class TestLineup:
     def test_the_cohort_is_in_once_each(self):
         # Order is the operator's (re-set 2026-10-13, pinned in
         # tests/test_daily_edition.py); this guard checks membership.
-        assert len(SPEC.lineup) == len(set(SPEC.lineup)) == 26
+        # Oct 17 2026: 25 — Vancouver keeps its local Pacific slot and left
+        # the 7 AM Eastern edition (operator).
+        assert len(SPEC.lineup) == len(set(SPEC.lineup)) == 25
         for slug in ("omni_view_world", "mag7", "ai_chips", "prediction_markets",
-                     "vancouver", "collingwood", "longevity", "peptides"):
+                     "collingwood", "longevity", "peptides"):
             assert slug in SPEC.lineup, slug
+        assert "vancouver" not in SPEC.lineup
 
     def test_the_regional_desks_follow_omni_view(self):
         # 2026-10-13: Top World moved up to sixth (operator); Omni View and
@@ -55,14 +58,18 @@ class TestLineup:
         assert not {"longevity", "peptides", "env_intel", "offshore_north", "dp_pod"} & set(exp)
         assert len(exp) == len(SPEC.lineup) - 5
 
-    def test_the_personal_vocabulary_is_the_roster(self):
+    def test_the_personal_vocabulary_is_the_roster_plus_vancouver(self):
+        # Oct 17 2026: Vancouver left the edition but members may still
+        # choose it — it is the one extra beyond the roster.
         from engine.personal_edition import PERSONAL_EXTRA_SHOW_SLUGS, PERSONAL_SHOW_SLUGS
-        assert PERSONAL_EXTRA_SHOW_SLUGS == ()
-        assert set(PERSONAL_SHOW_SLUGS) == set(SPEC.lineup)
+        assert PERSONAL_EXTRA_SHOW_SLUGS == ("vancouver",)
+        assert set(PERSONAL_SHOW_SLUGS) == set(SPEC.lineup) | {"vancouver"}
 
 
 # The ready gate's clock moved to a fixed 07:50 Pacific release on Oct 8
-# 2026; its tests live in tests/test_nerra_daily_8am_pacific_2026_10_08.py.
+# 2026 and to 06:35 Eastern on Oct 17 2026; its tests live in
+# tests/test_nerra_daily_8am_pacific_2026_10_08.py and
+# tests/test_seven_am_eastern_2026_10_17.py.
 
 
 class TestTheLinksBudget:

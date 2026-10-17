@@ -70,13 +70,14 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s",
 logger = logging.getLogger("nerra_daily")
 
 #: The ready-gate rule lives in engine.daily_edition (``ready_decision``,
-#: ``RELEASE_PACIFIC`` / ``HOLD_UNTIL_PACIFIC``). History: 14:00 -> 12:00
+#: ``RELEASE_EASTERN`` / ``HOLD_UNTIL_EASTERN``). History: 14:00 -> 12:00
 #: UTC (Aug 2026, land by 6am Pacific) -> 13:00 UTC (Oct 2 2026) -> a fixed
-#: Pacific release (Oct 8 2026, operator-directed): the gate opens at 07:50
-#: Pacific so the edition is live by ~8:00 with every show of the morning
-#: in it, and holds for a straggler until 09:00. The punctual triggers are
-#: workers/scheduler's Pacific-clock dispatches; the GitHub sweeps in
-#: nerra-daily.yml are the delayed fallback.
+#: Pacific release (Oct 8 2026: 07:50 PT, live by ~8:00) -> a fixed EASTERN
+#: release (Oct 17 2026, operator-directed): the gate opens at 06:35 Eastern
+#: so the edition is live by 7:00 AM New York with every edition show of the
+#: morning in it, and holds for a straggler until 06:50. The punctual
+#: triggers are workers/scheduler's Eastern-clock dispatches; the GitHub
+#: sweeps in nerra-daily.yml are the delayed fallback.
 
 LINKS_MODEL = os.environ.get("NERRA_DAILY_LINKS_MODEL", "grok-4.3")
 
@@ -659,8 +660,8 @@ def main() -> int:
                         help="Edition date YYYY-MM-DD (default: today UTC)")
     parser.add_argument("--when-ready", action="store_true",
                         help="Gate mode: exit 0 quietly unless every expected "
-                             "show has published or skipped by the 07:50 Pacific "
-                             "release (or the 09:00 Pacific hold has ended)")
+                             "show has published or skipped by the 06:35 Eastern "
+                             "release (or the 06:50 Eastern hold has ended)")
     parser.add_argument("--force", action="store_true",
                         help="Build now with whatever segments exist")
     parser.add_argument("--skip-llm", action="store_true",

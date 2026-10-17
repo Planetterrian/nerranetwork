@@ -9,7 +9,7 @@ Example:
     --audience "marine researchers, ocean tech founders, and policy readers" \\
     --source "https://www.science.org/rss/news_current.xml,Science AAAS" \\
     --keyword "ocean technology" --keyword "marine science" \\
-    --cron "45 10 * * *" \\
+    --slot-et "05:45" \\
     --brand-color "#0EA5E9"
 
 Then:
@@ -68,7 +68,12 @@ def main() -> int:
     p.add_argument("--keyword", action="append", default=[], dest="keywords")
     p.add_argument("--web-search", action="append", default=[], dest="web_search")
     p.add_argument("--image-query", action="append", default=[], dest="image_queries")
-    p.add_argument("--cron", default="", help="Cron expression for run-show.yml")
+    p.add_argument("--slot-et", default="",
+                   help="Slot on EASTERN wall time, HH:MM with a multiple-of-five "
+                        "minute (Oct 17 2026: the schedule's clock); derives the "
+                        "run-show.yml fallback cron (ET + 5 h) and the Worker row")
+    p.add_argument("--cron", default="",
+                   help="Explicit UTC fallback cron (legacy; prefer --slot-et)")
     p.add_argument("--cron-filter", default=None,
                    choices=["even", "odd", "odd_weekday", "weekday",
                             "monday", "tuesday", "wednesday", "thursday",
@@ -105,6 +110,7 @@ def main() -> int:
             f"{args.slug.replace('_', ' ')} latest",
         ],
         image_queries=args.image_queries,
+        slot_et=args.slot_et,
         cron=args.cron,
         cron_day_filter=args.cron_filter,
         related_show=args.related_show,

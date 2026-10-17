@@ -2,104 +2,95 @@ name: Run Podcast Show
 
 on:
   schedule:
-    # Network ships ~10 episodes/day. All shows scheduled to finish before
-    # 10:01 UTC. Pipeline takes up to 45 min, so triggers must be staggered
-    # accordingly (15-minute intervals for 10 daily shows across 7:01-10:01 UTC).
+    # Oct 17 2026 (operator-directed): the network runs on EASTERN wall
+    # time so Nerra Daily is live by 7:00 AM New York, and every show starts
+    # as late as it can for freshness. The exact-time driver is the
+    # Cloudflare Worker (workers/scheduler): its SLOTS are Eastern wall time
+    # (SLOT_TZ = America/New_York), so the 1 November clock change moves
+    # nothing. GitHub crons are UTC and cannot follow daylight saving, so
+    # each fallback below is the slot's EST equivalent (ET + 5 h): in winter
+    # it fires at the slot, in summer one hour after the Worker — fallbacks
+    # are hours late in practice anyway, and the gate's same-day duplicate
+    # guard drops a fallback whose show already published. Every slot is
+    # 04:00-08:15 ET = 08:00-13:15 UTC, inside one calendar day in both
+    # offsets, so the gate's UTC weekday filters agree with the Worker's
+    # Eastern ones. Drift guard: tests/test_scheduling_punctuality.py
+    # compares the Worker SLOTS with the gate's cron map at the EST offset.
     #
     # June 2026 punctuality pass: GitHub delivers `schedule` events
     # best-effort and 1-6 h late in practice (Tesla's 11:00 cron observed
-    # starting 13:54). Three mitigations:
-    #   1. Cron minutes shifted off the contended :00/:30 marks (:07/:37).
-    #   2. An exact-time external dispatcher (workers/scheduler — Cloudflare
-    #      Cron Triggers fire to the minute) calls workflow_dispatch per
-    #      slot once the operator deploys it; these GitHub crons then act
-    #      as the delayed fallback.
-    #   3. The gate skips a scheduled run when today's episode already
-    #      landed (see the duplicate guard below), so dispatcher + late
-    #      fallback cron can never double-publish.
+    # starting 13:54). Hence the exact-time Worker, and the duplicate guard
+    # (below) so dispatcher + late fallback can never double-publish.
     #
-    # May 2026 schedule overhaul: 7 shows went daily (OV, PT, FF, M&A, MAB,
-    # MIT, TST) with Sunday's slot becoming a "weekly recap" episode that
-    # synthesises the past 7 days from the content lake. MIT also runs
-    # Saturday with a weekend-focus angle (international markets, crypto,
-    # lessons learned). Cron times shifted +1h from the prior schedule.
+    # Minutes are multiples of five and unique per hour: the Worker fires
+    # every five minutes and takes the FIRST SLOTS row matching h:m.
     #
-    # Привет, Русский!: Weekly on Monday at 6:07 UTC
-    - cron: '7 6 * * 1'
-    # Omni View: Daily at 7:01 UTC (Sunday = weekly recap)
-    - cron: '1 7 * * *'
-    # Planetterrian Daily: Daily at 7:16 UTC (Sunday = weekly recap)
-    - cron: '16 7 * * *'
-    # Fascinating Frontiers: Daily at 7:31 UTC (Sunday = weekly recap)
-    - cron: '31 7 * * *'
-    # Models & Agents: Daily at 7:46 UTC (Sunday = weekly recap)
-    - cron: '46 7 * * *'
-    # Environmental Intelligence: Weekly on Monday at 8:07 UTC
-    - cron: '7 8 * * 1'
-    # Models & Agents for Beginners: Daily at 8:01 UTC (Sunday = weekly recap)
-    - cron: '1 8 * * *'
-    # Modern Investing Techniques: Daily at 8:16 UTC.
-    # Mon-Fri = US market preview; Sat = weekend angle (international
-    # markets, crypto, lessons learned, what to prepare for, long-term
-    # insights); Sun = weekly recap.
-    - cron: '16 8 * * *'
-    # First Principles Daily: Daily at 8:31 UTC. Narrative show —
-    # topic-queue-driven, no daily news fetch. Alternates concrete
-    # example / opportunity area per episode. Runs all 7 days.
-    - cron: '31 8 * * *'
-    # Tesla Shorts Time: Daily at 8:46 UTC (Sunday = weekly recap)
-    - cron: '46 8 * * *'
-    # Unintended Consequences: Daily at 9:01 UTC. Narrative show —
-    # topic-queue-driven, no daily news fetch. Runs all 7 days.
-    - cron: '1 9 * * *'
-    # SpaceX Daily: Daily at 9:16 UTC (Sunday = weekly recap)
-    - cron: '16 9 * * *'
-    # Финансы Просто: Weekly on Monday at 9:37 UTC
-    - cron: '37 9 * * 1'
-    # The DP Pod: Daily at 9:46 UTC. Two-host dialogue show (Dan + Patrick).
-    # Fresh episode all 7 days — no Sunday recap (operator decision).
-    - cron: '46 9 * * 1'
-    # Offshore North: Weekly on Monday at 10:01 UTC.
-    # Offshore ocean racing, single host (Dan). The "past 7 days"
-    # window ends Sunday, so the cron day and the news window are
-    # coupled - do not move this without changing the prompt's
-    # window language. Races start and finish at weekends, so Monday
-    # is also the freshest editorial day for this beat.
-    - cron: '1 10 * * 1'
-    # Sep 2026 new shows (docs/new_shows_plan_2026_09_22.md §6), launched
-    # after all four Episode 1s published and were reviewed:
-    # AI Chips & Data Centres Daily: Daily at 9:31 UTC.
-    - cron: '31 9 * * *'
-    # MAG 7 Daily: Daily at 10:46 UTC (06:46 New York, before the
-    # pre-market — the tape is the last completed session's closes).
-    - cron: '46 10 * * *'
-    # Longevity Weekly: Wednesday at 11:01 UTC.
-    - cron: '1 11 * * 3'
-    # Peptides Weekly: Thursday at 11:07 UTC (own minute: the scheduler
-    # Worker takes the FIRST SLOTS row matching h:m).
-    - cron: '7 11 * * 4'
-    # Launch-cohort PR C (2026-09-23; docs/new_shows_plan_2026_09_22.md §6):
-    # the nine shows whose Episode 1s were produced by hand and reviewed.
-    # Omni View Asia Pacific: Daily at 6:16 UTC (16:16 AEST).
-    - cron: '16 6 * * *'
-    # Omni View Africa & Middle East: Daily at 6:31 UTC (09:31 EAT).
-    - cron: '31 6 * * *'
-    # Omni View Europe: Daily at 6:46 UTC (08:46 CEST).
-    - cron: '46 6 * * *'
-    # Collingwood Weekly: Weekly on Friday at 10:07 UTC (06:07 ET);
-    # first scheduled run 2026-10-02 (Ep1 was produced by hand 09-23).
-    - cron: '7 10 * * 5'
-    # Omni View North America: Daily at 10:16 UTC (06:16 ET).
-    - cron: '16 10 * * *'
-    # Omni View Central & South America: Daily at 10:31 UTC (07:31 BRT).
-    - cron: '31 10 * * *'
-    # Prediction Markets Daily: Daily at 11:16 UTC (07:16 ET).
-    - cron: '16 11 * * *'
-    # Omni View Top World News: Daily at 11:31 UTC — after every desk's
-    # 50-minute budget, so its intake reads the five desks' digests.
-    - cron: '31 11 * * *'
-    # Vancouver Daily News: Daily at 12:16 UTC (05:16 PDT).
-    - cron: '16 12 * * *'
+    # 04:00 ET — Unintended Consequences — daily narrative show (topic queue, no news fetch).
+    - cron: '0 9 * * *'
+    # 04:05 ET — First Principles Daily — daily narrative show (topic queue; alternates
+    # concrete example / opportunity area).
+    - cron: '5 9 * * *'
+    # 04:10 ET — Привет, Русский! — weekly, Monday.
+    - cron: '10 9 * * 1'
+    # 04:15 ET — Environmental Intelligence — weekly, Monday.
+    - cron: '15 9 * * 1'
+    # 04:20 ET — Финансы Просто — weekly, Monday.
+    - cron: '20 9 * * 1'
+    # 04:25 ET — The DP Pod — weekly, Monday (two-host dialogue; no Sunday recap).
+    - cron: '25 9 * * 1'
+    # 04:30 ET — Omni View Asia Pacific — daily (an evening brief in Australia).
+    - cron: '30 9 * * *'
+    # 04:35 ET — Offshore North — weekly, Monday. The "past 7 days" window ends
+    # Sunday, so the cron day and the news window are coupled — do not move
+    # this off Monday without changing the prompt's window language.
+    - cron: '35 9 * * 1'
+    # 04:40 ET — Omni View Africa & Middle East — daily.
+    - cron: '40 9 * * *'
+    # 04:45 ET — Longevity Weekly — Wednesday.
+    - cron: '45 9 * * 3'
+    # 04:50 ET — Omni View Europe — daily (late morning in Central Europe).
+    - cron: '50 9 * * *'
+    # 04:55 ET — Peptides Weekly — Thursday.
+    - cron: '55 9 * * 4'
+    # 05:00 ET — Planetterrian Daily — daily (Sunday carries the week-in-review segment).
+    - cron: '0 10 * * *'
+    # 05:05 ET — Omni View Central & South America — daily.
+    - cron: '5 10 * * *'
+    # 05:10 ET — Fascinating Frontiers — daily.
+    - cron: '10 10 * * *'
+    # 05:15 ET — Omni View North America — daily.
+    - cron: '15 10 * * *'
+    # 05:20 ET — AI Chips & Data Centres Daily — daily.
+    - cron: '20 10 * * *'
+    # 05:25 ET — Models & Agents — daily.
+    - cron: '25 10 * * *'
+    # 05:30 ET — Models & Agents for Beginners — daily.
+    - cron: '30 10 * * *'
+    # 05:35 ET — Collingwood Weekly — Friday; first scheduled run 2026-10-02 (Ep1 was
+    # produced by hand 09-23).
+    - cron: '35 10 * * 5'
+    # 05:40 ET — Omni View — daily.
+    - cron: '40 10 * * *'
+    # 05:45 ET — SpaceX Daily — daily.
+    - cron: '45 10 * * *'
+    # 05:50 ET — Tesla Shorts Time — daily.
+    - cron: '50 10 * * *'
+    # 05:55 ET — MAG 7 Daily — daily, 05:55 New York: pre-market, so the tape is the
+    # last completed session's closes.
+    - cron: '55 10 * * *'
+    # 06:00 ET — Modern Investing Techniques — daily. Mon-Fri = US market preview
+    # (06:00 New York, before the open); Sat = weekend angle (international
+    # markets, crypto, lessons learned); Sun = week-in-review segment.
+    - cron: '0 11 * * *'
+    # 06:05 ET — Prediction Markets Daily — daily.
+    - cron: '5 11 * * *'
+    # 06:10 ET — Omni View Top World News — daily, after every desk's 50-minute budget
+    # (the last desk starts 05:15 ET), so its intake reads the five desks'
+    # digests. The last show of the Nerra Daily edition.
+    - cron: '10 11 * * *'
+    # 08:15 ET — Vancouver Daily News — daily, 05:15 Pacific (08:15 ET; ET minus PT is
+    # three hours all year). Local morning slot, NOT in the 7 AM edition.
+    - cron: '15 13 * * *'
 
   workflow_dispatch:
     inputs:
@@ -214,35 +205,36 @@ jobs:
               # so some crons fire more often than intended.  The day_filter
               # applies the intended restriction.
               CRON_MAP = {
-                  "7 6 * * 1":        ("privet_russian",          "monday"),
-                  "1 7 * * *":        ("omni_view",                None),
-                  "16 7 * * *":       ("planetterrian",            None),
-                  "31 7 * * *":       ("fascinating_frontiers",    None),
-                  "46 7 * * *":       ("models_agents",            None),
-                  "7 8 * * 1":        ("env_intel",               "monday"),
-                  "1 8 * * *":        ("models_agents_beginners",  None),
-                  "16 8 * * *":       ("modern_investing",         None),
-                  "31 8 * * *":       ("first_principles",         None),
-                  "46 8 * * *":       ("tesla",                    None),
-                  "1 9 * * *":        ("unintended_consequences", None),
-                  "16 9 * * *":       ("spacex",                   None),
-                  "37 9 * * 1":       ("finansy_prosto",          "monday"),
-                  "46 9 * * 1":       ("dp_pod",                  "monday"),
-                  "1 10 * * 1":       ("offshore_north",          "monday"),
-                  "31 9 * * *":       ("ai_chips",                 None),
-                  "46 10 * * *":      ("mag7",                     None),
-                  "1 11 * * 3":       ("longevity",               "wednesday"),
-                  "7 11 * * 4":       ("peptides",                "thursday"),
-                  # Launch-cohort PR C (2026-09-23).
-                  "16 6 * * *":       ("omni_view_asia_pacific",   None),
-                  "31 6 * * *":       ("omni_view_africa_mideast", None),
-                  "46 6 * * *":       ("omni_view_europe",         None),
-                  "7 10 * * 5":       ("collingwood",             "friday"),
-                  "16 10 * * *":      ("omni_view_north_america",  None),
-                  "31 10 * * *":      ("omni_view_latam",          None),
-                  "16 11 * * *":      ("prediction_markets",       None),
-                  "31 11 * * *":      ("omni_view_world",          None),
-                  "16 12 * * *":      ("vancouver",                None),
+                  # Oct 17 2026: keys are the EST equivalents of the Worker's Eastern
+                  # slots (ET + 5 h); see the schedule comment at the top.
+                  "0 9 * * *":        ("unintended_consequences",   None),
+                  "5 9 * * *":        ("first_principles",          None),
+                  "10 9 * * 1":       ("privet_russian",            "monday"),
+                  "15 9 * * 1":       ("env_intel",                 "monday"),
+                  "20 9 * * 1":       ("finansy_prosto",            "monday"),
+                  "25 9 * * 1":       ("dp_pod",                    "monday"),
+                  "30 9 * * *":       ("omni_view_asia_pacific",    None),
+                  "35 9 * * 1":       ("offshore_north",            "monday"),
+                  "40 9 * * *":       ("omni_view_africa_mideast",  None),
+                  "45 9 * * 3":       ("longevity",                 "wednesday"),
+                  "50 9 * * *":       ("omni_view_europe",          None),
+                  "55 9 * * 4":       ("peptides",                  "thursday"),
+                  "0 10 * * *":       ("planetterrian",             None),
+                  "5 10 * * *":       ("omni_view_latam",           None),
+                  "10 10 * * *":      ("fascinating_frontiers",     None),
+                  "15 10 * * *":      ("omni_view_north_america",   None),
+                  "20 10 * * *":      ("ai_chips",                  None),
+                  "25 10 * * *":      ("models_agents",             None),
+                  "30 10 * * *":      ("models_agents_beginners",   None),
+                  "35 10 * * 5":      ("collingwood",               "friday"),
+                  "40 10 * * *":      ("omni_view",                 None),
+                  "45 10 * * *":      ("spacex",                    None),
+                  "50 10 * * *":      ("tesla",                     None),
+                  "55 10 * * *":      ("mag7",                      None),
+                  "0 11 * * *":       ("modern_investing",          None),
+                  "5 11 * * *":       ("prediction_markets",        None),
+                  "10 11 * * *":      ("omni_view_world",           None),
+                  "15 13 * * *":      ("vancouver",                 None),
               }
 
               # First scheduled run per show (Sep 2026 launch). A weekly

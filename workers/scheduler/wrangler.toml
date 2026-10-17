@@ -24,15 +24,19 @@ workers_dev = true
 # plan, which allows five cron triggers in total, and the Voices Worker
 # holds three — a second trigger here was refused at deploy
 # ("reached the Workers Free limit of 5 cron triggers", code 10072), so the
-# 8am-Pacific edition dispatch never went live. The handler decides from
-# the exact firing minute, so one broad expression covers both jobs:
-# :01/:07/:16/:31/:37/:46 from 06:00-12:00 UTC are the show slots (mirroring
-# run-show.yml's CRON_MAP; drift guard tests/test_scheduling_punctuality.py)
-# and the Nerra Daily edition fires on PACIFIC wall time — 07:50 (release)
-# and 09:01 (end of the straggler hold) are 14:50/16:01 UTC under PDT and
-# 15:50/17:01 UTC under PST. Oct 11 2026: every hour, not 06-17 UTC, for
-# the @nerranetwork X queue (x-queue.yml at :01 and :31 Pacific, 6:31 AM to
-# 7:31 PM). Every other firing is a logged no-op (~140 a day, each a few
-# milliseconds). Do not split this back into two triggers without moving
-# the account to Workers Paid first.
-crons = ["1,7,16,31,37,46,50 * * * *"]
+# edition dispatch never went live. The handler decides from the exact
+# firing minute, so one broad expression covers every job.
+#
+# Oct 17 2026: every five minutes. The show slots, the Nerra Daily edition
+# (06:35 / 06:50) and the @nerranetwork X queue (:05 / :35, 7:05 AM to
+# 10:05 PM) are all on EASTERN wall time, and every one of them sits on a
+# multiple of five minutes; Eastern is UTC-4 (EDT) or UTC-5 (EST), whole
+# hours, so a minute that is a multiple of five in New York is one in UTC
+# under both offsets. The handler converts each firing to Eastern time and
+# matches SLOTS / EDITION_DISPATCH / X_QUEUE_DISPATCH; every other firing is
+# a logged no-op (~250 a day, each a few milliseconds). Drift guard:
+# tests/test_scheduling_punctuality.py and
+# tests/test_seven_am_eastern_2026_10_17.py check the trigger fires at every
+# slot in both offsets. Do not split this back into two triggers without
+# moving the account to Workers Paid first.
+crons = ["*/5 * * * *"]

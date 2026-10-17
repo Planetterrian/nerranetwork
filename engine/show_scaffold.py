@@ -17,6 +17,45 @@ DEFAULT_MUSIC = "assets/music/tesla_shorts_time.mp3"
 WEEKDAY_FILTERS = ("monday", "tuesday", "wednesday", "thursday", "friday",
                    "saturday", "sunday")
 
+#: Oct 17 2026: every slot is EASTERN wall time (the scheduler Worker's
+#: SLOT_TZ). The run-show.yml fallback cron is UTC and cannot follow daylight
+#: saving, so it is the slot's EST equivalent: ET + this many hours.
+EST_UTC_OFFSET_HOURS = 5
+_CRON_DOW = {name: str((i + 1) % 7) for i, name in enumerate(WEEKDAY_FILTERS)}
+_SLOT_ET_RE = re.compile(r"^(\d{1,2}):(\d{2})$")
+
+
+def parse_et_slot(slot_et: str) -> tuple[int, int]:
+    """``"05:45"`` -> ``(5, 45)``. The minute must be a multiple of five (the
+    Worker fires every five minutes) and the slot must stay inside one UTC
+    day at the EST offset, so the gate's UTC weekday filter agrees with the
+    Worker's Eastern one."""
+    m = _SLOT_ET_RE.match((slot_et or "").strip())
+    if not m:
+        raise ValueError(f"slot {slot_et!r} is not HH:MM Eastern time")
+    hour, minute = int(m.group(1)), int(m.group(2))
+    if minute % 5 or minute > 55:
+        raise ValueError(f"slot {slot_et!r}: the minute must be a multiple of five")
+    if hour < 0 or hour + EST_UTC_OFFSET_HOURS > 23:
+        raise ValueError(f"slot {slot_et!r}: must be before 19:00 ET (one UTC day)")
+    return hour, minute
+
+
+def cron_for_et_slot(slot_et: str, day_filter: str | None = None) -> str:
+    """The run-show.yml fallback cron for an Eastern slot (its EST equivalent)."""
+    hour, minute = parse_et_slot(slot_et)
+    dow = _CRON_DOW.get((day_filter or "").lower(), "*")
+    return f"{minute} {hour + EST_UTC_OFFSET_HOURS} * * {dow}"
+
+
+def worker_slot_row(spec: "ScaffoldSpec") -> str:
+    """The workers/scheduler/src/index.ts SLOTS row for *spec* (Eastern)."""
+    if not spec.slot_et:
+        return ""
+    hour, minute = parse_et_slot(spec.slot_et)
+    filt = "null" if spec.cron_day_filter is None else f'"{spec.cron_day_filter}"'
+    return f'  [{hour}, {minute}, "{spec.slug}", {filt}],'
+
 
 @dataclass
 class ScaffoldSpec:
@@ -68,9 +107,16 @@ class ScaffoldSpec:
     web_search_queries: list[str] = field(default_factory=list)
     keywords: list[str] = field(default_factory=list)
     image_queries: list[str] = field(default_factory=list)
+    #: Eastern wall-clock slot "HH:MM" (Oct 17 2026: the schedule's clock).
+    #: The fallback ``cron`` is derived from it when not given.
+    slot_et: str = ""
     cron: str = ""
     cron_day_filter: str | None = None
     youtube_category_id: str = "28"
+
+    def __post_init__(self) -> None:
+        if self.slot_et and not self.cron:
+            self.cron = cron_for_et_slot(self.slot_et, self.cron_day_filter)
 
 
 def slug_to_page(slug: str) -> str:
@@ -287,6 +333,8 @@ def append_cron_snippet(
         pending = yaml.safe_load(registry.read_text(encoding="utf-8")) or pending
     pending.setdefault("cron_entries", []).append({
         "cron": spec.cron,
+        "slot_et": spec.slot_et or None,
+        "worker_slot": worker_slot_row(spec).strip() or None,
         "slug": spec.slug,
         "day_filter": spec.cron_day_filter,
         "line": line.strip(),
@@ -346,7 +394,14 @@ def generate_registration_patch(spec: ScaffoldSpec) -> str:
     if cron_line:
         lines.append(f"   {cron_line}")
     else:
-        lines.append("   (No --cron was provided — add manually)")
+        lines.append("   (No --slot-et was provided — add manually)")
+    slot_row = worker_slot_row(spec)
+    lines.extend([
+        "",
+        "1b. Add to workers/scheduler/src/index.ts SLOTS (EASTERN wall time; the",
+        "    cron above is its EST equivalent, ET + 5 h — Oct 17 2026):",
+        f"   {slot_row}" if slot_row else "   (No --slot-et was provided — add manually)",
+    ])
 
     lines.extend([
         "",
@@ -367,7 +422,7 @@ def generate_registration_patch(spec: ScaffoldSpec) -> str:
         "",
         "7. Cadence lives in SIX places — all must agree (CLAUDE.md, Sep 21 2026):",
         "   run-show.yml CRON_MAP + `- cron:` line + workflow_dispatch options + `all` list;",
-        "   workers/scheduler/src/index.ts SLOTS (unique h:m — the Worker takes the first match);",
+        "   workers/scheduler/src/index.ts SLOTS (Eastern wall time, unique h:m — the Worker takes the first match);",
         "   review_episodes.py SHOW_REGISTRY schedule; daily-audit.yml FEEDS limit (above);",
         "   engine/daily_edition.py lineup/monday_only (or an explicit exclusion in",
         "   tests/test_daily_edition.py); the registry `schedule` + rss_description copy.",

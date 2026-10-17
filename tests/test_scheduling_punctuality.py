@@ -6,6 +6,12 @@ starting 13:54). The fix is three-layered: off-peak cron minutes
 (workers/scheduler), and a same-day duplicate guard in the gate so the
 two drivers never double-publish. These tests pin all three AND that the
 Worker's SLOTS table stays in sync with the workflow's CRON_MAP.
+
+Oct 17 2026: the Worker's SLOTS are EASTERN wall time (SLOT_TZ =
+America/New_York) so Nerra Daily is out by 7:00 AM New York and the clock
+changes move nothing. The GitHub fallback crons are UTC and cannot follow
+daylight saving, so each is the slot's EST equivalent (ET + 5 h); the
+Worker-vs-CRON_MAP check compares them at that offset.
 """
 
 from __future__ import annotations
@@ -18,8 +24,13 @@ _WF = (_ROOT / ".github" / "workflows" / "run-show.yml").read_text(encoding="utf
 _TS = (_ROOT / "workers" / "scheduler" / "src" / "index.ts").read_text(encoding="utf-8")
 
 
+#: Eastern Standard Time is UTC-5: a fallback cron's UTC hour minus this is
+#: the Worker's Eastern slot hour.
+EST_OFFSET_HOURS = 5
+
+
 def _cron_map() -> dict:
-    """Parse CRON_MAP entries: "M H ..." -> (show, day_filter|None)."""
+    """Parse CRON_MAP entries: "M H ..." -> (UTC hour, minute, day_filter|None)."""
     entries = {}
     for m in re.finditer(
         r'"(\d+) (\d+) [^"]*":\s*\("(\w+)",\s*(?:"(\w+)"|None)\)', _WF,
@@ -53,17 +64,23 @@ def test_scheduled_handler_honours_the_launch_date():
 
 
 def test_cron_minutes_off_peak():
-    """Crons are staggered to avoid bunching on the same minute. The
-    original :07/:37 design avoided top-of-hour contention but capped at
-    2 slots/hour (13 shows, 12 hours min). For 10 daily shows in 3 hours,
-    :01/:16/:31/:46 spacing is used instead (same anti-bunch principle,
-    tighter packing). GitHub fallback crons are no longer on the
-    historically-off-peak :07/:37 marks, but the Cloudflare Worker (primary,
-    minute-accurate dispatch) is unaffected and the duplicate guard still
-    prevents double-publishing."""
-    crons = re.findall(r"- cron: '(\d+) ", _WF)
+    """Crons are staggered so no two shows share a minute. Oct 17 2026: the
+    slots are Eastern wall time on five-minute marks (04:00-06:10 ET for
+    the edition shows, 08:15 for Vancouver) because the Worker's one
+    trigger fires every five minutes; the GitHub fallbacks inherit those
+    minutes. The Cloudflare Worker (primary, minute-accurate dispatch) is
+    unaffected by GitHub's top-of-hour contention, and the duplicate guard
+    still prevents double-publishing."""
+    crons = re.findall(r"- cron: '(\d+) (\d+) ", _WF)
     assert crons, "no crons parsed"
-    assert set(crons) <= {"1", "7", "16", "31", "37", "46"}, f"unexpected cron minutes: {crons}"
+    assert all(int(m) % 5 == 0 for m, _h in crons), f"unexpected cron minutes: {crons}"
+    assert len({(m, h) for m, h in crons}) == len(crons), "two crons share a minute"
+
+
+def _est_to_eastern(cron_map: dict) -> dict:
+    """CRON_MAP converted to the Worker's clock: the UTC fallback cron at the
+    EST offset (UTC-5) is the Eastern slot."""
+    return {show: (h - EST_OFFSET_HOURS, m, f) for show, (h, m, f) in cron_map.items()}
 
 
 def test_worker_slots_match_cron_map():
@@ -73,23 +90,66 @@ def test_worker_slots_match_cron_map():
     # CRON_MAP entry, so a new show that adds one without the other fails.
     crons = re.findall(r"- cron: '([^']+)'", _WF)
     assert len(cron_map) == len(crons), f"CRON_MAP parse drift: {sorted(cron_map)}"
-    assert slots == cron_map, (
-        "workers/scheduler SLOTS desynced from run-show.yml CRON_MAP:\n"
-        f"  worker-only/changed: { {k: v for k, v in slots.items() if cron_map.get(k) != v} }\n"
-        f"  cron-map-only/changed: { {k: v for k, v in cron_map.items() if slots.get(k) != v} }"
+    eastern = _est_to_eastern(cron_map)
+    assert slots == eastern, (
+        "workers/scheduler SLOTS (Eastern) desynced from run-show.yml CRON_MAP "
+        "(UTC at the EST offset, ET + 5 h):\n"
+        f"  worker-only/changed: { {k: v for k, v in slots.items() if eastern.get(k) != v} }\n"
+        f"  cron-map-only/changed: { {k: v for k, v in eastern.items() if slots.get(k) != v} }"
     )
 
 
-def test_worker_trigger_covers_all_slots():
+def test_worker_slots_are_eastern_wall_time():
+    from engine.scheduler_slots import SLOT_TZ, worker_slot_tz
+    assert SLOT_TZ == "America/New_York"
+    assert worker_slot_tz(_TS) == SLOT_TZ
+    # The handler converts the firing to the slot clock and the day filters
+    # read the Eastern calendar, never getUTC*.
+    body = _TS.split("async scheduled(", 1)[1]
+    assert "wallClock(now)" in body
+    assert "getUTCHours" not in _TS and "getUTCDay" not in _TS and "getUTCDate" not in _TS
+
+
+def test_every_slot_stays_inside_one_utc_day():
+    """04:00-08:15 ET is 08:00-13:15 UTC under EDT and 09:00-13:15 under EST:
+    the gate's UTC weekday filter and the Worker's Eastern one agree."""
+    for show, (h, m, _f) in _worker_slots().items():
+        assert 0 <= h + 4 and h + EST_OFFSET_HOURS <= 23, (show, h, m)
+
+
+def _trigger_fires(utc_hour: int, utc_minute: int) -> bool:
     toml = (_ROOT / "workers" / "scheduler" / "wrangler.toml").read_text(encoding="utf-8")
-    # One trigger covers the show minutes (:01/:07/:16/:31/:37/:46, last show
-    # slot Vancouver's 12:16) and the Nerra Daily edition's Pacific minutes
-    # (:50 and :01 inside 14-17 UTC) — Oct 9 2026, the Workers Free limit of
-    # five cron triggers per account refused a second one at deploy. The
+    crons = re.findall(r'^crons = \[(.*)\]', toml, re.M)[0]
+    for cron in re.findall(r'"([^"]+)"', crons):
+        minute, hour = cron.split()[:2]
+        if minute.startswith("*/"):
+            mins = set(range(0, 60, int(minute[2:])))
+        elif minute == "*":
+            mins = set(range(60))
+        else:
+            mins = {int(x) for x in minute.split(",")}
+        if hour == "*":
+            hrs = set(range(24))
+        elif "-" in hour:
+            lo, hi = (int(x) for x in hour.split("-"))
+            hrs = set(range(lo, hi + 1))
+        else:
+            hrs = {int(x) for x in hour.split(",")}
+        if utc_minute in mins and utc_hour in hrs:
+            return True
+    return False
+
+
+def test_worker_trigger_covers_all_slots():
+    # Oct 17 2026: one trigger, every five minutes. Every Eastern slot must
+    # be a firing minute under BOTH offsets (EDT = UTC-4, EST = UTC-5); the
     # edition clock itself is pinned in
-    # tests/test_nerra_daily_8am_pacific_2026_10_08.py.
-    # Oct 11 2026: every hour, for the daytime X queue (x-queue.yml).
-    assert '"1,7,16,31,37,46,50 * * * *"' in toml
+    # tests/test_seven_am_eastern_2026_10_17.py.
+    toml = (_ROOT / "workers" / "scheduler" / "wrangler.toml").read_text(encoding="utf-8")
+    assert 'crons = ["*/5 * * * *"]' in toml
+    for show, (h, m, _f) in _worker_slots().items():
+        for offset in (4, 5):
+            assert _trigger_fires((h + offset) % 24, m), (show, h, m, offset)
 
 
 def test_gate_has_duplicate_guard():
@@ -180,33 +240,33 @@ def test_audit_rss_limits_match_cron_cadence():
 
 def test_edition_dispatch_slot():
     """Nerra Daily has an exact-time driver: the Worker dispatches
-    nerra-daily.yml on PACIFIC wall time (07:50 release and 09:01 end of
-    the straggler hold, Oct 8 2026 — previously 13:07 UTC). Deliberately
-    NOT a SLOTS row (those parse as shows above). The clock itself is
-    pinned in tests/test_nerra_daily_8am_pacific_2026_10_08.py."""
+    nerra-daily.yml on EASTERN wall time (06:35 release and 06:50 end of
+    the straggler hold, Oct 17 2026 — 07:50/09:01 Pacific from Oct 8,
+    13:07 UTC before that). Deliberately NOT a SLOTS row (those parse as
+    shows above). The clock itself is pinned in
+    tests/test_seven_am_eastern_2026_10_17.py."""
     m = re.search(
-        r'EDITION_DISPATCH = \{\s*tz: "America/Los_Angeles",\s*times: \[.*?\] as '
+        r'EDITION_DISPATCH = \{\s*tz: "America/New_York",\s*times: \[(.*?)\] as '
         r'Array<\[number, number\]>,\s*workflow: "([\w.-]+)",', _TS, re.S)
     assert m, "EDITION_DISPATCH missing from workers/scheduler"
-    assert m.group(1) == "nerra-daily.yml"
+    assert m.group(2) == "nerra-daily.yml"
     # Oct 9 2026: ONE cron trigger. The account is on Workers Free (five
     # cron triggers in total, the Voices Worker holds three) and a second
     # trigger here was refused at deploy, so the edition dispatch never went
-    # live. One expression covers the show minutes 06:00-12:00 UTC and the
-    # edition's Pacific minutes (14:50/16:01 UTC under PDT, 15:50/17:01 under
-    # PST); the handler decides from the exact firing minute. The handler
-    # returns after an edition dispatch, so no show slot may sit on an
-    # edition minute: edition hours are 14-17 UTC, show hours 6-12.
+    # live. One expression covers every Eastern minute the handler needs;
+    # the handler decides from the exact firing minute.
     toml = (_ROOT / "workers" / "scheduler" / "wrangler.toml").read_text(
         encoding="utf-8")
     crons = re.findall(r'^crons = \[(.*)\]', toml, re.M)
     assert crons and crons[0].count('"') == 2, (
         "the scheduler must hold exactly one cron trigger (Workers Free "
         "allows five per account and Voices holds three)")
-    assert crons[0] == '"1,7,16,31,37,46,50 * * * *"', crons
-    slot_hours = {int(h) for h, _m, _s, _f in re.findall(
-        r'^\s*\[(\d+),\s*(\d+),\s*"([\w-]+)",\s*(null|"[a-z_]+")\]', _TS, re.M)}
-    assert slot_hours and max(slot_hours) <= 12, slot_hours
+    assert crons[0] == '"*/5 * * * *"', crons
+    # The edition and the show slots are independent dispatches now, but a
+    # slot on an edition minute would still be a scheduling mistake.
+    times = {(int(h), int(mi)) for h, mi in re.findall(r"\[(\d+),\s*(\d+)\]", m.group(1))}
+    slot_times = {(h, mi) for h, mi, _f in _worker_slots().values()}
+    assert times and not times & slot_times, times & slot_times
 
 
 _VOICES_TS = (_ROOT / "workers" / "voices" / "src" / "index.ts").read_text(encoding="utf-8")

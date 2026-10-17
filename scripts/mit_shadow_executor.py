@@ -2,7 +2,7 @@
 """Run one shadow-executor pass over today's MIT trade signal (Phase 2).
 
 Scheduled at ~9:50 ET (13:50 UTC) — after the opening auction, on the
-signal the 08:16 UTC episode wrote. Fail-closed by design:
+signal the 06:00 ET episode wrote. Fail-closed by design:
 
 - no signal file → clean no-op (exit 0, logged);
 - stale / no-trade / unvalidated signal → 'skipped' ledger entry with

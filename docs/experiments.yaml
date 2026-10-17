@@ -4941,3 +4941,35 @@ experiments:
       read by article_age_days; _open_positions_note in the MIT hook; Top
       World intake_line(0, n) == ""; _build_teaser clips via engine.titles.
       ⚠️ AUDIO: Prediction Markets teaser, MIT pick context.
+  - id: nerra-daily-7am-eastern-2026-10-17
+    title: "The schedule runs on Eastern time and Nerra Daily is out by 7am Eastern"
+    area: product
+    shipped: 2026-10-17
+    readout: 2026-11-07
+    status: reading
+    baseline: >
+      Oct 8-16: the edition released at 07:50 PT (14:50 UTC) after shows
+      that ran 06:01-12:16 UTC on a UTC Worker table; the slots moved an
+      hour against New York on every clock change. Vancouver Daily News was
+      the edition's last expected show.
+    target: >
+      Over 21 days spanning the 1 November change: the edition commit lands
+      by 07:00 Eastern on >= 19 days; missing_expected empty on >= 17 days;
+      every Worker dispatch fires at its Eastern minute on both sides of
+      1 November (scheduler logs / Actions run start times).
+    criteria: >
+      Hit = all three. An edition after 07:00 ET means a straggler held it
+      past 06:50: read missing_expected for the show and fix that show's
+      run (audio before video), never move the release earlier. Five-minute
+      slot spacing puts ~8 runs in flight at once; a push-contention
+      recovery PR on the morning slate is a reason to widen the spacing.
+    notes: >
+      workers/scheduler SLOTS on Eastern wall time (SLOT_TZ
+      America/New_York), one cron trigger "*/5 * * * *"; EDITION_DISPATCH
+      06:35/06:50 ET; X_QUEUE_DISPATCH :05/:35 from 07:05 to 22:05 ET.
+      run-show.yml fallbacks are the EST equivalents (ET + 5 h).
+      engine/daily_edition.py RELEASE_EASTERN (6, 35) / HOLD_UNTIL_EASTERN
+      (6, 50); Vancouver left the lineup (stays choosable in Nerra
+      Personal). Needs `wrangler deploy` in workers/scheduler. No audio or
+      prompt change — outside landmine #17. Guards
+      tests/test_seven_am_eastern_2026_10_17.py.

@@ -53,10 +53,11 @@ class TestDpPodIsWeekly:
 
     def test_the_scheduler_worker_agrees(self):
         """The Worker dispatches to the minute; drift means two runs a week
-        or none."""
+        or none. Oct 17 2026: the Worker's slot is Eastern wall time,
+        04:25 ET (the gate's fallback "25 9 * * 1" is its EST equivalent)."""
         src = (ROOT / "workers" / "scheduler" / "src" / "index.ts").read_text(
             encoding="utf-8")
-        row = re.search(r'\[\s*9,\s*46,\s*"dp_pod",\s*([^\]]+)\]', src)
+        row = re.search(r'\[\s*4,\s*25,\s*"dp_pod",\s*([^\]]+)\]', src)
         assert row, "dp_pod is not in the Worker SLOTS table"
         assert '"monday"' in row.group(1)
 

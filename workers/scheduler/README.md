@@ -5,6 +5,18 @@ May–June 2026; Tesla's 11:00 UTC cron started at 13:54 on June 9). Cloudflare
 Cron Triggers fire to the minute. This Worker dispatches each show's
 `Run Podcast Show` run via `workflow_dispatch` at its intended slot.
 
+**Every slot is EASTERN wall time** (Oct 17 2026, operator-directed:
+Nerra Daily is out by 7:00 AM New York). `SLOTS` rows are
+`[etHour, etMinute, show, dayFilter]` on `SLOT_TZ = "America/New_York"`;
+the handler converts each firing to Eastern time and the day filters read
+the Eastern date, so the 1 November and March clock changes move nothing.
+The Nerra Daily edition (`EDITION_DISPATCH`, 06:35 / 06:50 ET) and the
+@nerranetwork X queue (`X_QUEUE_DISPATCH`, :05 / :35 from 7:05 AM to
+10:05 PM ET) read the same clock. The Worker's ONE cron trigger is
+`*/5 * * * *` (Workers Free: five triggers per account, Voices holds three);
+every Eastern minute it needs is a multiple of five, which is a multiple of
+five in UTC under both offsets.
+
 The GitHub crons in `run-show.yml` stay enabled as the delayed fallback;
 the gate's same-day duplicate guard (it checks for today's
 `Auto-generated: <show> <date>` commit) ensures the two drivers never
@@ -21,7 +33,7 @@ exactly as today.
 4. `wrangler deploy`
 5. Verify next slot in the Cloudflare dashboard (Workers → nerra-scheduler
    → Logs) and confirm the corresponding workflow run starts within ~1 min
-   of :07/:37.
+   of its Eastern slot (`GET /` shows `next_slot.et`).
 
 ## Verifying a deploy (do this instead of waiting for a slot)
 
@@ -29,7 +41,9 @@ The Worker answers HTTP on its workers.dev URL (Cloudflare dashboard →
 Workers & Pages → nerra-scheduler → the `*.workers.dev` link, or
 `wrangler deployments list`):
 
-- `GET /` — config, the slot table, and `next_slot` (what should fire next).
+- `GET /` — config, the slot table (each row `{"at": "05:45", "tz":
+  "America/New_York", "show": ..., "filter": ...}`), and `next_slot` (what
+  should fire next, in UTC and Eastern).
 - `GET /health` — the same plus a **live, read-only GitHub probe** with
   the stored token. `ok: true` means the token authenticates AND has the
   Actions permission `workflow_dispatch` needs. It never dispatches.
@@ -70,6 +84,11 @@ way `next_slot` does; before 2026-09-24 only the status page did, and a
 
 
 `SLOTS` in `src/index.ts` mirrors `CRON_MAP` in
-`.github/workflows/run-show.yml`. `tests/test_scheduling_punctuality.py`
-parses both and fails CI on drift. When changing the schedule, update both
-+ redeploy the Worker.
+`.github/workflows/run-show.yml`. The GitHub fallback crons are UTC and
+cannot follow daylight saving, so each is the slot's EST equivalent
+(ET + 5 h) — in summer it fires an hour after the Worker and the gate's
+duplicate guard drops it. `tests/test_scheduling_punctuality.py` parses
+both and compares them at the EST offset, failing CI on drift. When
+changing the schedule, update both + redeploy the Worker. A Worker still
+deployed from before Oct 17 2026 answers UTC rows (`"09:16Z"`); the deploy
+check names that clock and asks for a redeploy.

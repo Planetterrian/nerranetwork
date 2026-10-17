@@ -651,7 +651,7 @@ NETWORK_SHOWS = {
         "about_host": "Hosted by Patrick in Vancouver. Helping you form your own informed opinions through balanced, multi-perspective coverage.",
         "description_long": "A calm daily briefing on the day's most important stories worldwide — every region, every side, in plain language for everyone from teens to seniors. Genuine disagreements presented at their strongest with named advocates, one progress story every day, and each episode ends by pointing you to a second perspective worth reading — so you can decide for yourself.",
         "related_show": "nerra_daily",
-        "related_reason": "If you enjoy Omni View, you might also like Nerra Daily — every English show the network publishes, in one listen a day.",
+        "related_reason": "If you enjoy Omni View, you might also like Nerra Daily — the network's English shows, in one listen every morning.",
         "apple_podcasts_url": "https://podcasts.apple.com/us/podcast/omni-view-balanced-news-perspectives/id1885661594",
         "spotify_url": "https://open.spotify.com/show/4KuOgvZMm4Mweorshrm2qR",
         "theme_color": "#0B6FD6",
