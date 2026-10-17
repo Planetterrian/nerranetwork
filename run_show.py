@@ -2313,11 +2313,12 @@ def run(args: argparse.Namespace) -> None:
             except Exception as _rec_exc:  # noqa: BLE001
                 logger.warning("Story recurrence metric failed "
                                "(non-fatal): %s", _rec_exc)
+        _retold_clusters: list = []
         if _article_clusters:
             try:
-                from engine.story_clusters import cluster_retold_in_digest
-                _retold = cluster_retold_in_digest(
-                    x_thread, articles, _article_clusters)
+                from engine.story_clusters import retold_clusters as _retold_of
+                _retold_clusters = _retold_of(x_thread, articles, _article_clusters)
+                _retold = len(_retold_clusters)
                 metrics.record("story_clusters_retold_in_digest", _retold)
                 if _retold:
                     logger.warning(
@@ -2811,6 +2812,20 @@ def run(args: argparse.Namespace) -> None:
                 f"one-clause update later in the digest",
                 {},
             )]
+        # Oct 17 2026 (readout of story-clusters-2026-10-01): a same-story
+        # cluster the digest still told as several items is a structural
+        # defect on the shows that opt in (Tesla retold one on 12 of its
+        # first 14 post-merge episodes — the inline annotation is read
+        # past). It rides the one-shot regeneration like the hook
+        # recurrence; the retry is kept only if it retells no more.
+        _cluster_regen = bool(
+            _retold_clusters and getattr(config, "story_clusters_regen", False)
+            and not is_deep_dive)
+        if _cluster_regen:
+            from engine.digest_lint import LintFinding as _LintFinding
+            from engine.story_clusters import retold_cluster_note
+            _lint_findings = list(_lint_findings) + [_LintFinding(
+                "story_cluster_retold", retold_cluster_note(_retold_clusters), {})]
         if (_val_factory or _hook_too_long or _lint_findings) and not is_deep_dive:
             _struct_defects: list = []
             for _lf in _lint_findings:
@@ -2909,6 +2924,9 @@ def run(args: argparse.Namespace) -> None:
                             # section, costs less than an unsourced day).
                             from engine.digest_lint import new_lint_names
                             _new_lints = new_lint_names(_lint_findings, _after)
+                        if _cluster_regen and not _new_lints and _cluster_retry_worse(
+                                _candidate, articles, _article_clusters, _retold_clusters, metrics):
+                            _new_lints = ["story_cluster_retold"]
                         if _new_lints:
                             logger.warning(
                                 "Structural retry introduced lint defect(s) the "
@@ -6659,6 +6677,17 @@ _SOURCE_SCAFFOLD_RE = re.compile(
 # many prior days is a structural defect (Tesla Ep632 led with Solar Roof,
 # told on three recent days). One prior day is an update and passes.
 HOOK_RECURRENCE_MIN_DAYS = 2
+
+
+def _cluster_retry_worse(candidate, articles, clusters, retold_before, metrics) -> bool:
+    """True when a structural retry spent on retold story clusters tells
+    MORE clusters as several items than the original did (Oct 17 2026,
+    story-clusters-2026-10-01 readout); records the retry's count."""
+    from engine.story_clusters import retold_clusters
+
+    after = len(retold_clusters(candidate, articles, clusters))
+    metrics.record("story_clusters_retold_after_retry", after)
+    return after > len(retold_before)
 
 # Mid-line / sentence-final attribution: "… within a human lifetime.
 # Source goodnewsnetwork.org." (colon-less) and "… measured. Source:

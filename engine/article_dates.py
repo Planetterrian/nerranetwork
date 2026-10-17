@@ -94,6 +94,43 @@ _SLUG_ISO_DATE_RE = re.compile(
     r"(?:^|[-_])(20[0-9]{2})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(?=$|[-_.])"
 )
 _PATH_DATE_RE = re.compile(r"/20[0-9]{2}/(?:0[1-9]|1[0-2])(?:/|$)")
+_URL_PATH_DATE_RE = re.compile(
+    r"/(20[0-9]{2})/(0[1-9]|1[0-2])(?:/(0[1-9]|[12][0-9]|3[01]))?(?=/|$)")
+
+
+def url_path_date(url: str) -> Optional[_dt.datetime]:
+    """Publication date implied by a ``/YYYY/MM[/DD]/`` URL path, as a UTC
+    datetime, or ``None`` when the URL carries no such path.
+
+    A day-dated path is the END of that day; a month-only path is the LAST
+    second of that month — a path date can only ever say "no later than
+    this", so a freshness check never calls a recent article stale.
+    ``engine.fetcher._url_path_date`` delegates here.
+
+    Oct 17 2026 readout (freshness-dating-2026-09-30): Planetterrian
+    2026-10-07 cited ``bjo.bmj.com/content/early/2026/09/18/…`` — nineteen
+    days old on a ``stale_article_days: 3`` show — because the stale gate
+    read only the page and feed dates (a journal feed dates an online-first
+    paper by its issue) and the URL path was checked only against the
+    fetch window. :func:`engine.article_text.article_age_days` now reads
+    this date too, older-only, like :func:`url_slug_date`.
+    """
+    if not url:
+        return None
+    m = _URL_PATH_DATE_RE.search(url)
+    if not m:
+        return None
+    year, month = int(m.group(1)), int(m.group(2))
+    day = int(m.group(3)) if m.group(3) else None
+    try:
+        if day is None:
+            nxt = _dt.datetime(year + (month == 12), (month % 12) + 1, 1,
+                               tzinfo=_dt.timezone.utc)
+            return nxt - _dt.timedelta(seconds=1)
+        return (_dt.datetime(year, month, day, tzinfo=_dt.timezone.utc)
+                + _dt.timedelta(days=1) - _dt.timedelta(seconds=1))
+    except ValueError:
+        return None
 
 
 def url_slug_date(url: str) -> Optional[_dt.datetime]:
@@ -260,6 +297,7 @@ __all__: List[str] = [
     "DATE_SOURCE_FEED", "DATE_SOURCE_INDEX", "DATE_SOURCE_URL_PATH",
     "DATE_SOURCE_PAGE", "DATE_SOURCE_MODEL", "DATE_SOURCE_X_POST",
     "DATE_SOURCE_UNKNOWN", "TRUSTED_DATE_SOURCES", "DEFAULT_MAX_PROBES",
-    "parse_date_token", "stamp", "is_trusted", "needs_probe", "too_old",
+    "parse_date_token", "url_path_date", "url_slug_date",
+    "stamp", "is_trusted", "needs_probe", "too_old",
     "probe_page_dates", "count_undated", "summarize_date_sources",
 ]

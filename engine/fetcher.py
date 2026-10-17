@@ -247,10 +247,9 @@ def _publisher_from_entry(entry, title: str = "") -> Optional[str]:
 # ---------------------------------------------------------------------------
 
 # /YYYY/MM/ or /YYYY/MM/DD/ inside a publisher URL path (WordPress-style
-# permalinks, most newspapers). Year is bounded so a numeric slug can't
-# masquerade as a date.
+# permalinks, most newspapers) — parsed by engine.article_dates.url_path_date
+# (year bounded so a numeric slug can't masquerade as a date).
 _URL_DATE_SLACK = datetime.timedelta(days=1)
-_URL_DATE_RE = re.compile(r"/(20[0-9]{2})/(0[1-9]|1[0-2])(?:/(0[1-9]|[12][0-9]|3[01]))?(?=/|$)")
 
 
 def _url_path_date(url: str) -> Optional[datetime.datetime]:
@@ -262,27 +261,16 @@ def _url_path_date(url: str) -> Optional[datetime.datetime]:
     positive on a recent month. Returns ``None`` when the URL carries no
     date; callers must treat that as "unknown", not "fresh".
     """
-    if not url:
-        return None
-    m = _URL_DATE_RE.search(url)
-    if not m:
-        return None
-    year, month = int(m.group(1)), int(m.group(2))
-    day = int(m.group(3)) if m.group(3) else None
-    try:
-        if day is None:
-            nxt = datetime.datetime(year + (month == 12), (month % 12) + 1, 1,
-                                    tzinfo=datetime.timezone.utc)
-            return nxt - datetime.timedelta(seconds=1)
-        # A day-dated path is the END of that day, not midnight: the
-        # first post-merge Planetterrian run (2026-09-04 07:24 UTC, 24 h
-        # window) dropped every STAT News / MIT Tech Review article dated
-        # /2026/09/03/ because midnight 09-03 sat seven hours before the
-        # cutoff. A path date can only ever say "no later than this".
-        return (datetime.datetime(year, month, day, tzinfo=datetime.timezone.utc)
-                + datetime.timedelta(days=1) - datetime.timedelta(seconds=1))
-    except ValueError:
-        return None
+    # A day-dated path is the END of that day, not midnight: the first
+    # post-merge Planetterrian run (2026-09-04 07:24 UTC, 24 h window)
+    # dropped every STAT News / MIT Tech Review article dated /2026/09/03/
+    # because midnight 09-03 sat seven hours before the cutoff. A path date
+    # can only ever say "no later than this". Oct 17 2026: the parse lives
+    # in engine.article_dates (the one owner of an article's date) so the
+    # stale gate reads the same date this fetch filter does.
+    from engine.article_dates import url_path_date
+
+    return url_path_date(url)
 
 
 def _parse_entry_date(entry) -> Optional[datetime.datetime]:
