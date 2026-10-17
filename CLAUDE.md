@@ -182,6 +182,18 @@ this policy and no stronger one. Register `claims-flag-policy-2026-10-01`;
 guards `tests/test_claims_flag_mode_2026_10_01.py`,
 `tests/test_claims_pages_2026_10_01.py`.
 
+**Oct 17 2026 — the page the run read vouches, and an unsourced back-test is
+a citation shape.** `build_local_texts` now includes an ordinary article's
+page `full_text` (`full_text_source: page`): the gate's own HTTP check is a
+second, differently-headed request, and France24 refused it on 12 claims in
+the week to Oct 17. Two shapes joined `CITATION_SHAPE_PATTERNS` — a back-test
+that "shows/found" something, and a historical rate "in N% of cases" —
+after Modern Investing Ep203 aired an invented "58% of cases" back-test
+inside an item sourced only to a PPI page and the gate passed it 5/5; on all
+2,470 committed digests they match four sentences, every one an unsourced
+MIT statistic. Guards `tests/test_citation_shapes.py`,
+`tests/test_slate_2026_10_17.py`.
+
 **Oct 5 2026 — the coverage floor reads the item's OWN source.** It had
 added one verified claim in 24 flagship episodes: it asked the model to
 name a fetchable page for each uncovered item from memory, and a truthful
