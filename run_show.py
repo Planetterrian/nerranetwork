@@ -7100,6 +7100,63 @@ def _publish_youtube(
         )
         return result
 
+    # ---- East-coast release schedule (Oct 17 2026, operator-directed) ----
+    # The long-form and the hook Short upload now, private with publishAt
+    # at the show's slot in engine/release_schedule.py (hook Short 7:00 ET
+    # + 15 min x rank among this channel's YouTube shows; long-form 12:00 /
+    # 18:00 ET waves). Only a PUBLIC show is scheduled (publishAt would make
+    # an unlisted/private upload public). Best-effort by contract: any
+    # failure here, a passed slot, or YouTube refusing the publishAt means
+    # the video publishes now, exactly as before.
+    _release_on = bool(
+        getattr(config.youtube, "release_schedule_enabled", False)
+    ) and str(getattr(config.youtube, "privacy_status", "public")
+              or "public").lower() == "public"
+    _release_peers: "list[str] | None" = None
+    _long_publish_at = None   # set when the long-form is scheduled
+    _short1_at = None         # set when the hook Short is scheduled
+    if _release_on:
+        try:
+            import yaml as _rs_yaml
+            _rs_channel = (getattr(config.youtube, "channel", "en")
+                           or "en").lower()
+            _release_peers = []
+            for _rs_path in sorted((PROJECT_ROOT / "shows").glob("*.yaml")):
+                if _rs_path.name.startswith("_"):
+                    continue
+                try:
+                    _rs_doc = _rs_yaml.safe_load(
+                        _rs_path.read_text(encoding="utf-8")) or {}
+                except Exception:  # noqa: BLE001 — one bad file ranks nothing
+                    continue
+                if not isinstance(_rs_doc, dict):
+                    continue
+                _rs_yt = _rs_doc.get("youtube") or {}
+                if not isinstance(_rs_yt, dict) or not _rs_yt.get("enabled"):
+                    continue
+                if str(_rs_yt.get("channel") or "en").lower() != _rs_channel:
+                    continue
+                _release_peers.append(str(_rs_doc.get("slug") or _rs_path.stem))
+            if config.slug not in _release_peers:
+                _release_peers.append(config.slug)
+        except Exception as _rs_exc:  # noqa: BLE001 — rank against the tuple
+            logger.warning("release schedule: peer list unavailable (%s) — "
+                           "ranking against the full release order", _rs_exc)
+            _release_peers = None
+
+    def _long_hidden_from(t) -> bool:
+        """True when a video going public at *t* (``None`` = now) would
+        link a long-form that is still private (scheduled later)."""
+        if _long_publish_at is None or not long_url:
+            return False
+        return t is None or t < _long_publish_at
+
+    def _schedule_refused(exc: BaseException) -> bool:
+        """YouTube turned the publishAt down (HTTP 400 at insert): the
+        upload is retried once, published now."""
+        _st = getattr(getattr(exc, "resp", None), "status", None)
+        return str(_st) == "400" or "publishat" in str(exc).lower()
+
     # LLM-optimized YouTube title (click-tuned, separate from the spoken
     # hook). Used by the LONG-FORM upload only (Shorts titles come from
     # build_short_metadata's per-window headline); the extra candidates are
@@ -8316,8 +8373,19 @@ def _publish_youtube(
                     footage_attribution=_broll_credits,
                     optimized_title=yt_title,
                 )
-                upload = upload_video(
-                    long_video_path,
+                if _release_on:
+                    try:
+                        from engine.release_schedule import youtube_long_time
+                        _long_publish_at = youtube_long_time(
+                            config.slug,
+                            datetime.datetime.now(datetime.timezone.utc),
+                            peers=_release_peers,
+                        )
+                    except Exception as _rs_exc:  # noqa: BLE001
+                        logger.warning("release schedule (long-form) failed "
+                                       "— publishing now: %s", _rs_exc)
+                        _long_publish_at = None
+                _long_kw = dict(
                     credentials=credentials,
                     title=meta["title"],
                     description=meta["description"],
@@ -8327,8 +8395,26 @@ def _publish_youtube(
                     privacy_status=config.youtube.privacy_status,
                     thumbnail_path=thumbnail_path,
                 )
+                try:
+                    upload = upload_video(long_video_path,
+                                          publish_at=_long_publish_at,
+                                          **_long_kw)
+                except Exception as _sched_exc:
+                    if _long_publish_at is None or not _schedule_refused(_sched_exc):
+                        raise
+                    logger.warning(
+                        "::warning::YouTube refused the long-form publishAt "
+                        "%s (%s) — uploading it public now",
+                        _long_publish_at, _sched_exc)
+                    _long_publish_at = None
+                    upload = upload_video(long_video_path, **_long_kw)
                 long_url = upload.watch_url
                 result["long_url"] = long_url
+                if _long_publish_at is not None:
+                    result["long_publish_at"] = _long_publish_at.strftime(
+                        "%Y-%m-%dT%H:%M:%SZ")
+                    logger.info("Long-form scheduled: public at %s",
+                                result["long_publish_at"])
                 # Record in the network video→episode index so the YouTube
                 # analytics-feedback loop can attribute retention/CTR back to
                 # this show + episode (best-effort; never blocks publish).
@@ -8341,7 +8427,10 @@ def _publish_youtube(
                         kind="long",
                         title=meta.get("title", ""),
                         hook=hook,
-                        published=f"{today:%Y-%m-%d}",
+                        # A scheduled long-form's clock starts when it goes
+                        # PUBLIC (the Shorts-stagger rule).
+                        published=(f"{_long_publish_at:%Y-%m-%d}"
+                                   if _long_publish_at else f"{today:%Y-%m-%d}"),
                         watch_url=long_url,
                         channel=(getattr(config.youtube, "channel", "en") or "en"),
                         index_path=digests_dir / "youtube_videos.json",
@@ -8376,7 +8465,21 @@ def _publish_youtube(
                             rss_link=config.publishing.rss_link or "",
                             audio_url=audio_url or "",
                         )
-                        if _pin_text and post_video_comment(
+                        if _pin_text and _long_publish_at is not None:
+                            # A private (scheduled) video takes no comment:
+                            # queue it; the half-hourly x-queue sweep posts
+                            # it once the long-form is public.
+                            from engine.shorts_stagger import queue_comment
+                            if queue_comment(
+                                    digests_dir,
+                                    video_id=upload.video_id,
+                                    channel=(getattr(config.youtube, "channel",
+                                                     "en") or "en"),
+                                    text=_pin_text,
+                                    publish_at=_long_publish_at):
+                                result["yt_comments_queued"] = (
+                                    int(result.get("yt_comments_queued", 0)) + 1)
+                        elif _pin_text and post_video_comment(
                                 credentials=credentials,
                                 video_id=upload.video_id,
                                 text=_pin_text):
@@ -8700,6 +8803,27 @@ def _publish_youtube(
             # private with status.publishAt at the channel's next optimal
             # slots so they spread through the day (manual runs included).
             # Any failure here degrades to the legacy publish-all-now.
+            # Oct 17 2026: the hook Short (Short #1) takes the show's
+            # release slot; later Shorts are staggered from IT, so they
+            # always follow it.
+            _short1_at = None
+            if _release_on and shorts_plan:
+                try:
+                    from engine.release_schedule import youtube_short_time
+                    _short1_at = youtube_short_time(
+                        config.slug,
+                        datetime.datetime.now(datetime.timezone.utc),
+                        peers=_release_peers,
+                    )
+                except Exception as _rs_exc:  # noqa: BLE001
+                    logger.warning("release schedule (hook Short) failed — "
+                                   "publishing now: %s", _rs_exc)
+                    _short1_at = None
+            if _short1_at is not None:
+                result["short_publish_at"] = _short1_at.strftime(
+                    "%Y-%m-%dT%H:%M:%SZ")
+                logger.info("Hook Short scheduled: public at %s",
+                            result["short_publish_at"])
             _stagger_times: "list" = []
             if len(shorts_plan) > 1 and bool(
                 getattr(config.youtube, "shorts_stagger_enabled", False)
@@ -8710,7 +8834,9 @@ def _publish_youtube(
                         stagger_publish_times,
                     )
                     _stagger_times = stagger_publish_times(
-                        datetime.datetime.now(datetime.timezone.utc),
+                        max(datetime.datetime.now(datetime.timezone.utc),
+                            _short1_at or datetime.datetime.now(
+                                datetime.timezone.utc)),
                         len(shorts_plan) - 1,
                         slot_hours=resolve_slot_hours(
                             config.youtube, _yt_channel),
@@ -8720,8 +8846,9 @@ def _publish_youtube(
                         for t in _stagger_times
                     ]
                     logger.info(
-                        "Shorts stagger: #1 publishes now; %d later Short(s) "
+                        "Shorts stagger: #1 publishes %s; %d later Short(s) "
                         "scheduled at %s",
+                        (result.get("short_publish_at") or "now"),
                         len(_stagger_times),
                         ", ".join(result["shorts_scheduled_times"]),
                     )
@@ -9085,12 +9212,31 @@ def _publish_youtube(
                     # Dragon CRS-35 to ISS") existed. Use it first.
                     if not _opt_short_title and not (this_hook or "").strip():
                         _opt_short_title = (yt_title or "").strip() or None
+                    # Staggered publishing: Short #1 carries the release
+                    # slot (Oct 17 2026); later Shorts carry publishAt
+                    # (upload_video flips them to private + scheduled).
+                    _publish_at = (
+                        _stagger_times[short_idx - 1]
+                        if short_idx >= 1 and (short_idx - 1) < len(_stagger_times)
+                        else (_short1_at if short_idx == 0 else None)
+                    )
+                    if (short_idx == 0 and _publish_at is not None
+                            and _publish_at <= datetime.datetime.now(
+                                datetime.timezone.utc)
+                            + datetime.timedelta(minutes=5)):
+                        _publish_at = None  # the slot ran out during the render
+                        result.pop("short_publish_at", None)
                     meta = build_short_metadata(
                         config,
                         episode_num=episode_num,
                         today_str=today_str,
                         hook=this_hook,
-                        long_form_url=long_url,
+                        # A long-form still private when this Short goes
+                        # public would be a "Video unavailable" link: send
+                        # viewers to the episode page instead (the comment
+                        # below waits for the long-form).
+                        long_form_url=("" if _long_hidden_from(_publish_at)
+                                       else long_url),
                         optimized_title=_opt_short_title,
                         channel=_yt_channel,
                         variant=(_variant.variant if _ab_on else ""),
@@ -9104,16 +9250,7 @@ def _publish_youtube(
                         if this_short_thumb_path and Path(this_short_thumb_path).exists()
                         else thumbnail_path
                     )
-                    # Staggered publishing: Short #1 is immediate; later
-                    # Shorts carry publishAt (upload_video flips them to
-                    # private + scheduled).
-                    _publish_at = (
-                        _stagger_times[short_idx - 1]
-                        if short_idx >= 1 and (short_idx - 1) < len(_stagger_times)
-                        else None
-                    )
-                    this_upload = upload_video(
-                        this_short_video_path,
+                    _short_kw = dict(
                         credentials=credentials,
                         title=meta["title"],
                         description=meta["description"],
@@ -9122,8 +9259,25 @@ def _publish_youtube(
                         default_language=meta["default_language"],
                         privacy_status=config.youtube.privacy_status,
                         thumbnail_path=upload_thumb,
-                        publish_at=_publish_at,
                     )
+                    try:
+                        this_upload = upload_video(
+                            this_short_video_path,
+                            publish_at=_publish_at,
+                            **_short_kw,
+                        )
+                    except Exception as _sched_exc:
+                        if _publish_at is None or not _schedule_refused(_sched_exc):
+                            raise
+                        logger.warning(
+                            "::warning::YouTube refused Short #%d's publishAt "
+                            "%s (%s) — uploading it public now",
+                            short_idx + 1, _publish_at, _sched_exc)
+                        _publish_at = None
+                        if short_idx == 0:
+                            result.pop("short_publish_at", None)
+                        this_upload = upload_video(this_short_video_path,
+                                                   **_short_kw)
                     short_urls_out.append(this_upload.watch_url)
                     short_video_ids_out.append(this_upload.video_id)
                     try:
@@ -9207,7 +9361,17 @@ def _publish_youtube(
                                     + "\n\U0001f514 Subscribe for "
                                     + _cad(getattr(config, "slug", ""))
                                     ) if _cmt_target else ""
-                            if _cmt and _publish_at is not None:
+                            # Oct 17 2026: a Short that goes public before
+                            # the long-form waits for it too, so the link in
+                            # the comment always works.
+                            _cmt_at = max(
+                                [t for t in (
+                                    _publish_at,
+                                    _long_publish_at
+                                    if _long_hidden_from(_publish_at) else None,
+                                ) if t is not None],
+                                default=None)
+                            if _cmt and _cmt_at is not None:
                                 # Comments can't be posted on a private
                                 # (scheduled) video \u2014 queue it; the sweep
                                 # (scripts/post_scheduled_short_comments.py)
@@ -9218,7 +9382,7 @@ def _publish_youtube(
                                         video_id=this_upload.video_id,
                                         channel=_yt_channel,
                                         text=_cmt,
-                                        publish_at=_publish_at):
+                                        publish_at=_cmt_at):
                                     result["yt_comments_queued"] = (
                                         int(result.get(
                                             "yt_comments_queued", 0)) + 1)

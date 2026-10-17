@@ -176,7 +176,8 @@ class TestDeferredComments:
         monkeypatch.setattr(yt, "get_channel_credentials_from_env",
                             lambda ch: None)
         stats = post_due_comments(tmp_path, now=_at(16))
-        assert stats == {"posted": 0, "kept": 1, "dropped": 0}
+        assert stats == {"posted": 0, "kept": 1, "dropped": 0,
+                         "already_posted": 0}
         data = json.loads((ddir / "scheduled_comments.json").read_text())
         assert len(data["pending"]) == 1
 
@@ -194,6 +195,57 @@ class TestDeferredComments:
         assert stats["dropped"] == 1
         data = json.loads((ddir / "scheduled_comments.json").read_text())
         assert data["pending"] == []
+
+
+class TestNoDoublePost:
+    """Oct 17 2026: the half-hourly x-queue job runs the sweep and cannot
+    commit the sidecar back, so every sweep checks the video first."""
+
+    def _queue(self, tmp_path):
+        ddir = tmp_path / "digests" / "spacex"
+        ddir.mkdir(parents=True)
+        queue_comment(ddir, video_id="v", channel="en", text="t",
+                      publish_at=_at(15))
+        return ddir
+
+    def _creds(self, monkeypatch, seen, posted):
+        import engine.youtube as yt
+        monkeypatch.setattr(yt, "get_channel_credentials_from_env",
+                            lambda ch: object())
+        monkeypatch.setattr(yt, "video_has_comment", lambda **kw: seen)
+        monkeypatch.setattr(yt, "post_video_comment",
+                            lambda **kw: posted.append(kw["video_id"]) or "c")
+
+    def test_a_comment_already_on_the_video_is_not_posted_again(
+            self, tmp_path, monkeypatch):
+        ddir, posted = self._queue(tmp_path), []
+        self._creds(monkeypatch, True, posted)
+        stats = post_due_comments(tmp_path, now=_at(16))
+        assert posted == [] and stats["already_posted"] == 1
+        data = json.loads((ddir / "scheduled_comments.json").read_text())
+        assert data["pending"] == []
+
+    def test_a_stateless_run_never_posts_blind(self, tmp_path, monkeypatch):
+        ddir, posted = self._queue(tmp_path), []
+        self._creds(monkeypatch, None, posted)
+        stats = post_due_comments(tmp_path, now=_at(16), stateless=True)
+        assert posted == [] and stats["kept"] == 1
+        data = json.loads((ddir / "scheduled_comments.json").read_text())
+        assert len(data["pending"]) == 1
+
+    def test_a_committing_run_posts_when_the_check_fails(
+            self, tmp_path, monkeypatch):
+        self._queue(tmp_path)
+        posted = []
+        self._creds(monkeypatch, None, posted)
+        assert post_due_comments(tmp_path, now=_at(16))["posted"] == 1
+        assert posted == ["v"]
+
+    def test_absent_comment_posts_in_either_mode(self, tmp_path, monkeypatch):
+        self._queue(tmp_path)
+        posted = []
+        self._creds(monkeypatch, False, posted)
+        assert post_due_comments(tmp_path, now=_at(16), stateless=True)["posted"] == 1
 
 
 class TestWiring:

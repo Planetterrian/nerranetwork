@@ -1,10 +1,14 @@
-"""Daytime posting for @nerranetwork (Oct 11 2026).
+"""Daytime posting for @nerranetwork (Oct 11 2026; ET grid Oct 17 2026).
 
-The shows publish between about 11 PM and 5 AM Pacific, and on the first
-night their X posts went out then too, to an audience that was asleep. A
-show's post now waits in a queue (Supabase ``x_post_queue``) for a slot on a
-half-hour grid between 6:30 AM and 7:00 PM Pacific, one post per slot, and
-``scripts/post_x_queue.py`` posts what is due. The scheduler Worker
+The shows publish in the early morning, and on the first night their X
+posts went out then too, to an audience that was asleep. A show's post now
+waits in a queue (Supabase ``x_post_queue``) for a slot on a half-hour grid
+between 7:00 AM and 10:00 PM New York time, one post per slot, and
+``scripts/post_x_queue.py`` posts what is due. Oct 17 2026: the network is
+timed to an East-coast morning (engine/release_schedule.py) — Nerra Daily
+holds 7:00 ET (it posts directly; no show is queued into it) and each show
+takes its own preferred slot from 7:30 ET in release order when that slot
+is free and not past, else the next free slot. The scheduler Worker
 dispatches that script every half hour; the workflow keeps a slower GitHub
 cron as a fallback. The clip or image waits on the audio R2 bucket (served
 at audio.nerranetwork.com) under ``x_queue/`` and is deleted once posted.
@@ -26,10 +30,10 @@ from zoneinfo import ZoneInfo
 
 logger = logging.getLogger(__name__)
 
-PACIFIC = ZoneInfo("America/Los_Angeles")
+EASTERN = ZoneInfo("America/New_York")
 UTC = dt.timezone.utc
-FIRST_SLOT = dt.time(6, 30)
-LAST_SLOT = dt.time(19, 0)
+FIRST_SLOT = dt.time(7, 0)
+LAST_SLOT = dt.time(22, 0)
 SPACING = dt.timedelta(minutes=30)
 LEAD = dt.timedelta(minutes=5)
 TABLE = "x_post_queue"
@@ -46,21 +50,43 @@ LONG_FORM_MAX_SECONDS = 20 * 60
 
 
 # ------------------------------------------------------------------ slots --
-def next_slot(taken: Iterable[dt.datetime], now: dt.datetime) -> dt.datetime:
-    """The earliest free half-hour slot, 6:30 AM to 7:00 PM Pacific, at
-    least five minutes from *now*. Returned in UTC."""
+def next_slot(taken: Iterable[dt.datetime], now: dt.datetime, *,
+              reserve_edition: bool = True) -> dt.datetime:
+    """The earliest free half-hour slot, 7:00 AM to 10:00 PM ET, at least
+    five minutes from *now*. Returned in UTC. Nerra Daily's 7:00 ET slot is
+    never handed to a show (*reserve_edition*)."""
+    from engine.release_schedule import x_reserved_slots
     busy = {t.astimezone(UTC).replace(second=0, microsecond=0) for t in taken}
-    earliest = now.astimezone(PACIFIC) + LEAD
+    earliest = now.astimezone(EASTERN) + LEAD
     day = earliest.date()
     for _ in range(30):
-        slot = dt.datetime.combine(day, FIRST_SLOT, PACIFIC)
-        last = dt.datetime.combine(day, LAST_SLOT, PACIFIC)
+        reserved = set(x_reserved_slots(day)) if reserve_edition else set()
+        slot = dt.datetime.combine(day, FIRST_SLOT, EASTERN)
+        last = dt.datetime.combine(day, LAST_SLOT, EASTERN)
         while slot <= last:
-            if slot >= earliest and slot.astimezone(UTC) not in busy:
-                return slot.astimezone(UTC)
-            slot = (slot.replace(tzinfo=None) + SPACING).replace(tzinfo=PACIFIC)
+            utc = slot.astimezone(UTC)
+            if slot >= earliest and utc not in busy and utc not in reserved:
+                return utc
+            slot = (slot.replace(tzinfo=None) + SPACING).replace(tzinfo=EASTERN)
         day += dt.timedelta(days=1)
     return earliest.astimezone(UTC)  # a month of full slots: post now
+
+
+def choose_slot(show_slug: str, taken: Iterable[dt.datetime], now: dt.datetime) -> dt.datetime:
+    """The show's preferred release slot when it is free and not past
+    (engine/release_schedule.py), else :func:`next_slot`. UTC."""
+    taken = list(taken)
+    try:
+        from engine.release_schedule import x_slot
+        preferred = x_slot(show_slug, now)
+    except Exception as exc:  # noqa: BLE001 — the grid still works
+        logger.info("X release slot unavailable for %s: %s", show_slug, exc)
+        preferred = None
+    if preferred is not None:
+        busy = {t.astimezone(UTC).replace(second=0, microsecond=0) for t in taken}
+        if preferred.astimezone(UTC) not in busy:
+            return preferred.astimezone(UTC)
+    return next_slot(taken, now)
 
 
 # --------------------------------------------------------------- plumbing --
@@ -143,7 +169,7 @@ def enqueue(*, show_slug: str, episode_num: int, env_prefix: str, text: str,
         media_url = ""
         if media_path and Path(media_path).is_file():
             media_url = _host(Path(media_path), show_slug)
-        due = next_slot(_taken(now), now)
+        due = choose_slot(show_slug, _taken(now), now)
         rows = _rest("POST", TABLE, params={"on_conflict": "show_slug,episode_num"},
                      prefer="return=representation,resolution=ignore-duplicates",
                      json={"show_slug": show_slug, "episode_num": int(episode_num),
@@ -154,8 +180,8 @@ def enqueue(*, show_slug: str, episode_num: int, env_prefix: str, text: str,
         if not rows:
             logger.info("X post for %s ep%s was already queued", show_slug, episode_num)
             return True, "already_queued"
-        local = due.astimezone(PACIFIC)
-        logger.info("X post for %s ep%s queued for %s Pacific", show_slug, episode_num,
+        local = due.astimezone(EASTERN)
+        logger.info("X post for %s ep%s queued for %s ET", show_slug, episode_num,
                     local.strftime("%a %-I:%M %p"))
         return True, _iso(due)
     except Exception as exc:  # noqa: BLE001 — post now rather than lose it

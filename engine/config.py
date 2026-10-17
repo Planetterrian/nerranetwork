@@ -1218,6 +1218,15 @@ class YouTubeConfig:
     shorts_stagger_enabled: bool = False
     shorts_stagger_slots_utc: Dict[str, list] = field(default_factory=dict)
 
+    # ---- East-coast release schedule (Oct 17 2026, operator-directed) ----
+    # The long-form and the hook Short upload private with ``publishAt`` at
+    # the show's slot in engine/release_schedule.py (hook Short 7:00 ET +
+    # 15 min x rank; long-form 12:00 / 18:00 ET waves) instead of going
+    # public the minute the run ends (~4-6 AM ET). A passed slot publishes
+    # now. Dataclass default False so legacy callers are byte-identical;
+    # the network default lives in shows/_defaults.yaml.
+    release_schedule_enabled: bool = False
+
     # ---- Dub long-form override (Aug 2026, operator-directed) ----
     # Channels whose dub publishes the LONG-FORM video regardless of the
     # adaptive policy's tier (the Shorts count still follows the policy —

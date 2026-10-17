@@ -43,3 +43,25 @@ jobs:
           R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      # Oct 17 2026: long-forms are scheduled (YouTube publishAt) for 12:00
+      # and 18:00 ET and a private video takes no comment, so their funnel
+      # comment waits in digests/<slug>/scheduled_comments.json. This
+      # half-hourly run posts it within half an hour of the video going
+      # public (nightly alone would leave a 12:00 ET long-form bare until
+      # the next morning). This job does not commit, so --stateless: every
+      # entry is checked against the video before posting and kept when
+      # the check fails, and the committing sweeps (nightly, multilingual)
+      # clear the sidecar later. Same secret names as nightly-maintenance.
+      - name: Post comments on scheduled videos that went public
+        # Its own step: a failed X post above must not hold the comments.
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: |
+          pip install google-api-python-client google-auth google-auth-httplib2
+          python scripts/post_scheduled_short_comments.py --stateless
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN_EN: ${{ secrets.YOUTUBE_REFRESH_TOKEN_EN }}
+          YOUTUBE_REFRESH_TOKEN_RU: ${{ secrets.YOUTUBE_REFRESH_TOKEN_RU }}
+          YOUTUBE_REFRESH_TOKEN_FR: ${{ secrets.YOUTUBE_REFRESH_TOKEN_FR }}
