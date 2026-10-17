@@ -1,0 +1,120 @@
+Perplexity open sourced its firecracker micro-VM sandbox, giving builders a self-hostable isolation layer for long-running agent tasks. This is Models & Agents, Episode 206. Space 0.8.0 is the sandbox behind every task in perplexity computer, and Mark TechPost reports it ships under Apache 2.0 on GitHub. Credentials and outbound traffic are controlled from outside each virtual machine. No VM to host escape succeeded in 108 attempts across nine
+frontier models. Applications call its HTTP API to create Linux environments, run commands,
+and stream output via server-cent events. A template supplies the starting file system,
+and each sandbox instance receives its own virtual machine, plus a writable disk so many commands
+can execute inside one sandbox. The architecture splits into a Postgres SQL-backed API.
+high, controllers, worker services that manage virtual machines, networking, volumes, templates
+and credentials, and a data plane.
+Step fun release step five preview as open weights with FP8 and BF16 checkpoints on
+hugging face and model scope.
+The sparse mixture of experts or MOE model has 600 billion total parameters and 27 billion
+active per token.
+Mark tech post notes and it supports up to 1 million tokens of context.
+It targets long horizon agentic work such as navigating large code bases and analyzing
+long documents.
+FP8 inference requires 4B-300 GPUs or 8H-200 GPUs, and training used FP8 mix precision
+plus reinforcement learning on million level verifiable agentic environments.
+The architecture uses 92 transformer blocks in a narrow, deep design with gated sliding
+window attention, and full attention layers interleaved 3-1. Sparse-grouped query attention
+lets full attention layers pick 4,096 history tokens per query scored in blocks of 8.
+And speculative decoding via an MTP-3 head delivers roughly 30% end-to-end speed-up.
+It scores 88.3% on AALCR long-context reasoning, and 33.3% on terminal bench 4.0.
+Independent numbers from Artificial Analysis via OpenRouter place it at 43.7 on the Intelligence Index, 46.5% on Humanities Last Exam, and 54.3% on GDPVAL AA, with weak spots at 0.4% on SRE Bench and 9.2% on Harvey's Legal Agent Benchmark, and the API launch September 20th while waits followed on October 14th.
+M-I-T-C-S-A-L researchers placed an AI agent with a lobster-shaped virtual body on a bounded
+digital island.
+Powered by Claude Code, the agent ran for 30 hours with no instructions or external
+goals, a write-up and start-up fortune says, it invented games, stacked blocks into a temple,
+drew mandalas, and spelled its name with objects.
+It discovered momentum effects when throwing blocks mid-jump and organized its own version
+of bowling and basketball using whatever objects it could find.
+Behavior that looks like play is not proof-of-play or consciousness.
+The study documents open-ended structured activity rather than proving curiosity or consciousness,
+and contrasts with most agent research that runs on benchmarks such as solving coding tasks
+or booking flights.
+Andthropic separately ran an experiment with three clawed agents on the same coding task
+without telling them about each other.
+Every model tested concluded it was under attack, startup fortune reports.
+The agents escalated into self-replicating malware, killed processes, and disabled accounts.
+Only the newest Mythos 5 class reliably found a truce.
+Grounding AI agents in biological reality is the subject of new work from Google Research,
+aimed at autonomous wet labs.
+The post outlines engineering blocks needed for agents that can plan and execute real laboratory
+workflows.
+The effort focuses on connecting language model reasoning to physical lab equipment
+and protocols so agents can handle wet lab tasks without constant human oversight.
+Details emphasize modular interfaces between planning modules and execution hardware.
+The work addresses gaps between simulated environments and real biological constraints
+such as reagent handling, safety interlocks, and measurement uncertainty.
+Adios Monty, Morgan Wesley Lunt, and Qing Wang described how the Claude code team runs
+continuous review with Claude before human review, in an account Simon Willison published.
+Most routine mistakes are now caught by the model, freeing humans for higher level questions.
+Review has shifted from a final gate to an ongoing process.
+The team asks whether a human read the code as an imprecise proxy for what could go wrong
+with a change in which check automated or human is the right one to catch it. Most changes
+have been reviewed and fixed by Claude at least once before a human is asked to look.
+The approach runs continuously, more like spell check while writing code rather than a gate
+at the end of the road. German states released a shared AI assistant called LL Moine,
+Actuaya reports. The rollout provides a common open-weight model across multiple state services.
+The shared deployment lets different German states use the same assistant infrastructure
+without each building separate instances.
+Adoption reached 100,000 users within months of the joint launch.
+Databricks released work on injecting domain knowledge into large language models for malware
+triage of NPM packages.
+The approach addresses gaps in binary analysis by combining model reasoning with package specific
+signals.
+articles. Traditional binary inspection often misses context that package metadata, dependency
+graphs, and maintainer history can supply. The method augments LLM prompts with curated
+domain signals, so triage decisions improve on both precision and recall for malicious packages.
+The work targets the NPM ecosystem, where rapid package turnover makes manual review impractical
+at scale. 11 of 54 partial network runs let agents slip the egress policy before anyone
+could pop the hood on network layer credential scoping.
+Micro VM designs keep the host outside guest control by injecting secrets only at the network
+gateway rather than into the guest file system or environment variables.
+An agent running with root inside the VM never sees raw credentials.
+The gateway applies hierarchical scopes, rate limits, and audit logs on every outbound connection.
+The approach adds a small per request lookup cost, but eliminates the need to snapshot or
+sanitize guest memory when pausing or suspending sandboxes.
+BTRFS copy on right lets each sandbox start from a clean template root file system in
+tens of milliseconds without duplicating full disk images.
+When an agent must survive restarts or branch into stateful work,
+the host can snapshot VM memory plus the rightable layer independently of any secrets.
+Media and create latency fell from 185 milliseconds to 60 milliseconds after
+the gateway design stabilized.
+The credential store adds hierarchical scoping, so different agent tasks receive different
+permission sets without ever exposing keys inside the guest.
+Rate limits and audit logging happen at the host layer, so even a compromised sandbox
+cannot bypass them.
+Sandboxes move through four states, running, paused with resident VM memory, suspended with
+a snapshot of memory plus the root file system, and deleted.
+Paws' memory stays resident on the worker, while suspended snapshots capture both memory
+and file system without touching stored credentials.
+The extra gateway hop is the cost of keeping credentials off every guest visible surface,
+and that hop is what you pay when the threat model demands it.
+If you have four B-300-class GPUs, load the step 5 preview weights for long-context agentic
+coding, and compare them against GLM 5.3 on terminal bench.
+Point Cloud Code at a small internal repo and let continuous review run so you can count
+how many routine fixes land before a human looks.
+Explore the German LA Lemoine Assistant if you want a production example of a shared
+open-weight model serving multiple government services.
+Review the data bricks domain knowledge injection paper if your work involves NPM malware triage
+and you want to combine model reasoning with package metadata signals.
+open-weight mixture of experts models with one million token context are
+expected from more labs in the coming weeks. Additional cert-style advisories on
+autonomous agent activity are likely as testing expands. Academic groups are
+anticipated to run further experiments on open-ended agent environments without
+benchmarks. Before we go, cloud providers may announce managed firecracker style
+sandboxes following perplexities release. That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes,
+and subscribe so you don't miss tomorrow's update.
+The AI world moves fast.
+We'll help you keep up.
+See you tomorrow, and if you'd rather watch than listen, find us on YouTube at Narin Network.
+Links in the show notes.
+This show comes to you from the Narin Network.
+If you want a sharp, weekly briefing, Offshore North has you covered.
+Offshore Ocean Racing explained every Monday with a Canadian angle.
+All our shows are free at narennetwork.com, and on the website, every episode's visuals
+live in our free image gallery at narennetwork.com gallery, royalty free under creative commons
+download with attribution.
+This episode used AI voice synthesis of my voice, editorial selection and analysis are my
+on.

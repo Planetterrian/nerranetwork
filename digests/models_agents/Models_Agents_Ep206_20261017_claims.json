@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "gate": {
+    "passed": false,
+    "ledger_present": true,
+    "claims_total": 6,
+    "claims_anchored": 3,
+    "claims_verified": 3,
+    "shape_errors": [
+      "1: missing supporting_quote",
+      "3: missing claim"
+    ],
+    "dropped_claims": [
+      {
+        "id": "2",
+        "claim": "Step 5 Preview is a sparse Mixture-of-Experts model with 600B total parameters and 27B active per token.",
+        "reason": "episode_span not found in final episode text"
+      }
+    ],
+    "failed_verifications": [],
+    "uncovered_shapes": [
+      {
+        "pattern": "(?i)\\b(?:researchers|scientists|analysts|officials) (?:found|noted|estimated|documented)\\b",
+        "match": "researchers documented",
+        "sentence": "MIT researchers documented unstructured agent behavior in a no-task island environment."
+      }
+    ],
+    "reviewer_notes": [],
+    "verified_from_fetched": 3,
+    "stripped_sentences": [],
+    "stripped_notes": [],
+    "removed_items": 0,
+    "covered_by_item_source": 0,
+    "repair_recovered": 0,
+    "pre_strip": null,
+    "policy_version": 2,
+    "mode": "flag",
+    "flagged_sentences": [
+      "The Perplexity SPACE sandbox gives each agent task its own Firecracker microVM.",
+      "MIT researchers documented unstructured agent behavior in a no-task island environment."
+    ],
+    "flagged_count": 3,
+    "verified_count": 3
+  },
+  "claims": [
+    {
+      "id": "1",
+      "claim": "Perplexity SPACE gives each agent task its own Firecracker microVM with credentials and outbound traffic controlled from outside the VM.",
+      "source_url": "https://www.marktechpost.com/2026/10/16/perplexity-open-sources-space-firecracker-microvm-sandbox-ai-agents/",
+      "source_title": "Perplexity Open-Sources SPACE, a Firecracker MicroVM Sandbox for AI Agents",
+      "confidence": "high",
+      "status": "malformed"
+    },
+    {
+      "id": "3",
+      "source_url": "https://startupfortune.com/mit-left-an-ai-agent-alone-on-a-virtual-island-for-30-hours/",
+      "source_title": "MIT Left an AI Agent Alone on a Virtual Island for 30 Hours",
+      "supporting_quote": "Researchers at MIT's Computer Science and Artificial Intelligence Laboratory gave an AI agent a lobster-shaped virtual body, dropped it on a bounded digital island, and walked away for 30 straight hours.",
+      "confidence": "high",
+      "status": "malformed"
+    },
+    {
+      "id": "cov1",
+      "claim": "StepFun released Step 5 Preview as open weights with FP8 and BF16 checkpoints on Hugging Face and ModelScope.",
+      "episode_span": "StepFun released Step 5 Preview as open weights with FP8 and BF16 checkpoints on Hugging Face and ModelScope.",
+      "source_url": "https://www.marktechpost.com/2026/10/16/stepfun-releases-step-5-preview-open-weights-600b-moe-27b-active-1m-context/",
+      "supporting_quote": "StepFun has released Step 5 Preview as open weights. FP8 and BF16 checkpoints are live on Hugging Face and ModelScope",
+      "confidence": "medium",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "cov4",
+      "claim": "Addy Osmani and colleagues described how the Claude Code team runs continuous review with Claude before human review.",
+      "episode_span": "Addy Osmani and colleagues described how the Claude Code team runs continuous review with Claude before human review.",
+      "source_url": "https://simonwillison.net/2026/Oct/16/code-review/",
+      "supporting_quote": "Most changes have been reviewed and fixed by Claude at least once before a human is asked to look.",
+      "confidence": "medium",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "cov5",
+      "claim": "German states released a shared AI assistant called LLMoin that has reached 100,000 users.",
+      "episode_span": "German states released a shared AI assistant called LLMoin that has reached 100,000 users.",
+      "source_url": "https://www.actuia.com/en/news/german-states-share-ai-assistant-llmoin-reaching-100000-users/",
+      "supporting_quote": "German states share AI assistant LLMoin, reaching 100,000 users",
+      "confidence": "medium",
+      "status": "verified_from_fetched"
+    },
+    {
+      "id": "u1",
+      "claim": "MIT researchers documented unstructured agent behavior in a no-task island environment.",
+      "episode_span": "MIT researchers documented unstructured agent behavior in a no-task island environment.",
+      "source_url": "",
+      "supporting_quote": "",
+      "status": "unverified_uncovered",
+      "status_reason": "citation shape 'researchers documented' with no covering verified claim"
+    }
+  ]
+}
