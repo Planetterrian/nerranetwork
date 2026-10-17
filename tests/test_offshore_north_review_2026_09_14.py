@@ -422,7 +422,8 @@ class TestCampaignDashboard:
         assert "fetch_offshore_north_dashboard.py" in nightly
         assert "offshore-north-dashboard.html" in nightly
         assert "api/offshore_north_dashboard.json" in nightly
-        assert "api/offshore_north_dashboard.json" in _read(".github/workflows/run-show.yml")
+        # The show run's staging list lives in scripts/stage_show_artifacts.sh (Oct 17 2026).
+        assert "api/offshore_north_dashboard.json" in _read("scripts/stage_show_artifacts.sh")
         assert "_refresh_dashboard_data" in _read("shows/hooks/offshore_north.py")
 
     def test_generated_page_exists_with_the_position(self):
