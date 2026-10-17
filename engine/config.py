@@ -1358,6 +1358,13 @@ class ShowConfig:
     # carried the Model 3 refresh as eight items and spoke it five times.
     # Default False; the news shows opt in per-YAML.
     story_clusters: bool = False
+    # A cluster the digest still told as several items is a STRUCTURAL
+    # defect (Oct 17 2026 readout of story-clusters-2026-10-01: Tesla
+    # retold a clustered story on 12 of its first 14 post-merge episodes —
+    # the inline annotation is read past). Opt-in: it spends the one-shot
+    # structural regeneration, so it is on only where the annotation
+    # missed on a majority of episodes.
+    story_clusters_regen: bool = False
     # The hook's story is item one (Oct 14 2026, engine/hook_item.py): the
     # numbered item that shares the most salient words with the hook moves
     # to the top of its section after the overlap dedupe, so the script's
@@ -1671,6 +1678,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         entity_dedup_ignore=[str(w) for w in (data.get("entity_dedup_ignore") or [])],
         story_recurrence=bool(data.get("story_recurrence", False)),
         story_clusters=bool(data.get("story_clusters", False)),
+        story_clusters_regen=bool(data.get("story_clusters_regen", False)),
         hook_item_first=bool(data.get("hook_item_first", False)),
         web_search_queries=data.get("web_search_queries", []),
         web_search_always=bool(data.get("web_search_always", False)),

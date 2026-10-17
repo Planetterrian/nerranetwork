@@ -491,6 +491,11 @@ def article_age_days(article: Dict, now) -> Optional[float]:
     (:func:`engine.article_dates.url_slug_date`) can only make the article
     OLDER: when it predates the page/feed date, it wins (a story whose slug
     says "update-october-10" was not new on Oct 17, whatever the feed said).
+
+    A ``/YYYY/MM[/DD]/`` URL path (:func:`engine.article_dates.url_path_date`)
+    is read the same way, older-only (Oct 17 2026: a BMJ online-first paper
+    at ``…/early/2026/09/18/…`` aired on Planetterrian 10-07 under a fresh
+    feed date).
     """
     age: Optional[float] = None
     for key in ("page_published_date", "published_date"):
@@ -498,16 +503,19 @@ def article_age_days(article: Dict, now) -> Optional[float]:
         if parsed is not None:
             age = (now - parsed).total_seconds() / 86400.0
             break
+    url = str(article.get("url") or "")
     try:
-        from engine.article_dates import url_slug_date
+        from engine.article_dates import url_path_date, url_slug_date
 
-        slug = url_slug_date(str(article.get("url") or ""))
+        url_dates = [url_slug_date(url), url_path_date(url)]
     except Exception:  # noqa: BLE001 — dating must never break a run
-        slug = None
-    if slug is not None:
-        slug_age = (now - slug).total_seconds() / 86400.0
-        if age is None or slug_age > age:
-            age = slug_age
+        url_dates = []
+    for when in url_dates:
+        if when is None:
+            continue
+        url_age = (now - when).total_seconds() / 86400.0
+        if age is None or url_age > age:
+            age = url_age
     return age
 
 

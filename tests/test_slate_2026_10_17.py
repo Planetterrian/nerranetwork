@@ -234,3 +234,48 @@ def test_dashboard_separates_queued_from_posted(tmp_path):
     out = gd._episode_counter_shares(tmp_path, dt.date(2026, 10, 17), days=7, min_n=1)
     assert out["x_posted_share_7d"] == 1.0
     assert out["x_queued_share_7d"] == 0.5
+
+
+# ------------------------------------------------- claims: fetched page --
+def test_a_fetched_page_vouches_for_an_ordinary_article():
+    from engine.claims import build_local_texts, normalize_source_url as n
+    page = "The ministry said 412 households were evacuated overnight along the river."
+    arts = [{"url": "https://www.france24.com/en/x", "title": "Floods",
+             "description": "Short teaser.", "full_text": page, "full_text_source": "page"}]
+    assert page in build_local_texts(arts)[n("https://www.france24.com/en/x")]
+
+
+def test_a_description_promoted_to_full_text_adds_nothing_new():
+    from engine.claims import build_local_texts, normalize_source_url as n
+    arts = [{"url": "https://a.example/y", "title": "T", "description": "Teaser body here today.",
+             "full_text": "SECRET", "full_text_source": "description"}]
+    assert "SECRET" not in build_local_texts(arts)[n("https://a.example/y")]
+
+
+# ------------------------------------------------- show notes: funnel --
+def test_show_notes_links_are_tagged_through_the_funnel():
+    from engine.funnel import parse_campaign_id
+    from engine.publisher import build_show_notes_footer
+    from urllib.parse import parse_qs, urlparse
+    out = build_show_notes_footer("https://nerranetwork.com", "spacex", 134, has_blog=True)
+    urls = re.findall(r"\]\((https://[^)]+)\)", out)
+    tagged = [u for u in urls if "utm_" in u]
+    assert any("/blog/spacex/ep134.html" in u for u in tagged)
+    assert any("/join.html" in u for u in tagged)
+    for u in tagged:
+        q = parse_qs(urlparse(u).query)
+        assert q["utm_source"] == ["podcast"] and q["utm_medium"] == ["episode"]
+        assert q["utm_content"] == ["shownotes"]
+        c = parse_campaign_id(q["utm_campaign"][0])
+        assert c is not None and c.show == "spacex" and c.episode == 134
+
+
+def test_no_newsletter_ask_without_a_blog_page():
+    from engine.publisher import build_show_notes_footer
+    assert "join.html" not in build_show_notes_footer(
+        "https://nerranetwork.com", "some_show", 3, has_blog=False)
+
+
+def test_russian_feeds_tag_their_own_channel():
+    src = (ROOT / "run_show.py").read_text(encoding="utf-8")
+    assert 'channel="ru" if args.show in _RUSSIAN_SHOWS else "en"' in src

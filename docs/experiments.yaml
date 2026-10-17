@@ -3328,7 +3328,7 @@ experiments:
     area: quality
     shipped: 2026-09-30
     readout: 2026-10-14
-    status: reading
+    status: done
     baseline: "7 months-old stories on the flagships in 14 days (a 2013 Teslarati page aired 3x on Tesla; 2021 Mashable and Jan-2025 Starlink on SpaceX), every one behind an undated URL; 1,254 of 2,053 shipped items behind undated URLs; stale_article_days off on every flagship; undated/GN/web/X articles stamped with the run clock"
     target: >
       0 items whose page date is > 3 days older than the digest date on
@@ -3348,18 +3348,23 @@ experiments:
       opens; digests/xai_grok.py never answers a search from memory. A/B:
       the digest INPUT changed on the 12 shows.
     outcome: >
-      READ 2026-10-12 (early): PARTIAL. Undated articles in the prompt
-      median 0 (max 8), page-probe dated median 5, the stale gate fired
-      on 44 of 205 episodes (68 dropped), 0 same-URL recurrences in 811
-      Source URLs; one Source more than 3 days old shipped
-      (Planetterrian 10-07 cited a BMJ online-first page of 09-18).
+      READ 2026-10-17: PARTIAL. 142 episodes of the 12 shows dated 10-01..10-14:
+      articles_undated_in_prompt median 0 (max 8, one episode >= 5),
+      articles_date_probe_dated median 6 (Omni View's median 0), the stale gate
+      fired on 35 episodes (60 articles dropped), 0 same-URL recurrences across
+      1,406 digest URLs against each show's prior 45 days. One Source older than
+      3 days shipped: Planetterrian Ep206 (10-07) cited
+      bjo.bmj.com/content/early/2026/09/18/… — the gate never read a URL path,
+      so engine.article_text.article_age_days now does (older-only). Page dates
+      are not committed: only the 246 of 1,406 URLs that carry a date could be
+      judged, the rest are unmeasured. docs/reviews/readouts_2026_10_17.md.
 
   - id: frame-memory-2026-09-30
     title: "Rotation memory for sentence frames on 17 shows"
     area: quality
     shipped: 2026-09-30
     readout: 2026-10-14
-    status: reading
+    status: done
     baseline: "'(Before we go,) keep an eye on' FF 15/15 and PT 13/15; 'If you want to go deeper' OV 15/15; 'The case on both sides' 7/8 on each desk, Vancouver 8/8; 'You know that feeling' MAB 7/15 (09-16..30)"
     target: >
       Each named frame opens a sentence in <= 4 of the first 14 post-merge
@@ -3377,12 +3382,16 @@ experiments:
       lines. Rendered through {recent_frames_block} in
       _shared/content_discipline.txt and _shared/omni_desk_podcast_body.txt.
     outcome: >
-      READ 2026-10-12 (early): PARTIAL. Omni View 3/12 and MAB 2/12 meet
-      the target; FF 6/11 and Planetterrian 5/12 miss; the desks and
-      Vancouver read 9-12/12 because their recurring frames are required
-      chapter anchors ('the case on both sides', FF's 'Keep an eye on')
-      that frame_memory exempts by design, so the target is unmeetable
-      there and needs rescoping.
+      READ 2026-10-17: PARTIAL. First 14 _tts.txt scripts dated 10-01 on (10-01
+      is a no-op day — the block rendered nothing until the 10-01 wiring fix;
+      frame-memory-wired-2026-10-01 is the clean read). Sentence openers: FF
+      'keep an eye on' 5/14 (one over), Planetterrian 4/14, Omni View 'if you
+      want to go deeper' 3/14, MAB 'you know that feeling' 2/14; Vancouver 'the
+      case on both sides' 6/14 and the five desks 7-10/14 miss — on the desks it
+      is the Both Sides chapter anchor frame_memory exempts by design. The only
+      non-anchor successor over 6/14 is Prediction Markets' 'Before we go, the …'
+      7/14, which its own prompt requires. Oct 11 script-model moves (FF,
+      Planetterrian, M&A) sit inside the window.
 
   - id: whisper-av-pin-2026-09-30
     title: "PyAV pinned below 19 after the 09-30 transcript outage"
@@ -3415,12 +3424,23 @@ experiments:
     area: quality
     shipped: 2026-10-01
     readout: 2026-10-15
-    status: reading
+    status: done
     baseline: "0 of 17 opted-in shows received a block on 2026-10-01 — the builder read config.output_dir, an attribute only the test double had; 6 banned-frame sentences shipped across 17 scripts that day"
     target: >
       The frame-memory-2026-09-30 target, measured from the first episode
       AFTER this merge (the 09-30 entry's clock restarts here; its
       pre-merge days are a no-op control, not a baseline).
+    outcome: >
+      READ 2026-10-17: PARTIAL. First 14 scripts dated 10-02 on (10-02..10-16):
+      FF 'keep an eye on' 4/14, Planetterrian 4/14, Omni View 'if you want to go
+      deeper' 2/14, MAB 'you know that feeling' 1/14 — met (were 15/15, 13/15,
+      15/15, 7/15). Missed: Vancouver 'the case on both sides' 6/14 and the
+      desks 7-10/14 (Africa 8, Asia 9, Europe 10, LatAm 8, North America 7/13) —
+      the Both Sides chapter anchor, exempt by design; from 10-11, when Both
+      Sides became optional, the desks read 0-2 of 5. No successor over 6/14
+      except Prediction Markets' prompt-required 'Before we go, the …' (7/14),
+      which the block bans while the prompt demands it. Confounds: Oct 11
+      script-model moves (FF, Planetterrian, M&A) and the 10-11 Both Sides change.
     notes: >
       The 09-30 guard passed on a fake config with a flat output_dir. The
       new guard loads shows/omni_view.yaml and points its episode dir at a
@@ -3431,7 +3451,7 @@ experiments:
     area: quality
     shipped: 2026-10-01
     readout: 2026-10-15
-    status: reading
+    status: done
     baseline: "Tesla Ep622: the Model 3 refresh as 8 of 17 digest items from 8 outlets, told 5 times in the script; SpaceX Ep117 Needham run rate x2, orbital compute restated in the deep dive; script_repeated_facts network sum 38 on 10-01"
     target: >
       story_clusters_retold_in_digest == 0 on >= 12 of the first 14
@@ -3452,6 +3472,17 @@ experiments:
       overlap <= 0.38 on the Ep622 pairs). Calibrated on four shows' last
       four days of tracker headlines: every proposed cluster was a real
       same-story pair once the window filter was in.
+    outcome: >
+      READ 2026-10-17: PARTIAL. First 14 post-merge episodes (Tesla Ep623-636,
+      SpaceX Ep118-131, M&A Ep191-204): story_clusters_retold_in_digest == 0 on
+      Tesla 2/14, SpaceX 9/14 (Ep124 unrecorded), M&A 8/14 recorded plus 5 days
+      with no cluster to retell — only M&A meets >= 12. Tesla
+      script_repeated_facts median 1 (target <= 3; 09-25..10-01 median 3) — met.
+      Tesla retold on 12 of 14, the criteria's majority branch: the rule now
+      rides the one-shot structural regeneration on Tesla
+      (story_clusters_regen; metric story_clusters_retold_after_retry). The
+      script stage moved to grok-4.6 inside the window (SpaceX Ep126, Tesla
+      Ep632, M&A Ep201).
   - id: platform-ask-2026-10-01
     title: "Follow-or-rate ask on the 17 closings that asked for nothing"
     area: growth
@@ -3478,7 +3509,7 @@ experiments:
     area: instrument
     shipped: 2026-10-01
     readout: 2026-10-15
-    status: reading
+    status: done
     baseline: "ratings read nowhere; the on-air and show-notes asks were unmeasurable"
     target: >
       api/apple_ratings.json present with >= 14 of 15 shows measured on
@@ -3488,6 +3519,13 @@ experiments:
       page's serialised ratings metadata for the measured-zero case, null
       (never 0) when neither block exists; previous reading kept and
       flagged on a failed fetch. No auth, no paid API.
+    outcome: >
+      READ 2026-10-17: HIT. api/apple_ratings.json carries 17 daily readings per
+      show (10-01..10-17) and 15 of 15 shows were measured on every one,
+      10-15 included (target >= 14). Mission Control's Apple ratings card
+      renders count_delta_7d per show and for the network (api/dashboard.json
+      10-17: +1, Fascinating Frontiers' first rating). Network total 4 ratings
+      on 10-01, 7 on 10-15 — that movement is platform-ask-2026-10-01's to score.
   - id: vtt-transcripts-2026-10-01
     title: "WebVTT transcripts in every feed item (Apple reads these)"
     area: growth
@@ -3624,7 +3662,7 @@ experiments:
     area: quality
     shipped: 2026-10-03
     readout: 2026-10-17
-    status: reading
+    status: done
     metric: dub_fragment_title_share_14d
     baseline: 0.11
     target: >
@@ -3642,6 +3680,13 @@ experiments:
       Shorts earned a median 149 views vs 161 for clean ones. Existing
       videos: scripts/retitle_youtube_videos.py --channel ru|fr (dry run
       default; 68 RU + 2 FR proposals on 10-03; ~51 quota units each).
+    outcome: >
+      READ 2026-10-17: HIT. RU/FR window Shorts (kind short, window not
+      hook_open) published 10-04..10-17 in digests/*/youtube_videos.{ru,fr}.json:
+      0 of 89 (51 RU, 38 FR) fail engine.titles.is_fragment_title; 09-20..10-03
+      read 11 of 89. The live dub_fragment_title_share_14d reads 0.02 only
+      because its window still holds the two 10-03 pre-merge fragments (FF Ep211
+      «ЕК 2040 года», SpaceX Ep119 «в 2026 года»); it reads 0.00 from 10-18.
 
   - id: promo-cadence-word-2026-10-03
     title: "The sibling plug says weekly for a weekly show"

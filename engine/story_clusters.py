@@ -182,14 +182,27 @@ def cluster_retold_in_digest(
     """How many clusters surfaced as MORE than one digest item — the
     scoreable outcome. An article "surfaces" as the item whose headline
     shares the most salient tokens with it (at least 3)."""
+    return len(retold_clusters(digest_text, articles, clusters))
+
+
+def retold_clusters(
+    digest_text: str,
+    articles: Sequence[dict],
+    clusters: Sequence[Sequence[int]],
+) -> List[List[str]]:
+    """For every cluster that surfaced as more than one digest item, the
+    headlines of those items (digest order). ``cluster_retold_in_digest``
+    is the length of this list."""
     titles = digest_item_titles(digest_text)
     if not titles or not clusters:
-        return 0
+        return []
     title_toks = [salient_tokens(t) for t in titles]
-    retold = 0
+    out: List[List[str]] = []
     for group in clusters:
         hit_items = set()
         for idx in group:
+            if not 0 <= idx < len(articles):
+                continue
             art = salient_tokens(str(articles[idx].get("title") or ""))
             best, best_n = None, 0
             for k, tt in enumerate(title_toks):
@@ -199,12 +212,33 @@ def cluster_retold_in_digest(
             if best is not None and best_n >= 3:
                 hit_items.add(best)
         if len(hit_items) > 1:
-            retold += 1
-    return retold
+            out.append([titles[k] for k in sorted(hit_items)])
+    return out
+
+
+def retold_cluster_note(retold: Sequence[Sequence[str]], *, max_clusters: int = 3) -> str:
+    """The structural-regeneration note for clusters told as several items
+    (Oct 17 2026 readout of story-clusters-2026-10-01: Tesla retold a
+    clustered story on 12 of its first 14 post-merge episodes, so the
+    inline annotation is read past and the rule rides the one-shot
+    regeneration, like a missing section). ``""`` when nothing was retold.
+    Names the items, never a sentence to write."""
+    if not retold:
+        return ""
+    parts = []
+    for heads in list(retold)[:max_clusters]:
+        parts.append(" / ".join(f"“{h[:70]}”" for h in heads))
+    return (
+        f"{len(retold)} story(ies) appear as more than one item ("
+        + "; ".join(parts)
+        + ") — each is ONE story told by several outlets: write it as ONE "
+        "item that folds in every outlet's angle and keeps every Source URL"
+    )
 
 
 __all__ = [
     "MIN_SHARED", "MIN_SHARE", "COMMON_DF",
     "cluster_articles", "annotate_articles", "annotation_for",
-    "cluster_retold_in_digest", "digest_item_titles", "common_tokens",
+    "cluster_retold_in_digest", "retold_clusters", "retold_cluster_note",
+    "digest_item_titles", "common_tokens",
 ]

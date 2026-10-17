@@ -1236,7 +1236,7 @@ class TestBuildShowNotesFooter:
         markdown brackets."""
         footer = build_show_notes_footer(self.BASE, "tesla", 461, has_blog=True)
         rendered = _markdown_to_rss_html("Episode body.\n\n" + footer)
-        assert f'<a href="{self.BASE}/blog/tesla/ep461.html">' in rendered
+        assert f'<a href="{self.BASE}/blog/tesla/ep461.html?utm_source=podcast' in rendered
         assert f'<a href="{self.BASE}">' in rendered
         # No leftover markdown link brackets.
         assert "](" not in rendered
