@@ -425,7 +425,7 @@ class TestPipelineWiring:
 
     def test_video_step_cannot_break_the_audio_publish(self):
         block = self.RUN_SHOW[self.RUN_SHOW.index("if config.video_podcast.enabled:\n        try:"):]
-        try_body = block[:block.index("\n    # 11c.")]
+        try_body = block[:block.index("\n    # 12b. Send newsletter")]
         assert "except Exception as exc:  # noqa: BLE001 — never block the publish" in try_body
 
 
@@ -449,9 +449,9 @@ class TestWorkflowWiring:
         assert fnmatch.fnmatch(tesla_feed, "*.video.rss")
 
     def test_run_show_commit_step_picks_up_the_feed(self):
-        run_show_yml = (ROOT / ".github" / "workflows"
-                        / "run-show.yml").read_text(encoding="utf-8")
-        assert "git add '*.rss'" in run_show_yml
+        # The staging list lives in scripts/stage_show_artifacts.sh (Oct 17 2026).
+        stage = (ROOT / "scripts" / "stage_show_artifacts.sh").read_text(encoding="utf-8")
+        assert "git add '*.rss'" in stage
 
     def test_no_comments_inside_the_add_paths_block(self):
         """add-paths is fed to `git add --pathspec-from-file`, which has no

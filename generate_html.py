@@ -383,8 +383,8 @@ def _language_feed_is_stale(path, max_age_days: int = 45) -> bool:
 # ---------------------------------------------------------------------------
 # GA4 Measurement ID and the Google Ads *tag* ID are committed to the repo
 # (both are public — visible in page source). Conversion labels are NOT
-# used: GA4 key events are imported into Google Ads, so no Ads ``send_to``
-# labels are needed on the site.
+# used: GA4 key events are imported into Google Ads, so the site carries
+# no ``send_to`` labels.
 #
 # - GA4_MEASUREMENT_ID: Google Analytics 4 (default: Nerra Network property)
 # - GOOGLE_ADS_ID: Google Ads tag ID (default: AW-949617778). Must be the
