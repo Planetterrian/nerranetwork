@@ -291,7 +291,9 @@ queue:
   exclude:
   - cortical
   arxiv: abs:"prediction market" AND abs:blockchain
-  produced: false
+  produced: true
+  episode_number: 25
+  produced_date: '2026-10-17'
 - id: long-shot-election-contracts
   title: Reading a 3% Contract
   brief: 'What a very low price means and does not mean: fees and time value, the long-shot bias, the cost of capital locked until resolution, and why a 3% contract is not a 3% forecast in the way a 50% one is. Education only; never a recommendation, a pick or a view on which side is mispriced.'
@@ -303,16 +305,17 @@ queue:
   - cortical
   arxiv: abs:"prediction market" AND abs:"low probability"
   produced: false
-- id: play-money-vs-real-money
-  title: Play Money, Real Money and Reputation
-  brief: What the research says about accuracy on play-money and reputation markets against real-money venues, why play-money forecasts can be surprisingly good, and where they fail. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: research
-  search: play money prediction market accuracy
+- id: why-a-sure-thing-pays-less
+  title: Why a 95-Cent Contract Is Not Free Money
+  brief: The time value of money locked in a contract that resolves in a year, what a five-cent return over twelve months means against a savings rate, why long-dated contracts price below the probability a trader actually holds, and how venues that pay interest on collateral change the arithmetic. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: theory
+  search: prediction market long-dated contracts interest time value collateral
   require:
-  - play money|real money|reputation
+  - prediction|event contract|Kalshi|Polymarket
+  - interest|time value|long-dated|collateral|yield
   exclude:
   - cortical
-  arxiv: abs:"prediction market" AND abs:"play money"
+  arxiv: abs:"prediction market" AND abs:discount
   produced: false
 - id: liquidity-provision-incentives
   title: Who Provides Liquidity and Why
@@ -348,16 +351,16 @@ queue:
   - cortical
   arxiv: abs:"prediction market" AND abs:volume
   produced: false
-- id: history-iowa-electronic-markets
-  title: 'A Short History: From Iowa to Today'
-  brief: The Iowa Electronic Markets, Intrade's rise and closure, the CFTC's no-action letters, and how the field arrived at today's venues; what changed in the law and what did not. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: history
-  search: Iowa Electronic Markets history prediction markets Intrade
+- id: play-money-vs-real-money
+  title: Play Money, Real Money and Reputation
+  brief: What the research says about accuracy on play-money and reputation markets against real-money venues, why play-money forecasts can be surprisingly good, and where they fail. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: research
+  search: play money prediction market accuracy
   require:
-  - Iowa|Intrade|history
+  - play money|real money|reputation
   exclude:
   - cortical
-  arxiv: abs:"Iowa Electronic Markets"
+  arxiv: abs:"prediction market" AND abs:"play money"
   produced: false
 - id: order-books
   title: 'The Order Book: How Two Traders Find a Price'
@@ -371,76 +374,17 @@ queue:
   - cortical
   arxiv: ti:"order book" AND abs:"prediction market"
   produced: false
-- id: event-contracts-vs-gambling-law
-  title: Event Contract or Bet? The Legal Line
-  brief: Why the same contract can be a regulated derivative in one jurisdiction and unlicensed gambling in another; the federal-versus-state contest in the US, the provincial regime in Canada, and how other countries draw the line. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: regulation
-  search: event contracts gambling law jurisdiction
-  require:
-  - gambling|gaming|jurisdiction
-  exclude:
-  - cortical
-  arxiv: abs:"prediction market" AND (abs:gambling OR abs:regulation)
-  produced: false
-- id: replication-markets
-  title: 'Betting on Science: Replication Markets'
-  brief: The experiments that asked traders to price whether a published finding would replicate, how well the prices did against the replication attempts, the DARPA SCORE programme, and what it suggests about peer review. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: research
-  search: replication markets prediction market science reproducibility
-  require:
-  - replicat|reproduc
-  - prediction market|betting market
-  exclude:
-  - cortical
-  arxiv: ti:"replication" AND abs:"prediction market"
-  produced: false
-- id: why-a-sure-thing-pays-less
-  title: Why a 95-Cent Contract Is Not Free Money
-  brief: The time value of money locked in a contract that resolves in a year, what a five-cent return over twelve months means against a savings rate, why long-dated contracts price below the probability a trader actually holds, and how venues that pay interest on collateral change the arithmetic. Education only; never a recommendation, a pick or a view on which side is mispriced.
+- id: correlated-markets
+  title: 'One Question Inside Another: Correlated and Combinatorial Markets'
+  brief: How a market on a rate cut relates to a market on inflation, why separate contracts on linked events can carry prices that cannot all be right at once, what a combinatorial market is and why they are hard to run, and what the research says about pricing joint events. Education only; never a recommendation, a pick or a view on which side is mispriced.
   category: theory
-  search: prediction market long-dated contracts interest time value collateral
+  search: combinatorial prediction markets correlated contracts
   require:
-  - prediction|event contract|Kalshi|Polymarket
-  - interest|time value|long-dated|collateral|yield
+  - combinatorial|correlat|joint|conditional
+  - prediction|market
   exclude:
   - cortical
-  arxiv: abs:"prediction market" AND abs:discount
-  produced: false
-- id: how-fast-a-price-moves
-  title: 'How Fast a Price Moves: Markets Against the Clock'
-  brief: Studies that timed a market's reaction to a debate, a verdict or a data release in minutes, what a price does in the first seconds against the first hour, how an exchange's halt rules and a thin book shape the path, and why a fast first move is not always the right one. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: evidence
-  search: prediction market price reaction news minutes real-time study
-  require:
-  - react|minutes|real-time|speed|within
-  - prediction market|event contract
-  exclude:
-  - cortical
-  arxiv: abs:"prediction market" AND abs:"real-time"
-  produced: false
-- id: betting-exchanges
-  title: 'The Exchange Model: Betfair and the Lay Bet'
-  brief: How a betting exchange matches backers against layers with no bookmaker in between, why its prices behave like a prediction market, how the UK regulates it as gambling, and what twenty-five years of exchange prices have taught researchers about market accuracy. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: history
-  search: Betfair betting exchange lay bet prediction market accuracy
-  require:
-  - Betfair|betting exchange|lay
-  - market|odds
-  exclude:
-  - cortical
-  arxiv: abs:"betting exchange"
-  produced: false
-- id: taxes-on-event-contracts
-  title: 'The Tax Line: How a Payout Is Taxed'
-  brief: How the United States and Canada treat a payout from an event contract (capital gain, gambling winnings or ordinary income), what the venue reports, why the regulatory label of the contract decides the tax treatment, and the difference between a regulated exchange and an offshore venue for a filer. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: law
-  search: event contracts tax treatment Kalshi 1099 capital gains Canada
-  require:
-  - tax|1099|capital gain|CRA|IRS
-  - event contract|prediction market|Kalshi
-  exclude:
-  - cortical
-  arxiv: abs:"prediction market" AND abs:tax
+  arxiv: ti:"combinatorial prediction market"
   produced: false
 - id: multi-outcome-sums
   title: Why the Prices in a Race Do Not Add Up to One
@@ -454,64 +398,28 @@ queue:
   - cortical
   arxiv: abs:"prediction market" AND abs:"multiple outcomes"
   produced: false
-- id: media-and-markets-odds-on-air
-  title: 'Odds on the News: When Broadcasters Show Market Prices'
-  brief: How news organisations have started displaying market prices, the commercial arrangements behind some of them, the newsroom ethics guidance on reporting a price as a forecast, and the difference between a price and a poll for a viewer. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: people
-  search: news media prediction market prices journalism ethics
+- id: how-fast-a-price-moves
+  title: 'How Fast a Price Moves: Markets Against the Clock'
+  brief: Studies that timed a market's reaction to a debate, a verdict or a data release in minutes, what a price does in the first seconds against the first hour, how an exchange's halt rules and a thin book shape the path, and why a fast first move is not always the right one. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: evidence
+  search: prediction market price reaction news minutes real-time study
   require:
-  - media|journalis|news
+  - react|minutes|real-time|speed|within
+  - prediction market|event contract
   exclude:
   - cortical
-  arxiv: abs:"prediction market" AND abs:media
+  arxiv: abs:"prediction market" AND abs:"real-time"
   produced: false
-- id: canada-event-contracts
-  title: Event Contracts in Canada
-  brief: 'Where a Canadian stands: provincial gambling regulators, the securities regulators'' view of event contracts, which venues accept Canadian traders and under what rules, and how the Criminal Code''s betting provisions apply. Education only; never a recommendation, a pick or a view on which side is mispriced.'
-  category: regulation
-  search: Canada prediction markets event contracts legal provincial regulator
+- id: history-iowa-electronic-markets
+  title: 'A Short History: From Iowa to Today'
+  brief: The Iowa Electronic Markets, Intrade's rise and closure, the CFTC's no-action letters, and how the field arrived at today's venues; what changed in the law and what did not. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: history
+  search: Iowa Electronic Markets history prediction markets Intrade
   require:
-  - Canad|Ontario|Quebec|British Columbia|AGCO|OSC
-  - prediction market|event contract|Polymarket|Kalshi
+  - Iowa|Intrade|history
   exclude:
   - cortical
-  arxiv: abs:"prediction market" AND abs:Canada
-  produced: false
-- id: epidemic-forecasting-markets
-  title: Forecasting an Outbreak With a Market
-  brief: The influenza and COVID forecasting markets run with health professionals, how their prices compared with statistical models and official forecasts, who was allowed to trade and why, and what public-health forecasters took from them. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: research
-  search: influenza prediction market forecasting outbreak health professionals
-  require:
-  - influenza|flu|epidemic|outbreak|COVID|pandemic
-  - prediction market|forecast
-  exclude:
-  - cortical
-  arxiv: abs:"prediction market" AND (abs:influenza OR abs:epidemic)
-  produced: false
-- id: where-the-money-sits
-  title: 'Where the Money Sits: Collateral, Custody and Payout'
-  brief: 'What happens to the dollar a trader commits: segregated accounts at a regulated exchange, stablecoin collateral in a smart contract, who holds it between the trade and the resolution, what is insured and what is not, and how a payout is actually settled. Education only; never a recommendation, a pick or a view on which side is mispriced.'
-  category: risk
-  search: prediction market collateral custody stablecoin segregated funds payout
-  require:
-  - custod|collateral|segregat|stablecoin|settle
-  - prediction|event contract|Polymarket|Kalshi
-  exclude:
-  - cortical
-  arxiv: abs:"prediction market" AND abs:collateral
-  produced: false
-- id: correlated-markets
-  title: 'One Question Inside Another: Correlated and Combinatorial Markets'
-  brief: How a market on a rate cut relates to a market on inflation, why separate contracts on linked events can carry prices that cannot all be right at once, what a combinatorial market is and why they are hard to run, and what the research says about pricing joint events. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: theory
-  search: combinatorial prediction markets correlated contracts
-  require:
-  - combinatorial|correlat|joint|conditional
-  - prediction|market
-  exclude:
-  - cortical
-  arxiv: ti:"combinatorial prediction market"
+  arxiv: abs:"Iowa Electronic Markets"
   produced: false
 - id: long-dated-contracts
   title: Why a Contract That Settles Next Year Trades Below Its Odds
@@ -524,6 +432,30 @@ queue:
   exclude:
   - cortical
   arxiv: abs:"prediction market" AND abs:"time value"
+  produced: false
+- id: replication-markets
+  title: 'Betting on Science: Replication Markets'
+  brief: The experiments that asked traders to price whether a published finding would replicate, how well the prices did against the replication attempts, the DARPA SCORE programme, and what it suggests about peer review. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: research
+  search: replication markets prediction market science reproducibility
+  require:
+  - replicat|reproduc
+  - prediction market|betting market
+  exclude:
+  - cortical
+  arxiv: ti:"replication" AND abs:"prediction market"
+  produced: false
+- id: where-the-money-sits
+  title: 'Where the Money Sits: Collateral, Custody and Payout'
+  brief: 'What happens to the dollar a trader commits: segregated accounts at a regulated exchange, stablecoin collateral in a smart contract, who holds it between the trade and the resolution, what is insured and what is not, and how a payout is actually settled. Education only; never a recommendation, a pick or a view on which side is mispriced.'
+  category: risk
+  search: prediction market collateral custody stablecoin segregated funds payout
+  require:
+  - custod|collateral|segregat|stablecoin|settle
+  - prediction|event contract|Polymarket|Kalshi
+  exclude:
+  - cortical
+  arxiv: abs:"prediction market" AND abs:collateral
   produced: false
 - id: herding-and-cascades
   title: 'Following the Crowd: Herding and Information Cascades'
@@ -548,17 +480,17 @@ queue:
   - cortical
   arxiv: abs:"Hollywood Stock Exchange"
   produced: false
-- id: futures-as-forecasts
-  title: 'Prediction Markets You Already Know: Futures Prices as Forecasts'
-  brief: How ordinary futures markets in commodities, currencies and interest rates carry a forecast inside their price, the classic studies that tested those forecasts against what happened, and where a futures price differs from a probability on a yes-or-no contract. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: evidence
-  search: futures prices as forecasts accuracy study commodity futures predictive
+- id: betting-exchanges
+  title: 'The Exchange Model: Betfair and the Lay Bet'
+  brief: How a betting exchange matches backers against layers with no bookmaker in between, why its prices behave like a prediction market, how the UK regulates it as gambling, and what twenty-five years of exchange prices have taught researchers about market accuracy. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: history
+  search: Betfair betting exchange lay bet prediction market accuracy
   require:
-  - futures
-  - forecast|predict
+  - Betfair|betting exchange|lay
+  - market|odds
   exclude:
   - cortical
-  arxiv: abs:"futures prices" AND abs:forecast
+  arxiv: abs:"betting exchange"
   produced: false
 - id: rate-expectations
   title: Reading the Market's Rate Expectations
@@ -572,16 +504,28 @@ queue:
   - cortical
   arxiv: abs:"federal funds futures"
   produced: false
-- id: policy-analysis-market
-  title: 'The Market That Was Cancelled in a Day: The Policy Analysis Market'
-  brief: The US defence research agency's 2003 proposal for a market on Middle East political and security events, why it was cancelled within days of becoming public, what its designers said it was for, and what the episode still shapes in the debate over which questions a market should be allowed to ask. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: history
-  search: Policy Analysis Market DARPA 2003 cancelled terrorism futures
+- id: event-contracts-vs-gambling-law
+  title: Event Contract or Bet? The Legal Line
+  brief: Why the same contract can be a regulated derivative in one jurisdiction and unlicensed gambling in another; the federal-versus-state contest in the US, the provincial regime in Canada, and how other countries draw the line. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: regulation
+  search: event contracts gambling law jurisdiction
   require:
-  - Policy Analysis Market|DARPA|FutureMAP
+  - gambling|gaming|jurisdiction
   exclude:
   - cortical
-  arxiv: abs:"Policy Analysis Market"
+  arxiv: abs:"prediction market" AND (abs:gambling OR abs:regulation)
+  produced: false
+- id: epidemic-forecasting-markets
+  title: Forecasting an Outbreak With a Market
+  brief: The influenza and COVID forecasting markets run with health professionals, how their prices compared with statistical models and official forecasts, who was allowed to trade and why, and what public-health forecasters took from them. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: research
+  search: influenza prediction market forecasting outbreak health professionals
+  require:
+  - influenza|flu|epidemic|outbreak|COVID|pandemic
+  - prediction market|forecast
+  exclude:
+  - cortical
+  arxiv: abs:"prediction market" AND (abs:influenza OR abs:epidemic)
   produced: false
 - id: streaks-and-the-gamblers-fallacy
   title: 'Streaks: The Gambler''s Fallacy and the Hot Hand'
@@ -595,29 +539,6 @@ queue:
   - cortical
   arxiv: abs:"gambler's fallacy" AND abs:betting
   produced: false
-- id: holding-losers
-  title: Why Traders Hold Losing Positions Too Long
-  brief: The disposition effect, the tendency to sell winners early and hold losers, what research on betting exchanges and trading platforms found about it, how it can keep a price from moving to the evidence, and why it matters to anyone reading a price as a forecast. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: risk
-  search: disposition effect betting exchange traders hold losing positions study
-  require:
-  - disposition effect|loss aversion|losing position
-  exclude:
-  - cortical
-  arxiv: abs:"disposition effect"
-  produced: false
-- id: expert-panels-vs-markets
-  title: 'Ask the Experts or Ask the Market? The Delphi Method'
-  brief: How structured expert panels such as the Delphi method gather and revise forecasts, how they differ from a market that pays for being right, what comparisons between the two have found, and when an organisation might reasonably prefer one over the other. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: research
-  search: Delphi method versus prediction markets forecasting accuracy comparison
-  require:
-  - Delphi|expert panel|expert survey|expert opinion
-  - market|forecast
-  exclude:
-  - cortical
-  arxiv: abs:Delphi AND abs:"prediction market"
-  produced: false
 - id: the-marginal-trader
   title: 'The Marginal Trader: Why a Few People Can Set the Price'
   brief: The finding from the early university election markets that most traders showed familiar biases while a smaller group of active, careful traders set the prices that turned out accurate; what the marginal-trader idea claims, the evidence for and against it, and what it means for a market with few participants. Education only; never a recommendation, a pick or a view on which side is mispriced.
@@ -628,6 +549,98 @@ queue:
   exclude:
   - cortical
   arxiv: abs:"marginal trader"
+  produced: false
+- id: futures-as-forecasts
+  title: 'Prediction Markets You Already Know: Futures Prices as Forecasts'
+  brief: How ordinary futures markets in commodities, currencies and interest rates carry a forecast inside their price, the classic studies that tested those forecasts against what happened, and where a futures price differs from a probability on a yes-or-no contract. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: evidence
+  search: futures prices as forecasts accuracy study commodity futures predictive
+  require:
+  - futures
+  - forecast|predict
+  exclude:
+  - cortical
+  arxiv: abs:"futures prices" AND abs:forecast
+  produced: false
+- id: policy-analysis-market
+  title: 'The Market That Was Cancelled in a Day: The Policy Analysis Market'
+  brief: The US defence research agency's 2003 proposal for a market on Middle East political and security events, why it was cancelled within days of becoming public, what its designers said it was for, and what the episode still shapes in the debate over which questions a market should be allowed to ask. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: history
+  search: Policy Analysis Market DARPA 2003 cancelled terrorism futures
+  require:
+  - Policy Analysis Market|DARPA|FutureMAP
+  exclude:
+  - cortical
+  arxiv: abs:"Policy Analysis Market"
+  produced: false
+- id: taxes-on-event-contracts
+  title: 'The Tax Line: How a Payout Is Taxed'
+  brief: How the United States and Canada treat a payout from an event contract (capital gain, gambling winnings or ordinary income), what the venue reports, why the regulatory label of the contract decides the tax treatment, and the difference between a regulated exchange and an offshore venue for a filer. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: law
+  search: event contracts tax treatment Kalshi 1099 capital gains Canada
+  require:
+  - tax|1099|capital gain|CRA|IRS
+  - event contract|prediction market|Kalshi
+  exclude:
+  - cortical
+  arxiv: abs:"prediction market" AND abs:tax
+  produced: false
+- id: base-rates
+  title: 'Base Rates: Where a Good Forecast Starts'
+  brief: What a base rate is, why forecasters who start from how often similar events have happened tend to beat those who start from the details of the case, what the forecasting-tournament research found about it, and how a listener can apply the same habit when they see a price. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: mechanism
+  search: base rate neglect forecasting accuracy reference class superforecasters
+  require:
+  - base rate|reference class|outside view
+  exclude:
+  - cortical
+  arxiv: abs:"base rate" AND abs:forecast
+  produced: false
+- id: media-and-markets-odds-on-air
+  title: 'Odds on the News: When Broadcasters Show Market Prices'
+  brief: How news organisations have started displaying market prices, the commercial arrangements behind some of them, the newsroom ethics guidance on reporting a price as a forecast, and the difference between a price and a poll for a viewer. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: people
+  search: news media prediction market prices journalism ethics
+  require:
+  - media|journalis|news
+  exclude:
+  - cortical
+  arxiv: abs:"prediction market" AND abs:media
+  produced: false
+- id: canada-event-contracts
+  title: Event Contracts in Canada
+  brief: 'Where a Canadian stands: provincial gambling regulators, the securities regulators'' view of event contracts, which venues accept Canadian traders and under what rules, and how the Criminal Code''s betting provisions apply. Education only; never a recommendation, a pick or a view on which side is mispriced.'
+  category: regulation
+  search: Canada prediction markets event contracts legal provincial regulator
+  require:
+  - Canad|Ontario|Quebec|British Columbia|AGCO|OSC
+  - prediction market|event contract|Polymarket|Kalshi
+  exclude:
+  - cortical
+  arxiv: abs:"prediction market" AND abs:Canada
+  produced: false
+- id: expert-panels-vs-markets
+  title: Ask the Experts or Ask the Market? The Delphi Method
+  brief: How structured expert panels such as the Delphi method gather and revise forecasts, how they differ from a market that pays for being right, what comparisons between the two have found, and when an organisation might reasonably prefer one over the other. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: research
+  search: Delphi method versus prediction markets forecasting accuracy comparison
+  require:
+  - Delphi|expert panel|expert survey|expert opinion
+  - market|forecast
+  exclude:
+  - cortical
+  arxiv: abs:Delphi AND abs:"prediction market"
+  produced: false
+- id: holding-losers
+  title: Why Traders Hold Losing Positions Too Long
+  brief: The disposition effect, the tendency to sell winners early and hold losers, what research on betting exchanges and trading platforms found about it, how it can keep a price from moving to the evidence, and why it matters to anyone reading a price as a forecast. Education only; never a recommendation, a pick or a view on which side is mispriced.
+  category: risk
+  search: disposition effect betting exchange traders hold losing positions study
+  require:
+  - disposition effect|loss aversion|losing position
+  exclude:
+  - cortical
+  arxiv: abs:"disposition effect"
   produced: false
 - id: what-a-price-averages
   title: Whose Belief Is the Price? The Debate Over What a Price Averages
@@ -640,15 +653,4 @@ queue:
   exclude:
   - cortical
   arxiv: abs:"prediction markets" AND abs:beliefs
-  produced: false
-- id: base-rates
-  title: 'Base Rates: Where a Good Forecast Starts'
-  brief: What a base rate is, why forecasters who start from how often similar events have happened tend to beat those who start from the details of the case, what the forecasting-tournament research found about it, and how a listener can apply the same habit when they see a price. Education only; never a recommendation, a pick or a view on which side is mispriced.
-  category: mechanism
-  search: base rate neglect forecasting accuracy reference class superforecasters
-  require:
-  - base rate|reference class|outside view
-  exclude:
-  - cortical
-  arxiv: abs:"base rate" AND abs:forecast
   produced: false
