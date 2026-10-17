@@ -70,6 +70,7 @@ from engine.daily_edition import (  # noqa: E402
     load_transcript,
     mira_piece_cmd,
     parse_links_json,
+    realign_handoffs,
     segment_trim_cmd,
 )
 from engine.personal_edition import (  # noqa: E402
@@ -332,13 +333,25 @@ def generate_personal_links(
     try:
         from digests.xai_grok import grok_generate_text
 
+        handoff_count = max(0, len(segments) - 1)
         prompt = build_personal_links_prompt(ROOT, spec, segments, target_date)
         text, _meta = grok_generate_text(
             prompt=prompt, model=LINKS_MODEL, temperature=0.7,
-            max_tokens=2000, timeout_seconds=600,
+            # Same budget as Nerra Daily's links call: a fixed 2,000 cut a
+            # long lineup's reply short and sent it to the fallback.
+            max_tokens=max(2500, 900 + 140 * handoff_count),
+            timeout_seconds=600,
         )
-        links = parse_links_json(text, max(0, len(segments) - 1))
+        links = parse_links_json(text, handoff_count)
         if links:
+            # Oct 17 2026: the count check passes a draft that skips one show
+            # and pads the end, so every later handoff introduces the show
+            # before the one that follows (Nerra Daily Ep049/055/057). The
+            # repair Nerra Daily runs gives each segment its own handoff.
+            links = realign_handoffs(links, segments)
+            if links.get("_handoffs_realigned"):
+                logger.warning("%s…: %d handoff(s) realigned to their segment",
+                               spec.token[:8], links["_handoffs_realigned"])
             return links
         logger.warning("%s…: links unusable — fallback", spec.token[:8])
     except Exception as exc:  # noqa: BLE001
