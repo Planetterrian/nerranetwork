@@ -4754,6 +4754,435 @@ def generate_explore_page(*, dry_run=False, output_dir=None):
 
 LANDING_TEST_PATH = "landing-test.html"
 
+#: Never linked from the landing page: the private join link for a scheduled
+#: interview (kept out of the sitemap for the same reason).
+_LANDING_NEVER_LINK = frozenset({"age-of-ai-studio.html"})
+
+
+def _landing_file(rel):
+    """*rel* when it is a real, linkable page in the repo; '' otherwise."""
+    rel = str(rel or "").strip()
+    if (not rel or rel in _LANDING_NEVER_LINK or rel in redirect_stub_paths()
+            or not (ROOT / rel.split("#")[0]).is_file()):
+        return ""
+    return rel
+
+
+def _load_json_quiet(path):
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def _fresh_snapshot(data, key="fetched_at", max_age_days=None):
+    """True when a committed snapshot's timestamp is within the rails' rule
+    (the homepage's Most played uses the same 8 days)."""
+    max_age_days = POPULAR_EPISODES_MAX_AGE_DAYS if max_age_days is None else max_age_days
+    raw = (data or {}).get(key) if isinstance(data, dict) else None
+    if not raw:
+        return False
+    try:
+        when = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=timezone.utc)
+    return datetime.now(timezone.utc) - when <= timedelta(days=max_age_days)
+
+
+def _feed_items_in_window(rss_files, end, days=7):
+    """How many feed items across *rss_files* carry a pubDate in the *days*
+    days ending on *end* (a date). Read from the committed feeds — the
+    pubDate is when the episode went out, so this is "episodes this week"
+    with nothing estimated. ``None`` when no feed could be read."""
+    from email.utils import parsedate_to_datetime
+
+    if end is None:
+        return None
+    start = end - timedelta(days=days - 1)
+    read_any, count = False, 0
+    for rel in rss_files:
+        try:
+            text = (ROOT / rel).read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        read_any = True
+        for raw in re.findall(r"<item>.*?<pubDate>(.*?)</pubDate>", text, re.S):
+            try:
+                when = parsedate_to_datetime(raw.strip()).date()
+            except (TypeError, ValueError):
+                continue
+            if start <= when <= end:
+                count += 1
+    return count if read_any else None
+
+
+def _landing_test_v2(shows, public, ranked, page, *, edition=None,
+                     live_hubs=(), gallery_root=None):
+    """The v2 sections of ``landing-test.html``: the rest of the site.
+
+    Every value is read from committed data and every link is checked
+    against the repo; a section whose data is missing comes back empty and
+    the template renders nothing for it. Design notes and the inventory
+    behind each section: docs/landing_test.md, "v2 — the whole site".
+    """
+    from datetime import date
+
+    from engine import landing_test as _lt
+    from engine import topic_hubs as _hubs
+    from engine.video_metadata import CHANNEL_HANDLES, channel_subscribe_url
+
+    gallery_root = Path(gallery_root) if gallery_root else ROOT / "site" / "data" / "gallery"
+    by_slug = {s["slug"]: s for s in public}
+    public_slugs = list(by_slug)
+    order = [s["slug"] for s in ranked]
+    names = {s["slug"]: s["name"] for s in public}
+    out = {}
+
+    def _cover_webp(show):
+        cover = show.get("podcast_image") or ""
+        base = cover[:-4] if cover.endswith(".jpg") else ""
+        return f"{base}-400.webp" if base and (ROOT / f"{base}-400.webp").exists() else ""
+
+    def _record_hook(slug, number):
+        cfg = NETWORK_SHOWS.get(slug) or {}
+        rec = (_lt.record_by_number(ROOT / cfg["json_path"], number)
+               if cfg.get("json_path") and number else None) or {}
+        return rec, (_lt.hook_from_markdown(rec.get("content") or "")
+                     or (rec.get("hook") or "").strip()
+                     or _lt.strip_episode_label(rec.get("episode_title") or rec.get("title") or ""))
+
+    # ---- Conversations (The Age of AI, Nerra Voices) ------------------
+    convos, apply_links = [], []
+    for slug in _lt.CONVERSATION_SLUGS:
+        show = by_slug.get(slug)
+        cfg = NETWORK_SHOWS.get(slug)
+        if not show or not cfg:
+            continue
+        apply_rel = _landing_file(cfg.get("apply_page"))
+        if apply_rel:
+            apply_links.append({"show_name": show["name"], "url": apply_rel,
+                                "brand_color": show["brand_color"]})
+        for card in _interview_episode_cards(slug, cfg):
+            # Only an episode with an article and a named guest is a card.
+            if not card.get("post_url") or not (card.get("guest") or "").strip():
+                continue
+            try:
+                when = datetime.strptime(card.get("date") or "", "%b %d, %Y").date()
+            except ValueError:
+                when = None
+            convos.append({
+                **card,
+                "date_obj": when,
+                "slug": slug,
+                "show_name": show["name"],
+                "show_page": show["show_page"],
+                "brand_color": show["brand_color"],
+                "cover_url": show.get("podcast_image") or "",
+                "cover_webp": _cover_webp(show),
+            })
+    convos.sort(key=lambda c: ((c["date_obj"] or date.min).toordinal(),
+                               c.get("episode") or 0), reverse=True)
+    out["conversations"] = convos[:_lt.CONVERSATION_LIMIT]
+    out["conversation_links"] = {
+        "apply": apply_links if convos else [],
+        "mira": _landing_file("mira.html"),
+        "guest_picks": _landing_file("guest-picks.html"),
+        "hub": (_landing_file(_hubs.hub_page_path("interviews"))
+                if "interviews" in set(live_hubs) else ""),
+    }
+
+    # ---- Watch (YouTube) -----------------------------------------------
+    videos = []
+    for slug in public_slugs:
+        cfg = NETWORK_SHOWS.get(slug) or {}
+        if not cfg.get("json_path"):
+            continue
+        data = _load_json_quiet((ROOT / cfg["json_path"]).parent / "youtube_videos.json")
+        rows = data.get("videos") if isinstance(data, dict) else data
+        videos.extend(r for r in (rows or []) if isinstance(r, dict))
+
+    # Pictures already beside a story on this page: a video card shows a
+    # DIFFERENT scene of its episode when the episode has one.
+    used = {s.get("image_url") for s in [page.get("lead") or {}, *(page.get("top") or []),
+                                          *(s for sec in page.get("sections") or [] for s in sec["stories"]),
+                                          *(page.get("more") or [])] if s and s.get("image_url")}
+
+    def _with_scene(video, portrait):
+        slug, number = video["show_slug"], video.get("episode")
+        number = number if isinstance(number, int) else None
+        rec, _hook = _record_hook(slug, number)
+        ep_date = str(rec.get("date") or "")[:10]
+        scene = _lt.episode_scene(
+            _lt.load_gallery_index(gallery_root, slug), slug, number, ep_date,
+            hook=video.get("hook") or video.get("title") or "",
+            prompts=_lt.scene_prompts(gallery_root / f"{slug}.json", slug, number, ep_date),
+            portrait_first=portrait, avoid_urls=used)
+        if scene:
+            used.add(scene["url"])
+        show = by_slug[slug]
+        return {**video, "show_name": show["name"], "show_page": show["show_page"],
+                "brand_color": show["brand_color"],
+                "image_url": scene["url"] if scene else "",
+                "image_orientation": scene["orientation"] if scene else ""}
+
+    longs = [_with_scene(v, False) for v in _lt.pick_videos(
+        videos, kind="long", public_slugs=public_slugs, limit=_lt.WATCH_LONG_LIMIT,
+        audience_order=order)]
+    shorts = [_with_scene(v, True) for v in _lt.pick_videos(
+        videos, kind="short", public_slugs=public_slugs, limit=_lt.WATCH_SHORT_LIMIT,
+        audience_order=order)]
+    channel_labels = {"en": "English", "ru": "Русский", "fr": "Français"}
+    social_urls = {v["url"].split("?")[0] for v in NETWORK_SOCIAL.values()}
+    channels = [
+        {"handle": handle, "label": channel_labels.get(code, code),
+         "lang": "" if code == "en" else code,
+         "url": channel_subscribe_url(code)}
+        for code, handle in CHANNEL_HANDLES.items()
+        # Only a channel the site's own chrome already lists as ours.
+        if f"https://www.youtube.com/{handle}" in social_urls
+    ]
+    out["watch"] = {"longs": longs, "shorts": shorts,
+                    "channels": channels if (longs or shorts) else []}
+
+    # ---- Most read (GA4) -----------------------------------------------
+    most_read = []
+    ga4 = _load_json_quiet(ROOT / "api" / "ga4_stats.json")
+    if _fresh_snapshot(ga4):
+        for slug, number in _lt.most_read_pages(ga4, public_slugs=public_slugs,
+                                                limit=_lt.MOST_READ_LIMIT + 3):
+            url = _blog_url_for_episode(slug, episode_num=number)
+            rec, hook = _record_hook(slug, number)
+            if not url or not hook:
+                continue
+            # On an interview show the guest IS the episode (the archive
+            # rail's rule); the thesis sentence rides underneath.
+            guest = (rec.get("guest") or "").strip() if slug in _lt.CONVERSATION_SLUGS else ""
+            most_read.append({"show_name": names[slug], "show_page": by_slug[slug]["show_page"],
+                              "brand_color": by_slug[slug]["brand_color"],
+                              "blog_url": url, "title": guest or hook,
+                              "dek": hook if guest else ""})
+            if len(most_read) >= _lt.MOST_READ_LIMIT:
+                break
+    out["most_read"] = most_read
+    out["most_read_days"] = (ga4 or {}).get("days") if most_read else None
+
+    # ---- Trust strip (the claims ledger, exactly as claims.html counts) --
+    trust = None
+    try:
+        totals = _claims_network_ledger(shows)["totals"] if public else {}
+    except Exception as exc:  # noqa: BLE001 — a trust strip is never worth a build
+        print(f"Warning: landing-test claims totals unavailable: {exc}")
+        totals = {}
+    if isinstance(totals.get("claims"), int) and totals["claims"] > 0:
+        trust = {"totals": totals}
+    out["trust"] = trust
+    out["trust_links"] = [
+        link for link in (
+            {"label": "Claims & corrections ledger", "url": _landing_file("claims.html")},
+            {"label": "How corrections work", "url": _landing_file("editorial.html") and "editorial.html#corrections"},
+            {"label": "How we use AI", "url": _landing_file("ai-disclosure.html")},
+            {"label": "Editorial standards", "url": _landing_file("editorial.html")},
+            {"label": "Open data", "url": _landing_file("data.html")},
+        ) if link["url"]
+    ]
+
+    # ---- Network at a glance --------------------------------------------
+    newest = page.get("lead") and max(
+        (s["date_obj"] for s in page.get("latest") or [] if s.get("date_obj")),
+        default=None)
+    out["glance"] = _lt.glance_numbers(
+        _load_json_quiet(AUDIENCE_HEADLINE_PATH),
+        shows_publishing=len(public),
+        episodes_this_week=_feed_items_in_window(
+            [s["rss_file"] for s in public if s.get("rss_file")], newest),
+        languages=len(_listening_languages())) if public else []
+
+    # ---- Live dashboards + Story Trackers ------------------------------
+    dashboards = []
+
+    def _dash(slug, rel, title, desc, fact=""):
+        if slug not in by_slug or not _landing_file(rel):
+            return
+        dashboards.append({"title": title, "desc": desc, "url": rel, "fact": fact,
+                           "brand_color": by_slug[slug]["brand_color"],
+                           "show_name": by_slug[slug]["name"]})
+
+    launches = _load_json_quiet(ROOT / "api" / "spacex_launches.json") or {}
+    nxt = launches.get("next") if isinstance(launches, dict) else None
+    launch_fact = ""
+    if isinstance(nxt, dict) and nxt.get("mission") and nxt.get("net"):
+        net_d = _lt._parse_date(str(nxt["net"]))
+        upd = _lt._parse_date(str(launches.get("updated_at") or ""))
+        if net_d and upd and net_d >= upd:
+            launch_fact = (f"Next launch on record: {nxt['mission']}"
+                           f"{' · ' + nxt['rocket'] if nxt.get('rocket') else ''}"
+                           f" · no earlier than {net_d.strftime('%b')} {net_d.day}")
+    _dash("spacex", "spacex-dashboard.html", "SpaceX dashboard",
+          "Launch cadence, the fleet, pads and Starship, updated daily.", launch_fact)
+    tsla = _load_json_quiet(ROOT / "api" / "tsla.json") or {}
+    tsla_fact = ""
+    price, fetched = tsla.get("price"), _lt._parse_date(str(tsla.get("fetched_at") or ""))
+    if isinstance(price, (int, float)) and not isinstance(price, bool) and price > 0 and fetched:
+        tsla_fact = f"TSLA last quote on record: ${price:,.2f} · {fetched.strftime('%b')} {fetched.day}"
+    _dash("tesla", "tesla-dashboard.html", "Tesla dashboard",
+          "The stock, deliveries and the programs the show tracks.", tsla_fact)
+    on = _load_json_quiet(ROOT / "api" / "offshore_north_dashboard.json") or {}
+    fix = ((on.get("tracker") or {}).get("latest") or {}) if isinstance(on, dict) else {}
+    on_fact = ""
+    fix_d = _lt._parse_date(str(fix.get("date") or ""))
+    if fix_d and (fix.get("place") or fix.get("coords")):
+        on_fact = (f"EMIRA IV's last tracker fix: {fix.get('place') or fix.get('coords')}"
+                   f" · {fix_d.strftime('%b')} {fix_d.day} ({(on.get('tracker') or {}).get('source') or 'tracker'})")
+    _dash("offshore_north", "offshore-north-dashboard.html", "Offshore North campaign",
+          "Canada Ocean Racing and EMIRA IV: position, calendar, results.", on_fact)
+    gloss = _load_json_quiet(ROOT / "site" / "data" / "offshore_north_glossary.json") or {}
+    n_terms = sum(len(g.get("entries") or []) for g in (gloss.get("groups") or [])
+                  if isinstance(g, dict)) if isinstance(gloss, dict) else 0
+    _dash("offshore_north", "offshore-north-glossary.html", "Plain Sailing glossary",
+          "Offshore racing explained for a keen non-expert.",
+          f"{n_terms} terms, each with a sentence you could repeat" if n_terms else "")
+    _dash("modern_investing", "modern-investing-performance.html", "Modern Investing record",
+          "Every simulated trade published, losers and voided picks included.")
+    out["dashboards"] = dashboards
+    out["trackers"] = [
+        {"name": s["name"], "url": rel, "brand_color": s["brand_color"]}
+        for s in ranked
+        for rel in [_landing_file(s["show_page"].replace(".html", "-narrative.html"))]
+        if rel
+    ]
+
+    # ---- Topics + Explore ----------------------------------------------
+    topics = []
+    for hub_id in live_hubs:
+        hub = _hubs.hub_by_id(hub_id)
+        rel = _landing_file(_hubs.hub_page_path(hub_id)) if hub else ""
+        if rel:
+            topics.append({"heading": hub["heading"], "url": rel})
+    out["topics"] = topics
+    out["discover_links"] = [
+        link for link in (
+            {"label": "Explore every show", "url": _landing_file("explore.html")},
+            {"label": "New here? Start here", "url": _landing_file("start-here.html")},
+            {"label": "All topics", "url": _landing_file("topics/index.html")},
+            {"label": "Every article", "url": _landing_file("blog/index.html")},
+        ) if link["url"]
+    ]
+
+    # ---- Books -----------------------------------------------------------
+    books = []
+    for vol in books_page_volumes(ROOT / "books" / "catalog.json", ROOT / "books" / "volumes"):
+        show = by_slug.get(vol.get("show_slug") or "")
+        if not show:
+            continue
+        books.append({
+            "title": vol.get("title") or "", "full_title": vol.get("full_title") or vol.get("title") or "",
+            "subtitle": vol.get("subtitle") or "", "author": vol.get("author") or "",
+            "chapters": vol.get("chapters") if isinstance(vol.get("chapters"), int) else None,
+            "volume_number": vol.get("volume_number"),
+            "brand_color": show["brand_color"], "show_name": show["name"],
+        })
+    out["books"] = books if _landing_file("books.html") else []
+
+    # ---- Gallery strip ---------------------------------------------------
+    net_index = _lt.load_gallery_index(gallery_root, "_network")
+    out["gallery"] = (_lt.gallery_strip(
+        net_index, public_slugs=public_slugs,
+        show_names=names, exclude_urls=used) if _landing_file("gallery.html") else [])
+    out["gallery_license"] = str((net_index or {}).get("license") or "") if out["gallery"] else ""
+
+    # ---- Newsletter picks ------------------------------------------------
+    # Only shows that actually send a newsletter (the YAML's
+    # newsletter.enabled — the flag the send path reads), most-listened
+    # first. Each value is the show's newsletter_tag, the closed set the
+    # Worker's SHOW_NEWSLETTER_TAGS accepts.
+    picks = []
+    for s in ranked:
+        cfg = _registry_show_config(s["slug"])
+        news = getattr(cfg, "newsletter", None) if cfg else None
+        if news is not None and getattr(news, "enabled", False) and s.get("newsletter_tag"):
+            picks.append({"name": s["name"], "tag": s["newsletter_tag"]})
+    out["signup_picks"] = picks
+
+    # ---- Nerra Personal --------------------------------------------------
+    stripe = os.environ.get("STRIPE_LINK_PERSONAL", "")
+    out["personal"] = {
+        "join": _landing_file("join.html"),
+        "plans": _landing_file("join.html") and "join.html#plans",
+        "account": _landing_file("account.html"),
+        "support": _landing_file("support.html"),
+        "interest": _landing_file("personal-interest.html"),
+        # Same rule as join.html: no live Payment Link = "launching soon".
+        "live": bool(stripe and stripe != "#"),
+        "trial_days": _env_int("STRIPE_TRIAL_DAYS"),
+    } if _landing_file("join.html") else None
+
+    # ---- Listen everywhere ----------------------------------------------
+    platforms = []
+    for s in ranked[:6]:
+        platforms.append({
+            "name": s["name"], "show_page": s["show_page"], "brand_color": s["brand_color"],
+            "apple": s.get("apple_podcasts_url") or "",
+            "spotify": s.get("spotify_url") or "",
+            "rss": _landing_file(s.get("rss_file") or ""),
+        })
+    lang_counts: dict = {}
+    # Only languages the network still produces (a switched-off track's
+    # frozen feed stays on how-to-listen.html; it is not advertised here).
+    producing = set(_listening_languages())
+    for s in public:
+        for feed in s.get("language_feeds") or []:
+            if feed.get("lang") not in producing:
+                continue
+            lang_counts.setdefault(feed["lang"], {"label": feed["label"], "count": 0})
+            lang_counts[feed["lang"]]["count"] += 1
+    out["listen_everywhere"] = {
+        "platforms": [p for p in platforms if p["apple"] or p["spotify"] or p["rss"]],
+        "languages": [{"lang": k, **v} for k, v in sorted(lang_counts.items())],
+        "ru_pages": _landing_file("ru/index.html"),
+        "how_to_listen": _landing_file("how-to-listen.html"),
+        "player": _landing_file("player.html"),
+        "network_rss": _landing_file("network.rss"),
+    }
+
+    # ---- Partners --------------------------------------------------------
+    out["partners"] = [
+        link for link in (
+            {"label": "Sponsor the network", "url": _landing_file("sponsor.html")},
+            {"label": "Press kit", "url": _landing_file("press.html")},
+            *({"label": f"Be a guest on {a['show_name']}", "url": a["url"]} for a in apply_links),
+            {"label": "Contact", "url": _landing_file("contact.html")},
+        ) if link["url"]
+    ]
+
+    # ---- Lead share links + JSON-LD -------------------------------------
+    lead = page.get("lead") or {}
+    share = {}
+    if lead.get("post_url") and isinstance(lead.get("episode_num"), int):
+        from engine.blog import _share_urls
+        share = _share_urls(lead["slug"], lead["episode_num"],
+                            f"https://nerranetwork.com/{lead['post_url']}")
+    out["lead_share"] = share
+    items = []
+    for s in [lead, *(page.get("top") or []),
+              *(x for sec in page.get("sections") or [] for x in sec["stories"]),
+              *(page.get("more") or [])]:
+        if not s or not s.get("hook"):
+            continue
+        items.append({"@type": "ListItem", "position": len(items) + 1,
+                      "url": f"https://nerranetwork.com/{s.get('post_url') or s['show_page']}",
+                      "name": s["hook"]})
+    out["item_list"] = ({
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": "Nerra Network — the newest story from every show",
+        "itemListOrder": "https://schema.org/ItemListOrderDescending",
+        "numberOfItems": len(items),
+        "itemListElement": items,
+    } if items else None)
+    return out
+
 
 def generate_landing_test_page(*, dry_run=False, output_dir=None,
                                all_shows=None, gallery_dir=None):
@@ -4815,6 +5244,10 @@ def generate_landing_test_page(*, dry_run=False, output_dir=None,
             continue
         if show["slug"] == _lt.EDITION_SLUG:
             edition = story
+        elif show["slug"] in _lt.CONVERSATION_SLUGS:
+            # v2: the interviews have their own section (the site's
+            # strongest web draw), so they do not also run as news stories.
+            continue
         else:
             stories.append(story)
 
@@ -4862,19 +5295,28 @@ def generate_landing_test_page(*, dry_run=False, output_dir=None,
             "blog_url": show["blog_page"] if (ROOT / show["blog_page"]).exists() else "",
         })
 
+    v2 = _landing_test_v2(shows, public, ranked, page, edition=edition,
+                          live_hubs=live_hubs, gallery_root=gallery_root)
+
     description = (
         "Today's top stories from every Nerra Network show on one page — "
         "space, AI, markets, world news, science and more, each with the "
         "episode to hear and the article to read."
     )
+    lead = page.get("lead") or {}
     context = {
         "path_prefix": "",
-        "page_title": "Landing Test — Nerra Network front page",
+        "page_title": "Nerra Network Today — the newest story from every show (test front page)",
         "page_description": description,
         "meta_description": description,
         "meta_keywords": "",
         "theme_color": "#6B47FF",
-        "og_image": "",
+        # The lead story's own scene: a share of this page previews the
+        # story it leads with. Display-size thumbnail (the full-size file
+        # is behind the gallery's download gate).
+        "og_image": lead.get("image_url") if lead.get("image_orientation") == "landscape" else "",
+        "og_image_alt": (f"AI-generated scene illustrating {lead['show_name']} "
+                         f"episode {lead['episode_num']}") if lead.get("image_url") else "",
         "canonical_url": f"https://nerranetwork.com/{LANDING_TEST_PATH}",
         "show_color": "",
         "show_color_dark": "",
@@ -4884,6 +5326,10 @@ def generate_landing_test_page(*, dry_run=False, output_dir=None,
         "popular": popular,
         "listen": listen,
         "story_show_count": len(public),
+        # One email ask on this page: the inline form. The footer keeps its
+        # Personal / sign-in links (the homepage does the same).
+        "suppress_footer_newsletter_form": True,
+        **v2,
     }
     html = _get_jinja_env().get_template("landing_test.html.j2").render(**context)
     out_path = (Path(output_dir) / LANDING_TEST_PATH if output_dir
@@ -6764,6 +7210,20 @@ def claims_page_paths() -> list:
     return ["claims.html"] + [f"claims/{slug}.html" for slug in claims_page_slugs()]
 
 
+def _claims_network_ledger(all_shows, *, days=None, today=None, digests_root=None):
+    """The network ledger ``claims.html`` renders: every registered show in
+    display order, over the claims pages' window. ONE function so any other
+    surface quoting the network's claim counts (the landing-test trust
+    strip) reads exactly the numbers the claims page prints."""
+    from engine import claims_ledger as _ledger
+
+    ordered = [s["slug"] for s in all_shows if s["slug"] in NETWORK_SHOWS]
+    ordered += [s for s in NETWORK_SHOWS if s not in ordered]
+    return _ledger.network_ledger(
+        ordered, days=CLAIMS_PAGES_DAYS if days is None else days,
+        today=today, digests_root=digests_root)
+
+
 def generate_claims_pages(*, dry_run=False, output_dir=None, digests_root=None,
                           today=None, days=CLAIMS_PAGES_DAYS, slugs=None,
                           network_page=True):
@@ -6813,9 +7273,7 @@ def generate_claims_pages(*, dry_run=False, output_dir=None, digests_root=None,
     }
 
     # Network page: one row per registered show, in display order.
-    ordered = [s["slug"] for s in all_shows if s["slug"] in NETWORK_SHOWS]
-    ordered += [s for s in NETWORK_SHOWS if s not in ordered]
-    net = (_ledger.network_ledger(ordered, days=days, today=today,
+    net = (_claims_network_ledger(all_shows, days=days, today=today,
                                   digests_root=digests_root)
            if network_page else {"shows": [], "totals": {}})
     rows = []

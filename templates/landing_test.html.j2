@@ -20,6 +20,19 @@
 
 {% block head_extra %}
 <meta name="robots" content="noindex, follow">
+{%- if og_image %}
+<meta property="og:image:width" content="800">
+<meta property="og:image:height" content="450">
+{%- if og_image_alt %}
+<meta property="og:image:alt" content="{{ og_image_alt }}">
+<meta name="twitter:image:alt" content="{{ og_image_alt }}">
+{%- endif %}
+{%- endif %}
+{%- if item_list %}
+{#- Built as a dict in generate_html and piped through tojson (always-valid
+    JSON, <>& escaped), like the blog's PodcastEpisode block. #}
+<script type="application/ld+json">{{ item_list | tojson }}</script>
+{%- endif %}
 <style>
 .lt-page {
   --lt-ink: var(--nn-text);
@@ -74,6 +87,9 @@
 .lt-secnav ul {
   list-style: none; display: flex; gap: var(--sp-1) var(--sp-5); margin: 0; padding: 0 0 var(--sp-2);
   overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--lt-rule);
+  /* v2 added sections: the nav scrolls; the faded edge says so. */
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 40px), transparent);
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 40px), transparent);
 }
 .lt-secnav ul::-webkit-scrollbar { display: none; }
 .lt-secnav a {
@@ -212,21 +228,226 @@ a.lt-media:hover img { transform: scale(1.03); }
 .lt-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 var(--sp-8); }
 .lt-grid-3 .lt-row { padding-top: 14px; }
 
-/* ---- Most played ---- */
-.lt-popular ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-2) var(--sp-8); counter-reset: lt-pop; }
+/* ---- Most played / Most read ---- */
+.lt-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-6) var(--sp-10); }
+.lt-charts.is-single { grid-template-columns: minmax(0, 1fr); }
+.lt-chart-h { font-family: var(--lt-ui); font-size: 0.8rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--nn-white); margin: 0 0 4px; }
+.lt-chart-sub { font-family: var(--lt-ui); font-size: 0.78rem; color: var(--lt-muted); margin: 0 0 var(--sp-2); }
+.lt-popular ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: lt-pop; }
+.lt-charts.is-single .lt-popular ol { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--sp-8); }
 .lt-popular li { counter-increment: lt-pop; display: grid; grid-template-columns: 2.4rem minmax(0, 1fr); gap: var(--sp-2); padding: 12px 0; border-bottom: 1px solid var(--lt-rule); }
 .lt-popular li::before { content: counter(lt-pop); font-family: var(--lt-head); font-weight: 700; font-size: 2rem; line-height: 1; color: var(--lt-accent-text); }
 .lt-popular .lt-hl { font-size: 1rem; font-weight: 600; line-height: 1.32; }
+.lt-dek { font-family: var(--lt-ui); font-size: 0.84rem; line-height: 1.45; color: var(--lt-muted); margin: 4px 0 0; }
+
+/* ---- Shared v2 atoms ---- */
+.lt-block-head .lt-block-sub { font-family: var(--lt-ui); font-size: 0.86rem; color: var(--lt-muted); font-weight: 500; margin: 0; flex: 1 1 18rem; }
+.lt-block-head .lt-block-links { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.lt-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.lt-chip {
+  display: inline-flex; align-items: center; gap: 6px; font-family: var(--lt-ui); font-size: 0.84rem; font-weight: 600;
+  padding: 7px 12px; border-radius: 999px; border: 1px solid var(--lt-rule-strong); background: var(--lt-panel-2); color: var(--lt-ink);
+}
+.lt-page a.lt-chip:hover { border-color: var(--lt-cyan); color: var(--nn-white); }
+.lt-chip { white-space: nowrap; }
+.lt-chip-count { font-weight: 500; font-size: 0.78rem; color: var(--lt-muted); }
+.lt-chip-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--show-color, var(--lt-accent)); flex: none; }
+.lt-panel { border: 1px solid var(--lt-rule); border-radius: 14px; background: var(--lt-panel-2); padding: var(--sp-5); }
+.lt-sublabel { font-family: var(--lt-ui); font-size: 0.74rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--lt-muted); margin: 0 0 var(--sp-3); }
+.lt-links-row { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: var(--sp-4) 0 0; font-family: var(--lt-ui); font-size: 0.86rem; }
+.lt-links-row a { color: var(--lt-accent-text); font-weight: 700; }
+.lt-links-row a:hover { color: var(--nn-white); text-decoration: underline; }
+
+/* ---- Lead share row ---- */
+.lt-share { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: var(--sp-3); font-family: var(--lt-ui); font-size: 0.8rem; color: var(--lt-muted); }
+.lt-share a { color: var(--lt-ink); font-weight: 600; }
+.lt-share a:hover { color: var(--nn-white); text-decoration: underline; }
+
+/* ---- Conversations (The Age of AI, Nerra Voices) ---- */
+.lt-convo-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: var(--sp-6) var(--sp-8); align-items: start; }
+.lt-convo-feature {
+  position: relative; border-radius: 16px; overflow: hidden; padding: var(--sp-6);
+  background: radial-gradient(130% 120% at 0% 0%, color-mix(in srgb, var(--show-color) 40%, #0B0F1A) 0%, #101524 58%, #0B0F1A 100%);
+  border: 1px solid var(--lt-rule-strong);
+}
+.lt-convo-top { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: var(--sp-5); align-items: center; }
+.lt-convo-top img { width: 132px; height: 132px; border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,0.5); object-fit: cover; }
+.lt-guest { font-family: var(--lt-head); font-weight: 700; font-size: clamp(1.7rem, 3vw, 2.35rem); line-height: 1.08; margin: 4px 0 6px; color: var(--nn-white); }
+.lt-guest a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.lt-guest-id { font-family: var(--lt-ui); font-size: 0.9rem; color: var(--lt-ink); opacity: 0.85; margin: 0; line-height: 1.4; }
+.lt-convo-hook { font-family: var(--lt-head); font-size: 1.16rem; line-height: 1.45; color: var(--lt-ink); margin: var(--sp-5) 0 0; }
+.lt-convo-feature .lt-lead-audio { margin-top: var(--sp-4); }
+.lt-convo-list { list-style: none; margin: 0; padding: 0; }
+.lt-convo-list li { padding: 12px 0; border-bottom: 1px solid var(--lt-rule); }
+.lt-convo-list li:first-child { padding-top: 0; }
+.lt-convo-list .lt-hl { font-size: 1.12rem; }
+.lt-convo-list .lt-guest-id { font-size: 0.84rem; color: var(--lt-muted); opacity: 1; margin-top: 2px; }
+.lt-apply {
+  margin-top: var(--sp-4); border-radius: 12px; padding: var(--sp-4) var(--sp-5);
+  border: 1px dashed color-mix(in srgb, var(--lt-accent) 60%, transparent); background: rgba(107, 71, 255, 0.08);
+}
+.lt-apply h3 { font-family: var(--lt-head); font-size: 1.15rem; margin: 0 0 4px; }
+.lt-apply p { font-family: var(--lt-ui); font-size: 0.86rem; color: var(--lt-muted); margin: 0 0 var(--sp-3); line-height: 1.5; }
+.lt-apply .lt-signup-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.lt-claim-wrap { margin-top: var(--sp-6); }
+/* The claim, its basis and its correction invitation always render together
+   (engine.brand / the mira_claim macro); here the claim reads as a pull
+   quote beside its basis. */
+.lt-claim-wrap .nn-mira-claim {
+  margin: 0; padding: var(--sp-5) var(--sp-6); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr);
+  gap: var(--sp-2) var(--sp-8); align-items: start; border-left-color: var(--lt-accent);
+}
+.lt-claim-wrap .nn-mira-claim__claim { grid-row: span 2; font-family: var(--lt-head); font-size: 1.24rem; line-height: 1.4; margin: 0; }
+.lt-claim-wrap .nn-mira-claim__basis { font-family: var(--lt-ui); font-size: 0.86rem; line-height: 1.6; color: var(--lt-muted); margin: 0; }
+.lt-claim-wrap .nn-mira-claim__footnote { font-family: var(--lt-ui); font-size: 0.8rem; color: var(--lt-muted); }
+
+/* ---- Watch (YouTube) ---- */
+.lt-watch-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-6); }
+.lt-video .lt-media::after {
+  content: ""; position: absolute; left: 12px; bottom: 12px; width: 44px; height: 32px; border-radius: 8px;
+  background: rgba(10, 12, 20, 0.78) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M8 5v14l11-7z'/%3E%3C/svg%3E") center / 18px no-repeat;
+  border: 1px solid rgba(255,255,255,0.25);
+}
+.lt-video .lt-media.is-card { display: flex; align-items: flex-end; padding: 14px 14px 14px 70px; }
+.lt-video .lt-media.is-card span { font-family: var(--lt-ui); font-weight: 700; font-size: 0.82rem; color: var(--nn-white); opacity: 0.9; }
+.lt-video .lt-hl { font-size: 1.04rem; margin-top: 10px; }
+.lt-shorts { margin-top: var(--sp-6); }
+.lt-shorts ul {
+  list-style: none; margin: 0; padding: 0 0 var(--sp-2); display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--sp-4);
+}
+.lt-short .lt-media { aspect-ratio: 9 / 16; border-radius: 12px; }
+.lt-short .lt-media img { object-position: center; }
+.lt-short .lt-media .lt-short-title {
+  position: absolute; inset: auto 0 0 0; padding: 40px 10px 10px; font-family: var(--lt-ui); font-weight: 700; font-size: 0.84rem; line-height: 1.3;
+  color: var(--nn-white); background: linear-gradient(to top, rgba(5, 7, 14, 0.92), rgba(5, 7, 14, 0));
+}
+.lt-short .lt-kicker { margin-top: 8px; font-size: 0.68rem; }
+.lt-yt-badge { font-family: var(--lt-ui); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--nn-white); background: #C4302B; padding: 2px 7px; border-radius: 4px; }
+.lt-channels { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---- Inline signup ---- */
+.lt-signup {
+  margin-top: var(--sp-10); border: 1px solid var(--lt-rule-strong); border-radius: 18px; padding: var(--sp-8);
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: var(--sp-6) var(--sp-10); align-items: center;
+  background:
+    radial-gradient(90% 140% at 100% 0%, rgba(0, 212, 255, 0.10), transparent 60%),
+    linear-gradient(135deg, rgba(107, 71, 255, 0.20), rgba(17, 22, 39, 0.6));
+}
+.lt-signup-kicker { font-family: var(--lt-ui); font-size: 0.74rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--lt-cyan); margin: 0 0 6px; }
+.lt-signup h2 { font-family: var(--lt-head); font-size: clamp(1.5rem, 2.6vw, 2rem); line-height: 1.15; margin: 0 0 8px; }
+.lt-signup p { font-family: var(--lt-ui); color: var(--lt-muted); margin: 0; line-height: 1.55; }
+.lt-form { display: grid; gap: var(--sp-3); }
+.lt-form-row { display: flex; gap: var(--sp-2); }
+.lt-form input[type=email] {
+  flex: 1 1 auto; min-width: 0; font-family: var(--lt-ui); font-size: 16px; padding: 12px 14px; border-radius: 10px;
+  border: 1px solid var(--lt-rule-strong); background: rgba(5, 7, 14, 0.55); color: var(--nn-white);
+}
+.lt-form input[type=email]:focus { outline: 2px solid var(--lt-cyan); outline-offset: 1px; }
+.lt-form button {
+  flex: none; font-family: var(--lt-ui); font-weight: 800; font-size: 0.95rem; padding: 12px 18px; border-radius: 10px; border: 0;
+  color: var(--nn-white); background: var(--lt-accent); cursor: pointer;
+}
+.lt-form button:hover { background: var(--nn-accent-hover); }
+.lt-form button:disabled { opacity: 0.7; cursor: default; }
+.lt-picks { font-family: var(--lt-ui); font-size: 0.86rem; border: 0; margin: 0; padding: 0; min-width: 0; }
+.lt-picks legend { font-weight: 700; color: var(--lt-ink); padding: 0; }
+.lt-picks legend span { color: var(--lt-muted); font-weight: 500; }
+.lt-picks summary { cursor: pointer; font-weight: 700; color: var(--lt-accent-text); margin-top: 10px; font-size: 0.82rem; }
+.lt-picks-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.lt-picks label {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--lt-rule-strong); background: rgba(5, 7, 14, 0.35); color: var(--lt-ink); font-size: 0.82rem;
+}
+.lt-picks label:has(input:checked) { border-color: var(--lt-cyan); background: rgba(0, 212, 255, 0.10); }
+.lt-picks input { accent-color: var(--nn-cyan); }
+.lt-form-status { font-family: var(--lt-ui); font-size: 0.86rem; min-height: 1.2em; margin: 0; }
+.lt-form-fine { font-family: var(--lt-ui); font-size: 0.78rem; color: var(--lt-muted); margin: 0; line-height: 1.5; }
+.lt-form-fine a { color: var(--lt-cyan); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+
+/* ---- By the numbers + trust ---- */
+.lt-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--sp-4); }
+.lt-tile { border-top: 2px solid var(--lt-rule-strong); padding-top: 10px; }
+.lt-tile-num { font-family: var(--lt-head); font-weight: 700; font-size: clamp(1.8rem, 3vw, 2.4rem); line-height: 1; color: var(--nn-white); letter-spacing: -0.01em; }
+.lt-tile-label { font-family: var(--lt-ui); font-size: 0.82rem; color: var(--lt-muted); margin-top: 6px; line-height: 1.4; }
+.lt-trust { margin-top: var(--sp-6); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: var(--sp-6) var(--sp-8); align-items: start; }
+.lt-trust h3 { font-family: var(--lt-head); font-size: 1.35rem; margin: 0 0 6px; }
+.lt-trust p { font-family: var(--lt-ui); font-size: 0.9rem; color: var(--lt-muted); line-height: 1.55; margin: 0; }
+.lt-trust .lt-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.lt-tile--verified { border-top-color: var(--nn-claims-verified, #34D399); }
+.lt-tile--flagged { border-top-color: var(--nn-claims-flagged, #F5C860); }
+
+/* ---- Dashboards + trackers ---- */
+.lt-dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: var(--sp-4); }
+.lt-dash {
+  display: flex; flex-direction: column; gap: 6px; border-radius: 12px; padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--lt-rule); background: var(--lt-panel-2); border-top: 3px solid var(--show-color);
+}
+.lt-page a.lt-dash:hover { border-color: var(--lt-rule-strong); border-top-color: var(--show-color); background: rgba(255,255,255,0.06); }
+.lt-dash-title { font-family: var(--lt-head); font-weight: 700; font-size: 1.12rem; color: var(--nn-white); }
+.lt-dash-desc { font-family: var(--lt-ui); font-size: 0.84rem; color: var(--lt-muted); line-height: 1.45; }
+.lt-dash-fact { font-family: var(--lt-ui); font-size: 0.8rem; font-weight: 600; color: var(--lt-cyan); line-height: 1.4; margin-top: auto; padding-top: 6px; }
+.lt-trackers { margin-top: var(--sp-5); }
+
+/* ---- Personal ---- */
+.lt-personal {
+  border-radius: 18px; padding: var(--sp-8); display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: var(--sp-6) var(--sp-10); align-items: center;
+  background: radial-gradient(120% 140% at 0% 100%, rgba(0, 212, 255, 0.12), transparent 55%), linear-gradient(120deg, #111627, #0E1322);
+  border: 1px solid var(--lt-rule-strong);
+}
+.lt-personal h2 { font-family: var(--lt-head); font-size: clamp(1.5rem, 2.6vw, 2.05rem); line-height: 1.15; margin: 0 0 10px; }
+.lt-personal p { font-family: var(--lt-ui); color: var(--lt-ink); opacity: 0.9; margin: 0; line-height: 1.55; }
+.lt-personal ul { list-style: none; margin: var(--sp-4) 0 0; padding: 0; display: grid; gap: 8px; font-family: var(--lt-ui); font-size: 0.9rem; }
+.lt-personal li { padding-left: 22px; position: relative; }
+.lt-personal li::before { content: ""; position: absolute; left: 0; top: 0.45em; width: 10px; height: 6px; border-left: 2px solid var(--lt-cyan); border-bottom: 2px solid var(--lt-cyan); transform: rotate(-45deg); }
+.lt-personal-cta { display: grid; gap: var(--sp-3); justify-items: start; }
+.lt-personal-cta .lt-btn { font-size: 0.95rem; padding: 12px 18px; }
+.lt-personal-note { font-family: var(--lt-ui); font-size: 0.8rem; color: var(--lt-muted); }
+
+/* ---- Books + gallery ---- */
+.lt-shelf { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: var(--sp-8); align-items: start; }
+.lt-books { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-5); }
+.lt-book { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: var(--sp-4); align-items: center; }
+.lt-book-cover {
+  width: 92px; aspect-ratio: 5 / 8; border-radius: 4px 8px 8px 4px; padding: 10px 9px; display: flex; flex-direction: column; justify-content: space-between;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--show-color) 85%, #fff 0%), color-mix(in srgb, var(--show-color) 45%, #05070E));
+  box-shadow: inset 6px 0 0 rgba(0,0,0,0.25), 0 12px 26px rgba(0,0,0,0.45); color: #fff;
+}
+.lt-book-cover b { font-family: var(--lt-head); font-size: 0.74rem; line-height: 1.12; overflow-wrap: anywhere; hyphens: auto; }
+.lt-book-cover small { font-family: var(--lt-ui); font-size: 0.56rem; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.85; }
+.lt-book .lt-hl { font-size: 1.08rem; }
+.lt-gallery-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.lt-gallery-grid a { position: relative; display: block; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #111627; }
+.lt-gallery-grid img { width: 100%; height: 100%; object-fit: cover; transition: transform 400ms var(--ease); }
+.lt-gallery-grid a:hover img { transform: scale(1.04); }
+.lt-gallery-grid span {
+  position: absolute; inset: auto 0 0 0; padding: 18px 8px 6px; font-family: var(--lt-ui); font-size: 0.7rem; font-weight: 700; color: #fff;
+  background: linear-gradient(to top, rgba(5,7,14,0.85), rgba(5,7,14,0));
+}
+
+/* ---- Listen everywhere ---- */
+.lt-apps { margin-top: var(--sp-6); display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: var(--sp-6) var(--sp-8); align-items: start; }
+.lt-app-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--sp-6); }
+.lt-app-list li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 10px; padding: 10px 0; border-bottom: 1px solid var(--lt-rule); font-family: var(--lt-ui); font-size: 0.88rem; }
+.lt-app-list .lt-app-name { font-weight: 700; color: var(--lt-ink); }
+.lt-app-list .lt-app-links { display: flex; gap: 12px; font-size: 0.8rem; }
+.lt-app-list .lt-app-links a { color: var(--show-color-text); font-weight: 700; }
+.lt-app-list a:hover { text-decoration: underline; }
+
+/* ---- Partners ---- */
+.lt-partners { margin-top: var(--sp-10); border-top: 1px solid var(--lt-rule); padding-top: var(--sp-4); display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; font-family: var(--lt-ui); font-size: 0.86rem; }
+.lt-partners strong { color: var(--lt-muted); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.74rem; }
+.lt-partners a { color: var(--lt-ink); font-weight: 600; }
+.lt-partners a:hover { color: var(--nn-white); text-decoration: underline; }
 
 /* ---- Listen rail ---- */
-.lt-listen ul {
+.lt-listen > ul {
   list-style: none; margin: 0; padding: 0 0 var(--sp-3); display: flex; gap: var(--sp-4); overflow-x: auto;
   scroll-snap-type: x mandatory; scrollbar-width: thin;
   -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 56px), transparent);
   mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 56px), transparent);
 }
-.lt-listen li { flex: 0 0 150px; scroll-snap-align: start; }
-.lt-listen img { width: 150px; height: 150px; border-radius: 10px; border-bottom: 3px solid var(--show-color); object-fit: cover; }
+.lt-listen > ul > li { flex: 0 0 150px; scroll-snap-align: start; }
+.lt-listen > ul img { width: 150px; height: 150px; border-radius: 10px; border-bottom: 3px solid var(--show-color); object-fit: cover; }
 .lt-listen-name { font-family: var(--lt-ui); font-weight: 700; font-size: 0.88rem; line-height: 1.3; margin: 8px 0 2px; color: var(--lt-ink); }
 .lt-listen-name a:hover { color: var(--nn-white); text-decoration: underline; }
 .lt-listen-sched { font-family: var(--lt-ui); font-size: 0.75rem; color: var(--lt-muted); margin: 0; }
@@ -234,15 +455,6 @@ a.lt-media:hover img { transform: scale(1.03); }
 .lt-listen-links a { color: var(--show-color-text); font-weight: 700; }
 .lt-listen-links a:hover { text-decoration: underline; }
 
-/* ---- Newsletter band ---- */
-.lt-signup {
-  margin-top: var(--sp-12); border: 1px solid var(--lt-rule-strong); border-radius: 16px; padding: var(--sp-8) var(--sp-6);
-  display: grid; grid-template-columns: minmax(0, 1.4fr) auto; gap: var(--sp-6); align-items: center;
-  background: linear-gradient(135deg, rgba(107, 71, 255, 0.16), rgba(0, 212, 255, 0.06));
-}
-.lt-signup h2 { font-family: var(--lt-head); font-size: 1.6rem; margin: 0 0 6px; }
-.lt-signup p { font-family: var(--lt-ui); color: var(--lt-muted); margin: 0; line-height: 1.5; }
-.lt-signup .lt-signup-actions { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
 .lt-note { font-family: var(--lt-ui); font-size: 0.8rem; color: var(--lt-muted); margin-top: var(--sp-8); line-height: 1.5; }
 .lt-note a, .lt-edition-note a { color: var(--lt-cyan); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 
@@ -250,8 +462,10 @@ a.lt-media:hover img { transform: scale(1.03); }
 
 /* ---- Responsive ---- */
 @media (max-width: 1100px) {
-  .lt-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .lt-grid-3, .lt-popular ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lt-grid-4, .lt-watch-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lt-grid-3, .lt-charts.is-single .lt-popular ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lt-shorts ul { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .lt-gallery-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 900px) {
   .lt-top { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); }
@@ -261,7 +475,8 @@ a.lt-media:hover img { transform: scale(1.03); }
   .lt-latest li:nth-child(n+6) { display: none; }
   .lt-section-grid { grid-template-columns: minmax(0, 1fr); }
   .lt-pair { gap: var(--sp-6); }
-  .lt-signup { grid-template-columns: minmax(0, 1fr); }
+  .lt-signup, .lt-personal, .lt-convo-grid, .lt-charts, .lt-trust, .lt-shelf, .lt-apps, .lt-claim-wrap .nn-mira-claim { grid-template-columns: minmax(0, 1fr); }
+  .lt-claim-wrap .nn-mira-claim__claim { grid-row: auto; font-size: 1.12rem; }
 }
 @media (max-width: 640px) {
   .lt-page .container { padding-left: var(--sp-4); padding-right: var(--sp-4); }
@@ -278,7 +493,31 @@ a.lt-media:hover img { transform: scale(1.03); }
   .lt-row { grid-template-columns: minmax(0, 1fr) 112px; }
   .lt-pair { grid-template-columns: minmax(0, 1fr); }
   .lt-feature .lt-hl, .lt-pair .lt-hl { font-size: 1.24rem; }
-  .lt-grid-3, .lt-popular ol { grid-template-columns: minmax(0, 1fr); }
+  .lt-grid-3, .lt-charts.is-single .lt-popular ol { grid-template-columns: minmax(0, 1fr); }
+  .lt-watch-grid { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  /* Videos read as a list on a phone, like the top stories. */
+  .lt-video { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: var(--sp-3); padding: 12px 0; border-bottom: 1px solid var(--lt-rule); align-items: start; }
+  .lt-video .lt-hl { margin-top: 0; font-size: 0.98rem; }
+  .lt-video .lt-media { border-radius: 6px; border-bottom-width: 2px; }
+  .lt-video .lt-media::after { width: 30px; height: 22px; left: 6px; bottom: 6px; background-size: 13px; }
+  .lt-video .lt-media.is-card { padding: 8px 8px 8px 42px; }
+  .lt-video .lt-media.is-card span { font-size: 0.7rem; }
+  .lt-shorts ul { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; gap: var(--sp-3); }
+  .lt-shorts ul::-webkit-scrollbar { display: none; }
+  .lt-shorts li { flex: 0 0 138px; scroll-snap-align: start; }
+  .lt-convo-feature { padding: var(--sp-4); }
+  .lt-convo-top { grid-template-columns: 84px minmax(0, 1fr); gap: var(--sp-3); }
+  .lt-convo-top img { width: 84px; height: 84px; border-radius: 8px; }
+  .lt-convo-hook { font-size: 1.04rem; margin-top: var(--sp-4); }
+  .lt-convo-feature .lt-lead-audio audio { width: 100%; }
+  .lt-form-row { flex-direction: column; }
+  .lt-form button { width: 100%; }
+  .lt-signup, .lt-personal { padding: var(--sp-5) var(--sp-4); }
+  .lt-gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lt-app-list { grid-template-columns: minmax(0, 1fr); }
+  .lt-tiles, .lt-trust .lt-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lt-book { grid-template-columns: 76px minmax(0, 1fr); }
+  .lt-book-cover { width: 76px; }
   .lt-edition-inner { display: block; padding: var(--sp-4); }
   .lt-edition-inner::after { content: ""; display: table; clear: both; }
   .lt-edition-cover { float: left; margin: 0 var(--sp-3) var(--sp-2) 0; }
@@ -288,8 +527,8 @@ a.lt-media:hover img { transform: scale(1.03); }
   .lt-feature .lt-more, .lt-feature .lt-more-label, .lt-pair .lt-more, .lt-pair .lt-more-label { display: none; }
   .lt-block-head h2 { font-size: 1.3rem; }
   .lt-hide-sm { display: none; }
-  .lt-listen li { flex-basis: 128px; }
-  .lt-listen img { width: 128px; height: 128px; }
+  .lt-listen > ul > li { flex-basis: 128px; }
+  .lt-listen > ul img { width: 128px; height: 128px; }
   .lt-signup { padding: var(--sp-6) var(--sp-4); }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -300,6 +539,7 @@ a.lt-media:hover img { transform: scale(1.03); }
 {% endblock %}
 
 {#- ---------------------------------------------------------------------- -#}
+{%- from "_macros.html.j2" import mira_claim -%}
 {%- macro story_href(s) -%}{{ path_prefix }}{{ s.post_url or s.show_page }}{%- endmacro -%}
 
 {%- macro media(s, eager=false) -%}
@@ -355,6 +595,181 @@ a.lt-media:hover img { transform: scale(1.03); }
 </li>
 {%- endmacro -%}
 
+{#- Conversations: the interview shows, the site's strongest web draw. The
+    claim comes from engine.brand through the mira_claim macro, never typed
+    here; the guest's terms are the claim's own basis paragraph. -#}
+{%- macro conversations_block() -%}
+{%- if conversations -%}
+{% set c = conversations[0] %}
+{% set cl = conversation_links %}
+<section class="lt-block container" id="conversations" aria-labelledby="lt-convo-h">
+    <div class="lt-block-head">
+        <h2 id="lt-convo-h">Conversations</h2>
+        <p class="lt-block-sub">Real people, interviewed live by {{ mira.host_name }}, the network's AI host.</p>
+        <div class="lt-block-links">
+            {% if cl.hub %}<a href="{{ path_prefix }}{{ cl.hub }}">All interviews →</a>{% endif %}
+            {% if cl.mira %}<a href="{{ path_prefix }}{{ cl.mira }}">Meet {{ mira.host_name }} →</a>{% endif %}
+        </div>
+    </div>
+    <div class="lt-convo-grid">
+        <article class="lt-convo-feature" style="--show-color:{{ c.brand_color }};">
+            <div class="lt-convo-top">
+                <a href="{{ path_prefix }}{{ c.post_url }}" tabindex="-1" aria-hidden="true">
+                    <picture>
+                        {% if c.cover_webp %}<source type="image/webp" srcset="{{ path_prefix }}{{ c.cover_webp }}">{% endif %}
+                        <img src="{{ path_prefix }}{{ c.cover_url }}" alt="{{ c.show_name }} cover art" width="132" height="132" loading="lazy" decoding="async">
+                    </picture>
+                </a>
+                <div>
+                    <p class="lt-kicker"><a href="{{ path_prefix }}{{ c.show_page }}">{{ c.show_name }}</a>{% if c.date %} <span class="lt-hub" style="color:var(--lt-muted);">{{ c.date }}</span>{% endif %}</p>
+                    <h3 class="lt-guest"><a href="{{ path_prefix }}{{ c.post_url }}">{{ c.guest }}</a></h3>
+                    {% if c.identifier %}<p class="lt-guest-id">{{ c.identifier }}</p>{% endif %}
+                </div>
+            </div>
+            {% if c.hook %}<p class="lt-convo-hook">{{ c.hook }}</p>{% endif %}
+            <div class="lt-meta">
+                {% if c.run_time %}<span>{{ c.run_time }}</span><span class="lt-dot" aria-hidden="true">•</span>{% endif %}
+                <span>Hosted by {{ mira.host_name }}{% if c.cohost %} with {{ c.cohost }}{% endif %}</span>
+            </div>
+            <div class="lt-lead-audio">
+                {% if c.audio_url %}<audio controls preload="none" src="{{ c.audio_url }}" aria-label="Play {{ c.show_name }} episode {{ c.episode }} with {{ c.guest }}"></audio>{% endif %}
+                <a class="lt-btn lt-btn--primary" href="{{ path_prefix }}{{ c.post_url }}">Read the conversation</a>
+            </div>
+        </article>
+        <div>
+            {% if conversations|length > 1 %}
+            <p class="lt-sublabel">More conversations</p>
+            <ul class="lt-convo-list">
+                {% for x in conversations[1:] %}
+                <li style="--show-color:{{ x.brand_color }};">
+                    <p class="lt-kicker"><a href="{{ path_prefix }}{{ x.show_page }}">{{ x.show_name }}</a>{% if x.date %} <time style="color:var(--lt-muted);font-weight:500;letter-spacing:0;text-transform:none;">{{ x.date }}</time>{% endif %}</p>
+                    <h3 class="lt-hl"><a href="{{ path_prefix }}{{ x.post_url }}">{{ x.guest }}</a></h3>
+                    {% if x.identifier %}<p class="lt-guest-id">{{ x.identifier }}</p>{% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% if cl.apply %}
+            <div class="lt-apply">
+                <h3>Be interviewed by {{ mira.host_name }}</h3>
+                <p>Tell us what you are building or have learned.{% if cl.guest_picks %} Every guest's book, tool and bet are on <a href="{{ path_prefix }}{{ cl.guest_picks }}" style="color:var(--lt-cyan);text-decoration:underline;">the guest picks page</a>.{% endif %}</p>
+                <div class="lt-signup-actions">
+                    {% for a in cl.apply %}<a class="lt-btn{% if loop.first %} lt-btn--primary{% endif %}" href="{{ path_prefix }}{{ a.url }}">Apply to {{ a.show_name }}</a>{% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="lt-claim-wrap">
+        {{ mira_claim() }}
+    </div>
+</section>
+{%- endif -%}
+{%- endmacro -%}
+
+{#- The one email ask on this page: the site's own signup form, posting
+    through assets/js/footer-subscribe.js to the account Worker's
+    /api/subscribe with list "member" and the capture source engine.funnel
+    owns (capture_source_site). Show picks are the Worker's closed tag set
+    (newsletter_tag), public shows only. -#}
+{%- macro signup_block() -%}
+<section class="container" id="signup" aria-labelledby="lt-signup-h">
+<div class="lt-signup">
+    <div>
+        <p class="lt-signup-kicker">Free · by email</p>
+        <h2 id="lt-signup-h">Get the shows you pick by email</h2>
+        <p>Pick the shows you want in your inbox. It's free, it sets up your free Nerra account, and every show stays free to hear either way.</p>
+    </div>
+    <form class="lt-form" method="post" action="#"
+          data-nn-subscribe="landing"
+          data-source="{{ capture_source_site }}"
+          data-label-loading="Subscribing…"
+          data-label-done="Check your email ✓"
+          data-label-idle="Subscribe"
+          data-label-error="Something went wrong — try again">
+        <div class="lt-form-row">
+            <label for="lt-email" class="visually-hidden" style="position:absolute;left:-9999px;">Email address</label>
+            <input id="lt-email" type="email" name="email" placeholder="you@example.com" autocomplete="email" required aria-label="Email address">
+            <button type="submit">Subscribe</button>
+        </div>
+        {% if signup_picks %}
+        <fieldset class="lt-picks">
+            <legend>Pick your shows <span>(optional)</span></legend>
+            <div class="lt-picks-grid">
+                {% for s in signup_picks[:8] %}<label><input type="checkbox" name="tag" value="{{ s.tag }}"> {{ s.name }}</label>{% endfor %}
+            </div>
+            {% if signup_picks|length > 8 %}
+            <details>
+                <summary>{{ signup_picks|length - 8 }} more shows</summary>
+                <div class="lt-picks-grid">
+                    {% for s in signup_picks[8:] %}<label><input type="checkbox" name="tag" value="{{ s.tag }}"> {{ s.name }}</label>{% endfor %}
+                </div>
+            </details>
+            {% endif %}
+        </fieldset>
+        {% endif %}
+        <p class="lt-form-status nn-subscribe-status" data-nn-subscribe-status role="status" aria-live="polite"></p>
+        <p class="lt-form-fine">Unsubscribe from any email in one click. <a href="{{ path_prefix }}privacy-policy.html">Privacy policy</a>.</p>
+    </form>
+</div>
+</section>
+{%- endmacro -%}
+
+{#- Watch: the newest English long-form per show and the newest hook Short
+    per show, from the committed youtube_videos.json indexes. The picture is
+    the episode's own scene art (gallery), else a titled card — never a
+    YouTube-hosted thumbnail. -#}
+{%- macro watch_block() -%}
+{%- if watch and (watch.longs or watch.shorts) -%}
+<section class="lt-block container" id="watch" aria-labelledby="lt-watch-h">
+    <div class="lt-block-head">
+        <h2 id="lt-watch-h">Watch</h2>
+        <p class="lt-block-sub">Every episode is also a video. Subscribe on YouTube:</p>
+        {% if watch.channels %}
+        <div class="lt-channels">
+            {% for ch in watch.channels %}<a class="lt-chip" href="{{ ch.url }}" target="_blank" rel="noopener"{% if ch.lang %} lang="{{ ch.lang }}"{% endif %}><span class="lt-yt-badge" aria-hidden="true">▶</span>{{ ch.handle }} <small class="lt-chip-count">{{ ch.label }}</small></a>{% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% if watch.longs %}
+    <div class="lt-watch-grid">
+        {% for v in watch.longs %}
+        <article class="lt-video" style="--show-color:{{ v.brand_color }};">
+            {% if v.image_url %}
+            <a href="{{ v.watch_url }}" class="lt-media" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
+                <img src="{{ v.image_url }}" alt="AI-generated scene from {{ v.show_name }} episode {{ v.episode }}" width="{{ 450 if v.image_orientation == 'portrait' else 800 }}" height="{{ 800 if v.image_orientation == 'portrait' else 450 }}" loading="lazy" decoding="async">
+            </a>
+            {% else %}
+            <a href="{{ v.watch_url }}" class="lt-media is-card" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span>{{ v.show_name }}</span></a>
+            {% endif %}
+            <div>
+                <h3 class="lt-hl"><a href="{{ v.watch_url }}" target="_blank" rel="noopener">{{ v.display_title }}</a></h3>
+                <p class="lt-kicker" style="margin-top:6px;"><a href="{{ path_prefix }}{{ v.show_page }}">{{ v.show_name }}</a> <time datetime="{{ v.date_raw }}" style="color:var(--lt-muted);font-weight:500;letter-spacing:0;text-transform:none;">{{ v.date }}</time></p>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if watch.shorts %}
+    <div class="lt-shorts">
+        <p class="lt-sublabel">Shorts</p>
+        <ul>
+            {% for v in watch.shorts %}
+            <li class="lt-short" style="--show-color:{{ v.brand_color }};">
+                <a href="{{ v.watch_url }}" class="lt-media{% if not v.image_url %} is-cover{% endif %}" target="_blank" rel="noopener">
+                    {% if v.image_url %}<img src="{{ v.image_url }}" alt="AI-generated scene from {{ v.show_name }} episode {{ v.episode }}" width="{{ 450 if v.image_orientation == 'portrait' else 800 }}" height="{{ 800 if v.image_orientation == 'portrait' else 450 }}" loading="lazy" decoding="async">{% endif %}
+                    <span class="lt-short-title">{{ v.display_title }}</span>
+                </a>
+                <p class="lt-kicker"><a href="{{ path_prefix }}{{ v.show_page }}">{{ v.show_name }}</a></p>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</section>
+{%- endif -%}
+{%- endmacro -%}
+
 {% block content %}
 <div class="lt-page">
 {% set p = page %}
@@ -377,16 +792,20 @@ a.lt-media:hover img { transform: scale(1.03); }
 </div>
 {% else %}
 
-{% if p.sections %}
 <div class="container"><nav class="lt-secnav" aria-label="Sections on this page">
     <ul>
-        <li><a href="#top-stories">Top stories</a></li>
+        {% if p.top %}<li><a href="#top-stories">Top stories</a></li>{% endif %}
+        {% if conversations %}<li><a href="#conversations">Conversations</a></li>{% endif %}
+        {% if watch and (watch.longs or watch.shorts) %}<li><a href="#watch">Watch</a></li>{% endif %}
         {% for sec in p.sections %}<li><a href="#section-{{ sec.id }}">{{ sec.heading }}</a></li>{% endfor %}
         {% if p.more %}<li><a href="#section-more">More</a></li>{% endif %}
+        {% if glance or trust %}<li><a href="#numbers">By the numbers</a></li>{% endif %}
+        {% if dashboards or trackers %}<li><a href="#dashboards">Dashboards</a></li>{% endif %}
+        {% if personal %}<li><a href="#personal">Nerra Personal</a></li>{% endif %}
         <li><a href="#listen">All shows</a></li>
+        <li><a href="#signup">Newsletter</a></li>
     </ul>
 </nav></div>
-{% endif %}
 
 <div class="lt-ticker container" role="region" aria-label="Latest headlines">
     <span class="lt-ticker-label">Latest</span>
@@ -412,6 +831,19 @@ a.lt-media:hover img { transform: scale(1.03); }
                 {% if s.post_url %}<a class="lt-btn lt-btn--primary" href="{{ path_prefix }}{{ s.post_url }}">Read the full story</a>{% endif %}
                 <a class="lt-btn" href="{{ path_prefix }}{{ s.show_page }}">More from {{ s.show_name }}</a>
             </div>
+            {%- if lead_share %}
+            {#- Each shared URL is built by engine.funnel (engine.blog._share_urls),
+                the blog share row's own builder, so a click a reader's share
+                earns is attributable to this story and the platform. -#}
+            <div class="lt-share" aria-label="Share this story">
+                <span>Share</span>
+                <a href="https://twitter.com/intent/tweet?url={{ lead_share.x | urlencode }}&amp;text={{ s.hook | urlencode }}" target="_blank" rel="noopener">X</a>
+                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ lead_share.linkedin | urlencode }}" target="_blank" rel="noopener">LinkedIn</a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u={{ lead_share.facebook | urlencode }}" target="_blank" rel="noopener">Facebook</a>
+                <a href="https://wa.me/?text={{ (s.hook ~ ' — ' ~ lead_share.whatsapp) | urlencode }}" target="_blank" rel="noopener">WhatsApp</a>
+                <a href="mailto:?subject={{ s.hook | urlencode }}&amp;body={{ lead_share.email | urlencode }}">Email</a>
+            </div>
+            {%- endif %}
         </div>
     </article>
 
@@ -427,6 +859,8 @@ a.lt-media:hover img { transform: scale(1.03); }
         </ol>
     </aside>
 </section>
+
+{{ conversations_block() }}
 
 {#- Top stories -#}
 {% if p.top %}
@@ -447,6 +881,8 @@ a.lt-media:hover img { transform: scale(1.03); }
     </div>
 </section>
 {% endif %}
+
+{{ signup_block() }}
 
 {#- Nerra Daily: the whole network in one episode, hosted by Mira -#}
 {% if edition %}
@@ -473,6 +909,8 @@ a.lt-media:hover img { transform: scale(1.03); }
 </div>
 </section>
 {% endif %}
+
+{{ watch_block() }}
 
 {#- Topic sections -#}
 {% for sec in p.sections %}
@@ -524,24 +962,186 @@ a.lt-media:hover img { transform: scale(1.03); }
 </section>
 {% endif %}
 
-{#- Most played this week (OP3), when the data is fresh -#}
-{% if popular %}
-<section class="lt-block lt-popular container" aria-labelledby="lt-pop-h">
-    <div class="lt-block-head"><h2 id="lt-pop-h">Most played this week</h2></div>
-    <ol>
-        {% for ep in popular %}
-        <li style="--show-color:{{ ep.brand_color or '#6B47FF' }};">
-            <div>
-                <p class="lt-kicker"><a href="{{ path_prefix }}{{ ep.show_page }}">{{ ep.show_name }}</a></p>
-                <h3 class="lt-hl"><a href="{{ path_prefix }}{{ ep.blog_url or ep.show_page }}">{{ ep.title }}</a></h3>
-            </div>
-        </li>
-        {% endfor %}
-    </ol>
+{% endif %}{#- p.lead -#}
+
+{#- Most played this week (OP3) and most read on the site (GA4), each only
+    when its committed snapshot is fresh. -#}
+{% if popular or most_read %}
+<section class="lt-block container" id="popular" aria-labelledby="lt-pop-h">
+    <div class="lt-block-head"><h2 id="lt-pop-h">Most popular</h2></div>
+    <div class="lt-charts{% if not (popular and most_read) %} is-single{% endif %}">
+        {% if popular %}
+        <div class="lt-popular">
+            <h3 class="lt-chart-h">Most played this week</h3>
+            <p class="lt-chart-sub">Podcast downloads, measured by OP3</p>
+            <ol>
+                {% for ep in popular %}
+                <li style="--show-color:{{ ep.brand_color or '#6B47FF' }};">
+                    <div>
+                        <p class="lt-kicker"><a href="{{ path_prefix }}{{ ep.show_page }}">{{ ep.show_name }}</a></p>
+                        <h4 class="lt-hl"><a href="{{ path_prefix }}{{ ep.blog_url or ep.show_page }}">{{ ep.title }}</a></h4>
+                    </div>
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
+        {% endif %}
+        {% if most_read %}
+        <div class="lt-popular">
+            <h3 class="lt-chart-h">Most read on the site</h3>
+            <p class="lt-chart-sub">Article views, last {{ most_read_days or 28 }} days</p>
+            <ol>
+                {% for ep in most_read %}
+                <li style="--show-color:{{ ep.brand_color }};">
+                    <div>
+                        <p class="lt-kicker"><a href="{{ path_prefix }}{{ ep.show_page }}">{{ ep.show_name }}</a></p>
+                        <h4 class="lt-hl"><a href="{{ path_prefix }}{{ ep.blog_url }}">{{ ep.title }}</a></h4>
+                        {% if ep.dek %}<p class="lt-dek">{{ ep.dek }}</p>{% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
+        {% endif %}
+    </div>
 </section>
 {% endif %}
 
-{% endif %}{#- p.lead -#}
+{% if not p.lead %}{{ signup_block() }}{% endif %}
+
+{#- By the numbers + the claims record -#}
+{% if glance or trust %}
+<section class="lt-block container" id="numbers" aria-labelledby="lt-num-h">
+    <div class="lt-block-head"><h2 id="lt-num-h">The network, by the numbers</h2>{% if glance %}<p class="lt-block-sub">Counted from the feeds, the claims ledger and the analytics the network publishes.</p>{% endif %}</div>
+    {% if glance %}
+    <div class="lt-tiles">
+        {% for t in glance %}<div class="lt-tile"><div class="lt-tile-num">{{ t.value }}</div><div class="lt-tile-label">{{ t.label }}</div></div>{% endfor %}
+    </div>
+    {% endif %}
+    {% if trust %}
+    {% set tt = trust.totals %}
+    <div class="lt-trust lt-panel">
+        <div>
+            <h3>Every claim, on the record</h3>
+            <p>Each episode's factual claims are checked against the source they cite, and what cannot be confirmed is published and marked rather than hidden. Last {{ tt.days }} days, every show:</p>
+        </div>
+        <div>
+            <div class="lt-tiles">
+                <div class="lt-tile"><div class="lt-tile-num">{{ '{:,}'.format(tt.claims) }}</div><div class="lt-tile-label">claims on the ledger across {{ tt.episodes }} episodes</div></div>
+                {% if tt.verified_share_pct is not none %}<div class="lt-tile lt-tile--verified"><div class="lt-tile-num">{{ tt.verified_share_pct }}%</div><div class="lt-tile-label">verified against their source</div></div>{% endif %}
+                {% if tt.flagged is not none %}<div class="lt-tile lt-tile--flagged"><div class="lt-tile-num">{{ '{:,}'.format(tt.flagged) }}</div><div class="lt-tile-label">published and marked, not yet verified</div></div>{% endif %}
+                <div class="lt-tile"><div class="lt-tile-num">{{ tt.corrections }}</div><div class="lt-tile-label">corrections filed</div></div>
+            </div>
+            {% if trust_links %}<p class="lt-links-row">{% for l in trust_links %}<a href="{{ path_prefix }}{{ l.url }}">{{ l.label }}</a>{% endfor %}</p>{% endif %}
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endif %}
+
+{#- Live dashboards + Story Trackers -#}
+{% if dashboards or trackers %}
+<section class="lt-block container" id="dashboards" aria-labelledby="lt-dash-h">
+    <div class="lt-block-head"><h2 id="lt-dash-h">Live dashboards &amp; trackers</h2><p class="lt-block-sub">Pages the network keeps current between episodes.</p></div>
+    {% if dashboards %}
+    <div class="lt-dash-grid">
+        {% for d in dashboards %}
+        <a class="lt-dash" href="{{ path_prefix }}{{ d.url }}" style="--show-color:{{ d.brand_color }};">
+            <span class="lt-kicker">{{ d.show_name }}</span>
+            <span class="lt-dash-title">{{ d.title }}</span>
+            <span class="lt-dash-desc">{{ d.desc }}</span>
+            {% if d.fact %}<span class="lt-dash-fact">{{ d.fact }}</span>{% endif %}
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if trackers %}
+    <div class="lt-trackers">
+        <p class="lt-sublabel">Story Trackers — every running story a show follows</p>
+        <ul class="lt-chips">
+            {% for t in trackers %}<li><a class="lt-chip" href="{{ path_prefix }}{{ t.url }}" style="--show-color:{{ t.brand_color }};"><span class="lt-chip-dot" aria-hidden="true"></span>{{ t.name }}</a></li>{% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</section>
+{% endif %}
+
+{#- Topics + Explore -#}
+{% if topics or discover_links %}
+<section class="lt-block container" id="discover" aria-labelledby="lt-disc-h">
+    <div class="lt-block-head"><h2 id="lt-disc-h">Find your subject</h2>{% if discover_links %}<div class="lt-block-links">{% for l in discover_links %}<a href="{{ path_prefix }}{{ l.url }}">{{ l.label }} →</a>{% endfor %}</div>{% endif %}</div>
+    {% if topics %}
+    <ul class="lt-chips">
+        {% for t in topics %}<li><a class="lt-chip" href="{{ path_prefix }}{{ t.url }}">{{ t.heading }}</a></li>{% endfor %}
+    </ul>
+    {% endif %}
+</section>
+{% endif %}
+
+{#- Nerra Personal -#}
+{% if personal %}
+<section class="lt-block container" id="personal" aria-labelledby="lt-pers-h">
+<div class="lt-personal">
+    <div>
+        <p class="lt-signup-kicker">Nerra Personal</p>
+        <h2 id="lt-pers-h">Your own daily show, in your order</h2>
+        <p>A private daily feed of the shows you pick, in the order you pick them, anchored by {{ mira.host_name }}, the network's AI host, who greets you by name.</p>
+        <ul>
+            <li>Pick the shows you want; they arrive as one private episode every morning</li>
+            <li>A private feed that works in any podcast app</li>
+            <li>Every show stays free to hear either way</li>
+        </ul>
+    </div>
+    <div class="lt-personal-cta">
+        {% if personal.live %}
+        <a class="lt-btn lt-btn--primary" href="{{ path_prefix }}{{ personal.plans }}" onclick="if(typeof gtag==='function'){gtag('event','select_personal_upsell',{placement:'landing_test'});}">{% if personal.trial_days %}Try it free for {{ personal.trial_days }} days{% else %}See plans{% endif %} →</a>
+        {% else %}
+        <a class="lt-btn lt-btn--primary" href="{{ path_prefix }}{{ personal.join }}" onclick="if(typeof gtag==='function'){gtag('event','select_personal_upsell',{placement:'landing_test'});}">Launching soon — join free for first access →</a>
+        {% endif %}
+        {% if personal.interest %}<a class="lt-btn" href="{{ path_prefix }}{{ personal.interest }}">Tips by email, no charge</a>{% endif %}
+        <span class="lt-personal-note">{% if personal.account %}<a href="{{ path_prefix }}{{ personal.account }}">Your account</a>{% endif %}{% if personal.account and personal.support %} · {% endif %}{% if personal.support %}<a href="{{ path_prefix }}{{ personal.support }}">Support the network</a>{% endif %}</span>
+    </div>
+</div>
+</section>
+{% endif %}
+
+{#- Books + the image gallery -#}
+{% if books or gallery %}
+<section class="lt-block container" id="shelf" aria-labelledby="lt-shelf-h">
+    <div class="lt-block-head"><h2 id="lt-shelf-h">Books &amp; the image gallery</h2></div>
+    <div class="lt-shelf"{% if not (books and gallery) %} style="grid-template-columns:minmax(0,1fr);"{% endif %}>
+        {% if books %}
+        <div>
+            <p class="lt-sublabel">Books from the shows</p>
+            <ul class="lt-books">
+                {% for b in books %}
+                <li class="lt-book" style="--show-color:{{ b.brand_color }};">
+                    <a class="lt-book-cover" href="{{ path_prefix }}books.html" tabindex="-1" aria-hidden="true"><b>{{ b.title }}</b><small>Volume {{ b.volume_number }}{% if b.author %} · {{ b.author }}{% endif %}</small></a>
+                    <div>
+                        <p class="lt-kicker">{{ b.show_name }}</p>
+                        <h3 class="lt-hl"><a href="{{ path_prefix }}books.html">{{ b.full_title }}</a></h3>
+                        {% if b.subtitle %}<p class="lt-dek">{{ b.subtitle }}{% if b.chapters %} · {{ b.chapters }} chapters{% endif %}</p>{% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            <p class="lt-links-row"><a href="{{ path_prefix }}books.html">Ebooks and audiobooks →</a></p>
+        </div>
+        {% endif %}
+        {% if gallery %}
+        <div>
+            <p class="lt-sublabel">From the image gallery{% if gallery_license %} · free to reuse under {{ gallery_license }}{% endif %}</p>
+            <ul class="lt-gallery-grid">
+                {% for g in gallery %}
+                <li><a href="{{ path_prefix }}gallery.html"><img src="{{ g.url }}" alt="AI-generated scene from {{ g.show_name }} episode {{ g.episode_num }}" width="800" height="450" loading="lazy" decoding="async"><span>{{ g.show_name }}</span></a></li>
+                {% endfor %}
+            </ul>
+            <p class="lt-links-row"><a href="{{ path_prefix }}gallery.html">Browse the gallery →</a></p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
 
 {#- Every public show: cover, page, blog -#}
 {% if listen %}
@@ -565,21 +1165,51 @@ a.lt-media:hover img { transform: scale(1.03); }
         </li>
         {% endfor %}
     </ul>
+    {% set le = listen_everywhere %}
+    {% if le and (le.platforms or le.languages or le.how_to_listen) %}
+    <div class="lt-apps">
+        {% if le.platforms %}
+        <div>
+            <p class="lt-sublabel">In your podcast app</p>
+            <ul class="lt-app-list">
+                {% for a in le.platforms %}
+                <li style="--show-color:{{ a.brand_color }};">
+                    <a class="lt-app-name" href="{{ path_prefix }}{{ a.show_page }}">{{ a.name }}</a>
+                    <span class="lt-app-links">
+                        {% if a.apple %}<a href="{{ a.apple }}" target="_blank" rel="noopener" aria-label="{{ a.name }} on Apple Podcasts">Apple</a>{% endif %}
+                        {% if a.spotify %}<a href="{{ a.spotify }}" target="_blank" rel="noopener" aria-label="{{ a.name }} on Spotify">Spotify</a>{% endif %}
+                        {% if a.rss %}<a href="{{ path_prefix }}{{ a.rss }}" aria-label="{{ a.name }} RSS feed">RSS</a>{% endif %}
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        <div>
+            {% if le.languages or le.ru_pages %}
+            <p class="lt-sublabel">In other languages</p>
+            <ul class="lt-chips">
+                {% for l in le.languages %}<li><a class="lt-chip" href="{{ path_prefix }}{{ le.how_to_listen or 'how-to-listen.html' }}#feeds" lang="{{ l.lang }}">{{ l.label }}<small class="lt-chip-count" lang="en">{{ l.count }} {{ "feed" if l.count == 1 else "feeds" }}</small></a></li>{% endfor %}
+                {% if le.ru_pages %}<li><a class="lt-chip" href="{{ path_prefix }}{{ le.ru_pages }}" lang="ru">Подкасты на русском</a></li>{% endif %}
+            </ul>
+            {% endif %}
+            <p class="lt-links-row">
+                {% if le.how_to_listen %}<a href="{{ path_prefix }}{{ le.how_to_listen }}">How to listen</a>{% endif %}
+                {% if le.player %}<a href="{{ path_prefix }}{{ le.player }}">Network player</a>{% endif %}
+                {% if le.network_rss %}<a href="{{ path_prefix }}{{ le.network_rss }}">Latest from every show (RSS)</a>{% endif %}
+            </p>
+        </div>
+    </div>
+    {% endif %}
 </section>
 {% endif %}
 
-<section class="container" aria-labelledby="lt-signup-h">
-<div class="lt-signup">
-    <div>
-        <h2 id="lt-signup-h">Get the shows you pick by email</h2>
-        <p>Pick the shows you want in your inbox. It's free, and every show stays free to hear either way.</p>
-    </div>
-    <div class="lt-signup-actions">
-        <a class="lt-btn lt-btn--primary" href="#newsletter-signup">Choose your shows</a>
-        <a class="lt-btn" href="{{ path_prefix }}how-to-listen.html">Other ways to listen</a>
-    </div>
-</div>
-</section>
+{% if partners %}
+<div class="container"><nav class="lt-partners" aria-label="For partners and guests">
+    <strong>Partners &amp; guests</strong>
+    {% for l in partners %}<a href="{{ path_prefix }}{{ l.url }}">{{ l.label }}</a>{% endfor %}
+</nav></div>
+{% endif %}
 
 <p class="lt-note container">This is a test layout. Headlines are each episode's own headline; pictures are the AI-generated scene art made for that episode, or the show's cover where an episode has none. Every episode is written and narrated by AI — <a href="{{ path_prefix }}ai-disclosure.html">how we use AI</a>.</p>
 

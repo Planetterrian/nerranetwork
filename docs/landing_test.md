@@ -80,3 +80,94 @@ topic hub only when that hub page is actually built (`renderable_hubs`).
   above the show grid), or should this become the homepage outright?
 - Shows without gallery art (the launch cohort, the weeklies) fall back to
   cover art; turning on scene art for them would make the page much richer.
+
+## v2 — the whole site (Oct 17 2026, second pass)
+
+Operator request: "do another full review of the existing site and integrate
+items such that the full site is covered off and represented on the new
+landing page and would help to grow traffic and audience and subscribers
+from the content." Guards: `tests/test_landing_test_v2_2026_10_17.py` (and
+one intentional change to the v1 guard, below).
+
+### What the data said, and the order it set
+
+| Signal (committed file) | Reading | What it decided |
+|---|---|---|
+| GA4 landing pages, 28 days (`api/ga4_stats.json`) | `/` 45 sessions, then `/blog/age_of_ai/ep005.html` 24 and `/age-of-ai.html` 23; then Nerra Daily, Mira, SpaceX, claims, Peptides | The interviews are the strongest web draw → **Conversations** sits directly under the lead + Latest, above Top stories |
+| Audience headline (`api/audience_headline.json`) | 11,937 RSS downloads / 30 d, +67% week over week; 62,244 YouTube views / 28 d (Shorts ~70%) | **Watch** gets its own band high on the page; downloads + views are the glance tiles |
+| Newsletter (`api/buttondown_stats.json`) | 12 subscribers | Signup is the weakest stage → a **real inline form** right after Top stories (the old band only jumped to the footer); the footer form is suppressed on this page so there is one ask, not two |
+| Claims ledgers (`digests/*/…_claims.json`) | 4,599 claims / 30 d, 95.5% verified | A **trust strip** with the same numbers `claims.html` prints |
+
+Final order: masthead · section nav · Latest ticker · **lead + Latest** ·
+**Conversations** · Top stories · **signup** · Nerra Daily · **Watch** ·
+topic sections · More · **Most popular** (played + read) · **By the numbers**
+(+ claims record) · **Live dashboards & trackers** · **Find your subject** ·
+**Nerra Personal** · **Books & the image gallery** · Listen to every show
+(+ **apps and languages**) · **Partners & guests** · note.
+
+### Inventory: every public surface, and where it is on the page
+
+| Surface | On the page as | Source of truth |
+|---|---|---|
+| Show pages (public shows) | Story kickers, Listen rail, app list | registry (`_build_all_shows_list`) |
+| Episode articles `blog/<slug>/epNNN.html` | Every headline (v1); Most read; Conversations | `_blog_url_for_episode` (stubs excluded) |
+| `blog/index.html` | "Every article" | — |
+| The Age of AI / Nerra Voices (show pages, articles) | **Conversations**: newest interview featured (guest, identifier, the digest's hook, run time, co-host read from the transcript, player), four more | `_interview_episode_cards` (the show page's own builder) |
+| `mira.html` + the Mira claim | "Meet Mira" + the claim block | `mira_claim` macro → `engine.brand` (claim + basis + correction invitation, never retyped) |
+| `age-of-ai-apply.html`, `nerra-voices-apply.html` | "Be interviewed by Mira" + Partners row | registry `apply_page` |
+| `guest-picks.html` | Link in the apply card | — |
+| `topics/interviews.html` | "All interviews" (only while the hub is built) | `renderable_hubs` |
+| YouTube @NerraNetwork / @NerraRU / @NerraFR | **Watch**: newest EN long-form per show (4) + newest hook Short per show (6), subscribe chips for all three channels | `digests/<dir>/youtube_videos.json`; `engine.video_metadata.channel_subscribe_url` |
+| OP3 most played | Most played (v1, unchanged rule) | `_load_popular_episodes` |
+| GA4 most read | **Most read on the site** — articles only, ranks only, no counts; hidden when the snapshot is > 8 days old | `engine.landing_test.most_read_pages` |
+| `claims.html`, corrections policy, `ai-disclosure.html`, `editorial.html`, `data.html` | **Every claim, on the record** tiles + links (`editorial.html#corrections` — the section gained that id) | `_claims_network_ledger`, now the ONE function `claims.html` also calls |
+| Network numbers | **By the numbers**: public shows, episodes in the last 7 days (feed pubDates), languages, 30-day downloads (+ week over week only when up), 28-day YouTube views | `engine.landing_test.glance_numbers`; a missing figure is no tile, never 0 |
+| `spacex-dashboard.html`, `tesla-dashboard.html`, `offshore-north-dashboard.html`, `offshore-north-glossary.html`, `modern-investing-performance.html` | **Live dashboards** cards; a dated one-line fact where the committed data has one (next launch NET, TSLA last quote with its date, EMIRA IV's last tracker fix with date + source, glossary term count) | `api/spacex_launches.json`, `api/tsla.json`, `api/offshore_north_dashboard.json`, `site/data/offshore_north_glossary.json` |
+| Story Trackers `*-narrative.html` | Chip row, public shows only (the desks' trackers are not linked) | file exists |
+| Topic hubs, `topics/index.html`, `explore.html`, `start-here.html` | **Find your subject** chips + links | `renderable_hubs` (never a hub that is not built) |
+| `join.html`, `account.html`, `support.html`, `personal-interest.html` | **Nerra Personal** band; CTA fires `select_personal_upsell` (`placement: landing_test`), already in `ENGAGEMENT_EVENTS` | `STRIPE_LINK_PERSONAL` decides "See plans" vs "Launching soon", the join page's own rule |
+| `books.html` | **Books**: the live volumes as typographic covers | `books_page_volumes` (retired volumes never appear) |
+| `gallery.html` | **Image gallery** strip: 8 recent scenes, one per show, none already printed on the page, with the licence from the index | slim `_network.index.json` (never the 22 MB manifest) |
+| `how-to-listen.html`, `player.html`, `network.rss`, per-show Apple/Spotify/RSS, per-language feeds, `ru/` | **Listen** band: the six most-listened shows' app links, languages the network still produces (with feed counts → `how-to-listen.html#feeds`), the Russian pages | registry; `_collect_language_feeds` filtered by `_listening_languages()` |
+| `sponsor.html`, `press.html`, `contact.html` | **Partners & guests** row | — |
+
+Growth details: Open Graph / Twitter image = the lead story's own scene
+(800×450 thumbnail with alt; the full-size file is behind the gallery's
+download gate), a schema.org `ItemList` of every story on the page (built as
+a dict, piped through `tojson`), and a share row on the lead whose URLs come
+from `engine.blog._share_urls` (`engine.funnel` campaigns, the blog's own
+share builder).
+
+### Deliberately left out
+
+- **Personal prices.** `$4.99` / `$8.99` are typed in `join_page.html.j2`, not
+  config, so this page names the product and links to the plans.
+- **YouTube-hosted thumbnails.** A video card shows its episode's own gallery
+  scene (a different one from the story card above it when the episode has
+  one), else a titled card. Nothing is fetched from `ytimg.com`.
+- **Book cover images.** The store covers are 3.4 MB PNGs and the gallery's
+  `book_cover` art belongs to the retired volume builds; the shelf uses
+  typographic covers in the show's colour.
+- **Subscriber count.** 12 is below `MIN_SOCIAL_PROOF_SUBSCRIBERS` (50).
+- **MIT's record numbers.** The alpha figures carry their own scoping rules;
+  the card links the verified record and states no number.
+- **A Prediction Markets board page.** None exists; the Board lives in the
+  episodes.
+- **A new capture source.** `engine.funnel` sources are acquisition channels
+  (`utm_source`), not placements; a new value would also need a Worker
+  deploy. The form sends `capture_source_site`, and a signup from this page
+  is already attributable by the `newsletter_signup` event's `page_path`.
+  **No Worker change.**
+- `login.html` (the account link covers it), `management.html` (operator
+  dashboard), `modern-investing-resources.html` (one show's hand-written
+  list), `about.html` / `faq.html` (in the footer on every page), per-show
+  `*-summaries.html` and `claims/<slug>.html` (one click from the show page
+  and `claims.html`), and the members-only desks (never shown).
+
+### Changed guard
+
+`tests/test_landing_test_2026_10_17.py::TestLinks::test_no_utm_on_internal_links`
+now treats a link as internal when it is relative or its HOST is
+`nerranetwork.com`. The lead's share row links to x.com, LinkedIn, Facebook
+and WhatsApp with the funnel-tagged article URL as a parameter — the blog
+share row's pattern — and the old substring check read those as internal.

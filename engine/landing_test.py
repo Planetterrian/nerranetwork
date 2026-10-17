@@ -39,6 +39,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
 
 from engine import titles as _titles
 from engine import topic_hubs as _hubs
+from engine.interviews import INTERVIEW_SHOW_SLUGS
 from engine.summaries_ssr import _display_date, _episode_number, _records
 
 #: Access modes whose top-level episodes are public. ``members_only`` shows
@@ -249,7 +250,9 @@ SCENE_MATCH_MIN_WORDS = 2
 
 def episode_scene(index: Optional[dict], slug: str, episode_num: Optional[int],
                   episode_date: str, *, hook: str = "",
-                  prompts: Optional[Dict[str, str]] = None) -> Optional[Dict[str, Any]]:
+                  prompts: Optional[Dict[str, str]] = None,
+                  portrait_first: bool = False,
+                  avoid_urls: Iterable[str] = ()) -> Optional[Dict[str, Any]]:
     """A scene image of exactly this episode, landscape first.
 
     Matches show, ``epNNN`` AND date: an episode id alone could be reused
@@ -259,6 +262,9 @@ def episode_scene(index: Optional[dict], slug: str, episode_num: Optional[int],
     whose prompt shares the most words with *hook* wins (SpaceX Ep133's first
     scene was the Optimus story; its Dragon scene is the one that belongs
     beside the Dragon headline). Otherwise the episode's first scene.
+    ``portrait_first`` tries the 9:16 set first (a Short's card).
+    ``avoid_urls`` skips scenes already printed elsewhere on the page, while
+    the episode has another scene to offer (never another episode's).
     Returns ``{"url", "orientation", "matched"}`` or ``None``.
     """
     if not index or not isinstance(episode_num, int) or not episode_date:
@@ -286,7 +292,9 @@ def episode_scene(index: Optional[dict], slug: str, episode_num: Optional[int],
     overrides = index.get("overrides") or {}
     hook_words = _salient(hook)
     prompts = prompts or {}
-    for use, orientation in ((LANDSCAPE_USE, "landscape"), (PORTRAIT_USE, "portrait")):
+    avoid = set(avoid_urls)
+    order = ((LANDSCAPE_USE, "landscape"), (PORTRAIT_USE, "portrait"))
+    for use, orientation in (order[::-1] if portrait_first else order):
         candidates = []
         for position, row in enumerate(index.get("images") or []):
             if len(row) <= max(i_id, i_ep, i_use):
@@ -302,6 +310,8 @@ def episode_scene(index: Optional[dict], slug: str, episode_num: Optional[int],
                 candidates.append((score, position, url))
         if not candidates:
             continue
+        fresh = [c for c in candidates if c[2] not in avoid]
+        candidates = fresh or candidates
         best = max(candidates, key=lambda c: (c[0], -c[1]))
         if best[0] >= SCENE_MATCH_MIN_WORDS:
             return {"url": best[2], "orientation": orientation, "matched": True}
@@ -476,3 +486,235 @@ def assemble(stories: Iterable[Dict[str, Any]], *,
         "story_count": len(ordered),
         "today_count": sum(1 for s in ordered if s.get("date_obj") == newest),
     }
+
+
+# ---------------------------------------------------------------------------
+# v2 — the rest of the site on the front page (Oct 17 2026, second pass)
+# ---------------------------------------------------------------------------
+#
+# Everything below is read from committed files by generate_html and passed
+# in; nothing here opens a file. Each helper returns an empty value when its
+# input is missing, and the template renders a section only when its value
+# is non-empty — unknown data renders nothing.
+
+#: The interview shows (``engine.interviews.INTERVIEW_SHOW_SLUGS``) are the
+#: site's strongest web draw (GA4, 28 days to Oct 16 2026: an Age of AI
+#: article and its show page were the 2nd and 3rd landing pages). They get a
+#: "Conversations" section of their own instead of competing as one more
+#: news story, so they are left out of the story flow.
+CONVERSATION_SLUGS = tuple(INTERVIEW_SHOW_SLUGS)
+
+#: Conversations shown: one feature + the rest as a list.
+CONVERSATION_LIMIT = 5
+
+#: Watch: newest EN long-form per show, and newest hook Short per show.
+WATCH_LONG_LIMIT = 4
+WATCH_SHORT_LIMIT = 6
+
+#: Gallery strip on the front page.
+GALLERY_STRIP_LIMIT = 8
+
+#: "Most read" rows from GA4's top pages.
+MOST_READ_LIMIT = 5
+
+_HASHTAG_TAIL_RE = re.compile(r"(?:\s+#\w+)+\s*$")
+
+
+def strip_hashtag_tail(title: str) -> str:
+    """``"SpaceX Dragon Runs… #Shorts"`` -> ``"SpaceX Dragon Runs…"``.
+
+    Dropping a trailing platform hashtag is not clipping a title: every word
+    of the title is kept, only the tag YouTube needs is removed."""
+    return _HASHTAG_TAIL_RE.sub("", (title or "").strip()).strip()
+
+
+def _video_date(video: dict) -> Optional[date]:
+    return _parse_date(str(video.get("published") or ""))
+
+
+def pick_videos(videos: Iterable[dict], *, kind: str, public_slugs: Iterable[str],
+                limit: int, audience_order: Sequence[str] = (),
+                channel: str = "en", max_age_days: int = MAX_STORY_AGE_DAYS,
+                ) -> List[dict]:
+    """The newest video of *kind* per show, newest first, at most *limit*.
+
+    Rows are the committed ``digests/<dir>/youtube_videos.json`` entries the
+    caller loaded. Only *channel* (English by default — the dub channels get
+    a subscribe link, not a card), only public shows, only a
+    ``https://www.youtube.com/`` watch URL, and nothing older than
+    *max_age_days* before the newest video picked. For Shorts the hook Short
+    (``window == "hook_open"``) wins over another window of the same day.
+    """
+    public = set(public_slugs)
+    rank = {slug: n for n, slug in enumerate(audience_order)}
+    best: Dict[str, dict] = {}
+    for video in videos:
+        if not isinstance(video, dict):
+            continue
+        slug = str(video.get("show_slug") or "")
+        url = str(video.get("watch_url") or "")
+        when = _video_date(video)
+        if (video.get("kind") != kind or slug not in public
+                or (video.get("channel") or "en") != channel
+                or not url.startswith("https://www.youtube.com/") or not when
+                or not strip_hashtag_tail(video.get("title") or "")):
+            continue
+        ep = video.get("episode") if isinstance(video.get("episode"), int) else 0
+        key = (when, 1 if video.get("window") == "hook_open" else 0, ep)
+        current = best.get(slug)
+        if current is None or key > current[0]:
+            best[slug] = (key, video)
+    chosen = sorted(best.values(),
+                    key=lambda kv: (-kv[0][0].toordinal(),
+                                    rank.get(kv[1]["show_slug"], 10_000),
+                                    kv[1]["show_slug"]))
+    if chosen:
+        newest = chosen[0][0][0]
+        chosen = [kv for kv in chosen if (newest - kv[0][0]).days <= max_age_days]
+    out = []
+    for key, video in chosen[:limit]:
+        row = dict(video)
+        row["display_title"] = strip_hashtag_tail(video.get("title") or "")
+        row["date_raw"] = key[0].isoformat()
+        row["date"] = _display_date(row["date_raw"])
+        out.append(row)
+    return out
+
+
+def gallery_strip(index: Optional[dict], *, public_slugs: Iterable[str],
+                  show_names: Optional[Dict[str, str]] = None,
+                  exclude_urls: Iterable[str] = (),
+                  limit: int = GALLERY_STRIP_LIMIT) -> List[Dict[str, str]]:
+    """Recent landscape scene thumbnails for the gallery strip.
+
+    From the network's SLIM gallery index (``_network.index.json`` — never
+    the 22 MB manifest): newest episode first, one image per show so the
+    strip shows the network rather than one flagship, public shows only,
+    story scenes only (``segment_card``; book art is never a scene), and no
+    image already printed beside a story on this page.
+    """
+    if not isinstance(index, dict):
+        return []
+    ef = index.get("episode_fields") or []
+    imf = index.get("image_fields") or []
+    try:
+        e_slug, e_date, e_id = (ef.index("show_slug"), ef.index("episode_date"),
+                                ef.index("episode_id"))
+        i_id, i_ep, i_use = (imf.index("image_id"), imf.index("episode"),
+                             imf.index("intended_use"))
+    except ValueError:
+        return []
+    base = (index.get("base_url") or "").rstrip("/")
+    overrides = index.get("overrides") or {}
+    episodes = index.get("episodes") or []
+    public = set(public_slugs)
+    names = show_names or {}
+    skip = set(exclude_urls)
+    candidates = []
+    for position, row in enumerate(index.get("images") or []):
+        if len(row) <= max(i_id, i_ep, i_use) or row[i_use] != LANDSCAPE_USE:
+            continue
+        n = row[i_ep]
+        if not isinstance(n, int) or not 0 <= n < len(episodes):
+            continue
+        ep = episodes[n]
+        if len(ep) <= max(e_slug, e_date, e_id):
+            continue
+        slug, ep_date, ep_id = ep[e_slug], str(ep[e_date] or ""), str(ep[e_id] or "")
+        if slug not in public or not _parse_date(ep_date):
+            continue
+        url = (overrides.get(str(position)) or {}).get("thumbnail_url") or (
+            f"{base}/{slug}/{ep_date}/{ep_id}/{row[i_id]}.thumb.webp" if base else "")
+        if not url.startswith("https://") or url in skip:
+            continue
+        candidates.append((ep_date, position, slug, ep_id, url))
+    candidates.sort(key=lambda c: (c[0], c[1]), reverse=True)
+    seen, out = set(), []
+    for ep_date, _pos, slug, ep_id, url in candidates:
+        if slug in seen:
+            continue
+        seen.add(slug)
+        digits = re.sub(r"\D", "", ep_id)
+        out.append({
+            "url": url,
+            "show_slug": slug,
+            "show_name": names.get(slug, slug),
+            "episode_num": str(int(digits)) if digits else "",
+            "date": _display_date(ep_date),
+        })
+        if len(out) >= limit:
+            break
+    return out
+
+
+_BLOG_EP_PATH_RE = re.compile(r"^/blog/([a-z0-9_]+)/ep(\d{3,4})\.html$")
+
+
+def most_read_pages(ga4: Optional[dict], *, public_slugs: Iterable[str],
+                    limit: int = MOST_READ_LIMIT) -> List[tuple]:
+    """``[(slug, episode_num), …]`` — the most-viewed episode ARTICLES in the
+    committed GA4 snapshot (``api/ga4_stats.json`` ``top_pages``), in GA4's
+    order. Show pages and the homepage are not articles and are skipped, as
+    is any show that is not public. No view count leaves this function: at
+    this site's size a number would read as anti-proof; the rank is the
+    information."""
+    if not isinstance(ga4, dict):
+        return []
+    public = set(public_slugs)
+    out: List[tuple] = []
+    for row in ga4.get("top_pages") or []:
+        if not isinstance(row, dict):
+            continue
+        match = _BLOG_EP_PATH_RE.match(str(row.get("pagePath") or ""))
+        if not match or match.group(1) not in public:
+            continue
+        key = (match.group(1), int(match.group(2)))
+        if key not in out:
+            out.append(key)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def _int(value) -> Optional[int]:
+    return value if isinstance(value, int) and not isinstance(value, bool) else None
+
+
+def glance_numbers(audience: Optional[dict], *, shows_publishing: int,
+                   episodes_this_week: Optional[int], languages: int,
+                   claims: Optional[dict] = None) -> List[Dict[str, str]]:
+    """The "network at a glance" tiles: computed, never typed.
+
+    Each tile is ``{"value", "label"}``. A figure the committed data does not
+    carry is left out — never printed as 0. *audience* is
+    ``api/audience_headline.json``; *claims* is the network totals block the
+    claims page renders (``engine.claims_ledger.network_ledger``).
+    """
+    tiles: List[Dict[str, str]] = []
+    if shows_publishing > 0:
+        tiles.append({"value": f"{shows_publishing}", "label": "public shows publishing"})
+    if _int(episodes_this_week):
+        tiles.append({"value": f"{episodes_this_week:,}",
+                      "label": "new episodes in the last 7 days"})
+    if languages > 1:
+        tiles.append({"value": f"{languages}", "label": "languages to listen in"})
+    net = audience.get("network") if isinstance(audience, dict) else None
+    net = net if isinstance(net, dict) else {}
+    downloads = _int(net.get("downloads_30d"))
+    if downloads:
+        label = "podcast downloads in 30 days"
+        wow = net.get("wow_pct")
+        if isinstance(wow, (int, float)) and not isinstance(wow, bool) and wow >= 1:
+            label += f", up {round(wow)}% on the week before"
+        tiles.append({"value": f"{downloads:,}", "label": label})
+    yt = net.get("youtube") if isinstance(net.get("youtube"), dict) else {}
+    views = _int(yt.get("views"))
+    if views:
+        tiles.append({"value": f"{views:,}", "label": "YouTube views in 28 days"})
+    totals = claims if isinstance(claims, dict) else {}
+    checked = _int(totals.get("claims"))
+    if checked:
+        tiles.append({"value": f"{checked:,}",
+                      "label": f"claims checked against their sources in "
+                               f"{totals.get('days') or 30} days"})
+    return tiles
