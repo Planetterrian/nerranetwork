@@ -4973,3 +4973,44 @@ experiments:
       Personal). Needs `wrangler deploy` in workers/scheduler. No audio or
       prompt change — outside landmine #17. Guards
       tests/test_seven_am_eastern_2026_10_17.py.
+  - id: audio-first-2026-10-17
+    title: "A run publishes its audio before it renders video"
+    area: reliability
+    shipped: 2026-10-17
+    readout: 2026-11-07
+    status: reading
+    baseline: >
+      Oct 2026: one commit at the end of each run; a flagship episode reached
+      main 34-40 minutes after its run started (video ~2/3 of it).
+    target: >
+      Median minutes from run start to the "(audio)" commit on main <= 18 for
+      the run_show slate; audio_first_pushed true on >= 95% of episodes; no
+      podcast app sees a second GUID for one episode.
+    criteria: >
+      Hit = all three. A false audio_first_pushed is not a lost episode (the
+      final commit carries it) but a recurring one means push contention on
+      the 5-minute slate.
+    notes: >
+      run_show _checkpoint_publish -> scripts/checkpoint_publish.sh;
+      update_rss_feed keep_existing_guid on the post-video rewrite.
+  - id: release-schedule-2026-10-17
+    title: "YouTube, X and newsletters released through the Eastern day"
+    area: growth
+    shipped: 2026-10-17
+    readout: 2026-11-14
+    status: reading
+    baseline: >
+      Oct 2026: every Short and long-form went public the minute it uploaded
+      (05:00-08:00 ET), the newsletter sent at run end, X posted from a
+      Pacific 6:30 AM - 7 PM grid.
+    target: >
+      Age-3 hook-Short median per channel (api/youtube_early_reach.json) and
+      long-form views per video at day 7 not below the four weeks before;
+      newsletter open rate not below baseline.
+    criteria: >
+      Read at a fixed age; compare the same channels. A scheduled video that
+      never went public, or a newsletter Buttondown left unsent, is a defect,
+      not a result.
+    notes: >
+      engine/release_schedule.py; youtube.release_schedule_enabled per show
+      reverts; youtube_long_publish_at / youtube_short_publish_at metrics.

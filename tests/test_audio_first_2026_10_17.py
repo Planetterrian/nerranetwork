@@ -33,7 +33,7 @@ def test_the_episode_is_complete_before_the_video():
         "    validation_passed = run_post_validation(",
         "    _checkpoint_publish(args, metrics)",
         "    youtube_urls = _publish_youtube(",
-        "        _write_rss_feed(youtube_long_url, refresh=True)",
+        "        _write_rss_feed(youtube_long_url, refresh=True,",
         "        _write_blog_post(youtube_long_url, youtube_short_url, refresh=True)",
         "    # 12b. Video podcast (July 2026 pilot).",
         "    # 12b. Send newsletter",
@@ -168,3 +168,14 @@ def test_a_failed_push_leaves_everything_staged_for_the_final_commit(clone):
     assert _git("rev-parse", "HEAD", cwd=work).stdout.strip() == head
     staged = _git("diff", "--cached", "--name-only", cwd=work).stdout
     assert "digests/s/S_Ep005_20261017.md" in staged
+
+
+# --------------------------------------------- a long-form scheduled later --
+def test_the_feed_says_when_a_scheduled_long_form_goes_public():
+    from engine.release_schedule import describe_public_at
+    morning = dt.datetime(2026, 10, 19, 10, 30, tzinfo=dt.timezone.utc)  # 6:30 AM EDT
+    assert describe_public_at("2026-10-19T16:30:00Z", now=morning) == "12:30 PM ET"
+    assert describe_public_at("2026-10-19T09:00:00Z", now=morning) == ""
+    assert describe_public_at("", now=morning) == ""
+    assert describe_public_at("garbage", now=morning) == ""
+    assert "Watch on YouTube{_when}" in RUN_SHOW

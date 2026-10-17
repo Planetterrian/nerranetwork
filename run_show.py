@@ -5183,7 +5183,8 @@ def run(args: argparse.Namespace) -> None:
     # 11. Update RSS feed. A function since Oct 17 2026: it runs once before
     # the video (audio first) and again after it when YouTube produced a
     # watch link, on the same GUID so no app downloads the episode twice.
-    def _write_rss_feed(youtube_long_url: str = "", *, refresh: bool = False) -> None:
+    def _write_rss_feed(youtube_long_url: str = "", *, refresh: bool = False,
+                        youtube_public_at: str = "") -> None:
         _t_rss = time.monotonic()
         if not (final_mp3 and final_mp3.exists()):
             return
@@ -5248,7 +5249,11 @@ def run(args: argparse.Namespace) -> None:
         # the RSS description so listeners on every podcast app can
         # click through to the video version.
         if youtube_long_url:
-            episode_desc += f"\n\n🎬 Watch on YouTube: {youtube_long_url}"
+            # A long-form scheduled for later in the day (engine/release_
+            # schedule.py, Oct 17 2026) says when it goes public, so the link
+            # never reads as broken in the hours before.
+            _when = f" (public from {youtube_public_at})" if youtube_public_at else ""
+            episode_desc += f"\n\n🎬 Watch on YouTube{_when}: {youtube_long_url}"
 
         # Drive listeners from the podcast apps back to the website: link the
         # network home page plus this episode's blog page (full show notes,
@@ -5675,7 +5680,10 @@ def run(args: argparse.Namespace) -> None:
 
     # 12d. The YouTube links reach the feed item and the blog post.
     if youtube_long_url:
-        _write_rss_feed(youtube_long_url, refresh=True)
+        from engine.release_schedule import describe_public_at as _describe_public_at
+        _write_rss_feed(youtube_long_url, refresh=True,
+                        youtube_public_at=_describe_public_at(
+                            youtube_urls.get("long_publish_at") or ""))
     if youtube_long_url or youtube_short_url:
         _write_blog_post(youtube_long_url, youtube_short_url, refresh=True)
 

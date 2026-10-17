@@ -189,3 +189,21 @@ def iso_utc(t: Optional[dt.datetime]) -> str:
     if t is None:
         return ""
     return _aware(t).astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def describe_public_at(stamp: str, *, now: Optional[dt.datetime] = None) -> str:
+    """'12:30 PM ET' for a publishAt still ahead, '' for one past or unreadable.
+
+    Read by run_show's feed rewrite: a long-form scheduled for the afternoon is
+    linked from the morning's feed item with the time it goes public.
+    """
+    if not stamp:
+        return ""
+    try:
+        t = dt.datetime.strptime(stamp, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=dt.timezone.utc)
+    except ValueError:
+        return ""
+    if t <= _aware(now or dt.datetime.now(dt.timezone.utc)):
+        return ""
+    local = t.astimezone(EASTERN)
+    return local.strftime("%I:%M %p ET").lstrip("0")
