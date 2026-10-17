@@ -5182,6 +5182,9 @@ def run(args: argparse.Namespace) -> None:
         extra_context["youtube_short_url"] = youtube_short_url
     if youtube_urls.get("x_clip_path"):
         extra_context["x_clip_path"] = youtube_urls["x_clip_path"]
+    for _k in ("x_long_url", "x_long_subtitles_url"):
+        if youtube_urls.get(_k):
+            extra_context[_k] = youtube_urls[_k]
     # Record YouTube publishing outcomes (extracted to engine/pipeline.py
     # as the first step of the larger run_show.py phase extraction effort
     # identified in the May 2026 review).
@@ -5722,7 +5725,8 @@ def run(args: argparse.Namespace) -> None:
             # link would cost another $0.20.
             from engine import x_queue
             from engine.x_post import (
-                clip_post_text, has_follow_ask, post_closers, post_media)
+                clip_post_text, has_follow_ask, long_form_reply_text, post_closers,
+                post_media)
             if "hook" not in extra_context and locals().get("hook"):
                 extra_context["hook"] = hook
             _clip = str(extra_context.get("x_clip_path") or "")
@@ -5761,6 +5765,21 @@ def run(args: argparse.Namespace) -> None:
             _queued, _due = x_queue.enqueue(
                 show_slug=config.slug, episode_num=episode_num, env_prefix=prefix,
                 text=_x_text, media_path=_media_for_x, media_kind=_kind)
+            # Oct 17 2026: the full episode, as a reply under this post.
+            _long_url = extra_context.get("x_long_url") or ""
+            _long_subs = extra_context.get("x_long_subtitles_url") or ""
+            if _long_url and _queued:
+                _lq, _lwhy = x_queue.enqueue_reply(
+                    show_slug=config.slug, episode_num=episode_num, env_prefix=prefix,
+                    text=long_form_reply_text(_x_label(config), episode_num),
+                    media_url=_long_url, subtitles_url=_long_subs)
+                metrics.record("x_long_form_reply", "queued" if _lq else _lwhy)
+            elif _long_url:
+                # No queue, no parent row to reply under: drop the hosted copy.
+                for _u in (_long_url, _long_subs):
+                    if _u:
+                        x_queue.forget_media(_u)
+                metrics.record("x_long_form_reply", "no_parent_queue")
             if _queued:
                 # Oct 17 2026: a queued post is handed off, not posted — the
                 # x-queue workflow posts it later and its run is the record of
@@ -8126,6 +8145,21 @@ def _publish_youtube(
                 result["long_form_render_duration_s"],
                 _pipeline_budget_remaining(),
             )
+            # ---- Full episode on X (Oct 17 2026) ----
+            # Host the long-form MP4 (and its SRT) now, before the cleanup
+            # below deletes it; the X step queues it as a reply under the
+            # show's post. X takes up to 20 minutes on a default account.
+            if (getattr(config.publishing, "x_long_form", False)
+                    and getattr(config.publishing, "x_post_format", "") == "clip"):
+                from engine import x_queue as _xq
+                if 0 < _ep_duration <= _xq.LONG_FORM_MAX_SECONDS:
+                    _x_long_url = _xq.host_file(long_video_path, config.slug)
+                    if _x_long_url:
+                        result["x_long_url"] = _x_long_url
+                        if srt_path and srt_path.exists():
+                            result["x_long_subtitles_url"] = _xq.host_file(srt_path, config.slug)
+                else:
+                    result["x_long_skipped"] = "too_long"
             # ---- Video podcast (July 2026 pilot) ----
             # Host the rendered MP4 on R2 so it can also ship as an Apple
             # video-podcast episode. Done here, immediately after the

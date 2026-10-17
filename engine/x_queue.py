@@ -33,12 +33,16 @@ LAST_SLOT = dt.time(19, 0)
 SPACING = dt.timedelta(minutes=30)
 LEAD = dt.timedelta(minutes=5)
 TABLE = "x_post_queue"
+REPLY_TABLE = "x_post_replies"
 R2_PREFIX = "x_queue"
 # The audio bucket and its public domain (shows/_defaults.yaml storage:),
 # the one R2 host the network already serves media from.
 R2_BUCKET = os.getenv("X_QUEUE_R2_BUCKET", "podcast-audio")
 R2_PUBLIC_BASE = os.getenv("X_QUEUE_R2_PUBLIC_BASE", "https://audio.nerranetwork.com").rstrip("/")
 MAX_ATTEMPTS = 3
+# X's limit for a video on a post from a default (non-Premium) account
+# (docs.x.com media best practices, Oct 2026): 20 minutes, 8 GB.
+LONG_FORM_MAX_SECONDS = 20 * 60
 
 
 # ------------------------------------------------------------------ slots --
@@ -113,6 +117,19 @@ def _host(path: Path, show_slug: str) -> str:
         content_type=mimetypes.guess_type(path.name)[0] or "application/octet-stream")
 
 
+def host_file(path, show_slug: str) -> str:
+    """Put *path* on the audio bucket under ``x_queue/`` and return its
+    public URL, or ``""`` when the queue is not configured or the upload
+    fails. The copy is deleted once the post that carries it is up."""
+    try:
+        if not configured() or not Path(path).is_file():
+            return ""
+        return _host(Path(path), show_slug)
+    except Exception as exc:  # noqa: BLE001 — a reply is a bonus
+        logger.warning("Could not host %s for X: %s", Path(path).name, exc)
+        return ""
+
+
 # ---------------------------------------------------------------- enqueue --
 def enqueue(*, show_slug: str, episode_num: int, env_prefix: str, text: str,
             media_path: str = "", media_kind: str = "",
@@ -143,6 +160,35 @@ def enqueue(*, show_slug: str, episode_num: int, env_prefix: str, text: str,
         return True, _iso(due)
     except Exception as exc:  # noqa: BLE001 — post now rather than lose it
         logger.warning("X queue unavailable (%s); posting now", exc)
+        return False, "queue_error"
+
+
+def enqueue_reply(*, show_slug: str, episode_num: int, env_prefix: str, text: str,
+                  media_url: str, subtitles_url: str = "", kind: str = "long") -> Tuple[bool, str]:
+    """Queue the full episode as a reply under the show's queued post.
+
+    Never posts on its own: a reply needs its parent post, so with no queue
+    (or no ``x_post_replies`` table yet) the reply is simply not made and the
+    hosted copy is deleted. ``(True, "queued")`` or ``(False, reason)``.
+    """
+    if not media_url:
+        return False, "no_media"
+    if not configured():
+        return False, "queue_not_configured"
+    try:
+        _rest("POST", REPLY_TABLE, params={"on_conflict": "show_slug,episode_num,kind"},
+              prefer="return=representation,resolution=ignore-duplicates",
+              json={"show_slug": show_slug, "episode_num": int(episode_num), "kind": kind,
+                    "env_prefix": env_prefix, "text": text, "media_url": media_url,
+                    "subtitles_url": subtitles_url or None, "status": "queued"})
+        logger.info("X %s reply for %s ep%s queued under its post", kind, show_slug, episode_num)
+        return True, "queued"
+    except Exception as exc:  # noqa: BLE001 — the parent post is unaffected
+        logger.warning("X reply queue unavailable (%s); no %s reply for %s ep%s",
+                       exc, kind, show_slug, episode_num)
+        for url in (media_url, subtitles_url):
+            if url:
+                _forget_media(url)
         return False, "queue_error"
 
 
@@ -178,6 +224,11 @@ def _forget_media(url: str) -> None:
                      aws_secret_access_key=secret).delete_object(Bucket=R2_BUCKET, Key=key)
     except Exception as exc:  # noqa: BLE001
         logger.info("Could not delete hosted X media %s: %s", url, exc)
+
+
+def forget_media(url: str) -> None:
+    """Delete a copy :func:`host_file` put on the bucket (best-effort)."""
+    _forget_media(url)
 
 
 def post_due(*, limit: int = 2, now: Optional[dt.datetime] = None) -> List[dict]:
@@ -227,3 +278,93 @@ def post_due(*, limit: int = 2, now: Optional[dt.datetime] = None) -> List[dict]
             results.append({"id": row["id"], "show": label,
                             "status": "failed" if final else "retry", "error": reason})
     return results
+
+
+def _status_id(url: str) -> str:
+    tail = (url or "").rstrip("/").rsplit("/", 1)[-1]
+    return tail if tail.isdigit() else ""
+
+
+def post_due_replies(*, limit: int = 1, now: Optional[dt.datetime] = None) -> List[dict]:
+    """Post queued replies whose parent post is up, oldest first.
+
+    A reply waits while its parent is queued or posting, is cancelled when
+    the parent failed or was cancelled, and posts as a reply to the parent's
+    status once it is up. One per run by default: a full episode is a large
+    upload, and the queue workflow runs every half hour.
+    """
+    from engine.x_post import post_video_reply
+    now = now or dt.datetime.now(UTC)
+    _rest("PATCH", REPLY_TABLE, params={"status": "eq.posting",
+                                        "updated_at": f"lt.{_iso(now - dt.timedelta(minutes=60))}"},
+          json={"status": "queued"}, prefer="return=minimal")
+    queued = _rest("GET", REPLY_TABLE, params={
+        "select": "*", "status": "eq.queued", "order": "created_at.asc", "limit": "20"})
+    results: List[dict] = []
+    for row in queued:
+        if len(results) >= limit:
+            break
+        label = f"{row['show_slug']} ep{row['episode_num']} ({row.get('kind') or 'long'})"
+        parents = _rest("GET", TABLE, params={
+            "select": "status,tweet_url", "show_slug": f"eq.{row['show_slug']}",
+            "episode_num": f"eq.{row['episode_num']}", "limit": "1"})
+        parent = parents[0] if parents else {}
+        pstatus = parent.get("status")
+        if pstatus in ("failed", "cancelled") or (not parents and row.get("created_at")
+                                                   and _age_hours(row["created_at"], now) > 48):
+            _rest("PATCH", REPLY_TABLE, params={"id": f"eq.{row['id']}"}, prefer="return=minimal",
+                  json={"status": "cancelled", "error": f"parent {pstatus or 'missing'}",
+                        "updated_at": _iso(now)})
+            for url in (row.get("media_url"), row.get("subtitles_url")):
+                if url:
+                    _forget_media(url)
+            results.append({"id": row["id"], "show": label, "status": "cancelled",
+                            "error": f"parent {pstatus or 'missing'}"})
+            continue
+        parent_id = _status_id(parent.get("tweet_url") or "")
+        if pstatus != "posted" or not parent_id:
+            continue  # the parent is still waiting for its slot
+        claimed = _rest("PATCH", REPLY_TABLE, params={"id": f"eq.{row['id']}", "status": "eq.queued"},
+                        json={"status": "posting", "attempts": int(row.get("attempts") or 0) + 1,
+                              "updated_at": _iso(now)})
+        if not claimed:
+            continue
+        with tempfile.TemporaryDirectory() as tmp:
+            try:
+                video = _download(row["media_url"], Path(tmp))
+                subs = _download(row["subtitles_url"], Path(tmp)) if row.get("subtitles_url") else ""
+            except Exception as exc:  # noqa: BLE001
+                video, subs = "", ""
+                logger.warning("Could not fetch the %s video: %s", label, exc)
+            posted, reason, url = (False, "no_media", "") if not video else post_video_reply(
+                env_prefix=row.get("env_prefix") or "NERRANETWORK_X_", text=row["text"],
+                video_path=video, subtitles_path=subs, in_reply_to=parent_id, label=label)
+        if posted:
+            _rest("PATCH", REPLY_TABLE, params={"id": f"eq.{row['id']}"}, prefer="return=minimal",
+                  json={"status": "posted", "tweet_url": url, "posted_at": _iso(now),
+                        "updated_at": _iso(now), "error": reason or None})
+            for media in (row.get("media_url"), row.get("subtitles_url")):
+                if media:
+                    _forget_media(media)
+            results.append({"id": row["id"], "show": label, "status": "posted", "url": url})
+            continue
+        attempts = int(row.get("attempts") or 0) + 1
+        final = attempts >= MAX_ATTEMPTS or reason in ("no_credentials", "too_long")
+        _rest("PATCH", REPLY_TABLE, params={"id": f"eq.{row['id']}"}, prefer="return=minimal",
+              json={"status": "failed" if final else "queued", "error": reason,
+                    "updated_at": _iso(now)})
+        if final:
+            for media in (row.get("media_url"), row.get("subtitles_url")):
+                if media:
+                    _forget_media(media)
+        results.append({"id": row["id"], "show": label,
+                        "status": "failed" if final else "retry", "error": reason})
+    return results
+
+
+def _age_hours(stamp: str, now: dt.datetime) -> float:
+    try:
+        t = dt.datetime.fromisoformat(str(stamp).replace("Z", "+00:00"))
+    except ValueError:
+        return 0.0
+    return (now - t).total_seconds() / 3600.0
