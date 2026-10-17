@@ -268,7 +268,8 @@ class TestSmallFixes:
 
     def test_run_show_is_wired(self):
         src = (ROOT / "run_show.py").read_text(encoding="utf-8")
-        assert "run_digest_lints(x_thread, _lint_names)" in src
+        # Oct 17 2026: the run passes its article list to the context lints.
+        assert "x_thread, _lint_names, context={\"articles\": articles}" in src
         assert "or _lint_findings) and not is_deep_dive" in src
         assert "apply_x_source_policy(articles, _x_policy)" in src
         assert 'metrics.record("articles_dropped_off_region"' in src

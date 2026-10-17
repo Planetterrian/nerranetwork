@@ -35,6 +35,10 @@ digest_lints:
 - items_without_source
 - wyntk_hook_match
 - x_only_lead
+# Oct 17 2026: a hook figure, name or consequence no item carries rides the
+# one-shot regeneration (engine/digest_lint.py hook_supported; the prompt
+# states it in _shared/hook_supported.txt). Replay: 0 of the last 10.
+- hook_supported
 # Oct 16 2026: Both Sides is the case on a story the show has already
 # told (Vancouver Ep024: the Massey crossing, the lead). The overlap
 # dedupe matched it to the lead by its shared Global News URL and
@@ -152,6 +156,11 @@ web_search_queries:
 - Metro Vancouver council transit housing news today
 - British Columbia government news today
 
+# Oct 17 2026: sports betting lines never reach this prompt (Vancouver Ep025
+# aired a sportsbook moneyline). Drops betting-page titles and strips
+# betting-line sentences from article text (engine.utils). Calibrated on
+# 68,027 committed local/desk sentences: one match, the aired line.
+exclude_betting_lines: true
 exclude_title_patterns:
 # Shopping, listicles and restaurant churn only. Never bare "deal" (a
 # council or labour deal is news) or "opening" (a SkyTrain station opening

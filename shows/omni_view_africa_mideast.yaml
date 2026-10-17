@@ -133,6 +133,11 @@ web_search_queries:
 
 # Omni View's nine anti-tabloid filters plus the desk additions
 # (engine.omni_desks.ANTI_TABLOID_PATTERNS — keep the two in sync).
+# Oct 17 2026: sports betting lines never reach this prompt (Vancouver Ep025
+# aired a sportsbook moneyline). Drops betting-page titles and strips
+# betting-line sentences from article text (engine.utils). Calibrated on
+# 68,027 committed local/desk sentences: one match, the aired line.
+exclude_betting_lines: true
 exclude_title_patterns:
 - 'red carpet'
 - '\bLove Island\b'

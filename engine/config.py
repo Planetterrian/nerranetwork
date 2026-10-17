@@ -1297,6 +1297,11 @@ class ShowConfig:
     # content (moon calendars, planet-visibility roundups, "this day in
     # history") — see engine.utils.drop_excluded_titles.
     exclude_title_patterns: List[str] = field(default_factory=list)
+    # Oct 17 2026: a local news show never reads sports betting lines
+    # (Vancouver Ep025 aired a sportsbook moneyline). True adds
+    # engine.utils.BETTING_LINE_TITLE_PATTERNS to the title filter and strips
+    # betting-line sentences from article text before the prompt.
+    exclude_betting_lines: bool = False
     # Words that are never a story's "primary entity" for the entity dedup
     # (engine.utils.deduplicate_by_entity, max two articles per entity).
     # Sep 23 2026: on a local show the first capitalised phrase of almost
@@ -1662,6 +1667,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         x_fetch_enabled=data.get("x_fetch_enabled"),
         keywords=data.get("keywords", []),
         exclude_title_patterns=data.get("exclude_title_patterns", []),
+        exclude_betting_lines=bool(data.get("exclude_betting_lines", False)),
         entity_dedup_ignore=[str(w) for w in (data.get("entity_dedup_ignore") or [])],
         story_recurrence=bool(data.get("story_recurrence", False)),
         story_clusters=bool(data.get("story_clusters", False)),

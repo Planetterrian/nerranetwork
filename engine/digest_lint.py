@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
 from engine.script_audit import _salient
 
@@ -568,28 +568,299 @@ def hook_unsupported_names(digest: str) -> Optional[List[str]]:
     return [n for n in hook_names(hook) if n.lower().rstrip("s") not in rest]
 
 
+# Oct 17 2026 (slate review): two more shapes of the same failure.
+#
+# * A FIGURE in the hook that no item carries. A spoken hook figure is the
+#   episode's first fact; when no item states it, nothing the claims gate
+#   reads vouches for it.
+# * A figure joined to a consequence its own item never names. Modern
+#   Investing Ep203's hook read "September PPI at 6.3% versus 5.3% estimate
+#   raises Bank of Canada hike odds before October 28." The 6.3% item is a US
+#   Bureau of Labor Statistics print and never mentions the Bank of Canada;
+#   the Bank of Canada sentence sits in Market Pulse, a different section,
+#   and says nothing about PPI. Every name and figure appears SOMEWHERE, so
+#   the name check above passed — the defect is the join. A hook name that
+#   is in the digest, but in no section carrying the hook's figure, is that
+#   join.
+#
+# Figures are digit-written only (a spelled-out "forty billion" is not
+# compared); a year, a percentage, a count and a price are all figures.
+
+_HOOK_FIGURE_RE = re.compile(r"(?<![\w.,])\$?(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d+))?(?![\w])")
+_BODY_FIGURE_RE = _HOOK_FIGURE_RE
+
+
+def _figure_key(whole: str, frac: Optional[str]) -> str:
+    key = whole.replace(",", "").lstrip("0") or "0"
+    frac = (frac or "").rstrip("0")
+    return f"{key}.{frac}" if frac else key
+
+
+def figures_in(text: str) -> List[str]:
+    """Digit-written figures in *text*, normalised (``16,000`` → ``16000``,
+    ``6.30`` → ``6.3``). URLs are ignored."""
+    return [_figure_key(m.group(1), m.group(2))
+            for m in _BODY_FIGURE_RE.finditer(_URL_RE.sub(" ", text or ""))]
+
+
+#: A number right after a capitalised word is part of a name ("S&P 500",
+#: "Model 3", "Falcon 9") or a calendar date ("October 28") — not a figure
+#: the hook reports. A sentence-opening word ("After 16,000-plus…") or a
+#: function word is neither.
+_NAME_BEFORE_RE = re.compile(r"(?:^|\s)([A-Z][\w&’'.-]*)\s+$")
+
+
+def _is_name_number(text: str, start: int) -> bool:
+    m = _NAME_BEFORE_RE.search(text[:start])
+    if not m:
+        return False
+    word = m.group(1)
+    if word in _MONTHS_DAYS:
+        return True
+    if not text[:m.start(1)].strip():
+        return False  # the hook's first word
+    return word not in _NOT_A_NAME
+
+
+def hook_figures(hook: str) -> List[str]:
+    out: List[str] = []
+    text = _URL_RE.sub(" ", hook or "")
+    for m in _HOOK_FIGURE_RE.finditer(text):
+        if _is_name_number(text, m.start()):
+            continue
+        f = _figure_key(m.group(1), m.group(2))
+        if f not in out:
+            out.append(f)
+    return out
+
+
+def _hook_free_text(digest: str) -> str:
+    return _WYNTK_RE.sub(" ", _HOOK_RE.sub(" ", digest or ""))
+
+
+def figure_matches(hook_fig: str, body_figs: Iterable[str]) -> bool:
+    """A hook figure is carried when a body figure equals it at the hook's
+    own precision (the hook rounds: "514,158 pesos" for 514,158.45)."""
+    try:
+        want = float(hook_fig)
+    except ValueError:
+        return False
+    decimals = len(hook_fig.split(".", 1)[1]) if "." in hook_fig else 0
+    tol = 0.5 * 10 ** (-decimals) + 1e-9
+    for g in body_figs:
+        try:
+            if abs(float(g) - want) <= tol:
+                return True
+        except ValueError:
+            continue
+    return False
+
+
+def hook_unsupported_figures(digest: str) -> Optional[List[str]]:
+    """Hook figures no line of the digest outside the hook/WYNTK carries."""
+    hook = hook_line(digest)
+    if not hook:
+        return None
+    rest = set(figures_in(_hook_free_text(digest)))
+    return [f for f in hook_figures(hook) if not figure_matches(f, rest)]
+
+
+def hook_unjoined_names(digest: str) -> Optional[List[str]]:
+    """Hook names that appear in the digest but in NO section that carries
+    one of the hook's figures. ``None`` when the hook has no figure an item
+    carries (nothing to anchor on)."""
+    hook = hook_line(digest)
+    if not hook:
+        return None
+    figs = set(hook_figures(hook))
+    if not figs:
+        return None
+    carrying = [
+        body.lower() for _t, body in sections(_hook_free_text(digest))
+        if any(figure_matches(f, figures_in(body)) for f in figs)
+    ]
+    if not carrying:
+        return None
+    rest = _hook_free_text(digest).lower()
+    out: List[str] = []
+    for name in hook_names(hook):
+        key = name.lower().rstrip("s")
+        if key not in rest:
+            continue  # the plain name check reports it
+        if not any(key in body for body in carrying) and name not in out:
+            out.append(name)
+    return out
+
+
 def lint_hook_supported(digest: str) -> Optional[LintFinding]:
     missing = hook_unsupported_names(digest)
     if missing is None:
         return None
-    metrics = {"hook_unsupported_names": len(missing)}
+    figures = hook_unsupported_figures(digest) or []
+    unjoined = hook_unjoined_names(digest) or []
+    metrics = {"hook_unsupported_names": len(missing),
+               "hook_unsupported_figures": len(figures),
+               "hook_unjoined_names": len(unjoined)}
+    notes: List[str] = []
     if missing:
+        notes.append(
+            "the HOOK names something no item in the digest reports ("
+            + ", ".join(sorted(set(missing))) + ")")
+    if figures:
+        notes.append(
+            "the HOOK states a figure no item in the digest carries ("
+            + ", ".join(figures) + ")")
+    if unjoined:
+        notes.append(
+            "the HOOK ties its figure to something the item reporting that "
+            "figure never mentions (" + ", ".join(unjoined) + ")")
+    if notes:
         return LintFinding(
             "hook_supported",
-            "the HOOK names something no item in the digest reports ("
-            + ", ".join(sorted(set(missing))) + ") — the hook states only "
-            "what the lead item and its source say; never add an angle the "
-            "reporting does not carry",
+            "; ".join(notes) + " — the hook states only what the lead item "
+            "and its source say; every figure in it is in that item, and it "
+            "never adds an angle or a consequence the reporting does not carry",
             metrics,
         )
     return LintFinding("hook_supported", "", metrics)
 
 
 # ---------------------------------------------------------------------------
+# Context lints (Oct 17 2026): checks that need the run's ARTICLE LIST, not
+# just the digest. run_show passes ``context={"articles": [...]}``; called
+# without one (a replay over committed digests) they measure nothing.
+# ---------------------------------------------------------------------------
+
+# --- board_venue_mix --------------------------------------------------------
+# Prediction Markets Ep024 and Ep025 put ONE market on The Board (a Polymarket
+# ceasefire, then a Manifold play-money question about a chatbot) while the
+# hook supplied eight to ten markets from three venues. The root cause was
+# upstream (story_recurrence marked nine of ten board markets "already
+# covered — pick a different story"; the board articles are now exempt), and
+# this is the guard: when two venues supplied markets, the Board carries
+# markets from at least two.
+
+def lint_board_venue_mix(digest: str, context: Optional[dict] = None) -> Optional[LintFinding]:
+    if not context:
+        return None
+    from engine.prediction_board import board_venues_in, supplied_board_venues
+
+    supplied = supplied_board_venues(context.get("articles") or [])
+    body = section_body(digest, "The Board")
+    if body is None:
+        return None
+    shipped = board_venues_in(body)
+    metrics = {"board_venues": sorted(shipped), "board_venues_supplied": sorted(supplied)}
+    if len(supplied) >= 2 and len(shipped & supplied) < 2:
+        return LintFinding(
+            "board_venue_mix",
+            "The Board carries markets from "
+            + (("only " + ", ".join(sorted(shipped))) if shipped else "no venue")
+            + " while the market articles above come from "
+            + ", ".join(sorted(supplied)) + " — The Board carries at least one "
+            "market from each of two venues whenever two venues supplied markets",
+            metrics,
+        )
+    return LintFinding("board_venue_mix", "", metrics)
+
+
+# --- deep_dive_fetched_source -----------------------------------------------
+# AI Chips Ep026's Teardown (825 words on wafer bow, Zeiss DUNE and Von
+# Ardenne's glass-via coating) was written from an EE Times article whose page
+# the runner never read: www.eetimes.com timed out on every fetch (Ep019, 021,
+# 022, 025, 026), so the prompt held a feed teaser, and both Teardown claims
+# the gate checked were "unverified_unreachable". The prompt already says the
+# Teardown is built from ONE article whose full text is printed; this is that
+# rule in code. A section is read-sourced when a URL it cites, or an outlet it
+# names, belongs to an article that carried full text into the prompt.
+
+#: Deep-dive sections that must be built from a read article.
+DEEP_DIVE_FETCHED_SECTIONS = ("The Teardown",)
+#: Below this much text an article was a teaser, not a read page.
+READ_ARTICLE_MIN_CHARS = 1200
+
+
+def _norm_url(url: str) -> str:
+    from engine.claims import normalize_source_url
+
+    return normalize_source_url(url or "")
+
+
+def read_articles(articles) -> List[dict]:
+    return [a for a in articles or []
+            if len(str(a.get("full_text") or "").strip()) >= READ_ARTICLE_MIN_CHARS]
+
+
+def _outlet_named(outlet: str, text_low: str) -> bool:
+    o = " ".join((outlet or "").lower().split())
+    if len(o) < 3:
+        return False
+    return re.search(r"(?<![\w])" + re.escape(o) + r"(?![\w])", text_low) is not None
+
+
+def deep_dive_source_status(body: str, articles) -> Tuple[Optional[bool], List[str]]:
+    """``(read, names)``: ``read`` is True when the section cites or names a
+    read article, False when everything it cites or names was unread, None
+    when it identifies no article at all. ``names`` are the unread outlets
+    or URLs it leaned on."""
+    arts = list(articles or [])
+    read = read_articles(arts)
+    read_urls = {_norm_url(a.get("url") or "") for a in read}
+    cited = [u for u in urls_in(body) if _norm_url(u)]
+    if cited:
+        if any(_norm_url(u) in read_urls for u in cited):
+            return True, []
+        return False, cited[:3]
+    low = " ".join((body or "").lower().split())
+    named = {str(a.get("source_name") or "").strip() for a in arts
+             if _outlet_named(str(a.get("source_name") or ""), low)}
+    named.discard("")
+    if not named:
+        return None, []
+    read_named = {str(a.get("source_name") or "").strip() for a in read}
+    if named & read_named:
+        return True, []
+    return False, sorted(named)
+
+
+def lint_deep_dive_fetched_source(digest: str, context: Optional[dict] = None) -> Optional[LintFinding]:
+    if not context:
+        return None
+    articles = context.get("articles") or []
+    for name in DEEP_DIVE_FETCHED_SECTIONS:
+        body = section_body(digest, name)
+        if body is None or not body.strip():
+            continue
+        status, leaned_on = deep_dive_source_status(body, articles)
+        metrics = {"deep_dive_source_read": status,
+                   "deep_dive_read_candidates": len(read_articles(articles))}
+        if status is True:
+            return LintFinding("deep_dive_fetched_source", "", metrics)
+        if not read_articles(articles):
+            # Nothing was read today: the prompt's own fallback (leave the
+            # section out) is the only honest answer, and a retry cannot do
+            # better, so this measures without firing.
+            return LintFinding("deep_dive_fetched_source", "", metrics)
+        what = (", ".join(leaned_on) if leaned_on else "no named article")
+        return LintFinding(
+            "deep_dive_fetched_source",
+            f"{name} is built from an article whose full text was never read "
+            f"({what}) — build it from ONE article above that carries a FULL "
+            f"TEXT block, name its outlet, and end {name} on that article's "
+            "Source line",
+            metrics,
+        )
+    return None
+
+
+# ---------------------------------------------------------------------------
 # Registry + runner
 # ---------------------------------------------------------------------------
 
-LINTS: Dict[str, Callable[[str], Optional[LintFinding]]] = {
+#: Lints that read the run's article list (``context``) as well as the digest.
+CONTEXT_LINTS = frozenset({"board_venue_mix", "deep_dive_fetched_source"})
+
+LINTS: Dict[str, Callable[..., Optional[LintFinding]]] = {
     "wyntk_hook_match": lint_wyntk_hook_match,
     "x_only_lead": lint_x_only_lead,
     "progress_watch_thin": lint_progress_watch_thin,
@@ -601,14 +872,18 @@ LINTS: Dict[str, Callable[[str], Optional[LintFinding]]] = {
     "dose_terms": lint_dose_terms,
     "spotlight_card": lint_spotlight_card,
     "hook_supported": lint_hook_supported,
+    "board_venue_mix": lint_board_venue_mix,
+    "deep_dive_fetched_source": lint_deep_dive_fetched_source,
 }
 
 
-def run_digest_lints(digest: str, names: List[str]) -> Tuple[List[LintFinding], Dict[str, object]]:
+def run_digest_lints(digest: str, names: List[str],
+                     context: Optional[dict] = None) -> Tuple[List[LintFinding], Dict[str, object]]:
     """Run the named lints. Returns ``(fired_findings, metrics)`` — metrics
     for every lint that had something to measure, findings only for those
     that fired (``note`` non-empty). An unknown name is ignored (the YAML
-    validator reports it)."""
+    validator reports it). ``context`` (``{"articles": [...]}``) reaches
+    only the lints in ``CONTEXT_LINTS``."""
     fired: List[LintFinding] = []
     metrics: Dict[str, object] = {}
     for name in names or []:
@@ -616,7 +891,7 @@ def run_digest_lints(digest: str, names: List[str]) -> Tuple[List[LintFinding], 
         if fn is None:
             continue
         try:
-            f = fn(digest)
+            f = fn(digest, context) if name in CONTEXT_LINTS else fn(digest)
         except Exception:  # noqa: BLE001 — a lint can never cost an episode
             continue
         if f is None:

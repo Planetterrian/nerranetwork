@@ -13,7 +13,7 @@ import logging
 import os
 import re
 from difflib import SequenceMatcher
-from typing import Optional
+from typing import Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -376,9 +376,86 @@ NETWORK_EXCLUDE_URL_PATTERNS = (
 )
 
 
+#: Oct 17 2026: sports betting lines never reach a local-news prompt.
+#: Vancouver Ep025 aired "Bleacher Nation listed the Lightning at minus three
+#: hundred ninety-seven and the Canucks at plus three hundred one, and
+#: predicted … the over at six and a half goals" from a sportsbook-picks page
+#: ("Lightning vs. Canucks Prediction: Picks, Live Odds and Moneyline").
+#: Opt-in per show (``exclude_betting_lines: true``) — Prediction Markets
+#: reports on sportsbooks as an industry. Calibrated on every committed
+#: Vancouver and Collingwood tracker headline: the three betting pages
+#: (09-28, 10-11, 10-17) match; "Line Combinations", "Projected Lines",
+#: "first-round pick" and "pick a side" do not.
+BETTING_LINE_TITLE_PATTERNS = (
+    r"\b(?:best bets?|money ?lines?|point spreads?|puck lines?|run lines?|odds to win"
+    r"|sportsbooks?|parlays?|player props?|prop bets?|over/under"
+    r"|betting (?:odds|lines?|picks?|preview|tips|trends))\b",
+    r"\bodds\b.*\b(?:picks?|predictions?|best bets?|spread)\b",
+    r"\b(?:picks?|predictions?)\b.*\bodds\b",
+)
+
+_BETTING_TERM_RE = re.compile(
+    r"\b(?:money ?lines?|point spreads?|puck lines?|run lines?|odds to win|best bets?"
+    r"|sportsbooks?|parlays?|player props?|prop bets?|over/under"
+    r"|betting (?:odds|lines?|favou?rites?)"
+    r"|(?:the|take the|hit the) (?:over|under) (?:at|of|on) [\w.½ -]{1,25}?(?:goals?|points?|runs?))\b",
+    re.IGNORECASE)
+#: An American odds price: "+150", "-397", or spoken "plus three hundred one".
+_AMERICAN_ODDS_RE = re.compile(
+    r"(?<![\w$.,])[+\-−–](?:[1-9]\d{2}|\d{4})\b(?![.,]\d|\s*(?:%|percent|per cent|°))"
+    r"|\b(?:plus|minus) (?:one|two|three|four|five|six|seven|eight|nine) hundred\b",
+    re.IGNORECASE)
+_ODDS_CONTEXT_RE = re.compile(
+    r"\b(?:odds|favou?rites?|underdogs?|lines?|spread|bets?|betting|wagers?|picks?|listed)\b",
+    re.IGNORECASE)
+_BET_SENT_SPLIT = re.compile(r"(?<=[.!?])\s+")
+
+
+def is_betting_line_sentence(sentence: str) -> bool:
+    """A sentence that reads a betting line: a sportsbook term, or an
+    American odds price beside an odds word."""
+    s = sentence or ""
+    if _BETTING_TERM_RE.search(s):
+        return True
+    return bool(_AMERICAN_ODDS_RE.search(s) and _ODDS_CONTEXT_RE.search(s))
+
+
+def strip_betting_lines(text: str) -> Tuple[str, int]:
+    """Remove betting-line sentences from article text. Returns
+    ``(text, removed_count)``; paragraphs are kept, never re-flowed."""
+    if not text:
+        return text, 0
+    removed = 0
+    paras = []
+    for para in str(text).split("\n"):
+        kept = []
+        for sent in _BET_SENT_SPLIT.split(para):
+            if sent.strip() and is_betting_line_sentence(sent):
+                removed += 1
+                continue
+            kept.append(sent)
+        paras.append(" ".join(kept))
+    return "\n".join(paras), removed
+
+
+def strip_betting_lines_from_articles(articles: list) -> int:
+    """Strip betting-line sentences from every article's prompt-facing text
+    (``description``, ``content_text``, ``full_text``), in place."""
+    total = 0
+    for art in articles or []:
+        for key in ("description", "content_text", "full_text"):
+            if art.get(key):
+                art[key], n = strip_betting_lines(art[key])
+                total += n
+    return total
+
+
 def exclude_title_patterns_for(config) -> list:
-    """The per-show ``exclude_title_patterns`` plus the network list."""
+    """The per-show ``exclude_title_patterns`` plus the network list (and the
+    betting-line titles where the show sets ``exclude_betting_lines``)."""
     own = list(getattr(config, "exclude_title_patterns", None) or []) if config else []
+    if config is not None and getattr(config, "exclude_betting_lines", False) is True:
+        own += list(BETTING_LINE_TITLE_PATTERNS)
     return own + list(NETWORK_EXCLUDE_TITLE_PATTERNS)
 
 

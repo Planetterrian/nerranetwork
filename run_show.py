@@ -2012,6 +2012,21 @@ def run(args: argparse.Namespace) -> None:
             except Exception as _st_exc:  # noqa: BLE001 — never block a run
                 logger.warning("Stale-article gate failed (non-fatal): %s", _st_exc)
 
+        # Oct 17 2026: sports betting lines never reach a local-news prompt
+        # (Vancouver Ep025 aired a sportsbook's moneyline). Betting-page
+        # TITLES are dropped at every fetch site by exclude_title_patterns_for;
+        # this strips betting-line SENTENCES from whatever text is left, after
+        # full-text enrichment, so every route (RSS, web, X, hook) is covered.
+        if getattr(config, "exclude_betting_lines", False) is True and articles:
+            try:
+                from engine.utils import strip_betting_lines_from_articles
+                _n_bet = strip_betting_lines_from_articles(articles)
+                # Consumer: the show review (non-zero = a game preview carried
+                # odds into the prompt and was cleaned).
+                metrics.record("articles_betting_lines_removed", _n_bet)
+            except Exception as _bet_exc:  # noqa: BLE001 — never block a run
+                logger.warning("Betting-line strip failed (non-fatal): %s", _bet_exc)
+
         from engine.article_text import render_full_text_block
         from engine.article_text import speakable_source_name
 
@@ -2757,7 +2772,8 @@ def run(args: argparse.Namespace) -> None:
         _lint_names = list(getattr(config, "digest_lints", []) or [])
         if _lint_names and not is_deep_dive:
             from engine.digest_lint import run_digest_lints
-            _lint_findings, _lint_metrics = run_digest_lints(x_thread, _lint_names)
+            _lint_findings, _lint_metrics = run_digest_lints(
+                x_thread, _lint_names, context={"articles": articles})
             for _lk, _lv in _lint_metrics.items():
                 metrics.record(_lk, _lv)
             metrics.record("digest_lints_fired", [f.lint for f in _lint_findings])
@@ -2873,7 +2889,8 @@ def run(args: argparse.Namespace) -> None:
                         _new_lints: list = []
                         if _lint_names:
                             from engine.digest_lint import run_digest_lints as _rdl
-                            _after, _after_m = _rdl(_candidate, _lint_names)
+                            _after, _after_m = _rdl(_candidate, _lint_names,
+                                                    context={"articles": articles})
                             metrics.record("digest_lints_fired_after_retry",
                                            [f.lint for f in _after])
                             for _lk, _lv in _after_m.items():
@@ -2939,7 +2956,7 @@ def run(args: argparse.Namespace) -> None:
         ]
         if _blocking and not is_deep_dive:
             from engine.digest_lint import run_digest_lints as _run_blocking
-            _still, _ = _run_blocking(x_thread, _blocking)
+            _still, _ = _run_blocking(x_thread, _blocking, context={"articles": articles})
             if _still:
                 _names = ", ".join(f.lint for f in _still)
                 metrics.record("digest_lints_blocked", [f.lint for f in _still])
