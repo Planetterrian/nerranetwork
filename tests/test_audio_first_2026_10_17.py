@@ -179,3 +179,9 @@ def test_the_feed_says_when_a_scheduled_long_form_goes_public():
     assert describe_public_at("", now=morning) == ""
     assert describe_public_at("garbage", now=morning) == ""
     assert "Watch on YouTube{_when}" in RUN_SHOW
+
+
+def test_the_feed_refresh_after_the_video_is_non_fatal():
+    i = RUN_SHOW.index("# 12d. The YouTube links reach the feed item")
+    block = RUN_SHOW[i:i + 900]
+    assert "try:" in block and "Feed refresh with the YouTube link failed (non-fatal)" in block

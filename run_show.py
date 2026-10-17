@@ -5695,12 +5695,17 @@ def run(args: argparse.Namespace) -> None:
     except Exception:
         logger.warning("post-publish step failed (non-fatal)", exc_info=True)
 
-    # 12d. The YouTube links reach the feed item and the blog post.
+    # 12d. The YouTube links reach the feed item and the blog post. The
+    # episode is already out: a failure here costs a link, never the
+    # newsletter or the X post that follow.
     if youtube_long_url:
-        from engine.release_schedule import describe_public_at as _describe_public_at
-        _write_rss_feed(youtube_long_url, refresh=True,
-                        youtube_public_at=_describe_public_at(
-                            youtube_urls.get("long_publish_at") or ""))
+        try:
+            from engine.release_schedule import describe_public_at as _describe_public_at
+            _write_rss_feed(youtube_long_url, refresh=True,
+                            youtube_public_at=_describe_public_at(
+                                youtube_urls.get("long_publish_at") or ""))
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Feed refresh with the YouTube link failed (non-fatal): %s", exc)
     if youtube_long_url or youtube_short_url:
         _write_blog_post(youtube_long_url, youtube_short_url, refresh=True)
 
