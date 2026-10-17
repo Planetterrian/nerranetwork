@@ -419,6 +419,11 @@ class PublishingConfig:
     # shows was switched on in config with a start date, so it begins
     # without another deploy. Empty = no hold.
     x_start_date: str = ""
+    # Oct 17 2026: post the full long-form episode as a reply under the
+    # show's X post (engine/x_queue.enqueue_reply). Clip-format shows only;
+    # needs the x_post_replies table (supabase/migrations/20261017_*). X
+    # takes up to 20 minutes on a default account.
+    x_long_form: bool = False
     host_name: str = "Patrick"
     # "human" (default) or "ai". An AI host (Mira) must never be given the
     # human-host disclosure ("synthesis of MY voice — analysis my own",

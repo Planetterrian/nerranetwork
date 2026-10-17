@@ -199,6 +199,47 @@ def post_media(*, env_prefix: str, text: str, media_paths: Sequence,
     return True, ("" if media_id else "no_media"), url, used
 
 
+def post_video_reply(*, env_prefix: str, text: str, video_path, subtitles_path="",
+                     in_reply_to: str, label: str) -> Tuple[bool, str, str]:
+    """Post a full-episode video as a reply to *in_reply_to* (Oct 17 2026).
+
+    Returns ``(posted, reason, url)``. Unlike :func:`post_media` it never
+    falls back to text: a reply that says "the full episode" with no
+    episode in it is worse than no reply. ``reason`` is ``""`` or
+    ``no_subtitles`` on success; ``no_credentials``, ``upload_failed`` or
+    ``post_failed`` otherwise.
+    """
+    creds = x_credentials(env_prefix)
+    if not creds:
+        return False, "no_credentials", ""
+    from engine.x_media import LONG_STATUS_TIMEOUT_S, add_subtitles, upload_media
+    media_id = upload_media(video_path, creds, status_timeout=LONG_STATUS_TIMEOUT_S, timeout=300)
+    if not media_id:
+        return False, "upload_failed", ""
+    note = ""
+    if subtitles_path and Path(subtitles_path).is_file():
+        sub_id = upload_media(subtitles_path, creds)
+        if not (sub_id and add_subtitles(media_id, sub_id, creds)):
+            note = "no_subtitles"
+    else:
+        note = "no_subtitles"
+    try:
+        from engine.publisher import post_to_x
+        url = post_to_x(text, media_ids=[media_id], in_reply_to_tweet_id=in_reply_to, **creds)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("X full-episode reply failed for %s: %s", label, exc)
+        return False, "post_failed", ""
+    if not url:
+        return False, "post_failed", ""
+    logger.info("Posted the full %s under its post: %s", label, url)
+    return True, note, url
+
+
+def long_form_reply_text(label: str, episode_num: int) -> str:
+    """The reply's one line. No link: a post with a URL costs $0.20."""
+    return f"The full episode: {label}, episode {int(episode_num)}."
+
+
 def teaser_text(title: str, link: str) -> str:
     """``<title>\n\n<link>`` with the title clipped to the X text budget."""
     head = clip_words(" ".join((title or "").split()), X_TEASER_TEXT_MAX)

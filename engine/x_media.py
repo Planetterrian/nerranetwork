@@ -32,6 +32,10 @@ logger = logging.getLogger(__name__)
 UPLOAD_URL = "https://api.x.com/2/media/upload"
 CHUNK_BYTES = 4 * 1024 * 1024          # X asks for <= 5 MB per segment
 STATUS_TIMEOUT_S = 300                  # a one-minute Short processes in seconds
+# Oct 17 2026: a full episode (10-20 minutes, 100-300 MB) can process for
+# several minutes on X's side.
+LONG_STATUS_TIMEOUT_S = 900
+SUBTITLES_URL = "https://api.x.com/2/media/subtitles"
 
 _CATEGORY = {
     "video/mp4": "tweet_video",
@@ -39,7 +43,9 @@ _CATEGORY = {
     "image/png": "tweet_image",
     "image/webp": "tweet_image",
     "image/gif": "tweet_gif",
+    "text/srt": "subtitles",
 }
+_TYPES = {".srt": "text/srt"}
 
 
 def _auth(creds: dict):
@@ -65,13 +71,14 @@ def _info(resp) -> dict:
 
 def upload_media(path, creds: dict, *, session=None,
                  sleep: Callable[[float], None] = time.sleep,
-                 timeout: int = 120) -> Optional[str]:
+                 timeout: int = 120,
+                 status_timeout: float = STATUS_TIMEOUT_S) -> Optional[str]:
     """Upload one file and return its media id, or ``None`` on any failure."""
     path = Path(path)
     if not path.is_file():
         logger.warning("X media upload skipped: %s does not exist", path)
         return None
-    media_type = mimetypes.guess_type(path.name)[0] or ""
+    media_type = _TYPES.get(path.suffix.lower()) or mimetypes.guess_type(path.name)[0] or ""
     category = _CATEGORY.get(media_type)
     if not category:
         logger.warning("X media upload skipped: %s is not a video or image (%r)",
@@ -101,7 +108,7 @@ def upload_media(path, creds: dict, *, session=None,
         r.raise_for_status()
         info, waited = _info(r), 0.0
         while info.get("state") in ("pending", "in_progress"):
-            if waited >= STATUS_TIMEOUT_S:
+            if waited >= status_timeout:
                 logger.warning("X media %s still processing after %ss; giving up",
                                media_id, int(waited))
                 return None
@@ -120,6 +127,26 @@ def upload_media(path, creds: dict, *, session=None,
     except Exception as exc:  # noqa: BLE001 — never raise into the episode
         logger.warning("X media upload failed for %s: %s", path.name, _describe(exc))
         return None
+
+
+def add_subtitles(video_media_id: str, subtitles_media_id: str, creds: dict, *,
+                  language_code: str = "EN", display_name: str = "English",
+                  session=None, timeout: int = 60) -> bool:
+    """Attach an uploaded SRT (``media_category: subtitles``) to a video
+    before it is posted. ``False`` on any failure; the video still posts."""
+    import requests
+    http = session or requests.Session()
+    try:
+        r = http.post(SUBTITLES_URL, auth=_auth(creds), timeout=timeout,
+                      json={"id": str(video_media_id), "media_category": "TweetVideo",
+                            "subtitles": {"display_name": display_name,
+                                          "id": str(subtitles_media_id),
+                                          "language_code": language_code.upper()[:2]}})
+        r.raise_for_status()
+        return True
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("X subtitles not attached to %s: %s", video_media_id, _describe(exc))
+        return False
 
 
 # X turns any URL in the text into a link, and a post with a link is billed

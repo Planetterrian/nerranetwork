@@ -111,6 +111,11 @@ X_TEASER_TEXT_MAX = 200
 # cutting mid-word; it now clips through clip_words() with these.
 X_TEASER_TWO_LINK_TEXT_MAX = 180
 
+#: ``landing-test.html`` (Oct 17 2026): the one-line "Latest" ticker chip at
+#: the top of the test front page. Every other headline on that page is shown
+#: whole; the ticker is a single scrolling line, so it clips word-safe here.
+LANDING_TICKER_MAX = 90
+
 ELLIPSIS = "…"
 
 # Trailing characters that read as debris once the tail is gone.

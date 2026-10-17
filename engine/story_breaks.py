@@ -200,8 +200,13 @@ def story_units(digest_md: str) -> List[StoryUnit]:
                 # lines at the end of a section's last item).
                 if (essay and section[0] and not _NUMBERED_RE.match(block[0])
                         and not block[0].lstrip().startswith("**")):
+                    # A run that opens on a bold story title is an item
+                    # (Vancouver's Closer Look, Top World); one that opens
+                    # straight into prose is the section's essay with its
+                    # citation at the end (Tesla's First Principles).
+                    label = "item" if essay[0].lstrip().startswith("**") else "essay"
                     essay.append(text)
-                    _add(" ".join(essay), "item")
+                    _add(" ".join(essay), label)
                     essay.clear()
                     continue
                 flush_essay()

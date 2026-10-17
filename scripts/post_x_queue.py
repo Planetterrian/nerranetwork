@@ -36,6 +36,20 @@ def main() -> int:
             logger.warning("%s did not post (%s); retrying in 30 minutes", r["show"], r["error"])
         else:
             print(f"::error::X post for {r['show']} failed for good ({r['error']})")
+    # Oct 17 2026: full episodes, as replies under posts that are up. The
+    # x_post_replies table may not exist yet; that is a warning, never red.
+    try:
+        replies = x_queue.post_due_replies()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Full-episode replies skipped: %s", exc)
+        replies = []
+    for r in replies:
+        if r["status"] == "posted":
+            logger.info("Posted the full episode under %s: %s", r["show"], r["url"])
+        elif r["status"] in ("retry", "cancelled"):
+            logger.warning("Full-episode reply %s: %s (%s)", r["show"], r["status"], r["error"])
+        else:
+            print(f"::warning::Full-episode reply for {r['show']} failed ({r['error']})")
     return 1 if any(r["status"] == "failed" for r in results) else 0
 
 

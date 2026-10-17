@@ -3593,6 +3593,71 @@ def generate_all_show_pages(*, dry_run=False):
 # Network landing page
 # ---------------------------------------------------------------------------
 
+def _load_popular_episodes():
+    """The homepage "Most played this week" rail data (also read by
+    ``landing-test.html``). Empty when the OP3 data is missing or stale."""
+    # "Most played this week" rail — fed by the nightly OP3 stats fetch
+    # (scripts/fetch_op3_stats.py). Renders nothing when the file is
+    # missing/empty (OP3_API_TOKEN not configured yet) OR when the
+    # companion op3_stats.json is older than POPULAR_EPISODES_MAX_AGE_DAYS
+    # (stale rail misleads visitors when the token is unset).
+    popular_episodes = []
+    try:
+        _popular_path = ROOT / "site" / "data" / "popular_episodes.json"
+        _op3_path = ROOT / "api" / "op3_stats.json"
+        _fresh = True
+        if _op3_path.exists():
+            try:
+                _fetched = (json.loads(_op3_path.read_text(encoding="utf-8"))
+                            or {}).get("fetched_at")
+                if _fetched:
+                    _fetched_dt = datetime.fromisoformat(
+                        _fetched.replace("Z", "+00:00"))
+                    if _fetched_dt.tzinfo is None:
+                        _fetched_dt = _fetched_dt.replace(tzinfo=timezone.utc)
+                    _age = datetime.now(timezone.utc) - _fetched_dt
+                    if _age > timedelta(days=POPULAR_EPISODES_MAX_AGE_DAYS):
+                        _fresh = False
+                        print(
+                            f"Warning: popular episodes rail hidden — "
+                            f"OP3 stats are {_age.days}d old "
+                            f"(>{POPULAR_EPISODES_MAX_AGE_DAYS}d)"
+                        )
+            except Exception as _age_exc:
+                print(f"Warning: could not parse OP3 fetched_at: {_age_exc}")
+        if _fresh and _popular_path.exists():
+            popular_episodes = json.loads(
+                _popular_path.read_text(encoding="utf-8")) or []
+            for _ep in popular_episodes:
+                if not _ep.get("blog_url"):
+                    _ep["blog_url"] = _blog_url_for_episode(
+                        _ep.get("show_slug") or "",
+                        title=_ep.get("title") or "",
+                    )
+            # At most two per show: on 2026-09-03 the top six were ALL
+            # SpaceX Daily, which made a 17-show network's "listener
+            # favourites" rail look like a one-show network. Ranks are
+            # re-numbered after the cut so the badges stay 1..6.
+            _per_show: dict = {}
+            _deduped = []
+            for ep in popular_episodes:
+                if not ep.get("audio_url"):
+                    continue
+                _slug = ep.get("show_slug") or ep.get("show_name") or ""
+                if _per_show.get(_slug, 0) >= POPULAR_EPISODES_MAX_PER_SHOW:
+                    continue
+                _per_show[_slug] = _per_show.get(_slug, 0) + 1
+                _deduped.append(ep)
+                if len(_deduped) >= 6:
+                    break
+            for _i, ep in enumerate(_deduped, 1):
+                ep["rank"] = _i
+            popular_episodes = _deduped
+    except Exception as e:
+        print(f"Warning: could not load popular episodes: {e}")
+    return popular_episodes
+
+
 def generate_network_page(*, dry_run=False):
     """Render and write the network landing page."""
     env = _get_jinja_env()
@@ -3709,65 +3774,7 @@ def generate_network_page(*, dry_run=False):
     except Exception as e:
         print(f"Warning: could not collect latest episodes from RSS: {e}")
 
-    # "Most played this week" rail — fed by the nightly OP3 stats fetch
-    # (scripts/fetch_op3_stats.py). Renders nothing when the file is
-    # missing/empty (OP3_API_TOKEN not configured yet) OR when the
-    # companion op3_stats.json is older than POPULAR_EPISODES_MAX_AGE_DAYS
-    # (stale rail misleads visitors when the token is unset).
-    popular_episodes = []
-    try:
-        _popular_path = ROOT / "site" / "data" / "popular_episodes.json"
-        _op3_path = ROOT / "api" / "op3_stats.json"
-        _fresh = True
-        if _op3_path.exists():
-            try:
-                _fetched = (json.loads(_op3_path.read_text(encoding="utf-8"))
-                            or {}).get("fetched_at")
-                if _fetched:
-                    _fetched_dt = datetime.fromisoformat(
-                        _fetched.replace("Z", "+00:00"))
-                    if _fetched_dt.tzinfo is None:
-                        _fetched_dt = _fetched_dt.replace(tzinfo=timezone.utc)
-                    _age = datetime.now(timezone.utc) - _fetched_dt
-                    if _age > timedelta(days=POPULAR_EPISODES_MAX_AGE_DAYS):
-                        _fresh = False
-                        print(
-                            f"Warning: popular episodes rail hidden — "
-                            f"OP3 stats are {_age.days}d old "
-                            f"(>{POPULAR_EPISODES_MAX_AGE_DAYS}d)"
-                        )
-            except Exception as _age_exc:
-                print(f"Warning: could not parse OP3 fetched_at: {_age_exc}")
-        if _fresh and _popular_path.exists():
-            popular_episodes = json.loads(
-                _popular_path.read_text(encoding="utf-8")) or []
-            for _ep in popular_episodes:
-                if not _ep.get("blog_url"):
-                    _ep["blog_url"] = _blog_url_for_episode(
-                        _ep.get("show_slug") or "",
-                        title=_ep.get("title") or "",
-                    )
-            # At most two per show: on 2026-09-03 the top six were ALL
-            # SpaceX Daily, which made a 17-show network's "listener
-            # favourites" rail look like a one-show network. Ranks are
-            # re-numbered after the cut so the badges stay 1..6.
-            _per_show: dict = {}
-            _deduped = []
-            for ep in popular_episodes:
-                if not ep.get("audio_url"):
-                    continue
-                _slug = ep.get("show_slug") or ep.get("show_name") or ""
-                if _per_show.get(_slug, 0) >= POPULAR_EPISODES_MAX_PER_SHOW:
-                    continue
-                _per_show[_slug] = _per_show.get(_slug, 0) + 1
-                _deduped.append(ep)
-                if len(_deduped) >= 6:
-                    break
-            for _i, ep in enumerate(_deduped, 1):
-                ep["rank"] = _i
-            popular_episodes = _deduped
-    except Exception as e:
-        print(f"Warning: could not load popular episodes: {e}")
+    popular_episodes = _load_popular_episodes()
 
     # Newsletter social proof — fed by the nightly Buttondown stats fetch
     # (scripts/fetch_buttondown_stats.py). Hidden below the threshold so a
@@ -4731,6 +4738,162 @@ def generate_explore_page(*, dry_run=False, output_dir=None):
 #    search index itself shipped ~13x a day until July 2026 (built on a fresh
 #    checkout that had never backfilled the gitignored content lake).
 #  * A hub below ``MIN_EPISODES_FOR_HUB`` is skipped rather than stubbed.
+
+
+# ---------------------------------------------------------------------------
+# /landing-test.html — the network as a news front page (Oct 17 2026, TEST)
+# ---------------------------------------------------------------------------
+#
+# Operator-directed experiment: every public show's newest episode laid out
+# the way a news front page is (lead story, top stories, a Latest list, topic
+# sections, a most-played list, a Listen rail), with each episode's own scene
+# art. It is a TEST page: ``noindex``, not in the sitemap, linked from no
+# nav. engine/landing_test.py assembles the data (and documents the honesty
+# rules); this function resolves links against the repo and renders.
+# Design notes: docs/landing_test.md.
+
+LANDING_TEST_PATH = "landing-test.html"
+
+
+def generate_landing_test_page(*, dry_run=False, output_dir=None,
+                               all_shows=None, gallery_dir=None):
+    """Write ``landing-test.html``. ``output_dir`` renders into a scratch
+    tree (tests); ``all_shows`` overrides the registry list (tests: ``[]`` is
+    the no-stories state); ``gallery_dir`` points at a scratch gallery
+    index directory. Every link is resolved against the repo root, which is
+    where the page is served from."""
+    from engine import landing_test as _lt
+    from engine import topic_hubs as _hubs
+    from engine.publisher import apply_op3_prefix as _op3
+
+    shows = _build_all_shows_list() if all_shows is None else list(all_shows)
+    public = [
+        s for s in shows
+        if s.get("access", "public") in _lt.PUBLIC_ACCESS_MODES
+        and s.get("has_feed", True)
+    ]
+    gallery_root = (Path(gallery_dir) if gallery_dir
+                    else ROOT / "site" / "data" / "gallery")
+    hub_for = _lt.hub_by_slug(public)
+
+    def _audio(url):
+        if url.startswith("https://audio.nerranetwork.com/"):
+            return _op3(url)
+        return url if url.startswith("https://") else ""
+
+    def _post(slug, number):
+        return _blog_url_for_episode(slug, episode_num=number) if number else ""
+
+    stories, edition = [], None
+    for show in public:
+        cfg = NETWORK_SHOWS.get(show["slug"]) or {}
+        record = _lt.latest_record(ROOT / cfg.get("json_path", "")) \
+            if cfg.get("json_path") else None
+        if record is None:
+            continue
+        digest_text = ""
+        if not _lt.hook_from_markdown(record.get("content") or ""):
+            # The interview shows' records carry a summary, not the digest;
+            # their hook lives in the committed digest .md. Top level of the
+            # show directory only — never members/.
+            num = _lt._episode_number(record)
+            if isinstance(num, int):
+                for md in sorted((ROOT / cfg["json_path"]).parent.glob(
+                        f"*Ep{num:03d}_*.md")):
+                    digest_text = md.read_text(encoding="utf-8", errors="replace")
+                    break
+        _slice = gallery_root / f"{show['slug']}.json"
+        story = _lt.build_story(
+            show, record, blog_url_for=_post, audio_url_for=_audio,
+            gallery=_lt.load_gallery_index(gallery_root, show["slug"]),
+            hub=hub_for.get(show["slug"]), digest_text=digest_text,
+            # Build-time only: the scene prompts pick which of the episode's
+            # scenes depicts the headline. None of it is written to the page.
+            prompts_for=(lambda n, d, _p=_slice, _s=show["slug"]:
+                         _lt.scene_prompts(_p, _s, n, d)))
+        if story is None:
+            continue
+        if show["slug"] == _lt.EDITION_SLUG:
+            edition = story
+        else:
+            stories.append(story)
+
+    try:
+        _index = _hubs.load_search_index()
+        live_hubs = ([c["hub"]["id"] for c in _hubs.renderable_hubs(shows, _index)]
+                     if _index else [])
+    except Exception:  # noqa: BLE001 — a hub link is never worth a build
+        live_hubs = []
+
+    ranked = _rank_shows_by_audience(public)
+    page = _lt.assemble(stories, audience_order=[s["slug"] for s in ranked],
+                        live_hub_ids=live_hubs)
+
+    popular = []
+    if all_shows is None:
+        public_slugs = {s["slug"] for s in public}
+        for ep in _load_popular_episodes():
+            if ep.get("show_slug") not in public_slugs:
+                continue
+            # Re-resolved here: the committed file carries a precomputed
+            # blog_url, and only this helper knows a redirect stub is not
+            # an article.
+            ep = dict(ep)
+            ep["blog_url"] = _blog_url_for_episode(
+                ep.get("show_slug") or "", title=ep.get("title") or "")
+            # The committed list carries the clipped FEED title ("…with…",
+            # or "SpaceX Daily - Episode 125 - October 09, 2026"); the
+            # episode's own hook is in its summaries record.
+            _num = _lt.episode_number_from_title(ep.get("title") or "")
+            _cfg = NETWORK_SHOWS.get(ep.get("show_slug") or "") or {}
+            _rec = (_lt.record_by_number(ROOT / _cfg["json_path"], _num)
+                    if _num and _cfg.get("json_path") else None)
+            ep["title"] = (_lt.hook_from_markdown((_rec or {}).get("content") or "")
+                           or _lt.strip_episode_label(ep.get("title") or ""))
+            popular.append(ep)
+
+    listen = []
+    for show in ranked:
+        cover = show.get("podcast_image") or ""
+        base = cover[:-4] if cover.endswith(".jpg") else ""
+        listen.append({
+            **show,
+            "cover_webp": f"{base}-400.webp" if base and (ROOT / f"{base}-400.webp").exists() else "",
+            "blog_url": show["blog_page"] if (ROOT / show["blog_page"]).exists() else "",
+        })
+
+    description = (
+        "Today's top stories from every Nerra Network show on one page — "
+        "space, AI, markets, world news, science and more, each with the "
+        "episode to hear and the article to read."
+    )
+    context = {
+        "path_prefix": "",
+        "page_title": "Landing Test — Nerra Network front page",
+        "page_description": description,
+        "meta_description": description,
+        "meta_keywords": "",
+        "theme_color": "#6B47FF",
+        "og_image": "",
+        "canonical_url": f"https://nerranetwork.com/{LANDING_TEST_PATH}",
+        "show_color": "",
+        "show_color_dark": "",
+        "all_shows": shows,
+        "page": page,
+        "edition": edition,
+        "popular": popular,
+        "listen": listen,
+        "story_show_count": len(public),
+    }
+    html = _get_jinja_env().get_template("landing_test.html.j2").render(**context)
+    out_path = (Path(output_dir) / LANDING_TEST_PATH if output_dir
+                else ROOT / LANDING_TEST_PATH)
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
 
 
 def generate_topic_hub_pages(*, dry_run=False, output_dir=None):
@@ -6555,6 +6718,9 @@ def generate_static_pages(*, dry_run=False):
     generate_404_page(dry_run=dry_run)
     generate_mira_page(dry_run=dry_run)
     generate_explore_page(dry_run=dry_run)
+    # Oct 17 2026 test front page: noindex, not in the sitemap; refreshed
+    # here so it carries the day's stories.
+    generate_landing_test_page(dry_run=dry_run)
     generate_topic_hub_pages(dry_run=dry_run)
     generate_personal_interest_page(dry_run=dry_run)
     generate_claims_pages(dry_run=dry_run)
@@ -7087,6 +7253,14 @@ def main():
         help="Generate explore.html, the browse-by-subject page",
     )
     parser.add_argument(
+        "--landing-test",
+        action="store_true",
+        help=(
+            "Generate landing-test.html, the noindexed news-front-page test "
+            "(also in --static-pages)"
+        ),
+    )
+    parser.add_argument(
         "--redirects",
         action="store_true",
         help=(
@@ -7109,6 +7283,7 @@ def main():
         or args.start_here or args.faq or args.about or args.blog_aggregates
         or args.books or args.legal or args.static_pages or args.redirects
         or args.mira or args.topics or args.explore or args.guest_picks
+        or args.landing_test
     )
     if not _any_flag:
         args.all = True
@@ -7222,6 +7397,7 @@ def main():
         generate_redirect_stubs(dry_run=args.dry_run)
         generate_llms_txt(dry_run=args.dry_run)
         generate_mira_page(dry_run=args.dry_run)
+        generate_landing_test_page(dry_run=args.dry_run)
         generate_topic_hub_pages(dry_run=args.dry_run)
         # Three generators used to run ONLY under --show, so a full regen left
         # them stale: the story trackers, the MIT performance page and the RU
@@ -7299,6 +7475,8 @@ def main():
         generate_mira_page(dry_run=args.dry_run)
     if args.explore:
         generate_explore_page(dry_run=args.dry_run)
+    if args.landing_test:
+        generate_landing_test_page(dry_run=args.dry_run)
     if args.topics:
         generate_topic_hub_pages(dry_run=args.dry_run)
     if args.redirects:

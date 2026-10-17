@@ -196,7 +196,11 @@ class TestCommittedEpisodesReplay:
 
     def test_tesla_628_lead_is_a_chapter(self):
         titles = self._replay("tesla_shorts_time", "*Ep628_20261008", "tesla.yaml")
-        assert titles[1].startswith("Tesla applies for sixteen Supercharger stalls")
+        # Oct 17 2026: the lead's headline ("Tesla applies for sixteen
+        # Supercharger stalls on former motorhome site in Somerset", 82
+        # chars) no longer fits whole, and a headline is never clipped — the
+        # lead keeps its chapter under the digest's own section name.
+        assert titles[1] == "Top 12 News Items"
 
     def test_uc_136_chapters_are_its_segments(self):
         titles = self._replay("unintended_consequences", "*Ep136_20261008",
