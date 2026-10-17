@@ -4893,3 +4893,51 @@ experiments:
       unmatched segments get the deterministic one-line handoff. The field
       note now also avoids the last three editions' lineup headlines
       (recent_lineup_hooks). ⚠️ AUDIO on the realigned days only.
+  - id: story-breaks-placement-2026-10-17
+    title: "A beat only where a story changes, and every story change gets one"
+    area: network
+    shipped: 2026-10-17
+    readout: 2026-10-31
+    status: reading
+    baseline: >
+      Oct 17 2026 slate: 133 found, 115 inserted, 17 dropped by the 20 s
+      spacing (15 of them real stories; Tesla's stories run 14-22 s apart),
+      1 unplaced; 10 of 67 beats in eight read episodes sat mid-story (6 on
+      Unintended Consequences).
+    target: >
+      story_breaks_inserted / story_breaks_found at or above 0.95 network-wide
+      (replay: 116 of 121); no beat on the lead story's first body line; on a
+      read of five episodes, no more than one mid-story beat each.
+    notes: >
+      engine/story_breaks.py: MIN_STORY_SECONDS 20 -> 12; the cold open (to
+      the identity line) and everything from the sign-off never set the story;
+      unsourced paragraphs join the sourced one that ends their section (not
+      when it opens on its own bold title); all-essay digests move forward
+      only; the lead runs two lines before the first beat; anchors back off by
+      letters and snap to a word start. A retell-overlap suppression was
+      measured and rejected (it removed Planetterrian's deep-dive opener 3/3).
+      ⚠️ AUDIO — A/B-listen one Tesla and one UC episode. Guards
+      tests/test_slate_2026_10_17.py.
+  - id: slate-2026-10-17
+    title: "Oct 17 slate fixes: ledger dedup, slug dates, MIT open positions, X queued"
+    area: network
+    shipped: 2026-10-17
+    readout: 2026-10-31
+    status: reading
+    baseline: >
+      45 malformed claims-ledger entries on 12 shows in a week (the expansion
+      dedup deleted fenced ledger lines); MAB Ep199 shipped an empty explainer;
+      Omni View Ep208 aired a week-old quake update dated in its slug; MIT
+      Ep203 picked a symbol it already held; Top World told public readers
+      about the members-only desks; x_posted counted queued posts as posted.
+    target: >
+      zero malformed entries traceable to the expansion retry; MAB's explainer
+      present on every episode; no slug-dated article older than
+      stale_article_days in a prompt; no MIT pick on an open symbol;
+      x_queued_share_7d reported beside x_posted_share_7d.
+    notes: >
+      engine.generator._dedup_expansion_sentences skips fenced blocks;
+      digest_overlap_exempt_sections on MAB; engine.article_dates.url_slug_date
+      read by article_age_days; _open_positions_note in the MIT hook; Top
+      World intake_line(0, n) == ""; _build_teaser clips via engine.titles.
+      ⚠️ AUDIO: Prediction Markets teaser, MIT pick context.

@@ -2240,12 +2240,16 @@ def _episode_counter_shares(root: Path, anchor_d: _dt.date, days: int = 7,
     over Sep 25 – Oct 8, with the reasons now in
     ``digest_structural_regen_reasons``). ``x_posted_share_7d``: of the
     episodes on shows with X enabled (the key is recorded only there), the
-    share whose teaser posted (item 13 — before this a silent credential
-    failure on every posting show showed nothing). Null under ``min_n``
-    episodes, never a fake zero.
+    share whose teaser posted or was queued (item 13 — before this a silent
+    credential failure on every posting show showed nothing).
+    ``x_queued_share_7d`` (Oct 17 2026) is the part of that share that was
+    only QUEUED: the @nerranetwork shows hand their post to the x-queue
+    workflow, so for them ``x_posted`` means handed off, and delivery is that
+    workflow's record, not the episode's. Null under ``min_n`` episodes,
+    never a fake zero.
     """
     cutoff = anchor_d - _dt.timedelta(days=days)
-    n_all = regen = n_x = posted = 0
+    n_all = regen = n_x = posted = queued = 0
     digests = root / "digests"
     for show_dir in (sorted(digests.iterdir()) if digests.is_dir() else []):
         if not show_dir.is_dir():
@@ -2269,9 +2273,12 @@ def _episode_counter_shares(root: Path, anchor_d: _dt.date, days: int = 7,
                 n_x += 1
                 if counters.get("x_posted") is True:
                     posted += 1
+                    if counters.get("x_post_queued") is True:
+                        queued += 1
     return {
         "digest_structural_regen_share_7d": round(regen / n_all, 2) if n_all >= min_n else None,
         "x_posted_share_7d": round(posted / n_x, 2) if n_x >= min_n else None,
+        "x_queued_share_7d": round(queued / n_x, 2) if n_x >= min_n else None,
     }
 
 

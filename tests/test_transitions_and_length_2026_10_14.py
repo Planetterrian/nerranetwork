@@ -55,12 +55,12 @@ class TestThePauseIsATotal:
         breaks, _ = S.plan_breaks([(10.0, 11.2)], [(10.0, 11.2)], gap_seconds=1.0)
         assert breaks[0].insert == 0.0
 
-    def test_beats_closer_than_twenty_seconds_are_dropped(self):
+    def test_beats_closer_than_the_spacing_floor_are_dropped(self):
         anchors = [(30.0, 30.4), (37.0, 37.4), (60.0, 60.4)]
         sil = [(29.9, 30.4), (36.9, 37.4), (59.9, 60.4)]
         breaks, _ = S.plan_breaks(anchors, sil, gap_seconds=1.0)
         assert [round(b.cut) for b in breaks] == [30, 60]
-        assert S.MIN_STORY_SECONDS == 20.0
+        assert S.MIN_STORY_SECONDS == 12.0
 
     def test_per_cut_splice_and_transcript_shift(self):
         t = {"duration": 100.0, "segments": [{"start": 50.0, "end": 51.0,

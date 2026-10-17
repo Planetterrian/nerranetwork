@@ -62,10 +62,12 @@ SILENCE_NOISE_DB = -45.0
 SILENCE_MIN_SECONDS = 0.15
 #: How far either side of the Whisper hand-over a silence may sit.
 ANCHOR_WINDOW = 0.6
-#: A beat closer than this to the previous one is dropped: a story told in
-#: under twenty seconds is a brief, and beats every few seconds read as a
-#: stutter (Vancouver Ep021 had two 7 s apart).
-MIN_STORY_SECONDS = 20.0
+#: A beat closer than this to the previous one is dropped: beats every few
+#: seconds read as a stutter (Vancouver Ep021 had two 7 s apart).
+#: Oct 17 2026: 20 s dropped real story changes. Tesla's stories run 14-22 s
+#: apart, so whether one got a beat was close to a coin flip; on the Oct 17
+#: slate 15 of the 17 beats dropped by the 20 s rule were real stories.
+MIN_STORY_SECONDS = 12.0
 
 _STOP = frozenset(
     "the a an and or of to in on for with at by from is are was were be been "
@@ -188,6 +190,20 @@ def story_units(digest_md: str) -> List[StoryUnit]:
             ):
                 continue
             if _NUMBERED_RE.match(block[0]) or _URL_RE.search(text) or _SOURCE_RE.search(text):
+                # Oct 17 2026: unsourced paragraphs followed by a sourced one
+                # in the same section are one story whose citation sits at
+                # its end (Vancouver Ep025's Closer Look and Both Sides, MAG 7
+                # Ep's Thread). As two units, the sourced paragraph's first
+                # line got a beat in the middle of the section.
+                # A sourced paragraph that opens on its own bold title is a
+                # new item (Models & Agents for Beginners pools both Source
+                # lines at the end of a section's last item).
+                if (essay and section[0] and not _NUMBERED_RE.match(block[0])
+                        and not block[0].lstrip().startswith("**")):
+                    essay.append(text)
+                    _add(" ".join(essay), "item")
+                    essay.clear()
+                    continue
                 flush_essay()
                 _add(text, "item")
             else:
@@ -242,6 +258,20 @@ def opens_as_continuation(line: str) -> bool:
     return bool(_CONTINUATION_RE.match(line or ""))
 
 
+#: The identity line ("This is <Show>, episode N"). Lines up to it are the
+#: cold open: the hook summarises the lead story, and letting it set the
+#: current story put a beat on the lead story's first body line (FF Ep225
+#: "El Gordo, as the cluster is nicknamed…", UC Ep145, Oct 17 2026).
+_IDENTITY_RE = re.compile(r"^\W*this is .{2,60}episode", re.IGNORECASE)
+IDENTITY_SEARCH_LINES = 4
+#: The sign-off ("That's <Show> for today", "see you tomorrow"). Nothing
+#: after it is a story: Omni View Africa & Middle East Ep023's network plug,
+#: two lines after Mira's goodbye, matched a Closer Look item on three words.
+_SIGNOFF_RE = re.compile(
+    r"^\W*that(?:'|’)?s .{2,60} for (?:today|this week)|\bsee you (?:tomorrow|next)",
+    re.IGNORECASE)
+
+
 def script_lines(script: str) -> List[str]:
     return [ln.strip() for ln in (script or "").split("\n") if ln.strip()]
 
@@ -254,26 +284,62 @@ def story_boundary_lines(script: str, digest_md: str) -> List[int]:
     short (one or two sentences in the digest). The first story never gets
     a break (the hook and the identity line lead into it), and lines that
     match nothing (the identity line, the closing) never move the cursor.
+    The cold open (up to the identity line) and everything from the
+    sign-off on never set the story; an all-essay digest moves forward only.
     """
     units = story_units(digest_md)
     lines = script_lines(script)
     if len(units) < 2 or not lines:
         return []
     assigned = _assign(lines, units)
+    start = 0
+    for i, line in enumerate(lines[:IDENTITY_SEARCH_LINES]):
+        if _IDENTITY_RE.match(line):
+            start = i + 1
+    stop = len(lines)
+    for i in range(len(lines) // 2, len(lines)):
+        if _SIGNOFF_RE.search(lines[i]):
+            stop = i
+            break
     confident = [(i, u) for i, (u, s) in enumerate(assigned)
-                 if u >= 0 and s >= MIN_ASSIGN_SCORE
+                 if start <= i < stop and u >= 0 and s >= MIN_ASSIGN_SCORE
                  and len(_tokens(lines[i]) & units[u].tokens) >= MIN_ASSIGN_TOKENS]
+    # Oct 17 2026: an all-essay digest (Unintended Consequences, First
+    # Principles) is a sequence of segments the script tells in order, and
+    # its segments share vocabulary (marshes, dams, pulse). Two lines leaning
+    # towards another segment put 6 of UC Ep145's 9 beats mid-thought. There
+    # a beat only moves FORWARD to a segment not yet told, and only when two
+    # of the next three lines are on it.
+    narrative = all(u.label == "essay" or u.section == "sources" for u in units)
     breaks: List[int] = []
     current: Optional[int] = None
+    furthest = -1
     run = 0  # confident lines told so far in the current story
     for k, (idx, unit) in enumerate(confident):
         if unit == current:
             run += 1
             continue
         if current is None:
-            current, run = unit, 1
+            current, run, furthest = unit, 1, unit
+            first_story = True
+            continue
+        if narrative:
+            ahead = [u for _, u in confident[k:k + 3]]
+            if (unit > furthest and ahead.count(unit) >= 2
+                    and not opens_as_continuation(lines[idx])):
+                breaks.append(idx)
+                furthest = unit
+                current, run = unit, 1
             continue
         nxt = confident[k + 1][1] if k + 1 < len(confident) else None
+        # Oct 17 2026: the lead story is never a one-line story. Planetterrian
+        # Ep214 tells its lead's first fact on one line and turns to its
+        # Spotlight (which retells the lead) on the next; that was a beat
+        # inside the lead.
+        if first_story and run < 2 and nxt == unit:
+            current, run, first_story = unit, 1, False
+            continue
+        first_story = False
         # A one-line detour that returns to the story being told (A B A) is
         # a passing reference, not a new story.
         if nxt == current:
@@ -490,7 +556,18 @@ def boundary_anchors(script: str, boundary_idx: Sequence[int],
                 break
             at = stream.find(probe, pos_char)
             if at >= 0:
-                hit = max(0, owner[at] - skip)
+                # Oct 17 2026: back off by the skipped words' LETTERS, never
+                # their count. Whisper splits and merges words ("m i t c s a
+                # l" for "MIT CSAIL"), so a count of script words landed the
+                # anchor up to five transcript words late and M&A Ep206's
+                # MIT story lost its pause.
+                # The letters can disagree by one or two ("csal"), so the
+                # anchor snaps to the nearest word START.
+                target = max(0, at - len("".join(toks[:skip])))
+                w = owner[target]
+                if w + 1 < len(words) and first_char[w + 1] - target < target - first_char[w]:
+                    w += 1
+                hit = w
                 break
         if hit is None:
             hit = _fuzzy_hit(toks, words, owner[pos_char] if pos_char < len(owner) else len(words),

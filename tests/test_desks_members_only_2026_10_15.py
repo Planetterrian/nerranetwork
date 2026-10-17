@@ -152,8 +152,10 @@ class TestTopWorldReadsMembersDigests:
         assert mod.todays_desk_digests(tmp_path, dt.date(2026, 10, 15)) == []
 
     def test_the_intake_line_does_not_say_published(self):
+        # Oct 17 2026: a day with no desk edition carries no intake line at
+        # all (the sentence told public readers about a members-only show).
         line = _top_world().intake_line(0, 5)
-        assert "world feeds alone" in line and "published" not in line
+        assert line == "" and "published" not in line
 
 
 class TestTheAuditReadsTheGateAsWorking:

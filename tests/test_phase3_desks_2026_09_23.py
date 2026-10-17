@@ -262,7 +262,9 @@ class TestTopWorldReadsTheDesks:
         payload = h.build_payload(root, _dt.date(2026, 9, 24))
         assert payload["articles"] == []
         assert payload["metrics"]["desks_live_at_publish"] == 0
-        assert "No regional desk had published" in payload["hook_context"]
+        # Oct 17 2026: the note no longer tells the model (and so the public
+        # blog) that a members-only desk did not publish.
+        assert "No regional desk edition is part of today's intake" in payload["hook_context"]
         assert "Europe:" not in payload["hook_context"]
 
     def test_hook_articles_stay_under_the_prompt_cap(self):

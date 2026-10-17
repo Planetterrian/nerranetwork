@@ -5762,8 +5762,13 @@ def run(args: argparse.Namespace) -> None:
                 show_slug=config.slug, episode_num=episode_num, env_prefix=prefix,
                 text=_x_text, media_path=_media_for_x, media_kind=_kind)
             if _queued:
+                # Oct 17 2026: a queued post is handed off, not posted — the
+                # x-queue workflow posts it later and its run is the record of
+                # delivery. ``x_post_queued`` keeps the dashboard from reading
+                # a hand-off as a confirmed post.
                 _x_posted = True
                 record_x_post(tracker)
+                metrics.record("x_post_queued", True)
                 metrics.record("x_post_queued_for", _due)
                 metrics.record("x_post_media", _kind)
             else:
@@ -9394,6 +9399,8 @@ def _build_teaser(config, episode_num: int, today_str: str, extra_context: dict)
     ``extra_context["youtube_url"]`` is set (set by the pipeline after
     a successful long-form upload).
     """
+    from engine.titles import X_TEASER_TEXT_MAX, X_TEASER_TWO_LINK_TEXT_MAX, clip_words
+
     # Use YAML template if configured
     template = getattr(config.publishing, "x_teaser_template", "")
     if template:
@@ -9415,8 +9422,7 @@ def _build_teaser(config, episode_num: int, today_str: str, extra_context: dict)
         # link straight to the episode's blog post (inline player +
         # show notes) instead of the generic summaries page.
         hook_text = (extra_context.get("hook") or "").strip()
-        if len(hook_text) > 200:
-            hook_text = hook_text[:199].rstrip() + "…"
+        hook_text = clip_words(hook_text, X_TEASER_TEXT_MAX)
         hook_line = f"{hook_text}\n\n" if hook_text else ""
         teaser = (
             f"🚀⚡ Tesla Shorts Time Ep {episode_num}{price_str}\n\n"
@@ -9436,8 +9442,7 @@ def _build_teaser(config, episode_num: int, today_str: str, extra_context: dict)
             "planetterrian": "🌍🧬 Planetterrian Daily",
         }
         hook_text = (extra_context.get("hook") or "").strip()
-        if len(hook_text) > 200:
-            hook_text = hook_text[:199].rstrip() + "…"
+        hook_text = clip_words(hook_text, X_TEASER_TEXT_MAX)
         hook_line = f"{hook_text}\n\n" if hook_text else ""
         teaser = (
             f"{_branding[slug]} Ep {episode_num}\n\n"
@@ -9452,8 +9457,7 @@ def _build_teaser(config, episode_num: int, today_str: str, extra_context: dict)
         # post, and plug the live performance page (the show's most
         # differentiating asset, previously invisible on X).
         hook_text = (extra_context.get("hook") or "").strip()
-        if len(hook_text) > 180:
-            hook_text = hook_text[:179].rstrip() + "…"
+        hook_text = clip_words(hook_text, X_TEASER_TWO_LINK_TEXT_MAX)
         hook_line = f"{hook_text}\n\n" if hook_text else ""
         teaser = (
             f"📈💰 Modern Investing Techniques Ep {episode_num}\n\n"
@@ -9468,8 +9472,7 @@ def _build_teaser(config, episode_num: int, today_str: str, extra_context: dict)
         # episode hook + link the episode blog post when available,
         # instead of the date-only post that read identically every day.
         hook_text = (extra_context.get("hook") or "").strip()
-        if len(hook_text) > 200:
-            hook_text = hook_text[:199].rstrip() + "…"
+        hook_text = clip_words(hook_text, X_TEASER_TEXT_MAX)
         blog_url = ""
         try:
             from generate_html import NETWORK_SHOWS

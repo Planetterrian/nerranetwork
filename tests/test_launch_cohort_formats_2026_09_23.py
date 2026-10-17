@@ -129,7 +129,7 @@ class TestTopWorld:
         from shows.hooks.omni_view_world import intake_line
         assert "all 5" in intake_line(5, 5)
         assert "3 of the 5" in intake_line(3, 5)
-        assert "no regional desk" in intake_line(0, 5).lower()
+        assert intake_line(0, 5) == ""  # Oct 17 2026: no line on a no-desk day
 
     def test_edition_note_switches_on_saturday(self):
         from shows.hooks.omni_view_world import edition_note

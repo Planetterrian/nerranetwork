@@ -84,6 +84,62 @@ def parse_date_token(raw: Optional[str]) -> Optional[_dt.datetime]:
     return day + _dt.timedelta(days=1) - _dt.timedelta(seconds=1)
 
 
+_MONTHS = ("january", "february", "march", "april", "may", "june", "july",
+           "august", "september", "october", "november", "december")
+_SLUG_WORD_DATE_RE = re.compile(
+    r"(?:^|[-_])(" + "|".join(_MONTHS) + r")-([0-3]?[0-9])-(20[0-9]{2})(?=$|[-_.])",
+    re.I,
+)
+_SLUG_ISO_DATE_RE = re.compile(
+    r"(?:^|[-_])(20[0-9]{2})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(?=$|[-_.])"
+)
+_PATH_DATE_RE = re.compile(r"/20[0-9]{2}/(?:0[1-9]|1[0-2])(?:/|$)")
+
+
+def url_slug_date(url: str) -> Optional[_dt.datetime]:
+    """The EARLIEST date written into a URL's path words, end of that day.
+
+    Oct 17 2026, Omni View Ep208: The Hindu's
+    ``…/panama-earthquake-toll-injuries-damage-update-october-10-2026/…``
+    aired as that morning's news a week late, and as a less accurate story
+    than the show had told on Oct 11. Its feed date was fresh and the URL
+    has no ``/YYYY/MM/`` path, so nothing read the date the publisher wrote
+    into the slug. A slug date is a date the story already existed on, so
+    it can only make an article OLDER; a deadline or event date ahead of
+    the run ("…-by-march-31-2027", "…-results-on-november-10-2026") never
+    makes anything stale. A URL with a ``/YYYY/MM/`` path is left to that
+    path (a slug there names a period, e.g. "…period-ending-september-30").
+    Calibrated on every content tracker (732 slug-dated URLs): four were
+    used more than three days after their slug date, all four re-surfaced
+    stories.
+    """
+    from urllib.parse import urlsplit
+
+    try:
+        path = urlsplit(url or "").path
+    except ValueError:
+        return None
+    if not path or _PATH_DATE_RE.search(path):
+        return None
+    found: List[_dt.datetime] = []
+    for seg in path.split("/"):
+        for m in _SLUG_WORD_DATE_RE.finditer(seg):
+            try:
+                found.append(_dt.datetime(int(m.group(3)), _MONTHS.index(m.group(1).lower()) + 1,
+                                          int(m.group(2)), tzinfo=_dt.timezone.utc))
+            except ValueError:
+                pass
+        for m in _SLUG_ISO_DATE_RE.finditer(seg):
+            try:
+                found.append(_dt.datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)),
+                                          tzinfo=_dt.timezone.utc))
+            except ValueError:
+                pass
+    if not found:
+        return None
+    return min(found) + _dt.timedelta(days=1) - _dt.timedelta(seconds=1)
+
+
 def stamp(article: Dict, when: Optional[_dt.datetime], source: str) -> Dict:
     """Write *when* (or ``""``) and *source* onto *article* in place."""
     article["published_date"] = when.isoformat() if when is not None else ""

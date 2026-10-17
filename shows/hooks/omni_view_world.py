@@ -69,9 +69,11 @@ def intake_line(desks_live: int, desks_total: int) -> str:
     if desks_live <= 0:
         # Oct 16 2026: since the desks became members-only (Oct 15) a day
         # with no desk digest is usually a day no desk was made, and "had
-        # not filed by press time" told readers they were late.
-        return ("This edition was drawn from the world feeds alone; no regional desk "
-                "edition was available when it was assembled.")
+        # not filed by press time" told readers they were late. Oct 17: the
+        # replacement sentence then rode every edition's public blog and
+        # newsletter, telling readers about a members-only product they
+        # cannot see. A day with no desk edition carries no intake line.
+        return ""
     if desks_live >= desks_total:
         return f"This edition draws on all {desks_total} Omni View regional desks."
     return (f"This edition draws on {desks_live} of the {desks_total} Omni View regional desks "
@@ -119,9 +121,9 @@ def build_payload(root: Path, date: _dt.date) -> Dict[str, object]:
     if not lines:
         note = (
             "### TODAY'S REGIONAL DESKS (instruction — do not include in output)\n"
-            "No regional desk had published when this edition was assembled. The "
-            "intake line for the end of What You Need to Know is, copied as given: "
-            + intake + "\n\n" + edition_note(date)
+            "No regional desk edition is part of today's intake. There is no intake "
+            "line today: end What You Need to Know on its own last sentence, and do "
+            "not mention the regional desks anywhere.\n\n" + edition_note(date)
         )
         return {"articles": [], "hook_context": note, "metrics": metrics}
     note = (
