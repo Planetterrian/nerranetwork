@@ -111,7 +111,6 @@
         return {
             ga4: (s && s.getAttribute('data-nn-ga4-id')) || '',
             ads: (s && s.getAttribute('data-nn-ads-id')) || '',
-            adsLabel: (s && s.getAttribute('data-nn-ads-signup-label')) || '',
         };
     }
 
@@ -165,11 +164,10 @@
         if (ids.ga4) {
             gtag('config', ids.ga4, { 'anonymize_ip': true });
         }
+        // Ads tag config only — no send_to conversion labels. Conversions
+        // are imported from GA4 key events (newsletter_signup, etc.).
         if (ids.ads) {
             gtag('config', ids.ads);
-            if (ids.adsLabel) {
-                window._GOOGLE_ADS_SIGNUP_TARGET = ids.ads + '/' + ids.adsLabel;
-            }
         }
     }
 

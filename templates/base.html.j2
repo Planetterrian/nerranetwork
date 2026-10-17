@@ -74,8 +74,9 @@
     {# ---------------------------------------------------------------
        Marketing & Analytics
        Globals: marketing.ga4_measurement_id, marketing.google_ads_id,
-                marketing.google_ads_signup_label, marketing.plausible_domain
-       Set via env vars in generate_html.py — all empty by default.
+                marketing.plausible_domain
+       GA4 + Ads tag IDs default in generate_html.py (public IDs).
+       No Ads conversion labels — GA4 key events are imported into Ads.
        --------------------------------------------------------------- #}
     {% if marketing.ga4_measurement_id or marketing.google_ads_id %}
     {#- Consent Mode v2: consent.js owns gtag load + config.
@@ -86,8 +87,7 @@
     <script src="{{ path_prefix }}assets/js/consent.js"
             data-nn-path-prefix="{{ path_prefix }}"
             data-nn-ga4-id="{{ marketing.ga4_measurement_id or '' }}"
-            data-nn-ads-id="{{ marketing.google_ads_id or '' }}"
-            data-nn-ads-signup-label="{{ marketing.google_ads_signup_label or '' }}"></script>
+            data-nn-ads-id="{{ marketing.google_ads_id or '' }}"></script>
     {% endif %}
     {% if marketing.plausible_domain %}
     <script defer data-domain="{{ marketing.plausible_domain }}" src="https://plausible.io/js/script.js"></script>
