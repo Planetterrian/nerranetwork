@@ -735,10 +735,10 @@ a.lt-media:hover img { transform: scale(1.03); }
 {%- endif -%}
 {%- endmacro -%}
 
-{%- macro meta(s, listen=true) -%}
+{%- macro meta(s, listen=true, read=true) -%}
 <div class="lt-meta">
     {% if s.stamp and s.stamp.label %}<span class="lt-when">{{ when(s.stamp) }}</span>{% elif s.date %}<time datetime="{{ s.date_raw }}">{{ s.date }}</time>{% endif %}
-    {% if s.post_url %}<span class="lt-dot" aria-hidden="true">•</span><a href="{{ path_prefix }}{{ s.post_url }}">Read</a>{% endif %}
+    {% if read and s.post_url %}<span class="lt-dot" aria-hidden="true">•</span><a href="{{ path_prefix }}{{ s.post_url }}">Read</a>{% endif %}
     {% if listen %}<span class="lt-dot" aria-hidden="true">•</span><a href="{{ path_prefix }}{{ s.show_page }}">Listen</a>{% endif %}
 </div>
 {%- endmacro -%}
@@ -912,7 +912,7 @@ a.lt-media:hover img { transform: scale(1.03); }
                 episode, the show finder and the feeds. Each is a page that
                 exists; the edition link only when an edition was built. -#}
             <p class="lt-masthead-actions">
-                {% if edition %}<a class="is-primary" href="{{ path_prefix }}{{ edition.post_url or edition.show_page }}">Play today's {{ edition.show_name }}</a>{% endif %}
+                {% if edition %}<a class="is-primary" href="{{ path_prefix }}{{ edition.post_url or edition.show_page }}">{% if edition.stamp and edition.stamp.is_today %}Play today's {{ edition.show_name }}{% else %}Play the latest {{ edition.show_name }}{% endif %}</a>{% endif %}
                 <a href="{{ path_prefix }}start-here.html">Find your show</a>
                 <a href="{{ path_prefix }}how-to-listen.html">Listen in any app</a>
             </p>
@@ -1031,7 +1031,7 @@ a.lt-media:hover img { transform: scale(1.03); }
 <section class="lt-block container" id="flagships" aria-labelledby="lt-flag-h">
     <div class="lt-block-head">
         <h2 id="lt-flag-h">Flagship shows</h2>
-        <p class="lt-block-sub">The network's two biggest daily shows, in this morning's episodes.</p>
+        <p class="lt-block-sub">The network's two biggest daily shows, in their latest episodes.</p>
     </div>
     <div class="lt-flag-grid">
         {% for f in p.flagships %}
@@ -1053,7 +1053,7 @@ a.lt-media:hover img { transform: scale(1.03); }
             </div>
             {{ media(f) }}
             <h3 class="lt-hl"{% if f.lang %} lang="{{ f.lang }}"{% endif %}><a href="{{ story_href(f) }}">{{ f.hook }}</a></h3>
-            {{ meta(f, listen=false) }}
+            {{ meta(f, listen=false, read=false) }}
             {{ more_list(f) }}
             {% if f.launch %}{% set l = f.launch %}
             <p class="lt-flag-launch" data-expires="{{ l.net_iso }}"><b>Next launch</b> {{ l.mission }}{% if l.rocket %} · {{ l.rocket }}{% endif %} · no earlier than <time datetime="{{ l.net_iso }}">{{ l.net }}</time></p>
@@ -1151,7 +1151,7 @@ a.lt-media:hover img { transform: scale(1.03); }
                 <p class="lt-edition-note">The network's English shows in one daily episode, with Mira, the network's AI host, introducing each one. <a href="{{ path_prefix }}mira.html">Meet Mira</a>.</p>
                 <div class="lt-lead-audio">
                     {% if e.audio_url %}<audio controls preload="none" src="{{ e.audio_url }}" aria-label="Play {{ e.show_name }} episode {{ e.episode_num }}"></audio>{% endif %}
-                    {% if e.post_url %}<a class="lt-btn" href="{{ path_prefix }}{{ e.post_url }}">Today's rundown</a>{% endif %}
+                    {% if e.post_url %}<a class="lt-btn" href="{{ path_prefix }}{{ e.post_url }}">{% if e.stamp and e.stamp.is_today %}Today's rundown{% else %}Read the rundown{% endif %}</a>{% endif %}
                 </div>
             </div>
         </div>

@@ -55,6 +55,20 @@ revealed here why you your
 
 _TOKEN_RE = re.compile(r"[a-z0-9]+(?:['’][a-z0-9]+)*")
 
+# Words that say nothing about WHICH story a hook tells. Ignored only by
+# the hook gate (``hook_match``), which spends a whole digest regeneration
+# when it fires: on 2026-10-18 M&A's hook matched an Oct 6 benchmark story
+# on {agent, coding, models, real} and an Oct 3 robot story on {just, real,
+# single, tasks}, and the regeneration then stalled 1,700 s on a 503.
+HOOK_GENERIC = frozenset("""
+just real single first now more most still also about than then like
+one two three four five six seven eight nine ten hundred thousand million
+billion percent year years day days week weeks month months
+""".split())
+# The hook gate needs a stronger match than an article annotation.
+HOOK_MIN_OVERLAP = 4
+HOOK_MIN_FRACTION_OVERLAP = 3
+
 # A window headline shares this many salient tokens with an article title
 # (or covers this fraction of the smaller token set) => same story.
 _MIN_OVERLAP = 3
@@ -103,7 +117,15 @@ class RecurrenceIndex:
     def __len__(self) -> int:
         return len(self._entries)
 
-    def match(self, title: str) -> Optional[dict]:
+    def hook_match(self, hook: str) -> Optional[dict]:
+        """``match`` at the hook gate's stricter threshold."""
+        return self.match(hook, min_overlap=HOOK_MIN_OVERLAP,
+                          min_fraction_overlap=HOOK_MIN_FRACTION_OVERLAP,
+                          ignore=HOOK_GENERIC)
+
+    def match(self, title: str, *, min_overlap: int = _MIN_OVERLAP,
+              min_fraction_overlap: int = 2,
+              ignore: frozenset = frozenset()) -> Optional[dict]:
         """Best window match for *title*, or None.
 
         Returns ``{"date", "headline", "times"}`` — ``times`` is how many
@@ -111,19 +133,19 @@ class RecurrenceIndex:
         4 days reads differently than one that ran once; counting raw
         headline matches would inflate multi-section coverage).
         """
-        probe = salient_tokens(title) - self.common
+        probe = salient_tokens(title) - self.common - ignore
         if len(probe) < 2:
             return None
         matches: List[Tuple[str, str, int]] = []
         for date, headline, toks in self._entries:
-            cand = toks - self.common
+            cand = toks - self.common - ignore
             if not cand:
                 continue
             overlap = len(probe & cand)
             smaller = min(len(probe), len(cand))
-            if overlap >= _MIN_OVERLAP or (
+            if overlap >= min_overlap or (
                 smaller >= 2 and overlap / smaller >= _MIN_FRACTION
-                and overlap >= 2
+                and overlap >= min_fraction_overlap
             ):
                 matches.append((date, headline, overlap))
         if not matches:

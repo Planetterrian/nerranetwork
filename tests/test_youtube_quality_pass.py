@@ -79,7 +79,7 @@ class TestSlideshowSceneCycling:
         assert "_MAX_SLIDESHOW_SLOTS = 36" in sched_src
         assert _MAX_SLIDESHOW_SLOTS == 36
         assert "_dedupe_scene_inputs" in video_src
-        assert "PIPELINE_TIMEOUT_SECONDS: '3000'" in (
+        assert "PIPELINE_TIMEOUT_SECONDS: '4200'" in (
             _ROOT / ".github" / "workflows" / "run-show.yml"
         ).read_text(encoding="utf-8")
 

@@ -1076,32 +1076,22 @@ def _milestone_note(episode_num: int, *, is_ru: bool = False) -> str | None:
     Финансы Просто's Ep100 would have opened with the Olya voice reading
     an English sentence mid-Russian-intro.
     """
+    # The identity line already says the episode number, so a note never
+    # repeats it (Oct 18 2026, MAB Ep200 aired "episode two hundred.
+    # Episode two hundred. Thanks for sticking with us.").
     if is_ru:
         if episode_num == 100:
-            return "Это сотый выпуск — настоящая веха. Спасибо, что вы с нами."
+            return "Это настоящая веха. Спасибо, что вы с нами."
         if episode_num % 100 == 0 and episode_num > 0:
             return "Ещё одна круглая отметка — спасибо, что слушаете."
         return None
     if episode_num == 100:
-        return "That's episode one hundred — a big milestone. Thank you for being here."
-    if episode_num == 200:
-        return "Episode two hundred. Thanks for sticking with us."
+        return "A big milestone. Thank you for being here."
     if episode_num == 500:
-        return "Five hundred episodes. What a journey — thank you."
+        return "What a journey. Thank you."
     if episode_num % 100 == 0 and episode_num > 0:
-        return f"Episode {_num_words(episode_num)} — thanks for being here."
-    if episode_num % 50 == 0 and episode_num > 0:
-        return None  # subtle — don't clutter every 50th
+        return "A milestone. Thanks for sticking with us."
     return None
-
-
-def _num_words(n: int) -> str:
-    """Simple number-to-words for milestone callouts (hundreds only)."""
-    try:
-        from engine.utils import number_to_words
-        return number_to_words(n)
-    except Exception:
-        return str(n)
 
 
 # ---------------------------------------------------------------------------

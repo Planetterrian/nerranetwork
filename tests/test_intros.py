@@ -57,7 +57,8 @@ class TestMilestones:
     def test_episode_100(self):
         note = _milestone_note(100)
         assert note is not None
-        assert "one hundred" in note or "100" in note
+        # The identity line already speaks the number; the note never repeats it.
+        assert "hundred" not in note.lower() and "100" not in note
 
     def test_episode_200(self):
         assert _milestone_note(200) is not None
