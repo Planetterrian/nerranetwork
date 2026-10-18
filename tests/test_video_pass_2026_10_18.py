@@ -237,6 +237,13 @@ class TestCaptionTokensRejoin:
         assert [w["word"] for w in out] == ["a", "107.6%", "over-the-air"]
         assert out[1]["start"] == 0.2 and out[1]["end"] == 0.9
 
+    def test_domains_and_abbreviations_rejoin(self):
+        from engine.captions import merge_split_words
+        words = [{"word": w, "start": i, "end": i + 1} for i, w in
+                 enumerate(["at", "Space", ".com.", "the", "U", ".S", "rule"])]
+        assert [w["word"] for w in merge_split_words(words)] == [
+            "at", "Space.com.", "the", "U.S", "rule"]
+
     def test_a_standalone_dash_is_left_alone(self):
         from engine.captions import join_split_text
         assert join_split_text("a - b") == "a - b"

@@ -538,10 +538,11 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 #: word tokens — "107" ".6" "%", "14" ",371", "over" "-the" "-air" — about
 #: forty times an episode, and the burned-in Short captions printed the
 #: gaps ("face a 107 .6 % loss" on Tesla Ep638). A token that starts with
-#: a decimal or thousands part, a percent sign, or a hyphen joined to a
-#: letter or digit belongs to the word before it.
-_SPLIT_CONTINUATION_RE = re.compile(r"^(?:[.,]\d|%|-[^\W_])")
-_SPLIT_IN_TEXT_RE = re.compile(r"(?<=\S) (?=[.,]\d|%|-[^\W_])")
+#: a decimal or thousands part, a percent sign, a hyphen joined to a
+#: letter or digit, or a period joined to a letter (".com" 411 times in
+#: 200 episodes, "U" ".S", "p" ".m") belongs to the word before it.
+_SPLIT_CONTINUATION_RE = re.compile(r"^(?:[.,]\d|\.[^\W\d_]|%|-[^\W_])")
+_SPLIT_IN_TEXT_RE = re.compile(r"(?<=\S) (?=[.,]\d|\.[^\W\d_]|%|-[^\W_])")
 
 
 def join_split_text(text: str) -> str:
