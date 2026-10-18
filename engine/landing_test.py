@@ -578,7 +578,10 @@ CONVERSATION_LIMIT = 5
 
 #: Watch: newest EN long-form per show, and newest hook Short per show.
 WATCH_LONG_LIMIT = 4
-WATCH_SHORT_LIMIT = 6
+#: The Shorts reel (Oct 18 2026): one card per show, so in practice this is
+#: "every show with a recent Short" — the reel is the front page's widest
+#: discovery surface, and a visitor scrolls it sideways.
+WATCH_SHORT_LIMIT = 16
 
 #: Gallery strip on the front page.
 GALLERY_STRIP_LIMIT = 8
@@ -652,6 +655,78 @@ def pick_videos(videos: Iterable[dict], *, kind: str, public_slugs: Iterable[str
         row["date"] = _display_date(row["date_raw"])
         out.append(row)
     return out
+
+
+#: A YouTube video id: 11 URL-safe base64 characters.
+_YT_ID_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
+_YT_URL_RES = (
+    re.compile(r"^https://(?:www\.|m\.)?youtube\.com/shorts/([A-Za-z0-9_-]{11})(?:[/?#]|$)"),
+    re.compile(r"^https://(?:www\.|m\.)?youtube\.com/watch\?(?:[^#]*&)?v=([A-Za-z0-9_-]{11})(?:[&#]|$)"),
+    re.compile(r"^https://youtu\.be/([A-Za-z0-9_-]{11})(?:[/?#]|$)"),
+)
+
+
+def youtube_video_id(watch_url: str) -> str:
+    """The video id in a ``/shorts/<id>`` or ``watch?v=<id>`` URL, else "".
+
+    Read from the URL the index committed, never guessed: a row whose URL
+    does not parse gets no in-page player (its card links out instead)."""
+    url = str(watch_url or "").strip()
+    for pattern in _YT_URL_RES:
+        match = pattern.match(url)
+        if match:
+            return match.group(1)
+    return ""
+
+
+def youtube_embed_url(video_id: str) -> str:
+    """The privacy-enhanced (``youtube-nocookie.com``) embed for *video_id*.
+
+    The page never loads it until a visitor presses Play (facade pattern):
+    no YouTube frame, script or cookie on the initial page."""
+    if not _YT_ID_RE.match(str(video_id or "")):
+        return ""
+    # enablejsapi: the player script listens for the frame's own onError
+    # message (no YouTube script on our page) and offers "Watch on YouTube"
+    # when a video cannot play embedded.
+    return (f"https://www.youtube-nocookie.com/embed/{video_id}"
+            "?autoplay=1&playsinline=1&rel=0&enablejsapi=1")
+
+
+def preview_url(video: dict) -> str:
+    """A Short row's muted preview loop (``engine.short_preview``), when the
+    video stage recorded one — an https MP4 only, else ""."""
+    url = str((video or {}).get("preview_url") or "").strip()
+    return url if url.startswith("https://") and url.split("?")[0].endswith(".mp4") else ""
+
+
+def order_shorts_for_discovery(shorts: Sequence[dict], *,
+                               hub_for: Dict[str, Dict[str, Any]],
+                               limit: int = WATCH_SHORT_LIMIT) -> List[dict]:
+    """The reel's order: one Short per beat first (the front page's variety
+    rule, ``_beat`` — SpaceX and Tesla are one beat), in the order given
+    (``pick_videos``: newest, then audience), then the rest in that order.
+
+    ``pick_videos`` already holds one card per show; this decides who a
+    visitor meets first. The flagships are not pinned to the front: the reel
+    sits directly under their own band, so leading with them again would
+    spend the first two cards on the shows the visitor just passed.
+    """
+    def beat(video: dict) -> str:
+        hub = hub_for.get(video.get("show_slug") or "") or {}
+        return _beat({"hub_id": hub.get("id") or "", "slug": video.get("show_slug") or ""})
+
+    return _varied_by(shorts, limit, beat)
+
+
+def _varied_by(items: Sequence[dict], limit: int, beat: Callable[[dict], str]) -> List[dict]:
+    seen: set = set()
+    first, later = [], []
+    for item in items:
+        b = beat(item)
+        (later if b in seen else first).append(item)
+        seen.add(b)
+    return (first + later)[:limit]
 
 
 def gallery_strip(index: Optional[dict], *, public_slugs: Iterable[str],

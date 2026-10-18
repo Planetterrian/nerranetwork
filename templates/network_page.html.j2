@@ -450,17 +450,174 @@ a.lt-media:hover img { transform: scale(1.03); }
 .lt-video .lt-media.is-card { display: flex; align-items: flex-end; padding: 14px 14px 14px 70px; }
 .lt-video .lt-media.is-card span { font-family: var(--lt-ui); font-weight: 700; font-size: 0.82rem; color: var(--nn-white); opacity: 0.9; }
 .lt-video .lt-hl { font-size: 1.04rem; margin-top: 10px; }
-.lt-shorts { margin-top: var(--sp-6); }
-.lt-shorts ul {
-  list-style: none; margin: 0; padding: 0 0 var(--sp-2); display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--sp-4);
+/* ---- Shorts reel (Oct 18 2026): one 9:16 card per show ---- */
+.lt-reel-head { align-items: center; }
+.lt-reel-nav { display: flex; gap: 8px; flex: none; }
+.lt-reel-arrow {
+  width: 40px; height: 40px; border-radius: 50%; display: inline-grid; place-items: center;
+  border: 1px solid var(--lt-rule-strong); background: var(--lt-panel-2); color: var(--nn-white);
+  transition: border-color 160ms var(--ease), background 160ms var(--ease), opacity 160ms var(--ease);
 }
-.lt-short .lt-media { aspect-ratio: 9 / 16; border-radius: 12px; }
-.lt-short .lt-media img { object-position: center; }
-.lt-short .lt-media .lt-short-title {
-  position: absolute; inset: auto 0 0 0; padding: 40px 10px 10px; font-family: var(--lt-ui); font-weight: 700; font-size: 0.84rem; line-height: 1.3;
-  color: var(--nn-white); background: linear-gradient(to top, rgba(5, 7, 14, 0.92), rgba(5, 7, 14, 0));
+.lt-reel-arrow svg { width: 18px; height: 18px; }
+.lt-reel-arrow:hover:not(:disabled) { border-color: var(--lt-cyan); background: rgba(0, 212, 255, 0.08); }
+.lt-reel-arrow:focus-visible { outline: 2px solid var(--lt-cyan); outline-offset: 2px; }
+.lt-reel-arrow:disabled { opacity: 0.35; cursor: default; }
+
+.lt-reel { position: relative; --reel-card: 196px; --reel-gap: var(--sp-4); }
+/* Edge fades say "there is more"; the script switches them off at either end. */
+.lt-reel::before, .lt-reel::after {
+  content: ""; position: absolute; top: 0; bottom: 44px; width: 56px; z-index: 2; pointer-events: none;
+  transition: opacity 200ms var(--ease);
 }
-.lt-short .lt-kicker { margin-top: 8px; font-size: 0.68rem; }
+.lt-reel::before { left: 0; background: linear-gradient(to right, var(--nn-bg), rgba(11, 15, 26, 0)); }
+.lt-reel::after { right: 0; background: linear-gradient(to left, var(--nn-bg), rgba(11, 15, 26, 0)); }
+.lt-reel[data-at-start]::before, .lt-reel[data-at-end]::after { opacity: 0; }
+.lt-reel-track {
+  list-style: none; margin: 0; padding: 4px 2px var(--sp-2); display: flex; gap: var(--reel-gap);
+  overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-behavior: smooth;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.lt-reel-track::-webkit-scrollbar { display: none; }
+.lt-reel-card { flex: 0 0 var(--reel-card); scroll-snap-align: start; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.lt-reel-frame {
+  position: relative; aspect-ratio: 9 / 16; border-radius: 14px; overflow: hidden; isolation: isolate;
+  background: radial-gradient(130% 90% at 30% 0%, color-mix(in srgb, var(--show-color) 70%, #0B0F1A), #0B0F1A 78%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 14px 32px -14px rgba(0, 0, 0, 0.7);
+  transition: transform 260ms var(--ease), box-shadow 260ms var(--ease);
+}
+.lt-reel-frame::after {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    linear-gradient(to bottom, rgba(5, 7, 14, 0.55) 0%, rgba(5, 7, 14, 0) 22%),
+    linear-gradient(to top, rgba(5, 7, 14, 0.96) 0%, rgba(5, 7, 14, 0.72) 30%, rgba(5, 7, 14, 0) 58%);
+}
+.lt-reel-frame::before {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; z-index: 2; background: var(--show-color);
+}
+.lt-reel-img, .lt-reel-preview { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.lt-reel-img { transition: transform 500ms var(--ease); }
+.lt-reel-img[data-landscape] { object-position: 50% 40%; }
+.lt-reel-preview { opacity: 0; transition: opacity 400ms var(--ease); }
+.lt-reel-preview.is-playing { opacity: 1; }
+.lt-reel-cover {
+  position: absolute; left: 50%; top: 34%; width: 58%; height: auto; aspect-ratio: 1; transform: translate(-50%, -50%);
+  border-radius: 12px; box-shadow: 0 16px 34px rgba(0, 0, 0, 0.55); object-fit: cover;
+}
+.lt-reel-badge {
+  position: absolute; top: 10px; left: 10px; z-index: 3; max-width: calc(100% - 20px);
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px 4px 7px; border-radius: 999px;
+  font-family: var(--lt-ui); font-size: 0.68rem; font-weight: 800; letter-spacing: 0.04em; line-height: 1.2;
+  color: var(--show-color-text); background: rgba(8, 10, 18, 0.74); border: 1px solid rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  white-space: nowrap;
+}
+.lt-reel-badge-name { min-width: 0; overflow: hidden; text-overflow: ellipsis;
+}
+.lt-reel-badge .lt-chip-dot { width: 7px; height: 7px; }
+.lt-reel-glyph {
+  position: absolute; left: 50%; top: 42%; z-index: 3; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%;
+  display: grid; place-items: center; color: var(--nn-white);
+  background: rgba(8, 10, 18, 0.5); border: 1.5px solid rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  transition: transform 220ms var(--ease), background 220ms var(--ease), border-color 220ms var(--ease), opacity 220ms var(--ease);
+}
+.lt-reel-glyph svg { width: 22px; height: 22px; margin-left: 3px; }
+.lt-reel-caption { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding: 0 12px 13px; }
+.lt-reel-title {
+  font-family: var(--lt-head); font-weight: 700; font-size: 1rem; line-height: 1.24; color: var(--nn-white); margin: 0;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+}
+.lt-reel-date { display: block; margin-top: 6px; font-family: var(--lt-ui); font-size: 0.7rem; font-weight: 600; color: rgba(232, 236, 244, 0.72); letter-spacing: 0.02em; }
+.lt-reel-hit { position: absolute; inset: 0; z-index: 4; display: block; border: 0; padding: 0; margin: 0; background: transparent; border-radius: inherit; cursor: pointer; }
+.lt-reel-hit:focus-visible { outline: 3px solid var(--lt-cyan); outline-offset: -3px; }
+.lt-reel-card:hover .lt-reel-frame, .lt-reel-card:focus-within .lt-reel-frame {
+  transform: translateY(-3px);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--show-color) 65%, transparent), 0 20px 38px -14px rgba(0, 0, 0, 0.8);
+}
+.lt-reel-card:hover .lt-reel-img { transform: scale(1.045); }
+.lt-reel-card:hover .lt-reel-glyph, .lt-reel-frame:focus-within .lt-reel-glyph {
+  transform: scale(1.08); background: var(--show-color); border-color: var(--show-color);
+}
+.lt-reel-card.is-previewing .lt-reel-glyph { opacity: 0.85; }
+.lt-page a.lt-reel-show {
+  font-family: var(--lt-ui); font-size: 0.8rem; font-weight: 600; line-height: 1.35; color: var(--lt-muted);
+  padding: 0 2px; display: block;
+}
+.lt-reel-show b { color: var(--show-color-text); font-weight: 800; }
+.lt-page a.lt-reel-show:hover { color: var(--nn-white); }
+.lt-page a.lt-reel-show:hover b { text-decoration: underline; text-underline-offset: 3px; }
+.lt-reel-arrowtext { white-space: nowrap; }
+.lt-reel-show:hover .lt-reel-arrowtext { color: var(--nn-white); }
+
+/* ---- The in-page Shorts player (a <dialog>; the frame loads on Play) ---- */
+.lt-player {
+  margin: auto; padding: 0; border: 0; background: transparent; color: var(--nn-text);
+  width: min(100vw, 980px); max-width: 100vw; max-height: 100dvh; overflow: visible;
+}
+.lt-player::backdrop { background: rgba(4, 6, 12, 0.86); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.lt-player[open] { animation: lt-player-in 220ms var(--ease); }
+@keyframes lt-player-in { from { opacity: 0; transform: translateY(10px) scale(0.985); } to { opacity: 1; transform: none; } }
+.lt-player-shell {
+  position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-8); align-items: center;
+  padding: var(--sp-6); border-radius: 20px; border: 1px solid var(--lt-rule-strong, rgba(255, 255, 255, 0.16));
+  background: linear-gradient(150deg, color-mix(in srgb, var(--show-color, #6B47FF) 22%, #0B0F1A) 0%, #0F1424 55%, #0B0F1A 100%);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+.lt-player-stage { position: relative; }
+.lt-player-frame {
+  width: min(360px, calc((100dvh - 96px) * 9 / 16)); aspect-ratio: 9 / 16; border-radius: 14px; overflow: hidden; background: #000 center / cover no-repeat;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.lt-player-frame iframe { display: block; width: 100%; height: 100%; border: 0; }
+.lt-player-fallback {
+  position: absolute; inset: 0; z-index: 1; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--sp-4); padding: var(--sp-6); text-align: center;
+  background: linear-gradient(to bottom, rgba(7, 9, 15, 0.55), rgba(7, 9, 15, 0.9)), var(--player-poster, none) center / cover no-repeat, radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--show-color, #6B47FF) 45%, #0B0F1A), #07090F 75%);
+}
+.lt-player-fallback p { font-family: var(--font-ui); font-weight: 700; font-size: 1rem; color: var(--nn-white); margin: 0; }
+.lt-player-fallback .lt-btn {
+  display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-ui); font-weight: 700; font-size: 0.9rem; padding: 11px 16px;
+  border-radius: 9px; color: var(--nn-white); background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.18); text-decoration: none;
+}
+.lt-player-fallback .lt-btn--primary { background: var(--nn-purple); border-color: var(--nn-purple); }
+.lt-player-fallback .lt-btn:hover { border-color: var(--nn-cyan); }
+.lt-player-step {
+  position: absolute; top: 50%; width: 44px; height: 44px; margin-top: -22px; border-radius: 50%;
+  display: grid; place-items: center; color: var(--nn-white); z-index: 2;
+  background: rgba(8, 10, 18, 0.72); border: 1px solid rgba(255, 255, 255, 0.22);
+}
+.lt-player-step svg { width: 20px; height: 20px; }
+.lt-player-step.is-prev { left: -22px; }
+.lt-player-step.is-next { right: -22px; }
+.lt-player-step:hover:not(:disabled) { border-color: var(--nn-cyan); }
+.lt-player-step:disabled { opacity: 0.3; cursor: default; }
+.lt-player-step:focus-visible, .lt-player-close:focus-visible, .lt-player a:focus-visible { outline: 2px solid var(--nn-cyan); outline-offset: 2px; }
+.lt-player-info { min-width: 0; font-family: var(--font-ui); }
+.lt-player-show {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0 0 var(--sp-2);
+  font-size: 0.78rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--show-color-text);
+}
+.lt-player-count { color: var(--nn-text-muted); font-weight: 600; letter-spacing: 0.02em; text-transform: none; }
+.lt-player-count::before { content: "·"; margin-right: 8px; }
+.lt-player-title { font-family: 'Source Serif 4', Georgia, serif; font-size: clamp(1.4rem, 2.4vw, 1.9rem); line-height: 1.18; font-weight: 700; color: var(--nn-white); margin: 0 0 var(--sp-5); }
+.lt-player-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.lt-player-actions .lt-btn {
+  display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.88rem; padding: 10px 15px; border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.16); color: var(--nn-white); background: rgba(255, 255, 255, 0.04); text-decoration: none;
+}
+.lt-player-actions .lt-btn:hover { border-color: var(--nn-cyan); }
+.lt-player-actions .lt-btn--primary { background: var(--nn-purple); border-color: var(--nn-purple); }
+.lt-player-actions .lt-btn--primary:hover { background: var(--nn-accent-hover); }
+.lt-player-note { margin: var(--sp-5) 0 0; font-size: 0.78rem; line-height: 1.5; color: var(--nn-text-muted); }
+.lt-player-note a { color: var(--nn-cyan); text-decoration: underline; text-underline-offset: 2px; }
+.lt-player-close {
+  position: absolute; top: 12px; right: 12px; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  color: var(--nn-white); background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.16);
+}
+.lt-player-close svg { width: 18px; height: 18px; }
+.lt-player-close:hover { border-color: var(--nn-cyan); }
+body.lt-player-open { overflow: hidden; }
 .lt-yt-badge { font-family: var(--lt-ui); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--nn-white); background: #C4302B; padding: 2px 7px; border-radius: 4px; }
 .lt-channels { display: flex; flex-wrap: wrap; gap: 8px; }
 
@@ -603,7 +760,7 @@ a.lt-media:hover img { transform: scale(1.03); }
 @media (max-width: 1100px) {
   .lt-grid-4, .lt-watch-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lt-grid-3, .lt-charts.is-single .lt-popular ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .lt-shorts ul { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .lt-reel { --reel-card: 176px; }
   .lt-gallery-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 900px) {
@@ -649,9 +806,36 @@ a.lt-media:hover img { transform: scale(1.03); }
   .lt-video .lt-media::after { width: 30px; height: 22px; left: 6px; bottom: 6px; background-size: 13px; }
   .lt-video .lt-media.is-card { padding: 8px 8px 8px 42px; }
   .lt-video .lt-media.is-card span { font-size: 0.7rem; }
-  .lt-shorts ul { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; gap: var(--sp-3); }
-  .lt-shorts ul::-webkit-scrollbar { display: none; }
-  .lt-shorts li { flex: 0 0 138px; scroll-snap-align: start; }
+  /* The reel runs edge to edge on a phone: the card cut off at the screen
+     edge is the "swipe for more" cue, so the fades and arrows step aside. */
+  .lt-reel { --reel-card: 152px; --reel-gap: var(--sp-3); }
+  .lt-reel::before, .lt-reel::after { display: none; }
+  .lt-reel-nav { display: none !important; }
+  .lt-reel-track {
+    margin: 0 calc(-1 * var(--sp-4)); padding-left: var(--sp-4); padding-right: var(--sp-4);
+    scroll-padding-inline: var(--sp-4);
+  }
+  .lt-reel-title { font-size: 0.92rem; -webkit-line-clamp: 4; }
+  .lt-reel-caption { padding: 0 10px 11px; }
+  .lt-reel-glyph { width: 44px; height: 44px; margin: -22px 0 0 -22px; }
+  .lt-reel-glyph svg { width: 18px; height: 18px; }
+  .lt-reel-badge { font-size: 0.62rem; top: 8px; left: 8px; }
+  .lt-page a.lt-reel-show { font-size: 0.76rem; }
+  /* The player fills a phone: the video on top, the show and its links under it. */
+  .lt-player { width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; }
+  .lt-player-shell {
+    grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); align-content: start; justify-items: center;
+    min-height: 100dvh; border-radius: 0; border: 0; padding: 60px var(--sp-4) var(--sp-5); overflow-y: auto;
+  }
+  .lt-player-frame { width: min(100%, calc((100dvh - 290px) * 9 / 16), 330px); }
+  .lt-player-step.is-prev { left: -14px; }
+  .lt-player-step.is-next { right: -14px; }
+  .lt-player-info { width: 100%; max-width: 420px; }
+  .lt-player-title { font-size: 1.22rem; margin-bottom: var(--sp-3); }
+  .lt-player-actions .lt-btn { flex: 1 1 auto; justify-content: center; padding: 10px 12px; font-size: 0.84rem; }
+  .lt-player-actions .lt-btn--primary { flex-basis: 100%; }
+  .lt-player-note { margin-top: var(--sp-3); }
+  .lt-player-close { top: 10px; right: 10px; }
   .lt-convo-feature { padding: var(--sp-4); }
   .lt-convo-top { grid-template-columns: 84px minmax(0, 1fr); gap: var(--sp-3); }
   .lt-convo-top img { width: 84px; height: 84px; border-radius: 8px; }
@@ -691,6 +875,14 @@ a.lt-media:hover img { transform: scale(1.03); }
 @media (prefers-reduced-motion: reduce) {
   .lt-media img { transition: none; }
   a.lt-media:hover img { transform: none; }
+  /* The reel holds still: no preview loops (the script never starts one and
+     this hides any that did), no lift, no zoom, no animated scroll. */
+  .lt-reel-preview { display: none !important; }
+  .lt-reel-track { scroll-behavior: auto; }
+  .lt-reel-frame, .lt-reel-img, .lt-reel-glyph { transition: none; }
+  .lt-reel-card:hover .lt-reel-frame, .lt-reel-card:focus-within .lt-reel-frame,
+  .lt-reel-card:hover .lt-reel-img { transform: none; }
+  .lt-player[open] { animation: none; }
 }
 </style>
 {% endblock %}
@@ -857,35 +1049,129 @@ a.lt-media:hover img { transform: scale(1.03); }
         <article class="lt-video" style="--show-color:{{ v.brand_color }};">
             {% if v.image_url %}
             <a href="{{ v.watch_url }}" class="lt-media" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
-                <img src="{{ v.image_url }}" alt="AI-generated scene from {{ v.show_name }} episode {{ v.episode }}" width="{{ 450 if v.image_orientation == 'portrait' else 800 }}" height="{{ 800 if v.image_orientation == 'portrait' else 450 }}" loading="lazy" decoding="async">
+                <img src="{{ v.image_url }}" alt="AI-generated scene from {{ v.show_name | e }} episode {{ v.episode }}" width="{{ 450 if v.image_orientation == 'portrait' else 800 }}" height="{{ 800 if v.image_orientation == 'portrait' else 450 }}" loading="lazy" decoding="async">
             </a>
             {% else %}
-            <a href="{{ v.watch_url }}" class="lt-media is-card" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span>{{ v.show_name }}</span></a>
+            <a href="{{ v.watch_url }}" class="lt-media is-card" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span>{{ v.show_name | e }}</span></a>
             {% endif %}
             <div>
                 <h3 class="lt-hl"><a href="{{ v.watch_url }}" target="_blank" rel="noopener">{{ v.display_title | e }}</a></h3>
-                <p class="lt-kicker" style="margin-top:6px;"><a href="{{ path_prefix }}{{ v.show_page }}">{{ v.show_name }}</a> <time datetime="{{ v.date_raw }}" style="color:var(--lt-muted);font-weight:500;letter-spacing:0;text-transform:none;">{{ v.date }}</time></p>
+                <p class="lt-kicker" style="margin-top:6px;"><a href="{{ path_prefix }}{{ v.show_page }}">{{ v.show_name | e }}</a> <time datetime="{{ v.date_raw }}" style="color:var(--lt-muted);font-weight:500;letter-spacing:0;text-transform:none;">{{ v.date }}</time></p>
             </div>
         </article>
         {% endfor %}
     </div>
     {% endif %}
-    {% if watch.shorts %}
-    <div class="lt-shorts">
-        <p class="lt-sublabel">Shorts</p>
-        <ul>
-            {% for v in watch.shorts %}
-            <li class="lt-short" style="--show-color:{{ v.brand_color }};">
-                <a href="{{ v.watch_url }}" class="lt-media{% if not v.image_url %} is-cover{% endif %}" target="_blank" rel="noopener">
-                    {% if v.image_url %}<img src="{{ v.image_url }}" alt="AI-generated scene from {{ v.show_name }} episode {{ v.episode }}" width="{{ 450 if v.image_orientation == 'portrait' else 800 }}" height="{{ 800 if v.image_orientation == 'portrait' else 450 }}" loading="lazy" decoding="async">{% endif %}
-                    <span class="lt-short-title">{{ v.display_title | e }}</span>
-                </a>
-                <p class="lt-kicker"><a href="{{ path_prefix }}{{ v.show_page }}">{{ v.show_name }}</a></p>
+    {% if watch.shorts and not watch.longs %}
+    <p class="lt-links-row"><a href="#shorts">Today's Shorts from every show ↑</a></p>
+    {% endif %}
+</section>
+{%- endif -%}
+{%- endmacro -%}
+
+{#- The Shorts reel (Oct 18 2026, operator: "build the video Shorts into the
+    landing page … discovery of shows"). One hook Short per public show
+    (engine.landing_test.pick_videos + order_shorts_for_discovery: one per
+    beat first), each a 9:16 card on the episode's own portrait scene (never
+    a YouTube-hosted thumbnail) with two actions — Play, in an in-page player,
+    and the show page. Rules this keeps:
+    * Nothing from YouTube loads until a visitor presses Play: the player is
+      a facade, and its frame is the privacy-enhanced youtube-nocookie.com
+      embed. Each Play is a real link to the Short, so with no script (or a
+      modified click) it opens YouTube; a row whose watch_url has no
+      parseable id is only ever that link.
+    * A muted preview loop (preview_url, engine.short_preview) plays only
+      while its card is on screen, never under prefers-reduced-motion, and
+      preloads nothing; without one the card is its still.
+    * Brand colours are fills; text uses --show-color-text. -#}
+{%- macro shorts_reel() -%}
+{%- if watch and watch.shorts -%}
+{%- set reel = watch.shorts -%}
+<section class="lt-block container lt-reel-block" id="shorts" aria-labelledby="lt-shorts-h">
+    <div class="lt-block-head lt-reel-head">
+        <h2 id="lt-shorts-h">Shorts</h2>
+        <p class="lt-block-sub">A minute from each show: the newest Short from {{ reel|length }} shows. Play one here, then open the show you like.</p>
+        <div class="lt-reel-nav" data-reel-nav hidden>
+            <button type="button" class="lt-reel-arrow" data-reel-prev aria-label="Scroll Shorts back" aria-controls="lt-reel-track"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <button type="button" class="lt-reel-arrow" data-reel-next aria-label="Scroll Shorts forward" aria-controls="lt-reel-track"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+    </div>
+    <div class="lt-reel" data-reel data-at-start>
+        <ol class="lt-reel-track" id="lt-reel-track" data-reel-track aria-label="Shorts, one per show">
+            {% for v in reel %}
+            <li class="lt-reel-card" style="--show-color:{{ v.brand_color }};" data-reel-item>
+                <div class="lt-reel-frame{% if not v.image_url %} is-card{% endif %}">
+                    {% if v.image_url %}
+                    <img class="lt-reel-img" src="{{ v.image_url }}" alt="AI-generated scene from {{ v.show_name | e }} episode {{ v.episode }}" width="{{ 450 if v.image_orientation == 'portrait' else 800 }}" height="{{ 800 if v.image_orientation == 'portrait' else 450 }}" loading="lazy" decoding="async"{% if v.image_orientation != 'portrait' %} data-landscape{% endif %}>
+                    {% elif v.cover_url %}
+                    <img class="lt-reel-cover" src="{{ path_prefix }}{{ v.cover_url }}" alt="{{ v.show_name | e }} cover art" width="160" height="160" loading="lazy" decoding="async">
+                    {% endif %}
+                    {% if v.preview_url %}
+                    <video class="lt-reel-preview" src="{{ v.preview_url }}"{% if v.image_url %} poster="{{ v.image_url }}"{% endif %} muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true" tabindex="-1" data-reel-preview></video>
+                    {% endif %}
+                    <span class="lt-reel-badge" aria-hidden="true"><span class="lt-chip-dot"></span><span class="lt-reel-badge-name">{{ v.show_name | e }}</span></span>
+                    <span class="lt-reel-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span>
+                    <div class="lt-reel-caption">
+                        <h3 class="lt-reel-title">{{ v.display_title | e }}</h3>
+                        <time class="lt-reel-date" datetime="{{ v.date_raw }}">{{ v.date }}</time>
+                    </div>
+                    {% if v.embed_url %}
+                    <a class="lt-reel-hit" href="{{ v.watch_url }}" target="_blank" rel="noopener" data-reel-play="{{ loop.index0 }}" aria-haspopup="dialog" aria-controls="lt-player">
+                        <span class="sr-only">Play the Short: {{ v.display_title | e }}, from {{ v.show_name | e }}</span>
+                    </a>
+                    {% else %}
+                    <a class="lt-reel-hit" href="{{ v.watch_url }}" target="_blank" rel="noopener">
+                        <span class="sr-only">Watch on YouTube: {{ v.display_title | e }}, from {{ v.show_name | e }} (opens in a new tab)</span>
+                    </a>
+                    {% endif %}
+                </div>
+                <a class="lt-reel-show" href="{{ path_prefix }}{{ v.show_page }}">Listen to <b>{{ v.show_name | e }}</b><span class="lt-reel-arrowtext" aria-hidden="true">&nbsp;→</span></a>
             </li>
             {% endfor %}
-        </ul>
+        </ol>
     </div>
-    {% endif %}
+    {#- The player's data: the ids and links the cards already carry, as one
+        JSON blob (tojson: <>& escaped). No embed loads until Play. -#}
+    {%- set ns = namespace(items=[]) -%}
+    {%- for v in reel -%}
+    {%- set _ = ns.items.append({
+        "id": v.video_id or "",
+        "embed": v.embed_url or "",
+        "title": v.display_title or "",
+        "show": v.show_name or "",
+        "color": v.brand_color or "",
+        "show_page": path_prefix ~ v.show_page,
+        "post": (path_prefix ~ v.post_url) if v.post_url else "",
+        "watch": v.watch_url or "",
+        "poster": v.image_url or "",
+    }) -%}
+    {%- endfor %}
+    <script type="application/json" id="lt-reel-data">{{ ns.items | tojson }}</script>
+    <dialog class="lt-player" id="lt-player" aria-labelledby="lt-player-title" aria-describedby="lt-player-note" aria-modal="true" data-player>
+        <div class="lt-player-shell">
+            <div class="lt-player-stage">
+                <div class="lt-player-frame" data-player-frame></div>
+                <div class="lt-player-fallback" data-player-fallback hidden>
+                    <p>This Short can't play here.</p>
+                    <a class="lt-btn lt-btn--primary" href="#" target="_blank" rel="noopener" data-player-fallback-watch>Watch on YouTube <span aria-hidden="true">↗</span></a>
+                    <button type="button" class="lt-btn" data-player-fallback-next>Next Short <span aria-hidden="true">→</span></button>
+                </div>
+                <button type="button" class="lt-player-step is-prev" data-player-prev aria-label="Previous Short"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                <button type="button" class="lt-player-step is-next" data-player-next aria-label="Next Short"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            </div>
+            <div class="lt-player-info">
+                <p class="lt-player-show"><span class="lt-chip-dot" aria-hidden="true"></span><span data-player-show></span><span class="lt-player-count" data-player-count></span></p>
+                <h2 class="lt-player-title" id="lt-player-title" data-player-title></h2>
+                <div class="lt-player-actions">
+                    <a class="lt-btn lt-btn--primary" href="#" data-player-show-link>Listen to the show</a>
+                    <a class="lt-btn" href="#" data-player-post>Read the episode</a>
+                    <a class="lt-btn" href="#" target="_blank" rel="noopener" data-player-watch>Watch on YouTube <span aria-hidden="true">↗</span></a>
+                </div>
+                <p class="lt-player-note" id="lt-player-note">Plays from YouTube in privacy-enhanced mode, and only after you press play. Use the arrow keys or swipe for the next show. <a href="{{ path_prefix }}privacy-policy.html">Privacy</a></p>
+            </div>
+            <button type="button" class="lt-player-close" data-player-close aria-label="Close the player"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+        </div>
+    </dialog>
 </section>
 {%- endif -%}
 {%- endmacro -%}
@@ -956,6 +1242,7 @@ a.lt-media:hover img { transform: scale(1.03); }
     <ul>
         <li><a href="#latest">Latest</a></li>
         {% if p.flagships %}<li><a href="#flagships">SpaceX &amp; Tesla</a></li>{% endif %}
+        {% if watch and watch.shorts %}<li><a href="#shorts">Shorts</a></li>{% endif %}
         {% if developing %}<li><a href="#developing">Developing</a></li>{% endif %}
         {% if conversations %}<li><a href="#conversations">Conversations</a></li>{% endif %}
         {% if p.top %}<li><a href="#top-stories">Top stories</a></li>{% endif %}
@@ -1070,6 +1357,11 @@ a.lt-media:hover img { transform: scale(1.03); }
     </div>
 </section>
 {% endif %}
+
+{#- The Shorts reel sits directly under the flagship band: after the lead and
+    the network's two biggest shows, the next thing a visitor meets is the
+    breadth of the network, one show a card (Oct 18 2026). -#}
+{{ shorts_reel() }}
 
 {#- Developing stories: threads the network covered on two or more days this
     week, found by matching the digests' own headlines (engine.newsroom) —
@@ -1569,6 +1861,11 @@ a.lt-media:hover img { transform: scale(1.03); }
 {% endblock %}
 
 {% block scripts %}
+{%- if watch and watch.shorts %}
+{#- The Shorts reel and its player (assets/js/shorts-reel.js): first-party,
+    deferred, and it loads nothing from YouTube until a visitor presses Play. #}
+<script src="{{ path_prefix }}assets/js/shorts-reel.js" defer></script>
+{%- endif %}
 {#- Relative timestamps (BBC / Guardian convention): the server prints the
     absolute Eastern time; this rewrites it to "2 hours ago" / "Yesterday",
     keeps the absolute stamp as the tooltip, drops a "Today" marker whose
