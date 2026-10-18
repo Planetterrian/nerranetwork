@@ -2138,6 +2138,33 @@ aborts the rebase and un-commits the unpushed checkpoint, and
 fires on the Oct 9 UTC table (runs at :01/:16/:31/:46) — `wrangler deploy` in
 `workers/scheduler`.
 
+### The 24-hour review (Oct 18 2026)
+
+Six reviewers over everything Oct 17 14:00 – Oct 18 14:00 UTC (review:
+[`docs/reviews/review_2026_10_18_24h.md`](docs/reviews/review_2026_10_18_24h.md);
+register `review-24h-2026-10-18`; guards `tests/test_review_2026_10_18.py`,
+`tests/test_pinned_comment_2026_10_18.py`). Rules that bind: **a template
+renders through `format_map` with every field supplied, never a swallowed
+`KeyError` that returns it raw** — every long-form YouTube comment since Jul 18
+read "{show_page_url}"; **a hook article's flags survive the merge**
+(`engine.hook_articles._FLAG_KEYS` — the PM Board's exemption and venue lint
+had read nothing); **the coverage floor reads one-line, unbolded-numbered and
+`**Title:** Outlet` items** (`engine.claims._coverage_items`); **a feed
+rebuild keeps unnumbered trailer items** (`engine.publisher.
+_unnumbered_trailer_items`); **nothing links a scheduled video before its
+`publish_at`** (recorded in the video index; `release_schedule.
+is_still_scheduled` — homepage, X teaser, blog button); **the checkpoint blog
+render gets `_md_path`** (claims panel, chapters, corrections); **the
+structural retry has a deadline** (`_structural_retry_deadline`, daemon
+thread); **an outcome hook is never a re-telling** (`story_recurrence.
+OUTCOME_WORDS`); **empty headings are dropped after validation**
+(`drop_empty_sections`); a Wayback citation verifies against its original; a
+weekend close says "closed Friday at" (⚠️ AUDIO). Not fixed: Nerra Daily has
+no `--replace` for an edition built before late re-runs; FF's expansion
+claims drop is unexplained by the committed data. Operator: `wrangler deploy`
+in `workers/scheduler` (still the Oct 9 UTC table), delete the placeholder
+comments on past long-forms.
+
 ### The follow ask on @nerranetwork, and a render budget sized from the audio (Oct 15 2026)
 
 Operator-directed (register `x-follow-ask-2026-10-15`,

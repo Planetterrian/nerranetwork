@@ -380,7 +380,15 @@ def _price_sentence(
         except (TypeError, ValueError):
             change_part = ""
     if source == "yfinance_history" or not _market_is_open(now):
-        return f"Ess Pee See Ex closed at {spoken}{change_part}. "
+        # Oct 18 2026: on a weekend the close is Friday's; say so.
+        _local = (now or datetime.datetime.now(datetime.timezone.utc))
+        try:
+            from zoneinfo import ZoneInfo
+            _local = _local.astimezone(ZoneInfo("America/New_York"))
+        except Exception:  # pragma: no cover
+            pass
+        _day = " Friday" if _local.weekday() >= 5 else ""
+        return f"Ess Pee See Ex closed{_day} at {spoken}{change_part}. "
     return f"Ess Pee See Ex is trading at {spoken}{change_part}. "
 
 

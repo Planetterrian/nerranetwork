@@ -793,6 +793,14 @@ class TestClosingBlock:
         assert "closed at" not in closing.lower()
         assert "after-hours" in closing.lower()
 
+    def test_weekend_close_names_friday(self):
+        """Oct 18 2026: Ep637 (Sat) and Ep638 (Sun) both said "closed at
+        $354.72, down 2.1 percent" with no day named."""
+        ctx = {"price": "354.72", "change_str": "▼ $7.72 (2.1%)"}
+        sunday = __import__("datetime").date(2026, 10, 18)
+        assert "closed friday at" in tesla_hook._pick_closing(ctx, date=sunday).lower()
+        assert "closed at" in tesla_hook._pick_closing(ctx, date=self._date(10)).lower()
+
     def test_closing_rotates_across_dates(self):
         ctx = {"price": "415.50", "change_str": "▲ $7.27 (1.8%)"}
         distinct = {

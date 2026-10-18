@@ -40,6 +40,7 @@ from __future__ import annotations
 import datetime as _dt
 import json
 import logging
+import re
 import time
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
 
@@ -395,6 +396,20 @@ def kalshi_articles(fetch: Fetch = _http_json, now: Optional[_dt.datetime] = Non
 # Manifold (play money)
 # ---------------------------------------------------------------------------
 
+#: Oct 18 2026: Ep026 aired "Will the poster think all AI hell broke loose
+#: in 2026?" — a Manifold market about its CREATOR's opinion, resolved by
+#: that one person. A question about the market's own author is not a
+#: forecast of the world.
+_PERSONAL_MARKET_RE = re.compile(
+    r"\b(?:the (?:poster|creator|author|market maker)|I|I'll|I'm|I've|me|my|mine)\b"
+    r"|\bthis market\b|\bresolves? (?:to )?(?:yes|no) (?:if|when) I\b")
+
+
+def is_personal_market(question: str) -> bool:
+    """True when the question is about the person who wrote it."""
+    return bool(_PERSONAL_MARKET_RE.search(question or ""))
+
+
 def manifold_articles(fetch: Fetch = _http_json, now: Optional[_dt.datetime] = None,
                       max_markets: int = MAX_MANIFOLD) -> List[Dict[str, Any]]:
     now = now or _now()
@@ -417,6 +432,8 @@ def manifold_articles(fetch: Fetch = _http_json, now: Optional[_dt.datetime] = N
         question = str(m.get("question") or "").strip()
         url = str(m.get("url") or "").strip()
         if not question or not url.startswith("https://manifold.markets/"):
+            continue
+        if is_personal_market(question):
             continue
         opened = _parse_time(m.get("createdTime"))
         lines = [f"Manifold market, read at {_read_stamp(now)}.",

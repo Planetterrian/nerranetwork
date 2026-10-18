@@ -101,6 +101,7 @@ def record_video(
     channel: str = "en",
     variant: str = "",
     window: str = "",
+    publish_at: str = "",
     index_path: Optional[Path] = None,
 ) -> bool:
     """Append (or update) one published-video record. Best-effort.
@@ -138,6 +139,12 @@ def record_video(
         # hook Short's performance against smart windows.
         if window:
             row["window"] = window
+        # Oct 18 2026: the exact UTC time a SCHEDULED video goes public
+        # (``published`` is the date only). The homepage linked four
+        # still-private long-forms for 5-12 hours; a reader skips a row whose
+        # publish_at is still ahead. Only written when set.
+        if publish_at:
+            row["publish_at"] = publish_at
         # Idempotent upsert keyed on video_id.
         for i, existing in enumerate(videos):
             if existing.get("video_id") == video_id:

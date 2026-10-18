@@ -44,6 +44,9 @@ HOOK_DEDUP_THRESHOLD = 0.65
 
 _TEXT_KEYS = ("description", "content_text", "source_name", "published_date")
 
+#: Non-text flags a hook may set on an article and downstream stages read.
+_FLAG_KEYS = ("recurrence_exempt", "board_new", "board_venue")
+
 
 def pop_hook_articles(extra_context: Dict[str, Any] | None, slug: str = "") -> List[Dict]:
     """Remove and validate the hook's ``articles`` entry.
@@ -92,6 +95,12 @@ def normalize_hook_articles(raw: Any, slug: str = "") -> List[Dict]:
         art["source_kind"] = SOURCE_KIND_HOOK
         if item.get("exempt_stale"):
             art["exempt_stale"] = True
+        # Oct 18 2026: the Prediction Markets Board flags its markets for the
+        # recurrence/cluster exemption and the venue-mix lint. Dropping them
+        # here left both reading nothing (PM Ep023-026).
+        for flag in _FLAG_KEYS:
+            if item.get(flag):
+                art[flag] = item[flag] if flag == "board_venue" else True
         out.append(art)
     return out
 

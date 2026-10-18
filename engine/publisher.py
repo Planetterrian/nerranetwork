@@ -412,6 +412,7 @@ def update_rss_feed(
     # rebuild, so it is carried over from the feed on disk here — never
     # re-derived while one exists, even if the feed URL later moves.
     existing_podcast_guid = ""
+    preserved_trailers = _unnumbered_trailer_items(rss_path)
     if rss_path.exists():
         try:
             tree = ET.parse(str(rss_path))
@@ -699,6 +700,8 @@ def update_rss_feed(
             podcast_guid=existing_podcast_guid,
         )
 
+        _reinsert_trailer_items(Path(tmp_path), preserved_trailers)
+
         os.replace(tmp_path, str(rss_path))
     except Exception:
         # Clean up temp file on failure
@@ -724,6 +727,55 @@ def update_rss_feed(
 
     logger.info("RSS feed updated: %s", rss_path)
     return rss_path
+
+
+_ITEM_BLOCK_RE = re.compile(r"<item\b.*?</item>", re.S)
+_TRAILER_TYPE_RE = re.compile(r"<itunes:episodeType>\s*trailer\s*</itunes:episodeType>")
+_GUID_TEXT_RE = re.compile(r"<guid\b[^>]*>(.*?)</guid>", re.S)
+
+
+def _unnumbered_trailer_items(rss_path: Path) -> list:
+    """Raw ``<item>`` blocks for trailers the numbered rebuild cannot keep.
+
+    Oct 18 2026: a members-only series trailer is inserted into a free feed
+    as an ``itunes:episodeType`` trailer with no episode number and no
+    ``ep<digits>`` in its GUID, so it never moves the numbering — and for
+    exactly that reason the rebuild below (which keeps items by episode
+    number) dropped it on the show's next daily run. These blocks are put
+    back verbatim after the rebuild.
+    """
+    try:
+        text = Path(rss_path).read_text(encoding="utf-8")
+    except OSError:
+        return []
+    out = []
+    for block in _ITEM_BLOCK_RE.findall(text):
+        if not _TRAILER_TYPE_RE.search(block) or "<itunes:episode>" in block:
+            continue
+        m = _GUID_TEXT_RE.search(block)
+        guid = (m.group(1).strip() if m else "")
+        if not guid or re.search(r"ep\d+", guid):
+            continue
+        out.append((guid, block))
+    return out
+
+
+def _reinsert_trailer_items(path: Path, trailers: list) -> None:
+    """Put preserved trailer items back above the first episode, once each."""
+    if not trailers:
+        return
+    text = path.read_text(encoding="utf-8")
+    missing = [blk for guid, blk in trailers if f">{guid}<" not in text]
+    if not missing:
+        return
+    i = text.find("<item>")
+    if i < 0:
+        i = text.find("<item ")
+    if i < 0:
+        i = text.find("</channel>")
+    if i < 0:
+        return
+    path.write_text(text[:i] + "\n".join(missing) + "\n" + text[i:], encoding="utf-8")
 
 
 def write_rss_aliases(rss_path: Path, aliases: list) -> list:

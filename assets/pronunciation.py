@@ -262,6 +262,7 @@ COMMON_ACRONYMS: Dict[str, str] = {
     "HW3": "H W three",
     "HW4": "H W four",
     "AI5": "A I five",
+    "AI6": "A I six",
     "4680": "forty-six eighty",
     "EVs": "E Vs",
     "EV": "E V",
