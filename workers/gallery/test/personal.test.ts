@@ -9,6 +9,7 @@ import {
   DEFAULT_LINEUP,
   PERSONAL_ADDONS,
   PERSONAL_SHOWS,
+  TARGET_MINUTES,
   handleAccount,
   handleAdminSpecs,
   handleBookDownload,
@@ -760,6 +761,100 @@ describe("locations + topics (Sep 13 2026)", () => {
     expect(sp.cities).toEqual(["Vancouver, BC", "Kelowna"]);
     expect(sp.topics).toEqual(["Starship"]);
     expect(sp.city).toBe("Vancouver, BC");
+    expect(JSON.stringify(body)).not.toContain("example.com");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Oct 18 2026: "Tell Mira about you", edition length, skip_repeats.
+// ---------------------------------------------------------------------------
+
+describe("profile, length and skip_repeats (Oct 18 2026)", () => {
+  async function save(env: Env, email: string, body: object) {
+    return handlePreferences(new Request("https://api.example.com/api/account/preferences", {
+      method: "POST",
+      headers: { Cookie: await memberCookie(env, email), "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }), env);
+  }
+  async function account(env: Env, email: string) {
+    return (await (await handleAccount(
+      new Request("https://api.example.com/api/account",
+        { headers: { Cookie: await memberCookie(env, email) } }), env)).json()) as any;
+  }
+
+  it("stores a scrubbed, capped profile and a closed-set length", async () => {
+    const env = envWith();
+    const res = await save(env, "fan@example.com", {
+      shows: ["spacex", "tesla"],
+      profile: "<script>x</script>I build batteries in Calgary {date_spoken} " + "y".repeat(400),
+      target_minutes: 30,
+    });
+    expect(res.status).toBe(200);
+    const saved = (await res.json() as any).saved;
+    expect(saved.profile.length).toBeLessThanOrEqual(240);
+    expect(saved.profile).not.toContain("<");
+    expect(saved.profile).not.toContain("{");
+    expect(saved.profile.startsWith("x I build batteries in Calgary")).toBe(true);
+    expect(saved.target_minutes).toBe(30);
+    const acct = await account(env, "fan@example.com");
+    expect(acct.member.preferences.profile).toBe(saved.profile);
+    expect(acct.member.preferences.target_minutes).toBe(30);
+  });
+
+  it("an unknown length is no budget, and an older page leaves both untouched", async () => {
+    const env = envWith();
+    await save(env, "fan@example.com", {
+      shows: ["spacex", "tesla"], profile: "Nurse on night shifts", target_minutes: 45,
+    });
+    // A page from before Oct 18 sends neither field: nothing changes.
+    await save(env, "fan@example.com", { shows: ["spacex", "tesla"] });
+    let acct = await account(env, "fan@example.com");
+    expect(acct.member.preferences.profile).toBe("Nurse on night shifts");
+    expect(acct.member.preferences.target_minutes).toBe(45);
+    // Outside the closed set: stored as "no budget", never guessed.
+    await save(env, "fan@example.com", { shows: ["spacex", "tesla"], target_minutes: 37 });
+    acct = await account(env, "fan@example.com");
+    expect(acct.member.preferences.target_minutes).toBe(null);
+    // An empty profile is a real clear.
+    await save(env, "fan@example.com", { shows: ["spacex", "tesla"], profile: "" });
+    acct = await account(env, "fan@example.com");
+    expect(acct.member.preferences.profile).toBe("");
+  });
+
+  it("skip_repeats is in the closed add-on set and stored only when chosen", async () => {
+    expect(PERSONAL_ADDONS).toContain("skip_repeats");
+    expect(TARGET_MINUTES).toEqual([20, 30, 45, 60]);
+    const env = envWith();
+    const res = await save(env, "fan@example.com", {
+      shows: ["spacex", "tesla"], addons: ["skip_repeats", "made_up"],
+    });
+    expect((await res.json() as any).saved.addons).toEqual(["skip_repeats"]);
+  });
+
+  it("admin specs carry profile and length when set, still no email", async () => {
+    const env = envWith();
+    await save(env, "fan@example.com", {
+      shows: ["spacex", "tesla"], profile: "Teacher, follows Starship", target_minutes: 20,
+    });
+    const kv = env.RATE_LIMIT_KV as unknown as FakeKV;
+    const rec = JSON.parse(kv.store.get("member:fan@example.com")!);
+    kv.store.set("member:fan@example.com", JSON.stringify({
+      ...rec, tier: "personal", status: "active", feed_token: "e".repeat(32),
+    }));
+    kv.store.set("member:plain@example.com", JSON.stringify({
+      shows: ["spacex", "tesla"], first_name: "", city: "", tier: "personal",
+      status: "active", feed_token: "f".repeat(32), updated_at: "",
+    }));
+    const res = await handleAdminSpecs(new Request("https://api.example.com/api/admin/personal-specs",
+      { headers: { Authorization: "Bearer admin-token" } }), env);
+    const body = await res.json() as { specs: any[] };
+    const sp = body.specs.find((x) => x.token === "e".repeat(32))!;
+    expect(sp.profile).toBe("Teacher, follows Starship");
+    expect(sp.target_minutes).toBe(20);
+    const plain = body.specs.find((x) => x.token === "f".repeat(32))!;
+    expect("profile" in plain).toBe(false);
+    expect("target_minutes" in plain).toBe(false);
     expect(JSON.stringify(body)).not.toContain("example.com");
   });
 });

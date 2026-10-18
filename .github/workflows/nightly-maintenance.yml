@@ -295,6 +295,14 @@ jobs:
         # watching. Clean no-op (empty JSON) until analytics data accrues.
         run: python scripts/build_gallery_retention.py --out api/gallery_retention.json || echo "::warning::Gallery retention join failed (non-fatal)"
 
+      - name: Build share cards
+        # Oct 18 2026: the 1200x630 link previews (network, every show, the
+        # site pages, every topic hub) — engine/share_cards.py. A card is
+        # rewritten only when its pixels change, so a quiet night commits
+        # nothing. Runs before the page regen so a new show's pages point
+        # at its card the same night.
+        run: python scripts/build_share_cards.py || echo "::warning::Share cards failed (non-fatal) — pages fall back to the cover / network card"
+
       - name: Generate MIT Performance Page + Tesla Narrative Page + Main Site
         # Ensures dedicated transparency pages (MIT performance + TST narrative tracker)
         # and other pages that depend on fresh data stay up to date.
@@ -503,6 +511,7 @@ jobs:
             editorial.html
             mira.html
             topics/*.html
+            assets/share/**
             claims.html
             claims/*.html
             gallery.html

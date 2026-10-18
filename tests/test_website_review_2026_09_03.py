@@ -213,8 +213,14 @@ class TestHomepageClaims:
     def test_ticker_and_stats_driven_by_registry(self):
         src = _read("templates/network_page.html.j2")
         assert "Tesla & EV Markets" not in src, "hand-maintained ticker is back"
-        assert '<div class="topic-ticker" aria-hidden="true">' in src
-        assert "{{ all_shows|length }}</strong>" in src
+        # Oct 18 2026: the news-front ticker carries the day's headlines from
+        # the stories list, and every count on the page is computed: the
+        # show count from the public registry list, the rest from
+        # engine.landing_test.glance_numbers.
+        ticker = src.split('class="lt-ticker', 1)[1].split("</div>", 1)[0]
+        assert "{% for s in p.latest %}" in ticker
+        assert "{{ public_show_count }}" in src
+        assert "{% for t in glance %}" in src
 
     def test_no_false_daily_or_free_forever_claims(self):
         src = _read("templates/network_page.html.j2")
@@ -241,10 +247,18 @@ class TestHomepageClaims:
         assert "@keyframes cardFloat" not in src
         assert "@keyframes ctaPulse" not in src
 
-    def test_hero_eager_images_capped(self):
-        src = _read("templates/network_page.html.j2")
-        # Oct 16 2026: cut 7 → 2 for LCP (security/perf pass).
-        assert "{% if loop.index0 < 2 %} loading=\"eager\" fetchpriority=\"high\"" in src
+    def test_hero_eager_images_capped(self, tmp_path):
+        # Oct 16 2026: cut 7 → 2 for LCP (security/perf pass). Oct 18: the
+        # news front's only eager image is the lead story's picture; the
+        # property — at most two images compete for early bandwidth — is
+        # checked on the rendered page.
+        import re
+        import generate_html as g
+        html = g.generate_network_page(output_dir=tmp_path).read_text(encoding="utf-8")
+        imgs = re.findall(r"<img\b[^>]*>", html)
+        eager = [t for t in imgs if 'loading="lazy"' not in t]
+        assert len(eager) <= 2, eager
+        assert len([t for t in imgs if "fetchpriority" in t]) <= 2
 
     def test_most_played_capped_per_show(self):
         import generate_html as g

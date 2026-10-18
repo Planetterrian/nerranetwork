@@ -1,10 +1,12 @@
-"""Data for ``landing-test.html`` — the network's stories as a news front page.
+"""Data for the homepage (``index.html``) — the network's stories as a news front.
 
-Operator-directed TEST (Oct 17 2026): what would the site look like if its
-landing page were a news front — every public show's newest episode laid out
-as a lead story, a top-stories grid and topic sections, with the episode's
-own scene art — instead of a podcast catalogue? The page is ``noindex``, kept
-out of the sitemap and linked from nowhere; this module only assembles data.
+Built as an operator-directed TEST (Oct 17 2026, ``landing-test.html``): what
+would the site look like if its landing page were a news front — every
+public show's newest episode laid out as a lead story, a top-stories grid and
+topic sections, with the episode's own scene art — instead of a podcast
+catalogue? Promoted to the homepage on Oct 18 2026; ``engine/newsroom.py``
+adds the timestamps, developing stories, markets, corrections and schedule.
+This module only assembles data.
 
 Everything here comes from committed files and nothing is written for the
 page:

@@ -2435,6 +2435,11 @@ def _get_jinja_env():
     # Template-side existence check for optional assets (blog RSS feeds).
     # Used so a missing ``blog_<slug>.rss`` is not advertised as a 404 link.
     env.globals["site_file_exists"] = lambda rel: (ROOT / str(rel)).is_file()
+    # Oct 18 2026: every page's share card is decided in one place (base.html.j2
+    # calls this) — see engine/share_cards.py.
+    from engine import share_cards as _share_cards
+    env.globals["resolve_og_image"] = lambda og="", canonical="", alt="": (
+        _share_cards.resolve_og_image(og, canonical, shows=NETWORK_SHOWS, alt=alt))
     env.filters["with_utm"] = _with_utm
     # Jinja's default ``tojson`` filter inherits Python's
     # ``ensure_ascii=True``, which escapes Cyrillic to ``Ф...``
@@ -3594,8 +3599,8 @@ def generate_all_show_pages(*, dry_run=False):
 # ---------------------------------------------------------------------------
 
 def _load_popular_episodes():
-    """The homepage "Most played this week" rail data (also read by
-    ``landing-test.html``). Empty when the OP3 data is missing or stale."""
+    """The homepage's "Most Played This Week" list data. Empty when the OP3
+    data is missing or stale."""
     # "Most played this week" rail — fed by the nightly OP3 stats fetch
     # (scripts/fetch_op3_stats.py). Renders nothing when the file is
     # missing/empty (OP3_API_TOKEN not configured yet) OR when the
@@ -3656,183 +3661,6 @@ def _load_popular_episodes():
     except Exception as e:
         print(f"Warning: could not load popular episodes: {e}")
     return popular_episodes
-
-
-def generate_network_page(*, dry_run=False):
-    """Render and write the network landing page."""
-    env = _get_jinja_env()
-    template = env.get_template("network_page.html.j2")
-
-    # Collect 6 most recent blog posts across all shows for the landing page
-    latest_blog_posts = []
-    try:
-        from engine.blog import extract_blog_metadata
-        from datetime import date as _date, datetime as _datetime
-
-        all_posts = []
-        for slug in NETWORK_SHOWS:
-            digest_dir = ROOT / "digests" / _SHOW_DIRS.get(slug, slug)
-            if not digest_dir.exists():
-                continue
-            seen_eps: dict[int, dict] = {}
-            for md_file in sorted(digest_dir.glob("*.md")):
-                md_text = md_file.read_text(encoding="utf-8")
-                meta = extract_blog_metadata(md_text, slug, md_file.name, file_path=md_file)
-                ep = meta["episode_num"]
-                if ep in seen_eps:
-                    if md_file.name > seen_eps[ep]["filename"]:
-                        seen_eps[ep] = meta
-                else:
-                    seen_eps[ep] = meta
-            for meta in seen_eps.values():
-                cfg_show = NETWORK_SHOWS.get(slug, {})
-                meta["show_name"] = cfg_show.get("name", slug)
-                meta["show_color"] = cfg_show.get("brand_color", "#6B47FF")
-            all_posts.extend(seen_eps.values())
-
-        def _sort_key(p):
-            d = p.get("date_obj")
-            if isinstance(d, _datetime):
-                return d.date()
-            if isinstance(d, _date):
-                return d
-            return _date.min
-
-        all_posts.sort(key=_sort_key, reverse=True)
-        latest_blog_posts = all_posts[:6]
-    except Exception as e:
-        print(f"Warning: could not collect blog posts for network page: {e}")
-
-    # Collect latest episodes from RSS feeds (static rendering)
-    latest_episodes = []
-    try:
-        import xml.etree.ElementTree as ET
-        from email.utils import parsedate_to_datetime
-
-        for slug, cfg in NETWORK_SHOWS.items():
-            rss_path = ROOT / cfg["rss_file"]
-            if not rss_path.exists():
-                continue
-            try:
-                tree = ET.parse(rss_path)
-                root_el = tree.getroot()
-                items = root_el.findall(".//item")
-                if not items:
-                    continue
-                # Find newest item by pubDate
-                best_item = None
-                best_date = None
-                for it in items:
-                    pds = it.findtext("pubDate", "")
-                    pd = None
-                    if pds:
-                        try:
-                            pd = parsedate_to_datetime(pds)
-                        except Exception:
-                            pass
-                    if best_item is None or (pd and (best_date is None or pd > best_date)):
-                        best_item = it
-                        best_date = pd
-                if best_item is None:
-                    continue
-                title = best_item.findtext("title", "Episode")
-                pub_date_str = best_item.findtext("pubDate", "")
-                enclosure = best_item.find("enclosure")
-                audio_url = enclosure.get("url", "") if enclosure is not None else ""
-                latest_episodes.append({
-                    "show_name": cfg["name"],
-                    "show_slug": slug,
-                    "show_page": cfg["show_page"],
-                    "brand_color": cfg["brand_color"],
-                    "title": title,
-                    "pub_date_str": pub_date_str,
-                    "pub_date": best_date,
-                    "audio_url": audio_url,
-                    "blog_url": _blog_url_for_episode(slug, title=title),
-                })
-            except Exception:
-                continue
-
-        from datetime import datetime as _dt, timezone as _tz
-        _epoch = _dt(1970, 1, 1, tzinfo=_tz.utc)
-        def _ep_sort(e):
-            d = e.get("pub_date")
-            if d is None:
-                return _epoch
-            if d.tzinfo is None:
-                return d.replace(tzinfo=_tz.utc)
-            return d
-        latest_episodes.sort(key=_ep_sort, reverse=True)
-        latest_episodes = latest_episodes[:10]
-        # Format dates for display
-        for ep in latest_episodes:
-            d = ep.get("pub_date")
-            if d:
-                ep["date_display"] = d.strftime("%a, %b %d, %Y")
-            else:
-                ep["date_display"] = ""
-    except Exception as e:
-        print(f"Warning: could not collect latest episodes from RSS: {e}")
-
-    popular_episodes = _load_popular_episodes()
-
-    # Newsletter social proof — fed by the nightly Buttondown stats fetch
-    # (scripts/fetch_buttondown_stats.py). Hidden below the threshold so a
-    # small number never reads as anti-proof; rounded down to the nearest
-    # 10 so it doesn't read as fake-precise.
-    newsletter_subscriber_count = None
-    try:
-        _bd_path = ROOT / "api" / "buttondown_stats.json"
-        if _bd_path.exists():
-            _count = (json.loads(_bd_path.read_text(encoding="utf-8"))
-                      or {}).get("subscriber_count")
-            if isinstance(_count, int) and _count >= MIN_SOCIAL_PROOF_SUBSCRIBERS:
-                newsletter_subscriber_count = (_count // 10) * 10
-    except Exception as e:
-        print(f"Warning: could not load newsletter stats: {e}")
-
-    _home_title, _home_meta = SEO_PAGE_COPY["index.html"]
-    context = {
-        "path_prefix": "",
-        "page_title": _home_title,
-        "page_description": _home_meta,
-        "meta_description": _home_meta,
-        "meta_keywords": "podcast network, daily podcasts, Nerra Network, Tesla, space, science, AI, environment, history, unintended consequences",
-        "theme_color": "#6B47FF",
-        "og_image": f"{GITHUB_RAW}/assets/og-preview.png",
-        # Bare origin, not /index.html: inbound links, the CNAME and the
-        # hreflang tags all resolve to "/" (Sep 2026 review).
-        "canonical_url": f"{GITHUB_RAW}/",
-        "rss_url": "network.rss",
-        # Computed, not typed (the homepage said "4" beside 11 Spanish
-        # feed files; the language registry is the one count).
-        "listening_language_count": len(_listening_languages()),
-        "all_shows": _build_all_shows_list(),
-        # The hero icons and the show grid lead with the most-listened
-        # shows; the nav and footer keep display_order like every page.
-        "ranked_shows": _rank_shows_by_audience(_build_all_shows_list()),
-        "latest_blog_posts": latest_blog_posts,
-        "latest_episodes": latest_episodes,
-        "popular_episodes": popular_episodes,
-        "newsletter_subscriber_count": newsletter_subscriber_count,
-        "emit_bilingual_hreflang": True,
-        "total_episodes": _count_total_episodes(),
-        # Homepage Soft-only (Oct 2026): Soft hero is the email ask;
-        # suppress the footer per-show newsletter form but keep the
-        # Personal tips link. Every other page leaves this unset/false.
-        "suppress_footer_newsletter_form": True,
-    }
-
-    html = template.render(**context)
-
-    out_path = ROOT / "index.html"
-    if dry_run:
-        print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
-        return None
-
-    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
-    print(f"Wrote {out_path} ({len(html):,} bytes)")
-    return out_path
 
 
 # ---------------------------------------------------------------------------
@@ -4425,7 +4253,7 @@ def _redirect_target_label(dst: str) -> str:
         "data.html": "Data & Dashboards",
         "editorial.html": "the Editorial Process",
         "faq.html": "the FAQ",
-        "index.html": "Nerra Network",
+        "index.html": "the Nerra Network homepage",
     }.get(dst, dst)
 
 
@@ -4741,18 +4569,20 @@ def generate_explore_page(*, dry_run=False, output_dir=None):
 
 
 # ---------------------------------------------------------------------------
-# /landing-test.html — the network as a news front page (Oct 17 2026, TEST)
+# index.html — the homepage, laid out as a news front page
 # ---------------------------------------------------------------------------
 #
-# Operator-directed experiment: every public show's newest episode laid out
-# the way a news front page is (lead story, top stories, a Latest list, topic
-# sections, a most-played list, a Listen rail), with each episode's own scene
-# art. It is a TEST page: ``noindex``, not in the sitemap, linked from no
-# nav. engine/landing_test.py assembles the data (and documents the honesty
-# rules); this function resolves links against the repo and renders.
+# Built as the Oct 17 2026 landing test (landing-test.html, noindexed) and
+# promoted to the homepage on Oct 18 2026 (operator: "make the landing page
+# test the new landing page"). Every public show's newest episode laid out the
+# way a news front page is (lead story, a Latest list, developing stories,
+# top stories, topic sections), each with the episode's own scene art and the
+# time it went out, and the rest of the site folded in. engine/landing_test.py
+# assembles the stories (and documents the honesty rules), engine/newsroom.py
+# the timestamps, developing stories, markets strip, corrections and today's
+# schedule; generate_network_page resolves links against the repo and
+# renders. landing-test.html is now a redirect stub (site/redirects.yaml).
 # Design notes: docs/landing_test.md.
-
-LANDING_TEST_PATH = "landing-test.html"
 
 #: Never linked from the landing page: the private join link for a scheduled
 #: interview (kept out of the sitemap for the same reason).
@@ -4818,9 +4648,10 @@ def _feed_items_in_window(rss_files, end, days=7):
     return count if read_any else None
 
 
-def _landing_test_v2(shows, public, ranked, page, *, edition=None,
-                     live_hubs=(), gallery_root=None):
-    """The v2 sections of ``landing-test.html``: the rest of the site.
+def _front_page_sections(shows, public, ranked, page, *, edition=None,
+                         live_hubs=(), gallery_root=None):
+    """The homepage's whole-site sections (the landing test's v2): the rest
+    of the site.
 
     Every value is read from committed data and every link is checked
     against the repo; a section whose data is missing comes back empty and
@@ -4973,7 +4804,7 @@ def _landing_test_v2(shows, public, ranked, page, *, edition=None,
     try:
         totals = _claims_network_ledger(shows)["totals"] if public else {}
     except Exception as exc:  # noqa: BLE001 — a trust strip is never worth a build
-        print(f"Warning: landing-test claims totals unavailable: {exc}")
+        print(f"Warning: homepage claims totals unavailable: {exc}")
         totals = {}
     if isinstance(totals.get("claims"), int) and totals["claims"] > 0:
         trust = {"totals": totals}
@@ -5184,17 +5015,89 @@ def _landing_test_v2(shows, public, ranked, page, *, edition=None,
     return out
 
 
-def generate_landing_test_page(*, dry_run=False, output_dir=None,
-                               all_shows=None, gallery_dir=None):
-    """Write ``landing-test.html``. ``output_dir`` renders into a scratch
-    tree (tests); ``all_shows`` overrides the registry list (tests: ``[]`` is
-    the no-stories state); ``gallery_dir`` points at a scratch gallery
-    index directory. Every link is resolved against the repo root, which is
-    where the page is served from."""
+def _newsroom_episodes(public, now, *, window_days=None):
+    """Every public news episode of the last week, for Developing stories.
+
+    Read from each show's committed summaries JSON — the show directory's top
+    level, never ``members/`` — with the hook and the digest's own story
+    headlines. Nerra Daily (it re-tells every show) and the interview shows
+    (a conversation is not a news thread) are left out.
+    """
     from engine import landing_test as _lt
+    from engine import newsroom as _nr
+    from engine.grok_imagine import extract_story_headlines
+    from engine.summaries_ssr import _records
+
+    window_days = window_days or _nr.DEVELOPING_WINDOW_DAYS
+    today = now.astimezone(_nr.EASTERN).date()
+    out = []
+    for show in public:
+        slug = show["slug"]
+        if slug == _lt.EDITION_SLUG or slug in _lt.CONVERSATION_SLUGS:
+            continue
+        cfg = NETWORK_SHOWS.get(slug) or {}
+        if not cfg.get("json_path"):
+            continue
+        data = _load_json_quiet(ROOT / cfg["json_path"])
+        for record in _records(data) if data is not None else []:
+            when = _nr.published_at(record)
+            st = _nr.stamp(record.get("date"), when, now)
+            day = _lt._parse_date(st["day"]) if st["day"] else None
+            if day is None or not 0 <= (today - day).days < window_days:
+                continue
+            content = record.get("content") or ""
+            hook = _lt.hook_from_markdown(content)
+            heads = extract_story_headlines(content, max_count=14)
+            if not hook and not heads:
+                continue
+            number = _lt._episode_number(record)
+            out.append({
+                "slug": slug, "show_name": show["name"], "show_page": show["show_page"],
+                "brand_color": show.get("brand_color") or "", "day": day, "stamp": st,
+                "post_url": _blog_url_for_episode(slug, episode_num=number) if number else "",
+                "headlines": ([hook] if hook else []) + heads,
+                "lang": "ru" if _lt.is_cyrillic(hook or (heads[0] if heads else "")) else "",
+            })
+    return out
+
+
+def _newsroom_corrections(public):
+    """Every filed correction on a public show, with its show and article."""
+    from engine import corrections as _corr
+
+    rows = []
+    for show in public:
+        cfg = NETWORK_SHOWS.get(show["slug"]) or {}
+        if not cfg.get("json_path"):
+            continue
+        for c in _corr.load_corrections((ROOT / cfg["json_path"]).parent):
+            rows.append({
+                **c, "show_name": show["name"], "show_page": show["show_page"],
+                "post_url": _blog_url_for_episode(show["slug"], episode_num=c["episode"]),
+            })
+    return rows
+
+
+def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
+                          gallery_dir=None, now=None):
+    """Write the homepage, ``index.html``: the network as a news front page.
+
+    Promoted from the Oct 17 2026 landing test on Oct 18 2026. ``output_dir``
+    renders into a scratch tree (tests); ``all_shows`` overrides the registry
+    list (tests: ``[]`` is the no-stories state); ``gallery_dir`` points at a
+    scratch gallery index directory; ``now`` fixes the build clock (every
+    timestamp, "Today" marker and freshness rule reads it). Every link is
+    resolved against the repo root, which is where the page is served from.
+    Design notes: docs/landing_test.md (v1-v3).
+    """
+    from engine import landing_test as _lt
+    from engine import newsroom as _nr
     from engine import topic_hubs as _hubs
     from engine.publisher import apply_op3_prefix as _op3
 
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
     shows = _build_all_shows_list() if all_shows is None else list(all_shows)
     public = [
         s for s in shows
@@ -5213,7 +5116,7 @@ def generate_landing_test_page(*, dry_run=False, output_dir=None,
     def _post(slug, number):
         return _blog_url_for_episode(slug, episode_num=number) if number else ""
 
-    stories, edition = [], None
+    stories, edition, today_new = [], None, 0
     for show in public:
         cfg = NETWORK_SHOWS.get(show["slug"]) or {}
         record = _lt.latest_record(ROOT / cfg.get("json_path", "")) \
@@ -5242,11 +5145,16 @@ def generate_landing_test_page(*, dry_run=False, output_dir=None,
                          _lt.scene_prompts(_p, _s, n, d)))
         if story is None:
             continue
+        # When it went out: the summary record's own time (ET), never the
+        # feed pubDate (every item carries 08:00 UTC).
+        story["stamp"] = _nr.stamp(record.get("date"), _nr.published_at(record), now)
+        if story["stamp"]["is_today"]:
+            today_new += 1
         if show["slug"] == _lt.EDITION_SLUG:
             edition = story
         elif show["slug"] in _lt.CONVERSATION_SLUGS:
-            # v2: the interviews have their own section (the site's
-            # strongest web draw), so they do not also run as news stories.
+            # The interviews have their own section (the site's strongest
+            # web draw), so they do not also run as news stories.
             continue
         else:
             stories.append(story)
@@ -5261,8 +5169,9 @@ def generate_landing_test_page(*, dry_run=False, output_dir=None,
     ranked = _rank_shows_by_audience(public)
     page = _lt.assemble(stories, audience_order=[s["slug"] for s in ranked],
                         live_hub_ids=live_hubs)
+    page["today_new"] = today_new
 
-    popular = []
+    popular_episodes = []
     if all_shows is None:
         public_slugs = {s["slug"] for s in public}
         for ep in _load_popular_episodes():
@@ -5283,62 +5192,130 @@ def generate_landing_test_page(*, dry_run=False, output_dir=None,
                     if _num and _cfg.get("json_path") else None)
             ep["title"] = (_lt.hook_from_markdown((_rec or {}).get("content") or "")
                            or _lt.strip_episode_label(ep.get("title") or ""))
-            popular.append(ep)
+            popular_episodes.append(ep)
 
-    listen = []
-    for show in ranked:
-        cover = show.get("podcast_image") or ""
-        base = cover[:-4] if cover.endswith(".jpg") else ""
-        listen.append({
-            **show,
-            "cover_webp": f"{base}-400.webp" if base and (ROOT / f"{base}-400.webp").exists() else "",
-            "blog_url": show["blog_page"] if (ROOT / show["blog_page"]).exists() else "",
-        })
+    # Newsletter social proof — fed by the nightly Buttondown stats fetch.
+    # Hidden below the threshold so a small number never reads as
+    # anti-proof; rounded down to the nearest 10. Not rendered on the
+    # homepage since the Oct 9 Soft-only pass (the form it rode on left /);
+    # supplied so a later surface can read it.
+    newsletter_subscriber_count = None
+    try:
+        _count = (_load_json_quiet(ROOT / "api" / "buttondown_stats.json")
+                  or {}).get("subscriber_count")
+        if isinstance(_count, int) and _count >= MIN_SOCIAL_PROOF_SUBSCRIBERS:
+            newsletter_subscriber_count = (_count // 10) * 10
+    except Exception as e:  # noqa: BLE001
+        print(f"Warning: could not load newsletter stats: {e}")
 
-    v2 = _landing_test_v2(shows, public, ranked, page, edition=edition,
-                          live_hubs=live_hubs, gallery_root=gallery_root)
+    v2 = _front_page_sections(shows, public, ranked, page, edition=edition,
+                              live_hubs=live_hubs, gallery_root=gallery_root)
 
-    description = (
-        "Today's top stories from every Nerra Network show on one page — "
-        "space, AI, markets, world news, science and more, each with the "
-        "episode to hear and the article to read."
-    )
+    # ---- Newsroom signals (engine/newsroom.py) ---------------------------
+    try:
+        developing = _nr.developing_stories(_newsroom_episodes(public, now), now)
+    except Exception as exc:  # noqa: BLE001 — a front-page rail is never worth a build
+        print(f"Warning: developing stories unavailable: {exc}")
+        developing = []
+    markets = _nr.market_strip(
+        mag7=_load_json_quiet(ROOT / "api" / "mag7_quotes.json"),
+        spcx=_load_json_quiet(ROOT / "api" / "spcx.json"),
+        tsla=_load_json_quiet(ROOT / "api" / "tsla.json"),
+        launches=_load_json_quiet(ROOT / "api" / "spacex_launches.json"),
+        now=now) if public else {"quotes": [], "groups": [], "launch": None}
+    corrections = _nr.recent_corrections(_newsroom_corrections(public))
+    schedule = _nr.todays_schedule(now) if public else []
+    if not _nr.schedule_is_clean(schedule):
+        schedule = []
+
+    org_ld = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Nerra Network",
+        "url": "https://nerranetwork.com",
+        "description": (
+            "Independent news and podcast network: free shows on AI, Tesla, "
+            "SpaceX, investing, world news, space, science and more, every "
+            "claim checked against its source. Produced in Vancouver, Canada."),
+        "logo": "https://nerranetwork.com/assets/nerra-logo-icon.svg",
+        "hasPart": [
+            {k: v for k, v in {
+                "@type": "PodcastSeries",
+                "name": s["name"],
+                "description": s.get("description_long") or s.get("tagline") or "",
+                "webFeed": (f"https://nerranetwork.com/{s['rss_file']}"
+                            if s.get("has_feed") and s.get("rss_file") else ""),
+                "image": f"https://nerranetwork.com/{s['podcast_image']}"
+                         if s.get("podcast_image") else "",
+                "url": f"https://nerranetwork.com/{s['show_page']}",
+            }.items() if v}
+            for s in ranked
+        ],
+    }
+    website_ld = {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Nerra Network",
+        "url": "https://nerranetwork.com/",
+        "inLanguage": "en",
+        "publisher": {"@type": "Organization", "name": "Nerra Network",
+                      "url": "https://nerranetwork.com"},
+    }
+
     lead = page.get("lead") or {}
+    _home_title, _home_meta = SEO_PAGE_COPY["index.html"]
     context = {
         "path_prefix": "",
-        "page_title": "Nerra Network Today — the newest story from every show (test front page)",
-        "page_description": description,
-        "meta_description": description,
-        "meta_keywords": "",
+        "page_title": _home_title,
+        "page_description": _home_meta,
+        "meta_description": _home_meta,
+        "meta_keywords": "news podcast network, daily podcasts, Nerra Network, Tesla, SpaceX, AI, markets, world news, space, science",
         "theme_color": "#6B47FF",
-        # The lead story's own scene: a share of this page previews the
-        # story it leads with. Display-size thumbnail (the full-size file
-        # is behind the gallery's download gate).
-        "og_image": lead.get("image_url") if lead.get("image_orientation") == "landscape" else "",
-        "og_image_alt": (f"AI-generated scene illustrating {lead['show_name']} "
-                         f"episode {lead['episode_num']}") if lead.get("image_url") else "",
-        "canonical_url": f"https://nerranetwork.com/{LANDING_TEST_PATH}",
+        # The network share card (engine/share_cards.py via base.html.j2): a
+        # front page shared anywhere is recognised by its brand, not by
+        # whichever AI scene led today. Each story's own post carries its
+        # episode card.
+        "og_image": "",
+        # Bare origin, not /index.html: inbound links, the CNAME and the
+        # hreflang tags all resolve to "/" (Sep 2026 review).
+        "canonical_url": f"{GITHUB_RAW}/",
+        "rss_url": "network.rss",
+        "emit_bilingual_hreflang": True,
         "show_color": "",
         "show_color_dark": "",
+        # The nav and footer list the whole registry like every page; the
+        # page body reads only the public shows.
         "all_shows": shows,
+        # Most-listened first (generate_html._rank_shows_by_audience).
+        "ranked_shows": ranked,
+        "public_show_count": len(public),
+        "total_episodes": _count_total_episodes(),
+        # Computed, not typed (the language registry is the one count).
+        "listening_language_count": len(_listening_languages()),
         "page": page,
         "edition": edition,
-        "popular": popular,
-        "listen": listen,
-        "story_show_count": len(public),
-        # One email ask on this page: the inline form. The footer keeps its
-        # Personal / sign-in links (the homepage does the same).
+        "popular_episodes": popular_episodes,
+        "newsletter_subscriber_count": newsletter_subscriber_count,
+        "masthead": _nr.masthead(now),
+        "developing": developing,
+        "markets": markets,
+        "corrections": corrections,
+        "schedule": schedule,
+        "org_ld": org_ld,
+        "website_ld": website_ld,
+        # Homepage Soft-only (Oct 2026): the Soft Personal band is the email
+        # ask; suppress the footer per-show newsletter form but keep the
+        # Personal tips link. Every other page leaves this unset/false.
         "suppress_footer_newsletter_form": True,
         **v2,
     }
-    html = _get_jinja_env().get_template("landing_test.html.j2").render(**context)
-    out_path = (Path(output_dir) / LANDING_TEST_PATH if output_dir
-                else ROOT / LANDING_TEST_PATH)
+    html = _get_jinja_env().get_template("network_page.html.j2").render(**context)
+    out_path = (Path(output_dir) / "index.html" if output_dir else ROOT / "index.html")
     if dry_run:
-        print(f"[dry-run] Would write {out_path}")
+        print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
         return None
     out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
-    print(f"Wrote {out_path}")
+    print(f"Wrote {out_path} ({len(html):,} bytes)")
     return out_path
 
 
@@ -6108,7 +6085,7 @@ def generate_data_hub_page(*, dry_run=False, output_dir=None):
             "simulated-portfolio performance page."
         ),
         "theme_color": "#6B47FF",
-        "og_image": f"{GITHUB_RAW}/assets/og-default.png",
+        "og_image": "",  # the page card (assets/share/pages/data.jpg)
         "canonical_url": f"{GITHUB_RAW}/data.html",
         "t": _NAV_T,
         "all_shows": _build_all_shows_list(),
@@ -6549,6 +6526,9 @@ def generate_account_page(*, dry_run=False, output_dir=None):
                           "how you get around"),
         "markets": ("📈", "TSLA + SPCX closes from the network's own data "
                           "pipeline — on any paid tier"),
+        "skip_repeats": ("✂️", "When a later show retells a story an earlier "
+                               "one told, Mira trims it — only at a clean "
+                               "story break, and she says so"),
     }
     ctx["personal_addons"] = [
         {"id": aid, "label": meta["label"], "tier": meta["tier"],
@@ -6556,6 +6536,11 @@ def generate_account_page(*, dry_run=False, output_dir=None):
         for aid, meta in PERSONAL_ADDONS.items()
     ]
     ctx["default_addons"] = list(DEFAULT_ADDONS)
+    # Oct 18 2026: "Tell Mira about you" + edition length — limits from the
+    # engine (the Worker mirrors them; drift-guarded).
+    from engine.personal_edition import PROFILE_MAX_CHARS, TARGET_MINUTES
+    ctx["profile_max_chars"] = PROFILE_MAX_CHARS
+    ctx["target_minutes_options"] = list(TARGET_MINUTES)
     # Books for members (Sep 14 2026): the library card lists every
     # listed volume; the download link answers only for active PNN
     # members (Worker /api/books). Public metadata only — the private
@@ -7164,9 +7149,6 @@ def generate_static_pages(*, dry_run=False):
     generate_404_page(dry_run=dry_run)
     generate_mira_page(dry_run=dry_run)
     generate_explore_page(dry_run=dry_run)
-    # Oct 17 2026 test front page: noindex, not in the sitemap; refreshed
-    # here so it carries the day's stories.
-    generate_landing_test_page(dry_run=dry_run)
     generate_topic_hub_pages(dry_run=dry_run)
     generate_personal_interest_page(dry_run=dry_run)
     generate_claims_pages(dry_run=dry_run)
@@ -7213,7 +7195,7 @@ def claims_page_paths() -> list:
 def _claims_network_ledger(all_shows, *, days=None, today=None, digests_root=None):
     """The network ledger ``claims.html`` renders: every registered show in
     display order, over the claims pages' window. ONE function so any other
-    surface quoting the network's claim counts (the landing-test trust
+    surface quoting the network's claim counts (the homepage's record
     strip) reads exactly the numbers the claims page prints."""
     from engine import claims_ledger as _ledger
 
@@ -7711,11 +7693,13 @@ def main():
         help="Generate explore.html, the browse-by-subject page",
     )
     parser.add_argument(
-        "--landing-test",
+        "--homepage",
         action="store_true",
         help=(
-            "Generate landing-test.html, the noindexed news-front-page test "
-            "(also in --static-pages)"
+            "Regenerate index.html ONLY (the news front page). --network "
+            "also rebuilds it, with the claims ledger, dashboards and member "
+            "pages; this flag is for a workflow that commits only the "
+            "homepage (Nerra Daily, the finalize job's last step)."
         ),
     )
     parser.add_argument(
@@ -7741,7 +7725,7 @@ def main():
         or args.start_here or args.faq or args.about or args.blog_aggregates
         or args.books or args.legal or args.static_pages or args.redirects
         or args.mira or args.topics or args.explore or args.guest_picks
-        or args.landing_test
+        or args.homepage
     )
     if not _any_flag:
         args.all = True
@@ -7821,7 +7805,6 @@ def main():
         generate_claims_pages(dry_run=args.dry_run)
         generate_all_show_pages(dry_run=args.dry_run)
         generate_all_summaries(dry_run=args.dry_run)
-        generate_network_page(dry_run=args.dry_run)
         generate_all_blogs(dry_run=args.dry_run)
         generate_404_page(dry_run=args.dry_run)
         generate_player_page(dry_run=args.dry_run)
@@ -7855,8 +7838,10 @@ def main():
         generate_redirect_stubs(dry_run=args.dry_run)
         generate_llms_txt(dry_run=args.dry_run)
         generate_mira_page(dry_run=args.dry_run)
-        generate_landing_test_page(dry_run=args.dry_run)
         generate_topic_hub_pages(dry_run=args.dry_run)
+        # The homepage after the pages it links (posts, hubs, claims,
+        # dashboards): every link on it is a file-exists check.
+        generate_network_page(dry_run=args.dry_run)
         # Three generators used to run ONLY under --show, so a full regen left
         # them stale: the story trackers, the MIT performance page and the RU
         # funnel landers. --all means all.
@@ -7933,8 +7918,8 @@ def main():
         generate_mira_page(dry_run=args.dry_run)
     if args.explore:
         generate_explore_page(dry_run=args.dry_run)
-    if args.landing_test:
-        generate_landing_test_page(dry_run=args.dry_run)
+    if args.homepage and not args.network:
+        generate_network_page(dry_run=args.dry_run)
     if args.topics:
         generate_topic_hub_pages(dry_run=args.dry_run)
     if args.redirects:

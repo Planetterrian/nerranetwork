@@ -103,7 +103,6 @@ class TestEverySignupFormEmitsASource:
     FORMS = (
         ("templates/base.html.j2", "footer subscribe"),
         ("templates/join_page.html.j2", "join free"),
-        ("templates/network_page.html.j2", "homepage subscribe"),
     )
 
     @pytest.mark.parametrize("rel,label", FORMS)
@@ -132,6 +131,23 @@ class TestEverySignupFormEmitsASource:
         assert "src-nerranetwork" not in src, (
             f"{label} hardcodes the capture tag instead of importing it"
         )
+
+    def test_the_homepage_form_sends_the_funnel_source(self, tmp_path):
+        """Oct 18 2026: the homepage became the news front page and its one
+        email form is the Soft Personal band, written by the shared macro —
+        so the template carries no ``data-nn-subscribe`` literal of its own.
+        Same property, read where it is true: the RENDERED page's every form
+        posts a source, and that source is engine.funnel's site tag."""
+        import generate_html as G
+        from engine.funnel import SOURCE_SITE, source_tag
+
+        tpl = (ROOT / "templates" / "network_page.html.j2").read_text()
+        assert "capture_source_site" in tpl and "src-nerranetwork" not in tpl
+        html = G.generate_network_page(output_dir=tmp_path).read_text()
+        forms = re.findall(r"<form\b[^>]*data-nn-subscribe=[^>]*>", html)
+        assert forms, "the homepage renders no capture form"
+        for form in forms:
+            assert f'data-source="{source_tag(SOURCE_SITE)}"' in form, form
 
     def test_the_global_resolves_to_a_tag_the_worker_accepts(self):
         from engine.funnel import SOURCE_SITE, source_tag

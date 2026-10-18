@@ -155,6 +155,15 @@ redirects:
     to: player.html
     reason: chrome link resolved relative before path_prefix was fixed
 
+  # --- The news-front test became the homepage (2026-10-18) --------------
+  # landing-test.html was the Oct 17 2026 noindexed test of a news front
+  # page; on Oct 18 the operator made it the homepage. Nothing generates the
+  # test page any more (a stub may never shadow a real page), and anyone who
+  # was sent the test link lands on the page it became.
+  - from: landing-test.html
+    to: index.html
+    reason: the Oct 17 2026 landing test was promoted to the homepage on 2026-10-18
+
 # Paths that are measured as 404s and should STAY 404s. Listed so the audit
 # reports only genuinely new holes, and so the reasoning is not re-litigated.
 accepted_404:

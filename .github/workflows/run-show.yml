@@ -1025,6 +1025,13 @@ jobs:
           # (10,642 GETs) took 38 of this step's 39 minutes, ~13x/day.
           python scripts/build_gallery_manifest.py --out site/data/gallery-manifest.json
 
+          # The homepage is the news front page (Oct 18 2026): its story
+          # pictures come from the gallery indexes just rebuilt above and its
+          # topic links from the search index, so it is rendered once more,
+          # last, from the freshest of both. --homepage writes index.html
+          # only (committed below); --network above already wrote it once.
+          python generate_html.py --homepage
+
       - name: Commit and push shared pages
         run: |
           # Standard bot identity for consistency with episode commits and composites.

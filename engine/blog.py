@@ -1589,6 +1589,29 @@ def _interview_page_title(interview: dict, show_config: dict, ep_num: int) -> st
     return f"{lead} | {show_config['name']} Ep{ep_num}"
 
 
+def _episode_og_image(metadata: dict, show_config: dict, ep_num) -> str:
+    """The episode's share card URL (``digests/<dir>/share_cards.json``), or
+    the show cover — base.html.j2 maps a cover to the show's card."""
+    md_path = metadata.get("_md_path")
+    if md_path and ep_num:
+        try:
+            from engine.share_cards import episode_card_url
+            url = episode_card_url(Path(md_path).parent, ep_num)
+            if url:
+                return url
+        except Exception:  # noqa: BLE001 - a preview image never breaks a post
+            pass
+    return f"https://nerranetwork.com/{show_config.get('podcast_image', '')}"
+
+
+def _episode_og_alt(metadata: dict, show_config: dict, ep_num) -> str:
+    hook = (metadata.get("hook") or metadata.get("title") or "").strip()
+    name = show_config.get("name", "")
+    if hook and ep_num:
+        return f"{name}, episode {ep_num}: {hook}"
+    return name
+
+
 def generate_blog_post_html(
     md_text: str,
     metadata: dict,
@@ -1874,7 +1897,10 @@ def generate_blog_post_html(
         "meta_description": _blog_meta_description(metadata, show_config),
         "meta_keywords": show_config.get("meta_keywords", ""),
         "theme_color": show_config.get("theme_color", ""),
-        "og_image": f"https://nerranetwork.com/{show_config.get('podcast_image', '')}",
+        # Oct 18 2026: the episode's own share card when run_show recorded
+        # one; else the cover, which base.html.j2 turns into the show card.
+        "og_image": _episode_og_image(metadata, show_config, ep_num),
+        "og_image_alt": _episode_og_alt(metadata, show_config, ep_num),
         "canonical_url": blog_url,
         "show_color": show_config["brand_color"],
         "show_color_dark": show_config.get("brand_color_dark", show_config["brand_color"]),

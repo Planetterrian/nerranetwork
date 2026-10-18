@@ -1,10 +1,13 @@
-"""Guards for ``landing-test.html`` — the network as a news front page (Oct 17 2026).
+"""Guards for the news front page — built Oct 17 2026 as ``landing-test.html``,
+the homepage (``index.html``) since Oct 18 2026.
 
-An operator-directed TEST page: every public show's newest episode laid out as
-a news front (lead, Latest list, top stories, topic sections, most played,
-Listen rail). What these pin:
+Every public show's newest episode laid out as a news front (lead, Latest
+list, top stories, topic sections, most played, the show grid). What these
+pin (the homepage-specific rules live in
+``tests/test_homepage_landing_2026_10_18.py``):
 
-* it is a test — ``noindex``, never in the sitemap;
+* it is the homepage now — indexable, in the sitemap as ``/``, and
+  ``landing-test.html`` is a redirect stub to it;
 * every internal link resolves to a file in the repo (a redirect stub is never
   an article: links go through ``_blog_url_for_episode``);
 * members-only shows never appear in the page body;
@@ -39,7 +42,7 @@ _IMG_RE = re.compile(r"<img\b[^>]*>", re.S)
 @pytest.fixture(scope="module")
 def rendered(tmp_path_factory) -> str:
     out = tmp_path_factory.mktemp("landing")
-    path = G.generate_landing_test_page(output_dir=out)
+    path = G.generate_network_page(output_dir=out)
     return Path(path).read_text(encoding="utf-8")
 
 
@@ -55,27 +58,37 @@ def _internal(href: str) -> bool:
     return not href.startswith(("http://", "https://", "#", "mailto:", "data:"))
 
 
-class TestItIsATest:
-    def test_noindex(self, rendered):
-        head = rendered.split("</head>")[0]
-        assert re.search(r'<meta name="robots" content="noindex', head)
+class TestItIsTheHomepage:
+    """Oct 18 2026: the test became the homepage. These replace the four
+    "it is a test" guards (noindex / not in the sitemap / not linked / the
+    --landing-test flag), each now asserting the homepage's opposite."""
 
-    def test_not_in_the_sitemap(self, tmp_path):
+    def test_indexable(self, rendered):
+        head = rendered.split("</head>")[0]
+        assert not re.search(r'<meta name="robots" content="noindex', head)
+        assert '<link rel="canonical" href="https://nerranetwork.com/">' in head
+
+    def test_in_the_sitemap_as_the_bare_origin(self, tmp_path):
         out = tmp_path / "sitemap.xml"
         G.generate_sitemap(out=out)
-        assert G.LANDING_TEST_PATH not in out.read_text(encoding="utf-8")
+        xml = out.read_text(encoding="utf-8")
+        assert "<loc>https://nerranetwork.com/</loc>" in xml
+        assert "landing-test" not in xml
 
-    def test_not_linked_from_the_shared_chrome(self):
-        for name in ("base.html.j2", "_macros.html.j2", "network_page.html.j2"):
-            text = (ROOT / "templates" / name).read_text(encoding="utf-8")
-            assert "landing-test" not in text, name
+    def test_landing_test_is_a_redirect_stub_to_the_homepage(self):
+        import yaml
+        data = yaml.safe_load((ROOT / "site" / "redirects.yaml").read_text(encoding="utf-8"))
+        entry = [r for r in data["redirects"] if r["from"] == "landing-test.html"]
+        assert entry and entry[0]["to"] == "index.html"
+        stub = ROOT / "landing-test.html"
+        if stub.exists():
+            assert G._is_redirect_stub(stub)
 
-    def test_refreshed_by_the_nightly_and_the_flag(self):
+    def test_no_generator_writes_the_old_test_page(self):
         src = (ROOT / "generate_html.py").read_text(encoding="utf-8")
-        static = src.split("def generate_static_pages(")[1].split("\ndef ")[0]
-        assert "generate_landing_test_page(dry_run=dry_run)" in static
-        assert '"--landing-test"' in src
-        assert "generate_landing_test_page(dry_run=args.dry_run)" in src
+        assert "generate_landing_test_page" not in src
+        assert '"--landing-test"' not in src
+        assert not (ROOT / "templates" / "landing_test.html.j2").exists()
 
 
 class TestLinks:
@@ -121,9 +134,9 @@ class TestMembersOnly:
 
     def test_a_show_marked_members_only_is_dropped(self, tmp_path):
         tesla = next(s for s in G._build_all_shows_list() if s["slug"] == "tesla")
-        G.generate_landing_test_page(
+        G.generate_network_page(
             output_dir=tmp_path, all_shows=[{**tesla, "access": "members_only"}])
-        body = _body((tmp_path / G.LANDING_TEST_PATH).read_text(encoding="utf-8"))
+        body = _body((tmp_path / "index.html").read_text(encoding="utf-8"))
         assert "Tesla Shorts Time" not in body
 
     def test_never_reads_a_members_directory(self):
@@ -138,7 +151,11 @@ class TestImages:
         assert imgs
         for tag in imgs:
             alt = re.search(r'alt="([^"]*)"', tag)
-            assert alt and alt.group(1).strip(), tag
+            assert alt, tag
+            # Oct 18 2026: the homepage's show grid is the shared show_card,
+            # whose cover is alt="" on purpose (the show's name is the
+            # heading beside it — tests/test_site_review_2026_10_07_chrome).
+            assert alt.group(1).strip() or 'class="show-card-image"' in tag, tag
             assert re.search(r'width="\d+"', tag) and re.search(r'height="\d+"', tag), tag
 
     def test_scene_images_come_from_the_gallery_host(self, rendered):
@@ -149,7 +166,7 @@ class TestImages:
 
 class TestEmpty:
     def test_no_stories_renders_an_empty_state(self, tmp_path):
-        path = G.generate_landing_test_page(output_dir=tmp_path, all_shows=[])
+        path = G.generate_network_page(output_dir=tmp_path, all_shows=[])
         html = Path(path).read_text(encoding="utf-8")
         assert "lt-empty" in html
         assert "lt-lead" not in _body(html)

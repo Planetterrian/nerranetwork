@@ -17,7 +17,8 @@
  *
  * Endpoints:
  *   GET  /api/account                    - member record for the cookie's email
- *   POST /api/account/preferences        - save shows/order/name/city
+ *   POST /api/account/preferences        - save shows/order/name/city (+ profile,
+ *                                          target_minutes since Oct 18 2026)
  *   POST /api/account/rebuild            - build/rebuild today's edition now
  *   POST /api/stripe/webhook             - checkout + cancel lifecycle
  *   GET  /api/feed/<token>/<file>        - token-gated private feed/audio
@@ -105,8 +106,19 @@ export const PERSONAL_ADDONS = [
   "events",
   "traffic",
   "markets",
+  // Oct 18 2026: trim a later show's retelling of a story an earlier show
+  // in the lineup already told. Off unless the member turns it on.
+  "skip_repeats",
 ] as const;
 const ADDONS_MAX = 8;
+
+// "Tell Mira about you" (Oct 18 2026) — one member-typed note, scrubbed by
+// cleanList like every free-text field. Mirrors
+// engine.personal_edition.PROFILE_MAX_CHARS — drift-guarded.
+const PROFILE_MAX = 240;
+// Edition length preference, minutes. Mirrors
+// engine.personal_edition.TARGET_MINUTES — drift-guarded.
+export const TARGET_MINUTES = [20, 30, 45, 60] as const;
 
 const COOKIE_NAME = "nn_gallery";
 const FEED_FILE_RE = /^[A-Za-z0-9_.-]+$/;
@@ -129,6 +141,8 @@ export interface MemberRecord {
   city: string;        // primary location — always cities[0] (legacy readers)
   cities?: string[];   // all locations, member's order, ≤ CITIES_MAX
   topics?: string[];   // member-named subjects, ≤ TOPICS_MAX
+  profile?: string;    // "Tell Mira about you", ≤ PROFILE_MAX (absent = never saved)
+  target_minutes?: number | null; // one of TARGET_MINUTES; null/absent = no budget
   tier: string;          // "personal" | "personal_local"
   status: string;        // "none" | "active" | "cancelled"
   feed_token?: string;
@@ -228,6 +242,8 @@ export async function handleAccount(request: Request, env: Env): Promise<Respons
             cities: member.cities ?? (member.city ? [member.city] : []),
             topics: member.topics ?? [],
             addons: member.addons ?? null,
+            profile: member.profile ?? "",
+            target_minutes: member.target_minutes ?? null,
           }
         : null,
       tier: member?.tier || "none",
@@ -478,6 +494,20 @@ export async function handlePreferences(
     }
   }
 
+  // Oct 18 2026 — profile and length: absent = leave the stored value
+  // untouched (an older page never sends them); present = replace. The
+  // profile goes through the same scrub as every free-text field; a length
+  // outside the closed set is "no budget", never a guess.
+  let profile: string | undefined;
+  if (body?.profile !== undefined) {
+    profile = cleanList([body.profile], 1, PROFILE_MAX)[0] ?? "";
+  }
+  let targetMinutes: number | null | undefined;
+  if (body?.target_minutes !== undefined) {
+    const n = Number(body.target_minutes);
+    targetMinutes = (TARGET_MINUTES as readonly number[]).includes(n) ? n : null;
+  }
+
   const existing = (await loadMember(env, email)) || {
     shows: [], first_name: "", city: "", tier: "none", status: "none",
     updated_at: "",
@@ -490,12 +520,16 @@ export async function handlePreferences(
     cities,
     topics,
     ...(addons !== undefined ? { addons } : {}),
+    ...(profile !== undefined ? { profile } : {}),
+    ...(targetMinutes !== undefined ? { target_minutes: targetMinutes } : {}),
     updated_at: new Date().toISOString(),
   };
   await saveMember(env, email, rec);
   return jsonResponse(request, 200, { ok: true, saved: {
     shows, first_name: firstName, city, cities, topics,
     addons: addons !== undefined ? addons : (existing as MemberRecord).addons ?? null,
+    profile: rec.profile ?? "",
+    target_minutes: rec.target_minutes ?? null,
   } });
 }
 
@@ -894,6 +928,10 @@ export async function handleAdminSpecs(
           cities: rec.cities ?? (rec.city ? [rec.city] : []),
           topics: rec.topics ?? [],
           ...(rec.addons !== undefined ? { addons: rec.addons } : {}),
+          // Oct 18 2026: the member's own note and length budget. The
+          // builder re-scrubs and re-validates both (validate_spec).
+          ...(rec.profile ? { profile: rec.profile } : {}),
+          ...(rec.target_minutes ? { target_minutes: rec.target_minutes } : {}),
           default_lineup: (rec.shows?.length ?? 0) < 2,
         });
       }

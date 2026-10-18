@@ -75,12 +75,16 @@ def test_homepage_uses_dynamic_episode_count():
     assert "{{ total_episodes }}+" not in tpl
     assert "'{:,}'.format(total_episodes)" in tpl
     assert re.search(r"<strong>900\+</strong>", tpl) is None
-    assert "episode-card-title" in tpl
-    assert "ep.blog_url" in tpl
+    # Oct 18 2026: the homepage is the news front page. Its Latest list and
+    # the popular lists link each episode's article (story_href / ep.blog_url)
+    # rather than the old `episode-card-title` cards.
+    assert "ep.blog_url" in tpl and "story_href(s)" in tpl
     # The July quick-win added SpaceX Daily to a hardcoded homepage ticker;
-    # #1136 made the ticker registry-driven ("so it can never drift"), so the
-    # guard is now: the ticker iterates the registry, and SpaceX is in it.
-    assert "{% for s in all_shows %}" in tpl
+    # #1136 made it registry-driven; since Oct 18 the ticker carries the
+    # day's stories, built from every public show's newest episode — never
+    # a typed list.
+    ticker = tpl.split('class="lt-ticker', 1)[1].split("</div>", 1)[0]
+    assert "{% for s in p.latest %}" in ticker
     from generate_html import NETWORK_SHOWS
     assert any(cfg.get("name") == "SpaceX Daily" for cfg in NETWORK_SHOWS.values())
     assert "The DP Pod" in tpl

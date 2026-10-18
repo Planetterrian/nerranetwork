@@ -393,6 +393,10 @@ def record_youtube_outcomes(
                            int(youtube_urls.get("scene_fresh_long_requested", 0) or 0))
         if youtube_urls.get("thumbnail_base"):
             metrics.record("thumbnail_base", str(youtube_urls["thumbnail_base"]))
+        # Oct 18 2026: "scene" when the episode's share card was redrawn on
+        # its own scene (engine/share_cards.py); absent = the art card stands.
+        if youtube_urls.get("share_card"):
+            metrics.record("share_card", str(youtube_urls["share_card"]))
         if youtube_urls.get("thumbnail_variant_urls"):
             metrics.record("thumbnail_variant_urls", list(youtube_urls["thumbnail_variant_urls"]))
 

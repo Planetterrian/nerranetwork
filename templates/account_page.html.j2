@@ -228,6 +228,38 @@
                     </div>
                 </div>
 
+                <!-- Tell Mira about you + edition length (Oct 18 2026) -->
+                <div class="nn-card" id="nn-about-card">
+                    <h2>Tell Mira about you</h2>
+                    <p class="nn-muted">A sentence or two about you — your work,
+                       where you are, what you follow. When a story in your edition
+                       genuinely connects, Mira uses it to say why it matters to
+                       you: at most twice an edition, never read back to you, and
+                       never assuming more than you wrote. It is used only to write
+                       your edition (it goes to the AI model that writes Mira's
+                       lines, as your name and city do) and appears on no public page.</p>
+                    <textarea id="nn-profile" maxlength="{{ profile_max_chars }}" rows="3"
+                        style="width:100%;max-width:560px;" aria-describedby="nn-profile-count"
+                        placeholder="Optional — a few plain words about you"></textarea>
+                    <p class="nn-muted" style="margin:0.25rem 0 0;"><span id="nn-profile-count">0</span>/{{ profile_max_chars }} characters ·
+                       punctuation beyond . , ' - &amp; / ( ) is dropped</p>
+                    <div style="margin-top:var(--sp-4);">
+                        <label>Edition length
+                            <select id="nn-length" style="max-width:320px;">
+                                <option value="">As long as today's shows run</option>
+                                {% for m in target_minutes_options %}<option value="{{ m }}">About {{ m }} minutes</option>
+                                {% endfor %}
+                            </select></label>
+                        <p class="nn-muted" style="margin:0.4rem 0 0;">When an edition
+                           would run long, Mira trims later stories from the end of
+                           your longest shows — only at a clean story break, never a
+                           show's lead story, never a whole show — and tells you what
+                           she trimmed. If it can't fit by those rules, it runs long.
+                           Every edition also remembers what you heard, so a story
+                           you already know comes back as an update.</p>
+                    </div>
+                </div>
+
                 <!-- Add-ons: customize the edition itself (Aug 30 2026) -->
                 <div class="nn-card">
                     <h2>Your add-ons</h2>
@@ -548,6 +580,7 @@ var NN = (function () {
       shows: state.shows, name: el('nn-name').value.trim(),
       cities: listValues(cityInputs()), topics: listValues(topicInputs()),
       addons: state.addons,
+      profile: el('nn-profile').value.trim(), length: el('nn-length').value,
     });
   }
   function markClean() { state.clean = snapshot(); checkDirty(); }
@@ -566,7 +599,7 @@ var NN = (function () {
     var addons = state.addons === null ? DEFAULT_ADDONS : state.addons;
     var cities = listValues(cityInputs()).slice(0, lim.cities);
     var topics = listValues(topicInputs()).slice(0, lim.topics);
-    var local = addons.filter(function (a) { return a !== 'markets'; });
+    var local = addons.filter(function (a) { return a !== 'markets' && a !== 'skip_repeats'; });
     var items = [];
     items.push('<li>Mira opens, greeting ' + (el('nn-name').value.trim() ? esc(el('nn-name').value.trim()) : 'you') + ' by name</li>');
     if (cities.length && local.length) {
@@ -580,6 +613,9 @@ var NN = (function () {
     if (topics.length) { items.push('<li>Your topics: ' + esc(topics.join(', ')) + '</li>'); }
     if (addons.indexOf('markets') !== -1) { items.push('<li>Markets minute</li>'); }
     items.push('<li>' + shows.length + ' shows in your order: ' + esc(names.join(' → ')) + '</li>');
+    if (el('nn-profile').value.trim()) { items.push('<li>Mira knows what you told her about you, and uses it only where a story connects</li>'); }
+    if (addons.indexOf('skip_repeats') !== -1) { items.push('<li>A story told twice is trimmed from the later show at a clean story break, and Mira says so</li>'); }
+    if (el('nn-length').value) { items.push('<li>Aimed at about ' + esc(el('nn-length').value) + ' minutes — trimmed from the end of your longest shows when it runs long</li>'); }
     items.push('<li>Sign-off' + (state.tier === 'personal' && cities.length && local.length ? ' (with a one-line note about Personal News Network on Mondays)' : '') + '</li>');
     el('nn-tomorrow-list').innerHTML = items.join('');
     box.hidden = false;
@@ -823,6 +859,9 @@ var NN = (function () {
         state.shows = prefs.shows || [];
         state.addons = (prefs.addons === undefined) ? null : prefs.addons;
         el('nn-name').value = prefs.first_name || '';
+        el('nn-profile').value = prefs.profile || '';
+        el('nn-profile-count').textContent = String(el('nn-profile').value.length);
+        el('nn-length').value = prefs.target_minutes ? String(prefs.target_minutes) : '';
         greet(prefs.first_name || '');
         var feedUrl = data.member && data.member.feed_url;
         var tier = (data.member && data.member.tier) || 'none';
@@ -834,11 +873,17 @@ var NN = (function () {
         renderLists(prefs);
         renderAddons();
         markClean();
-        ['nn-name'].concat(cityInputs().map(function (i) { return i; }), topicInputs())
+        ['nn-name', 'nn-profile', 'nn-length'].concat(cityInputs().map(function (i) { return i; }), topicInputs())
           .forEach(function (x) {
             var node = typeof x === 'string' ? el(x) : x;
-            if (node && !node._nnWired) { node._nnWired = true; node.addEventListener('input', checkDirty); }
+            if (node && !node._nnWired) { node._nnWired = true; node.addEventListener('input', checkDirty); node.addEventListener('change', checkDirty); }
           });
+        if (!el('nn-profile')._nnCount) {
+          el('nn-profile')._nnCount = true;
+          el('nn-profile').addEventListener('input', function () {
+            el('nn-profile-count').textContent = String(el('nn-profile').value.length);
+          });
+        }
         loadEpisodes();
         loadMarkets();
         el('nn-feed-active').hidden = !feedUrl;
@@ -940,6 +985,10 @@ var NN = (function () {
         first_name: el('nn-name').value,
         cities: listValues(cityInputs()),
         topics: listValues(topicInputs()),
+        // Oct 18 2026: sent every save; the Worker scrubs and caps the note
+        // and keeps the length to its closed set (anything else = none).
+        profile: el('nn-profile').value.trim(),
+        target_minutes: el('nn-length').value ? Number(el('nn-length').value) : null,
       };
       // Send addons only once the member has a real choice — an untouched
       // page must not overwrite "never saved" (defaults) with a snapshot.
