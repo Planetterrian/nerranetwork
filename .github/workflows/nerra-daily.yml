@@ -66,9 +66,13 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-26.04
-    # On workflow_run, only proceed when the triggering episode pipeline
-    # succeeded — a failed run can't have added a segment.
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    # On workflow_run, proceed after a success OR a failure: a failed run
+    # adds no segment, but past the hold it is the last wake-up of the
+    # morning. Oct 18 2026: every show from 09:16 UTC failed its smoke
+    # step, every edition trigger was skipped, the Worker's Eastern
+    # dispatch was not deployed and the GitHub fallback crons had not
+    # fired by 12:20 UTC — no edition at 7 AM. The ready gate decides.
+    if: ${{ github.event_name != 'workflow_run' || contains(fromJSON('["success","failure"]'), github.event.workflow_run.conclusion) }}
     timeout-minutes: 90
     steps:
       - name: Checkout

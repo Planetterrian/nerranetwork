@@ -83,3 +83,9 @@ class TestStreamErrorEvents:
         req = httpx.Request("POST", "https://api.x.ai/v1/chat/completions")
         with pytest.raises(openai.APITimeoutError):
             self._read(openai.APITimeoutError(request=req))
+
+
+def test_edition_wakes_after_a_failed_show_run():
+    wf = (ROOT / ".github" / "workflows" / "nerra-daily.yml").read_text(encoding="utf-8")
+    cond = [ln for ln in wf.splitlines() if ln.strip().startswith("if:") and "workflow_run" in ln][0]
+    assert '"failure"' in cond and '"success"' in cond
