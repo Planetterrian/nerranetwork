@@ -58,6 +58,12 @@ def _normalise(raw: str) -> str:
     path = unquote(path).strip().lstrip("/")
     if not path or path in _NON_PATHS:
         return ""
+    # Oct 18 2026: GA4 measured ``/ru/<a href=`` — markup leaked into a
+    # URL by some client, not a page anyone could be served. Angle
+    # brackets, quotes and whitespace cannot occur in a repo path, so a
+    # value carrying them is noise, never a hole to stub.
+    if any(ch in path for ch in '<>"\' \t\n'):
+        return ""
     # A directory URL is served by its index.html.
     if path.endswith("/"):
         path += "index.html"

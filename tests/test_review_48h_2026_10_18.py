@@ -341,6 +341,18 @@ class TestUCQueueAfterTheRestock:
         assert "to complete a Shakespearean aviary collection" not in e["brief"]
 
 
+# ------------------------------------------------------- dead-url audit --
+class TestDeadUrlAuditIgnoresMarkupLeakedIntoAPath:
+    def test_a_landing_path_carrying_markup_is_noise(self):
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import audit_dead_urls as A
+        assert A._normalise("/ru/<a href=") == ""
+        assert A._normalise('/blog/x/"onerror=') == ""
+        # The shapes GA4 legitimately emits still resolve.
+        assert A._normalise("/a.html; and then some prose") == "a.html"
+        assert A._normalise("/blog/tesla/") == "blog/tesla/index.html"
+
+
 # ----------------------------------------------------- weekly segment --
 class TestWeeklySegmentNamesPeopleAsTheCoverageDid:
     def test_the_instruction_carries_the_naming_rule(self):
