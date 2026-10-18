@@ -299,3 +299,30 @@ class TestTheWorkflows:
         assert 'workflows: ["Run Podcast Show", "Render Episode Video"]' in ML_WF
         assert re.search(r"\(\?:run\|render\)", ML_WF)
         assert ".video_pending_" in ML_WF and "Waiting for their video job" in ML_WF
+
+
+# --------------------------------------------------- the reel's preview loop --
+class TestShortPreviewWiring:
+    def test_the_index_row_carries_the_preview(self, tmp_path):
+        from engine.youtube_index import record_video
+        idx = tmp_path / "youtube_videos.json"
+        assert record_video(video_id="abcdefghijk", show_slug="spacex", episode=1,
+                            kind="short", preview_url="https://audio.example/p.mp4",
+                            index_path=idx)
+        assert record_video(video_id="bcdefghijkl", show_slug="spacex", episode=1,
+                            kind="short", index_path=idx)
+        rows = json.loads(idx.read_text())["videos"]
+        assert rows[0]["preview_url"] == "https://audio.example/p.mp4"
+        assert "preview_url" not in rows[1]
+
+    def test_the_short_upload_cuts_and_records_it(self):
+        assert "make_short_preview(this_short_video_path, _pv," in RUN_SHOW
+        assert "start_s=SHORT_PREVIEW_START_S" in RUN_SHOW
+        assert "preview_url=_preview_url," in RUN_SHOW
+        from engine.pipeline import record_youtube_outcomes
+        from engine.metrics import PipelineMetrics
+        m = PipelineMetrics(show_slug="s", episode_num=1)
+        from engine.config import load_config
+        record_youtube_outcomes(m, {"short_preview_urls": ["a", "b"]}, 1.0,
+                                config=load_config(ROOT / "shows" / "spacex.yaml"))
+        assert m.counters["short_previews_uploaded"] == 2
