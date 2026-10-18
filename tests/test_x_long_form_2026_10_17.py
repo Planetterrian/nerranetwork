@@ -160,10 +160,27 @@ def test_subtitles_request_shape():
 
 
 # ---------------------------------------------------------------- wiring --
-def test_the_pilot_shows():
-    on = {s for s in ("spacex", "fascinating_frontiers", "models_agents", "tesla", "omni_view")
-          if load_config(ROOT / "shows" / f"{s}.yaml").publishing.x_long_form}
-    assert on == {"spacex", "fascinating_frontiers", "models_agents"}
+def test_every_clip_show_with_a_long_form_posts_it_in_full():
+    """Oct 18 2026: the pilot is widened to every @nerranetwork clip show
+    whose YouTube stage renders a long-form; nothing else asks for it."""
+    want, on = set(), set()
+    for path in sorted((ROOT / "shows").glob("*.yaml")):
+        if path.name.startswith("_"):
+            continue
+        try:
+            cfg = load_config(path)
+        except Exception:
+            continue  # registry / data YAMLs that are not shows
+        pub = cfg.publishing
+        if pub.x_long_form:
+            on.add(cfg.slug)
+        if (pub.x_enabled and pub.x_post_format == "clip"
+                and pub.x_env_prefix == "NERRANETWORK_X_"
+                and cfg.youtube.enabled and cfg.youtube.publish_long_form):
+            want.add(cfg.slug)
+    assert on == want
+    assert {"spacex", "fascinating_frontiers", "models_agents", "omni_view",
+            "modern_investing"} <= on
 
 
 def test_the_mp4_is_hosted_before_the_cleanup_deletes_it():
