@@ -75,7 +75,32 @@ class TestHomepage:
         title = re.search(r"<title>([^<]*)</title>", home).group(1)
         assert title.lower().endswith("feed your curiosity, not your anxiety")
         desc = re.search(r'<meta name="description" content="([^"]*)"', home).group(1)
-        assert "Tesla" not in desc and "SpaceX" not in desc
+        # The flagships are named first; the rest of the promise follows.
+        assert desc.index("SpaceX") < desc.index("Tesla") < desc.index("AI")
+
+    def test_flagship_band_comes_before_every_other_block(self, home):
+        band = home.index('id="flagships"')
+        assert home.index('class="lt-lead"') < band
+        for later in ('id="developing"', 'id="top-stories"', 'id="today"'):
+            if later in home:
+                assert band < home.index(later), later
+        cards = re.findall(r'<article class="lt-flag"', home)
+        assert len(cards) == len(B.FLAGSHIP_SHOW_SLUGS)
+        sec = home[band:home.index("</section>", band)]
+        assert sec.index("SpaceX Daily") < sec.index("Tesla Shorts Time")
+        assert 'href="#flagships"' in home
+
+    def test_masthead_actions_link_to_pages_that_exist(self, home):
+        block = home[home.index('class="lt-masthead-actions"'):]
+        block = block[:block.index("</p>")]
+        hrefs = re.findall(r'href="([^"#]+)"', block)
+        assert "start-here.html" in hrefs and "how-to-listen.html" in hrefs
+        for h in hrefs:
+            assert (ROOT / h).is_file(), h
+
+    def test_markets_strip_leads_with_the_flagship_ticker(self, home):
+        strip = home[home.index('id="markets"'):]
+        assert strip.index(">TSLA<") < strip.index(">NVDA<")
 
     def test_footer_signs_with_the_tagline(self, home):
         assert f"{B.NETWORK_TAGLINE} Independent news and podcasts" in home
@@ -83,51 +108,88 @@ class TestHomepage:
 
 
 class TestLeadRotation:
+    """The lead rotates by subject; the flagships have their own band and are
+    never the lead or a top story (they stay in the chronological Latest)."""
+
     def _story(self, slug, d, hub, img="u"):
         return {"slug": slug, "date_obj": date.fromisoformat(d), "image_url": img,
                 "image_orientation": "landscape" if img else "", "hub_id": hub}
 
     def _day(self, d):
         return [self._story("spacex", d, "space"), self._story("tesla", d, "tesla"),
+                self._story("fascinating_frontiers", d, "space"),
                 self._story("models_agents", d, "ai"),
                 self._story("omni_view_world", d, "world-news"),
                 self._story("planetterrian", d, "science"),
                 self._story("modern_investing", d, "markets"),
                 self._story("unintended_consequences", d, "history-and-consequences")]
 
+    AUDIENCE = ["tesla", "spacex", "models_agents", "omni_view_world",
+                "planetterrian", "modern_investing", "unintended_consequences",
+                "fascinating_frontiers"]
+
+    def _page(self, d, stories=None):
+        return LT.assemble(stories or self._day(d), audience_order=self.AUDIENCE,
+                           flagships=B.FLAGSHIP_SHOW_SLUGS)
+
+    def test_flagships_have_their_own_band_every_day(self):
+        for k in range(7):
+            d = (date(2026, 10, 18) + dt.timedelta(days=k)).isoformat()
+            page = self._page(d)
+            assert [s["slug"] for s in page["flagships"]] == list(B.FLAGSHIP_SHOW_SLUGS)
+            placed = [page["lead"], *page["top"], *page["more"],
+                      *(s for sec in page["sections"] for s in sec["stories"])]
+            assert not {s["slug"] for s in placed} & set(B.FLAGSHIP_SHOW_SLUGS)
+            assert {"spacex", "tesla"} <= {s["slug"] for s in page["latest"]}
+
     def test_the_lead_subject_changes_daily_and_covers_the_promise(self):
-        audience = ["tesla", "spacex", "models_agents", "omni_view_world",
-                    "planetterrian", "modern_investing", "unintended_consequences"]
         leads = []
         for k in range(len(LT.LEAD_ROTATION)):
             d = (date(2026, 10, 18) + dt.timedelta(days=k)).isoformat()
-            leads.append(LT.assemble(self._day(d), audience_order=audience)["lead"]["hub_id"])
+            leads.append(self._page(d)["lead"]["hub_id"])
         assert sorted(leads) == sorted(LT.LEAD_ROTATION)
-        assert "tesla" not in leads
 
     def test_a_missing_subject_falls_through_to_the_next(self):
         d = "2026-10-18"
         hub = LT.LEAD_ROTATION[date.fromisoformat(d).toordinal() % len(LT.LEAD_ROTATION)]
         stories = [s for s in self._day(d) if s["hub_id"] != hub]
-        lead = LT.assemble(stories)["lead"]
+        lead = self._page(d, stories)["lead"]
         assert lead["hub_id"] != hub and lead["hub_id"] in LT.LEAD_ROTATION
+
+    def test_only_flagships_published_means_they_lead_as_before(self):
+        d = "2026-10-18"
+        page = self._page(d, [self._story("spacex", d, "space"),
+                              self._story("tesla", d, "tesla")])
+        assert page["flagships"] == [] and page["lead"]["slug"] in {"spacex", "tesla"}
 
     def test_top_stories_show_range_before_repeating_a_beat(self):
         d = "2026-10-18"
-        stories = self._day(d) + [self._story("ai_chips", d, "ai"),
-                                  self._story("fascinating_frontiers", d, "space")]
-        page = LT.assemble(stories, audience_order=["tesla", "spacex", "fascinating_frontiers",
-                                                    "ai_chips"])
+        stories = self._day(d) + [self._story("ai_chips", d, "ai")]
+        page = self._page(d, stories)
         beats = [LT._beat(s) for s in [page["lead"], *page["top"]]]
-        assert len(beats) == len(set(beats)), beats  # SpaceX and Tesla are one beat
+        assert len(beats) == len(set(beats)), beats
 
 
 class TestNetworkCard:
-    def test_card_art_is_the_networks_breadth(self):
+    def test_card_art_leads_with_the_flagships_then_the_breadth(self):
         sys.path.insert(0, str(ROOT / "scripts"))
         import build_share_cards as BSC
-        grid = BSC.NETWORK_COVER_SLUGS[:9]
-        assert "tesla" not in grid and "spacex" not in grid
+        assert B.FLAGSHIP_SHOW_SLUGS == ("spacex", "tesla")
+        # The breadth row never repeats a flagship tile.
+        assert not set(BSC.NETWORK_COVER_SLUGS) & set(B.FLAGSHIP_SHOW_SLUGS)
+        src = (ROOT / "scripts" / "build_share_cards.py").read_text(encoding="utf-8")
+        assert "flagship_covers=_covers(shows, FLAGSHIP_SHOW_SLUGS)" in src
+
+    def test_flagship_layout_draws_large_tiles(self):
+        from PIL import Image
+        tile = lambda c: Image.new("RGB", (400, 400), c)  # noqa: E731
+        card = S.render_network_card(show_count=26,
+                                     flagship_covers=[tile("red"), tile("blue")],
+                                     covers=[tile("green")] * 6)
+        assert card.size == (S.WIDTH, S.HEIGHT)
+        # The first flagship tile's centre is the flagship's own colour.
+        r, g, b = card.convert("RGB").getpixel((840, 140))
+        assert r > 150 and g < 90 and b < 90
 
     def test_alt_text_is_the_tagline_and_promise(self):
         import json
@@ -135,3 +197,4 @@ class TestNetworkCard:
         alt = alts["assets/share/network.jpg"]
         assert alt.startswith(f"{S.NETWORK_NAME}: {B.NETWORK_TAGLINE}")
         assert "every claim is checked against its source" in alt
+        assert alt.endswith("Featuring SpaceX Daily and Tesla Shorts Time.")

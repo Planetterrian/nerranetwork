@@ -32,20 +32,19 @@ sys.path.insert(0, str(ROOT))
 
 from engine import share_cards as S  # noqa: E402
 from engine.brand import (  # noqa: E402
-    NETWORK_PROMISE_SHORT, NETWORK_SUBJECTS, NETWORK_TAGLINE, network_promise,
+    FLAGSHIP_SHOW_SLUGS, NETWORK_PROMISE_SHORT, NETWORK_SUBJECTS, NETWORK_TAGLINE, network_promise,
 )
 
 logger = logging.getLogger("build_share_cards")
 
-# The network card's artwork: the BREADTH of the network, one show per
-# subject the promise names (space, AI, markets, world news, science), never
-# two of one beat (Oct 18 2026, operator: the card had led on SpaceX and
-# Tesla). A slug that leaves the registry drops out; the grid needs nine.
+# The network card's artwork: the two flagships (engine.brand.
+# FLAGSHIP_SHOW_SLUGS) as large tiles, then the breadth of the network — one
+# show per subject the promise names. A slug that leaves the registry drops
+# out; the breadth row needs six.
 NETWORK_COVER_SLUGS = (
-    "nerra_daily", "fascinating_frontiers", "models_agents",
+    "nerra_daily", "models_agents", "fascinating_frontiers",
     "omni_view_world", "planetterrian", "modern_investing",
     "unintended_consequences", "ai_chips", "age_of_ai",
-    "first_principles", "longevity", "prediction_markets",
 )
 
 STRAND_KICKERS = {
@@ -69,7 +68,7 @@ def _page_cards(show_count: int) -> dict:
                  ("nerra_daily", "age_of_ai", "nerra_voices"), "#7C3AED"),
         "join": ("Nerra Personal", "Your shows. Your order. One private daily episode.",
                  "Pick the shows you want and Mira builds your edition every morning.",
-                 ("nerra_daily", "spacex", "models_agents", "planetterrian"), "#6B47FF"),
+                 ("spacex", "tesla", "nerra_daily", "models_agents"), "#6B47FF"),
         "explore": ("Explore", "Every show, by subject",
                     "AI, space, markets, science, world and local news, and language "
                     "learning. Every public show is free.",
@@ -79,10 +78,10 @@ def _page_cards(show_count: int) -> dict:
                          ("ai_chips", "fascinating_frontiers", "modern_investing", "longevity"), ""),
         "start-here": ("Start here", "Find your show",
                        f"{n} free shows on {NETWORK_SUBJECTS}.",
-                       ("nerra_daily", "fascinating_frontiers", "models_agents", "omni_view_world"), ""),
+                       ("spacex", "tesla", "nerra_daily", "models_agents"), ""),
         "about": ("About", NETWORK_TAGLINE,
                   NETWORK_PROMISE_SHORT + " Made in Vancouver, Canada.",
-                  ("nerra_daily", "planetterrian", "modern_investing", "omni_view_world"), ""),
+                  ("spacex", "tesla", "nerra_daily", "omni_view_world"), ""),
         "faq": ("Questions", "How Nerra works",
                 "How the shows use AI, who hosts, when episodes release and how to subscribe.",
                 (), ""),
@@ -186,9 +185,11 @@ def build_committed(check: bool = False) -> list[str]:
     import generate_html as g
     count = len(g._public_shows())
     network = S.render_network_card(show_count=count,
-                                    covers=_covers(shows, NETWORK_COVER_SLUGS)[:9])
+                                    flagship_covers=_covers(shows, FLAGSHIP_SHOW_SLUGS),
+                                    covers=_covers(shows, NETWORK_COVER_SLUGS)[:6])
     emit(network, S.network_card_path(),
-         f"{S.NETWORK_NAME}: {NETWORK_TAGLINE} {network_promise(count)}")
+         f"{S.NETWORK_NAME}: {NETWORK_TAGLINE} {network_promise(count)} "
+         f"Featuring {' and '.join(shows[s]['name'] for s in FLAGSHIP_SHOW_SLUGS if s in shows)}.")
     # The legacy default is still named by hand-written pages and by links the
     # platforms cached: it becomes the network card too (it still carried the
     # no-advertising promise the Oct 11 sponsor policy retired).

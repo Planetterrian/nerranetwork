@@ -5197,8 +5197,10 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
         live_hubs = []
 
     ranked = _rank_shows_by_audience(public)
+    from engine import brand as _brand
     page = _lt.assemble(stories, audience_order=[s["slug"] for s in ranked],
-                        live_hub_ids=live_hubs)
+                        live_hub_ids=live_hubs,
+                        flagships=_brand.FLAGSHIP_SHOW_SLUGS)
     page["today_new"] = today_new
 
     popular_episodes = []
@@ -5253,6 +5255,22 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
         tsla=_load_json_quiet(ROOT / "api" / "tsla.json"),
         launches=_load_json_quiet(ROOT / "api" / "spacex_launches.json"),
         now=now) if public else {"quotes": [], "groups": [], "launch": None}
+    # The flagship band: each flagship's own market line, the next launch on
+    # SpaceX, and the data pages that exist for it (a link only to a file).
+    _shows_by_slug = {sh["slug"]: sh for sh in public}
+    for f in page.get("flagships") or []:
+        ticker = _nr.SHOW_TICKERS.get(f["slug"])
+        f["quote"] = next((q for q in markets.get("quotes") or []
+                           if q.get("symbol") == ticker), None) if ticker else None
+        f["launch"] = markets.get("launch") if f["slug"] == "spacex" else None
+        f["tagline"] = (_shows_by_slug.get(f["slug"]) or {}).get("hero_tagline") \
+            or (_shows_by_slug.get(f["slug"]) or {}).get("tagline") or ""
+        base = f["show_page"][:-5] if f["show_page"].endswith(".html") else ""
+        f["links"] = [{"label": label, "url": url} for label, url in (
+            ("Dashboard", f"{base}-dashboard.html"),
+            ("Story tracker", f"{base}-narrative.html"),
+            ("All episodes", f["show_page"]),
+        ) if base and (ROOT / url).is_file()]
     corrections = _nr.recent_corrections(_newsroom_corrections(public))
     schedule = _nr.todays_schedule(now) if public else []
     if not _nr.schedule_is_clean(schedule):
