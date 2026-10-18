@@ -313,3 +313,24 @@ class TestWorkflowWiring:
         wf = (ROOT / ".github" / "workflows" / "run-show.yml").read_text()
         assert "create_recovery_pr.sh" in wf
         assert 'PUSH_SUCCEEDED' in wf
+
+
+class TestStaleRebase:
+    """Oct 18 2026: a checkpoint killed mid-rebase left .git/rebase-merge,
+    every later `pull --rebase` refused to start, and the episode was lost."""
+
+    def test_a_left_over_rebase_dir_does_not_strand_the_push(self, remote_and_clone):
+        _, seed, work = remote_and_clone
+        (work / "digest.md").write_text("top world ep26\n")
+        _git("add", "-A", cwd=work)
+        _git("commit", "-m", "omni_view_world ep26", cwd=work)
+        _advance_origin(seed, "other.txt", "spacex moved\n", "spacex ep134")
+        stale = work / ".git" / "rebase-merge"
+        stale.mkdir()
+        (stale / "head-name").write_text("refs/heads/main\n")
+
+        result = _run_script(work, show="omni_view_world")
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert not stale.exists()
+        log = _git("log", "--oneline", "origin/main", cwd=work).stdout
+        assert "omni_view_world ep26" in log and "spacex ep134" in log

@@ -191,3 +191,13 @@ def test_long_form_has_room_after_audio_first():
     wf = yaml.safe_load((ROOT / ".github" / "workflows" / "run-show.yml").read_text(encoding="utf-8"))
     step = next(s for s in wf["jobs"]["run"]["steps"] if s.get("name") == "Run show pipeline")
     assert int(step["env"]["PIPELINE_TIMEOUT_SECONDS"]) >= 4200
+
+
+class TestCheckpointCleanup:
+    def test_a_failed_checkpoint_restores_the_tree(self):
+        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
+        body = src[src.index("def _checkpoint_publish("):src.index("def _restore_after_checkpoint(")]
+        assert "start_new_session=True" in body and "os.killpg" in body
+        assert "_restore_after_checkpoint(args.show)" in body
+        restore = src[src.index("def _restore_after_checkpoint("):src.index("def _rss_disclosure_for(")]
+        assert '"rebase", "--abort"' in restore and '"--soft", "HEAD~1"' in restore

@@ -2102,7 +2102,14 @@ min under an 80-min hard kill** — the audio is pushed first, so the time buys
 only the video (the render budget had dropped 5 of 15 long-forms on OV, M&A
 and MIT). Milestone notes never repeat the episode number (⚠️ AUDIO on round
 episodes). The homepage never calls an earlier day's flagship episode or
-edition "this morning's" / "today's". Operator: the scheduler Worker still
+edition "this morning's" / "today's". **A killed audio-first checkpoint
+leaves no rebase behind**: Top World's checkpoint hit the 300 s timeout inside
+`git pull --rebase`, the leftover `.git/rebase-merge` failed every later push
+attempt as a "conflict", and the recovery branch carried the half-replayed tree
+(a workflow change), which GitHub refused — the episode was lost from git.
+`_checkpoint_publish` now kills the whole process group, `_restore_after_checkpoint`
+aborts the rebase and un-commits the unpushed checkpoint, and
+`push_show_artifacts.sh` clears a stale rebase before each attempt. Operator: the scheduler Worker still
 fires on the Oct 9 UTC table (runs at :01/:16/:31/:46) — `wrangler deploy` in
 `workers/scheduler`.
 
