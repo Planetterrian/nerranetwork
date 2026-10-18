@@ -58,13 +58,18 @@ class TestHomeLinksPreferCanonical:
 
 
 class TestHreflangReciprocalOnCanonicals:
-    def test_homepage_template_pair_is_canonical(self):
-        src = _read("templates/base.html.j2")
-        assert 'hreflang="en" href="https://nerranetwork.com/"' in src
-        assert 'hreflang="ru" href="https://nerranetwork.com/ru/index.html"' in src
-        assert 'hreflang="x-default" href="https://nerranetwork.com/"' in src
+    def test_homepage_group_is_canonical(self):
+        # Oct 18 2026: the group is rendered from engine.show_lang's site
+        # languages (one hub per language) instead of typed EN/RU lines.
+        import generate_html as g
+        alts = {a["lang"]: a["href"] for a in g._site_hreflang_alternates()}
+        assert alts["en"] == "https://nerranetwork.com/"
+        assert alts["ru"] == "https://nerranetwork.com/ru/index.html"
+        assert alts["x-default"] == "https://nerranetwork.com/"
         # The directory form /ru/ is NOT the RU homepage canonical.
-        assert 'hreflang="ru" href="https://nerranetwork.com/ru/"' not in src
+        assert "https://nerranetwork.com/ru/" not in alts.values()
+        assert all(h.endswith("/index.html") for lang, h in alts.items()
+                   if lang not in ("en", "x-default"))
 
     def test_ru_index_committed_pair_matches_en(self):
         src = _read("ru/index.html")

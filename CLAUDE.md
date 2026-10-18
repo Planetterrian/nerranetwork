@@ -4330,8 +4330,8 @@ Deferred with rationale in the doc: blog `<h1>`==hook duplication
 Trackers on 10 of 11 shows (`last_major_update_episode` never written),
 per-show blog pagination, SSR summaries, stale curated Tesla/SpaceX
 series under "Live" badges, MIT alpha framing on Mission Control, and
-the three remaining hand-written pages (`ru/index.html`,
-`modern-investing-resources.html`, `age-of-ai-apply.html`).
+the remaining hand-written pages (`modern-investing-resources.html`,
+`age-of-ai-apply.html`; `ru/index.html` is generated since Oct 18 2026).
 
 ### Site + funnel + Mira program (Sep 19–20, 2026)
 
@@ -4819,6 +4819,42 @@ Rules that bind:
 - **Mission Control's sponsor/investor numbers come from the same honest
   sources as the tiles** (week-over-week from `audience_headline`, episodes
   from RSS pubDates, untracked spend `None`).
+
+### The site's languages: an English front page, one hub per language (Oct 18 2026)
+
+Operator: the English landing page carried the two Russian shows and their
+headlines; other-language content belongs behind the header's language
+selector or on dedicated pages. Guards `tests/test_site_languages_2026_10_18.py`.
+Rules that bind: **`engine/show_lang.py` owns the SITE LANGUAGES**
+(`site_languages()` — English plus every language a show renders its pages in
+or produces an audio track in, derived from the show YAMLs; `es` and `zh` have
+neither today and get no row), `language_hub_path()` (`<lang>/index.html`) and
+`track_languages()` (the one reading of `multilingual.languages` with the ZH
+approval rule — `generate_html._producing_track_languages` and
+`_listening_languages` delegate to it). **The English homepage reads English
+shows only** (`_english_shows`; stories, grid, picker, Organization JSON-LD),
+while the free-show COUNT stays network-wide (`_public_show_count_cached`, 26).
+**The chrome lists the shows of the PAGE's language** (`chrome_shows` in
+`base.html.j2`, from each show dict's `page_lang`; a language with no native
+show falls back to the English list) and links the other languages' hubs from
+the header's one Language menu (Site links + the June 2026 episode-audio
+radios, both from `site_languages`), the footer and the mobile menu; the footer
+newsletter picker offers the chrome's shows. **`<lang>/index.html` is generated
+for every non-English site language** (`generate_language_hub_pages`, template
+`language_hub.html.j2`, in `--static-pages` and `--all`, both hubs in nightly's
+add-paths): `ru/index.html` is no longer hand-written (the Sep 3 "three
+hand-written pages" are two now), `fr/index.html` is new — seven shows produce a
+French track and @NerraFR had no page on the site. A hub lists the language's
+native shows (latest episode), the English shows with a live `<lang>` feed
+(`_collect_language_feeds(..., slug)` — the 45-day freshness gate applies), the
+RU landers and the language's YouTube channel; **every reader string is
+hand-written in `_LANGUAGE_HUB_COPY`** and a language with no copy gets no
+page and a `::warning::`. The homepage and every hub emit the SAME hreflang
+group (`_site_hreflang_alternates`, en / fr / ru / x-default on canonical URLs;
+the EN↔RU show-pair helper is unchanged) and the sitemap lists hubs from the
+same vocabulary. The chrome's translation dict is still EN/RU only: the French
+hub's body is French and its chrome English (a `fr` dict is the next step if
+the hub earns traffic).
 
 ### The front page and the share cards (Oct 18 2026)
 

@@ -1,0 +1,156 @@
+{# ---------------------------------------------------------------------
+   Language hub — <lang>/index.html (Oct 18 2026).
+
+   The one page a reader of this language lands on: the shows made natively
+   in it, the English shows that produce a translated audio track in it (each
+   a real subscribable feed), the on-site landers, and the YouTube channel for
+   the language. The English homepage lists English shows only and sends a
+   reader here through the header's Language menu.
+
+   Every reader-facing string comes from generate_html._LANGUAGE_HUB_COPY
+   (hand-written per language); this template types nothing a reader sees.
+   --------------------------------------------------------------------- #}
+{% extends "base.html.j2" %}
+
+{% block head_extra %}
+<style>
+  .lh-hero { padding: calc(var(--nav-height) + 3rem) 0 2.5rem; text-align: center; }
+  .lh-hero h1 { font-size: clamp(2rem, 4vw, 3rem); margin: 0 0 1rem; }
+  .lh-hero p { max-width: 42rem; margin: 0 auto 1.5rem; color: var(--nn-text-secondary); font-size: 1.1rem; line-height: 1.6; }
+  .lh-actions { display: flex; gap: var(--sp-3); justify-content: center; flex-wrap: wrap; }
+  .lh-langs { margin-top: 1.25rem; font-size: 0.9rem; color: var(--nn-text-muted); }
+  .lh-langs a { margin: 0 0.35rem; }
+  .lh-latest { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--nn-border); font-size: 0.9rem; }
+  .lh-latest-label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--nn-text-muted); margin-bottom: 0.25rem; }
+  .lh-dubbed { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--sp-4); }
+  .lh-dub { display: grid; grid-template-columns: 72px 1fr; gap: var(--sp-3); align-items: start; padding: var(--sp-4); border-radius: 16px; }
+  .lh-dub img { width: 72px; height: 72px; border-radius: 12px; display: block; }
+  .lh-dub h3 { margin: 0 0 0.25rem; font-size: 1.05rem; }
+  .lh-dub p { margin: 0 0 0.5rem; font-size: 0.9rem; color: var(--nn-text-secondary); }
+  .lh-dub-links { display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem; font-size: 0.85rem; }
+  .lh-dub-latest { margin-top: 0.5rem; font-size: 0.85rem; }
+  .lh-dub-latest audio { display: block; width: 100%; margin-top: 0.35rem; }
+  .lh-listen { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--sp-4); }
+  .lh-listen a.glass-card { display: block; padding: var(--sp-4); border-radius: 16px; text-decoration: none; color: inherit; }
+  .lh-listen h3 { margin: 0 0 0.3rem; font-size: 1rem; }
+  .lh-listen p { margin: 0; font-size: 0.85rem; color: var(--nn-text-secondary); }
+  .lh-note { font-size: 0.85rem; color: var(--nn-text-muted); max-width: 48rem; }
+  @media (max-width: 600px) { .lh-dub { grid-template-columns: 56px 1fr; } .lh-dub img { width: 56px; height: 56px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="lh-hero">
+    <div class="container">
+        <h1>{{ hub.h1 }}</h1>
+        <p>{{ hub.intro }}</p>
+        <div class="lh-actions">
+            {% if native_shows %}<a href="#shows" class="nn-btn nn-btn-primary" style="--show-color:#6B47FF;">{{ hub.native_heading }}</a>{% endif %}
+            {% if dubbed_shows %}<a href="#dubbed" class="nn-btn{% if not native_shows %} nn-btn-primary{% endif %}" style="--show-color:#6B47FF;">{{ hub.dubbed_heading }}</a>{% endif %}
+            <a href="#listen" class="nn-btn">{{ hub.listen_heading }}</a>
+        </div>
+        {% if other_languages %}
+        <p class="lh-langs">{{ hub.other_languages_label }}:
+            {% for l in other_languages %}<a href="{{ l.href }}" lang="{{ l.lang }}" hreflang="{{ l.lang }}">{{ l.label }}</a>{% if not loop.last %}·{% endif %}{% endfor %}
+        </p>
+        {% endif %}
+    </div>
+</section>
+
+{% if native_shows %}
+<section id="shows" class="nn-section">
+    <div class="container">
+        <div class="nn-section-header">
+            <h2>{{ hub.native_heading }}</h2>
+            {% if hub.native_sub %}<p>{{ hub.native_sub }}</p>{% endif %}
+        </div>
+        <div class="show-showcase">
+            {% for s in native_shows %}
+            {% set _base = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
+            <div class="show-card-wrap" data-slug="{{ s.slug }}" style="--show-color:{{ s.brand_color }};--show-color-text:color-mix(in srgb, {{ s.brand_color }}, white 35%);">
+                <a href="{{ path_prefix }}{{ s.show_page }}" class="show-card glass-card">
+                    <img src="{{ path_prefix }}{{ _base }}-400.webp" alt="" class="show-card-image" width="400" height="400" loading="lazy" decoding="async">
+                    <h3 class="show-card-name">{{ s.name }}</h3>
+                    <div class="show-card-badges">
+                        {% if s.hub_cadence %}<span class="show-card-badge">{{ s.hub_cadence }}</span>{% endif %}
+                        {% if s.hub_length %}<span class="show-card-badge">{{ s.hub_length }}</span>{% endif %}
+                    </div>
+                    <div class="show-card-tagline">{{ s.hub_description }}</div>
+                    {% if s.latest and s.latest.hook %}
+                    <div class="lh-latest">
+                        <span class="lh-latest-label">{{ hub.latest_label }}{% if s.latest.date %} · {{ s.latest.date }}{% endif %}</span>
+                        {{ s.latest.hook }}
+                    </div>
+                    {% endif %}
+                    <div class="show-card-listen">
+                        {{ hub.listen_label }}
+                        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% if dubbed_shows %}
+<section id="dubbed" class="nn-section">
+    <div class="container">
+        <div class="nn-section-header">
+            <h2>{{ hub.dubbed_heading }}</h2>
+            <p>{{ hub.dubbed_sub }}</p>
+        </div>
+        <div class="lh-dubbed">
+            {% for s in dubbed_shows %}
+            {% set _base = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
+            <article class="lh-dub glass-card" style="--show-color:{{ s.brand_color }};">
+                <img src="{{ path_prefix }}{{ _base }}-400.webp" alt="" width="400" height="400" loading="lazy" decoding="async">
+                <div>
+                    <h3><a href="{{ s.lander or (path_prefix ~ s.show_page) }}">{{ s.name }}</a></h3>
+                    <p lang="en">{{ s.tagline }}</p>
+                    <div class="lh-dub-links">
+                        <a href="{{ s.feed_url }}">{{ hub.feed_label }}</a>
+                        {% if s.lander %}<a href="{{ s.lander }}">{{ hub.lander_label }}</a>{% endif %}
+                        {% if s.apple_track_url %}<a href="{{ s.apple_track_url }}" target="_blank" rel="noopener" lang="en">Apple Podcasts</a>{% endif %}
+                    </div>
+                    {% if s.latest_track %}
+                    <div class="lh-dub-latest">
+                        <span class="lh-latest-label">{{ hub.episode_label }} {{ s.latest_track.number }}{% if s.latest_track.date %} · {{ s.latest_track.date }}{% endif %}</span>
+                        {% if s.latest_track.title %}{{ s.latest_track.title }}{% endif %}
+                        <audio controls preload="none" src="{{ s.latest_track.audio_url }}"></audio>
+                    </div>
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<section id="listen" class="nn-section">
+    <div class="container">
+        <div class="nn-section-header">
+            <h2>{{ hub.listen_heading }}</h2>
+        </div>
+        <div class="lh-listen">
+            {% if youtube %}
+            <a class="glass-card" href="{{ youtube.url }}" target="_blank" rel="noopener">
+                <h3>{{ hub.youtube_label.replace('{handle}', youtube.handle) }}</h3>
+                <p>{{ hub.youtube_sub }}</p>
+            </a>
+            {% endif %}
+            <a class="glass-card" href="{{ network_rss }}">
+                <h3 lang="en">Network RSS</h3>
+                <p>{{ hub.network_rss_label }}</p>
+            </a>
+            <a class="glass-card" href="{{ home_url }}" hreflang="en">
+                <h3>{{ hub.english_label }}</h3>
+                <p>{{ hub.english_sub }}</p>
+            </a>
+        </div>
+        <p class="lh-note" style="margin-top:var(--sp-5);">{{ hub.ai_note }} <a href="{{ path_prefix }}ai-disclosure.html">{{ hub.ai_link_label }}</a></p>
+    </div>
+</section>
+{% endblock %}

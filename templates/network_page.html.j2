@@ -1803,11 +1803,13 @@ body.lt-player-open { overflow: hidden; }
             </details>
         </div>
         <div>
-            {% if le and (le.languages or le.ru_pages) %}
+            {% if le and le.hubs %}
+            {#- One chip per other site language, to that language's own hub
+                (engine.show_lang): the Russian shows and the translated
+                tracks live there, not on this page (Oct 18 2026). -#}
             <p class="lt-sublabel">In other languages</p>
             <ul class="lt-chips">
-                {% for l in le.languages %}<li><a class="lt-chip" href="{{ path_prefix }}{{ le.how_to_listen or 'how-to-listen.html' }}#feeds" lang="{{ l.lang }}">{{ l.label }}<small class="lt-chip-count" lang="en">{{ l.count }} {{ "feed" if l.count == 1 else "feeds" }}</small></a></li>{% endfor %}
-                {% if le.ru_pages %}<li><a class="lt-chip" href="{{ path_prefix }}{{ le.ru_pages }}" lang="ru">Подкасты на русском</a></li>{% endif %}
+                {% for h in le.hubs %}<li><a class="lt-chip" href="{{ path_prefix }}{{ h.path }}" lang="{{ h.lang }}" hreflang="{{ h.lang }}">{{ h.label }}</a></li>{% endfor %}
             </ul>
             {% endif %}
             <p class="lt-sublabel" style="margin-top:var(--sp-5);">Everything in one feed</p>
@@ -1832,7 +1834,7 @@ body.lt-player-open { overflow: hidden; }
         <div class="lt-about-text">
             <p><strong>{{ network_tagline }}</strong></p>
             <p>{{ network_promise() }}</p>
-            <p>Nerra Network is an independent news and podcast network of free shows covering world news, space and astronomy, science, AI for experts and beginners, AI chips and data centres, markets and modern investing, the Magnificent Seven, prediction markets, SpaceX, Tesla, longevity and peptide research, environmental policy, first-principles thinking, the unintended consequences of big decisions, good news with something you can do about it (The DP Pod), Canada's offshore ocean-racing story (Offshore North), local news from Vancouver and Collingwood, live AI-hosted interviews (The Age of AI and Nerra Voices), and financial literacy and language learning in Russian &mdash; plus Nerra Daily, the whole network in one daily edition. All produced in Vancouver, Canada by Patrick Novak, with AI doing the writing and narration and a human owning the standards. <a href="{{ path_prefix }}ai-disclosure.html">How we use AI</a>.</p>
+            <p>Nerra Network is an independent news and podcast network of free shows covering world news, space and astronomy, science, AI for experts and beginners, AI chips and data centres, markets and modern investing, the Magnificent Seven, prediction markets, SpaceX, Tesla, longevity and peptide research, environmental policy, first-principles thinking, the unintended consequences of big decisions, good news with something you can do about it (The DP Pod), Canada's offshore ocean-racing story (Offshore North), local news from Vancouver and Collingwood, and live AI-hosted interviews (The Age of AI and Nerra Voices) &mdash; plus Nerra Daily, the whole network in one daily edition. Two more shows are made natively in Russian, on <a href="{{ path_prefix }}ru/index.html" hreflang="ru">the Russian page</a>. All produced in Vancouver, Canada by Patrick Novak, with AI doing the writing and narration and a human owning the standards. <a href="{{ path_prefix }}ai-disclosure.html">How we use AI</a>.</p>
             <p>Our mission: stimulating conversation, supporting positive developments that benefit all, and providing unbiased coverage with varying perspectives.</p>
         </div>
         <ul class="lt-values">
@@ -1842,7 +1844,7 @@ body.lt-player-open { overflow: hidden; }
             <li><span aria-hidden="true">&#128197;</span><div><b>A cadence you can set your morning by.</b> Most shows publish every day; the rest weekly or when an interview is ready, and each show's card says which.</div></li>
             <li><span aria-hidden="true">&#127464;&#127462;</span><div><b>Made in Canada.</b> Independently produced in Vancouver by Patrick Novak. No corporate backing, no editorial interference.</div></li>
             {% if listen_everywhere and listen_everywhere.languages %}
-            <li><span aria-hidden="true">&#128266;</span><div><b>{{ listening_language_count }} listening languages.</b> English originals with {% for l in listen_everywhere.languages %}<span lang="{{ l.lang }}">{{ l.label }}</span>{% if not loop.last %} and {% endif %}{% endfor %} audio tracks, plus two shows made natively in Russian. Pick your audio language with the globe in the menu.</div></li>
+            <li><span aria-hidden="true">&#128266;</span><div><b>{{ listening_language_count }} listening languages.</b> English originals with {% for l in listen_everywhere.languages %}<span lang="{{ l.lang }}">{{ l.label }}</span>{% if not loop.last %} and {% endif %}{% endfor %} audio tracks, plus two shows made natively in Russian. The globe in the menu switches the site language and the audio language.</div></li>
             {% endif %}
         </ul>
     </div>

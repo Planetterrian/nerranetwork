@@ -665,8 +665,12 @@ class TestGlobalLanguageControl:
         assert 'id="nn-lang-toggle"' in base
         assert 'id="nn-lang-menu"' in base
         assert "assets/js/language-control.js" in base
-        # Clearly an AUDIO control, not a page-translation control.
-        assert "Audio language" in base
+        # Oct 18 2026: one globe, two sections — the SITE language links
+        # (one per language hub) and the episode AUDIO preference, both from
+        # the derived site_languages vocabulary (no typed 中文 radio).
+        assert "t.lang_site" in base and "t.lang_audio" in base
+        assert 'class="nn-lang-site"' in base
+        assert 'data-lang="zh"' not in base
 
     def test_language_control_js_contract(self):
         js = (PROJECT_ROOT / "assets" / "js" / "language-control.js").read_text(encoding="utf-8")

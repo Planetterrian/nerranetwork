@@ -256,13 +256,16 @@ class TestFaqCadence:
 
 
 # ---------------------------------------------------------------------------
-# 4. ru/index.html (hand-written)
+# 4. ru/index.html (generated since Oct 18 2026 — templates/language_hub.html.j2)
 # ---------------------------------------------------------------------------
 
 class TestRussianIndex:
     @pytest.fixture()
-    def page(self):
-        return (ROOT / "ru" / "index.html").read_text(encoding="utf-8")
+    def page(self, tmp_path):
+        # Rendered through the real generator; the body only (the chrome's
+        # logo and cover <picture> fallbacks are the site's, not this page's).
+        html = G.generate_language_hub_page("ru", output_dir=tmp_path).read_text(encoding="utf-8")
+        return html.split('<main id="main-content">', 1)[1].split("</main>", 1)[0]
 
     def test_cadence_is_monday(self, page):
         assert "Через день" not in page
@@ -273,7 +276,7 @@ class TestRussianIndex:
 
     def test_the_dub_landers_are_linked_and_exist(self, page):
         for name in ("spacex.html", "tesla.html"):
-            assert f'href="{name}"' in page
+            assert f'href="../ru/{name}"' in page
             assert (ROOT / "ru" / name).exists()
 
     def test_covers_are_the_small_sized_webps(self, page):
