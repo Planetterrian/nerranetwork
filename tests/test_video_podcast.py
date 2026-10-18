@@ -425,7 +425,9 @@ class TestPipelineWiring:
 
     def test_video_step_cannot_break_the_audio_publish(self):
         block = self.RUN_SHOW[self.RUN_SHOW.index("if config.video_podcast.enabled:\n        try:"):]
-        try_body = block[:block.index("\n    # 12b. Send newsletter")]
+        # Oct 18 2026: the step lives in _run_video_stage, which ends where
+        # the X stage begins (the newsletter stays in run()).
+        try_body = block[:block.index("\ndef _run_x_stage(")]
         assert "except Exception as exc:  # noqa: BLE001 — never block the publish" in try_body
 
 
