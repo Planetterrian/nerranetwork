@@ -1,11 +1,11 @@
 """The tagline and the promise lead every surface (Oct 18 2026, operator).
 
-"Feed your curiosity, not your anxiety." and "News and ideas from N free shows
-on space, AI, markets, world news, science and more. Every story is sourced,
-every claim is checked against its source, and you can read the article or
-hear the episode it came from." — instead of a front page and a share card
-that led on SpaceX and Tesla. ``engine/brand.py`` owns both sentences; every
-page, card and meta description reads them from there.
+"Feed your curiosity, not your anxiety." and the visitor-facing promise —
+"Free news and ideas on space, AI, …" (count-free as of the Oct 18
+follow-up) — instead of a front page and a share card that led on SpaceX
+and Tesla. ``engine/brand.py`` still owns the tagline and the counted
+``network_promise(n)`` used by share-card art; generate_html's Jinja
+global serves the count-free visitor wording.
 """
 from __future__ import annotations
 
@@ -67,9 +67,11 @@ def home(tmp_path_factory) -> str:
 
 class TestHomepage:
     def test_masthead_carries_tagline_and_promise(self, home):
-        n = len(G._public_shows())
         assert f'<p class="lt-tagline">{B.NETWORK_TAGLINE}</p>' in home
-        assert B.network_promise(n) in home
+        visitor = G._get_jinja_env().globals["network_promise"]()
+        assert visitor in home
+        assert "Free news and ideas on" in visitor
+        assert not re.search(r"\d+ free shows", visitor)
 
     def test_title_and_description_lead_with_the_tagline(self, home):
         title = re.search(r"<title>([^<]*)</title>", home).group(1)

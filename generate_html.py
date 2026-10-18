@@ -2505,16 +2505,24 @@ def _get_jinja_env():
     # Used so a missing ``blog_<slug>.rss`` is not advertised as a 404 link.
     env.globals["site_file_exists"] = lambda rel: (ROOT / str(rel)).is_file()
     # Oct 18 2026: the tagline and the promise lead every surface that
-    # introduces the network; engine.brand owns the words.
+    # introduces the network; engine.brand owns the words. Visitor-facing
+    # ``network_promise`` is count-free (operator Oct 18 follow-up) — never
+    # bake a show number into the hero / default meta; pages that still
+    # need a live count call ``public_show_count()`` explicitly.
     from engine import brand as _brand_copy
     env.globals["network_tagline"] = _brand_copy.NETWORK_TAGLINE
     env.globals["network_tagline_ru"] = _brand_copy.NETWORK_TAGLINE_RU
     env.globals["network_promise_short"] = _brand_copy.NETWORK_PROMISE_SHORT
-    env.globals["network_promise"] = lambda n=None: _brand_copy.network_promise(
-        n if n is not None else _public_show_count_cached())
-    # One count for every "N free shows" sentence (Oct 18 2026; homepage,
-    # join, show-page "See all N"), and the members-only count for pages
-    # that list those shows too.
+
+    def _network_promise_visitor(_n=None) -> str:
+        return (
+            f"Free news and ideas on {_brand_copy.NETWORK_SUBJECTS}. "
+            "Every story is sourced, every claim is checked against its source, "
+            "and you can read the article or hear the episode it came from.")
+
+    env.globals["network_promise"] = _network_promise_visitor
+    # Live count for pages that still name it (explore / how-to-listen /
+    # join stats). Never hard-code the number in a template.
     env.globals["public_show_count"] = _public_show_count_cached
     env.globals["members_show_count"] = _members_show_count
     # Oct 18 2026: every page's share card is decided in one place (base.html.j2
@@ -5381,6 +5389,16 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
 
     lead = page.get("lead") or {}
     _home_title, _home_meta = SEO_PAGE_COPY["index.html"]
+    from engine import brand as _brand_home
+    # Count-free alt: the share-card manifest still carries a numbered
+    # promise (engine/share_cards.py — Patrick's pipeline); override here
+    # so /'s og/twitter image alt matches the hero.
+    _home_og_alt = (
+        f"Nerra Network: {_brand_home.NETWORK_TAGLINE} "
+        f"Free news and ideas on {_brand_home.NETWORK_SUBJECTS}. "
+        "Every story is sourced, every claim is checked against its source, "
+        "and you can read the article or hear the episode it came from. "
+        "Featuring SpaceX Daily and Tesla Shorts Time.")
     context = {
         "path_prefix": "",
         "page_title": _home_title,
@@ -5393,6 +5411,7 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
         # whichever AI scene led today. Each story's own post carries its
         # episode card.
         "og_image": "",
+        "og_image_alt": _home_og_alt,
         # Bare origin, not /index.html: inbound links, the CNAME and the
         # hreflang tags all resolve to "/" (Sep 2026 review).
         "canonical_url": f"{GITHUB_RAW}/",
