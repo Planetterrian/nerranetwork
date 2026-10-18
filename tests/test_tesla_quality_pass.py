@@ -752,7 +752,8 @@ class TestSep2026FlagshipPass:
         assert hook._normalize_market_state("intraday") == "INTRADAY"
         spoken = hook._price_sentence("351.73", "▲ $5.90 (1.7%) (Intraday)")
         assert spoken.startswith("T S L A is trading at") and "closed" not in spoken
-        assert hook._price_sentence("345.82", "▲ $5.90 (1.7%)").startswith("T S L A closed at")
+        _wed = __import__("datetime").datetime(2026, 10, 14, 16, tzinfo=__import__("datetime").timezone.utc)
+        assert hook._price_sentence("345.82", "▲ $5.90 (1.7%)", now=_wed).startswith("T S L A closed at")
 
     def test_history_source_reports_intraday_during_session(self, monkeypatch):
         import datetime as dt
