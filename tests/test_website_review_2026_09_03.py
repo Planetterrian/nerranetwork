@@ -214,12 +214,14 @@ class TestHomepageClaims:
         src = _read("templates/network_page.html.j2")
         assert "Tesla & EV Markets" not in src, "hand-maintained ticker is back"
         # Oct 18 2026: the news-front ticker carries the day's headlines from
-        # the stories list, and every count on the page is computed: the
-        # show count from the public registry list, the rest from
-        # engine.landing_test.glance_numbers.
+        # the stories list; glance numbers come from
+        # engine.landing_test.glance_numbers. Oct 18 follow-up: visitor copy
+        # on this page is count-free ("All shows", "network of free shows",
+        # "Stories from across the network") — never bake a roster size in.
         ticker = src.split('class="lt-ticker', 1)[1].split("</div>", 1)[0]
         assert "{% for s in p.latest %}" in ticker
-        assert "{{ public_show_count }}" in src
+        assert "network of free shows covering" in src
+        assert "{{ public_show_count }}" not in src
         assert "{% for t in glance %}" in src
 
     def test_no_false_daily_or_free_forever_claims(self):
