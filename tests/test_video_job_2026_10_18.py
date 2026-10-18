@@ -414,3 +414,15 @@ class TestTheRehearsal:
                 call()
             assert exc.value.response["Error"]["Code"] == "RehearsalReadOnly"
         assert blocked == ["PutObject", "DeleteObject", "CreateMultipartUpload"]
+
+    def test_r2_uploads_are_refused_at_once(self, monkeypatch, tmp_path):
+        import engine.storage as storage
+        from scripts.rehearse_video import refuse_r2_uploads
+        monkeypatch.setattr(storage, "upload_to_r2", storage.upload_to_r2)
+        refused = refuse_r2_uploads()
+        from engine.storage import upload_to_r2   # bound after: the refusal
+        src = tmp_path / "a.mp4"
+        src.write_bytes(b"x")
+        assert upload_to_r2(src, "previews/s/ep1-short1.mp4", bucket="b",
+                            endpoint_url="e", access_key="a", secret_key="s") == ""
+        assert refused == ["previews/s/ep1-short1.mp4"]
