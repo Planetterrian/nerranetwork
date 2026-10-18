@@ -221,7 +221,9 @@ def test_metrics_round_trip(tmp_path):
 class TestTheSweep:
     def test_run_title_matches_the_workflow_run_name(self):
         from scripts.video_job import run_title
-        assert "format('Render video: {0} {1}', inputs.show, inputs.date)" in VIDEO_WF
+        # A real run's name is exactly run_title(); a rehearsal adds " (rehearsal)".
+        assert ("format('Render video: {0} {1}{2}', inputs.show, inputs.date, "
+                "inputs.rehearse && ' (rehearsal)' || '')") in VIDEO_WF
         assert run_title("spacex", "2026-10-18") == "Render video: spacex 2026-10-18"
 
     def test_starts_only_lost_dispatches(self):
@@ -275,10 +277,12 @@ class TestTheWorkflows:
     def test_it_runs_on_main_and_one_show_at_a_time(self):
         doc = yaml.safe_load(VIDEO_WF)
         render = doc["jobs"]["render"]
-        assert render["name"] == "render (${{ inputs.show }})"
+        assert render["name"] == "${{ inputs.rehearse && 'rehearse' || 'render' }} (${{ inputs.show }})"
         assert render["concurrency"]["group"] == "video-${{ inputs.show }}"
         checkout = render["steps"][0]
-        assert checkout["with"]["ref"] == "main"
+        # The branch tip at checkout time (production dispatches main).
+        assert checkout["with"]["ref"] == "${{ github.ref_name }}"
+        assert '"ref": "main"' in (ROOT / "scripts" / "video_job.py").read_text()
         # Never the finalize group: a short job would supersede a pending finalize.
         assert doc["jobs"]["homepage"]["concurrency"]["group"] != "finalize-shared-pages"
 
@@ -326,3 +330,87 @@ class TestShortPreviewWiring:
         record_youtube_outcomes(m, {"short_preview_urls": ["a", "b"]}, 1.0,
                                 config=load_config(ROOT / "shows" / "spacex.yaml"))
         assert m.counters["short_previews_uploaded"] == 2
+
+
+# ------------------------------------------------------------- rehearsal --
+class TestTheRehearsal:
+    def test_it_removes_every_publishing_credential(self):
+        from scripts.rehearse_video import scrub_environment
+        env = {"GROK_API_KEY": "k", "PEXELS_API_KEY": "p", "R2_ACCESS_KEY_ID": "x",
+               "YOUTUBE_REFRESH_TOKEN_EN": "x", "NERRANETWORK_X_ACCESS_TOKEN": "x",
+               "X_QUEUE_SUPABASE_KEY": "x", "BUTTONDOWN_API_KEY": "x",
+               "NOTIFICATION_WEBHOOK_URL": "x", "NERRA_VIDEO_JOB": "1",
+               "PERSONAL_DEMAND_TOKEN": "x", "PIPELINE_TIMEOUT_SECONDS": "6600"}
+        scrub_environment(env)
+        assert set(env) == {"GROK_API_KEY", "PEXELS_API_KEY", "PIPELINE_TIMEOUT_SECONDS",
+                            "R2_ACCESS_KEY_ID"}
+        # Every credential the real video job is given is covered.
+        video_env = set(_step_env(VIDEO_WF, "Render and publish the video"))
+        keep = {"GROK_API_KEY", "ELEVENLABS_API_KEY", "GROK_CLONED_VOICE_ID",
+                "PEXELS_API_KEY", "PIPELINE_TIMEOUT_SECONDS", "NERRA_LLM_TIMEOUT_SECONDS",
+                "NERRA_SINGLE_PASS_RENDER", "NERRA_X264_PRESET",
+                "R2_ENDPOINT_URL", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY"}
+        probe = {k: "x" for k in video_env}
+        scrub_environment(probe)
+        assert set(probe) <= keep, set(probe) - keep
+
+    def test_every_youtube_write_is_faked(self, tmp_path):
+        from scripts.rehearse_video import FakeYouTube
+        mod = SimpleNamespace()
+        FakeYouTube(tmp_path).install(mod)
+        for name in ("get_channel_credentials_from_env", "upload_video",
+                     "add_video_to_playlist", "update_video_title", "post_video_comment",
+                     "video_has_comment", "upload_caption_track",
+                     "upload_caption_track_detailed"):
+            assert callable(getattr(mod, name)), name
+        import engine.youtube as yt
+        writes = {n for n in dir(yt) if n.startswith(("upload_", "post_", "add_", "update_"))
+                  and callable(getattr(yt, n))}
+        assert writes <= set(vars(mod)), writes - set(vars(mod))
+
+    def test_the_upload_keeps_the_file(self, tmp_path):
+        from scripts.rehearse_video import FakeYouTube
+        src = tmp_path / "ep.mp4"
+        src.write_bytes(b"\0" * 10)
+        out = tmp_path / "out"
+        out.mkdir()
+        fake = FakeYouTube(out)
+        res = fake.upload_video(src, title="T")
+        assert (out / "01_ep.mp4").exists() and res.video_id == "REHEARSAL01"
+        assert fake.uploads[0]["title"] == "T"
+
+    def test_it_rebuilds_the_handoff_from_a_published_episode(self):
+        from engine.config import load_config
+        from scripts.rehearse_video import published_handoff
+        cfg = load_config(ROOT / "shows" / "spacex.yaml")
+        h = published_handoff(cfg, ROOT / cfg.episode.output_dir, dt.date(2026, 10, 18))
+        assert h["episode_num"] == 134
+        assert h["audio_url"].endswith("/SpaceX_Daily_Ep134_20261018.mp3")
+        assert h["mp3"] == "SpaceX_Daily_Ep134_20261018.mp3"
+
+    def test_the_workflow_publishes_nothing_on_a_rehearsal(self):
+        doc = yaml.safe_load(VIDEO_WF)
+        steps = {s.get("name"): s for s in doc["jobs"]["render"]["steps"]}
+        for name in ("Regenerate show HTML pages", "Commit and push the video's artifacts"):
+            assert "!inputs.rehearse" in steps[name]["if"]
+        assert "scripts/rehearse_video.py" in steps["Render and publish the video"]["run"]
+        assert steps["Attach the rehearsal's videos and report"]["uses"].startswith(
+            "actions/upload-artifact@")
+
+    def test_r2_is_read_only(self, monkeypatch):
+        import boto3
+        import botocore.client
+        from botocore.exceptions import ClientError
+        from scripts.rehearse_video import block_s3_writes
+        monkeypatch.setattr(botocore.client.BaseClient, "_make_api_call",
+                            botocore.client.BaseClient._make_api_call)
+        blocked = block_s3_writes()
+        s3 = boto3.client("s3", endpoint_url="http://127.0.0.1:9", region_name="auto",
+                          aws_access_key_id="x", aws_secret_access_key="y")
+        for call in (lambda: s3.put_object(Bucket="b", Key="k", Body=b"x"),
+                     lambda: s3.delete_object(Bucket="b", Key="k"),
+                     lambda: s3.create_multipart_upload(Bucket="b", Key="k")):
+            with pytest.raises(ClientError) as exc:
+                call()
+            assert exc.value.response["Error"]["Code"] == "RehearsalReadOnly"
+        assert blocked == ["PutObject", "DeleteObject", "CreateMultipartUpload"]
