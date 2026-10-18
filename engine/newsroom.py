@@ -338,9 +338,11 @@ def developing_stories(episodes: Iterable[Dict[str, Any]], now: dt.datetime, *,
 MARKET_MAX_AGE_DAYS = 3
 
 #: The quotes the strip prints, in order, from ``api/mag7_quotes.json``.
-# Alphabetical, so no one company heads the strip (Oct 18 2026, operator:
-# the front page had led on Tesla and SpaceX everywhere it could).
-MARKET_TICKERS = ("AAPL", "AMZN", "GOOGL", "META", "MSFT", "NVDA", "TSLA")
+MARKET_TICKERS = ("TSLA", "NVDA", "AAPL", "MSFT", "GOOGL", "AMZN", "META")
+
+#: The flagship shows' own tickers (engine.brand.FLAGSHIP_SHOW_SLUGS): the
+#: front page's flagship band prints each show's line from the strip.
+SHOW_TICKERS = {"spacex": "SPCX", "tesla": "TSLA"}
 
 
 def _num(value) -> Optional[float]:
@@ -421,6 +423,8 @@ def market_strip(*, mag7: Optional[dict], spcx: Optional[dict], tsla: Optional[d
 
     if "TSLA" not in by_ticker or not any(q["symbol"] == "TSLA" for q in quotes):
         _quote("TSLA", tsla, "fetched_at")
+        # Keep TSLA first, where the closes put it.
+        quotes.sort(key=lambda q: 0 if q["symbol"] == "TSLA" else 1)
     _quote("SPCX", spcx, "updated_at")
 
     launch = None

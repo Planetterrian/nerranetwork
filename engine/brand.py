@@ -86,6 +86,15 @@ def network_promise(show_count: int) -> str:
             "and you can read the article or hear the episode it came from.")
 
 
+#: The flagship shows: the network's two biggest audiences (Tesla Shorts Time
+#: and SpaceX Daily carry most downloads and views). The promise leads with the
+#: network's breadth; the flagships keep a permanent place beside it — their
+#: own band on the front page and the large tiles on the network share card
+#: (operator, Oct 18 2026: the first pass had reduced them too far). One list,
+#: in display order; every surface that features them reads it.
+FLAGSHIP_SHOW_SLUGS = ("spacex", "tesla")
+
+
 #: A short form for surfaces with one line to spare (cards, meta).
 NETWORK_PROMISE_SHORT = ("Every story sourced. Every claim checked against its source. "
                          "Read the article or hear the episode.")

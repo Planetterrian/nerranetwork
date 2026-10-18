@@ -421,16 +421,20 @@ def _covers_grid(img: Image.Image, covers: Sequence[Image.Image], *, x0: int, y0
 
 
 def render_network_card(*, show_count: int, covers: Sequence[Image.Image] = (),
+                        flagship_covers: Sequence[Image.Image] = (),
                         promise: str = "") -> Image.Image:
     """The homepage and default card: the tagline as the headline, the
-    promise under it, and the breadth of the shows beside them."""
+    promise under it, and the shows beside them — the two flagships
+    (``engine.brand.FLAGSHIP_SHOW_SLUGS``) as large tiles over a row of the
+    network's breadth, or a 3x3 grid when no flagship art is given."""
     img = _canvas()
     _glow(img, (180, 120), 360, PURPLE, 110)
     _glow(img, (1060, 560), 380, CYAN, 70)
     _gradient_bar(img, 0, 7, PURPLE, CYAN)
     d = ImageDraw.Draw(img)
 
-    has_grid = len(covers) >= 9
+    flagship_layout = len(flagship_covers) >= 2 and len(covers) >= 6
+    has_grid = flagship_layout or len(covers) >= 9
     text_w = 590 if has_grid else 1000
     x, y = 64, 60
     mark = _mark(64)
@@ -449,7 +453,16 @@ def render_network_card(*, show_count: int, covers: Sequence[Image.Image] = (),
                 leading=1.38, fallback=_FALLBACK_REGULAR, max_height=520 - y - 8)
     _draw_block(d, prom, x, y, TEXT_SECONDARY)
 
-    if has_grid:
+    if flagship_layout:
+        # Two large flagship tiles, then two rows of three smaller ones.
+        small, gap = 124, 14
+        x0 = WIDTH - 64 - (3 * small + 2 * gap)
+        big = (3 * small + 2 * gap - gap) // 2
+        _covers_grid(img, list(flagship_covers)[:2], x0=x0, y0=40, cols=2, size=big,
+                     gap=gap, radius=22)
+        _covers_grid(img, list(covers)[:6], x0=x0, y0=40 + big + gap, cols=3,
+                     size=small, gap=gap, radius=16)
+    elif has_grid:
         _covers_grid(img, list(covers)[:9], x0=716, y0=52, cols=3, size=136, gap=16)
     _footer(img, right_text=NETWORK_DOMAIN, tagline="")
     return _finish(img)

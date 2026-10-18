@@ -296,7 +296,7 @@ class TestMarkets:
     def test_every_value_carries_its_as_of_date(self):
         m = N.market_strip(mag7=MAG7, spcx=SPCX, tsla=None, launches=LAUNCHES, now=NOW)
         syms = [q["symbol"] for q in m["quotes"]]
-        assert syms == ["NVDA", "TSLA", "SPCX"]  # alphabetical, never one company first
+        assert syms == ["TSLA", "NVDA", "SPCX"]  # the flagship ticker leads
         for q in m["quotes"]:
             assert q["as_of"] and q["as_of_iso"]
         tsla = next(q for q in m["quotes"] if q["symbol"] == "TSLA")

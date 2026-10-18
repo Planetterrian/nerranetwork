@@ -187,6 +187,15 @@
   margin-right: 0.45em; border-radius: 2px; background: var(--nn-gradient);
 }
 .lt-standfirst { font-family: var(--lt-ui); color: var(--lt-ink); opacity: 0.88; font-size: 1.06rem; max-width: 36rem; margin: 0; line-height: 1.55; }
+.lt-standfirst-wrap { max-width: 36rem; }
+.lt-masthead-actions { font-family: var(--lt-ui); display: flex; flex-wrap: wrap; gap: 8px; margin: var(--sp-3) 0 0; }
+.lt-masthead-actions a {
+  font-size: 0.86rem; font-weight: 700; color: var(--nn-white); text-decoration: none;
+  border: 1px solid var(--lt-rule-strong); border-radius: 999px; padding: 6px 14px;
+}
+.lt-masthead-actions a:hover { border-color: var(--lt-cyan); }
+.lt-masthead-actions a.is-primary { background: var(--lt-accent); border-color: var(--lt-accent); }
+.lt-masthead-actions a.is-primary:hover { background: var(--nn-accent-hover); }
 
 /* ---- Section nav (in-page anchors) ---- */
 .lt-secnav { margin: 0 0 var(--sp-3); }
@@ -314,6 +323,30 @@ a.lt-media:hover img { transform: scale(1.03); }
 .lt-edition .lt-hl { font-size: clamp(1.3rem, 2.4vw, 1.8rem); }
 .lt-edition p.lt-edition-note { font-family: var(--lt-ui); font-size: 0.92rem; color: var(--lt-ink); opacity: 0.85; margin: 8px 0 0; line-height: 1.5; }
 .lt-edition .lt-lead-audio { margin-top: var(--sp-3); }
+
+/* ---- Flagship shows (engine.brand.FLAGSHIP_SHOW_SLUGS) ---- */
+.lt-flag-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-6); }
+.lt-flag {
+  border: 1px solid var(--lt-rule-strong); border-top: 4px solid var(--show-color); border-radius: 14px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--show-color) 16%, #0B0F1A) 0%, #0F1424 60%);
+  padding: var(--sp-5); display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0;
+}
+.lt-flag-head { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: var(--sp-3); align-items: center; }
+.lt-flag-cover img { width: 72px; height: 72px; border-radius: 10px; display: block; box-shadow: 0 8px 22px rgba(0,0,0,0.45); }
+.lt-flag-name { font-family: var(--lt-head); font-size: 1.32rem; font-weight: 700; margin: 0; line-height: 1.15; }
+.lt-flag-name a { color: var(--nn-white); text-decoration: none; }
+.lt-flag-name a:hover { text-decoration: underline; }
+.lt-flag-tag { font-family: var(--lt-ui); font-size: 0.86rem; color: var(--lt-muted); margin: 2px 0 0; line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lt-flag-quote { font-family: var(--lt-ui); font-size: 0.92rem; margin: 0; text-align: right; white-space: nowrap; }
+.lt-flag-quote small { display: block; font-size: 0.72rem; color: var(--lt-muted); font-weight: 500; }
+.lt-flag .lt-media { border-radius: 10px; }
+.lt-flag .lt-hl { font-size: 1.36rem; margin: 0; }
+.lt-flag-launch { font-family: var(--lt-ui); font-size: 0.86rem; color: var(--lt-ink); margin: 0; }
+.lt-flag-launch b { color: var(--show-color-text, var(--lt-cyan)); }
+.lt-flag-links { font-family: var(--lt-ui); font-size: 0.86rem; display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; }
+.lt-flag-links a { color: var(--lt-cyan); font-weight: 600; }
+.lt-flag .lt-lead-audio { margin-top: auto; }
 
 /* ---- Topic sections ---- */
 .lt-section-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--sp-6) var(--sp-8); }
@@ -585,6 +618,14 @@ a.lt-media:hover img { transform: scale(1.03); }
   .lt-claim-wrap .nn-mira-claim__claim { grid-row: auto; font-size: 1.12rem; }
 }
 @media (max-width: 640px) {
+  .lt-flag-grid { grid-template-columns: minmax(0, 1fr); }
+  .lt-flag { padding: var(--sp-4); }
+  .lt-flag-head { grid-template-columns: 56px minmax(0, 1fr); }
+  .lt-flag-cover img { width: 56px; height: 56px; }
+  .lt-flag-quote { grid-column: 1 / -1; text-align: left; }
+  .lt-flag-quote small { display: inline; margin-left: 6px; }
+  .lt-flag .lt-hl { font-size: 1.2rem; }
+  .lt-flag .lt-lead-audio audio { width: 100%; }
   .lt-page .container { padding-left: var(--sp-4); padding-right: var(--sp-4); }
   .lt-page { padding-top: calc(var(--nav-height, 72px) + var(--sp-2)); }
   .lt-lead .lt-media { border-radius: 8px; }
@@ -865,7 +906,17 @@ a.lt-media:hover img { transform: scale(1.03); }
             <h1 class="lt-wordmark">Nerra Network <span>Today</span></h1>
             <p class="lt-tagline">{{ network_tagline }}</p>
         </div>
-        <p class="lt-standfirst">{{ network_promise(public_show_count) }}</p>
+        <div class="lt-standfirst-wrap">
+            <p class="lt-standfirst">{{ network_promise(public_show_count) }}</p>
+            {#- Where a first-time reader goes next: today's whole-network
+                episode, the show finder and the feeds. Each is a page that
+                exists; the edition link only when an edition was built. -#}
+            <p class="lt-masthead-actions">
+                {% if edition %}<a class="is-primary" href="{{ path_prefix }}{{ edition.post_url or edition.show_page }}">Play today's {{ edition.show_name }}</a>{% endif %}
+                <a href="{{ path_prefix }}start-here.html">Find your show</a>
+                <a href="{{ path_prefix }}how-to-listen.html">Listen in any app</a>
+            </p>
+        </div>
     </div>
 </div></header>
 
@@ -902,6 +953,7 @@ a.lt-media:hover img { transform: scale(1.03); }
 <div class="container"><nav class="lt-secnav" aria-label="Sections on this page">
     <ul>
         <li><a href="#latest">Latest</a></li>
+        {% if p.flagships %}<li><a href="#flagships">SpaceX &amp; Tesla</a></li>{% endif %}
         {% if developing %}<li><a href="#developing">Developing</a></li>{% endif %}
         {% if conversations %}<li><a href="#conversations">Conversations</a></li>{% endif %}
         {% if p.top %}<li><a href="#top-stories">Top stories</a></li>{% endif %}
@@ -970,6 +1022,52 @@ a.lt-media:hover img { transform: scale(1.03); }
         <p class="lt-rail-more"><a href="{{ path_prefix }}blog/index.html">Every article →</a></p>
     </aside>
 </section>
+
+{#- The flagship shows (engine.brand.FLAGSHIP_SHOW_SLUGS): the network's two
+    biggest audiences keep a band of their own every day, beside the lead the
+    subject rotation picks (Oct 18 2026). A flagship story runs here and in
+    the Latest list, never also as the lead or a top story. -#}
+{% if p.flagships %}
+<section class="lt-block container" id="flagships" aria-labelledby="lt-flag-h">
+    <div class="lt-block-head">
+        <h2 id="lt-flag-h">Flagship shows</h2>
+        <p class="lt-block-sub">The network's two biggest daily shows, in this morning's episodes.</p>
+    </div>
+    <div class="lt-flag-grid">
+        {% for f in p.flagships %}
+        <article class="lt-flag" style="--show-color:{{ f.brand_color }};">
+            <div class="lt-flag-head">
+                <a class="lt-flag-cover" href="{{ path_prefix }}{{ f.show_page }}" tabindex="-1" aria-hidden="true">
+                    <picture>
+                        {% if f.cover_webp %}<source type="image/webp" srcset="{{ path_prefix }}{{ f.cover_webp }}">{% endif %}
+                        <img src="{{ path_prefix }}{{ f.cover_url }}" alt="{{ f.show_name }} cover art" width="72" height="72" loading="lazy" decoding="async">
+                    </picture>
+                </a>
+                <div>
+                    <p class="lt-flag-name"><a href="{{ path_prefix }}{{ f.show_page }}">{{ f.show_name }}</a></p>
+                    {% if f.tagline %}<p class="lt-flag-tag">{{ f.tagline }}</p>{% endif %}
+                </div>
+                {% if f.quote %}{% set q = f.quote %}
+                <p class="lt-flag-quote lt-quote is-{{ q.direction }}"><span><b class="lt-quote-sym">{{ q.symbol }}</b> <span class="lt-quote-px">{{ q.price }}</span>{% if q.change %} <span class="lt-quote-chg">{{ q.change }}</span>{% endif %}<small>{{ 'Close' if q.basis == 'close' else 'Last quote' }} · <time datetime="{{ q.as_of_iso }}">{{ q.as_of }}</time></small></span></p>
+                {% endif %}
+            </div>
+            {{ media(f) }}
+            <h3 class="lt-hl"{% if f.lang %} lang="{{ f.lang }}"{% endif %}><a href="{{ story_href(f) }}">{{ f.hook }}</a></h3>
+            {{ meta(f, listen=false) }}
+            {{ more_list(f) }}
+            {% if f.launch %}{% set l = f.launch %}
+            <p class="lt-flag-launch" data-expires="{{ l.net_iso }}"><b>Next launch</b> {{ l.mission }}{% if l.rocket %} · {{ l.rocket }}{% endif %} · no earlier than <time datetime="{{ l.net_iso }}">{{ l.net }}</time></p>
+            {% endif %}
+            {% if f.links %}<p class="lt-flag-links">{% for ln in f.links %}<a href="{{ path_prefix }}{{ ln.url }}">{{ ln.label }}</a>{% endfor %}</p>{% endif %}
+            <div class="lt-lead-audio">
+                {% if f.audio_url %}<audio controls preload="none" src="{{ f.audio_url }}" aria-label="Play {{ f.show_name }} episode {{ f.episode_num }}"></audio>{% endif %}
+                {% if f.post_url %}<a class="lt-btn lt-btn--primary" href="{{ path_prefix }}{{ f.post_url }}">Read the episode</a>{% endif %}
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
 
 {#- Developing stories: threads the network covered on two or more days this
     week, found by matching the digests' own headlines (engine.newsroom) —

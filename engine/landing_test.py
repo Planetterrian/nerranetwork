@@ -469,16 +469,24 @@ def _varied(stories: Sequence[Dict[str, Any]], limit: int, *, seen: set) -> List
 
 def assemble(stories: Iterable[Dict[str, Any]], *,
              audience_order: Sequence[str] = (),
-             live_hub_ids: Iterable[str] = ()) -> Dict[str, Any]:
-    """Lay the stories out: lead, top stories, latest list, sections.
+             live_hub_ids: Iterable[str] = (),
+             flagships: Sequence[str] = ()) -> Dict[str, Any]:
+    """Lay the stories out: lead, flagships, top stories, latest list, sections.
 
     Deterministic: newest date first, then the audience ranking (30-day
     downloads, the homepage's own order), then slug. The lead is the first
     story with a landscape scene of its own, because a lead without a picture
     is not a front page; when no story has one, the first story leads anyway.
+
+    A ``flagships`` show (``engine.brand.FLAGSHIP_SHOW_SLUGS``) gets its own
+    band every day, in the given order, and so never also runs as the lead, a
+    top story or a section story; it still appears in the Latest list, which
+    is the chronological record.
     """
     rank = {slug: n for n, slug in enumerate(audience_order)}
     ordered = sorted(stories, key=_order_key(rank))
+    flagship_order = {slug: n for n, slug in enumerate(flagships)}
+    featured: List[Dict[str, Any]] = []
     if ordered and ordered[0].get("date_obj"):
         newest = ordered[0]["date_obj"]
         ordered = [
@@ -486,17 +494,22 @@ def assemble(stories: Iterable[Dict[str, Any]], *,
             if s.get("date_obj") and (newest - s["date_obj"]).days <= MAX_STORY_AGE_DAYS
         ]
     if not ordered:
-        return {"lead": None, "top": [], "latest": [], "sections": [],
-                "more": [], "edition_date": "", "story_count": 0,
-                "today_count": 0}
+        return {"lead": None, "flagships": [], "top": [], "latest": [],
+                "sections": [], "more": [], "edition_date": "",
+                "story_count": 0, "today_count": 0}
 
-    lead = _rotated_lead(ordered) or next(
-        (s for s in ordered if s["image_orientation"] == "landscape"), ordered[0])
-    rest = [s for s in ordered if s is not lead]
+    featured = sorted((s for s in ordered if s["slug"] in flagship_order),
+                      key=lambda s: flagship_order[s["slug"]])
+    pool = [s for s in ordered if s["slug"] not in flagship_order] or ordered
+    if pool is ordered:  # nothing but flagships published: they lead as usual
+        featured = []
+    lead = _rotated_lead(pool) or next(
+        (s for s in pool if s["image_orientation"] == "landscape"), pool[0])
+    rest = [s for s in pool if s is not lead]
     with_art = [s for s in rest if s["image_url"]]
     top = _varied((with_art + [s for s in rest if not s["image_url"]]),
                   TOP_STORY_COUNT, seen={_beat(lead)})
-    placed = {id(lead), *(id(s) for s in top)}
+    placed = {id(lead), *(id(s) for s in top), *(id(s) for s in featured)}
 
     live = set(live_hub_ids)
     buckets: Dict[str, List[Dict[str, Any]]] = {}
@@ -531,6 +544,7 @@ def assemble(stories: Iterable[Dict[str, Any]], *,
     newest = ordered[0]["date_obj"]
     return {
         "lead": lead,
+        "flagships": featured,
         "top": top,
         "latest": ordered[:LATEST_LIMIT],
         "sections": sections,
