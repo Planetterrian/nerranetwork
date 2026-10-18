@@ -695,7 +695,24 @@ _CLOSING_VARIANTS = (
 )
 
 
-def _price_sentence(price_str: str, change_str: str) -> str:
+def _weekend_close_word(now=None) -> str:
+    """``" Friday"`` on a Saturday or Sunday in New York, else ``""``.
+
+    Oct 18 2026: the weekend episodes said "closed at $354.72, down 2.1
+    percent" two days running with no day named, so Saturday and Sunday
+    each sounded like a fresh session.
+    """
+    import datetime as _d
+    now = now or _d.datetime.now(_d.timezone.utc)
+    try:
+        from zoneinfo import ZoneInfo
+        local = now.astimezone(ZoneInfo("America/New_York"))
+    except Exception:  # pragma: no cover
+        local = now - _d.timedelta(hours=4)
+    return " Friday" if local.weekday() >= 5 else ""
+
+
+def _price_sentence(price_str: str, change_str: str, now=None) -> str:
     """Build the spoken stock sentence, or '' when the quote isn't trustworthy.
 
     Phrasing follows the market state embedded in ``change_str`` — the
@@ -717,7 +734,7 @@ def _price_sentence(price_str: str, change_str: str) -> str:
         return f"T S L A is at {price_spoken} in after-hours trading, {change_spoken}. "
     if "Intraday" in change_str:
         return f"T S L A is trading at {price_spoken}, {change_spoken}. "
-    return f"T S L A closed at {price_spoken}, {change_spoken}. "
+    return f"T S L A closed{_weekend_close_word(now)} at {price_spoken}, {change_spoken}. "
 
 
 def _pick_closing(context: dict, *, date: datetime.date | None = None) -> str:
@@ -732,5 +749,6 @@ def _pick_closing(context: dict, *, date: datetime.date | None = None) -> str:
     template = _CLOSING_VARIANTS[d.toordinal() % len(_CLOSING_VARIANTS)]
     sentence = _price_sentence(
         context.get("price", "0.00"), context.get("change_str", ""),
+        now=datetime.datetime(d.year, d.month, d.day, 16, tzinfo=datetime.timezone.utc),
     )
     return template.format(price_sentence=sentence)

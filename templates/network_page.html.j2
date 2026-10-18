@@ -913,7 +913,9 @@ a.lt-media:hover img { transform: scale(1.03); }
                 exists; the edition link only when an edition was built. -#}
             <p class="lt-masthead-actions">
                 {% if edition %}<a class="is-primary" href="{{ path_prefix }}{{ edition.post_url or edition.show_page }}">{% if edition.stamp and edition.stamp.is_today %}Play today's {{ edition.show_name }}{% else %}Play the latest {{ edition.show_name }}{% endif %}</a>{% endif %}
-                <a href="{{ path_prefix }}start-here.html">Find your show</a>
+                {# The same destination as the nav's "Find your show" (Oct 18 2026:
+                   this one went to start-here.html, the nav to explore.html). #}
+                <a href="{{ path_prefix }}explore.html">Find your show</a>
                 <a href="{{ path_prefix }}how-to-listen.html">Listen in any app</a>
             </p>
         </div>

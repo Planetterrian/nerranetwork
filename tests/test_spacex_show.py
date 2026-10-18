@@ -381,7 +381,8 @@ class TestStockClosing:
         assert not _market_is_open(saturday)
         assert _market_is_open(self._SESSION_OPEN)
         assert "closed at" in _price_sentence(141.5, "+1.0%", "yfinance_fast_info", now=run_time)
-        assert "closed at" in _price_sentence(141.5, "+1.0%", "yfinance_fast_info", now=saturday)
+        # Oct 18 2026: a weekend close names its day.
+        assert "closed Friday at" in _price_sentence(141.5, "+1.0%", "yfinance_fast_info", now=saturday)
 
     def test_zero_move_is_unchanged_never_down_zero(self):
         """Ep080 closed with "down zero percent" (digest: "-0.0% vs the

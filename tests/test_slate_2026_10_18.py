@@ -8,6 +8,7 @@
 """
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -21,13 +22,77 @@ openai = pytest.importorskip("openai")
 from engine import generator as G  # noqa: E402
 
 
+def _smoke_command() -> str:
+    wf = (ROOT / ".github" / "workflows" / "run-show.yml").read_text(encoding="utf-8")
+    step = wf[wf.index("- name: Run smoke tests"):]
+    step = step[:step.index("- name:", 10)]
+    return step[step.index("python -m pytest"):]
+
+
+def _committed_corpus_globs(module: Path) -> list[str]:
+    """Test functions in ``module`` that glob committed show output.
+
+    The shape that stopped the slate: a test reading a path under the
+    repo's ``digests/`` (never ``tmp_path``) through ``.glob(`` — so the
+    next commit any show makes is part of the test's input."""
+    src = module.read_text(encoding="utf-8")
+    defs = list(re.finditer(r"^[ ]*def (test_\w+)\(", src, re.M))
+    found = []
+    for i, m in enumerate(defs):
+        end = defs[i + 1].start() if i + 1 < len(defs) else len(src)
+        for line in src[m.start():end].splitlines():
+            if ".glob(" in line and '"digests' in line and "tmp_path" not in line:
+                found.append(m.group(1))
+                break
+    return found
+
+
+# Modules that read every show's (or another show's) committed output by
+# construction. They run in Run Tests on push, never in a per-show smoke
+# step, where one bad commit from any show stops every later show.
+CORPUS_MODULES = (
+    "test_book_release_pass.py",   # every book-bound digest (Oct 18 UC "Lark et al.,")
+    "test_episode_validity.py",    # every show's latest digest
+    "test_rss.py",                 # every committed feed
+    "test_dp_pod_show.py",         # DP Pod's committed digests + hook memory
+)
+
+
 class TestSmokeStep:
     def test_no_corpus_scan_of_other_shows_in_the_smoke_step(self):
-        wf = (ROOT / ".github" / "workflows" / "run-show.yml").read_text(encoding="utf-8")
-        step = wf[wf.index("- name: Run smoke tests"):]
-        step = step[:step.index("- name:", 10)]
-        command = step[step.index("python -m pytest"):]
-        assert "test_book_release_pass.py" not in command
+        command = _smoke_command()
+        for module in CORPUS_MODULES:
+            assert f"tests/{module}" not in command, module
+
+    def test_no_listed_module_globs_committed_digests_undeselected(self):
+        command = _smoke_command()
+        modules = sorted(set(re.findall(r"tests/(test_\w+\.py)(?!::)", command)))
+        assert modules, "could not parse the smoke step's module list"
+        deselected = set(re.findall(r"--deselect tests/(\S+)", command))
+        offenders = []
+        for name in modules:
+            for test in _committed_corpus_globs(ROOT / "tests" / name):
+                if not any(d.startswith(f"{name}::") and d.endswith(f"::{test}")
+                           for d in deselected):
+                    offenders.append(f"{name}::{test}")
+        assert not offenders, (
+            "these smoke-step tests read committed show output; deselect them "
+            f"or drop the module from the smoke step: {offenders}")
+
+    def test_known_corpus_readers_are_deselected(self):
+        command = _smoke_command()
+        for node in (
+            "tests/test_chapters.py::TestChapterTitlesNeverCarryLinks::"
+            "test_committed_models_agents_chapters_carry_no_link_fragments",
+            "tests/test_review_remediation.py::TestBlogRssRegeneration::"
+            "test_collect_posts_from_tesla_digests",
+        ):
+            assert f"--deselect {node}" in command, node
+            module, _, rest = node.partition("::")
+            cls, _, test = rest.partition("::")
+            src = (ROOT / module).read_text(encoding="utf-8")
+            # A rename must not leave a deselect that matches nothing.
+            assert f"class {cls}" in src and f"def {test}(" in src, node
 
     def test_et_al_is_not_a_seam(self):
         sys.path.insert(0, str(ROOT / "tests"))

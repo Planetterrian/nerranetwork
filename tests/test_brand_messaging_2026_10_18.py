@@ -94,7 +94,9 @@ class TestHomepage:
         block = home[home.index('class="lt-masthead-actions"'):]
         block = block[:block.index("</p>")]
         hrefs = re.findall(r'href="([^"#]+)"', block)
-        assert "start-here.html" in hrefs and "how-to-listen.html" in hrefs
+        # "Find your show" goes where the nav's "Find your show" goes.
+        assert "explore.html" in hrefs and "how-to-listen.html" in hrefs
+        assert "start-here.html" not in hrefs
         for h in hrefs:
             assert (ROOT / h).is_file(), h
 

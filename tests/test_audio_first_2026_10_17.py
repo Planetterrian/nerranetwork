@@ -34,7 +34,7 @@ def test_the_episode_is_complete_before_the_video():
         "    _checkpoint_publish(args, metrics)",
         "    youtube_urls = _publish_youtube(",
         "        _write_rss_feed(youtube_long_url, refresh=True,",
-        "        _write_blog_post(youtube_long_url, youtube_short_url, refresh=True)",
+        "        _write_blog_post(\"\" if youtube_long_scheduled else youtube_long_url,",
         "    # 12b. Video podcast (July 2026 pilot).",
         "    # 12b. Send newsletter",
         "    # 13. Post to X",

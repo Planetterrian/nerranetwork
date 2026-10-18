@@ -216,6 +216,17 @@ _SELF_NARRATION = [
     re.compile(r"^(?:No|None of)\b[^.!?]{0,120}\b(?:is|are|was|were) (?:in|given in|named in) "
                r"(?:the|today(?:'s|’s)) (?:report|reporting|text|post|article|account)s?\b",
                re.IGNORECASE),
+    # Oct 18 2026 slate: grok-4.7 wrote its own instructions into essay
+    # sections — Top World Ep025 "Set the week in order, using only what
+    # these reports name." / "What it changes, and for whom, follows from
+    # those named claims.", MAG 7 Ep026 "What changes follows from which
+    # figure touches which company.", AI Chips Ep027 "Walk only the figures
+    # iTWire prints." Swept against every committed digest and script: these
+    # four shapes match exactly those four sentences.
+    re.compile(r"\busing only what (?:these|the) (?:reports|sources) name\b"
+               r"|\bfollows from (?:those|these) named claims\b"
+               r"|\bfollows from which (?:figure|fact|number|claim)\b"
+               r"|^Walk only the (?:figures|facts|numbers)\b", re.IGNORECASE),
 ]
 
 # "<Outlet> is the source for <list>" — North America Ep020 (2026-10-13)
@@ -379,6 +390,59 @@ def drop_empty_items(text: str) -> Tuple[str, int]:
             j += 1
         if (j >= len(lines) or _SECTION_RE.match(lines[j])
                 or _ITEM_HEADING_RE.match(lines[j])):
+            keep[i] = False
+            removed += 1
+    out = "\n".join(line for line, k in zip(lines, keep) if k)
+    return re.sub(r"\n{3,}", "\n\n", out), removed
+
+
+_MD_HEADING_RE = re.compile(r"^(#{2,4})\s+\S")
+
+
+def drop_empty_sections(text: str) -> Tuple[str, int]:
+    """Remove ``##``-``####`` headings with nothing under them.
+
+    Oct 18 2026: published digests carried bare headings — Tesla "## Short
+    Spot" (emptied by the cross-section dedupe), SpaceX "### AI & Compute"
+    on 5 of 8 episodes, Prediction Markets "### New and Notable" after the
+    absence filter took its one sentence — and the blog rendered each as a
+    linked table-of-contents entry over nothing. A heading followed by a
+    DEEPER heading is a parent and stays; one followed by a heading of the
+    same or a higher level, or by the end of the text, goes. Runs after
+    validation, so it can never turn an optional empty section into a
+    "missing section" regeneration. Fenced blocks are left alone.
+    """
+    if not text:
+        return text, 0
+    lines = text.split("\n")
+    keep = [True] * len(lines)
+    in_fence = False
+    fenced = [False] * len(lines)
+    for i, line in enumerate(lines):
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            fenced[i] = True
+            continue
+        fenced[i] = in_fence
+    removed = 0
+    for i, line in enumerate(lines):
+        m = _MD_HEADING_RE.match(line)
+        if not m or fenced[i]:
+            continue
+        j = i + 1
+        ruled = False
+        while j < len(lines) and (not lines[j].strip() or lines[j].strip() == "---"):
+            ruled = ruled or lines[j].strip() == "---"
+            j += 1
+        if j >= len(lines):
+            empty = True
+        else:
+            n = _MD_HEADING_RE.match(lines[j])
+            # A ``---`` rule closes the section (Tesla's "## Short Spot" /
+            # "---" / "### Tesla First Principles"), so the deeper heading
+            # after it is not this one's child.
+            empty = bool(n) and (ruled or len(n.group(1)) <= len(m.group(1)))
+        if empty:
             keep[i] = False
             removed += 1
     out = "\n".join(line for line, k in zip(lines, keep) if k)

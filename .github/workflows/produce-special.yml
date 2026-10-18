@@ -49,6 +49,8 @@ concurrency:
 
 permissions:
   contents: write
+  # create_recovery_pr.sh opens a draft PR when a commit cannot reach main.
+  pull-requests: write
 
 jobs:
   special:
@@ -82,12 +84,40 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           PERSONAL_R2_BUCKET: ${{ vars.PERSONAL_R2_BUCKET || 'nerra-personal' }}
           NERRA_LLM_TIMEOUT_SECONDS: '1500'
+          GH_TOKEN: ${{ github.token }}
           SERIES: ${{ github.event.inputs.series }}
           EPISODES: ${{ github.event.inputs.episodes }}
           TEXT_ONLY: ${{ github.event.inputs.text_only }}
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          # One push helper for every commit below (Oct 18 2026). The old
+          # inline loop was `git pull --rebase && git push && break` x4: a
+          # rebase conflict left .git/rebase-merge behind, every later pull
+          # refused to start, and the step still exited 0 — on the release
+          # path that lost the `status: released` catalog commit and the
+          # X/Short "posted" markers AFTER X and YouTube had posted, so a
+          # re-run would post twice. Now a failed rebase is aborted inside
+          # the loop and an exhausted loop returns non-zero.
+          push_main() {
+            local gd i
+            gd="$(git rev-parse --git-dir)"
+            for i in 1 2 3 4; do
+              if [ -d "$gd/rebase-merge" ] || [ -d "$gd/rebase-apply" ]; then
+                git rebase --abort 2>/dev/null || true
+                rm -rf "$gd/rebase-merge" "$gd/rebase-apply"
+              fi
+              if git pull --rebase -q origin main; then
+                git push -q origin HEAD:main && return 0
+              else
+                echo "::warning::rebase onto main failed (attempt $i) — aborting it"
+                git rebase --abort 2>/dev/null || true
+              fi
+              sleep $((i * 5))
+            done
+            return 1
+          }
+          unpushed=0
           if [ -z "$EPISODES" ]; then
             EPISODES=$(python -c "from engine.specials import find_series; print(' '.join(e.id for e in find_series('$SERIES').episodes))")
           fi
@@ -99,10 +129,7 @@ jobs:
             git add specials/
             if ! git diff --cached --quiet; then
               git commit -q -m "Members-only series: $SERIES $ep"
-              for i in 1 2 3 4; do
-                git pull --rebase -q origin main && git push -q origin HEAD:main && break
-                sleep $((i * 5))
-              done
+              if push_main; then unpushed=0; else unpushed=1; fi
             fi
           done
           if [ "$TEXT_ONLY" != "true" ]; then
@@ -110,11 +137,15 @@ jobs:
             git add specials/
             if ! git diff --cached --quiet; then
               git commit -q -m "Members-only series: $SERIES trailer"
-              for i in 1 2 3 4; do
-                git pull --rebase -q origin main && git push -q origin HEAD:main && break
-                sleep $((i * 5))
-              done
+              if push_main; then unpushed=0; else unpushed=1; fi
             fi
+          fi
+          if [ "$unpushed" -ne 0 ]; then
+            # The episodes' text and catalog rows exist only on this runner.
+            # Keep them on a recovery branch and fail the run where it shows.
+            echo "::error::Members-only series $SERIES: committed work could not be pushed to main — saved to a recovery branch; merge it before re-running"
+            SHOW="special-$SERIES" bash scripts/create_recovery_pr.sh || true
+            exit 1
           fi
           exit $status
 
@@ -144,24 +175,56 @@ jobs:
           STRIPE_TRIAL_DAYS: ${{ vars.STRIPE_TRIAL_DAYS || '7' }}
           STRIPE_LINK_DONATE_MONTHLY: ${{ vars.STRIPE_LINK_DONATE_MONTHLY || 'https://buy.stripe.com/7sYcN61vc6H8b6q1VB0Ba02' }}
           STRIPE_LINK_DONATE_ONCE: ${{ vars.STRIPE_LINK_DONATE_ONCE || 'https://donate.stripe.com/dRm8wQ8XEd5weiC0Rx0Ba03' }}
+          GH_TOKEN: ${{ github.token }}
           SERIES: ${{ github.event.inputs.series }}
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          # One push helper for every commit below (Oct 18 2026). The old
+          # inline loop was `git pull --rebase && git push && break` x4: a
+          # rebase conflict left .git/rebase-merge behind, every later pull
+          # refused to start, and the step still exited 0 — on the release
+          # path that lost the `status: released` catalog commit and the
+          # X/Short "posted" markers AFTER X and YouTube had posted, so a
+          # re-run would post twice. Now a failed rebase is aborted inside
+          # the loop and an exhausted loop returns non-zero.
+          push_main() {
+            local gd i
+            gd="$(git rev-parse --git-dir)"
+            for i in 1 2 3 4; do
+              if [ -d "$gd/rebase-merge" ] || [ -d "$gd/rebase-apply" ]; then
+                git rebase --abort 2>/dev/null || true
+                rm -rf "$gd/rebase-merge" "$gd/rebase-apply"
+              fi
+              if git pull --rebase -q origin main; then
+                git push -q origin HEAD:main && return 0
+              else
+                echo "::warning::rebase onto main failed (attempt $i) — aborting it"
+                git rebase --abort 2>/dev/null || true
+              fi
+              sleep $((i * 5))
+            done
+            return 1
+          }
           git pull -q --rebase origin main
           python scripts/release_special.py --series "$SERIES" --confirm
           python generate_html.py --static-pages
-          python generate_html.py --homepage
           for show in $(python -c "from engine.specials import find_series; print(' '.join(find_series('$SERIES').tease_shows))"); do
             python generate_html.py --show "$show"
           done
-          python generate_html.py --sitemap || true
-          git add -A specials/ ./*.rss ./*.html sitemap.xml
-          git reset -q -- login.html 2>/dev/null || true
+          # index.html and sitemap.xml belong to run-show's finalize job
+          # (every show run rewrites them); committing them here only
+          # manufactured rebase conflicts on the commit that matters most.
+          # The homepage card and the sitemap follow on the next finalize.
+          git add -A specials/ ./*.rss ./*.html
+          git reset -q -- login.html index.html sitemap.xml 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git commit -q -m "Members-only series released: $SERIES"
-            for i in 1 2 3 4; do
-              git pull --rebase -q origin main && git push -q origin HEAD:main && break
-              sleep $((i * 5))
-            done
+            if ! push_main; then
+              # X and YouTube have ALREADY posted and their "posted" markers
+              # are in this commit: a re-run before it lands posts twice.
+              echo "::error::Members-only series $SERIES was released (X/YouTube posted) but the release commit could not be pushed to main — saved to a recovery branch. MERGE IT before re-running the release, or the teasers post twice."
+              SHOW="special-$SERIES-release" bash scripts/create_recovery_pr.sh || true
+              exit 1
+            fi
           fi

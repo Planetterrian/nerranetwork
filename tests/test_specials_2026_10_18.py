@@ -174,6 +174,25 @@ class TestReleaseSurfaces:
         assert len(mine) == 1
         ns = "{http://www.itunes.com/dtds/podcast-1.0.dtd}"
         assert mine[0].findtext(f"{ns}episodeType") == "trailer"
+        # Oct 18 review: the next daily episode REBUILDS the feed through
+        # update_rss_feed, which keeps items by episode number — the trailer
+        # has none by design and used to vanish the next morning.
+        from engine.publisher import update_rss_feed
+        mp3 = tmp_path / "next.mp3"
+        mp3.write_bytes(b"\0" * 2048)
+        update_rss_feed(
+            feed, before, "Next episode", "Desc", dt.date(2026, 10, 21),
+            "next.mp3", 600.0, mp3, audio_url="https://audio.nerranetwork.com/x/next.mp3",
+            guid_prefix="spacex", channel_title="SpaceX Daily")
+        root = ET.parse(feed).getroot()
+        items = root.find("channel").findall("item")
+        assert sum((i.findtext("guid") or "") == guid for i in items) == 1
+        assert get_next_episode_number(feed, tmp_path) == before + 1
+        update_rss_feed(
+            feed, before + 1, "One more", "Desc", dt.date(2026, 10, 22),
+            "next.mp3", 600.0, mp3, audio_url="https://audio.nerranetwork.com/x/n2.mp3",
+            guid_prefix="spacex", channel_title="SpaceX Daily")
+        assert ET.parse(feed).getroot().find("channel").findall("item")[0].findtext("guid") == guid
 
     def test_member_rows_are_released_and_produced_only(self, released_catalog):
         rows = S.member_feed_rows(released_catalog)

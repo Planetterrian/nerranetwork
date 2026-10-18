@@ -221,3 +221,19 @@ def describe_public_at(stamp: str, *, now: Optional[dt.datetime] = None) -> str:
         return ""
     local = t.astimezone(EASTERN)
     return local.strftime("%I:%M %p ET").lstrip("0")
+
+
+def is_still_scheduled(publish_at: str, now: Optional[dt.datetime] = None) -> bool:
+    """True while an ISO-8601 UTC ``publish_at`` (``2026-10-18T16:30:00Z``)
+    is still ahead: the video is private and nothing should link it yet.
+    An empty or unparseable value is "public" (the legacy behaviour)."""
+    if not publish_at:
+        return False
+    try:
+        when = dt.datetime.fromisoformat(str(publish_at).replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=dt.timezone.utc)
+    now = now or dt.datetime.now(dt.timezone.utc)
+    return when > now

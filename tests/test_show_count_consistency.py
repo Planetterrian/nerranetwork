@@ -60,9 +60,12 @@ def test_templates_use_dynamic_count():
     # count-agnostic: about.html.j2, base.html.j2, player_page.html.j2, and
     # start_here.html.j2. The remaining templates still compute show counts
     # dynamically to remain forward-compatible with network growth.
-    for name in ("editorial.html.j2", "how_to_listen.html.j2"):
+    # Oct 18 2026: how-to-listen counts the FREE shows (public_show_count(),
+    # the homepage's number) and names the members-only ones separately.
+    for name, needle in (("editorial.html.j2", "all_shows|length"),
+                         ("how_to_listen.html.j2", "public_show_count()")):
         src = (_ROOT / "templates" / name).read_text(encoding="utf-8")
-        assert "all_shows|length" in src, f"{name} no longer computes the show count"
+        assert needle in src, f"{name} no longer computes the show count"
 
 
 def test_hardcoded_count_surfaces_match():
@@ -91,8 +94,11 @@ def test_generate_html_metas_are_computed():
     # Oct 2026: the support and player metas count PUBLISHED shows (a
     # registry entry with no feed is not a show a listener can hear), still
     # computed — never a typed number.
+    # Oct 18 2026: the "N shows … free" metas (about, support, explore) count
+    # the FREE shows, the homepage's number (_public_shows).
     computed = sum(src.count(f) for f in (
-        "{len(NETWORK_SHOWS)}", "{len(_published_show_ids())}", "{len(player_shows)}"))
+        "{len(NETWORK_SHOWS)}", "{len(_published_show_ids())}", "{len(player_shows)}",
+        "{_public_show_count_cached()}"))
     assert computed >= 2
     assert "11 Daily Shows" not in src
     assert "Eleven daily podcasts" not in src

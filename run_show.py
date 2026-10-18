@@ -98,6 +98,48 @@ def _pipeline_budget_remaining() -> float:
     return max(0.0, _PIPELINE_TIMEOUT - (time.monotonic() - _PIPELINE_STARTED_AT))
 
 
+#: Oct 18 2026: Models & Agents Ep207's structural retry ran 1,700 s (three
+#: tenacity attempts of up to four rate-limit retries of a 600 s request),
+#: ended "Service temporarily unavailable", shipped the original digest
+#: anyway — and the run then had 302 s too few for its long-form render. A
+#: retry is a polish; it gets what the rest of the episode can spare.
+_STRUCTURAL_RETRY_MIN_S = 300
+_STRUCTURAL_RETRY_MAX_S = int(os.environ.get("NERRA_STRUCTURAL_RETRY_MAX_S", 900))
+#: What the rest of a run needs after the digest: script, TTS, transcript,
+#: mix, publish and a long-form render.
+_STRUCTURAL_RETRY_RESERVE_S = 2400
+
+
+def _structural_retry_deadline() -> float:
+    """Seconds the structural digest retry may take."""
+    spare = _pipeline_budget_remaining() - _STRUCTURAL_RETRY_RESERVE_S
+    return float(max(_STRUCTURAL_RETRY_MIN_S, min(_STRUCTURAL_RETRY_MAX_S, spare)))
+
+
+def _call_with_deadline(fn, seconds: float):
+    """Run *fn* and return its result, or raise ``TimeoutError`` after
+    *seconds*. The call keeps running on a daemon thread and its result is
+    discarded — the caller has already moved on with what it had."""
+    import threading
+
+    box: dict = {}
+
+    def _run():
+        try:
+            box["value"] = fn()
+        except BaseException as exc:  # noqa: BLE001 — re-raised below
+            box["error"] = exc
+
+    t = threading.Thread(target=_run, name="deadline-call", daemon=True)
+    t.start()
+    t.join(seconds)
+    if t.is_alive():
+        raise TimeoutError(f"{seconds:.0f}s")
+    if "error" in box:
+        raise box["error"]
+    return box["value"]
+
+
 # The pinned-model retry (engine.generator._call_pinned) retries a dropped
 # grok-4.7 call only while this budget leaves room for the retry AND the
 # rest of the episode — register it before any LLM call.
@@ -2932,10 +2974,13 @@ def run(args: argparse.Namespace) -> None:
                         # A retry of an existing digest never changes the
                         # model arm: a pinned model that fails here raises
                         # PinnedModelUnavailable and the original is kept.
-                        _x_struct = generate_digest(
-                            template_vars, config, tracker=tracker,
-                            prompt_suffix=_struct_suffix,
-                            allow_model_switch=False,
+                        _x_struct = _call_with_deadline(
+                            lambda: generate_digest(
+                                template_vars, config, tracker=tracker,
+                                prompt_suffix=_struct_suffix,
+                                allow_model_switch=False,
+                            ),
+                            _structural_retry_deadline(),
                         )
                     # Only swap in the retry if it restored the HOOK (the most
                     # reliable structural signal) and isn't shorter garbage.
@@ -3002,6 +3047,14 @@ def run(args: argparse.Namespace) -> None:
                             "keeping original (podcast prompt will still be told "
                             "to cover all stories).",
                         )
+                except TimeoutError as _deadline_exc:
+                    logger.warning(
+                        "::warning::%s: structural digest retry passed its "
+                        "deadline (%s) — keeping the original digest so the "
+                        "rest of the episode keeps its budget",
+                        config.slug, _deadline_exc,
+                    )
+                    metrics.record("digest_structural_retry_timed_out", True)
                 except LLMRefusalError:
                     logger.error(
                         "Structural digest retry refused by LLM — keeping original",
@@ -3518,6 +3571,14 @@ def run(args: argparse.Namespace) -> None:
         # occasionally emits one); ``write_text`` would otherwise abort the
         # whole pipeline on ``UnicodeEncodeError``. See engine.utils.
         from engine.utils import strip_lone_surrogates as _scrub
+        try:
+            from engine.absence_sentences import drop_empty_sections as _drop_empty
+            x_thread, _empty_n = _drop_empty(x_thread)
+            if _empty_n:
+                logger.info("Dropped %d empty section heading(s) from the digest", _empty_n)
+                metrics.record("digest_empty_sections_dropped", _empty_n)
+        except Exception as _empty_exc:  # noqa: BLE001 — cosmetic, never blocks
+            logger.warning("Empty-section drop failed (non-fatal): %s", _empty_exc)
         digest_md = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}.md"
         digest_md.write_text(_scrub(x_thread), encoding="utf-8")
         logger.info("Digest saved: %s", digest_md)
@@ -5544,6 +5605,12 @@ def run(args: argparse.Namespace) -> None:
                 _blog_env = _get_jinja_env()
                 _blog_meta = extract_blog_metadata(x_thread, config.slug, digest_md.name if digest_md else "", file_path=digest_md)
                 _blog_meta["episode_num"] = episode_num
+                # Oct 18 2026: generate_html sets _md_path; without it the
+                # post rendered here (and pushed by the audio-first
+                # checkpoint, live for the whole video half) had no claims
+                # panel, chapters, corrections box or episode share card.
+                if digest_md:
+                    _blog_meta["_md_path"] = Path(digest_md)
                 # Merge any just-generated translation tracks so the switcher +
                 # badges render on today's post (the .md/x_thread carry neither).
                 try:
@@ -5673,7 +5740,13 @@ def run(args: argparse.Namespace) -> None:
     youtube_long_url = youtube_urls.get("long_url", "")
     youtube_short_url = youtube_urls.get("short_url", "")
     youtube_pexels_filtered = int(youtube_urls.get("pexels_photos_filtered", 0) or 0)
-    if youtube_long_url:
+    # Oct 18 2026: a long-form scheduled for noon/18:00 ET is private until
+    # then. The X teaser and the blog's "Watch on YouTube" button linked it
+    # straight away ("Video unavailable" for 5-12 hours); the feed already
+    # says when it goes public. Neither links it while it is scheduled.
+    from engine.release_schedule import is_still_scheduled as _still_scheduled
+    youtube_long_scheduled = _still_scheduled(youtube_urls.get("long_publish_at") or "")
+    if youtube_long_url and not youtube_long_scheduled:
         extra_context["youtube_url"] = youtube_long_url
     if youtube_short_url:
         extra_context["youtube_short_url"] = youtube_short_url
@@ -5788,7 +5861,8 @@ def run(args: argparse.Namespace) -> None:
         except Exception as exc:  # noqa: BLE001
             logger.warning("Feed refresh with the YouTube link failed (non-fatal): %s", exc)
     if youtube_long_url or youtube_short_url:
-        _write_blog_post(youtube_long_url, youtube_short_url, refresh=True)
+        _write_blog_post("" if youtube_long_scheduled else youtube_long_url,
+                         youtube_short_url, refresh=True)
 
     # 12b. Video podcast (July 2026 pilot). The episode's long-form MP4 was
     # uploaded to R2 during the YouTube stage; attach it to the summaries
@@ -8571,6 +8645,8 @@ def _publish_youtube(
                         # PUBLIC (the Shorts-stagger rule).
                         published=(f"{_long_publish_at:%Y-%m-%d}"
                                    if _long_publish_at else f"{today:%Y-%m-%d}"),
+                        publish_at=(f"{_long_publish_at:%Y-%m-%dT%H:%M:%SZ}"
+                                    if _long_publish_at else ""),
                         watch_url=long_url,
                         channel=(getattr(config.youtube, "channel", "en") or "en"),
                         index_path=digests_dir / "youtube_videos.json",
@@ -9434,6 +9510,8 @@ def _publish_youtube(
                             # the publishAt date so policy vpd math is honest.
                             published=(f"{_publish_at:%Y-%m-%d}"
                                        if _publish_at else f"{today:%Y-%m-%d}"),
+                            publish_at=(f"{_publish_at:%Y-%m-%dT%H:%M:%SZ}"
+                                        if _publish_at else ""),
                             watch_url=this_upload.watch_url,
                             channel=(getattr(config.youtube, "channel", "en") or "en"),
                             # The arm this Short ACTUALLY shipped —

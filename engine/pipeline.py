@@ -285,6 +285,10 @@ def record_youtube_outcomes(
             metrics.record("thumbnail_punch_text", str(youtube_urls["thumbnail_punch_text"]))
         if youtube_urls.get("yt_comments_posted"):
             metrics.record("yt_comments_posted", int(youtube_urls["yt_comments_posted"]))
+        # Oct 18 2026: a comment on a still-private video is QUEUED for the
+        # sweep; the count was set on the result and recorded nowhere.
+        if youtube_urls.get("yt_comments_queued"):
+            metrics.record("yt_comments_queued", int(youtube_urls["yt_comments_queued"]))
 
         # Video podcast (July 2026 pilot). The hosted MP4's real byte size
         # is the only honest input to the R2 storage-cost projection — the

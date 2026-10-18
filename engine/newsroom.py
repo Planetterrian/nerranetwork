@@ -176,10 +176,19 @@ DEVELOPING_COMMON_SHARE = 0.015
 #: week, a test fixture) would otherwise call a word common at two uses.
 DEVELOPING_COMMON_MIN_COUNT = 8
 
+#: Two headlines from the SAME show whose salient tokens differ by at most
+#: this many (symmetric difference) are one recurring segment label.
+#: Replayed on Oct 12-18 2026: the real same-show threads (iPhone Duo,
+#: Booster 23, Perseverance) differ by five or more.
+FURNITURE_MAX_SWAP = 2
+
 #: Generic headline words, on top of story_recurrence's stopwords: verbs and
 #: quantities every beat uses, and the spelled-out numbers the TTS-ready
 #: digests print ("seven point four nine"). Without them "Canucks visit the
-#: Hurricanes tonight" matched "Canucks visit the Islanders tonight".
+#: Hurricanes tonight" matched "Canucks visit the Islanders tonight". The
+#: product-news verbs (release / launch / unveil / announce) joined Oct 18
+#: 2026: "Google releases a $100 Home Speaker for Gemini" threaded with
+#: "Google Releases Gemini 4 Argon API" on {google, releases, gemini}.
 GENERIC_WORDS = frozenset("""
 coming soon exec execs says said new upgrades upgrade cool very few hundred
 hundreds thousand thousands dollars dollar several only contain contains cost
@@ -194,6 +203,8 @@ rise rises hit hits record records share shares face faces reach reaches
 reached one two three four five six seven eight nine ten eleven twelve thirteen
 fourteen fifteen sixteen seventeen eighteen nineteen twenty thirty forty fifty
 sixty seventy eighty ninety point
+release releases released launch launches launched unveil unveils unveiled
+announce announces announced
 """.split())
 
 
@@ -229,9 +240,12 @@ def developing_stories(episodes: Iterable[Dict[str, Any]], now: dt.datetime, *,
               if isinstance(e.get("day"), dt.date)
               and 0 <= (today - e["day"]).days < window_days]
 
-    # Furniture: a line the same show prints on two or more days, or a
-    # one-word variant of it ("Unusual Whales Options Flow" / "… API"), is a
-    # segment label, not a story that developed.
+    # Furniture: a line the same show prints on two or more days, a
+    # one-word variant of it ("Unusual Whales Options Flow" / "… API"), or a
+    # one-word SWAP of it ("Interactive Brokers Volume Scanner" / "… TWS
+    # Scanner" — MIT's recurring tool segment, Oct 18 2026: salient-token
+    # symmetric difference of at most FURNITURE_MAX_SWAP) is a segment label,
+    # not a story that developed.
     by_show: Dict[str, List[tuple]] = defaultdict(list)
     for ep in window:
         for text in ep.get("headlines") or []:
@@ -243,7 +257,9 @@ def developing_stories(episodes: Iterable[Dict[str, Any]], now: dt.datetime, *,
                 if d1 == d2 or not t1 or not t2:
                     continue
                 small, big = (t1, t2) if len(t1) <= len(t2) else (t2, t1)
-                if n1 == n2 or (small <= big and len(big - small) <= 1):
+                if (n1 == n2 or (small <= big and len(big - small) <= 1)
+                        or (len(t1 & t2) >= 2
+                            and len(t1 ^ t2) <= FURNITURE_MAX_SWAP)):
                     furniture.add((slug, n1))
                     furniture.add((slug, n2))
 
@@ -458,6 +474,20 @@ def market_strip(*, mag7: Optional[dict], spcx: Optional[dict], tsla: Optional[d
             groups.append({"basis": q["basis"], "label": label, "as_of": q["as_of"],
                            "as_of_iso": q["as_of_iso"], "quotes": [q]})
     return {"quotes": quotes, "groups": groups, "launch": launch}
+
+
+def quote_line(quote):
+    """One strip quote as a line for another card, with the SAME basis and
+    as-of date the strip prints ("TSLA close: $354.72 · Oct 16").
+
+    Oct 18 2026: the homepage's Tesla dashboard card labelled the close a
+    "last quote on record" dated by its weekend FETCH time (Oct 18) while the
+    strip beside it said "Close · Oct 16". ``''`` when there is no quote.
+    """
+    if not quote:
+        return ""
+    label = "close" if quote.get("basis") == "close" else "last quote"
+    return f"{quote['symbol']} {label}: {quote['price']} · {quote['as_of']}"
 
 
 # ---------------------------------------------------------------------------

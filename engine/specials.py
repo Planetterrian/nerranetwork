@@ -622,9 +622,10 @@ def insert_trailer_item(rss_path: Path, item_xml: str, guid: str) -> bool:
 
     Inserted as text before the first ``<item>`` (or before ``</channel>``)
     so nothing else in the feed is re-serialised. ``update_rss_feed``
-    preserves it on every later rebuild: it keeps an existing item's
-    ``itunes:episodeType``, and the numbering ignores a GUID with no
-    ``ep<digits>``. Returns False when the GUID is already present.
+    keeps it on every later rebuild (``_unnumbered_trailer_items`` lifts
+    the block out before the numbered rebuild and puts it back after), and
+    the numbering ignores a GUID with no ``ep<digits>``. Returns False when
+    the GUID is already present.
     """
     text = Path(rss_path).read_text(encoding="utf-8")
     if f">{guid}<" in text:

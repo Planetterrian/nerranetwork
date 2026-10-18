@@ -43,6 +43,7 @@ from engine import titles as _titles
 from engine import topic_hubs as _hubs
 from engine.interviews import INTERVIEW_SHOW_SLUGS
 from engine.summaries_ssr import _display_date, _episode_number, _records
+from engine.release_schedule import is_still_scheduled
 
 #: Access modes whose top-level episodes are public. ``members_only`` shows
 #: are left out entirely (their public surfaces never carry an episode).
@@ -603,7 +604,7 @@ def _video_date(video: dict) -> Optional[date]:
 def pick_videos(videos: Iterable[dict], *, kind: str, public_slugs: Iterable[str],
                 limit: int, audience_order: Sequence[str] = (),
                 channel: str = "en", max_age_days: int = MAX_STORY_AGE_DAYS,
-                ) -> List[dict]:
+                now=None) -> List[dict]:
     """The newest video of *kind* per show, newest first, at most *limit*.
 
     Rows are the committed ``digests/<dir>/youtube_videos.json`` entries the
@@ -626,6 +627,10 @@ def pick_videos(videos: Iterable[dict], *, kind: str, public_slugs: Iterable[str
                 or (video.get("channel") or "en") != channel
                 or not url.startswith("https://www.youtube.com/") or not when
                 or not strip_hashtag_tail(video.get("title") or "")):
+            continue
+        # Oct 18 2026: a scheduled video is private until its publish_at —
+        # never a card a visitor clicks into "Video unavailable".
+        if is_still_scheduled(str(video.get("publish_at") or ""), now=now):
             continue
         ep = video.get("episode") if isinstance(video.get("episode"), int) else 0
         key = (when, 1 if video.get("window") == "hook_open" else 0, ep)

@@ -173,8 +173,11 @@ class TestSpaceXPreMarketQuote:
         monkeypatch.setattr(sx, "_persist", lambda *a, **k: None)
         price, change, source = sx._fetch_spcx_quote()
         assert price == 163.42 and change == "+0.5%" and source == "yfinance_history"
-        assert "closed at" in sx._price_sentence(price, change, source, now=None)
-        assert "unchanged" not in sx._price_sentence(price, change, source, now=None)
+        # A fixed weekday: on a weekend the close is spoken "closed Friday at"
+        # (Oct 18 2026), and a wall-clock test would fail every Saturday.
+        wed = __import__("datetime").datetime(2026, 10, 14, 7, 30, tzinfo=__import__("datetime").timezone.utc)
+        assert "closed at" in sx._price_sentence(price, change, source, now=wed)
+        assert "unchanged" not in sx._price_sentence(price, change, source, now=wed)
 
     def test_a_real_trade_at_the_prior_close_keeps_fast_info(self, monkeypatch):
         import shows.hooks.spacex as sx

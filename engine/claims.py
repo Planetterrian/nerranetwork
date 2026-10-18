@@ -551,6 +551,16 @@ def _is_unreachable(status: Optional[int]) -> bool:
 _TRACKING_PARAMS = ("utm_", "ref", "ref_src", "s", "t", "fbclid", "gclid", "igshid", "mc_cid", "mc_eid")
 
 
+_ARCHIVE_URL_RE = re.compile(
+    r"^https?://web\.archive\.org/web/\d{4,14}[a-z_]*/(?P<orig>https?://.+)$", re.I)
+
+
+def unwrap_archive_url(url: str) -> str:
+    """The original page behind a Wayback Machine snapshot URL, else *url*."""
+    m = _ARCHIVE_URL_RE.match(str(url or "").strip())
+    return m.group("orig") if m else str(url or "")
+
+
 def normalize_source_url(url: str) -> str:
     """One key per source: scheme, ``www.``, tracking params, trailing
     slash and the twitter/x split all dropped, host lower-cased."""
@@ -658,6 +668,13 @@ def verify_claim_sources(
     results: List[dict] = []
     for claim in claims:
         url = str(claim.get("source_url") or "").strip()
+        _orig = unwrap_archive_url(url)
+        if _orig != url:
+            # Oct 18 2026: UC Ep146 cited invented Wayback snapshot URLs for
+            # two true claims whose real PNAS pages its own Sources list
+            # carried; the snapshots 404'd and the public record read
+            # "not found". The archived page IS the original page.
+            claim["source_url"] = url = _orig
         quote = str(claim.get("supporting_quote") or "").strip()
         local_text = local.get(normalize_source_url(url)) if local else None
         if local_text and quote and fuzzy_contains(quote, local_text):
@@ -2068,19 +2085,71 @@ def load_ledger(digest_md_path: Path, verified_only: bool = True) -> List[dict]:
 ITEM_COVERAGE_MIN_PCT = 50.0
 
 
+_COVERAGE_ITEM_START_RE = re.compile(r"^\s*(?:\d+[.)]\s+|\*\*)")
+_COVERAGE_ITEM_TITLE_RE = re.compile(
+    r"^\s*(?:\d+[.)]\s*)?\*\*(?P<title>.+?)\*\*\s*(?:[—–:-]\s*)?")
+
+
+def _coverage_items(body: str) -> List[str]:
+    """Item blocks of one section, for the coverage floor.
+
+    Oct 18 2026: ``digest_lint.items`` splits on blank lines only and wants a
+    bold head, so a run of numbered one-line items with no blank lines
+    between them (SpaceX Ep134's Top News) was one block or none, and the
+    floor counted 0 sourced items against 13 Source lines. A numbered or
+    bold line opens an item here; anything else continues the one before.
+    """
+    out: List[str] = []
+    for line in (body or "").splitlines():
+        if not line.strip():
+            continue
+        if _COVERAGE_ITEM_START_RE.match(line) or not out:
+            out.append(line.strip())
+        else:
+            out[-1] = out[-1] + "\n" + line.strip()
+    return out
+
+
+def _coverage_item_prose(block: str) -> str:
+    """The item's prose without its number, bold title, URLs or Source tail.
+    A one-line item (``1. **Title** — body. Source: …``, Tesla Ep638) keeps
+    the text after its title; the old reader took lines[1:] only and saw
+    nothing."""
+    lines = [ln.strip() for ln in block.splitlines() if ln.strip()]
+    if not lines:
+        return ""
+    head = lines[0]
+    m = _COVERAGE_ITEM_TITLE_RE.match(head)
+    if m:
+        head = head[m.end():]
+    else:
+        head = re.sub(r"^\s*\d+[.)]\s*", "", head)
+    if m and len(lines) > 1 and len(head.strip()) < 60:
+        # ``**Title:** Outlet`` then the body on the next line (Longevity,
+        # the desks): the head's remainder is the outlet name, not prose.
+        head = ""
+    parts = [head] + lines[1:]
+    prose = " ".join(p for p in parts if not p.startswith("Source:"))
+    prose = re.sub(r"\s*Source(?:/Post)?\s*:.*$", "", prose)
+    prose = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", prose)
+    prose = re.sub(r"https?://\S+", " ", prose)
+    return " ".join(prose.replace("**", "").split())
+
+
 def _digest_items_with_source(text: str) -> List[Tuple[str, str]]:
     """``(first_sentence, block)`` for every digest item carrying a Source."""
-    from engine.digest_lint import items as _items, sections as _sections
+    from engine.digest_lint import sections as _sections
     out: List[Tuple[str, str]] = []
     for title, body in _sections(text):
         if title in ("What This Show Covers", "Evidence Ledger", "The Tape"):
             continue
-        for block in _items(body):
+        for block in _coverage_items(body):
             if "Source:" not in block and "http" not in block:
                 continue
-            lines = [ln.strip() for ln in block.splitlines()[1:]
-                     if ln.strip() and not ln.strip().startswith("Source:")]
-            prose = " ".join(lines)
+            head = block.lstrip().split("\n", 1)[0].lower()
+            if head.startswith(("- ", "* ")) or "read more" in head:
+                continue  # a "Read more" link list, not a story
+            prose = _coverage_item_prose(block)
             first = re.split(r"(?<=[.!?])\s+", prose, 1)[0].strip() if prose else ""
             if len(first) >= 40:
                 out.append((first, block))
@@ -2110,8 +2179,10 @@ def _uncovered_items_with_source(
         if any(_sentence_covered(block, c) for c in verified_claims):
             continue
         lines = block.splitlines()
-        title = re.sub(r"[*#]+", "", lines[0]).strip() if lines else ""
-        out.append((first, title, _block_source_url(lines, 0, len(lines))))
+        m = _COVERAGE_ITEM_TITLE_RE.match(lines[0]) if lines else None
+        title = (m.group("title") if m else
+                 re.sub(r"^\s*\d+[.)]\s*|[*#]+", "", lines[0]).strip() if lines else "")
+        out.append((first, title.strip(), _block_source_url(lines, 0, len(lines))))
     return out
 
 

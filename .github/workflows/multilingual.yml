@@ -80,7 +80,13 @@ jobs:
     # On the workflow_run trigger, only proceed if the episode pipeline that
     # triggered us actually succeeded — no point translating a failed/partial
     # publish. Schedule + manual dispatch always run.
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    # Oct 18 2026: `cancelled` is accepted too — run-show's finalize job is
+    # in the finalize-shared-pages concurrency group, a pending finalize is
+    # cancelled when a newer one queues, and the run then concludes
+    # `cancelled` although its show job published (2 of 12 sweeps missed on
+    # Oct 18). Safe because the resolve step below translates only shows
+    # whose "run (<show>)" job concluded `success`.
+    if: ${{ github.event_name != 'workflow_run' || contains(fromJSON('["success","cancelled"]'), github.event.workflow_run.conclusion) }}
     outputs:
       shows: ${{ steps.resolve.outputs.shows }}
     steps:

@@ -118,10 +118,33 @@ class RecurrenceIndex:
         return len(self._entries)
 
     def hook_match(self, hook: str) -> Optional[dict]:
-        """``match`` at the hook gate's stricter threshold."""
-        return self.match(hook, min_overlap=HOOK_MIN_OVERLAP,
-                          min_fraction_overlap=HOOK_MIN_FRACTION_OVERLAP,
-                          ignore=HOOK_GENERIC)
+        """``match`` at the hook gate's stricter threshold.
+
+        Oct 18 2026: an OUTCOME is not a re-telling. Vancouver Ep026's first
+        draft led on Pete Fry unseating Ken Sim the morning after the
+        election, and the gate matched it against four days of campaign
+        headlines ("Ken Sim Wants to Be Re-Elected Mayor…") on {ken, sim,
+        mayor, elected} and sent it back; the result aired as one sentence.
+        A hook whose outcome word appears in none of the window headlines it
+        matched is a development, and leads.
+        """
+        m = self.match(hook, min_overlap=HOOK_MIN_OVERLAP,
+                       min_fraction_overlap=HOOK_MIN_FRACTION_OVERLAP,
+                       ignore=HOOK_GENERIC)
+        if not m:
+            return None
+        outcome = _outcome_words(hook)
+        if not outcome:
+            return m
+        probe = salient_tokens(hook) - self.common - HOOK_GENERIC
+        for _date, headline, toks in self._entries:
+            cand = toks - self.common - HOOK_GENERIC
+            overlap = len(probe & cand)
+            if overlap < 2:
+                continue
+            if outcome & _outcome_words(headline):
+                return m  # the window already reported this outcome
+        return None
 
     def match(self, title: str, *, min_overlap: int = _MIN_OVERLAP,
               min_fraction_overlap: int = 2,
@@ -158,6 +181,22 @@ class RecurrenceIndex:
                     key=lambda m: m[2])[1]
         return {"date": latest, "headline": quote,
                 "times": len({d for d, _h, _o in matches})}
+
+
+#: Words that report an OUTCOME — the event the earlier coverage was
+#: waiting for. Hyphenated forms stay whole, so "re-elected" in a campaign
+#: headline never counts as "elected".
+OUTCOME_WORDS = frozenset({
+    "wins", "won", "elected", "unseats", "unseated", "defeats", "defeated",
+    "ousts", "ousted", "concedes", "conceded", "verdict", "convicted",
+    "acquitted", "sentenced", "approved", "approves", "rejected", "rejects",
+    "signed", "signs", "passes", "passed", "resigns", "resigned", "dies",
+    "died", "sworn", "landed", "ruled", "rules", "overturned", "struck",
+})
+
+
+def _outcome_words(text: str) -> set:
+    return set(re.findall(r"[a-z]+(?:-[a-z]+)*", (text or "").lower())) & OUTCOME_WORDS
 
 
 def annotation_for(match: dict) -> str:
