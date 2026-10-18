@@ -146,6 +146,46 @@ jobs:
           python scripts/build_daily_edition.py $ARGS
           echo "EDITION_DAY=${EDITION_DATE:-$(date -u +%F)}" >> "$GITHUB_ENV"
 
+      # Oct 18 2026: the homepage is the network's news front page and the
+      # day's edition is on it (the "Today" band). Re-render it the moment the
+      # edition publishes instead of waiting for the next show's finalize run.
+      # --homepage writes index.html ONLY: --network would also rewrite
+      # claims.html, the dashboards and the member pages, which this
+      # workflow does not own or commit. A failure here never costs the
+      # edition commit below.
+      - name: Refresh the homepage
+        if: steps.fastgate.outputs.published != 'true' || github.event.inputs.force == 'true'
+        env:
+          GA4_MEASUREMENT_ID: ${{ secrets.GA4_MEASUREMENT_ID }}
+          GSC_VERIFICATION: ${{ secrets.GSC_VERIFICATION }}
+          GOOGLE_ADS_ID: ${{ secrets.GOOGLE_ADS_ID }}
+          GOOGLE_ADS_SIGNUP_LABEL: ${{ secrets.GOOGLE_ADS_SIGNUP_LABEL }}
+          PLAUSIBLE_DOMAIN: ${{ secrets.PLAUSIBLE_DOMAIN }}
+          STRIPE_LINK_PERSONAL: ${{ vars.STRIPE_LINK_PERSONAL || 'https://buy.stripe.com/8x26oI4Ho7Lc6Qa1VB0Ba00' }}
+          STRIPE_TRIAL_DAYS: ${{ vars.STRIPE_TRIAL_DAYS || '7' }}
+          EDITION_DATE: ${{ env.EDITION_DAY }}
+        run: |
+          # Only when THIS run published the edition (a --when-ready run that
+          # exited early must not commit a homepage whose only change is its
+          # "Updated" stamp).
+          if python3 - <<'EOF'
+          import datetime, json, os, sys
+          date = (os.environ.get("EDITION_DATE") or "").strip() or \
+              datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+          try:
+              with open("digests/nerra_daily/summaries_nerra_daily.json") as fh:
+                  data = json.load(fh)
+          except Exception:
+              sys.exit(1)
+          sys.exit(0 if any(isinstance(e, dict) and e.get("date") == date
+                            for e in data.get("summaries", [])) else 1)
+          EOF
+          then
+            python generate_html.py --homepage || echo "::warning::homepage refresh failed; the next finalize run rebuilds it"
+          else
+            echo "Edition not published by this run; homepage left as is."
+          fi
+
       - name: Commit edition artifacts
         if: steps.fastgate.outputs.published != 'true' || github.event.inputs.force == 'true'
         uses: ./.github/actions/safe-commit-push
@@ -156,6 +196,7 @@ jobs:
             blog/nerra_daily
             nerra-daily.html
             nerra-daily-summaries.html
+            index.html
           commit-message: "Nerra Daily edition ${{ env.EDITION_DAY }}"
 
       # --- Nerra Personal follows the edition (Sep 14 2026) ---------------

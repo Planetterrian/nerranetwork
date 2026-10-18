@@ -111,9 +111,10 @@ X_TEASER_TEXT_MAX = 200
 # cutting mid-word; it now clips through clip_words() with these.
 X_TEASER_TWO_LINK_TEXT_MAX = 180
 
-#: ``landing-test.html`` (Oct 17 2026): the one-line "Latest" ticker chip at
-#: the top of the test front page. Every other headline on that page is shown
-#: whole; the ticker is a single scrolling line, so it clips word-safe here.
+#: The homepage's one-line "Latest" ticker chip (built Oct 17 2026 for the
+#: landing test, the homepage since Oct 18). Every other headline on that page
+#: is shown whole; the ticker is a single scrolling line, so it clips
+#: word-safe here.
 LANDING_TICKER_MAX = 90
 
 #: Share cards (Oct 18 2026, ``engine/share_cards.py``): the hook printed on

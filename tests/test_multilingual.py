@@ -679,9 +679,23 @@ class TestGlobalLanguageControl:
             html = (PROJECT_ROOT / "templates" / tpl).read_text(encoding="utf-8")
             assert "nn-langchange" in html, tpl
 
-    def test_homepage_card_lists_languages(self):
-        html = (PROJECT_ROOT / "templates" / "network_page.html.j2").read_text(encoding="utf-8")
-        assert "中文" in html  # multilingual card now names the audio languages
+    def test_homepage_card_lists_languages(self, tmp_path):
+        # Oct 18 2026: the homepage (now the news front page) names the audio
+        # languages from the language registry instead of a typed list. The
+        # typed list said 中文 for weeks after the ZH track was switched off
+        # (Oct 9), so the guard checks the rendered page against what the
+        # network still PRODUCES, both ways.
+        import generate_html as G
+        from engine.language_feeds import LANGUAGE_META
+
+        html = G.generate_network_page(output_dir=tmp_path).read_text(encoding="utf-8")
+        about = html.split('id="about"', 1)[1].split("</section>", 1)[0]
+        producing = set(G._listening_languages())
+        for lang, (autonym, _locale) in LANGUAGE_META.items():
+            if lang in producing:
+                assert autonym in about, lang
+            else:
+                assert autonym not in about, lang
 
 
 class TestMultilingualDecoupled:

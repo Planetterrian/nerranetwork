@@ -92,10 +92,14 @@ class TestHomepageAndStartHere:
     def test_homepage_nav_matches_every_other_page(self):
         src = _strip_jinja_comments(
             (ROOT / "templates" / "network_page.html.j2").read_text(encoding="utf-8"))
-        block = src.split("{% block nav_links %}", 1)[1].split("{% endblock %}", 1)[0]
-        # The two in-page anchors pushed "Subscribe"/"Join" off-screen at
-        # 1024-1186px.
-        assert 'href="#latest"' not in block and 'href="#subscribe"' not in block
+        # Oct 18 2026: the news-front homepage no longer overrides the nav at
+        # all (the base nav IS every other page's). If an override ever comes
+        # back it must not carry in-page anchors: the two the old one had
+        # pushed "Subscribe"/"Join" off-screen at 1024-1186px.
+        for name in ("nav_links", "mobile_nav_links"):
+            if "{% block " + name + " %}" in src:
+                block = src.split("{% block " + name + " %}", 1)[1].split("{% endblock %}", 1)[0]
+                assert 'href="#' not in block, name
 
     def test_made_in_canada_card_uses_the_canada_flag(self):
         src = (ROOT / "templates" / "network_page.html.j2").read_text(encoding="utf-8")
@@ -406,10 +410,13 @@ class TestHomepageLeadsWithTopShows:
     def test_hero_icons_and_grid_read_the_ranked_list(self):
         tpl = _strip_jinja_comments(
             (ROOT / "templates" / "network_page.html.j2").read_text(encoding="utf-8"))
-        orbit = tpl.split('<div class="hero-show-orbit">', 1)[1].split("</div>", 1)[0]
-        assert "{% for s in _ranked %}" in orbit
-        assert "{%- set _ranked = ranked_shows | default(all_shows) -%}" in tpl
+        # Oct 18 2026: the hero cover orbit left with the old homepage (the
+        # news front leads with stories, ordered newest-then-audience by
+        # engine.landing_test.assemble). The show grid still reads the ranked
+        # list — the PUBLIC shows, most-listened first.
         grid = tpl.split('id="show-showcase-grid">', 1)[1].split("</div>", 1)[0]
         assert "ranked_shows" in grid
         gen = (ROOT / "generate_html.py").read_text(encoding="utf-8")
-        assert '"ranked_shows": _rank_shows_by_audience(_build_all_shows_list())' in gen
+        body = gen.split("def generate_network_page(", 1)[1].split("\ndef ", 1)[0]
+        assert "ranked = _rank_shows_by_audience(public)" in body
+        assert '"ranked_shows": ranked,' in body

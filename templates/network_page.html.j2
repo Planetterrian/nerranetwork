@@ -1,465 +1,1487 @@
 {% extends "base.html.j2" %}
-{% from "_macros.html.j2" import show_card, soft_personal_interest, soft_personal_hero_band %}
 
-{# May 2026 operator request: homepage nav previously read just
-   ``Latest | Subscribe`` — inconsistent with the rest of the site
-   which carries ``Start Here | Listen | About | Player`` in the
-   top-right. Switched to that 4-link set + the in-page ``Latest``
-   and ``Subscribe`` anchors so the homepage matches every other
-   page while still exposing the homepage-specific jump links. #}
-{% block nav_links %}
-<li><a href="{{ path_prefix }}start-here.html">{{ t.nav_start_here }}</a></li>
-<li><a href="{{ path_prefix }}how-to-listen.html">{{ t.nav_how_to_listen }}</a></li>
-<li><a href="{{ path_prefix }}about.html">{{ t.nav_about }}</a></li>
-<li><a href="{{ path_prefix }}player.html">{{ t.nav_player }}</a></li>
-{% endblock %}
+{#- index.html — the network's homepage, laid out as a news front page.
 
-{# Mobile links carry no inline onclick: base.html.j2 closes the menu (and
-   clears the body scroll lock) with one delegated listener. The previous
-   per-link handlers here forgot the body class, so tapping "Latest" or
-   "Subscribe" left the homepage scroll-locked (Sep 2026 review). #}
-{% block mobile_nav_links %}
-<a href="{{ path_prefix }}start-here.html">{{ t.nav_start_here }}</a>
-<a href="{{ path_prefix }}how-to-listen.html">{{ t.nav_how_to_listen }}</a>
-<a href="{{ path_prefix }}about.html">{{ t.nav_about }}</a>
-<a href="{{ path_prefix }}player.html">{{ t.nav_player }}</a>
-<a href="#latest">Latest</a>
-<a href="#subscribe">Subscribe</a>
-{% endblock %}
+    Promoted from the Oct 17 2026 landing test on Oct 18 2026 (operator: "make
+    the landing page test the new landing page"). Every public show's newest
+    episode as a lead story, a Latest list, developing stories, top stories and
+    topic sections, with the rest of the site (interviews, video, the claims
+    record, dashboards, topics, Nerra Personal, books, the gallery, every way
+    to listen) folded in. Data: engine/landing_test.py (stories) and
+    engine/newsroom.py (timestamps, developing stories, markets, corrections,
+    today's schedule); design notes: docs/landing_test.md (v1-v3).
+
+    Rules this template keeps:
+    * It is the homepage: indexable, canonical = the bare origin, in the
+      sitemap; the site's own nav and footer.
+    * The homepage's one email ask is the Soft Personal band (Oct 9 2026
+      "Homepage Soft-only"): no per-show newsletter form here, and the footer
+      form is suppressed (``suppress_footer_newsletter_form``).
+    * Headlines are the episodes' own hooks and the digests' own story
+      headlines, printed whole. Only the one-line ticker clips, through
+      engine.titles (``ticker_text``).
+    * A picture is that episode's own scene, else the show's cover art.
+    * Every story says when it went out (the summary record's time, in ET);
+      a value without its date — a quote, a launch — is not printed.
+    * Members-only shows never appear in the page body.
+    * Brand colours are fills and rules only; text uses --show-color-text.
+    * Internal links carry no utm_* tag.
+    * Nothing here fetches: the page is server-rendered; one small inline
+      script only rewrites timestamps to "2 hours ago" and retires a "Today"
+      marker or a launch once they no longer hold. -#}
 
 {% block head_extra %}
-    <!-- Schema.org: Organization + PodcastSeries -->
-    <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "name": "Nerra Network",
-  "url": "https://nerranetwork.com",
-  "description": "Independent podcast network featuring free daily shows covering AI, Tesla, investing, space, science, environmental policy, and more. Produced in Vancouver, Canada.",
-  "logo": "https://nerranetwork.com/assets/nerra-logo-icon.svg",
-  "hasPart": [
-    {% for s in all_shows %}
-    {
-      "@type": "PodcastSeries",
-      "name": "{{ s.name }}",
-      "description": "{{ s.description_long[:200] | e }}",
-      {% if s.has_feed %}"webFeed": "https://nerranetwork.com/{{ s.rss_file }}",{% endif %}
-      "image": "https://nerranetwork.com/{{ s.podcast_image }}",
-      "url": "https://nerranetwork.com/{{ s.show_page }}"
-    }{% if not loop.last %},{% endif %}
-    {% endfor %}
-  ]
+{%- if og_image %}
+<meta property="og:image:width" content="800">
+<meta property="og:image:height" content="450">
+{%- if og_image_alt %}
+<meta property="og:image:alt" content="{{ og_image_alt }}">
+<meta name="twitter:image:alt" content="{{ og_image_alt }}">
+{%- endif %}
+{%- endif %}
+{#- Built as dicts in generate_html and piped through tojson (always-valid
+    JSON, <>& escaped). Organization (with every public show as a
+    PodcastSeries) and WebSite carry over from the pre-Oct-18 homepage; the
+    ItemList names the stories on today's front. #}
+<script type="application/ld+json">{{ org_ld | tojson }}</script>
+<script type="application/ld+json">{{ website_ld | tojson }}</script>
+{%- if item_list %}
+<script type="application/ld+json">{{ item_list | tojson }}</script>
+{%- endif %}
+<style>
+.lt-page {
+  --lt-ink: var(--nn-text);
+  --lt-muted: var(--nn-text-muted);
+  --lt-rule: var(--nn-border);
+  --lt-rule-strong: rgba(255, 255, 255, 0.16);
+  --lt-panel: var(--nn-bg-alt);
+  --lt-panel-2: rgba(255, 255, 255, 0.035);
+  --lt-accent: var(--nn-purple);
+  --lt-accent-text: var(--nn-purple-text);
+  --lt-cyan: var(--nn-cyan);
+  --lt-today-bg: rgba(240, 180, 41, 0.16);
+  --lt-today-text: #F5C860;
+  --lt-head: 'Source Serif 4', Georgia, serif;
+  --lt-ui: var(--font-ui);
+  --lt-radius: 10px;
+  padding-top: calc(var(--nav-height, 72px) + var(--sp-4));
+  padding-bottom: var(--sp-12);
+  color: var(--lt-ink);
 }
-    </script>
-    {# Orbit float, CTA pulse and their reduced-motion gates live in
-       styles/main.css (`.orbit-card` uses the per-card `--i` delay). The
-       inline copy that used to sit here overrode them with a second,
-       conflicting keyframe set and an nth-child stagger that stopped at
-       the 11th show — removed Sep 2026. #}
+/* Component links: the site-wide prose-link rule (cyan + underline on a bare
+   <a> inside p/li) is for running text; on a front page every headline is a
+   link and gets its own hover treatment below. Running-text links that
+   remain (.lt-note, the edition note) are underlined explicitly. */
+.lt-page a { color: inherit; text-decoration: none; }
+.lt-page a:focus-visible { outline: 2px solid var(--lt-cyan); outline-offset: 2px; border-radius: 4px; }
+.lt-page .container { padding-left: var(--sp-6); padding-right: var(--sp-6); }
+
+/* ---- Masthead ---- */
+.lt-masthead-inner { border-bottom: 3px double var(--lt-rule-strong); padding-bottom: var(--sp-4); margin-bottom: var(--sp-3); }
+.lt-masthead-meta {
+  display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); align-items: center;
+  font-family: var(--lt-ui); font-size: 0.82rem; color: var(--lt-muted);
+  border-bottom: 1px solid var(--lt-rule); padding-bottom: var(--sp-2); margin-bottom: var(--sp-4);
+}
+.lt-masthead-meta time { color: var(--lt-ink); font-weight: 600; }
+.lt-masthead-row { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--sp-3) var(--sp-8); }
+.lt-dateline { text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* ---- Markets & launches (every value under its as-of date) ---- */
+.lt-markets {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--sp-3); margin: 0 0 var(--sp-3); min-width: 0;
+  font-family: var(--lt-ui); font-size: 0.8rem; border-bottom: 1px solid var(--lt-rule); padding-bottom: var(--sp-2);
+}
+.lt-markets-h { flex: 1 1 auto; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--lt-muted); }
+.lt-markets ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px var(--sp-6); min-width: 0; flex: 1 1 100%; order: 3; }
+
+.lt-mk-group { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-width: 0; }
+.lt-mk-label { color: var(--lt-muted); font-size: 0.72rem; }
+.lt-mk-label time { color: var(--lt-muted); }
+.lt-quote { display: inline-flex; gap: 5px; align-items: baseline; }
+.lt-quote-sym { font-weight: 800; color: var(--nn-white); letter-spacing: 0.02em; }
+.lt-quote-px { font-variant-numeric: tabular-nums; color: var(--lt-ink); }
+.lt-quote-chg { font-variant-numeric: tabular-nums; font-weight: 700; }
+.lt-quote.is-up .lt-quote-chg { color: #34D399; }
+.lt-quote.is-down .lt-quote-chg { color: #F87171; }
+.lt-quote.is-flat .lt-quote-chg { color: var(--lt-muted); }
+.lt-launch-name { color: var(--nn-white); font-weight: 700; }
+.lt-markets-more { flex: none; font-weight: 700; color: var(--lt-accent-text) !important; font-size: 0.76rem; }
+
+/* ---- Timestamps ---- */
+.lt-today { display: inline-block; font-family: var(--lt-ui); font-size: 0.66rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lt-today-text); background: var(--lt-today-bg); padding: 1px 6px; border-radius: 4px; vertical-align: 1px; }
+.lt-when time, .lt-rail-when time { color: var(--lt-muted); font-weight: 500; letter-spacing: 0; text-transform: none; }
+.lt-rail-when { font-size: 0.72rem; letter-spacing: 0; text-transform: none; font-weight: 500; }
+.lt-rail-more { font-family: var(--lt-ui); font-size: 0.84rem; font-weight: 700; margin: var(--sp-2) 0 0; }
+.lt-rail-more a { color: var(--lt-accent-text); }
+.lt-rail-more a:hover { color: var(--nn-white); text-decoration: underline; }
+
+/* ---- Developing stories ---- */
+.lt-dev-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: var(--sp-4) var(--sp-6); }
+.lt-dev { border-left: 3px solid var(--show-color); padding: 2px 0 2px var(--sp-4); min-width: 0; }
+.lt-dev-flag { font-family: var(--lt-ui); font-size: 0.74rem; font-weight: 700; color: var(--lt-muted); margin: 0 0 6px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
+.lt-dev-badge { color: #fff; background: #B42318; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.64rem; padding: 2px 6px; border-radius: 3px; }
+.lt-dev .lt-hl { font-size: 1.12rem; line-height: 1.3; }
+.lt-dev-shows { font-family: var(--lt-ui); font-size: 0.78rem; font-weight: 700; margin: 4px 0 0; color: var(--lt-muted); }
+.lt-dev-shows a { color: var(--lt-ink); }
+.lt-dev-shows a:hover { color: var(--nn-white); text-decoration: underline; }
+.lt-dev-latest { font-weight: 700; color: var(--lt-ink); }
+.lt-dev-earlier { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; }
+.lt-dev-earlier li { font-family: var(--lt-ui); font-size: 0.82rem; line-height: 1.4; color: var(--lt-muted); }
+.lt-dev-earlier a { color: var(--lt-ink); }
+.lt-dev-earlier a:hover { color: var(--nn-white); text-decoration: underline; }
+.lt-dev-when { font-weight: 700; color: var(--lt-muted); margin-right: 4px; }
+
+/* ---- Soft Personal band (the homepage's one email ask) ---- */
+.lt-soft { margin-top: var(--sp-10); }
+.lt-soft .nn-soft-personal-hero { border-top: 1px solid var(--nn-border); }
+
+/* ---- Today: the edition + the schedule ---- */
+.lt-today-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: var(--sp-6); align-items: stretch; }
+.lt-today-grid.is-single { grid-template-columns: minmax(0, 1fr); }
+.lt-today-grid .lt-edition { margin-top: 0; }
+.lt-schedule ol { list-style: none; margin: 0; padding: 0; }
+.lt-schedule li { display: grid; grid-template-columns: 9.4rem minmax(0, 1fr); gap: var(--sp-3); padding: 8px 0; border-bottom: 1px solid var(--lt-rule); font-family: var(--lt-ui); font-size: 0.84rem; line-height: 1.4; }
+.lt-schedule li:last-child { border-bottom: 0; }
+.lt-sched-time { white-space: nowrap; font-weight: 700; color: var(--nn-white); font-variant-numeric: tabular-nums; }
+.lt-sched-what { color: var(--lt-muted); }
+.lt-sched-what b { color: var(--lt-ink); }
+.lt-schedule li.is-past .lt-sched-time { color: var(--lt-muted); }
+.lt-schedule li.is-past .lt-sched-time::after { content: " ✓"; color: #34D399; }
+
+/* ---- Corrections ---- */
+.lt-corrections { margin-top: var(--sp-6); }
+.lt-corrections ol { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); }
+.lt-corrections li { border-left: 3px solid var(--nn-claims-flagged, #F5C860); padding-left: var(--sp-4); }
+.lt-corrections .lt-kicker time { color: var(--lt-muted); font-weight: 500; letter-spacing: 0; text-transform: none; }
+.lt-corr-text { font-family: var(--lt-ui); font-size: 0.88rem; line-height: 1.55; color: var(--lt-ink); margin: 0; }
+.lt-corr-text a { font-weight: 700; color: var(--nn-white); text-decoration: underline; text-underline-offset: 2px; }
+
+/* ---- Personal lineup sample ---- */
+.lt-lineup { display: grid; gap: 6px; width: 100%; max-width: 22rem; margin-bottom: var(--sp-2); }
+.lt-lineup-row { display: flex; align-items: center; gap: 10px; border: 1px solid var(--lt-rule); border-radius: 10px; padding: 6px 10px; background: rgba(5, 7, 14, 0.35); font-family: var(--lt-ui); font-size: 0.86rem; }
+.lt-lineup-row img { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; }
+.lt-lineup-row small { margin-left: auto; color: var(--lt-muted); }
+.lt-personal-note a { color: var(--lt-cyan); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.lt-personal-note a.nn-soft-personal-link { text-decoration: none; }
+
+/* ---- Subscribe + about ---- */
+.subscribe-all { margin-top: var(--sp-4); }
+.subscribe-all summary { cursor: pointer; font-family: var(--lt-ui); font-weight: 700; font-size: 0.88rem; color: var(--lt-accent-text); }
+.subscribe-all .lt-app-list { margin-top: var(--sp-3); }
+.lt-about { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: var(--sp-6) var(--sp-10); align-items: start; }
+.lt-about-text p { font-family: var(--lt-ui); font-size: 0.95rem; line-height: 1.65; color: var(--lt-ink); margin: 0 0 var(--sp-3); }
+.lt-about-text a, .lt-values a { color: var(--lt-cyan); text-decoration: underline; text-underline-offset: 2px; }
+.lt-values { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); }
+.lt-values li { display: grid; grid-template-columns: 1.8rem minmax(0, 1fr); gap: var(--sp-2); font-family: var(--lt-ui); font-size: 0.86rem; line-height: 1.55; color: var(--lt-muted); }
+.lt-values b { color: var(--lt-ink); }
+#shows .show-showcase { margin-top: 0; }
+.lt-wordmark {
+  font-family: var(--lt-head); font-weight: 700; letter-spacing: -0.02em;
+  font-size: clamp(2.1rem, 5.2vw, 3.6rem); line-height: 1; margin: 0;
+}
+.lt-wordmark span { background: var(--nn-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.lt-standfirst { font-family: var(--lt-ui); color: var(--lt-muted); font-size: 0.98rem; max-width: 34rem; margin: 0; line-height: 1.5; }
+
+/* ---- Section nav (in-page anchors) ---- */
+.lt-secnav { margin: 0 0 var(--sp-3); }
+.lt-secnav ul {
+  list-style: none; display: flex; gap: var(--sp-1) var(--sp-5); margin: 0; padding: 0 0 var(--sp-2);
+  overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--lt-rule);
+  /* v2 added sections: the nav scrolls; the faded edge says so. */
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 40px), transparent);
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 40px), transparent);
+}
+.lt-secnav ul::-webkit-scrollbar { display: none; }
+.lt-secnav a {
+  display: block; white-space: nowrap; font-family: var(--lt-ui); font-size: 0.86rem; font-weight: 600;
+  color: var(--lt-ink); padding: 6px 0; border-bottom: 2px solid transparent;
+}
+.lt-secnav a:hover { border-bottom-color: var(--lt-accent); color: var(--nn-white); }
+
+/* ---- Ticker ---- */
+.lt-ticker { display: flex; align-items: stretch; gap: var(--sp-3); margin-bottom: var(--sp-6); min-width: 0; }
+.lt-ticker-label {
+  flex: none; display: flex; align-items: center; gap: 6px;
+  font-family: var(--lt-ui); font-weight: 700; font-size: 0.74rem; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--nn-white); background: var(--lt-accent);
+  padding: 0 10px; border-radius: 6px;
+}
+.lt-ticker-label::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--lt-cyan); }
+.lt-ticker ul {
+  list-style: none; margin: 0; padding: 0; display: flex; gap: var(--sp-5); min-width: 0;
+  overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 48px), transparent);
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 48px), transparent);
+}
+.lt-ticker ul::-webkit-scrollbar { display: none; }
+.lt-ticker li { flex: none; scroll-snap-align: start; padding: 6px 0; font-family: var(--lt-ui); font-size: 0.86rem; white-space: nowrap; }
+.lt-ticker li a { color: var(--lt-ink); }
+.lt-ticker li a:hover { color: var(--nn-white); text-decoration: underline; }
+.lt-ticker-show { font-weight: 700; color: var(--show-color-text); margin-right: 6px; }
+
+/* ---- Shared story atoms ---- */
+.lt-kicker {
+  font-family: var(--lt-ui); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--show-color-text); display: flex; flex-wrap: wrap; gap: 4px 8px;
+  align-items: center; margin: 0 0 6px;
+}
+.lt-kicker a { color: inherit; }
+.lt-kicker a:hover { text-decoration: underline; }
+.lt-kicker .lt-hub { color: var(--lt-muted); }
+.lt-kicker .lt-hub::after { content: "/"; margin-left: 8px; color: var(--lt-rule-strong); }
+.lt-hl { font-family: var(--lt-head); font-weight: 700; line-height: 1.22; letter-spacing: -0.005em; margin: 0; color: var(--lt-ink); }
+.lt-hl a { color: inherit; }
+.lt-hl a:hover { color: var(--nn-white); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.lt-meta { font-family: var(--lt-ui); font-size: 0.8rem; color: var(--lt-muted); display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; margin-top: 8px; }
+.lt-meta a { color: var(--lt-ink); font-weight: 600; }
+.lt-meta a:hover { color: var(--nn-white); text-decoration: underline; }
+.lt-meta .lt-dot { color: var(--lt-rule-strong); }
+
+.lt-media {
+  position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--lt-radius);
+  background: radial-gradient(120% 120% at 20% 10%, color-mix(in srgb, var(--show-color) 55%, #0B0F1A), #0B0F1A 70%);
+  border-bottom: 3px solid var(--show-color);
+}
+.lt-media img { width: 100%; height: 100%; object-fit: cover; transition: transform 400ms var(--ease); }
+.lt-media.is-portrait img { object-position: center 30%; }
+.lt-media.is-cover img { width: auto; height: 74%; aspect-ratio: 1; position: absolute; inset: 0; margin: auto; border-radius: 8px; box-shadow: 0 12px 30px rgba(0,0,0,0.45); object-fit: cover; }
+a.lt-media:hover img { transform: scale(1.03); }
+.lt-media.is-cover:hover img { transform: none; }
+.lt-feature .lt-media.is-cover, .lt-pair .lt-media.is-cover, .lt-card .lt-media.is-cover { aspect-ratio: 21 / 9; }
+.lt-feature .lt-media.is-cover img, .lt-pair .lt-media.is-cover img, .lt-card .lt-media.is-cover img { height: 82%; }
+
+.lt-more { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.lt-more li { font-family: var(--lt-ui); font-size: 0.86rem; line-height: 1.4; padding-left: 14px; position: relative; color: var(--lt-ink); }
+.lt-more li::before { content: ""; position: absolute; left: 0; top: 0.55em; width: 6px; height: 6px; border-radius: 1px; background: var(--show-color); }
+.lt-more a:hover { color: var(--nn-white); text-decoration: underline; }
+.lt-more-label { font-family: var(--lt-ui); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--lt-muted); margin: 14px 0 0; }
+
+/* ---- Lead + Latest ---- */
+.lt-top { display: grid; grid-template-columns: minmax(0, 2.15fr) minmax(0, 1fr); gap: var(--sp-8); }
+.lt-lead .lt-media { border-radius: 12px; }
+.lt-lead-body { padding-top: var(--sp-4); }
+.lt-lead .lt-hl { font-size: clamp(1.7rem, 3.2vw, 2.6rem); line-height: 1.12; }
+.lt-lead-audio { margin-top: var(--sp-4); display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); }
+.lt-lead-audio audio { width: min(100%, 420px); height: 40px; }
+.lt-btn {
+  display: inline-flex; align-items: center; gap: 6px; font-family: var(--lt-ui); font-weight: 700; font-size: 0.86rem;
+  padding: 9px 14px; border-radius: 8px; border: 1px solid var(--lt-rule-strong); color: var(--nn-white); background: var(--lt-panel-2);
+}
+.lt-btn:hover { border-color: var(--lt-cyan); }
+.lt-btn--primary { background: var(--lt-accent); border-color: var(--lt-accent); }
+.lt-btn--primary:hover { background: var(--nn-accent-hover); }
+
+.lt-latest { border-left: 1px solid var(--lt-rule); padding-left: var(--sp-6); min-width: 0; }
+.lt-rail-h {
+  font-family: var(--lt-ui); font-size: 0.8rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--nn-white); margin: 0 0 var(--sp-3); padding-top: 8px; border-top: 3px solid var(--lt-accent);
+}
+.lt-latest ol { list-style: none; margin: 0; padding: 0; }
+.lt-latest li { padding: 11px 0; border-bottom: 1px solid var(--lt-rule); }
+.lt-latest li:last-child { border-bottom: 0; }
+.lt-latest .lt-kicker { font-size: 0.68rem; margin-bottom: 3px; }
+.lt-latest .lt-hl { font-size: 1.02rem; font-weight: 600; line-height: 1.32; }
+.lt-latest time { font-family: var(--lt-ui); font-size: 0.74rem; color: var(--lt-muted); font-weight: 500; letter-spacing: 0; text-transform: none; }
+
+/* ---- Top stories ---- */
+.lt-block { margin-top: var(--sp-10); }
+.lt-block-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-4);
+  border-top: 3px solid var(--lt-ink); padding-top: 8px; margin-bottom: var(--sp-5); flex-wrap: wrap;
+}
+.lt-block-head h2 { font-family: var(--lt-head); font-size: 1.55rem; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+.lt-block-head a { font-family: var(--lt-ui); font-size: 0.84rem; font-weight: 700; color: var(--lt-accent-text); text-align: right; }
+.lt-block-head a:hover { color: var(--nn-white); }
+.lt-grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-6); }
+.lt-card .lt-card-body { padding-top: 12px; }
+.lt-card .lt-hl { font-size: 1.14rem; }
+
+/* ---- Edition strip (Nerra Daily / Mira) ---- */
+.lt-edition {
+  margin-top: var(--sp-10); border-radius: 16px; overflow: hidden; position: relative;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--nn-purple) 38%, #0B0F1A) 0%, #111627 55%, color-mix(in srgb, var(--nn-cyan) 18%, #0B0F1A) 100%);
+  border: 1px solid var(--lt-rule-strong);
+}
+.lt-edition-inner { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: var(--sp-6); padding: var(--sp-6); align-items: center; }
+.lt-edition-cover img { width: 180px; height: 180px; border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,0.5); }
+.lt-edition-label { font-family: var(--lt-ui); font-size: 0.76rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--lt-cyan); margin: 0 0 6px; }
+.lt-edition .lt-hl { font-size: clamp(1.3rem, 2.4vw, 1.8rem); }
+.lt-edition p.lt-edition-note { font-family: var(--lt-ui); font-size: 0.92rem; color: var(--lt-ink); opacity: 0.85; margin: 8px 0 0; line-height: 1.5; }
+.lt-edition .lt-lead-audio { margin-top: var(--sp-3); }
+
+/* ---- Topic sections ---- */
+.lt-section-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--sp-6) var(--sp-8); }
+.lt-feature .lt-hl { font-size: 1.42rem; }
+.lt-feature .lt-card-body { padding-top: 12px; }
+.lt-stack { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; align-content: start; }
+.lt-row { display: grid; grid-template-columns: minmax(0, 1fr) 132px; gap: var(--sp-4); padding: 14px 0; border-bottom: 1px solid var(--lt-rule); align-items: start; }
+.lt-stack .lt-row:first-child { padding-top: 0; }
+.lt-stack .lt-row:last-child { border-bottom: 0; }
+.lt-row .lt-hl { font-size: 1.04rem; font-weight: 600; line-height: 1.3; }
+.lt-row .lt-media { border-radius: 8px; border-bottom-width: 2px; }
+.lt-row .lt-media.is-cover img { height: 80%; border-radius: 6px; }
+
+.lt-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-8); }
+.lt-pair .lt-hl { font-size: 1.3rem; }
+
+/* ---- More from the network ---- */
+.lt-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 var(--sp-8); }
+.lt-grid-3 .lt-row { padding-top: 14px; }
+
+/* ---- Most played / Most read ---- */
+.lt-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-6) var(--sp-10); }
+.lt-charts.is-single { grid-template-columns: minmax(0, 1fr); }
+.lt-chart-h { font-family: var(--lt-ui); font-size: 0.8rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--nn-white); margin: 0 0 4px; }
+.lt-chart-sub { font-family: var(--lt-ui); font-size: 0.78rem; color: var(--lt-muted); margin: 0 0 var(--sp-2); }
+.lt-popular ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: lt-pop; }
+.lt-charts.is-single .lt-popular ol { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--sp-8); }
+.lt-popular li { counter-increment: lt-pop; display: grid; grid-template-columns: 2.4rem minmax(0, 1fr); gap: var(--sp-2); padding: 12px 0; border-bottom: 1px solid var(--lt-rule); }
+.lt-popular li::before { content: counter(lt-pop); font-family: var(--lt-head); font-weight: 700; font-size: 2rem; line-height: 1; color: var(--lt-accent-text); }
+.lt-popular .lt-hl { font-size: 1rem; font-weight: 600; line-height: 1.32; }
+.lt-dek { font-family: var(--lt-ui); font-size: 0.84rem; line-height: 1.45; color: var(--lt-muted); margin: 4px 0 0; }
+
+/* ---- Shared v2 atoms ---- */
+.lt-block-head .lt-block-sub { font-family: var(--lt-ui); font-size: 0.86rem; color: var(--lt-muted); font-weight: 500; margin: 0; flex: 1 1 18rem; }
+.lt-block-head .lt-block-links { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.lt-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.lt-chip {
+  display: inline-flex; align-items: center; gap: 6px; font-family: var(--lt-ui); font-size: 0.84rem; font-weight: 600;
+  padding: 7px 12px; border-radius: 999px; border: 1px solid var(--lt-rule-strong); background: var(--lt-panel-2); color: var(--lt-ink);
+}
+.lt-page a.lt-chip:hover { border-color: var(--lt-cyan); color: var(--nn-white); }
+.lt-chip { white-space: nowrap; }
+.lt-chip-count { font-weight: 500; font-size: 0.78rem; color: var(--lt-muted); }
+.lt-chip-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--show-color, var(--lt-accent)); flex: none; }
+.lt-panel { border: 1px solid var(--lt-rule); border-radius: 14px; background: var(--lt-panel-2); padding: var(--sp-5); }
+.lt-sublabel { font-family: var(--lt-ui); font-size: 0.74rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--lt-muted); margin: 0 0 var(--sp-3); }
+.lt-links-row { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: var(--sp-4) 0 0; font-family: var(--lt-ui); font-size: 0.86rem; }
+.lt-links-row a { color: var(--lt-accent-text); font-weight: 700; }
+.lt-links-row a:hover { color: var(--nn-white); text-decoration: underline; }
+
+/* ---- Lead share row ---- */
+.lt-share { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: var(--sp-3); font-family: var(--lt-ui); font-size: 0.8rem; color: var(--lt-muted); }
+.lt-share a { color: var(--lt-ink); font-weight: 600; }
+.lt-share a:hover { color: var(--nn-white); text-decoration: underline; }
+
+/* ---- Conversations (The Age of AI, Nerra Voices) ---- */
+.lt-convo-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: var(--sp-6) var(--sp-8); align-items: start; }
+.lt-convo-feature {
+  position: relative; border-radius: 16px; overflow: hidden; padding: var(--sp-6);
+  background: radial-gradient(130% 120% at 0% 0%, color-mix(in srgb, var(--show-color) 40%, #0B0F1A) 0%, #101524 58%, #0B0F1A 100%);
+  border: 1px solid var(--lt-rule-strong);
+}
+.lt-convo-top { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: var(--sp-5); align-items: center; }
+.lt-convo-top img { width: 132px; height: 132px; border-radius: 12px; box-shadow: 0 14px 34px rgba(0,0,0,0.5); object-fit: cover; }
+.lt-guest { font-family: var(--lt-head); font-weight: 700; font-size: clamp(1.7rem, 3vw, 2.35rem); line-height: 1.08; margin: 4px 0 6px; color: var(--nn-white); }
+.lt-guest a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.lt-guest-id { font-family: var(--lt-ui); font-size: 0.9rem; color: var(--lt-ink); opacity: 0.85; margin: 0; line-height: 1.4; }
+.lt-convo-hook { font-family: var(--lt-head); font-size: 1.16rem; line-height: 1.45; color: var(--lt-ink); margin: var(--sp-5) 0 0; }
+.lt-convo-feature .lt-lead-audio { margin-top: var(--sp-4); }
+.lt-convo-list { list-style: none; margin: 0; padding: 0; }
+.lt-convo-list li { padding: 12px 0; border-bottom: 1px solid var(--lt-rule); }
+.lt-convo-list li:first-child { padding-top: 0; }
+.lt-convo-list .lt-hl { font-size: 1.12rem; }
+.lt-convo-list .lt-guest-id { font-size: 0.84rem; color: var(--lt-muted); opacity: 1; margin-top: 2px; }
+.lt-apply {
+  margin-top: var(--sp-4); border-radius: 12px; padding: var(--sp-4) var(--sp-5);
+  border: 1px dashed color-mix(in srgb, var(--lt-accent) 60%, transparent); background: rgba(107, 71, 255, 0.08);
+}
+.lt-apply h3 { font-family: var(--lt-head); font-size: 1.15rem; margin: 0 0 4px; }
+.lt-apply p { font-family: var(--lt-ui); font-size: 0.86rem; color: var(--lt-muted); margin: 0 0 var(--sp-3); line-height: 1.5; }
+.lt-apply .lt-signup-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.lt-claim-wrap { margin-top: var(--sp-6); }
+/* The claim, its basis and its correction invitation always render together
+   (engine.brand / the mira_claim macro); here the claim reads as a pull
+   quote beside its basis. */
+.lt-claim-wrap .nn-mira-claim {
+  margin: 0; padding: var(--sp-5) var(--sp-6); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr);
+  gap: var(--sp-2) var(--sp-8); align-items: start; border-left-color: var(--lt-accent);
+}
+.lt-claim-wrap .nn-mira-claim__claim { grid-row: span 2; font-family: var(--lt-head); font-size: 1.24rem; line-height: 1.4; margin: 0; }
+.lt-claim-wrap .nn-mira-claim__basis { font-family: var(--lt-ui); font-size: 0.86rem; line-height: 1.6; color: var(--lt-muted); margin: 0; }
+.lt-claim-wrap .nn-mira-claim__footnote { font-family: var(--lt-ui); font-size: 0.8rem; color: var(--lt-muted); }
+
+/* ---- Watch (YouTube) ---- */
+.lt-watch-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-6); }
+.lt-video .lt-media::after {
+  content: ""; position: absolute; left: 12px; bottom: 12px; width: 44px; height: 32px; border-radius: 8px;
+  background: rgba(10, 12, 20, 0.78) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M8 5v14l11-7z'/%3E%3C/svg%3E") center / 18px no-repeat;
+  border: 1px solid rgba(255,255,255,0.25);
+}
+.lt-video .lt-media.is-card { display: flex; align-items: flex-end; padding: 14px 14px 14px 70px; }
+.lt-video .lt-media.is-card span { font-family: var(--lt-ui); font-weight: 700; font-size: 0.82rem; color: var(--nn-white); opacity: 0.9; }
+.lt-video .lt-hl { font-size: 1.04rem; margin-top: 10px; }
+.lt-shorts { margin-top: var(--sp-6); }
+.lt-shorts ul {
+  list-style: none; margin: 0; padding: 0 0 var(--sp-2); display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--sp-4);
+}
+.lt-short .lt-media { aspect-ratio: 9 / 16; border-radius: 12px; }
+.lt-short .lt-media img { object-position: center; }
+.lt-short .lt-media .lt-short-title {
+  position: absolute; inset: auto 0 0 0; padding: 40px 10px 10px; font-family: var(--lt-ui); font-weight: 700; font-size: 0.84rem; line-height: 1.3;
+  color: var(--nn-white); background: linear-gradient(to top, rgba(5, 7, 14, 0.92), rgba(5, 7, 14, 0));
+}
+.lt-short .lt-kicker { margin-top: 8px; font-size: 0.68rem; }
+.lt-yt-badge { font-family: var(--lt-ui); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--nn-white); background: #C4302B; padding: 2px 7px; border-radius: 4px; }
+.lt-channels { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---- Inline signup ---- */
+.lt-signup {
+  margin-top: var(--sp-10); border: 1px solid var(--lt-rule-strong); border-radius: 18px; padding: var(--sp-8);
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: var(--sp-6) var(--sp-10); align-items: center;
+  background:
+    radial-gradient(90% 140% at 100% 0%, rgba(0, 212, 255, 0.10), transparent 60%),
+    linear-gradient(135deg, rgba(107, 71, 255, 0.20), rgba(17, 22, 39, 0.6));
+}
+.lt-signup-kicker { font-family: var(--lt-ui); font-size: 0.74rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--lt-cyan); margin: 0 0 6px; }
+.lt-signup h2 { font-family: var(--lt-head); font-size: clamp(1.5rem, 2.6vw, 2rem); line-height: 1.15; margin: 0 0 8px; }
+.lt-signup p { font-family: var(--lt-ui); color: var(--lt-muted); margin: 0; line-height: 1.55; }
+.lt-form { display: grid; gap: var(--sp-3); }
+.lt-form-row { display: flex; gap: var(--sp-2); }
+.lt-form input[type=email] {
+  flex: 1 1 auto; min-width: 0; font-family: var(--lt-ui); font-size: 16px; padding: 12px 14px; border-radius: 10px;
+  border: 1px solid var(--lt-rule-strong); background: rgba(5, 7, 14, 0.55); color: var(--nn-white);
+}
+.lt-form input[type=email]:focus { outline: 2px solid var(--lt-cyan); outline-offset: 1px; }
+.lt-form button {
+  flex: none; font-family: var(--lt-ui); font-weight: 800; font-size: 0.95rem; padding: 12px 18px; border-radius: 10px; border: 0;
+  color: var(--nn-white); background: var(--lt-accent); cursor: pointer;
+}
+.lt-form button:hover { background: var(--nn-accent-hover); }
+.lt-form button:disabled { opacity: 0.7; cursor: default; }
+.lt-picks { font-family: var(--lt-ui); font-size: 0.86rem; border: 0; margin: 0; padding: 0; min-width: 0; }
+.lt-picks legend { font-weight: 700; color: var(--lt-ink); padding: 0; }
+.lt-picks legend span { color: var(--lt-muted); font-weight: 500; }
+.lt-picks summary { cursor: pointer; font-weight: 700; color: var(--lt-accent-text); margin-top: 10px; font-size: 0.82rem; }
+.lt-picks-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.lt-picks label {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--lt-rule-strong); background: rgba(5, 7, 14, 0.35); color: var(--lt-ink); font-size: 0.82rem;
+}
+.lt-picks label:has(input:checked) { border-color: var(--lt-cyan); background: rgba(0, 212, 255, 0.10); }
+.lt-picks input { accent-color: var(--nn-cyan); }
+.lt-form-status { font-family: var(--lt-ui); font-size: 0.86rem; min-height: 1.2em; margin: 0; }
+.lt-form-fine { font-family: var(--lt-ui); font-size: 0.78rem; color: var(--lt-muted); margin: 0; line-height: 1.5; }
+.lt-form-fine a { color: var(--lt-cyan); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+
+/* ---- By the numbers + trust ---- */
+.lt-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--sp-4); }
+.lt-tile { border-top: 2px solid var(--lt-rule-strong); padding-top: 10px; }
+.lt-tile-num { font-family: var(--lt-head); font-weight: 700; font-size: clamp(1.8rem, 3vw, 2.4rem); line-height: 1; color: var(--nn-white); letter-spacing: -0.01em; }
+.lt-tile-label { font-family: var(--lt-ui); font-size: 0.82rem; color: var(--lt-muted); margin-top: 6px; line-height: 1.4; }
+.lt-trust { margin-top: var(--sp-6); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: var(--sp-6) var(--sp-8); align-items: start; }
+.lt-trust h3 { font-family: var(--lt-head); font-size: 1.35rem; margin: 0 0 6px; }
+.lt-trust p { font-family: var(--lt-ui); font-size: 0.9rem; color: var(--lt-muted); line-height: 1.55; margin: 0; }
+.lt-trust .lt-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.lt-tile--verified { border-top-color: var(--nn-claims-verified, #34D399); }
+.lt-tile--flagged { border-top-color: var(--nn-claims-flagged, #F5C860); }
+
+/* ---- Dashboards + trackers ---- */
+.lt-dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: var(--sp-4); }
+.lt-dash {
+  display: flex; flex-direction: column; gap: 6px; border-radius: 12px; padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--lt-rule); background: var(--lt-panel-2); border-top: 3px solid var(--show-color);
+}
+.lt-page a.lt-dash:hover { border-color: var(--lt-rule-strong); border-top-color: var(--show-color); background: rgba(255,255,255,0.06); }
+.lt-dash-title { font-family: var(--lt-head); font-weight: 700; font-size: 1.12rem; color: var(--nn-white); }
+.lt-dash-desc { font-family: var(--lt-ui); font-size: 0.84rem; color: var(--lt-muted); line-height: 1.45; }
+.lt-dash-fact { font-family: var(--lt-ui); font-size: 0.8rem; font-weight: 600; color: var(--lt-cyan); line-height: 1.4; margin-top: auto; padding-top: 6px; }
+.lt-trackers { margin-top: var(--sp-5); }
+
+/* ---- Personal ---- */
+.lt-personal {
+  border-radius: 18px; padding: var(--sp-8); display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: var(--sp-6) var(--sp-10); align-items: center;
+  background: radial-gradient(120% 140% at 0% 100%, rgba(0, 212, 255, 0.12), transparent 55%), linear-gradient(120deg, #111627, #0E1322);
+  border: 1px solid var(--lt-rule-strong);
+}
+.lt-personal h2 { font-family: var(--lt-head); font-size: clamp(1.5rem, 2.6vw, 2.05rem); line-height: 1.15; margin: 0 0 10px; }
+.lt-personal p { font-family: var(--lt-ui); color: var(--lt-ink); opacity: 0.9; margin: 0; line-height: 1.55; }
+.lt-personal ul { list-style: none; margin: var(--sp-4) 0 0; padding: 0; display: grid; gap: 8px; font-family: var(--lt-ui); font-size: 0.9rem; }
+.lt-personal li { padding-left: 22px; position: relative; }
+.lt-personal li::before { content: ""; position: absolute; left: 0; top: 0.45em; width: 10px; height: 6px; border-left: 2px solid var(--lt-cyan); border-bottom: 2px solid var(--lt-cyan); transform: rotate(-45deg); }
+.lt-personal-cta { display: grid; gap: var(--sp-3); justify-items: start; }
+.lt-personal-cta .lt-btn { font-size: 0.95rem; padding: 12px 18px; }
+.lt-personal-note { font-family: var(--lt-ui); font-size: 0.8rem; color: var(--lt-muted); }
+
+/* ---- Books + gallery ---- */
+.lt-shelf { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: var(--sp-8); align-items: start; }
+.lt-books { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-5); }
+.lt-book { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: var(--sp-4); align-items: center; }
+.lt-book-cover {
+  width: 92px; aspect-ratio: 5 / 8; border-radius: 4px 8px 8px 4px; padding: 10px 9px; display: flex; flex-direction: column; justify-content: space-between;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--show-color) 85%, #fff 0%), color-mix(in srgb, var(--show-color) 45%, #05070E));
+  box-shadow: inset 6px 0 0 rgba(0,0,0,0.25), 0 12px 26px rgba(0,0,0,0.45); color: #fff;
+}
+.lt-book-cover b { font-family: var(--lt-head); font-size: 0.74rem; line-height: 1.12; overflow-wrap: anywhere; hyphens: auto; }
+.lt-book-cover small { font-family: var(--lt-ui); font-size: 0.56rem; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.85; }
+.lt-book .lt-hl { font-size: 1.08rem; }
+.lt-gallery-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.lt-gallery-grid a { position: relative; display: block; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #111627; }
+.lt-gallery-grid img { width: 100%; height: 100%; object-fit: cover; transition: transform 400ms var(--ease); }
+.lt-gallery-grid a:hover img { transform: scale(1.04); }
+.lt-gallery-grid span {
+  position: absolute; inset: auto 0 0 0; padding: 18px 8px 6px; font-family: var(--lt-ui); font-size: 0.7rem; font-weight: 700; color: #fff;
+  background: linear-gradient(to top, rgba(5,7,14,0.85), rgba(5,7,14,0));
+}
+
+/* ---- Listen everywhere ---- */
+.lt-apps { margin-top: var(--sp-6); display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: var(--sp-6) var(--sp-8); align-items: start; }
+.lt-app-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--sp-6); }
+.lt-app-list li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 10px; padding: 10px 0; border-bottom: 1px solid var(--lt-rule); font-family: var(--lt-ui); font-size: 0.88rem; }
+.lt-app-list .lt-app-name { font-weight: 700; color: var(--lt-ink); }
+.lt-app-list .lt-app-links { display: flex; gap: 12px; font-size: 0.8rem; }
+.lt-app-list .lt-app-links a { color: var(--show-color-text); font-weight: 700; }
+.lt-app-list a:hover { text-decoration: underline; }
+
+/* ---- Partners ---- */
+.lt-partners { margin-top: var(--sp-10); border-top: 1px solid var(--lt-rule); padding-top: var(--sp-4); display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; font-family: var(--lt-ui); font-size: 0.86rem; }
+.lt-partners strong { color: var(--lt-muted); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.74rem; }
+.lt-partners a { color: var(--lt-ink); font-weight: 600; }
+.lt-partners a:hover { color: var(--nn-white); text-decoration: underline; }
+
+/* ---- Listen rail ---- */
+.lt-listen > ul {
+  list-style: none; margin: 0; padding: 0 0 var(--sp-3); display: flex; gap: var(--sp-4); overflow-x: auto;
+  scroll-snap-type: x mandatory; scrollbar-width: thin;
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 56px), transparent);
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 56px), transparent);
+}
+.lt-listen > ul > li { flex: 0 0 150px; scroll-snap-align: start; }
+.lt-listen > ul img { width: 150px; height: 150px; border-radius: 10px; border-bottom: 3px solid var(--show-color); object-fit: cover; }
+.lt-listen-name { font-family: var(--lt-ui); font-weight: 700; font-size: 0.88rem; line-height: 1.3; margin: 8px 0 2px; color: var(--lt-ink); }
+.lt-listen-name a:hover { color: var(--nn-white); text-decoration: underline; }
+.lt-listen-sched { font-family: var(--lt-ui); font-size: 0.75rem; color: var(--lt-muted); margin: 0; }
+.lt-listen-links { font-family: var(--lt-ui); font-size: 0.78rem; display: flex; gap: 10px; margin-top: 4px; }
+.lt-listen-links a { color: var(--show-color-text); font-weight: 700; }
+.lt-listen-links a:hover { text-decoration: underline; }
+
+.lt-note { font-family: var(--lt-ui); font-size: 0.8rem; color: var(--lt-muted); margin-top: var(--sp-8); line-height: 1.5; }
+.lt-note a, .lt-edition-note a { color: var(--lt-cyan); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+
+.lt-empty { padding: var(--sp-12) 0; font-family: var(--lt-ui); color: var(--lt-muted); }
+
+/* ---- Responsive ---- */
+@media (max-width: 1100px) {
+  .lt-grid-4, .lt-watch-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lt-grid-3, .lt-charts.is-single .lt-popular ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lt-shorts ul { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .lt-gallery-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .lt-top { grid-template-columns: minmax(0, 1fr); gap: var(--sp-6); }
+  .lt-latest { border-left: 0; padding-left: 0; }
+  /* Stacked under the lead, the full Latest list pushed the top stories
+     three screens down; the ticker above already carries every headline. */
+  .lt-latest li:nth-child(n+6) { display: none; }
+  .lt-section-grid { grid-template-columns: minmax(0, 1fr); }
+  .lt-pair { gap: var(--sp-6); }
+  .lt-signup, .lt-personal, .lt-convo-grid, .lt-charts, .lt-trust, .lt-shelf, .lt-apps, .lt-claim-wrap .nn-mira-claim, .lt-today-grid, .lt-about { grid-template-columns: minmax(0, 1fr); }
+  .lt-claim-wrap .nn-mira-claim__claim { grid-row: auto; font-size: 1.12rem; }
+}
+@media (max-width: 640px) {
+  .lt-page .container { padding-left: var(--sp-4); padding-right: var(--sp-4); }
+  .lt-page { padding-top: calc(var(--nav-height, 72px) + var(--sp-2)); }
+  .lt-lead .lt-media { border-radius: 8px; }
+  .lt-grid-4 { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  /* On a phone the top stories read as a list: headline beside a thumbnail,
+     the BBC/Guardian mobile pattern, not four full-width pictures. */
+  .lt-grid-4 .lt-card { display: grid; grid-template-columns: minmax(0, 1fr) 112px; gap: var(--sp-3); padding: 14px 0; border-bottom: 1px solid var(--lt-rule); }
+  .lt-grid-4 .lt-card .lt-media { order: 2; border-radius: 6px; border-bottom-width: 2px; }
+  .lt-grid-4 .lt-card .lt-card-body { order: 1; padding-top: 0; }
+  .lt-grid-4 .lt-card .lt-hl { font-size: 1.02rem; }
+  .lt-grid-4 .lt-card .lt-more, .lt-grid-4 .lt-card .lt-more-label { display: none; }
+  .lt-row { grid-template-columns: minmax(0, 1fr) 112px; }
+  .lt-pair { grid-template-columns: minmax(0, 1fr); }
+  .lt-feature .lt-hl, .lt-pair .lt-hl { font-size: 1.24rem; }
+  .lt-grid-3, .lt-charts.is-single .lt-popular ol { grid-template-columns: minmax(0, 1fr); }
+  .lt-watch-grid { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  /* Videos read as a list on a phone, like the top stories. */
+  .lt-video { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: var(--sp-3); padding: 12px 0; border-bottom: 1px solid var(--lt-rule); align-items: start; }
+  .lt-video .lt-hl { margin-top: 0; font-size: 0.98rem; }
+  .lt-video .lt-media { border-radius: 6px; border-bottom-width: 2px; }
+  .lt-video .lt-media::after { width: 30px; height: 22px; left: 6px; bottom: 6px; background-size: 13px; }
+  .lt-video .lt-media.is-card { padding: 8px 8px 8px 42px; }
+  .lt-video .lt-media.is-card span { font-size: 0.7rem; }
+  .lt-shorts ul { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; gap: var(--sp-3); }
+  .lt-shorts ul::-webkit-scrollbar { display: none; }
+  .lt-shorts li { flex: 0 0 138px; scroll-snap-align: start; }
+  .lt-convo-feature { padding: var(--sp-4); }
+  .lt-convo-top { grid-template-columns: 84px minmax(0, 1fr); gap: var(--sp-3); }
+  .lt-convo-top img { width: 84px; height: 84px; border-radius: 8px; }
+  .lt-convo-hook { font-size: 1.04rem; margin-top: var(--sp-4); }
+  .lt-convo-feature .lt-lead-audio audio { width: 100%; }
+  .lt-form-row { flex-direction: column; }
+  .lt-form button { width: 100%; }
+  .lt-signup, .lt-personal { padding: var(--sp-5) var(--sp-4); }
+  .lt-gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lt-app-list { grid-template-columns: minmax(0, 1fr); }
+  .lt-tiles, .lt-trust .lt-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lt-markets { flex-wrap: wrap; }
+  /* A phone scrolls the strip sideways, like the Latest ticker. */
+  .lt-markets ul {
+    flex-basis: 100%; order: 3; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; white-space: nowrap;
+    -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 32px), transparent);
+    mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 32px), transparent);
+  }
+  .lt-markets ul::-webkit-scrollbar { display: none; }
+  .lt-mk-group { flex-wrap: nowrap; flex: none; }
+  .lt-schedule li { grid-template-columns: 8.6rem minmax(0, 1fr); }
+  .lt-book { grid-template-columns: 76px minmax(0, 1fr); }
+  .lt-book-cover { width: 76px; }
+  .lt-edition-inner { display: block; padding: var(--sp-4); }
+  .lt-edition-inner::after { content: ""; display: table; clear: both; }
+  .lt-edition-cover { float: left; margin: 0 var(--sp-3) var(--sp-2) 0; }
+  .lt-edition-cover img { width: 76px; height: 76px; border-radius: 8px; }
+  .lt-edition .lt-edition-note, .lt-edition .lt-lead-audio { clear: both; }
+  .lt-edition .lt-lead-audio audio { width: 100%; }
+  .lt-feature .lt-more, .lt-feature .lt-more-label, .lt-pair .lt-more, .lt-pair .lt-more-label { display: none; }
+  .lt-block-head h2 { font-size: 1.3rem; }
+  .lt-hide-sm { display: none; }
+  .lt-listen > ul > li { flex-basis: 128px; }
+  .lt-listen > ul img { width: 128px; height: 128px; }
+  .lt-signup { padding: var(--sp-6) var(--sp-4); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lt-media img { transition: none; }
+  a.lt-media:hover img { transform: none; }
+}
+</style>
 {% endblock %}
 
-{% block content %}
-    <!-- Hero -->
-    <section class="network-hero">
-        <div class="network-hero-bg">
-            <!-- Animated gradient orbs -->
-            <div class="hero-orb hero-orb-1"></div>
-            <div class="hero-orb hero-orb-2"></div>
-            <div class="hero-orb hero-orb-3"></div>
-            <!-- Grid overlay -->
-            <div class="hero-grid"></div>
-        </div>
-        <div class="network-hero-content">
-            <div class="hero-badge">Independent Podcast Network</div>
-            <h1><span class="gradient-text">Nerra</span> Network</h1>
-            <p class="network-hero-tagline">Feed your curiosity. Not your anxiety.</p>
-            <p class="hero-subtitle">{{ all_shows|length }} free shows on Tesla, SpaceX, AI, markets, space, science, world news, first-principles thinking and more — most of them new every day, in {{ listening_language_count | default(4) }} listening languages. Independently produced in Vancouver, Canada.</p>
-            {#- Most-listened first (generate_html._rank_shows_by_audience): a
-                phone shows the first nine icons, so the order decides which. -#}
-            {%- set _ranked = ranked_shows | default(all_shows) -%}
-            <div class="hero-show-orbit">
-                {% for s in _ranked %}
-                {% set _pbase = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
-                <a href="{{ path_prefix }}{{ s.show_page }}" class="orbit-card" style="--i: {{ loop.index0 }};" title="{{ s.name }}">
-                    <picture>
-                        <source type="image/webp" srcset="{{ path_prefix }}{{ _pbase }}-400.webp 400w, {{ path_prefix }}{{ _pbase }}-800.webp 800w" sizes="120px">
-                        {#- Only the first 1–2 covers compete for early bandwidth;
-                            seven `fetchpriority=high` images starved the hero text LCP
-                            (Oct 16 2026 security/perf pass; was 7 after Sep 2026 cut
-                            from 17). -#}
-                        <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400"{% if loop.index0 < 2 %} loading="eager" fetchpriority="high"{% else %} loading="lazy"{% endif %} />
-                    </picture>
-                </a>
-                {% endfor %}
-            </div>
-            <div class="hero-cta-row">
-                <a href="#shows" class="nn-btn nn-btn-primary nn-btn-lg hero-cta-primary" style="--show-color:var(--nn-purple);">Explore Shows</a>
-                <a href="{{ path_prefix }}start-here.html" class="nn-btn nn-btn-lg">Start Here</a>
-                <a href="{{ path_prefix }}player.html" class="nn-btn nn-btn-lg">Open Player</a>
-                <a href="#subscribe" class="nn-btn nn-btn-lg">Subscribe Free</a>
-            </div>
+{#- ---------------------------------------------------------------------- -#}
+{%- from "_macros.html.j2" import show_card, mira_claim, soft_personal_interest, soft_personal_hero_band -%}
+{%- macro story_href(s) -%}{{ path_prefix }}{{ s.post_url or s.show_page }}{%- endmacro -%}
 
-            <!-- Network proof stats -->
-            <div class="hero-proof-stats" aria-label="Network stats">
-                <div class="proof-stat">
-                    <strong>{{ all_shows|length }}</strong>
-                    <span>shows</span>
-                </div>
-                <div class="proof-stat">
-                    <strong>{{ '{:,}'.format(total_episodes) }}</strong>
-                    <span>episodes shipped</span>
-                </div>
-                <div class="proof-stat">
-                    <strong>0</strong>
-                    <span>ads</span>
-                </div>
-                <div class="proof-stat">
-                    <strong>{{ listening_language_count | default(4) }}</strong>
-                    <span>listening languages</span>
-                </div>
-            </div>
-        </div>
-    </section>
+{%- macro media(s, eager=false) -%}
+{%- if s.image_url -%}
+<a href="{{ story_href(s) }}" class="lt-media{% if s.image_orientation == 'portrait' %} is-portrait{% endif %}" tabindex="-1" aria-hidden="true">
+    <img src="{{ s.image_url }}" alt="AI-generated scene illustrating {{ s.show_name }} episode {{ s.episode_num }}"
+         width="{{ 450 if s.image_orientation == 'portrait' else 800 }}" height="{{ 800 if s.image_orientation == 'portrait' else 450 }}"
+         {% if eager %}fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async">
+</a>
+{%- else -%}
+<a href="{{ story_href(s) }}" class="lt-media is-cover" tabindex="-1" aria-hidden="true">
+    <picture>
+        {% if s.cover_webp %}<source type="image/webp" srcset="{{ path_prefix }}{{ s.cover_webp }}">{% endif %}
+        <img src="{{ path_prefix }}{{ s.cover_url }}" alt="{{ s.show_name }} cover art" width="400" height="400"
+             {% if eager %}fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async">
+    </picture>
+</a>
+{%- endif -%}
+{%- endmacro -%}
 
-    {#- Soft Personal one-field capture on the homepage — same contract
-        as the YouTube-landing show pages. Server-rendered static HTML
-        (wrapper #home-soft-personal, inner #soft-personal-hero) so it
-        adds no CLS. Free interest only; paid path is /join.html. -#}
-    {{ soft_personal_hero_band(path_prefix, 'network', capture_source_site, wrapper_id='home-soft-personal') }}
+{%- macro kicker(s, with_hub=true) -%}
+<p class="lt-kicker">
+    {% if with_hub and s.hub_heading %}<span class="lt-hub">{{ s.hub_heading }}</span>{% endif %}
+    <a href="{{ path_prefix }}{{ s.show_page }}">{{ s.show_name }}</a>
+</p>
+{%- endmacro -%}
 
-    {# Decorative ticker, driven from the registry so it can never drift
-       from the lineup (the hand-maintained list was stuck at 15 of 17
-       shows). Hidden from assistive tech — it duplicates the show grid. #}
-    <div class="topic-ticker" aria-hidden="true">
-        <div class="ticker-track">
-            {% for _pass in range(2) %}{% for s in ranked_shows | default(all_shows) %}
-            <span>{{ s.name }}</span>
-            {% endfor %}{% endfor %}
+{#- A story's publication stamp: absolute Eastern time server-side (the
+    summary record's own time; a record without one prints its date only),
+    upgraded to "2 hours ago" by the script at the end of the page, which
+    keeps the absolute stamp as the tooltip. -#}
+{%- macro when(st, today=true) -%}
+{%- if st and st.label -%}
+{%- if today and st.is_today %}<span class="lt-today" data-today="{{ st.day }}">Today</span> {% endif -%}
+<time datetime="{{ st.iso }}" data-rel title="{{ st.label }}">{{ st.label }}</time>
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro meta(s, listen=true) -%}
+<div class="lt-meta">
+    {% if s.stamp and s.stamp.label %}<span class="lt-when">{{ when(s.stamp) }}</span>{% elif s.date %}<time datetime="{{ s.date_raw }}">{{ s.date }}</time>{% endif %}
+    {% if s.post_url %}<span class="lt-dot" aria-hidden="true">•</span><a href="{{ path_prefix }}{{ s.post_url }}">Read</a>{% endif %}
+    {% if listen %}<span class="lt-dot" aria-hidden="true">•</span><a href="{{ path_prefix }}{{ s.show_page }}">Listen</a>{% endif %}
+</div>
+{%- endmacro -%}
+
+{%- macro more_list(s) -%}
+{%- if s.more and s.post_url -%}
+<p class="lt-more-label">Also in this episode</p>
+<ul class="lt-more">
+    {% for h in s.more %}<li{% if s.lang %} lang="{{ s.lang }}"{% endif %}><a href="{{ path_prefix }}{{ s.post_url }}">{{ h }}</a></li>{% endfor %}
+</ul>
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro row(s, with_hub=false) -%}
+<li class="lt-row" style="--show-color:{{ s.brand_color }};">
+    <div>
+        {{ kicker(s, with_hub) }}
+        <h3 class="lt-hl"{% if s.lang %} lang="{{ s.lang }}"{% endif %}><a href="{{ story_href(s) }}">{{ s.hook }}</a></h3>
+        {{ meta(s) }}
+    </div>
+    {{ media(s) }}
+</li>
+{%- endmacro -%}
+
+{#- Conversations: the interview shows, the site's strongest web draw. The
+    claim comes from engine.brand through the mira_claim macro, never typed
+    here; the guest's terms are the claim's own basis paragraph. -#}
+{%- macro conversations_block() -%}
+{%- if conversations -%}
+{% set c = conversations[0] %}
+{% set cl = conversation_links %}
+<section class="lt-block container" id="conversations" aria-labelledby="lt-convo-h">
+    <div class="lt-block-head">
+        <h2 id="lt-convo-h">Conversations</h2>
+        <p class="lt-block-sub">Real people, interviewed live by {{ mira.host_name }}, the network's AI host.</p>
+        <div class="lt-block-links">
+            {% if cl.hub %}<a href="{{ path_prefix }}{{ cl.hub }}">All interviews →</a>{% endif %}
+            {% if cl.mira %}<a href="{{ path_prefix }}{{ cl.mira }}">Meet {{ mira.host_name }} →</a>{% endif %}
         </div>
     </div>
-
-    {# The legacy standalone stats bar was removed Aug 30 2026: it repeated
-       the hero-proof-stats band verbatim two screens apart (operator
-       screenshot — "duplicating elements"). The hero band is the one that
-       stays; do not reintroduce a second cadence/episodes/languages/ads
-       strip below the ticker. #}
-
-    {# May 2026 operator request: "Find Your Show" interactive picker
-       was removed and replaced by the Fresh Episodes / Blog / Why Nerra
-       triplet (in that order) — these three sections used to live
-       BELOW the Show Showcase grid; they now sit in the prime slot
-       between the stats bar and the show grid so the page leads with
-       what listeners actually came for (recent episodes + recent
-       writing + the network's pitch) before showing the full
-       show-grid catalogue. The old triplet positions below have been
-       removed in the same edit to avoid duplication. #}
-
-    <!-- Latest Across the Network -->
-    <section id="latest" class="nn-section" style="background:var(--nn-bg-alt);">
-        <div class="container">
-            <div class="nn-section-header">
-                <div class="section-label">Fresh Episodes</div>
-                <h2>Latest Across the Network</h2>
-                <p>The ten newest episodes across the network, freshest first.</p>
+    <div class="lt-convo-grid">
+        <article class="lt-convo-feature" style="--show-color:{{ c.brand_color }};">
+            <div class="lt-convo-top">
+                <a href="{{ path_prefix }}{{ c.post_url }}" tabindex="-1" aria-hidden="true">
+                    <picture>
+                        {% if c.cover_webp %}<source type="image/webp" srcset="{{ path_prefix }}{{ c.cover_webp }}">{% endif %}
+                        <img src="{{ path_prefix }}{{ c.cover_url }}" alt="{{ c.show_name }} cover art" width="132" height="132" loading="lazy" decoding="async">
+                    </picture>
+                </a>
+                <div>
+                    <p class="lt-kicker"><a href="{{ path_prefix }}{{ c.show_page }}">{{ c.show_name }}</a>{% if c.date %} <span class="lt-hub" style="color:var(--lt-muted);">{{ c.date }}</span>{% endif %}</p>
+                    <h3 class="lt-guest"><a href="{{ path_prefix }}{{ c.post_url }}">{{ c.guest }}</a></h3>
+                    {% if c.identifier %}<p class="lt-guest-id">{{ c.identifier }}</p>{% endif %}
+                </div>
             </div>
-        </div>
-        {% if latest_episodes %}
-        <div class="latest-scroll-row">
-            {% for ep in latest_episodes %}
-            <div class="latest-scroll-card glass-card">
-                <div class="episode-card-show" style="background:{{ ep.brand_color }};">{{ ep.show_name }}</div>
-                {% if ep.blog_url %}
-                <a href="{{ path_prefix }}{{ ep.blog_url }}" class="episode-card-title" style="display:block;color:inherit;text-decoration:none;">{{ ep.title }}</a>
-                {% else %}
-                <div class="episode-card-title">{{ ep.title }}</div>
-                {% endif %}
-                <div class="episode-card-date">{{ ep.date_display }}</div>
-                {% if ep.audio_url %}
-                <audio controls preload="none" src="{{ ep.audio_url }}" aria-label="{{ ep.show_name }} episode audio" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
-                {% endif %}
-                {% if ep.blog_url %}
-                <a href="{{ path_prefix }}{{ ep.blog_url }}" style="display:inline-block;margin-top:var(--sp-2);font-family:var(--font-ui);font-size:0.8rem;color:color-mix(in srgb, {{ ep.brand_color }}, white 35%);text-decoration:none;">Read article →</a>
-                {% endif %}
+            {% if c.hook %}<p class="lt-convo-hook">{{ c.hook }}</p>{% endif %}
+            <div class="lt-meta">
+                {% if c.run_time %}<span>{{ c.run_time }}</span><span class="lt-dot" aria-hidden="true">•</span>{% endif %}
+                <span>Hosted by {{ mira.host_name }}{% if c.cohost %} with {{ c.cohost }}{% endif %}</span>
             </div>
-            {% endfor %}
+            <div class="lt-lead-audio">
+                {% if c.audio_url %}<audio controls preload="none" src="{{ c.audio_url }}" aria-label="Play {{ c.show_name }} episode {{ c.episode }} with {{ c.guest }}"></audio>{% endif %}
+                <a class="lt-btn lt-btn--primary" href="{{ path_prefix }}{{ c.post_url }}">Read the conversation</a>
+            </div>
+        </article>
+        <div>
+            {% if conversations|length > 1 %}
+            <p class="lt-sublabel">More conversations</p>
+            <ul class="lt-convo-list">
+                {% for x in conversations[1:] %}
+                <li style="--show-color:{{ x.brand_color }};">
+                    <p class="lt-kicker"><a href="{{ path_prefix }}{{ x.show_page }}">{{ x.show_name }}</a>{% if x.date %} <time style="color:var(--lt-muted);font-weight:500;letter-spacing:0;text-transform:none;">{{ x.date }}</time>{% endif %}</p>
+                    <h3 class="lt-hl"><a href="{{ path_prefix }}{{ x.post_url }}">{{ x.guest }}</a></h3>
+                    {% if x.identifier %}<p class="lt-guest-id">{{ x.identifier }}</p>{% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% if cl.apply %}
+            <div class="lt-apply">
+                <h3>Be interviewed by {{ mira.host_name }}</h3>
+                <p>Tell us what you are building or have learned.{% if cl.guest_picks %} Every guest's book, tool and bet are on <a href="{{ path_prefix }}{{ cl.guest_picks }}" style="color:var(--lt-cyan);text-decoration:underline;">the guest picks page</a>.{% endif %}</p>
+                <div class="lt-signup-actions">
+                    {% for a in cl.apply %}<a class="lt-btn{% if loop.first %} lt-btn--primary{% endif %}" href="{{ path_prefix }}{{ a.url }}">Apply to {{ a.show_name }}</a>{% endfor %}
+                </div>
+            </div>
+            {% endif %}
         </div>
-        <div class="container latest-more">
-            <a href="{{ path_prefix }}blog/index.html" class="nn-btn">Every episode article &rarr;</a>
-        </div>
-        {% else %}
-        <div class="latest-scroll-row">
-            <p style="color:var(--nn-text-muted);padding:2rem;text-align:center;width:100%;">Episodes will appear here once available.</p>
+    </div>
+    <div class="lt-claim-wrap">
+        {{ mira_claim() }}
+    </div>
+</section>
+{%- endif -%}
+{%- endmacro -%}
+
+{#- Watch: the newest English long-form per show and the newest hook Short
+    per show, from the committed youtube_videos.json indexes. The picture is
+    the episode's own scene art (gallery), else a titled card — never a
+    YouTube-hosted thumbnail. -#}
+{%- macro watch_block() -%}
+{%- if watch and (watch.longs or watch.shorts) -%}
+<section class="lt-block container" id="watch" aria-labelledby="lt-watch-h">
+    <div class="lt-block-head">
+        <h2 id="lt-watch-h">Watch</h2>
+        <p class="lt-block-sub">Every episode is also a video. Subscribe on YouTube:</p>
+        {% if watch.channels %}
+        <div class="lt-channels">
+            {% for ch in watch.channels %}<a class="lt-chip" href="{{ ch.url }}" target="_blank" rel="noopener"{% if ch.lang %} lang="{{ ch.lang }}"{% endif %}><span class="lt-yt-badge" aria-hidden="true">▶</span>{{ ch.handle }} <small class="lt-chip-count">{{ ch.label }}</small></a>{% endfor %}
         </div>
         {% endif %}
-    </section>
+    </div>
+    {% if watch.longs %}
+    <div class="lt-watch-grid">
+        {% for v in watch.longs %}
+        <article class="lt-video" style="--show-color:{{ v.brand_color }};">
+            {% if v.image_url %}
+            <a href="{{ v.watch_url }}" class="lt-media" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
+                <img src="{{ v.image_url }}" alt="AI-generated scene from {{ v.show_name }} episode {{ v.episode }}" width="{{ 450 if v.image_orientation == 'portrait' else 800 }}" height="{{ 800 if v.image_orientation == 'portrait' else 450 }}" loading="lazy" decoding="async">
+            </a>
+            {% else %}
+            <a href="{{ v.watch_url }}" class="lt-media is-card" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span>{{ v.show_name }}</span></a>
+            {% endif %}
+            <div>
+                <h3 class="lt-hl"><a href="{{ v.watch_url }}" target="_blank" rel="noopener">{{ v.display_title }}</a></h3>
+                <p class="lt-kicker" style="margin-top:6px;"><a href="{{ path_prefix }}{{ v.show_page }}">{{ v.show_name }}</a> <time datetime="{{ v.date_raw }}" style="color:var(--lt-muted);font-weight:500;letter-spacing:0;text-transform:none;">{{ v.date }}</time></p>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if watch.shorts %}
+    <div class="lt-shorts">
+        <p class="lt-sublabel">Shorts</p>
+        <ul>
+            {% for v in watch.shorts %}
+            <li class="lt-short" style="--show-color:{{ v.brand_color }};">
+                <a href="{{ v.watch_url }}" class="lt-media{% if not v.image_url %} is-cover{% endif %}" target="_blank" rel="noopener">
+                    {% if v.image_url %}<img src="{{ v.image_url }}" alt="AI-generated scene from {{ v.show_name }} episode {{ v.episode }}" width="{{ 450 if v.image_orientation == 'portrait' else 800 }}" height="{{ 800 if v.image_orientation == 'portrait' else 450 }}" loading="lazy" decoding="async">{% endif %}
+                    <span class="lt-short-title">{{ v.display_title }}</span>
+                </a>
+                <p class="lt-kicker"><a href="{{ path_prefix }}{{ v.show_page }}">{{ v.show_name }}</a></p>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</section>
+{%- endif -%}
+{%- endmacro -%}
 
-    <!-- Nerra Personal promo (Aug 2026: the paid product had no homepage
-         presence beyond a footer link; Aug 30: promoted into the prime
-         slot after Fresh Episodes and rebuilt as a real product band —
-         features + lineup covers + both entry points). -->
-    <section class="nn-section" id="personal-promo">
-        <div class="container" style="max-width:1040px;">
-            <div style="border:1px solid var(--nn-border);border-radius:20px;background:var(--nn-surface);position:relative;overflow:hidden;">
-                <div style="position:absolute;inset:0;background:
-                    radial-gradient(ellipse at 88% 10%, rgba(0,212,255,0.14), transparent 55%),
-                    radial-gradient(ellipse at 5% 95%, rgba(107,71,255,0.12), transparent 50%);pointer-events:none;"></div>
-                <div style="position:relative;display:grid;grid-template-columns:minmax(300px,1.2fr) minmax(260px,1fr);gap:2rem;padding:2.4rem 2.2rem;align-items:center;" class="personal-promo-grid">
-                    <div>
-                        <div class="section-label">Nerra Personal</div>
-                        <h2 style="font-family:var(--font-heading);margin:0.4rem 0 0.7rem;font-size:1.9rem;line-height:1.15;">Your own daily show, built from the shows you already love</h2>
-                        <p style="color:var(--nn-text-muted);margin:0 0 1.1rem;">
-                            Pick your shows and their order. Every morning Mira
-                            assembles them into <strong>one private podcast
-                            episode made just for you</strong> — greeting you by
-                            name, with chapters for every segment.</p>
-                        <ul style="list-style:none;margin:0 0 1.4rem;padding:0;display:grid;gap:0.45rem;color:var(--nn-text-muted);font-size:0.95rem;">
-                            <li>✓ One feed, your lineup, your order — in any podcast app</li>
-                            <li>✓ Mira anchors it and greets you by name</li>
-                            <li>✓ Free account: newsletter, gallery downloads, book discounts</li>
-                            <li>✓ $4.99/mo · cancel any time</li>
-                        </ul>
-                        <p style="margin:0;display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;">
-                            <a class="nn-btn nn-btn-primary" href="{{ path_prefix }}join.html">Build your show →</a>
-                            <a class="nn-btn" href="{{ path_prefix }}account.html">Member sign in</a>
-                            <a class="nn-btn" href="{{ path_prefix }}nerra-daily.html">Try Nerra Daily free</a>
-                        </p>
-                        {#- Soft Personal (Sep 2026): home Personal band used to
-                            push join only. Soft interest is tips/reminder email
-                            — never a charge; paid stays the primary button. -#}
-                        <p style="margin:0.85rem 0 0;" id="soft-interest">
-                            {{ soft_personal_interest(path_prefix, compact=true) }}
-                        </p>
-                    </div>
-                    <div aria-hidden="true" style="display:grid;gap:0.6rem;">
-                        <div style="font-family:var(--font-ui);font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--nn-text-muted);">Your morning, one feed</div>
-                        {#- Sample lineup: only shows that are actually in the
-                            Personal lineup (Nerra Daily and the two Mira
-                            interview shows are not). -#}
-                        {% set _lineup_sample = all_shows | rejectattr('slug', 'in', ['nerra_daily', 'age_of_ai', 'nerra_voices', 'finansy_prosto', 'privet_russian']) | list %}
-                        {% for s in _lineup_sample[:4] %}
-                        {% set _pbase = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
-                        <div style="display:flex;align-items:center;gap:0.7rem;border:1px solid var(--nn-border);border-radius:12px;padding:0.5rem 0.7rem;background:color-mix(in srgb, var(--nn-surface) 70%, transparent);">
-                            <picture>
-                                <source type="image/webp" srcset="{{ path_prefix }}{{ _pbase }}-400.webp">
-                                <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="" width="44" height="44" loading="lazy" style="width:44px;height:44px;border-radius:8px;">
-                            </picture>
-                            <span style="font-size:0.9rem;">{{ s.name }}</span>
-                            <span style="margin-left:auto;font-size:0.75rem;color:var(--nn-text-muted);">{{ loop.index }}</span>
-                        </div>
-                        {% endfor %}
-                        <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.8rem;color:var(--nn-cyan,#00D4FF);">
-                            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:currentColor;"></span>
-                            PRIVATE FEED · chapters + Mira's links between shows
-                        </div>
-                    </div>
+{% block content %}
+<div class="lt-page">
+{% set p = page %}
+
+<header class="lt-masthead container"><div class="lt-masthead-inner">
+    <div class="lt-masthead-meta">
+        <time class="lt-dateline" datetime="{{ masthead.date_iso }}">{{ masthead.date }}</time>
+        <span>Updated <time datetime="{{ masthead.updated_iso }}">{{ masthead.updated }}</time></span>
+        {% if p.today_new %}<span>{{ p.today_new }} new {{ 'episode' if p.today_new == 1 else 'episodes' }} today</span>{% endif %}
+        {% if p.story_count %}<span>Stories from {{ p.story_count }} shows</span>{% endif %}
+    </div>
+    <div class="lt-masthead-row">
+        <h1 class="lt-wordmark">Nerra Network <span>Today</span></h1>
+        <p class="lt-standfirst">News and ideas from {{ public_show_count }} free shows on space, AI, markets, world news, science and more. Every story is sourced, every claim is checked against its source, and you can read the article or hear the episode it came from.</p>
+    </div>
+</div></header>
+
+{#- Markets & launches: committed files only, each value under its as-of
+    date (engine.newsroom.market_strip). A stale or undated value is absent. -#}
+{%- set mk = markets -%}
+{% if mk and (mk.groups or mk.launch) %}
+<div class="container"><aside class="lt-markets" id="markets" aria-label="Markets and launches">
+    <span class="lt-markets-h">Markets &amp; launches</span>
+    <ul>
+        {% for g in mk.groups %}
+        <li class="lt-mk-group"><span class="lt-mk-label">{{ g.label }} · <time datetime="{{ g.as_of_iso }}">{{ g.as_of }}</time></span>
+            {% for q in g.quotes %}<span class="lt-quote is-{{ q.direction }}"><b class="lt-quote-sym">{{ q.symbol }}</b> <span class="lt-quote-px">{{ q.price }}</span>{% if q.change %} <span class="lt-quote-chg">{{ q.change }}</span>{% endif %}</span>{% endfor %}
+        </li>
+        {% endfor %}
+        {% if mk.launch %}
+        {% set l = mk.launch %}
+        <li class="lt-mk-group lt-launch" data-expires="{{ l.net_iso }}"><span class="lt-mk-label">Next SpaceX launch · schedule of <time datetime="{{ l.as_of_iso }}">{{ l.as_of_short }}</time></span>
+            <span class="lt-launch-name">{{ l.mission }}{% if l.rocket %} · {{ l.rocket }}{% endif %}</span>
+            <span class="lt-quote-px">no earlier than <time datetime="{{ l.net_iso }}">{{ l.net }}</time></span>
+        </li>
+        {% endif %}
+    </ul>
+    <a class="lt-markets-more" href="#dashboards">Dashboards →</a>
+</aside></div>
+{% endif %}
+
+{% if not p.lead %}
+<div class="container lt-empty">
+    <p>No stories to show right now. Every show is on <a href="{{ path_prefix }}explore.html">the shows page</a>.</p>
+</div>
+{% else %}
+
+<div class="container"><nav class="lt-secnav" aria-label="Sections on this page">
+    <ul>
+        <li><a href="#latest">Latest</a></li>
+        {% if developing %}<li><a href="#developing">Developing</a></li>{% endif %}
+        {% if conversations %}<li><a href="#conversations">Conversations</a></li>{% endif %}
+        {% if p.top %}<li><a href="#top-stories">Top stories</a></li>{% endif %}
+        {% if edition or schedule %}<li><a href="#today">Today</a></li>{% endif %}
+        {% if watch and (watch.longs or watch.shorts) %}<li><a href="#watch">Watch</a></li>{% endif %}
+        {% for sec in p.sections %}<li><a href="#section-{{ sec.id }}">{{ sec.heading }}</a></li>{% endfor %}
+        {% if p.more %}<li><a href="#section-more">More</a></li>{% endif %}
+        {% if glance or trust or corrections %}<li><a href="#numbers">Our record</a></li>{% endif %}
+        {% if dashboards or trackers %}<li><a href="#dashboards">Dashboards</a></li>{% endif %}
+        <li><a href="#personal-promo">Nerra Personal</a></li>
+        <li><a href="#shows">All shows</a></li>
+        <li><a href="#subscribe">Subscribe</a></li>
+    </ul>
+</nav></div>
+
+<div class="lt-ticker container" role="region" aria-label="Latest headlines">
+    <span class="lt-ticker-label">Latest</span>
+    <ul>
+        {% for s in p.latest %}
+        <li style="--show-color:{{ s.brand_color }};"><a href="{{ story_href(s) }}"><span class="lt-ticker-show">{{ s.show_name }}</span><span{% if s.lang %} lang="{{ s.lang }}"{% endif %}>{{ s.ticker_text }}</span></a></li>
+        {% endfor %}
+    </ul>
+</div>
+
+{#- Lead story + Latest list -#}
+<section class="lt-top container" aria-label="Lead story">
+    {% set s = p.lead %}
+    <article class="lt-lead" style="--show-color:{{ s.brand_color }};">
+        {{ media(s, eager=true) }}
+        <div class="lt-lead-body">
+            {{ kicker(s) }}
+            <h2 class="lt-hl"{% if s.lang %} lang="{{ s.lang }}"{% endif %}><a href="{{ story_href(s) }}">{{ s.hook }}</a></h2>
+            {{ meta(s, listen=false) }}
+            {{ more_list(s) }}
+            <div class="lt-lead-audio">
+                {% if s.audio_url %}<audio controls preload="none" src="{{ s.audio_url }}" aria-label="Play {{ s.show_name }} episode {{ s.episode_num }}"></audio>{% endif %}
+                {% if s.post_url %}<a class="lt-btn lt-btn--primary" href="{{ path_prefix }}{{ s.post_url }}">Read the full story</a>{% endif %}
+                <a class="lt-btn" href="{{ path_prefix }}{{ s.show_page }}">More from {{ s.show_name }}</a>
+            </div>
+            {%- if lead_share %}
+            {#- Each shared URL is built by engine.funnel (engine.blog._share_urls),
+                the blog share row's own builder, so a click a reader's share
+                earns is attributable to this story and the platform. -#}
+            <div class="lt-share" aria-label="Share this story">
+                <span>Share</span>
+                <a href="https://twitter.com/intent/tweet?url={{ lead_share.x | urlencode }}&amp;text={{ s.hook | urlencode }}" target="_blank" rel="noopener">X</a>
+                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ lead_share.linkedin | urlencode }}" target="_blank" rel="noopener">LinkedIn</a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u={{ lead_share.facebook | urlencode }}" target="_blank" rel="noopener">Facebook</a>
+                <a href="https://wa.me/?text={{ (s.hook ~ ' — ' ~ lead_share.whatsapp) | urlencode }}" target="_blank" rel="noopener">WhatsApp</a>
+                <a href="mailto:?subject={{ s.hook | urlencode }}&amp;body={{ lead_share.email | urlencode }}">Email</a>
+            </div>
+            {%- endif %}
+        </div>
+    </article>
+
+    <aside class="lt-latest" id="latest" aria-labelledby="lt-latest-h">
+        <h2 class="lt-rail-h" id="lt-latest-h">Latest across the network</h2>
+        <ol>
+            {% for s in p.latest %}{% if s is not sameas p.lead %}
+            <li style="--show-color:{{ s.brand_color }};">
+                <p class="lt-kicker"><a href="{{ path_prefix }}{{ s.show_page }}">{{ s.show_name }}</a>{% if s.stamp and s.stamp.label %} <span class="lt-rail-when">{{ when(s.stamp) }}</span>{% endif %}</p>
+                <h3 class="lt-hl"{% if s.lang %} lang="{{ s.lang }}"{% endif %}><a href="{{ story_href(s) }}">{{ s.hook }}</a></h3>
+            </li>
+            {% endif %}{% endfor %}
+        </ol>
+        <p class="lt-rail-more"><a href="{{ path_prefix }}blog/index.html">Every article →</a></p>
+    </aside>
+</section>
+
+{#- Developing stories: threads the network covered on two or more days this
+    week, found by matching the digests' own headlines (engine.newsroom) —
+    never written for this page. -#}
+{% if developing %}
+<section class="lt-block container" id="developing" aria-labelledby="lt-dev-h">
+    <div class="lt-block-head">
+        <h2 id="lt-dev-h">Developing stories</h2>
+        <p class="lt-block-sub">Stories the network has followed on more than one day this week, newest update first.</p>
+    </div>
+    <ol class="lt-dev-list">
+        {% for t in developing %}
+        {% set l = t.latest %}
+        <li class="lt-dev" style="--show-color:{{ l.brand_color }};">
+            <p class="lt-dev-flag"><span class="lt-dev-badge">Developing</span> Covered on {{ t.days }} days{% if t.shows|length > 1 %} by {{ t.shows|length }} shows{% endif %}</p>
+            <h3 class="lt-hl"{% if l.lang %} lang="{{ l.lang }}"{% endif %}><a href="{{ path_prefix }}{{ l.url or l.show_page }}">{{ l.headline }}</a></h3>
+            <p class="lt-meta"><span class="lt-dev-latest">Latest update</span>{% if l.stamp and l.stamp.label %} <span class="lt-when">{{ when(l.stamp) }}</span>{% endif %}</p>
+            <p class="lt-dev-shows">{% for sh in t.shows %}<a href="{{ path_prefix }}{{ sh.show_page }}" style="--show-color:{{ sh.brand_color }};">{{ sh.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</p>
+            {% if t.earlier %}
+            <ul class="lt-dev-earlier">
+                {% for e in t.earlier %}<li><span class="lt-dev-when">{{ e.stamp.short if e.stamp else '' }}</span> <a href="{{ path_prefix }}{{ e.url or e.show_page }}"{% if e.lang %} lang="{{ e.lang }}"{% endif %}>{{ e.headline }}</a></li>{% endfor %}
+            </ul>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ol>
+</section>
+{% endif %}
+
+{{ conversations_block() }}
+
+{#- Top stories -#}
+{% if p.top %}
+<section class="lt-block container" id="top-stories" aria-labelledby="lt-top-h">
+    <div class="lt-block-head"><h2 id="lt-top-h">Top stories</h2></div>
+    <div class="lt-grid-4">
+        {% for s in p.top %}
+        <article class="lt-card" style="--show-color:{{ s.brand_color }};">
+            {{ media(s) }}
+            <div class="lt-card-body">
+                {{ kicker(s) }}
+                <h3 class="lt-hl"{% if s.lang %} lang="{{ s.lang }}"{% endif %}><a href="{{ story_href(s) }}">{{ s.hook }}</a></h3>
+                {{ meta(s) }}
+                {{ more_list(s) }}
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% endif %}{#- p.lead -#}
+
+{#- The homepage's one email ask (Oct 9 2026 "Homepage Soft-only"): Soft
+    Personal interest, never a per-show newsletter form and never a charge.
+    Rendered whatever the stories are, with the capture source engine.funnel
+    owns. -#}
+<div class="lt-soft container">
+{{ soft_personal_hero_band(path_prefix, 'network', capture_source_site, wrapper_id='home-soft-personal') }}
+</div>
+
+{% if p.lead %}
+{#- Today: Nerra Daily (the whole network in one episode, hosted by Mira) and
+    when the day's editions go out. -#}
+{% if edition or schedule %}
+<section class="lt-block container" id="today" aria-label="Today on Nerra">
+<div class="lt-today-grid{% if not (edition and schedule) %} is-single{% endif %}">
+    {% if edition %}
+    {% set e = edition %}
+    <div class="lt-edition" style="--show-color:{{ e.brand_color }};">
+        <div class="lt-edition-inner">
+            <a class="lt-edition-cover" href="{{ path_prefix }}{{ e.show_page }}" tabindex="-1" aria-hidden="true">
+                <picture>
+                    {% if e.cover_webp %}<source type="image/webp" srcset="{{ path_prefix }}{{ e.cover_webp }}">{% endif %}
+                    <img src="{{ path_prefix }}{{ e.cover_url }}" alt="{{ e.show_name }} cover art" width="180" height="180" loading="lazy" decoding="async">
+                </picture>
+            </a>
+            <div>
+                <p class="lt-edition-label">{{ e.show_name }} · hosted by Mira{% if e.stamp and e.stamp.label %} · {{ when(e.stamp) }}{% elif e.date %} · {{ e.date }}{% endif %}</p>
+                <h2 class="lt-hl" id="lt-edition-h"><a href="{{ path_prefix }}{{ e.post_url or e.show_page }}">{{ e.hook }}</a></h2>
+                <p class="lt-edition-note">The network's English shows in one daily episode, with Mira, the network's AI host, introducing each one. <a href="{{ path_prefix }}mira.html">Meet Mira</a>.</p>
+                <div class="lt-lead-audio">
+                    {% if e.audio_url %}<audio controls preload="none" src="{{ e.audio_url }}" aria-label="Play {{ e.show_name }} episode {{ e.episode_num }}"></audio>{% endif %}
+                    {% if e.post_url %}<a class="lt-btn" href="{{ path_prefix }}{{ e.post_url }}">Today's rundown</a>{% endif %}
                 </div>
             </div>
         </div>
-    </section>
-    <style>@media (max-width: 760px){ .personal-promo-grid { grid-template-columns: 1fr !important; } }</style>
+    </div>
+    {% endif %}
+    {% if schedule %}
+    <div class="lt-schedule lt-panel">
+        <h2 class="lt-rail-h">Today on Nerra</h2>
+        <p class="lt-chart-sub">When the day's editions go out, Eastern time.</p>
+        <ol>
+            {% for r in schedule %}
+            <li data-at="{{ r.iso }}" data-day="{{ masthead.date_iso }}"><span class="lt-sched-time">{{ r.when }}</span><span class="lt-sched-what"><b>{{ r.label }}</b> {{ r.detail }}</span></li>
+            {% endfor %}
+        </ol>
+    </div>
+    {% endif %}
+</div>
+</section>
+{% endif %}
 
-    {% if popular_episodes %}
-    <!-- Most Played This Week (OP3 download data, refreshed nightly) -->
-    <section id="popular" class="nn-section">
-        <div class="container">
-            <div class="nn-section-header">
-                <div class="section-label">Listener Favorites</div>
-                <h2>Most Played This Week</h2>
-                <p>The episodes listeners played most over the last seven days — at most two per show, so you see the breadth of the network.</p>
+{{ watch_block() }}
+
+{#- Topic sections -#}
+{% for sec in p.sections %}
+<section class="lt-block container" id="section-{{ sec.id }}" aria-labelledby="lt-sec-{{ sec.id }}">
+    <div class="lt-block-head">
+        <h2 id="lt-sec-{{ sec.id }}">{{ sec.heading }}</h2>
+        {% if sec.hub_url %}<a href="{{ path_prefix }}{{ sec.hub_url }}" aria-label="More {{ sec.heading | lower }}">More<span class="lt-hide-sm"> {{ sec.heading | lower }}</span> →</a>{% endif %}
+    </div>
+    {% if sec.stories|length == 2 %}
+    <div class="lt-pair">
+        {% for f in sec.stories %}
+        <article class="lt-feature" style="--show-color:{{ f.brand_color }};">
+            {{ media(f) }}
+            <div class="lt-card-body">
+                {{ kicker(f, false) }}
+                <h3 class="lt-hl"{% if f.lang %} lang="{{ f.lang }}"{% endif %}><a href="{{ story_href(f) }}">{{ f.hook }}</a></h3>
+                {{ meta(f) }}
+                {{ more_list(f) }}
             </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="lt-section-grid">
+        {% set f = sec.stories[0] %}
+        <article class="lt-feature" style="--show-color:{{ f.brand_color }};">
+            {{ media(f) }}
+            <div class="lt-card-body">
+                {{ kicker(f, false) }}
+                <h3 class="lt-hl"{% if f.lang %} lang="{{ f.lang }}"{% endif %}><a href="{{ story_href(f) }}">{{ f.hook }}</a></h3>
+                {{ meta(f) }}
+                {{ more_list(f) }}
+            </div>
+        </article>
+        <ul class="lt-stack">
+            {% for s in sec.stories[1:] %}{{ row(s) }}{% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</section>
+{% endfor %}
+
+{% if p.more %}
+<section class="lt-block container" id="section-more" aria-labelledby="lt-more-h">
+    <div class="lt-block-head"><h2 id="lt-more-h">More from the network</h2><a href="{{ path_prefix }}topics/index.html">Browse by topic →</a></div>
+    <ul class="lt-stack lt-grid-3">
+        {% for s in p.more %}{{ row(s, true) }}{% endfor %}
+    </ul>
+</section>
+{% endif %}
+{% endif %}{#- p.lead -#}
+
+{#- Most Played This Week (OP3) and most read on the site (GA4), each only
+    when its committed snapshot is fresh. -#}
+{% if popular_episodes or most_read %}
+<section class="lt-block container" id="popular" aria-labelledby="lt-pop-h">
+    <div class="lt-block-head"><h2 id="lt-pop-h">Most popular</h2></div>
+    <div class="lt-charts{% if not (popular_episodes and most_read) %} is-single{% endif %}">
+        {% if popular_episodes %}
+        <div class="lt-popular">
+            <h3 class="lt-chart-h">Most Played This Week</h3>
+            <p class="lt-chart-sub">Podcast downloads over the last seven days, measured by OP3; at most two per show</p>
+            <ol>
+                {% for ep in popular_episodes %}
+                <li style="--show-color:{{ ep.brand_color or '#6B47FF' }};">
+                    <div>
+                        <p class="lt-kicker"><a href="{{ path_prefix }}{{ ep.show_page }}">{{ ep.show_name }}</a></p>
+                        <h4 class="lt-hl"><a href="{{ path_prefix }}{{ ep.blog_url or ep.show_page }}">{{ ep.title }}</a></h4>
+                    </div>
+                </li>
+                {% endfor %}
+            </ol>
         </div>
-        <div class="latest-scroll-row">
-            {% for ep in popular_episodes %}
-            <div class="latest-scroll-card glass-card">
-                <div class="episode-card-show" style="background:{{ ep.brand_color }};">#{{ ep.rank }} · {{ ep.show_name }}</div>
-                {% if ep.blog_url %}
-                <a href="{{ path_prefix }}{{ ep.blog_url }}" class="episode-card-title" style="display:block;color:inherit;text-decoration:none;">{{ ep.title }}</a>
-                {% else %}
-                <div class="episode-card-title">{{ ep.title }}</div>
-                {% endif %}
-                {% if ep.audio_url %}
-                <audio controls preload="none" src="{{ ep.audio_url }}" aria-label="{{ ep.show_name }} episode audio" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
-                {% endif %}
-                {% if ep.blog_url %}
-                <a href="{{ path_prefix }}{{ ep.blog_url }}" style="display:inline-block;margin-top:var(--sp-2);font-family:var(--font-ui);font-size:0.8rem;color:color-mix(in srgb, {{ ep.brand_color }}, white 35%);text-decoration:none;">Read article →</a>
-                {% endif %}
+        {% endif %}
+        {% if most_read %}
+        <div class="lt-popular">
+            <h3 class="lt-chart-h">Most read on the site</h3>
+            <p class="lt-chart-sub">Article views, last {{ most_read_days or 28 }} days</p>
+            <ol>
+                {% for ep in most_read %}
+                <li style="--show-color:{{ ep.brand_color }};">
+                    <div>
+                        <p class="lt-kicker"><a href="{{ path_prefix }}{{ ep.show_page }}">{{ ep.show_name }}</a></p>
+                        <h4 class="lt-hl"><a href="{{ path_prefix }}{{ ep.blog_url }}">{{ ep.title }}</a></h4>
+                        {% if ep.dek %}<p class="lt-dek">{{ ep.dek }}</p>{% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
+
+{#- Our record: the network by the numbers, the claims ledger and the latest
+    corrections — the numbers are the ones claims.html prints. -#}
+{% if glance or trust or corrections %}
+<section class="lt-block container" id="numbers" aria-labelledby="lt-num-h">
+    <div class="lt-block-head"><h2 id="lt-num-h">Our record</h2>{% if glance %}<p class="lt-block-sub">Counted from the feeds, the claims ledger and the analytics the network publishes.</p>{% endif %}</div>
+    {% if glance %}
+    <div class="lt-tiles">
+        {% for t in glance %}<div class="lt-tile"><div class="lt-tile-num">{{ t.value }}</div><div class="lt-tile-label">{{ t.label }}</div></div>{% endfor %}
+        {#- Counted from the feed files at build time (the old homepage hero's
+            "episodes shipped"), never typed. -#}
+        {% if total_episodes %}<div class="lt-tile"><div class="lt-tile-num">{{ '{:,}'.format(total_episodes) }}</div><div class="lt-tile-label">episodes in the network's podcast feeds</div></div>{% endif %}
+    </div>
+    {% endif %}
+    {% if trust %}
+    {% set tt = trust.totals %}
+    <div class="lt-trust lt-panel">
+        <div>
+            <h3>Every claim, on the record</h3>
+            <p>Each episode's factual claims are checked against the source they cite, and what cannot be confirmed is published and marked rather than hidden. Last {{ tt.days }} days, every show:</p>
+        </div>
+        <div>
+            <div class="lt-tiles">
+                <div class="lt-tile"><div class="lt-tile-num">{{ '{:,}'.format(tt.claims) }}</div><div class="lt-tile-label">claims on the ledger across {{ tt.episodes }} episodes</div></div>
+                {% if tt.verified_share_pct is not none %}<div class="lt-tile lt-tile--verified"><div class="lt-tile-num">{{ tt.verified_share_pct }}%</div><div class="lt-tile-label">verified against their source</div></div>{% endif %}
+                {% if tt.flagged is not none %}<div class="lt-tile lt-tile--flagged"><div class="lt-tile-num">{{ '{:,}'.format(tt.flagged) }}</div><div class="lt-tile-label">published and marked, not yet verified</div></div>{% endif %}
+                <div class="lt-tile"><div class="lt-tile-num">{{ tt.corrections }}</div><div class="lt-tile-label">corrections filed</div></div>
+            </div>
+            {% if trust_links %}<p class="lt-links-row">{% for l in trust_links %}<a href="{{ path_prefix }}{{ l.url }}">{{ l.label }}</a>{% endfor %}</p>{% endif %}
+        </div>
+    </div>
+    {% endif %}
+    {% if corrections %}
+    <div class="lt-corrections" id="latest-corrections">
+        <h3 class="lt-chart-h">Latest corrections</h3>
+        <p class="lt-chart-sub">When we get something wrong we say so on the episode's page and in the next episode's show notes.</p>
+        <ol>
+            {% for c in corrections %}
+            <li>
+                <p class="lt-kicker"><a href="{{ path_prefix }}{{ c.show_page }}">{{ c.show_name }}</a> <time datetime="{{ c.date }}">{{ c.date_label }}</time></p>
+                <p class="lt-corr-text"><a href="{{ path_prefix }}{{ c.post_url or c.show_page }}">Correction to episode {{ c.episode }}</a>: {{ c.text }}</p>
+            </li>
+            {% endfor %}
+        </ol>
+    </div>
+    {% endif %}
+</section>
+{% endif %}
+
+{#- Live dashboards + Story Trackers -#}
+{% if dashboards or trackers %}
+<section class="lt-block container" id="dashboards" aria-labelledby="lt-dash-h">
+    <div class="lt-block-head"><h2 id="lt-dash-h">Live dashboards &amp; trackers</h2><p class="lt-block-sub">Pages the network keeps current between episodes.</p></div>
+    {% if dashboards %}
+    <div class="lt-dash-grid">
+        {% for d in dashboards %}
+        <a class="lt-dash" href="{{ path_prefix }}{{ d.url }}" style="--show-color:{{ d.brand_color }};">
+            <span class="lt-kicker">{{ d.show_name }}</span>
+            <span class="lt-dash-title">{{ d.title }}</span>
+            <span class="lt-dash-desc">{{ d.desc }}</span>
+            {% if d.fact %}<span class="lt-dash-fact">{{ d.fact }}</span>{% endif %}
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if trackers %}
+    <div class="lt-trackers">
+        <p class="lt-sublabel">Story Trackers — every running story a show follows</p>
+        <ul class="lt-chips">
+            {% for t in trackers %}<li><a class="lt-chip" href="{{ path_prefix }}{{ t.url }}" style="--show-color:{{ t.brand_color }};"><span class="lt-chip-dot" aria-hidden="true"></span>{{ t.name }}</a></li>{% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</section>
+{% endif %}
+
+{#- Topics + Explore -#}
+{% if topics or discover_links %}
+<section class="lt-block container" id="discover" aria-labelledby="lt-disc-h">
+    <div class="lt-block-head"><h2 id="lt-disc-h">Find your subject</h2>{% if discover_links %}<div class="lt-block-links">{% for l in discover_links %}<a href="{{ path_prefix }}{{ l.url }}">{{ l.label }} →</a>{% endfor %}</div>{% endif %}</div>
+    {% if topics %}
+    <ul class="lt-chips">
+        {% for t in topics %}<li><a class="lt-chip" href="{{ path_prefix }}{{ t.url }}">{{ t.heading }}</a></li>{% endfor %}
+    </ul>
+    {% endif %}
+</section>
+{% endif %}
+
+{#- Nerra Personal (the paid product; the free path sits beside it). The
+    sample lineup lists only shows that are in the Personal lineup: not Nerra
+    Daily, not the two interview shows, not the Russian shows. -#}
+<section class="lt-block container" id="personal-promo" aria-labelledby="lt-pers-h">
+<div class="lt-personal">
+    <div>
+        <p class="lt-signup-kicker">Nerra Personal</p>
+        <h2 id="lt-pers-h">Your own daily show, built from the shows you already love</h2>
+        <p>A private daily feed of the shows you pick, in the order you pick them, anchored by {{ mira.host_name }}, the network's AI host, who greets you by name.</p>
+        <ul>
+            <li>Pick the shows you want; they arrive as one private episode every morning</li>
+            <li>A private feed that works in any podcast app, with chapters for every segment</li>
+            <li>A free account brings the newsletter, gallery downloads and book discounts</li>
+            <li>Every show stays free to hear either way</li>
+        </ul>
+    </div>
+    <div class="lt-personal-cta">
+        {% set _lineup_sample = ranked_shows | rejectattr('slug', 'in', ['nerra_daily', 'age_of_ai', 'nerra_voices', 'finansy_prosto', 'privet_russian']) | list %}
+        {% if _lineup_sample %}
+        <div class="lt-lineup" aria-hidden="true">
+            <p class="lt-sublabel">Your morning, one feed</p>
+            {% for s in _lineup_sample[:4] %}
+            {% set _pbase = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
+            <div class="lt-lineup-row">
+                <picture>
+                    <source type="image/webp" srcset="{{ path_prefix }}{{ _pbase }}-400.webp">
+                    <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="40" height="40" loading="lazy" decoding="async">
+                </picture>
+                <span>{{ s.name }}</span>
+                <small>{{ loop.index }}</small>
             </div>
             {% endfor %}
         </div>
-    </section>
-    {% endif %}
+        {% endif %}
+        {% if personal and personal.live %}
+        <a class="lt-btn lt-btn--primary" href="{{ path_prefix }}{{ personal.plans }}" onclick="if(typeof gtag==='function'){gtag('event','select_personal_upsell',{placement:'homepage'});}">{% if personal.trial_days %}Try it free for {{ personal.trial_days }} days{% else %}See plans{% endif %} →</a>
+        {% else %}
+        {#- Same rule as join.html: no live Payment Link = "launching soon". -#}
+        <a class="lt-btn lt-btn--primary" href="{{ path_prefix }}join.html" onclick="if(typeof gtag==='function'){gtag('event','select_personal_upsell',{placement:'homepage'});}">Launching soon — join free for first access →</a>
+        {% endif %}
+        <p class="lt-personal-note"><a href="{{ path_prefix }}account.html">Member sign in</a> · <a href="{{ path_prefix }}nerra-daily.html">Try Nerra Daily free</a>{% if personal and personal.support %} · <a href="{{ path_prefix }}{{ personal.support }}">Support the network</a>{% endif %}</p>
+        <p class="lt-personal-note" id="soft-interest">{{ soft_personal_interest(path_prefix, compact=true) }}</p>
+    </div>
+</div>
+</section>
 
-    {#- "Latest from the Blog" was removed Oct 7 2026: it listed the same
-        six episodes as the Latest rail above, whose cards already link each
-        article. The rail now ends on one link to the whole archive. -#}
-
-    <!-- Why Nerra -->
-    <section class="nn-section" style="background:var(--nn-bg-alt);">
-        <div class="container">
-            <div class="nn-section-header">
-                <div class="section-label">Why Nerra</div>
-                <h2>Built different</h2>
-            </div>
-            <div class="features-grid">
-                <div class="feature-card glass-card">
-                    <div class="feature-icon">&#9889;</div>
-                    <h3>Sourced, Not Vibes</h3>
-                    <p>News episodes are built from named sources, and each article links to them. A source-integrity gate checks cited claims against those sources and marks any it cannot verify — the public <a href="{{ path_prefix }}claims.html">claims ledger</a> shows the status. <a href="{{ path_prefix }}editorial.html">See how an episode is made</a>.</p>
-                </div>
-                <div class="feature-card glass-card">
-                    <div class="feature-icon">&#127911;</div>
-                    <h3>Free, and Independent</h3>
-                    <p>{{ sponsor_policy.summary }} <a href="{{ path_prefix }}join.html">Nerra Personal</a> is the optional upgrade for people who want one custom feed.</p>
-                </div>
-                <div class="feature-card glass-card">
-                    <div class="feature-icon">&#127758;</div>
-                    <h3>Multi-Perspective Coverage</h3>
-                    <p>Omni View argues each side of a story in its strongest form. Across the network we pull from diverse sources to present balanced, nuanced takes &mdash; not echo chambers.</p>
-                </div>
-                <div class="feature-card glass-card">
-                    <div class="feature-icon">&#128197;</div>
-                    <h3>A Cadence You Can Set Your Morning By</h3>
-                    <p>Most shows publish every day; the rest weekly or when an interview is ready, and each show page says which. Build a daily habit you can rely on.</p>
-                </div>
-                <div class="feature-card glass-card">
-                    <div class="feature-icon">&#127464;&#127462;</div>
-                    <h3>Made in Canada</h3>
-                    <p>Independently produced in Vancouver by Patrick Novak. No corporate backing, no editorial interference.</p>
-                </div>
-                <div class="feature-card glass-card">
-                    <div class="feature-icon">&#128266;</div>
-                    <h3>{{ listening_language_count | default(4) }} Listening Languages</h3>
-                    <p>English originals with Fran&ccedil;ais, Русский and 中文 audio tracks, plus two shows made natively in Russian. Pick your audio language with the globe in the menu.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    {# --- Find Your Show picker REMOVED (May 2026) — original chip
-       set retained below as a comment for easy resurrection if the
-       operator changes their mind. ---
-       (chip list previously here — three rows of topic / audience /
-       language buttons + clear-filters action — all removed.) --- #}
-
-    <!-- Show Showcase -->
-    <section id="shows" class="nn-section">
-        <div class="container">
-            <div class="nn-section-header">
-                <div class="section-label">Our Shows</div>
-                <h2>Daily intelligence on the topics that matter</h2>
-                <p>Every show is free and independently produced; most publish every day. Pick one, or let <a href="{{ path_prefix }}nerra-daily.html">Nerra Daily</a> hand you the whole network in one episode. Three of them are hosted by <a href="{{ path_prefix }}mira.html">Mira</a>, who also does the network's interviews herself.</p>
-            </div>
-            <div class="show-showcase" id="show-showcase-grid">
-                {% for s in ranked_shows | default(all_shows) %}
-                {{ show_card(s, path_prefix) }}
+{#- Books + the image gallery -#}
+{% if books or gallery %}
+<section class="lt-block container" id="shelf" aria-labelledby="lt-shelf-h">
+    <div class="lt-block-head"><h2 id="lt-shelf-h">Books &amp; the image gallery</h2></div>
+    <div class="lt-shelf"{% if not (books and gallery) %} style="grid-template-columns:minmax(0,1fr);"{% endif %}>
+        {% if books %}
+        <div>
+            <p class="lt-sublabel">Books from the shows</p>
+            <ul class="lt-books">
+                {% for b in books %}
+                <li class="lt-book" style="--show-color:{{ b.brand_color }};">
+                    <a class="lt-book-cover" href="{{ path_prefix }}books.html" tabindex="-1" aria-hidden="true"><b>{{ b.title }}</b><small>Volume {{ b.volume_number }}{% if b.author %} · {{ b.author }}{% endif %}</small></a>
+                    <div>
+                        <p class="lt-kicker">{{ b.show_name }}</p>
+                        <h3 class="lt-hl"><a href="{{ path_prefix }}books.html">{{ b.full_title }}</a></h3>
+                        {% if b.subtitle %}<p class="lt-dek">{{ b.subtitle }}{% if b.chapters %} · {{ b.chapters }} chapters{% endif %}</p>{% endif %}
+                    </div>
+                </li>
                 {% endfor %}
-            </div>
+            </ul>
+            <p class="lt-links-row"><a href="{{ path_prefix }}books.html">Ebooks and audiobooks →</a></p>
         </div>
-    </section>
-
-    {# Fresh Episodes / Blog / Why Nerra triplet was moved ABOVE the
-       Show Showcase as part of the May 2026 homepage restructure
-       (operator request). The original positions here are now empty
-       to avoid duplicating those sections on the page. #}
-
-    <!-- About the Network -->
-    <section class="nn-section" style="background:var(--nn-bg-alt);">
-        <div class="container">
-            <div class="nn-section-header">
-                <div class="section-label">About</div>
-                <h2>About Nerra Network</h2>
-            </div>
-            <div class="about-section-text">
-                <p><strong>Free shows on the ideas shaping tomorrow.</strong></p>
-                <p>Nerra Network is an independent podcast network of {{ all_shows|length }} shows covering Tesla, SpaceX, AI for experts and beginners, modern investing, balanced world news, space and astronomy, science and longevity, environmental policy, first-principles thinking, the unintended consequences of big decisions, good news with something you can do about it (The DP Pod), Canada's offshore ocean-racing story (Offshore North), live AI-hosted interviews (The Age of AI), and financial literacy and language learning in Russian &mdash; plus Nerra Daily, the whole network in one daily edition. All produced in Vancouver, Canada by Patrick Novak, with AI doing the writing and narration and a human owning the standards. <a href="{{ path_prefix }}ai-disclosure.html">How we use AI</a>.</p>
-                <p>Our mission: stimulating conversation, supporting positive developments that benefit all, and providing unbiased coverage with varying perspectives.</p>
-            </div>
+        {% endif %}
+        {% if gallery %}
+        <div>
+            <p class="lt-sublabel">From the image gallery{% if gallery_license %} · free to reuse under {{ gallery_license }}{% endif %}</p>
+            <ul class="lt-gallery-grid">
+                {% for g in gallery %}
+                <li><a href="{{ path_prefix }}gallery.html"><img src="{{ g.url }}" alt="AI-generated scene from {{ g.show_name }} episode {{ g.episode_num }}" width="800" height="450" loading="lazy" decoding="async"><span>{{ g.show_name }}</span></a></li>
+                {% endfor %}
+            </ul>
+            <p class="lt-links-row"><a href="{{ path_prefix }}gallery.html">Browse the gallery →</a></p>
         </div>
-    </section>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
 
-    <!-- Subscribe -->
-    <section id="subscribe" class="nn-section" style="border-top:1px solid var(--nn-border);">
-        <div class="container">
-            <div class="nn-section-header">
-                <div class="section-label">Listen Anywhere</div>
-                <h2>Subscribe Everywhere</h2>
-                <p>Every show has its own RSS feed. Paste it into any podcast app — Apple Podcasts, Spotify, Pocket Casts, Overcast — and new episodes arrive automatically.</p>
-            </div>
-            <div class="subscribe-badges">
-                <a href="{{ path_prefix }}network.rss" class="subscribe-badge">
-                    Network RSS (All Shows)
-                </a>
-                <a href="{{ path_prefix }}blog.rss" class="subscribe-badge">
-                    Network Blog RSS
-                </a>
-            </div>
-            {#- Thirty-one rows of feed buttons ran ~3,000px on a phone; they
-                open on demand now (how-to-listen.html lists them too). -#}
+{#- Every public show, as the shared card (_macros.show_card — /explore.html
+    renders the same one), most-listened first. -#}
+{% if ranked_shows %}
+<section class="lt-block container" id="shows" aria-labelledby="lt-shows-h">
+    <div class="lt-block-head"><h2 id="lt-shows-h">All {{ ranked_shows|length }} shows</h2><p class="lt-block-sub">Every show is free and independently produced; each card says how often it publishes.</p><a href="{{ path_prefix }}explore.html">Browse by subject →</a></div>
+    <div class="show-showcase" id="show-showcase-grid">
+        {% for s in ranked_shows %}
+        {{ show_card(s, path_prefix) }}
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{#- Subscribe everywhere: every feed, in any podcast app. -#}
+<section class="lt-block container" id="subscribe" aria-labelledby="lt-sub-h">
+    <div class="lt-block-head"><h2 id="lt-sub-h">Subscribe everywhere</h2><p class="lt-block-sub">Every show has its own RSS feed. Paste it into any podcast app — Apple Podcasts, Spotify, Pocket Casts, Overcast — and new episodes arrive automatically.</p></div>
+    {% set le = listen_everywhere %}
+    <div class="lt-apps">
+        <div>
+            {% if le and le.platforms %}
+            <p class="lt-sublabel">The most-listened shows in your podcast app</p>
+            <ul class="lt-app-list">
+                {% for a in le.platforms %}
+                <li style="--show-color:{{ a.brand_color }};">
+                    <a class="lt-app-name" href="{{ path_prefix }}{{ a.show_page }}">{{ a.name }}</a>
+                    <span class="lt-app-links">
+                        {% if a.apple %}<a href="{{ a.apple }}" target="_blank" rel="noopener" aria-label="{{ a.name }} on Apple Podcasts">Apple</a>{% endif %}
+                        {% if a.spotify %}<a href="{{ a.spotify }}" target="_blank" rel="noopener" aria-label="{{ a.name }} on Spotify">Spotify</a>{% endif %}
+                        {% if a.rss %}<a href="{{ path_prefix }}{{ a.rss }}" aria-label="{{ a.name }} RSS feed">RSS</a>{% endif %}
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
             <details class="subscribe-all">
-            <summary>Every show's feed, Apple and Spotify links ({{ all_shows|length }} shows)</summary>
-            <div class="subscribe-show-list">
-                {% for s in ranked_shows | default(all_shows) %}
-                {% set _subbase = s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image %}
-                <div class="subscribe-show-row">
-                    <picture>
-                        <source type="image/webp" srcset="{{ path_prefix }}{{ _subbase }}-400.webp">
-                        <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="lazy">
-                    </picture>
-                    <div class="subscribe-show-meta">
-                        <div class="subscribe-show-name">{{ s.name }}</div>
-                        <div class="subscribe-show-tagline">{{ s.tagline }}</div>
-                    </div>
-                    <div class="subscribe-show-links">
-                        {% if s.apple_podcasts_url %}
-                        <a href="{{ s.apple_podcasts_url | with_utm(campaign=s.slug) }}" target="_blank" rel="noopener" class="subscribe-link-btn" aria-label="Subscribe to {{ s.name }} on Apple Podcasts" data-show="{{ s.slug }}">Apple</a>
-                        {% endif %}
-                        {% if s.spotify_url %}
-                        <a href="{{ s.spotify_url | with_utm(campaign=s.slug) }}" target="_blank" rel="noopener" class="subscribe-link-btn" aria-label="Subscribe to {{ s.name }} on Spotify" data-show="{{ s.slug }}">Spotify</a>
-                        {% endif %}
-                        {%- if s.has_feed %}
-                        <a href="{{ path_prefix }}{{ s.rss_file }}" class="subscribe-link-btn subscribe-link-rss" aria-label="Subscribe to {{ s.name }} via RSS" data-show="{{ s.slug }}">RSS</a>
-                        {%- endif %}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
+                <summary>Every show's feed, Apple and Spotify links ({{ ranked_shows|length }} shows)</summary>
+                <ul class="lt-app-list">
+                    {% for s in ranked_shows %}
+                    <li style="--show-color:{{ s.brand_color }};">
+                        <a class="lt-app-name" href="{{ path_prefix }}{{ s.show_page }}">{{ s.name }}</a>
+                        <span class="lt-app-links">
+                            {% if s.apple_podcasts_url %}<a href="{{ s.apple_podcasts_url }}" target="_blank" rel="noopener" aria-label="Subscribe to {{ s.name }} on Apple Podcasts">Apple</a>{% endif %}
+                            {% if s.spotify_url %}<a href="{{ s.spotify_url }}" target="_blank" rel="noopener" aria-label="Subscribe to {{ s.name }} on Spotify">Spotify</a>{% endif %}
+                            {% if s.has_feed %}<a href="{{ path_prefix }}{{ s.rss_file }}" aria-label="Subscribe to {{ s.name }} via RSS">RSS</a>{% endif %}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
             </details>
-            <p style="text-align:center;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.88rem;margin-top:var(--sp-6);">Every feed works in every podcast app today &mdash; copy the RSS link into yours. Apple Podcasts and Spotify buttons appear as each show's directory listing goes live. <a href="{{ path_prefix }}how-to-listen.html" style="color:var(--nn-text-muted);">How to listen</a>.</p>
         </div>
-    </section>
+        <div>
+            {% if le and (le.languages or le.ru_pages) %}
+            <p class="lt-sublabel">In other languages</p>
+            <ul class="lt-chips">
+                {% for l in le.languages %}<li><a class="lt-chip" href="{{ path_prefix }}{{ le.how_to_listen or 'how-to-listen.html' }}#feeds" lang="{{ l.lang }}">{{ l.label }}<small class="lt-chip-count" lang="en">{{ l.count }} {{ "feed" if l.count == 1 else "feeds" }}</small></a></li>{% endfor %}
+                {% if le.ru_pages %}<li><a class="lt-chip" href="{{ path_prefix }}{{ le.ru_pages }}" lang="ru">Подкасты на русском</a></li>{% endif %}
+            </ul>
+            {% endif %}
+            <p class="lt-sublabel" style="margin-top:var(--sp-5);">Everything in one feed</p>
+            <ul class="lt-chips">
+                <li><a class="lt-chip" href="{{ path_prefix }}network.rss">Network RSS (all shows)</a></li>
+                <li><a class="lt-chip" href="{{ path_prefix }}blog.rss">Network blog RSS</a></li>
+            </ul>
+            <p class="lt-links-row">
+                <a href="{{ path_prefix }}how-to-listen.html">How to listen</a>
+                <a href="{{ path_prefix }}player.html">Network player</a>
+                <a href="{{ path_prefix }}start-here.html">New here? Start here</a>
+            </p>
+        </div>
+    </div>
+</section>
 
-    {#- Homepage Soft-only (Oct 2026): the per-show newsletter form
-        (data-nn-subscribe="homepage", former #newsletter) is gone. Soft
-        Personal under the hero is the email ask; #subscribe (RSS / Apple /
-        Spotify) stays. -#}
+{#- About the network. The count is computed; the subject list names public
+    shows only (the members-only desks are not listed). -#}
+<section class="lt-block container" id="about" aria-labelledby="lt-about-h">
+    <div class="lt-block-head"><h2 id="lt-about-h">About Nerra Network</h2><a href="{{ path_prefix }}about.html">More about us →</a></div>
+    <div class="lt-about">
+        <div class="lt-about-text">
+            <p><strong>Feed your curiosity. Not your anxiety.</strong></p>
+            <p>Nerra Network is an independent news and podcast network of {{ public_show_count }} free shows covering Tesla, SpaceX, AI for experts and beginners, AI chips and data centres, the Magnificent Seven, modern investing, prediction markets, world news, space and astronomy, science, longevity and peptide research, environmental policy, first-principles thinking, the unintended consequences of big decisions, good news with something you can do about it (The DP Pod), Canada's offshore ocean-racing story (Offshore North), local news from Vancouver and Collingwood, live AI-hosted interviews (The Age of AI and Nerra Voices), and financial literacy and language learning in Russian &mdash; plus Nerra Daily, the whole network in one daily edition. All produced in Vancouver, Canada by Patrick Novak, with AI doing the writing and narration and a human owning the standards. <a href="{{ path_prefix }}ai-disclosure.html">How we use AI</a>.</p>
+            <p>Our mission: stimulating conversation, supporting positive developments that benefit all, and providing unbiased coverage with varying perspectives.</p>
+        </div>
+        <ul class="lt-values">
+            <li><span aria-hidden="true">&#9889;</span><div><b>Sourced, not vibes.</b> News episodes are built from named sources and each article links to them. A source-integrity gate checks cited claims against those sources and marks any it cannot verify — the public <a href="{{ path_prefix }}claims.html">claims ledger</a> shows the status. <a href="{{ path_prefix }}editorial.html">See how an episode is made</a>.</div></li>
+            <li><span aria-hidden="true">&#127911;</span><div><b>Free, and independent.</b> {{ sponsor_policy.summary }} <a href="{{ path_prefix }}join.html">Nerra Personal</a> is the optional upgrade for people who want one custom feed.</div></li>
+            <li><span aria-hidden="true">&#127758;</span><div><b>Every side, in its strongest form.</b> Omni View argues each side of a story at its best, and across the network we draw on diverse sources rather than one echo chamber.</div></li>
+            <li><span aria-hidden="true">&#128197;</span><div><b>A cadence you can set your morning by.</b> Most shows publish every day; the rest weekly or when an interview is ready, and each show's card says which.</div></li>
+            <li><span aria-hidden="true">&#127464;&#127462;</span><div><b>Made in Canada.</b> Independently produced in Vancouver by Patrick Novak. No corporate backing, no editorial interference.</div></li>
+            {% if listen_everywhere and listen_everywhere.languages %}
+            <li><span aria-hidden="true">&#128266;</span><div><b>{{ listening_language_count }} listening languages.</b> English originals with {% for l in listen_everywhere.languages %}<span lang="{{ l.lang }}">{{ l.label }}</span>{% if not loop.last %} and {% endif %}{% endfor %} audio tracks, plus two shows made natively in Russian. Pick your audio language with the globe in the menu.</div></li>
+            {% endif %}
+        </ul>
+    </div>
+</section>
 
-    {# --- The show-card filter states (``.is-dimmed`` / ``.is-match``) and
-       ``.show-card-audience`` moved to styles/main.css on 2026-09-21: the card
-       itself is a shared macro now and /explore.html renders it too, so the
-       rules cannot live in this one page's inline style. What is left below is
-       homepage-only. --- #}
-    <style>
-      /* Subscribe-section per-show rows — independent of the picker. */
-      .subscribe-show-list {
-        display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-        gap: 12px; margin: 24px auto 0; max-width: 1100px;
-      }
-      .subscribe-show-row {
-        display: flex; align-items: center; gap: 12px;
-        background: var(--nn-surface, #161a24); border: 1px solid var(--nn-border);
-        border-radius: 12px; padding: 12px 14px;
-      }
-      .subscribe-show-row img { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
-      .subscribe-show-meta { flex: 1; min-width: 0; }
-      .subscribe-show-name { font-weight: 600; font-size: 0.95rem; color: var(--nn-text); }
-      .subscribe-show-tagline { font-size: 0.78rem; color: var(--nn-text-muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .subscribe-show-links { display: flex; gap: 6px; flex-shrink: 0; }
-      .subscribe-link-btn {
-        font-size: 0.75rem; padding: 6px 10px; border-radius: 6px;
-        border: 1px solid var(--nn-border); background: rgba(124,92,255,0.08);
-        color: var(--nn-text); text-decoration: none; font-family: var(--font-ui);
-      }
-      .subscribe-link-btn:hover { background: rgba(124,92,255,0.22); }
-      .subscribe-link-rss { background: rgba(255,140,0,0.12); }
-    </style>
+{% if partners %}
+<div class="container"><nav class="lt-partners" aria-label="For partners and guests">
+    <strong>Partners &amp; guests</strong>
+    {% for l in partners %}<a href="{{ path_prefix }}{{ l.url }}">{{ l.label }}</a>{% endfor %}
+</nav></div>
+{% endif %}
+
+<p class="lt-note container">Headlines are each episode's own headline; pictures are the AI-generated scene art made for that episode, or the show's cover where an episode has none. Times are Eastern. Every episode is written and narrated by AI — <a href="{{ path_prefix }}ai-disclosure.html">how we use AI</a>.</p>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{#- Relative timestamps (BBC / Guardian convention): the server prints the
+    absolute Eastern time; this rewrites it to "2 hours ago" / "Yesterday",
+    keeps the absolute stamp as the tooltip, drops a "Today" marker whose
+    Eastern date has passed, retires a launch whose time has come, and marks
+    the schedule rows that have already gone out. Nothing is fetched. -#}
+<script>
+(function () {
+  var now = new Date();
+  var etDay = function (d) {
+    try { return new Intl.DateTimeFormat('en-CA', {timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit'}).format(d); }
+    catch (e) { return ''; }
+  };
+  var today = etDay(now);
+  var yest = etDay(new Date(now.getTime() - 864e5));
+  document.querySelectorAll('time[data-rel]').forEach(function (el) {
+    var raw = el.getAttribute('datetime') || '';
+    var day = '', mins = null;
+    if (raw.indexOf('T') > 0) {
+      var t = new Date(raw);
+      if (isNaN(t)) return;
+      mins = Math.round((now - t) / 6e4);
+      day = etDay(t);
+    } else { day = raw; }
+    var text = '';
+    if (mins !== null && mins >= 0 && mins < 60) text = mins <= 1 ? 'Just now' : mins + ' minutes ago';
+    else if (mins !== null && mins >= 60 && mins < 1440) { var h = Math.round(mins / 60); text = h + (h === 1 ? ' hour ago' : ' hours ago'); }
+    else if (day && day === today) text = 'Today';
+    else if (day && day === yest) text = 'Yesterday';
+    if (text) el.textContent = text;
+  });
+  document.querySelectorAll('[data-today]').forEach(function (el) {
+    if (today && el.getAttribute('data-today') !== today) el.remove();
+  });
+  document.querySelectorAll('[data-expires]').forEach(function (el) {
+    var t = new Date(el.getAttribute('data-expires'));
+    if (!isNaN(t) && t < now) el.remove();
+  });
+  document.querySelectorAll('li[data-at]').forEach(function (el) {
+    var t = new Date(el.getAttribute('data-at'));
+    if (el.getAttribute('data-day') === today && !isNaN(t) && t <= now) el.classList.add('is-past');
+  });
+})();
+</script>
 {% endblock %}

@@ -53,7 +53,7 @@ def _ts_set(name: str) -> set:
 @pytest.fixture(scope="module")
 def rendered(tmp_path_factory) -> str:
     out = tmp_path_factory.mktemp("landing_v2")
-    path = G.generate_landing_test_page(output_dir=out)
+    path = G.generate_network_page(output_dir=out)
     return Path(path).read_text(encoding="utf-8")
 
 
@@ -109,7 +109,11 @@ class TestWholePage:
     def test_images_have_alt_and_dimensions(self, rendered):
         for tag in _IMG_RE.findall(_body(rendered)):
             alt = re.search(r'alt="([^"]*)"', tag)
-            assert alt and alt.group(1).strip(), tag
+            assert alt, tag
+            # Oct 18 2026: the homepage's show grid is the shared show_card,
+            # whose cover is alt="" on purpose (the show's name is the
+            # heading beside it — tests/test_site_review_2026_10_07_chrome).
+            assert alt.group(1).strip() or 'class="show-card-image"' in tag, tag
             assert re.search(r'width="\d+"', tag) and re.search(r'height="\d+"', tag), tag
 
     def test_below_the_fold_images_are_lazy(self, rendered):
@@ -128,13 +132,15 @@ class TestWholePage:
             narrative = show["show_page"].replace(".html", "-narrative.html")
             assert f'href="{narrative}"' not in body, show["slug"]
 
-    def test_still_noindex_and_out_of_the_nav(self, rendered):
-        assert re.search(r'<meta name="robots" content="noindex', rendered.split("</head>")[0])
-        for name in ("base.html.j2", "_macros.html.j2", "network_page.html.j2"):
-            assert "landing-test" not in (ROOT / "templates" / name).read_text(encoding="utf-8")
+    def test_indexable_and_never_links_the_retired_test_url(self, rendered):
+        # Oct 18 2026: the page is the homepage now (was: noindex test page).
+        assert not re.search(r'<meta name="robots" content="noindex', rendered.split("</head>")[0])
+        assert "landing-test" not in rendered
 
     def test_page_weight_is_reasonable(self, rendered):
-        assert len(rendered.encode("utf-8")) < 400_000
+        # Oct 18 2026: the homepage added the show grid, the subscribe list
+        # and the about block to the test page's sections.
+        assert len(rendered.encode("utf-8")) < 450_000
 
     def test_no_new_external_scripts(self, rendered):
         srcs = re.findall(r'<script[^>]+src="([^"]+)"', _body(rendered))
@@ -217,7 +223,7 @@ class TestConversations:
         assert brand.MIRA_FIRST_CLAIM_FOOTNOTE in sec
 
     def test_the_claim_is_never_retyped_in_the_template(self):
-        tpl = (ROOT / "templates" / "landing_test.html.j2").read_text(encoding="utf-8")
+        tpl = (ROOT / "templates" / "network_page.html.j2").read_text(encoding="utf-8")
         assert "first interview shows of their kind" not in tpl
         assert "{{ mira_claim() }}" in tpl
 
@@ -253,47 +259,38 @@ class TestConversations:
 # --------------------------------------------------------------------------
 
 class TestSignup:
-    def _form(self, html):
-        forms = re.findall(r"<form\b[^>]*data-nn-subscribe[^>]*>.*?</form>", html, re.S)
-        assert len(forms) == 1, "the inline form is the page's ONLY email form"
-        return forms[0]
+    """Oct 18 2026: the v2 test page's inline per-show newsletter form did not
+    come with the promotion. The homepage is Soft-only (Oct 9 2026,
+    tests/test_homepage_soft_only_2026_10_09.py): its one email ask is the
+    Soft Personal band, and the footer form is suppressed. These guard the
+    same properties the v2 form guards did — one ask, posting through the
+    shared handler with engine.funnel's source — on the form the page has."""
 
-    def test_posts_to_the_worker_through_the_shared_handler(self, rendered):
-        form = self._form(rendered)
-        assert 'method="post"' in form and 'data-nn-subscribe="landing"' in form
+    def _forms(self, html):
+        return re.findall(r"<form\b[^>]*data-nn-subscribe[^>]*>.*?</form>", html, re.S)
+
+    def test_one_email_ask_and_it_is_soft_personal(self, rendered):
+        forms = self._forms(rendered)
+        assert len(forms) == 1, "the Soft Personal band is the homepage's ONLY email form"
+        assert 'data-nn-subscribe="soft-personal"' in forms[0]
+        assert 'data-nn-subscribe="landing"' not in rendered
+        assert 'name="tag"' not in rendered
+
+    def test_posts_through_the_shared_handler_with_the_funnel_source(self, rendered):
+        form = self._forms(rendered)[0]
         assert 'type="email"' in form and 'name="email"' in form
         assert "assets/js/footer-subscribe.js" in rendered
         js = (ROOT / "assets" / "js" / "footer-subscribe.js").read_text(encoding="utf-8")
         assert "https://api.nerranetwork.com/api/subscribe" in js
-        assert "form[data-nn-subscribe]" in js
-
-    def test_source_is_the_funnel_tag_and_the_worker_accepts_it(self, rendered):
-        form = self._form(rendered)
         source = re.search(r'data-source="([^"]+)"', form).group(1)
         assert source == F.source_tag(F.SOURCE_SITE)
         assert source in _ts_set("SOURCE_TAGS")
-
-    def test_show_tags_are_the_workers_closed_set(self, rendered):
-        form = self._form(rendered)
-        tags = re.findall(r'name="tag" value="([^"]+)"', form)
-        assert tags, "picks render for shows that send a newsletter"
-        allowed = _ts_set("SHOW_NEWSLETTER_TAGS")
-        assert not [t for t in tags if t.replace("&amp;", "&") not in allowed]
-
-    def test_picks_are_only_shows_that_send_a_newsletter(self, rendered):
-        form = self._form(rendered)
-        tags = {t.replace("&amp;", "&") for t in re.findall(r'name="tag" value="([^"]+)"', form)}
-        for s in _public_shows():
-            cfg = G._registry_show_config(s["slug"])
-            enabled = bool(cfg and getattr(cfg.newsletter, "enabled", False))
-            if not enabled:
-                assert s["newsletter_tag"] not in tags, s["slug"]
 
     def test_no_subscriber_count_below_the_social_proof_floor(self, rendered):
         stats = json.loads((ROOT / "api" / "buttondown_stats.json").read_text(encoding="utf-8"))
         count = stats.get("subscriber_count")
         if not (isinstance(count, int) and count >= G.MIN_SOCIAL_PROOF_SUBSCRIBERS):
-            assert not re.search(r"Join \d+", _section(rendered, "signup"))
+            assert not re.search(r"Join \d+", _body(rendered))
 
 
 # --------------------------------------------------------------------------
@@ -340,7 +337,7 @@ class TestNumbersAndTrust:
         fake = tmp_path / "audience_headline.json"
         fake.write_text(json.dumps({"network": {"downloads_30d": None, "youtube": None}, "shows": {}}))
         monkeypatch.setattr(G, "AUDIENCE_HEADLINE_PATH", fake)
-        path = G.generate_landing_test_page(output_dir=tmp_path)
+        path = G.generate_network_page(output_dir=tmp_path)
         sec = _section(Path(path).read_text(encoding="utf-8"), "numbers")
         assert "podcast downloads" not in sec and "YouTube views" not in sec
         assert ">0<" not in sec
@@ -427,13 +424,13 @@ class TestGalleryStrip:
 
     def test_strip_reads_the_slim_index_never_the_manifest(self):
         src = (ROOT / "generate_html.py").read_text(encoding="utf-8")
-        v2 = src.split("def _landing_test_v2(")[1].split("\ndef ")[0]
+        v2 = src.split("def _front_page_sections(")[1].split("\ndef ")[0]
         assert "gallery-manifest" not in v2 and '"_network"' in v2
 
     def test_no_gallery_data_renders_no_strip_and_no_scenes(self, tmp_path):
         empty = tmp_path / "gallery"
         empty.mkdir()
-        path = G.generate_landing_test_page(output_dir=tmp_path, gallery_dir=empty)
+        path = G.generate_network_page(output_dir=tmp_path, gallery_dir=empty)
         html = Path(path).read_text(encoding="utf-8")
         assert "lt-gallery-grid" not in _body(html)
         assert "gallery.nerranetwork.com" not in _body(html)
@@ -472,12 +469,12 @@ class TestPersonal:
         import os
         if os.environ.get("STRIPE_LINK_PERSONAL"):
             pytest.skip("a live Payment Link is configured in this environment")
-        sec = _section(rendered, "personal")
+        sec = _section(rendered, "personal-promo")
         assert "Launching soon" in sec
         assert "$" not in sec, "prices are not stated from config, so none are printed"
 
     def test_cta_is_measured_as_an_engagement_event(self, rendered):
-        sec = _section(rendered, "personal")
+        sec = _section(rendered, "personal-promo")
         assert "select_personal_upsell" in sec
         src = (ROOT / "scripts" / "fetch_ga4_stats.py").read_text(encoding="utf-8")
         assert re.search(r"ENGAGEMENT_EVENTS = \[[^\]]*\"select_personal_upsell\"", src)
@@ -485,7 +482,7 @@ class TestPersonal:
 
 class TestListenEverywhere:
     def test_languages_are_only_ones_still_produced(self, rendered):
-        sec = _section(rendered, "listen")
+        sec = _section(rendered, "subscribe")
         producing = set(G._listening_languages())
         from engine.language_feeds import LANGUAGE_META
         for lang, (autonym, _locale) in LANGUAGE_META.items():
@@ -515,7 +512,7 @@ class TestMostRead:
 
 class TestEmptyState:
     def test_no_public_shows_renders_no_v2_show_sections(self, tmp_path):
-        path = G.generate_landing_test_page(output_dir=tmp_path, all_shows=[])
+        path = G.generate_network_page(output_dir=tmp_path, all_shows=[])
         body = _body(Path(path).read_text(encoding="utf-8"))
         for section_id in ("conversations", "watch", "dashboards", "numbers", "shelf"):
             assert f'id="{section_id}"' not in body, section_id

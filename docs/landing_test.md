@@ -1,5 +1,9 @@
 # Landing Test — the network as a news front page (Oct 17 2026)
 
+> **Since Oct 18 2026 this design is the homepage (`index.html`) and
+> `landing-test.html` is a redirect stub to it — see "v3 — the homepage"
+> at the end. v1 and v2 below describe the test as it was built.**
+
 Operator request: a test landing page that takes the top story from every
 show, with images and the story hooks, and lays it out like a news network's
 front page — so a visitor wants to stay and discover more.
@@ -171,3 +175,128 @@ now treats a link as internal when it is relative or its HOST is
 `nerranetwork.com`. The lead's share row links to x.com, LinkedIn, Facebook
 and WhatsApp with the funnel-tagged article URL as a parameter — the blog
 share row's pattern — and the old substring check read those as internal.
+
+## v3 — the homepage (Oct 18 2026)
+
+Operator direction: "make the landing page test the new landing page … ensure
+it properly captures and highlights all the features of Nerra Network while
+also updating and containing timely news information and updates as any
+successful news and information site would be expected to have." Guards:
+`tests/test_homepage_landing_2026_10_18.py` (plus the v1/v2 files, updated,
+and the old homepage guards, ported — below).
+
+### What moved
+
+- **`index.html` is the front page.** `generate_network_page()` renders
+  `templates/network_page.html.j2`, which is the landing template (moved by
+  `git mv`); the old homepage template is gone. `generate_landing_test_page()`
+  and `--landing-test` are removed; `--homepage` regenerates `index.html`
+  alone (for workflows that commit only the homepage). `--network`,
+  `--all` and the nightly still build it; `--all` now builds it after the
+  posts, hubs and claims pages it links.
+- **`landing-test.html` is a redirect stub** to the homepage
+  (`site/redirects.yaml`; the committed test page was deleted in the same
+  change, so the stub never shadows a real page).
+- It is a homepage now: indexable, canonical = the bare origin, in the
+  sitemap as `/`, the approved `SEO_PAGE_COPY["index.html"]` title and meta,
+  bilingual hreflang, the Organization JSON-LD (every PUBLIC show as a
+  `PodcastSeries`, built as a dict) plus a WebSite block and the stories'
+  `ItemList`, and the site's real nav (no override; the in-page anchors the
+  old override carried are gone).
+- **Old homepage features folded in:** the Soft Personal band (the
+  homepage's one email ask — the Oct 9 "Homepage Soft-only" rule wins over
+  v2's inline per-show newsletter form, which did NOT come across; the footer
+  form stays suppressed); the Nerra Personal promo (`#personal-promo`, sample
+  lineup, soft interest link, `select_personal_upsell` with
+  `placement: homepage`); Most Played This Week; the full grid of every
+  public show (`#shows`, the shared `show_card`); Subscribe everywhere
+  (`#subscribe`: app links, every feed in `details.subscribe-all`, network
+  and blog RSS, languages); the About paragraph with the values list (Canada
+  flag, sponsor policy from `engine.brand`, the listening languages computed
+  from the language registry — the old typed list still said 中文 after the
+  ZH track was switched off); the episode count from the feeds. The
+  decorative show-name ticker, the cover "orbit" and the "0 ads" stat were
+  not carried over.
+
+### Timely: what a news front shows (`engine/newsroom.py`)
+
+| Element | Source | Rule |
+|---|---|---|
+| Story timestamp | the summary record's `datetime` (runner clock, UTC) | Printed as Eastern time server-side ("Oct 17, 5:47 AM ET"), upgraded by an inline script to "2 hours ago" / "Yesterday" with the absolute stamp as the tooltip. A record with no time prints its date only. **Never the feed `pubDate`** — every feed item carries `08:00:00 +0000`. |
+| "Today" marker | the story's Eastern date vs the build's | The script removes it once the Eastern date has moved on. |
+| Masthead | the build clock | Weekday + date and "Updated 9:30 AM ET"; "N new episodes today" counted from the same stamps. |
+| Developing stories | the digests' hooks + story headlines, 7 days | See calibration below. |
+| Markets & launches | `api/mag7_quotes.json` (closes with `bar_date`), `api/spcx.json`, `api/tsla.json` (fallback only), `api/spacex_launches.json` `next` | Every value under its as-of date; older than 3 days = absent; a launch whose NET has passed = absent (server-side, and the script removes it client-side). TSLA from the quote file is labelled a "last quote", never "trading at". |
+| Corrections | `engine.corrections.load_corrections` on every public show | Newest three, full text, each linking the corrected article; none = no block. |
+| Claims record | `_claims_network_ledger` — the function `claims.html` calls | Unchanged from v2. |
+| Today on Nerra | `engine.daily_edition.RELEASE_EASTERN`, `engine.release_schedule` (`NEWSLETTER_SLOT`, `SHORT_FIRST`, `SHORT_SPACING`, `LONG_FIRST_WAVE`, `LONG_SECOND_WAVE`) | No typed times; the script ticks rows that have gone out today. |
+
+### Developing stories — calibration
+
+Matching is the `engine.story_recurrence` idea widened from one show's window
+to the network's: salient words (its stopwords plus a list of generic
+headline verbs, quantities and spelled-out numbers), minus words in more than
+1.5% of the window's headlines (and never fewer than 8 — the beat words:
+"tesla", "spacex", "launch"). Two headlines are one story at **≥ 3 shared
+words that are ≥ 50% of the shorter headline's**; a thread needs **two or more
+days** and an update in the **last 3 days**; a line the same show prints on
+two days, or a one-word variant of it, is a segment label and never a story.
+Nerra Daily (it re-tells every show), the interview shows and the
+members-only desks are excluded.
+
+Replayed on the committed digests for windows ending Oct 10 … Oct 17 2026
+(~113 episodes, ~740-850 headlines each): **3-9 threads per window**, every
+one a real thread. Window ending Oct 17: SpaceX's Super Heavy Booster 23
+cryogenic testing (Oct 13 → 17), the Ebola case in Kenya (Omni View, Oct 11 →
+Omni View Top World News, Oct 15), Perseverance's Mars distance record (FF,
+Oct 14 → 15). Window ending Oct 14 adds the Pope's lung surgery and diagnosis,
+Google's prediction-market ad policy, Kalshi/Polymarket volume records, the
+delayed Roadster reveal, the Taiwan Megapack order, X's bundled subscription
+and the CRS-35 launch and landing. Rejected settings: 2 shared words doubled
+the count with false threads ("Google releases an AI detection tool" beside
+"Google releases Gemini 4", two unrelated dinosaur finds, "trade deficit
+widens" beside "Rome's deficit widens"); without the generic-word list
+"Canucks visit the Hurricanes tonight" matched "Canucks visit the Islanders
+tonight"; without the furniture rule MIT's daily "Unusual Whales Options
+Flow" line read as a three-day story. A borderline case kept: "Arctic sea ice
+shrinks to its 2026 minimum" and "New algorithm forecasts Arctic sea ice"
+(FF → Planetterrian) — the same subject on two days, which is what the label
+"Covered on 2 days" says.
+
+### Freshness wiring
+
+- **run-show finalize** (after every show): `--network --blogs --sitemap` as
+  before, then — after the gallery manifest and search index are rebuilt —
+  `generate_html.py --homepage` once more, so the front page's pictures and
+  topic links come from the freshest indexes. `index.html` was already in its
+  add list.
+- **nerra-daily.yml**: a "Refresh the homepage" step after the edition is
+  built (only when this run published it — a `--when-ready` exit leaves the
+  homepage alone), `--homepage` only (`--network` would rewrite claims.html,
+  the dashboards and member pages this workflow does not commit), and
+  `index.html` added to the commit's add-paths. A failed refresh warns and
+  never costs the edition commit.
+- The nightly already regenerates and commits `index.html`.
+
+### Guards changed in the promotion (each asserts the same property on the new page)
+
+- `test_capture_measurement_2026_09_21`: the homepage left the text-level
+  FORMS list (its one form is the shared Soft Personal macro); a rendered
+  test checks every capture form on the page sends `engine.funnel`'s source.
+- `test_multilingual::test_homepage_card_lists_languages`: rendered; names
+  every produced language and no switched-off one (was: "中文" in the
+  template).
+- `test_site_review_2026_10_07_chrome`: the nav test accepts no override (and
+  bans in-page anchors in any future one); the ranked-list test drops the
+  retired orbit and pins `_rank_shows_by_audience(public)`.
+- `test_network_quick_wins_2026_07_09`: the ticker iterates the day's stories
+  (`p.latest`), not a typed list; article links via `story_href` /
+  `ep.blog_url` replace the retired `episode-card-title` cards.
+- `test_website_review_2026_09_03`: ticker + computed counts
+  (`public_show_count`, `glance`); eager images capped at two on the RENDERED
+  page.
+- `test_landing_test_2026_10_17` / `_v2_`: render `generate_network_page`;
+  the four "it is a test" guards became "it is the homepage" (indexable, in
+  the sitemap as `/`, stub, no generator); the inline-signup class became the
+  Soft-only rule; `alt=""` is allowed only on the shared show card's cover;
+  the page-weight ceiling rose 400 → 450 KB.
