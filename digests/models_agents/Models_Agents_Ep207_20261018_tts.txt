@@ -1,0 +1,163 @@
+Local models just matched a frontier coding agent on five real tasks while running on a single sixteen gigabyte card.
+
+This is Models and Agents, episode two hundred seven.
+
+A LocalLLaMA bake-off on an RX ninety sixty XT asked nine models to write solution.py and test_solution.py, execute the tests, and clear a performance gate.
+
+DeepSeek V four point one Flash from the cloud and Qwen three point eight twenty-seven B UD-IQ4_XS with MTP both scored five out of five.
+
+The remaining seven models failed at least one of the interval-scheduling or shortest-prefix tasks.
+
+The problems covered CSV quoting rules, an arithmetic evaluator with pinned exceptions, a POSIX-ish shell tokenizer, max-profit interval scheduling with tie-breaks on two hundred thousand intervals, and shortest-prefix pattern matching against four thousand characters.
+
+Both perfect runs used a Thompson NFA with epsilon closure on the last task and a bisect dynamic program on the scheduler.
+
+The Qwen variant burned one hundred eighty-five thousand tokens over ninety-four minutes, while the cloud DeepSeek finished in two hundred thirty-six seconds on forty-three thousand tokens, and most of that local time went into a nine-thousand-case fuzz after the model had already reported success.
+
+NVIDIA shipped Structured Data Models, a PyTorch library that MarkTechPost says exposes pretrained tabular foundation models for predictions with no training step.
+
+The library wraps TabICL v two and KumoTabular for single tables plus KumoRelational for full relational databases, and each model answers in-context, taking labeled rows and query rows through a single forward pass.
+
+Users can reuse an encoded context across many queries, read calibrated intervals on regression heads, and scale to twenty-class problems.
+
+The tutorial walks through typed table tensors, a comparison against scikit-learn baselines, a three-table shop database, and preprocessing pitfalls such as dropped timestamp columns.
+
+Install needs a pinned git commit, since the package builds wheel URLs that do not match the torch minor-version pyg-lib wheels actually published.
+
+The relational sampler path needs the pyg-lib wheel built for the exact major-minor torch version rather than the patch version the library hard-codes.
+
+DeepSeek released the ten seventeen checkpoint of V four point one Flash, a major revision that LocalLLaMA users are already wiring into Dwarfstar.
+
+The update changed roughly forty percent of routed expert tensors, thirty percent of engrams, and fifty percent of vision-tower experts while keeping the same architecture.
+
+A mixed Q two to Q eight quant following antirez's original Dwarfstar recipe now fits the one hundred fifty-two gigabyte wired backbone plus a two hundred gigabyte engram table on one hundred twenty-eight gigabyte systems with SSD streaming.
+
+The imatrix calibration was rebuilt from the ten seventeen checkpoint rather than the original weights.
+
+Early tests show the model remains competitive as the leading open-weights release, and the engram table pages on demand.
+
+Voxel51 three point zero unifies search, curation, annotation, and evaluation for multimodal sensor data aimed at robotics, vehicles, and factory teams, MarkTechPost reports.
+
+The release ships Voxel51 Agent with forty-five plus Model Context Protocol, or M C P, tools, eighty plus operators, and eighteen open-source skills, plus dataset versioning and a free tier that allows three datasets of ten thousand samples each.
+
+Time-series support now aligns multiple sensor streams on one timeline with segment-level embeddings.
+
+Supported modalities include MCAP, images, video, three-D point clouds, meshes, DICOM, NIfTI, geospatial data, and audio.
+
+Voxel51 Search uses a lasting hybrid index on LanceDB that mixes vector, scalar, and full-text retrieval, and it skips full rebuilds when data arrives incrementally.
+
+The free tier caps storage at twenty gigabytes and inference at thirty thousand requests per month.
+
+Anthropic is enlisting legal expertise, the Financial Times reports, so A I agents can negotiate and execute contracts autonomously.
+
+The work targets the practical gap between agent capability and enforceable commercial agreements.
+
+Early support for the emerging ID-JAG identity standard is going into Okta's Cross-App Access solution ahead of formal Internet Engineering Task Force, or IETF, standardization.
+
+The work lets autonomous agents authenticate across A P I's and enterprise workflows, Simply Wall Street adds, using the same identity layer that already serves human users.
+
+Okta's early implementation gives it influence over default patterns before the standard is finalized, and the company is aligning ID-JAG usage with existing Cross-App Access and Auth0 for A I Agents products.
+
+A fifty seventy Ti paired with a thirty seventy on a PCIe riser now runs Qwen three point six thirty-five B-A three B at eighty-two tokens a second with sixteen thousand context using Ollama or llama.cpp layer splitting, a LocalLLaMA builder posted.
+
+Roughly twenty-three percent of layers spill into system RAM while the thirty seventy keeps four gigabytes unused.
+
+The fifty seventy Ti was purchased for seven hundred fifty dollars after tax in November twenty twenty-five.
+
+Layer splitting works because the riser runs at x one and the split passes very little data between cards, and the user has not yet tuned the split ratio between the two G P U's.
+
+A vLLM-backed controller on LocalLLaMA uses motherboard temperature sensors to modulate G P U load as a space heater, pausing inference when heating is active and exposing a token-gated localhost UI.
+
+The project is released as a sanitized public repo focused on the control loop rather than production use.
+
+The system pauses heating during inference and accepts target temperature commands from a partner via the gated webpage.
+
+It is built around the user's existing vLLM backend, and an ESP thirty-two based thermostat is planned next.
+
+Red Curtain ports Fish Audio Drama three, a thirty-five billion mixture-of-experts model with about three billion active, to an RX ninety seventy by keeping FP eight experts in system RAM and caching only active ones on the card.
+
+It produces three point three seconds of speech in thirteen seconds while using eleven to twelve gigabytes of VRAM, against an official ask of a forty-eight gigabyte NVIDIA card, according to that LocalLLaMA write-up.
+
+The port keeps top-k off, supplies each speaker with a reference voice clip, and avoids starting lines with sound tags.
+
+A small web UI supports voice cloning from a reference clip and multi-speaker scripts with the same tags used in Fish's own editor.
+
+The first line sometimes plays then goes silent, matching a known behavior in the original vLLM recipe.
+
+Unsloth IQ4_XS with key-value cache streaming and n-gram prediction ran Qwen three point eight twenty-seven B at two hundred sixty-two thousand context on twenty-four gigabytes of system RAM, another LocalLLaMA post showed.
+
+The setup delivered forty-two point seven tokens a second in generation and six hundred fifty-eight in prefill at twenty thousand context, using a fork of llama.cpp that needed a Grok-assisted fix for missing PCIe atomics.
+
+At two hundred thousand context the same hardware sustains thirty-five tokens a second in generation and five hundred in prefill.
+
+The user runs the model with q four key-value cache values and q eight keys.
+
+If you want a reality check, rerun that nine-model coding gauntlet on whatever card you already have and see which checkpoint actually finishes without hanging.
+
+Grab NVIDIA Structured Data Models from the GitHub commit named in the tutorial and throw your own three-table shop database at the zero-shot path.
+
+If you need multi-speaker cloning without a forty-eight gigabyte NVIDIA G P U, try the Red Curtain port of Fish Audio Drama three on an AMD card.
+
+Load the ten seventeen DeepSeek V four point one Flash quant in Dwarfstar on one hundred twenty-eight gigabyte hardware and compare vision and language quality against the prior checkpoint.
+
+More community quants of the ten seventeen DeepSeek checkpoint are expected in the next few days.
+
+Additional M C P tool packs for Voxel51 Agent will appear as robotics teams publish their workflows.
+
+Further mismatched-G P U split-ratio experiments will surface as fifty seventy Ti owners add older cards.
+
+Idle time on a five-device chain is the reason to pop the hood on pipelined speculation for mixed kits.
+
+Multi-device mixture-of-experts inference looks like simple layer sharding until the slowest link leaves four or five gadgets waiting.
+
+The practical fix is a small draft head on the first device that guesses the next few tokens, after which the entire chain validates them in one pass.
+
+That first device then starts the next speculation while earlier guesses are still travelling.
+
+A verified step averages about two point two tokens, so the wait becomes decode.
+
+On a forty-eight-layer, five-hundred-twelve-expert model split across two PCs, an M four Pro MacBook, and two phones, this yields thirty-seven to thirty-nine tokens a second at sixty thousand context with every weight kept in VRAM or unified memory.
+
+The first PC holds layers zero through nine plus the output layer and the draft head.
+
+The MacBook holds layers ten through twenty-nine.
+
+The second PC holds layers thirty through forty-seven.
+
+Phones handle expert selection for layers ten through eighteen over U S B C, while the Mac keeps the hottest experts in its own memory.
+
+That draft head has to beat the extra PCIe and U S B C latency as the window grows, and once acceptance drops under about fifty-five percent the quality edge is gone.
+
+The layout serves sixty-nine point six thousand context natively before key-value cache pressure forces a second configuration that moves two layers back to the first PC and keeps eight-bit key-value on the Mac and phones.
+
+Every change is exact by construction except the Mac's expert cache, which adds partial sums in a different order.
+
+The KL check against a reference has not yet been run on today's changes.
+
+The pattern pays off on mixed kits that already sit on your desk and need long-context decode.
+
+When the whole model fits in twenty-four gigabytes and you would rather keep the graph simple, cache experts on one G P U instead.
+
+Stepping back from today's local checkpoints, the past seven days were dominated by agent harnesses and cheaper long-context inference.
+
+NVIDIA committed two hundred fifty million dollars in U K compute for agentic safety research over five years.
+
+Pause-token key-value compression shrank cache three point five times and sped H one hundred inference three point two times on long math problems.
+
+Yesterday Perplexity open-sourced its Firecracker microVM sandbox, giving builders a self-hostable isolation layer for long-running agent tasks.
+
+Before we go — a second layout for the five-device Qwen three point eight Flash Next chain that reaches full two hundred sixty-two thousand context is already in testing.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update.
+
+The A I world moves fast. We'll help you keep up. See you tomorrow.
+
+And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute.
+
+If today earned its place in your feed, here's your next listen — A I Chips and Data Centres Daily, the daily on accelerators, memory, and the data centres being built to run them.
+
+Find every show, free, at nerranetwork dot com. Prefer reading? Today's full write-up, sources, and transcript are on the episode blog at nerranetwork dot com — same briefing, readable format.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
