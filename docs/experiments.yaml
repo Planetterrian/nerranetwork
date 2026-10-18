@@ -5182,3 +5182,41 @@ experiments:
       absence_sentences.drop_empty_sections. Review doc
       docs/reviews/review_2026_10_18_24h.md. ⚠️ AUDIO: weekend "closed
       Friday at", AI6, PM Board (personal markets out, board flags in).
+  - id: video-job-2026-10-18
+    title: "The video renders in its own job (render-video.yml), with its own time limit"
+    area: network
+    shipped: 2026-10-18
+    readout: 2026-11-01
+    status: reading
+    baseline: >
+      Video was two thirds of a flagship run (67-82% of wall time on the
+      flagships) and shared the run's 70-minute budget: the long-form was
+      skipped on 5 of the last 14 episodes of Omni View (2), Models & Agents
+      (2) and Modern Investing (1); a failed video meant re-running the show.
+    target: >
+      zero long-forms skipped for the render budget; every handoff marker
+      followed by a .video_done marker the same day; no duplicate upload from
+      a re-run; audio publish times unchanged.
+    notes: >
+      run_show.py --video-phase (run_video_phase); _make_feed_writer,
+      _make_blog_writer, _run_video_stage, _run_x_stage moved verbatim out of
+      run(); handoff digests/<dir>/.video_pending_<date>.json rides the
+      audio-first commit; scripts/video_job.py dispatch/sweep; multilingual
+      waits for a pending video. Revert = repo variable NERRA_VIDEO_JOB=0.
+  - id: homepage-shorts-reel-2026-10-18
+    title: "Homepage Shorts reel: one Short per show, in-page player, muted preview loops"
+    area: site
+    shipped: 2026-10-18
+    readout: 2026-11-01
+    status: reading
+    baseline: >
+      Six still images linking out to YouTube; no on-site Short plays; the
+      homepage's show discovery from video measured nowhere.
+    target: >
+      play_short and select_short_show GA4 events read in the engagement
+      report; a measurable share of reel plays followed by a show-page visit.
+    notes: >
+      templates/network_page.html.j2 shorts_reel; assets/js/shorts-reel.js;
+      engine.landing_test order_shorts_for_discovery / youtube_video_id;
+      engine/short_preview.py (preview_url on Short rows, made in the video
+      job); youtube-nocookie embed loaded only on click.

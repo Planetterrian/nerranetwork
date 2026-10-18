@@ -4864,9 +4864,29 @@ def _front_page_sections(shows, public, ranked, page, *, edition=None,
     longs = [_with_scene(v, False) for v in _lt.pick_videos(
         videos, kind="long", public_slugs=public_slugs, limit=_lt.WATCH_LONG_LIMIT,
         audience_order=order)]
-    shorts = [_with_scene(v, True) for v in _lt.pick_videos(
-        videos, kind="short", public_slugs=public_slugs, limit=_lt.WATCH_SHORT_LIMIT,
-        audience_order=order)]
+    # The Shorts reel (Oct 18 2026): one hook Short per show, one per beat
+    # first (engine.landing_test.order_shorts_for_discovery). Every card
+    # carries what the in-page player needs — the id parsed from the
+    # committed watch_url (no id: the card links out), the nocookie embed
+    # (loaded only on Play), the optional muted preview loop
+    # (engine.short_preview) and the show page / episode article.
+    shorts = []
+    for v in _lt.order_shorts_for_discovery(
+            _lt.pick_videos(videos, kind="short", public_slugs=public_slugs,
+                            limit=len(public_slugs) or 1, audience_order=order),
+            hub_for=_lt.hub_by_slug(public), limit=_lt.WATCH_SHORT_LIMIT):
+        card = _with_scene(v, True)
+        vid = _lt.youtube_video_id(card.get("watch_url") or "")
+        number = card.get("episode") if isinstance(card.get("episode"), int) else None
+        show = by_slug[card["show_slug"]]
+        card.update({
+            "video_id": vid,
+            "embed_url": _lt.youtube_embed_url(vid),
+            "preview_url": _lt.preview_url(card),
+            "post_url": _blog_url_for_episode(card["show_slug"], episode_num=number) if number else "",
+            "cover_url": show.get("podcast_image") or "",
+        })
+        shorts.append(card)
     channel_labels = {"en": "English", "ru": "Русский", "fr": "Français"}
     social_urls = {v["url"].split("?")[0] for v in NETWORK_SOCIAL.values()}
     channels = [

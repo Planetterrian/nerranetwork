@@ -26,25 +26,37 @@ WF = (ROOT / ".github" / "workflows" / "run-show.yml").read_text(encoding="utf-8
 
 # ----------------------------------------------------------------- order --
 def test_the_episode_is_complete_before_the_video():
-    pos = {k: RUN_SHOW.index(k) for k in (
+    # Oct 18 2026: the video and X code moved out of run() into module-level
+    # functions (the separate video job runs them too); the order holds in
+    # run() and inside the video stage.
+    run_start = RUN_SHOW.index("def run(args: argparse.Namespace) -> None:")
+    run_body = RUN_SHOW[run_start:RUN_SHOW.index("\ndef ", run_start + 10)]
+    pos = {k: run_body.index(k) for k in (
         "    _write_rss_feed()\n",
         "    save_summary_to_github_pages(",
         "    _write_blog_post()\n",
         "    validation_passed = run_post_validation(",
         "    _checkpoint_publish(args, metrics)",
+        "        _run_video_stage(",
+        "    # 12b. Send newsletter",
+        "        _run_x_stage(",
+    )}
+    order = sorted(pos, key=pos.get)
+    assert order == list(pos), order
+    stage = RUN_SHOW[RUN_SHOW.index("def _run_video_stage("):RUN_SHOW.index("def _run_x_stage(")]
+    pos = {k: stage.index(k) for k in (
         "    youtube_urls = _publish_youtube(",
         "        _write_rss_feed(youtube_long_url, refresh=True,",
         "        _write_blog_post(\"\" if youtube_long_scheduled else youtube_long_url,",
         "    # 12b. Video podcast (July 2026 pilot).",
-        "    # 12b. Send newsletter",
-        "    # 13. Post to X",
     )}
     order = sorted(pos, key=pos.get)
     assert order == list(pos), order
+    assert "    # 13. Post to X" in RUN_SHOW[RUN_SHOW.index("def _run_x_stage("):]
 
 
 def test_the_refresh_never_notifies_directories_twice():
-    fn = RUN_SHOW[RUN_SHOW.index("    def _write_rss_feed("):RUN_SHOW.index("    _write_rss_feed()\n")]
+    fn = RUN_SHOW[RUN_SHOW.index("    def _write_rss_feed("):RUN_SHOW.index("    return _write_rss_feed\n")]
     assert "keep_existing_guid=refresh" in fn
     assert fn.index("if refresh:\n            return") < fn.index("notify_directories(")
 

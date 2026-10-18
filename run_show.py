@@ -399,6 +399,207 @@ def _discover_shows() -> list[str]:
     return discover_show_slugs(PROJECT_ROOT / "shows")
 
 
+# ---------------------------------------------------------------------------
+# The separate video job (Oct 18 2026)
+# ---------------------------------------------------------------------------
+# Video is two thirds of a flagship run, and inside the run's time limit it
+# lost the long-form on 5 of the last 14 episodes of Omni View, Models &
+# Agents and Modern Investing. run-show.yml sets NERRA_VIDEO_JOB=1: the audio
+# job writes a handoff marker that rides the audio-first commit and stops
+# there; .github/workflows/render-video.yml checks out main, fetches the MP3
+# back from R2 and runs the same video and X code (run_video_phase) in a job
+# with its own time limit. A video that fails is re-run on its own, never by
+# re-running the show.
+VIDEO_JOB_ENV = "NERRA_VIDEO_JOB"
+#: Where a Short's homepage preview loop starts: after the hook overlay
+#: (0-3 s, 1.2-4.25 s with a punch frame), so the loop is the scene, not text
+#: the reel card already prints.
+SHORT_PREVIEW_START_S = 4.5
+VIDEO_PENDING_PREFIX = ".video_pending_"
+VIDEO_DONE_PREFIX = ".video_done_"
+#: Longest ``extra_context`` string the handoff carries. The X teaser reads
+#: short scalars (the hook, Tesla's price); prompt-sized blocks stay behind.
+VIDEO_HANDOFF_MAX_CHARS = 300
+
+
+def _video_job_wanted(config, args) -> bool:
+    """True when this run hands its video to the separate video job."""
+    if os.environ.get(VIDEO_JOB_ENV, "").strip() != "1":
+        return False
+    for flag in ("test", "dry_run", "rehearse", "skip_youtube", "resume_publish",
+                 "resume_youtube", "video_phase"):
+        if getattr(args, flag, False):
+            return False
+    youtube = getattr(config, "youtube", None)
+    video_podcast = getattr(config, "video_podcast", None)
+    return bool(getattr(youtube, "enabled", False)
+                or getattr(video_podcast, "enabled", False))
+
+
+def _video_marker(digests_dir, prefix: str, day) -> Path:
+    return Path(digests_dir) / f"{prefix}{day:%Y%m%d}.json"
+
+
+def _write_video_handoff(digests_dir, *, show_slug, episode_num, today, final_mp3,
+                         r2_audio_url, rss_audio_url, hook, title_hook,
+                         audio_duration, digest_md, extra_context) -> Path:
+    """Everything the video job needs that is not already committed."""
+    carried = {
+        k: v for k, v in (extra_context or {}).items()
+        if isinstance(k, str) and (
+            v is None or isinstance(v, (bool, int, float))
+            or (isinstance(v, str) and len(v) <= VIDEO_HANDOFF_MAX_CHARS))
+    }
+    data = {
+        "show": show_slug,
+        "episode_num": int(episode_num),
+        "date": today.isoformat(),
+        "mp3": final_mp3.name if final_mp3 else "",
+        "audio_url": r2_audio_url or "",
+        "rss_audio_url": rss_audio_url or "",
+        "hook": hook or "",
+        "title_hook": title_hook or "",
+        "audio_duration": round(float(audio_duration or 0.0), 2),
+        "digest_md": Path(digest_md).name if digest_md else "",
+        "extra_context": carried,
+        "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(
+            timespec="seconds"),
+    }
+    path = _video_marker(digests_dir, VIDEO_PENDING_PREFIX, today)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+                    encoding="utf-8")
+    logger.info("Video handed to the video job: %s", path.name)
+    return path
+
+
+def _fetch_episode_mp3(url: str, dest: Path, attempts: int = 3) -> None:
+    """Download the published MP3 (the raw R2 URL — never the OP3 prefix,
+    which would count the video job as a listener)."""
+    import requests
+    if not url:
+        raise SystemExit("Video job: the handoff has no audio URL to fetch the MP3 from")
+    last: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        tmp = dest.with_name(dest.name + ".part")
+        try:
+            with requests.get(url, stream=True, timeout=120) as resp:
+                resp.raise_for_status()
+                with open(tmp, "wb") as fh:
+                    for chunk in resp.iter_content(1 << 20):
+                        fh.write(chunk)
+            if tmp.stat().st_size <= 0:
+                raise ValueError("empty download")
+            tmp.replace(dest)
+            logger.info("Video job: fetched %s (%d bytes)", dest.name, dest.stat().st_size)
+            return
+        except Exception as exc:  # noqa: BLE001 — retried, then fatal
+            last = exc
+            tmp.unlink(missing_ok=True)
+            logger.warning("Video job: MP3 fetch attempt %d failed: %s", attempt, exc)
+            time.sleep(5 * attempt)
+    raise SystemExit(f"Video job: could not fetch the episode MP3 from {url}: {last}")
+
+
+def run_video_phase(args: argparse.Namespace) -> None:
+    """The separate video job: render, upload and link the episode's video,
+    then post the episode to X, from the audio job's handoff marker."""
+    from engine.config import load_config
+    from engine.metrics import PipelineMetrics
+    from engine.tracking import create_tracker, save_usage as _save_usage
+
+    config = load_config(PROJECT_ROOT / "shows" / f"{args.show}.yaml")
+    digests_dir = PROJECT_ROOT / config.episode.output_dir
+    today = (datetime.date.fromisoformat(args.date) if getattr(args, "date", None)
+             else datetime.date.today())
+    today_str = today.strftime("%B %d, %Y")
+    pending = _video_marker(digests_dir, VIDEO_PENDING_PREFIX, today)
+    done = _video_marker(digests_dir, VIDEO_DONE_PREFIX, today)
+    logger.info("=== %s — video job for %s ===", config.name, today.isoformat())
+    if done.exists() and not getattr(args, "force_video", False):
+        logger.info("Video job: %s is already done for %s — nothing to do "
+                    "(pass --force-video to render again)", config.slug, today)
+        return
+    if not pending.exists():
+        logger.error("::error::Video job: no handoff %s on main — the audio job "
+                     "did not hand %s's video over for %s", pending.name,
+                     config.slug, today)
+        sys.exit(1)
+    handoff = json.loads(pending.read_text(encoding="utf-8"))
+    episode_num = int(handoff["episode_num"])
+    digest_md = digests_dir / handoff["digest_md"]
+    x_thread = digest_md.read_text(encoding="utf-8")
+    final_mp3 = digests_dir / handoff["mp3"]
+    fetched_mp3 = not final_mp3.exists()
+    if fetched_mp3:
+        _fetch_episode_mp3(handoff.get("audio_url") or "", final_mp3)
+    from engine.audio import get_audio_duration
+    audio_duration = (float(handoff.get("audio_duration") or 0.0)
+                      or float(get_audio_duration(final_mp3) or 0.0))
+    hook = handoff.get("hook") or None
+    title_hook = handoff.get("title_hook") or hook or ""
+    extra_context = dict(handoff.get("extra_context") or {})
+
+    metrics_path = digests_dir / f"metrics_ep{episode_num:03d}.json"
+    metrics = (PipelineMetrics.load(metrics_path) if metrics_path.exists()
+               else PipelineMetrics(show_slug=config.slug, episode_num=episode_num))
+    credit_path = digests_dir / f"credit_usage_{handoff['date']}_ep{episode_num:03d}.json"
+    if credit_path.exists():
+        tracker = json.loads(credit_path.read_text(encoding="utf-8"))
+    else:
+        tracker = create_tracker(config.name, episode_num)
+        tracker["date"] = handoff["date"]
+
+    rss_path = PROJECT_ROOT / config.publishing.rss_file
+    summaries_json = PROJECT_ROOT / config.publishing.summaries_json
+    _write_rss_feed = _make_feed_writer(
+        args=args, config=config, metrics=metrics, audio_duration=audio_duration,
+        digests_dir=digests_dir, episode_num=episode_num, final_mp3=final_mp3,
+        rss_audio_url=handoff.get("rss_audio_url") or handoff.get("audio_url") or "",
+        rss_path=rss_path, title_hook=title_hook, today=today, today_str=today_str,
+        x_thread=x_thread,
+    )
+    _write_blog_post = _make_blog_writer(
+        args=args, config=config, digest_md=digest_md, episode_num=episode_num,
+        hook=hook, today=today, x_thread=x_thread,
+    )
+    _t_job = time.monotonic()
+    _run_video_stage(
+        args=args, config=config, metrics=metrics, tracker=tracker,
+        digests_dir=digests_dir, episode_num=episode_num,
+        extra_context=extra_context, final_mp3=final_mp3, hook=hook,
+        r2_audio_url=handoff.get("audio_url") or "", summaries_json=summaries_json,
+        today=today, today_str=today_str, x_thread=x_thread,
+        _write_blog_post=_write_blog_post, _write_rss_feed=_write_rss_feed,
+    )
+    _run_x_stage(
+        args=args, config=config, metrics=metrics, tracker=tracker,
+        digests_dir=digests_dir, episode_num=episode_num, episode_published=True,
+        extra_context=extra_context, final_mp3=final_mp3, hook=hook, today=today,
+        today_str=today_str,
+    )
+    # Not a *_duration_s key: wall_duration_s already counts the video stage's
+    # own timers, and this one would count them twice.
+    metrics.record("video_job", "rendered")
+    metrics.record("video_job_seconds", round(time.monotonic() - _t_job, 1))
+    _save_usage(tracker, digests_dir)
+    try:
+        metrics.save(digests_dir)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Metrics save failed (non-fatal): %s", exc)
+    done.write_text(json.dumps({
+        **{k: handoff.get(k) for k in ("show", "episode_num", "date")},
+        "finished_at": datetime.datetime.now(datetime.timezone.utc).isoformat(
+            timespec="seconds"),
+        "long_form_uploaded": bool(metrics.counters.get("youtube_long_form_uploaded")),
+        "short_uploaded": bool(metrics.counters.get("youtube_short_uploaded")),
+    }, indent=2) + "\n", encoding="utf-8")
+    pending.unlink(missing_ok=True)
+    if fetched_mp3:
+        final_mp3.unlink(missing_ok=True)
+    logger.info("=== %s video job complete ===", config.name)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run a podcast show pipeline.")
     available = _discover_shows()
@@ -440,6 +641,23 @@ def parse_args() -> argparse.Namespace:
         "--resume-youtube",
         action="store_true",
         help="YouTube only: MP3 + digest on disk, rebuild/upload videos (skips TTS/RSS/X)",
+    )
+    parser.add_argument(
+        "--video-phase",
+        action="store_true",
+        help=("The separate video job (render-video.yml): render, upload and "
+              "link the episode's video and post it to X, from the audio "
+              "job's handoff marker"),
+    )
+    parser.add_argument(
+        "--date",
+        default=None,
+        help="--video-phase only: the episode date, YYYY-MM-DD (default today)",
+    )
+    parser.add_argument(
+        "--force-video",
+        action="store_true",
+        help="--video-phase only: render again even when the video is done",
     )
     parser.add_argument(
         "--deep-dive",
@@ -5329,6 +5547,248 @@ def run(args: argparse.Namespace) -> None:
     # 11. Update RSS feed. A function since Oct 17 2026: it runs once before
     # the video (audio first) and again after it when YouTube produced a
     # watch link, on the same GUID so no app downloads the episode twice.
+    _write_rss_feed = _make_feed_writer(
+        args=args, config=config, metrics=metrics, audio_duration=audio_duration,
+        digests_dir=digests_dir, episode_num=episode_num, final_mp3=final_mp3,
+        rss_audio_url=rss_audio_url, rss_path=rss_path, title_hook=title_hook,
+        today=today, today_str=today_str, x_thread=x_thread,
+    )
+
+    _write_rss_feed()
+
+    # 12. Save GitHub Pages summary
+    from engine.publisher import save_summary_to_github_pages
+
+    summaries_json = PROJECT_ROOT / config.publishing.summaries_json
+    audio_url = r2_audio_url  # Prefer R2 URL
+    if not audio_url and final_mp3 and final_mp3.exists():
+        audio_url = (
+            f"{config.publishing.base_url}/{config.publishing.audio_subdir}/{final_mp3.name}"
+        )
+
+    from engine import titles as _titles
+    save_summary_to_github_pages(
+        summary_text=x_thread,
+        summaries_json_path=summaries_json,
+        podcast_name=config.publishing.summaries_podcast_name or config.slug,
+        episode_num=episode_num,
+        episode_title=_titles.episode_title(
+            title_hook, episode_num,
+            fallback=f"{config.name} - Episode {episode_num} - {today_str}"),
+        audio_url=audio_url,
+        rss_url=f"{config.publishing.base_url}/{config.publishing.rss_file}",
+    )
+
+    # 11c. Multilingual audio (FR/RU/ES/ZH) is generated OUT OF BAND by a
+    # separate workflow (.github/workflows/multilingual.yml) running the
+    # idempotent driver scripts/generate_translations.py. It used to run
+    # inline here, but four sequential TTS renders (~16 min) pushed
+    # video-heavy shows (e.g. Tesla) past the 2400s pipeline timeout — the
+    # SIGALRM fired mid-render, run_show exited non-zero, and the episode's
+    # git commit step was skipped, leaving a partial publish (R2 + YouTube
+    # done, nothing committed). Decoupling keeps the episode pipeline fast +
+    # durable; translations land shortly after via the dedicated workflow.
+
+    # 12a. Generate blog post. Like the feed, written before the video and
+    # rewritten after it when YouTube links exist (Oct 17 2026).
+    _write_blog_post = _make_blog_writer(
+        args=args, config=config, digest_md=digest_md, episode_num=episode_num,
+        hook=hook, today=today, x_thread=x_thread,
+    )
+
+    # 12a-share. The episode's link preview (Oct 18 2026, engine/share_cards.py):
+    # hook, show and date on the show's art, uploaded to R2 before the post is
+    # written so the first share of the post already carries it. The video
+    # stage replaces it with one drawn on the episode's own scene.
+    if not args.test:
+        try:
+            from engine.share_cards import episode_card_for as _episode_card_for
+            _episode_card_for(config, episode_num=episode_num, hook=hook or "",
+                              date_str=today.isoformat())
+        except Exception:  # noqa: BLE001
+            logger.warning("Episode share card failed (non-fatal)", exc_info=True)
+
+    _write_blog_post()
+
+    # 12a-pre. Post-run validation (before newsletter/X so bad episodes
+    # don't email subscribers or tweet without audio).
+    from engine.post_run_validation import run_post_validation
+    validation_passed = run_post_validation(
+        mp3_path=final_mp3,
+        rss_path=rss_path,
+        digest_text=x_thread,
+        show_name=config.name,
+        episode_num=episode_num,
+    )
+    if not validation_passed:
+        logger.error("Post-run validation FAILED — exiting with error code")
+        save_usage(tracker, digests_dir)
+        sys.exit(1)
+
+    # 12c-video. The separate video job (Oct 18 2026). Under the workflow
+    # (NERRA_VIDEO_JOB=1) the video half no longer shares this job's time
+    # limit: the handoff marker written here rides the audio-first commit, and
+    # render-video.yml renders, uploads, links and posts to X from it
+    # (run_video_phase). Off — a local run, a test, a show with no video — the
+    # same functions run inline, exactly as before.
+    _video_deferred = _video_job_wanted(config, args)
+    if _video_deferred:
+        _write_video_handoff(
+            digests_dir, show_slug=config.slug, episode_num=episode_num,
+            today=today, final_mp3=final_mp3, r2_audio_url=r2_audio_url or "",
+            rss_audio_url=rss_audio_url or "", hook=hook, title_hook=title_hook,
+            audio_duration=audio_duration, digest_md=digest_md,
+            extra_context=extra_context,
+        )
+        metrics.record("video_job", "deferred")
+
+    # 12c. Audio first (Oct 17 2026). The episode is complete without its
+    # video: audio on R2, feed, summaries, blog post, transcript. Push it now
+    # so Nerra Daily and listeners have it ~15 minutes into the run instead
+    # of ~35; the video renders and uploads after, and the workflow's commit
+    # step pushes what it adds. Best-effort: a failed push leaves everything
+    # for that final commit, exactly as before.
+    _checkpoint_publish(args, metrics)
+
+    if not _video_deferred:
+        _run_video_stage(
+            args=args, config=config, metrics=metrics, tracker=tracker,
+            digests_dir=digests_dir, episode_num=episode_num,
+            extra_context=extra_context, final_mp3=final_mp3, hook=hook,
+            r2_audio_url=r2_audio_url, summaries_json=summaries_json, today=today,
+            today_str=today_str, x_thread=x_thread,
+            _write_blog_post=_write_blog_post, _write_rss_feed=_write_rss_feed,
+        )
+
+    episode_published = bool(final_mp3 and final_mp3.exists())
+
+    # 12b. Send newsletter
+    if (
+        episode_published
+        and config.newsletter.enabled
+        and not args.skip_newsletter
+    ):
+        from engine.newsletter import send_show_newsletter
+
+        try:
+            email_id = send_show_newsletter(
+                x_thread, config, episode_num, today_str, hook=hook,
+            )
+        except Exception as exc:  # pragma: no cover — defensive
+            email_id = None
+            logger.exception("Newsletter send raised: %s", exc)
+
+        # Record the send outcome in metrics.json so the operator can
+        # spot a pipeline-wide silent-failure (e.g. May 2026 audit
+        # caught all three of OV / Modern Investing / Privet Russian
+        # being scaffold-blocked for weeks without a metric to flag
+        # it). ``newsletter_email_id`` is None on every blocked path;
+        # the bool counter is the easier-to-grep daily signal.
+        metrics.record("newsletter_sent", bool(email_id))
+        if email_id:
+            metrics.record("newsletter_email_id", email_id)
+
+        if email_id:
+            logger.info("Newsletter sent: %s", email_id)
+        else:
+            # send_show_newsletter returns None for several distinct
+            # reasons (api key missing, contrast hard-block, scaffold
+            # leak, same-day double-send guard, Buttondown rejection,
+            # tag filter matched zero subscribers). engine.newsletter
+            # logs the SPECIFIC reason at ERROR/WARNING level just
+            # above — pointing the operator there is more accurate
+            # than guessing here. Operator caught (TST Ep465, May 6
+            # 2026) the prior speculative ``tag filter matched zero
+            # subscribers OR Buttondown rejected the send`` warning
+            # being printed when the actual block was a contrast
+            # hard-block, which is plainly logged on the preceding
+            # line.
+            api_key_env = getattr(
+                config.newsletter, "api_key_env", "BUTTONDOWN_API_KEY",
+            )
+            if not os.getenv(api_key_env, "").strip():
+                logger.warning(
+                    "Newsletter not sent: %s env var is empty. "
+                    "Add the secret in GitHub Actions to enable "
+                    "newsletters.", api_key_env,
+                )
+            else:
+                logger.warning(
+                    "Newsletter not sent — see the preceding "
+                    "engine.newsletter log line for the specific "
+                    "reason (contrast block, scaffold leak, send "
+                    "guardrail, or Buttondown response).",
+                )
+                # Loud alert: a configured-and-enabled newsletter that fails
+                # to send is an operator-actionable problem, not routine. The
+                # Buttondown account-disabled outage (June 19-28 2026) ran 9
+                # days unnoticed because this only logged a WARNING. Fire the
+                # notification webhook so a real send failure pages the
+                # operator immediately. Best-effort, never blocks the run.
+                _alert_webhook(
+                    f"⚠️ Newsletter NOT sent for {config.name} "
+                    f"ep{episode_num}. The Buttondown send failed (see the "
+                    f"run log for the API response — e.g. account disabled, "
+                    f"tag/recipient, or contrast/scaffold block). Newsletters "
+                    f"stay down until resolved."
+                )
+
+    # 13. Post to X — in the video job when the video is deferred, since the
+    # post carries the episode's Short and the full episode replies under it.
+    if not _video_deferred:
+        _run_x_stage(
+            args=args, config=config, metrics=metrics, tracker=tracker,
+            digests_dir=digests_dir, episode_num=episode_num,
+            episode_published=episode_published, extra_context=extra_context,
+            final_mp3=final_mp3, hook=hook, today=today, today_str=today_str,
+        )
+
+    # 14b. Cleanup raw audio now that validation has passed
+    if not args.skip_podcast and final_mp3 and final_mp3.exists():
+        raw_mp3_cleanup = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_raw.mp3"
+        if raw_mp3_cleanup.exists() and raw_mp3_cleanup != final_mp3:
+            raw_mp3_cleanup.unlink(missing_ok=True)
+            logger.info("Cleaned up raw audio: %s", raw_mp3_cleanup.name)
+
+    # 15. Save tracking & metrics
+    save_usage(tracker, digests_dir)
+    try:
+        metrics.record("digest_chars", len(x_thread) if x_thread else 0)
+        metrics.record("audio_duration_s", audio_duration)
+        metrics.save(digests_dir)
+        logger.info("Pipeline summary: %s", metrics.summary())
+    except Exception as exc:
+        logger.warning("Metrics save failed (non-fatal): %s", exc)
+
+    _digest_marker_md = digests_dir / (
+        f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}.md"
+    )
+    if episode_published or _digest_marker_md.exists():
+        write_publish_complete_marker(
+            publish_marker,
+            show_slug=config.slug,
+            episode_num=episode_num,
+            date_iso=today.isoformat(),
+        )
+
+    logger.info("=== %s complete ===", config.name)
+
+
+# ---------------------------------------------------------------------------
+# The episode's video half (Oct 18 2026, the separate video job)
+# ---------------------------------------------------------------------------
+# These four were inline in run() — two closures and the code after the
+# audio-first checkpoint. They are module-level so the separate video job
+# (run_video_phase, .github/workflows/render-video.yml) runs exactly the code
+# an inline run runs: the bodies are moved verbatim and every variable they
+# read from run() is now a keyword argument.
+
+def _make_feed_writer(
+    *, args, config, metrics, audio_duration, digests_dir, episode_num, final_mp3,
+    rss_audio_url, rss_path, title_hook, today, today_str, x_thread,
+) -> "callable":
+    """The episode's feed writer: once before the video (audio first), again
+    with the YouTube link after it, on the same GUID."""
     def _write_rss_feed(youtube_long_url: str = "", *, refresh: bool = False,
                         youtube_public_at: str = "") -> None:
         _t_rss = time.monotonic()
@@ -5544,43 +6004,13 @@ def run(args: argparse.Namespace) -> None:
         rss_url = f"{config.publishing.base_url}/{config.publishing.rss_file}"
         notify_directories(rss_url, show_name=config.publishing.rss_title)
 
-    _write_rss_feed()
+    return _write_rss_feed
 
-    # 12. Save GitHub Pages summary
-    from engine.publisher import save_summary_to_github_pages
 
-    summaries_json = PROJECT_ROOT / config.publishing.summaries_json
-    audio_url = r2_audio_url  # Prefer R2 URL
-    if not audio_url and final_mp3 and final_mp3.exists():
-        audio_url = (
-            f"{config.publishing.base_url}/{config.publishing.audio_subdir}/{final_mp3.name}"
-        )
-
-    from engine import titles as _titles
-    save_summary_to_github_pages(
-        summary_text=x_thread,
-        summaries_json_path=summaries_json,
-        podcast_name=config.publishing.summaries_podcast_name or config.slug,
-        episode_num=episode_num,
-        episode_title=_titles.episode_title(
-            title_hook, episode_num,
-            fallback=f"{config.name} - Episode {episode_num} - {today_str}"),
-        audio_url=audio_url,
-        rss_url=f"{config.publishing.base_url}/{config.publishing.rss_file}",
-    )
-
-    # 11c. Multilingual audio (FR/RU/ES/ZH) is generated OUT OF BAND by a
-    # separate workflow (.github/workflows/multilingual.yml) running the
-    # idempotent driver scripts/generate_translations.py. It used to run
-    # inline here, but four sequential TTS renders (~16 min) pushed
-    # video-heavy shows (e.g. Tesla) past the 2400s pipeline timeout — the
-    # SIGALRM fired mid-render, run_show exited non-zero, and the episode's
-    # git commit step was skipped, leaving a partial publish (R2 + YouTube
-    # done, nothing committed). Decoupling keeps the episode pipeline fast +
-    # durable; translations land shortly after via the dedicated workflow.
-
-    # 12a. Generate blog post. Like the feed, written before the video and
-    # rewritten after it when YouTube links exist (Oct 17 2026).
+def _make_blog_writer(
+    *, args, config, digest_md, episode_num, hook, today, x_thread,
+) -> "callable":
+    """The episode's blog-post writer: before the video and again with its links."""
     def _write_blog_post(youtube_long_url: str = "", youtube_short_url: str = "",
                          *, refresh: bool = False) -> None:
         try:
@@ -5647,43 +6077,16 @@ def run(args: argparse.Namespace) -> None:
         except Exception as exc:
             logger.warning("Blog post generation failed (non-fatal): %s", exc)
 
-    # 12a-share. The episode's link preview (Oct 18 2026, engine/share_cards.py):
-    # hook, show and date on the show's art, uploaded to R2 before the post is
-    # written so the first share of the post already carries it. The video
-    # stage replaces it with one drawn on the episode's own scene.
-    if not args.test:
-        try:
-            from engine.share_cards import episode_card_for as _episode_card_for
-            _episode_card_for(config, episode_num=episode_num, hook=hook or "",
-                              date_str=today.isoformat())
-        except Exception:  # noqa: BLE001
-            logger.warning("Episode share card failed (non-fatal)", exc_info=True)
+    return _write_blog_post
 
-    _write_blog_post()
 
-    # 12a-pre. Post-run validation (before newsletter/X so bad episodes
-    # don't email subscribers or tweet without audio).
-    from engine.post_run_validation import run_post_validation
-    validation_passed = run_post_validation(
-        mp3_path=final_mp3,
-        rss_path=rss_path,
-        digest_text=x_thread,
-        show_name=config.name,
-        episode_num=episode_num,
-    )
-    if not validation_passed:
-        logger.error("Post-run validation FAILED — exiting with error code")
-        save_usage(tracker, digests_dir)
-        sys.exit(1)
-
-    # 12c. Audio first (Oct 17 2026). The episode is complete without its
-    # video: audio on R2, feed, summaries, blog post, transcript. Push it now
-    # so Nerra Daily and listeners have it ~15 minutes into the run instead
-    # of ~35; the video renders and uploads after, and the workflow's commit
-    # step pushes what it adds. Best-effort: a failed push leaves everything
-    # for that final commit, exactly as before.
-    _checkpoint_publish(args, metrics)
-
+def _run_video_stage(
+    *, args, config, metrics, tracker, digests_dir, episode_num, extra_context,
+    final_mp3, hook, r2_audio_url, summaries_json, today, today_str, x_thread,
+    _write_blog_post, _write_rss_feed,
+) -> None:
+    """Render and upload the episode's video, then put its links in the feed
+    item and the blog post and attach the video-podcast edition."""
     # YouTube results are still produced by the existing _publish_youtube
     # for this iteration. Full move coming in follow-up PRs.
     _t_yt = time.monotonic()
@@ -5739,7 +6142,6 @@ def run(args: argparse.Namespace) -> None:
 
     youtube_long_url = youtube_urls.get("long_url", "")
     youtube_short_url = youtube_urls.get("short_url", "")
-    youtube_pexels_filtered = int(youtube_urls.get("pexels_photos_filtered", 0) or 0)
     # Oct 18 2026: a long-form scheduled for noon/18:00 ET is private until
     # then. The X teaser and the blog's "Watch on YouTube" button linked it
     # straight away ("Video unavailable" for 5-12 hours); the feed already
@@ -5894,79 +6296,12 @@ def run(args: argparse.Namespace) -> None:
         except Exception as exc:  # noqa: BLE001 — never block the publish
             logger.warning("Video podcast step failed (non-fatal): %s", exc)
 
-    episode_published = bool(final_mp3 and final_mp3.exists())
 
-    # 12b. Send newsletter
-    if (
-        episode_published
-        and config.newsletter.enabled
-        and not args.skip_newsletter
-    ):
-        from engine.newsletter import send_show_newsletter
-
-        try:
-            email_id = send_show_newsletter(
-                x_thread, config, episode_num, today_str, hook=hook,
-            )
-        except Exception as exc:  # pragma: no cover — defensive
-            email_id = None
-            logger.exception("Newsletter send raised: %s", exc)
-
-        # Record the send outcome in metrics.json so the operator can
-        # spot a pipeline-wide silent-failure (e.g. May 2026 audit
-        # caught all three of OV / Modern Investing / Privet Russian
-        # being scaffold-blocked for weeks without a metric to flag
-        # it). ``newsletter_email_id`` is None on every blocked path;
-        # the bool counter is the easier-to-grep daily signal.
-        metrics.record("newsletter_sent", bool(email_id))
-        if email_id:
-            metrics.record("newsletter_email_id", email_id)
-
-        if email_id:
-            logger.info("Newsletter sent: %s", email_id)
-        else:
-            # send_show_newsletter returns None for several distinct
-            # reasons (api key missing, contrast hard-block, scaffold
-            # leak, same-day double-send guard, Buttondown rejection,
-            # tag filter matched zero subscribers). engine.newsletter
-            # logs the SPECIFIC reason at ERROR/WARNING level just
-            # above — pointing the operator there is more accurate
-            # than guessing here. Operator caught (TST Ep465, May 6
-            # 2026) the prior speculative ``tag filter matched zero
-            # subscribers OR Buttondown rejected the send`` warning
-            # being printed when the actual block was a contrast
-            # hard-block, which is plainly logged on the preceding
-            # line.
-            api_key_env = getattr(
-                config.newsletter, "api_key_env", "BUTTONDOWN_API_KEY",
-            )
-            if not os.getenv(api_key_env, "").strip():
-                logger.warning(
-                    "Newsletter not sent: %s env var is empty. "
-                    "Add the secret in GitHub Actions to enable "
-                    "newsletters.", api_key_env,
-                )
-            else:
-                logger.warning(
-                    "Newsletter not sent — see the preceding "
-                    "engine.newsletter log line for the specific "
-                    "reason (contrast block, scaffold leak, send "
-                    "guardrail, or Buttondown response).",
-                )
-                # Loud alert: a configured-and-enabled newsletter that fails
-                # to send is an operator-actionable problem, not routine. The
-                # Buttondown account-disabled outage (June 19-28 2026) ran 9
-                # days unnoticed because this only logged a WARNING. Fire the
-                # notification webhook so a real send failure pages the
-                # operator immediately. Best-effort, never blocks the run.
-                _alert_webhook(
-                    f"⚠️ Newsletter NOT sent for {config.name} "
-                    f"ep{episode_num}. The Buttondown send failed (see the "
-                    f"run log for the API response — e.g. account disabled, "
-                    f"tag/recipient, or contrast/scaffold block). Newsletters "
-                    f"stay down until resolved."
-                )
-
+def _run_x_stage(
+    *, args, config, metrics, tracker, digests_dir, episode_num, episode_published,
+    extra_context, final_mp3, hook, today, today_str,
+) -> None:
+    """Post the episode to X (the clip, or the linked teaser)."""
     # 13. Post to X
     _t_x = time.monotonic()
     # Oct 9 2026: the OUTCOME is recorded, not only the duration. Seven
@@ -6135,36 +6470,6 @@ def run(args: argparse.Namespace) -> None:
         metrics.record("x_posted", _x_posted)
         if not _x_posted:
             metrics.record("x_post_skipped", _x_skip_reason or "post_failed")
-
-    # 14b. Cleanup raw audio now that validation has passed
-    if not args.skip_podcast and final_mp3 and final_mp3.exists():
-        raw_mp3_cleanup = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_raw.mp3"
-        if raw_mp3_cleanup.exists() and raw_mp3_cleanup != final_mp3:
-            raw_mp3_cleanup.unlink(missing_ok=True)
-            logger.info("Cleaned up raw audio: %s", raw_mp3_cleanup.name)
-
-    # 15. Save tracking & metrics
-    save_usage(tracker, digests_dir)
-    try:
-        metrics.record("digest_chars", len(x_thread) if x_thread else 0)
-        metrics.record("audio_duration_s", audio_duration)
-        metrics.save(digests_dir)
-        logger.info("Pipeline summary: %s", metrics.summary())
-    except Exception as exc:
-        logger.warning("Metrics save failed (non-fatal): %s", exc)
-
-    _digest_marker_md = digests_dir / (
-        f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}.md"
-    )
-    if episode_published or _digest_marker_md.exists():
-        write_publish_complete_marker(
-            publish_marker,
-            show_slug=config.slug,
-            episode_num=episode_num,
-            date_iso=today.isoformat(),
-        )
-
-    logger.info("=== %s complete ===", config.name)
 
 
 # ---------------------------------------------------------------------------
@@ -9496,6 +9801,25 @@ def _publish_youtube(
                                                    **_short_kw)
                     short_urls_out.append(this_upload.watch_url)
                     short_video_ids_out.append(this_upload.video_id)
+                    # Oct 18 2026: the homepage's Shorts reel plays a muted
+                    # ~6 s loop of the Short in view. Cut after the hook
+                    # overlay, uploaded beside the audio; "" on any failure.
+                    _preview_url = ""
+                    if (getattr(config.youtube, "channel", "en") or "en") == "en":
+                        try:
+                            from engine.short_preview import (
+                                make_short_preview, upload_short_preview)
+                            _pv = this_short_video_path.with_name(
+                                this_short_video_path.stem + "_preview.mp4")
+                            if make_short_preview(this_short_video_path, _pv,
+                                                  start_s=SHORT_PREVIEW_START_S):
+                                _preview_url = upload_short_preview(
+                                    _pv, config.slug, episode_num, short_idx + 1)
+                            _pv.unlink(missing_ok=True)
+                        except Exception as _pv_exc:  # noqa: BLE001 — a bonus
+                            logger.debug("Short preview skipped: %s", _pv_exc)
+                    if _preview_url:
+                        result.setdefault("short_preview_urls", []).append(_preview_url)
                     try:
                         from engine.youtube_index import record_video as _yt_record
                         _yt_record(
@@ -9527,6 +9851,7 @@ def _publish_youtube(
                             # first directive) — hook_open | qualified |
                             # filled | legacy_fallback.
                             window=_fill_mode,
+                            preview_url=_preview_url,
                             index_path=digests_dir / "youtube_videos.json",
                         )
                     except Exception as _exc:
@@ -10087,7 +10412,10 @@ def _build_cross_promo_reply(config, today, episode_num=None) -> str:
 if __name__ == "__main__":
     args = parse_args()
     try:
-        run(args)
+        if args.video_phase:
+            run_video_phase(args)
+        else:
+            run(args)
     except KeyboardInterrupt:
         logger.info("Interrupted.")
         sys.exit(1)

@@ -61,7 +61,13 @@ CONVERSION_EVENTS = ["newsletter_signup", "generate_lead", "gallery_subscribe"]
 # Soft Personal interest submit is INTENT toward tips/reminder (no charge),
 # never a newsletter conversion — keep it out of CONVERSION_EVENTS so
 # build_funnel._captures() does not count Soft as a subscriber signup.
-ENGAGEMENT_EVENTS = ["select_personal_upsell", "soft_personal_interest_submit"]
+# Oct 18 2026: the homepage Shorts reel (assets/js/shorts-reel.js) fires
+# play_short when its in-page player starts a Short and select_short_show
+# when a visitor follows a Short to its show page — the reel's discovery
+# outcome; play_short_unavailable when YouTube refuses to play one embedded
+# (the player then offers "Watch on YouTube"). Engagement, never a capture.
+ENGAGEMENT_EVENTS = ["select_personal_upsell", "soft_personal_interest_submit",
+                     "play_short", "select_short_show", "play_short_unavailable"]
 
 
 def _session():

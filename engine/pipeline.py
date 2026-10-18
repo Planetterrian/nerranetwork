@@ -199,6 +199,10 @@ def record_youtube_outcomes(
         # East-coast release schedule (Oct 17 2026): when the long-form and
         # the hook Short go PUBLIC (UTC), absent = published at upload.
         # engine/release_schedule.py owns the slots; these say what shipped.
+        # Oct 18 2026: the muted loops the homepage's Shorts reel plays.
+        if youtube_urls.get("short_preview_urls"):
+            metrics.record("short_previews_uploaded",
+                           len(youtube_urls["short_preview_urls"]))
         for key in ("long_publish_at", "short_publish_at"):
             if youtube_urls.get(key):
                 metrics.record(f"youtube_{key}", str(youtube_urls[key]))

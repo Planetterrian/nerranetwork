@@ -362,8 +362,10 @@ class TestTheGuardsNeverCostAPublishedEpisode:
         assert "sys.exit(1)" not in early
         # After the feed is updated, a guard may only warn.
         blog = src.index("# 12a. Generate blog post")
-        late = src[blog:src.index("# 12a-pre. Post-run validation")]
-        assert src.index("# 11. Update RSS feed") < blog
+        assert src.index("# 11. Update RSS feed") < blog < src.index("# 12a-pre. Post-run validation")
+        # Oct 18 2026: the blog writer is built by _make_blog_writer (the
+        # separate video job calls it too); its body is what runs after the feed.
+        late = src[src.index("def _make_blog_writer("):src.index("    return _write_blog_post\n")]
         assert "check_publish_guards(" in late
         assert "sys.exit" not in late
         assert "_skip_episode(" not in late

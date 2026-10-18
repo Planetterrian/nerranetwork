@@ -117,7 +117,8 @@ class TestCancelledRunsStillWake:
     def test_multilingual_translates_only_successful_show_jobs(self):
         text = _wf("multilingual.yml")
         assert 'job.get("conclusion") == "success"' in text
-        assert r're.fullmatch(r"run \((\S+)\)"' in text
+        # Oct 18 2026: the video job's "render (<show>)" jobs count too.
+        assert r're.fullmatch(r"(?:run|render) \((\S+)\)"' in text
 
 
 class TestDuplicateGuard:

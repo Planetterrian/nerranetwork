@@ -93,6 +93,23 @@ class PipelineMetrics:
                 "OK" if metric.success else f"FAILED ({metric.error[:60]})",
             )
 
+    @classmethod
+    def load(cls, path: Path) -> "PipelineMetrics":
+        """Read a saved metrics file back (Oct 18 2026: the separate video
+        job adds its stages and counters to the audio job's file)."""
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+        metrics = cls(show_slug=str(data.get("show_slug") or ""),
+                      episode_num=int(data.get("episode_num") or 0))
+        for s in data.get("stages") or []:
+            metrics.stages.append(StageMetric(
+                name=str(s.get("name") or ""),
+                duration_s=float(s.get("duration_s") or 0.0),
+                success=bool(s.get("success", True)),
+                error=str(s.get("error") or ""),
+            ))
+        metrics.counters.update(data.get("counters") or {})
+        return metrics
+
     def record(self, key: str, value: Any) -> None:
         """Record an arbitrary counter or metadata value."""
         self.counters[key] = value

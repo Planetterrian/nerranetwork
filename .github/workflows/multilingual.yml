@@ -22,8 +22,13 @@ on:
   # its "Auto-generated: <show> <date>" head commit) — the old all-7-show
   # fan-out per episode run was ~35 mostly-no-op jobs/day. The scheduled
   # passes below stay full-fan-out catch-alls for anything this misses.
+  # Oct 18 2026: also after each video job (render-video.yml, job
+  # "render (<show>)"). The translation tracks need only the audio and are
+  # made after the show run; the RU/FR dubs reuse the episode's scene images,
+  # which the video job makes, so its completion sweeps the show again (the
+  # driver skips whatever already exists).
   workflow_run:
-    workflows: ["Run Podcast Show"]
+    workflows: ["Run Podcast Show", "Render Episode Video"]
     types: [completed]
   schedule:
     # After the morning show window (shows finish ~12-13 UTC; GitHub cron is
@@ -110,6 +115,7 @@ jobs:
           HEAD_COMMIT_MESSAGE: ${{ github.event.workflow_run.head_commit.message }}
           # Oct 9 2026: the triggering run, so the step can read its jobs.
           TRIGGER_RUN_ID: ${{ github.event.workflow_run.id }}
+          TRIGGER_WORKFLOW: ${{ github.event.workflow_run.name }}
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
@@ -168,7 +174,7 @@ jobs:
                       r.raise_for_status()
                       published = []
                       for job in r.json().get("jobs", []):
-                          jm = re.fullmatch(r"run \((\S+)\)", job.get("name") or "")
+                          jm = re.fullmatch(r"(?:run|render) \((\S+)\)", job.get("name") or "")
                           if jm and job.get("conclusion") == "success":
                               published.append(jm.group(1))
                       # Oct 9 2026 (afternoon): a successful read is the
@@ -210,6 +216,24 @@ jobs:
                       if skipped:
                           print("Skipped their episode today:", skipped)
                       shows = [s for s in shows if s not in skipped]
+
+                      # Oct 18 2026: a show whose video is still rendering in
+                      # its own job (render-video.yml) is swept when THAT job
+                      # completes — both write the show's summaries file and
+                      # blog posts, and the dubs need its scene images.
+                      def _video_pending(slug):
+                          try:
+                              out = _P(load_config(f"shows/{slug}.yaml").episode.output_dir)
+                          except Exception:
+                              return False
+                          return ((out / f".video_pending_{stamp}.json").exists()
+                                  and not (out / f".video_done_{stamp}.json").exists())
+
+                      if os.environ.get("TRIGGER_WORKFLOW") == "Run Podcast Show":
+                          waiting = [s for s in shows if _video_pending(s)]
+                          if waiting:
+                              print("Waiting for their video job:", waiting)
+                          shows = [s for s in shows if s not in waiting]
                   except Exception as exc:  # noqa: BLE001 — fall through
                       print(f"::warning::could not read run {run_id} jobs: {exc}")
               if shows is None:
