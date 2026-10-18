@@ -157,6 +157,9 @@ permissions:
   # gh CLI (scripts/create_recovery_pr.sh). Without this the gh call 403s and
   # the recovery branch is pushed but no PR opens — the failure goes silent.
   pull-requests: write
+  # Oct 18 2026: the run job starts the separate video job
+  # (render-video.yml) through a workflow_dispatch.
+  actions: write
 
 jobs:
   # -----------------------------------------------------------------------
@@ -671,6 +674,11 @@ jobs:
           # scripts/checkpoint_publish.sh. Off in test_mode, which never
           # commits.
           NERRA_AUDIO_FIRST_PUSH: ${{ github.event.inputs.test_mode == 'true' && '0' || '1' }}
+          # Oct 18 2026: the video renders in its own job (render-video.yml),
+          # with its own time limit; this run stops at the audio checkpoint
+          # and leaves a handoff marker. Repo variable NERRA_VIDEO_JOB=0 puts
+          # the video back inline in this job.
+          NERRA_VIDEO_JOB: ${{ github.event.inputs.test_mode == 'true' && '0' || vars.NERRA_VIDEO_JOB || '1' }}
           # June 2026: secrets are passed directly as env vars instead of
           # being written to a .env file via a heredoc + sed strip — same
           # effect (load_dotenv never overrides existing env), no secrets
@@ -987,6 +995,16 @@ jobs:
             # or 1 only in the extremely rare case that even the recovery branch push failed.
             exit $?
           fi
+
+      - name: Start the video job
+        # Oct 18 2026: the handoff marker this run wrote is on main once the
+        # push above lands; render-video.yml renders, uploads and posts from
+        # it. No marker (a show with no video, NERRA_VIDEO_JOB=0) = no-op.
+        # A lost dispatch is started by render-video.yml's scheduled sweep.
+        if: always() && steps.pipeline.outcome == 'success' && steps.pipeline.outputs.skipped != 'true' && github.event.inputs.test_mode != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/video_job.py dispatch --show "${{ matrix.show }}"
 
       - name: Alert on failure
         if: failure()

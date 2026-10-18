@@ -736,7 +736,8 @@ class TestMultilingualDecoupled:
         # fallback behind an API failure.
         assert "TRIGGER_RUN_ID: ${{ github.event.workflow_run.id }}" in text
         assert '/actions/runs/{run_id}/jobs' in text
-        assert 'r"run \\((\\S+)\\)"' in text
+        # Oct 18 2026: the video job's "render (<show>)" counts too.
+        assert 'r"(?:run|render) \\((\\S+)\\)"' in text
         assert "actions: read" in text
 
     def test_push_exhaustion_preserves_commit_via_recovery_pr(self):

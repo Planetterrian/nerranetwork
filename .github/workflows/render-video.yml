@@ -1,0 +1,262 @@
+name: Render Episode Video
+
+# The separate video job (Oct 18 2026). The episode's video — the long-form
+# render and upload, the Shorts, the scene images, the video-podcast edition,
+# the YouTube links in the feed item and the blog post, and the X post with the
+# full episode under it — used to run inside the show run, after its audio was
+# published, under the same time limit as the LLM and TTS work. Video is two
+# thirds of a flagship run, and the limit cost the long-form on 5 of the last
+# 14 episodes of Omni View, Models & Agents and Modern Investing.
+#
+# Now the show run (run-show.yml, NERRA_VIDEO_JOB=1) stops at the audio-first
+# checkpoint, leaves digests/<dir>/.video_pending_<date>.json on main, and
+# starts this workflow. It checks out main, fetches the MP3 back from R2 and
+# runs run_show.py --video-phase: the same code, in its own job, with its own
+# time limit. A failed video is re-run here on its own ("Re-run failed jobs"
+# or a dispatch with the show and date), never by re-running the show.
+#
+# The scheduled sweep starts a handoff whose dispatch never arrived. It never
+# retries a handoff that already has a run: a failed run may have uploaded
+# before it died, and a second upload would be a duplicate public video.
+
+run-name: "${{ github.event_name == 'schedule' && 'Render video: sweep' || format('Render video: {0} {1}', inputs.show, inputs.date) }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      show:
+        description: 'Show slug (as in shows/<slug>.yaml)'
+        required: true
+        type: string
+      date:
+        description: 'Episode date, YYYY-MM-DD'
+        required: true
+        type: string
+      force:
+        description: 'Render again even if the video is already done (uploads again — delete the old videos first)'
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    - cron: '20,50 * * * *'
+
+permissions:
+  contents: write
+  # The push-failure fallback opens a draft recovery PR (create_recovery_pr.sh).
+  pull-requests: write
+  # The sweep reads this workflow's runs and dispatches it.
+  actions: write
+
+jobs:
+  sweep:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-python
+        timeout-minutes: 10
+        with:
+          python-version: '3.14'
+          skip-checkout: 'true'
+      - name: Start any video whose dispatch never arrived
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/video_job.py sweep
+
+  render:
+    if: github.event_name == 'workflow_dispatch'
+    name: render (${{ inputs.show }})
+    runs-on: ubuntu-26.04
+    concurrency:
+      group: video-${{ inputs.show }}
+      cancel-in-progress: false
+    outputs:
+      pushed: ${{ steps.commit.outputs.pushed }}
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v7
+        with:
+          # ref: main, not the dispatch SHA: a run queued behind another
+          # video run of the same show must see that run's done marker.
+          ref: main
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        # Hung-setup guard — see run-show.yml's run job.
+        timeout-minutes: 45
+        with:
+          python-version: '3.14'
+          requirements-file: 'requirements.txt'
+          system-packages: 'ffmpeg'
+          skip-checkout: 'true'
+
+      - name: Render and publish the video
+        id: video
+        # INVARIANT: above the in-process watchdog (PIPELINE_TIMEOUT_SECONDS,
+        # 6600 s = 110 min) with margin, so an overrun ends through SIGALRM
+        # with a reason. A flagship render is ~2x the audio (engine.video
+        # estimate_long_form_render_seconds); 110 minutes covers the longest
+        # show's render, uploads and X hand-off several times over.
+        timeout-minutes: 120
+        run: |
+          FORCE=""
+          if [ "${{ inputs.force }}" = "true" ]; then FORCE="--force-video"; fi
+          python run_show.py "${{ inputs.show }}" --video-phase --date "${{ inputs.date }}" $FORCE
+        env:
+          PIPELINE_TIMEOUT_SECONDS: '6600'
+          # The same credentials as run-show.yml's "Run show pipeline" step
+          # (tests/test_video_job_2026_10_18.py keeps the two lists equal).
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          GROK_CLONED_VOICE_ID: ${{ secrets.GROK_CLONED_VOICE_ID }}
+          INSTAGRAM_GRAPH_TOKEN: ${{ secrets.INSTAGRAM_GRAPH_TOKEN }}
+          INSTAGRAM_GRAPH_USER_ID: ${{ secrets.INSTAGRAM_GRAPH_USER_ID }}
+          X_CONSUMER_KEY: ${{ secrets.X_CONSUMER_KEY }}
+          X_CONSUMER_SECRET: ${{ secrets.X_CONSUMER_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          PLANETTERRIAN_X_CONSUMER_KEY: ${{ secrets.PLANETTERRIAN_X_CONSUMER_KEY }}
+          PLANETTERRIAN_X_CONSUMER_SECRET: ${{ secrets.PLANETTERRIAN_X_CONSUMER_SECRET }}
+          PLANETTERRIAN_X_ACCESS_TOKEN: ${{ secrets.PLANETTERRIAN_X_ACCESS_TOKEN }}
+          PLANETTERRIAN_X_ACCESS_TOKEN_SECRET: ${{ secrets.PLANETTERRIAN_X_ACCESS_TOKEN_SECRET }}
+          PLANETTERRIAN_X_BEARER_TOKEN: ${{ secrets.PLANETTERRIAN_X_BEARER_TOKEN }}
+          NERRANETWORK_X_CONSUMER_KEY: ${{ secrets.NERRANETWORK_X_CONSUMER_KEY }}
+          NERRANETWORK_X_CONSUMER_SECRET: ${{ secrets.NERRANETWORK_X_CONSUMER_SECRET }}
+          NERRANETWORK_X_ACCESS_TOKEN: ${{ secrets.NERRANETWORK_X_ACCESS_TOKEN }}
+          NERRANETWORK_X_ACCESS_TOKEN_SECRET: ${{ secrets.NERRANETWORK_X_ACCESS_TOKEN_SECRET }}
+          X_QUEUE_SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          X_QUEUE_SUPABASE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          PERSONAL_DEMAND_TOKEN: ${{ secrets.PERSONAL_DEMAND_TOKEN }}
+          PERSONAL_R2_BUCKET: ${{ vars.PERSONAL_R2_BUCKET || 'nerra-personal' }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN_EN: ${{ secrets.YOUTUBE_REFRESH_TOKEN_EN }}
+          YOUTUBE_REFRESH_TOKEN_RU: ${{ secrets.YOUTUBE_REFRESH_TOKEN_RU }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+          NERRA_LLM_TIMEOUT_SECONDS: '600'
+          NERRA_SINGLE_PASS_RENDER: ${{ vars.NERRA_SINGLE_PASS_RENDER }}
+          NERRA_X264_PRESET: ${{ vars.NERRA_X264_PRESET || 'medium' }}
+
+      - name: Regenerate show HTML pages
+        if: always() && steps.video.outcome == 'success'
+        env:
+          GA4_MEASUREMENT_ID: ${{ secrets.GA4_MEASUREMENT_ID }}
+          GSC_VERIFICATION: ${{ secrets.GSC_VERIFICATION }}
+          GOOGLE_ADS_ID: ${{ secrets.GOOGLE_ADS_ID }}
+          GOOGLE_ADS_SIGNUP_LABEL: ${{ secrets.GOOGLE_ADS_SIGNUP_LABEL }}
+          PLAUSIBLE_DOMAIN: ${{ secrets.PLAUSIBLE_DOMAIN }}
+          STRIPE_LINK_PERSONAL: ${{ vars.STRIPE_LINK_PERSONAL || 'https://buy.stripe.com/8x26oI4Ho7Lc6Qa1VB0Ba00' }}
+          STRIPE_LINK_PERSONAL_LOCAL: ${{ vars.STRIPE_LINK_PERSONAL_LOCAL || 'https://buy.stripe.com/dRm6oI7TAfdEgqK9o30Ba01' }}
+          STRIPE_TRIAL_DAYS: ${{ vars.STRIPE_TRIAL_DAYS || '7' }}
+          STRIPE_LINK_DONATE_MONTHLY: ${{ vars.STRIPE_LINK_DONATE_MONTHLY || 'https://buy.stripe.com/7sYcN61vc6H8b6q1VB0Ba02' }}
+          STRIPE_LINK_DONATE_ONCE: ${{ vars.STRIPE_LINK_DONATE_ONCE || 'https://donate.stripe.com/dRm8wQ8XEd5weiC0Rx0Ba03' }}
+        run: python generate_html.py --show "${{ inputs.show }}" --blogs
+
+      - name: Commit and push the video's artifacts
+        id: commit
+        # always(): a failed page regeneration must not strand the video's
+        # records — the YouTube index is what stops a second upload.
+        if: always() && steps.video.outcome == 'success'
+        env:
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          bash scripts/stage_show_artifacts.sh
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # "(video)" after the duplicate guard's "Auto-generated: <show> <date>".
+          git commit -m "Auto-generated: ${{ inputs.show }} ${{ inputs.date }} (video)"
+          if SHOW="${{ inputs.show }}" scripts/push_show_artifacts.sh; then
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "All direct push attempts to main exhausted; opening a recovery PR."
+          GH_TOKEN="${{ github.token }}" \
+          SHOW="${{ inputs.show }}" \
+          RUN_ID="${{ github.run_id }}" \
+          REPO_URL="${{ github.server_url }}/${{ github.repository }}" \
+          scripts/create_recovery_pr.sh
+          exit $?
+
+      - name: Alert on failure
+        if: failure()
+        env:
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+        run: |
+          echo "::error::VIDEO FAILURE: ${{ inputs.show }} ${{ inputs.date }}. The audio episode is published; re-run this job to render the video."
+          if [ -n "$NOTIFICATION_WEBHOOK_URL" ]; then
+            curl -s -X POST "$NOTIFICATION_WEBHOOK_URL" -H "Content-Type: application/json" \
+              -d "{\"text\":\"❌ Video FAILED: ${{ inputs.show }} ${{ inputs.date }} (audio is published)\\nRun: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+              || echo "Webhook notification failed (non-blocking)"
+          fi
+
+  # The homepage's Watch section and Shorts reel read the YouTube indexes and
+  # the gallery scenes this run just added. Refreshed here, in its own group:
+  # sharing run-show.yml's finalize-shared-pages group would let this short
+  # job supersede a pending full finalize (concurrency keeps one pending run).
+  homepage:
+    needs: render
+    if: always() && needs.render.result == 'success' && needs.render.outputs.pushed == 'true'
+    runs-on: ubuntu-26.04
+    concurrency:
+      group: homepage-after-video
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 1
+      - uses: ./.github/actions/setup-python
+        timeout-minutes: 45
+        with:
+          python-version: '3.14'
+          requirements-file: 'requirements.txt'
+          skip-checkout: 'true'
+      - name: Refresh the homepage and the gallery indexes
+        env:
+          GA4_MEASUREMENT_ID: ${{ secrets.GA4_MEASUREMENT_ID }}
+          GSC_VERIFICATION: ${{ secrets.GSC_VERIFICATION }}
+          GOOGLE_ADS_ID: ${{ secrets.GOOGLE_ADS_ID }}
+          GOOGLE_ADS_SIGNUP_LABEL: ${{ secrets.GOOGLE_ADS_SIGNUP_LABEL }}
+          PLAUSIBLE_DOMAIN: ${{ secrets.PLAUSIBLE_DOMAIN }}
+          STRIPE_LINK_PERSONAL: ${{ vars.STRIPE_LINK_PERSONAL || 'https://buy.stripe.com/8x26oI4Ho7Lc6Qa1VB0Ba00' }}
+          STRIPE_LINK_PERSONAL_LOCAL: ${{ vars.STRIPE_LINK_PERSONAL_LOCAL || 'https://buy.stripe.com/dRm6oI7TAfdEgqK9o30Ba01' }}
+          STRIPE_TRIAL_DAYS: ${{ vars.STRIPE_TRIAL_DAYS || '7' }}
+          STRIPE_LINK_DONATE_MONTHLY: ${{ vars.STRIPE_LINK_DONATE_MONTHLY || 'https://buy.stripe.com/7sYcN61vc6H8b6q1VB0Ba02' }}
+          STRIPE_LINK_DONATE_ONCE: ${{ vars.STRIPE_LINK_DONATE_ONCE || 'https://donate.stripe.com/dRm8wQ8XEd5weiC0Rx0Ba03' }}
+          R2_GALLERY_BUCKET: ${{ secrets.R2_GALLERY_BUCKET }}
+          R2_GALLERY_PUBLIC_BASE_URL: ${{ secrets.R2_GALLERY_PUBLIC_BASE_URL }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          # Incremental: only this run's new sidecars are downloaded.
+          python scripts/build_gallery_manifest.py --out site/data/gallery-manifest.json
+          python generate_html.py --homepage
+      - name: Commit and push the homepage
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html site/data/gallery-manifest.json || true
+          git add site/data/gallery/*.json || true
+          if git diff --cached --quiet; then
+            echo "Homepage is already up to date."
+            exit 0
+          fi
+          git commit -m "Update homepage after video: ${{ inputs.show }} ${{ inputs.date }}"
+          git checkout -- . 2>/dev/null || true
+          bash scripts/push_regenerable.sh

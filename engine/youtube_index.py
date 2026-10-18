@@ -102,6 +102,7 @@ def record_video(
     variant: str = "",
     window: str = "",
     publish_at: str = "",
+    preview_url: str = "",
     index_path: Optional[Path] = None,
 ) -> bool:
     """Append (or update) one published-video record. Best-effort.
@@ -145,6 +146,10 @@ def record_video(
         # publish_at is still ahead. Only written when set.
         if publish_at:
             row["publish_at"] = publish_at
+        # Oct 18 2026: a muted ~6 s loop of a Short (engine/short_preview.py)
+        # that the homepage's Shorts reel plays in view. Only written when set.
+        if preview_url:
+            row["preview_url"] = preview_url
         # Idempotent upsert keyed on video_id.
         for i, existing in enumerate(videos):
             if existing.get("video_id") == video_id:
