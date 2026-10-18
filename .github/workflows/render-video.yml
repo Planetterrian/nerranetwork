@@ -19,7 +19,7 @@ name: Render Episode Video
 # retries a handoff that already has a run: a failed run may have uploaded
 # before it died, and a second upload would be a duplicate public video.
 
-run-name: "${{ github.event_name == 'schedule' && 'Render video: sweep' || format('Render video: {0} {1}', inputs.show, inputs.date) }}"
+run-name: "${{ github.event_name == 'schedule' && 'Render video: sweep' || format('Render video: {0} {1}{2}', inputs.show, inputs.date, inputs.rehearse && ' (rehearsal)' || '') }}"
 
 on:
   workflow_dispatch:
@@ -34,6 +34,11 @@ on:
         type: string
       force:
         description: 'Render again even if the video is already done (uploads again — delete the old videos first)'
+        required: false
+        default: false
+        type: boolean
+      rehearse:
+        description: 'Rehearsal: render an already-published episode and publish NOTHING (scripts/rehearse_video.py); the videos and a timing report are attached to the run'
         required: false
         default: false
         type: boolean
@@ -69,7 +74,9 @@ jobs:
 
   render:
     if: github.event_name == 'workflow_dispatch'
-    name: render (${{ inputs.show }})
+    # A rehearsal is named differently so multilingual (which follows
+    # "render (<show>)" jobs) never sweeps a show for it.
+    name: ${{ inputs.rehearse && 'rehearse' || 'render' }} (${{ inputs.show }})
     runs-on: ubuntu-26.04
     concurrency:
       group: video-${{ inputs.show }}
@@ -80,9 +87,11 @@ jobs:
       - name: Checkout main
         uses: actions/checkout@v7
         with:
-          # ref: main, not the dispatch SHA: a run queued behind another
-          # video run of the same show must see that run's done marker.
-          ref: main
+          # The dispatched BRANCH, never the dispatch SHA: a run queued
+          # behind another video run of the same show must see that run's
+          # done marker (production always dispatches main; a rehearsal may
+          # dispatch a branch).
+          ref: ${{ github.ref_name }}
           fetch-depth: 1
 
       - uses: ./.github/actions/setup-python
@@ -103,6 +112,12 @@ jobs:
         # show's render, uploads and X hand-off several times over.
         timeout-minutes: 120
         run: |
+          if [ "${{ inputs.rehearse }}" = "true" ]; then
+            # Publishes nothing: the script removes every publishing
+            # credential before it imports anything and fakes YouTube.
+            python scripts/rehearse_video.py "${{ inputs.show }}" --date "${{ inputs.date }}" --out rehearsal
+            exit $?
+          fi
           FORCE=""
           if [ "${{ inputs.force }}" = "true" ]; then FORCE="--force-video"; fi
           python run_show.py "${{ inputs.show }}" --video-phase --date "${{ inputs.date }}" $FORCE
@@ -147,8 +162,21 @@ jobs:
           NERRA_SINGLE_PASS_RENDER: ${{ vars.NERRA_SINGLE_PASS_RENDER }}
           NERRA_X264_PRESET: ${{ vars.NERRA_X264_PRESET || 'medium' }}
 
+      - name: Attach the rehearsal's videos and report
+        if: always() && inputs.rehearse
+        uses: actions/upload-artifact@v7
+        with:
+          name: rehearsal-${{ inputs.show }}-${{ inputs.date }}
+          path: rehearsal/
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Rehearsal summary
+        if: always() && inputs.rehearse
+        run: cat rehearsal/*/report.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "No report written." >> "$GITHUB_STEP_SUMMARY"
+
       - name: Regenerate show HTML pages
-        if: always() && steps.video.outcome == 'success'
+        if: always() && steps.video.outcome == 'success' && !inputs.rehearse
         env:
           GA4_MEASUREMENT_ID: ${{ secrets.GA4_MEASUREMENT_ID }}
           GSC_VERIFICATION: ${{ secrets.GSC_VERIFICATION }}
@@ -166,7 +194,8 @@ jobs:
         id: commit
         # always(): a failed page regeneration must not strand the video's
         # records — the YouTube index is what stops a second upload.
-        if: always() && steps.video.outcome == 'success'
+        # Never for a rehearsal: it published nothing and commits nothing.
+        if: always() && steps.video.outcome == 'success' && !inputs.rehearse
         env:
           NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
         run: |
@@ -193,7 +222,7 @@ jobs:
           exit $?
 
       - name: Alert on failure
-        if: failure()
+        if: failure() && !inputs.rehearse
         env:
           NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
         run: |
