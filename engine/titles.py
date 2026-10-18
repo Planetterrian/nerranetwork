@@ -116,6 +116,14 @@ X_TEASER_TWO_LINK_TEXT_MAX = 180
 #: whole; the ticker is a single scrolling line, so it clips word-safe here.
 LANDING_TICKER_MAX = 90
 
+#: Share cards (Oct 18 2026, ``engine/share_cards.py``): the hook printed on
+#: an episode's 1200x630 link preview. Four lines of the card's floor size
+#: hold ~160 characters; every spoken hook is gated at 150, so a real hook
+#: is shown whole and this only catches a stray long headline. When a hook
+#: still overflows the card in pixels, the renderer shortens it through
+#: ``clip_words`` with a smaller limit — never a slice of its own.
+SHARE_CARD_HOOK_MAX = 160
+
 ELLIPSIS = "…"
 
 # Trailing characters that read as debris once the tail is gone.

@@ -5530,6 +5530,18 @@ def run(args: argparse.Namespace) -> None:
         except Exception as exc:
             logger.warning("Blog post generation failed (non-fatal): %s", exc)
 
+    # 12a-share. The episode's link preview (Oct 18 2026, engine/share_cards.py):
+    # hook, show and date on the show's art, uploaded to R2 before the post is
+    # written so the first share of the post already carries it. The video
+    # stage replaces it with one drawn on the episode's own scene.
+    if not args.test:
+        try:
+            from engine.share_cards import episode_card_for as _episode_card_for
+            _episode_card_for(config, episode_num=episode_num, hook=hook or "",
+                              date_str=today.isoformat())
+        except Exception:  # noqa: BLE001
+            logger.warning("Episode share card failed (non-fatal)", exc_info=True)
+
     _write_blog_post()
 
     # 12a-pre. Post-run validation (before newsletter/X so bad episodes
@@ -7997,6 +8009,24 @@ def _publish_youtube(
                 "gallery library" if visual_fallback == "library"
                 else "static cover",
             )
+
+    # ---- Episode share card from its own scene (Oct 18 2026) ----
+    # The link preview a blog post carries (engine/share_cards.py). The audio
+    # half already recorded a card drawn on the show's art; a scene card goes
+    # to a NEW key and replaces the record, and the blog rewrite below (or the
+    # finalize regen) points the post at it. Best-effort: never blocks video.
+    if not recap_pool_used and not getattr(args, "test", False):
+        _share_scene = next((Path(p) for p in long_scene_paths
+                             if Path(p) != Path(cover_path) and Path(p).is_file()), None)
+        if _share_scene is not None:
+            try:
+                from engine.share_cards import episode_card_for as _episode_card_for
+                if _episode_card_for(config, episode_num=episode_num, hook=hook,
+                                     date_str=today.isoformat(), scene_path=_share_scene,
+                                     out_dir=work_dir):
+                    result["share_card"] = "scene"
+            except Exception:  # noqa: BLE001
+                logger.warning("Episode share card (scene) failed (non-fatal)", exc_info=True)
 
     # ---- Long-form thumbnail from a fresh scene + A/B variants ----
     # The static cover made every episode's thumbnail identical; a fresh

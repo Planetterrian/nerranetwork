@@ -1,0 +1,65 @@
+name: Share Cards — backfill episodes
+
+# Oct 18 2026: the link preview of each episode's blog post
+# (engine/share_cards.py). run_show draws one for every NEW episode; this
+# draws them for the recent back catalogue from each episode's own gallery
+# scene (originals read through the R2 gallery bucket), uploads them to the
+# audio bucket under share/<slug>/ and records them in
+# digests/<dir>/share_cards.json. The next blog regen (finalize or nightly)
+# points each post at its card. Episodes already recorded are skipped.
+#
+# The committed network / show / page cards are built nightly
+# (nightly-maintenance.yml), not here.
+
+on:
+  workflow_dispatch:
+    inputs:
+      shows:
+        description: "Space-separated show slugs, or 'all'"
+        required: false
+        default: "all"
+      limit:
+        description: "Most recent N episodes per show"
+        required: false
+        default: "14"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: share-cards-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.14'
+          requirements-file: 'requirements.txt'
+          skip-checkout: 'true'
+
+      - name: Draw and upload episode cards
+        env:
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_GALLERY_BUCKET: ${{ secrets.R2_GALLERY_BUCKET }}
+          SHOWS: ${{ inputs.shows }}
+          LIMIT: ${{ inputs.limit }}
+        run: |
+          # shellcheck disable=SC2086
+          python scripts/build_share_cards.py --episodes $SHOWS --limit "$LIMIT" --upload </dev/null
+
+      - uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            digests/**/share_cards.json
+          commit-message: "Share cards: episode backfill (${{ inputs.shows }})"

@@ -23,7 +23,20 @@
     <meta property="og:title" content="{{ page_title | default('Nerra Network — Independent Podcast Network') }}">
     <meta property="og:description" content="{{ page_description | default(meta_description | default('Free daily shows covering AI, Tesla, investing, space, science, environmental policy, and more. Produced in Vancouver, Canada.')) }}">
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
-    <meta property="og:image" content="{{ og_image | default('https://nerranetwork.com/assets/og-preview.png', boolean=true) }}">
+    {#- Oct 18 2026: one decision about the share card, engine.share_cards.
+        resolve_og_image — a square cover becomes its show's 1200x630 card,
+        nothing becomes the page's own card or the network card, anything
+        else (an episode card, a landscape scene) passes through. -#}
+    {%- if resolve_og_image is defined -%}
+    {%- set _og = resolve_og_image(og_image | default('', true), canonical_url | default('', true), og_image_alt | default('', true)) -%}
+    {%- else -%}
+    {%- set _og = {'url': og_image | default('https://nerranetwork.com/assets/og-preview.png', true), 'width': none, 'height': none, 'alt': og_image_alt | default('', true)} -%}
+    {%- endif %}
+    <meta property="og:image" content="{{ _og.url }}">
+    {% if _og.width %}<meta property="og:image:width" content="{{ _og.width }}">
+    <meta property="og:image:height" content="{{ _og.height }}">
+    <meta property="og:image:type" content="image/jpeg">{% endif %}
+    {% if _og.alt %}<meta property="og:image:alt" content="{{ _og.alt | e }}">{% endif %}
     {% if canonical_url %}<meta property="og:url" content="{{ canonical_url }}">{% endif %}
     <meta property="og:site_name" content="Nerra Network">
 
@@ -31,7 +44,8 @@
     <meta name="twitter:card" content="{% block twitter_card %}summary_large_image{% endblock %}">
     <meta name="twitter:title" content="{{ page_title | default('Nerra Network') }}">
     <meta name="twitter:description" content="{{ page_description | default(meta_description | default('Free daily shows. Feed your curiosity. Not your anxiety.')) }}">
-    <meta name="twitter:image" content="{{ og_image | default('https://nerranetwork.com/assets/og-preview.png', boolean=true) }}">
+    <meta name="twitter:image" content="{{ _og.url }}">
+    {% if _og.alt %}<meta name="twitter:image:alt" content="{{ _og.alt | e }}">{% endif %}
     {#- Until Sep 2026 no page on this site named an account on its share card,
         so every link shared anywhere was attributed to nobody. The handle comes
         from NETWORK_SOCIAL in generate_html.py, which is also what the footer

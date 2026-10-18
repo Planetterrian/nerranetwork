@@ -2435,6 +2435,11 @@ def _get_jinja_env():
     # Template-side existence check for optional assets (blog RSS feeds).
     # Used so a missing ``blog_<slug>.rss`` is not advertised as a 404 link.
     env.globals["site_file_exists"] = lambda rel: (ROOT / str(rel)).is_file()
+    # Oct 18 2026: every page's share card is decided in one place (base.html.j2
+    # calls this) — see engine/share_cards.py.
+    from engine import share_cards as _share_cards
+    env.globals["resolve_og_image"] = lambda og="", canonical="", alt="": (
+        _share_cards.resolve_og_image(og, canonical, shows=NETWORK_SHOWS, alt=alt))
     env.filters["with_utm"] = _with_utm
     # Jinja's default ``tojson`` filter inherits Python's
     # ``ensure_ascii=True``, which escapes Cyrillic to ``Ф...``
@@ -6108,7 +6113,7 @@ def generate_data_hub_page(*, dry_run=False, output_dir=None):
             "simulated-portfolio performance page."
         ),
         "theme_color": "#6B47FF",
-        "og_image": f"{GITHUB_RAW}/assets/og-default.png",
+        "og_image": "",  # the page card (assets/share/pages/data.jpg)
         "canonical_url": f"{GITHUB_RAW}/data.html",
         "t": _NAV_T,
         "all_shows": _build_all_shows_list(),
