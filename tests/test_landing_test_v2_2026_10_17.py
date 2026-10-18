@@ -168,12 +168,14 @@ class TestGrowthDetails:
             assert (ROOT / rel).is_file(), rel
             assert item["name"] and "utm_" not in item["url"]
 
-    def test_og_image_is_the_lead_scene(self, rendered):
+    def test_og_image_is_the_network_card(self, rendered):
+        """Oct 18 2026: the front page shares as the network card
+        (engine/share_cards.py); each story's post carries its own card."""
         head = rendered.split("</head>")[0]
         og = re.search(r'<meta property="og:image" content="([^"]+)"', head).group(1)
-        lead = re.search(r'<article class="lt-lead".*?<img src="([^"]+)"', rendered, re.S).group(1)
-        assert og == lead and og.startswith("https://gallery.nerranetwork.com/")
-        assert '<meta property="og:image:width" content="800">' in head
+        assert og == "https://nerranetwork.com/assets/share/network.jpg"
+        assert '<meta property="og:image:width" content="1200">' in head
+        assert head.count('property="og:image:alt"') == 1
 
     def test_lead_share_links_carry_a_parseable_share_campaign(self, rendered):
         from urllib.parse import parse_qs, unquote, urlparse

@@ -5271,11 +5271,11 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
         "meta_description": _home_meta,
         "meta_keywords": "news podcast network, daily podcasts, Nerra Network, Tesla, SpaceX, AI, markets, world news, space, science",
         "theme_color": "#6B47FF",
-        # The lead story's own scene (the share-card system replaces this
-        # value later); with no landscape lead the base default card shows.
-        "og_image": lead.get("image_url") if lead.get("image_orientation") == "landscape" else "",
-        "og_image_alt": (f"AI-generated scene illustrating {lead['show_name']} "
-                         f"episode {lead['episode_num']}") if lead.get("image_url") else "",
+        # The network share card (engine/share_cards.py via base.html.j2): a
+        # front page shared anywhere is recognised by its brand, not by
+        # whichever AI scene led today. Each story's own post carries its
+        # episode card.
+        "og_image": "",
         # Bare origin, not /index.html: inbound links, the CNAME and the
         # hreflang tags all resolve to "/" (Sep 2026 review).
         "canonical_url": f"{GITHUB_RAW}/",

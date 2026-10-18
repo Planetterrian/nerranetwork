@@ -234,7 +234,7 @@ class TestWiring:
 
     def test_no_other_base_template_writes_its_own_og_image(self):
         """A template that writes og:image itself bypasses the resolver."""
-        allowed = {"base.html.j2", "landing_test.html.j2"}
+        allowed = {"base.html.j2"}
         for t in (ROOT / "templates").glob("*.j2"):
             if t.name in allowed:
                 continue
