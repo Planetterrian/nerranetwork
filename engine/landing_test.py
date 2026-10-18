@@ -90,6 +90,24 @@ SECTION_ORDER = (
     "ai-infrastructure",
 )
 
+#: The lead rotates through the subjects the network promises — world news,
+#: AI, science, markets, space, history — one a day by the edition date
+#: (Oct 18 2026, operator: the audience ranking alone put SpaceX or Tesla on
+#: top every morning). A day whose subject has no pictured story of the newest
+#: date takes the next subject in the list.
+LEAD_ROTATION = (
+    "world-news",
+    "ai",
+    "science",
+    "markets",
+    "space",
+    "history-and-consequences",
+)
+
+#: Hubs that are one beat for the front page's variety rule: SpaceX and Tesla
+#: are the same company story to a reader scanning the top.
+_SAME_BEAT = {"tesla": "space"}
+
 #: Shows that are not news stories: the daily edition is the network itself
 #: in one episode and gets its own strip.
 EDITION_SLUG = "nerra_daily"
@@ -416,6 +434,39 @@ def _order_key(rank: Dict[str, int]) -> Callable[[Dict[str, Any]], tuple]:
     return key
 
 
+def _beat(story: Dict[str, Any]) -> str:
+    hub = story.get("hub_id") or ""
+    return _SAME_BEAT.get(hub, hub) or story.get("slug", "")
+
+
+def _rotated_lead(ordered: Sequence[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """The newest day's pictured story from today's subject in
+    ``LEAD_ROTATION`` (the audience ranking still picks WITHIN a subject)."""
+    newest = ordered[0].get("date_obj") if ordered else None
+    if not newest:
+        return None
+    pictured = [s for s in ordered
+                if s.get("date_obj") == newest and s["image_orientation"] == "landscape"]
+    start = newest.toordinal() % len(LEAD_ROTATION)
+    for i in range(len(LEAD_ROTATION)):
+        hub = LEAD_ROTATION[(start + i) % len(LEAD_ROTATION)]
+        pick = next((s for s in pictured if s.get("hub_id") == hub), None)
+        if pick is not None:
+            return pick
+    return None
+
+
+def _varied(stories: Sequence[Dict[str, Any]], limit: int, *, seen: set) -> List[Dict[str, Any]]:
+    """Up to ``limit`` stories, one per beat first (in the given order), then
+    the rest in order — so the top of the page shows the network's range."""
+    seen = set(seen)
+    first, later = [], []
+    for s in stories:
+        (later if _beat(s) in seen else first).append(s)
+        seen.add(_beat(s))
+    return (first + later)[:limit]
+
+
 def assemble(stories: Iterable[Dict[str, Any]], *,
              audience_order: Sequence[str] = (),
              live_hub_ids: Iterable[str] = ()) -> Dict[str, Any]:
@@ -439,11 +490,12 @@ def assemble(stories: Iterable[Dict[str, Any]], *,
                 "more": [], "edition_date": "", "story_count": 0,
                 "today_count": 0}
 
-    lead = next((s for s in ordered if s["image_orientation"] == "landscape"),
-                ordered[0])
+    lead = _rotated_lead(ordered) or next(
+        (s for s in ordered if s["image_orientation"] == "landscape"), ordered[0])
     rest = [s for s in ordered if s is not lead]
     with_art = [s for s in rest if s["image_url"]]
-    top = (with_art + [s for s in rest if not s["image_url"]])[:TOP_STORY_COUNT]
+    top = _varied((with_art + [s for s in rest if not s["image_url"]]),
+                  TOP_STORY_COUNT, seen={_beat(lead)})
     placed = {id(lead), *(id(s) for s in top)}
 
     live = set(live_hub_ids)

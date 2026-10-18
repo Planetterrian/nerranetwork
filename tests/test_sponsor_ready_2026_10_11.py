@@ -22,7 +22,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 _AD_FREE_RE = re.compile(
-    r"\bad[- ]free\b|\bno ads\b|\bzero ads\b|\bwithout ads\b|\bnever (?:any )?ads\b",
+    r"\bad[- ]free\b|\bno ads\b|\bzero ads\b|\bwithout ads\b|\bnever (?:any )?ads\b"
+    r"|без\s+рекламы",
     re.IGNORECASE)
 # An outside site's own description (generate_html's health resource list)
 # is not a claim about this network.

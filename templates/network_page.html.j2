@@ -173,7 +173,20 @@
   font-size: clamp(2.1rem, 5.2vw, 3.6rem); line-height: 1; margin: 0;
 }
 .lt-wordmark span { background: var(--nn-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-.lt-standfirst { font-family: var(--lt-ui); color: var(--lt-muted); font-size: 0.98rem; max-width: 34rem; margin: 0; line-height: 1.5; }
+/* Oct 18 2026: the tagline and the promise lead the front page
+   (engine.brand owns the words). The tagline sits under the wordmark in the
+   headline face; the promise is a full-strength standfirst, not a caption. */
+.lt-brandline { display: flex; flex-direction: column; gap: var(--sp-2); }
+.lt-tagline {
+  font-family: var(--lt-head); font-style: italic; font-weight: 600;
+  font-size: clamp(1.25rem, 2.6vw, 1.75rem); line-height: 1.2; margin: 0;
+  color: var(--lt-ink);
+}
+.lt-tagline::before {
+  content: ""; display: inline-block; width: 0.9em; height: 3px; vertical-align: middle;
+  margin-right: 0.45em; border-radius: 2px; background: var(--nn-gradient);
+}
+.lt-standfirst { font-family: var(--lt-ui); color: var(--lt-ink); opacity: 0.88; font-size: 1.06rem; max-width: 36rem; margin: 0; line-height: 1.55; }
 
 /* ---- Section nav (in-page anchors) ---- */
 .lt-secnav { margin: 0 0 var(--sp-3); }
@@ -848,8 +861,11 @@ a.lt-media:hover img { transform: scale(1.03); }
         {% if p.story_count %}<span>Stories from {{ p.story_count }} shows</span>{% endif %}
     </div>
     <div class="lt-masthead-row">
-        <h1 class="lt-wordmark">Nerra Network <span>Today</span></h1>
-        <p class="lt-standfirst">News and ideas from {{ public_show_count }} free shows on space, AI, markets, world news, science and more. Every story is sourced, every claim is checked against its source, and you can read the article or hear the episode it came from.</p>
+        <div class="lt-brandline">
+            <h1 class="lt-wordmark">Nerra Network <span>Today</span></h1>
+            <p class="lt-tagline">{{ network_tagline }}</p>
+        </div>
+        <p class="lt-standfirst">{{ network_promise(public_show_count) }}</p>
     </div>
 </div></header>
 
@@ -1403,8 +1419,9 @@ a.lt-media:hover img { transform: scale(1.03); }
     <div class="lt-block-head"><h2 id="lt-about-h">About Nerra Network</h2><a href="{{ path_prefix }}about.html">More about us →</a></div>
     <div class="lt-about">
         <div class="lt-about-text">
-            <p><strong>Feed your curiosity. Not your anxiety.</strong></p>
-            <p>Nerra Network is an independent news and podcast network of {{ public_show_count }} free shows covering Tesla, SpaceX, AI for experts and beginners, AI chips and data centres, the Magnificent Seven, modern investing, prediction markets, world news, space and astronomy, science, longevity and peptide research, environmental policy, first-principles thinking, the unintended consequences of big decisions, good news with something you can do about it (The DP Pod), Canada's offshore ocean-racing story (Offshore North), local news from Vancouver and Collingwood, live AI-hosted interviews (The Age of AI and Nerra Voices), and financial literacy and language learning in Russian &mdash; plus Nerra Daily, the whole network in one daily edition. All produced in Vancouver, Canada by Patrick Novak, with AI doing the writing and narration and a human owning the standards. <a href="{{ path_prefix }}ai-disclosure.html">How we use AI</a>.</p>
+            <p><strong>{{ network_tagline }}</strong></p>
+            <p>{{ network_promise(public_show_count) }}</p>
+            <p>Nerra Network is an independent news and podcast network of {{ public_show_count }} free shows covering world news, space and astronomy, science, AI for experts and beginners, AI chips and data centres, markets and modern investing, the Magnificent Seven, prediction markets, SpaceX, Tesla, longevity and peptide research, environmental policy, first-principles thinking, the unintended consequences of big decisions, good news with something you can do about it (The DP Pod), Canada's offshore ocean-racing story (Offshore North), local news from Vancouver and Collingwood, live AI-hosted interviews (The Age of AI and Nerra Voices), and financial literacy and language learning in Russian &mdash; plus Nerra Daily, the whole network in one daily edition. All produced in Vancouver, Canada by Patrick Novak, with AI doing the writing and narration and a human owning the standards. <a href="{{ path_prefix }}ai-disclosure.html">How we use AI</a>.</p>
             <p>Our mission: stimulating conversation, supporting positive developments that benefit all, and providing unbiased coverage with varying perspectives.</p>
         </div>
         <ul class="lt-values">

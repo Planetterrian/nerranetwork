@@ -67,7 +67,10 @@ TEXT_SECONDARY = (203, 213, 225)
 TEXT_MUTED = (148, 163, 184)
 
 NETWORK_NAME = "Nerra Network"
-NETWORK_TAGLINE = "Feed your curiosity. Not your anxiety."
+# The words are engine.brand's (Oct 18 2026); a card never types its own.
+from engine.brand import (  # noqa: E402,F401
+    NETWORK_PROMISE_SHORT, NETWORK_TAGLINE, NETWORK_TAGLINE_RU, network_promise,
+)
 NETWORK_DOMAIN = "nerranetwork.com"
 
 # The record run_show writes beside a show's digests.
@@ -352,8 +355,8 @@ def _blurred_backdrop(cover: Image.Image, tint, darkness: float = 0.72) -> Image
 
 
 def _footer(img: Image.Image, *, right_text: str = NETWORK_DOMAIN,
-            accent=CYAN, y: int = 552) -> None:
-    """Mark + network name at the left, domain at the right, over a hairline."""
+            accent=CYAN, y: int = 552, tagline: str = NETWORK_TAGLINE) -> None:
+    """Mark + network name, the tagline when it fits, the domain at the right."""
     d = ImageDraw.Draw(img)
     d.line([(56, y - 18), (WIDTH - 56, y - 18)], fill=(255, 255, 255, 38), width=1)
     mark = _mark(46)
@@ -363,10 +366,23 @@ def _footer(img: Image.Image, *, right_text: str = NETWORK_DOMAIN,
         x += 46 + 14
     name_font = _font(str(_SANS_BOLD), 26)
     d.text((x, y + 4), NETWORK_NAME, font=name_font, fill=WHITE)
+    name_end = x + _text_width(name_font, NETWORK_NAME)
     rt = _fit(right_text, _SANS_MEDIUM, max_width=460, max_lines=1, start=24, floor=18,
               fallback=_FALLBACK_REGULAR)
     tw = _text_width(rt.font, rt.lines[0]) if rt.lines else 0
-    d.text((WIDTH - 56 - tw, y + 6), rt.lines[0] if rt.lines else "", font=rt.font, fill=accent)
+    right_x = WIDTH - 56 - tw
+    d.text((right_x, y + 6), rt.lines[0] if rt.lines else "", font=rt.font, fill=accent)
+    if tagline:
+        # Oct 18 2026: the tagline signs every card, sized down until it fits
+        # between the name and the address; a card it cannot fit carries none.
+        tpath = _pick(_SANS_MEDIUM, tagline, _FALLBACK_REGULAR)
+        for size in (21, 19, 17):
+            tfont = _font(str(tpath), size)
+            text = f"·  {tagline}"
+            if name_end + 16 + _text_width(tfont, text) + 28 <= right_x:
+                d.text((name_end + 16, y + 9 + (21 - size) // 2), text, font=tfont,
+                       fill=TEXT_SECONDARY)
+                break
 
 
 def _finish(img: Image.Image) -> Image.Image:
@@ -405,8 +421,9 @@ def _covers_grid(img: Image.Image, covers: Sequence[Image.Image], *, x0: int, y0
 
 
 def render_network_card(*, show_count: int, covers: Sequence[Image.Image] = (),
-                        facts: str = "") -> Image.Image:
-    """The homepage and default card: brand, promise, the shows themselves."""
+                        promise: str = "") -> Image.Image:
+    """The homepage and default card: the tagline as the headline, the
+    promise under it, and the breadth of the shows beside them."""
     img = _canvas()
     _glow(img, (180, 120), 360, PURPLE, 110)
     _glow(img, (1060, 560), 380, CYAN, 70)
@@ -414,30 +431,33 @@ def render_network_card(*, show_count: int, covers: Sequence[Image.Image] = (),
     d = ImageDraw.Draw(img)
 
     has_grid = len(covers) >= 9
-    text_w = 600 if has_grid else 1000
-    mark = _mark(92)
-    y = 78
+    text_w = 590 if has_grid else 1000
+    x, y = 64, 60
+    mark = _mark(64)
     if mark is not None:
-        img.alpha_composite(mark, (64, y))
-    y += 92 + 30
-    title = _fit(NETWORK_NAME, _SERIF_BOLD, max_width=text_w, max_lines=1, start=82, floor=56)
-    y = _draw_block(d, title, 64, y, WHITE) + 14
-    tag = _fit(NETWORK_TAGLINE, _SANS_MEDIUM, max_width=text_w, max_lines=1, start=32, floor=24,
-               leading=1.25, fallback=_FALLBACK_REGULAR)
-    y = _draw_block(d, tag, 64, y, TEXT_SECONDARY) + 26
-    fact_text = facts or f"{show_count} shows · news, science, markets and ideas"
-    fact = _fit(fact_text, _SANS_BOLD, max_width=text_w, max_lines=2, start=24, floor=19,
-                leading=1.3)
-    _draw_block(d, fact, 64, y, readable_on_dark(CYAN))
+        img.alpha_composite(mark, (x, y))
+        name_x = x + 64 + 18
+    else:
+        name_x = x
+    d.text((name_x, y + 12), NETWORK_NAME, font=_font(str(_SANS_BOLD), 34), fill=WHITE)
+    y += 64 + 34
+    tag = _fit(NETWORK_TAGLINE, _SERIF_BOLD, max_width=text_w, max_lines=2, start=62,
+               floor=44, leading=1.12)
+    y = _draw_block(d, tag, x, y, WHITE) + 22
+    body = promise or network_promise(show_count)
+    prom = _fit(body, _SANS_MEDIUM, max_width=text_w, max_lines=5, start=24, floor=19,
+                leading=1.38, fallback=_FALLBACK_REGULAR, max_height=520 - y - 8)
+    _draw_block(d, prom, x, y, TEXT_SECONDARY)
 
     if has_grid:
         _covers_grid(img, list(covers)[:9], x0=716, y0=52, cols=3, size=136, gap=16)
-    _footer(img, right_text=NETWORK_DOMAIN)
+    _footer(img, right_text=NETWORK_DOMAIN, tagline="")
     return _finish(img)
 
 
 def render_show_card(*, name: str, tagline: str, schedule: str, cover: Optional[Image.Image],
-                     brand_color: str = "", kicker: str = "", domain_path: str = "") -> Image.Image:
+                     brand_color: str = "", kicker: str = "", domain_path: str = "",
+                     lang: str = "en") -> Image.Image:
     """One show: its artwork whole (never cropped to a strip), name, promise, cadence."""
     tint = _hex(brand_color)
     accent = readable_on_dark(tint)
@@ -477,7 +497,7 @@ def render_show_card(*, name: str, tagline: str, schedule: str, cover: Optional[
         d.text((x + 18, y + 9), label, font=sfont,
                fill=WHITE if contrast(WHITE, tint) >= 3 else BG)
     _footer(img, right_text=f"{NETWORK_DOMAIN}/{domain_path}" if domain_path else NETWORK_DOMAIN,
-            accent=accent)
+            accent=accent, tagline=NETWORK_TAGLINE_RU if lang == "ru" else NETWORK_TAGLINE)
     return _finish(img)
 
 
@@ -530,8 +550,9 @@ def render_page_card(*, kicker: str, title: str, subtitle: str = "",
     if grid:
         _covers_grid(img, covers, x0=grid[0], y0=grid[1], cols=grid[2], size=grid[3],
                      gap=18, radius=22)
+    # A card whose headline IS the tagline does not sign with it again.
     _footer(img, right_text=f"{NETWORK_DOMAIN}/{domain_path}" if domain_path else NETWORK_DOMAIN,
-            accent=accent)
+            accent=accent, tagline="" if title == NETWORK_TAGLINE else NETWORK_TAGLINE)
     return _finish(img)
 
 
@@ -604,7 +625,8 @@ def render_episode_card(*, show_name: str, hook: str, episode_num=None, date_str
     d.rectangle((x - 2, hy + 8, x + 3, hy + hook_block.height - 10), fill=tint + (255,))
     _draw_block(d, hook_block, x + 26, hy, WHITE, shadow=scene is not None)
     _footer(img, right_text="Слушать на nerranetwork.com" if lang == "ru"
-            else f"Listen at {NETWORK_DOMAIN}", accent=accent)
+            else f"Listen at {NETWORK_DOMAIN}", accent=accent,
+            tagline=NETWORK_TAGLINE_RU if lang == "ru" else NETWORK_TAGLINE)
     return _finish(img)
 
 

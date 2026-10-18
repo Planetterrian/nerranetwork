@@ -1,9 +1,9 @@
 # Nerra SEO titles + meta — FINAL (HoM, Oct 16 2026)
-Oct 18 2026: the no-advertising claim was removed from every line (ads are coming; that promise is reserved for subscribers and paid content). Source: DRAFT-gsc-ctr-titles-meta-2026-10-08.md (Brand checklist PASS); personal-interest title per CMO (matches #1393). Title ≤60 chars, meta ≤160. Title → title, og:title, twitter:title; Meta → description, og:description, twitter:description. Show-page titles live in generate_html.py ~L3290 (drop the daily hook). `&#124;` = literal pipe.
+Oct 18 2026: the no-advertising claim was removed from every line (ads are coming; that promise is reserved for subscribers and paid content). Oct 18 2026, operator: the homepage leads with the tagline and the promise, not one show. Source: DRAFT-gsc-ctr-titles-meta-2026-10-08.md (Brand checklist PASS); personal-interest title per CMO (matches #1393). Title ≤60 chars, meta ≤160. Title → title, og:title, twitter:title; Meta → description, og:description, twitter:description. Show-page titles live in generate_html.py ~L3290 (drop the daily hook). `&#124;` = literal pipe.
 
 | URL | Title | Meta description |
 |---|---|---|
-| / | Nerra Network: Free Daily Podcasts on AI, Space & Tesla | Shows on the ideas shaping tomorrow: daily podcasts on AI, SpaceX, Tesla, space and science, with sources named. Every Nerra show stays free. |
+| / | Nerra Network: Feed Your Curiosity, Not Your Anxiety | Free daily news and podcasts on space, AI, markets, world news and science. Every story sourced, every claim checked against its source. |
 | /personal-interest.html | Personal tips by email, no charge, no card &#124; Nerra Network | Get occasional Personal tips by email, no charge, no card. Every Nerra show stays free. No outrage diet. Curiosity only. |
 | /join.html | Nerra Personal: Your Own Private Daily Podcast &#124; Nerra | Pick your shows and every morning Mira builds one private podcast episode just for you. 7-day free trial, then $4.99/month. Cancel any time, in one click. |
 | /claims.html | Claims & Corrections: How Nerra Checks Its Sources &#124; Nerra | How every Nerra Network claim is checked against its source, what happens when a check can't confirm it, and every correction filed. |
