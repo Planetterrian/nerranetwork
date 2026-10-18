@@ -72,7 +72,14 @@ jobs:
     # step, every edition trigger was skipped, the Worker's Eastern
     # dispatch was not deployed and the GitHub fallback crons had not
     # fired by 12:20 UTC — no edition at 7 AM. The ready gate decides.
-    if: ${{ github.event_name != 'workflow_run' || contains(fromJSON('["success","failure"]'), github.event.workflow_run.conclusion) }}
+    # Same day: `cancelled` too. run-show's finalize job sits in the
+    # finalize-shared-pages concurrency group, so a pending finalize is
+    # cancelled when a newer one queues and the whole run concludes
+    # `cancelled` although its show job published (2 of 11 edition skips
+    # on Oct 18). The conclusion only decides whether to wake; the ready
+    # gate reads what is committed (published episodes, skip markers), so
+    # a cancelled run is handled exactly like any other wake-up.
+    if: ${{ github.event_name != 'workflow_run' || contains(fromJSON('["success","failure","cancelled"]'), github.event.workflow_run.conclusion) }}
     timeout-minutes: 90
     steps:
       - name: Checkout
