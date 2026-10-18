@@ -36,6 +36,16 @@ def _source_files():
     yield from (ROOT / "shows" / "hooks").glob("*.py")
     yield ROOT / "generate_html.py"
     yield ROOT / "assets" / "js" / "footer-subscribe.js"
+    # Oct 18 2026: the places the claim survived the Oct 11 pass. The
+    # approved search copy is read at runtime (generate_html.SEO_PAGE_COPY)
+    # and put "Ad-Free" in the homepage <title>; the brand-refresh build
+    # drew it into the YouTube banner and the old share image.
+    yield ROOT / "docs" / "seo-titles-final.md"
+    yield from (ROOT / "shows").glob("*.yaml")
+    yield from (ROOT / "workers").glob("*/src/*.ts")
+    yield ROOT / "scripts" / "build_share_cards.py"
+    yield ROOT / "brand-refresh-2026" / "build_assets.py"
+    yield from (ROOT / "brand-refresh-2026" / "assets").glob("*.svg")
 
 
 class TestNoAdFreePromise:
@@ -46,6 +56,29 @@ class TestNoAdFreePromise:
                 if _AD_FREE_RE.search(line) and not any(a in line for a in _ALLOWED):
                     hits.append(f"{path.relative_to(ROOT)}:{n}: {line.strip()[:100]}")
         assert not hits, "ad-free promise still on a surface:\n" + "\n".join(hits)
+
+
+class TestPublishedArticlesDoNotPromiseNoAds:
+    """Oct 18 2026: ads are coming; ad-free is reserved for subscribers and
+    paid content. The September debut episodes' ARTICLES had written the
+    network as "an independent, ad-free network" — the written page is
+    corrected; the transcripts stay the record of what the audio said."""
+
+    _SELF_CLAIM = re.compile(
+        r"Nerra Network[^.\n]{0,80}\b(?:ad[- ]free|no ads)\b", re.IGNORECASE)
+
+    def test_no_article_calls_the_network_ad_free(self):
+        hits = []
+        for path in (ROOT / "digests").rglob("*"):
+            if path.suffix not in (".md", ".json") or "_transcript" in path.name:
+                continue
+            try:
+                text = path.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                continue
+            if self._SELF_CLAIM.search(text):
+                hits.append(str(path.relative_to(ROOT)))
+        assert not hits, "an article still calls the network ad-free:\n" + "\n".join(hits)
 
 
 class TestSponsorPolicyHasOneOwner:

@@ -10,7 +10,7 @@ This desk covers the European Union and the UK, Ireland, Norway, Switzerland and
 
 The brief is read by Mira, the network’s AI host. Stories are chosen and written by software from named newsrooms, and every item names its source. The one thing it will not do is take a side: every claim is attributed, and no party, government or people is praised or mocked.
 
-Other Omni View desks cover their own regions and Top World News covers the rest of the globe. Omni View Europe is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. Listeners are invited to return each day for the same format.
+Other Omni View desks cover their own regions and Top World News covers the rest of the globe. Omni View Europe is part of the Nerra Network, an independent network of shows at nerranetwork.com. Listeners are invited to return each day for the same format.
 
 ### Lead
 **Italian parliament backs Meloni’s plan to restart nuclear power: The Mighty 790 KFGO**

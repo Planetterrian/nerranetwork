@@ -12,7 +12,7 @@ The brief is read by Mira, the network’s AI host. Stories are chosen and writt
 
 Other Omni View desks, and Omni View Top World News, cover the world beyond this region.
 
-Omni View North America is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. You can find it there — an invitation to listen, not a sales pitch.
+Omni View North America is part of the Nerra Network, an independent network of shows at nerranetwork.com. You can find it there — an invitation to listen, not a sales pitch.
 
 ### Lead
 **Trump Once Vowed to ‘Own’ Greenland. He Settled for Something Much Less.: The New York Times**
