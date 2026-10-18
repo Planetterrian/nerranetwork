@@ -302,6 +302,7 @@ export async function handleSubscribe(
   request: Request,
   env: Env,
   deps: HandlerDeps,
+  ctx?: ExecutionContext,
 ): Promise<Response> {
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
 
@@ -373,6 +374,22 @@ export async function handleSubscribe(
     already: result.alreadySubscribed === true,
   }));
 
+  // Durable daily counter (PII-free): only brand-new subscribes
+  // (already=false). Fire via waitUntil so a KV blip never breaks the
+  // response. KV read-modify-write is not atomic — fine at this volume.
+  if (result.alreadySubscribed !== true && env.SUB_COUNTS) {
+    const day = utcDateString();
+    const bump = incrementSubCount(env.SUB_COUNTS, list, day).catch((e) => {
+      console.warn("subscribe: count increment failed", (e as Error).message);
+    });
+    if (ctx) {
+      ctx.waitUntil(bump);
+    } else {
+      // Unit tests that omit ExecutionContext still exercise the path.
+      void bump;
+    }
+  }
+
   const token = await signJwt(
     {
       sub: email,
@@ -387,6 +404,123 @@ export async function handleSubscribe(
     200,
     { ok: true, alreadySubscribed: result.alreadySubscribed },
     { "Set-Cookie": cookieFor(token, SUBSCRIBER_TTL_SECONDS) },
+  );
+}
+
+
+// ---------------------------------------------------------------------------
+// GET /api/subscribe-counts — durable Soft Personal / funnel counters
+// ---------------------------------------------------------------------------
+//
+// Query: ?list=personal-interest&days=28
+// Auth:  header `x-counts-key` must match secret COUNTS_KEY (constant-time).
+// Body:  { list, days: [{ date, count }], total } — integers only, no PII.
+// Cache: no-store. CORS: same allow-list as every other endpoint (no *).
+
+const SUB_COUNT_KEY_PREFIX = "subs:";
+const DEFAULT_COUNT_DAYS = 28;
+const MAX_COUNT_DAYS = 90;
+
+/** UTC calendar day `YYYY-MM-DD`. */
+export function utcDateString(now: Date = new Date()): string {
+  return now.toISOString().slice(0, 10);
+}
+
+/** KV key for a list's daily counter. List is already allow-listed. */
+export function subCountKey(list: string, day: string): string {
+  return `${SUB_COUNT_KEY_PREFIX}${list}:${day}`;
+}
+
+/**
+ * Read-modify-write increment. Not atomic under concurrent writers —
+ * acceptable at Soft Personal volume (tens/day, not thousands).
+ */
+export async function incrementSubCount(
+  kv: KVNamespace,
+  list: string,
+  day: string,
+): Promise<void> {
+  const key = subCountKey(list, day);
+  const raw = await kv.get(key);
+  const prev = raw ? parseInt(raw, 10) : 0;
+  const next = Number.isFinite(prev) && prev >= 0 ? prev + 1 : 1;
+  await kv.put(key, String(next));
+}
+
+/** Constant-time string compare (same shape as personal.ts bearerEquals). */
+export function countsKeyEquals(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const aa = enc.encode(a);
+  const bb = enc.encode(b);
+  if (aa.length !== bb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < aa.length; i++) diff |= aa[i] ^ bb[i];
+  return diff === 0;
+}
+
+export async function handleSubscribeCounts(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const provided = request.headers.get("x-counts-key") ?? "";
+  const expected = env.COUNTS_KEY ?? "";
+  if (!expected || !countsKeyEquals(provided, expected)) {
+    return jsonResponse(request, 401, { ok: false, error: "auth required" }, {
+      "Cache-Control": "no-store",
+    });
+  }
+
+  const url = new URL(request.url);
+  const listRaw = url.searchParams.get("list") ?? "";
+  if (
+    !listRaw
+    || !Object.prototype.hasOwnProperty.call(SUBSCRIBE_LISTS, listRaw)
+  ) {
+    return jsonResponse(request, 400, { ok: false, error: "invalid list" }, {
+      "Cache-Control": "no-store",
+    });
+  }
+
+  let days = DEFAULT_COUNT_DAYS;
+  const daysRaw = url.searchParams.get("days");
+  if (daysRaw !== null && daysRaw !== "") {
+    const n = parseInt(daysRaw, 10);
+    if (!Number.isFinite(n) || n < 1) {
+      return jsonResponse(request, 400, { ok: false, error: "invalid days" }, {
+        "Cache-Control": "no-store",
+      });
+    }
+    days = Math.min(n, MAX_COUNT_DAYS);
+  }
+
+  const dayList: { date: string; count: number }[] = [];
+  let total = 0;
+  const today = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(Date.UTC(
+      today.getUTCFullYear(),
+      today.getUTCMonth(),
+      today.getUTCDate() - i,
+    ));
+    const date = utcDateString(d);
+    let count = 0;
+    if (env.SUB_COUNTS) {
+      const raw = await env.SUB_COUNTS.get(subCountKey(listRaw, date));
+      if (raw) {
+        const n = parseInt(raw, 10);
+        count = Number.isFinite(n) && n >= 0 ? n : 0;
+      }
+    }
+    dayList.push({ date, count });
+    total += count;
+  }
+
+  // Explicit Cache-Control even though jsonResponse already sets no-store.
+  return jsonResponse(
+    request,
+    200,
+    { list: listRaw, days: dayList, total },
+    { "Cache-Control": "no-store" },
   );
 }
 

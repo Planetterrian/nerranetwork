@@ -64,11 +64,27 @@ bucket_name = "nerra-personal"
 binding = "BOOKS_BUCKET"
 bucket_name = "nerra-books"
 
+# Soft Personal / funnel subscribe counters (Oct 2026): a separate KV
+# namespace so daily `subs:<list>:<YYYY-MM-DD>` keys never share the
+# rate-limit / member namespace. Keys hold integer counts only — no
+# emails, IPs, or other PII. Read via GET /api/subscribe-counts.
+#
+# PLACEHOLDER — Patrick must create the namespace (free tier) and paste
+# its id here before deploy. Do NOT leave this as the placeholder string
+# on a live deploy; wrangler will bind whatever id you put.
+#   wrangler kv namespace create SUB_COUNTS
+#   # then replace the id below
+[[kv_namespaces]]
+binding = "SUB_COUNTS"
+id = "PLACEHOLDER_REPLACE_WITH_SUB_COUNTS_KV_ID"
+
 # Secrets are set out-of-band via:
 #   wrangler secret put JWT_SECRET
 #   wrangler secret put BUTTONDOWN_API_KEY
 #   wrangler secret put RESEND_API_KEY
 #   wrangler secret put RESEND_FROM_EMAIL
+# Subscribe-count read gate (Oct 2026):
+#   wrangler secret put COUNTS_KEY            # long random; header x-counts-key
 # Nerra Personal additionally needs:
 #   wrangler secret put STRIPE_WEBHOOK_SECRET   # from the Stripe webhook endpoint
 #   wrangler secret put PERSONAL_ADMIN_TOKEN    # any long random string; the
@@ -90,8 +106,12 @@ STRIPE_PRICE_PNN = "price_1U7jGNKE2gtsD9sR63qV7lRL"        # Personal News Netwo
 # PAT, repo Planetterrian/nerra-personal-batch only, Actions: Read and
 # write. Powers activation builds + POST /api/account/rebuild (Sep 2026).
 
+# Was: enabled = true with head_sampling_rate unset (observed ~10%
+# effective sampling on subscribe_ok logs). Pin to 1 so Soft Personal
+# sign-up counts are complete in Workers Observability.
 [observability]
 enabled = true
+head_sampling_rate = 1
 
 [placement]
 mode = "smart"
