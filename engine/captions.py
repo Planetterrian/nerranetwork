@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from pathlib import Path
 from typing import List, Optional
 
@@ -533,6 +534,42 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
 
 
+#: Oct 18 2026: Whisper splits a figure or a hyphenated word into separate
+#: word tokens — "107" ".6" "%", "14" ",371", "over" "-the" "-air" — about
+#: forty times an episode, and the burned-in Short captions printed the
+#: gaps ("face a 107 .6 % loss" on Tesla Ep638). A token that starts with
+#: a decimal or thousands part, a percent sign, or a hyphen joined to a
+#: letter or digit belongs to the word before it.
+_SPLIT_CONTINUATION_RE = re.compile(r"^(?:[.,]\d|%|-[^\W_])")
+_SPLIT_IN_TEXT_RE = re.compile(r"(?<=\S) (?=[.,]\d|%|-[^\W_])")
+
+
+def join_split_text(text: str) -> str:
+    """Re-join Whisper's split tokens inside a line of text."""
+    return _SPLIT_IN_TEXT_RE.sub("", str(text or ""))
+
+
+def merge_split_words(words: List[dict]) -> List[dict]:
+    """Merge Whisper word tokens that continue the word before them.
+
+    The merged word keeps the first token's start and takes the last
+    token's end, so per-word highlighting still follows the voice.
+    """
+    out: List[dict] = []
+    for w in words:
+        token = (w.get("word") or "").strip()
+        prev = (out[-1].get("word") or "").strip() if out else ""
+        if prev and token and _SPLIT_CONTINUATION_RE.match(token):
+            merged = dict(out[-1])
+            merged["word"] = prev + token
+            if w.get("end") is not None:
+                merged["end"] = w.get("end")
+            out[-1] = merged
+            continue
+        out.append(w)
+    return out
+
+
 def _chunk_words(
     words: List[dict], *, max_chars: int, max_words_per_chunk: int,
 ) -> List[List[dict]]:
@@ -547,7 +584,7 @@ def _chunk_words(
     chunks: List[List[dict]] = []
     current: List[dict] = []
     current_chars = 0
-    for w in words:
+    for w in merge_split_words(words):
         token = (w.get("word") or "").strip()
         if not token:
             continue

@@ -2552,6 +2552,11 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
     out["hook_short_motion_share_14d"] = (
         round(mo_hit / mo_n, 2) if mo_n >= 10 else None)
 
+    # Oct 18 2026 — the alternate-day motion A/B reads out here: median
+    # day-3 views of motion_open hook Shorts over the same shows' control-day
+    # hook Shorts, from the age-matched reach file. Null under 10 per arm.
+    out["hook_motion_vs_control_d3"] = _hook_motion_ab_ratio(root)
+
     # Sep 24 2026 — the grok-4.7 resilience pass reads out here: the share
     # of pinned-model episodes that fell back to the network default over
     # the last 7 days (baseline 9/24 = 0.38 on the launch cohort's first
@@ -2565,6 +2570,35 @@ def _experiment_live_metrics(root: Path) -> Dict[str, Any]:
 # include); everything else on the EN slate is the control.
 _SPOKEN_OPEN_ARM = frozenset({"tesla", "spacex", "fascinating_frontiers"})
 _HOOK_MOTION_VARIANTS = frozenset({"motion_open", "broll_open", "hook_stills"})
+_HOOK_MOTION_CONTROLS = frozenset({"control_stills", "control_broll"})
+
+
+def _hook_motion_ab_ratio(root: Path, *, age: str = "3", min_n: int = 10):
+    """Median age-3 views, motion arm / control arm (``None`` under min_n)."""
+    try:
+        data = json.loads((root / "api" / "youtube_early_reach.json").read_text(
+            encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    vids = data.get("videos") if isinstance(data, dict) else None
+    if isinstance(vids, dict):
+        vids = list(vids.values())
+    motion, control = [], []
+    for v in vids or []:
+        if not isinstance(v, dict) or (v.get("channel") or "en") != "en":
+            continue
+        views = (v.get("views_by_age") or {}).get(age)
+        if views is None:
+            continue
+        if v.get("variant") == "motion_open":
+            motion.append(float(views))
+        elif v.get("variant") in _HOOK_MOTION_CONTROLS:
+            control.append(float(views))
+    if len(motion) < min_n or len(control) < min_n:
+        return None
+    import statistics
+    base = statistics.median(control)
+    return round(statistics.median(motion) / base, 2) if base > 0 else None
 
 
 def _open_holds_5pct(stats: dict, *, slugs=None, exclude: bool = False) -> list:

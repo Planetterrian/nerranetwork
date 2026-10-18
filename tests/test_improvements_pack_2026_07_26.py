@@ -109,14 +109,16 @@ class TestReaderTranscript:
 
 
 class TestMultiPlatformPilot:
-    def test_tesla_and_spacex_enable_multi_platform_assets(self):
+    def test_tesla_and_spacex_render_no_unposted_social_variant(self):
+        """Oct 18 2026: the variant was rendered and uploaded daily with no
+        Instagram/TikTok secrets in any workflow, so nothing posted it. It
+        stays off until those secrets exist (see test_video_pass_2026_10_18)."""
         for slug in ("tesla", "spacex"):
             raw = yaml.safe_load(
                 (_ROOT / "shows" / f"{slug}.yaml").read_text(encoding="utf-8")
             )
             yt = raw.get("youtube") or {}
-            assert yt.get("multi_platform_enabled") is True
-            # Auto-post stays off until secrets + app approval.
+            assert yt.get("multi_platform_enabled") is False
             assert yt.get("instagram_enabled") is False
             assert yt.get("tiktok_enabled") is False
 

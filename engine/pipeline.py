@@ -285,6 +285,8 @@ def record_youtube_outcomes(
         # actually used, and how many auto-comments posted.
         if youtube_urls.get("shorts_fill_modes"):
             metrics.record("shorts_fill_modes", list(youtube_urls["shorts_fill_modes"]))
+        if youtube_urls.get("short_durations"):
+            metrics.record("short_durations", list(youtube_urls["short_durations"]))
         if youtube_urls.get("thumbnail_punch_text"):
             metrics.record("thumbnail_punch_text", str(youtube_urls["thumbnail_punch_text"]))
         if youtube_urls.get("yt_comments_posted"):
