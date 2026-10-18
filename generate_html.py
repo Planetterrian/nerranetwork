@@ -5263,8 +5263,12 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
         f["quote"] = next((q for q in markets.get("quotes") or []
                            if q.get("symbol") == ticker), None) if ticker else None
         f["launch"] = markets.get("launch") if f["slug"] == "spacex" else None
-        f["tagline"] = (_shows_by_slug.get(f["slug"]) or {}).get("hero_tagline") \
-            or (_shows_by_slug.get(f["slug"]) or {}).get("tagline") or ""
+        # The card says what the show covers, the same way for both: the
+        # registry meta description (Tesla's hero line is a slogan).
+        _sh = {**(NETWORK_SHOWS.get(f["slug"]) or {}), **(_shows_by_slug.get(f["slug"]) or {})}
+        f["tagline"] = re.sub(r"\s*Free to listen\.?$", "",
+                              _sh.get("meta_description") or "").strip() \
+            or _sh.get("hero_tagline") or _sh.get("tagline") or ""
         base = f["show_page"][:-5] if f["show_page"].endswith(".html") else ""
         f["links"] = [{"label": label, "url": url} for label, url in (
             ("Dashboard", f"{base}-dashboard.html"),

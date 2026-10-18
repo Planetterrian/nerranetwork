@@ -1550,10 +1550,52 @@ def _pick_weekly_bars(bars, pick_date):
     return window[0], window[horizon - 1]
 
 
+_ONES = {"zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
+         "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
+         "eleven": 11, "twelve": 12, "thirteen": 13, "fourteen": 14,
+         "fifteen": 15, "sixteen": 16, "seventeen": 17, "eighteen": 18,
+         "nineteen": 19}
+_TENS = {"twenty": 20, "thirty": 30, "forty": 40}
+_SPELLED_NUM = (
+    r"(?:(?:" + "|".join(_TENS) + r")(?:[- ](?:" + "|".join(list(_ONES)[1:10]) + r"))?"
+    r"|" + "|".join(sorted(_ONES, key=len, reverse=True)) + r")"
+    r"(?: point (?:" + "|".join(list(_ONES)[:10]) + r"))?")
+# "stop" or "stop-loss", then the number in the SAME clause (no sentence or
+# semicolon break, no "$" price in between). Oct 18 2026: the old patterns
+# required the word "stop-loss" and a "%" sign, and the digests write
+# "stop-loss set at eight percent below entry" / "stop 8% below entry" /
+# "stop-loss set 8 percent below entry" — 40 of the last 45 Practice
+# Investment sections recorded no stop, so the sim never enforced one.
+_STOP_WORD = r"\bstop(?:[- ]?loss)?\b"
 _STOP_PRICE_RE = re.compile(
-    r"stop[- ]?loss[^.\n%$]{0,60}?\$\s*([\d,]+(?:\.\d+)?)", re.IGNORECASE)
+    _STOP_WORD + r"[^.;\n%$]{0,60}?\$\s*([\d,]+(?:\.\d+)?)", re.IGNORECASE)
 _STOP_PCT_RE = re.compile(
-    r"stop[- ]?loss[^.\n%$]{0,60}?(\d{1,2}(?:\.\d+)?)\s*%", re.IGNORECASE)
+    _STOP_WORD + r"[^.;\n%$]{0,60}?\b(\d{1,2}(?:\.\d+)?|" + _SPELLED_NUM + r")"
+    r"\s*(?:%|percent\b|per cent\b)", re.IGNORECASE)
+
+
+def _spelled_to_number(text: str) -> float | None:
+    """'eight' -> 8, 'five point three' -> 5.3, 'twenty-five' -> 25, '8' -> 8."""
+    t = (text or "").strip().lower()
+    try:
+        return float(t)
+    except ValueError:
+        pass
+    whole, _, frac = t.partition(" point ")
+    parts = re.split(r"[- ]", whole)
+    total = 0
+    for w in parts:
+        if w in _TENS:
+            total += _TENS[w]
+        elif w in _ONES:
+            total += _ONES[w]
+        else:
+            return None
+    if frac:
+        if frac not in _ONES or _ONES[frac] > 9:
+            return None
+        return total + _ONES[frac] / 10
+    return float(total)
 
 
 def _extract_stop_loss(digest_text: str) -> dict | None:
@@ -1583,12 +1625,9 @@ def _extract_stop_loss(digest_text: str) -> dict | None:
             pass
     pct_m = _STOP_PCT_RE.search(section)
     if pct_m:
-        try:
-            pct = float(pct_m.group(1))
-            if 0 < pct < 50:
-                return {"pct": pct}
-        except ValueError:
-            pass
+        pct = _spelled_to_number(pct_m.group(1))
+        if pct is not None and 0 < pct < 50:
+            return {"pct": pct}
     return None
 
 

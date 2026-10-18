@@ -2792,7 +2792,7 @@ def run(args: argparse.Namespace) -> None:
             try:
                 from engine.digest_lint import hook_line as _hook_line_of
                 _hr_hook = _hook_line_of(x_thread or "") or ""
-                _hr_match = _recurrence_index.match(_hr_hook) if _hr_hook else None
+                _hr_match = _recurrence_index.hook_match(_hr_hook) if _hr_hook else None
                 if _hr_match and int(_hr_match.get("times", 1)) >= HOOK_RECURRENCE_MIN_DAYS:
                     _hook_recurrence = _hr_match
                 metrics.record("hook_recurrence_days",
@@ -4054,7 +4054,8 @@ def run(args: argparse.Namespace) -> None:
             if include_weekly_summary and _summary_segment:
                 _week_lang_re = re.compile(
                     r"\b(?:this (?:past )?week|week in review|"
-                    r"over the (?:past|last) (?:seven days|week)|"
+                    r"(?:over )?the (?:past|last) (?:seven days|week)|"
+                    r"spent the week|across the week|"
                     r"earlier this week|looking back at the week|"
                     r"what you (?:may have|might have|might've) missed)\b",
                     re.IGNORECASE,

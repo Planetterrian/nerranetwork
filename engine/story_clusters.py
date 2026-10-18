@@ -108,30 +108,28 @@ def cluster_articles(
     toks = [frozenset() if articles[i].get("recurrence_exempt") else s - common
             for i, s in enumerate(toks)]
 
-    parent = list(range(len(articles)))
+    def _same_story(i: int, j: int) -> bool:
+        if len(toks[i]) < min_shared or len(toks[j]) < min_shared:
+            return False
+        shared = toks[i] & toks[j]
+        if len(shared) < min_shared:
+            return False
+        return len(shared) / min(len(toks[i]), len(toks[j])) >= min_share
 
-    def find(x: int) -> int:
-        while parent[x] != x:
-            parent[x] = parent[parent[x]]
-            x = parent[x]
-        return x
-
-    for i in range(len(toks)):
-        if len(toks[i]) < min_shared:
-            continue
-        for j in range(i + 1, len(toks)):
-            if len(toks[j]) < min_shared:
-                continue
-            shared = toks[i] & toks[j]
-            if len(shared) < min_shared:
-                continue
-            if len(shared) / min(len(toks[i]), len(toks[j])) < min_share:
-                continue
-            parent[find(j)] = find(i)
-
+    # Every member must match the cluster's LEAD itself, never only another
+    # member. Oct 18 2026: single-link chaining (A~B, B~C => A+C) put Korean
+    # insurance losses, a first FSD drive in Slovakia, a family's Model Y and
+    # a Ninth Circuit ruling in one Tesla cluster, and the regeneration note
+    # then told the model to write all six as ONE item.
+    owner = [-1] * len(articles)
     groups: Dict[int, List[int]] = {}
     for i in range(len(toks)):
-        groups.setdefault(find(i), []).append(i)
+        if owner[i] != -1:
+            continue
+        for j in range(i + 1, len(toks)):
+            if owner[j] == -1 and _same_story(i, j):
+                owner[j] = i
+                groups.setdefault(i, [i]).append(j)
     return [sorted(g) for g in groups.values() if len(g) > 1]
 
 

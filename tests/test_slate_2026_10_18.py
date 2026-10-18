@@ -89,3 +89,105 @@ def test_edition_wakes_after_a_failed_show_run():
     wf = (ROOT / ".github" / "workflows" / "nerra-daily.yml").read_text(encoding="utf-8")
     cond = [ln for ln in wf.splitlines() if ln.strip().startswith("if:") and "workflow_run" in ln][0]
     assert '"failure"' in cond and '"success"' in cond
+
+
+class TestMitStopParser:
+    """40 of 45 Practice Investment sections recorded no stop (Oct 18): the
+    pattern wanted 'stop-loss' + a '%' sign; the digests spell the number."""
+
+    @pytest.fixture(scope="class")
+    def mi(self):
+        from shows.hooks import modern_investing
+        return modern_investing
+
+    @pytest.mark.parametrize("risk, want", [
+        ("Stop-loss set at eight percent below entry to limit drawdown", {"pct": 8.0}),
+        ("could compress margins; stop 8% below entry", {"pct": 8.0}),
+        ("stop-loss set 8 percent below entry.", {"pct": 8.0}),
+        ("Stop loss at one hundred sixteen dollars representing five point three percent downside",
+         {"pct": 5.3}),
+        ("Stop would trigger on a close below the September low of $58.40", {"price": 58.4}),
+        ("Stop-loss set at the 20-day moving average; maximum acceptable loss capped at 6-8%", None),
+        ("Maximum loss capped at eight percent if the stop at the fifty day moving average breaks", None),
+    ])
+    def test_narrated_stops(self, mi, risk, want):
+        digest = f"### Practice Investment of the Day\n- **Risk Assessment:** {risk}\n"
+        assert mi._extract_stop_loss(digest) == want
+
+
+def test_clusters_never_chain_through_a_member():
+    from engine.story_clusters import cluster_articles
+    arts = [
+        {"title": "Korea EV insurers loss ratio Tesla sales triple insurance"},
+        {"title": "Korea insurers Tesla loss ratio FSD Slovakia first drive"},
+        {"title": "FSD Slovakia first drive approved regulators Europe"},
+    ]
+    groups = cluster_articles(arts, min_shared=3, min_share=0.4)
+    for g in groups:
+        assert not ({0, 2} <= set(g)), groups
+
+
+class TestHomepageStaleness:
+    """A flagship or the edition from an earlier day is never called
+    'this morning's' or 'today's' (Oct 18: SpaceX failed, the edition had
+    not built, and the page said both)."""
+
+    def test_no_unconditional_today_copy(self):
+        t = (ROOT / "templates" / "network_page.html.j2").read_text(encoding="utf-8")
+        assert "this morning's episodes" not in t
+        for phrase in ("Play today's", "Today's rundown"):
+            for line in [ln for ln in t.splitlines() if phrase in ln]:
+                assert "is_today" in line, line
+
+    def test_flagship_card_describes_the_show(self):
+        src = (ROOT / "generate_html.py").read_text(encoding="utf-8")
+        assert '_sh.get("meta_description")' in src
+
+
+class TestHookRecurrenceGate:
+    """The hook gate spends a whole regeneration; it must not fire on words
+    that say nothing about which story it is (M&A 2026-10-18)."""
+
+    def _index(self):
+        from engine.story_recurrence import RecurrenceIndex
+        eps = [{"date": f"2026-10-0{d}", "headlines": h} for d, h in (
+            (3, ["Unitree just dropped a single 6B model that does 64 real robot tasks"]),
+            (6, ["SWE-Race: a coding-agent benchmark of 188 real concurrency bugs across models"]),
+            (8, ["Solar Roof installs stall as Tesla Energy pivots to Megapack deliveries"]),
+            (9, ["Tesla Solar Roof installs stall again while Megapack deliveries climb"]),
+        )] + [{"date": "2026-09-2%d" % i, "headlines": [f"filler story number {i} about chips"]}
+              for i in range(1, 6)]
+        return RecurrenceIndex(eps)
+
+    def test_generic_words_do_not_fire(self):
+        hook = ("Local models just matched a frontier coding agent on five real "
+                "tasks while running on a single 16 GB card.")
+        assert self._index().hook_match(hook) is None
+
+    def test_a_real_retelling_still_fires(self):
+        m = self._index().hook_match(
+            "Tesla Solar Roof installs stall again as Megapack deliveries take over.")
+        assert m and m["times"] >= 2
+
+    def test_run_show_uses_the_hook_gate(self):
+        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert "_recurrence_index.hook_match(_hr_hook)" in src
+
+
+def test_milestone_never_repeats_the_episode_number():
+    from engine.intros import _milestone_note
+    for n in (100, 200, 300, 500):
+        note = _milestone_note(n) or ""
+        assert "hundred" not in note.lower() and str(n) not in note
+
+
+def test_weekly_segment_phrases_register():
+    src = (ROOT / "run_show.py").read_text(encoding="utf-8")
+    assert '(?:over )?the (?:past|last) (?:seven days|week)' in src
+
+
+def test_long_form_has_room_after_audio_first():
+    import yaml
+    wf = yaml.safe_load((ROOT / ".github" / "workflows" / "run-show.yml").read_text(encoding="utf-8"))
+    step = next(s for s in wf["jobs"]["run"]["steps"] if s.get("name") == "Run show pipeline")
+    assert int(step["env"]["PIPELINE_TIMEOUT_SECONDS"]) >= 4200
