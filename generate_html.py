@@ -333,9 +333,12 @@ def _producing_track_languages(slug):
     feeds frozen, yet both flagship pages kept a 中文 chip for six weeks
     because the 45-day freshness gate still read the frozen feed as live)."""
     # engine.show_lang owns the rule (Oct 18 2026: the site's language
-    # vocabulary — hubs, header menu, hreflang — reads the same function).
-    langs = _show_lang.track_languages(slug)
-    return None if langs is None else set(langs)
+    # vocabulary — hubs, header menu, hreflang — applies the same function
+    # to the same loaded config).
+    cfg = _registry_show_config(slug)
+    if cfg is None:
+        return None
+    return set(_show_lang.track_languages_from_config(cfg))
 
 
 def _collect_language_feeds(rss_file: str, prefix: str, slug: str = "") -> list:

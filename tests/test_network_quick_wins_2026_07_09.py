@@ -19,7 +19,11 @@ if str(_ROOT) not in sys.path:
 def test_footer_newsletter_loops_all_shows():
     """Footer must not hardcode a stale 11-show checkbox list."""
     base = (_ROOT / "templates" / "base.html.j2").read_text(encoding="utf-8")
-    assert "{% for s in all_shows %}" in base
+    # Oct 18 2026: the picker offers the chrome's shows — the page
+    # language's shows, derived from ``all_shows`` in base.html.j2 — never a
+    # typed list.
+    assert "{% for s in chrome_shows %}" in base
+    assert "{%- for _s in all_shows -%}" in base
     assert 'value="{{ s.newsletter_tag or s.name }}"' in base
     # The old hardcoded Tesla-only first checkbox must stay gone.
     assert 'value="Tesla Shorts Time"> Tesla Shorts Time' not in base

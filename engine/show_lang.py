@@ -177,17 +177,22 @@ def track_languages(slug: Optional[str]) -> Optional[frozenset]:
     except Exception:  # noqa: BLE001 — a bad YAML produces no tracks
         langs: frozenset = frozenset()
     else:
-        ml = getattr(cfg, "multilingual", None)
-        if ml is None or not getattr(ml, "enabled", False):
-            langs = frozenset()
-        else:
-            codes = {str(c).strip().lower()
-                     for c in (getattr(ml, "languages", None) or []) if c}
-            if not getattr(ml, "zh_approved", False):
-                codes.discard("zh")
-            langs = frozenset(codes)
+        langs = track_languages_from_config(cfg)
     _TRACK_LANGS[slug] = langs
     return langs
+
+
+def track_languages_from_config(cfg) -> frozenset:
+    """The rule itself, on a loaded ``ShowConfig`` (or anything with a
+    ``multilingual`` attribute): enabled tracks, ZH only when approved."""
+    ml = getattr(cfg, "multilingual", None)
+    if ml is None or not getattr(ml, "enabled", False):
+        return frozenset()
+    codes = {str(c).strip().lower()
+             for c in (getattr(ml, "languages", None) or []) if c}
+    if not getattr(ml, "zh_approved", False):
+        codes.discard("zh")
+    return frozenset(codes)
 
 
 def site_languages(slugs) -> list:
