@@ -132,8 +132,9 @@ class TestNoSendToConversionLabels:
         assert "ads-signup-label" not in js
         assert "adsLabel:" not in js or "BANNER_COPY" in js  # banner copy key only
         assert "data-nn-ads-signup-label" not in js
-        # Config for the Ads tag remains (consent-gated).
-        assert "gtag('config', ids.ads)" in js
+        # Config for the Ads tag remains (consent-gated); personalization off.
+        assert "gtag('config', ids.ads" in js
+        assert "allow_ad_personalization_signals: false" in js
         assert "ids.ads + '/' +" not in js and "ids.ads+'/'+" not in js
 
     def test_template_has_no_signup_label_attr(self):

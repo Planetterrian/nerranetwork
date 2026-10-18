@@ -2512,8 +2512,9 @@ def _get_jinja_env():
     env.globals["network_promise_short"] = _brand_copy.NETWORK_PROMISE_SHORT
     env.globals["network_promise"] = lambda n=None: _brand_copy.network_promise(
         n if n is not None else _public_show_count_cached())
-    # One count for every "N free shows" sentence (Oct 18 2026), and the
-    # members-only count for pages that list those shows too.
+    # One count for every "N free shows" sentence (Oct 18 2026; homepage,
+    # join, show-page "See all N"), and the members-only count for pages
+    # that list those shows too.
     env.globals["public_show_count"] = _public_show_count_cached
     env.globals["members_show_count"] = _members_show_count
     # Oct 18 2026: every page's share card is decided in one place (base.html.j2
@@ -7251,7 +7252,7 @@ _LEGAL_PAGES = {
 # Rendered into each legal page's "Updated" line. Bump when the copy
 # changes materially; it is deliberately NOT the build date (a date that
 # moves on every regeneration tells readers nothing).
-LEGAL_PAGES_UPDATED_LABEL = "October 16, 2026"
+LEGAL_PAGES_UPDATED_LABEL = "October 18, 2026"
 
 
 def generate_legal_page(key, *, dry_run=False, output_dir=None):

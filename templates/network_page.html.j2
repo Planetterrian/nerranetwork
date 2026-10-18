@@ -731,7 +731,7 @@ a.lt-media:hover img { transform: scale(1.03); }
 {%- macro when(st, today=true) -%}
 {%- if st and st.label -%}
 {%- if today and st.is_today %}<span class="lt-today" data-today="{{ st.day }}">Today</span> {% endif -%}
-<time datetime="{{ st.iso }}" data-rel title="{{ st.label }}">{{ st.label }}</time>
+<time datetime="{{ st.iso }}" data-rel title="{{ st.label | e }}">{{ st.label | e }}</time>
 {%- endif -%}
 {%- endmacro -%}
 
@@ -756,7 +756,7 @@ a.lt-media:hover img { transform: scale(1.03); }
 <li class="lt-row" style="--show-color:{{ s.brand_color }};">
     <div>
         {{ kicker(s, with_hub) }}
-        <h3 class="lt-hl"{% if s.lang %} lang="{{ s.lang }}"{% endif %}><a href="{{ story_href(s) }}">{{ s.hook }}</a></h3>
+        <h3 class="lt-hl"{% if s.lang %} lang="{{ s.lang }}"{% endif %}><a href="{{ story_href(s) }}">{{ s.hook | e }}</a></h3>
         {{ meta(s) }}
     </div>
     {{ media(s) }}
@@ -794,7 +794,7 @@ a.lt-media:hover img { transform: scale(1.03); }
                     {% if c.identifier %}<p class="lt-guest-id">{{ c.identifier }}</p>{% endif %}
                 </div>
             </div>
-            {% if c.hook %}<p class="lt-convo-hook">{{ c.hook }}</p>{% endif %}
+            {% if c.hook %}<p class="lt-convo-hook">{{ c.hook | e }}</p>{% endif %}
             <div class="lt-meta">
                 {% if c.run_time %}<span>{{ c.run_time }}</span><span class="lt-dot" aria-hidden="true">•</span>{% endif %}
                 <span>Hosted by {{ mira.host_name }}{% if c.cohost %} with {{ c.cohost }}{% endif %}</span>
@@ -863,7 +863,7 @@ a.lt-media:hover img { transform: scale(1.03); }
             <a href="{{ v.watch_url }}" class="lt-media is-card" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span>{{ v.show_name }}</span></a>
             {% endif %}
             <div>
-                <h3 class="lt-hl"><a href="{{ v.watch_url }}" target="_blank" rel="noopener">{{ v.display_title }}</a></h3>
+                <h3 class="lt-hl"><a href="{{ v.watch_url }}" target="_blank" rel="noopener">{{ v.display_title | e }}</a></h3>
                 <p class="lt-kicker" style="margin-top:6px;"><a href="{{ path_prefix }}{{ v.show_page }}">{{ v.show_name }}</a> <time datetime="{{ v.date_raw }}" style="color:var(--lt-muted);font-weight:500;letter-spacing:0;text-transform:none;">{{ v.date }}</time></p>
             </div>
         </article>
@@ -878,7 +878,7 @@ a.lt-media:hover img { transform: scale(1.03); }
             <li class="lt-short" style="--show-color:{{ v.brand_color }};">
                 <a href="{{ v.watch_url }}" class="lt-media{% if not v.image_url %} is-cover{% endif %}" target="_blank" rel="noopener">
                     {% if v.image_url %}<img src="{{ v.image_url }}" alt="AI-generated scene from {{ v.show_name }} episode {{ v.episode }}" width="{{ 450 if v.image_orientation == 'portrait' else 800 }}" height="{{ 800 if v.image_orientation == 'portrait' else 450 }}" loading="lazy" decoding="async">{% endif %}
-                    <span class="lt-short-title">{{ v.display_title }}</span>
+                    <span class="lt-short-title">{{ v.display_title | e }}</span>
                 </a>
                 <p class="lt-kicker"><a href="{{ path_prefix }}{{ v.show_page }}">{{ v.show_name }}</a></p>
             </li>
@@ -975,7 +975,7 @@ a.lt-media:hover img { transform: scale(1.03); }
     <span class="lt-ticker-label">Latest</span>
     <ul>
         {% for s in p.latest %}
-        <li style="--show-color:{{ s.brand_color }};"><a href="{{ story_href(s) }}"><span class="lt-ticker-show">{{ s.show_name }}</span><span{% if s.lang %} lang="{{ s.lang }}"{% endif %}>{{ s.ticker_text }}</span></a></li>
+        <li style="--show-color:{{ s.brand_color }};"><a href="{{ story_href(s) }}"><span class="lt-ticker-show">{{ s.show_name }}</span><span{% if s.lang %} lang="{{ s.lang }}"{% endif %}>{{ s.ticker_text | e }}</span></a></li>
         {% endfor %}
     </ul>
 </div>
@@ -987,7 +987,7 @@ a.lt-media:hover img { transform: scale(1.03); }
         {{ media(s, eager=true) }}
         <div class="lt-lead-body">
             {{ kicker(s) }}
-            <h2 class="lt-hl"{% if s.lang %} lang="{{ s.lang }}"{% endif %}><a href="{{ story_href(s) }}">{{ s.hook }}</a></h2>
+            <h2 class="lt-hl"{% if s.lang %} lang="{{ s.lang }}"{% endif %}><a href="{{ story_href(s) }}">{{ s.hook | e }}</a></h2>
             {{ meta(s, listen=false) }}
             {{ more_list(s) }}
             <div class="lt-lead-audio">
@@ -1017,7 +1017,7 @@ a.lt-media:hover img { transform: scale(1.03); }
             {% for s in p.latest %}{% if s is not sameas p.lead %}
             <li style="--show-color:{{ s.brand_color }};">
                 <p class="lt-kicker"><a href="{{ path_prefix }}{{ s.show_page }}">{{ s.show_name }}</a>{% if s.stamp and s.stamp.label %} <span class="lt-rail-when">{{ when(s.stamp) }}</span>{% endif %}</p>
-                <h3 class="lt-hl"{% if s.lang %} lang="{{ s.lang }}"{% endif %}><a href="{{ story_href(s) }}">{{ s.hook }}</a></h3>
+                <h3 class="lt-hl"{% if s.lang %} lang="{{ s.lang }}"{% endif %}><a href="{{ story_href(s) }}">{{ s.hook | e }}</a></h3>
             </li>
             {% endif %}{% endfor %}
         </ol>
@@ -1054,7 +1054,7 @@ a.lt-media:hover img { transform: scale(1.03); }
                 {% endif %}
             </div>
             {{ media(f) }}
-            <h3 class="lt-hl"{% if f.lang %} lang="{{ f.lang }}"{% endif %}><a href="{{ story_href(f) }}">{{ f.hook }}</a></h3>
+            <h3 class="lt-hl"{% if f.lang %} lang="{{ f.lang }}"{% endif %}><a href="{{ story_href(f) }}">{{ f.hook | e }}</a></h3>
             {{ meta(f, listen=false, read=false) }}
             {{ more_list(f) }}
             {% if f.launch %}{% set l = f.launch %}
@@ -1085,12 +1085,12 @@ a.lt-media:hover img { transform: scale(1.03); }
         {% set l = t.latest %}
         <li class="lt-dev" style="--show-color:{{ l.brand_color }};">
             <p class="lt-dev-flag"><span class="lt-dev-badge">Developing</span> Covered on {{ t.days }} days{% if t.shows|length > 1 %} by {{ t.shows|length }} shows{% endif %}</p>
-            <h3 class="lt-hl"{% if l.lang %} lang="{{ l.lang }}"{% endif %}><a href="{{ path_prefix }}{{ l.url or l.show_page }}">{{ l.headline }}</a></h3>
+            <h3 class="lt-hl"{% if l.lang %} lang="{{ l.lang }}"{% endif %}><a href="{{ path_prefix }}{{ l.url or l.show_page }}">{{ l.headline | e }}</a></h3>
             <p class="lt-meta"><span class="lt-dev-latest">Latest update</span>{% if l.stamp and l.stamp.label %} <span class="lt-when">{{ when(l.stamp) }}</span>{% endif %}</p>
             <p class="lt-dev-shows">{% for sh in t.shows %}<a href="{{ path_prefix }}{{ sh.show_page }}" style="--show-color:{{ sh.brand_color }};">{{ sh.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</p>
             {% if t.earlier %}
             <ul class="lt-dev-earlier">
-                {% for e in t.earlier %}<li><span class="lt-dev-when">{{ e.stamp.short if e.stamp else '' }}</span> <a href="{{ path_prefix }}{{ e.url or e.show_page }}"{% if e.lang %} lang="{{ e.lang }}"{% endif %}>{{ e.headline }}</a></li>{% endfor %}
+                {% for e in t.earlier %}<li><span class="lt-dev-when">{{ e.stamp.short if e.stamp else '' }}</span> <a href="{{ path_prefix }}{{ e.url or e.show_page }}"{% if e.lang %} lang="{{ e.lang }}"{% endif %}>{{ e.headline | e }}</a></li>{% endfor %}
             </ul>
             {% endif %}
         </li>
@@ -1111,7 +1111,7 @@ a.lt-media:hover img { transform: scale(1.03); }
             {{ media(s) }}
             <div class="lt-card-body">
                 {{ kicker(s) }}
-                <h3 class="lt-hl"{% if s.lang %} lang="{{ s.lang }}"{% endif %}><a href="{{ story_href(s) }}">{{ s.hook }}</a></h3>
+                <h3 class="lt-hl"{% if s.lang %} lang="{{ s.lang }}"{% endif %}><a href="{{ story_href(s) }}">{{ s.hook | e }}</a></h3>
                 {{ meta(s) }}
                 {{ more_list(s) }}
             </div>
@@ -1149,7 +1149,7 @@ a.lt-media:hover img { transform: scale(1.03); }
             </a>
             <div>
                 <p class="lt-edition-label">{{ e.show_name }} · hosted by Mira{% if e.stamp and e.stamp.label %} · {{ when(e.stamp) }}{% elif e.date %} · {{ e.date }}{% endif %}</p>
-                <h2 class="lt-hl" id="lt-edition-h"><a href="{{ path_prefix }}{{ e.post_url or e.show_page }}">{{ e.hook }}</a></h2>
+                <h2 class="lt-hl" id="lt-edition-h"><a href="{{ path_prefix }}{{ e.post_url or e.show_page }}">{{ e.hook | e }}</a></h2>
                 <p class="lt-edition-note">The network's English shows in one daily episode, with Mira, the network's AI host, introducing each one. <a href="{{ path_prefix }}mira.html">Meet Mira</a>.</p>
                 <div class="lt-lead-audio">
                     {% if e.audio_url %}<audio controls preload="none" src="{{ e.audio_url }}" aria-label="Play {{ e.show_name }} episode {{ e.episode_num }}"></audio>{% endif %}
@@ -1165,7 +1165,7 @@ a.lt-media:hover img { transform: scale(1.03); }
         <p class="lt-chart-sub">When the day's editions go out, Eastern time.</p>
         <ol>
             {% for r in schedule %}
-            <li data-at="{{ r.iso }}" data-day="{{ masthead.date_iso }}"><span class="lt-sched-time">{{ r.when }}</span><span class="lt-sched-what"><b>{{ r.label }}</b> {{ r.detail }}</span></li>
+            <li data-at="{{ r.iso }}" data-day="{{ masthead.date_iso }}"><span class="lt-sched-time">{{ r.when }}</span><span class="lt-sched-what"><b>{{ r.label | e }}</b> {{ r.detail | e }}</span></li>
             {% endfor %}
         </ol>
     </div>
@@ -1190,7 +1190,7 @@ a.lt-media:hover img { transform: scale(1.03); }
             {{ media(f) }}
             <div class="lt-card-body">
                 {{ kicker(f, false) }}
-                <h3 class="lt-hl"{% if f.lang %} lang="{{ f.lang }}"{% endif %}><a href="{{ story_href(f) }}">{{ f.hook }}</a></h3>
+                <h3 class="lt-hl"{% if f.lang %} lang="{{ f.lang }}"{% endif %}><a href="{{ story_href(f) }}">{{ f.hook | e }}</a></h3>
                 {{ meta(f) }}
                 {{ more_list(f) }}
             </div>
@@ -1204,7 +1204,7 @@ a.lt-media:hover img { transform: scale(1.03); }
             {{ media(f) }}
             <div class="lt-card-body">
                 {{ kicker(f, false) }}
-                <h3 class="lt-hl"{% if f.lang %} lang="{{ f.lang }}"{% endif %}><a href="{{ story_href(f) }}">{{ f.hook }}</a></h3>
+                <h3 class="lt-hl"{% if f.lang %} lang="{{ f.lang }}"{% endif %}><a href="{{ story_href(f) }}">{{ f.hook | e }}</a></h3>
                 {{ meta(f) }}
                 {{ more_list(f) }}
             </div>
@@ -1242,7 +1242,7 @@ a.lt-media:hover img { transform: scale(1.03); }
                 <li style="--show-color:{{ ep.brand_color or '#6B47FF' }};">
                     <div>
                         <p class="lt-kicker"><a href="{{ path_prefix }}{{ ep.show_page }}">{{ ep.show_name }}</a></p>
-                        <h4 class="lt-hl"><a href="{{ path_prefix }}{{ ep.blog_url or ep.show_page }}">{{ ep.title }}</a></h4>
+                        <h4 class="lt-hl"><a href="{{ path_prefix }}{{ ep.blog_url or ep.show_page }}">{{ ep.title | e }}</a></h4>
                     </div>
                 </li>
                 {% endfor %}
@@ -1258,7 +1258,7 @@ a.lt-media:hover img { transform: scale(1.03); }
                 <li style="--show-color:{{ ep.brand_color }};">
                     <div>
                         <p class="lt-kicker"><a href="{{ path_prefix }}{{ ep.show_page }}">{{ ep.show_name }}</a></p>
-                        <h4 class="lt-hl"><a href="{{ path_prefix }}{{ ep.blog_url }}">{{ ep.title }}</a></h4>
+                        <h4 class="lt-hl"><a href="{{ path_prefix }}{{ ep.blog_url }}">{{ ep.title | e }}</a></h4>
                         {% if ep.dek %}<p class="lt-dek">{{ ep.dek }}</p>{% endif %}
                     </div>
                 </li>
@@ -1309,7 +1309,7 @@ a.lt-media:hover img { transform: scale(1.03); }
             {% for c in corrections %}
             <li>
                 <p class="lt-kicker"><a href="{{ path_prefix }}{{ c.show_page }}">{{ c.show_name }}</a> <time datetime="{{ c.date }}">{{ c.date_label }}</time></p>
-                <p class="lt-corr-text"><a href="{{ path_prefix }}{{ c.post_url or c.show_page }}">Correction to episode {{ c.episode }}</a>: {{ c.text }}</p>
+                <p class="lt-corr-text"><a href="{{ path_prefix }}{{ c.post_url or c.show_page }}">Correction to episode {{ c.episode }}</a>: {{ c.text | e }}</p>
             </li>
             {% endfor %}
         </ol>
@@ -1369,11 +1369,11 @@ a.lt-media:hover img { transform: scale(1.03); }
     </div>
     <div class="nn-member-special-grid">
         {% for sp in member_specials %}
-        <section class="nn-member-special" aria-label="{{ sp.title }}">
+        <section class="nn-member-special" aria-label="{{ sp.title | e }}">
             <p class="nn-member-special-kicker">{{ sp.total_parts }} episodes · from {{ sp.host_name }}</p>
-            <p class="nn-member-special-title"><a href="{{ path_prefix }}specials.html#{{ sp.id }}">{{ sp.title }}</a></p>
-            <p class="nn-member-special-text">{{ sp.teaser or sp.summary }}</p>
-            {% if sp.trailer_url %}<audio controls preload="none" src="{{ sp.trailer_url }}" aria-label="Play the {{ sp.title }} trailer"></audio>{% endif %}
+            <p class="nn-member-special-title"><a href="{{ path_prefix }}specials.html#{{ sp.id }}">{{ sp.title | e }}</a></p>
+            <p class="nn-member-special-text">{{ (sp.teaser or sp.summary) | e }}</p>
+            {% if sp.trailer_url %}<audio controls preload="none" src="{{ sp.trailer_url }}" aria-label="Play the {{ sp.title | e }} trailer"></audio>{% endif %}
         </section>
         {% endfor %}
     </div>
@@ -1433,11 +1433,11 @@ a.lt-media:hover img { transform: scale(1.03); }
             <ul class="lt-books">
                 {% for b in books %}
                 <li class="lt-book" style="--show-color:{{ b.brand_color }};">
-                    <a class="lt-book-cover" href="{{ path_prefix }}books.html" tabindex="-1" aria-hidden="true"><b>{{ b.title }}</b><small>Volume {{ b.volume_number }}{% if b.author %} · {{ b.author }}{% endif %}</small></a>
+                    <a class="lt-book-cover" href="{{ path_prefix }}books.html" tabindex="-1" aria-hidden="true"><b>{{ b.title | e }}</b><small>Volume {{ b.volume_number }}{% if b.author %} · {{ b.author }}{% endif %}</small></a>
                     <div>
                         <p class="lt-kicker">{{ b.show_name }}</p>
-                        <h3 class="lt-hl"><a href="{{ path_prefix }}books.html">{{ b.full_title }}</a></h3>
-                        {% if b.subtitle %}<p class="lt-dek">{{ b.subtitle }}{% if b.chapters %} · {{ b.chapters }} chapters{% endif %}</p>{% endif %}
+                        <h3 class="lt-hl"><a href="{{ path_prefix }}books.html">{{ b.full_title | e }}</a></h3>
+                        {% if b.subtitle %}<p class="lt-dek">{{ b.subtitle | e }}{% if b.chapters %} · {{ b.chapters }} chapters{% endif %}</p>{% endif %}
                     </div>
                 </li>
                 {% endfor %}
