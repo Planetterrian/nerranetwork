@@ -125,7 +125,7 @@ def _append_summary(
             logger.warning("rewriting unreadable summaries file %s", path)
     data["summaries"].insert(0, {
         "date": target_date.isoformat(),
-        "datetime": dt.datetime.now().isoformat(),
+        "datetime": dt.datetime.now(dt.timezone.utc).isoformat(),  # aware, like engine.publisher
         "content": content,
         "episode_num": episode_num,
         "episode_title": episode_title,

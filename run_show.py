@@ -134,6 +134,11 @@ def _call_with_deadline(fn, seconds: float):
     t.start()
     t.join(seconds)
     if t.is_alive():
+        # Oct 18 2026: the thread keeps running; mark it so a stash write
+        # it makes later (engine.claims / engine.generator) is discarded —
+        # its ledger belongs to a digest that will never ship.
+        from engine.claims import ABANDONED_THREAD_ATTR
+        setattr(t, ABANDONED_THREAD_ATTR, True)
         raise TimeoutError(f"{seconds:.0f}s")
     if "error" in box:
         raise box["error"]
@@ -572,12 +577,29 @@ def run_video_phase(args: argparse.Namespace) -> None:
         today=today, today_str=today_str, x_thread=x_thread,
         _write_blog_post=_write_blog_post, _write_rss_feed=_write_rss_feed,
     )
-    _run_x_stage(
-        args=args, config=config, metrics=metrics, tracker=tracker,
-        digests_dir=digests_dir, episode_num=episode_num, episode_published=True,
-        extra_context=extra_context, final_mp3=final_mp3, hook=hook, today=today,
-        today_str=today_str,
-    )
+    # Oct 18 2026: the done marker is written the moment the uploads are
+    # behind us, BEFORE the X stage. The marker (with the YouTube index the
+    # uploads recorded) is what makes a re-run of this job a no-op; written
+    # last, an X failure or the watchdog after the uploads left no marker, and
+    # the re-run the failure alert invited uploaded a second public copy.
+    done.write_text(json.dumps({
+        **{k: handoff.get(k) for k in ("show", "episode_num", "date")},
+        "finished_at": datetime.datetime.now(datetime.timezone.utc).isoformat(
+            timespec="seconds"),
+        "long_form_uploaded": bool(metrics.counters.get("youtube_long_form_uploaded")),
+        "short_uploaded": bool(metrics.counters.get("youtube_short_uploaded")),
+    }, indent=2) + "\n", encoding="utf-8")
+    pending.unlink(missing_ok=True)
+    try:
+        _run_x_stage(
+            args=args, config=config, metrics=metrics, tracker=tracker,
+            digests_dir=digests_dir, episode_num=episode_num, episode_published=True,
+            extra_context=extra_context, final_mp3=final_mp3, hook=hook, today=today,
+            today_str=today_str,
+        )
+    except Exception as exc:  # noqa: BLE001 — the video is published; X is not worth a second upload
+        logger.error("::error::X stage failed after the video published: %s", exc)
+        metrics.record("x_post_skipped", "video_job_x_error")
     # Not a *_duration_s key: wall_duration_s already counts the video stage's
     # own timers, and this one would count them twice.
     metrics.record("video_job", "rendered")
@@ -587,14 +609,6 @@ def run_video_phase(args: argparse.Namespace) -> None:
         metrics.save(digests_dir)
     except Exception as exc:  # noqa: BLE001
         logger.warning("Metrics save failed (non-fatal): %s", exc)
-    done.write_text(json.dumps({
-        **{k: handoff.get(k) for k in ("show", "episode_num", "date")},
-        "finished_at": datetime.datetime.now(datetime.timezone.utc).isoformat(
-            timespec="seconds"),
-        "long_form_uploaded": bool(metrics.counters.get("youtube_long_form_uploaded")),
-        "short_uploaded": bool(metrics.counters.get("youtube_short_uploaded")),
-    }, indent=2) + "\n", encoding="utf-8")
-    pending.unlink(missing_ok=True)
     if fetched_mp3:
         final_mp3.unlink(missing_ok=True)
     logger.info("=== %s video job complete ===", config.name)
@@ -3187,6 +3201,17 @@ def run(args: argparse.Namespace) -> None:
                         f"{_HOOK_MAX} characters; rewrite it shorter, never "
                         "add a second sentence."
                     )
+                # Oct 18 2026: the retry's generation replaces the module
+                # stashes (claims ledger, combined script) the moment its
+                # text comes back — before this block decides whether the
+                # retry ships. Snapshot them, and put them back on every
+                # path that keeps the original digest, so the ledger the
+                # gate verifies is the one belonging to the digest shipping.
+                from engine import claims as _stash_claims_mod
+                from engine import generator as _stash_gen_mod
+                _pre_retry_claims = _stash_claims_mod.peek_stashed_claims()
+                _pre_retry_combined = _stash_gen_mod.snapshot_combined_script()
+                _retry_accepted = False
                 try:
                     with metrics.stage("generate_digest_structural_retry"):
                         # A retry of an existing digest never changes the
@@ -3259,6 +3284,7 @@ def run(args: argparse.Namespace) -> None:
                                 len(_x_struct.strip()),
                             )
                             x_thread = _candidate
+                            _retry_accepted = True
                     else:
                         logger.warning(
                             "Structural retry did not restore a usable HOOK — "
@@ -3282,6 +3308,15 @@ def run(args: argparse.Namespace) -> None:
                         "Structural digest retry failed: %s — keeping original",
                         exc,
                     )
+                if not _retry_accepted:
+                    # The original digest ships: its ledger and its combined
+                    # script go back into the stashes the gate and the script
+                    # stage drain. (A retry that never returned — timeout,
+                    # refusal, error — may or may not have written them;
+                    # restoring is correct either way.)
+                    _stash_claims_mod.restore_stashed_claims(_pre_retry_claims)
+                    _stash_gen_mod.restore_combined_script(_pre_retry_combined)
+                    metrics.record("digest_structural_retry_stash_restored", True)
 
         # Blocking lints (Sep 24 2026): a finding that survives the one-shot
         # structural regeneration above skips the episode — never a strip
@@ -5365,8 +5400,14 @@ def run(args: argparse.Namespace) -> None:
                 if episode_chapters and audio_duration > 0:
                     from engine.chapters import calculate_timestamps, write_chapters_json
 
-                    # Music intro offset = time before voice starts
-                    music_intro_offset = config.audio.voice_intro_delay + config.audio.intro_duration
+                    # Music intro offset = time before voice starts. Oct 18
+                    # 2026: the voice sits voice_intro_delay into the mix
+                    # (the standard mix applies no delay unless it is > 0 —
+                    # engine.audio); intro_duration is how long the theme
+                    # plays UNDER the voice, not before it. Adding it put
+                    # every unaligned chapter on a music show 3 s late, in a
+                    # different frame from the transcript-aligned ones.
+                    music_intro_offset = float(config.audio.voice_intro_delay or 0.0)
                     calculate_timestamps(
                         episode_chapters,
                         audio_duration,
@@ -7653,10 +7694,14 @@ def _publish_youtube(
         return t is None or t < _long_publish_at
 
     def _schedule_refused(exc: BaseException) -> bool:
-        """YouTube turned the publishAt down (HTTP 400 at insert): the
-        upload is retried once, published now."""
-        _st = getattr(getattr(exc, "resp", None), "status", None)
-        return str(_st) == "400" or "publishat" in str(exc).lower()
+        """YouTube turned the publishAt down (HTTP 400 at insert naming the
+        scheduled publishing time): the upload is retried once, published
+        now. Oct 18 2026: a bare 400 is NOT a publishAt refusal — a 400 for
+        a bad title or description would re-send 100-300 MB to fail the
+        same way — so the error text must name the schedule."""
+        _txt = str(exc).lower()
+        return any(k in _txt for k in (
+            "publishat", "publish_at", "publishing time", "scheduled publishing"))
 
     # LLM-optimized YouTube title (click-tuned, separate from the spoken
     # hook). Used by the LONG-FORM upload only (Shorts titles come from

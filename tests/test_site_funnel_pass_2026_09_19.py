@@ -85,7 +85,11 @@ class TestRedirectStubs:
             html = src.read_text(encoding="utf-8")
             assert 'name="robots" content="noindex, follow"' in html
             assert 'rel="canonical"' in html
-            assert f'https://nerranetwork.com/{entry["to"]}' in html
+            # The homepage's canonical is the site root, never index.html
+            # (the generator canonicalises it; Oct 18 2026).
+            expected = ("https://nerranetwork.com/" if entry["to"] == "index.html"
+                        else f'https://nerranetwork.com/{entry["to"]}')
+            assert expected in html
 
     def test_stubs_are_excluded_from_the_sitemap(self, redirects, tmp_path):
         """generate_sitemap GLOBS blog/<show>/ep*.html, so a stub for a retired

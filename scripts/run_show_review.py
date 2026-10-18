@@ -38,6 +38,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import yaml
@@ -554,7 +555,16 @@ def open_draft_pr(slug: str, files: list[Path], pr_body: str,
         _git("checkout", "-b", branch)
         _git("add", *[str(f.relative_to(ROOT)) for f in [*files, pending]])
         _git("commit", "-m", title)
-        _git("push", "-u", "origin", branch)
+        # Three attempts: a transient rejection ("fatal error in commit_refs")
+        # is the one failure this push has, and the review is lost with it.
+        for _attempt in range(3):
+            try:
+                _git("push", "-u", "origin", branch)
+                break
+            except subprocess.CalledProcessError:
+                if _attempt == 2:
+                    raise
+                time.sleep(5 * (_attempt + 1))
         proc = subprocess.run(
             ["gh", "pr", "create", "--draft", "--base", "main", "--head", branch,
              "--title", title, "--body-file", str(body_file)],
@@ -591,8 +601,16 @@ def _post_webhook(text: str) -> None:
 
 
 def _git(*args: str) -> None:
-    subprocess.run(["git", *args], cwd=ROOT, check=True,
-                   capture_output=True, text=True)
+    """Run one git command. A failure prints git's own stderr before raising:
+    the Oct 18 2026 mag7 run lost a $0.13 review to a push whose rejection
+    nobody could read (``check=True`` swallowed it)."""
+    proc = subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True)
+    if proc.returncode == 0:
+        return
+    print(f"::warning::git {' '.join(args)} failed: "
+          f"{(proc.stderr or proc.stdout).strip()[-800:]}")
+    raise subprocess.CalledProcessError(proc.returncode, proc.args,
+                                        output=proc.stdout, stderr=proc.stderr)
 
 
 # ---------------------------------------------------------------------------

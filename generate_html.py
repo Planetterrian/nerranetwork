@@ -4752,7 +4752,7 @@ def _feed_items_in_window(rss_files, end, days=7):
 
 
 def _front_page_sections(shows, public, ranked, page, *, edition=None,
-                         live_hubs=(), gallery_root=None, markets=None):
+                         live_hubs=(), gallery_root=None, markets=None, now=None):
     """The homepage's whole-site sections (the landing test's v2): the rest
     of the site.
 
@@ -4863,7 +4863,7 @@ def _front_page_sections(shows, public, ranked, page, *, edition=None,
 
     longs = [_with_scene(v, False) for v in _lt.pick_videos(
         videos, kind="long", public_slugs=public_slugs, limit=_lt.WATCH_LONG_LIMIT,
-        audience_order=order)]
+        audience_order=order, now=now)]
     # The Shorts reel (Oct 18 2026): one hook Short per show, one per beat
     # first (engine.landing_test.order_shorts_for_discovery). Every card
     # carries what the in-page player needs — the id parsed from the
@@ -4873,7 +4873,7 @@ def _front_page_sections(shows, public, ranked, page, *, edition=None,
     shorts = []
     for v in _lt.order_shorts_for_discovery(
             _lt.pick_videos(videos, kind="short", public_slugs=public_slugs,
-                            limit=len(public_slugs) or 1, audience_order=order),
+                            limit=len(public_slugs) or 1, audience_order=order, now=now),
             hub_for=_lt.hub_by_slug(public), limit=_lt.WATCH_SHORT_LIMIT):
         card = _with_scene(v, True)
         vid = _lt.youtube_video_id(card.get("watch_url") or "")
@@ -5341,7 +5341,7 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
 
     v2 = _front_page_sections(shows, public, ranked, page, edition=edition,
                               live_hubs=live_hubs, gallery_root=gallery_root,
-                              markets=markets)
+                              markets=markets, now=now)
 
     try:
         developing = _nr.developing_stories(_newsroom_episodes(public, now), now)
@@ -7143,8 +7143,13 @@ def _published_show_ids() -> list:
             if cfg.get("rss_file") and (ROOT / cfg["rss_file"]).exists()]
 
 
+@functools.lru_cache(maxsize=None)
 def _registry_show_config(slug):
-    """The loaded ``shows/<slug>.yaml``, or None (registry-only shows)."""
+    """The loaded ``shows/<slug>.yaml``, or None (registry-only shows).
+
+    Cached for the process (Oct 18 2026): the homepage render loaded 145
+    show YAMLs through the pure-Python loader — 15 of its 18 seconds — and
+    the page is rebuilt ~26 times a day by the finalize jobs alone."""
     path = SHOWS_DIR / f"{slug}.yaml"
     if not path.is_file():
         return None
@@ -7155,9 +7160,11 @@ def _registry_show_config(slug):
         return None
 
 
+@functools.lru_cache(maxsize=None)
 def _listening_languages() -> list:
     """Every language a listener can hear: each show's page language plus
-    every enabled multilingual track. Sorted codes, ``en`` first."""
+    every enabled multilingual track. Sorted codes, ``en`` first.
+    Cached for the process — it walks every show YAML (Oct 18 2026)."""
     langs = {"en"}
     for slug in NETWORK_SHOWS:
         langs.add(_show_lang.page_lang(slug))

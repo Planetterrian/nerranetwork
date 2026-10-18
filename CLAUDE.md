@@ -2165,6 +2165,53 @@ claims drop is unexplained by the committed data. Operator: `wrangler deploy`
 in `workers/scheduler` (still the Oct 9 UTC table), delete the placeholder
 comments on past long-forms.
 
+### The 48-hour review (Oct 18 2026, evening)
+
+Three reviewers over everything merged Oct 16 19:00 – Oct 18 19:00 UTC, read
+against the day's committed episodes and runs (guards
+`tests/test_review_48h_2026_10_18.py`). The day itself: 16 of 16 shows
+published, audio-first pushed on every one, spoken-text gate 16/16, main
+green; the video job has not yet run for real (merged after the slate —
+Oct 19 is its first live day). Rules that bind: **every model- or
+form-written string on the homepage goes through `| e`** — the "Also in
+this episode" headlines and the interview cards' guest, identifier, co-host
+and dek rendered raw (a poisoned headline put 16 live `onerror` tags on the
+front page in a test render); **a `wrangler.toml` never carries a
+placeholder id** — wrangler validates KV ids at upload and the `SUB_COUNTS`
+placeholder had blocked every pending gallery-Worker deploy (the block is
+commented out until the namespace exists; the Worker no-ops without it);
+**the homepage's show-YAML loaders are process-cached**
+(`_registry_show_config`, `_listening_languages` — 145 loads were 15 of the
+render's 18 s, ~26 renders a day); **`pick_videos` reads the build's `now`**;
+**the summaries `datetime` is an aware UTC stamp** (`engine.publisher`,
+`build_daily_edition`). **The structural digest retry snapshots the claims
+and combined-script stashes and restores them on every path that keeps the
+original** (`peek_/restore_stashed_claims`, `snapshot_/restore_combined_script`),
+and a generation its caller abandoned (`_call_with_deadline` marks the
+thread `nerra_abandoned`) never writes a stash — the retry's ledger had been
+pairing with a digest that never shipped. **Both chapter passes use
+`voice_intro_delay` alone** (the estimate had added `intro_duration`, 3 s
+late on every music show). **The video job's commit step is
+`always() && !inputs.rehearse` and the done marker is written BEFORE the X
+stage** — a job that died after uploading lost its YouTube index and the
+alert invited a duplicate upload; the multilingual cron passes now wait for a
+running video job like the `workflow_run` branch does; `x_queue.enqueue`
+forgets a copy it hosted when the row already exists; `_schedule_refused`
+needs the error to name the publishing time, never a bare 400. **The Show
+Review Agent prints git's stderr and retries the push three times** — the
+18:46 mag7 run lost its review to a push rejection nobody could read.
+Content: two corrections filed and applied (UC Ep146's "corn prices rose
+roughly 30 percent 2008–2016" — they fell; FPD Ep134's 630TS "weighed
+roughly as much as a small battleship"); the UC restock's duplicate
+autopilot topic pruned and the starling brief's Shakespeare-aviary story
+marked as the myth its own first source calls it; the Sunday segment names
+people as the week's coverage did (Omni View Ep209 said "Lula and
+Bolsonaro" for Flávio Bolsonaro — ⚠️ AUDIO on Sundays). Read and not acted
+on: the five desks are dark on `no_member_demand` by design; MAG 7 Ep026's
+opaque 4.7 prose ("a shattered dot io note") is a ledger item for its next
+review, not a code fix. Operator: `wrangler deploy` in `workers/gallery` now
+works; the scheduler Worker still fires on the Oct 9 UTC table.
+
 ### The video renders in its own job; Shorts on the front page (Oct 18 2026)
 
 Operator-directed (register `video-job-2026-10-18`, `homepage-shorts-reel-2026-10-18`;

@@ -1539,7 +1539,11 @@ def save_summary_to_github_pages(
     Returns the path to the JSON file on success, ``None`` on error.
     """
     try:
-        now = datetime.datetime.now()
+        # Oct 18 2026: an AWARE UTC stamp. The homepage (engine.newsroom)
+        # reads a naive value as UTC, which was only true because the runner
+        # clock is UTC; a run from a Pacific laptop stamped a story seven
+        # hours off and labelled it ET.
+        now = datetime.datetime.now(datetime.timezone.utc)
         entry = {
             "date": now.strftime("%Y-%m-%d"),
             "datetime": now.isoformat(),

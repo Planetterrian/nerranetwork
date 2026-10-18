@@ -379,8 +379,10 @@ class TestOct17Slate:
         if not (tj.exists() and cj.exists()):
             pytest.skip("transcript or chapters not on disk")
         duration = json.loads(cj.read_text())["chapters"][-1]["endTime"]
+        # Oct 18 2026: one frame for both passes — the voice sits
+        # voice_intro_delay into the mix, never intro_duration as well.
         calculate_timestamps(chapters, duration,
-                             music_intro_offset=cfg.audio.voice_intro_delay + cfg.audio.intro_duration)
+                             music_intro_offset=cfg.audio.voice_intro_delay)
         transcript = json.loads(tj.read_text())
         align_timestamps_to_transcript(chapters, script, transcript,
                                        music_intro_offset=cfg.audio.voice_intro_delay,
