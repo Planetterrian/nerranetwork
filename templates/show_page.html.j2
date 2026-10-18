@@ -270,6 +270,16 @@
         Rendered from the same summaries JSON the script fetches, through
         engine.summaries_ssr, so the script's replacement is an update rather
         than a different page appearing. -#}
+    {#- Members-only series this show teases (Oct 18 2026, engine.specials):
+        one card per released series, linking its page; nothing before release. -#}
+    {% for sp in member_specials or [] %}
+    <section class="nn-member-special" aria-label="Members-only series">
+        <p class="nn-member-special-kicker">Members-only series · {{ sp.total_parts }} episodes</p>
+        <p class="nn-member-special-title"><a href="{{ path_prefix }}specials.html#{{ sp.id }}">{{ sp.title }}</a></p>
+        <p class="nn-member-special-text">{{ sp.teaser or sp.summary }}</p>
+        {% if sp.trailer_url %}<audio controls preload="none" src="{{ sp.trailer_url }}" aria-label="Play the {{ sp.title }} trailer"></audio>{% endif %}
+    </section>
+    {% endfor %}
     <!-- Latest Episode -->
     {#- A show with no feed has no episodes, so a card promising one is a
         surface advertising something that does not exist. Nerra Voices showed

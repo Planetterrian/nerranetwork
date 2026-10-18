@@ -1358,6 +1358,25 @@ a.lt-media:hover img { transform: scale(1.03); }
 {#- Nerra Personal (the paid product; the free path sits beside it). The
     sample lineup lists only shows that are in the Personal lineup: not Nerra
     Daily, not the two interview shows, not the Russian shows. -#}
+{#- Members-only series (Oct 18 2026, engine.specials): released series only. -#}
+{% if member_specials %}
+<section class="lt-block container" id="member-specials" aria-labelledby="lt-specials-h">
+    <div class="lt-block-head">
+        <h2 id="lt-specials-h">Members-only series</h2>
+        <p class="lt-block-sub">Long, sourced deep dives for Nerra Personal members. The trailers are free.</p>
+    </div>
+    <div class="nn-member-special-grid">
+        {% for sp in member_specials %}
+        <section class="nn-member-special" aria-label="{{ sp.title }}">
+            <p class="nn-member-special-kicker">{{ sp.total_parts }} episodes · from {{ sp.host_name }}</p>
+            <p class="nn-member-special-title"><a href="{{ path_prefix }}specials.html#{{ sp.id }}">{{ sp.title }}</a></p>
+            <p class="nn-member-special-text">{{ sp.teaser or sp.summary }}</p>
+            {% if sp.trailer_url %}<audio controls preload="none" src="{{ sp.trailer_url }}" aria-label="Play the {{ sp.title }} trailer"></audio>{% endif %}
+        </section>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
 <section class="lt-block container" id="personal-promo" aria-labelledby="lt-pers-h">
 <div class="lt-personal">
     <div>

@@ -1,0 +1,167 @@
+name: Members-only series
+
+# Oct 18 2026 (operator-directed). Produces a members-only limited series
+# (engine/specials.py, specials/series/<id>.yaml) and, as a separate run,
+# releases it. Production touches no public surface: the audio goes to the
+# private bucket and the trailer to a new public key no feed points at yet.
+# Release is the step that makes the series public — run it only after
+# listening to the episodes.
+#
+#   produce: every unproduced episode, one at a time, committed after each
+#            (a timeout keeps what finished; re-running resumes), then the
+#            trailer once all parts exist.
+#   release: marks the series released (Personal feeds carry it from the
+#            next builder run), adds the trailer to each teaser show's free
+#            feed, posts the X teaser, and rebuilds the pages that show it.
+
+on:
+  workflow_dispatch:
+    inputs:
+      series:
+        description: 'Series id (specials/series/<file>.yaml id)'
+        required: true
+        type: choice
+        options:
+          - spacex-tesla-merger
+          - peptides-deep-dives
+      action:
+        description: 'produce = make the episodes privately; release = publish the teasers'
+        required: true
+        type: choice
+        default: produce
+        options:
+          - produce
+          - release
+      episodes:
+        description: 'produce only: space-separated episode ids (default: every unproduced one)'
+        required: false
+        default: ''
+        type: string
+      text_only:
+        description: 'produce only: research and writing, no audio'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: members-special-${{ github.event.inputs.series }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  special:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        timeout-minutes: 45
+        with:
+          python-version: '3.14'
+          requirements-file: 'requirements.txt'
+          system-packages: 'ffmpeg'
+          skip-checkout: 'true'
+
+      - name: Cache Whisper transcription model
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/huggingface
+          key: whisper-faster-base-v1
+
+      - name: Produce
+        if: github.event.inputs.action == 'produce'
+        env:
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          PERSONAL_R2_BUCKET: ${{ vars.PERSONAL_R2_BUCKET || 'nerra-personal' }}
+          NERRA_LLM_TIMEOUT_SECONDS: '1500'
+          SERIES: ${{ github.event.inputs.series }}
+          EPISODES: ${{ github.event.inputs.episodes }}
+          TEXT_ONLY: ${{ github.event.inputs.text_only }}
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -z "$EPISODES" ]; then
+            EPISODES=$(python -c "from engine.specials import find_series; print(' '.join(e.id for e in find_series('$SERIES').episodes))")
+          fi
+          FLAGS=""
+          [ "$TEXT_ONLY" = "true" ] && FLAGS="--text-only"
+          status=0
+          for ep in $EPISODES; do
+            python scripts/produce_special.py --series "$SERIES" --episode "$ep" --no-trailer $FLAGS || status=1
+            git add specials/
+            if ! git diff --cached --quiet; then
+              git commit -q -m "Members-only series: $SERIES $ep"
+              for i in 1 2 3 4; do
+                git pull --rebase -q origin main && git push -q origin HEAD:main && break
+                sleep $((i * 5))
+              done
+            fi
+          done
+          if [ "$TEXT_ONLY" != "true" ]; then
+            python scripts/produce_special.py --series "$SERIES" || status=1
+            git add specials/
+            if ! git diff --cached --quiet; then
+              git commit -q -m "Members-only series: $SERIES trailer"
+              for i in 1 2 3 4; do
+                git pull --rebase -q origin main && git push -q origin HEAD:main && break
+                sleep $((i * 5))
+              done
+            fi
+          fi
+          exit $status
+
+      - name: Release
+        if: github.event.inputs.action == 'release'
+        env:
+          X_CONSUMER_KEY: ${{ secrets.X_CONSUMER_KEY }}
+          X_CONSUMER_SECRET: ${{ secrets.X_CONSUMER_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          NERRANETWORK_X_CONSUMER_KEY: ${{ secrets.NERRANETWORK_X_CONSUMER_KEY }}
+          NERRANETWORK_X_CONSUMER_SECRET: ${{ secrets.NERRANETWORK_X_CONSUMER_SECRET }}
+          NERRANETWORK_X_ACCESS_TOKEN: ${{ secrets.NERRANETWORK_X_ACCESS_TOKEN }}
+          NERRANETWORK_X_ACCESS_TOKEN_SECRET: ${{ secrets.NERRANETWORK_X_ACCESS_TOKEN_SECRET }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN_EN: ${{ secrets.YOUTUBE_REFRESH_TOKEN_EN }}
+          # Same site env as nightly's regen, or the rebuilt pages lose
+          # their analytics tags and Stripe links.
+          GA4_MEASUREMENT_ID: ${{ secrets.GA4_MEASUREMENT_ID }}
+          GSC_VERIFICATION: ${{ secrets.GSC_VERIFICATION }}
+          GOOGLE_ADS_ID: ${{ secrets.GOOGLE_ADS_ID }}
+          GOOGLE_ADS_SIGNUP_LABEL: ${{ secrets.GOOGLE_ADS_SIGNUP_LABEL }}
+          PLAUSIBLE_DOMAIN: ${{ secrets.PLAUSIBLE_DOMAIN }}
+          STRIPE_LINK_PERSONAL: ${{ vars.STRIPE_LINK_PERSONAL || 'https://buy.stripe.com/8x26oI4Ho7Lc6Qa1VB0Ba00' }}
+          STRIPE_LINK_PERSONAL_LOCAL: ${{ vars.STRIPE_LINK_PERSONAL_LOCAL || 'https://buy.stripe.com/dRm6oI7TAfdEgqK9o30Ba01' }}
+          STRIPE_TRIAL_DAYS: ${{ vars.STRIPE_TRIAL_DAYS || '7' }}
+          STRIPE_LINK_DONATE_MONTHLY: ${{ vars.STRIPE_LINK_DONATE_MONTHLY || 'https://buy.stripe.com/7sYcN61vc6H8b6q1VB0Ba02' }}
+          STRIPE_LINK_DONATE_ONCE: ${{ vars.STRIPE_LINK_DONATE_ONCE || 'https://donate.stripe.com/dRm8wQ8XEd5weiC0Rx0Ba03' }}
+          SERIES: ${{ github.event.inputs.series }}
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git pull -q --rebase origin main
+          python scripts/release_special.py --series "$SERIES" --confirm
+          python generate_html.py --static-pages
+          python generate_html.py --homepage
+          for show in $(python -c "from engine.specials import find_series; print(' '.join(find_series('$SERIES').tease_shows))"); do
+            python generate_html.py --show "$show"
+          done
+          python generate_html.py --sitemap || true
+          git add -A specials/ ./*.rss ./*.html sitemap.xml
+          git reset -q -- login.html 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -q -m "Members-only series released: $SERIES"
+            for i in 1 2 3 4; do
+              git pull --rebase -q origin main && git push -q origin HEAD:main && break
+              sleep $((i * 5))
+            done
+          fi

@@ -3523,6 +3523,8 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         "strand": cfg.get("strand", ""),
         "host": cfg.get("host", ""),
         "apply_page": cfg.get("apply_page", ""),
+        # Members-only series this show teases (Oct 18 2026, engine.specials).
+        "member_specials": specials_for_show(slug),
         # Interview shows (Sep 21 2026): the episode rail is a list of
         # GUESTS, not a list of RSS titles. On these shows the RSS title is
         # the digest's whole thesis sentence, so the generic rail gave a
@@ -5346,6 +5348,7 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
         "listening_language_count": len(_listening_languages()),
         "page": page,
         "edition": edition,
+        "member_specials": _specials_context_rows(),
         "popular_episodes": popular_episodes,
         "newsletter_subscriber_count": newsletter_subscriber_count,
         "masthead": _nr.masthead(now),
@@ -5694,6 +5697,7 @@ def generate_sitemap(*, dry_run=False, out=None):
                   "press.html", "sponsor.html", "contact.html", "editorial.html",
                   "gallery.html", "books.html", "guest-picks.html", "player.html", "data.html",
                   "join.html", "support.html", "personal-interest.html",
+                  "specials.html",
                   "modern-investing-performance.html",
                   "spacex-dashboard.html", "tesla-dashboard.html",
                   "offshore-north-dashboard.html",
@@ -6629,6 +6633,60 @@ def generate_login_page(*, dry_run=False, output_dir=None):
     return out_path
 
 
+def _specials_context_rows():
+    """Released members-only series for the site (engine.specials catalog)."""
+    from engine import specials as _sp
+    rows = []
+    for sid, entry in _sp.released_series():
+        eps = sorted(entry.get("episodes", {}).values(), key=lambda e: int(e.get("part", 0)))
+        host = NETWORK_SHOWS.get(entry.get("host_show"), {})
+        rows.append({
+            "id": sid, "title": entry.get("title") or sid,
+            "subtitle": entry.get("subtitle") or "", "summary": entry.get("summary") or "",
+            "teaser": entry.get("teaser") or "",
+            "total_parts": entry.get("total_parts") or len(eps),
+            "host_name": host.get("name") or entry.get("host_show"),
+            "tease_shows": entry.get("tease_shows") or [],
+            "trailer_url": (entry.get("trailer") or {}).get("audio_url", ""),
+            "episodes": [{"title": f"Part {e.get('part')}: {e.get('title')}",
+                          "minutes": int(round(float(e.get("duration_seconds") or 0) / 60))}
+                         for e in eps],
+            "sources": sum(int(e.get("sources") or 0) for e in eps),
+            "claims_verified": sum(int(e.get("claims_verified") or 0) for e in eps),
+            "flagged": sum(int(e.get("claims_flagged") or 0) for e in eps),
+            "released": entry.get("released_date") or "",
+        })
+    return rows
+
+
+def specials_for_show(slug):
+    """Released series a show page or post teases (empty when none)."""
+    return [r for r in _specials_context_rows() if slug in r["tease_shows"]]
+
+
+def generate_specials_page(*, dry_run=False, output_dir=None):
+    """/specials.html — the released members-only series (Oct 18 2026).
+    No page is written until a series is released."""
+    rows = _specials_context_rows()
+    out_path = (Path(output_dir) if output_dir else ROOT) / "specials.html"
+    if not rows:
+        return None
+    env = _get_jinja_env()
+    ctx = _member_page_context(
+        "Members-only series — Nerra Network",
+        "Long, sourced deep-dive series for Nerra Personal members: "
+        + "; ".join(r["title"] for r in rows) + ".",
+        "https://nerranetwork.com/specials.html")
+    ctx["series"] = rows
+    html = env.get_template("specials_page.html.j2").render(**ctx)
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
+
+
 def generate_support_page(*, dry_run=False, output_dir=None):
     """Generate /support.html — donations + cost transparency. This is
     also the target of every feed's podcast:funding tag."""
@@ -7203,6 +7261,7 @@ def generate_static_pages(*, dry_run=False):
     generate_explore_page(dry_run=dry_run)
     generate_topic_hub_pages(dry_run=dry_run)
     generate_personal_interest_page(dry_run=dry_run)
+    generate_specials_page(dry_run=dry_run)
     generate_claims_pages(dry_run=dry_run)
     generate_redirect_stubs(dry_run=dry_run)
     generate_llms_txt(dry_run=dry_run)
