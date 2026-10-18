@@ -149,10 +149,18 @@ class TestRenderedSummariesPage:
         assert _markup_only(daily_page).count("<audio") >= SSR_CARD_LIMIT
 
     def test_it_says_what_needs_javascript(self, daily_page):
-        """An honest partial beats a silent one."""
-        assert "<noscript>" in daily_page
-        noscript = re.search(r"<noscript>(.*?)</noscript>", daily_page, re.S)
-        assert "archive" in noscript.group(1).lower()
+        """An honest partial beats a silent one.
+
+        Pick the archive message specifically — ``base.html.j2`` also ships a
+        Google Fonts ``<noscript>`` fallback ahead of the body (Oct 18 2026),
+        so the first ``<noscript>`` is no longer this one.
+        """
+        blocks = re.findall(r"<noscript>(.*?)</noscript>", daily_page, re.S)
+        assert blocks, "expected at least one <noscript>"
+        archive = next((b for b in blocks if "archive" in b.lower()), None)
+        assert archive is not None, (
+            "summaries page must tell noscript readers about the archive")
+        assert "javascript" in archive.lower()
 
     def test_a_show_with_no_episodes_keeps_its_empty_state(self, tmp_path,
                                                            unpublished_show):
