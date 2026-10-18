@@ -8,7 +8,7 @@ Every Friday morning, the week in Collingwood and the south Georgian Bay towns â
 
 The round-up is read by Mira, the network's AI host. She says so. She does not claim to live here, to have skied the hill, walked the harbour or attended a meeting. She speaks as a well-informed host who read the week's local news so you do not have to. The stories are chosen and written by software from named local newsrooms and public data, and every item names its source. The one thing it will not do is speculate about people â€” no guesses about anyone's motives, guilt, health or private life.
 
-Collingwood Weekly is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. You are welcome to look around if another show would be useful to someone you know.
+Collingwood Weekly is part of the Nerra Network, an independent network of shows at nerranetwork.com. You are welcome to look around if another show would be useful to someone you know.
 
 ### The Week's Stories
 **Bull moose tranquilized in Collingwood, taken away in trailer:** BarrieToday

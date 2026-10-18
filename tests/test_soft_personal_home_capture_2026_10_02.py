@@ -25,7 +25,7 @@ SOFT_PRIVACY_NOTE = (
 )
 SOFT_META_DESCRIPTION = (
     "Get occasional Personal tips by email, no charge, no card. Every "
-    "Nerra show stays free. No ads. No outrage diet. Curiosity only."
+    "Nerra show stays free. No outrage diet. Curiosity only."
 )
 
 

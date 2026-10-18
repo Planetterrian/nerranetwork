@@ -15,7 +15,7 @@ Sources are named and linked every week. There is no hype, no play-by-play that 
 
 The audience is three rings at once: lifelong offshore fans who want the depth the English press does not give them, weekend sailors who know a boom from a bow but not the points table, and people who have never touched a rope and never will. No sailing knowledge is required and none is assumed. Whatever needs explaining gets one clean sentence.
 
-Offshore North is part of the Nerra Network, an independent, ad-free network of daily shows built by two friends covering technology, science, markets, world news and language learning in several languages, free with no ads and no paywall, at nerranetwork.com.
+Offshore North is part of the Nerra Network, an independent network of daily shows built by two friends covering technology, science, markets, world news and language learning in several languages, free to listen, at nerranetwork.com.
 
 ## The Canadian Boat
 As of the team’s 17 August 2026 update, EMIRA IV had departed Collingwood the weekend of 8–9 August for the return transatlantic delivery to France.

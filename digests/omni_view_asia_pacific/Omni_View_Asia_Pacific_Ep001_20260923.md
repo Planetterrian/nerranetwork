@@ -12,7 +12,7 @@ The brief is read by Mira, the network's AI host. Stories are chosen and written
 
 Other Omni View desks, and Omni View Top World News, cover the world beyond this region.
 
-Omni View Asia Pacific is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. If this daily brief is the region you want, the rest of the network is there to read and to hear.
+Omni View Asia Pacific is part of the Nerra Network, an independent network of shows at nerranetwork.com. If this daily brief is the region you want, the rest of the network is there to read and to hear.
 
 ### Lead
 **China’s Xi kicks off state visit to Washington on Wednesday with a rare planeside welcome from Trump: AP News**

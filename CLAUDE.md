@@ -2983,7 +2983,14 @@ Mechanics, SpaceX deep dive, Both Sides, the Sunday segment, the two teasers.
 `narrative-queue-source-audit-2026-10-11`, `fr-dub-gate-enforce-2026-10-11`;
 guards `tests/test_sponsor_ready_2026_10_11.py`). **The network no longer
 promises "ad-free" anywhere** (operator: sponsorship comes next); the episode
-stays free, which is true. **`engine.brand` owns the sponsor policy**
+stays free, which is true. **Oct 18 2026: ads are coming to the site and the
+shows, and ad-free is reserved for subscribers and paid content** — no free
+surface says ad-free (the approved SEO copy in `docs/seo-titles-final.md` had
+put "Ad-Free" in the homepage `<title>` and five show metas, the brand-refresh
+banner/share art and the September debut articles carried it; all corrected,
+and the guard now reads those sources plus show YAMLs and Worker pages).
+Transcripts stay the record of what the audio said. Copy that calls the PAID
+tier ad-free lives in `engine.brand` and names the product. **`engine.brand` owns the sponsor policy**
 (`SPONSOR_POLICY_SUMMARY` / `_RULES`, the `sponsor_policy` Jinja global):
 labelled, kept apart from the reporting, no say over coverage, same sourcing
 rules, every episode free. It renders on `sponsor.html` (numbers from

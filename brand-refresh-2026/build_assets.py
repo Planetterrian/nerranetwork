@@ -139,7 +139,7 @@ write("nerra-youtube-banner.svg", f'''<svg xmlns="http://www.w3.org/2000/svg" vi
   {mark(1180,470,scale=1.6)}
   {wy}
   <text x="1280" y="858" text-anchor="middle" textLength="640" lengthAdjust="spacingAndGlyphs" font-family="'DM Sans',Arial,sans-serif" font-weight="500" font-size="38" fill="#CBD5E1">Feed your curiosity — not your anxiety.</text>
-  <text x="1280" y="918" text-anchor="middle" textLength="980" lengthAdjust="spacingAndGlyphs" font-family="'DM Sans',Arial,sans-serif" font-weight="600" font-size="24" fill="#94A3B8">NEW EPISODES DAILY&#160;&#160;·&#160;&#160;100% AD-FREE&#160;&#160;·&#160;&#160;EN · FR · RU · ZH</text>
+  <text x="1280" y="918" text-anchor="middle" textLength="980" lengthAdjust="spacingAndGlyphs" font-family="'DM Sans',Arial,sans-serif" font-weight="600" font-size="24" fill="#94A3B8">NEW EPISODES DAILY&#160;&#160;·&#160;&#160;SOURCES NAMED&#160;&#160;·&#160;&#160;EN · FR · RU</text>
 </svg>''')
 
 # ---------- 4. Social banner 1500x500 ----------
@@ -161,7 +161,7 @@ write("nerra-social-banner.svg", f'''<svg xmlns="http://www.w3.org/2000/svg" vie
   <line x1="0" y1="497" x2="1500" y2="497" stroke="url(#nerra)" stroke-width="5"/>
   {mark(90,150,scale=1.95,glow=False)}
   {wb}
-  <text x="312" y="280" textLength="520" lengthAdjust="spacingAndGlyphs" font-family="'DM Sans',Arial,sans-serif" font-weight="600" font-size="19" fill="#94A3B8">INDEPENDENT PODCAST NETWORK · EN · FR · RU · ZH</text>
+  <text x="312" y="280" textLength="520" lengthAdjust="spacingAndGlyphs" font-family="'DM Sans',Arial,sans-serif" font-weight="600" font-size="19" fill="#94A3B8">INDEPENDENT PODCAST NETWORK · EN · FR · RU</text>
   <text x="312" y="372" font-family="'DM Sans',Arial,sans-serif" font-weight="700" font-size="40" fill="#FFFFFF">Daily<tspan font-weight="500" font-size="22" fill="#94A3B8" dx="8">new</tspan><tspan font-weight="700" font-size="40" fill="#FFFFFF" dx="30">900+</tspan><tspan font-weight="500" font-size="22" fill="#94A3B8" dx="8">episodes</tspan><tspan font-weight="700" font-size="40" fill="#FFFFFF" dx="30">100%</tspan><tspan font-weight="500" font-size="22" fill="#94A3B8" dx="8">independent</tspan><tspan font-weight="700" font-size="40" fill="url(#nerraText)" dx="30">0</tspan><tspan font-weight="500" font-size="22" fill="#94A3B8" dx="8">ads</tspan></text>
   <g transform="translate(1140,250)">
     <g stroke="url(#nerra)" stroke-width="1.5" opacity="0.28">{nlines}</g>
@@ -183,7 +183,7 @@ write("nerra-og-preview.svg", f'''<svg xmlns="http://www.w3.org/2000/svg" viewBo
   {mark(550,90,glow=False)}
   {wo}
   <text x="600" y="392" text-anchor="middle" textLength="560" lengthAdjust="spacingAndGlyphs" font-family="'DM Sans',Arial,sans-serif" font-weight="500" font-size="34" fill="#CBD5E1">Feed your curiosity — not your anxiety.</text>
-  <text x="600" y="468" text-anchor="middle" textLength="600" lengthAdjust="spacingAndGlyphs" font-family="'DM Sans',Arial,sans-serif" font-weight="600" font-size="22" fill="#94A3B8">AD-FREE&#160;&#160;·&#160;&#160;NEW EVERY DAY&#160;&#160;·&#160;&#160;EN · FR · RU · ZH</text>
+  <text x="600" y="468" text-anchor="middle" textLength="600" lengthAdjust="spacingAndGlyphs" font-family="'DM Sans',Arial,sans-serif" font-weight="600" font-size="22" fill="#94A3B8">NEW EVERY DAY&#160;&#160;·&#160;&#160;SOURCES NAMED&#160;&#160;·&#160;&#160;EN · FR · RU</text>
   <g transform="translate(600,520)">
     <circle cx="-150" cy="0" r="7" fill="#E31937"/><circle cx="-100" cy="0" r="7" fill="#0B6FD6"/><circle cx="-50" cy="0" r="7" fill="#1E40AF"/>
     <circle cx="0" cy="0" r="7" fill="#7C5CFF"/><circle cx="50" cy="0" r="7" fill="#16A34A"/><circle cx="100" cy="0" r="7" fill="#F59E0B"/><circle cx="150" cy="0" r="7" fill="#EC4899"/></g>

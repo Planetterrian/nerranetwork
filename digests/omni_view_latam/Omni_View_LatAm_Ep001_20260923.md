@@ -12,7 +12,7 @@ The brief is read by Mira, the network's AI host. Stories are chosen and written
 
 Other Omni View desks and Omni View Top World News sit alongside this one.
 
-Omni View Central and South America is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. If this is the region you want each morning, it is here.
+Omni View Central and South America is part of the Nerra Network, an independent network of shows at nerranetwork.com. If this is the region you want each morning, it is here.
 
 ### Lead
 **Hurricane Polo strengthens to category 5 off Mexico's Pacific coast: Reuters**

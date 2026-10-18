@@ -12,7 +12,7 @@ The brief is read by Mira, the network’s AI host. The stories are chosen and w
 
 The other Omni View desks and Omni View Top World News sit alongside this one.
 
-Omni View Africa & Middle East is part of the Nerra Network, an independent, ad-free network of shows at nerranetwork.com. Listen if it is useful; nothing is being sold with the invitation.
+Omni View Africa & Middle East is part of the Nerra Network, an independent network of shows at nerranetwork.com. Listen if it is useful; nothing is being sold with the invitation.
 
 ### Lead
 **11 killed in mass shooting near Durban, South Africa: BBC News Africa**

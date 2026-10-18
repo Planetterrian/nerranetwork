@@ -53,6 +53,11 @@ CONTACT_EMAIL = "hello@nerranetwork.com"
 # talks about sponsors renders it from here (the ``sponsor_policy`` Jinja
 # global); a template that types its own version fails
 # ``tests/test_sponsor_ready_2026_10_11.py``.
+#
+# Oct 18 2026 (operator): ads are coming to the site and the shows, and
+# "ad-free" is reserved for subscribers and paid content. No free surface
+# says ad-free; when the paid tier is described as ad-free, that copy lives
+# here, next to the sponsor policy, and names the paid product it applies to.
 
 #: Where sponsor enquiries go. One address for now; split it out when there
 #: is a second person to read it.
