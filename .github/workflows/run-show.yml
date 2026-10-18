@@ -434,6 +434,11 @@ jobs:
           fi
 
       - name: Run smoke tests
+        # Code guards only. A test that scans every committed digest of
+        # ANOTHER show (the book-release corpus checks) does not belong
+        # here: on 2026-10-18 one new UC sentence ("Lark et al.,") failed
+        # tests/test_book_release_pass.py and every show after it on the
+        # slate died at this step. Run Tests on push still runs it.
         run: |
           python -m pytest tests/test_config.py tests/test_schedule.py \
             tests/test_tts_grok.py tests/test_tesla_hook.py tests/test_rss.py \
@@ -449,7 +454,6 @@ jobs:
             tests/test_tts_dialogue.py tests/test_dp_pod_show.py \
             tests/test_source_integrity.py tests/test_citation_shapes.py \
             tests/test_uc_fact_corrections.py \
-            tests/test_book_release_pass.py \
             -q --tb=short
 
       - name: Validate config before run

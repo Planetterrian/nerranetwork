@@ -546,6 +546,21 @@ def sdk_httpx():
     raise ImportError("neither httpx2 nor httpx is importable beside openai")
 
 
+_CAPACITY_MESSAGE_RE = re.compile(
+    r"at capacity|rate limit|too many requests|try again in", re.I)
+
+
+def _stream_error_as_status(exc, req, httpx, rate_limit_cls, server_cls):
+    """The status error a mid-stream error event stands for: capacity
+    language is a 429 (the capacity backoff and the pinned retry apply),
+    anything else a 500 (the pinned-model fallback applies)."""
+    message = str(getattr(exc, "message", "") or exc)
+    capacity = bool(_CAPACITY_MESSAGE_RE.search(message))
+    response = httpx.Response(429 if capacity else 500, request=req)
+    cls = rate_limit_cls if capacity else server_cls
+    return cls(message, response=response, body=getattr(exc, "body", None))
+
+
 def _stream_completion(client, create_kwargs: Dict[str, Any], *, wall_timeout: float,
                        model: str):
     """Read one streamed chat completion.
@@ -558,7 +573,10 @@ def _stream_completion(client, create_kwargs: Dict[str, Any], *, wall_timeout: f
     fallback) is exactly the non-streaming one.
     """
     httpx = sdk_httpx()
-    from openai import APIConnectionError, APITimeoutError
+    from openai import (
+        APIConnectionError, APIError, APITimeoutError, InternalServerError,
+        RateLimitError,
+    )
 
     url = "https://api.x.ai/v1/chat/completions"
     req = httpx.Request("POST", url)
@@ -599,6 +617,16 @@ def _stream_completion(client, create_kwargs: Dict[str, Any], *, wall_timeout: f
             raise APITimeoutError(request=req) from exc
         except (httpx.HTTPError, httpx.StreamError) as exc:
             raise APIConnectionError(message=f"stream broke: {exc}", request=req) from exc
+        except APIError as exc:
+            # An error EVENT inside the stream arrives as the bare base
+            # class, which no retry set names. Oct 18 2026: "The model is
+            # currently at capacity" ended Fascinating Frontiers' run four
+            # minutes in, where the same condition on a non-streaming call
+            # is a 429 that the capacity backoff rides out.
+            if type(exc) is not APIError:
+                raise
+            raise _stream_error_as_status(exc, req, httpx,
+                                          RateLimitError, InternalServerError) from exc
     finally:
         close = getattr(stream, "close", None)
         if callable(close):

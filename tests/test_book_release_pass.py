@@ -15,6 +15,12 @@ import yaml
 from engine.claims import find_citation_shapes
 
 ROOT = Path(__file__).resolve().parent.parent
+
+# Ordinary abbreviations that legitimately end in "." before a comma.
+_ABBREVIATIONS = frozenset({
+    "al", "etc", "e.g", "i.e", "inc", "co", "corp", "ltd", "jr", "sr",
+    "st", "vs", "no", "dr", "mr", "mrs", "ms", "prof", "approx", "ca",
+})
 UC_DIR = ROOT / "digests" / "unintended_consequences"
 VOLS = ROOT / "books" / "volumes"
 
@@ -364,13 +370,19 @@ class TestWO11ShipBlockers:
                                       "first_principles"])
     def test_no_duplication_seams_in_any_digest(self, show):
         """The '.,' hits were rewrite seams that duplicated clause
-        tails (found in both shows). 'D.C.,' -style abbreviations are
-        legitimate."""
+        tails (found in both shows). 'D.C.,' -style initials and a
+        closed list of ordinary abbreviations ('et al.,' — UC Ep146
+        cited "Lark et al., arguing…" on 2026-10-18 and this guard
+        stopped every show's smoke step for the rest of the slate)
+        are legitimate."""
         import re
         for p in sorted((ROOT / "digests" / show).glob("*.md")):
             t = p.read_text(encoding="utf-8")
             for m in re.finditer(r"\.,", t):
                 ctx = t[max(0, m.start() - 4):m.start() + 2]
+                word = re.search(r"([A-Za-z.]+)$", t[max(0, m.start() - 12):m.start()])
+                if word and word.group(1).lower() in _ABBREVIATIONS:
+                    continue
                 assert re.search(r"\b[A-Z]\.[A-Z]?\.,$", ctx), (
                     f"{p.name}: seam at "
                     f"{t[max(0, m.start() - 60):m.start() + 60]!r}")
