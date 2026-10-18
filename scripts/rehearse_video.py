@@ -76,6 +76,25 @@ def block_s3_writes() -> list:
     return blocked
 
 
+def refuse_r2_uploads() -> list:
+    """Make engine.storage.upload_to_r2 — the one R2 upload helper — refuse
+    at once (returns "", the helper's own failure value). Behind the botocore
+    guard; without this every refused upload spent ~8 s in the helper's
+    retries, which inflated a rehearsal's video-stage time by 5-7 minutes
+    (Oct 18 2026 rehearsal: 39-54 refused uploads per flagship). Install it
+    before anything imports the helper by name."""
+    import engine.storage as storage
+
+    refused: list = []
+
+    def refuse(local_path, remote_key, **_kw):
+        refused.append(str(remote_key))
+        return ""
+
+    storage.upload_to_r2 = refuse
+    return refused
+
+
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -176,6 +195,7 @@ def main(argv=None) -> int:
     dropped = scrub_environment()
     blocked_writes = block_s3_writes()
     sys.path.insert(0, str(ROOT))
+    refused_uploads = refuse_r2_uploads()
     import run_show  # noqa: E402 — after the scrub, so nothing reads a credential
     from engine import youtube as _youtube
     from engine.config import load_config
@@ -233,6 +253,7 @@ def main(argv=None) -> int:
         "mp3_fetch_s": fetch_s, "video_stage_s": stage_s, "error": error,
         "credentials_removed": dropped,
         "s3_writes_refused": blocked_writes,
+        "r2_uploads_refused": refused_uploads,
         "image_cost_usd": round(float(c.get("grok_image_cost_usd") or 0.0), 3),
         "metrics": {k: c[k] for k in REPORT_KEYS if k in c},
         "videos": fake.uploads,
@@ -241,7 +262,8 @@ def main(argv=None) -> int:
     lines = [f"## {config.name} Ep{episode_num} ({day})", "",
              f"- video stage: {stage_s / 60:.1f} min (MP3 fetch {fetch_s} s)",
              f"- error: {error or 'none'}",
-             f"- publishing: nothing ({len(blocked_writes)} R2 writes refused,"
+             f"- publishing: nothing ({len(refused_uploads)} R2 uploads and"
+             f" {len(blocked_writes)} other S3 writes refused,"
              f" {len(fake.uploads)} YouTube uploads kept as files)",
              f"- long-form rendered: {bool(c.get('youtube_long_form_uploaded'))}"
              f" (render {c.get('long_form_render_duration_s', '—')} s,"
