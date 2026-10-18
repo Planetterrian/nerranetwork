@@ -3422,7 +3422,7 @@ episode:
   it to other shows via `engine/show_memory.py`.
 - `tests/test_prompt_fidelity.py` — every show's prompts exist, are non-empty,
   and render without a malformed-brace crash.
-- `tests/test_episode_validity.py` — the latest committed digest per show meets
+- `tests/test_episode_validity.py` — (Run Tests only since Oct 18 2026; never the per-show smoke step) the latest committed digest per show meets
   a conservative word floor and isn't a refusal.
 - `tests/test_pipeline_safety.py` — the three safety scripts below.
 
