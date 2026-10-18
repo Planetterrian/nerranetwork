@@ -141,6 +141,23 @@ jobs:
                       shows.append(slug)
               return shows
 
+          def video_pending_today(slug):
+              # Oct 18 2026: a show whose video is still rendering in its own
+              # job (render-video.yml) is swept when THAT job completes —
+              # both write the show's summaries file and blog posts, and the
+              # dubs need its scene images. The workflow_run branch below
+              # checks this; the cron passes must too, or the 14:07 / 18:07
+              # sweep rewrites the posts under a running render.
+              import datetime as _dt
+              from pathlib import Path as _Path
+              stamp = _dt.date.today().strftime("%Y%m%d")
+              try:
+                  out = _Path(load_config(f"shows/{slug}.yaml").episode.output_dir)
+              except Exception:
+                  return False
+              return ((out / f".video_pending_{stamp}.json").exists()
+                      and not (out / f".video_done_{stamp}.json").exists())
+
           dispatch = "${{ github.event.inputs.show }}".strip()
           event = "${{ github.event_name }}"
           if dispatch and dispatch not in ("", "all"):
@@ -245,8 +262,12 @@ jobs:
                                head_msg.splitlines()[0] if head_msg else "")
                   shows = ([m.group(1)] if m.group(1) in enabled else []) if m else enabled
           else:
-              # Scheduled / "all": every show that opts into auto multilingual.
-              shows = auto_enabled_shows()
+              # Scheduled / "all": every show that opts into auto multilingual,
+              # minus any whose video job is still running (Oct 18 2026).
+              waiting = [s for s in auto_enabled_shows() if video_pending_today(s)]
+              if waiting:
+                  print("Waiting for their video job:", waiting)
+              shows = [s for s in auto_enabled_shows() if s not in waiting]
           print("Multilingual shows:", shows)
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
               f.write(f"shows={json.dumps(shows)}\n")

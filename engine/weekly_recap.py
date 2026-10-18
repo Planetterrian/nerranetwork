@@ -177,7 +177,10 @@ def build_weekly_summary_segment(
             "of the PAST WEEK and where each stands now, in a warm, plain "
             "register. Keep it TIGHT — this is a segment, not "
             "the whole episode. Do NOT re-report today's stories inside it, "
-            "and never read URLs aloud."
+            "and never read URLs aloud. Name every person and organisation "
+            "exactly as this week's episodes named them: a surname alone is "
+            "not a name, and a first name the coverage carried is never "
+            "dropped."
         ),
     ]
     if recurring_threads:

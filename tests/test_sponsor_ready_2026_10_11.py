@@ -197,7 +197,9 @@ class TestQueueSourceAudit:
             assert t["source_audit"] in ("keep", "fix"), t["id"]
             assert t.get("sources"), t["id"]
             if t["source_audit"] == "fix":
-                assert "SOURCE AUDIT (2026-10-11)" in t["brief"], t["id"]
+                # A dated note, the Oct 11 shape — later audits carry their
+                # own date (the first was 2026-10-11; Oct 18 added one).
+                assert re.search(r"SOURCE AUDIT \(\d{4}-\d{2}-\d{2}\)", t["brief"]), t["id"]
 
     def test_restock_prompts_ban_unsourced_figures(self):
         for name in ("unintended_consequences_restock.txt", "first_principles_restock.txt"):

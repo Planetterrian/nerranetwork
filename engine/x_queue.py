@@ -189,9 +189,11 @@ def enqueue(*, show_slug: str, episode_num: int, env_prefix: str, text: str,
     if not configured():
         return False, "queue_not_configured"
     now = now or dt.datetime.now(UTC)
+    hosted_here = False
     try:
         if not media_url and media_path and Path(media_path).is_file():
             media_url = _host(Path(media_path), show_slug)
+            hosted_here = True
         due = slot_for(show_slug, _taken(now), now, slot)
         rows = _rest("POST", TABLE, params={"on_conflict": "show_slug,episode_num"},
                      prefer="return=representation,resolution=ignore-duplicates",
@@ -202,6 +204,11 @@ def enqueue(*, show_slug: str, episode_num: int, env_prefix: str, text: str,
                            "due_at": _iso(due), "status": "queued"})
         if not rows:
             logger.info("X post for %s ep%s was already queued", show_slug, episode_num)
+            if hosted_here and media_url:
+                # Oct 18 2026: the copy this call hosted has no row to carry
+                # it — a re-run (the video job's --force-video) would leave
+                # an orphan clip on the bucket for every duplicate.
+                _forget_media(media_url)
             return True, "already_queued"
         local = due.astimezone(EASTERN)
         logger.info("X post for %s ep%s queued for %s ET", show_slug, episode_num,

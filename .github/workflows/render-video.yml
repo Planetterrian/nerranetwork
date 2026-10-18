@@ -192,10 +192,14 @@ jobs:
 
       - name: Commit and push the video's artifacts
         id: commit
-        # always(): a failed page regeneration must not strand the video's
-        # records — the YouTube index is what stops a second upload.
+        # always(): a failed page regeneration — or a video step that died
+        # AFTER its uploads (the X stage, the watchdog during the blog
+        # rewrite) — must not strand the video's records: the YouTube index
+        # and scheduled_comments.json are what stop a second public upload
+        # when the job is re-run. With nothing uploaded there is nothing
+        # staged and the step is a no-op.
         # Never for a rehearsal: it published nothing and commits nothing.
-        if: always() && steps.video.outcome == 'success' && !inputs.rehearse
+        if: always() && !inputs.rehearse
         env:
           NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
         run: |
@@ -226,7 +230,7 @@ jobs:
         env:
           NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
         run: |
-          echo "::error::VIDEO FAILURE: ${{ inputs.show }} ${{ inputs.date }}. The audio episode is published; re-run this job to render the video."
+          echo "::error::VIDEO FAILURE: ${{ inputs.show }} ${{ inputs.date }}. The audio episode is published. Before re-running this job, check YouTube Studio and digests/<show>/youtube_videos.json for today's uploads — a run that died after uploading would upload a second public copy."
           if [ -n "$NOTIFICATION_WEBHOOK_URL" ]; then
             curl -s -X POST "$NOTIFICATION_WEBHOOK_URL" -H "Content-Type: application/json" \
               -d "{\"text\":\"❌ Video FAILED: ${{ inputs.show }} ${{ inputs.date }} (audio is published)\\nRun: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \

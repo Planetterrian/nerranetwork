@@ -367,11 +367,29 @@ def strip_claims_block_for_validation(text: str) -> str:
 # pattern digests/xai_grok.py uses for search-tool usage.
 _STASHED_CLAIMS: Optional[List[dict]] = None
 
+#: Oct 18 2026: run_show's structural digest retry runs under a deadline on a
+#: worker thread that keeps running after the deadline fires. A generation the
+#: caller has already abandoned must never write the stash — its ledger would
+#: pair with a digest that never shipped. The caller marks the thread with
+#: this attribute; the stash writers check it.
+ABANDONED_THREAD_ATTR = "nerra_abandoned"
+
+
+def thread_is_abandoned() -> bool:
+    """True inside a generation the caller gave up waiting for."""
+    import threading
+
+    return bool(getattr(threading.current_thread(), ABANDONED_THREAD_ATTR, False))
+
 
 def extract_and_stash(text: str) -> str:
     """Extract the ledger from generated text, stash it, return clean text."""
     global _STASHED_CLAIMS
     cleaned, claims = extract_claims_block(text)
+    if thread_is_abandoned():
+        logger.info("Source-integrity ledger from an abandoned generation "
+                    "discarded (%s claim(s))", len(claims or []))
+        return cleaned
     _STASHED_CLAIMS = claims
     if claims is not None:
         logger.info("Source-integrity ledger extracted: %d claim(s)", len(claims))
@@ -383,6 +401,17 @@ def drain_stashed_claims() -> Optional[List[dict]]:
     global _STASHED_CLAIMS
     claims, _STASHED_CLAIMS = _STASHED_CLAIMS, None
     return claims
+
+
+def peek_stashed_claims() -> Optional[List[dict]]:
+    """The stashed ledger without clearing it (a snapshot before a retry)."""
+    return _STASHED_CLAIMS
+
+
+def restore_stashed_claims(claims: Optional[List[dict]]) -> None:
+    """Put a snapshot back: the digest it belongs to is the one shipping."""
+    global _STASHED_CLAIMS
+    _STASHED_CLAIMS = claims
 
 
 # ---------------------------------------------------------------------------

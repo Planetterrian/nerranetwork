@@ -69,14 +69,17 @@ bucket_name = "nerra-books"
 # rate-limit / member namespace. Keys hold integer counts only — no
 # emails, IPs, or other PII. Read via GET /api/subscribe-counts.
 #
-# PLACEHOLDER — Patrick must create the namespace (free tier) and paste
-# its id here before deploy. Do NOT leave this as the placeholder string
-# on a live deploy; wrangler will bind whatever id you put.
+# NOT YET BOUND — the block below is commented out on purpose. wrangler
+# validates every KV namespace id at upload, so a placeholder id refuses
+# the whole deploy (Oct 18 2026: every pending deploy of this Worker —
+# the Personal picker, the show-demand gate, the profile mirrors — was
+# blocked behind it). The Worker no-ops the counters while
+# `env.SUB_COUNTS` is unbound (handlers.ts). To turn them on:
 #   wrangler kv namespace create SUB_COUNTS
-#   # then replace the id below
-[[kv_namespaces]]
-binding = "SUB_COUNTS"
-id = "PLACEHOLDER_REPLACE_WITH_SUB_COUNTS_KV_ID"
+#   # then paste the id and un-comment the three lines
+# [[kv_namespaces]]
+# binding = "SUB_COUNTS"
+# id = "<the id wrangler printed>"
 
 # Secrets are set out-of-band via:
 #   wrangler secret put JWT_SECRET

@@ -2298,6 +2298,12 @@ def _finish_combined_script(script: Optional[str], digest_text: str, config: Any
     """Validate + sanitise the PART 2 script and stash it, or leave the
     stash empty so the two-pass path runs. Never raises."""
     global _STASHED_COMBINED
+    from engine.claims import thread_is_abandoned
+    if thread_is_abandoned():
+        # Oct 18 2026: a generation the caller stopped waiting for must not
+        # replace the stash the shipping digest's script is paired with.
+        logger.info("Combined script from an abandoned generation discarded")
+        return
     _STASHED_COMBINED = None
     if not script or not script.strip():
         logger.warning(
@@ -2345,6 +2351,20 @@ def take_combined_script() -> Optional[Dict[str, str]]:
     global _STASHED_COMBINED
     stash, _STASHED_COMBINED = _STASHED_COMBINED, None
     return stash
+
+
+def snapshot_combined_script() -> Optional[Dict[str, str]]:
+    """The whole stash (script + the digest it was written from) without
+    clearing it — a snapshot before a structural retry (Oct 18 2026).
+    ``peek_combined_script`` below returns the script text alone."""
+    return _STASHED_COMBINED
+
+
+def restore_combined_script(stash: Optional[Dict[str, str]]) -> None:
+    """Put a snapshot back when the retry it was taken ahead of was rejected
+    or abandoned, so the shipping digest keeps its own script."""
+    global _STASHED_COMBINED
+    _STASHED_COMBINED = stash
 
 
 def amend_combined_script(script: str) -> bool:
