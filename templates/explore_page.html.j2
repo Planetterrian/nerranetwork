@@ -28,7 +28,11 @@
             <div class="nn-section-header">
                 <div class="section-label">Explore</div>
                 <h1>Find a show that fits</h1>
-                <p>{{ all_shows|length }} shows, all free and independently produced. Filter by
+                {#- Free shows only in the count (Oct 18 2026): the grid also
+                    lists the members-only desks, which are not free. #}
+                {%- set _members = members_show_count(all_shows) %}
+                <p>{{ public_show_count() }} free shows, independently produced{% if _members %},
+                   plus {{ _members }} for Nerra Personal members{% endif %}. Filter by
                    subject or language — or <a href="{{ path_prefix }}nerra-daily.html">let
                    Nerra Daily</a> hand you the whole network in one daily episode.</p>
             </div>

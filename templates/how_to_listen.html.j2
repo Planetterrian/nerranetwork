@@ -289,7 +289,8 @@
             {#- id="feeds": the footer links every page here instead of
                 repeating seventeen per-show RSS links (2026-09-21). #}
             <section class="htl-shows-section" id="feeds">
-                <h2>All {{ all_shows|length }} shows</h2>
+                {%- set _members = members_show_count(all_shows) %}
+                <h2>{{ public_show_count() }} free shows{% if _members %}, plus {{ _members }} for members{% endif %}</h2>
                 <p>Tap a platform link to open the show in the corresponding app. A dash
                 means the show is not listed in that directory yet &mdash; its RSS feed
                 works in Apple Podcasts (Follow a Show by URL) and most other apps.</p>
@@ -353,8 +354,9 @@
                 <h2>Common questions</h2>
                 <details>
                     <summary>Do I need an account to listen?</summary>
-                    <p>No. All Nerra Network shows are free and public — no sign-up, no
-                    paywall. An Apple or Spotify account helps you save shows to your
+                    <p>No. The {{ public_show_count() }} free shows need no sign-up and
+                    have no paywall{% if _members %}; the {{ _members }} members-only shows
+                    are part of Nerra Personal{% endif %}. An Apple or Spotify account helps you save shows to your
                     library and sync across devices, but every episode is also available
                     via RSS.</p>
                 </details>

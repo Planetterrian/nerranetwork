@@ -323,7 +323,28 @@ def _apple_badge_asset() -> str:
     return _APPLE_BADGE_REL if (ROOT / _APPLE_BADGE_REL).exists() else ""
 
 
-def _collect_language_feeds(rss_file: str, prefix: str) -> list:
+def _producing_track_languages(slug):
+    """The translated tracks a show produces TODAY, from its YAML
+    ``multilingual`` block — or ``None`` when the show has no YAML
+    (registry-only shows), meaning "do not filter".
+
+    A ZH track needs BOTH ``zh`` in ``languages`` and ``zh_approved``
+    (Oct 9 2026: the ZH track was switched off on tesla / spacex / FF and its
+    feeds frozen, yet both flagship pages kept a 中文 chip for six weeks
+    because the 45-day freshness gate still read the frozen feed as live)."""
+    cfg = _registry_show_config(slug)
+    if cfg is None:
+        return None
+    ml = getattr(cfg, "multilingual", None)
+    if ml is None or not getattr(ml, "enabled", False):
+        return set()
+    langs = {str(code) for code in (getattr(ml, "languages", None) or [])}
+    if not getattr(ml, "zh_approved", False):
+        langs.discard("zh")
+    return langs
+
+
+def _collect_language_feeds(rss_file: str, prefix: str, slug: str = "") -> list:
     """Return the per-language podcast feeds that exist for a show.
 
     Scans for ``<rss_stem>.<lang>.rss`` siblings of the English feed (built
@@ -334,8 +355,15 @@ def _collect_language_feeds(rss_file: str, prefix: str) -> list:
     """
     from engine.language_feeds import LANGUAGE_META, feed_filename
 
+    # With a *slug* (the show page's "In your language" chips), only the
+    # tracks the show produces today: a switched-off track's frozen feed is
+    # kept for its existing subscribers (how-to-listen.html still lists it)
+    # but is never advertised as a way in.
+    producing = _producing_track_languages(slug) if slug else None
     feeds = []
     for lang, (autonym, _locale) in LANGUAGE_META.items():
+        if producing is not None and lang not in producing:
+            continue
         fname = feed_filename(rss_file, lang)
         if not (ROOT / fname).exists():
             continue
@@ -2385,6 +2413,21 @@ def _public_show_count_cached() -> int:
     return _PUBLIC_SHOW_COUNT
 
 
+def _members_show_count(shows=None) -> int:
+    """Shows that publish only for Nerra Personal members (feed exists, not
+    public). Oct 18 2026: about/support/explore/how-to-listen/press counted
+    these five desks inside "N shows … all free" while the homepage said 26.
+    Every "free" sentence uses ``_public_shows``; a page that LISTS these
+    shows says how many are members-only instead of calling them free."""
+    from engine import landing_test as _lt
+    shows = _build_all_shows_list() if shows is None else shows
+    return sum(
+        1 for s in shows
+        if s.get("access", "public") not in _lt.PUBLIC_ACCESS_MODES
+        and s.get("has_feed", True)
+    )
+
+
 def _get_jinja_env():
     """Create a shared Jinja2 environment with marketing globals + filters."""
     env = Environment(
@@ -2469,6 +2512,10 @@ def _get_jinja_env():
     env.globals["network_promise_short"] = _brand_copy.NETWORK_PROMISE_SHORT
     env.globals["network_promise"] = lambda n=None: _brand_copy.network_promise(
         n if n is not None else _public_show_count_cached())
+    # One count for every "N free shows" sentence (Oct 18 2026), and the
+    # members-only count for pages that list those shows too.
+    env.globals["public_show_count"] = _public_show_count_cached
+    env.globals["members_show_count"] = _members_show_count
     # Oct 18 2026: every page's share card is decided in one place (base.html.j2
     # calls this) — see engine/share_cards.py.
     from engine import share_cards as _share_cards
@@ -3493,7 +3540,7 @@ def generate_show_page(slug, *, dry_run=False, output_dir=None):
         "schema_web_feed": f"{GITHUB_RAW}/{cfg['rss_file']}",
         "schema_image_url": f"{GITHUB_RAW}/{cfg['podcast_image'].lstrip('/')}",
         "rss_url": f"{prefix}{cfg['rss_file']}",
-        "language_feeds": _collect_language_feeds(cfg["rss_file"], prefix),
+        "language_feeds": _collect_language_feeds(cfg["rss_file"], prefix, slug),
         # A show registered before its first episode has a feed NAME but no
         # feed FILE; linking it 404s (Nerra Voices).
         "has_feed": (ROOT / cfg["rss_file"]).exists(),
@@ -4196,13 +4243,16 @@ def redirect_stub_paths():
     return frozenset(str(r["from"]).strip().lstrip("/") for r in redirects)
 
 
-def generate_redirect_stubs(*, dry_run=False):
+def generate_redirect_stubs(*, dry_run=False, output_dir=None):
     """Write a stub page for every entry in ``site/redirects.yaml``.
 
     A stub never shadows a real page: if ``from`` exists on disk the entry is
     skipped with a warning, because a live page beats a redirect to one every
     time. A ``to`` that does not exist is also skipped — a redirect into a
     404 is worse than the 404 it replaces.
+
+    ``output_dir`` (Oct 18 2026) writes the stubs under another root so a
+    guard renders them into ``tmp_path``; the checks still read the repo.
     """
     import os
 
@@ -4235,9 +4285,16 @@ def generate_redirect_stubs(*, dry_run=False):
             continue
 
         target_rel = os.path.relpath(dst_path, src_path.parent)
+        canonical_path = dst
+        if dst == "index.html":
+            # The homepage's canonical is the bare origin, never /index.html
+            # (Sep 2026 Search Console hygiene; Oct 18 2026: the
+            # landing-test.html stub pointed its canonical at /index.html
+            # while the page it names says "/").
+            canonical_path = ""
         label = _redirect_target_label(dst)
         html = template.render(
-            target=dst,
+            target=canonical_path,
             target_rel=target_rel,
             target_label=label,
             message=_redirect_message(entry, label),
@@ -4245,8 +4302,9 @@ def generate_redirect_stubs(*, dry_run=False):
         if dry_run:
             print(f"[dry-run] Would write {src} -> {dst}")
         else:
-            src_path.parent.mkdir(parents=True, exist_ok=True)
-            src_path.write_text(html, encoding="utf-8")
+            out_path = (Path(output_dir) / src) if output_dir else src_path
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(html, encoding="utf-8")
         written += 1
 
     if not dry_run:
@@ -4544,9 +4602,9 @@ def generate_explore_page(*, dry_run=False, output_dir=None):
     ]
 
     description = (
-        "Browse all of the Nerra Network's shows by subject and language — AI, "
+        "Browse the Nerra Network's shows by subject and language — AI, "
         "space, markets, science, climate, world news, language learning and "
-        "more. Every show is free and independently produced."
+        f"more. {_public_show_count_cached()} free shows, independently produced."
     )
 
     context = {
@@ -4685,7 +4743,7 @@ def _feed_items_in_window(rss_files, end, days=7):
 
 
 def _front_page_sections(shows, public, ranked, page, *, edition=None,
-                         live_hubs=(), gallery_root=None):
+                         live_hubs=(), gallery_root=None, markets=None):
     """The homepage's whole-site sections (the landing test's v2): the rest
     of the site.
 
@@ -4888,11 +4946,12 @@ def _front_page_sections(shows, public, ranked, page, *, edition=None,
                            f" · no earlier than {net_d.strftime('%b')} {net_d.day}")
     _dash("spacex", "spacex-dashboard.html", "SpaceX dashboard",
           "Launch cadence, the fleet, pads and Starship, updated daily.", launch_fact)
-    tsla = _load_json_quiet(ROOT / "api" / "tsla.json") or {}
-    tsla_fact = ""
-    price, fetched = tsla.get("price"), _lt._parse_date(str(tsla.get("fetched_at") or ""))
-    if isinstance(price, (int, float)) and not isinstance(price, bool) and price > 0 and fetched:
-        tsla_fact = f"TSLA last quote on record: ${price:,.2f} · {fetched.strftime('%b')} {fetched.day}"
+    # The strip's own TSLA quote (engine.newsroom.market_strip): a close is
+    # dated by its bar, never by the weekend fetch that read it (Oct 18 2026).
+    from engine import newsroom as _nr
+    tsla_fact = _nr.quote_line(next(
+        (q for q in (markets or {}).get("quotes") or [] if q.get("symbol") == "TSLA"),
+        None))
     _dash("tesla", "tesla-dashboard.html", "Tesla dashboard",
           "The stock, deliveries and the programs the show tracks.", tsla_fact)
     on = _load_json_quiet(ROOT / "api" / "offshore_north_dashboard.json") or {}
@@ -5242,21 +5301,24 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
     except Exception as e:  # noqa: BLE001
         print(f"Warning: could not load newsletter stats: {e}")
 
-    v2 = _front_page_sections(shows, public, ranked, page, edition=edition,
-                              live_hubs=live_hubs, gallery_root=gallery_root)
-
     # ---- Newsroom signals (engine/newsroom.py) ---------------------------
-    try:
-        developing = _nr.developing_stories(_newsroom_episodes(public, now), now)
-    except Exception as exc:  # noqa: BLE001 — a front-page rail is never worth a build
-        print(f"Warning: developing stories unavailable: {exc}")
-        developing = []
+    # The strip comes first: the dashboards card reads its TSLA quote.
     markets = _nr.market_strip(
         mag7=_load_json_quiet(ROOT / "api" / "mag7_quotes.json"),
         spcx=_load_json_quiet(ROOT / "api" / "spcx.json"),
         tsla=_load_json_quiet(ROOT / "api" / "tsla.json"),
         launches=_load_json_quiet(ROOT / "api" / "spacex_launches.json"),
         now=now) if public else {"quotes": [], "groups": [], "launch": None}
+
+    v2 = _front_page_sections(shows, public, ranked, page, edition=edition,
+                              live_hubs=live_hubs, gallery_root=gallery_root,
+                              markets=markets)
+
+    try:
+        developing = _nr.developing_stories(_newsroom_episodes(public, now), now)
+    except Exception as exc:  # noqa: BLE001 — a front-page rail is never worth a build
+        print(f"Warning: developing stories unavailable: {exc}")
+        developing = []
     # The flagship band: each flagship's own market line, the next launch on
     # SpaceX, and the data pages that exist for it (a link only to a file).
     _shows_by_slug = {sh["slug"]: sh for sh in public}
@@ -6693,13 +6755,13 @@ def generate_support_page(*, dry_run=False, output_dir=None):
     env = _get_jinja_env()
     ctx = _member_page_context(
         "Support the Nerra Network",
-        f"{len(_published_show_ids())} shows, most of them daily, all free. "
+        f"{_public_show_count_cached()} shows, most of them daily, all free. "
         "See what the network actually costs to run, and chip "
         "in if you want it to keep existing.",
         "https://nerranetwork.com/support.html")
     # Computed, never typed (Oct 7 2026: "four listening languages" and the
     # registry length, which counts a show with no episodes yet).
-    ctx["published_show_count"] = len(_published_show_ids())
+    ctx["published_show_count"] = _public_show_count_cached()
     ctx["listening_language_count"] = len(_listening_languages())
     html = env.get_template("support_page.html.j2").render(**ctx)
     out_path = (Path(output_dir) if output_dir else ROOT) / "support.html"
@@ -6724,7 +6786,7 @@ def generate_about_page(*, dry_run=False, output_dir=None):
         # alternate-day, or published when an interview is ready. The Sep 3
         # pass corrected the visible copy to "most shows daily" and missed the
         # meta description, which is the line Google actually prints.
-        "meta_description": f"About Nerra Network — an independent podcast network of {len(NETWORK_SHOWS)} shows, most of them daily, covering AI, Tesla, investing, space, science, and environmental policy. Founded by Patrick Novak.",
+        "meta_description": f"About Nerra Network — an independent podcast network of {_public_show_count_cached()} free shows, most of them daily, covering AI, Tesla, investing, space, science, and environmental policy. Founded by Patrick Novak.",
         "meta_keywords": "about Nerra Network, Patrick Novak, independent podcast network, Vancouver podcasts, free podcasts",
         "theme_color": "#6B47FF",
         "og_image": "",
@@ -6754,7 +6816,7 @@ def generate_about_page(*, dry_run=False, output_dir=None):
     return out_path
 
 
-def generate_press_page(*, dry_run=False):
+def generate_press_page(*, dry_run=False, output_dir=None):
     """Generate the press kit / media-resources page."""
     env = _get_jinja_env()
     template = env.get_template("press.html.j2")
@@ -6771,12 +6833,15 @@ def generate_press_page(*, dry_run=False):
         "show_color": "",
         "show_color_dark": "",
         "all_shows": _build_all_shows_list(),
-        "shows_count": len(NETWORK_SHOWS),
+        # Free shows only (Oct 18 2026); the members-only desks are named
+        # separately in the template.
+        "shows_count": _public_show_count_cached(),
+        "members_shows_count": _members_show_count(),
         "total_episodes": _count_total_episodes(),
     }
 
     html = template.render(**context)
-    out_path = ROOT / "press.html"
+    out_path = (Path(output_dir) if output_dir else ROOT) / "press.html"
 
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
@@ -6846,7 +6911,8 @@ def generate_sponsor_page(*, dry_run=False, output_dir=None):
         "show_color": "",
         "show_color_dark": "",
         "all_shows": _build_all_shows_list(),
-        "published_show_count": len(_published_show_ids()),
+        # "Every episode is free" follows this number: free shows only.
+        "published_show_count": _public_show_count_cached(),
         "listening_language_count": len(_listening_languages()),
         "total_episodes": f"{_count_total_episodes():,}",
         "audience": _sponsor_audience(),
