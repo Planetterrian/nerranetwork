@@ -14,8 +14,11 @@ test.describe("Landing and show journeys", () => {
     const covers = page.locator('img[alt$="cover art"]');
     await expect(covers).toHaveCount(await covers.count());
     expect(await covers.count()).toBeGreaterThan(5);
-    // At least one eager cover is in the first viewport.
-    await expect(page.locator('img[alt$="cover art"][loading="eager"]').first()).toBeVisible();
+    // Oct 18 2026: the homepage is the news front page — the first viewport
+    // is the lead story (headline linking to its post), not a cover grid.
+    const lead = page.locator("article.lt-lead h2 a").first();
+    await expect(lead).toBeVisible();
+    await expect(lead).toHaveAttribute("href", /^blog\//);
   });
 
   test("show page opens and exposes the podcast feed link", async ({ page }) => {
