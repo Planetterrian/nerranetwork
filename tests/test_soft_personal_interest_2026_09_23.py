@@ -168,7 +168,8 @@ class TestSoftPersonalInterestPage:
         src = _read("templates/join_page.html.j2")
         assert "personal-interest.html" in src
         assert "Get occasional Personal tips by email — no charge, no card." in src
-        assert "Not ready yet? Get Personal tips by email — no charge, no card →" in src
+        assert "Get Personal tips by email — no charge, no card →" in src
+        assert "Not ready yet?" not in src
         assert "Not ready to pay?" not in src
         assert "reminder" not in src.lower()
         # ENG-SPEC: interest block above Stripe plans (does not replace checkout)
@@ -269,7 +270,8 @@ class TestSoftPersonalSurfaceCTAs:
         join_tpl = _read("templates/join_page.html.j2")
         assert "Get occasional Personal tips by email — no charge, no card." in join_tpl
         assert "Save my email on the Personal page →" in join_tpl
-        assert "Not ready yet? Get Personal tips by email — no charge, no card →" in join_tpl
+        assert "Get Personal tips by email — no charge, no card →" in join_tpl
+        assert "Not ready yet?" not in join_tpl
         assert "Not ready to pay?" not in join_tpl
         assert "Soft Personal" not in join_tpl
 
@@ -279,7 +281,8 @@ class TestSoftPersonalSurfaceCTAs:
         assert "Not ready to pay?" not in daily
         assert "Soft Personal" not in join
         assert "Soft Personal" not in daily
-        assert "Not ready yet? Get Personal tips by email — no charge, no card →" in join
+        assert "Get Personal tips by email — no charge, no card →" in join
+        assert "Not ready yet?" not in join
         assert "Not ready? Get free Personal tips by email — no charge, no card →" in daily
         assert "Personal tips by email — no charge →" in join
         assert "Personal tips by email — no charge →" in daily

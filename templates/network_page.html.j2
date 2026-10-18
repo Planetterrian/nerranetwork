@@ -899,7 +899,7 @@ a.lt-media:hover img { transform: scale(1.03); }
         <time class="lt-dateline" datetime="{{ masthead.date_iso }}">{{ masthead.date }}</time>
         <span>Updated <time datetime="{{ masthead.updated_iso }}">{{ masthead.updated }}</time></span>
         {% if p.today_new %}<span>{{ p.today_new }} new {{ 'episode' if p.today_new == 1 else 'episodes' }} today</span>{% endif %}
-        {% if p.story_count %}<span>Stories from {{ p.story_count }} shows</span>{% endif %}
+        {% if p.story_count %}<span>Stories from across the network</span>{% endif %}
     </div>
     <div class="lt-masthead-row">
         <div class="lt-brandline">
@@ -907,7 +907,7 @@ a.lt-media:hover img { transform: scale(1.03); }
             <p class="lt-tagline">{{ network_tagline }}</p>
         </div>
         <div class="lt-standfirst-wrap">
-            <p class="lt-standfirst">{{ network_promise(public_show_count) }}</p>
+            <p class="lt-standfirst">{{ network_promise() }}</p>
             {#- Where a first-time reader goes next: today's whole-network
                 episode, the show finder and the feeds. Each is a page that
                 exists; the edition link only when an edition was built. -#}
@@ -1464,7 +1464,7 @@ a.lt-media:hover img { transform: scale(1.03); }
     renders the same one), most-listened first. -#}
 {% if ranked_shows %}
 <section class="lt-block container" id="shows" aria-labelledby="lt-shows-h">
-    <div class="lt-block-head"><h2 id="lt-shows-h">All {{ ranked_shows|length }} shows</h2><p class="lt-block-sub">Every show is free and independently produced; each card says how often it publishes.</p><a href="{{ path_prefix }}explore.html">Browse by subject →</a></div>
+    <div class="lt-block-head"><h2 id="lt-shows-h">All shows</h2><p class="lt-block-sub">Every show is free and independently produced; each card says how often it publishes.</p><a href="{{ path_prefix }}explore.html">Browse by subject →</a></div>
     <div class="show-showcase" id="show-showcase-grid">
         {% for s in ranked_shows %}
         {{ show_card(s, path_prefix) }}
@@ -1539,8 +1539,8 @@ a.lt-media:hover img { transform: scale(1.03); }
     <div class="lt-about">
         <div class="lt-about-text">
             <p><strong>{{ network_tagline }}</strong></p>
-            <p>{{ network_promise(public_show_count) }}</p>
-            <p>Nerra Network is an independent news and podcast network of {{ public_show_count }} free shows covering world news, space and astronomy, science, AI for experts and beginners, AI chips and data centres, markets and modern investing, the Magnificent Seven, prediction markets, SpaceX, Tesla, longevity and peptide research, environmental policy, first-principles thinking, the unintended consequences of big decisions, good news with something you can do about it (The DP Pod), Canada's offshore ocean-racing story (Offshore North), local news from Vancouver and Collingwood, live AI-hosted interviews (The Age of AI and Nerra Voices), and financial literacy and language learning in Russian &mdash; plus Nerra Daily, the whole network in one daily edition. All produced in Vancouver, Canada by Patrick Novak, with AI doing the writing and narration and a human owning the standards. <a href="{{ path_prefix }}ai-disclosure.html">How we use AI</a>.</p>
+            <p>{{ network_promise() }}</p>
+            <p>Nerra Network is an independent news and podcast network of free shows covering world news, space and astronomy, science, AI for experts and beginners, AI chips and data centres, markets and modern investing, the Magnificent Seven, prediction markets, SpaceX, Tesla, longevity and peptide research, environmental policy, first-principles thinking, the unintended consequences of big decisions, good news with something you can do about it (The DP Pod), Canada's offshore ocean-racing story (Offshore North), local news from Vancouver and Collingwood, live AI-hosted interviews (The Age of AI and Nerra Voices), and financial literacy and language learning in Russian &mdash; plus Nerra Daily, the whole network in one daily edition. All produced in Vancouver, Canada by Patrick Novak, with AI doing the writing and narration and a human owning the standards. <a href="{{ path_prefix }}ai-disclosure.html">How we use AI</a>.</p>
             <p>Our mission: stimulating conversation, supporting positive developments that benefit all, and providing unbiased coverage with varying perspectives.</p>
         </div>
         <ul class="lt-values">

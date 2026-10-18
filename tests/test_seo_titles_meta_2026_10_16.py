@@ -158,3 +158,57 @@ def test_title_and_meta_length_caps(approved):
     for url, (title, meta) in approved.items():
         assert len(title) <= 60, (url, len(title), title)
         assert len(meta) <= 160, (url, len(meta), meta)
+
+
+# Pages we can regenerate in CI without touching engine/** or shows/*.yaml.
+# Age of AI / Nerra Voices / Voices apply are registry-or-pipeline owned;
+# committed HTML is still locked by test_six_tags_match_approved_file.
+# Generators that accept output_dir (scratch). personal-interest / age-of-ai /
+# nerra-voices / voices-apply are locked on committed HTML only.
+_RENDERABLE = {
+    "/": "network",
+    "/join.html": "join",
+    "/claims.html": "claims",
+    "/spacex.html": "show:spacex",
+    "/tesla.html": "show:tesla",
+    "/fascinating-frontiers.html": "show:fascinating_frontiers",
+    "/models-agents.html": "show:models_agents",
+}
+
+
+@pytest.mark.parametrize("url", sorted(_RENDERABLE))
+def test_regenerated_pages_match_seo_file(url, approved, tmp_path):
+    """Parse docs/seo-titles-final.md and fail if a rendered page drifts."""
+    import datetime as dt
+    import generate_html as G
+
+    title, meta = approved[url]
+    kind = _RENDERABLE[url]
+    out = tmp_path
+    if kind == "network":
+        path = G.generate_network_page(
+            output_dir=out,
+            now=dt.datetime(2026, 10, 18, 12, 0, tzinfo=dt.timezone.utc),
+        )
+    elif kind == "join":
+        path = G.generate_join_page(output_dir=out)
+    elif kind == "claims":
+        G.generate_claims_pages(
+            dry_run=False, slugs=[], network_page=True, output_dir=out,
+        )
+        path = out / "claims.html"
+    elif kind.startswith("show:"):
+        path = Path(G.generate_show_page(kind.split(":", 1)[1], output_dir=out))
+    else:
+        pytest.fail(f"unknown kind {kind}")
+
+    html = Path(path).read_text(encoding="utf-8")
+    tags = _page_seo_tags(html)
+    for key in TITLE_TAGS:
+        assert tags[key] == title, (
+            f"rendered {url} {key}:\n  got:  {tags[key]!r}\n  want: {title!r}"
+        )
+    for key in META_TAGS:
+        assert tags[key] == meta, (
+            f"rendered {url} {key}:\n  got:  {tags[key]!r}\n  want: {meta!r}"
+        )

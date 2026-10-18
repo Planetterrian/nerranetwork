@@ -1,9 +1,10 @@
-"""One public show count on home, join and show pages (Oct 18 2026).
+"""One public show count where a live number is still shown (Oct 18 2026).
 
 Show pages used to say "See all 29 shows" (all_shows minus RU), while the
-homepage and join page said 26 (public / Personal roster). Both numbers
-were honest for their filter; visitors saw three pages disagree. The show
-page now reads ``public_show_count()`` — the same source as the homepage.
+homepage and join page said 26 (public / Personal roster). The Oct 18
+follow-up made homepage + show-page CTAs count-free; join still derives
+its "shows to pick from" from the Personal roster at build time — never
+a typed integer. Explore / how-to-listen keep ``public_show_count()``.
 """
 from __future__ import annotations
 
@@ -31,12 +32,6 @@ def expected_n() -> int:
 
 
 @pytest.fixture(scope="module")
-def home_html(tmp_path_factory) -> str:
-    out = tmp_path_factory.mktemp("home")
-    return G.generate_network_page(output_dir=out, now=NOW).read_text(encoding="utf-8")
-
-
-@pytest.fixture(scope="module")
 def join_html(tmp_path_factory) -> str:
     out = tmp_path_factory.mktemp("join")
     path = G.generate_join_page(output_dir=out)
@@ -56,33 +51,19 @@ class TestPublicShowCountAcrossSurfaces:
         assert env.globals["public_show_count"] is G._public_show_count_cached
         assert env.globals["public_show_count"]() == len(G._public_shows())
 
-    def test_show_page_see_all_matches_public_count(self, tesla_html, expected_n):
-        m = re.search(r"See all (\d+) shows", tesla_html)
-        assert m, "tesla show page missing 'See all N shows' link"
-        assert int(m.group(1)) == expected_n
+    def test_show_page_see_all_is_count_free(self, tesla_html):
+        assert "See all shows" in tesla_html
+        assert not re.search(r"See all \d+ shows", tesla_html)
 
-    def test_homepage_and_join_and_show_page_agree(
-        self, home_html, join_html, tesla_html, expected_n,
-    ):
-        home_n = re.search(
-            r"News and ideas from (\d+) free shows", home_html,
-        )
-        assert home_n, "homepage missing network_promise show count"
-        assert int(home_n.group(1)) == expected_n
-
+    def test_join_stat_matches_personal_roster(self, join_html):
         join_n = re.search(
             r"<strong>(\d+)</strong><span>shows to pick from</span>", join_html,
         )
         assert join_n, "join page missing shows-to-pick-from stat"
-        assert int(join_n.group(1)) == expected_n
-
-        see_all = re.search(r"See all (\d+) shows", tesla_html)
-        assert see_all
-        assert int(see_all.group(1)) == expected_n
-
-        assert int(home_n.group(1)) == int(join_n.group(1)) == int(see_all.group(1))
+        assert int(join_n.group(1)) == len(G._personal_shows_list())
 
     def test_template_no_longer_counts_network_shows_for_see_all(self):
         src = (ROOT / "templates" / "show_page.html.j2").read_text(encoding="utf-8")
-        assert "public_show_count()" in src
+        assert "See all shows" in src
+        assert "See all {{ public_show_count() }} shows" not in src
         assert "See all {{ _network_shows | length }} shows" not in src
