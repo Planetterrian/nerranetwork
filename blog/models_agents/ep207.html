@@ -97,11 +97,22 @@
     },
     "image": "https://nerranetwork.com/assets/covers/models-agents.jpg",
     "transcript": "https://nerranetwork.com/blog/models_agents/ep207.html#transcript",
-    "associatedMedia": {
-      "@type": "MediaObject",
-      "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep207_20261018.mp3",
-      "inLanguage": "en"
-    }
+    "associatedMedia": [
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep207_20261018.mp3",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep207_20261018.fr.mp3",
+        "inLanguage": "fr"
+      }
+    ],
+    "availableLanguage": [
+      "en",
+      "fr"
+    ]
   }
 ]
     </script>
@@ -1867,21 +1878,27 @@
     
 
     
-    
-    <section class="nn-listen" id="listen" aria-label="Listen to this episode">
+    <section class="nn-i18n" id="listen" aria-label="Listen in another language">
         <div class="nn-i18n-inner">
             <div class="nn-i18n-row">
                 <span class="nn-i18n-label">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    Listen to this episode
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    Listen in
                 </span>
+                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="fr" aria-pressed="false">Français</button>
+                
             </div>
-            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep207_20261018.mp3">
-                <a href="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep207_20261018.mp3">Download the audio</a>
-            </audio>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep207_20261018.mp3"></audio>
         </div>
+        <script type="application/json" id="nn-i18n-tracks">
+{
+  "en": {"url": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep207_20261018.mp3", "title": "Local models just matched a frontier coding agent on five real tasks while running on a single 16 GB card.", "desc": "Local models just matched a frontier coding agent on five real tasks while running on a single 16 GB card."},
+  "fr": {"url": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep207_20261018.fr.mp3", "title": "Ep 207 : Des modèles locaux viennent d’égaler un agent de coding de pointe sur cinq tâches réelles, tout en tournant sur une…", "desc": "Des modèles locaux viennent d’égaler un agent de coding de pointe sur cinq tâches réelles, tout en s’exécutant sur une seule carte de 16 Go."}
+}
+        </script>
     </section>
-    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1966,6 +1983,92 @@
 <li>A second layout for the five-device Qwen3.8 Flash Next chain that reaches full 262 k context is already in testing.
 </li>
 </ul>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="fr" hidden>
+                <p class="blog-translated-note">Français — AI-translated from the English episode.</p>
+                <p>Les modèles locaux viennent d’égaler un agent de code de pointe sur cinq tâches réelles, en tournant sur une seule carte de seize gigaoctets.</p>
+<p>C’est Models and Agents, épisode deux cent sept.</p>
+<p>Un concours LocalLLaMA sur une RX neuf mille soixante XT a demandé à neuf modèles d’écrire solution point py et test tiret bas solution point py, d’exécuter les tests, et de franchir un seuil de performance.</p>
+<p>DeepSeek V quatre point un Flash depuis le cloud et Qwen trois point huit vingt-sept B UD-IQ4_XS avec MTP ont tous les deux obtenu cinq sur cinq.</p>
+<p>Les sept modèles restants ont échoué à au moins une des tâches, l’ordonnancement d’intervalles ou le plus court préfixe.</p>
+<p>Les problèmes couvraient les règles de guillemets CSV, un évaluateur arithmétique avec des exceptions figées, un tokeniseur de shell façon POSIX, l’ordonnancement d’intervalles à profit maximal avec règles de départage sur deux cent mille intervalles, et la correspondance de motifs par plus court préfixe sur quatre mille caractères.</p>
+<p>Les deux exécutions parfaites ont utilisé un NFA de Thompson avec fermeture epsilon sur la dernière tâche, et une programmation dynamique par dichotomie sur l’ordonnanceur.</p>
+<p>La variante Qwen a brûlé cent quatre-vingt-cinq mille jetons en quatre-vingt-quatorze minutes, tandis que le DeepSeek du cloud a terminé en deux cent trente-six secondes sur quarante-trois mille jetons, et l’essentiel de ce temps local est parti dans un fuzzing de neuf mille cas, après que le modèle avait déjà annoncé le succès.</p>
+<p>NVIDIA a sorti Structured Data Models, une bibliothèque PyTorch qui, d’après MarkTechPost, expose des modèles de fondation tabulaires préentraînés pour faire des prédictions sans aucune étape d’entraînement.</p>
+<p>La bibliothèque enveloppe TabICL v deux et KumoTabular pour les tables uniques, plus KumoRelational pour les bases de données relationnelles complètes, et chaque modèle répond en contexte, en faisant passer les lignes étiquetées et les lignes de requête par une seule passe avant.</p>
+<p>Les utilisateurs peuvent réutiliser un contexte encodé sur de nombreuses requêtes, lire des intervalles calibrés sur les têtes de régression, et monter jusqu’à des problèmes à vingt classes.</p>
+<p>Le tutoriel parcourt les tenseurs de tables typés, une comparaison face aux références scikit-learn, une base boutique à trois tables, et les pièges du prétraitement, comme les colonnes d’horodatage qui sautent.</p>
+<p>L’installation exige un commit git épinglé, parce que le paquet fabrique des URL de fichiers wheel qui ne correspondent pas aux fichiers wheel pyg-lib réellement publiés pour la version mineure de torch.</p>
+<p>Le chemin de l’échantillonneur relationnel a besoin du binaire pyg-lib compilé pour la version majeure-mineure exacte de torch, plutôt que la version patch que la bibliothèque code en dur.</p>
+<p>DeepSeek a publié le checkpoint dix dix-sept de V quatre point un Flash, une révision majeure que les utilisateurs LocalLLaMA sont déjà en train de brancher dans Dwarfstar.</p>
+<p>La mise à jour a modifié environ quarante pour cent des tenseurs d’experts routés, trente pour cent des engrammes, et cinquante pour cent des experts de la tour de vision, tout en conservant la même architecture.</p>
+<p>Une quantification mixte Q deux à Q huit, suivant la recette Dwarfstar originale d’antirez, fait maintenant tenir le backbone câblé de cent cinquante-deux gigaoctets plus une table d’engrammes de deux cents gigaoctets sur des machines de cent vingt-huit gigaoctets, avec streaming sur SSD.</p>
+<p>La calibration imatrix a été reconstruite à partir du checkpoint dix dix-sept plutôt que des poids d’origine.</p>
+<p>Les premiers tests montrent que le modèle reste compétitif, en tête des publications à poids ouverts, et la table d’engrammes se pagine à la demande.</p>
+<p>Voxel51 trois point zéro unifie la recherche, la curation, l’annotation et l’évaluation pour les données capteurs multimodales destinées aux équipes robotique, véhicules et usine, rapporte MarkTechPost.</p>
+<p>La version livre Voxel51 Agent avec plus de quarante-cinq outils Model Context Protocol, ou M-C-P, plus de quatre-vingts opérateurs, et dix-huit compétences en source ouverte, plus le versionnage des jeux de données et une offre gratuite qui autorise trois jeux de données de dix mille échantillons chacun.</p>
+<p>Le support des séries temporelles aligne maintenant plusieurs flux capteurs sur une seule frise chronologique, avec des plongements au niveau des segments.</p>
+<p>Les modalités prises en charge comprennent MCAP, les images, la vidéo, les nuages de points trois D, les maillages, DICOM, NIfTI, les données géospatiales, et l’audio.</p>
+<p>Voxel51 Search utilise un index hybride persistant sur LanceDB qui mélange la recherche vectorielle, scalaire et en texte intégral, et il saute les reconstructions complètes quand les données arrivent au fil de l’eau.</p>
+<p>L’offre gratuite plafonne le stockage à vingt gigaoctets et l’inférence à trente mille requêtes par mois.</p>
+<p>Anthropic s’adjoint une expertise juridique, rapporte le Financial Times, pour que les agents I-A puissent négocier et exécuter des contrats de façon autonome.</p>
+<p>Le travail vise l’écart pratique entre la capacité des agents et des accords commerciaux opposables.</p>
+<p>Un support précoce du standard d’identité émergent ID-JAG entre dans la solution Cross-App Access d’Okta, en amont de la normalisation formelle par l’Internet Engineering Task Force, ou IETF.</p>
+<p>Ce travail permet aux agents autonomes de s’authentifier à travers les A-P-I et les flux d’entreprise, ajoute Simply Wall Street, en utilisant la même couche d’identité qui sert déjà les utilisateurs humains.</p>
+<p>La mise en œuvre précoce d’Okta lui donne de l’influence sur les schémas par défaut avant que le standard soit finalisé, et la société aligne l’usage d’ID-JAG avec les produits existants Cross-App Access et Auth0 for A I Agents.</p>
+<p>Une cinq mille soixante-dix Ti appariée à une trois mille soixante-dix sur un riser PCIe fait maintenant tourner Qwen trois point six trente-cinq B-A trois B à quatre-vingt-deux jetons par seconde, avec seize mille de contexte, via le découpage de couches d’Ollama ou de llama.cpp, a publié un bricoleur LocalLLaMA.</p>
+<p>Environ vingt-trois pour cent des couches débordent dans la RAM système, tandis que la trois mille soixante-dix garde quatre gigaoctets inutilisés.</p>
+<p>La cinq mille soixante-dix Ti a été achetée sept cent cinquante dollars après taxes en novembre deux mille vingt-cinq.</p>
+<p>Le découpage de couches fonctionne parce que le riser tourne en x un et que la coupure fait passer très peu de données entre les cartes, et l’utilisateur n’a pas encore réglé le ratio de répartition entre les deux G-P-U.</p>
+<p>Un contrôleur s’appuyant sur vLLM, sur LocalLLaMA, utilise les capteurs de température de la carte mère pour moduler la charge G-P-U comme un chauffage d’appoint, en mettant l’inférence en pause quand le chauffage est actif, et en exposant une interface locale protégée par jetons.</p>
+<p>Le projet est publié comme un dépôt public nettoyé, centré sur la boucle de contrôle plutôt que sur un usage en production.</p>
+<p>Le système met le chauffage en pause pendant l’inférence et accepte des consignes de température cible d’un partenaire via la page web protégée.</p>
+<p>Il est construit autour du moteur vLLM déjà en place chez l’utilisateur, et un thermostat à base d’ESP trente-deux est prévu ensuite.</p>
+<p>Red Curtain porte Fish Audio Drama trois, un modèle en mélange d’experts de trente-cinq milliards avec environ trois milliards actifs, sur une RX neuf mille soixante-dix, en gardant les experts FP huit en RAM système et en ne mettant en cache sur la carte que les experts actifs.</p>
+<p>Il produit trois virgule trois secondes de parole en treize secondes tout en utilisant onze à douze gigaoctets de mémoire vidéo, contre une demande officielle d’une carte NVIDIA de quarante-huit gigaoctets, d’après ce compte-rendu LocalLLaMA.</p>
+<p>Le portage garde le top-k désactivé, fournit à chaque locuteur un clip vocal de référence, et évite de commencer les répliques par des balises sonores.</p>
+<p>Une petite interface web prend en charge le clonage de voix à partir d’un clip de référence et les scripts multi-locuteurs avec les mêmes balises que dans l’éditeur de Fish.</p>
+<p>La première réplique se joue parfois puis tombe dans le silence, ce qui colle à un comportement connu de la recette vLLM d’origine.</p>
+<p>Unsloth IQ4_XS, avec streaming du cache clé-valeur et prédiction par n-grammes, a fait tourner Qwen trois point huit vingt-sept B à deux cent soixante-deux mille de contexte sur vingt-quatre gigaoctets de RAM système, a montré un autre message LocalLLaMA.</p>
+<p>La config a délivré quarante-deux virgule sept jetons par seconde en génération et six cent cinquante-huit en préremplissage, à vingt mille de contexte, en utilisant une version dérivée de llama.cpp qui a nécessité un correctif assisté par Grok pour des opérations atomiques PCIe manquantes.</p>
+<p>À deux cent mille de contexte, le même matériel tient trente-cinq jetons par seconde en génération et cinq cents en préremplissage.</p>
+<p>L’utilisateur fait tourner le modèle avec des valeurs de cache clé-valeur en q quatre et des clés en q huit.</p>
+<p>Si vous voulez un retour au réel, relancez ce parcours d’épreuves de code à neuf modèles sur la carte que vous avez déjà, et voyez quel checkpoint termine vraiment sans rester coincé.</p>
+<p>Récupérez NVIDIA Structured Data Models depuis le commit GitHub nommé dans le tutoriel, et jetez-y votre propre base boutique à trois tables, sur le chemin zéro-shot.</p>
+<p>Si vous avez besoin de clonage multi-locuteurs sans G-P-U NVIDIA de quarante-huit gigaoctets, essayez le portage Red Curtain de Fish Audio Drama trois sur une carte AMD.</p>
+<p>Chargez la quantification dix dix-sept de DeepSeek V quatre point un Flash dans Dwarfstar sur du matériel de cent vingt-huit gigaoctets, et comparez la qualité vision et langage avec le checkpoint précédent.</p>
+<p>D’autres quantifications communautaires du checkpoint DeepSeek dix dix-sept sont attendues dans les prochains jours.</p>
+<p>Des packs d’outils M-C-P supplémentaires pour Voxel51 Agent apparaîtront à mesure que les équipes robotique publieront leurs flux de travail.</p>
+<p>D’autres expériences de ratio de répartition sur G-P-U hétérogènes vont remonter, à mesure que les propriétaires de cinq mille soixante-dix Ti ajouteront des cartes plus anciennes.</p>
+<p>Le temps d’inactivité sur une chaîne de cinq appareils, c’est la raison d’ouvrir le capot de la spéculation en pipeline pour les kits mixtes.</p>
+<p>L’inférence en mélange d’experts sur plusieurs appareils ressemble à un simple partitionnement de couches, jusqu’à ce que le maillon le plus lent laisse quatre ou cinq gadgets en attente.</p>
+<p>Le correctif pratique, c’est une petite tête de spéculation sur le premier appareil, qui devine les quelques jetons suivants, après quoi toute la chaîne les valide en une seule passe.</p>
+<p>Ce premier appareil lance alors la spéculation suivante pendant que les hypothèses précédentes sont encore en chemin.</p>
+<p>Une étape vérifiée fait en moyenne environ deux virgule deux jetons, donc l’attente devient du décodage.</p>
+<p>Sur un modèle de quarante-huit couches et cinq cent douze experts, réparti sur deux PC, un MacBook M quatre Pro, et deux téléphones, ça donne trente-sept à trente-neuf jetons par seconde à soixante mille de contexte, avec tous les poids gardés en mémoire vidéo ou en mémoire unifiée.</p>
+<p>Le premier PC tient les couches zéro à neuf, plus la couche de sortie et la tête de spéculation.</p>
+<p>Le MacBook tient les couches dix à vingt-neuf.</p>
+<p>Le deuxième PC tient les couches trente à quarante-sept.</p>
+<p>Les téléphones gèrent la sélection d’experts pour les couches dix à dix-huit via U-S-B C, tandis que le Mac garde les experts les plus chauds dans sa propre mémoire.</p>
+<p>Cette tête de spéculation doit battre la latence PCIe et U-S-B C supplémentaire à mesure que la fenêtre grandit, et une fois que le taux d’acceptation passe sous environ cinquante-cinq pour cent, l’avantage de qualité disparaît.</p>
+<p>Cette disposition sert soixante-neuf virgule six mille de contexte nativement, avant que la pression du cache clé-valeur force une deuxième configuration, qui renvoie deux couches vers le premier PC et garde le clé-valeur en huit bits sur le Mac et les téléphones.</p>
+<p>Chaque changement est exact par construction, sauf le cache d’experts du Mac, qui additionne les sommes partielles dans un ordre différent.</p>
+<p>Le contrôle K-L contre une référence n’a pas encore été lancé sur les changements d’aujourd’hui.</p>
+<p>Le schéma paie sur les kits mixtes qui traînent déjà sur votre bureau et qui ont besoin de décodage à long contexte.</p>
+<p>Quand tout le modèle tient dans vingt-quatre gigaoctets et que vous préférez garder le graphe simple, mettez plutôt les experts en cache sur un seul G-P-U.</p>
+<p>En prenant du recul sur les checkpoints locaux du jour, les sept derniers jours ont été dominés par les harnais d’agents et l’inférence long contexte moins chère.</p>
+<p>NVIDIA a engagé deux cent cinquante millions de dollars de calcul au Royaume-Uni pour la recherche sur la sûreté agentique, sur cinq ans.</p>
+<p>La compression clé-valeur par jetons de pause a réduit le cache par trois virgule cinq et accéléré l’inférence H cent de trois virgule deux fois sur de longs problèmes de maths.</p>
+<p>Hier, Perplexity a ouvert les sources de son bac à sable micro-VM Firecracker, offrant aux constructeurs une couche d’isolation auto-hébergeable pour les tâches d’agents de longue haleine.</p>
+<p>Avant de partir — une deuxième disposition pour la chaîne Qwen trois point huit Flash Next à cinq appareils, qui atteint les deux cent soixante-deux mille de contexte en entier, est déjà en test.</p>
+<p>C’était Models and Agents pour aujourd’hui. Si ça vous a été utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements, et abonnez-vous pour ne pas rater la mise à jour de demain.</p>
+<p>Le monde de l’I-A avance vite. On vous aide à suivre. À demain.</p>
+<p>Et si vous préférez regarder plutôt qu’écouter, retrouvez-nous sur YouTube, Nerra Network — le lien est dans les notes de l’émission.</p>
+<p>Et avant de partir : cette émission fait partie du Nerra Network — une famille de podcasts quotidiens sur la tech, la science et les marchés, chacun un briefing court et tranchant que vous pouvez finir sur le trajet.</p>
+<p>Si aujourd’hui a mérité sa place dans votre flux, voici votre prochaine écoute — A I Chips and Data Centres Daily, le quotidien sur les accélérateurs, la mémoire, et les centres de données qu’on construit pour les faire tourner.</p>
+<p>Retrouvez chaque émission, gratuitement, sur nerranetwork point com. Vous préférez lire ? Le compte-rendu complet du jour, les sources et la transcription sont sur le blog de l’épisode, à nerranetwork point com — le même briefing, en format lisible.</p>
+<p>Cet épisode a utilisé une synthèse vocale I-A de ma voix — la sélection éditoriale et l’analyse sont les miennes.</p>
             </div>
             
 
@@ -2524,17 +2627,17 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                         
                     </a>
                     
-                    <a href="../../blog/spacex/ep133.html" class="blog-related-card" style="--card-show-color: #1A5CFF">
+                    <a href="../../blog/unintended_consequences/ep145.html" class="blog-related-card" style="--card-show-color: #B45309">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #1A5CFF, white 35%)">SpaceX Daily</span>
-                        <h3>SpaceX Dragon experiments on artificial retinas and brain tissue now run in sustained microgravity aboard the station.</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Unintended Consequences</span>
+                        <h3>Thirty-two major dams on the Tigris and Euphrates reduced the flood pulses that fed Iraq's Mesopotamian marshes.</h3>
                         
                     </a>
                     
-                    <a href="../../blog/nerra_daily/ep058.html" class="blog-related-card" style="--card-show-color: #007A99">
+                    <a href="../../blog/first_principles/ep133.html" class="blog-related-card" style="--card-show-color: #0F766E">
                         
-                        <span class="blog-related-show" style="color: color-mix(in srgb, #007A99, white 35%)">Nerra Daily</span>
-                        <h3>Saturday edition — Tissue studies in orbit, off-grid estates, and election contracts</h3>
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #0F766E, white 35%)">First Principles Daily</span>
+                        <h3>Atwater Kent built nearly one million radios in 1929 using stamped chassis and assembly lines.</h3>
                         
                     </a>
                     
