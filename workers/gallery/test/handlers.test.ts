@@ -10,9 +10,12 @@ import {
   handleLogin,
   handleMagic,
   handleSubscribe,
+  handleSubscribeCounts,
   isSafeKey,
   normaliseEmail,
   resolveSubscribeTags,
+  subCountKey,
+  utcDateString,
 } from "../src/handlers";
 import { signJwt } from "../src/jwt";
 import { handleLogout } from "../src/handlers";
@@ -514,6 +517,224 @@ describe("POST /api/subscribe subscribe_ok log (N-PR0)", () => {
     expect(resp.status).toBe(502);
     expect(subscribeOkLines(logSpy)).toHaveLength(0);
     expect(warnSpy).toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Durable subscribe counters (SUB_COUNTS KV) + GET /api/subscribe-counts
+// ---------------------------------------------------------------------------
+
+function makeKv(store: Record<string, string> = {}): KVNamespace {
+  return {
+    async get(key: string) {
+      return store[key] ?? null;
+    },
+    async put(key: string, value: string) {
+      store[key] = String(value);
+    },
+    async delete(key: string) {
+      delete store[key];
+    },
+    async list() {
+      return { keys: [], list_complete: true, cursor: "" };
+    },
+    async getWithMetadata() {
+      return { value: null, metadata: null };
+    },
+  } as unknown as KVNamespace;
+}
+
+type FakeCtx = ExecutionContext & { pending: Promise<unknown>[] };
+
+function makeCtx(): FakeCtx {
+  const pending: Promise<unknown>[] = [];
+  return {
+    pending,
+    waitUntil(p: Promise<unknown>) {
+      pending.push(p);
+    },
+    passThroughOnException() {},
+    props: {},
+  } as FakeCtx;
+}
+
+async function flushCtx(ctx: FakeCtx): Promise<void> {
+  await Promise.all(ctx.pending);
+}
+
+describe("POST /api/subscribe SUB_COUNTS counter", () => {
+  it("increments only when already=false (new Soft Personal signup)", async () => {
+    const store: Record<string, string> = {};
+    const kv = makeKv(store);
+    const ctx = makeCtx();
+    const deps = makeDeps();
+    const env = makeEnv({ SUB_COUNTS: kv });
+    const req = makeRequest("POST", "https://api.nerranetwork.com/api/subscribe", {
+      body: JSON.stringify({
+        email: "new@example.com",
+        list: "personal-interest",
+        source: "src-nerranetwork",
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const resp = await handleSubscribe(req, env, deps, ctx);
+    expect(resp.status).toBe(200);
+    await flushCtx(ctx);
+    const key = subCountKey("personal-interest", utcDateString());
+    expect(store[key]).toBe("1");
+    // Counter value is an integer string — never an email or IP.
+    expect(Object.keys(store).every((k) => k.startsWith("subs:"))).toBe(true);
+    expect(JSON.stringify(store)).not.toContain("@");
+    expect(JSON.stringify(store)).not.toContain("new@example.com");
+  });
+
+  it("does not increment when alreadySubscribed=true", async () => {
+    const store: Record<string, string> = {};
+    const kv = makeKv(store);
+    const ctx = makeCtx();
+    const deps = makeDeps({
+      buttondown: {
+        subscribe: vi.fn(async () => ({
+          ok: true,
+          alreadySubscribed: true,
+          status: 400,
+        })),
+        isSubscribed: vi.fn(),
+      },
+    });
+    const req = makeRequest("POST", "https://api.nerranetwork.com/api/subscribe", {
+      body: JSON.stringify({
+        email: "returning@example.com",
+        list: "personal-interest",
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const resp = await handleSubscribe(req, makeEnv({ SUB_COUNTS: kv }), deps, ctx);
+    expect(resp.status).toBe(200);
+    await flushCtx(ctx);
+    expect(store).toEqual({});
+  });
+
+  it("does not increment on honeypot discard", async () => {
+    const store: Record<string, string> = {};
+    const kv = makeKv(store);
+    const ctx = makeCtx();
+    const deps = makeDeps();
+    const req = makeRequest("POST", "https://api.nerranetwork.com/api/subscribe", {
+      body: JSON.stringify({
+        email: "bot@example.com",
+        list: "personal-interest",
+        company: "Acme Spam Co",
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const resp = await handleSubscribe(req, makeEnv({ SUB_COUNTS: kv }), deps, ctx);
+    expect(resp.status).toBe(200);
+    await flushCtx(ctx);
+    expect(deps.buttondown.subscribe).not.toHaveBeenCalled();
+    expect(store).toEqual({});
+  });
+
+  it("does not increment on Buttondown failure", async () => {
+    const store: Record<string, string> = {};
+    const kv = makeKv(store);
+    const ctx = makeCtx();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const deps = makeDeps({
+      buttondown: {
+        subscribe: vi.fn(async () => ({
+          ok: false,
+          alreadySubscribed: false,
+          error: "BUTTONDOWN_HTTP_500",
+        })),
+        isSubscribed: vi.fn(),
+      },
+    });
+    const req = makeRequest("POST", "https://api.nerranetwork.com/api/subscribe", {
+      body: JSON.stringify({
+        email: "fail@example.com",
+        list: "personal-interest",
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const resp = await handleSubscribe(req, makeEnv({ SUB_COUNTS: kv }), deps, ctx);
+    expect(resp.status).toBe(502);
+    await flushCtx(ctx);
+    expect(store).toEqual({});
+  });
+});
+
+describe("GET /api/subscribe-counts", () => {
+  const COUNTS_KEY = "test-counts-key-not-for-production";
+
+  it("returns 401 without x-counts-key", async () => {
+    const req = makeRequest(
+      "GET",
+      "https://api.nerranetwork.com/api/subscribe-counts?list=personal-interest&days=7",
+    );
+    const resp = await handleSubscribeCounts(
+      req,
+      makeEnv({ COUNTS_KEY, SUB_COUNTS: makeKv() }),
+    );
+    expect(resp.status).toBe(401);
+    expect(resp.headers.get("Cache-Control")).toBe("no-store");
+    // CORS: allow-listed origin only — never *.
+    expect(resp.headers.get("Access-Control-Allow-Origin"))
+      .toBe("https://nerranetwork.com");
+    expect(resp.headers.get("Access-Control-Allow-Origin")).not.toBe("*");
+  });
+
+  it("returns 401 with a wrong x-counts-key", async () => {
+    const req = makeRequest(
+      "GET",
+      "https://api.nerranetwork.com/api/subscribe-counts?list=personal-interest&days=7",
+      { headers: { "x-counts-key": "wrong" } },
+    );
+    const resp = await handleSubscribeCounts(
+      req,
+      makeEnv({ COUNTS_KEY, SUB_COUNTS: makeKv() }),
+    );
+    expect(resp.status).toBe(401);
+  });
+
+  it("returns correct daily totals with the key", async () => {
+    const today = utcDateString();
+    const yesterdayDate = new Date();
+    yesterdayDate.setUTCDate(yesterdayDate.getUTCDate() - 1);
+    const yesterday = utcDateString(yesterdayDate);
+    const store: Record<string, string> = {
+      [subCountKey("personal-interest", today)]: "3",
+      [subCountKey("personal-interest", yesterday)]: "2",
+      // Different list must not bleed into the total.
+      [subCountKey("gallery", today)]: "99",
+    };
+    const req = makeRequest(
+      "GET",
+      "https://api.nerranetwork.com/api/subscribe-counts?list=personal-interest&days=2",
+      { headers: { "x-counts-key": COUNTS_KEY } },
+    );
+    const resp = await handleSubscribeCounts(
+      req,
+      makeEnv({ COUNTS_KEY, SUB_COUNTS: makeKv(store) }),
+    );
+    expect(resp.status).toBe(200);
+    expect(resp.headers.get("Cache-Control")).toBe("no-store");
+    const body = await resp.json() as {
+      list: string;
+      days: { date: string; count: number }[];
+      total: number;
+    };
+    expect(body).toEqual({
+      list: "personal-interest",
+      days: [
+        { date: yesterday, count: 2 },
+        { date: today, count: 3 },
+      ],
+      total: 5,
+    });
+    // Shape only — no emails / ok / error fields.
+    expect(Object.keys(body).sort()).toEqual(["days", "list", "total"]);
+    expect(JSON.stringify(body)).not.toContain("@");
   });
 });
 

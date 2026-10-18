@@ -4,6 +4,7 @@
  * Routes:
  *
  *   POST /api/subscribe   - email gate enrolment
+ *   GET  /api/subscribe-counts - durable daily subscribe totals (x-counts-key)
  *   GET  /api/login       - request a magic-link email
  *   GET  /api/magic       - consume a magic-link token
  *   POST /api/logout      - clear the session cookie
@@ -25,6 +26,7 @@ import {
   handleLogin,
   handleMagic,
   handleSubscribe,
+  handleSubscribeCounts,
 } from "./handlers";
 import {
   handleAccount,
@@ -49,7 +51,11 @@ const BOOK_PATH_RE = /^\/api\/books\/([^/]+)\/([^/]+)$/;
 
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(
+    request: Request,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<Response> {
     if (request.method === "OPTIONS") {
       return handlePreflight(request);
     }
@@ -72,7 +78,9 @@ export default {
       }
       switch (route) {
         case "POST /api/subscribe":
-          return await handleSubscribe(request, env, DEPS);
+          return await handleSubscribe(request, env, DEPS, ctx);
+        case "GET /api/subscribe-counts":
+          return await handleSubscribeCounts(request, env);
         case "GET /api/login":
           return await handleLogin(request, env, DEPS);
         case "GET /api/magic":

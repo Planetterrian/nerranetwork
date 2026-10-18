@@ -21,6 +21,13 @@ export interface Env {
   // feedtok:/sub:). Every consumer degrades gracefully when absent.
   RATE_LIMIT_KV?: KVNamespace;
 
+  // Soft Personal / funnel daily counters (Oct 2026). Keys:
+  // `subs:<list>:<YYYY-MM-DD>` → integer string. No PII. Optional
+  // until Patrick provisions the namespace; increments no-op without it.
+  SUB_COUNTS?: KVNamespace;
+  // Gate for GET /api/subscribe-counts (`x-counts-key` header).
+  COUNTS_KEY?: string;
+
   // --- Nerra Personal (Aug 2026) — all optional until provisioned; the
   // personal endpoints answer 503 "not configured" without them.
   PERSONAL_BUCKET?: R2Bucket;          // bucket: nerra-personal
