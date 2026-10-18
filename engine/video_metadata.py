@@ -421,17 +421,43 @@ def build_pinned_comment_text(
     pinned = (getattr(config.youtube, "pinned_comment_template", None) or "").strip()
     if not pinned:
         return ""
+    # Oct 18 2026: the network template names {show_name}, which this call
+    # never supplied, and a KeyError returned the RAW template — every
+    # long-form comment and description since July 18 carried literal
+    # "{show_page_url}" / "{show_name}". Every field is supplied now, and an
+    # unknown one renders empty instead of shipping the template.
+    page = rss_link or "https://nerranetwork.com"
     try:
-        pinned = pinned.format(
-            hook=(hook or "").strip(),
-            episode_num=episode_num,
-            today_str=today_str,
-            show_page_url=rss_link,
-            full_episode_url=audio_url or "",
-        )
-    except KeyError:
+        from engine import funnel as _funnel
+        page = _funnel.episode_link(
+            page, getattr(config, "slug", ""), episode_num,
+            channel="en", kind="long", placement=_funnel.PLACEMENT_COMMENT,
+        ) or page
+    except Exception:  # noqa: BLE001 — a tag must never cost the comment
         pass
+    values = _PinnedFields(
+        hook=(hook or "").strip(),
+        episode_num=episode_num,
+        today_str=today_str,
+        show_page_url=page,
+        full_episode_url=audio_url or "",
+        show_name=getattr(config, "name", "") or "",
+    )
+    try:
+        pinned = pinned.format_map(values)
+    except (ValueError, IndexError):
+        logger.warning("pinned_comment_template is malformed; comment skipped")
+        return ""
     return pinned.strip()
+
+
+class _PinnedFields(dict):
+    """format_map values: a field the template names and the caller lacks
+    renders as "" (logged once per name), never as the raw ``{field}``."""
+
+    def __missing__(self, key):
+        logger.warning("pinned_comment_template field {%s} has no value", key)
+        return ""
 
 
 def build_long_form_metadata(
