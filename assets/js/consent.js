@@ -10,17 +10,22 @@
  *
  * Choices (stored separately; both denied until chosen):
  *   Analytics      → analytics_storage
- *   Ad measurement → ad_storage + ad_user_data + ad_personalization
+ *   Ad measurement → ad_storage + ad_user_data
+ *   ad_personalization is ALWAYS denied (no cross-site retargeting /
+ *   remarketing lists — matches the privacy policy).
  *
  * Banner: Accept all / Reject all / Choose (equal weight). Choose reveals
  * two independent toggles (off by default) + Save. Close ≡ Reject all.
  * "Cookie settings" footer link reopens; withdrawing updates immediately.
+ * Cookie settings syncs toggles from the visitor's saved choices.
  *
  * Legacy nn_consent_v1 `{state:'accepted'|'rejected'}` migrates to both
  * granted / both denied.
  *
- * BANNER_COPY holds shared strings; mode-specific body sentences live in
- * BODY_LEAD_BY_MODE so marketing can swap either without touching logic.
+ * BANNER_COPY / BANNER_COPY_RU hold shared strings; mode-specific body
+ * sentences live in BODY_LEAD_BY_MODE / BODY_LEAD_BY_MODE_RU so marketing
+ * can swap either without touching logic. RU is chosen when
+ * document.documentElement.lang starts with "ru".
  *
  * Place this script BEFORE any gtag.js / gtag('config') so defaults win.
  * In basic mode the template must NOT load gtag.js itself — this file
@@ -45,6 +50,15 @@
             'Nothing is sent to Google until you choose. ',
     };
 
+    var BODY_LEAD_BY_MODE_RU = {
+        advanced:
+            'До вашего выбора Google получает только базовые сигналы без ' +
+            'cookie (например, что страница загрузилась), без cookie и ' +
+            'идентификаторов, которые вас узнают. ',
+        basic:
+            'Пока вы не выберете, Google ничего не получает. ',
+    };
+
     var BANNER_COPY = {
         label: 'Cookies on Nerra',
         heading: 'Cookies on Nerra',
@@ -65,11 +79,51 @@
         save: 'Save',
         closeAria: 'Close',
         cookieSettings: 'Cookie settings',
+        siteWorking: 'Some cookies keep the site working. ',
     };
 
+    var BANNER_COPY_RU = {
+        label: 'Cookie на Nerra',
+        heading: 'Cookie на Nerra',
+        bodyAfterLead:
+            'С вашего согласия можно также включить: Аналитику — cookie ' +
+            'Google Analytics, чтобы мы видели, какие страницы и выпуски ' +
+            'полезны, и Измерение рекламы — Google Ads для подсчёта ' +
+            'регистраций с нашей рекламы. Когда вы подписываетесь на ' +
+            'Personal tips, Измерение рекламы также отправляет Google ' +
+            'закодированную (хешированную) версию вашего email. Изменить ' +
+            'выбор можно в любой момент через «Настройки cookie» внизу ' +
+            'каждой страницы. ',
+        privacyLinkText: 'Политика конфиденциальности',
+        acceptAll: 'Принять все',
+        rejectAll: 'Отклонить все',
+        choose: 'Выбрать',
+        analyticsLabel: 'Аналитика',
+        adsLabel: 'Измерение рекламы',
+        save: 'Сохранить',
+        closeAria: 'Закрыть',
+        cookieSettings: 'Настройки cookie',
+        siteWorking: 'Некоторые cookie нужны для работы сайта. ',
+    };
+
+    function isRu() {
+        return (document.documentElement.lang || 'en')
+            .toLowerCase().indexOf('ru') === 0;
+    }
+
+    function bannerCopy() {
+        return isRu() ? BANNER_COPY_RU : BANNER_COPY;
+    }
+
+    function bodyLeads() {
+        return isRu() ? BODY_LEAD_BY_MODE_RU : BODY_LEAD_BY_MODE;
+    }
+
     function bodyBeforePrivacy() {
-        var lead = BODY_LEAD_BY_MODE[CONSENT_MODE] || BODY_LEAD_BY_MODE.advanced;
-        return 'Some cookies keep the site working. ' + lead + BANNER_COPY.bodyAfterLead;
+        var leads = bodyLeads();
+        var lead = leads[CONSENT_MODE] || leads.advanced;
+        var copy = bannerCopy();
+        return copy.siteWorking + lead + copy.bodyAfterLead;
     }
 
     window.dataLayer = window.dataLayer || [];
@@ -166,14 +220,17 @@
         }
         // Ads tag config only — no send_to conversion labels. Conversions
         // are imported from GA4 key events (newsletter_signup, etc.).
+        // allow_ad_personalization_signals: false keeps remarketing off
+        // even when Ad measurement (ad_storage / ad_user_data) is granted.
         if (ids.ads) {
-            gtag('config', ids.ads);
+            gtag('config', ids.ads, { allow_ad_personalization_signals: false });
         }
     }
 
     /**
      * Load gtag.js + config. Advanced: called at boot (denied defaults
      * already set). Basic: called only after Analytics or Ads is granted.
+     * Config is queued once in dataLayer (no onload re-config).
      */
     function ensureGtagLoaded() {
         if (_gtagLoaded) return;
@@ -197,7 +254,6 @@
         var s = document.createElement('script');
         s.async = true;
         s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(primary);
-        s.onload = function () { configTags(); };
         // If DOM not ready yet, queue the insert.
         if (document.head) document.head.appendChild(s);
         else {
@@ -205,13 +261,15 @@
                 document.head.appendChild(s);
             });
         }
-        // Config can queue before the library arrives (dataLayer).
+        // Config queues in dataLayer before the library arrives — do NOT
+        // re-config when the script finishes loading (that doubled Ads hits).
         configTags();
     }
 
     /**
      * Push Consent Mode update. While ad_storage is denied: url_passthrough
      * false + ads_data_redaction true (Advanced cookieless / ID-free pings).
+     * ad_personalization stays denied always (no remarketing).
      */
     function applyConsent(choices) {
         var analytics = choices.analytics === 'granted' ? 'granted' : 'denied';
@@ -220,7 +278,7 @@
             'analytics_storage': analytics,
             'ad_storage': ads,
             'ad_user_data': ads,
-            'ad_personalization': ads,
+            'ad_personalization': 'denied',
         });
         gtag('set', 'url_passthrough', ads === 'granted');
         gtag('set', 'ads_data_redaction', ads !== 'granted');
@@ -292,6 +350,16 @@
         saveChoices({ analytics: 'granted', ads: 'granted' }, banner);
     }
 
+    /** Reflect saved choices on the Choose-panel toggles. */
+    function syncToggles(banner) {
+        if (!banner) return;
+        var current = readStored() || { analytics: 'denied', ads: 'denied' };
+        var aToggle = banner.querySelector('[data-nn-toggle="analytics"]');
+        var dToggle = banner.querySelector('[data-nn-toggle="ads"]');
+        if (aToggle) aToggle.checked = current.analytics === 'granted';
+        if (dToggle) dToggle.checked = current.ads === 'granted';
+    }
+
     function renderBanner() {
         var existing = document.getElementById('nn-consent-banner');
         if (existing) {
@@ -299,22 +367,19 @@
             existing.removeAttribute('hidden');
             var panel = existing.querySelector('[data-nn-consent-panel]');
             if (panel) panel.hidden = true;
-            var current = readStored() || { analytics: 'denied', ads: 'denied' };
-            var aToggle = existing.querySelector('[data-nn-toggle="analytics"]');
-            var dToggle = existing.querySelector('[data-nn-toggle="ads"]');
-            if (aToggle) aToggle.checked = current.analytics === 'granted';
-            if (dToggle) dToggle.checked = current.ads === 'granted';
+            syncToggles(existing);
             // Refresh body if mode/copy changed between opens (tests).
             var text = existing.querySelector('.nn-consent-text');
             if (text) {
+                var tExisting = bannerCopy();
                 text.innerHTML = bodyBeforePrivacy() +
                     '<a class="nn-consent-privacy" href="' + href('privacy-policy.html') + '">' +
-                    BANNER_COPY.privacyLinkText + '</a>.';
+                    tExisting.privacyLinkText + '</a>.';
             }
             return existing;
         }
 
-        var t = BANNER_COPY;
+        var t = bannerCopy();
         var banner = document.createElement('div');
         banner.id = 'nn-consent-banner';
         banner.setAttribute('role', 'dialog');
@@ -352,6 +417,7 @@
                 '</div>' +
             '</div>';
         document.body.appendChild(banner);
+        syncToggles(banner);
 
         banner.querySelector('[data-nn-consent="accept-all"]').addEventListener('click', function () {
             acceptAll(banner);
@@ -387,7 +453,7 @@
     }
 
     function ensureCookieSettingsLink() {
-        var label = BANNER_COPY.cookieSettings;
+        var label = bannerCopy().cookieSettings;
         var links = document.querySelectorAll('[data-nn-cookie-settings]');
         if (!links.length) {
             var legal = document.querySelector('.nn-footer-legal > div');
@@ -408,8 +474,24 @@
                     legal.appendChild(sep);
                     legal.appendChild(a);
                 }
-                links = document.querySelectorAll('[data-nn-cookie-settings]');
+            } else {
+                // Hand-written pages without .nn-footer-legal (ru/index,
+                // modern-investing-resources): fall back to footer, then body.
+                var host = document.querySelector('footer') || document.body;
+                if (host && typeof host.appendChild === 'function') {
+                    var p = document.createElement('p');
+                    var fa = document.createElement('a');
+                    if (p && typeof p.appendChild === 'function' && fa) {
+                        p.className = 'nn-cookie-settings-fallback';
+                        fa.href = '#';
+                        fa.setAttribute('data-nn-cookie-settings', '1');
+                        fa.textContent = label;
+                        p.appendChild(fa);
+                        host.appendChild(p);
+                    }
+                }
             }
+            links = document.querySelectorAll('[data-nn-cookie-settings]');
         }
         Array.prototype.forEach.call(links, function (el) {
             if (el.getAttribute('data-nn-cookie-settings-bound') === '1') return;
@@ -440,8 +522,13 @@
     window.NNConsent.CONSENT_MODE = CONSENT_MODE;
     window.NNConsent.STORAGE_KEY = STORAGE_KEY;
     window.NNConsent.BANNER_COPY = BANNER_COPY;
+    window.NNConsent.BANNER_COPY_RU = BANNER_COPY_RU;
     window.NNConsent.BODY_LEAD_BY_MODE = BODY_LEAD_BY_MODE;
+    window.NNConsent.BODY_LEAD_BY_MODE_RU = BODY_LEAD_BY_MODE_RU;
     window.NNConsent.bodyBeforePrivacy = bodyBeforePrivacy;
+    window.NNConsent.isRu = isRu;
+    window.NNConsent.bannerCopy = bannerCopy;
+    window.NNConsent.syncToggles = syncToggles;
     window.NNConsent.isAdUserDataGranted = isAdUserDataGranted;
     window.NNConsent.isAnalyticsGranted = isAnalyticsGranted;
     window.NNConsent.hasChosen = hasChosen;
@@ -454,6 +541,7 @@
     window.NNConsent.reopen = reopenBanner;
     window.NNConsent.showBanner = showBanner;
     window.NNConsent.ensureGtagLoaded = ensureGtagLoaded;
+    window.NNConsent.ensureCookieSettingsLink = ensureCookieSettingsLink;
 
     onReady(function () {
         ensureCookieSettingsLink();

@@ -82,7 +82,7 @@ class TestBannerCopyAndEqualWeight:
         js = _read("assets/js/consent.js")
         # bodyBeforePrivacy uses CONSENT_MODE to pick the lead.
         assert "function bodyBeforePrivacy" in js
-        assert "BODY_LEAD_BY_MODE[CONSENT_MODE]" in js
+        assert "leads[CONSENT_MODE]" in js or "BODY_LEAD_BY_MODE[CONSENT_MODE]" in js
         assert "Some cookies keep the site working." in js
         assert "Cookie settings at the bottom of every page" in js
         assert "Privacy policy" in js
@@ -118,6 +118,9 @@ class TestPrivacyPolicyAdvancedCopy:
             assert "contact page" in src
             assert "If you don't allow Ad measurement, your email hash is never sent." in src
             assert "If you decline cookies, nothing is sent." not in src
+            assert "We run Google ads" in src
+            assert "If we run Google ads" not in src
+            assert "when you submit a Personal tips form" in src
 
     def test_enhanced_conversions_sentence_kept(self):
         src = _read("templates/privacy_policy.html.j2")

@@ -7190,7 +7190,7 @@ _LEGAL_PAGES = {
 # Rendered into each legal page's "Updated" line. Bump when the copy
 # changes materially; it is deliberately NOT the build date (a date that
 # moves on every regeneration tells readers nothing).
-LEGAL_PAGES_UPDATED_LABEL = "October 16, 2026"
+LEGAL_PAGES_UPDATED_LABEL = "October 18, 2026"
 
 
 def generate_legal_page(key, *, dry_run=False, output_dir=None):
