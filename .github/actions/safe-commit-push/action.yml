@@ -64,7 +64,23 @@ runs:
     - name: Pull latest (best effort)
       shell: bash
       run: |
-        git pull --rebase --autostash origin main || true
+        # Oct 18 2026: a failed `git pull --rebase` leaves the rebase IN
+        # PROGRESS (.git/rebase-merge). Every later pull then refuses to
+        # start and every push sends a ref the rebase never moved, so the
+        # retries below were dead after the first conflict — the class
+        # scripts/push_show_artifacts.sh `clear_stale_rebase` fixed (#1472).
+        # Aborting also restores the autostash.
+        abort_stale_rebase() {
+          local gd
+          gd="$(git rev-parse --git-dir 2>/dev/null || echo .git)"
+          if [ -d "$gd/rebase-merge" ] || [ -d "$gd/rebase-apply" ]; then
+            echo "::warning::safe-commit-push: aborting a rebase left in progress"
+            git rebase --abort 2>/dev/null || true
+            rm -rf "$gd/rebase-merge" "$gd/rebase-apply"
+          fi
+        }
+        abort_stale_rebase
+        git pull --rebase --autostash origin main || abort_stale_rebase
 
     - name: Add files
       shell: bash
@@ -159,15 +175,32 @@ runs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
+        # Oct 18 2026: a failed `git pull --rebase` leaves the rebase IN
+        # PROGRESS (.git/rebase-merge). Every later pull then refuses to
+        # start and every push sends a ref the rebase never moved, so the
+        # retries below were dead after the first conflict — the class
+        # scripts/push_show_artifacts.sh `clear_stale_rebase` fixed (#1472).
+        # Aborting also restores the autostash.
+        abort_stale_rebase() {
+          local gd
+          gd="$(git rev-parse --git-dir 2>/dev/null || echo .git)"
+          if [ -d "$gd/rebase-merge" ] || [ -d "$gd/rebase-apply" ]; then
+            echo "::warning::safe-commit-push: aborting a rebase left in progress"
+            git rebase --abort 2>/dev/null || true
+            rm -rf "$gd/rebase-merge" "$gd/rebase-apply"
+          fi
+        }
         for attempt in 1 2 3 4 5; do
+          abort_stale_rebase
           if git push origin main; then
             echo "Push succeeded on attempt $attempt"
             exit 0
           fi
           echo "Push failed (attempt $attempt), rebasing and retrying in $((attempt * 2))s..."
-          git pull --rebase --autostash origin main || true
+          git pull --rebase --autostash origin main || abort_stale_rebase
           sleep $((attempt * 2))
         done
+        abort_stale_rebase
         echo "All push attempts failed"
         if [ "${{ inputs.recovery-on-failure }}" = "true" ]; then
           echo "::warning::safe-commit-push: opening recovery PR (data preserved)"
