@@ -978,9 +978,15 @@ class TestKnownSectionsOnlyChapters:
             allowed = set(self.KNOWN_TITLES)
             digest = list((_ROOT / "digests/spacex").glob(f"*Ep{ep:03d}_*.md"))
             if digest:
+                from engine.chapters import lead_section_name
                 from engine.grok_imagine import extract_story_headlines
-                allowed |= set(extract_story_headlines(
-                    digest[0].read_text(encoding="utf-8"), max_count=12))
+                text = digest[0].read_text(encoding="utf-8")
+                allowed |= set(extract_story_headlines(text, max_count=12))
+                # Oct 14 2026: when the hook is too long to title the lead,
+                # the lead chapter takes the digest's own section name
+                # ("Top News" on Ep134) — a label, never a clipped headline.
+                if lead_section_name(text):
+                    allowed.add(lead_section_name(text))
             bad = [c["title"] for c in data.get("chapters", [])
                    if c.get("title") not in allowed]
             if bad:
