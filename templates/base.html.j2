@@ -75,9 +75,13 @@
     <link rel="alternate" hreflang="{{ alt.lang }}" href="{{ alt.href }}">
     {% endfor %}
     {% elif emit_bilingual_hreflang %}
-    <link rel="alternate" hreflang="en" href="https://nerranetwork.com/">
-    <link rel="alternate" hreflang="ru" href="https://nerranetwork.com/ru/index.html">
-    <link rel="alternate" hreflang="x-default" href="https://nerranetwork.com/">
+    {#- The homepage's group: one entry per SITE language (engine.show_lang —
+        en "/", ru "/ru/index.html", fr "/fr/index.html" today) plus
+        x-default. Every language hub emits the same group through
+        ``hreflang_alternates`` (Oct 18 2026). -#}
+    {% for alt in site_hreflang %}
+    <link rel="alternate" hreflang="{{ alt.lang }}" href="{{ alt.href }}">
+    {% endfor %}
     {% endif %}
 
     <!-- Google Fonts: DM Sans + Source Serif 4 (non-blocking: media=print onload swap) -->
@@ -235,7 +239,28 @@
         'learn_more': 'Подробнее' if _is_ru else 'Learn more',
         'footer_all_feeds': 'Все RSS-ленты' if _is_ru else 'All RSS feeds',
         'nav_explore': 'Найти подкаст' if _is_ru else 'Find your show',
+        'lang_menu_label': 'Язык' if _is_ru else 'Language',
+        'lang_menu_title': 'Язык сайта и язык аудио выпусков' if _is_ru else 'Site language and episode audio language',
+        'lang_site': 'Сайт' if _is_ru else 'Site',
+        'lang_audio': 'Язык аудио выпусков' if _is_ru else 'Episode audio',
+        'footer_languages': 'Другие языки' if _is_ru else 'Other languages',
     } -%}
+    {#- The chrome lists the shows of the PAGE's language (Oct 18 2026). An
+        English page carries the English shows; a Russian page the Russian
+        ones; a language with no native show (French) falls back to the
+        English list, since its hub is where its translated tracks live.
+        The other languages are one click away in the Language menu, the
+        footer and the mobile menu. Show dicts without ``page_lang`` (test
+        doubles) are English, as every surface assumed before the field. -#}
+    {%- set _chrome_lang = page_lang | default('en') -%}
+    {%- set _lang_pick = namespace(own=[], en=[]) -%}
+    {%- for _s in all_shows -%}
+        {%- set _sl = _s.page_lang | default('en') -%}
+        {%- if _sl == _chrome_lang -%}{%- set _lang_pick.own = _lang_pick.own + [_s] -%}{%- endif -%}
+        {%- if _sl == 'en' -%}{%- set _lang_pick.en = _lang_pick.en + [_s] -%}{%- endif -%}
+    {%- endfor -%}
+    {%- set chrome_shows = _lang_pick.own if _lang_pick.own else _lang_pick.en -%}
+    {%- set other_site_languages = (site_languages | default([])) | rejectattr('lang', 'equalto', _chrome_lang) | list -%}
 
     {#- ``strand`` groups the shows for the chrome. Computed ONCE here because
         four surfaces need it — the desktop Shows dropdown, the mobile menu, the
@@ -260,12 +285,12 @@
     ] -%}
     {%- set _grouping = namespace(groups=[], known=[]) -%}
     {%- for _sid, _skey in _strand_order -%}
-        {%- set _members = all_shows | selectattr('strand', 'equalto', _sid) | list -%}
+        {%- set _members = chrome_shows | selectattr('strand', 'equalto', _sid) | list -%}
         {%- if _members -%}{%- set _grouping.groups = _grouping.groups + [(_skey, _members)] -%}{%- endif -%}
         {%- set _grouping.known = _grouping.known + [_sid] -%}
     {%- endfor -%}
-    {%- set _strand_rest = all_shows | rejectattr('strand', 'in', _grouping.known) | list -%}
-    {%- set show_groups = (_grouping.groups + [('nav_other_shows', _strand_rest)]) if _grouping.groups else [('', all_shows)] -%}
+    {%- set _strand_rest = chrome_shows | rejectattr('strand', 'in', _grouping.known) | list -%}
+    {%- set show_groups = (_grouping.groups + [('nav_other_shows', _strand_rest)]) if _grouping.groups else [('', chrome_shows)] -%}
     <a href="#main-content" class="skip-link">{{ t.skip_to_content }}</a>
     <!-- Navigation -->
     <nav class="nn-nav" aria-label="{{ t.main_navigation }}">
@@ -288,31 +313,45 @@
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
             </div>
 
-            {# Audio-language control (multilingual audio, June 2026). Sets a
-               site-wide preference for which language episode AUDIO plays in —
-               the page text is unaffected (hence the "Audio" label). Reads/
-               writes the same `nn-pref-lang` localStorage key the episode +
-               show-page players use, and dispatches `nn-langchange` so an
-               on-page player switches live. Wired by assets/js/language-control.js. #}
+            {# Language menu (Oct 18 2026). Two things, one globe:
+               SITE — a link to each language's own page (the English
+               homepage, ru/index.html, fr/index.html), from the derived
+               ``site_languages`` vocabulary (engine.show_lang), the current
+               one marked; and EPISODE AUDIO — the June 2026 site-wide
+               preference for which language episode AUDIO plays in, which
+               changes no page text. The audio radios list the same languages
+               (every one has a native show or a produced track); the 中文
+               radio the old control offered had no Chinese track behind it.
+               Audio preference: localStorage `nn-pref-lang`, `nn-langchange`
+               event, wired by assets/js/language-control.js. #}
             <style>
                 #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
                 #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
                 #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+                #nn-lang-menu .nn-lang-site{display:block;padding:7px 12px;color:inherit;font-size:0.85rem;text-decoration:none;}
+                #nn-lang-menu .nn-lang-site:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-site[aria-current="page"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+                #nn-lang-menu .nn-lang-head{padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);}
+                #nn-lang-menu .nn-lang-sep{border-top:1px solid var(--nn-border);margin:4px 0 0;}
             </style>
             <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
                 <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
-                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        aria-label="{{ t.lang_menu_label }}" title="{{ t.lang_menu_title }}"
                         style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                    <span id="nn-lang-current">EN</span>
+                    <span id="nn-lang-current">{{ _chrome_lang | upper }}</span>
                 </button>
-                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
-                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
-                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
-                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
-                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
-                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
-                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                <div id="nn-lang-menu" role="menu" aria-label="{{ t.lang_menu_label }}"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:180px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div class="nn-lang-head">{{ t.lang_site }}</div>
+                    {% for l in site_languages | default([]) %}
+                    <a class="nn-lang-site" role="menuitem" lang="{{ l.lang }}" hreflang="{{ l.lang }}"
+                       href="{{ (path_prefix ~ l.path) if l.path else home_url }}"{% if l.lang == _chrome_lang %} aria-current="page"{% endif %}>{{ l.label }}</a>
+                    {% endfor %}
+                    <div class="nn-lang-head nn-lang-sep">{{ t.lang_audio }}</div>
+                    {% for l in site_languages | default([]) %}
+                    <button type="button" role="menuitemradio" data-lang="{{ l.lang }}" class="nn-lang-opt" aria-checked="{{ 'true' if l.lang == _chrome_lang else 'false' }}">{{ l.label }}</button>
+                    {% endfor %}
                 </div>
             </div>
 
@@ -450,6 +489,14 @@
             {% endfor %}
         </details>
         {% endfor %}
+        {%- if other_site_languages %}
+        <div class="nn-mobile-shows nn-mobile-langs">
+            <div class="nn-mobile-shows-title">{{ t.lang_menu_label }}</div>
+            {% for l in other_site_languages %}
+            <a href="{{ (path_prefix ~ l.path) if l.path else home_url }}" class="nn-mobile-show-link" lang="{{ l.lang }}" hreflang="{{ l.lang }}">{{ l.label }}</a>
+            {% endfor %}
+        </div>
+        {%- endif %}
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">{{ t.mobile_blogs }}</div>
             <a href="{{ path_prefix }}blog/index.html" class="nn-mobile-show-link" style="font-weight:600">{{ t.all_blog_posts }}</a>
@@ -524,6 +571,13 @@
                         to a page that exists rather than seventeen repeated on
                         every page of the site. #}
                     <a href="{{ path_prefix }}how-to-listen.html#feeds">{{ t.footer_all_feeds }}</a>
+                    {%- if other_site_languages %}
+                    {#- The other languages' hubs (Oct 18 2026): a reader on an
+                        English page finds the Russian and French pages here,
+                        not Russian shows mixed into the English list. -#}
+                    <span class="nn-footer-langs" style="display:block;margin-top:0.4rem;font-size:0.8rem;color:var(--nn-text-muted);">{{ t.footer_languages }}:
+                        {%- for l in other_site_languages %} <a href="{{ (path_prefix ~ l.path) if l.path else home_url }}" lang="{{ l.lang }}" hreflang="{{ l.lang }}">{{ l.label }}</a>{% if not loop.last %} ·{% endif %}{% endfor %}</span>
+                    {%- endif %}
                 </div>
                 {#- The About column used to sit OUTSIDE .nn-footer-grid
                     (after its closing div), so it rendered as a full-width
@@ -621,7 +675,7 @@
                         pass): open they made the footer ~900px of form on a
                         page whose reader came for something else. -#}
                     <details class="nn-subscribe-pick">
-                    <summary>{{ t.subscribe_pick_shows }} <span>({{ all_shows|length }})</span></summary>
+                    <summary>{{ t.subscribe_pick_shows }} <span>({{ chrome_shows|length }})</span></summary>
                     <div class="nn-subscribe-tags">
                         {#- Every show, driven from NETWORK_SHOWS so new
                             shows cannot silently drop out of the footer
@@ -631,7 +685,7 @@
                             mirrors each YAML ``newsletter.tag`` —
                             Buttondown rejects non-ASCII tags, so RU
                             shows keep ASCII values with native labels. -#}
-                        {% for s in all_shows %}
+                        {% for s in chrome_shows %}
                         <label><input type="checkbox" name="tag" value="{{ s.newsletter_tag or s.name }}"> {{ s.name }}</label>
                         {% endfor %}
                     </div>

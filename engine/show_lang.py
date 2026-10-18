@@ -119,4 +119,105 @@ def _reset_cache() -> None:
     production resolves each slug once per process."""
     global _META_LANGS
     _LANG_BY_SLUG.clear()
+    _TRACK_LANGS.clear()
     _META_LANGS = None
+
+
+# ---------------------------------------------------------------------------
+# The site's languages (Oct 18 2026)
+# ---------------------------------------------------------------------------
+#
+# The English front page used to carry the two Russian shows and their
+# headlines beside the English ones, and the header's globe offered 中文 while
+# no show produced a Chinese track. Both came from the same gap: nothing owned
+# the list of languages the site is actually published in. This block does.
+#
+# A language is a SITE language when a show renders its pages in it
+# (``page_lang``) or when a show produces a translated audio track in it
+# (``multilingual.languages``, with the ZH approval rule). English is always
+# first. Each non-English language gets ONE hub page, ``<lang>/index.html``,
+# which is where the English chrome and the header's Language menu send a
+# reader; the English homepage lists English shows only.
+
+#: Autonyms — what each language calls itself. The header menu, the hubs and
+#: the hreflang/sitemap entries all read this; a language missing here still
+#: works (its code is its label) but should be added.
+LANGUAGE_AUTONYMS: Dict[str, str] = {
+    "en": "English",
+    "fr": "Français",
+    "ru": "Русский",
+    "es": "Español",
+    "zh": "中文",
+}
+
+_TRACK_LANGS: Dict[str, frozenset] = {}
+
+
+def track_languages(slug: Optional[str]) -> Optional[frozenset]:
+    """The translated audio tracks ``shows/<slug>.yaml`` produces today, or
+    ``None`` for a registry-only show (no YAML — "do not filter").
+
+    Reads the loaded config (defaults merged) so a show that enables
+    ``multilingual`` without listing languages inherits the network list, as
+    the pipeline does. A ZH track needs BOTH ``zh`` in ``languages`` and
+    ``zh_approved`` (Oct 9 2026: the ZH tracks were switched off on the
+    flagships and their frozen feeds kept a 中文 chip alive for six weeks).
+    """
+    if not slug:
+        return None
+    slug = str(slug)
+    if slug in _TRACK_LANGS:
+        return _TRACK_LANGS[slug]
+    path = SHOWS_DIR / f"{slug}.yaml"
+    if not path.is_file():
+        return None
+    try:
+        from engine.config import load_config
+        cfg = load_config(path)
+    except Exception:  # noqa: BLE001 — a bad YAML produces no tracks
+        langs: frozenset = frozenset()
+    else:
+        ml = getattr(cfg, "multilingual", None)
+        if ml is None or not getattr(ml, "enabled", False):
+            langs = frozenset()
+        else:
+            codes = {str(c).strip().lower()
+                     for c in (getattr(ml, "languages", None) or []) if c}
+            if not getattr(ml, "zh_approved", False):
+                codes.discard("zh")
+            langs = frozenset(codes)
+    _TRACK_LANGS[slug] = langs
+    return langs
+
+
+def site_languages(slugs) -> list:
+    """Every language the site is published in, ``en`` first, then sorted.
+
+    *slugs* is the registry's show list. A language counts when a show's
+    pages render in it or a show produces an audio track in it — so ``es``
+    and ``zh`` drop out by themselves while no show produces them, and a
+    show switching a track on adds its language with no code change.
+    """
+    langs = {DEFAULT_LANG}
+    for slug in slugs:
+        langs.add(page_lang(slug))
+        langs.update(track_languages(slug) or ())
+    return sorted(langs, key=lambda c: (c != DEFAULT_LANG, c))
+
+
+def language_hub_path(lang: str) -> str:
+    """Site-relative path of a language's hub page: ``""`` for English (the
+    homepage), ``"<lang>/index.html"`` otherwise.
+
+    ``ru/index.html`` is the committed RU root that every EN↔RU hreflang
+    pair already names, so the pattern follows it rather than the directory
+    form ``/ru/`` (Google ignores an hreflang pair whose href is not the
+    page's canonical).
+    """
+    lang = (lang or DEFAULT_LANG).strip().lower()
+    return "" if lang == DEFAULT_LANG else f"{lang}/index.html"
+
+
+def language_autonym(lang: str) -> str:
+    lang = (lang or "").strip().lower()
+    return LANGUAGE_AUTONYMS.get(lang, lang)

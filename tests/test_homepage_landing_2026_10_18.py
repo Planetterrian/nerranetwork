@@ -61,9 +61,12 @@ def _section(html: str, section_id: str) -> str:
 
 
 def _public():
+    # The English homepage lists the English public shows (Oct 18 2026); the
+    # Russian pair lives on ru/index.html (tests/test_site_languages_2026_10_18.py).
     from engine import landing_test as LT
     return [s for s in G._build_all_shows_list()
-            if s.get("access", "public") in LT.PUBLIC_ACCESS_MODES and s.get("has_feed", True)]
+            if s.get("access", "public") in LT.PUBLIC_ACCESS_MODES and s.get("has_feed", True)
+            and (s.get("page_lang") or "en") == "en"]
 
 
 # --------------------------------------------------------------------------

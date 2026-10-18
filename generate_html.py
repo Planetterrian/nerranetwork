@@ -332,16 +332,10 @@ def _producing_track_languages(slug):
     (Oct 9 2026: the ZH track was switched off on tesla / spacex / FF and its
     feeds frozen, yet both flagship pages kept a 中文 chip for six weeks
     because the 45-day freshness gate still read the frozen feed as live)."""
-    cfg = _registry_show_config(slug)
-    if cfg is None:
-        return None
-    ml = getattr(cfg, "multilingual", None)
-    if ml is None or not getattr(ml, "enabled", False):
-        return set()
-    langs = {str(code) for code in (getattr(ml, "languages", None) or [])}
-    if not getattr(ml, "zh_approved", False):
-        langs.discard("zh")
-    return langs
+    # engine.show_lang owns the rule (Oct 18 2026: the site's language
+    # vocabulary — hubs, header menu, hreflang — reads the same function).
+    langs = _show_lang.track_languages(slug)
+    return None if langs is None else set(langs)
 
 
 def _collect_language_feeds(rss_file: str, prefix: str, slug: str = "") -> list:
@@ -2206,6 +2200,12 @@ def _build_all_shows_list():
             # three shows the network's AI host presents, which display_order
             # scatters across the list (0.5, 13, 13.5).
             "strand": cfg.get("strand", ""),
+            # The language the show's pages render in (engine.show_lang).
+            # The chrome lists the shows of the PAGE's language and sends a
+            # reader to the other languages' hubs (Oct 18 2026) — before
+            # this the English nav, footer and homepage carried the two
+            # Russian shows beside the English ones.
+            "page_lang": _show_lang.page_lang(cfg["slug"]),
             # ``host`` (Sep 2026): who presents the show — patrick | dan |
             # mira | patrick_dan. Separate from ``strand`` because Mira also
             # hosts news desks that must NOT inherit the interview claim band
@@ -2501,6 +2501,11 @@ def _get_jinja_env():
     # Canonical site home. Internal links must point at ``/`` (the homepage
     # canonical), never ``/index.html`` — Sep 2026 Search Console hygiene.
     env.globals["home_url"] = "/"
+    # The site's languages (Oct 18 2026): the header's Language menu, the
+    # footer and the homepage/hub hreflang group all read these rows.
+    # engine.show_lang derives them from the show YAMLs.
+    env.globals["site_languages"] = _site_language_links()
+    env.globals["site_hreflang"] = _site_hreflang_alternates()
     # Template-side existence check for optional assets (blog RSS feeds).
     # Used so a missing ``blog_<slug>.rss`` is not advertised as a 404 link.
     env.globals["site_file_exists"] = lambda rel: (ROOT / str(rel)).is_file()
@@ -5095,7 +5100,10 @@ def _front_page_sections(shows, public, ranked, page, *, edition=None,
     out["listen_everywhere"] = {
         "platforms": [p for p in platforms if p["apple"] or p["spotify"] or p["rss"]],
         "languages": [{"lang": k, **v} for k, v in sorted(lang_counts.items())],
-        "ru_pages": _landing_file("ru/index.html"),
+        # One hub per non-English site language (engine.show_lang); a hub
+        # is linked only once its page exists.
+        "hubs": [h for h in _site_language_links() if h["lang"] != "en"
+                 and _landing_file(h["path"])],
         "how_to_listen": _landing_file("how-to-listen.html"),
         "player": _landing_file("player.html"),
         "network_rss": _landing_file("network.rss"),
@@ -5223,7 +5231,14 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
     if now.tzinfo is None:
         now = now.replace(tzinfo=timezone.utc)
     shows = _build_all_shows_list() if all_shows is None else list(all_shows)
-    public = _public_shows(shows)
+    # Every free show counts in the promise ("N free shows"); the PAGE reads
+    # English shows only (Oct 18 2026). The Russian shows and their
+    # headlines had run in the stories, the grid, the picker and the About
+    # text of the English front page; they belong to the Russian hub
+    # (ru/index.html), which the header's Language menu and the "In other
+    # languages" chips point at.
+    public_all = _public_shows(shows)
+    public = _english_shows(public_all)
     gallery_root = (Path(gallery_dir) if gallery_dir
                     else ROOT / "site" / "data" / "gallery")
     hub_for = _lt.hub_by_slug(public)
@@ -5444,7 +5459,7 @@ def generate_network_page(*, dry_run=False, output_dir=None, all_shows=None,
         "all_shows": shows,
         # Most-listened first (generate_html._rank_shows_by_audience).
         "ranked_shows": ranked,
-        "public_show_count": len(public),
+        "public_show_count": len(public_all),
         "total_episodes": _count_total_episodes(),
         # Computed, not typed (the language registry is the one count).
         "listening_language_count": len(_listening_languages()),
@@ -5738,9 +5753,12 @@ def generate_sitemap(*, dry_run=False, out=None):
     urls.append((f"{base}/blog/index.html", "0.7",
                  _lm_or_today("blog/index.html")))
 
-    # Russian hub
-    urls.append((f"{base}/ru/index.html", "0.7",
-                 _lm_or_today("ru/index.html")))
+    # Language hubs (engine.show_lang): one per non-English site language,
+    # listed only when the page exists.
+    for _row in _site_language_links():
+        _hub = _row["path"]
+        if _hub and (ROOT / _hub).exists():
+            urls.append((f"{base}/{_hub}", "0.7", _lm_or_today(_hub)))
 
     # Russian funnel landing pages. High priority on purpose: these are
     # the destination every @NerraRU description points at, so they are
@@ -6075,6 +6093,45 @@ def _hreflang_alternates(en_path: str, ru_path: str) -> list[dict]:
     ]
 
 
+def _english_shows(shows):
+    """The shows whose pages render in English (``page_lang``), in order.
+
+    A show dict that predates the field (a test double) is English, which is
+    what every surface assumed before the field existed.
+    """
+    return [s for s in shows if (s.get("page_lang") or "en") == "en"]
+
+
+def _site_language_links() -> list[dict]:
+    """The site's languages as menu rows: ``{lang, label, path}``.
+
+    ``path`` is site-relative (``""`` is the English homepage) so a template
+    prefixes it with ``path_prefix`` like every other chrome link. Derived
+    from the show YAMLs through ``engine.show_lang.site_languages`` — a
+    language with neither a native show nor a produced track (es, zh today)
+    has no row, which is how the 中文 entry the header offered for weeks
+    with no Chinese track behind it went away.
+    """
+    return [
+        {"lang": lang, "label": _show_lang.language_autonym(lang),
+         "path": _show_lang.language_hub_path(lang)}
+        for lang in _show_lang.site_languages(NETWORK_SHOWS)
+    ]
+
+
+def _site_hreflang_alternates() -> list[dict]:
+    """hreflang entries for the homepage and every language hub: one per
+    site language, on each page's canonical URL, plus x-default = English.
+    Every hub lists the SAME set, as Google requires of a reciprocal group."""
+    alts = []
+    for row in _site_language_links():
+        path = row["path"]
+        href = f"{GITHUB_RAW}/{path}" if path else f"{GITHUB_RAW}/"
+        alts.append({"lang": row["lang"], "href": href})
+    alts.append({"lang": "x-default", "href": f"{GITHUB_RAW}/"})
+    return alts
+
+
 def _hreflang_for_show(slug: str, *, is_russian_show: bool) -> list[dict] | None:
     """EN show page ↔ RU funnel landing, when that pair genuinely exists.
 
@@ -6094,6 +6151,12 @@ def _hreflang_for_show(slug: str, *, is_russian_show: bool) -> list[dict] | None
 
 def _ru_landing_episodes(slug: str, limit: int = 4) -> list:
     """Recent episodes that actually have a Russian audio track."""
+    return _track_episodes(slug, "ru", limit=limit)
+
+
+def _track_episodes(slug: str, lang: str, limit: int = 4) -> list:
+    """Recent episodes of *slug* that carry a translated audio track in
+    *lang* (the ``translations.<lang>`` block of the summaries record)."""
     yaml_path = SHOWS_DIR / f"{slug}.yaml"
     try:
         import yaml as _yaml
@@ -6105,7 +6168,7 @@ def _ru_landing_episodes(slug: str, limit: int = 4) -> list:
         return []
     out = []
     for rec in (payload.get("summaries") or []):
-        track = ((rec.get("translations") or {}).get("ru") or {})
+        track = ((rec.get("translations") or {}).get(lang) or {})
         audio = (track.get("audio_url") or "").strip()
         if not audio:
             continue
@@ -6222,6 +6285,276 @@ def generate_all_ru_landing_pages(*, dry_run=False):
         path = generate_ru_landing_page(slug, dry_run=dry_run)
         if path:
             written.append(path)
+    return written
+
+
+# ---------------------------------------------------------------------------
+# Language hubs — <lang>/index.html (Oct 18 2026)
+# ---------------------------------------------------------------------------
+#
+# One page per non-English site language (engine.show_lang.site_languages):
+# the shows made natively in that language, the English shows that produce a
+# translated audio track in it (each a real subscribable feed), the on-site
+# landers and the YouTube channel for that language. The English homepage
+# lists English shows only and sends a reader here through the header's
+# Language menu, the footer and its "In other languages" chips.
+#
+# ru/index.html had been one of the three HAND-WRITTEN pages (Sep 2026 site
+# review) — out of the chrome, with its own copy of the nav, and listing the
+# two Russian shows by hand. It is generated from this template now, like
+# every other page, and fr/index.html exists for the first time: seven shows
+# produce a French track and @NerraFR has been live since July, with no page
+# on the site a French speaker could land on.
+#
+# Every string a reader sees is HAND-WRITTEN in the language, below. A hub
+# whose copy is missing is not built: a page in the wrong language is worse
+# than no page (the ru_landing rule).
+
+_LANGUAGE_HUB_COPY = {
+    "ru": {
+        "title": "Nerra Network по-русски | Подкасты на русском языке",
+        "meta_description": (
+            "Подкасты Nerra Network на русском языке: Финансы Просто и Привет, "
+            "Русский!, а также русская озвучка SpaceX Daily, Tesla Shorts Time, "
+            "Fascinating Frontiers и Modern Investing. Бесплатно, из Ванкувера."),
+        "h1": "Подкасты на русском языке",
+        "intro": (
+            "Два подкаста, которые мы делаем на русском, и русская озвучка наших "
+            "англоязычных шоу — тот же выпуск, тот же день, другой язык. "
+            "Независимо. Бесплатно. Из Ванкувера, Канада."),
+        "native_heading": "Наши подкасты на русском",
+        "native_sub": "Сделаны на русском языке. По понедельникам.",
+        "latest_label": "Последний выпуск",
+        "listen_label": "Слушать",
+        "read_label": "Читать",
+        "dubbed_heading": "Также по-русски",
+        "dubbed_sub": (
+            "Русская озвучка наших англоязычных подкастов — тот же сценарий, "
+            "тот же день. Каждая ссылка ниже — настоящая RSS-лента, которую "
+            "можно вставить в любое приложение для подкастов."),
+        "feed_label": "RSS по-русски",
+        "lander_label": "Страница по-русски",
+        "episode_label": "Выпуск",
+        "listen_heading": "Где слушать",
+        "youtube_label": "YouTube · {handle}",
+        "youtube_sub": "Короткие и полные выпуски с русской озвучкой.",
+        "network_rss_label": "RSS всей сети (все шоу, на английском)",
+        "english_label": "Полный каталог на английском →",
+        "english_sub": (
+            "Большинство наших подкастов — на английском языке: Tesla, SpaceX, "
+            "ИИ, рынки, мировые новости, космос, наука и экология."),
+        "other_languages_label": "Другие языки",
+        "ai_note": (
+            "Переводы и русская озвучка выполнены с помощью ИИ на основе "
+            "оригинального английского выпуска. Nerra Network использует "
+            "ИИ-инструменты в производстве контента."),
+        "ai_link_label": "Подробнее",
+        "shows": {
+            "finansy_prosto": {
+                "cadence": "По понедельникам",
+                "length": "~10 мин",
+                "description": (
+                    "Подкаст о финансах на русском языке для женщин в Канаде. "
+                    "Ведущая Оля объясняет инвестиции, сбережения, бюджет и "
+                    "финансовую грамотность — просто и понятно."),
+            },
+            "privet_russian": {
+                "cadence": "По понедельникам",
+                "length": "~8 мин",
+                "description": (
+                    "Изучение русского языка для англоговорящих — дети и "
+                    "взрослые начинающие. Ведущая Оля учит словам, фразам и "
+                    "культуре через весёлые тематические уроки."),
+            },
+        },
+    },
+    "fr": {
+        "title": "Nerra Network en français | Podcasts traduits en français",
+        "meta_description": (
+            "Les émissions de Nerra Network en français : SpaceX Daily, Tesla "
+            "Shorts Time, Fascinating Frontiers, Models & Agents, Modern "
+            "Investing et d'autres, traduites et lues en français chaque jour. "
+            "Gratuit, depuis Vancouver."),
+        "h1": "Nos émissions en français",
+        "intro": (
+            "Le même épisode que l'original anglais, traduit et lu en français "
+            "le jour même : SpaceX, Tesla, l'espace, l'IA, les marchés. Chaque "
+            "flux ci-dessous est un vrai podcast à coller dans votre application. "
+            "Indépendant. Gratuit. Depuis Vancouver, au Canada."),
+        "native_heading": "Nos émissions en français",
+        "native_sub": "",
+        "latest_label": "Dernier épisode",
+        "listen_label": "Écouter",
+        "read_label": "Lire",
+        "dubbed_heading": "Émissions disponibles en français",
+        "dubbed_sub": (
+            "Traduites depuis l'anglais et lues en français, publiées le même "
+            "jour que l'original. Abonnez-vous au flux français de chaque "
+            "émission dans n'importe quelle application de podcasts."),
+        "feed_label": "RSS en français",
+        "lander_label": "Page en français",
+        "episode_label": "Épisode",
+        "listen_heading": "Où écouter",
+        "youtube_label": "YouTube · {handle}",
+        "youtube_sub": "Les épisodes et les Shorts en français.",
+        "network_rss_label": "RSS de tout le réseau (toutes les émissions, en anglais)",
+        "english_label": "Le catalogue complet, en anglais →",
+        "english_sub": (
+            "La plupart de nos émissions sont en anglais : Tesla, SpaceX, l'IA, "
+            "les marchés, l'actualité mondiale, l'espace, la science et "
+            "l'environnement."),
+        "other_languages_label": "Autres langues",
+        "ai_note": (
+            "La traduction et la voix françaises sont produites par IA à partir "
+            "de l'épisode anglais original. Nerra Network utilise des outils "
+            "d'IA dans la production de ses contenus."),
+        "ai_link_label": "En savoir plus",
+        "shows": {},
+    },
+}
+
+
+def _load_yaml_quiet(path):
+    """``shows/<slug>.yaml`` as a dict, or ``{}`` — a page never crashes on a
+    missing or malformed show file."""
+    import yaml as _yaml
+    try:
+        return _yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def _hub_latest_episode(show, prefix):
+    """The newest public episode of a native show, for its hub card."""
+    from engine import landing_test as _lt
+
+    cfg = NETWORK_SHOWS.get(show["slug"]) or {}
+    rec = (_lt.latest_record(ROOT / cfg["json_path"])
+           if cfg.get("json_path") else None)
+    if not rec:
+        return None
+    num = _lt._episode_number(rec)
+    hook = (_lt.hook_from_markdown(rec.get("content") or "")
+            or (rec.get("hook") or "").strip()
+            or _lt.strip_episode_label(rec.get("episode_title")
+                                       or rec.get("title") or ""))
+    post = _blog_url_for_episode(show["slug"], episode_num=num) if num else ""
+    return {
+        "number": num,
+        "date": rec.get("date", ""),
+        "hook": hook,
+        "url": f"{prefix}{post}" if post else "",
+    }
+
+
+def generate_language_hub_page(lang, *, dry_run=False, output_dir=None):
+    """Render one language's hub (``<lang>/index.html``); ``None`` when the
+    language has no hub path or no hand-written copy."""
+    from engine.video_metadata import CHANNEL_HANDLES
+
+    lang = str(lang or "").strip().lower()
+    target = _show_lang.language_hub_path(lang)
+    copy = _LANGUAGE_HUB_COPY.get(lang)
+    if not target or not copy:
+        return None
+
+    prefix = "../"
+    shows = _build_all_shows_list()
+    public = _public_shows(shows)
+
+    native = []
+    for s in public:
+        if s.get("page_lang") != lang:
+            continue
+        show_copy = (copy.get("shows") or {}).get(s["slug"]) or {}
+        native.append({
+            **s,
+            "latest": _hub_latest_episode(s, prefix),
+            "hub_description": (show_copy.get("description")
+                                or s.get("description_long") or s.get("tagline") or ""),
+            "hub_cadence": show_copy.get("cadence") or s.get("schedule") or "",
+            "hub_length": show_copy.get("length") or s.get("episode_length") or "",
+        })
+
+    dubbed = []
+    for s in _english_shows(public):
+        feeds = [f for f in _collect_language_feeds(s["rss_file"], prefix, s["slug"])
+                 if f["lang"] == lang]
+        if not feeds:
+            continue
+        lander = _ru_landing_target(s["slug"]) if lang == "ru" else ""
+        if lander and not (ROOT / lander).exists():
+            lander = ""
+        episodes = _track_episodes(s["slug"], lang, limit=1)
+        # The translated edition is a SEPARATE Apple show with its own id
+        # (``apple_show_ids.<lang>`` in the show YAML); the English Apple
+        # link would send this reader to English audio, so it is never used
+        # here — no id, no chip (the ru_landing rule).
+        raw = _load_yaml_quiet(SHOWS_DIR / f"{s['slug']}.yaml")
+        apple_id = str(((raw.get("apple_show_ids") or {}).get(lang) or "")).strip()
+        dubbed.append({
+            **s,
+            "feed_url": feeds[0]["url"],
+            "lander": f"{prefix}{lander}" if lander else "",
+            "latest_track": episodes[0] if episodes else None,
+            "apple_track_url": (f"https://podcasts.apple.com/podcast/id{apple_id}"
+                                if apple_id else ""),
+        })
+
+    handle = CHANNEL_HANDLES.get(lang, "")
+    youtube = {"handle": handle, "url": f"https://www.youtube.com/{handle}"} if handle else None
+    others = [{**row, "href": f"{prefix}{row['path']}" if row["path"] else "/"}
+              for row in _site_language_links() if row["lang"] != lang]
+
+    context = {
+        "path_prefix": prefix,
+        "page_lang": lang,
+        "page_title": copy["title"],
+        "page_description": copy["meta_description"],
+        "meta_description": copy["meta_description"],
+        "theme_color": "#6B47FF",
+        "show_color": "",
+        "show_color_dark": "",
+        "og_image": "",
+        "canonical_url": f"{GITHUB_RAW}/{target}",
+        "hreflang_alternates": _site_hreflang_alternates(),
+        "all_shows": shows,
+        "hub": copy,
+        "hub_lang": lang,
+        "native_shows": native,
+        "dubbed_shows": dubbed,
+        "youtube": youtube,
+        "other_languages": others,
+        "network_rss": f"{prefix}network.rss",
+        # The footer newsletter picker offers the chrome's shows — the
+        # native shows here, which have letters. A language with no native
+        # show has no letter to offer, so the form is omitted (one ask).
+        "hide_footer_subscribe": not native,
+    }
+    html = _get_jinja_env().get_template("language_hub.html.j2").render(**context)
+    out_path = (Path(output_dir) / target) if output_dir else ROOT / target
+    if dry_run:
+        print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
+        return out_path
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path} ({len(html):,} bytes)")
+    return out_path
+
+
+def generate_language_hub_pages(*, dry_run=False, output_dir=None):
+    """Render the hub of every non-English site language."""
+    written = []
+    for lang in _show_lang.site_languages(NETWORK_SHOWS):
+        if lang == "en":
+            continue
+        path = generate_language_hub_page(lang, dry_run=dry_run, output_dir=output_dir)
+        if path:
+            written.append(path)
+        else:
+            print(f"::warning::language hub for '{lang}' skipped: no hand-written "
+                  f"copy in generate_html._LANGUAGE_HUB_COPY (a show produces "
+                  f"this language; add the copy so it gets a page).")
     return written
 
 
@@ -7165,14 +7498,7 @@ def _listening_languages() -> list:
     """Every language a listener can hear: each show's page language plus
     every enabled multilingual track. Sorted codes, ``en`` first.
     Cached for the process — it walks every show YAML (Oct 18 2026)."""
-    langs = {"en"}
-    for slug in NETWORK_SHOWS:
-        langs.add(_show_lang.page_lang(slug))
-        cfg = _registry_show_config(slug)
-        ml = getattr(cfg, "multilingual", None) if cfg else None
-        if ml is not None and getattr(ml, "enabled", False):
-            langs.update(str(code) for code in (getattr(ml, "languages", None) or []))
-    return sorted(langs, key=lambda c: (c != "en", c))
+    return _show_lang.site_languages(NETWORK_SHOWS)
 
 
 def _registry_order() -> list:
@@ -7377,6 +7703,7 @@ def generate_static_pages(*, dry_run=False):
     generate_specials_page(dry_run=dry_run)
     generate_claims_pages(dry_run=dry_run)
     generate_redirect_stubs(dry_run=dry_run)
+    generate_language_hub_pages(dry_run=dry_run)
     generate_llms_txt(dry_run=dry_run)
 
 
@@ -8072,6 +8399,7 @@ def main():
         generate_all_narrative_pages(dry_run=args.dry_run)
         generate_mit_performance_page(dry_run=args.dry_run)
         generate_all_ru_landing_pages(dry_run=args.dry_run)
+        generate_language_hub_pages(dry_run=args.dry_run)
         # Sitemap last so it picks up every page generated above
         generate_sitemap(dry_run=args.dry_run)
         # Regenerate JSON API for mobile app

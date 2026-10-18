@@ -191,12 +191,13 @@ class TestNavigationChrome:
         assert "current_year" in g._get_jinja_env().globals
 
     def test_hreflang_and_homepage_canonical_use_bare_origin(self):
-        src = _read("templates/base.html.j2")
-        assert 'hreflang="x-default" href="https://nerranetwork.com/"' in src
+        import generate_html as g
+        alts = {a["lang"]: a["href"] for a in g._site_hreflang_alternates()}
+        assert alts["x-default"] == "https://nerranetwork.com/"
         # RU side must use the RU homepage canonical (/ru/index.html), not
         # the directory form /ru/ — Google ignores mismatched pairs.
-        assert 'hreflang="ru" href="https://nerranetwork.com/ru/index.html"' in src
-        assert 'hreflang="ru" href="https://nerranetwork.com/ru/"' not in src
+        assert alts["ru"] == "https://nerranetwork.com/ru/index.html"
+        assert "https://nerranetwork.com/ru/" not in alts.values()
         gen = _read("generate_html.py")
         assert '"canonical_url": f"{GITHUB_RAW}/",' in gen
 
