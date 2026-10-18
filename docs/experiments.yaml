@@ -5220,3 +5220,53 @@ experiments:
       engine.landing_test order_shorts_for_discovery / youtube_video_id;
       engine/short_preview.py (preview_url on Short rows, made in the video
       job); youtube-nocookie embed loaded only on click.
+  - id: hook-short-motion-ab-2026-10-18
+    title: "Hook-Short motion clip on alternate days: a same-show control for the $0.28 clip"
+    area: retention
+    shipped: 2026-10-18
+    readout: 2026-11-15
+    status: reading
+    metric: hook_motion_vs_control_d3
+    baseline: >
+      The clip ran on every flagship hook Short since Sep 22 (about $24 a
+      month) with no control arm. Against the drop week, flagship hook
+      Shorts rose from a median 42.5 to 56 views at day 3 (+32%) while
+      shows with no clip rose from 7 to 10 (+43%): no measurable lift.
+    target: >
+      hook_motion_vs_control_d3 (median day-3 views, motion_open over the
+      same shows' control-day hook Shorts, n >= 10 per arm) at or above 1.2
+      keeps the clip; under 1.1 switches it off (hook_short_motion: false in
+      the three show YAMLs). Between the two, read again at 2026-12-01.
+    notes: >
+      engine.hook_short_motion.is_control_day: even date ordinals get the
+      clip, odd ones are the control (control_stills / control_broll on the
+      video index, never hook_stills). youtube.hook_short_motion_alternate
+      in _defaults.yaml; false restores the every-day clip.
+  - id: video-pass-2026-10-18
+    title: "Rehearsal findings: picture holds, fact-card labels, Shorts sentence ends, caption tokens, outro count"
+    area: retention
+    shipped: 2026-10-18
+    readout: 2026-11-15
+    status: reading
+    baseline: >
+      Rehearsal renders of SpaceX Ep134, Tesla Ep638 and FF Ep226: FF held one
+      picture for 74 s and 27 s inside the first minute (38% of its runtime in
+      holds over 30 s); about 20 of 90 recent flagship fact cards read as
+      nonsense; 56 of 70 hook Shorts ended mid-sentence at 35 s; split number
+      tokens in every episode's burned-in captions; the outro said "All 16
+      shows" (26 free shows); Tesla/SpaceX rendered an Instagram/TikTok
+      variant nothing posted.
+    target: >
+      Replayed on 71 recent episodes, the longest single-picture hold falls
+      from a median 37 s to 26 s (worst tenth 59 s to 32 s) and holds over 10 s
+      in the opening minute from 6 episodes to 1; 63 of 70 hook Shorts end on
+      a full sentence (median 32 s). Read long_open_hold_5pct_en and
+      short_avp_en_14d beside it: render and metadata only, no audio change.
+    notes: >
+      engine.scene_scheduler (_alternatives, _cap_slots never makes a run);
+      engine.fact_cards (compound units, clause cut, credit cut, unreadable
+      labels dropped); engine.shorts_selector.end_on_sentence (metric
+      short_durations); engine.captions.merge_split_words; engine.promo_card
+      free_show_count; .github/workflows/capture-site-screens.yml;
+      multi_platform_enabled false on tesla/spacex. Guards:
+      tests/test_video_pass_2026_10_18.py.

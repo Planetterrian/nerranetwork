@@ -9384,7 +9384,18 @@ def _publish_youtube(
             short_video_ids_out: "list[str]" = []
             short_errors_out: "list[dict]" = []
             multi = len(shorts_plan) > 1
+            _base_short_duration = duration
+            result["short_durations"] = []
             for short_idx, (this_offset, this_hook, _fill_mode) in enumerate(shorts_plan):
+                # Oct 18 2026: each Short ends on its last full sentence
+                # inside the final few seconds (it used to stop mid-word at
+                # 35 s on four Shorts in five).
+                from engine.shorts_selector import end_on_sentence
+                duration = end_on_sentence(
+                    _transcript_words, this_offset, _base_short_duration,
+                    audio_offset_s=_caption_offset,
+                )
+                result["short_durations"].append(duration)
                 # Filename suffix is empty for the single-Short case so
                 # the legacy ``{base}_short.mp4`` path stays exactly the
                 # same when ``shorts_per_episode == 1``.
@@ -9586,6 +9597,7 @@ def _publish_youtube(
                                 scene_brief=_motion_brief,
                                 hook=(this_hook or hook or ""),
                                 pipeline_budget_left_s=_pipeline_budget_remaining(),
+                                episode_date=today,
                             )
                         except Exception as exc:  # noqa: BLE001
                             logger.warning("Hook Short motion plan failed: %s", exc)
@@ -9656,10 +9668,17 @@ def _publish_youtube(
                         # The retry did not land a clip: say which arm the
                         # Short actually opens on (SpaceX's b-roll pool
                         # already opens its hook Short on real footage).
-                        _hook_motion.variant = (
-                            _hook_motion_mod.VARIANT_BROLL_OPEN if _short_broll
-                            else _hook_motion_mod.VARIANT_HOOK_STILLS
-                        )
+                        if _hook_motion.control:
+                            _hook_motion.variant = (
+                                _hook_motion_mod.VARIANT_CONTROL_BROLL
+                                if _short_broll
+                                else _hook_motion_mod.VARIANT_CONTROL_STILLS
+                            )
+                        else:
+                            _hook_motion.variant = (
+                                _hook_motion_mod.VARIANT_BROLL_OPEN if _short_broll
+                                else _hook_motion_mod.VARIANT_HOOK_STILLS
+                            )
                         result.update(_hook_motion.as_metric())
 
                     build_short_video(

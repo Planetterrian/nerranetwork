@@ -274,16 +274,41 @@ def _pick_scene(
     return best_path
 
 
+def _alternatives(
+    slot_pool: Sequence[Path],
+    last_pick: Path,
+    title_tokens: frozenset,
+    context: Dict[Path, frozenset],
+    library: frozenset,
+) -> Sequence[Path]:
+    """The candidates for a slot that follows *last_pick*.
+
+    Oct 18 2026: one token of title overlap outweighed the repeat penalty,
+    so a story's own image filled every slot of its chapter — FF Ep226 held
+    one picture for 74 s, and 27 s inside the first minute, where the plan
+    asks for a change every 8 s. The previous image is now excluded when
+    another image FITS the chapter: one sharing a word with its title, or
+    else a library scene (chosen for this episode by topic). An image from
+    an unrelated story never fills in; with nothing that fits, the image
+    holds as before.
+    """
+    others = [p for p in slot_pool if p != last_pick]
+    topical = [p for p in others if title_tokens & context.get(p, frozenset())]
+    if topical:
+        return topical
+    related = [p for p in others if p in library]
+    return related or slot_pool
+
+
 def _cap_slots(
     plan: List[Tuple[Path, float]],
     max_slots: int = _MAX_SLIDESHOW_SLOTS,
 ) -> List[Tuple[Path, float]]:
     """Merge adjacent slots until ``len(plan) <= max_slots``.
 
-    Prefers merging consecutive same-path slots (no visual change), then
-    the shortest adjacent pair — so chapter-boundary switches on longer
-    chapters survive when a long episode would otherwise explode the
-    ffmpeg input count. Durations always sum to the original total.
+    Merges the shortest adjacent pair, so the holds stay even when a long
+    episode would otherwise explode the ffmpeg graph. Durations always sum
+    to the original total.
 
     Merges are position-aware (Aug 2026): pairs inside the accelerating
     open (first ``_OPEN_FAST_WINDOW_S`` of the timeline) are only merge
@@ -301,14 +326,22 @@ def _cap_slots(
         best_key: Optional[Tuple[int, int, float]] = None
         start = 0.0
         for i in range(len(out) - 1):
-            same = 0 if out[i][0] == out[i + 1][0] else 1
             combined = out[i][1] + out[i + 1][1]
             # 0 = pair begins after the accelerating open (merge freely);
             # 1 = pair begins inside it (merge only as a last resort).
-            # Same-path merges stay rank-0 regardless — collapsing two
-            # copies of one image changes nothing on screen.
-            in_open = 1 if (start < _OPEN_FAST_WINDOW_S and same) else 0
-            key = (same, in_open, combined)
+            # Oct 18 2026: a same-image pair is no longer merged first.
+            # Each slot is its own Ken Burns move, so two slots of one
+            # image are a visible re-frame; merged, they became one slow
+            # crawl (FF Ep226 held one picture 74 s). The shortest pair
+            # merges, which keeps the holds even.
+            in_open = 1 if start < _OPEN_FAST_WINDOW_S else 0
+            # The merged slot keeps the left image; a merge that puts it
+            # next to the same image again makes a run, so it goes last.
+            makes_run = 1 if (
+                i + 2 < len(out) and out[i + 2][0] == out[i][0]
+                and out[i + 1][0] != out[i][0]
+            ) else 0
+            key = (in_open, makes_run, combined)
             if best_key is None or key < best_key:
                 best_key = key
                 best_i = i
@@ -408,6 +441,7 @@ def plan_chapter_schedule(
         return []
     audio_duration_s = float(audio_duration_s)
     fresh = frozenset(fresh_list)
+    library_set = frozenset(pool) - fresh
 
     context: Dict[Path, frozenset] = {}
     for key, value in (scene_context or {}).items():
@@ -453,6 +487,10 @@ def plan_chapter_schedule(
             # video — the first frame a viewer judges was not today's
             # story. Later slots keep the overlap-first rule.
             slot_pool = fresh_list if (not plan and fresh_list) else pool
+            if last_pick is not None:
+                slot_pool = _alternatives(
+                    slot_pool, last_pick, title_tokens, context, library_set,
+                )
             pick = _pick_scene(
                 slot_pool, fresh, context, title_tokens, use_counts, last_pick,
             )

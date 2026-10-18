@@ -1058,6 +1058,9 @@ class YouTubeConfig:
     hook_short_motion_seconds: int = 4
     hook_short_motion_max_cost_usd: float = 0.30
     hook_short_motion_budget_seconds: float = 150.0
+    # Oct 18 2026: the clip runs on alternate days so the motion arm has a
+    # same-show control (engine.hook_short_motion.is_control_day).
+    hook_short_motion_alternate: bool = False
 
     # ---- Visual reuse + chapter-aligned scenes (June 2026) ----
     # These gate engine/visual_reuse.py, the composition layer over

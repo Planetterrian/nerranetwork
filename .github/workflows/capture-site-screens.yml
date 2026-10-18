@@ -1,0 +1,52 @@
+name: Capture Site Screenshots
+
+# The long-form outro card and the Shorts end card show real screenshots
+# of nerranetwork.com (engine/promo_card.py). Those screenshots are
+# committed under assets/site_screens/ so a render never touches the
+# network, and until Oct 18 2026 nothing refreshed them: the outro was
+# still showing the homepage from Sep 30 after the front page was rebuilt.
+# This runs scripts/capture_site_screens.py on a runner once a month and
+# on demand (after a site redesign), and commits the five PNGs (~2 MB).
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 09:13 UTC on the 1st of each month — after the morning slate.
+    - cron: "13 9 1 * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: capture-site-screens
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.14'
+          requirements-file: 'requirements.txt'
+          skip-checkout: 'true'
+
+      - name: Install Chromium for Playwright
+        run: |
+          set -euo pipefail
+          pip install playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Capture the pages
+        run: python scripts/capture_site_screens.py
+
+      - uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: "assets/site_screens/*.png"
+          commit-message: "Site screenshots: refresh the outro and end-card captures"

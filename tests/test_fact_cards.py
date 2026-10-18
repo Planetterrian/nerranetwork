@@ -68,7 +68,8 @@ class TestSelection:
                  + _w(["worth", "$9", "billion."], start=60.0)
                  + _w(["another", "700", "cars."], start=150.0))
         cards = fc.extract_fact_cards(words, max_cards=2)
-        assert [c.figure for c in cards] == ["$9 billion", "700"]
+        # Oct 18 2026: the counted noun joins a bare figure ("700 cars").
+        assert [c.figure for c in cards] == ["$9 billion", "700 cars"]
 
     def test_max_cards_respected_and_sorted_by_time(self):
         words = []

@@ -56,14 +56,18 @@ CHAPTER_CLEAR_S = 5.0
 _LABEL_WORDS = 8
 
 _START_RE = re.compile(r"^[\$€£]?\d[\d,]*(?:\.\d+)?%?[.,;:!?]*$")
-_CONT_RE = re.compile(r"^(?:[.,]\d+|,\d{3})%?[.,;:!?]*$")
+# Oct 18 2026: a lone "%" is a continuation too — Whisper writes "100"
+# "%" as two tokens, and the card read "100 / % means claims are already".
+_CONT_RE = re.compile(r"^(?:(?:[.,]\d+|,\d{3})%?|%)[.,;:!?]*$")
 _SENTENCE_END = (".", "!", "?")
 _UNIT_WORDS = {
     "million": "million", "billion": "billion", "trillion": "trillion",
     "thousand": "thousand", "percent": "%", "per cent": "%",
     "dollars": "$",
 }
-_YEAR_RE = re.compile(r"^(?:19|20)\d\d$")
+# A bare four-digit 1500-2099 is a year ("1856", "1181" on FF Ep223); a
+# count of that size is written "1,856".
+_YEAR_RE = re.compile(r"^(?:1[5-9]|20)\d\d$")
 _EPISODE_WORDS = frozenset({"episode", "ep", "ep.", "number"})
 # Sep 22 2026: a small count with a unit noun IS a fact ("9 satellites",
 # "1 gigawatt", "5 orbital launches"), but ``_score`` gave every bare
@@ -83,6 +87,33 @@ _COUNT_NOUNS = frozenset({
     "employee", "employees", "vehicle", "vehicles", "unit", "units",
     "country", "countries", "patient", "patients", "sample", "samples",
     "light-year", "light-years", "orbit", "orbits", "starlink", "starlinks",
+    "pound", "pounds", "foot", "feet", "meter", "meters", "metre", "metres",
+    "euro", "euros", "yuan", "yen",
+})
+#: Oct 18 2026: the second word of a compound unit. Whisper writes
+#: "light" "-years" and "gigawatt" "hour"; the card read "1 gigawatt /
+#: Hour" and "37 million / Light -years away in Columbus". Each entry is
+#: (unit already read, next words) -> the unit as displayed.
+_COMPOUND_UNITS = {
+    ("gigawatt", "hour"): "GWh", ("gigawatt", "hours"): "GWh",
+    ("gigawatts", "hour"): "GWh", ("gigawatts", "hours"): "GWh",
+    ("megawatt", "hour"): "MWh", ("megawatt", "hours"): "MWh",
+    ("megawatts", "hour"): "MWh", ("megawatts", "hours"): "MWh",
+    ("kilowatt", "hour"): "kWh", ("kilowatt", "hours"): "kWh",
+    ("kilowatts", "hour"): "kWh", ("kilowatts", "hours"): "kWh",
+    ("miles", "per hour"): "mph", ("mile", "per hour"): "mph",
+    ("km", "per hour"): "km/h", ("kilometers", "per hour"): "km/h",
+    ("kilometres", "per hour"): "km/h",
+    ("square", "feet"): "sq ft", ("square", "foot"): "sq ft",
+    ("square", "meters"): "m²", ("square", "metres"): "m²",
+}
+#: After a scale word ("million", "billion") one more unit word may follow:
+#: "1.7 million square feet", "6.08 million euros", "160 million won".
+_SCALE_UNITS = frozenset({"million", "billion", "trillion", "thousand"})
+_AFTER_SCALE = frozenset({
+    "euros", "pounds", "won", "yuan", "yen", "rupees", "square", "light",
+    "tons", "tonnes", "kilometers", "kilometres", "miles", "people", "users",
+    "vehicles", "units", "subscribers", "customers", "years", "light-years",
 })
 #: "in 2021 launches resumed" — a year before a count noun is still a year.
 _YEAR_PREPS = frozenset({"in", "since", "by", "from", "until", "of", "through"})
@@ -119,8 +150,10 @@ def _dangling_tail() -> frozenset:
 
 def _fit_label(text: str) -> str:
     text = re.sub(r"\s+", " ", str(text or "")).strip(" ,;:-–—")
-    # Whisper splits "$14.08" into "$14" ".8": re-join figures in labels.
-    text = re.sub(r"(\d) ([.,]\d)", r"\1\2", text)
+    # Whisper splits "$14.08" into "$14" ".8", "3.7%" into "3.7" "%" and
+    # "end-to-end" into "end" "-to" "-end": re-join them in labels.
+    from engine.captions import join_split_text
+    text = join_split_text(text)
     if not text:
         return ""
     clean = clip_words(text, FACT_CARD_LABEL_MAX, ellipsis="")
@@ -167,6 +200,45 @@ def _score(figure: str, unit: str, prev_word: str) -> int:
     return 0
 
 
+def _word_at(words: Sequence[dict], k: int) -> Tuple[str, bool]:
+    if k >= len(words):
+        return "", True
+    core, ended = _strip_trailing_punct(_clean(words[k].get("word")))
+    return core.lower(), ended
+
+
+def _extend_unit(words: Sequence[dict], j: int, unit: str) -> Tuple[str, int, bool]:
+    """Read the rest of a compound unit after *unit* (the word at *j*).
+
+    Returns ``(display, last_index, ended)``. "1 gigawatt hour" shows as
+    "1 GWh", "230 miles per hour" as "230 mph", "1.7 million square feet"
+    as "1.7 million sq ft", "37 million light -years" as "37 million
+    light-years". Anything else returns the unit unchanged.
+    """
+    display, ended = unit, False
+    w1, e1 = _word_at(words, j + 1)
+    w2, e2 = _word_at(words, j + 2)
+    if unit in _SCALE_UNITS and w1 == "dollars":
+        return f"{unit} dollars", j + 1, e1
+    if unit in _SCALE_UNITS and w1 in _AFTER_SCALE:
+        if w1 in ("square", "light") and w2:
+            joined = "light-years" if (w1 == "light" and w2.lstrip("-") in ("years", "year")) else None
+            if joined:
+                return f"{unit} {joined}", j + 2, e2
+            compound = _COMPOUND_UNITS.get((w1, w2))
+            if compound:
+                return f"{unit} {compound}", j + 2, e2
+            return display, j, ended
+        return f"{unit} {w1}", j + 1, e1
+    if (unit, w1) in _COMPOUND_UNITS:
+        return _COMPOUND_UNITS[(unit, w1)], j + 1, e1
+    if w1 == "per" and (unit, f"per {w2}") in _COMPOUND_UNITS:
+        return _COMPOUND_UNITS[(unit, f"per {w2}")], j + 2, e2
+    if w1.startswith("-") and unit in ("light",):
+        return "light-years", j + 1, e1
+    return display, j, ended
+
+
 def _merge_runs(words: Sequence[dict]) -> List[dict]:
     """Merge Whisper's split numeric tokens into figure candidates.
 
@@ -205,13 +277,17 @@ def _merge_runs(words: Sequence[dict]) -> List[dict]:
                 unit = _UNIT_WORDS[key]
                 j += 1
                 ended = nxt_ended
-            elif key in _COUNT_NOUNS:
+            elif key in _COUNT_NOUNS and not figure.endswith("%"):
                 unit = key
                 j += 1
                 ended = nxt_ended
+        display = unit
+        if unit and not ended:
+            display, j, ended = _extend_unit(words, j, unit)
         prev_word = _clean(words[i - 1].get("word")) if i > 0 else ""
         out.append({
             "start": start, "figure": figure, "unit": unit,
+            "unit_display": display,
             "idx_from": i, "idx_to": j, "prev_word": prev_word,
             "ended": ended,
         })
@@ -220,6 +296,11 @@ def _merge_runs(words: Sequence[dict]) -> List[dict]:
 
 
 def _display_figure(figure: str, unit: str) -> str:
+    if unit in ("GWh", "MWh", "kWh", "mph", "km/h", "sq ft", "m²"):
+        return f"{figure} {unit}"
+    if unit.endswith(" dollars"):
+        scale = unit.split()[0]
+        return f"{figure if figure.startswith('$') else '$' + figure} {scale}"
     if unit == "%":
         return figure if figure.endswith("%") else figure + "%"
     if unit == "$":
@@ -229,30 +310,132 @@ def _display_figure(figure: str, unit: str) -> str:
     return figure
 
 
-def _label_for(words: Sequence[dict], run: dict) -> str:
+#: Oct 18 2026 label rules. A label is read from the words after the
+#: figure, and it stops where the clause stops: at a comma, before a
+#: credit ("according to", "reports"), before a joining word once it has
+#: two words. A label that still does not read as a description of the
+#: figure is dropped — the card then shows the figure alone when its unit
+#: explains it, or not at all. Measured on the last week of the three
+#: flagships: "Of U .S", "% means claims are already", "Up 0.3% I'm
+#: Patrick in Vancouver", "In the evening Central Time".
+_LABEL_STOP_BEFORE = frozenset({
+    "according", "reports", "reported", "report", "says", "said", "noted",
+    "notes", "told", "writes", "wrote", "i'm", "via",
+})
+_LABEL_JOINERS = frozenset({
+    "and", "but", "yet", "while", "which", "who", "whose", "that", "so",
+    "because", "although", "though", "or", "as", "if", "when", "where",
+})
+_LABEL_BAD_START = frozenset({
+    "of", "and", "or", "but", "yet", "so", "nor", "than", "to", "is", "are",
+    "was", "were", "means", "mean", "had", "has", "have", "be", "been",
+    "it", "its", "they", "this", "that", "which", "who", "a", "an",
+    "according", "said", "says", "reports", "i'm", "won",
+})
+_TIME_WORDS = frozenset({
+    "am", "pm", "a.m", "p.m", "a.m.", "p.m.", "evening", "morning",
+    "afternoon", "tonight", "eastern", "pacific", "central",
+})
+_LABEL_MIN_WORDS = 2
+
+
+def _label_words(words: Sequence[dict], run: dict) -> Tuple[List[str], bool]:
+    """The words after the figure, cut where its clause ends, and whether
+    the cut was a credit ("… Universe Today reports")."""
     after: List[str] = []
+    if run["ended"]:
+        return after, False
     k = run["idx_to"] + 1
-    if not run["ended"]:
-        while k < len(words) and len(after) < _LABEL_WORDS:
-            tok = _clean(words[k].get("word"))
-            core, ended = _strip_trailing_punct(tok)
-            after.append(core)
-            if ended:
-                break
-            k += 1
-    label = _fit_label(" ".join(after))
-    if label:
-        return label
+    while k < len(words) and len(after) < _LABEL_WORDS:
+        tok = _clean(words[k].get("word"))
+        core = tok.rstrip(".,;:!?")
+        low = core.lower()
+        if low in _LABEL_STOP_BEFORE:
+            return after, True
+        if low in _LABEL_JOINERS and after:
+            break
+        after.append(core)
+        if tok.endswith(_SENTENCE_END) or tok.endswith((",", ";", ":")):
+            break
+        k += 1
+    return after, False
+
+
+def _label_reads(label_words: Sequence[str]) -> bool:
+    if not label_words:
+        return False
+    first = label_words[0].lower()
+    if first in _LABEL_BAD_START or first in _LABEL_JOINERS:
+        return False
+    if first[:1].isdigit() or first[:1] in "%.,-":
+        return False
+    if any(w.lower().strip(".") in _TIME_WORDS for w in label_words[:3]):
+        return False
+    return True
+
+
+def _before_words(words: Sequence[dict], run: dict) -> List[str]:
+    """The words of the figure's own clause before it, for a figure that
+    ends its sentence ("a record altitude of 150.")."""
     before: List[str] = []
     k = run["idx_from"] - 1
     while k >= 0 and len(before) < _LABEL_WORDS:
         tok = _clean(words[k].get("word"))
         core, ended = _strip_trailing_punct(tok)
-        if ended:
+        if ended or tok.endswith((",", ";", ":")):
             break
         before.insert(0, core)
         k -= 1
-    return _fit_label(" ".join(before))
+    return before
+
+
+def _plural_noun(word: str) -> bool:
+    low = word.lower()
+    return (word.isalpha() and word[:1].islower() and len(word) > 3
+            and low.endswith("s") and not low.endswith("ss")
+            and low not in _LABEL_BAD_START and low not in _LABEL_JOINERS)
+
+
+def _label_for(words: Sequence[dict], run: dict) -> Tuple[Optional[str], str]:
+    """``(label, noun)`` for the run.
+
+    *label* is the text under the figure, ``""`` for a figure that stands
+    alone, or ``None`` when the card should not be shown at all. *noun* is
+    a plural noun that joins the figure instead ("700 cars").
+    """
+    tail = _dangling_tail()
+    if run["ended"]:
+        before = _before_words(words, run)
+        while before and before[-1].lower() in tail | _LABEL_JOINERS:
+            before.pop()
+        if len(before) >= _LABEL_MIN_WORDS and _label_reads(before):
+            label = _fit_label(" ".join(before))
+            if label:
+                return label, ""
+        after, credited = [], False
+    else:
+        after, credited = _label_words(words, run)
+    while after and after[-1].lower() in tail | _LABEL_JOINERS:
+        after.pop()
+    # Words that run straight into a credit are the outlet's name.
+    if credited and len(after) <= 3:
+        after = []
+    if len(after) >= _LABEL_MIN_WORDS and _label_reads(after):
+        label = _fit_label(" ".join(after))
+        if label:
+            return label, ""
+    # No label that reads: the figure may still stand alone when its unit
+    # says what it counts ("$4.2 billion", "85%", "230 mph"), or when the
+    # word after it is the thing counted ("700 cars").
+    unit = run.get("unit_display") or run["unit"]
+    figure = run["figure"]
+    if unit or figure.startswith(("$", "€", "£")) or figure.endswith("%"):
+        return "", ""
+    nxt = _clean(words[run["idx_to"] + 1].get("word")) if run["idx_to"] + 1 < len(words) else ""
+    noun, _ = _strip_trailing_punct(nxt)
+    if _plural_noun(noun):
+        return "", noun
+    return None, ""
 
 
 def extract_fact_cards(
@@ -276,10 +459,14 @@ def extract_fact_cards(
         score = _score(run["figure"], run["unit"], run["prev_word"])
         if score <= 0:
             continue
-        figure = _display_figure(run["figure"], run["unit"])
+        figure = _display_figure(run["figure"], run.get("unit_display") or run["unit"])
         if run["prev_word"].lower() in ("v", "version") and run["figure"].count(".") > 1:
             figure = "v" + figure
-        label = _label_for(words, run)
+        label, noun = _label_for(words, run)
+        if label is None:
+            continue
+        if noun:
+            figure = f"{figure} {noun}"
         candidates.append(FactCard(round(run["start"], 2), figure, label, score))
     candidates.sort(key=lambda c: (-c.score, c.start))
     picked: List[FactCard] = []

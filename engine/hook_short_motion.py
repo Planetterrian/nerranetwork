@@ -32,7 +32,13 @@ logger = logging.getLogger(__name__)
 VARIANT_MOTION_OPEN = "motion_open"
 VARIANT_HOOK_STILLS = "hook_stills"
 VARIANT_BROLL_OPEN = "broll_open"
-VARIANTS = (VARIANT_MOTION_OPEN, VARIANT_BROLL_OPEN, VARIANT_HOOK_STILLS)
+#: Oct 18 2026: a control day of the alternate-day A/B. Separate labels so
+#: a planned control is never read as a failed clip (``hook_stills``).
+VARIANT_CONTROL_STILLS = "control_stills"
+VARIANT_CONTROL_BROLL = "control_broll"
+VARIANTS = (VARIANT_MOTION_OPEN, VARIANT_BROLL_OPEN, VARIANT_HOOK_STILLS,
+            VARIANT_CONTROL_STILLS, VARIANT_CONTROL_BROLL)
+CONTROL_REASON = "alternate-day control"
 
 #: The pipeline must have at least this much wall-clock left before the
 #: clip step is attempted — the Shorts render, upload and commit follow.
@@ -55,6 +61,7 @@ class HookMotion:
     cost_usd: float = 0.0
     seconds: int = 0
     requested: bool = False
+    control: bool = False
 
     def as_metric(self) -> dict:
         return {
@@ -68,6 +75,26 @@ def is_enabled(config) -> bool:
     """True when this show opts into the hook-Short motion retry."""
     yt = getattr(config, "youtube", None)
     return bool(getattr(yt, "hook_short_motion", False))
+
+
+def is_control_day(config, episode_date) -> bool:
+    """True on the days the alternate-day A/B ships no clip.
+
+    Oct 18 2026: the clip ($0.28 a Short) ran on every flagship hook Short
+    with no same-show control, and the drop-week comparison could not
+    separate it from the general recovery. Even calendar days (by date
+    ordinal) get the clip, odd days are the control, so each show is its
+    own control and both arms see every weekday over a fortnight.
+    """
+    yt = getattr(config, "youtube", None)
+    if not bool(getattr(yt, "hook_short_motion_alternate", False)):
+        return False
+    if episode_date is None:
+        return False
+    try:
+        return episode_date.toordinal() % 2 == 1
+    except AttributeError:
+        return False
 
 
 def motion_prompt(scene_brief: str, hook: str) -> str:
@@ -86,6 +113,7 @@ def plan_hook_motion(
     budget_s: Optional[float] = None,
     spent_usd: float = 0.0,
     pipeline_budget_left_s: Optional[float] = None,
+    episode_date=None,
 ) -> HookMotion:
     """Try for ONE opening clip on the hook Short. Never raises.
 
@@ -97,6 +125,12 @@ def plan_hook_motion(
     result = HookMotion()
     if not is_enabled(config):
         result.fallback_reason = "disabled"
+        return result
+    if is_control_day(config, episode_date):
+        result.control = True
+        result.variant = VARIANT_CONTROL_STILLS
+        result.fallback_reason = CONTROL_REASON
+        logger.info("Hook Short motion: control day — no clip requested")
         return result
 
     def _stills(reason: str) -> HookMotion:

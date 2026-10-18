@@ -64,11 +64,29 @@ def _texts(channel: str) -> Dict[str, str]:
             "sub": "Toutes les émissions · transcriptions · newsletters gratuites",
             "scan": "Scannez pour en savoir plus",
         }
+    count = free_show_count()
+    shows = f"All {count} free shows" if count else "Every show"
     return {
         "headline": "KEEP EXPLORING THE NETWORK",
-        "sub": "All 16 shows · transcripts · free newsletters",
+        "sub": f"{shows} · transcripts · free newsletters",
         "scan": "Scan for this show",
     }
+
+
+def free_show_count() -> int:
+    """The network's free-show count, from the one filter the site uses.
+
+    Oct 18 2026: the card said "All 16 shows" on every long-form while the
+    network had 26 free shows. ``generate_html._public_shows`` owns the
+    number (homepage, meta description, share card); ``0`` when it cannot
+    be read, and the card then names no number.
+    """
+    try:
+        from generate_html import _public_show_count_cached
+
+        return int(_public_show_count_cached())
+    except Exception:  # noqa: BLE001 — the outro card is best-effort
+        return 0
 
 
 def site_screenshot_for(show_slug: str, channel: str = "en") -> Optional[Path]:

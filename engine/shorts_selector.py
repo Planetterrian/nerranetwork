@@ -671,3 +671,48 @@ def hook_first_windows(
             continue
         kept.append(w)
     return kept[:n]
+
+
+#: Oct 18 2026: how far a Short may end early to finish on a sentence.
+#: 56 of 70 hook Shorts on seven shows were cut mid-sentence at 35 s; the
+#: last full sentence ended a median 3.5 s earlier and 93% within 8 s.
+SENTENCE_END_MAX_TRIM_S = 8.0
+#: Whisper's word end lands a little before the voice decays.
+SENTENCE_END_PAD_S = 0.35
+
+
+def end_on_sentence(
+    words,
+    start_s: float,
+    max_duration_s: float,
+    *,
+    audio_offset_s: float = 0.0,
+    max_trim_s: float = SENTENCE_END_MAX_TRIM_S,
+) -> float:
+    """A Short's duration that ends on the last full sentence.
+
+    *words* are Whisper word dicts on the voice-only timeline;
+    *audio_offset_s* moves them onto the mixed audio the Short is cut
+    from (the music-intro delay). Returns *max_duration_s* unchanged when
+    no sentence ends inside the last *max_trim_s* seconds of the clip.
+    """
+    try:
+        start = float(start_s)
+        limit = float(max_duration_s)
+    except (TypeError, ValueError):
+        return max_duration_s
+    if limit <= 0:
+        return max_duration_s
+    best = None
+    for w in words or []:
+        try:
+            token = str(w.get("word") or "").strip()
+            end = float(w["end"]) + float(audio_offset_s or 0.0)
+        except (AttributeError, KeyError, TypeError, ValueError):
+            continue
+        if not token.endswith((".", "!", "?")):
+            continue
+        rel = end - start + SENTENCE_END_PAD_S
+        if limit - max_trim_s <= rel <= limit:
+            best = rel if best is None else max(best, rel)
+    return round(best, 2) if best is not None else max_duration_s
