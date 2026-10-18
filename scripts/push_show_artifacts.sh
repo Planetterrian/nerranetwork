@@ -114,7 +114,21 @@ resolve_conflicts() {
   [ "$unresolved" -eq 0 ]
 }
 
+# A rebase left in progress by a killed process (the audio-first checkpoint
+# timing out, Oct 18 2026) makes every `git pull --rebase` refuse to start,
+# which the loop below would read as a conflict on every attempt.
+clear_stale_rebase() {
+  local gd
+  gd="$(git rev-parse --git-dir 2>/dev/null || echo .git)"
+  if [ -d "$gd/rebase-merge" ] || [ -d "$gd/rebase-apply" ]; then
+    echo "Clearing a rebase left in progress by an earlier process"
+    git rebase --abort 2>/dev/null || true
+    rm -rf "$gd/rebase-merge" "$gd/rebase-apply"
+  fi
+}
+
 for attempt in $(seq 1 "$ATTEMPTS"); do
+  clear_stale_rebase
   if git pull --rebase origin main; then
     if git push origin main; then
       echo "Push succeeded on attempt $attempt (rebase)"

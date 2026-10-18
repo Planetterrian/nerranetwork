@@ -211,22 +211,35 @@ def _checkpoint_publish(args, metrics) -> bool:
     """
     if os.environ.get(AUDIO_FIRST_ENV) != "1" or getattr(args, "test", False):
         return False
+    import signal
     import subprocess
     script = PROJECT_ROOT / "scripts" / "checkpoint_publish.sh"
     try:
-        done = subprocess.run(
+        # Own process group, so a timeout kills git too, not only bash.
+        proc = subprocess.Popen(
             ["bash", str(script)], cwd=str(PROJECT_ROOT),
             env={**os.environ, "SHOW": args.show},
-            timeout=AUDIO_FIRST_TIMEOUT_S, capture_output=True, text=True,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+            start_new_session=True,
         )
-        ok = done.returncode == 0
-        tail = (done.stdout + done.stderr).strip().splitlines()[-6:]
+        try:
+            out, _ = proc.communicate(timeout=AUDIO_FIRST_TIMEOUT_S)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except OSError:
+                pass
+            out, _ = proc.communicate()
+            raise subprocess.TimeoutExpired(proc.args, AUDIO_FIRST_TIMEOUT_S, output=out)
+        ok = proc.returncode == 0
+        tail = (out or "").strip().splitlines()[-6:]
         for line in tail:
             logger.info("audio-first push: %s", line)
     except Exception as exc:  # noqa: BLE001 — the final commit still runs
         ok = False
         logger.warning("audio-first push failed (non-fatal): %s", exc)
     if not ok:
+        _restore_after_checkpoint(args.show)
         print("::warning::Audio-first push did not land; the episode goes out "
               "with the run's final commit instead.", flush=True)
     try:
@@ -234,6 +247,42 @@ def _checkpoint_publish(args, metrics) -> bool:
     except Exception:  # noqa: BLE001
         pass
     return ok
+
+
+def _restore_after_checkpoint(show: str) -> None:
+    """Leave the tree as the final commit step expects after a failed or
+    killed checkpoint: no rebase in progress, no unpushed checkpoint commit,
+    everything staged.
+
+    Oct 18 2026: Top World's checkpoint was killed at the 300 s timeout in
+    the middle of ``git pull --rebase``. The ``.git/rebase-merge`` it left
+    made every later rebase refuse to start, the push script read that as a
+    conflict four times, and the recovery branch carried the half-replayed
+    tree (a workflow change from main), which GitHub refused, so the episode
+    was lost from git.
+    """
+    import subprocess
+
+    def _git(*argv):
+        return subprocess.run(["git", *argv], cwd=str(PROJECT_ROOT),
+                              capture_output=True, text=True)
+    try:
+        git_dir = PROJECT_ROOT / ".git"
+        if (git_dir / "rebase-merge").exists() or (git_dir / "rebase-apply").exists():
+            _git("rebase", "--abort")
+            for d in ("rebase-merge", "rebase-apply"):
+                if (git_dir / d).exists():
+                    import shutil
+                    shutil.rmtree(git_dir / d, ignore_errors=True)
+            logger.warning("audio-first push: aborted a rebase left in progress")
+        head = _git("log", "-1", "--format=%s").stdout.strip()
+        unpushed = _git("merge-base", "--is-ancestor", "HEAD", "origin/main").returncode != 0
+        if (head.startswith(f"Auto-generated: {show} ") and head.endswith("(audio)")
+                and unpushed):
+            _git("reset", "-q", "--soft", "HEAD~1")
+            logger.warning("audio-first push: un-committed the unpushed checkpoint")
+    except Exception as exc:  # noqa: BLE001 — the final commit still runs
+        logger.warning("audio-first cleanup failed (non-fatal): %s", exc)
 
 
 def _rss_disclosure_for(config, slug: str) -> str:
