@@ -12,8 +12,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 _NEW_SNIPPET = (
-    "If you allow Ad measurement and then enter your email in a Personal tips "
-    "form, your browser sends Google a SHA-256 hash of your email address"
+    "If you allow Ad measurement and then submit a Personal tips form, your "
+    "browser sends Google a SHA-256 hash of your email address"
 )
 _OLD_SNIPPET = (
     "If we ever run ads, Google Ads conversion tracking would count "
@@ -44,10 +44,10 @@ class TestPrivacyEnhancedConversionsDisclosure:
         assert 'target="_blank"' in html[html.index(_GOOGLE_PRIVACY_HREF):html.index(_GOOGLE_PRIVACY_HREF) + 200]
         assert _OLD_SNIPPET not in html
 
-    def test_last_updated_is_october_16_2026(self):
+    def test_last_updated_is_october_18_2026(self):
         html = _read("privacy-policy.html")
-        assert "Last updated October 16, 2026" in html
-        assert "Last reviewed October 16, 2026" in html
+        assert "Last updated October 18, 2026" in html
+        assert "Last reviewed October 18, 2026" in html
         # Generator label is the source for {{ updated_label }} on regen.
         gen = _read("generate_html.py")
-        assert 'LEGAL_PAGES_UPDATED_LABEL = "October 16, 2026"' in gen
+        assert 'LEGAL_PAGES_UPDATED_LABEL = "October 18, 2026"' in gen
