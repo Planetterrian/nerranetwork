@@ -1164,7 +1164,10 @@
                 {% endfor %}
             </div>
             {% if not _is_ru_page and _pool | length > 8 %}
-            <p class="cross-network-all"><a href="{{ path_prefix }}explore.html">See all {{ _network_shows | length }} shows &rarr;</a></p>
+            {#- Public free-show count (same as homepage + join), never the
+                non-RU registry length — that included members-only desks and
+                said 29 beside the homepage's 26 (Oct 18 2026 review). -#}
+            <p class="cross-network-all"><a href="{{ path_prefix }}explore.html">See all {{ public_show_count() }} shows &rarr;</a></p>
             {% endif %}
         </div>
     </section>

@@ -2469,6 +2469,11 @@ def _get_jinja_env():
     env.globals["network_promise_short"] = _brand_copy.NETWORK_PROMISE_SHORT
     env.globals["network_promise"] = lambda n=None: _brand_copy.network_promise(
         n if n is not None else _public_show_count_cached())
+    # Oct 18 2026: one public count for every surface that says "N shows"
+    # (homepage / join / show-page "See all N"). Call as public_show_count()
+    # in templates that do not pass it in context; the homepage still
+    # receives the int via generate_network_page.
+    env.globals["public_show_count"] = _public_show_count_cached
     # Oct 18 2026: every page's share card is decided in one place (base.html.j2
     # calls this) — see engine/share_cards.py.
     from engine import share_cards as _share_cards
